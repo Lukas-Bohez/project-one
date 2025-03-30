@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+    <title>Quiz Session | Quiz The Spire</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/quiz.css">
+</head>
+<body>
+    <header class="c-header">
+        <a href="/index.html" class="c-header__link">
+            <h1 class="c-header__title">Quiz The Spire</h1>
+        </a>
+        <button id="infoBtn" class="c-info-btn">i</button>
+    </header>
+
+    <main class="c-quiz-container">
+        <div class="c-quiz-header">
+            <div class="c-items-container">
+                <div class="c-item-slot" id="item1"></div>
+                <div class="c-item-slot" id="item2"></div>
+                <div class="c-item-slot" id="item3"></div>
+            </div>
+            <div class="c-quiz-controls">
+                <button id="useItemBtn" class="c-btn c-btn--secondary" disabled>Use Item</button>
+                <button id="deleteItemBtn" class="c-btn c-btn--delete" disabled>Delete Item</button>
+            </div>
+            <div class="c-timer-container">
+                <div class="c-servo-visual" id="servoVisual"></div>
+                <span class="c-time-remaining" id="timeRemaining">30</span>
+            </div>
+            <div class="c-score-display">
+                <span>Score: <span id="currentScore">0</span></span>
+            </div>
+        </div>
+
+        <div class="c-question-container">
+            <h2 id="questionText">Loading question...</h2>
+            <div class="c-image-container" id="questionImage"></div>
+        </div>
+
+        <div class="c-answers-container">
+            <button class="c-answer-btn" id="answer1">Answer 1</button>
+            <button class="c-answer-btn" id="answer2">Answer 2</button>
+            <button class="c-answer-btn" id="answer3">Answer 3</button>
+            <button class="c-answer-btn" id="answer4">Answer 4</button>
+        </div>
+
+
+        <div class="c-players-container">
+            <h3>Players</h3>
+            <div class="c-players-list" id="playersList">
+                <!-- Player items will be added here dynamically -->
+            </div>
+        </div>
+    </main>
+
+    <div id="infoModal" class="c-modal">
+        <div class="c-modal__content">
+            <span class="c-modal__close">&times;</span>
+            <h2>Welcome to Quiz The Spire</h2>
+            <div class="c-info-section">
+                <h3 class="c-info-section__title">How to Play</h3>
+                <p>Join a quiz session either locally using a SNES controller or online via this website. Answer questions correctly to earn points and items!</p>
+            </div>
+            <div class="c-info-section">
+                <h3 class="c-info-section__title">Items</h3>
+                <ul class="c-items-list">
+                    <li class="c-items-list__item"><strong>Freeze:</strong> Lowers temperature by 15°C, slowing timer</li>
+                    <li class="c-items-list__item"><strong>Fireball:</strong> Raises temperature by 15°C, speeding timer</li>
+                    <li class="c-items-list__item"><strong>Answer Remove:</strong> Removes one wrong answer</li>
+                </ul>
+            </div>
+            <div class="c-info-section">
+                <h3 class="c-info-section__title">Sensor Effects</h3>
+                <p>The game adapts based on your environment:</p>
+                <ul class="c-items-list">
+                    <li class="c-items-list__item">Higher temperature = faster timer</li>
+                    <li class="c-items-list__item">Lower light = easier questions</li>
+                    <li class="c-items-list__item">More noise = easier questions</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/quiz.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+    <title>Graphs | Quiz The Spire</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/graphs.css">
+</head>
+<body>
+    <header class="c-header">
+        <a href="/index.html" class="c-header__link">
+            <h1 class="c-header__title">Quiz The Spire</h1>
+        </a>
+        <button id="infoBtn" class="c-info-btn">i</button>
+    </header>
+
+    <main class="c-graphs-container">
+        <div class="c-graph-card js-graph-temp">
+            <h2 class="c-graph-title">Temperature (°C)</h2>
+            <div id="tempChart" class="c-graph"></div>
+        </div>
+        
+        <div class="c-graph-card js-graph-light">
+            <h2 class="c-graph-title">Light Intensity (lux)</h2>
+            <div id="lightChart" class="c-graph"></div>
+        </div>
+        
+        <div class="c-graph-card js-graph-sound">
+            <h2 class="c-graph-title">Sound Level (dB)</h2>
+            <div id="soundChart" class="c-graph"></div>
+        </div>
+    </main>
+    
+    <div id="infoModal" class="c-modal">
+        <div class="c-modal__content">
+            <span class="c-modal__close">&times;</span>
+            <h2>Welcome to Quiz The Spire</h2>
+            <div class="c-info-section">
+                <h3 class="c-info-section__title">How to Play</h3>
+                <p>Join a quiz session either locally using a SNES controller or online via this website. Answer questions correctly to earn points and items!</p>
+            </div>
+            <div class="c-info-section">
+                <h3 class="c-info-section__title">Items</h3>
+                <ul class="c-items-list">
+                    <li class="c-items-list__item"><strong>Freeze:</strong> Lowers temperature by 15°C, slowing timer</li>
+                    <li class="c-items-list__item"><strong>Fireball:</strong> Raises temperature by 15°C, speeding timer</li>
+                    <li class="c-items-list__item"><strong>Answer Remove:</strong> Removes one wrong answer</li>
+                </ul>
+            </div>
+            <div class="c-info-section">
+                <h3 class="c-info-section__title">Sensor Effects</h3>
+                <p>The game adapts based on your environment:</p>
+                <ul class="c-items-list">
+                    <li class="c-items-list__item">Higher temperature = faster timer</li>
+                    <li class="c-items-list__item">Lower light = easier questions</li>
+                    <li class="c-items-list__item">More noise = easier questions</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/graphs.js"></script>
+</body>
+</html>

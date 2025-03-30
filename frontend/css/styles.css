@@ -1,0 +1,325 @@
+/*---------------------------------------/*
+ # SETTINGS
+/*---------------------------------------*/
+:root {
+    --primary-color: #4a6fa5;
+    --secondary-color: #166088;
+    --tertiary-color: #4fc3f7;
+    --dark-color: #1a2639;
+    --light-color: #dbe4ee;
+    --success-color: #4caf50;
+    --danger-color: #f44336;
+    --warning-color: #ff9800;
+    --info-color: #2196f3;
+}
+
+/*---------------------------------------/*
+ # GENERIC
+/*---------------------------------------*/
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/*---------------------------------------/*
+ # ELEMENTS
+/*---------------------------------------*/
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--light-color);
+    color: var(--dark-color);
+    line-height: 1.6;
+    font-size: 16px; /* Base font size for mobile */
+}
+
+/*---------------------------------------/*
+ # OBJECTS
+/*---------------------------------------*/
+.o-container {
+    width: 100%;
+    padding: 0 1rem;
+    margin: 1rem auto; /* Smaller margin on mobile */
+}
+
+.o-button-group {
+    display: grid;
+    grid-template-columns: 1fr; /* Single column by default */
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.o-status-display {
+    display: flex;
+    flex-direction: column; /* Stack items vertically on mobile */
+    gap: 1rem;
+    background-color: var(--light-color);
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/*---------------------------------------/*
+ # COMPONENTS
+/*---------------------------------------*/
+.c-header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 0.75rem 1rem; /* Smaller padding on mobile */
+    text-align: center;
+    position: relative;
+}
+
+.c-header__link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.c-header__link:hover .c-header__title {
+    text-decoration: underline;
+}
+
+.c-header__title {
+    margin: 0;
+    display: inline-block;
+    font-size: 1.25rem; /* Smaller heading on mobile */
+}
+
+.c-welcome-message {
+    background-color: var(--light-color);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.c-btn {
+    padding: 0.75rem; /* Smaller buttons on mobile */
+    border: none;
+    border-radius: 5px;
+    font-size: 0.9rem; /* Smaller text on mobile buttons */
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.c-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.c-btn--primary {
+    background-color: var(--primary-color);
+    color: var(--dark-color);
+}
+
+.c-btn--secondary {
+    background-color: var(--secondary-color);
+    color: var(--light-color);
+}
+
+.c-btn--delete {
+    background-color: var(--danger-color);
+    color: var(--light-color);
+    margin-left: 10%;
+}
+
+.c-btn--tertiary {
+    background-color: var(--tertiary-color);
+    color: var(--dark-color);
+}
+
+.c-btn--admin {
+    background-color: var(--dark-color);
+    color: var(--light-color);
+}
+
+.c-info-btn {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid var(--light-color);
+    background-color: transparent;
+    color: var(--light-color);
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.c-modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.c-modal__content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 2rem;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 800px;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+    position: relative;
+}
+
+.c-modal__close {
+    color: #aaa;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.c-info-section {
+    margin-bottom: 1.5rem;
+}
+
+.c-info-section__title {
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+}
+
+.c-items-list {
+    list-style-type: none;
+    margin-left: 1rem;
+}
+
+.c-items-list__item {
+    margin-bottom: 0.5rem;
+    padding-left: 1.5rem;
+    position: relative;
+}
+
+.c-items-list__item::before {
+    content: "•";
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    position: absolute;
+    left: 0;
+    top: -0.3rem;
+}
+
+.c-servo-test {
+    margin-top: 1rem;
+}
+
+.c-login-form {
+    background-color: var(--light-color);
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.c-login-input {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--light-color);
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.c-error-message {
+    color: var(--danger-color);
+    background-color: rgba(244, 67, 54, 0.1);
+    padding: 0.75rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    display: none;
+}
+
+.c-error-message.is-visible {
+    display: block;
+}
+
+.c-loading-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 0.5rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+
+/*---------------------------------------/*
+ # UTILITIES
+/*---------------------------------------*/
+.u-flex {
+    display: flex;
+}
+
+.u-gap-1 {
+    gap: 1rem;
+}
+
+.u-mb-2 {
+    margin-bottom: 2rem;
+}
+
+@media screen and (min-width: 768px) {
+    body {
+        font-size: 18px; /* Slightly larger base font */
+    }
+    
+    .o-container {
+        max-width: 1200px;
+        margin: 2rem auto; /* Larger margins on desktop */
+    }
+    
+    .o-button-group {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Multi-column on desktop */
+        margin-bottom: 2rem;
+    }
+    
+    .o-status-display {
+        flex-direction: row; /* Horizontal layout on desktop */
+        justify-content: space-between;
+    }
+    
+    .c-header {
+        padding: 1rem; /* Larger padding on desktop */
+    }
+    
+    .c-header__title {
+        font-size: 1.5rem; /* Larger heading on desktop */
+    }
+    
+    .c-btn {
+        padding: 1rem; /* Larger buttons on desktop */
+        font-size: 1rem; /* Regular text size */
+    }
+    
+    .c-login-form {
+        padding: 2rem;
+    }
+    
+    .c-login-input {
+        padding: 1rem;
+    }
+}
+
