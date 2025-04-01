@@ -2,15 +2,15 @@
  # SETTINGS
 /*---------------------------------------*/
 :root {
-    --primary-color: #4a6fa5;
-    --secondary-color: #166088;
-    --tertiary-color: #4fc3f7;
-    --dark-color: #1a2639;
-    --light-color: #dbe4ee;
-    --success-color: #4caf50;
-    --danger-color: #f44336;
-    --warning-color: #ff9800;
-    --info-color: #2196f3;
+    --primary-color: #2c4c7c;       /* Darkened for better contrast */
+    --secondary-color: #0c4061;      /* Darkened for better contrast */
+    --tertiary-color: #0d9edb;       /* Slightly darkened for better contrast */
+    --dark-color: #0e1827;           /* Darker for better contrast against light backgrounds */
+    --light-color: #f4f8fc;          /* Lightened background color */
+    --success-color: #2e8b34;        /* Darkened for better contrast */
+    --danger-color: #d32f2f;         /* Adjusted for better contrast */
+    --warning-color: #e65100;        /* Darkened for better contrast */
+    --info-color: #0d61aa;           /* Darkened for better contrast */
 }
 
 /*---------------------------------------/*
@@ -53,10 +53,10 @@ body {
     display: flex;
     flex-direction: column; /* Stack items vertically on mobile */
     gap: 1rem;
-    background-color: var(--light-color);
+    background-color: white;  /* Changed to white for better contrast */
     padding: 1rem;
     border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);  /* Subtle shadow for depth */
 }
 
 /*---------------------------------------/*
@@ -86,11 +86,11 @@ body {
 }
 
 .c-welcome-message {
-    background-color: var(--light-color);
+    background-color: white;  /* Changed to white for better contrast */
     padding: 1.5rem;
     border-radius: 8px;
     margin-bottom: 2rem;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);  /* Subtle shadow for depth */
 }
 
 .c-btn {
@@ -111,28 +111,28 @@ body {
 
 .c-btn--primary {
     background-color: var(--primary-color);
-    color: var(--dark-color);
+    color: white;  /* Changed to white for better contrast */
 }
 
 .c-btn--secondary {
     background-color: var(--secondary-color);
-    color: var(--light-color);
+    color: white;  /* Changed to white for better contrast */
 }
 
 .c-btn--delete {
     background-color: var(--danger-color);
-    color: var(--light-color);
+    color: white;  /* Changed to white for better contrast */
     margin-left: 10%;
 }
 
 .c-btn--tertiary {
     background-color: var(--tertiary-color);
-    color: var(--dark-color);
+    color: white;  /* Changed to white for better contrast */
 }
 
 .c-btn--admin {
     background-color: var(--dark-color);
-    color: var(--light-color);
+    color: white;  /* Changed to white for better contrast */
 }
 
 .c-info-btn {
@@ -143,9 +143,9 @@ body {
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    border: 2px solid var(--light-color);
+    border: 2px solid white;  /* Changed to white for better contrast */
     background-color: transparent;
-    color: var(--light-color);
+    color: white;
     font-weight: bold;
     cursor: pointer;
     display: flex;
@@ -162,22 +162,22 @@ body {
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0,0,0,0.4);
+    background-color: rgba(0,0,0,0.6);  /* Darkened for better visibility of modal */
 }
 
 .c-modal__content {
-    background-color: #fefefe;
+    background-color: white;  /* Changed to white for better contrast */
     margin: 5% auto;
     padding: 2rem;
     border-radius: 8px;
     width: 80%;
     max-width: 800px;
-    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+    box-shadow: 0 4px 12px 0 rgba(0,0,0,0.2);  /* Enhanced shadow */
     position: relative;
 }
 
 .c-modal__close {
-    color: #aaa;
+    color: #666;  /* Darkened for better visibility */
     position: absolute;
     top: 1rem;
     right: 1rem;
@@ -220,10 +220,10 @@ body {
 }
 
 .c-login-form {
-    background-color: var(--light-color);
+    background-color: white;  /* Changed to white for better contrast */
     padding: 1.5rem;
     border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);  /* Subtle shadow for depth */
     max-width: 400px;
     margin: 0 auto;
 }
@@ -232,14 +232,14 @@ body {
     width: 100%;
     padding: 0.75rem;
     margin-bottom: 1rem;
-    border: 1px solid var(--light-color);
+    border: 1px solid #ccc;  /* Changed to more visible border */
     border-radius: 4px;
     font-size: 1rem;
 }
 
 .c-error-message {
     color: var(--danger-color);
-    background-color: rgba(244, 67, 54, 0.1);
+    background-color: rgba(211, 47, 47, 0.1);  /* Adjusted to match new danger color */
     padding: 0.75rem;
     border-radius: 4px;
     margin-bottom: 1rem;
@@ -322,4 +322,3 @@ body {
         padding: 1rem;
     }
 }
-
