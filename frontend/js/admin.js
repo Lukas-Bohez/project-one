@@ -205,7 +205,7 @@ const showEditModal = (itemType, item = null) => {
     if (itemType === 'questions') {
         form.innerHTML = `
             <div class="c-form-group">
-                <label>Question Text</label>
+                <label>Question</label>
                 <input type="text" name="text" class="c-form-input" value="${item ? item.text : ''}">
             </div>
             <div class="c-form-group">
@@ -392,45 +392,55 @@ const createQuestionElement = (question) => {
     
     element.innerHTML = `
         <div class="c-question-info">
-            <div class="c-question-edit">
-                <input type="text" class="c-question-text-edit" value="${escapeHTML(question.text)}" placeholder="Enter question">
-            </div>
-            <div class="c-question-meta">
-                <div class="c-question-theme">
-                    <label for="theme-${question.id}">Theme:</label>
-                    <select id="theme-${question.id}" class="js-theme-select" data-question-id="${question.id}">
-                        ${themesOptions}
-                    </select>
-                </div>
-                <div class="c-question-difficulty">
-                    <label for="difficulty-${question.id}">Difficulty:</label>
-                    <select id="difficulty-${question.id}" class="js-difficulty-select" data-question-id="${question.id}">
-                        <option value="Easy" ${question.difficulty === 'Easy' ? 'selected' : ''}>Easy</option>
-                        <option value="Medium" ${question.difficulty === 'Medium' ? 'selected' : ''}>Medium</option>
-                        <option value="Hard" ${question.difficulty === 'Hard' ? 'selected' : ''}>Hard</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="c-answer-options">
-                <div class="c-answer-count">
-                    <label for="answer-count-${question.id}">Number of answers:</label>
-                    <select id="answer-count-${question.id}" class="js-answer-count" data-question-id="${question.id}">
-                        ${[4, 5, 6, 7, 8, 9, 10].map(num => 
-                            `<option value="${num}" ${answerCount === num ? 'selected' : ''}>${num}</option>`
-                        ).join('')}
-                    </select>
-                </div>
-                
-                <div class="c-answer-list">
-                    ${answersHTML}
-                </div>
-            </div>
+    <div class="c-question-edit">
+        <input type="text" class="c-question-text-edit" value="${escapeHTML(question.text)}" placeholder="Enter question">
+    </div>
+    <div class="c-question-meta">
+        <div class="c-question-theme">
+            <label for="theme-${question.id}">Theme:</label>
+            <select id="theme-${question.id}" class="js-theme-select" data-question-id="${question.id}">
+                ${themesOptions}
+            </select>
         </div>
-        <div class="c-question-actions">
-            <button class="c-btn c-btn--edit js-edit-question" data-id="${question.id}">Edit</button>
-            <button class="c-btn c-btn--delete js-delete-question">Delete</button>
+        <div class="c-question-difficulty">
+            <label for="difficulty-${question.id}">Difficulty:</label>
+            <select id="difficulty-${question.id}" class="js-difficulty-select" data-question-id="${question.id}">
+                <option value="Easy" ${question.difficulty === 'Easy' ? 'selected' : ''}>Easy</option>
+                <option value="Medium" ${question.difficulty === 'Medium' ? 'selected' : ''}>Medium</option>
+                <option value="Hard" ${question.difficulty === 'Hard' ? 'selected' : ''}>Hard</option>
+            </select>
         </div>
+    </div>
+    
+    <div class="c-answer-options">
+        <div class="c-answer-count">
+            <label for="answer-count-${question.id}">Number of answers:</label>
+            <select id="answer-count-${question.id}" class="js-answer-count" data-question-id="${question.id}">
+                ${[4, 5, 6, 7, 8, 9, 10].map(num => 
+                    `<option value="${num}" ${answerCount === num ? 'selected' : ''}>${num}</option>`
+                ).join('')}
+            </select>
+        </div>
+        
+        <div class="c-answer-list">
+            ${answersHTML}
+        </div>
+    </div>
+    
+    <div class="c-explanation-container">
+        <h3 class="c-explanation-heading">Question Explanation</h3>
+        <div class="c-explanation-wrapper">
+            <textarea id="explanation-${question.id}" class="c-explanation-textarea" 
+                placeholder="Enter a detailed explanation for this question. This will help users understand the correct answer."
+            >${question.explanation || ''}</textarea>
+        </div>
+    </div>
+    
+    <div class="c-question-actions">
+        <button class="c-btn c-btn--edit js-edit-question" data-id="${question.id}">Edit</button>
+        <button class="c-btn c-btn--delete js-delete-question">Delete</button>
+    </div>
+</div>
     `;
     
     return element;

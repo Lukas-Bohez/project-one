@@ -576,6 +576,220 @@ body {
     width: 100%;
   }
 }
+
+.c-explanation-container {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px dashed #ECF0F1;
+}
+
+.c-explanation-heading {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--admin-primary);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.c-explanation-heading::before {
+    content: "";
+    display: inline-block;
+    width: 4px;
+    height: 16px;
+    background-color: var(--admin-accent);
+    margin-right: 0.75rem;
+    border-radius: 2px;
+}
+
+.c-explanation-wrapper {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.c-explanation-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 1rem;
+    border: 1px solid #E0E5E9;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    background-color: #FAFBFC;
+    color: var(--admin-text);
+    transition: all 0.2s ease;
+    resize: vertical;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.c-explanation-textarea:focus {
+    outline: none;
+    border-color: var(--admin-primary);
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.1);
+}
+
+.c-explanation-textarea::placeholder {
+    color: #95A5A6;
+    font-style: italic;
+}
+
+/* Character count indicator (optional) */
+.c-explanation-char-count {
+    position: absolute;
+    bottom: 0.5rem;
+    right: 0.75rem;
+    font-size: 0.8rem;
+    color: #95A5A6;
+    pointer-events: none;
+}
+
+
+/*---------------------------------------/*
+ # THEME
+/*---------------------------------------*/
+
+/* Theme Item Component */
+.c-theme-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border-left: 4px solid var(--admin-primary, #e67e22);
+    transition: all 0.2s ease;
+}
+
+.c-theme-item:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.c-theme-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.c-theme-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.c-theme-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.c-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.c-tag--count {
+    background-color: #f5f7fa;
+    color: #7f8c8d;
+}
+
+.c-theme-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/*---------------------------------------/*
+ # EDIT MODAL
+/*---------------------------------------*/
+
+/* Modal Styling */
+.c-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .c-modal__content {
+    background-color: #fff;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    width: 100%;
+  }
+  
+  .c-modal-title {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: #333;
+  }
+  
+  /* Form Styling */
+  .c-form-group {
+    margin-bottom: 1.5rem;
+  }
+  
+  .c-form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #555;
+  }
+  
+  .c-form-input,
+  .c-form-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+  }
+  
+  .c-form-input:focus,
+  .c-form-select:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+  }
+  
+  /* Button Styling */
+  .c-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 2rem;
+  }
+  
+  /* Close Button */
+  .c-modal__close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.5rem;
+    color: #999;
+    cursor: pointer;
+    transition: color 0.3s ease;
+  }
+  
+  .c-modal__close:hover {
+    color: #333;
+  }
+
 /*---------------------------------------/*
  # PAGINATION
 /*---------------------------------------*/
@@ -1046,5 +1260,23 @@ body {
     
     .c-admin-title {
         margin-bottom: 1rem;
+    }
+    .c-explanation-container {
+        margin-top: 1.5rem;
+        padding-top: 1.25rem;
+    }
+    
+    .c-explanation-textarea {
+        min-height: 100px;
+    }
+    .c-theme-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .c-theme-actions {
+        width: 100%;
+        justify-content: flex-end;
     }
 }
