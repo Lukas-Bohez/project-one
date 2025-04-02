@@ -1,14 +1,14 @@
-// #region ***  DOM references                           ***********
+// #region *** DOM references ***********
 const domLogin = {
-    adminBtn: document.querySelector('.js-login-admin'),
-    userBtn: document.querySelector('.js-login-user'),
+    loginBtn: document.querySelector('.js-login-admin'),
     loginForm: document.querySelector('.js-login-form'),
+    usernameInput: document.querySelector('.js-user-input'),
     rfidInput: document.querySelector('.js-rfid-input'),
     errorMessage: document.querySelector('.js-error-message')
 };
 // #endregion
 
-// #region ***  Callback-Visualisation - show___         ***********
+// #region *** Callback-Visualisation - show___ ***********
 const showErrorMessage = (message) => {
     if (domLogin.errorMessage) {
         domLogin.errorMessage.textContent = message;
@@ -29,13 +29,10 @@ const showLoadingState = (button, isLoading) => {
 };
 // #endregion
 
-// #region ***  Callback-No Visualisation - callback___  ***********
-const callbackAdminLoginSuccess = () => {
+// #region *** Callback-No Visualisation - callback___ ***********
+const callbackLoginSuccess = () => {
+    // All users go to the same page, backend controls permissions
     window.location.href = 'admin.html';
-};
-
-const callbackUserLoginSuccess = () => {
-    window.location.href = 'create.html';
 };
 
 const callbackLoginFailed = (error) => {
@@ -44,86 +41,56 @@ const callbackLoginFailed = (error) => {
 };
 // #endregion
 
-// #region ***  Data Access - get___                     ***********
-const getAdminCredentials = async (rfid) => {
+// #region *** Data Access - get___ ***********
+const getCredentials = async (username, rfid) => {
     try {
         // In a real implementation, this would fetch from your API
+        // The backend would handle access control based on the credentials
+        // Example API call:
+        // const response = await fetch('/api/login', {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'application/json' },
+        //     body: JSON.stringify({ username, rfid })
+        // });
+        // return await response.json();
+        
+        // Placeholder implementation - just check if values exist
         return {
-            isValid: rfid.length === 1, // Example validation
-            isAdmin: true
+            isValid: username.length > 0 && rfid.length > 0
         };
     } catch (error) {
-        throw new Error('Failed to verify admin credentials');
-    }
-};
-
-const getUserCredentials = async (rfid) => {
-    try {
-        // In a real implementation, this would fetch from your API
-        return {
-            isValid: rfid.length === 1, // Example validation
-            isAdmin: false
-        };
-    } catch (error) {
-        throw new Error('Failed to verify user credentials');
+        throw new Error('Failed to verify credentials');
     }
 };
 // #endregion
 
-// #region ***  Event Listeners - listenTo___            ***********
-const listenToAdminLogin = () => {
-    if (domLogin.adminBtn) {
-        domLogin.adminBtn.dataset.originalText = domLogin.adminBtn.textContent;
-        domLogin.adminBtn.addEventListener('click', async (e) => {
+// #region *** Event Listeners - listenTo___ ***********
+const listenToLogin = () => {
+    if (domLogin.loginBtn) {
+        domLogin.loginBtn.dataset.originalText = domLogin.loginBtn.textContent;
+        domLogin.loginBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            showLoadingState(domLogin.adminBtn, true);
+            showLoadingState(domLogin.loginBtn, true);
             
             try {
-                const rfid = domLogin.rfidInput?.value;
-                if (!rfid) {
-                    showErrorMessage('Please scan your RFID badge');
+                const username = domLogin.usernameInput?.value.trim();
+                const rfid = domLogin.rfidInput?.value.trim();
+                
+                if (!username || !rfid) {
+                    showErrorMessage('Please enter your username and scan your RFID badge');
                     return;
                 }
                 
-                const credentials = await getAdminCredentials(rfid);
-                if (credentials.isValid && credentials.isAdmin) {
-                    callbackAdminLoginSuccess();
-                } else {
-                    showErrorMessage('Invalid admin credentials');
-                }
-            } catch (error) {
-                callbackLoginFailed(error);
-            } finally {
-                showLoadingState(domLogin.adminBtn, false);
-            }
-        });
-    }
-};
-
-const listenToUserLogin = () => {
-    if (domLogin.userBtn) {
-        domLogin.userBtn.dataset.originalText = domLogin.userBtn.textContent;
-        domLogin.userBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            showLoadingState(domLogin.userBtn, true);
-            
-            try {
-                const rfid = domLogin.rfidInput?.value;
-                if (!rfid) {
-                    showErrorMessage('Please scan your RFID badge');
-                    return;
-                }
-                
-                const credentials = await getUserCredentials(rfid);
+                const credentials = await getCredentials(username, rfid);
                 if (credentials.isValid) {
-                    callbackUserLoginSuccess();
+                    callbackLoginSuccess();
                 } else {
-                    showErrorMessage('Invalid user credentials');
+                    showErrorMessage('Invalid credentials');
                 }
             } catch (error) {
                 callbackLoginFailed(error);
             } finally {
-                showLoadingState(domLogin.userBtn, false);
+                showLoadingState(domLogin.loginBtn, false);
             }
         });
     }
@@ -139,19 +106,16 @@ const listenToRFIDScanner = () => {
 };
 // #endregion
 
-// #region ***  Init / DOMContentLoaded                  ***********
+// #region *** Init / DOMContentLoaded ***********
 const initLogin = () => {
     if (!document.querySelector('.js-login-form')) return;
     
-    // Store original button texts
-    const adminBtn = document.querySelector('.js-login-admin');
-    const userBtn = document.querySelector('.js-login-user');
+    // Store original button text
+    const loginBtn = document.querySelector('.js-login-admin');
     
-    if (adminBtn) adminBtn.dataset.originalText = adminBtn.textContent;
-    if (userBtn) userBtn.dataset.originalText = userBtn.textContent;
+    if (loginBtn) loginBtn.dataset.originalText = loginBtn.textContent;
     
-    listenToAdminLogin();
-    listenToUserLogin();
+    listenToLogin();
     listenToRFIDScanner();
 };
 
