@@ -12,6 +12,18 @@ CREATE TABLE IF NOT EXISTS users (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- IP adressen tabel
+CREATE TABLE IF NOT EXISTS ip_addresses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ip_address VARCHAR(45) NOT NULL,
+    owned_by INT,
+    banned BOOLEAN DEFAULT FALSE,
+    ban_reason TEXT,
+    ban_date DATETIME,
+    FOREIGN KEY (owned_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+
 -- Thema's tabel
 CREATE TABLE IF NOT EXISTS themes (
     id INT AUTO_INCREMENT PRIMARY KEY,
