@@ -1,3 +1,11 @@
+# Gamepad control and system requirements
+evdev==1.6.1
+uinput==0.11.2
+python-alsaaudio==0.10.0
+
+# Audio control requirements sudo apt-get install libasound2-dev
+alsaaudio==0.10.0
+
 annotated-types==0.7.0
 anyio==4.8.0
 bidict==0.23.1
