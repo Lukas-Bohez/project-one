@@ -166,11 +166,11 @@ if __name__ == "__main__":
 '''
 How to Use
 
-    Save this script as gamepad_mouse.py
+    Save this script as gamepad.py
 
-    Make it executable: chmod +x gamepad_mouse.py
+    Make it executable: chmod +x gamepad.py
 
-    Run it with sudo: sudo ./gamepad_mouse.py
+    Run it with sudo: sudo ./gamepad.py
 
 Customization Options
 
