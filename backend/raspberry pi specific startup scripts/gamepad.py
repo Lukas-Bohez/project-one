@@ -10,15 +10,6 @@ import os
 MOUSE_SPEED = 5
 SCROLL_SPEED = 2
 
-# Button mapping configuration
-BUTTON_MAP = {
-    'left_click': ecodes.BTN_LEFT,
-    'right_click': ecodes.BTN_RIGHT,
-    'scroll_up': 'y',
-    'scroll_down': 'x',
-    # Add your custom mappings for a, b, start, select here
-}
-
 # Initialize virtual mouse
 device = uinput.Device([
     uinput.BTN_LEFT,
@@ -49,6 +40,7 @@ def main():
     
     print("Gamepad connected. Starting controller...")
     print("Press both START + SELECT simultaneously to toggle sleep mode.")
+    print("Press both A + B simultaneously to exit the script.")
     
     # Track button states
     btn_state = {
@@ -62,12 +54,13 @@ def main():
         'b': False,
         'start': False,
         'select': False,
+        'was_asleep': False,
     }
     
     try:
         for event in gamepad.read_loop():
             if event.type == ecodes.EV_KEY:
-                # Handle button presses
+                # Handle button presses gently
                 if event.code == ecodes.BTN_TL or event.code == ecodes.BTN_TL2:
                     if not btn_state['was_asleep']:
                         btn_state['left_bumper'] = event.value
@@ -91,28 +84,43 @@ def main():
                             device.emit(uinput.REL_WHEEL, -SCROLL_SPEED)
                 
                 elif event.code == ecodes.BTN_SOUTH:  # Typically A button
+                    btn_state['a'] = event.value
                     if not btn_state['was_asleep']:
-                        btn_state['a'] = event.value
-                        # Add your custom A button function here
+                        # Idk yet what to put here
+                        pass
                 
                 elif event.code == ecodes.BTN_EAST:  # Typically B button
+                    btn_state['b'] = event.value
                     if not btn_state['was_asleep']:
-                        btn_state['b'] = event.value
-                        # Add your custom B button function here
+                        # Idk yet what to put here
+                        pass
+                
+                # Check for A+B exit combo (regardless of sleep state)
+                if btn_state['a'] and btn_state['b']:
+                    print("A + B pressed. Exiting script...")
+                    return
                 
                 elif event.code == ecodes.BTN_START:
                     btn_state['start'] = event.value
                     if btn_state['start'] and btn_state['select']:
+                        if btn_state['was_asleep']:
+                            print("Waking up from sleep...")
+                            btn_state['was_asleep'] = False
+                        else:
                             print("Going to sleep...")
-                            # Suspend to RAM (mem) indefinitely
                             os.system("sudo systemctl suspend")
+                            btn_state['was_asleep'] = True
                 
                 elif event.code == ecodes.BTN_SELECT:
                     btn_state['select'] = event.value
                     if btn_state['start'] and btn_state['select']:
+                        if btn_state['was_asleep']:
+                            print("Waking up from sleep...")
+                            btn_state['was_asleep'] = False
+                        else:
                             print("Going to sleep...")
-                            # Suspend to RAM (mem) indefinitely
                             os.system("sudo systemctl suspend")
+                            btn_state['was_asleep'] = True
             
             elif event.type == ecodes.EV_ABS and not btn_state['was_asleep']:
                 # Handle D-pad movement (only when not asleep)
