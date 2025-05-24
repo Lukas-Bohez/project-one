@@ -1,6 +1,6 @@
 # Gamepad control and system requirements
 evdev==1.6.1
-uinput==0.11.2
+python-uinput==0.11.2
 python-alsaaudio==0.10.0
 
 # Audio control requirements
