@@ -1,10 +1,7 @@
 # Gamepad control and system requirements
 evdev==1.6.1
 python-uinput==0.11.2
-python-alsaaudio==0.10.0
 
-# Audio control requirements
-alsaaudio==0.10.0
 
 annotated-types==0.7.0
 anyio==4.8.0
@@ -28,36 +25,3 @@ uvicorn==0.34.0
 wsproto==1.2.0
 
 
-# '''
-# setup guide 
-# sudo apt install -y \
-#     python3-venv \
-#     python3-dev \
-#     libasound2-dev \
-#     python3-evdev \
-#     uinput
-# # Create virtual environment
-# python3 -m venv venv
-# # Install packages
-# pip install -r requirements.txt
-
-# # Load uinput module
-# sudo modprobe uinput
-
-# # Make it persistent after reboot
-# echo "uinput" | sudo tee -a /etc/modules
-
-# # Set permissions
-# sudo usermod -aG input $(whoami)
-# sudo sh -c 'echo KERNEL==\"uinput\", MODE=\"0666\" > /etc/udev/rules.d/99-uinput.rules'
-# # sudo udevadm control --reload-rules
-
-# '''
-# # Reload and enable service
-# sudo systemctl daemon-reload
-# sudo systemctl enable gamepadmouse.service
-# systemctl status gamepadmouse.service
-# sudo systemctl start gamepadmouse.service
-# sudo systemctl stop gamepadmouse.service
-# journalctl -u gamepadmouse.service -f
-# """
