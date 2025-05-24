@@ -9,10 +9,10 @@ DROP DATABASE IF EXISTS quizTheSpire;
 CREATE DATABASE IF NOT EXISTS `quizTheSpire` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE `quizTheSpire`;
 
--- Note: User creation should be handled in a separate administrative script
--- CREATE USER IF NOT EXISTS 'quiz_user'@'localhost' IDENTIFIED BY 'secure_password_here';
--- GRANT SELECT, INSERT, UPDATE, DELETE ON quizTheSpire.* TO 'quiz_user'@'localhost';
--- FLUSH PRIVILEGES;
+-- Note: User creation should be handled in a separate administrative script, but it won't.
+CREATE USER IF NOT EXISTS 'quiz_user'@'localhost' IDENTIFIED BY 'secure_password_here';
+GRANT SELECT, INSERT, UPDATE, DELETE ON quizTheSpire.* TO 'quiz_user'@'localhost';
+FLUSH PRIVILEGES;
 
 --
 -- Table structure for table `userRoles`
@@ -114,24 +114,37 @@ CREATE TABLE `users` (
   `first_name` varchar(100) NOT NULL,
   `email` varchar(100) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
-  `salt` varchar(255) DEFAULT NULL,
+  `salt` varchar(255) NOT NULL,
   `rfid_code` varchar(100) NOT NULL,
   `userRoleId` int NOT NULL,
-  `logoUrl` varchar(255) DEFAULT NULL,
+  `logoUrl` varchar(500) DEFAULT NULL,
+  `soul_points` int DEFAULT 4,
+  `limb_points` int DEFAULT 4,
   `email_verified` boolean DEFAULT FALSE,
   `email_verified_at` datetime DEFAULT NULL,
   `last_active` datetime DEFAULT CURRENT_TIMESTAMP,
+  `session_expires_at` datetime DEFAULT NULL,
+  `login_attempts` int DEFAULT 0,
+  `locked_until` datetime DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `updated_by` int DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   `version` int DEFAULT 1,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
-  UNIQUE KEY `rfid_code` (`rfid_code`),
   KEY `userRoleId` (`userRoleId`),
+  KEY `updated_by` (`updated_by`),
   KEY `idx_users_email` (`email`),
   KEY `idx_users_active` (`deleted_at`, `last_active`),
-  CONSTRAINT `users_ibfk_1` FOREIGN KEY (`userRoleId`) REFERENCES `userRoles` (`id`)
+  KEY `idx_users_session` (`session_expires_at`),
+  CONSTRAINT `users_ibfk_1` FOREIGN KEY (`userRoleId`) REFERENCES `userRoles` (`id`),
+  CONSTRAINT `users_ibfk_2` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `users_email_format` CHECK (`email` REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+[.][A-Za-z]{2,}$'),
+  CONSTRAINT `users_logoUrl_format` CHECK (`logoUrl` IS NULL OR `logoUrl` REGEXP '^https?://[a-zA-Z0-9.-]+[.][a-zA-Z]{2,}'),
+  CONSTRAINT `users_soul_points_check` CHECK (`soul_points` BETWEEN 0 AND 4),
+  CONSTRAINT `users_limb_points_check` CHECK (`limb_points` BETWEEN 0 AND 4),
+  CONSTRAINT `users_login_attempts_check` CHECK (`login_attempts` >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -148,8 +161,10 @@ CREATE TABLE `questions` (
   `audioUrl` varchar(500) DEFAULT NULL,
   `imageUrl` varchar(500) DEFAULT NULL,
   `time_limit` int DEFAULT 30,
+  `think_time` int DEFAULT 0,
   `points` int DEFAULT 10,
   `is_active` boolean DEFAULT false,
+  `no_answer_correct` boolean DEFAULT false,
   `createdBy` int,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -165,7 +180,8 @@ CREATE TABLE `questions` (
   CONSTRAINT `questions_ibfk_2` FOREIGN KEY (`difficultyLevelId`) REFERENCES `difficultyLevels` (`id`),
   CONSTRAINT `questions_ibfk_3` FOREIGN KEY (`createdBy`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `questions_chk_1` CHECK ((`time_limit` > 0)),
-  CONSTRAINT `questions_chk_2` CHECK ((`points` > 0))
+  CONSTRAINT `questions_chk_2` CHECK ((`think_time` >= 0)),
+  CONSTRAINT `questions_chk_3` CHECK ((`points` > 0))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -200,9 +216,6 @@ CREATE TABLE `quizSessions` (
   `sessionStatusId` int NOT NULL,
   `themeId` int NOT NULL,
   `hostUserId` int NOT NULL,
-  `maxPlayers` int DEFAULT 10,
-  `currentScore` int DEFAULT 0,
-  `maxScore` int DEFAULT 0,
   `start_time` datetime DEFAULT NULL,
   `end_time` datetime DEFAULT NULL,
   `is_public` boolean DEFAULT TRUE,
@@ -219,10 +232,7 @@ CREATE TABLE `quizSessions` (
   KEY `idx_sessions_status` (`sessionStatusId`, `session_date`),
   CONSTRAINT `quizSessions_ibfk_1` FOREIGN KEY (`sessionStatusId`) REFERENCES `sessionStatuses` (`id`),
   CONSTRAINT `quizSessions_ibfk_2` FOREIGN KEY (`themeId`) REFERENCES `themes` (`id`),
-  CONSTRAINT `quizSessions_ibfk_3` FOREIGN KEY (`hostUserId`) REFERENCES `users` (`id`),
-  CONSTRAINT `quizSessions_chk_1` CHECK ((`maxPlayers` > 0)),
-  CONSTRAINT `quizSessions_chk_2` CHECK ((`currentScore` >= 0)),
-  CONSTRAINT `quizSessions_chk_3` CHECK ((`maxScore` >= 0))
+  CONSTRAINT `quizSessions_ibfk_3` FOREIGN KEY (`hostUserId`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -424,6 +434,8 @@ SELECT
     sp.`sessionId`,
     u.`first_name`,
     u.`last_name`,
+    u.`soul_points`,
+    u.`limb_points`,
     sp.`score`,
     sp.`correctAnswers`,
     sp.`wrongAnswers`,
@@ -513,72 +525,118 @@ ORDER BY c.`created_at` ASC;
 CREATE INDEX `idx_chat_user_session` ON `chatLog` (`userId`, `sessionId`, `created_at`);
 CREATE INDEX `idx_chat_recent` ON `chatLog` (`created_at` DESC, `is_visible`, `is_deleted`);
 
+DROP TABLE IF EXISTS `bannedWords`;
+CREATE TABLE `bannedWords` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `word` varchar(255) NOT NULL,
+  `severity` ENUM('low', 'medium', 'high', 'severe') DEFAULT 'medium',
+  `is_active` boolean DEFAULT TRUE,
+  `added_by` int DEFAULT NULL,
+  `added_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `word` (`word`),
+  KEY `added_by` (`added_by`),
+  KEY `idx_banned_words_active` (`is_active`, `severity`),
+  CONSTRAINT `bannedWords_ibfk_1` FOREIGN KEY (`added_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 --
--- Example trigger to automatically flag messages containing inappropriate content
--- (You would need to customize the word list based on your application's needs)
+-- Dumping data for table `bannedWords`
 --
 
-DELIMITER $$
+LOCK TABLES `bannedWords` WRITE;
+INSERT INTO `bannedWords` (`word`, `severity`) VALUES 
+('spam', 'low'),
+('abuse', 'medium'),
+('fuck', 'medium'),
+('shit', 'medium'),
+('asshole', 'medium'),
+('bitch', 'medium'),
+('nigger', 'severe'),
+('fagot', 'severe'),
+('fagotG', 'severe'),
+('whore', 'medium'),
+('slut', 'medium'),
+('cunt', 'high'),
+('dick', 'medium'),
+('pussy', 'medium'),
+('kill', 'high'),
+('murder', 'high'),
+('hitler', 'severe'),
+('rape', 'severe'),
+('terrorist', 'severe'),
+('retard', 'high'),
+('cum', 'medium'),
+('faggot', 'severe'),
+('twat', 'medium'),
+('dildo', 'medium'),
+('bastard', 'medium'),
+('sex', 'low'),
+('molest', 'severe'),
+('pedo', 'severe'),
+('incest', 'severe'),
+('necrophilia', 'severe'),
+('zoophilia', 'severe'),
+('anal', 'medium'),
+('cock', 'medium'),
+('bollocks', 'medium'),
+('terror', 'high'),
+('slurs', 'high'),
+('gas the', 'severe'),
+('nazi', 'severe'),
+('sieg heil', 'severe');
+UNLOCK TABLES;
 
-CREATE TRIGGER `chatLog_content_check_before_insert`
+--
+-- Trigger to automatically flag messages containing banned words
+--
+
+DELIMITER $
+
+CREATE TRIGGER `chatLog_content_check` 
 BEFORE INSERT ON `chatLog`
 FOR EACH ROW
 BEGIN
-    DECLARE temp_message TEXT;
-    DECLARE link_count INT;
-    DECLARE repeat_pattern_count INT;
-    
-    -- Normalize message for checking (lowercase, remove extra spaces)
-    SET temp_message = LOWER(TRIM(NEW.message_text));
-    
-    -- Check 1: Basic inappropriate content (case-insensitive)
-IF temp_message REGEXP '(?i)\\b(spam|abuse|fuck|shit|asshole|bitch|nigger|fagot|fagotG|whore|slut|cunt|dick|pussy|kill|murder|hitler|rape|terrorist|retard|cum|faggot|twat|dildo|bastard|sex|molest|pedo|incest|necrophilia|zoophilia|anal|cock|bollocks|rape|terror|slurs|gas the jews|nazi|sieg heil)\\b'
- THEN
-        SET NEW.is_flagged = TRUE;
-        SET NEW.flagged_reason = CONCAT(IFNULL(NEW.flagged_reason, ''), 'Auto-flagged for inappropriate language. ');
-        SET NEW.flagged_at = NOW();
-    END IF;
-    
-    -- Check 2: Excessive capitalization (more than 50% caps)
-    IF (LENGTH(temp_message) - LENGTH(REPLACE(temp_message, ' ', ''))) > 5 
-       AND (LENGTH(REGEXP_REPLACE(temp_message, '[^A-Z]', '')) / LENGTH(REGEXP_REPLACE(temp_message, '[^a-zA-Z]', '')) > 0.5) THEN
-        SET NEW.is_flagged = TRUE;
-        SET NEW.flagged_reason = CONCAT(IFNULL(NEW.flagged_reason, ''), 'Auto-flagged for excessive capitalization. ');
-        SET NEW.flagged_at = NOW();
-    END IF;
-    
-    -- Check 3: URL detection
-    SET link_count = (SELECT REGEXP_COUNT(temp_message, '(https?:\\/\\/|www\\.)[\\w\\-]+(\\.[\\w\\-]+)+([\\w\\-.,@?^=%&:\\/~+#]*[\\w\\-@?^=%&\\/~+#])?'));
-    IF link_count > 0 THEN
-        SET NEW.is_flagged = TRUE;
-        SET NEW.flagged_reason = CONCAT(IFNULL(NEW.flagged_reason, ''), CONCAT('Auto-flagged for containing ', link_count, ' link(s). '));
-        SET NEW.flagged_at = NOW();
-    END IF;
-    
-    -- Check 4: Repeated character patterns (e.g., "loooool")
-    SET repeat_pattern_count = (SELECT REGEXP_COUNT(temp_message, '([a-zA-Z])\\1{3,}'));
-    IF repeat_pattern_count > 0 THEN
-        SET NEW.is_flagged = TRUE;
-        SET NEW.flagged_reason = CONCAT(IFNULL(NEW.flagged_reason, ''), 'Auto-flagged for suspicious character repetition. ');
-        SET NEW.flagged_at = NOW();
-    END IF;
-    
-    -- Check 5: Message length validation
+    DECLARE banned_word_found VARCHAR(255) DEFAULT NULL;
+    DECLARE word_severity VARCHAR(10) DEFAULT NULL;
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE word_cursor CURSOR FOR 
+        SELECT `word`, `severity` FROM `bannedWords` WHERE `is_active` = TRUE;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    -- Check message length first
     IF CHAR_LENGTH(NEW.message_text) > 1000 THEN
-        SIGNAL SQLSTATE '45000' 
-        SET MESSAGE_TEXT = 'Message too long. Maximum 1000 characters allowed.';
-    ELSEIF CHAR_LENGTH(NEW.message_text) = 0 THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Empty messages are not allowed.';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Message too long. Maximum 1000 characters allowed.';
     END IF;
+
+    -- Open cursor to check each banned word
+    OPEN word_cursor;
     
-    -- Check 6: Excessive special characters
-    IF (LENGTH(REGEXP_REPLACE(temp_message, '[a-zA-Z0-9\\s]', '')) / GREATEST(LENGTH(temp_message), 1)) > 0.3 THEN
-        SET NEW.is_flagged = TRUE;
-        SET NEW.flagged_reason = CONCAT(IFNULL(NEW.flagged_reason, ''), 'Auto-flagged for excessive special characters. ');
-        SET NEW.flagged_at = NOW();
-    END IF;
-END$$
+    check_words: LOOP
+        FETCH word_cursor INTO banned_word_found, word_severity;
+        IF done THEN
+            LEAVE check_words;
+        END IF;
+        
+        -- Check if the message contains this banned word (case-insensitive, word boundary)
+        IF LOWER(NEW.message_text) REGEXP CONCAT('\\b', LOWER(banned_word_found), '\\b') THEN
+            SET NEW.is_flagged = TRUE;
+            SET NEW.flagged_reason = CONCAT('Auto-flagged for inappropriate content: ', banned_word_found);
+            SET NEW.flagged_at = NOW();
+            
+            -- Make message invisible for violations
+            IF word_severity IN ('medium', 'high', 'severe') THEN
+                SET NEW.is_visible = FALSE;
+            END IF;
+            
+            -- Exit loop once we find a violation
+            LEAVE check_words;
+        END IF;
+    END LOOP;
+    
+    CLOSE word_cursor;
+END$
 
 DELIMITER ;
 
