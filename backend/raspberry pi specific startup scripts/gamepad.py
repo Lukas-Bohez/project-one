@@ -86,13 +86,13 @@ def main():
                 elif event.code == ecodes.BTN_SOUTH:  # Typically A button
                     btn_state['a'] = event.value
                     if not btn_state['was_asleep']:
-                        # Idk yet what to put here
+                        os.system("amixer set Master 5%+")  # Volume up when A is pressed
                         pass
                 
                 elif event.code == ecodes.BTN_EAST:  # Typically B button
                     btn_state['b'] = event.value
                     if not btn_state['was_asleep']:
-                        # Idk yet what to put here
+                        os.system("amixer set Master 5%-")
                         pass
                 
                 # Check for A+B exit combo (regardless of sleep state)
@@ -160,3 +160,45 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+'''
+How to Use
+
+    Save this script as gamepad_mouse.py
+
+    Make it executable: chmod +x gamepad_mouse.py
+
+    Run it with sudo: sudo ./gamepad_mouse.py
+
+Customization Options
+
+    Button Mapping: You can customize the button functions by modifying the BUTTON_MAP dictionary.
+
+    Speed Adjustment: Change MOUSE_SPEED and SCROLL_SPEED to adjust sensitivity.
+
+    Additional Functions: For the A and B buttons, and Start/Select individually, add your custom functions where indicated in the code.
+
+Auto-start on Boot
+
+To make this script run automatically when your Raspberry Pi starts:
+
+    Create a service file: sudo nano /etc/systemd/system/gamepadmouse.service
+
+    Add this content:
+
+
+
+[Unit]
+Description=Gamepad Mouse Controller
+After=multi-user.target
+
+[Service]
+ExecStart=/usr/bin/python3 /path/to/gamepad.py
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+'''
