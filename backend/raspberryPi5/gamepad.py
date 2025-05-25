@@ -1,34 +1,168 @@
 #!/usr/bin/env python3
 import evdev
-from evdev import ecodes, InputDevice, categorize
-import uinput
+from evdev import ecodes, InputDevice
+import subprocess
 import time
 import sys
 import os
+from pathlib import Path
 
 # Mouse movement speed (higher = faster)
-MOUSE_SPEED = 5
-SCROLL_SPEED = 2
+MOUSE_SPEED = 10
+SCROLL_SPEED = 3
 
-# Initialize virtual mouse
-device = uinput.Device([
-    uinput.BTN_LEFT,
-    uinput.BTN_RIGHT,
-    uinput.REL_X,
-    uinput.REL_Y,
-    uinput.REL_WHEEL,
-])
+# Virtual input device paths
+UINPUT_PATH = "/dev/uinput"
+MOUSE_DEVICE = None
+
+def setup_virtual_mouse():
+    """Create a virtual mouse device using direct uinput interface"""
+    try:
+        # Create virtual mouse device
+        mouse_fd = os.open(UINPUT_PATH, os.O_WRONLY | os.O_NONBLOCK)
+        
+        # Enable mouse events
+        import fcntl
+        
+        # Mouse buttons
+        fcntl.ioctl(mouse_fd, 0x40045564, 0x001)  # EV_KEY
+        fcntl.ioctl(mouse_fd, 0x40045565, 0x110)  # BTN_LEFT
+        fcntl.ioctl(mouse_fd, 0x40045565, 0x111)  # BTN_RIGHT
+        
+        # Mouse movement
+        fcntl.ioctl(mouse_fd, 0x40045564, 0x002)  # EV_REL
+        fcntl.ioctl(mouse_fd, 0x40045566, 0x000)  # REL_X
+        fcntl.ioctl(mouse_fd, 0x40045566, 0x001)  # REL_Y
+        fcntl.ioctl(mouse_fd, 0x40045566, 0x008)  # REL_WHEEL
+        
+        # Create the device
+        device_info = bytearray(1116)  # sizeof(struct uinput_user_dev)
+        device_info[:80] = b"Virtual Gamepad Mouse\0"  # name
+        
+        os.write(mouse_fd, device_info)
+        fcntl.ioctl(mouse_fd, 0x5501)  # UI_DEV_CREATE
+        
+        return mouse_fd
+    except Exception as e:
+        print(f"Failed to create virtual mouse: {e}")
+        return None
+
+def emit_event(fd, type_code, code, value):
+    """Emit an input event"""
+    if fd is None:
+        return
+    try:
+        # Create input_event structure: time(16 bytes) + type(2) + code(2) + value(4) = 24 bytes
+        import struct
+        import time as time_mod
+        
+        tv_sec = int(time_mod.time())
+        tv_usec = int((time_mod.time() % 1) * 1000000)
+        
+        event = struct.pack('LLHHH', tv_sec, tv_usec, type_code, code, value)
+        os.write(fd, event)
+        
+        # Send sync event
+        sync_event = struct.pack('LLHHH', tv_sec, tv_usec, 0, 0, 0)  # EV_SYN
+        os.write(fd, sync_event)
+    except Exception as e:
+        print(f"Failed to emit event: {e}")
+
+def alternative_mouse_control(action, value=0):
+    """Alternative mouse control using xdotool (fallback method)"""
+    try:
+        if action == "move_left":
+            subprocess.run(["xdotool", "mousemove_relative", "--", f"-{MOUSE_SPEED}", "0"], 
+                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        elif action == "move_right":
+            subprocess.run(["xdotool", "mousemove_relative", f"{MOUSE_SPEED}", "0"], 
+                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        elif action == "move_up":
+            subprocess.run(["xdotool", "mousemove_relative", "--", "0", f"-{MOUSE_SPEED}"], 
+                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        elif action == "move_down":
+            subprocess.run(["xdotool", "mousemove_relative", "0", f"{MOUSE_SPEED}"], 
+                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        elif action == "click_left":
+            if value:
+                subprocess.run(["xdotool", "mousedown", "1"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            else:
+                subprocess.run(["xdotool", "mouseup", "1"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        elif action == "click_right":
+            if value:
+                subprocess.run(["xdotool", "mousedown", "3"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            else:
+                subprocess.run(["xdotool", "mouseup", "3"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        elif action == "scroll_up":
+            subprocess.run(["xdotool", "click", "4"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        elif action == "scroll_down":
+            subprocess.run(["xdotool", "click", "5"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception:
+        pass  # Silently fail if xdotool is not available
 
 def find_gamepad():
     """Find the gamepad device"""
     devices = [InputDevice(path) for path in evdev.list_devices()]
     for device in devices:
-        if "gamepad" in device.name.lower() or "joystick" in device.name.lower():
+        name_lower = device.name.lower()
+        if any(keyword in name_lower for keyword in ["gamepad", "joystick", "controller", "xbox", "playstation", "8bitdo"]):
             print(f"Found gamepad: {device.name} at {device.path}")
             return device
     return None
 
+def setup_environment():
+    """Setup the environment for uinput access"""
+    print("Setting up environment...")
+    
+    # Load uinput module if not loaded
+    try:
+        result = subprocess.run(["lsmod"], capture_output=True, text=True)
+        if "uinput" not in result.stdout:
+            print("Loading uinput module...")
+            subprocess.run(["sudo", "modprobe", "uinput"], check=True)
+    except Exception as e:
+        print(f"Warning: Could not load uinput module: {e}")
+    
+    # Check if uinput device exists and is accessible
+    if not os.path.exists(UINPUT_PATH):
+        print(f"Error: {UINPUT_PATH} does not exist")
+        return False
+    
+    # Try to access the device
+    try:
+        test_fd = os.open(UINPUT_PATH, os.O_WRONLY | os.O_NONBLOCK)
+        os.close(test_fd)
+        return True
+    except PermissionError:
+        print("Permission denied accessing uinput. Trying to fix permissions...")
+        try:
+            subprocess.run(["sudo", "chmod", "666", UINPUT_PATH], check=True)
+            return True
+        except Exception as e:
+            print(f"Could not fix permissions: {e}")
+            return False
+    except Exception as e:
+        print(f"Error accessing uinput: {e}")
+        return False
+
 def main():
+    print("Gamepad Mouse Controller v2.0")
+    print("=============================")
+    
+    # Check if running as root
+    if os.geteuid() != 0:
+        print("Warning: Not running as root. You may need to run with sudo for full functionality.")
+    
+    # Setup environment
+    if not setup_environment():
+        print("Warning: uinput setup failed. Falling back to xdotool method.")
+        print("Installing xdotool if not present...")
+        try:
+            subprocess.run(["sudo", "apt", "update"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(["sudo", "apt", "install", "-y", "xdotool"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception:
+            pass
+    
     print("Looking for gamepad...")
     gamepad = None
     
@@ -38,9 +172,27 @@ def main():
             print("Gamepad not found. Please connect it and try again.")
             time.sleep(2)
     
-    print("Gamepad connected. Starting controller...")
-    print("Press both START + SELECT simultaneously to toggle sleep mode.")
-    print("Press both A + B simultaneously to exit the script.")
+    # Try to setup virtual mouse
+    mouse_fd = setup_virtual_mouse()
+    use_xdotool = mouse_fd is None
+    
+    if use_xdotool:
+        print("Using xdotool for mouse control (fallback method)")
+    else:
+        print("Using direct uinput for mouse control")
+    
+    print("\nGamepad connected. Starting controller...")
+    print("Controls:")
+    print("  D-pad: Mouse movement")
+    print("  Left Bumper/Trigger: Left mouse button")
+    print("  Right Bumper/Trigger: Right mouse button")
+    print("  Y button: Scroll up")
+    print("  X button: Scroll down")
+    print("  A button: Volume up")
+    print("  B button: Volume down")
+    print("  START + SELECT: Sleep/Wake system")
+    print("  A + B: Exit script")
+    print()
     
     # Track button states
     btn_state = {
@@ -60,205 +212,144 @@ def main():
     try:
         for event in gamepad.read_loop():
             if event.type == ecodes.EV_KEY:
-                # Handle button presses gently
-                if event.code == ecodes.BTN_TL or event.code == ecodes.BTN_TL2:
+                # Handle button presses
+                if event.code in [ecodes.BTN_TL, ecodes.BTN_TL2]:  # Left bumper/trigger
                     if not btn_state['was_asleep']:
-                        btn_state['left_bumper'] = event.value
-                        device.emit(uinput.BTN_LEFT, event.value)
+                        btn_state['left_bumper'] = bool(event.value)
+                        if use_xdotool:
+                            alternative_mouse_control("click_left", event.value)
+                        else:
+                            emit_event(mouse_fd, 1, 0x110, event.value)  # BTN_LEFT
                 
-                elif event.code == ecodes.BTN_TR or event.code == ecodes.BTN_TR2:
+                elif event.code in [ecodes.BTN_TR, ecodes.BTN_TR2]:  # Right bumper/trigger
                     if not btn_state['was_asleep']:
-                        btn_state['right_bumper'] = event.value
-                        device.emit(uinput.BTN_RIGHT, event.value)
+                        btn_state['right_bumper'] = bool(event.value)
+                        if use_xdotool:
+                            alternative_mouse_control("click_right", event.value)
+                        else:
+                            emit_event(mouse_fd, 1, 0x111, event.value)  # BTN_RIGHT
                 
-                elif event.code == ecodes.BTN_NORTH:  # Typically Y button
+                elif event.code == ecodes.BTN_NORTH:  # Y button - scroll up
                     if not btn_state['was_asleep']:
-                        btn_state['y'] = event.value
+                        btn_state['y'] = bool(event.value)
                         if event.value:
-                            device.emit(uinput.REL_WHEEL, SCROLL_SPEED)
+                            if use_xdotool:
+                                alternative_mouse_control("scroll_up")
+                            else:
+                                emit_event(mouse_fd, 2, 8, SCROLL_SPEED)  # REL_WHEEL
                 
-                elif event.code == ecodes.BTN_WEST:  # Typically X button
+                elif event.code == ecodes.BTN_WEST:  # X button - scroll down
                     if not btn_state['was_asleep']:
-                        btn_state['x'] = event.value
+                        btn_state['x'] = bool(event.value)
                         if event.value:
-                            device.emit(uinput.REL_WHEEL, -SCROLL_SPEED)
+                            if use_xdotool:
+                                alternative_mouse_control("scroll_down")
+                            else:
+                                emit_event(mouse_fd, 2, 8, -SCROLL_SPEED)  # REL_WHEEL
                 
-                elif event.code == ecodes.BTN_SOUTH:  # Typically A button
-                    btn_state['a'] = event.value
-                    if not btn_state['was_asleep']:
-                        os.system("amixer set Master 5%+")  # Volume up when A is pressed
-                        pass
+                elif event.code == ecodes.BTN_SOUTH:  # A button - volume up
+                    btn_state['a'] = bool(event.value)
+                    if event.value and not btn_state['was_asleep']:
+                        try:
+                            subprocess.run(["amixer", "set", "Master", "5%+"], 
+                                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        except Exception:
+                            pass
                 
-                elif event.code == ecodes.BTN_EAST:  # Typically B button
-                    btn_state['b'] = event.value
-                    if not btn_state['was_asleep']:
-                        os.system("amixer set Master 5%-")
-                        pass
+                elif event.code == ecodes.BTN_EAST:  # B button - volume down
+                    btn_state['b'] = bool(event.value)
+                    if event.value and not btn_state['was_asleep']:
+                        try:
+                            subprocess.run(["amixer", "set", "Master", "5%-"], 
+                                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        except Exception:
+                            pass
                 
-                # Check for A+B exit combo (regardless of sleep state)
+                # Check for A+B exit combo
                 if btn_state['a'] and btn_state['b']:
                     print("A + B pressed. Exiting script...")
-                    return
+                    break
                 
                 elif event.code == ecodes.BTN_START:
-                    btn_state['start'] = event.value
-                    if btn_state['start'] and btn_state['select']:
+                    btn_state['start'] = bool(event.value)
+                    if event.value and btn_state['select']:
                         if btn_state['was_asleep']:
                             print("Waking up from sleep...")
                             btn_state['was_asleep'] = False
                         else:
                             print("Going to sleep...")
-                            os.system("sudo systemctl suspend")
+                            try:
+                                subprocess.run(["sudo", "systemctl", "suspend"])
+                            except Exception as e:
+                                print(f"Could not suspend system: {e}")
                             btn_state['was_asleep'] = True
                 
                 elif event.code == ecodes.BTN_SELECT:
-                    btn_state['select'] = event.value
-                    if btn_state['start'] and btn_state['select']:
+                    btn_state['select'] = bool(event.value)
+                    if event.value and btn_state['start']:
                         if btn_state['was_asleep']:
                             print("Waking up from sleep...")
                             btn_state['was_asleep'] = False
                         else:
                             print("Going to sleep...")
-                            os.system("sudo systemctl suspend")
+                            try:
+                                subprocess.run(["sudo", "systemctl", "suspend"])
+                            except Exception as e:
+                                print(f"Could not suspend system: {e}")
                             btn_state['was_asleep'] = True
             
             elif event.type == ecodes.EV_ABS and not btn_state['was_asleep']:
-                # Handle D-pad movement (only when not asleep)
-                if event.code == ecodes.ABS_X or event.code == ecodes.ABS_HAT0X:
+                # Handle D-pad movement
+                if event.code in [ecodes.ABS_X, ecodes.ABS_HAT0X]:
+                    old_x = btn_state['dpad_x']
                     btn_state['dpad_x'] = event.value
+                    
+                    # Handle movement based on value change
+                    if old_x != event.value:
+                        if event.value < 0 or event.value == 0:  # Left
+                            if use_xdotool:
+                                alternative_mouse_control("move_left")
+                            else:
+                                emit_event(mouse_fd, 2, 0, -MOUSE_SPEED)  # REL_X
+                        elif event.value > 0 or event.value == 255:  # Right
+                            if use_xdotool:
+                                alternative_mouse_control("move_right")
+                            else:
+                                emit_event(mouse_fd, 2, 0, MOUSE_SPEED)  # REL_X
                 
-                elif event.code == ecodes.ABS_Y or event.code == ecodes.ABS_HAT0Y:
+                elif event.code in [ecodes.ABS_Y, ecodes.ABS_HAT0Y]:
+                    old_y = btn_state['dpad_y']
                     btn_state['dpad_y'] = event.value
-                
-                # Emit mouse movement based on D-pad
-                x_movement = 0
-                y_movement = 0
-                
-                if btn_state['dpad_x'] == 0:  # Left
-                    x_movement = -MOUSE_SPEED
-                elif btn_state['dpad_x'] == 255:  # Right (assuming 8-bit axis)
-                    x_movement = MOUSE_SPEED
-                
-                if btn_state['dpad_y'] == 0:  # Up (often inverted)
-                    y_movement = -MOUSE_SPEED
-                elif btn_state['dpad_y'] == 255:  # Down
-                    y_movement = MOUSE_SPEED
-                
-                if x_movement != 0:
-                    device.emit(uinput.REL_X, x_movement)
-                if y_movement != 0:
-                    device.emit(uinput.REL_Y, y_movement)
+                    
+                    # Handle movement based on value change
+                    if old_y != event.value:
+                        if event.value < 0 or event.value == 0:  # Up
+                            if use_xdotool:
+                                alternative_mouse_control("move_up")
+                            else:
+                                emit_event(mouse_fd, 2, 1, -MOUSE_SPEED)  # REL_Y
+                        elif event.value > 0 or event.value == 255:  # Down
+                            if use_xdotool:
+                                alternative_mouse_control("move_down")
+                            else:
+                                emit_event(mouse_fd, 2, 1, MOUSE_SPEED)  # REL_Y
     
     except KeyboardInterrupt:
         print("\nExiting...")
-    except IOError:
-        print("Gamepad disconnected.")
+    except Exception as e:
+        print(f"Error: {e}")
+        print("Gamepad may have been disconnected.")
     finally:
         # Clean up
-        device.destroy()
+        if mouse_fd is not None:
+            try:
+                import fcntl
+                fcntl.ioctl(mouse_fd, 0x5502)  # UI_DEV_DESTROY
+                os.close(mouse_fd)
+            except Exception:
+                pass
+        print("Cleanup complete.")
         sys.exit(0)
 
 if __name__ == "__main__":
     main()
-
-
-
-'''
-How to Use
-
-    Save this script as gamepad.py
-
-    Make it executable: chmod +x gamepad.py
-
-    Run it with sudo: sudo ./gamepad.py
-
-Customization Options
-
-    Button Mapping: You can customize the button functions by modifying the BUTTON_MAP dictionary.
-
-    Speed Adjustment: Change MOUSE_SPEED and SCROLL_SPEED to adjust sensitivity.
-
-    Additional Functions: For the A and B buttons, and Start/Select individually, add your custom functions where indicated in the code.
-
-Auto-start on Boot
-
-To make this script run automatically when your Raspberry Pi starts:
-
-    Create a service file: sudo nano /etc/systemd/system/gamepadmouse.service
-
-    Add this content:
-
-
-
-[Unit]
-Description=Gamepad Mouse Controller
-After=multi-user.target
-
-[Service]
-ExecStart=/usr/bin/python3 /path/to/gamepad.py
-Restart=always
-User=root
-
-[Install]
-WantedBy=multi-user.target
-
-
-
-
-
-if you get this error, do be sure to follow guide.txt more closely but anyhow, the commands needed to fix it can also be found here, but do be sure to not
-enable the system without making sure it runs properly first.
-
-/home/student/project/project-one/.venv/bin/python /home/student/project/project-one/backend/raspberryPi5/gamepad.py
-Traceback (most recent call last):
-  File "/home/student/project/project-one/backend/raspberryPi5/gamepad.py", line 4, in <module>
-    import uinput
-  File "/home/student/project/project-one/.venv/lib/python3.11/site-packages/uinput/__init__.py", line 86, in <module>
-    _libsuinput_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "_libsuinput" + sysconfig.get_config_var("SO")))
-                                                                                     ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-TypeError: can only concatenate str (not "NoneType") to str
-
-first try this 
-
-# First uninstall the current version
-pip uninstall python-uinput
-
-# Install from a patched source
-pip install git+https://github.com/tuomasjjrasanen/python-uinput.git
-
-if that doesn't work try this:
-
-Load the uinput kernel module:     This loads the uinput module immediately (until next reboot)
-sudo modprobe uinput
-
-(step 2) Make it persistent after reboot:     This adds uinput to the list of modules loaded at boot
-echo "uinput" | sudo tee -a /etc/modules
-
-Set proper permissions:
-sudo usermod -aG input $(whoami)
-sudo sh -c 'echo KERNEL==\"uinput\", MODE=\"0666\" > /etc/udev/rules.d/99-uinput.rules'
-sudo udevadm control --reload-rules
-sudo udevadm trigger
-
-
-
-Additional Troubleshooting:
-
-If you still have issues after these steps:
-
-Verify the module is loaded:
-lsmod | grep uinput
-
-Check if your user is in the input group:
-groups
-
-Verify the udev rule was created correctly:
-cat /etc/udev/rules.d/99-uinput.rules
-
-If you're using a virtual environment, make sure you have the Python uinput package installed:
-pip install python-uinput
-
-For Raspberry Pi specifically, you might need to ensure the kernel headers are installed:
-sudo apt install linux-headers-$(uname -r)
-
-'''
