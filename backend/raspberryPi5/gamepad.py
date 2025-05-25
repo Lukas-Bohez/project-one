@@ -201,4 +201,17 @@ User=root
 
 [Install]
 WantedBy=multi-user.target
+
+
+
+
+
+
+eror message loged
+ryPi5/gamepad.py
+(.venv) student@project1-orange-coconut:~/project/project-one $ /home/student/project/project-one/.venv/bin/python /home/student/project/project-one/backend/raspberryPi5/gamepad.py
+Traceback (most recent call last):
+  File "/home/student/project/project-one/backend/raspberryPi5/gamepad.py", line 4, in <module>
+    import uinput
+  File "/home/student/project/projec
 '''
