@@ -218,8 +218,15 @@ Traceback (most recent call last):
                                                                                      ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 TypeError: can only concatenate str (not "NoneType") to str
 
+first try this 
 
+# First uninstall the current version
+pip uninstall python-uinput
 
+# Install from a patched source
+pip install git+https://github.com/tuomasjjrasanen/python-uinput.git
+
+if that doesn't work try this:
 
 Load the uinput kernel module:     This loads the uinput module immediately (until next reboot)
 sudo modprobe uinput

@@ -1,6 +1,6 @@
 # Gamepad control and system requirements
 evdev==1.6.1
-python-uinput==0.11.2
+python-uinput @ git+https://github.com/tuomasjjrasanen/python-uinput.git@master
 
 
 annotated-types==0.7.0
