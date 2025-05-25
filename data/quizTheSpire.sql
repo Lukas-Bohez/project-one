@@ -585,7 +585,12 @@ INSERT INTO `bannedWords` (`word`, `severity`) VALUES
 ('slurs', 'high'),
 ('gas the', 'severe'),
 ('nazi', 'severe'),
-('sieg heil', 'severe');
+('sieg heil', 'severe'),
+('mein kampf', 'medium'),
+('penis','severe'),
+('gringo','medium'),
+('boobs','high')
+;
 UNLOCK TABLES;
 
 --
