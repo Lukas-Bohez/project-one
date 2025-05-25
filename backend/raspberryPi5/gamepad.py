@@ -206,7 +206,8 @@ WantedBy=multi-user.target
 
 
 
-
+if you get this error, do be sure to follow guide.txt more closely but anyhow, the commands needed to fix it can also be found here, but do be sure to not
+enable the system without making sure it runs properly first.
 eror message loged
 ryPi5/gamepad.py
 (.venv) student@project1-orange-coconut:~/project/project-one $ /home/student/project/project-one/.venv/bin/python /home/student/project/project-one/backend/raspberryPi5/gamepad.py
@@ -214,4 +215,41 @@ Traceback (most recent call last):
   File "/home/student/project/project-one/backend/raspberryPi5/gamepad.py", line 4, in <module>
     import uinput
   File "/home/student/project/projec
+
+
+
+
+Load the uinput kernel module:     This loads the uinput module immediately (until next reboot)
+sudo modprobe uinput
+
+(step 2) Make it persistent after reboot:     This adds uinput to the list of modules loaded at boot
+echo "uinput" | sudo tee -a /etc/modules
+
+Set proper permissions:
+sudo usermod -aG input $(whoami)
+sudo sh -c 'echo KERNEL==\"uinput\", MODE=\"0666\" > /etc/udev/rules.d/99-uinput.rules'
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+
+
+
+Additional Troubleshooting:
+
+If you still have issues after these steps:
+
+Verify the module is loaded:
+lsmod | grep uinput
+
+Check if your user is in the input group:
+groups
+
+Verify the udev rule was created correctly:
+cat /etc/udev/rules.d/99-uinput.rules
+
+If you're using a virtual environment, make sure you have the Python uinput package installed:
+pip install python-uinput
+
+For Raspberry Pi specifically, you might need to ensure the kernel headers are installed:
+sudo apt install linux-headers-$(uname -r)
+
 '''
