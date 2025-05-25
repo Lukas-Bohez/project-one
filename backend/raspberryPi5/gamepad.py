@@ -208,13 +208,15 @@ WantedBy=multi-user.target
 
 if you get this error, do be sure to follow guide.txt more closely but anyhow, the commands needed to fix it can also be found here, but do be sure to not
 enable the system without making sure it runs properly first.
-eror message loged
-ryPi5/gamepad.py
-(.venv) student@project1-orange-coconut:~/project/project-one $ /home/student/project/project-one/.venv/bin/python /home/student/project/project-one/backend/raspberryPi5/gamepad.py
+
+/home/student/project/project-one/.venv/bin/python /home/student/project/project-one/backend/raspberryPi5/gamepad.py
 Traceback (most recent call last):
   File "/home/student/project/project-one/backend/raspberryPi5/gamepad.py", line 4, in <module>
     import uinput
-  File "/home/student/project/projec
+  File "/home/student/project/project-one/.venv/lib/python3.11/site-packages/uinput/__init__.py", line 86, in <module>
+    _libsuinput_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "_libsuinput" + sysconfig.get_config_var("SO")))
+                                                                                     ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+TypeError: can only concatenate str (not "NoneType") to str
 
 
 
