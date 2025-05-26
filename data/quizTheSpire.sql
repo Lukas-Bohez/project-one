@@ -22,8 +22,6 @@ DROP TABLE IF EXISTS `userRoles`;
 CREATE TABLE `userRoles` (
   `id` int NOT NULL AUTO_INCREMENT,
   `description` varchar(50) NOT NULL,
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -43,8 +41,6 @@ DROP TABLE IF EXISTS `sessionStatuses`;
 CREATE TABLE `sessionStatuses` (
   `id` int NOT NULL AUTO_INCREMENT,
   `description` varchar(50) NOT NULL,
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -65,9 +61,7 @@ CREATE TABLE `difficultyLevels` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL,
   `description` varchar(255) DEFAULT NULL,
-  `logoUrl` varchar(255) DEFAULT NULL,
   `order_index` int DEFAULT 0,
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   INDEX `idx_difficulty_order` (`order_index`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -95,10 +89,7 @@ CREATE TABLE `themes` (
   `description` varchar(255) DEFAULT NULL,
   `logoUrl` varchar(255) DEFAULT NULL,
   `is_active` boolean DEFAULT TRUE,
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  `deleted_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  INDEX `idx_themes_active` (`is_active`, `deleted_at`)
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -114,26 +105,19 @@ CREATE TABLE `users` (
   `salt` varchar(255) NOT NULL,
   `rfid_code` varchar(100) NOT NULL,
   `userRoleId` int NOT NULL,
-  `logoUrl` varchar(500) DEFAULT NULL,
   `soul_points` int DEFAULT 4,
   `limb_points` int DEFAULT 4,
   `last_active` datetime DEFAULT NULL,
   `session_expires_at` datetime DEFAULT NULL,
-  `login_attempts` int DEFAULT 0,
   `updated_by` int DEFAULT NULL,
-  `deleted_at` datetime DEFAULT NULL,
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `userRoleId` (`userRoleId`),
   KEY `updated_by` (`updated_by`),
-  KEY `idx_users_active` (`deleted_at`, `last_active`),
   KEY `idx_users_session` (`session_expires_at`),
   CONSTRAINT `users_ibfk_1` FOREIGN KEY (`userRoleId`) REFERENCES `userRoles` (`id`),
   CONSTRAINT `users_ibfk_2` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `users_logoUrl_format` CHECK (`logoUrl` IS NULL OR `logoUrl` REGEXP '^https?://[a-zA-Z0-9.-]+[.][a-zA-Z]{2,}'),
   CONSTRAINT `users_soul_points_check` CHECK (`soul_points` BETWEEN 0 AND 4),
-  CONSTRAINT `users_limb_points_check` CHECK (`limb_points` BETWEEN 0 AND 4),
-  CONSTRAINT `users_login_attempts_check` CHECK (`login_attempts` >= 0)
+  CONSTRAINT `users_limb_points_check` CHECK (`limb_points` BETWEEN 0 AND 4)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -147,8 +131,7 @@ CREATE TABLE `questions` (
   `themeId` int NOT NULL,
   `difficultyLevelId` int NOT NULL,
   `explanation` text,
-  `audioUrl` varchar(500) DEFAULT NULL,
-  `imageUrl` varchar(500) DEFAULT NULL,
+  `Url` varchar(500) DEFAULT NULL,
   `time_limit` int DEFAULT 30,
   `think_time` int DEFAULT 0,
   `points` int DEFAULT 10,
@@ -159,14 +142,11 @@ CREATE TABLE `questions` (
   `LightMin` int DEFAULT NULL,
   `TempMax` int DEFAULT NULL,
   `TempMin` int DEFAULT NULL,
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `themeId` (`themeId`),
   KEY `difficultyLevelId` (`difficultyLevelId`),
   KEY `createdBy` (`createdBy`),
   KEY `idx_questions_theme_difficulty` (`themeId`, `difficultyLevelId`),
-  KEY `idx_questions_active` (`is_active`, `deleted_at`),
   CONSTRAINT `questions_ibfk_1` FOREIGN KEY (`themeId`) REFERENCES `themes` (`id`),
   CONSTRAINT `questions_ibfk_2` FOREIGN KEY (`difficultyLevelId`) REFERENCES `difficultyLevels` (`id`),
   CONSTRAINT `questions_ibfk_3` FOREIGN KEY (`createdBy`) REFERENCES `users` (`id`) ON DELETE SET NULL,
@@ -185,8 +165,6 @@ CREATE TABLE `answers` (
   `questionId` int NOT NULL,
   `answer_text` text NOT NULL,
   `is_correct` boolean NOT NULL DEFAULT FALSE,
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `questionId` (`questionId`),
   KEY `idx_answers_correct` (`questionId`, `is_correct`),
@@ -206,12 +184,9 @@ CREATE TABLE `quizSessions` (
   `sessionStatusId` int NOT NULL,
   `themeId` int NOT NULL,
   `hostUserId` int NOT NULL,
-  `join_code` varchar(20) DEFAULT NULL,
   `start_time` datetime DEFAULT NULL,
   `end_time` datetime DEFAULT NULL,
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `join_code` (`join_code`),
   KEY `sessionStatusId` (`sessionStatusId`),
   KEY `themeId` (`themeId`),
   KEY `hostUserId` (`hostUserId`),
@@ -346,8 +321,6 @@ CREATE TABLE `items` (
   `cost` int DEFAULT 0,
   `logoUrl` varchar(255) DEFAULT NULL,
   `is_active` boolean DEFAULT TRUE,
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_items_rarity` (`rarity`, `is_active`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -405,12 +378,9 @@ CREATE TABLE `auditLog` (
   `new_values` JSON DEFAULT NULL,
   `changed_by` int DEFAULT NULL,
   `ip_address` varchar(45) DEFAULT NULL,
-  `user_agent` text DEFAULT NULL,
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `changed_by` (`changed_by`),
   KEY `idx_audit_table_record` (`table_name`, `record_id`),
-  KEY `idx_audit_timestamp` (`created_at`),
   CONSTRAINT `auditLog_ibfk_1` FOREIGN KEY (`changed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -457,7 +427,6 @@ CREATE TABLE `bannedWords` (
   `is_active` boolean DEFAULT TRUE,
   `added_by` int DEFAULT NULL,
   `added_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `word` (`word`),
   KEY `added_by` (`added_by`),
