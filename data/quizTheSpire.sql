@@ -381,19 +381,14 @@ CREATE TABLE `sensorData` (
   `id` int NOT NULL AUTO_INCREMENT,
   `sessionId` int NOT NULL,
   `temperature` decimal(5,2) DEFAULT NULL,
-  `humidity` decimal(5,2) DEFAULT NULL,
   `lightIntensity` int DEFAULT NULL,
-  `soundLevel` decimal(5,2) DEFAULT NULL,
-  `air_quality` int DEFAULT NULL,
   `timestamp` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `sessionId` (`sessionId`),
   KEY `idx_sensor_timestamp` (`sessionId`, `timestamp`),
   CONSTRAINT `sensorData_ibfk_1` FOREIGN KEY (`sessionId`) REFERENCES `quizSessions` (`id`) ON DELETE CASCADE,
   CONSTRAINT `sensorData_chk_1` CHECK ((`temperature` BETWEEN -50 AND 100)),
-  CONSTRAINT `sensorData_chk_2` CHECK ((`humidity` BETWEEN 0 AND 100)),
-  CONSTRAINT `sensorData_chk_3` CHECK ((`lightIntensity` >= 0)),
-  CONSTRAINT `sensorData_chk_4` CHECK ((`soundLevel` >= 0))
+  CONSTRAINT `sensorData_chk_3` CHECK ((`lightIntensity` >= 0))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -435,27 +430,18 @@ CREATE TABLE `chatLog` (
   `flagged_by` int DEFAULT NULL,
   `flagged_reason` varchar(255) DEFAULT NULL,
   `flagged_at` datetime DEFAULT NULL,
-  `is_deleted` boolean DEFAULT FALSE,
-  `deleted_by` int DEFAULT NULL,
-  `deleted_at` datetime DEFAULT NULL,
-  `is_visible` boolean DEFAULT TRUE,
-  `ip_address` varchar(45) DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `sessionId` (`sessionId`),
   KEY `userId` (`userId`),
   KEY `reply_to_id` (`reply_to_id`),
   KEY `flagged_by` (`flagged_by`),
-  KEY `deleted_by` (`deleted_by`),
   KEY `idx_chat_session_time` (`sessionId`, `created_at`),
-  KEY `idx_chat_visible` (`sessionId`, `is_visible`, `is_deleted`),
   KEY `idx_chat_flagged` (`is_flagged`, `flagged_at`),
   CONSTRAINT `chatLog_ibfk_1` FOREIGN KEY (`sessionId`) REFERENCES `quizSessions` (`id`) ON DELETE CASCADE,
   CONSTRAINT `chatLog_ibfk_2` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `chatLog_ibfk_3` FOREIGN KEY (`reply_to_id`) REFERENCES `chatLog` (`id`) ON DELETE SET NULL,
   CONSTRAINT `chatLog_ibfk_4` FOREIGN KEY (`flagged_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `chatLog_ibfk_5` FOREIGN KEY (`deleted_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `chatLog_chk_1` CHECK (CHAR_LENGTH(`message_text`) <= 1000)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -566,12 +552,7 @@ BEGIN
             SET NEW.flagged_reason = CONCAT('Auto-flagged for inappropriate content: ', banned_word_found);
             SET NEW.flagged_at = NOW();
             
-            -- Make message invisible for serious violations
-            IF word_severity IN ('medium', 'high', 'severe') THEN
-                SET NEW.is_visible = FALSE;
-            END IF;
-            
-            -- Exit loop once we find a violation
+            -- Exit loop once we find a violation (that's the intended behavior)
             LEAVE check_words;
         END IF;
     END LOOP;
