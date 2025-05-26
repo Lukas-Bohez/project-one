@@ -482,6 +482,7 @@ INSERT INTO `bannedWords` (`word`, `severity`) VALUES
 ('mein kampf', 'medium'),
 ('penis','severe'),
 ('gringo','medium'),
+('fucking','medium'),
 ('boob','high');
 UNLOCK TABLES;
 
@@ -690,3 +691,252 @@ VALUES
 (@session_id, 25.3, 300, 36, DATE_ADD(NOW(), INTERVAL 80 SECOND)),
 (@session_id, 25.4, 300, 18, DATE_ADD(NOW(), INTERVAL 90 SECOND)),
 (@session_id, 25.5, 300, 0, DATE_ADD(NOW(), INTERVAL 100 SECOND));
+
+
+-- Add a question about the kanji for "window"
+INSERT INTO `questions` (
+    `question_text`, 
+    `themeId`, 
+    `difficultyLevelId`, 
+    `explanation`, 
+    `is_active`, 
+    `createdBy`,
+    `TempMax`, 
+    `TempMin`, 
+    `LightMax`, 
+    `LightMin`
+) 
+VALUES (
+    'What is the correct meaning of the kanji 窓?', 
+    @theme_id, 
+    (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Medium' LIMIT 1), 
+    'The kanji 窓 (まど/mado) means "window". It combines the radical for "hole" (穴) with the character for "heart/mind" (心), suggesting a window as a "hole for the mind/heart to look through".', 
+    TRUE, 
+    @user_id,
+    25,
+    18,
+    1000,
+    300
+);
+
+-- Get the new question ID
+SET @window_question_id = LAST_INSERT_ID();
+
+-- Add answers for the window question
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) 
+VALUES 
+(@window_question_id, 'Window', TRUE),
+(@window_question_id, 'Door', FALSE),
+(@window_question_id, 'The second plane hit the tower', FALSE),
+(@window_question_id, 'Sky', FALSE),
+(@window_question_id, 'Light', FALSE);
+
+-- Add sensor data for this question with servomotor movement
+-- Question display phase (servo 0→180 over 20 seconds)
+INSERT INTO `sensorData` (`sessionId`, `temperature`, `lightIntensity`, `servoPosition`, `timestamp`)
+VALUES
+(@session_id, 25.6, 500, 0, DATE_ADD(NOW(), INTERVAL 110 SECOND)),
+(@session_id, 25.7, 500, 36, DATE_ADD(NOW(), INTERVAL 120 SECOND)),
+(@session_id, 25.8, 500, 72, DATE_ADD(NOW(), INTERVAL 130 SECOND)),
+(@session_id, 25.9, 500, 108, DATE_ADD(NOW(), INTERVAL 140 SECOND)),
+(@session_id, 26.0, 500, 144, DATE_ADD(NOW(), INTERVAL 150 SECOND)),
+(@session_id, 26.1, 500, 180, DATE_ADD(NOW(), INTERVAL 160 SECOND)),
+
+-- Explanation phase (servo 180→0 over 10 seconds, lights dim)
+(@session_id, 26.2, 300, 144, DATE_ADD(NOW(), INTERVAL 170 SECOND)),
+(@session_id, 26.3, 300, 108, DATE_ADD(NOW(), INTERVAL 180 SECOND)),
+(@session_id, 26.4, 300, 72, DATE_ADD(NOW(), INTERVAL 190 SECOND)),
+(@session_id, 26.5, 300, 36, DATE_ADD(NOW(), INTERVAL 200 SECOND)),
+(@session_id, 26.6, 300, 0, DATE_ADD(NOW(), INTERVAL 210 SECOND));
+
+
+
+-- Add a question about the kanji for "patience" where no answer is correct
+INSERT INTO `questions` (
+    `question_text`, 
+    `themeId`, 
+    `difficultyLevelId`, 
+    `explanation`, 
+    `time_limit`, 
+    `no_answer_correct`, 
+    `is_active`, 
+    `createdBy`
+) 
+VALUES (
+    'What is the correct meaning of the kanji 忍?', 
+    @theme_id, 
+    (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Hard' LIMIT 1), 
+    'The kanji 忍 (にん/nin) means "patience" or "endurance". The character shows a blade (刃) over heart (心), symbolizing enduring pain. The correct strategy was to wait patiently without answering.', 
+    10,  -- Short 10-second timer
+    TRUE,  -- No answer is correct
+    TRUE, 
+    @user_id
+);
+
+-- Get the new question ID
+SET @patience_question_id = LAST_INSERT_ID();
+
+-- Add decoy answers (all incorrect)
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) 
+VALUES 
+(@patience_question_id, 'Sword', FALSE),
+(@patience_question_id, 'Heart', FALSE),
+(@patience_question_id, 'Anger', FALSE),
+(@patience_question_id, 'Quick', FALSE);
+
+
+-- Add a question about the kanji for "15"
+INSERT INTO `questions` (
+    `question_text`, 
+    `themeId`, 
+    `difficultyLevelId`, 
+    `explanation`, 
+    `time_limit`, 
+    `think_time`, 
+    `is_active`, 
+    `createdBy`
+) 
+VALUES (
+    'How would you write the number 15 in kanji, really think about it?', 
+    @theme_id, 
+    (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Easy' LIMIT 1), 
+    'The number 15 is written as 十五 in kanji. 十 (juu) means 10 and 五 (go) means 5, combining to make 15.', 
+    20,  -- 20 seconds to answer
+    15,  -- 15 seconds think time
+    TRUE, 
+    @user_id
+);
+
+-- Get the new question ID
+SET @fifteen_question_id = LAST_INSERT_ID();
+
+-- Add answers for the number 15 question
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) 
+VALUES 
+(@fifteen_question_id, '十五', TRUE),
+(@fifteen_question_id, '十ご', FALSE),  -- Mixed hiragana/kanji
+(@fifteen_question_id, 'じゅうご', FALSE),  -- Hiragana only
+(@fifteen_question_id, '一五', FALSE),  -- Wrong kanji combination
+(@fifteen_question_id, '105', FALSE);  -- Arabic numerals
+
+
+-- 1. Kanji for "mountain" (山) with visual-based answers
+INSERT INTO `questions` (`question_text`, `themeId`, `difficultyLevelId`, `explanation`, `time_limit`, `think_time`, `is_active`, `createdBy`)
+VALUES ('Which kanji represents "mountain"?', @theme_id, 
+        (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Easy' LIMIT 1), 
+        '山 is the kanji for mountain. It visually resembles a mountain range with three peaks.', 
+        20, 5, TRUE, @user_id);
+SET @q1 = LAST_INSERT_ID();
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES 
+(@q1, '山', TRUE), (@q1, '川', FALSE), (@q1, '木', FALSE), (@q1, '人', FALSE), (@q1, '🗻', TRUE);
+
+-- 2. Tricky kanji for "time" (時) with homophone distractors
+INSERT INTO `questions` (`question_text`, `themeId`, `difficultyLevelId`, `explanation`, `time_limit`, `think_time`, `is_active`, `createdBy`)
+VALUES ('Which kanji means "time"?', @theme_id, 
+        (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Medium' LIMIT 1), 
+        '時 (とき/ji) means time. It combines 日 (sun/day) with 寺 (temple), suggesting marking time.', 
+        25, 10, TRUE, @user_id);
+SET @q2 = LAST_INSERT_ID();
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES 
+(@q2, '時', TRUE), (@q2, '寺', FALSE), (@q2, '持', FALSE), (@q2, '詩', FALSE), (@q2, '十', FALSE);
+
+-- 3. Funny kanji combination question
+INSERT INTO `questions` (`question_text`, `themeId`, `difficultyLevelId`, `explanation`, `time_limit`, `think_time`, `is_active`, `createdBy`)
+VALUES ('What does 木+木+木 make?', @theme_id, 
+        (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Easy' LIMIT 1), 
+        '森 (mori) means forest - literally "many trees"! Three 木 (tree) kanji together make a forest.', 
+        15, 5, TRUE, @user_id);
+SET @q3 = LAST_INSERT_ID();
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES 
+(@q3, 'Forest', TRUE), (@q3, 'Woodpile', FALSE), (@q3, 'Treehouse', FALSE), (@q3, 'Timber', FALSE), (@q3, 'The Lorax', FALSE);
+
+-- 4. Kanji stroke count challenge
+INSERT INTO `questions` (`question_text`, `themeId`, `difficultyLevelId`, `explanation`, `time_limit`, `think_time`, `is_active`, `createdBy`)
+VALUES ('How many strokes in the kanji 愛 (love)?', @theme_id, 
+        (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Hard' LIMIT 1), 
+        '愛 has 13 strokes. It contains elements for "heart" (心) and "to receive" (受).', 
+        30, 15, TRUE, @user_id);
+SET @q4 = LAST_INSERT_ID();
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES 
+(@q4, '13', TRUE), (@q4, '8', FALSE), (@q4, '21', FALSE), (@q4, '10', FALSE), (@q4, 'Just 1 big stroke', FALSE);
+
+-- 5. Radical identification game
+INSERT INTO `questions` (`question_text`, `themeId`, `difficultyLevelId`, `explanation`, `time_limit`, `think_time`, `is_active`, `createdBy`)
+VALUES ('What radical appears in both 泳 (swim) and 河 (river)?', @theme_id, 
+        (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Medium' LIMIT 1), 
+        'The water radical 氵(さんずい) appears in both, indicating water-related meanings.', 
+        25, 10, TRUE, @user_id);
+SET @q5 = LAST_INSERT_ID();
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES 
+(@q5, 'Water radical (氵)', TRUE), (@q5, 'Person radical (亻)', FALSE), 
+(@q5, 'Mouth radical (口)', FALSE), (@q5, 'Tree radical (木)', FALSE), 
+(@q5, 'The one that looks like waves', TRUE);
+
+-- 6. Kanji pronunciation puzzle
+INSERT INTO `questions` (`question_text`, `themeId`, `difficultyLevelId`, `explanation`, `time_limit`, `think_time`, `is_active`, `createdBy`)
+VALUES ('How is 今日 pronounced?', @theme_id, 
+        (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Medium' LIMIT 1), 
+        '今日 is pronounced きょう (kyou) meaning "today". This is a special reading - the kanji separately would be 今 (ima/kon) + 日 (hi/nichi).', 
+        20, 10, TRUE, @user_id);
+SET @q6 = LAST_INSERT_ID();
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES 
+(@q6, 'きょう (kyou)', TRUE), (@q6, 'こんにち (konnichi)', FALSE), 
+(@q6, 'いまひ (imahi)', FALSE), (@q6, 'こんにちは (konnichiwa)', FALSE), 
+(@q6, 'きょねん (kyonen)', FALSE);
+
+-- 7. Funny compound kanji question
+INSERT INTO `questions` (`question_text`, `themeId`, `difficultyLevelId`, `explanation`, `time_limit`, `think_time`, `is_active`, `createdBy`)
+VALUES ('What does 猫舌 (nekojita) literally mean?', @theme_id, 
+        (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Hard' LIMIT 1), 
+        '猫舌 means "cat tongue" - someone who can''t handle hot food/drinks! 猫=cat + 舌=tongue.', 
+        25, 10, TRUE, @user_id);
+SET @q7 = LAST_INSERT_ID();
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES 
+(@q7, 'Cat tongue', TRUE), (@q7, 'Cat person', FALSE), 
+(@q7, 'Licking cats', FALSE), (@q7, 'Cat food', FALSE), 
+(@q7, 'When cats stick their tongue out', FALSE);
+
+-- 8. Counter kanji challenge
+INSERT INTO `questions` (`question_text`, `themeId`, `difficultyLevelId`, `explanation`, `time_limit`, `think_time`, `is_active`, `createdBy`)
+VALUES ('Which kanji is used for counting flat objects?', @theme_id, 
+        (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Medium' LIMIT 1), 
+        '枚 (まい) is the counter for flat objects like paper, shirts, or pancakes!', 
+        20, 5, TRUE, @user_id);
+SET @q8 = LAST_INSERT_ID();
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES 
+(@q8, '枚', TRUE), (@q8, '本', FALSE), (@q8, '匹', FALSE), 
+(@q8, '台', FALSE), (@q8, 'つ', FALSE);
+
+-- 9. Kanji visual pun
+INSERT INTO `questions` (`question_text`, `themeId`, `difficultyLevelId`, `explanation`, `time_limit`, `think_time`, `is_active`, `createdBy`)
+VALUES ('What does 木曜日 mean?', @theme_id, 
+        (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Easy' LIMIT 1), 
+        '木曜日 is Thursday (もくようび). The 木 means tree, and Thursday is "Jupiter day" - Jupiter was associated with wood in Chinese elements.', 
+        15, 5, TRUE, @user_id);
+SET @q9 = LAST_INSERT_ID();
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES 
+(@q9, 'Thursday', TRUE), (@q9, 'Tree day', FALSE), 
+(@q9, 'Wood cutting day', FALSE), (@q9, 'Arbor Day', FALSE), 
+(@q9, 'Forest bathing holiday', FALSE);
+
+-- 10. Kanji with multiple correct answers
+INSERT INTO `questions` (`question_text`, `themeId`, `difficultyLevelId`, `explanation`, `time_limit`, `think_time`, `is_active`, `createdBy`)
+VALUES ('What can 青 mean?', @theme_id, 
+        (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Medium' LIMIT 1), 
+        '青 (あお) primarily means blue, but can also mean green (in traffic lights) or young/unripe (青い).', 
+        20, 5, TRUE, @user_id);
+SET @q10 = LAST_INSERT_ID();
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES 
+(@q10, 'Blue', TRUE), (@q10, 'Green', TRUE), 
+(@q10, 'Young', TRUE), (@q10, 'Fresh', TRUE), 
+(@q10, 'All of the above', TRUE);
+
+
+
+
+
+-- example hate speech message
+
+-- Add the chat message
+INSERT INTO `chatLog` (`sessionId`, `userId`, `message_text`, `message_type`) 
+VALUES (@session_id, @user_id, 'I fucking love the lorax movie.', 'chat');
