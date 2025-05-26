@@ -394,7 +394,7 @@ DROP TABLE IF EXISTS `chatLog`;
 CREATE TABLE `chatLog` (
   `id` int NOT NULL AUTO_INCREMENT,
   `sessionId` int NOT NULL,
-  `userId` int NOT NULL,
+  `userId` int,
   `message_text` text NOT NULL,
   `message_type` ENUM('chat', 'system', 'announcement', 'warning') DEFAULT 'chat',
   `reply_to_id` int DEFAULT NULL,
@@ -940,3 +940,99 @@ INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES
 -- Add the chat message
 INSERT INTO `chatLog` (`sessionId`, `userId`, `message_text`, `message_type`) 
 VALUES (@session_id, @user_id, 'I fucking love the lorax movie.', 'chat');
+
+
+
+
+-- Create PinocchioP user (perfect scorer)
+SET @pinocchiop_salt = SHA2(UUID(), 256);
+SET @pinocchiop_hash = SHA2(CONCAT('vocaloid', @pinocchiop_salt), 256);
+
+INSERT INTO `users` (`last_name`, `first_name`, `password_hash`, `salt`, `rfid_code`, `userRoleId`) 
+VALUES ('ぴのきおっぷ', 'プロデューサー', @pinocchiop_hash, @pinocchiop_salt, 'VOCALOID123', 
+        (SELECT `id` FROM `userRoles` WHERE `description` = 'User' LIMIT 1));
+SET @pinocchiop_id = LAST_INSERT_ID();
+
+-- Create Wario user (always wrong)
+SET @wario_salt = SHA2(UUID(), 256);
+SET @wario_hash = SHA2(CONCAT('garlic', @wario_salt), 256);
+
+INSERT INTO `users` (`last_name`, `first_name`, `password_hash`, `salt`, `rfid_code`, `userRoleId`) 
+VALUES ('ワリオ', 'ゲーム', @wario_hash, @wario_salt, 'WAHWAH123', 
+        (SELECT `id` FROM `userRoles` WHERE `description` = 'User' LIMIT 1));
+SET @wario_id = LAST_INSERT_ID();
+
+-- Get 10 appropriate questions (excluding any sensitive ones)
+SET @quiz_session_id = (SELECT `id` FROM `quizSessions` ORDER BY `id` DESC LIMIT 1);
+SET @question_ids = (
+    SELECT GROUP_CONCAT(id) FROM (
+        SELECT id FROM `questions` 
+        WHERE `question_text` NOT LIKE '%plane%' 
+        ORDER BY RAND() LIMIT 10
+    ) q
+);
+
+-- Register both users for the session
+INSERT INTO `sessionPlayers` (`sessionId`, `userId`) VALUES (@quiz_session_id, @pinocchiop_id);
+INSERT INTO `sessionPlayers` (`sessionId`, `userId`) VALUES (@quiz_session_id, @wario_id);
+
+-- PinocchioP's perfect answers
+INSERT INTO `playerAnswers` (`sessionId`, `userId`, `questionId`, `answerId`, `is_correct`, `points_earned`, `time_taken`)
+SELECT 
+    @quiz_session_id, 
+    @pinocchiop_id, 
+    q.id, 
+    (SELECT `id` FROM `answers` WHERE `questionId` = q.id AND `is_correct` = TRUE LIMIT 1),
+    TRUE,
+    q.points,
+    FLOOR(RAND() * 5) + 1  -- Fast responses
+FROM `questions` q
+WHERE FIND_IN_SET(q.id, @question_ids);
+
+-- Wario's perfectly wrong answers
+INSERT INTO `playerAnswers` (`sessionId`, `userId`, `questionId`, `answerId`, `is_correct`, `points_earned`, `time_taken`)
+SELECT 
+    @quiz_session_id, 
+    @wario_id, 
+    q.id, 
+    (SELECT `id` FROM `answers` WHERE `questionId` = q.id AND `is_correct` = FALSE ORDER BY RAND() LIMIT 1),
+    FALSE,
+    0,
+    q.time_limit  -- Uses all time
+FROM `questions` q
+WHERE FIND_IN_SET(q.id, @question_ids);
+
+-- Update scores following all constraints
+UPDATE `sessionPlayers` 
+SET 
+    `score` = (SELECT SUM(`points_earned`) FROM `playerAnswers` WHERE `userId` = @pinocchiop_id AND `sessionId` = @quiz_session_id),
+    `correctAnswers` = 10,
+    `wrongAnswers` = 0,
+    `bonus_points` = 50  -- Perfect score bonus (within constraint >=0)
+WHERE `userId` = @pinocchiop_id AND `sessionId` = @quiz_session_id;
+
+-- For Wario, we'll set bonus_points to 0 instead of negative to respect the constraint
+UPDATE `sessionPlayers` 
+SET 
+    `score` = GREATEST(0, (SELECT SUM(`points_earned`) FROM `playerAnswers` WHERE `userId` = @wario_id AND `sessionId` = @quiz_session_id)),
+    `correctAnswers` = 0,
+    `wrongAnswers` = 10,
+    `bonus_points` = 0,  -- Changed from -5 to respect CHECK constraint
+    `time_bonus` = 0,
+    `streak_count` = 0  -- Wario gets no streaks
+WHERE `userId` = @wario_id AND `sessionId` = @quiz_session_id;
+
+-- Alternative way to penalize Wario without violating constraints:
+-- Add a system message about his poor performance instead
+INSERT INTO `chatLog` (`sessionId`, `userId`, `message_text`, `message_type`)
+VALUES (@quiz_session_id, @system_user_id, 'ワリオさんは残念ながらボーナスポイントを獲得できませんでした', 'system');
+
+-- Fun chat messages - FIXED VERSION
+-- Fun chat messages
+-- Use PinocchioP's ID for system messages since we don't have a dedicated system user
+INSERT INTO `chatLog` (`sessionId`, `userId`, `message_text`, `message_type`) VALUES
+(@quiz_session_id, @pinocchiop_id, '全問正解です！音楽のように完璧ですね♪', 'chat'),
+(@quiz_session_id, @wario_id, 'ワリオの負けパターンもまたカッコいいぜ！', 'chat'),
+(@quiz_session_id, @pinocchiop_id, '漢字はリズムと同じ、規則を覚えれば簡単です', 'chat'),
+(@quiz_session_id, @wario_id, '次は絶対...いや多分無理だワハハ！', 'chat'),
+(@quiz_session_id, @pinocchiop_id, 'ワリオさんはボーナスポイントを獲得できませんでした', 'chat');
