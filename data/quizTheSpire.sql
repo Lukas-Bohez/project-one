@@ -355,13 +355,15 @@ CREATE TABLE `sensorData` (
   `sessionId` int NOT NULL,
   `temperature` decimal(5,2) DEFAULT NULL,
   `lightIntensity` int DEFAULT NULL,
+  `servoPosition` int DEFAULT NULL COMMENT 'Servomotor position (0-180 degrees)',
   `timestamp` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `sessionId` (`sessionId`),
   KEY `idx_sensor_timestamp` (`sessionId`, `timestamp`),
   CONSTRAINT `sensorData_ibfk_1` FOREIGN KEY (`sessionId`) REFERENCES `quizSessions` (`id`) ON DELETE CASCADE,
   CONSTRAINT `sensorData_chk_1` CHECK ((`temperature` BETWEEN -50 AND 100)),
-  CONSTRAINT `sensorData_chk_3` CHECK ((`lightIntensity` >= 0))
+  CONSTRAINT `sensorData_chk_3` CHECK ((`lightIntensity` >= 0)),
+  CONSTRAINT `sensorData_chk_4` CHECK ((`servoPosition` BETWEEN 0 AND 180))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -632,3 +634,59 @@ VALUES ('users', @user_id, 'UPDATE',
         JSON_OBJECT('limb_points', 4), 
         JSON_OBJECT('limb_points', 0), 
         @user_id, '127.0.0.1');
+        
+        
+        
+-- Insert 50 sensor data records with servomotor simulation
+INSERT INTO `sensorData` (`sessionId`, `temperature`, `lightIntensity`, `servoPosition`, `timestamp`)
+VALUES
+-- Initial setup (pre-game, servo at 0)
+(@session_id, 21.5, 500, 0, DATE_ADD(NOW(), INTERVAL -300 SECOND)),
+
+-- Quiz starts (servo begins moving up as time counts down)
+(@session_id, 21.6, 500, 18, DATE_ADD(NOW(), INTERVAL -290 SECOND)),
+(@session_id, 21.7, 500, 36, DATE_ADD(NOW(), INTERVAL -280 SECOND)),
+(@session_id, 21.8, 500, 54, DATE_ADD(NOW(), INTERVAL -270 SECOND)),
+(@session_id, 21.9, 500, 72, DATE_ADD(NOW(), INTERVAL -260 SECOND)),
+(@session_id, 22.0, 500, 90, DATE_ADD(NOW(), INTERVAL -250 SECOND)),
+(@session_id, 22.1, 500, 108, DATE_ADD(NOW(), INTERVAL -240 SECOND)),
+(@session_id, 22.2, 500, 126, DATE_ADD(NOW(), INTERVAL -230 SECOND)),
+(@session_id, 22.3, 500, 144, DATE_ADD(NOW(), INTERVAL -220 SECOND)),
+(@session_id, 22.4, 500, 162, DATE_ADD(NOW(), INTERVAL -210 SECOND)),
+(@session_id, 22.5, 500, 180, DATE_ADD(NOW(), INTERVAL -200 SECOND)),
+
+-- Time's up! (servo begins moving back to 0 during explanation)
+(@session_id, 22.6, 300, 162, DATE_ADD(NOW(), INTERVAL -190 SECOND)),
+(@session_id, 22.7, 300, 144, DATE_ADD(NOW(), INTERVAL -180 SECOND)),
+(@session_id, 22.8, 300, 126, DATE_ADD(NOW(), INTERVAL -170 SECOND)),
+(@session_id, 22.9, 300, 108, DATE_ADD(NOW(), INTERVAL -160 SECOND)),
+(@session_id, 23.0, 300, 90, DATE_ADD(NOW(), INTERVAL -150 SECOND)),
+(@session_id, 23.1, 300, 72, DATE_ADD(NOW(), INTERVAL -140 SECOND)),
+(@session_id, 23.2, 300, 54, DATE_ADD(NOW(), INTERVAL -130 SECOND)),
+(@session_id, 23.3, 300, 36, DATE_ADD(NOW(), INTERVAL -120 SECOND)),
+(@session_id, 23.4, 300, 18, DATE_ADD(NOW(), INTERVAL -110 SECOND)),
+(@session_id, 23.5, 300, 0, DATE_ADD(NOW(), INTERVAL -100 SECOND)),
+
+-- Next question cycle begins
+(@session_id, 23.6, 500, 18, DATE_ADD(NOW(), INTERVAL -90 SECOND)),
+(@session_id, 23.7, 500, 36, DATE_ADD(NOW(), INTERVAL -80 SECOND)),
+(@session_id, 23.8, 500, 54, DATE_ADD(NOW(), INTERVAL -70 SECOND)),
+(@session_id, 23.9, 500, 72, DATE_ADD(NOW(), INTERVAL -60 SECOND)),
+(@session_id, 24.0, 500, 90, DATE_ADD(NOW(), INTERVAL -50 SECOND)),
+(@session_id, 24.1, 500, 108, DATE_ADD(NOW(), INTERVAL -40 SECOND)),
+(@session_id, 24.2, 500, 126, DATE_ADD(NOW(), INTERVAL -30 SECOND)),
+(@session_id, 24.3, 500, 144, DATE_ADD(NOW(), INTERVAL -20 SECOND)),
+(@session_id, 24.4, 500, 162, DATE_ADD(NOW(), INTERVAL -10 SECOND)),
+(@session_id, 24.5, 500, 180, NOW()),
+
+-- Final explanation phase
+(@session_id, 24.6, 300, 162, DATE_ADD(NOW(), INTERVAL 10 SECOND)),
+(@session_id, 24.7, 300, 144, DATE_ADD(NOW(), INTERVAL 20 SECOND)),
+(@session_id, 24.8, 300, 126, DATE_ADD(NOW(), INTERVAL 30 SECOND)),
+(@session_id, 24.9, 300, 108, DATE_ADD(NOW(), INTERVAL 40 SECOND)),
+(@session_id, 25.0, 300, 90, DATE_ADD(NOW(), INTERVAL 50 SECOND)),
+(@session_id, 25.1, 300, 72, DATE_ADD(NOW(), INTERVAL 60 SECOND)),
+(@session_id, 25.2, 300, 54, DATE_ADD(NOW(), INTERVAL 70 SECOND)),
+(@session_id, 25.3, 300, 36, DATE_ADD(NOW(), INTERVAL 80 SECOND)),
+(@session_id, 25.4, 300, 18, DATE_ADD(NOW(), INTERVAL 90 SECOND)),
+(@session_id, 25.5, 300, 0, DATE_ADD(NOW(), INTERVAL 100 SECOND));
