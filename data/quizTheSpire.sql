@@ -3,14 +3,14 @@ SET time_zone = "+00:00";
 
 --
 -- Database: `quizTheSpire`
--- sessionleaderboardssessionleaderboards
+--
 DROP DATABASE IF EXISTS quizTheSpire;
 
 CREATE DATABASE IF NOT EXISTS `quizTheSpire` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE `quizTheSpire`;
 
--- Note: User creation should be handled in a separate administrative script, but it won't.
-CREATE USER IF NOT EXISTS 'quiz_user'@'localhost' IDENTIFIED BY 'secure_password_here';
+-- Note: User creation should be handled in a separate administrative script
+CREATE USER IF NOT EXISTS 'quiz_user'@'localhost' IDENTIFIED BY 'secure_password_not_here';
 GRANT SELECT, INSERT, UPDATE, DELETE ON quizTheSpire.* TO 'quiz_user'@'localhost';
 FLUSH PRIVILEGES;
 
@@ -67,6 +67,7 @@ CREATE TABLE `difficultyLevels` (
   `description` varchar(255) DEFAULT NULL,
   `logoUrl` varchar(255) DEFAULT NULL,
   `order_index` int DEFAULT 0,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   INDEX `idx_difficulty_order` (`order_index`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -109,7 +110,6 @@ CREATE TABLE `users` (
   `id` int NOT NULL AUTO_INCREMENT,
   `last_name` varchar(100) NOT NULL,
   `first_name` varchar(100) NOT NULL,
-  `email` varchar(100) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
   `salt` varchar(255) NOT NULL,
   `rfid_code` varchar(100) NOT NULL,
@@ -117,6 +117,11 @@ CREATE TABLE `users` (
   `logoUrl` varchar(500) DEFAULT NULL,
   `soul_points` int DEFAULT 4,
   `limb_points` int DEFAULT 4,
+  `last_active` datetime DEFAULT NULL,
+  `session_expires_at` datetime DEFAULT NULL,
+  `login_attempts` int DEFAULT 0,
+  `updated_by` int DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
@@ -152,11 +157,11 @@ CREATE TABLE `questions` (
   `points` int DEFAULT 10,
   `is_active` boolean DEFAULT false,
   `no_answer_correct` boolean DEFAULT false,
-  `createdBy` int,
-  `LightMax` int,
-  `LightMin` int,
-  `TempMax` int,
-  `TempMin` int,
+  `createdBy` int DEFAULT NULL,
+  `LightMax` int DEFAULT NULL,
+  `LightMin` int DEFAULT NULL,
+  `TempMax` int DEFAULT NULL,
+  `TempMin` int DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -204,6 +209,7 @@ CREATE TABLE `quizSessions` (
   `sessionStatusId` int NOT NULL,
   `themeId` int NOT NULL,
   `hostUserId` int NOT NULL,
+  `join_code` varchar(20) DEFAULT NULL,
   `start_time` datetime DEFAULT NULL,
   `end_time` datetime DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
@@ -250,7 +256,7 @@ CREATE TABLE `sessionPlayers` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Table structure for table `playerAnswers` (New table for tracking individual answers)
+-- Table structure for table `playerAnswers`
 --
 
 DROP TABLE IF EXISTS `playerAnswers`;
@@ -287,20 +293,46 @@ DROP TABLE IF EXISTS `ipAddresses`;
 CREATE TABLE `ipAddresses` (
   `id` int NOT NULL AUTO_INCREMENT,
   `ip_address` varchar(45) NOT NULL,
-  `ownedBy` int,
+  `ownedBy` int DEFAULT NULL,
   `is_banned` boolean DEFAULT FALSE,
-  `ban_reason` text,
-  `ban_date` datetime,
+  `ban_reason` text DEFAULT NULL,
+  `ban_date` datetime DEFAULT NULL,
   `banned_by` int DEFAULT NULL,
   `ban_expires_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `ip_address` (`ip_address`),
-  KEY `ownedBy` (`ownedBy`),
   KEY `banned_by` (`banned_by`),
   KEY `idx_ip_banned` (`is_banned`, `ban_expires_at`),
-  CONSTRAINT `ipAddresses_ibfk_1` FOREIGN KEY (`ownedBy`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `ipAddresses_ibfk_2` FOREIGN KEY (`banned_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- Create a junction table for the many-to-many relationship between users and IP addresses
+DROP TABLE IF EXISTS `userIpAddresses`;
+CREATE TABLE `userIpAddresses` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `userId` int NOT NULL,
+  `ipAddressId` int NOT NULL,
+  `is_primary` boolean DEFAULT FALSE,
+  `usage_count` int DEFAULT 1,
+  `first_used` timestamp DEFAULT CURRENT_TIMESTAMP,
+  `last_used` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `user_ip_unique` (`userId`, `ipAddressId`),
+  KEY `idx_userId` (`userId`),
+  KEY `idx_ipAddressId` (`ipAddressId`),
+  KEY `idx_user_ip_primary` (`userId`, `is_primary`),
+  KEY `idx_user_ip_recent` (`userId`, `last_used` DESC),
+  KEY `idx_last_used` (`last_used`),
+  CONSTRAINT `fk_userIp_userId` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_userIp_ipAddressId` FOREIGN KEY (`ipAddressId`) REFERENCES `ipAddresses` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `chk_usage_count_positive` CHECK (`usage_count` >= 0),
+  CONSTRAINT `chk_first_used_before_last` CHECK (`first_used` <= `last_used`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 --
 -- Table structure for table `items`
@@ -324,7 +356,7 @@ CREATE TABLE `items` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Table structure for table `playerItems` (New table for player inventory)
+-- Table structure for table `playerItems`
 --
 
 DROP TABLE IF EXISTS `playerItems`;
@@ -351,10 +383,10 @@ DROP TABLE IF EXISTS `sensorData`;
 CREATE TABLE `sensorData` (
   `id` int NOT NULL AUTO_INCREMENT,
   `sessionId` int NOT NULL,
-  `temperature` decimal(5,2),
-  `humidity` decimal(5,2),
-  `lightIntensity` int,
-  `soundLevel` decimal(5,2),
+  `temperature` decimal(5,2) DEFAULT NULL,
+  `humidity` decimal(5,2) DEFAULT NULL,
+  `lightIntensity` int DEFAULT NULL,
+  `soundLevel` decimal(5,2) DEFAULT NULL,
   `air_quality` int DEFAULT NULL,
   `timestamp` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -368,7 +400,7 @@ CREATE TABLE `sensorData` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Table structure for table `auditLog` (New table for tracking changes)
+-- Table structure for table `auditLog`
 --
 
 DROP TABLE IF EXISTS `auditLog`;
@@ -391,47 +423,6 @@ CREATE TABLE `auditLog` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Create views for common queries
---
-
--- View for active users with role information
-CREATE VIEW `activeUsers` AS
-SELECT 
-    u.`id`,
-    u.`first_name`,
-    u.`last_name`,
-    u.`email`,
-    u.`email_verified`,
-    ur.`description` as `role`,
-    u.`last_active`,
-    u.`created_at`
-FROM `users` u
-JOIN `userRoles` ur ON u.`userRoleId` = ur.`id`
-WHERE u.`deleted_at` IS NULL;
-
--- View for session leaderboards
-CREATE VIEW `sessionLeaderboards` AS
-SELECT 
-    sp.`sessionId`,
-    u.`first_name`,
-    u.`last_name`,
-    u.`soul_points`,
-    u.`limb_points`,
-    sp.`score`,
-    sp.`correctAnswers`,
-    sp.`wrongAnswers`,
-    ROUND((sp.`correctAnswers` / NULLIF(sp.`correctAnswers` + sp.`wrongAnswers`, 0)) * 100, 2) as `accuracy_percentage`,
-    ROW_NUMBER() OVER (PARTITION BY sp.`sessionId` ORDER BY sp.`score` DESC, sp.`correctAnswers` DESC) as `rank_position`
-FROM `sessionPlayers` sp
-JOIN `users` u ON sp.`userId` = u.`id`
-WHERE sp.`is_active` = TRUE AND u.`deleted_at` IS NULL;
-
-
-
-
-
-
---
 -- Table structure for table `chatLog`
 --
 
@@ -450,6 +441,7 @@ CREATE TABLE `chatLog` (
   `is_deleted` boolean DEFAULT FALSE,
   `deleted_by` int DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
+  `is_visible` boolean DEFAULT TRUE,
   `ip_address` varchar(45) DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -471,39 +463,8 @@ CREATE TABLE `chatLog` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Create a view for active chat messages with user information
+-- Table structure for table `bannedWords`
 --
-
-CREATE VIEW `activeChatMessages` AS
-SELECT 
-    c.`id`,
-    c.`sessionId`,
-    c.`message_text`,
-    c.`message_type`,
-    c.`reply_to_id`,
-    c.`created_at`,
-    u.`first_name`,
-    u.`last_name`,
-    u.`email`,
-    ur.`description` as `user_role`,
-    reply_user.`first_name` as `reply_to_first_name`,
-    reply_user.`last_name` as `reply_to_last_name`
-FROM `chatLog` c
-JOIN `users` u ON c.`userId` = u.`id`
-JOIN `userRoles` ur ON u.`userRoleId` = ur.`id`
-LEFT JOIN `chatLog` reply_msg ON c.`reply_to_id` = reply_msg.`id`
-LEFT JOIN `users` reply_user ON reply_msg.`userId` = reply_user.`id`
-WHERE c.`is_visible` = TRUE 
-  AND c.`is_deleted` = FALSE 
-  AND u.`deleted_at` IS NULL
-ORDER BY c.`created_at` ASC;
-
---
--- Create indexes for better performance on common chat queries
---
-
-CREATE INDEX `idx_chat_user_session` ON `chatLog` (`userId`, `sessionId`, `created_at`);
-CREATE INDEX `idx_chat_recent` ON `chatLog` (`created_at` DESC, `is_visible`, `is_deleted`);
 
 DROP TABLE IF EXISTS `bannedWords`;
 CREATE TABLE `bannedWords` (
@@ -534,8 +495,7 @@ INSERT INTO `bannedWords` (`word`, `severity`) VALUES
 ('asshole', 'medium'),
 ('bitch', 'medium'),
 ('nigger', 'severe'),
-('fagot', 'severe'),
-('fagotG', 'severe'),
+('faggot', 'severe'),
 ('whore', 'medium'),
 ('slut', 'medium'),
 ('cunt', 'high'),
@@ -548,7 +508,6 @@ INSERT INTO `bannedWords` (`word`, `severity`) VALUES
 ('terrorist', 'severe'),
 ('retard', 'high'),
 ('cum', 'medium'),
-('faggot', 'severe'),
 ('twat', 'medium'),
 ('dildo', 'medium'),
 ('bastard', 'medium'),
@@ -562,22 +521,22 @@ INSERT INTO `bannedWords` (`word`, `severity`) VALUES
 ('cock', 'medium'),
 ('bollocks', 'medium'),
 ('terror', 'high'),
-('slurs', 'high'),
+('slur', 'high'),
 ('gas the', 'severe'),
 ('nazi', 'severe'),
 ('sieg heil', 'severe'),
 ('mein kampf', 'medium'),
 ('penis','severe'),
 ('gringo','medium'),
-('boob','high')
-;
+('boob','high');
 UNLOCK TABLES;
+
 
 --
 -- Trigger to automatically flag messages containing banned words
 --
 
-DELIMITER $
+DELIMITER $$
 
 CREATE TRIGGER `chatLog_content_check` 
 BEFORE INSERT ON `chatLog`
@@ -610,7 +569,7 @@ BEGIN
             SET NEW.flagged_reason = CONCAT('Auto-flagged for inappropriate content: ', banned_word_found);
             SET NEW.flagged_at = NOW();
             
-            -- Make message invisible for violations
+            -- Make message invisible for serious violations
             IF word_severity IN ('medium', 'high', 'severe') THEN
                 SET NEW.is_visible = FALSE;
             END IF;
@@ -621,9 +580,6 @@ BEGIN
     END LOOP;
     
     CLOSE word_cursor;
-END$
+END$$
 
 DELIMITER ;
-
-
--- This would track when messages are flagged, deleted, or moderated
