@@ -530,3 +530,105 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+
+
+
+-- Insert the theme (if not already exists)
+INSERT INTO `themes` (`name`, `description`, `is_active`) 
+VALUES ('Japanese Language', 'Questions about Japanese language and culture', TRUE)
+ON DUPLICATE KEY UPDATE `is_active` = TRUE;
+
+-- Get the theme ID
+SET @theme_id = (SELECT `id` FROM `themes` WHERE `name` = 'Japanese Language' LIMIT 1);
+
+-- Insert the user "server" with password "salty"
+-- First create a salt and hash the password
+SET @salt = SHA2(UUID(), 256);
+SET @password_hash = SHA2(CONCAT('salty', @salt), 256);
+
+-- Insert the user
+INSERT INTO `users` (`last_name`, `first_name`, `password_hash`, `salt`, `rfid_code`, `userRoleId`, `soul_points`, `limb_points`) 
+VALUES ('Server', 'User', @password_hash, @salt, 'SERVER123', 
+        (SELECT `id` FROM `userRoles` WHERE `description` = 'User' LIMIT 1), 
+        4, 4);
+
+-- Get the user ID
+SET @user_id = LAST_INSERT_ID();
+
+-- Insert the "Mystery Potion" item
+INSERT INTO `items` (`name`, `description`, `effect`, `effect_value`, `rarity`, `cost`, `is_active`) 
+VALUES ('Mystery Potion', 'A strange potion with unpredictable effects', 'rakuraku anrakushi', 1, 'rare', 50, TRUE);
+
+-- Get the item ID
+SET @item_id = LAST_INSERT_ID();
+
+-- Give the user the Mystery Potion
+INSERT INTO `playerItems` (`userId`, `itemId`, `quantity`) 
+VALUES (@user_id, @item_id, 1);
+
+-- Create a quiz session
+INSERT INTO `quizSessions` (`session_date`, `name`, `description`, `sessionStatusId`, `themeId`, `hostUserId`) 
+VALUES (NOW(), 'Japanese Quiz', 'Test your knowledge of Japanese language', 
+        (SELECT `id` FROM `sessionStatuses` WHERE `description` = 'Active' LIMIT 1), 
+        @theme_id, @user_id);
+
+-- Get the session ID
+SET @session_id = LAST_INSERT_ID();
+
+-- Add the user as a player in the session
+INSERT INTO `sessionPlayers` (`sessionId`, `userId`) 
+VALUES (@session_id, @user_id);
+
+-- Create a question about the kanji 三浦 with proper explanation, temperature, and light settings
+INSERT INTO `questions` (
+    `question_text`, 
+    `themeId`, 
+    `difficultyLevelId`, 
+    `explanation`, 
+    `is_active`, 
+    `createdBy`,
+    `TempMax`, 
+    `TempMin`, 
+    `LightMax`, 
+    `LightMin`
+) 
+VALUES (
+    'What is the correct reading for the kanji 三浦?', 
+    @theme_id, 
+    (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Medium' LIMIT 1), 
+    '三浦 is a common Japanese surname read as "Miura". It literally means "three bays" where 三 (mi/san) means "three" and 浦 (ura) means "bay" or "inlet".', 
+    TRUE, 
+    @user_id,
+    25,
+    18,
+    1000,
+    300
+);
+
+-- Get the question ID
+SET @question_id = LAST_INSERT_ID();
+
+-- Add answers for the question
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) 
+VALUES 
+(@question_id, 'Miura', TRUE),
+(@question_id, 'Sanura', FALSE),
+(@question_id, 'Mitsuura', FALSE),
+(@question_id, 'Sampo', FALSE);
+
+-- Simulate the effect of the Mystery Potion (limbs disappearing)
+UPDATE `users` 
+SET `limb_points` = 0 
+WHERE `id` = @user_id;
+
+-- Add the chat message
+INSERT INTO `chatLog` (`sessionId`, `userId`, `message_text`, `message_type`) 
+VALUES (@session_id, @user_id, 'aw man, that was awfull luck', 'chat');
+
+-- Log the item usage in audit log
+INSERT INTO `auditLog` (`table_name`, `record_id`, `action`, `old_values`, `new_values`, `changed_by`, `ip_address`) 
+VALUES ('users', @user_id, 'UPDATE', 
+        JSON_OBJECT('limb_points', 4), 
+        JSON_OBJECT('limb_points', 0), 
+        @user_id, '127.0.0.1');
