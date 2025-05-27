@@ -1080,9 +1080,130 @@ INSERT INTO `questions` (`question_text`, `themeId`, `difficultyLevelId`, `expla
 VALUES ('what does the kanji 私(watashi) mean in ちっちゃな私 (chicchana watashi)?', @theme_id, 
         (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Hard' LIMIT 1), 
         '私 here means me with a tone of humility or endearing smallness.', 
-        20, TRUE, @user_id,'https://www.youtube.com/watch?v=4aFC2oC-wHA');
+        20, TRUE, @user_id,'https://vocaloidlyrics.fandom.com/wiki/%E3%81%A1%E3%81%A3%E3%81%A1%E3%82%83%E3%81%AA%E7%A7%81_(Chiccha_na_Watashi)');
 SET @q10 = LAST_INSERT_ID();
 INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES 
 (@q10, 'small', False), (@q10, 'you', False), 
 (@q10, 'me', TRUE), (@q10, 'Tiny me', False), 
 (@q10, 'enormous ', False), (@q10, 'embarrassed', False);
+
+
+-- Question 1: Kanji meaning
+INSERT INTO `questions` (`question_text`, `themeId`, `difficultyLevelId`, `explanation`, `time_limit`, `is_active`, `createdBy`,`url`)
+VALUES ('What does the kanji 天使 (tenshi) mean in the context of this song?', @theme_id, 
+        (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Medium' LIMIT 1), 
+        '天使 (tenshi) means "angel" - 天 means heaven/sky and 使 means messenger.', 
+        15, TRUE, @user_id,'https://vocaloidlyrics.fandom.com/wiki/%E3%82%A2%E3%83%B3%E3%83%98%E3%83%AB_(%C3%81ngel)');
+SET @q11 = LAST_INSERT_ID();
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES 
+(@q11, 'devil', FALSE), (@q11, 'angel', TRUE), 
+(@q11, 'heaven', FALSE), (@q11, 'messenger', FALSE), 
+(@q11, 'spirit', FALSE), (@q11, 'dream', FALSE);
+
+-- Question 2: Katakana reading
+INSERT INTO `questions` (`question_text`, `themeId`, `difficultyLevelId`, `explanation`, `time_limit`, `is_active`, `createdBy`,`url`)
+VALUES ('What is the romaji reading of the katakana アンヘル?', @theme_id, 
+        (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Easy' LIMIT 1), 
+        'アンヘル is written as "anheru" in romaji, which is the Japanese pronunciation of "angel".', 
+        10, TRUE, @user_id,'https://vocaloidlyrics.fandom.com/wiki/%E3%82%A2%E3%83%B3%E3%83%98%E3%83%AB_(%C3%81ngel)');
+SET @q12 = LAST_INSERT_ID();
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES 
+(@q12, 'aneru', FALSE), (@q12, 'anheru', TRUE), 
+(@q12, 'angeru', FALSE), (@q12, 'anjeru', FALSE), 
+(@q12, 'ankheru', FALSE), (@q12, 'anhelu', FALSE);
+
+-- Question 3: Kanji meaning
+INSERT INTO `questions` (`question_text`, `themeId`, `difficultyLevelId`, `explanation`, `time_limit`, `is_active`, `createdBy`,`url`)
+VALUES ('What does the kanji 夜 (yoru) mean?', @theme_id, 
+        (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Easy' LIMIT 1), 
+        '夜 (yoru) means "night" and is commonly used in Japanese to refer to nighttime.', 
+        10, TRUE, @user_id,'https://vocaloidlyrics.fandom.com/wiki/%E3%82%A2%E3%83%B3%E3%83%98%E3%83%AB_(%C3%81ngel)');
+SET @q13 = LAST_INSERT_ID();
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES 
+(@q13, 'day', FALSE), (@q13, 'night', TRUE), 
+(@q13, 'evening', FALSE), (@q13, 'morning', FALSE), 
+(@q13, 'darkness', FALSE), (@q13, 'moon', FALSE);
+
+-- Question 4: Grammar particle
+INSERT INTO `questions` (`question_text`, `themeId`, `difficultyLevelId`, `explanation`, `time_limit`, `is_active`, `createdBy`,`url`)
+VALUES ('In the phrase "君の声" (kimi no koe), what is the function of the particle の (no)?', @theme_id, 
+        (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Medium' LIMIT 1), 
+        'の (no) is a possessive particle that shows ownership or relationship, here meaning "your voice".', 
+        15, TRUE, @user_id,'https://vocaloidlyrics.fandom.com/wiki/%E3%82%A2%E3%83%B3%E3%83%98%E3%83%AB_(%C3%81ngel)');
+SET @q14 = LAST_INSERT_ID();
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES 
+(@q14, 'topic marker', FALSE), (@q14, 'possessive marker', TRUE), 
+(@q14, 'object marker', FALSE), (@q14, 'subject marker', FALSE), 
+(@q14, 'location marker', FALSE), (@q14, 'time marker', FALSE);
+
+-- Question 5: Kanji meaning
+INSERT INTO `questions` (`question_text`, `themeId`, `difficultyLevelId`, `explanation`, `time_limit`, `is_active`, `createdBy`,`url`)
+VALUES ('What does the kanji 声 (koe) mean?', @theme_id, 
+        (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Easy' LIMIT 1), 
+        '声 (koe) means "voice" and is used to refer to someone\'s speaking voice or sound.', 
+        10, TRUE, @user_id,'https://vocaloidlyrics.fandom.com/wiki/%E3%82%A2%E3%83%B3%E3%83%98%E3%83%AB_(%C3%81ngel)');
+SET @q15 = LAST_INSERT_ID();
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES 
+(@q15, 'sound', FALSE), (@q15, 'voice', TRUE), 
+(@q15, 'word', FALSE), (@q15, 'song', FALSE), 
+(@q15, 'music', FALSE), (@q15, 'whisper', FALSE);
+
+-- Question 6: Hiragana reading
+INSERT INTO `questions` (`question_text`, `themeId`, `difficultyLevelId`, `explanation`, `time_limit`, `is_active`, `createdBy`,`url`)
+VALUES ('What is the romaji reading of the hiragana きみ?', @theme_id, 
+        (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Easy' LIMIT 1), 
+        'きみ is read as "kimi" in romaji, meaning "you" in an informal/intimate way.', 
+        10, TRUE, @user_id,'https://vocaloidlyrics.fandom.com/wiki/%E3%82%A2%E3%83%B3%E3%83%98%E3%83%AB_(%C3%81ngel)');
+SET @q16 = LAST_INSERT_ID();
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES 
+(@q16, 'kimi', TRUE), (@q16, 'kami', FALSE), 
+(@q16, 'kumi', FALSE), (@q16, 'kemi', FALSE), 
+(@q16, 'komi', FALSE), (@q16, 'kamu', FALSE);
+
+-- Question 7: Kanji compound meaning
+INSERT INTO `questions` (`question_text`, `themeId`, `difficultyLevelId`, `explanation`, `time_limit`, `is_active`, `createdBy`,`url`)
+VALUES ('What does the kanji compound 世界 (sekai) mean?', @theme_id, 
+        (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Medium' LIMIT 1), 
+        '世界 (sekai) means "world" - 世 refers to society/generation and 界 means boundary/realm.', 
+        15, TRUE, @user_id,'https://vocaloidlyrics.fandom.com/wiki/%E3%82%A2%E3%83%B3%E3%83%98%E3%83%AB_(%C3%81ngel)');
+SET @q17 = LAST_INSERT_ID();
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES 
+(@q17, 'universe', FALSE), (@q17, 'world', TRUE), 
+(@q17, 'society', FALSE), (@q17, 'boundary', FALSE), 
+(@q17, 'earth', FALSE), (@q17, 'planet', FALSE);
+
+-- Question 8: Verb form recognition
+INSERT INTO `questions` (`question_text`, `themeId`, `difficultyLevelId`, `explanation`, `time_limit`, `is_active`, `createdBy`,`url`)
+VALUES ('What is the dictionary form of the verb 歌って (utatte)?', @theme_id, 
+        (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Hard' LIMIT 1), 
+        '歌って (utatte) is the te-form of 歌う (utau), which means "to sing".', 
+        20, TRUE, @user_id,'https://vocaloidlyrics.fandom.com/wiki/%E3%82%A2%E3%83%B3%E3%83%98%E3%83%AB_(%C3%81ngel)');
+SET @q18 = LAST_INSERT_ID();
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES 
+(@q18, 'utau', TRUE), (@q18, 'utaru', FALSE), 
+(@q18, 'uteru', FALSE), (@q18, 'utoru', FALSE), 
+(@q18, 'utaku', FALSE), (@q18, 'utamu', FALSE);
+
+-- Question 9: Kanji meaning
+INSERT INTO `questions` (`question_text`, `themeId`, `difficultyLevelId`, `explanation`, `time_limit`, `is_active`, `createdBy`,`url`)
+VALUES ('What does the kanji 心 (kokoro) mean?', @theme_id, 
+        (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Medium' LIMIT 1), 
+        '心 (kokoro) means "heart" in the emotional/spiritual sense, not the physical organ.', 
+        15, TRUE, @user_id,'https://vocaloidlyrics.fandom.com/wiki/%E3%82%A2%E3%83%B3%E3%83%98%E3%83%AB_(%C3%81ngel)');
+SET @q19 = LAST_INSERT_ID();
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES 
+(@q19, 'mind', FALSE), (@q19, 'heart', TRUE), 
+(@q19, 'soul', FALSE), (@q19, 'spirit', FALSE), 
+(@q19, 'feeling', FALSE), (@q19, 'emotion', FALSE);
+
+-- Question 10: Hiragana compound reading
+INSERT INTO `questions` (`question_text`, `themeId`, `difficultyLevelId`, `explanation`, `time_limit`, `is_active`, `createdBy`,`url`)
+VALUES ('What is the romaji reading of ひとり?', @theme_id, 
+        (SELECT `id` FROM `difficultyLevels` WHERE `name` = 'Easy' LIMIT 1), 
+        'ひとり is read as "hitori" in romaji, meaning "alone" or "one person".', 
+        10, TRUE, @user_id,'https://vocaloidlyrics.fandom.com/wiki/%E3%82%A2%E3%83%B3%E3%83%98%E3%83%AB_(%C3%81ngel)');
+SET @q20 = LAST_INSERT_ID();
+INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES 
+(@q20, 'hitori', TRUE), (@q20, 'hitari', FALSE), 
+(@q20, 'hetori', FALSE), (@q20, 'hotori', FALSE), 
+(@q20, 'hutori', FALSE), (@q20, 'hatari', FALSE);
