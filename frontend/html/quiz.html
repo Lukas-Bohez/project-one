@@ -14,17 +14,48 @@
         </a>
         <button id="infoBtn" class="c-info-btn">i</button>
     </header>
-
     <main class="c-quiz-container">
         <div class="c-quiz-header">
             <div class="c-items-container">
-                <div class="c-item-slot" id="item1"></div>
-                <div class="c-item-slot" id="item2"></div>
-                <div class="c-item-slot" id="item3"></div>
+                <div class="c-item-slot" id="item1">
+                    <div class="c-item-hover-controls">
+                        <div class="c-item-description">Freeze: Lowers temperature by 15°C, slowing timer</div>
+                        <div class="c-item-actions">
+                            <button class="c-item-action-btn c-item-use-btn">Use</button>
+                            <button class="c-item-action-btn c-item-delete-btn">Delete</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="c-item-slot" id="item2">
+                    <div class="c-item-hover-controls">
+                        <div class="c-item-description">Fireball: Raises temperature by 15°C, speeding timer</div>
+                        <div class="c-item-actions">
+                            <button class="c-item-action-btn c-item-use-btn">Use</button>
+                            <button class="c-item-action-btn c-item-delete-btn">Delete</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="c-item-slot" id="item3">
+                    <div class="c-item-hover-controls">
+                        <div class="c-item-description">Answer Remove: Removes one wrong answer</div>
+                        <div class="c-item-actions">
+                            <button class="c-item-action-btn c-item-use-btn">Use</button>
+                            <button class="c-item-action-btn c-item-delete-btn">Delete</button>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="c-quiz-controls">
-                <button id="useItemBtn" class="c-btn c-btn--secondary" disabled>Use Item</button>
-                <button id="deleteItemBtn" class="c-btn c-btn--delete" disabled>Delete Item</button>
+                <div class="c-stats-display">
+                    <div class="c-stat-item c-lp-display">
+                        <span>LP:</span>
+                        <span class="js-LP">4</span>
+                    </div>
+                    <div class="c-stat-item c-sp-display">
+                        <span>SP:</span>
+                        <span class="js-SP">4</span>
+                    </div>
+                </div>
             </div>
             <div class="c-timer-container">
                 <div class="c-servo-visual" id="servoVisual"></div>
@@ -34,28 +65,42 @@
                 <span>Score: <span id="currentScore">0</span></span>
             </div>
         </div>
-
         <div class="c-question-container">
             <h2 id="questionText">Loading question...</h2>
             <div class="c-image-container" id="questionImage"></div>
         </div>
-
         <div class="c-answers-container">
             <button class="c-answer-btn" id="answer1">Answer 1</button>
             <button class="c-answer-btn" id="answer2">Answer 2</button>
             <button class="c-answer-btn" id="answer3">Answer 3</button>
             <button class="c-answer-btn" id="answer4">Answer 4</button>
         </div>
-
-
-        <div class="c-players-container">
-            <h3>Players</h3>
-            <div class="c-players-list" id="playersList">
-                <!-- Player items will be added here dynamically -->
+        <div class="c-game-sidebar">
+            <div class="c-players-container">
+                <h3>Players</h3>
+                <div class="c-players-list" id="playersList">
+                    <!-- Player items will be added here dynamically -->
+                </div>
+            </div>
+            
+            <div class="c-chat-container">
+                <div class="c-chat-header">
+                    <h3>Quiz Chat</h3>
+                    <button id="chatToggle" class="c-chat-toggle">−</button>
+                </div>
+                <div class="c-chat-content" id="chatContent">
+                    <div class="c-chat-messages" id="chatMessages">
+                        <!-- Chat messages will be added here dynamically -->
+                    </div>
+                    <div class="c-chat-input-container">
+                        <input type="text" id="chatInput" class="c-chat-input" 
+                               placeholder="Type a message..." maxlength="1000">
+                        <button id="chatSend" class="c-chat-send-btn">Send</button>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
-
     <div id="infoModal" class="c-modal">
         <div class="c-modal__content">
             <span class="c-modal__close">&times;</span>
@@ -83,7 +128,6 @@
             </div>
         </div>
     </div>
-
     <script src="../js/quiz.js"></script>
     <script src="../js/main.js"></script>
 </body>
