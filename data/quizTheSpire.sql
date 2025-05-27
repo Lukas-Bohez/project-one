@@ -352,9 +352,9 @@ DROP TABLE IF EXISTS `sensorData`;
 CREATE TABLE `sensorData` (
   `id` int NOT NULL AUTO_INCREMENT,
   `sessionId` int NOT NULL,
-  `temperature` decimal(5,2) DEFAULT NULL,
-  `lightIntensity` int DEFAULT NULL,
-  `servoPosition` int DEFAULT NULL COMMENT 'Servomotor position (0-180 degrees)',
+  `temperature (°C)` decimal(5,2) DEFAULT NULL,
+  `lightIntensity (lux)` int DEFAULT NULL,
+  `servoPosition (°)` int DEFAULT NULL COMMENT 'Servomotor position (0-180 degrees)',
   `timestamp` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `sessionId` (`sessionId`),
