@@ -53,6 +53,12 @@ class QuizAuth {
     const chatInput = document.getElementById('chatInput');
     const chatToggle = document.getElementById('chatToggle');
     const chatContent = document.getElementById('chatContent');
+    const chatMessages = document.getElementById('chatMessages');
+
+    // Initialize chat container height and scrolling
+    chatMessages.style.maxHeight = '250px'; // Fixed height for messages
+    chatMessages.style.overflowY = 'auto';
+    this.scrollChatToBottom();
 
     // Send message on button click
     chatSend.addEventListener('click', () => this.sendChatMessage());
@@ -68,7 +74,15 @@ class QuizAuth {
     chatToggle.addEventListener('click', () => {
       chatContent.style.display = chatContent.style.display === 'none' ? 'block' : 'none';
       chatToggle.textContent = chatContent.style.display === 'none' ? '+' : '−';
+      if (chatContent.style.display === 'block') {
+        this.scrollChatToBottom();
+      }
     });
+  }
+
+  scrollChatToBottom() {
+    const chatMessages = document.getElementById('chatMessages');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
   sendChatMessage() {
@@ -82,6 +96,9 @@ class QuizAuth {
 
     // Clear input
     chatInput.value = '';
+
+    // Scroll to bottom after adding new message
+    this.scrollChatToBottom();
   }
 
   addChatMessage(sender, message) {
@@ -95,9 +112,6 @@ class QuizAuth {
   `;
 
     chatMessages.appendChild(messageElement);
-
-    // Scroll to bottom
-    chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
   bindEvents() {

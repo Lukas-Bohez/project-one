@@ -575,6 +575,43 @@
     }
 }
 
+/* Chat Messages Container */
+.c-chat-messages {
+    flex: 1;
+    padding: 0.75rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 250px; /* Fixed height */
+    scroll-behavior: smooth; /* Smooth scrolling */
+}
+
+/* Ensure messages take full width */
+.c-chat-message {
+    display: flex;
+    gap: 0.5rem;
+    word-break: break-word;
+    width: 100%;
+}
+
+/* Better scrollbar styling */
+.c-chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.c-chat-messages::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.c-chat-messages::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.c-chat-messages::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
 
 /*---------------------------------------/*
  # UTILITIES
