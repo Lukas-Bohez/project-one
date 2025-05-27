@@ -184,7 +184,7 @@ CREATE TABLE `quizSessions` (
   `sessionStatusId` int NOT NULL,
   `themeId` int NOT NULL,
   `hostUserId` int NOT NULL,
-  `start_time` datetime DEFAULT NULL,
+  `start_time` datetime DEFAULT CURRENT_TIMESTAMP,
   `end_time` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `sessionStatusId` (`sessionStatusId`),
