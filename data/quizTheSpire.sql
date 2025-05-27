@@ -265,7 +265,6 @@ DROP TABLE IF EXISTS `ipAddresses`;
 CREATE TABLE `ipAddresses` (
   `id` int NOT NULL AUTO_INCREMENT,
   `ip_address` varchar(45) NOT NULL,
-  `ownedBy` int DEFAULT NULL,
   `is_banned` boolean DEFAULT FALSE,
   `ban_reason` text DEFAULT NULL,
   `ban_date` datetime DEFAULT NULL,
@@ -1044,3 +1043,34 @@ INSERT INTO `chatLog` (`sessionId`, `userId`, `message_text`, `message_type`) VA
 (@quiz_session_id, @pinocchiop_id, '漢字はリズムと同じ、規則を覚えれば簡単です', 'chat'),
 (@quiz_session_id, @wario_id, '次は絶対...いや多分無理だワハハ！', 'chat'),
 (@quiz_session_id, null, 'ワリオさんはボーナスポイントを獲得できませんでした', 'system');
+
+
+
+
+-- First, create the loopback IP address if it doesn't exist
+INSERT INTO `ipAddresses` (`ip_address`, `is_banned`, `created_at`)
+VALUES ('127.0.0.1', FALSE, NOW())
+ON DUPLICATE KEY UPDATE `is_banned` = FALSE;
+
+-- Get the IP address ID
+SET @loopback_id = (SELECT `id` FROM `ipAddresses` WHERE `ip_address` = '127.0.0.1' LIMIT 1);
+
+-- Get user IDs (assuming they already exist)
+SET @user_id = (SELECT `id` FROM `users` WHERE `rfid_code` = 'SERVER123' LIMIT 1);
+SET @pinocchiop_id = (SELECT `id` FROM `users` WHERE `rfid_code` = 'VOCALOID123' LIMIT 1);
+SET @wario_id = (SELECT `id` FROM `users` WHERE `rfid_code` = 'WAHWAH123' LIMIT 1);
+
+-- Assign the IP to system user as primary
+INSERT INTO `userIpAddresses` (`userId`, `ipAddressId`, `is_primary`, `usage_count`)
+VALUES (@user_id, @loopback_id, TRUE, 1)
+ON DUPLICATE KEY UPDATE `is_primary` = TRUE, `usage_count` = `usage_count` + 1;
+
+-- Assign the IP to PinocchioP as secondary
+INSERT INTO `userIpAddresses` (`userId`, `ipAddressId`, `is_primary`, `usage_count`)
+VALUES (@pinocchiop_id, @loopback_id, FALSE, 2)
+ON DUPLICATE KEY UPDATE `usage_count` = `usage_count` + 1;
+
+-- Assign the IP to Wario as secondary
+INSERT INTO `userIpAddresses` (`userId`, `ipAddressId`, `is_primary`, `usage_count`)
+VALUES (@wario_id, @loopback_id, FALSE, 3)
+ON DUPLICATE KEY UPDATE `usage_count` = `usage_count` + 1;
