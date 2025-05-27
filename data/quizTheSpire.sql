@@ -627,7 +627,7 @@ WHERE `id` = @user_id;
 
 -- Add the chat message
 INSERT INTO `chatLog` (`sessionId`, `userId`, `message_text`, `message_type`) 
-VALUES (@session_id, @user_id, 'aw man, that was awfull luck', 'chat');
+VALUES (@session_id, null, 'Item used on user system causing loss of LP', 'announcement');
 
 -- Log the item usage in audit log
 INSERT INTO `auditLog` (`table_name`, `record_id`, `action`, `old_values`, `new_values`, `changed_by`, `ip_address`) 
@@ -636,7 +636,9 @@ VALUES ('users', @user_id, 'UPDATE',
         JSON_OBJECT('limb_points', 0), 
         @user_id, '127.0.0.1');
         
-        
+-- Add the chat message
+INSERT INTO `chatLog` (`sessionId`, `userId`, `message_text`, `message_type`) 
+VALUES (@session_id, @user_id, 'aw man, that was awfull luck', 'chat');        
         
 -- Insert 50 sensor data records with servomotor simulation
 INSERT INTO `sensorData` (`sessionId`, `temperature`, `lightIntensity`, `servoPosition`, `timestamp`)
@@ -938,9 +940,16 @@ INSERT INTO `answers` (`questionId`, `answer_text`, `is_correct`) VALUES
 -- example hate speech message
 
 -- Add the chat message
+-- Insert the user's message first
 INSERT INTO `chatLog` (`sessionId`, `userId`, `message_text`, `message_type`) 
 VALUES (@session_id, @user_id, 'I fucking love the lorax movie.', 'chat');
 
+-- Get the ID of the last inserted message (the user's message)
+SET @user_message_id = LAST_INSERT_ID();
+
+-- Now insert the warning message as a reply to the user's message
+INSERT INTO `chatLog` (`sessionId`, `userId`, `message_text`, `message_type`, `reply_to_id`) 
+VALUES (@session_id, NULL, 'Do not use banned words user system!', 'warning', @user_message_id);
 
 
 
@@ -1025,14 +1034,13 @@ WHERE `userId` = @wario_id AND `sessionId` = @quiz_session_id;
 -- Alternative way to penalize Wario without violating constraints:
 -- Add a system message about his poor performance instead
 INSERT INTO `chatLog` (`sessionId`, `userId`, `message_text`, `message_type`)
-VALUES (@quiz_session_id, @system_user_id, 'ワリオさんは残念ながらボーナスポイントを獲得できませんでした', 'system');
+VALUES (@quiz_session_id, null, 'ワリオさんは残念ながらボーナスポイントを獲得できませんでした', 'system');
 
 -- Fun chat messages - FIXED VERSION
--- Fun chat messages
--- Use PinocchioP's ID for system messages since we don't have a dedicated system user
+-- Use PinocchioP's ID for system messages since we don't have a dedicated system user, maybe
 INSERT INTO `chatLog` (`sessionId`, `userId`, `message_text`, `message_type`) VALUES
 (@quiz_session_id, @pinocchiop_id, '全問正解です！音楽のように完璧ですね♪', 'chat'),
 (@quiz_session_id, @wario_id, 'ワリオの負けパターンもまたカッコいいぜ！', 'chat'),
 (@quiz_session_id, @pinocchiop_id, '漢字はリズムと同じ、規則を覚えれば簡単です', 'chat'),
 (@quiz_session_id, @wario_id, '次は絶対...いや多分無理だワハハ！', 'chat'),
-(@quiz_session_id, @pinocchiop_id, 'ワリオさんはボーナスポイントを獲得できませんでした', 'chat');
+(@quiz_session_id, null, 'ワリオさんはボーナスポイントを獲得できませんでした', 'system');
