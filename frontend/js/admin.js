@@ -190,6 +190,41 @@ const showEditModal = (itemType, item = null) => {
     const modalTitle = modal.querySelector('.c-modal-title');
     const form = modal.querySelector('.c-edit-form');
     
+    // Helper function to escape HTML
+    const escapeHTML = (str) => {
+        if (!str) return '';
+        return str.replace(/[&<>'"]/g, (tag) => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+        }[tag] || tag));
+    };
+    
+    // Helper function to generate answers HTML
+    const generateAnswersHTML = (answers, count) => {
+        return Array.from({length: count}, (_, i) => {
+            // Preserve existing answers up to the new count
+            const answer = i < answers.length ? answers[i] : {text: '', isCorrect: false};
+            return `
+                <div class="c-answer-item">
+                    <input type="text" 
+                        name="answers[${i}][text]"
+                        class="c-answer-text c-form-input" 
+                        value="${escapeHTML(answer.text)}" 
+                        placeholder="Answer option ${i+1}">
+                    <label class="c-answer-correct">
+                        <input type="checkbox" 
+                            name="answers[${i}][isCorrect]"
+                            ${answer.isCorrect ? 'checked' : ''}>
+                        <span>Correct</span>
+                    </label>
+                </div>
+            `;
+        }).join('');
+    };
+
     // Clear previous form
     form.innerHTML = '';
     
@@ -203,31 +238,149 @@ const showEditModal = (itemType, item = null) => {
     
     // Build form based on item type
     if (itemType === 'questions') {
+        // Get initial answer count - default to 4 if no item or no answers
+        const initialAnswerCount = item && item.answers ? item.answers.length : 4;
+        
         form.innerHTML = `
             <div class="c-form-group">
                 <label>Question</label>
-                <input type="text" name="text" class="c-form-input" value="${item ? item.text : ''}">
+                <input type="text" name="text" class="c-form-input" value="${escapeHTML(item ? item.text : '')}" required>
             </div>
+            
             <div class="c-form-group">
                 <label>Theme</label>
-                <select name="theme" class="c-form-select">
+                <select name="theme" class="c-form-select" required>
                     ${state.themes.map(theme => `
-                        <option value="${theme.name}" ${item && item.theme === theme.name ? 'selected' : ''}>
-                            ${theme.name}
+                        <option value="${escapeHTML(theme.name)}" ${item && item.theme === theme.name ? 'selected' : ''}>
+                            ${escapeHTML(theme.name)}
                         </option>
                     `).join('')}
                 </select>
             </div>
+            
             <div class="c-form-group">
                 <label>Difficulty</label>
-                <select name="difficulty" class="c-form-select">
+                <select name="difficulty" class="c-form-select" required>
                     <option value="Easy" ${item && item.difficulty === 'Easy' ? 'selected' : ''}>Easy</option>
                     <option value="Medium" ${item && item.difficulty === 'Medium' ? 'selected' : ''}>Medium</option>
                     <option value="Hard" ${item && item.difficulty === 'Hard' ? 'selected' : ''}>Hard</option>
+                    <option value="Expert" ${item && item.difficulty === 'Expert' ? 'selected' : ''}>Expert</option>
                 </select>
             </div>
+            
+            <div class="c-form-group">
+                <label>Think Time (seconds)</label>
+                <input type="number" name="think_time" class="c-form-input" 
+                       value="${item ? item.think_time : 0}" min="0">
+            </div>
+            
+            <div class="c-form-group">
+                <label>Answer Time Limit (seconds)</label>
+                <input type="number" name="time_limit" class="c-form-input" 
+                       value="${item ? item.time_limit : 30}" min="1" required>
+            </div>
+            
+            <div class="c-form-group">
+                <label>Points</label>
+                <input type="number" name="points" class="c-form-input" 
+                       value="${item ? item.points : 10}" min="1" required>
+            </div>
+            
+            <div class="c-form-group">
+                <label>Media URL (optional)</label>
+                <input type="text" name="Url" class="c-form-input" 
+                       value="${escapeHTML(item ? item.Url : '')}" placeholder="https://example.com/media.jpg">
+            </div>
+            
+            <div class="c-form-group c-answer-correct">
+                <label>
+                    <input type="checkbox" name="is_active" class="c-form-checkbox" 
+                           ${item && item.is_active ? 'checked' : ''}>
+                    Active Question
+                </label>
+            </div>
+            
+            <div class="c-form-group c-answer-correct">
+                <label>
+                    <input type="checkbox" name="no_answer_correct" class="c-form-checkbox" 
+                           ${item && item.no_answer_correct ? 'checked' : ''}>
+                    No Correct Answer
+                </label>
+            </div>
+            
+            <div class="c-form-group">
+                <label>Minimum Light</label>
+                <input type="number" name="LightMin" class="c-form-input" 
+                       value="${item ? item.LightMin : ''}" placeholder="Don't leave blank if not applicable">
+            </div>
+            
+            <div class="c-form-group">
+                <label>Maximum Light</label>
+                <input type="number" name="LightMax" class="c-form-input" 
+                       value="${item ? item.LightMax : ''}" placeholder="Don't leave blank if not applicable">
+            </div>
+            
+            <div class="c-form-group">
+                <label>Minimum Temperature</label>
+                <input type="number" name="TempMin" class="c-form-input" 
+                       value="${item ? item.TempMin : ''}" placeholder="Don't leave blank if not applicable">
+            </div>
+            
+            <div class="c-form-group">
+                <label>Maximum Temperature</label>
+                <input type="number" name="TempMax" class="c-form-input" 
+                       value="${item ? item.TempMax : ''}" placeholder="Don't leave blank if not applicable">
+            </div>
+            
+            <div class="c-form-group">
+                <label>Explanation</label>
+                <textarea name="explanation" class="c-form-textarea c-explanation-textarea" 
+                          placeholder="Detailed explanation for the correct answer">${escapeHTML(item ? item.explanation : '')}</textarea>
+            </div>
+            
+            <div class="c-form-group">
+                <label>Number of Answers</label>
+                <select name="answer_count" class="c-form-select js-answer-count">
+                    ${[4, 5, 6, 7, 8, 9, 10].map(num => 
+                        `<option value="${num}" ${initialAnswerCount === num ? 'selected' : ''}>
+                            ${num}
+                        </option>`
+                    ).join('')}
+                </select>
+            </div>
+
+            <div class="c-answer-options">
+                <div class="c-answer-list">
+                    ${generateAnswersHTML(item ? item.answers : [], initialAnswerCount)}
+                </div>
+            </div>
         `;
-    } else if (itemType === 'themes') {
+        
+        // Add event listener for answer count change - using event delegation
+        form.addEventListener('change', (e) => {
+            if (e.target.classList.contains('js-answer-count')) {
+                const newCount = parseInt(e.target.value);
+                const answerListContainer = form.querySelector('.c-answer-list');
+                
+                if (answerListContainer) {
+                    // Get current answers from the form
+                    const currentAnswers = Array.from(answerListContainer.querySelectorAll('.c-answer-item')).map(answerItem => {
+                        const textInput = answerItem.querySelector('input[type="text"]');
+                        const checkboxInput = answerItem.querySelector('input[type="checkbox"]');
+                        return {
+                            text: textInput ? textInput.value : '',
+                            isCorrect: checkboxInput ? checkboxInput.checked : false
+                        };
+                    });
+                    
+                    // Update the answer list with new count
+                    answerListContainer.innerHTML = generateAnswersHTML(currentAnswers, newCount);
+                }
+            }
+        });
+    }
+    
+ else if (itemType === 'themes') {
         form.innerHTML = `
             <div class="c-form-group">
                 <label>Theme Name</label>
@@ -235,20 +388,41 @@ const showEditModal = (itemType, item = null) => {
             </div>
         `;
     } else if (itemType === 'users') {
-        form.innerHTML = `
-            <div class="c-form-group">
-                <label>Username</label>
-                <input type="text" name="username" class="c-form-input" value="${item ? item.username : ''}">
-            </div>
-            <div class="c-form-group">
-                <label>Role</label>
-                <select name="role" class="c-form-select">
-                    <option value="Admin" ${item && item.role === 'Admin' ? 'selected' : ''}>Admin</option>
-                    <option value="Moderator" ${item && item.role === 'Moderator' ? 'selected' : ''}>Moderator</option>
-                    <option value="User" ${item && item.role === 'User' ? 'selected' : ''}>User</option>
-                </select>
-            </div>
-        `;
+form.innerHTML = `
+    <div class="c-form-group">
+        <label>Username</label>
+        <input type="text" name="username" class="c-form-input" value="${item ? item.username : ''}">
+    </div>
+    <div class="c-form-group">
+        <label>Role</label>
+        <select name="role" class="c-form-select">
+            <option value="Admin" ${item && item.role === 'Admin' ? 'selected' : ''}>Admin</option>
+            <option value="Moderator" ${item && item.role === 'Moderator' ? 'selected' : ''}>Moderator</option>
+            <option value="User" ${item && item.role === 'User' ? 'selected' : ''}>User</option>
+        </select>
+    </div>
+    <div class="c-form-group">
+        <label>IP Address</label>
+        <input type="text" name="ip" class="c-form-input" value="${item ? item.ip || '' : ''}" readonly>
+    </div>
+    <div class="c-form-group">
+        <label>Ban Reason</label>
+        <textarea name="banReason" class="c-explanation-textarea" placeholder="Enter reason for ban...">${item ? item.banReason || '' : ''}</textarea>
+    </div>
+    <div class="c-form-group">
+        <label>Ban Duration</label>
+        <div class="c-duration-container">
+            <input type="number" name="banDurationValue" class="c-form-input" value="1" min="1">
+            <select name="banDurationUnit" class="c-form-input">
+                <option value="minutes">Minutes</option>
+                <option value="hours" selected>Hours</option>
+                <option value="days">Days</option>
+                <option value="permanent">Eternity</option>
+            </select>
+             <button type="button" class="c-btn c-btn--primary">Ban IP Address</button>
+        </div>
+    </div>
+`;
     }
     
     // Add form action buttons
@@ -391,11 +565,13 @@ const createQuestionElement = (question) => {
     ).join('');
     
     element.innerHTML = `
-        <div class="c-question-info">
+<div class="c-question-info">
     <div class="c-question-edit">
         <input type="text" class="c-question-text-edit" value="${escapeHTML(question.text)}" placeholder="Enter question">
     </div>
+    
     <div class="c-question-meta">
+        <!-- Existing theme and difficulty fields -->
         <div class="c-question-theme">
             <label for="theme-${question.id}">Theme:</label>
             <select id="theme-${question.id}" class="js-theme-select" data-question-id="${question.id}">
@@ -408,10 +584,76 @@ const createQuestionElement = (question) => {
                 <option value="Easy" ${question.difficulty === 'Easy' ? 'selected' : ''}>Easy</option>
                 <option value="Medium" ${question.difficulty === 'Medium' ? 'selected' : ''}>Medium</option>
                 <option value="Hard" ${question.difficulty === 'Hard' ? 'selected' : ''}>Hard</option>
+                <option value="Expert" ${question.difficulty === 'Expert' ? 'selected' : ''}>Expert</option>
             </select>
+        </div>
+        
+        <!-- Time-related fields -->
+        <div class="c-question-time">
+            <label for="think-time-${question.id}">Think Time (s):</label>
+            <input type="number" id="think-time-${question.id}" class="c-answer-text js-think-time" 
+                   data-question-id="${question.id}" value="${question.think_time || 0}" min="0">
+        </div>
+        <div class="c-question-time">
+            <label for="time-limit-${question.id}">Answer Time (s):</label>
+            <input type="number" id="time-limit-${question.id}" class="js-time-limit c-answer-text" 
+                   data-question-id="${question.id}" value="${question.time_limit || 30}" min="1">
+        </div>
+        
+        <!-- Points field -->
+        <div class="c-question-points">
+            <label for="points-${question.id}">Points:</label>
+            <input type="number" id="points-${question.id}" class="c-answer-text js-points" 
+                   data-question-id="${question.id}" value="${question.points || 10}" min="1">
+        </div>
+        
+        <!-- URL field -->
+        <div class="c-question-url">
+            <label for="url-${question.id}">Media URL:</label>
+            <input type="text" id="url-${question.id}" class="c-answer-text js-url" 
+                   data-question-id="${question.id}" value="${question.Url || ''}" placeholder="Optional media URL">
+        </div>
+        
+        <!-- Active status checkbox -->
+        <div class="c-question-correct c-answer-correct">
+            <input type="checkbox" id="is-active-${question.id}" class="js-is-active c-answer-correct" 
+                   data-question-id="${question.id}" ${question.is_active ? 'checked' : ''}>
+            <label for="is-active-${question.id}">Active Question</label>
+        </div>
+        
+        <!-- No answer correct checkbox -->
+        <div class="c-question-correct c-answer-correct">
+            <input type="checkbox" id="not-correct-${question.id}" class="js-not-correct c-answer-correct" 
+                   data-question-id="${question.id}" ${question.no_answer_correct ? 'checked' : ''}>
+            <label for="not-correct-${question.id}">No correct answer</label>
         </div>
     </div>
     
+    <!-- Environmental conditions (yes, they are needed) -->
+    <div class="c-question-env">
+        <div class="c-question-env-item">
+            <label for="light-min-${question.id}">Min Light:</label>
+            <input type="number" id="light-min-${question.id}" class="c-answer-text js-light-min" 
+                   data-question-id="${question.id}" value="${question.LightMin || ''}" placeholder="Optional">
+        </div>
+        <div class="c-question-env-item">
+            <label for="light-max-${question.id}">Max Light:</label>
+            <input type="number" id="light-max-${question.id}" class="c-answer-text js-light-max" 
+                   data-question-id="${question.id}" value="${question.LightMax || ''}" placeholder="Optional">
+        </div>
+        <div class="c-question-env-item">
+            <label for="temp-min-${question.id}">Min Temp:</label>
+            <input type="number" id="temp-min-${question.id}" class="c-answer-text js-temp-min" 
+                   data-question-id="${question.id}" value="${question.TempMin || ''}" placeholder="Optional">
+        </div>
+        <div class="c-question-env-item">
+            <label for="temp-max-${question.id}">Max Temp:</label>
+            <input type="number" id="temp-max-${question.id}" class="c-answer-text js-temp-max" 
+                   data-question-id="${question.id}" value="${question.TempMax || ''}" placeholder="Optional">
+        </div>
+    </div>
+    
+    <!-- Rest of your existing content -->
     <div class="c-answer-options">
         <div class="c-answer-count">
             <label for="answer-count-${question.id}">Number of answers:</label>
