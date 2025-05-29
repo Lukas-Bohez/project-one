@@ -1,7 +1,6 @@
-# Gamepad control and system requirements evdev is linux only
-evdev==1.6.1
+bcrypt==4.1.2
 
-
+#normal imports
 annotated-types==0.7.0
 anyio==4.8.0
 bidict==0.23.1

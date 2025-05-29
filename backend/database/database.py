@@ -1,93 +1,104 @@
-from mysql import connector  # pip install mysql-connector-python
+from mysql import connector
 import os
-
+from config import db_config
+from typing import List, Dict, Any, Optional
 
 class Database:
-
-    # 1. connectie openen met classe variabelen voor hergebruik
+    # Remove static variables - they cause connection issues
+    db = None
+    cursor = None
     @staticmethod
-    def __open_connection():
+    def get_connection():
+        """Creates and returns a new database connection."""
         try:
-            Database.db = connector.connect(
-                option_files=os.path.abspath(os.path.join(
-                    os.path.dirname(__file__), "../config.py")),
-                autocommit=False
-            )
-            if "AttributeError" in(str(type(Database.db))):
-                raise Exception("foutieve database parameters in config")
-            Database.cursor = Database.db.cursor(
-                dictionary=True, buffered=True)  # lazy loaded
+            return connector.connect(**db_config)
         except connector.Error as err:
             if err.errno == connector.errorcode.ER_ACCESS_DENIED_ERROR:
-                print("Error: Er is geen toegang tot de database")
+                print("Error: Database access denied. Check credentials.")
             elif err.errno == connector.errorcode.ER_BAD_DB_ERROR:
-                print("Error: De database is niet gevonden")
+                print("Error: Database does not exist.")
             else:
-                print(err)
-            return
+                print(f"Database connection error: {err}")
+            raise # Re-raise the exception
 
-    # 2. Executes READS
-    @staticmethod
-    def get_rows(sqlQuery, params=None):
-        result = None
-        Database.__open_connection()
+
+    @classmethod
+    def __open_connection(cls):
         try:
-            Database.cursor.execute(sqlQuery, params)
-            result = Database.cursor.fetchall()
-            Database.cursor.close()
-            if (result is None):
-                print(ValueError(f"Resultaten zijn onbestaand.[DB Error]"))
-            Database.db.close()
+            cls.db = connector.connect(**db_config)
+            cls.cursor = cls.db.cursor(dictionary=True, buffered=True)
+        except connector.Error as err:
+            if err.errno == connector.errorcode.ER_ACCESS_DENIED_ERROR:
+                print("Error: Database access denied. Check credentials.")
+            elif err.errno == connector.errorcode.ER_BAD_DB_ERROR:
+                print("Error: Database does not exist.")
+            else:
+                print(f"Database connection error: {err}")
+            raise  # Re-raise the exception
+
+    @classmethod
+    def __close_connection(cls):
+        if cls.cursor:
+            cls.cursor.close()
+        if cls.db:
+            cls.db.close()
+
+    @classmethod
+    def get_rows(cls, sql_query, params=None):
+        try:
+            cls.__open_connection()
+            cls.cursor.execute(sql_query, params)
+            return cls.cursor.fetchall()
         except Exception as error:
-            print(error)  # development boodschap
-            result = None
+            print(f"Query error: {error}")
+            return None
         finally:
-            return result
+            cls.__close_connection()
 
-    @staticmethod
-    def get_one_row(sqlQuery, params=None):
-        Database.__open_connection()
+    @classmethod
+    def get_one_row(cls, sql_query, params=None):
         try:
-            Database.cursor.execute(sqlQuery, params)
-            result = Database.cursor.fetchone()
-            Database.cursor.close()
-            if (result is None):
-                raise ValueError("Resultaten zijn onbestaand.[DB Error]")
+            cls.__open_connection()
+            cls.cursor.execute(sql_query, params)
+            return cls.cursor.fetchone()
         except Exception as error:
-            print(error)  # development boodschap
-            result = None
+            print(f"Query error: {error}")
+            return None
         finally:
-            Database.db.close()
-            return result
+            cls.__close_connection()
 
-    # 3. Executes INSERT, UPDATE, DELETE with PARAMETERS
     @staticmethod
-    def execute_sql(sqlQuery, params=None):
-        result = None
-        Database.__open_connection()
+    def get_all_rows(sql: str, params: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
+        """Executes a SELECT query and returns all matching rows as a list of dictionaries."""
+        connection = None
         try:
-            Database.cursor.execute(sqlQuery, params)
-            Database.db.commit()
-            # bevestigig van create (int of 0)
-            result = Database.cursor.lastrowid
-            # bevestiging van update, delete (array)
-            # result = result if result != 0 else params  # Extra controle doen!!
-            if result != 0:  # is een insert, deze stuur het lastrowid terug.
-                result = result
-            else:  # is een update of een delete
-                if Database.cursor.rowcount == -1:  # Er is een fout in de SQL
-                    raise Exception("Fout in SQL")
-                elif Database.cursor.rowcount == 0:  # Er is niks gewijzigd, where voldoet niet of geen wijziging in de data
-                    result = 0
-                elif result == "undefined":  # Hoeveel rijen werden gewijzigd
-                    raise Exception("SQL error")
-                else:
-                    result = Database.cursor.rowcount
+            connection = Database.get_connection()
+            with connection.cursor() as cursor:
+                cursor.execute(sql, params)
+                results = cursor.fetchall() # Use fetchall() for multiple rows
+                return results if results else []
+        except Exception as e:
+            print(f"Error executing get_all_rows query: {e}")
+            raise
+        finally:
+            if connection:
+                connection.close()
+
+    @classmethod
+    def execute_sql(cls, sql_query, params=None):
+        try:
+            cls.__open_connection()
+            cls.cursor.execute(sql_query, params)
+            cls.db.commit()
+            
+            if cls.cursor.lastrowid:  # For INSERT
+                return cls.cursor.lastrowid
+            return cls.cursor.rowcount  # For UPDATE/DELETE
+            
         except connector.Error as error:
-            Database.db.rollback()
-            result = None
-            print(f"Error: Data niet bewaard.{error.msg}")
+            if cls.db:
+                cls.db.rollback()
+            print(f"Execute error: {error}")
+            return None
         finally:
-            Database.cursor.close()
-            Database.db.close()
-            return result
+            cls.__close_connection()
