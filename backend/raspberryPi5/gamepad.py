@@ -49,31 +49,26 @@ class SNESGamepadController:
 
     def check_requirements(self):
         """Verify required tools are installed and working"""
-        # Check if we're in a proper X11 environment
-        display = subprocess.run(['echo', '$DISPLAY'], capture_output=True, text=True, shell=True)
-        if not display.stdout.strip():
-            print("Warning: No DISPLAY environment variable set.")
-            print("If running over SSH, try: ssh -X username@hostname")
-            print("Or export DISPLAY=:0 if running locally")
-        
+        # Check ydotool instead of xdotool
         try:
-            # Test xdotool with a simple command
-            result = subprocess.run(['xdotool', 'getmouselocation'], 
+            # Test ydotool with a simple command
+            result = subprocess.run(['ydotool', 'mousemove', '0', '0'], 
                                   capture_output=True, text=True, timeout=5)
             if result.returncode != 0:
-                print("Warning: xdotool cannot access the display")
+                print("Warning: ydotool cannot control mouse")
                 print("Error:", result.stderr.strip())
-                print("Trying alternative mouse control methods...")
+                print("Make sure ydotoold daemon is running: sudo systemctl start ydotool")
                 self.use_alternative_mouse = True
             else:
                 self.use_alternative_mouse = False
                 if self.debug:
-                    print("xdotool working properly")
+                    print("ydotool working properly")
                     
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
-            print("Warning: xdotool not working properly")
-            print("Install with: sudo apt install xdotool")
-            print("Trying alternative mouse control methods...")
+            print("Warning: ydotool not working properly")
+            print("Install with: sudo apt install ydotool")
+            print("Start daemon with: sudo systemctl start ydotool")
+            print("Enable on boot: sudo systemctl enable ydotool")
             self.use_alternative_mouse = True
         
         try:
@@ -121,7 +116,7 @@ class SNESGamepadController:
             sys.exit(1)
 
     def detect_button_mappings(self):
-        """Auto-detect button mappings with corrected SNES layout"""
+        """Auto-detect button mappings with improved D-pad detection"""
         caps = self.device.capabilities()
         
         if self.debug:
@@ -146,25 +141,46 @@ class SNESGamepadController:
                     if i < len(sorted_codes):
                         self.button_map[sorted_codes[i]] = name
         
-        # Get D-pad/analog stick codes
+        # Get D-pad/analog stick codes with better detection
         if evdev.ecodes.EV_ABS in caps:
             abs_codes = caps[evdev.ecodes.EV_ABS]
             if self.debug:
                 print(f"Available analog codes: {abs_codes}")
             
-            # Map D-pad axes
+            # Map D-pad axes - try multiple common codes
             for code_info in abs_codes:
                 code = code_info[0] if isinstance(code_info, tuple) else code_info
-                if code == evdev.ecodes.ABS_X or code == evdev.ecodes.ABS_HAT0X:
+                
+                # Check for X-axis codes
+                if code in [evdev.ecodes.ABS_X, evdev.ecodes.ABS_HAT0X]:
                     self.dpad_codes['x'] = code
-                elif code == evdev.ecodes.ABS_Y or code == evdev.ecodes.ABS_HAT0Y:
+                    if self.debug:
+                        print(f"Found X-axis: {code}")
+                
+                # Check for Y-axis codes  
+                elif code in [evdev.ecodes.ABS_Y, evdev.ecodes.ABS_HAT0Y]:
                     self.dpad_codes['y'] = code
+                    if self.debug:
+                        print(f"Found Y-axis: {code}")
         
         if self.debug:
             print(f"\nFinal Button Mappings:")
             for code, name in sorted(self.button_map.items()):
                 print(f"  Button {code} -> {name}")
             print(f"D-pad mappings: {self.dpad_codes}")
+            
+        # Test current axis values to understand the range
+        if self.dpad_codes:
+            print(f"\nTesting current D-pad values...")
+            try:
+                for axis_name, axis_code in self.dpad_codes.items():
+                    current_value = self.device.absinfo(axis_code).value
+                    min_val = self.device.absinfo(axis_code).min
+                    max_val = self.device.absinfo(axis_code).max
+                    print(f"  {axis_name}-axis (code {axis_code}): current={current_value}, range=[{min_val}, {max_val}]")
+            except Exception as e:
+                if self.debug:
+                    print(f"Could not read axis info: {e}")
 
     def update_button_state(self, button, pressed):
         """Update button state with timestamp"""
@@ -209,23 +225,32 @@ class SNESGamepadController:
                     self.button_states['SELECT']['pressed'] = False
 
     def handle_dpad(self, axis, value):
-        """Handle D-pad movement with better sensitivity"""
+        """Handle D-pad movement with corrected 0-255 range logic"""
         current_time = time.time()
         
-        # Update D-pad state
+        # Debug: Show raw values
+        if self.debug:
+            print(f"Raw D-pad input: axis={axis}, value={value}")
+        
+        # Update D-pad state with corrected logic for 0-255 range
+        # Center is at 127, so we need deadzone around it
+        deadzone = 30  # Adjust this if needed for sensitivity
+        
         if axis == 'x':
-            if value < -50:  # Left
+            # For X axis: 0-97 = left, 157-255 = right, 97-157 = neutral
+            if value < (127 - deadzone):  # Left
                 self.dpad_state['x'] = -1
-            elif value > 50:  # Right
+            elif value > (127 + deadzone):  # Right
                 self.dpad_state['x'] = 1
-            else:
+            else:  # Neutral/center
                 self.dpad_state['x'] = 0
         elif axis == 'y':
-            if value < -50:  # Up
+            # For Y axis: 0-97 = up, 157-255 = down, 97-157 = neutral
+            if value < (127 - deadzone):  # Up
                 self.dpad_state['y'] = -1
-            elif value > 50:  # Down
+            elif value > (127 + deadzone):  # Down
                 self.dpad_state['y'] = 1
-            else:
+            else:  # Neutral/center
                 self.dpad_state['y'] = 0
         
         # Only move mouse if enough time has passed (for smoother movement)
@@ -237,7 +262,10 @@ class SNESGamepadController:
                 self.last_dpad_move = current_time
                 
                 if self.debug:
-                    print(f"D-pad: x={self.dpad_state['x']}, y={self.dpad_state['y']}, move=({move_x}, {move_y})")
+                    print(f"D-pad processed: x={self.dpad_state['x']}, y={self.dpad_state['y']}, move=({move_x}, {move_y})")
+            else:
+                if self.debug:
+                    print(f"D-pad neutral: x={self.dpad_state['x']}, y={self.dpad_state['y']}")
 
     def handle_event(self, event):
         """Process input events from the gamepad"""
@@ -277,64 +305,104 @@ class SNESGamepadController:
                     self.adjust_volume(-self.volume_step)
 
     def move_mouse(self, x=0, y=0):
-        """Move mouse pointer using available methods"""
+        """Move mouse pointer using ydotool with relative movement"""
         if self.use_alternative_mouse:
             self.move_mouse_alternative(x, y)
         else:
             try:
-                cmd = ['xdotool', 'mousemove_relative', '--', str(int(x)), str(int(y))]
+                # Get current mouse position first
+                current_pos = self.get_mouse_position()
+                if current_pos is None:
+                    if self.debug:
+                        print("Could not get current mouse position")
+                    self.move_mouse_alternative(x, y)
+                    return
+                
+                # Calculate new absolute position
+                new_x = current_pos[0] + int(x)
+                new_y = current_pos[1] + int(y)
+                
+                # Clamp to reasonable screen bounds (adjust as needed)
+                new_x = max(0, min(new_x, 1920))  # Assuming max 1920 width
+                new_y = max(0, min(new_y, 1080))  # Assuming max 1080 height
+                
+                # Use absolute positioning with ydotool
+                cmd = ['ydotool', 'mousemove', str(new_x), str(new_y)]
                 result = subprocess.run(cmd, capture_output=True, text=True, timeout=2)
                 if result.returncode != 0:
                     if self.debug:
-                        print(f"xdotool failed: {result.stderr.strip()}")
+                        print(f"ydotool mousemove failed: {result.stderr.strip()}")
                     self.use_alternative_mouse = True
                     self.move_mouse_alternative(x, y)
+                else:
+                    # Update our internal position tracking
+                    self.update_mouse_position(new_x, new_y)
+                    if self.debug:
+                        print(f"Mouse moved: ({x}, {y}) -> absolute ({new_x}, {new_y})")
             except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
                 if self.debug:
                     print(f"Mouse move failed: {e}")
                 self.use_alternative_mouse = True
                 self.move_mouse_alternative(x, y)
 
-    def move_mouse_alternative(self, x=0, y=0):
-        """Alternative mouse movement using /dev/input/mice or xinput"""
+    def get_mouse_position(self):
+        """Get current mouse cursor position using various methods"""
+        # Method 1: Try using xdotool if available (works in X11)
         try:
-            # Try using xinput if available
-            result = subprocess.run(['xinput', 'list'], capture_output=True, text=True, timeout=2)
+            result = subprocess.run(['xdotool', 'getmouselocation', '--shell'], 
+                                capture_output=True, text=True, timeout=2)
             if result.returncode == 0:
-                # Find mouse device
-                mice = []
-                for line in result.stdout.split('\n'):
-                    if 'mouse' in line.lower() or 'pointer' in line.lower():
-                        if 'id=' in line:
-                            device_id = line.split('id=')[1].split()[0]
-                            mice.append(device_id)
-                
-                if mice:
-                    # Use first mouse device found
-                    cmd = ['xinput', 'set-prop', mice[0], 'Device Enabled', '1']
-                    subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=2)
-                    if self.debug:
-                        print(f"Mouse move: ({x}, {y}) via xinput")
-                    return
-                        
+                lines = result.stdout.strip().split('\n')
+                x, y = None, None
+                for line in lines:
+                    if line.startswith('X='):
+                        x = int(line.split('=')[1])
+                    elif line.startswith('Y='):
+                        y = int(line.split('=')[1])
+                if x is not None and y is not None:
+                    return (x, y)
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError, ValueError):
+            pass
+        
+        # Method 2: Try parsing /proc/bus/input/devices or use xinput (if available)
+        try:
+            result = subprocess.run(['xinput', 'query-state', 'Virtual core pointer'], 
+                                capture_output=True, text=True, timeout=2)
+            if result.returncode == 0:
+                # This is more complex to parse, but possible
+                pass
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
             pass
         
+        # Method 3: Fallback - maintain our own position tracking
+        if not hasattr(self, '_mouse_pos'):
+            # Initialize at screen center (rough estimate)
+            self._mouse_pos = (640, 360)  # Assuming 1280x720 or similar
+        
+        return self._mouse_pos
+
+    def update_mouse_position(self, new_x, new_y):
+        """Update our internal mouse position tracking"""
+        self._mouse_pos = (new_x, new_y)
+
+    def move_mouse_alternative(self, x=0, y=0):
+        """Alternative mouse movement fallback"""
         # Fallback: just log the movement
         if self.debug and (x != 0 or y != 0):
-            print(f"Mouse move: ({x}, {y}) - display not available")
+            print(f"Mouse move: ({x}, {y}) - ydotool not available")
 
     def mouse_click(self, button='left'):
-        """Simulate mouse click using available methods"""
+        """Simulate mouse click using ydotool"""
         if self.use_alternative_mouse:
             self.mouse_click_alternative(button)
         else:
             try:
-                cmd = ['xdotool', 'click', '1' if button == 'left' else '3']
+                button_code = '0x40001' if button == 'left' else '0x40002'  # Left/Right mouse button codes for ydotool
+                cmd = ['ydotool', 'click', button_code]
                 result = subprocess.run(cmd, capture_output=True, text=True, timeout=2)
                 if result.returncode != 0:
                     if self.debug:
-                        print(f"xdotool click failed: {result.stderr.strip()}")
+                        print(f"ydotool click failed: {result.stderr.strip()}")
                     self.use_alternative_mouse = True
                     self.mouse_click_alternative(button)
                 elif self.debug:
@@ -348,22 +416,22 @@ class SNESGamepadController:
     def mouse_click_alternative(self, button='left'):
         """Alternative mouse click method"""
         if self.debug:
-            print(f"Mouse {button} click - display not available")
+            print(f"Mouse {button} click - ydotool not available")
 
     def scroll(self, amount):
-        """Simulate mouse wheel scroll using available methods"""
+        """Simulate mouse wheel scroll using ydotool"""
         if self.use_alternative_mouse:
             self.scroll_alternative(amount)
         else:
             try:
                 direction = 'up' if amount > 0 else 'down'
-                button_code = '4' if direction == 'up' else '5'
-                cmd = ['xdotool', 'click', button_code]
+                button_code = '0x40008' if direction == 'up' else '0x40010'  # Scroll up/down codes for ydotool
+                cmd = ['ydotool', 'click', button_code]
                 for _ in range(abs(amount)):
                     result = subprocess.run(cmd, capture_output=True, text=True, timeout=2)
                     if result.returncode != 0:
                         if self.debug:
-                            print(f"xdotool scroll failed: {result.stderr.strip()}")
+                            print(f"ydotool scroll failed: {result.stderr.strip()}")
                         self.use_alternative_mouse = True
                         self.scroll_alternative(amount)
                         return
@@ -380,7 +448,7 @@ class SNESGamepadController:
         """Alternative scroll method"""
         direction = 'up' if amount > 0 else 'down'
         if self.debug:
-            print(f"Scroll {direction} ({abs(amount)} steps) - display not available")
+            print(f"Scroll {direction} ({abs(amount)} steps) - ydotool not available")
 
     def adjust_volume(self, percent):
         """Adjust system volume using amixer"""
@@ -435,8 +503,8 @@ class SNESGamepadController:
 
     def run(self):
         """Main event loop"""
-        print("\nSNES Gamepad Controller")
-        print("=======================")
+        print("\nSNES Gamepad Controller (Wayland/ydotool)")
+        print("==========================================")
         print("Controls:")
         print("  D-pad: Mouse movement")
         print("  A: Left mouse click")
@@ -486,3 +554,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\nInterrupted by user")
         sys.exit(0)
+        
