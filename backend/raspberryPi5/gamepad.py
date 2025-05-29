@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
+
 import evdev
 import time
 import subprocess
 import sys
 from threading import Lock, Thread
+import threading
 
 class SNESGamepadController:
     def __init__(self, debug=True):
@@ -30,17 +32,23 @@ class SNESGamepadController:
         # D-pad state tracking
         self.dpad_state = {'x': 0, 'y': 0}
         self.last_dpad_move = 0
-        self.dpad_repeat_delay = 0.1  # 100ms between moves
+        self.dpad_repeat_delay = 0.05  # Reduced delay for faster mouse movement (from 0.1)
         
         # Button mappings (will be auto-detected)
         self.button_map = {}
         self.dpad_codes = {}
+
+        # Mouse position tracking for absolute movements
+        self._mouse_pos = (0, 0) # Initialize mouse position. This will be updated to actual position.
+        self.screen_width = 1920 # Default, ideally detect or configure
+        self.screen_height = 1080 # Default, ideally detect or configure
 
         # Verify requirements
         self.use_alternative_mouse = False
         self.check_requirements()
         self.find_gamepad()
         self.detect_button_mappings()
+        self.initialize_mouse_position() # Get initial mouse position after setup
         
         # Start combo checking thread
         self.combo_checker = Thread(target=self.check_combos)
@@ -49,11 +57,11 @@ class SNESGamepadController:
 
     def check_requirements(self):
         """Verify required tools are installed and working"""
-        # Check ydotool instead of xdotool
+        # Check ydotool
         try:
             # Test ydotool with a simple command
-            result = subprocess.run(['ydotool', 'mousemove', '0', '0'], 
-                                  capture_output=True, text=True, timeout=5)
+            result = subprocess.run(['ydotool', 'mousemove', '0', '0'],
+                                    capture_output=True, text=True, timeout=5)
             if result.returncode != 0:
                 print("Warning: ydotool cannot control mouse")
                 print("Error:", result.stderr.strip())
@@ -73,7 +81,7 @@ class SNESGamepadController:
         
         try:
             subprocess.run(['amixer', '-v'], check=True,
-                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except (subprocess.CalledProcessError, FileNotFoundError):
             print("Warning: amixer not found. Install with:")
             print("sudo apt install alsa-utils")
@@ -169,18 +177,48 @@ class SNESGamepadController:
                 print(f"  Button {code} -> {name}")
             print(f"D-pad mappings: {self.dpad_codes}")
             
-        # Test current axis values to understand the range
-        if self.dpad_codes:
-            print(f"\nTesting current D-pad values...")
+            # Test current axis values to understand the range
+            if self.dpad_codes:
+                print(f"\nTesting current D-pad values...")
+                try:
+                    for axis_name, axis_code in self.dpad_codes.items():
+                        current_value = self.device.absinfo(axis_code).value
+                        min_val = self.device.absinfo(axis_code).min
+                        max_val = self.device.absinfo(axis_code).max
+                        print(f"  {axis_name}-axis (code {axis_code}): current={current_value}, range=[{min_val}, {max_val}]")
+                except Exception as e:
+                    if self.debug:
+                        print(f"Could not read axis info: {e}")
+
+    def initialize_mouse_position(self):
+        """Get initial mouse position and screen dimensions."""
+        current_pos = self._get_current_mouse_position_xdotool()
+        if current_pos:
+            self._mouse_pos = current_pos
+            if self.debug:
+                print(f"Initialized mouse position to: {self._mouse_pos}")
+            # Try to get screen dimensions
             try:
-                for axis_name, axis_code in self.dpad_codes.items():
-                    current_value = self.device.absinfo(axis_code).value
-                    min_val = self.device.absinfo(axis_code).min
-                    max_val = self.device.absinfo(axis_code).max
-                    print(f"  {axis_name}-axis (code {axis_code}): current={current_value}, range=[{min_val}, {max_val}]")
-            except Exception as e:
+                result = subprocess.run(['xdpyinfo'], capture_output=True, text=True, timeout=2)
+                if result.returncode == 0:
+                    for line in result.stdout.splitlines():
+                        if 'dimensions:' in line:
+                            parts = line.strip().split()
+                            dims_str = parts[1].split('x')
+                            self.screen_width = int(dims_str[0])
+                            self.screen_height = int(dims_str[1])
+                            if self.debug:
+                                print(f"Detected screen dimensions: {self.screen_width}x{self.screen_height}")
+                            break
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
                 if self.debug:
-                    print(f"Could not read axis info: {e}")
+                    print("Could not detect screen dimensions with xdpyinfo. Using defaults.")
+        else:
+            if self.debug:
+                print("Could not get initial mouse position. Starting at (0,0) with default screen size.")
+            # Fallback to defaults and hope for the best
+            self._mouse_pos = (0, 0)
+
 
     def update_button_state(self, button, pressed):
         """Update button state with timestamp"""
@@ -277,7 +315,7 @@ class SNESGamepadController:
                 self.handle_dpad('y', event.value)
             elif self.debug:
                 print(f"Unhandled ABS event: code={event.code}, value={event.value}")
-                    
+                        
         elif event.type == evdev.ecodes.EV_KEY:
             # Button press/release
             button = self.button_map.get(event.code, None)
@@ -304,53 +342,11 @@ class SNESGamepadController:
                 elif button == 'R':
                     self.adjust_volume(-self.volume_step)
 
-    def move_mouse(self, x=0, y=0):
-        """Move mouse pointer using ydotool with relative movement"""
-        if self.use_alternative_mouse:
-            self.move_mouse_alternative(x, y)
-        else:
-            try:
-                # Get current mouse position first
-                current_pos = self.get_mouse_position()
-                if current_pos is None:
-                    if self.debug:
-                        print("Could not get current mouse position")
-                    self.move_mouse_alternative(x, y)
-                    return
-                
-                # Calculate new absolute position
-                new_x = current_pos[0] + int(x)
-                new_y = current_pos[1] + int(y)
-                
-                # Clamp to reasonable screen bounds (adjust as needed)
-                new_x = max(0, min(new_x, 1920))  # Assuming max 1920 width
-                new_y = max(0, min(new_y, 1080))  # Assuming max 1080 height
-                
-                # Use absolute positioning with ydotool
-                cmd = ['ydotool', 'mousemove', str(new_x), str(new_y)]
-                result = subprocess.run(cmd, capture_output=True, text=True, timeout=2)
-                if result.returncode != 0:
-                    if self.debug:
-                        print(f"ydotool mousemove failed: {result.stderr.strip()}")
-                    self.use_alternative_mouse = True
-                    self.move_mouse_alternative(x, y)
-                else:
-                    # Update our internal position tracking
-                    self.update_mouse_position(new_x, new_y)
-                    if self.debug:
-                        print(f"Mouse moved: ({x}, {y}) -> absolute ({new_x}, {new_y})")
-            except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-                if self.debug:
-                    print(f"Mouse move failed: {e}")
-                self.use_alternative_mouse = True
-                self.move_mouse_alternative(x, y)
-
-    def get_mouse_position(self):
-        """Get current mouse cursor position using various methods"""
-        # Method 1: Try using xdotool if available (works in X11)
+    def _get_current_mouse_position_xdotool(self):
+        """Helper to get current mouse cursor position using xdotool."""
         try:
-            result = subprocess.run(['xdotool', 'getmouselocation', '--shell'], 
-                                capture_output=True, text=True, timeout=2)
+            result = subprocess.run(['xdotool', 'getmouselocation', '--shell'],
+                                    capture_output=True, text=True, timeout=0.5) # Reduced timeout
             if result.returncode == 0:
                 lines = result.stdout.strip().split('\n')
                 x, y = None, None
@@ -362,111 +358,125 @@ class SNESGamepadController:
                 if x is not None and y is not None:
                     return (x, y)
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError, ValueError):
+            if self.debug:
+                print("xdotool for mouse position failed or not found.")
             pass
-        
-        # Method 2: Try parsing /proc/bus/input/devices or use xinput (if available)
-        try:
-            result = subprocess.run(['xinput', 'query-state', 'Virtual core pointer'], 
-                                capture_output=True, text=True, timeout=2)
-            if result.returncode == 0:
-                # This is more complex to parse, but possible
-                pass
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
-            pass
-        
-        # Method 3: Fallback - maintain our own position tracking
-        if not hasattr(self, '_mouse_pos'):
-            # Initialize at screen center (rough estimate)
-            self._mouse_pos = (640, 360)  # Assuming 1280x720 or similar
-        
-        return self._mouse_pos
+        return None
 
-    def update_mouse_position(self, new_x, new_y):
-        """Update our internal mouse position tracking"""
-        self._mouse_pos = (new_x, new_y)
+    def move_mouse(self, dx=0, dy=0):
+        """Move mouse pointer using ydotool with calculated absolute movement."""
+        if self.use_alternative_mouse:
+            self.move_mouse_alternative(dx, dy)
+            return
+
+        # Use internally tracked position for absolute movement calculation
+        current_x, current_y = self._mouse_pos
+
+        new_x = current_x + dx
+        new_y = current_y + dy
+
+        # Clamp to screen bounds
+        new_x = max(0, min(new_x, self.screen_width - 1))
+        new_y = max(0, min(new_y, self.screen_height - 1))
+
+        try:
+            cmd = ['ydotool', 'mousemove', '--', str(new_x), str(new_y)] # Add -- for absolute
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=0.5) # Reduced timeout
+            if result.returncode != 0:
+                if self.debug:
+                    print(f"ydotool mousemove (absolute) failed: {result.stderr.strip()}")
+                self.use_alternative_mouse = True
+                self.move_mouse_alternative(dx, dy)
+            else:
+                self._mouse_pos = (new_x, new_y) # Update internal position
+                if self.debug:
+                    print(f"Mouse moved: ({dx}, {dy}) -> absolute ({new_x}, {new_y})")
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as e:
+            if self.debug:
+                print(f"Mouse move failed (ydotool absolute): {e}")
+            self.use_alternative_mouse = True
+            self.move_mouse_alternative(dx, dy)
 
     def move_mouse_alternative(self, x=0, y=0):
-        """Alternative mouse movement fallback"""
-        # Fallback: just log the movement
+        """Alternative mouse movement fallback (prints to console)."""
         if self.debug and (x != 0 or y != 0):
-            print(f"Mouse move: ({x}, {y}) - ydotool not available")
+            print(f"Mouse move: ({x}, {y}) - ydotool not available or failed")
 
     def mouse_click(self, button='left'):
-        """Simulate mouse click using ydotool"""
+        """Simulate mouse click using ydotool."""
         if self.use_alternative_mouse:
             self.mouse_click_alternative(button)
-        else:
-            try:
-                button_code = '0x40001' if button == 'left' else '0x40002'  # Left/Right mouse button codes for ydotool
-                cmd = ['ydotool', 'click', button_code]
-                result = subprocess.run(cmd, capture_output=True, text=True, timeout=2)
-                if result.returncode != 0:
-                    if self.debug:
-                        print(f"ydotool click failed: {result.stderr.strip()}")
-                    self.use_alternative_mouse = True
-                    self.mouse_click_alternative(button)
-                elif self.debug:
-                    print(f"Mouse {button} click")
-            except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+            return
+        
+        try:
+            button_code = '0x40001' if button == 'left' else '0x40002'
+            cmd = ['ydotool', 'click', button_code]
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=0.5) # Reduced timeout
+            if result.returncode != 0:
                 if self.debug:
-                    print(f"Mouse click failed: {e}")
+                    print(f"ydotool click failed: {result.stderr.strip()}")
                 self.use_alternative_mouse = True
                 self.mouse_click_alternative(button)
+            elif self.debug:
+                print(f"Mouse {button} click")
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as e:
+            if self.debug:
+                print(f"Mouse click failed: {e}")
+            self.use_alternative_mouse = True
+            self.mouse_click_alternative(button)
 
     def mouse_click_alternative(self, button='left'):
-        """Alternative mouse click method"""
+        """Alternative mouse click method (prints to console)."""
         if self.debug:
-            print(f"Mouse {button} click - ydotool not available")
+            print(f"Mouse {button} click - ydotool not available or failed")
 
     def scroll(self, amount):
-        """Simulate mouse wheel scroll using ydotool"""
+        """Simulate mouse wheel scroll using ydotool."""
         if self.use_alternative_mouse:
             self.scroll_alternative(amount)
-        else:
-            try:
-                direction = 'up' if amount > 0 else 'down'
-                button_code = '0x40008' if direction == 'up' else '0x40010'  # Scroll up/down codes for ydotool
-                cmd = ['ydotool', 'click', button_code]
-                for _ in range(abs(amount)):
-                    result = subprocess.run(cmd, capture_output=True, text=True, timeout=2)
-                    if result.returncode != 0:
-                        if self.debug:
-                            print(f"ydotool scroll failed: {result.stderr.strip()}")
-                        self.use_alternative_mouse = True
-                        self.scroll_alternative(amount)
-                        return
-                    time.sleep(0.05)
-                if self.debug:
-                    print(f"Scroll {direction} ({abs(amount)} steps)")
-            except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-                if self.debug:
-                    print(f"Scroll failed: {e}")
-                self.use_alternative_mouse = True
-                self.scroll_alternative(amount)
+            return
+
+        try:
+            direction = 'up' if amount > 0 else 'down'
+            button_code = '0x40008' if direction == 'up' else '0x40010' # Scroll up/down codes for ydotool
+            cmd = ['ydotool', 'click', button_code]
+            for _ in range(abs(amount)):
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=0.5) # Reduced timeout
+                if result.returncode != 0:
+                    if self.debug:
+                        print(f"ydotool scroll failed: {result.stderr.strip()}")
+                    self.use_alternative_mouse = True
+                    self.scroll_alternative(amount)
+                    return
+                time.sleep(0.05)
+            if self.debug:
+                print(f"Scroll {direction} ({abs(amount)} steps)")
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as e:
+            if self.debug:
+                print(f"Scroll failed: {e}")
+            self.use_alternative_mouse = True
+            self.scroll_alternative(amount)
 
     def scroll_alternative(self, amount):
-        """Alternative scroll method"""
+        """Alternative scroll method (prints to console)."""
         direction = 'up' if amount > 0 else 'down'
         if self.debug:
-            print(f"Scroll {direction} ({abs(amount)} steps) - ydotool not available")
+            print(f"Scroll {direction} ({abs(amount)} steps) - ydotool not available or failed")
 
     def adjust_volume(self, percent):
-        """Adjust system volume using amixer"""
+        """Adjust system volume using amixer."""
         try:
-            # Use ALSA amixer (more reliable on Raspberry Pi)
             direction = "+" if percent > 0 else "-"
             cmd = ['amixer', '-q', 'set', 'Master', f'{abs(percent)}%{direction}']
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=1) # Added timeout
             
             # Get current volume for feedback
-            result = subprocess.run(['amixer', 'get', 'Master'], 
-                                  capture_output=True, text=True, check=True)
+            result = subprocess.run(['amixer', 'get', 'Master'],
+                                     capture_output=True, text=True, check=True, timeout=1) # Added timeout
             
-            # Parse volume from ALSA output
             lines = result.stdout.split('\n')
             for line in lines:
                 if '[' in line and '%' in line and ('Front Left:' in line or 'Mono:' in line):
-                    # Extract percentage between [ and %
                     try:
                         start = line.find('[') + 1
                         end = line.find('%', start)
@@ -477,29 +487,40 @@ class SNESGamepadController:
                     except:
                         pass
             
-            # Fallback: just report action
             print(f"Volume {'increased' if percent > 0 else 'decreased'} by {abs(percent)}%")
-                    
+                            
         except subprocess.CalledProcessError as e:
             if self.debug:
-                print(f"Volume adjustment failed: {e}")
-        except FileNotFoundError:
+                print(f"Volume adjustment failed: {e.stderr.strip()}")
+        except (FileNotFoundError, subprocess.TimeoutExpired):
             if self.debug:
-                print("amixer not found - install alsa-utils")
+                print("amixer not found or timed out - install alsa-utils")
 
     def system_sleep(self):
-        """Put system to sleep"""
+        """Put system to sleep."""
         try:
             print("Putting system to sleep...")
-            subprocess.run(['systemctl', 'suspend'], check=True)
+            subprocess.run(['systemctl', 'suspend'], check=True, timeout=5) # Added timeout
         except subprocess.CalledProcessError as e:
             if self.debug:
-                print(f"Sleep failed: {e}")
-            # Try alternative methods
+                print(f"Sleep failed with systemctl: {e.stderr.strip()}")
             try:
-                subprocess.run(['sudo', 'pm-suspend'], check=True)
-            except subprocess.CalledProcessError:
-                print("Could not suspend system - insufficient permissions or tools not available")
+                subprocess.run(['sudo', 'pm-suspend'], check=True, timeout=5) # Added timeout
+            except subprocess.CalledProcessError as e:
+                print(f"Could not suspend system - insufficient permissions or tools not available: {e.stderr.strip()}")
+            except FileNotFoundError:
+                print("Could not suspend system - pm-suspend not found.")
+        except FileNotFoundError:
+            print("systemctl not found - trying alternative (pm-suspend).")
+            try:
+                subprocess.run(['sudo', 'pm-suspend'], check=True, timeout=5)
+            except subprocess.CalledProcessError as e:
+                print(f"Could not suspend system - insufficient permissions or tools not available: {e.stderr.strip()}")
+            except FileNotFoundError:
+                print("Could not suspend system - pm-suspend not found.")
+        except subprocess.TimeoutExpired:
+            print("System suspend command timed out.")
+
 
     def run(self):
         """Main event loop"""
