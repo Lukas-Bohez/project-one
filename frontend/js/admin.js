@@ -14,6 +14,8 @@ const domAdmin = {
     themeList: document.querySelector('.c-theme-list'),
     userTable: document.querySelector('.c-user-table tbody')
 };
+
+const lanIP = `http://${window.location.hostname}:8000`;
 // #endregion
 
 // #region ***  Data & State Management                  ***********
@@ -46,17 +48,27 @@ const state = {
 };
 // #endregion
 
-// #region ***  API Calls                                ***********
-const fetchQuestions = async () => {
-    // In a real app, this would be an API call
-    // Example: const response = await fetch('/api/questions');
-    // const data = await response.json();
-    // return data;
+const fetchQuestions = async (activeOnly = false) => {
+    const endpoint = `${lanIP}/api/v1/questions/`;
     
-    return new Promise(resolve => {
-        setTimeout(() => resolve(state.questions), 300);
-    });
+    try {
+        const url = activeOnly ? `${endpoint}?active_only=true` : endpoint;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            console.error(`HTTP error! Status: ${response.status}`);
+            return [];
+        }
+        
+        const data = await response.json();
+        return data;
+        
+    } catch (error) {
+        console.error('Failed to fetch questions:', error);
+        return [];
+    }
 };
+
 
 const fetchThemes = async () => {
     return new Promise(resolve => {
