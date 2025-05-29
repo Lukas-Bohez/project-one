@@ -49,38 +49,145 @@ const state = {
 // #endregion
 
 const fetchQuestions = async (activeOnly = false) => {
-    const endpoint = `${lanIP}/api/v1/questions/`;
-    
+    const questionsEndpoint = `${lanIP}/api/v1/questions/`;
+    // Assuming an endpoint like /api/v1/questions/{question_id}/answers
+    // that uses your `get_answers_for_question` logic on the backend.
+    const answersBaseEndpoint = `${lanIP}/api/v1/questions/`;
+
     try {
-        const url = activeOnly ? `${endpoint}?active_only=true` : endpoint;
-        const response = await fetch(url);
-        
-        if (!response.ok) {
-            console.error(`HTTP error! Status: ${response.status}`);
+        // Step 1: Fetch all questions
+        // Correcting the activeOnly logic for clarity if you want truly active questions
+        const questionsUrl = activeOnly ? `${questionsEndpoint}?active_only=true` : questionsEndpoint;
+        const questionsResponse = await fetch(questionsUrl);
+
+        if (!questionsResponse.ok) {
+            console.error(`HTTP error fetching questions! Status: ${questionsResponse.status}`);
             return [];
         }
-        
-        const data = await response.json();
-        return data;
-        
+
+        const questions = await questionsResponse.json();
+        const questionsWithAnswers = [];
+
+        // Step 2: For each question, fetch its answers
+        for (const question of questions) {
+            const answersUrl = `${answersBaseEndpoint}${question.id}/answers`;
+            const answersResponse = await fetch(answersUrl);
+
+            let answers = [];
+            if (!answersResponse.ok) {
+                console.warn(`HTTP error fetching answers for question ID ${question.id}! Status: ${answersResponse.status}`);
+                // Continue even if answers for one question fail
+            } else {
+                const answersData = await answersResponse.json();
+                // Assuming the backend returns an object with an 'answers' array,
+                // matching your AnswerListResponse structure.
+                answers = answersData.answers || [];
+            }
+
+            questionsWithAnswers.push({
+                ...question, // Spread all properties of the original question
+                answers: answers // Add the fetched answers to it
+            });
+        }
+        console.log('answers below?')
+        console.log(questionsWithAnswers);
+        return questionsWithAnswers;
+
     } catch (error) {
-        console.error('Failed to fetch questions:', error);
+        console.error('Failed to fetch questions or answers:', error);
         return [];
     }
 };
 
+// Example of how to use it:
+// fetchQuestionsWithAnswers(true).then(data => console.log('Final Data:', data));
+
+
 
 const fetchThemes = async () => {
-    return new Promise(resolve => {
-        setTimeout(() => resolve(state.themes), 300);
-    });
+    try {
+        const response = await fetch(`${lanIP}/api/v1/themes/`);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+        }
+        const themes = await response.json();
+
+        // Fetch question count for each theme
+        const themesWithCounts = await Promise.all(
+            themes.map(async (theme) => {
+                try {
+                    const countResponse = await fetch(`${lanIP}/api/v1/themes/${theme.id}/question_count/`);
+                    if (!countResponse.ok) {
+                        // Log or handle error for individual count fetch, but don't stop the whole process
+                        console.warn(`Failed to fetch question count for theme ID ${theme.id}: ${countResponse.status}`);
+                        return { ...theme, questionCount: 0 }; // Assign 0 if count fails
+                    }
+                    const questionCount = await countResponse.json();
+                    return { ...theme, questionCount: questionCount };
+                } catch (countError) {
+                    console.error(`Error fetching question count for theme ID ${theme.id}:`, countError);
+                    return { ...theme, questionCount: 0 }; // Assign 0 if there's an error
+                }
+            })
+        );
+
+        return themesWithCounts;
+    } catch (error) {
+        console.error("Error fetching themes:", error);
+        throw error;
+    }
 };
 
+// Make sure 'lanIP' is correctly defined in your JavaScript, e.g.:
+// const lanIP = "http://localhost:8000"; // Or your actual server IP/domain
+
 const fetchUsers = async () => {
-    return new Promise(resolve => {
-        setTimeout(() => resolve(state.users), 300);
-    });
+    const url = `${lanIP}/api/v1/users/`;
+    console.log("Attempting to fetch users from:", url); // Crucial debug output
+
+    try {
+        const response = await fetch(url, {
+            method: 'GET', // Explicitly state the method
+            mode: 'cors',  // Explicitly set CORS mode
+            credentials: 'omit', // Explicitly omit credentials unless you specifically need them for this endpoint
+            headers: {
+                'Accept': 'application/json', // Request JSON response
+                // No 'Content-Type' for GET requests typically
+            },
+        });
+
+        console.log("Response status for users:", response.status);
+        console.log("Response headers for users:", Array.from(response.headers.entries())); // Inspect headers
+
+        if (!response.ok) {
+            // Attempt to read error details from the response
+            let errorDetail = `HTTP error! Status: ${response.status}`;
+            try {
+                const errorBody = await response.json();
+                errorDetail = errorBody.detail || errorDetail;
+            } catch (e) {
+                // If response is not JSON, use the raw text
+                const errorText = await response.text();
+                errorDetail = `HTTP error! Status: ${response.status}, Response: ${errorText.substring(0, 150)}...`;
+            }
+            throw new Error(errorDetail);
+        }
+
+        const users = await response.json();
+        console.log("Successfully fetched users:", users); // Confirm data receipt
+        return users;
+
+    } catch (error) {
+        console.error("Critical Error in fetchUsers:", error);
+        // Provide more context to the error message
+        const finalError = new Error(`Failed to fetch users from ${url}. Original error: ${error.message}`);
+        throw finalError;
+    }
 };
+
+// You should verify `lanIP` is defined somewhere like this:
+// const lanIP = "http://127.0.0.1:8000"; // Or your actual backend IP and port
 
 const updateQuestion = async (question) => {
     // API call to update question
@@ -562,162 +669,163 @@ const loadQuestions = async () => {
     }
 };
 
-// Helper function to create question element
+// No changes needed for createQuestionElement, as it correctly passes
+// question.answers to generateAnswersHTML.
 const createQuestionElement = (question) => {
     const element = document.createElement('div');
     element.className = 'c-question-item';
     element.dataset.id = question.id;
-    
-    const answerCount = question.answerCount || 4;
+
+    // Use question.answers directly now that it's correctly structured
+    // The `answerCount` might still be useful if you want a fixed number of answer inputs
+    // even if fewer answers are provided by the backend.
+    const answerCount = question.answers.length > 4 ? question.answers.length : 4; // Ensure at least 4 inputs, or more if answers exist
     const answersHTML = generateAnswersHTML(question.answers || [], answerCount);
-    
+
     // Get themes for dropdown
-    const themesOptions = state.themes.map(theme => 
+    const themesOptions = state.themes.map(theme =>
         `<option value="${theme.name}" ${question.theme === theme.name ? 'selected' : ''}>${theme.name}</option>`
     ).join('');
-    
+
     element.innerHTML = `
 <div class="c-question-info">
-    <div class="c-question-edit">
-        <input type="text" class="c-question-text-edit" value="${escapeHTML(question.text)}" placeholder="Enter question">
+        <div class="c-question-edit">
+            <input type="text" class="c-question-text-edit" value="${escapeHTML(question.question_text)}" placeholder="Enter question">
+        </div>
+
+        <div class="c-question-meta">
+            <div class="c-question-theme">
+                <label for="theme-${question.id}">Theme:</label>
+                <select id="theme-${question.id}" class="js-theme-select" data-question-id="${question.id}">
+                    ${themesOptions}
+                </select>
+            </div>
+
+            <div class="c-question-difficulty">
+                <label for="difficulty-${question.id}">Difficulty:</label>
+                <select id="difficulty-${question.id}" class="js-difficulty-select" data-question-id="${question.id}">
+                    <option value="1" ${question.difficultyLevelId === 1 ? 'selected' : ''}>Easy</option>
+                    <option value="2" ${question.difficultyLevelId === 2 ? 'selected' : ''}>Medium</option>
+                    <option value="3" ${question.difficultyLevelId === 3 ? 'selected' : ''}>Hard</option>
+                    <option value="4" ${question.difficultyLevelId === 4 ? 'selected' : ''}>Expert</option>
+                </select>
+            </div>
+
+            <div class="c-question-time">
+                <label for="think-time-${question.id}">Think Time (s):</label>
+                <input type="number" id="think-time-${question.id}" class="c-answer-text js-think-time"
+                        data-question-id="${question.id}" value="${question.think_time}" min="0">
+            </div>
+
+            <div class="c-question-time">
+                <label for="time-limit-${question.id}">Answer Time (s):</label>
+                <input type="number" id="time-limit-${question.id}" class="js-time-limit c-answer-text"
+                        data-question-id="${question.id}" value="${question.time_limit}" min="1">
+            </div>
+
+            <div class="c-question-points">
+                <label for="points-${question.id}">Points:</label>
+                <input type="number" id="points-${question.id}" class="c-answer-text js-points"
+                        data-question-id="${question.id}" value="${question.points}" min="1">
+            </div>
+
+            <div class="c-question-url">
+                <label for="url-${question.id}">Media URL:</label>
+                <input type="text" id="url-${question.id}" class="c-answer-text js-url"
+                        data-question-id="${question.id}" value="${question.Url || ''}" placeholder="Optional media URL">
+            </div>
+
+            <div class="c-question-correct c-answer-correct">
+                <input type="checkbox" id="is-active-${question.id}" class="js-is-active c-answer-correct"
+                        data-question-id="${question.id}" ${question.is_active ? 'checked' : ''}>
+                <label for="is-active-${question.id}">Active Question</label>
+            </div>
+
+            <div class="c-question-correct c-answer-correct">
+                <input type="checkbox" id="not-correct-${question.id}" class="js-not-correct c-answer-correct"
+                        data-question-id="${question.id}" ${question.no_answer_correct ? 'checked' : ''}>
+                <label for="not-correct-${question.id}">No correct answer</label>
+            </div>
+        </div>
+
+        <div class="c-question-env">
+            <div class="c-question-env-item">
+                <label for="light-min-${question.id}">Min Light:</label>
+                <input type="number" id="light-min-${question.id}" class="c-answer-text js-light-min"
+                        data-question-id="${question.id}" value="${question.LightMin || ''}" placeholder="Optional">
+            </div>
+            <div class="c-question-env-item">
+                <label for="light-max-${question.id}">Max Light:</label>
+                <input type="number" id="light-max-${question.id}" class="c-answer-text js-light-max"
+                        data-question-id="${question.id}" value="${question.LightMax || ''}" placeholder="Optional">
+            </div>
+            <div class="c-question-env-item">
+                <label for="temp-min-${question.id}">Min Temp (°C):</label>
+                <input type="number" id="temp-min-${question.id}" class="c-answer-text js-temp-min"
+                        data-question-id="${question.id}" value="${question.TempMin || ''}" placeholder="Optional">
+            </div>
+            <div class="c-question-env-item">
+                <label for="temp-max-${question.id}">Max Temp (°C):</label>
+                <input type="number" id="temp-max-${question.id}" class="c-answer-text js-temp-max"
+                        data-question-id="${question.id}" value="${question.TempMax || ''}" placeholder="Optional">
+            </div>
+        </div>
+
+        <div class="c-answer-options">
+            <div class="c-answer-count">
+                <label for="answer-count-${question.id}">Number of answers:</label>
+                <select id="answer-count-${question.id}" class="js-answer-count" data-question-id="${question.id}">
+                    ${[4, 5, 6, 7, 8, 9, 10].map(num =>
+                        `<option value="${num}" ${answerCount === num ? 'selected' : ''}>${num}</option>`
+                    ).join('')}
+                </select>
+            </div>
+
+            <div class="c-answer-list">
+                ${answersHTML}
+            </div>
+        </div>
+
+        <div class="c-explanation-container">
+            <h3 class="c-explanation-heading">Question Explanation</h3>
+            <div class="c-explanation-wrapper">
+                <textarea id="explanation-${question.id}" class="c-explanation-textarea js-explanation"
+                    data-question-id="${question.id}"
+                    placeholder="Enter a detailed explanation for this question. This will help users understand the correct answer."
+                >${question.explanation || ''}</textarea>
+            </div>
+        </div>
+
+        <div class="c-question-actions">
+            <button class="c-btn c-btn--edit js-edit-question" data-id="${question.id}">Save Changes</button>
+            <button class="c-btn c-btn--delete js-delete-question" data-id="${question.id}">Delete Question</button>
+        </div>
     </div>
-    
-    <div class="c-question-meta">
-        <!-- Existing theme and difficulty fields -->
-        <div class="c-question-theme">
-            <label for="theme-${question.id}">Theme:</label>
-            <select id="theme-${question.id}" class="js-theme-select" data-question-id="${question.id}">
-                ${themesOptions}
-            </select>
-        </div>
-        <div class="c-question-difficulty">
-            <label for="difficulty-${question.id}">Difficulty:</label>
-            <select id="difficulty-${question.id}" class="js-difficulty-select" data-question-id="${question.id}">
-                <option value="Easy" ${question.difficulty === 'Easy' ? 'selected' : ''}>Easy</option>
-                <option value="Medium" ${question.difficulty === 'Medium' ? 'selected' : ''}>Medium</option>
-                <option value="Hard" ${question.difficulty === 'Hard' ? 'selected' : ''}>Hard</option>
-                <option value="Expert" ${question.difficulty === 'Expert' ? 'selected' : ''}>Expert</option>
-            </select>
-        </div>
-        
-        <!-- Time-related fields -->
-        <div class="c-question-time">
-            <label for="think-time-${question.id}">Think Time (s):</label>
-            <input type="number" id="think-time-${question.id}" class="c-answer-text js-think-time" 
-                   data-question-id="${question.id}" value="${question.think_time || 0}" min="0">
-        </div>
-        <div class="c-question-time">
-            <label for="time-limit-${question.id}">Answer Time (s):</label>
-            <input type="number" id="time-limit-${question.id}" class="js-time-limit c-answer-text" 
-                   data-question-id="${question.id}" value="${question.time_limit || 30}" min="1">
-        </div>
-        
-        <!-- Points field -->
-        <div class="c-question-points">
-            <label for="points-${question.id}">Points:</label>
-            <input type="number" id="points-${question.id}" class="c-answer-text js-points" 
-                   data-question-id="${question.id}" value="${question.points || 10}" min="1">
-        </div>
-        
-        <!-- URL field -->
-        <div class="c-question-url">
-            <label for="url-${question.id}">Media URL:</label>
-            <input type="text" id="url-${question.id}" class="c-answer-text js-url" 
-                   data-question-id="${question.id}" value="${question.Url || ''}" placeholder="Optional media URL">
-        </div>
-        
-        <!-- Active status checkbox -->
-        <div class="c-question-correct c-answer-correct">
-            <input type="checkbox" id="is-active-${question.id}" class="js-is-active c-answer-correct" 
-                   data-question-id="${question.id}" ${question.is_active ? 'checked' : ''}>
-            <label for="is-active-${question.id}">Active Question</label>
-        </div>
-        
-        <!-- No answer correct checkbox -->
-        <div class="c-question-correct c-answer-correct">
-            <input type="checkbox" id="not-correct-${question.id}" class="js-not-correct c-answer-correct" 
-                   data-question-id="${question.id}" ${question.no_answer_correct ? 'checked' : ''}>
-            <label for="not-correct-${question.id}">No correct answer</label>
-        </div>
-    </div>
-    
-    <!-- Environmental conditions (yes, they are needed) -->
-    <div class="c-question-env">
-        <div class="c-question-env-item">
-            <label for="light-min-${question.id}">Min Light:</label>
-            <input type="number" id="light-min-${question.id}" class="c-answer-text js-light-min" 
-                   data-question-id="${question.id}" value="${question.LightMin || ''}" placeholder="Optional">
-        </div>
-        <div class="c-question-env-item">
-            <label for="light-max-${question.id}">Max Light:</label>
-            <input type="number" id="light-max-${question.id}" class="c-answer-text js-light-max" 
-                   data-question-id="${question.id}" value="${question.LightMax || ''}" placeholder="Optional">
-        </div>
-        <div class="c-question-env-item">
-            <label for="temp-min-${question.id}">Min Temp:</label>
-            <input type="number" id="temp-min-${question.id}" class="c-answer-text js-temp-min" 
-                   data-question-id="${question.id}" value="${question.TempMin || ''}" placeholder="Optional">
-        </div>
-        <div class="c-question-env-item">
-            <label for="temp-max-${question.id}">Max Temp:</label>
-            <input type="number" id="temp-max-${question.id}" class="c-answer-text js-temp-max" 
-                   data-question-id="${question.id}" value="${question.TempMax || ''}" placeholder="Optional">
-        </div>
-    </div>
-    
-    <!-- Rest of your existing content -->
-    <div class="c-answer-options">
-        <div class="c-answer-count">
-            <label for="answer-count-${question.id}">Number of answers:</label>
-            <select id="answer-count-${question.id}" class="js-answer-count" data-question-id="${question.id}">
-                ${[4, 5, 6, 7, 8, 9, 10].map(num => 
-                    `<option value="${num}" ${answerCount === num ? 'selected' : ''}>${num}</option>`
-                ).join('')}
-            </select>
-        </div>
-        
-        <div class="c-answer-list">
-            ${answersHTML}
-        </div>
-    </div>
-    
-    <div class="c-explanation-container">
-        <h3 class="c-explanation-heading">Question Explanation</h3>
-        <div class="c-explanation-wrapper">
-            <textarea id="explanation-${question.id}" class="c-explanation-textarea" 
-                placeholder="Enter a detailed explanation for this question. This will help users understand the correct answer."
-            >${question.explanation || ''}</textarea>
-        </div>
-    </div>
-    
-    <div class="c-question-actions">
-        <button class="c-btn c-btn--edit js-edit-question" data-id="${question.id}">Edit</button>
-        <button class="c-btn c-btn--delete js-delete-question">Delete</button>
-    </div>
-</div>
     `;
-    
+
     return element;
 };
 
 // Helper function to generate answers HTML
 const generateAnswersHTML = (answers, count) => {
     return Array.from({length: count}, (_, i) => {
-        const answer = answers[i] || {text: '', isCorrect: false};
+        // Access properties using the new names: answer_text and is_correct
+        const answer = answers[i] || { answer_text: '', is_correct: false };
         return `
             <div class="c-answer-item">
                 <input type="text" 
                        class="c-answer-text" 
-                       value="${escapeHTML(answer.text)}" 
+                       value="${escapeHTML(answer.answer_text)}" 
                        placeholder="Answer option ${i+1}">
                 <label class="c-answer-correct">
-                    <input type="checkbox" ${answer.isCorrect ? 'checked' : ''}>
+                    <input type="checkbox" ${answer.is_correct ? 'checked' : ''}>
                     <span>Correct</span>
                 </label>
             </div>
         `;
     }).join('');
 };
+
 
 // Event delegation handler for question actions
 const handleQuestionActions = (event) => {
@@ -901,15 +1009,15 @@ const loadThemes = async () => {
 
 const loadUsers = async () => {
     const userTableBody = document.querySelector('.c-user-table tbody');
-    
+
     if (!userTableBody) return;
-    
+
     showLoading(userTableBody);
-    
+
     try {
         const users = await fetchUsers();
-        
-        if (users.length === 0) {
+
+        if (!users || users.length === 0) { // Check if users is null/undefined or empty
             userTableBody.innerHTML = `
                 <tr>
                     <td colspan="5" class="c-empty-state">No users found.</td>
@@ -917,27 +1025,40 @@ const loadUsers = async () => {
             `;
             return;
         }
-        
-        userTableBody.innerHTML = users.map(user => `
-            <tr data-id="${user.id}">
-                <td data-label="Username">${user.username}</td>
-                <td data-label="Role">
-                    <span class="c-tag c-tag--role c-tag--${user.role.toLowerCase()}">${user.role}</span>
-                </td>
-                <td data-label="Last Active">${user.lastActive}</td>
-                <td>
-                    <button class="c-btn c-btn--edit js-edit-user">
-                        <span>Edit</span>
-                    </button>
-                </td>
-                <td>
-                    <button class="c-btn c-btn--delete js-delete-user">
-                        <span>Delete</span>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-        
+
+        userTableBody.innerHTML = users.map(user => {
+            // Map userRoleId to a displayable role name
+            // You'll need a mapping for userRoleId to role names, e.g., from your backend or a static client-side map.
+            // For example, if userRoleId 1 = 'Admin', 2 = 'Manager', 3 = 'Standard User'
+            // For now, let's just display the ID or map it to a placeholder.
+            // A more robust solution involves fetching roles from the backend or having a global roles mapping.
+            const roleName = getRoleName(user.userRoleId); // You need to define getRoleName
+            const lastActiveDisplay = user.last_active ? new Date(user.last_active).toLocaleString() : 'Never';
+
+            // Combine first_name and last_name for display username
+            const displayName = `${user.first_name} ${user.last_name}`;
+
+            return `
+                <tr data-id="${user.id}">
+                    <td data-label="Username">${displayName}</td>
+                    <td data-label="Role">
+                        <span class="c-tag c-tag--role c-tag--${roleName.toLowerCase()}">${roleName}</span>
+                    </td>
+                    <td data-label="Last Active">${lastActiveDisplay}</td>
+                    <td>
+                        <button class="c-btn c-btn--edit js-edit-user">
+                            <span>Edit</span>
+                        </button>
+                    </td>
+                    <td>
+                        <button class="c-btn c-btn--delete js-delete-user">
+                            <span>Delete</span>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
         // Add event listeners to new buttons
         userTableBody.querySelectorAll('.js-edit-user').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -948,20 +1069,22 @@ const loadUsers = async () => {
                 }
             });
         });
-        
+
         userTableBody.querySelectorAll('.js-delete-user').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const id = parseInt(btn.closest('tr').dataset.id);
                 const user = users.find(u => u.id === id);
-                
-                if (user && user.role === 'Admin' && state.users.filter(u => u.role === 'Admin').length === 1) {
+
+                // Assuming state.users is updated elsewhere or needs to be refreshed.
+                // For now, using 'users' array from fetch, which is already up-to-date.
+                if (user && roleName === 'Admin' && users.filter(u => getRoleName(u.userRoleId) === 'Admin').length === 1) {
                     showNotification('Cannot delete the last admin user.', 'error');
                     return;
                 }
-                
+
                 showConfirmDialog('Are you sure you want to delete this user?', async () => {
                     await deleteItem('users', id);
-                    loadUsers();
+                    loadUsers(); // Reload users after deletion
                     showNotification('User deleted successfully');
                 });
             });
@@ -973,6 +1096,19 @@ const loadUsers = async () => {
                 <td colspan="5" class="c-error-state">Failed to load users. Please try again.</td>
             </tr>
         `;
+    }
+};
+
+// --- Add this helper function to map userRoleId to a displayable role name ---
+// You will need to define how userRoleId maps to actual role names.
+// This is a placeholder; you might fetch roles from the backend or have a fixed map.
+const getRoleName = (userRoleId) => {
+    switch (userRoleId) {
+        case 1: return 'Admin';
+        case 2: return 'Manager';
+        case 3: return 'Standard User';
+        // Add more cases as needed for your user roles
+        default: return 'Unknown Role';
     }
 };
 
