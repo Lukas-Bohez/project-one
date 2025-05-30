@@ -1,4 +1,7 @@
 bcrypt==4.1.2
+# Gamepad control and system requirements evdev is linux only
+evdev==1.6.1
+
 
 #normal imports
 annotated-types==0.7.0
