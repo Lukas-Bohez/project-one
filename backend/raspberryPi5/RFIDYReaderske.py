@@ -86,7 +86,7 @@ class HardcoreRFID:
         current_time = time.time()
         
         # Skip if we're in cooldown period
-        if current_time - self.last_read_time < 15:
+        if current_time - self.last_read_time < 3:
             return None
             
         if self._wait_for_tag():
