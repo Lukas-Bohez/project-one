@@ -1,7 +1,6 @@
 bcrypt==4.1.2
-# Gamepad control and system requirements - pygame/pyautogui version
+# Gamepad control requirements - pygame only version
 pygame==2.6.1
-pyautogui==0.9.54
 #normal imports
 annotated-types==0.7.0
 anyio==4.8.0
