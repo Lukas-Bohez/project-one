@@ -2,6 +2,10 @@ import socketio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, status, Body
 from fastapi.middleware.cors import CORSMiddleware
+import time
+import traceback
+from threading import Thread, Event
+import socket
 # Import the new ThemeRepository
 from database.datarepository import QuestionRepository, AnswerRepository, ThemeRepository 
 from models.models import (
@@ -20,6 +24,18 @@ from fastapi import Query, Depends
 from models.models import User, UserCreate, UserUpdate, UserPublic # Import your new user models
 from database.datarepository import UserRepository
 from models.models import ErrorMessage,ErrorNotFound
+
+try:
+    from raspberryPi5.RFIDYReaderske import HardcoreRFID
+    from raspberryPi5.servomotor import ServoMotor
+    from raspberryPi5.temperature import TemperatureSensor
+    from raspberryPi5.mcpLighty import LightSensor
+    from raspberryPi5.lcd import LCD1602A
+    RPI_COMPONENTS_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Raspberry Pi components not found or failed to import: {e}")
+    print("The Pi-related background thread will not start.")
+    RPI_COMPONENTS_AVAILABLE = False
 
 
 # ----------------------------------------------------
@@ -641,6 +657,225 @@ async def delete_user(user_id: int):
 # - Logout (e.g., POST /api/v1/users/logout)
 # - Get user by RFID (if needed for specific frontend flows)
 
+
+# Global flag to signal the background thread to stop
+stop_thread_event = Event()
+
+# --- Raspberry Pi Script Logic (adapted into a function) ---
+
+# Constants (re-declare or import if they were in a separate config for the Pi script)
+REFRESH_INTERVAL = 1  # seconds
+RFID_DISPLAY_TIME = 3  # seconds to display RFID code (matches RFID cooldown)
+SERVO_IDLE_ANGLE = 0  # Neutral position when idle
+
+def get_ip_address():
+    """Get the IP address of the Raspberry Pi"""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "No IP"
+
+def format_second_row(temp, lux, angle):
+    """Format the second row of the LCD with sensor data"""
+    return f"{temp:.1f}C {lux:.0f}L {angle}deg"
+
+def raspberry_pi_main_thread(stop_event: Event):
+    """
+    This function will run in a separate thread, containing your Raspberry Pi logic.
+    It takes an Event object to signal when it should stop.
+    """
+    if not RPI_COMPONENTS_AVAILABLE:
+        print("Skipping Raspberry Pi thread start due to component import errors.")
+        return
+
+    # Initialize components
+    try:
+        lcd = LCD1602A()
+        rfid = HardcoreRFID()
+        servo = ServoMotor()
+        temp_sensor = TemperatureSensor()
+        light_sensor = LightSensor()
+    except Exception as e:
+        print(f"Failed to initialize Raspberry Pi components in thread: {e}")
+        print(traceback.format_exc())
+        stop_event.set() # Signal main app about failure if critical
+        return
+
+    # Initial positions
+    servo.set_angle(SERVO_IDLE_ANGLE)
+    current_angle = SERVO_IDLE_ANGLE
+
+    # State variables
+    last_refresh = 0
+    rfid_display_start = 0
+    showing_rfid = False
+    rfid_code = ""
+    servo_active = False
+
+    try:
+        # Initial display setup
+        lcd.clear()
+        ip_address = get_ip_address()
+        lcd.write_line(0, ip_address[:16])
+
+        while not stop_event.is_set(): # Loop while stop_event is not set
+            current_time = time.time()
+
+            try:
+                # Only check for RFID if we're not currently showing one and servo isn't active
+                if not showing_rfid and not servo_active:
+                    uid = rfid.read_card()
+                    if uid:  # RFID reader already handles cooldown and duplicate detection
+                        rfid_code = uid
+                        rfid_display_start = current_time
+                        showing_rfid = True
+
+                        # Display RFID immediately
+                        lcd.write_line(1, f"RFID:{rfid_code[:11]}")
+
+                # Check if RFID display time has expired and start servo sweep
+                if showing_rfid and not servo_active and (current_time - rfid_display_start) >= RFID_DISPLAY_TIME:
+                    servo_active = True
+                    try:
+                        # Simple single sweep from 0 to 180 degrees in exactly 3 seconds
+                        sweep_start_time = time.time()
+                        sweep_duration = 3.0  # 3 seconds total
+                        start_angle = 0
+                        end_angle = 180
+
+                        while (time.time() - sweep_start_time < sweep_duration) and not stop_event.is_set():
+                            # Calculate current position based on time elapsed
+                            elapsed = time.time() - sweep_start_time
+                            progress = elapsed / sweep_duration  # 0.0 to 1.0
+                            if progress > 1.0:
+                                progress = 1.0
+
+                            # Calculate angle and round to nearest 5 degrees
+                            raw_angle = start_angle + (end_angle - start_angle) * progress
+                            angle = round(raw_angle / 5) * 5  # Round to nearest multiple of 5
+
+                            servo.set_angle(angle)
+                            temp = temp_sensor.read_temperature()
+                            lux = light_sensor()
+                            current_degrees = servo.read_degrees()
+                            lcd.write_line(1, format_second_row(temp, lux, current_degrees)[:16])
+
+                            time.sleep(0.05)  # Small delay for sensor readings
+
+                        if not stop_event.is_set(): # Only complete sweep if not stopping
+                            # Ensure we end at exactly 180 degrees
+                            servo.set_angle(180)
+                            time.sleep(0.1)
+
+                            # Return to idle position
+                            servo.set_angle(SERVO_IDLE_ANGLE)
+                            current_angle = servo.read_degrees()
+
+                    except Exception as e:
+                        print(f"Servo sweep error: {e}")
+                    finally:
+                        servo_active = False
+                        showing_rfid = False  # Done with RFID sequence
+                        lcd.clear()
+                        lcd.write_line(0, ip_address[:16])
+                        last_refresh = 0  # Force immediate normal display update
+
+                # Update normal display at regular intervals (only when not showing RFID)
+                if not showing_rfid and (current_time - last_refresh) >= REFRESH_INTERVAL:
+                    try:
+                        temp = temp_sensor.read_temperature()
+                        lux = light_sensor()
+                        current_angle = servo.read_degrees()
+                        lcd.write_line(1, format_second_row(temp, lux, current_angle)[:16])
+                        last_refresh = current_time
+                    except Exception as e:
+                        print(f"Sensor read error: {e}")
+                        lcd.write_line(1, "Sensor Error")
+                        last_refresh = current_time
+
+                time.sleep(0.05)  # Reduced sleep for more responsive RFID detection
+
+            except Exception as e:
+                print(f"Main loop error in Pi thread: {e}")
+                print(traceback.format_exc())
+                time.sleep(1)
+
+    except KeyboardInterrupt: # This won't typically be caught directly in a background thread
+        print("\nExiting Pi thread due to KeyboardInterrupt (unlikely to occur directly)...")
+    except Exception as e:
+        print(f"Fatal error in Pi thread: {e}")
+        print(traceback.format_exc())
+    finally:
+        print("Pi thread cleanup initiated.")
+        try:
+            if servo: # Check if servo was initialized
+                servo.set_angle(SERVO_IDLE_ANGLE)  # Return to neutral position
+                time.sleep(0.5)
+                servo.cleanup()
+            if lcd: # Check if lcd was initialized
+                lcd.clear()
+                lcd.cleanup()
+            print("Pi thread cleanup complete.")
+        except Exception as e:
+            print(f"Pi thread cleanup error: {e}")
+
+
+# --- FastAPI Application Lifecycle Events ---
+
+@app.on_event("startup")
+async def startup_event():
+    print("FastAPI app starting up...")
+    if RPI_COMPONENTS_AVAILABLE:
+        # Start the Raspberry Pi script in a new thread
+        pi_thread = Thread(target=raspberry_pi_main_thread, args=(stop_thread_event,))
+        pi_thread.daemon = True # Allow main program to exit even if thread is running
+        pi_thread.start()
+        print("Raspberry Pi script thread started.")
+    else:
+        print("Raspberry Pi thread will not be started due to import errors.")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    print("FastAPI app shutting down...")
+    # Signal the background thread to stop
+    stop_thread_event.set()
+    # Give the thread a moment to clean up (optional, as it's a daemon thread)
+    # If the thread is not a daemon, you'd want to join it: pi_thread.join(timeout=5)
+    print("Shutdown signal sent to Raspberry Pi thread.")
+
+
+# --- FastAPI Endpoints ---
+
+@app.get("/")
+async def read_root():
+    return {"message": "Welcome to the Site Quiz Backend!"}
+
+@app.get("/api/v1/users/", response_model=List[UserPublic])
+async def get_all_users(request: Request):
+    """
+    Fetches all users from the database.
+    """
+    try:
+        users = UserRepository.get_all_users()
+        # Your console log shows it's a list of dictionaries, so this should work.
+        return [UserPublic(**user) for user in users]
+    except Exception as e:
+        print(f"Error in get_all_users endpoint: {e}")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail="Failed to retrieve users.")
+
+# Example of a middleware to log requests (if you still have this)
+@app.middleware("http")
+async def log_request(request: Request, call_next):
+    # print(f"Incoming request: {request.method} {request.url}")
+    response = await call_next(request)
+    # print(f"Outgoing response status: {response.status_code}")
+    return response
 
 # ----------------------------------------------------
 # Request Logging Middleware (Existing, unchanged)
