@@ -2,6 +2,7 @@ bcrypt==4.1.2
 
 # Special hardware imports (Raspberry Pi specific)
 spidev==3.6  # Note: Version might vary based on system installation
+smbus2==0.4.1  # More modern Python 3 compatible version
 # Gamepad control requirements - pygame only version
 pygame==2.6.1
 
