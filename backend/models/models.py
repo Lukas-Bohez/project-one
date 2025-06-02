@@ -265,3 +265,11 @@ class UserPublic(UserBase):
 
 class ErrorMessage(BaseModel):
     detail: str
+
+
+class IpAddressPayload(BaseModel):
+    ip_address: str
+
+class AppealPayload(BaseModel):
+    ip_address: str
+    quote: str # The quote they provided
