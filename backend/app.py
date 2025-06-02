@@ -1304,6 +1304,7 @@ async def log_request(request: Request, call_next):
 # ----------------------------------------------------
 # Request Logging Middleware
 # ----------------------------------------------------
+app.mount("/ws", socketio.ASGIApp(sio))
 
 @app.middleware("http")
 async def log_request(request: Request, call_next):
@@ -1319,13 +1320,46 @@ async def log_request(request: Request, call_next):
     return response
 
 
+# Socket.IO Event Handlers
+@sio.on('connect')
+async def handle_connect(sid, environ):
+    """
+    Handles a new Socket.IO client connection.
+    Logs the connection to the backend console.
+    """
+    print(f"Socket.IO Client connected: {sid}")
+    # You can emit a message back to the client upon connection if needed
+    await sio.emit('message', {'type': 'status', 'text': f'Connected with SID: {sid}'}, room=sid)
+
+@sio.on('disconnect')
+async def handle_disconnect(sid):
+    """
+    Handles a Socket.IO client disconnection.
+    Logs the disconnection to the backend console.
+    """
+    print(f"Socket.IO Client disconnected: {sid}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # ----------------------------------------------------
 # Run the app
 # ----------------------------------------------------
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
-        "app:sio_app", # <-- YOU ARE RUNNING sio_app, not app directly
+        "app:app",
         host="0.0.0.0",
         port=8000,
         reload=True,
