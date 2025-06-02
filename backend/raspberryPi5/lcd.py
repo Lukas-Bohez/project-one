@@ -1,5 +1,5 @@
 import time
-import smbus
+import smbus2
 import RPi.GPIO as GPIO
 
 class LCD1602A:
@@ -59,7 +59,7 @@ class LCD1602A:
         self.e_pin = e_pin
         
         # Initialize I2C bus
-        self.bus = smbus.SMBus(i2c_bus)
+        self.bus = smbus2.SMBus(i2c_bus)
         
         # Setup GPIO
         GPIO.setmode(GPIO.BCM)
