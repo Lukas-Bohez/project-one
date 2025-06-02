@@ -576,3 +576,314 @@ class UserRepository:
             params = [user_id]
         return Database.execute_sql(sql, params)
     
+
+class IpAddressRepository:
+
+    @staticmethod
+    def create_ip_address(ip_address: str) -> Optional[int]:
+        """
+        Inserts a new IP address into the ipAddresses table.
+        Returns the ID of the new IP address or None if creation fails.
+        """
+        sql = """
+            INSERT INTO ipAddresses (ip_address)
+            VALUES (%s)
+        """
+        params = [ip_address]
+        return Database.execute_sql(sql, params)
+
+    @staticmethod
+    def get_ip_address_by_id(ip_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Fetches a single IP address by its ID.
+        """
+        sql = "SELECT * FROM ipAddresses WHERE id = %s"
+        params = [ip_id]
+        return Database.get_one_row(sql, params)
+
+    @staticmethod
+    def get_ip_address_by_string(ip_address: str) -> Optional[Dict[str, Any]]:
+        """
+        Fetches a single IP address by its string value.
+        """
+        sql = "SELECT * FROM ipAddresses WHERE ip_address = %s"
+        params = [ip_address]
+        return Database.get_one_row(sql, params)
+
+    @staticmethod
+    def get_all_ip_addresses() -> List[Dict[str, Any]]:
+        """
+        Fetches all IP addresses from the database.
+        """
+        sql = "SELECT * FROM ipAddresses ORDER BY ip_address ASC"
+        return Database.get_rows(sql)
+
+    @staticmethod
+    def update_ip_address(
+        ip_id: int,
+        is_banned: Optional[bool] = None,
+        ban_reason: Optional[str] = None,
+        ban_date: Optional[datetime] = None,
+        banned_by: Optional[int] = None,
+        ban_expires_at: Optional[datetime] = None
+    ) -> bool:
+        """
+        Updates an existing IP address's information.
+        Returns True if the update was successful, False otherwise.
+        """
+        set_clauses = []
+        params = []
+
+        if is_banned is not None:
+            set_clauses.append("is_banned = %s")
+            params.append(is_banned)
+        if ban_reason is not None:
+            set_clauses.append("ban_reason = %s")
+            params.append(ban_reason)
+        if ban_date is not None:
+            set_clauses.append("ban_date = %s")
+            params.append(ban_date)
+        if banned_by is not None:
+            set_clauses.append("banned_by = %s")
+            params.append(banned_by)
+        if ban_expires_at is not None:
+            set_clauses.append("ban_expires_at = %s")
+            params.append(ban_expires_at)
+
+        if not set_clauses:
+            return False # Nothing to update
+
+        sql = f"UPDATE ipAddresses SET {', '.join(set_clauses)} WHERE id = %s"
+        params.append(ip_id)
+        # execute_sql returns rowcount for updates, which is 0 for no change, 1 for success.
+        # We can convert that to a boolean.
+        return bool(Database.execute_sql(sql, params))
+
+    @staticmethod
+    def delete_ip_address(ip_id: int) -> bool:
+        """
+        Deletes an IP address by its ID.
+        Returns True if deletion was successful, False otherwise.
+        """
+        sql = "DELETE FROM ipAddresses WHERE id = %s"
+        params = [ip_id]
+        return bool(Database.execute_sql(sql, params))
+
+    @staticmethod
+    def get_banned_ip_addresses() -> List[Dict[str, Any]]:
+        """
+        Fetches all currently banned IP addresses.
+        Considers `is_banned` and `ban_expires_at`.
+        """
+        sql = """
+            SELECT * FROM ipAddresses
+            WHERE is_banned = TRUE AND (ban_expires_at IS NULL OR ban_expires_at > NOW())
+            ORDER BY ban_date DESC
+        """
+        return Database.get_rows(sql)
+
+    @staticmethod
+    def is_ip_banned(ip_address: str) -> bool:
+        """
+        Checks if a specific IP address is currently banned.
+        """
+        sql = """
+            SELECT COUNT(*) FROM ipAddresses
+            WHERE ip_address = %s AND is_banned = TRUE AND (ban_expires_at IS NULL OR ban_expires_at > NOW())
+        """
+        params = [ip_address]
+        # execute_sql returns rowcount for selects, or 0 if nothing found.
+        # get_one_row would be better for COUNT(*). Let's use get_one_row and then check its value.
+        result = Database.get_one_row(sql, params)
+        return result and result.get('COUNT(*)', 0) > 0 # Access by column name 'COUNT(*)'
+    @staticmethod
+    def get_ip_address_by_string(ip_address: str) -> Optional[Dict[str, Any]]:
+        """
+        Fetches a single IP address by its string value, including ban details.
+        """
+        sql = """
+            SELECT id, ip_address, is_banned, ban_reason, ban_date, banned_by, ban_expires_at, created_at
+            FROM ipAddresses
+            WHERE ip_address = %s
+        """
+        params = [ip_address]
+        return Database.get_one_row(sql, params)
+
+    @staticmethod
+    def is_ip_banned(ip_address: str) -> bool:
+        """
+        Checks if a specific IP address is currently banned.
+        """
+        sql = """
+            SELECT COUNT(*) FROM ipAddresses
+            WHERE ip_address = %s AND is_banned = TRUE AND (ban_expires_at IS NULL OR ban_expires_at > NOW())
+        """
+        params = [ip_address]
+        result = Database.get_one_row(sql, params)
+        return result and result.get('COUNT(*)', 0) > 0 # Access by column name 'COUNT(*)'
+
+    # --- New method for ban appeal (to clear a ban) ---
+    @staticmethod
+    def appeal_ban(ip_address: str) -> bool:
+        """
+        Clears the ban status for a specific IP address.
+        """
+        sql = """
+            UPDATE ipAddresses
+            SET is_banned = FALSE, ban_reason = NULL, ban_date = NULL, banned_by = NULL, ban_expires_at = NULL
+            WHERE ip_address = %s
+        """
+        params = [ip_address]
+        return bool(Database.execute_sql(sql, params))
+    
+
+
+class UserIpAddressRepository:
+
+    @staticmethod
+    def create_user_ip_address_link(
+        user_id: int,
+        ip_address_id: int,
+        is_primary: bool = False
+    ) -> Optional[int]:
+        """
+        Creates a new link between a user and an IP address.
+        If the link already exists, it updates the usage_count and last_used.
+        Returns the ID of the new/updated link or None.
+        """
+        # First, try to find an existing link
+        existing_link = UserIpAddressRepository.get_user_ip_address_link(user_id, ip_address_id)
+
+        if existing_link:
+            # Update existing link
+            sql = """
+                UPDATE userIpAddresses
+                SET usage_count = usage_count + 1, last_used = CURRENT_TIMESTAMP
+                WHERE userId = %s AND ipAddressId = %s
+            """
+            params = [user_id, ip_address_id]
+            Database.execute_sql(sql, params)
+            return existing_link['id']
+        else:
+            # Create new link
+            sql = """
+                INSERT INTO userIpAddresses (userId, ipAddressId, is_primary, usage_count)
+                VALUES (%s, %s, %s, %s)
+            """
+            params = [user_id, ip_address_id, is_primary, 1] # Start with 1 usage
+            return Database.execute_sql(sql, params)
+
+    @staticmethod
+    def get_user_ip_address_link(user_id: int, ip_address_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Fetches a specific link between a user and an IP address.
+        """
+        sql = "SELECT * FROM userIpAddresses WHERE userId = %s AND ipAddressId = %s"
+        params = [user_id, ip_address_id]
+        return Database.get_one_row(sql, params)
+
+    @staticmethod
+    def get_user_ip_addresses(user_id: int) -> List[Dict[str, Any]]:
+        """
+        Fetches all IP addresses associated with a specific user,
+        joining with the ipAddresses table to get IP details.
+        """
+        sql = """
+            SELECT uia.*, ip.ip_address, ip.is_banned, ip.ban_reason, ip.ban_date, ip.ban_expires_at
+            FROM userIpAddresses uia
+            JOIN ipAddresses ip ON uia.ipAddressId = ip.id
+            WHERE uia.userId = %s
+            ORDER BY uia.last_used DESC
+        """
+        params = [user_id]
+        return Database.get_rows(sql, params)
+
+    @staticmethod
+    def get_users_by_ip_address(ip_address_id: int) -> List[Dict[str, Any]]:
+        """
+        Fetches all users associated with a specific IP address,
+        joining with the users table to get user details.
+        """
+        sql = """
+            SELECT uia.*, u.first_name, u.last_name, u.rfid_code, u.userRoleId
+            FROM userIpAddresses uia
+            JOIN users u ON uia.userId = u.id
+            WHERE uia.ipAddressId = %s
+            ORDER BY uia.last_used DESC
+        """
+        params = [ip_address_id]
+        return Database.get_rows(sql, params)
+
+    @staticmethod
+    def set_primary_ip_address(user_id: int, ip_address_id: int) -> bool:
+        """
+        Sets a specific IP address as the primary for a user,
+        and unsets all other primary IPs for that user.
+        """
+        # Start a transaction (if Database supports it directly, otherwise handle in SQL)
+        # For simplicity, we'll run two separate queries.
+        # A more robust solution might wrap this in a single transaction if Database had transaction context manager.
+
+        # 1. Unset all primary IPs for the user
+        sql_unset_primary = "UPDATE userIpAddresses SET is_primary = FALSE WHERE userId = %s"
+        Database.execute_sql(sql_unset_primary, [user_id])
+
+        # 2. Set the target IP as primary
+        sql_set_primary = "UPDATE userIpAddresses SET is_primary = TRUE WHERE userId = %s AND ipAddressId = %s"
+        params_set_primary = [user_id, ip_address_id]
+        return bool(Database.execute_sql(sql_set_primary, params_set_primary))
+
+    @staticmethod
+    def update_user_ip_address_link(
+        link_id: int,
+        is_primary: Optional[bool] = None,
+        usage_count: Optional[int] = None,
+        first_used: Optional[datetime] = None,
+        last_used: Optional[datetime] = None
+    ) -> bool:
+        """
+        Updates an existing user-IP link's information.
+        Returns True if the update was successful, False otherwise.
+        """
+        set_clauses = []
+        params = []
+
+        if is_primary is not None:
+            set_clauses.append("is_primary = %s")
+            params.append(is_primary)
+        if usage_count is not None:
+            set_clauses.append("usage_count = %s")
+            params.append(usage_count)
+        if first_used is not None:
+            set_clauses.append("first_used = %s")
+            params.append(first_used)
+        if last_used is not None:
+            set_clauses.append("last_used = %s")
+            params.append(last_used)
+
+        if not set_clauses:
+            return False # Nothing to update
+
+        sql = f"UPDATE userIpAddresses SET {', '.join(set_clauses)} WHERE id = %s"
+        params.append(link_id)
+        return bool(Database.execute_sql(sql, params))
+
+    @staticmethod
+    def delete_user_ip_address_link(link_id: int) -> bool:
+        """
+        Deletes a specific user-IP link by its ID.
+        Returns True if deletion was successful, False otherwise.
+        """
+        sql = "DELETE FROM userIpAddresses WHERE id = %s"
+        params = [link_id]
+        return bool(Database.execute_sql(sql, params))
+
+    @staticmethod
+    def delete_user_ip_address_link_by_user_and_ip(user_id: int, ip_address_id: int) -> bool:
+        """
+        Deletes a specific user-IP link by user ID and IP address ID.
+        Returns True if deletion was successful, False otherwise.
+        """
+        sql = "DELETE FROM userIpAddresses WHERE userId = %s AND ipAddressId = %s"
+        params = [user_id, ip_address_id]
+        return bool(Database.execute_sql(sql, params))
