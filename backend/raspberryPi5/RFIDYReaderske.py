@@ -1,168 +1,281 @@
 #!/usr/bin/env python3
-import spidev
 import RPi.GPIO as GPIO
 import time
-
-# RC522 Register Definitions
-COMMAND_REG = 0x01
-STATUS1_REG = 0x07
-FIFO_DATA_REG = 0x09
-FIFO_LEVEL_REG = 0x0A
-BIT_FRAMING_REG = 0x0D
-MODE_REG = 0x11
-TX_CONTROL_REG = 0x12
-RFC_CFG_REG = 0x26
-GS_N_REG = 0x27
-CW_CFG_REG = 0x28
-TRANSCEIVE_CMD = 0x0C
-IDLE_CMD = 0x00
+from spidev import SpiDev
 
 class HardcoreRFID:
-    def __init__(self, bus=0, device=0, speed=1000000, rst_pin=22):
-        self.spi = spidev.SpiDev()
-        self.spi.open(bus, device)
-        self.spi.max_speed_hz = speed
-        self.spi.mode = 0b00
-        
-        self.rst_pin = rst_pin
+    # RC_522 Command words
+    PCD_IDLE = 0x00
+    PCD_AUTHENT = 0x0E
+    PCD_RECEIVE = 0x08
+    PCD_TRANSMIT = 0x04
+    PCD_TRANSCEIVE = 0x0C
+    PCD_RESETPHASE = 0x0F
+    PCD_CALCCRC = 0x03
+ 
+    # Mifare_One card command words
+    PICC_REQIDL = 0x26
+    PICC_REQALL = 0x52
+    PICC_ANTICOLL = 0x93
+    PICC_SElECTTAG = 0x93
+    PICC_AUTHENT1A = 0x60
+    PICC_AUTHENT1B = 0x61
+    PICC_READ = 0x30
+    PICC_WRITE = 0xA0
+    PICC_DECREMENT = 0xC0
+    PICC_INCREMENT = 0xC1
+    PICC_RESTORE = 0xC2
+    PICC_TRANSFER = 0xB0
+    PICC_HALT = 0x50
+ 
+    # RC_522 Registers
+    CommandReg = 0x01
+    CommIEnReg = 0x02
+    DivIEnReg = 0x03
+    CommIrqReg = 0x04
+    DivIrqReg = 0x05
+    ErrorReg = 0x06
+    Status1Reg = 0x07
+    Status2Reg = 0x08
+    FIFODataReg = 0x09
+    FIFOLevelReg = 0x0A
+    ControlReg = 0x0C
+    BitFramingReg = 0x0D
+    ModeReg = 0x11
+    TxControlReg = 0x14
+    TxAutoReg = 0x15
+    TModeReg = 0x2A
+    TPrescalerReg = 0x2B
+    TReloadRegH = 0x2C
+    TReloadRegL = 0x2D
+ 
+    MAX_LEN = 16
+ 
+    def __init__(self, dev='/dev/spidev0.0', spd=1000000):
+        GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.rst_pin, GPIO.OUT)
-        GPIO.output(self.rst_pin, GPIO.HIGH)
-        
-        self._init_rc522()
-        self.last_uid = None
-        self.last_read_time = 0
+        GPIO.setup(22, GPIO.OUT)
+        GPIO.output(22, 1)
+ 
+        # Setup SPI
+        self.spi = SpiDev()
+        bus, device_id = map(int, dev.replace('/dev/spidev', '').split('.'))
+        self.spi.open(bus, device_id)
+        self.spi.max_speed_hz = spd
+ 
+        self.RC_522_Reset()
+        self.Write_RC_522(self.TModeReg, 0x8D)
+        self.Write_RC_522(self.TPrescalerReg, 0x3E)
+        self.Write_RC_522(self.TReloadRegL, 30)
+        self.Write_RC_522(self.TReloadRegH, 0)
+        self.Write_RC_522(self.TxAutoReg, 0x40)
+        self.Write_RC_522(self.ModeReg, 0x3D)
+        self.AntennaOn()
+ 
+    def RC_522_Reset(self):
+        self.Write_RC_522(self.CommandReg, self.PCD_RESETPHASE)
+ 
+    def Write_RC_522(self, addr, val):
+        self.spi.xfer2([(addr << 1) & 0x7E, val])
+ 
+    def Read_RC_522(self, addr):
+        val = self.spi.xfer2([((addr << 1) & 0x7E) | 0x80, 0])
+        return val[1]
+ 
+    def SetBitMask(self, reg, mask):
+        tmp = self.Read_RC_522(reg)
+        self.Write_RC_522(reg, tmp | mask)
+ 
+    def ClearBitMask(self, reg, mask):
+        tmp = self.Read_RC_522(reg)
+        self.Write_RC_522(reg, tmp & (~mask))
+ 
+    def AntennaOn(self):
+        if not (self.Read_RC_522(self.TxControlReg) & 0x03):
+            self.SetBitMask(self.TxControlReg, 0x03)
+ 
+    def AntennaOff(self):
+        self.ClearBitMask(self.TxControlReg, 0x03)
+ 
+    def ToCard(self, command, sendData):
+        backData = []
+        backLen = 0
+        status = None
+        irqEn = 0x00
+        waitIRq = 0x00
+ 
+        if command == self.PCD_AUTHENT:
+            irqEn = 0x12
+            waitIRq = 0x10
+        elif command == self.PCD_TRANSCEIVE:
+            irqEn = 0x77
+            waitIRq = 0x30
+ 
+        self.Write_RC_522(self.CommIEnReg, irqEn | 0x80)
+        self.ClearBitMask(self.CommIrqReg, 0x80)
+        self.SetBitMask(self.FIFOLevelReg, 0x80)
+ 
+        self.Write_RC_522(self.CommandReg, self.PCD_IDLE)
+ 
+        for c in sendData:
+            self.Write_RC_522(self.FIFODataReg, c)
+ 
+        self.Write_RC_522(self.CommandReg, command)
+        if command == self.PCD_TRANSCEIVE:
+            self.SetBitMask(self.BitFramingReg, 0x80)
+ 
+        i = 2000
+        while True:
+            n = self.Read_RC_522(self.CommIrqReg)
+            if n & waitIRq:
+                break
+            if n & 0x01 or i == 0:
+                break
+            i -= 1
+ 
+        self.ClearBitMask(self.BitFramingReg, 0x80)
+ 
+        if i != 0:
+            if (self.Read_RC_522(self.ErrorReg) & 0x1B) == 0x00:
+                status = "MI_OK"
+ 
+                if n & irqEn & 0x01:
+                    status = "NOTAGERR"
+ 
+                if command == self.PCD_TRANSCEIVE:
+                    n = self.Read_RC_522(self.FIFOLevelReg)
+                    lastBits = self.Read_RC_522(self.ControlReg) & 0x07
+                    backLen = (n - 1) * 8 + lastBits if lastBits != 0 else n * 8
+ 
+                    for _ in range(n):
+                        backData.append(self.Read_RC_522(self.FIFODataReg))
+            else:
+                status = "ERR"
+        return status, backData, backLen
+ 
+    def RC_522_Request(self, reqMode):
+        self.Write_RC_522(self.BitFramingReg, 0x07)
+        status, backData, backBits = self.ToCard(self.PCD_TRANSCEIVE, [reqMode])
+        if status != "MI_OK" or backBits != 0x10:
+            status = "ERR"
+        return status, backBits
+ 
+    def RC_522_Anticoll(self):
+        serNum = []
+        self.Write_RC_522(self.BitFramingReg, 0x00)
+        serNumCheck = 0
+        serNum.append(self.PICC_ANTICOLL)
+        serNum.append(0x20)
+        status, backData, _ = self.ToCard(self.PCD_TRANSCEIVE, serNum)
+        if (status == "MI_OK") and (len(backData) == 5):
+            for i in range(4):
+                serNumCheck ^= backData[i]
+            if serNumCheck != backData[4]:
+                status = "ERR"
+        return status, backData
+ 
+    def RC_522_SelectTag(self, serNum):
+        buf = [self.PICC_SElECTTAG, 0x70] + serNum[:5]
+        pOut = self.CalulateCRC(buf)
+        buf += pOut
+        status, backData, backLen = self.ToCard(self.PCD_TRANSCEIVE, buf)
+        if status == "MI_OK" and backLen == 0x18:
+            return 1
+        return 0
+ 
+    def RC_522_Auth(self, authMode, BlockAddr, Sectorkey, serNum):
+        buff = [authMode, BlockAddr] + Sectorkey[:6] + serNum[:4]
+        status, _, _ = self.ToCard(self.PCD_AUTHENT, buff)
+        if status != "MI_OK":
+            print("AUTH ERROR")
+        elif (self.Read_RC_522(self.Status2Reg) & 0x08) == 0:
+            print("AUTH ERROR(status2reg & 0x08) == 0")
+        return status
+ 
+    def RC_522_Read(self, blockAddr):
+        recvData = [self.PICC_READ, blockAddr]
+        crc = self.CalulateCRC(recvData)
+        recvData += crc
+        status, backData, _ = self.ToCard(self.PCD_TRANSCEIVE, recvData)
+        if status == "MI_OK":
+            print(f"Sector {blockAddr} {backData}")
+        return backData
+ 
+    def CalulateCRC(self, pIndata):
+        self.ClearBitMask(self.DivIrqReg, 0x04)
+        self.SetBitMask(self.FIFOLevelReg, 0x80)
+        for c in pIndata:
+            self.Write_RC_522(self.FIFODataReg, c)
+        self.Write_RC_522(self.CommandReg, self.PCD_CALCCRC)
+ 
+        i = 0xFF
+        while i > 0:
+            n = self.Read_RC_522(self.DivIrqReg)
+            if n & 0x04:
+                break
+            i -= 1
+        retData = [
+            self.Read_RC_522(0x22),
+            self.Read_RC_522(0x21)
+        ]
+        return retData
     
-    def _spi_write(self, address, value):
-        address = (address << 1) & 0x7E
-        self.spi.xfer2([address, value])
-    
-    def _spi_read(self, address):
-        address = ((address << 1) & 0x7E) | 0x80
-        return self.spi.xfer2([address, 0])[1]
-    
-    def _init_rc522(self):
-        # Hardware reset
-        GPIO.output(self.rst_pin, GPIO.LOW)
-        time.sleep(0.1)
-        GPIO.output(self.rst_pin, GPIO.HIGH)
-        time.sleep(0.1)
-        
-        # Soft reset
-        self._spi_write(COMMAND_REG, IDLE_CMD)
-        time.sleep(0.1)
-        
-        # Configure RC522
-        self._spi_write(MODE_REG, 0x3D)
-        self._spi_write(RFC_CFG_REG, 0x7F)
-        self._spi_write(GS_N_REG, 0x50)
-        self._spi_write(CW_CFG_REG, 0x00)
-        self._spi_write(TX_CONTROL_REG, 0x03)
-        
-        # Clear FIFO
-        self._clear_fifo()
-    
-    def _clear_fifo(self):
-        """Clear the FIFO buffer"""
-        self._spi_write(FIFO_LEVEL_REG, 0x80)  # Flush FIFO
-        self._spi_write(COMMAND_REG, IDLE_CMD)
-    
-    def _wait_for_tag(self):
-        self._clear_fifo()
-        self._spi_write(BIT_FRAMING_REG, 0x07)
-        self._spi_write(COMMAND_REG, TRANSCEIVE_CMD)
-        self._spi_write(FIFO_DATA_REG, 0x26)
-        
-        start_time = time.time()
-        while (time.time() - start_time) < 0.1:
-            status = self._spi_read(STATUS1_REG)
-            if status & 0x08:  # Check if data received
-                fifo_level = self._spi_read(FIFO_LEVEL_REG) & 0x7F
-                if fifo_level > 0:
-                    return True
-        return False
-    
-    def _get_uid(self):
-        self._clear_fifo()
-        self._spi_write(BIT_FRAMING_REG, 0x00)
-        self._spi_write(COMMAND_REG, TRANSCEIVE_CMD)
-        self._spi_write(FIFO_DATA_REG, 0x93)  # ANTICOLL command
-        self._spi_write(FIFO_DATA_REG, 0x20)
-        
-        # Wait for response
-        start_time = time.time()
-        while (time.time() - start_time) < 0.1:
-            status = self._spi_read(STATUS1_REG)
-            if status & 0x08:  # Data received
-                fifo_level = self._spi_read(FIFO_LEVEL_REG) & 0x7F
-                if fifo_level >= 5:  # Should have 4 UID bytes + 1 BCC
-                    break
-        else:
+    def uid_to_number(self, uid):
+        """Convert UID list to a single decimal number"""
+        if not uid or len(uid) < 4:
             return None
         
-        # Read UID bytes
-        uid = []
-        for _ in range(4):  # Only read 4 bytes (ignore BCC)
-            byte_val = self._spi_read(FIFO_DATA_REG)
-            # Validate byte (should not be 0xFF unless it's a valid card)
-            if byte_val == 0xFF:
-                # Check if all bytes are 0xFF (invalid)
-                remaining_bytes = []
-                for _ in range(3 - len(uid)):
-                    remaining_bytes.append(self._spi_read(FIFO_DATA_REG))
-                if all(b == 0xFF for b in remaining_bytes):
-                    return None
-                uid.extend(remaining_bytes)
-                break
-            uid.append(byte_val)
+        # Take only the first 4 bytes for the UID (ignore checksum)
+        uid_bytes = uid[:4]
         
-        return uid if len(uid) == 4 else None
+        # Convert to decimal number by treating as big-endian
+        number = 0
+        for byte in uid_bytes:
+            number = (number << 8) + byte
+        
+        return number
     
     def read_card(self):
-        current_time = time.time()
-        
-        # Skip if we're in cooldown period
-        if current_time - self.last_read_time < 3:
+        """
+        Main method to read RFID card and return numeric UID
+        Returns None if no card detected or error occurred
+        """
+        try:
+            # Check if a card is present
+            status, _ = self.RC_522_Request(self.PICC_REQIDL)
+            if status == "MI_OK":
+                # Try to read the UID
+                status, uid = self.RC_522_Anticoll()
+                if status == "MI_OK":
+                    # Convert UID to number and return it
+                    uid_number = self.uid_to_number(uid)
+                    return uid_number
             return None
-            
-        if self._wait_for_tag():
-            uid_bytes = self._get_uid()
-            
-            if uid_bytes is None:
-                return None
-            
-            # Convert to decimal string
-            uid_str = ''.join(f"{byte:02d}" for byte in uid_bytes)
-            
-            # Ignore all-zero UIDs or invalid patterns
-            if uid_str == "00000000" or uid_str == "255255255255":
-                return None
-                
-            # Only report if it's a new card or cooldown expired
-            if uid_str != self.last_uid or (current_time - self.last_read_time) >= 3:
-                self.last_uid = uid_str
-                self.last_read_time = current_time
-                
-                # Clear the FIFO and stop communication to prevent repeated reads
-                self._clear_fifo()
-                self._spi_write(COMMAND_REG, IDLE_CMD)
-                
-                return uid_str
-                
-        return None
-
-if __name__ == "__main__":
-    try:
-        print("RFID Reader Ready - Scan a card")
-        rfid = HardcoreRFID()
-        
-        while True:
-            uid = rfid.read_card()
-            if uid:
-                print(f"Card detected: {uid}")
-            time.sleep(0.1)
-            
-    except KeyboardInterrupt:
-        print("\nExiting...")
-    finally:
+        except Exception as e:
+            print(f"RFID read error: {e}")
+            return None
+ 
+    def cleanup(self):
+        self.spi.close()
         GPIO.cleanup()
+
+# Example usage with numeric UID output using the new read_card method
+if __name__ == "__main__":
+    reader = HardcoreRFID()
+        
+    print("Plaats een kaart tegen de lezer (druk Ctrl+C om te stoppen).")
+        
+    try:
+        while True:
+            # Use the new read_card method
+            uid_number = reader.read_card()
+            if uid_number:
+                print(f"Kaart gedetecteerd - UID: {uid_number}")
+                time.sleep(1)  # korte pauze om herhaald lezen te vermijden
+            time.sleep(0.1)
+     
+    except KeyboardInterrupt:
+        print("\nProgramma beëindigd door gebruiker.")
+    finally:
+        reader.cleanup()
+        print("GPIO en SPI zijn afgesloten.")

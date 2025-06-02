@@ -53,8 +53,8 @@ class Rc_522:
     def __init__(self, dev='/dev/spidev0.0', spd=1000000):
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(25, GPIO.OUT)
-        GPIO.output(25, 1)
+        GPIO.setup(22, GPIO.OUT)
+        GPIO.output(22, 1)
  
         # Setup SPI
         self.spi = SpiDev()
