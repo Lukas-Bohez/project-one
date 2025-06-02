@@ -1157,12 +1157,6 @@ def raspberry_pi_main_thread(stop_event: Event):
                             lcd.write_line(1, format_second_row(temp, lux, current_degrees)[:16])
                             # --- B2F Socket.IO Emit ---
                             try:
-                                # Ensure 'sio' (your Socket.IO server instance) is accessible here.
-                                # If sio is globally defined in app.py, you might need to pass it
-                                # into the thread function or access it as a global.
-                                # For simplicity, assuming sio is directly available here.
-                                # If not, you might need to pass it as an argument to raspberry_pi_main_thread
-                                # or use a global variable if it's safe in your setup.
                                 sio.emit('servo_data_update', {
                                     'angle': angle,
                                     'temperature': temp,
