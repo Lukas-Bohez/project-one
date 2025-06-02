@@ -18,7 +18,7 @@ TRANSCEIVE_CMD = 0x0C
 IDLE_CMD = 0x00
 
 class HardcoreRFID:
-    def __init__(self, bus=0, device=0, speed=1000000, rst_pin=25):
+    def __init__(self, bus=0, device=0, speed=1000000, rst_pin=22):
         self.spi = spidev.SpiDev()
         self.spi.open(bus, device)
         self.spi.max_speed_hz = speed
