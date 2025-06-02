@@ -273,3 +273,7 @@ class IpAddressPayload(BaseModel):
 class AppealPayload(BaseModel):
     ip_address: str
     quote: str # The quote they provided
+
+# Pydantic model for servo command
+class ServoCommand(BaseModel):
+    command: str

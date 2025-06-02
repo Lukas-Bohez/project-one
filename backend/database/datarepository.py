@@ -887,3 +887,166 @@ class UserIpAddressRepository:
         sql = "DELETE FROM userIpAddresses WHERE userId = %s AND ipAddressId = %s"
         params = [user_id, ip_address_id]
         return bool(Database.execute_sql(sql, params))
+    
+
+class QuizSessionRepository:
+    @staticmethod
+    def create_session(
+        session_date: datetime,
+        name: str,
+        description: Optional[str],
+        session_status_id: int,
+        theme_id: int,
+        host_user_id: int,
+        start_time: Optional[datetime] = None
+    ) -> Optional[int]:
+        """
+        Creates a new quiz session in the database.
+        Returns the ID of the newly created session, or None if creation fails.
+        """
+        sql = """
+            INSERT INTO quizSessions (session_date, name, description, sessionStatusId, themeId, hostUserId, start_time)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """
+        params = [
+            session_date,
+            name,
+            description,
+            session_status_id,
+            theme_id,
+            host_user_id,
+            start_time if start_time is not None else datetime.now()
+        ]
+        return Database.execute_and_get_last_id(sql, params)
+
+    @staticmethod
+    def get_session_by_id(session_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Fetches a single quiz session by its ID.
+        """
+        sql = """
+            SELECT id, session_date, name, description, sessionStatusId, themeId, hostUserId, start_time, end_time
+            FROM quizSessions
+            WHERE id = %s
+        """
+        params = [session_id]
+        return Database.get_one_row(sql, params)
+
+    @staticmethod
+    def get_all_sessions() -> List[Dict[str, Any]]:
+        """
+        Fetches all quiz sessions from the database.
+        """
+        sql = """
+            SELECT id, session_date, name, description, sessionStatusId, themeId, hostUserId, start_time, end_time
+            FROM quizSessions
+            ORDER BY session_date DESC, start_time DESC
+        """
+        return Database.get_all_rows(sql)
+
+    @staticmethod
+    def get_sessions_by_status(status_id: int) -> List[Dict[str, Any]]:
+        """
+        Fetches quiz sessions filtered by their status ID.
+        """
+        sql = """
+            SELECT id, session_date, name, description, sessionStatusId, themeId, hostUserId, start_time, end_time
+            FROM quizSessions
+            WHERE sessionStatusId = %s
+            ORDER BY session_date DESC, start_time DESC
+        """
+        params = [status_id]
+        return Database.get_all_rows(sql, params)
+
+    @staticmethod
+    def get_active_sessions() -> List[Dict[str, Any]]:
+        """
+        Fetches all currently active quiz sessions (sessionStatusId = 2).
+        """
+        return QuizSessionRepository.get_sessions_by_status(2) # 2 is active
+
+    @staticmethod
+    def update_session(
+        session_id: int,
+        session_date: datetime,
+        name: str,
+        description: Optional[str],
+        session_status_id: int,
+        theme_id: int,
+        host_user_id: int,
+        start_time: Optional[datetime],
+        end_time: Optional[datetime]
+    ) -> bool:
+        """
+        Updates an existing quiz session.
+        Returns True if the update was successful, False otherwise.
+        """
+        sql = """
+            UPDATE quizSessions
+            SET session_date = %s, name = %s, description = %s, sessionStatusId = %s,
+                themeId = %s, hostUserId = %s, start_time = %s, end_time = %s
+            WHERE id = %s
+        """
+        params = [
+            session_date,
+            name,
+            description,
+            session_status_id,
+            theme_id,
+            host_user_id,
+            start_time,
+            end_time,
+            session_id
+        ]
+        return bool(Database.execute_sql(sql, params))
+
+    @staticmethod
+    def delete_session(session_id: int) -> bool:
+        """
+        Deletes a quiz session by its ID.
+        Returns True if deletion was successful, False otherwise.
+        """
+        sql = "DELETE FROM quizSessions WHERE id = %s"
+        params = [session_id]
+        return bool(Database.execute_sql(sql, params))
+
+    @staticmethod
+    def update_session_status(session_id: int, new_status_id: int) -> bool:
+        """
+        Updates only the status of a quiz session.
+        Optionally sets end_time if status is 'complete' (3) or 'canceled' (4).
+        """
+        if new_status_id in [3, 4]: # Complete or Canceled
+            sql = "UPDATE quizSessions SET sessionStatusId = %s, end_time = %s WHERE id = %s"
+            params = [new_status_id, datetime.now(), session_id]
+        else:
+            sql = "UPDATE quizSessions SET sessionStatusId = %s WHERE id = %s"
+            params = [new_status_id, session_id]
+        return bool(Database.execute_sql(sql, params))
+
+    @staticmethod
+    def set_session_active(session_id: int) -> bool:
+        """Sets session status to 'active' (2) and sets start_time if not already set."""
+        session_info = QuizSessionRepository.get_session_by_id(session_id)
+        if session_info and session_info['start_time'] is None:
+             sql = "UPDATE quizSessions SET sessionStatusId = 2, start_time = %s WHERE id = %s"
+             params = [datetime.now(), session_id]
+        else:
+            sql = "UPDATE quizSessions SET sessionStatusId = 2 WHERE id = %s"
+            params = [session_id]
+        return bool(Database.execute_sql(sql, params))
+
+    @staticmethod
+    def set_session_complete(session_id: int) -> bool:
+        """Sets session status to 'complete' (3) and records end_time."""
+        return QuizSessionRepository.update_session_status(session_id, 3)
+
+    @staticmethod
+    def set_session_canceled(session_id: int) -> bool:
+        """Sets session status to 'canceled' (4) and records end_time."""
+        return QuizSessionRepository.update_session_status(session_id, 4)
+
+    @staticmethod
+    def set_session_pending(session_id: int) -> bool:
+        """Sets session status to 'pending' (1)."""
+        return QuizSessionRepository.update_session_status(session_id, 1)

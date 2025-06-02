@@ -5,11 +5,11 @@ from fastapi import FastAPI, HTTPException, status, Body
 from fastapi.middleware.cors import CORSMiddleware
 import time
 import traceback
-from threading import Thread, Event
+from threading import Thread, Event, Lock
 import socket
 # Import the new ThemeRepository
 from fastapi.responses import HTMLResponse,JSONResponse
-from database.datarepository import QuestionRepository, AnswerRepository, ThemeRepository,UserRepository, IpAddressRepository, UserIpAddressRepository 
+from database.datarepository import QuestionRepository, AnswerRepository, ThemeRepository,UserRepository, IpAddressRepository, UserIpAddressRepository,QuizSessionRepository
 from models.models import (
     QuestionBase, QuestionCreate, QuestionResponse, QuestionUpdate,
     QuestionStatusUpdate, ErrorNotFound, QuestionWithAnswers,
@@ -18,7 +18,7 @@ from models.models import (
     RandomQuestionRequest, QuestionMetadataUpdate,
     QuestionActivationNotification,
     AnswerBase, AnswerCreate, AnswerListResponse, AnswerResponse, 
-    AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload
+    AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand
 )
 from typing import Optional, List
 from fastapi import Request
@@ -26,7 +26,7 @@ from fastapi import Query, Depends
 from models.models import User, UserCreate, UserUpdate, UserPublic # Import your new user models
 from database.datarepository import UserRepository
 from models.models import ErrorMessage,ErrorNotFound
-
+import queue
 try:
     from raspberryPi5.RFIDYReaderske import HardcoreRFID
     from raspberryPi5.servomotor import ServoMotor
@@ -996,7 +996,7 @@ async def appeal_ban(payload: AppealPayload, request: Request):
 
 
 
-# You might also add endpoints for:
+# I will also add endpoints for:
 # - Login (e.g., POST /api/v1/users/login with username/password, returns token/session info)
 # - Logout (e.g., POST /api/v1/users/logout)
 # - Get user by RFID (if needed for specific frontend flows)
@@ -1004,7 +1004,7 @@ async def appeal_ban(payload: AppealPayload, request: Request):
 
 # Global flag to signal the background thread to stop
 stop_thread_event = Event()
-
+servo_command_queue = queue.Queue()
 # --- Raspberry Pi Script Logic (adapted into a function) ---
 
 # Constants (re-declare or import if they were in a separate config for the Pi script)
@@ -1027,16 +1027,20 @@ def format_second_row(temp, lux, angle):
     """Format the second row of the LCD with sensor data"""
     return f"{temp:.1f}C {lux:.0f}L {angle}deg"
 
+def format_second_row(temp, lux, angle):
+    return f"{temp:.1f}C {lux:.0f}L {angle}deg"
+
 def raspberry_pi_main_thread(stop_event: Event):
-    """
-    This function will run in a separate thread, containing your Raspberry Pi logic.
-    It takes an Event object to signal when it should stop.
-    """
     if not RPI_COMPONENTS_AVAILABLE:
         print("Skipping Raspberry Pi thread start due to component import errors.")
         return
 
     # Initialize components
+    lcd = None
+    rfid = None
+    servo = None
+    temp_sensor = None
+    light_sensor = None
     try:
         lcd = LCD1602A()
         rfid = HardcoreRFID()
@@ -1046,11 +1050,12 @@ def raspberry_pi_main_thread(stop_event: Event):
     except Exception as e:
         print(f"Failed to initialize Raspberry Pi components in thread: {e}")
         print(traceback.format_exc())
-        stop_event.set() # Signal main app about failure if critical
+        stop_event.set()
         return
 
     # Initial positions
-    servo.set_angle(SERVO_IDLE_ANGLE)
+    if servo:
+        servo.set_angle(SERVO_IDLE_ANGLE)
     current_angle = SERVO_IDLE_ANGLE
 
     # State variables
@@ -1058,114 +1063,177 @@ def raspberry_pi_main_thread(stop_event: Event):
     rfid_display_start = 0
     showing_rfid = False
     rfid_code = ""
-    servo_active = False
 
-    try:
-        # Initial display setup
+    # Initial display setup
+    if lcd:
         lcd.clear()
         ip_address = get_ip_address()
         lcd.write_line(0, ip_address[:16])
 
-        while not stop_event.is_set(): # Loop while stop_event is not set
+    try:
+        while not stop_event.is_set():
             current_time = time.time()
 
+            # --- Check for active Quiz Session ---
+            # This section will run every loop iteration
             try:
-                # Only check for RFID if we're not currently showing one and servo isn't active
-                if not showing_rfid and not servo_active:
+                active_sessions = QuizSessionRepository.get_active_sessions()
+                if active_sessions:
+                    # If any sessions are active, do nothing for now as per requirement
+                    # print(f"Active quiz session detected: {active_sessions[0]['name']}")
+                    pass # Placeholder for future logic
+                else:
+                    # No active sessions, continue with normal sensor/RFID functions
+                    # print("No active quiz sessions.")
+                    pass
+            except Exception as e:
+                print(f"Error checking active quiz sessions: {e}")
+                # Decide how to handle this error: e.g., proceed with other functions, or pause.
+
+            # --- RFID and Sensor Logic (only if no active session or if desired to run concurrently) ---
+            # For now, let's assume RFID/sensor logic can run alongside the session check.
+            # If you want to disable RFID/sensors during an active quiz, you'd wrap this:
+            # if not active_sessions:
+            if not showing_rfid: # Only check for RFID if we're not currently displaying an RFID
+                if rfid:
                     uid = rfid.read_card()
-                    if uid:  # RFID reader already handles cooldown and duplicate detection
+                    if uid:
                         rfid_code = uid
                         rfid_display_start = current_time
                         showing_rfid = True
-                        print(rfid_code)
-                        # Display RFID immediately
-                        lcd.write_line(1, f"RFID:{rfid_code[:11]}")
+                        print(f"RFID Scanned: {rfid_code}")
+                        if lcd:
+                            lcd.write_line(1, f"RFID:{rfid_code[:11]}")
 
-                # Check if RFID display time has expired and start servo sweep
-                if showing_rfid and not servo_active and (current_time - rfid_display_start) >= RFID_DISPLAY_TIME:
-                    servo_active = True
-                    try:
-                        # Simple single sweep from 0 to 180 degrees in exactly 3 seconds
+            # Manage RFID display time
+            if showing_rfid and (current_time - rfid_display_start) >= RFID_DISPLAY_TIME:
+                showing_rfid = False
+                if lcd:
+                    lcd.clear()
+                    lcd.write_line(0, ip_address[:16])
+                last_refresh = 0 # Force immediate normal display update
+
+            # Update normal display at regular intervals (only when not showing RFID)
+            if not showing_rfid and (current_time - last_refresh) >= REFRESH_INTERVAL:
+                try:
+                    if temp_sensor and light_sensor and servo and lcd:
+                        temp = temp_sensor.read_temperature()
+                        lux = light_sensor()
+                        current_angle = servo.read_degrees() # Read current angle of servo
+                        lcd.write_line(1, format_second_row(temp, lux, current_angle)[:16])
+                        last_refresh = current_time
+                except Exception as e:
+                    print(f"Sensor read error: {e}")
+                    if lcd:
+                        lcd.write_line(1, "Sensor Error")
+                    last_refresh = current_time
+
+            # --- Handle Servo Commands from Queue ---
+            try:
+                # Non-blocking check for commands
+                command = servo_command_queue.get(block=False)
+                if command == "SWEEP_SERVO":
+                    print("Received SWEEP_SERVO command.")
+                    # Perform the servo sweep
+                    if servo and lcd and temp_sensor and light_sensor:
                         sweep_start_time = time.time()
-                        sweep_duration = 3.0  # 3 seconds total
+                        sweep_duration = 1.0
                         start_angle = 0
                         end_angle = 180
 
                         while (time.time() - sweep_start_time < sweep_duration) and not stop_event.is_set():
-                            # Calculate current position based on time elapsed
                             elapsed = time.time() - sweep_start_time
-                            progress = elapsed / sweep_duration  # 0.0 to 1.0
+                            progress = elapsed / sweep_duration
                             if progress > 1.0:
                                 progress = 1.0
 
-                            # Calculate angle and round to nearest 5 degrees
                             raw_angle = start_angle + (end_angle - start_angle) * progress
-                            angle = round(raw_angle / 5) * 5  # Round to nearest multiple of 5
+                            angle = round(raw_angle / 5) * 5
 
                             servo.set_angle(angle)
                             temp = temp_sensor.read_temperature()
                             lux = light_sensor()
                             current_degrees = servo.read_degrees()
                             lcd.write_line(1, format_second_row(temp, lux, current_degrees)[:16])
+                            time.sleep(0.05)
 
-                            time.sleep(0.05)  # Small delay for sensor readings
-
-                        if not stop_event.is_set(): # Only complete sweep if not stopping
-                            # Ensure we end at exactly 180 degrees
-                            servo.set_angle(180)
+                        if not stop_event.is_set():
+                            servo.set_angle(180) # Ensure it reaches the end point
                             time.sleep(0.1)
-
-                            # Return to idle position
-                            servo.set_angle(SERVO_IDLE_ANGLE)
+                            servo.set_angle(SERVO_IDLE_ANGLE) # Return to idle
                             current_angle = servo.read_degrees()
 
-                    except Exception as e:
-                        print(f"Servo sweep error: {e}")
-                    finally:
-                        servo_active = False
-                        showing_rfid = False  # Done with RFID sequence
-                        lcd.clear()
-                        lcd.write_line(0, ip_address[:16])
-                        last_refresh = 0  # Force immediate normal display update
-
-                # Update normal display at regular intervals (only when not showing RFID)
-                if not showing_rfid and (current_time - last_refresh) >= REFRESH_INTERVAL:
-                    try:
-                        temp = temp_sensor.read_temperature()
-                        lux = light_sensor()
-                        current_angle = servo.read_degrees()
-                        lcd.write_line(1, format_second_row(temp, lux, current_angle)[:16])
-                        last_refresh = current_time
-                    except Exception as e:
-                        print(f"Sensor read error: {e}")
-                        lcd.write_line(1, "Sensor Error")
-                        last_refresh = current_time
-
-                time.sleep(0.05)  # Reduced sleep for more responsive RFID detection
-
+                        print("Servo sweep complete.")
+                        # Clear display or update after sweep
+                        if lcd:
+                            lcd.clear()
+                            lcd.write_line(0, ip_address[:16])
+                            last_refresh = 0 # Force refresh
+            except queue.Empty:
+                pass # No command in queue
             except Exception as e:
-                print(f"Main loop error in Pi thread: {e}")
+                print(f"Error processing servo command: {e}")
                 print(traceback.format_exc())
-                time.sleep(1)
 
-    except KeyboardInterrupt: # This won't typically be caught directly in a background thread
-        print("\nExiting Pi thread due to KeyboardInterrupt (unlikely to occur directly)...")
+
+            time.sleep(0.05)
+
     except Exception as e:
         print(f"Fatal error in Pi thread: {e}")
         print(traceback.format_exc())
     finally:
         print("Pi thread cleanup initiated.")
         try:
-            if servo: # Check if servo was initialized
-                servo.set_angle(SERVO_IDLE_ANGLE)  # Return to neutral position
+            if servo:
+                servo.set_angle(SERVO_IDLE_ANGLE)
                 time.sleep(0.5)
                 servo.cleanup()
-            if lcd: # Check if lcd was initialized
+            if lcd:
                 lcd.clear()
                 lcd.cleanup()
             print("Pi thread cleanup complete.")
         except Exception as e:
             print(f"Pi thread cleanup error: {e}")
+
+servo_lock = Lock()
+
+@app.post("/api/v1/trigger-servo")
+async def trigger_servo(cmd: ServoCommand):
+    """
+    Endpoint to trigger a servo movement from the frontend.
+    Only allows one command at a time and rejects if a quiz session is active.
+    """
+    if cmd.command != "SWEEP_SERVO":
+        raise HTTPException(status_code=400, detail="Invalid servo command.")
+
+    # 1. Check for active quiz sessions
+    try:
+        active_sessions = QuizSessionRepository.get_active_sessions()
+        if active_sessions:
+            raise HTTPException(status_code=409, detail="A quiz session is currently active. Servo movement is restricted.")
+    except Exception as e:
+        print(f"Error checking active quiz sessions during servo trigger: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error checking quiz status.")
+
+    # 2. Acquire lock to ensure only one command is queued/processed at a time
+    if not servo_lock.acquire(blocking=False):
+        # If we can't acquire the lock, another request is already processing a servo command
+        raise HTTPException(status_code=429, detail="Servo is currently busy or another command is being processed. Please wait.")
+
+    try:
+        # 3. Attempt to put the command into the queue
+        # The queue maxsize=1 already ensures only one can be put,
+        # but the lock adds another layer of immediate rejection for API requests.
+        # If put_nowait fails (queue is full), the lock is automatically released by the 'finally' block.
+        servo_command_queue.put_nowait("SWEEP_SERVO")
+        return {"message": "Servo sweep command sent to Raspberry Pi."}
+    except queue.Full:
+        # This catch might be redundant with maxsize=1 and the lock, but good for safety.
+        raise HTTPException(status_code=503, detail="Raspberry Pi command queue is full, try again soon.")
+    finally:
+        # Ensure the lock is released whether the command was successfully queued or an error occurred
+        servo_lock.release()
+
 
 
 # --- FastAPI Application Lifecycle Events ---
