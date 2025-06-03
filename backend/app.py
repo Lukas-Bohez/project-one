@@ -43,18 +43,46 @@ except ImportError as e:
 # ----------------------------------------------------
 # App setup
 # ----------------------------------------------------
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI()
+
+# CORS middleware for FastAPI
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # This should allow all origins
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
 )
-sio = socketio.AsyncServer(cors_allowed_origins='*', async_mode='asgi', logger=True)
-sio_app = socketio.ASGIApp(sio, app) # <-- THIS IS THE KEY
+
+# Socket.IO server setup
+sio = socketio.AsyncServer(
+    cors_allowed_origins="*", 
+    async_mode='asgi', 
+    logger=True
+)
 
 ENDPOINT = "/api/v1"  # API base endpoint
+
+# Request logging middleware
+@app.middleware("http")
+async def log_request(request: Request, call_next):
+    body = await request.body()
+    print(f"\n----- INCOMING REQUEST -----")
+    print(f"Method: {request.method}")
+    print(f"URL: {request.url}")
+    print(f"Headers: {dict(request.headers)}")
+    print(f"Body: {body}")
+    print(f"----------------------------\n")
+    response = await call_next(request)
+    return response
+
+
+
+# Mount Socket.IO on the same app - DON'T create separate sio_app
+app.mount("/socket.io", socketio.ASGIApp(sio))
 
 # ----------------------------------------------------
 # FastAPI Endpoints - Questions (Existing, unchanged)
@@ -1009,8 +1037,8 @@ servo_command_queue = queue.Queue()
 
 # Constants (re-declare or import if they were in a separate config for the Pi script)
 REFRESH_INTERVAL = 1  # seconds
-RFID_DISPLAY_TIME = 3  # seconds to display RFID code (matches RFID cooldown)
-SERVO_IDLE_ANGLE = 0  # Neutral position when idle
+RFID_DISPLAY_TIME = 6  # seconds to display RFID code (matches RFID cooldown)
+SERVO_IDLE_ANGLE = 90  # Neutral position when idle
 
 def get_ip_address():
     """Get the IP address of the Raspberry Pi"""
@@ -1103,7 +1131,7 @@ def raspberry_pi_main_thread(stop_event: Event):
                         showing_rfid = True
                         print(f"RFID Scanned: {rfid_code}")
                         if lcd:
-                            lcd.write_line(1, f"RFID:{rfid_code[:11]}")
+                            lcd.write_line(1, f"RFID:{rfid_code}")
 
             # Manage RFID display time
             if showing_rfid and (current_time - rfid_display_start) >= RFID_DISPLAY_TIME:
@@ -1122,6 +1150,7 @@ def raspberry_pi_main_thread(stop_event: Event):
                         current_angle = servo.read_degrees() # Read current angle of servo
                         lcd.write_line(1, format_second_row(temp, lux, current_angle)[:16])
                         last_refresh = current_time
+                        #print(format_second_row(temp, lux, current_angle)[:16])
                 except Exception as e:
                     print(f"Sensor read error: {e}")
                     if lcd:
@@ -1155,18 +1184,8 @@ def raspberry_pi_main_thread(stop_event: Event):
                             lux = light_sensor()
                             current_degrees = servo.read_degrees()
                             lcd.write_line(1, format_second_row(temp, lux, current_degrees)[:16])
-                            # --- B2F Socket.IO Emit ---
-                            try:
-                                sio.emit('servo_data_update', {
-                                    'angle': angle,
-                                    'temperature': temp,
-                                    'illuminance': lux,
-                                    'current_degrees_read': current_degrees
-                                })
-                            except Exception as e:
-                                # This can happen if sio isn't initialized or if the client connection drops
-                                print(f"Socket.IO emit error in Pi thread: {e}")
-                            # --- End B2F Socket.IO Emit ---
+                            
+                            
                             time.sleep(0.05)
 
                         if not stop_event.is_set():
@@ -1304,40 +1323,7 @@ async def log_request(request: Request, call_next):
 # ----------------------------------------------------
 # Request Logging Middleware
 # ----------------------------------------------------
-app.mount("/ws", socketio.ASGIApp(sio))
 
-@app.middleware("http")
-async def log_request(request: Request, call_next):
-    body = await request.body()
-    print(f"\n----- INCOMING REQUEST -----")
-    print(f"Method: {request.method}")
-    print(f"URL: {request.url}")
-    print(f"Headers: {dict(request.headers)}")
-    print(f"Body: {body}")
-    print(f"----------------------------\n")
-
-    response = await call_next(request)
-    return response
-
-
-# Socket.IO Event Handlers
-@sio.on('connect')
-async def handle_connect(sid, environ):
-    """
-    Handles a new Socket.IO client connection.
-    Logs the connection to the backend console.
-    """
-    print(f"Socket.IO Client connected: {sid}")
-    # You can emit a message back to the client upon connection if needed
-    await sio.emit('message', {'type': 'status', 'text': f'Connected with SID: {sid}'}, room=sid)
-
-@sio.on('disconnect')
-async def handle_disconnect(sid):
-    """
-    Handles a Socket.IO client disconnection.
-    Logs the disconnection to the backend console.
-    """
-    print(f"Socket.IO Client disconnected: {sid}")
 
 
 
