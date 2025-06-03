@@ -61,7 +61,7 @@ app.add_middleware(
 sio = socketio.AsyncServer(
     cors_allowed_origins="*",
     async_mode='asgi',
-    logger=True
+    logger=False
 )
 
 ENDPOINT = "/api/v1"  # API base endpoint
@@ -1067,7 +1067,7 @@ async def banned_page(request: Request):
             ban_status_message = "Your previous restriction has expired. You may appeal to regain full access."
             # Appeal button HTML
             button_html = f"""
-        [⚠️ Suspicious Content]             <button id="appealBanBtn" class="c-btn c-btn--primary">Reintegrate into Quizanistan</button>
+            <button id="appealBanBtn" class="c-btn c-btn--primary">Reintegrate into Quizanistan</button>
 
             <div id="appealModal" class="modal">
                 <div class="modal-content">
@@ -1362,7 +1362,7 @@ def format_second_row(temp, lux, angle):
 def format_second_row(temp, lux, angle):
     return f"{temp:.1f}C {lux:.0f}L {angle}deg"
 
-def raspberry_pi_main_thread(stop_event: Event):
+def raspberry_pi_main_thread(stop_event, sio, loop):
     if not RPI_COMPONENTS_AVAILABLE:
         print("Skipping Raspberry Pi thread start due to component import errors.")
         return
@@ -1455,6 +1455,20 @@ def raspberry_pi_main_thread(stop_event: Event):
                         lcd.write_line(1, format_second_row(temp, lux, current_angle)[:16])
                         last_refresh = current_time
                         #print(format_second_row(temp, lux, current_angle)[:16])
+                        sensor_data_to_emit = {
+                                'temperature': temp,
+                                'illuminance': lux,
+                                'servo_angle': current_angle,
+                            }   
+                        try:
+                            asyncio.run_coroutine_threadsafe(
+                                sio.emit('sensor_data', sensor_data_to_emit),
+                                loop 
+                            )
+                        except Exception as e:
+                            print(f"Error emitting sensor_data from thread: {e}")
+                            time.sleep(0.05)
+
                 except Exception as e:
                     print(f"Sensor read error: {e}")
                     if lcd:
@@ -1488,19 +1502,19 @@ def raspberry_pi_main_thread(stop_event: Event):
                             lux = light_sensor()
                             current_degrees = servo.read_degrees()
                             lcd.write_line(1, format_second_row(temp, lux, current_degrees)[:16])
-                            
-
-                            sensor_data = {
-                                'temperature': temp,  # Temperature in Celsius
-                                'illuminance': lux,   # Light level in lux
-                                'servo_angle': current_degrees,  # Servo angle in degrees
-                                'timestamp': int(time.time() * 1000)  # Current timestamp in milliseconds
-                            }
-
-                            # Emit the data to all connected clients
-                            sio.emit('sensor_data', sensor_data)
-                            
-                            time.sleep(0.05)
+                            sensor_data_to_emit = {
+                                    'temperature': temp,
+                                    'illuminance': lux,
+                                    'servo_angle': current_angle,
+                                }   
+                            try:
+                                asyncio.run_coroutine_threadsafe(
+                                    sio.emit('sensor_data', sensor_data_to_emit),
+                                    loop 
+                                )
+                            except Exception as e:
+                                print(f"Error emitting sensor_data from thread: {e}")
+                                time.sleep(0.05)
 
                         if not stop_event.is_set():
                             servo.set_angle(180) # Ensure it reaches the end point
@@ -1541,42 +1555,57 @@ def raspberry_pi_main_thread(stop_event: Event):
             print(f"Pi thread cleanup error: {e}")
 
 servo_lock = Lock()
+last_servo_command_time = 0.0 # Stores the Unix timestamp (seconds since epoch) of the last command
+SERVO_COOLDOWN_SECONDS = 3.0 # The duration of the cooldown
+servo_cooldown_lock = Lock() # A dedicated lock to protect access to last_servo_command_time
 
 @app.post("/api/v1/trigger-servo")
 async def trigger_servo(cmd: ServoCommand):
-    """
-    Endpoint to trigger a servo movement from the frontend.
-    Only allows one command at a time and rejects if a quiz session is active.
-    """
+    global last_servo_command_time # <--- MOVE THIS TO THE TOP OF THE FUNCTION
+
     if cmd.command != "SWEEP_SERVO":
         raise HTTPException(status_code=400, detail="Invalid servo command.")
 
-    # 1. Check for active quiz sessions
+    # 1. Check for active quiz sessions (KEEP THIS AS IS)
     try:
         active_sessions = QuizSessionRepository.get_active_sessions()
         if active_sessions:
-            raise HTTPException(status_code=409, detail="A quiz session is currently active. Servo movement is restricted.")
+            active_session_info = active_sessions[0] if active_sessions else None
+            raise HTTPException(
+                status_code=409,
+                detail="A quiz session is currently active. Servo movement is restricted.",
+                headers={"X-Active-Session": "true", "X-Session-Name": active_session_info.name}
+            )
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error checking active quiz sessions during servo trigger: {e}")
         raise HTTPException(status_code=500, detail="Internal server error checking quiz status.")
 
-    # 2. Acquire lock to ensure only one command is queued/processed at a time
+    # --- NEW LOGIC: Cooldown Check ---
+    with servo_cooldown_lock:
+        current_time = time.time()
+        if current_time - last_servo_command_time < SERVO_COOLDOWN_SECONDS:
+            remaining_cooldown = SERVO_COOLDOWN_SECONDS - (current_time - last_servo_command_time)
+            raise HTTPException(
+                status_code=429,
+                detail=f"Servo is on cooldown. Please wait {remaining_cooldown:.1f} seconds before trying again."
+            )
+        # The 'global' declaration is now at the top, so this modification is fine here.
+        last_servo_command_time = current_time
+    # --- END NEW LOGIC ---
+
+    # 2. Acquire the existing lock for queue access
     if not servo_lock.acquire(blocking=False):
-        # If we can't acquire the lock, another request is already processing a servo command
-        raise HTTPException(status_code=429, detail="Servo is currently busy or another command is being processed. Please wait.")
+        raise HTTPException(status_code=429, detail="Servo command queue is temporarily locked by another request.")
 
     try:
         # 3. Attempt to put the command into the queue
-        # The queue maxsize=1 already ensures only one can be put,
-        # but the lock adds another layer of immediate rejection for API requests.
-        # If put_nowait fails (queue is full), the lock is automatically released by the 'finally' block.
         servo_command_queue.put_nowait("SWEEP_SERVO")
         return {"message": "Servo sweep command sent to Raspberry Pi."}
     except queue.Full:
-        # This catch might be redundant with maxsize=1 and the lock, but good for safety.
         raise HTTPException(status_code=503, detail="Raspberry Pi command queue is full, try again soon.")
     finally:
-        # Ensure the lock is released whether the command was successfully queued or an error occurred
         servo_lock.release()
 
 
@@ -1585,15 +1614,28 @@ async def trigger_servo(cmd: ServoCommand):
 
 @app.on_event("startup")
 async def startup_event():
+    global main_asyncio_loop # Declare that you're using the global variable
     print("FastAPI app starting up...")
+
     if RPI_COMPONENTS_AVAILABLE:
+        # Get the main asyncio event loop when FastAPI starts.
+        # This is the loop on which Socket.IO emits will be scheduled.
+        main_asyncio_loop = asyncio.get_running_loop()
+        print(f"Main asyncio loop obtained: {main_asyncio_loop}")
+
         # Start the Raspberry Pi script in a new thread
-        pi_thread = Thread(target=raspberry_pi_main_thread, args=(stop_thread_event,))
-        pi_thread.daemon = True # Allow main program to exit even if thread is running
+        # Pass the sio instance and the main_asyncio_loop to the thread
+        pi_thread = Thread(
+            target=raspberry_pi_main_thread,
+            args=(stop_thread_event, sio, main_asyncio_loop), # <--- MODIFIED ARGS HERE
+            daemon=True
+        )
         pi_thread.start()
         print("Raspberry Pi script thread started.")
     else:
         print("Raspberry Pi thread will not be started due to import errors.")
+
+    print("Server started - Socket.IO backend is ready!")
 
 
 @app.on_event("shutdown")
