@@ -1,7 +1,7 @@
 import socketio
 import asyncio
 import uvicorn
-from datetime import datetime  
+from datetime import datetime,timedelta
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, status, Body
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,7 +20,7 @@ from models.models import (
     RandomQuestionRequest, QuestionMetadataUpdate,
     QuestionActivationNotification,
     AnswerBase, AnswerCreate, AnswerListResponse, AnswerResponse, 
-    AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand,BroadcastMessage,DirectMessage
+    AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand,BroadcastMessage,DirectMessage, ClientActivity
 )
 from typing import Dict, Any, Optional, List
 from fastapi import Request
@@ -73,36 +73,44 @@ connected_clients = set()
 # ----------------------------------------------------
 # Socket.IO event handlers
 # ----------------------------------------------------
+# Socket.IO event handlers
 @sio.event
 async def connect(sid, environ):
     print(f"Client {sid} connected")
     connected_clients.add(sid)
-    
+
     # Send welcome message to the newly connected client
     await sio.emit('welcome', {
         'message': 'Successfully connected to the server',
         'client_id': sid,
         'timestamp': datetime.now().isoformat()
     }, room=sid)
-    
+
     # Notify all other clients about new connection
     await sio.emit('client_connected', {
         'client_id': sid,
         'total_clients': len(connected_clients),
         'timestamp': datetime.now().isoformat()
-    }, skip_sid=sid)
+    }, skip_sid=sid) # <--- This is the key line for 'client_connected'
+    print(f"Server emitted 'client_connected' for new client {sid}. Total clients: {len(connected_clients)}")
+
+
 
 @sio.event
-async def disconnect(sid):
+async def disconnect(sid): # <--- You need a disconnect handler!
     print(f"Client {sid} disconnected")
-    connected_clients.discard(sid)
-    
-    # Notify all remaining clients about disconnection
+    if sid in connected_clients:
+        connected_clients.remove(sid)
+
+    # Notify all remaining clients about the disconnection
     await sio.emit('client_disconnected', {
         'client_id': sid,
         'total_clients': len(connected_clients),
         'timestamp': datetime.now().isoformat()
     })
+    print(f"Server emitted 'client_disconnected' for client {sid}. Total clients: {len(connected_clients)}")
+
+
 
 @sio.event
 async def message(sid, data):
@@ -1675,6 +1683,13 @@ async def log_request(request: Request, call_next):
     response = await call_next(request)
     # print(f"Outgoing response status: {response.status_code}")
     return response
+
+
+
+
+
+
+
 
 
 
