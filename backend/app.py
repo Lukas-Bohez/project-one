@@ -1,4 +1,5 @@
 import socketio
+import asyncio
 from datetime import datetime  
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, status, Body
@@ -18,9 +19,9 @@ from models.models import (
     RandomQuestionRequest, QuestionMetadataUpdate,
     QuestionActivationNotification,
     AnswerBase, AnswerCreate, AnswerListResponse, AnswerResponse, 
-    AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand
+    AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand,BroadcastMessage,ErrorMessage
 )
-from typing import Optional, List
+from typing import Dict, Any, Optional, List
 from fastapi import Request
 from fastapi import Query, Depends
 from models.models import User, UserCreate, UserUpdate, UserPublic # Import your new user models
@@ -43,10 +44,8 @@ except ImportError as e:
 # ----------------------------------------------------
 # App setup
 # ----------------------------------------------------
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()
+app = FastAPI(title="Socket.IO Messaging Backend", version="1.0.0")
 
 # CORS middleware for FastAPI
 app.add_middleware(
@@ -59,30 +58,37 @@ app.add_middleware(
 
 # Socket.IO server setup
 sio = socketio.AsyncServer(
-    cors_allowed_origins="*", 
-    async_mode='asgi', 
+    cors_allowed_origins="*",
+    async_mode='asgi',
     logger=True
 )
 
 ENDPOINT = "/api/v1"  # API base endpoint
 
-# Request logging middleware
-@app.middleware("http")
-async def log_request(request: Request, call_next):
-    body = await request.body()
-    print(f"\n----- INCOMING REQUEST -----")
-    print(f"Method: {request.method}")
-    print(f"URL: {request.url}")
-    print(f"Headers: {dict(request.headers)}")
-    print(f"Body: {body}")
-    print(f"----------------------------\n")
-    response = await call_next(request)
-    return response
+# Store connected clients
+connected_clients = set()
 
 
+# ----------------------------------------------------
+# Socket.IO event handlers
+# ----------------------------------------------------
+@sio.event
+async def connect(sid, environ):
+    print(f"Client {sid} connected")
+    connected_clients.add(sid)
+    
+    # Send welcome message to the newly connected client
+    await sio.emit('welcome', {
+        'message': 'Successfully connected to the server',
+        'client_id': sid,
+        'timestamp': datetime.now().isoformat()
+    }, room=sid)
+    
+@sio.event
+async def disconnect(sid):
+    print(f"Client {sid} disconnected")
+    connected_clients.discard(sid)
 
-# Mount Socket.IO on the same app - DON'T create separate sio_app
-app.mount("/socket.io", socketio.ASGIApp(sio))
 
 # ----------------------------------------------------
 # FastAPI Endpoints - Questions (Existing, unchanged)
@@ -1319,23 +1325,6 @@ async def log_request(request: Request, call_next):
     response = await call_next(request)
     # print(f"Outgoing response status: {response.status_code}")
     return response
-
-# ----------------------------------------------------
-# Request Logging Middleware
-# ----------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

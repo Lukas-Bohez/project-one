@@ -198,6 +198,8 @@ class QuizAuth {
 
     this.showLoading(loginBtn);
 
+    let loginSuccessful = false;
+
     try {
       // Simulate API call
       await this.simulateApiCall();
@@ -207,6 +209,7 @@ class QuizAuth {
 
       if (userExists) {
         this.loginUser(formData);
+        loginSuccessful = true;
       } else {
         this.showError('User not found. Please register first.');
       }
@@ -214,7 +217,11 @@ class QuizAuth {
       this.showError('Login failed. Please try again.');
     } finally {
       this.hideLoading(loginBtn, 'Login');
-      this.addChatMessage('System', `${this.currentUser.fullName} has joined the quiz!`);
+      
+      // Only add chat message if login was successful and currentUser exists
+      if (loginSuccessful && this.currentUser) {
+        this.addChatMessage('System', `${this.currentUser.fullName} has joined the quiz!`);
+      }
     }
   }
 
@@ -227,6 +234,8 @@ class QuizAuth {
 
     this.showLoading(registerBtn);
 
+    let registrationSuccessful = false;
+
     try {
       // Simulate API call
       await this.simulateApiCall();
@@ -238,12 +247,17 @@ class QuizAuth {
         this.showError('User already exists. Please login instead.');
       } else {
         this.registerUser(formData);
+        registrationSuccessful = true;
       }
     } catch (error) {
       this.showError('Registration failed. Please try again.');
     } finally {
       this.hideLoading(registerBtn, 'Register');
-      this.addChatMessage('System', `${this.currentUser.fullName} has joined the quiz!`);
+      
+      // Only add chat message if registration was successful and currentUser exists
+      if (registrationSuccessful && this.currentUser) {
+        this.addChatMessage('System', `${this.currentUser.fullName} has joined the quiz!`);
+      }
     }
   }
 
