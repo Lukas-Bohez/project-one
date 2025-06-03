@@ -61,7 +61,7 @@ class ServoMotor:
         # from the actual servo position
         if abs(angle - self.actual_servo_angle) >= 5:
             self._move_servo(angle)
-            print(f"Servo moved to {angle}° (was at {self.actual_servo_angle}°)")
+            print(f"Servo moved to {angle}°")
         else:
             print(f"Servo stays at {self.actual_servo_angle}° (requested {angle}°, difference < 5°)")
    
