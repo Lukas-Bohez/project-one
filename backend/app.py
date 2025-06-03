@@ -1,5 +1,6 @@
 import socketio
 import asyncio
+import uvicorn
 from datetime import datetime  
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, status, Body
@@ -19,7 +20,7 @@ from models.models import (
     RandomQuestionRequest, QuestionMetadataUpdate,
     QuestionActivationNotification,
     AnswerBase, AnswerCreate, AnswerListResponse, AnswerResponse, 
-    AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand,BroadcastMessage,ErrorMessage
+    AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand,BroadcastMessage,DirectMessage
 )
 from typing import Dict, Any, Optional, List
 from fastapi import Request
@@ -84,10 +85,307 @@ async def connect(sid, environ):
         'timestamp': datetime.now().isoformat()
     }, room=sid)
     
+    # Notify all other clients about new connection
+    await sio.emit('client_connected', {
+        'client_id': sid,
+        'total_clients': len(connected_clients),
+        'timestamp': datetime.now().isoformat()
+    }, skip_sid=sid)
+
 @sio.event
 async def disconnect(sid):
     print(f"Client {sid} disconnected")
     connected_clients.discard(sid)
+    
+    # Notify all remaining clients about disconnection
+    await sio.emit('client_disconnected', {
+        'client_id': sid,
+        'total_clients': len(connected_clients),
+        'timestamp': datetime.now().isoformat()
+    })
+
+@sio.event
+async def message(sid, data):
+    print(f"Received message from {sid}: {data}")
+    
+    # Echo the message back to all clients including sender
+    await sio.emit('message_received', {
+        'from': sid,
+        'data': data,
+        'timestamp': datetime.now().isoformat()
+    })
+
+@sio.event
+async def join_room(sid, data):
+    room = data.get('room')
+    if room:
+        await sio.enter_room(sid, room)
+        await sio.emit('room_joined', {
+            'room': room,
+            'client_id': sid,
+            'timestamp': datetime.now().isoformat()
+        }, room=room)
+
+@sio.event
+async def leave_room(sid, data):
+    room = data.get('room')
+    if room:
+        await sio.leave_room(sid, room)
+        await sio.emit('room_left', {
+            'room': room,
+            'client_id': sid,
+            'timestamp': datetime.now().isoformat()
+        }, room=room)
+
+# ----------------------------------------------------
+# HTTP API endpoints
+# ----------------------------------------------------
+@app.get(f"{ENDPOINT}/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "connected_clients": len(connected_clients),
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.get(f"{ENDPOINT}/clients")
+async def get_connected_clients():
+    return {
+        "connected_clients": list(connected_clients),
+        "total": len(connected_clients),
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.post(f"{ENDPOINT}/broadcast")
+async def broadcast_message(message: BroadcastMessage):
+    """
+    Broadcast a message to all connected clients or to a specific room
+    """
+    try:
+        if message.room:
+            # Send to specific room
+            await sio.emit(message.event, {
+                **message.data,
+                'timestamp': datetime.now().isoformat(),
+                'broadcast': True,
+                'room': message.room
+            }, room=message.room)
+        else:
+            # Send to all connected clients
+            await sio.emit(message.event, {
+                **message.data,
+                'timestamp': datetime.now().isoformat(),
+                'broadcast': True
+            })
+        
+        return {
+            "success": True,
+            "message": f"Message broadcasted to {'room ' + message.room if message.room else 'all clients'}",
+            "event": message.event,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post(f"{ENDPOINT}/send")
+async def send_direct_message(message: DirectMessage):
+    """
+    Send a message to a specific client
+    """
+    try:
+        if message.client_id not in connected_clients:
+            raise HTTPException(status_code=404, detail="Client not connected")
+        
+        await sio.emit(message.event, {
+            **message.data,
+            'timestamp': datetime.now().isoformat(),
+            'direct': True
+        }, room=message.client_id)
+        
+        return {
+            "success": True,
+            "message": f"Message sent to client {message.client_id}",
+            "event": message.event,
+            "timestamp": datetime.now().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post(f"{ENDPOINT}/notify")
+async def send_notification():
+    """
+    Send a sample notification to all clients
+    """
+    try:
+        notification_data = {
+            'title': 'Server Notification',
+            'message': 'This is a test notification from the server',
+            'type': 'info',
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        await sio.emit('notification', notification_data)
+        
+        return {
+            "success": True,
+            "message": "Notification sent to all clients",
+            "data": notification_data
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Background task example - sends periodic updates
+async def background_task():
+    """
+    Example background task that sends periodic data to all clients
+    """
+    counter = 0
+    while True:
+        if connected_clients:  # Only send if there are connected clients
+            counter += 1
+            await sio.emit('periodic_update', {
+                'counter': counter,
+                'timestamp': datetime.now().isoformat(),
+                'connected_clients': len(connected_clients)
+            })
+        await asyncio.sleep(30)  # Send update every 30 seconds
+
+# Start background task when the app starts
+@app.on_event("startup")
+async def startup_event():
+    # Uncomment the next line to enable periodic updates
+    # asyncio.create_task(background_task())
+    print("Server started - Socket.IO backend is ready!")
+
+# Mount Socket.IO on the same app
+app.mount("/socket.io", socketio.ASGIApp(sio, app))
+
+# ----------------------------------------------------
+# HTTP API endpoints
+# ----------------------------------------------------
+@app.get(f"{ENDPOINT}/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "connected_clients": len(connected_clients),
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.get(f"{ENDPOINT}/clients")
+async def get_connected_clients():
+    return {
+        "connected_clients": list(connected_clients),
+        "total": len(connected_clients),
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.post(f"{ENDPOINT}/broadcast")
+async def broadcast_message(message: BroadcastMessage):
+    """
+    Broadcast a message to all connected clients or to a specific room
+    """
+    try:
+        if message.room:
+            # Send to specific room
+            await sio.emit(message.event, {
+                **message.data,
+                'timestamp': datetime.now().isoformat(),
+                'broadcast': True,
+                'room': message.room
+            }, room=message.room)
+        else:
+            # Send to all connected clients
+            await sio.emit(message.event, {
+                **message.data,
+                'timestamp': datetime.now().isoformat(),
+                'broadcast': True
+            })
+        
+        return {
+            "success": True,
+            "message": f"Message broadcasted to {'room ' + message.room if message.room else 'all clients'}",
+            "event": message.event,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post(f"{ENDPOINT}/send")
+async def send_direct_message(message: DirectMessage):
+    """
+    Send a message to a specific client
+    """
+    try:
+        if message.client_id not in connected_clients:
+            raise HTTPException(status_code=404, detail="Client not connected")
+        
+        await sio.emit(message.event, {
+            **message.data,
+            'timestamp': datetime.now().isoformat(),
+            'direct': True
+        }, room=message.client_id)
+        
+        return {
+            "success": True,
+            "message": f"Message sent to client {message.client_id}",
+            "event": message.event,
+            "timestamp": datetime.now().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post(f"{ENDPOINT}/notify")
+async def send_notification():
+    """
+    Send a sample notification to all clients
+    """
+    try:
+        notification_data = {
+            'title': 'Server Notification',
+            'message': 'This is a test notification from the server',
+            'type': 'info',
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        await sio.emit('notification', notification_data)
+        
+        return {
+            "success": True,
+            "message": "Notification sent to all clients",
+            "data": notification_data
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Background task example - sends periodic updates
+async def background_task():
+    """
+    Example background task that sends periodic data to all clients
+    """
+    counter = 0
+    while True:
+        if connected_clients:  # Only send if there are connected clients
+            counter += 1
+            await sio.emit('periodic_update', {
+                'counter': counter,
+                'timestamp': datetime.now().isoformat(),
+                'connected_clients': len(connected_clients)
+            })
+        await asyncio.sleep(30)  # Send update every 30 seconds
+
+# Start background task when the app starts
+@app.on_event("startup")
+async def startup_event():
+    # Uncomment the next line to enable periodic updates
+    # asyncio.create_task(background_task())
+    print("Server started - Socket.IO backend is ready!")
+
+# Mount Socket.IO on the same app
+app.mount("/socket.io", socketio.ASGIApp(sio))
 
 
 # ----------------------------------------------------
@@ -1191,6 +1489,16 @@ def raspberry_pi_main_thread(stop_event: Event):
                             current_degrees = servo.read_degrees()
                             lcd.write_line(1, format_second_row(temp, lux, current_degrees)[:16])
                             
+
+                            sensor_data = {
+                                'temperature': temp,  # Temperature in Celsius
+                                'illuminance': lux,   # Light level in lux
+                                'servo_angle': current_degrees,  # Servo angle in degrees
+                                'timestamp': int(time.time() * 1000)  # Current timestamp in milliseconds
+                            }
+
+                            # Emit the data to all connected clients
+                            sio.emit('sensor_data', sensor_data)
                             
                             time.sleep(0.05)
 
@@ -1332,7 +1640,6 @@ async def log_request(request: Request, call_next):
 # Run the app
 # ----------------------------------------------------
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(
         "app:app",
         host="0.0.0.0",
