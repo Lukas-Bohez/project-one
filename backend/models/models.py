@@ -287,3 +287,6 @@ class DirectMessage(BaseModel):
     event: str
     data: Dict[str, Any]
     client_id: str
+
+class ClientActivity(BaseModel):
+    client_ip: str
