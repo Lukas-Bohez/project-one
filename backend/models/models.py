@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, Dict, Any
 from datetime import datetime
 
 # Existing Question Models (unchanged)
@@ -94,7 +94,7 @@ class DifficultyLevelResponse(DifficultyLevelBase):
         from_attributes = True
 
 class QuestionSearchResult(BaseModel):
-    questions: List[QuestionResponse]
+    questions: list[QuestionResponse]
     count: int
 
 class RandomQuestionRequest(BaseModel):
@@ -136,16 +136,16 @@ class AnswerStatusUpdate(BaseModel):
     is_correct: bool
 
 class AnswerListResponse(BaseModel):
-    answers: List[AnswerResponse]
+    answers: list[AnswerResponse]
     count: int
 
 class CorrectAnswerResponse(BaseModel):
-    correct_answers: List[AnswerResponse]
+    correct_answers: list[AnswerResponse]
     count: int
 
 # Update QuestionWithAnswers to use the now-defined AnswerResponse (unchanged)
 class QuestionWithAnswers(QuestionResponse):
-    answers: List[AnswerResponse]
+    answers: list[AnswerResponse]
 
 
 
@@ -277,3 +277,13 @@ class AppealPayload(BaseModel):
 # Pydantic model for servo command
 class ServoCommand(BaseModel):
     command: str
+
+class BroadcastMessage(BaseModel):
+    event: str
+    data: Dict[str, Any]
+    room: Optional[str] = None
+
+class DirectMessage(BaseModel):
+    event: str
+    data: Dict[str, Any]
+    client_id: str
