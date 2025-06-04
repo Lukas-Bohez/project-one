@@ -11,7 +11,7 @@ from threading import Thread, Event, Lock
 import socket
 # Import the new ThemeRepository
 from fastapi.responses import HTMLResponse,JSONResponse
-from database.datarepository import QuestionRepository, AnswerRepository, ThemeRepository,UserRepository, IpAddressRepository, UserIpAddressRepository,QuizSessionRepository
+from database.datarepository import QuestionRepository, AnswerRepository, ThemeRepository,UserRepository, IpAddressRepository, UserIpAddressRepository,QuizSessionRepository,SensorDataRepository,QuizSessionsRepository
 from models.models import (
     QuestionBase, QuestionCreate, QuestionResponse, QuestionUpdate,
     QuestionStatusUpdate, ErrorNotFound, QuestionWithAnswers,
@@ -20,7 +20,7 @@ from models.models import (
     RandomQuestionRequest, QuestionMetadataUpdate,
     QuestionActivationNotification,
     AnswerBase, AnswerCreate, AnswerListResponse, AnswerResponse, 
-    AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand,BroadcastMessage,DirectMessage, ClientActivity
+    AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand,BroadcastMessage,DirectMessage, ClientActivity,SessionSensorData,MultiSessionSensorResponse,UserUpdateNames,UserCredentials
 )
 from typing import Dict, Any, Optional, List
 from fastapi import Request
@@ -776,6 +776,191 @@ async def appeal_ban(payload: AppealPayload, request: Request):
 
 
 
+@app.get("/api/v1/sensor-data", response_model=MultiSessionSensorResponse)
+async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 10):
+    requested_session_ids = [int(sid.strip()) for sid in session_ids.split(',')]
+    
+    response_sessions_data = []
+    
+    for session_id in requested_session_ids:
+        session_data = QuizSessionRepository.get_session_by_id(session_id)
+        if not session_data:
+            continue
+            
+        current_session_id = session_data['id']
+        current_session_name = session_data['name']
+        
+        sensor_readings = SensorDataRepository.get_all_data_for_session(current_session_id)
+        
+        temperatures = []
+        light_intensities = []
+        servo_positions = []
+        
+        for reading in sensor_readings:
+            timestamp = reading.get('timestamp')
+            timestamp_iso = timestamp.isoformat() if timestamp else None
+            
+            # --- THE FIX IS HERE: Convert values to float if they are strings ---
+            try:
+                temp_value = float(reading.get('temperature (°C)'))
+            except (ValueError, TypeError):
+                temp_value = None # Or handle as appropriate, e.g., default to 0.0
+            
+            try:
+                light_value = float(reading.get('lightIntensity (lux)'))
+            except (ValueError, TypeError):
+                light_value = None
+            
+            try:
+                servo_value = float(reading.get('servoPosition (°)'))
+            except (ValueError, TypeError):
+                servo_value = None
+            # --- END OF FIX ---
+
+            temperatures.append({
+                "timestamp": timestamp_iso,
+                "value": temp_value # Use the converted float value
+            })
+            light_intensities.append({
+                "timestamp": timestamp_iso,
+                "value": light_value # Use the converted float value
+            })
+            servo_positions.append({
+                "timestamp": timestamp_iso,
+                "value": servo_value # Use the converted float value
+            })
+        
+        response_sessions_data.append(SessionSensorData(
+            session_id=current_session_id,
+            session_name=current_session_name,
+            temperatures=temperatures,
+            light_intensities=light_intensities,
+            servo_positions=servo_positions
+        ))
+    
+    return MultiSessionSensorResponse(sessions=response_sessions_data)
+
+
+
+
+
+
+@app.patch("/api/v1/users/{rfid_code}")
+async def update_user_names(rfid_code: str, user_update: UserUpdateNames):
+    all_users = UserRepository.get_all_users()
+    target_user_id = None
+
+    for user in all_users:
+        # Check if first and last name already exist for any user
+        if user['first_name'] == user_update.first_name and user['last_name'] == user_update.last_name:
+            # Found a user with matching name
+            if user['rfid_code'] == rfid_code:
+                # Name and RFID match: This is the user attempting to log in
+                target_user_id = user['id']
+                UserRepository.update_user_last_active(target_user_id, datetime.now())
+                break
+            else:
+                # Name matches, but RFID does not
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="A user with this name already exists, but the provided RFID does not match."
+                )
+    
+    # If no user found by name or if the loop completed without a direct match
+    if target_user_id is None:
+        # Check if the RFID is associated with an 'open' account
+        existing_user_by_rfid = UserRepository.get_user_by_rfid(rfid_code)
+        if existing_user_by_rfid:
+            if existing_user_by_rfid['first_name'] == 'Open' and existing_user_by_rfid['last_name'] == 'Open':
+                # RFID linked to an 'Open' account, update its details
+                success = UserRepository.update_user_names_by_rfid(
+                    rfid_code,
+                    user_update.first_name,
+                    user_update.last_name
+                )
+                if not success:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="Failed to update 'Open' user account."
+                    )
+                target_user_id = existing_user_by_rfid['id'] # Return the ID of the updated user
+                UserRepository.update_user_last_active(target_user_id, datetime.now())
+            else:
+                # RFID exists but is not "Open" and doesn't match the provided name
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"RFID code '{rfid_code}' is already associated with another user and is not an 'Open' account."
+                )
+        else:
+            # RFID not found at all.
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User with RFID code '{rfid_code}' not found and no 'Open' account to update."
+            )
+
+    return {"user_id": target_user_id}
+
+# --- Register Endpoint ---
+@app.post("/api/v1/register", status_code=status.HTTP_201_CREATED)
+async def register_user(user_credentials: UserCredentials):
+    # Check if user with this first/last name already exists
+    existing_user = UserRepository.get_user_by_name(user_credentials.first_name, user_credentials.last_name)
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A user with this first and last name already exists. Please choose another name or login."
+        )
+
+    # Hash the password
+    hashed_info = UserRepository.hash_password(user_credentials.password)
+
+    # Prepare user data for creation
+    user_data = {
+        'first_name': user_credentials.first_name,
+        'last_name': user_credentials.last_name,
+        'password_hash': hashed_info['password_hash'],
+        'salt': hashed_info['salt'],
+        'rfid_code': None, # RFID will be assigned later via the PATCH endpoint if needed
+        'userRoleId': 1, # Default to a standard player role, adjust as per your roles table
+        'soul_points': 4,
+        'limb_points': 4,
+        'updated_by': 1 # Assuming a system user ID or default
+    }
+
+    user_id = UserRepository.create_user_with_password(user_data)
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create user."
+        )
+
+    return {"message": "User registered successfully", "user_id": user_id}
+
+# --- Login Endpoint ---
+@app.post("/api/v1/login")
+async def login_user(user_credentials: UserCredentials):
+    user_id = UserRepository.authenticate_user(
+        user_credentials.first_name,
+        user_credentials.last_name,
+        user_credentials.password
+    )
+
+    if user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid first name, last name, or password."
+        )
+
+    return {"message": "Login successful", "user_id": user_id}
+
+
+
+
+
+
+
+
+
 
 
 
@@ -886,133 +1071,186 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
             current_time = time.time()
 
             # --- Check for active Quiz Session ---
-            # This section will run every loop iteration
             try:
                 active_sessions = QuizSessionRepository.get_active_sessions()
+                
                 if active_sessions:
-                    # If any sessions are active, do nothing for now as per requirement
-                    # print(f"Active quiz session detected: {active_sessions[0]['name']}")
-                    pass # Placeholder for future logic
-                else:
-                    # No active sessions, continue with normal sensor/RFID functions
-                    # print("No active quiz sessions.")
-                    pass
-            except Exception as e:
-                print(f"Error checking active quiz sessions: {e}")
-                # Decide how to handle this error: e.g., proceed with other functions, or pause.
-
-            # --- RFID and Sensor Logic (only if no active session or if desired to run concurrently) ---
-            # For now, let's assume RFID/sensor logic can run alongside the session check.
-            # If you want to disable RFID/sensors during an active quiz, you'd wrap this:
-            # if not active_sessions:
-            if not showing_rfid: # Only check for RFID if we're not currently displaying an RFID
-                if rfid:
-                    uid = rfid.read_card()
-                    if uid:
-                        rfid_code = uid
-                        rfid_display_start = current_time
-                        showing_rfid = True
-                        print(f"RFID Scanned: {rfid_code}")
-                        if lcd:
-                            lcd.write_line(1, f"RFID:{rfid_code}")
-
-            # Manage RFID display time
-            if showing_rfid and (current_time - rfid_display_start) >= RFID_DISPLAY_TIME:
-                showing_rfid = False
-                if lcd:
-                    lcd.clear()
-                    lcd.write_line(0, ip_address[:16])
-                last_refresh = 0 # Force immediate normal display update
-
-            # Update normal display at regular intervals (only when not showing RFID)
-            if not showing_rfid and (current_time - last_refresh) >= REFRESH_INTERVAL:
-                try:
-                    if temp_sensor and light_sensor and servo and lcd:
-                        temp = temp_sensor.read_temperature()
-                        lux = light_sensor()
-                        current_angle = servo.read_degrees() # Read current angle of servo
-                        lcd.write_line(1, format_second_row(temp, lux, current_angle)[:16])
-                        last_refresh = current_time
-                        #print(format_second_row(temp, lux, current_angle)[:16])
-                        sensor_data_to_emit = {
-                                'temperature': temp,
-                                'illuminance': lux,
-                                'servo_angle': current_angle,
-                            }   
+                    # --- ACTIVE QUIZ SESSION LOGIC ---
+                    session_id = active_sessions[0]['id']  # Assuming session has 'id' key
+                    
+                    # Log sensor data to the active session
+                    if temp_sensor and light_sensor and servo:
                         try:
-                            asyncio.run_coroutine_threadsafe(
-                                sio.emit('sensor_data', sensor_data_to_emit),
-                                loop 
+                            current_temp = temp_sensor.read_temperature()
+                            current_lux = light_sensor()
+                            current_servo_angle = servo.read_degrees()
+                            
+                            QuizSessionRepository.create_sensor_data(
+                                sessionId=session_id,
+                                temperature=current_temp,
+                                lightIntensity=current_lux,
+                                servoPosition=current_servo_angle,
+                                timestamp=datetime.now()  # You'll need to import datetime
                             )
-                        except Exception as e:
-                            print(f"Error emitting sensor_data from thread: {e}")
-                            time.sleep(0.05)
-
-                except Exception as e:
-                    print(f"Sensor read error: {e}")
-                    if lcd:
-                        lcd.write_line(1, "Sensor Error")
-                    last_refresh = current_time
-
-            # --- Handle Servo Commands from Queue ---
-            try:
-                # Non-blocking check for commands
-                command = servo_command_queue.get(block=False)
-                if command == "SWEEP_SERVO":
-                    print("Received SWEEP_SERVO command.")
-                    # Perform the servo sweep
-                    if servo and lcd and temp_sensor and light_sensor:
-                        sweep_start_time = time.time()
-                        sweep_duration = 1.0
-                        start_angle = 0
-                        end_angle = 180
-
-                        while (time.time() - sweep_start_time < sweep_duration) and not stop_event.is_set():
-                            elapsed = time.time() - sweep_start_time
-                            progress = elapsed / sweep_duration
-                            if progress > 1.0:
-                                progress = 1.0
-
-                            raw_angle = start_angle + (end_angle - start_angle) * progress
-                            angle = round(raw_angle / 5) * 5
-
-                            servo.set_angle(angle)
-                            temp = temp_sensor.read_temperature()
-                            lux = light_sensor()
-                            current_degrees = servo.read_degrees()
-                            lcd.write_line(1, format_second_row(temp, lux, current_degrees)[:16])
+                            
+                            # Still emit for real-time monitoring if needed
                             sensor_data_to_emit = {
-                                    'temperature': temp,
-                                    'illuminance': lux,
-                                    'servo_angle': current_angle,
-                                }   
+                                'temperature': current_temp,
+                                'illuminance': current_lux,
+                                'servo_angle': current_servo_angle,
+                            }
                             try:
                                 asyncio.run_coroutine_threadsafe(
                                     sio.emit('sensor_data', sensor_data_to_emit),
                                     loop 
                                 )
                             except Exception as e:
-                                print(f"Error emitting sensor_data from thread: {e}")
-                                time.sleep(0.05)
+                                print(f"Error emitting sensor_data during quiz: {e}")
+                                
+                        except Exception as e:
+                            print(f"Error logging sensor data to quiz session: {e}")
+                    
+                    # Add other quiz-specific logic here as needed
+                    # For example: handle quiz RFID interactions, display quiz info, etc.
+                    
+                else:
+                    # --- NORMAL OPERATION LOGIC (No active quiz session) ---
+                    
+                    # RFID Logic
+                    if not showing_rfid:
+                        if rfid:
+                            uid = rfid.read_card()
+                            if uid:
+                                rfid_code = uid
+                                rfid_display_start = current_time
+                                showing_rfid = True
+                                print(f"RFID Scanned: {rfid_code}")
+                                if lcd:
+                                    lcd.write_line(1, f"RFID:{rfid_code}")
 
-                        if not stop_event.is_set():
-                            servo.set_angle(180) # Ensure it reaches the end point
-                            time.sleep(0.1)
-                            servo.set_angle(SERVO_IDLE_ANGLE) # Return to idle
-                            current_angle = servo.read_degrees()
+                                # User creation logic
+                                existing_user = UserRepository.get_user_by_rfid(rfid_code)
+                                print(existing_user)
+                                if existing_user:
+                                    print(f"User with RFID {rfid_code} found: {existing_user['first_name']} {existing_user['last_name']}")
+                                else:
+                                    print(f"No user found for RFID {rfid_code}. Creating new 'open' user.")
+                                    open_user_data = {
+                                        'last_name': 'Open',
+                                        'first_name': 'Open',
+                                        'password': 'temp_password_for_open_user',
+                                        'rfid_code': rfid_code,
+                                        'userRoleId': 2,
+                                        'soul_points': 4,
+                                        'limb_points': 4,
+                                        'updated_by': 1
+                                    }
+                                    
+                                    new_user_id = UserRepository.create_user(open_user_data)
+                                    if new_user_id:
+                                        print(f"Created new user with ID: {new_user_id} and RFID: {rfid_code}")
+                                        if lcd:
+                                            lcd.write_line(2, "New user created!")
+                                    else:
+                                        print(f"Failed to create new user for RFID: {rfid_code}")
+                                        if lcd:
+                                            lcd.write_line(2, "User creation failed!")
 
-                        print("Servo sweep complete.")
-                        # Clear display or update after sweep
+                    # Manage RFID display time
+                    if showing_rfid and (current_time - rfid_display_start) >= RFID_DISPLAY_TIME:
+                        showing_rfid = False
                         if lcd:
                             lcd.clear()
                             lcd.write_line(0, ip_address[:16])
-                            last_refresh = 0 # Force refresh
-            except queue.Empty:
-                pass # No command in queue
-            except Exception as e:
-                print(f"Error processing servo command: {e}")
-                print(traceback.format_exc())
+                        last_refresh = 0
 
+                    # Update normal display at regular intervals
+                    if not showing_rfid and (current_time - last_refresh) >= REFRESH_INTERVAL:
+                        try:
+                            if temp_sensor and light_sensor and servo and lcd:
+                                temp = temp_sensor.read_temperature()
+                                lux = light_sensor()
+                                current_angle = servo.read_degrees()
+                                lcd.write_line(1, format_second_row(temp, lux, current_angle)[:16])
+                                last_refresh = current_time
+                                
+                                sensor_data_to_emit = {
+                                    'temperature': temp,
+                                    'illuminance': lux,
+                                    'servo_angle': current_angle,
+                                }   
+                                try:
+                                    asyncio.run_coroutine_threadsafe(
+                                        sio.emit('sensor_data', sensor_data_to_emit),
+                                        loop 
+                                    )
+                                except Exception as e:
+                                    print(f"Error emitting sensor_data from thread: {e}")
+
+                        except Exception as e:
+                            print(f"Sensor read error: {e}")
+                            if lcd:
+                                lcd.write_line(1, "Sensor Error")
+                            last_refresh = current_time
+
+                    # Handle Servo Commands from Queue (normal operation)
+                    try:
+                        command = servo_command_queue.get(block=False)
+                        if command == "SWEEP_SERVO":
+                            print("Received SWEEP_SERVO command.")
+                            if servo and lcd and temp_sensor and light_sensor:
+                                sweep_start_time = time.time()
+                                sweep_duration = 1.0
+                                start_angle = 0
+                                end_angle = 180
+
+                                while (time.time() - sweep_start_time < sweep_duration) and not stop_event.is_set():
+                                    elapsed = time.time() - sweep_start_time
+                                    progress = elapsed / sweep_duration
+                                    if progress > 1.0:
+                                        progress = 1.0
+
+                                    raw_angle = start_angle + (end_angle - start_angle) * progress
+                                    angle = round(raw_angle / 5) * 5
+
+                                    servo.set_angle(angle)
+                                    temp = temp_sensor.read_temperature()
+                                    lux = light_sensor()
+                                    current_degrees = servo.read_degrees()
+                                    lcd.write_line(1, format_second_row(temp, lux, current_degrees)[:16])
+                                    
+                                    sensor_data_to_emit = {
+                                        'temperature': temp,
+                                        'illuminance': lux,
+                                        'servo_angle': current_degrees,
+                                    }   
+                                    try:
+                                        asyncio.run_coroutine_threadsafe(
+                                            sio.emit('sensor_data', sensor_data_to_emit),
+                                            loop 
+                                        )
+                                    except Exception as e:
+                                        print(f"Error emitting sensor_data from thread: {e}")
+
+                                if not stop_event.is_set():
+                                    servo.set_angle(180)
+                                    time.sleep(0.1)
+                                    servo.set_angle(SERVO_IDLE_ANGLE)
+                                    current_angle = servo.read_degrees()
+
+                                print("Servo sweep complete.")
+                                if lcd:
+                                    lcd.clear()
+                                    lcd.write_line(0, ip_address[:16])
+                                    last_refresh = 0
+                    except queue.Empty:
+                        pass
+                    except Exception as e:
+                        print(f"Error processing servo command: {e}")
+                        print(traceback.format_exc())
+
+            except Exception as e:
+                print(f"Error checking active quiz sessions: {e}")
 
             time.sleep(0.05)
 
