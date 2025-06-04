@@ -146,6 +146,19 @@ class QuestionRepository:
         params = [question_id]
         return Database.execute_sql(sql, params)
     
+
+    @staticmethod
+    def get_active_questions_count():      
+        sql = "SELECT COUNT(*) FROM questions WHERE is_active = TRUE"
+        print(f"Executing SQL: {sql}")
+        result = Database.execute_sql(sql)
+        
+        # Convert the string result to an integer
+        try:
+            return int(result)
+        except (TypeError, ValueError):
+            return 0  # Fallback in case conversion fails
+
     @staticmethod
     def deactivate_question(question_id):
         sql = "UPDATE questions SET is_active = FALSE WHERE id = %s"

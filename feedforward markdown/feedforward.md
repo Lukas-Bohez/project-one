@@ -32,7 +32,7 @@
 
 # Feedforward gesprekken
 
-## Gesprek 1 (Datum: 28/05/2023)
+## Gesprek 1 (Datum: 28/05/2025)
 
 Lector: Stijn Walcarius
 
@@ -44,19 +44,32 @@ Dit is de feedback op mijn vragen.
 
 - feedback 1: Ja, maar te ingewikkeld.
 
-## Gesprek 2 (Datum: xx/xx/2023)
+## Gesprek 2 (Datum: 02/06/2025)
 
 Lector:
 
 Vragen voor dit gesprek:
 
--  vraag 1: V
+-  vraag 1: Wat is het probleem met mijn rfid sensor?
+
+Dit is de feedback op mijn vragen.
+
+- feedback 1: Het is niet gesoldeerd.
+
+## Gesprek 3 (Datum: xx/xx/2025)
+
+Lector:
+
+Vragen voor dit gesprek:
+
+- [x] vraag 1: V
 
 Dit is de feedback op mijn vragen.
 
 - feedback 1: G
 
-## Gesprek 3 (Datum: xx/xx/2023)
+
+## Gesprek 4 (Datum: xx/xx/2025)
 
 Lector:
 
