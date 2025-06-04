@@ -588,7 +588,85 @@ class UserRepository:
             sql = "UPDATE users SET last_active = NULL, session_expires_at = NULL WHERE id = %s"
             params = [user_id]
         return Database.execute_sql(sql, params)
+
+    @staticmethod
+    def update_user_names_by_rfid(rfid_code: str, first_name: str, last_name: str) -> bool:
+        """Updates the first_name and last_name of a user based on their RFID code."""
+        sql = """
+            UPDATE users
+            SET first_name = %s, last_name = %s
+            WHERE rfid_code = %s
+        """
+        params = [first_name, last_name, rfid_code]
+        affected_rows = Database.execute_sql(sql, params)
+        return affected_rows is not None and affected_rows > 0
     
+
+
+    @staticmethod
+    def hash_password(password: str) -> Dict[str, str]:
+        """Hashes a password using bcrypt and generates a salt."""
+        salt = bcrypt.gensalt()
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+        return {"password_hash": hashed_password, "salt": salt.decode('utf-8')}
+
+    @staticmethod
+    def verify_password(password_hash: str, salt: str, provided_password: str) -> bool:
+        """Verifies a provided password against a stored hash and salt."""
+        try:
+            return bcrypt.checkpw(provided_password.encode('utf-8'), password_hash.encode('utf-8'))
+        except ValueError:
+            # Hash or salt might be malformed
+            return False
+
+    @staticmethod
+    def get_user_by_name(first_name: str, last_name: str) -> Optional[Dict[str, Any]]:
+        """Fetches a user by first and last name."""
+        sql = "SELECT id, last_name, first_name, password_hash, salt, rfid_code, userRoleId, soul_points, limb_points, last_active, session_expires_at, updated_by FROM users WHERE first_name = %s AND last_name = %s"
+        params = [first_name, last_name]
+        return Database.get_one_row(sql, params)
+
+    @staticmethod
+    def create_user_with_password(user_data: Dict[str, Any]) -> Optional[int]:
+        """Inserts a new user with a password into the database."""
+        sql = """
+            INSERT INTO users (last_name, first_name, password_hash, salt, rfid_code, userRoleId, soul_points, limb_points, updated_by)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        # hash_password is called by the endpoint for password
+        params = [
+            user_data['last_name'],
+            user_data['first_name'],
+            user_data['password_hash'], # This will now come from the endpoint
+            user_data['salt'],         # This will now come from the endpoint
+            user_data.get('rfid_code'),
+            user_data.get('userRoleId', 2), # Default to player role if not provided
+            user_data.get('soul_points', 4),
+            user_data.get('limb_points', 4),
+            user_data.get('updated_by', 1) # Default to a system user or 1 if not provided
+        ]
+        return Database.execute_sql(sql, params)
+
+    @staticmethod
+    def authenticate_user(first_name: str, last_name: str, password: str) -> Optional[int]:
+        """Authenticates a user by first name, last name, and password, returning user ID on success.
+        Updates last_active timestamp if authentication succeeds."""
+        user = UserRepository.get_user_by_name(first_name, last_name)
+        if user:
+            if UserRepository.verify_password(user['password_hash'], user['salt'], password):
+                # Update last_active to current datetime
+                UserRepository.update_user_last_active(user['id'], datetime.now())
+                return user['id']
+        return None
+
+    @staticmethod
+    def update_user_last_active(user_id: int, timestamp: datetime) -> None:
+        """Updates the last_active timestamp for a user."""
+        # Assuming you have some database connection and execution method
+        query = "UPDATE users SET last_active = %s WHERE id = %s"
+        params = (timestamp, user_id)
+        # Execute the query using your database connection
+        Database.execute_sql(query, params)
 
 class IpAddressRepository:
 
@@ -1063,3 +1141,239 @@ class QuizSessionRepository:
     def set_session_pending(session_id: int) -> bool:
         """Sets session status to 'pending' (1)."""
         return QuizSessionRepository.update_session_status(session_id, 1)
+    
+class QuizSessionsRepository:
+    # CREATE operations
+    @staticmethod
+    def create_quiz_session(session_date, name, description, sessionStatusId, themeId, 
+                          hostUserId, start_time=None, end_time=None):
+        sql = """
+        INSERT INTO quizSessions 
+        (session_date, name, description, sessionStatusId, themeId, hostUserId, start_time, end_time) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        params = [session_date, name, description, sessionStatusId, themeId, 
+                 hostUserId, start_time, end_time]
+        return Database.execute_sql(sql, params)
+    
+    # READ operations
+    @staticmethod
+    def get_all_sessions(active_only=False):
+        sql = "SELECT * FROM quizSessions"
+        if active_only:
+            sql += " WHERE sessionStatusId IN (SELECT id FROM sessionStatuses WHERE is_active = TRUE)"
+        sql += " ORDER BY session_date DESC"
+        return Database.get_rows(sql)
+    
+    @staticmethod
+    def get_session_by_id(session_id):
+        sql = """
+        SELECT qs.*, 
+               ss.name as status_name, 
+               t.name as theme_name,
+               u.username as host_username
+        FROM quizSessions qs
+        JOIN sessionStatuses ss ON qs.sessionStatusId = ss.id
+        JOIN themes t ON qs.themeId = t.id
+        JOIN users u ON qs.hostUserId = u.id
+        WHERE qs.id = %s
+        """
+        params = [session_id]
+        return Database.get_one_row(sql, params)
+    
+    @staticmethod
+    def get_sessions_by_host(user_id):
+        sql = "SELECT * FROM quizSessions WHERE hostUserId = %s ORDER BY session_date DESC"
+        params = [user_id]
+        return Database.get_rows(sql, params)
+    
+    @staticmethod
+    def get_active_sessions_by_theme(theme_id):
+        sql = """
+        SELECT qs.* 
+        FROM quizSessions qs
+        JOIN sessionStatuses ss ON qs.sessionStatusId = ss.id
+        WHERE qs.themeId = %s AND ss.is_active = TRUE
+        ORDER BY qs.session_date DESC
+        """
+        params = [theme_id]
+        return Database.get_rows(sql, params)
+    
+    @staticmethod
+    def get_sessions_count_by_status(status_id):
+        sql = "SELECT COUNT(*) as count FROM quizSessions WHERE sessionStatusId = %s"
+        params = [status_id]
+        result = Database.get_one_row(sql, params)
+        return result['count'] if result else 0
+    
+    # UPDATE operations
+    @staticmethod
+    def update_session_status(session_id, new_status_id):
+        sql = "UPDATE quizSessions SET sessionStatusId = %s WHERE id = %s"
+        params = [new_status_id, session_id]
+        return Database.execute_sql(sql, params)
+    
+    @staticmethod
+    def update_session_times(session_id, start_time=None, end_time=None):
+        if start_time and end_time:
+            sql = "UPDATE quizSessions SET start_time = %s, end_time = %s WHERE id = %s"
+            params = [start_time, end_time, session_id]
+        elif start_time:
+            sql = "UPDATE quizSessions SET start_time = %s WHERE id = %s"
+            params = [start_time, session_id]
+        elif end_time:
+            sql = "UPDATE quizSessions SET end_time = %s WHERE id = %s"
+            params = [end_time, session_id]
+        else:
+            return False
+        return Database.execute_sql(sql, params)
+    
+    @staticmethod
+    def update_session_details(session_id, name=None, description=None, themeId=None):
+        updates = []
+        params = []
+        
+        if name:
+            updates.append("name = %s")
+            params.append(name)
+        if description:
+            updates.append("description = %s")
+            params.append(description)
+        if themeId:
+            updates.append("themeId = %s")
+            params.append(themeId)
+            
+        if not updates:
+            return False
+            
+        sql = f"UPDATE quizSessions SET {', '.join(updates)} WHERE id = %s"
+        params.append(session_id)
+        return Database.execute_sql(sql, params)
+    
+    # DELETE operations (use with caution)
+    @staticmethod
+    def delete_session(session_id):
+        sql = "DELETE FROM quizSessions WHERE id = %s"
+        params = [session_id]
+        return Database.execute_sql(sql, params)
+    
+
+
+class SensorDataRepository:
+    # CREATE operations
+    @staticmethod
+    def create_sensor_data(sessionId, temperature=None, lightIntensity=None, servoPosition=None, timestamp=None):
+        sql = """
+        INSERT INTO sensorData 
+        (sessionId, `temperature (°C)`, `lightIntensity (lux)`, `servoPosition (°)`, timestamp) 
+        VALUES (%s, %s, %s, %s, %s)
+        """
+        params = [sessionId, temperature, lightIntensity, servoPosition, timestamp]
+        return Database.execute_sql(sql, params)
+    
+    # READ operations
+    @staticmethod
+    def get_all_data_for_session(session_id):
+        sql = "SELECT * FROM sensorData WHERE sessionId = %s ORDER BY timestamp ASC"
+        params = [session_id]
+        return Database.get_rows(sql, params)
+    
+    @staticmethod
+    def get_all_data_for_session(session_id):
+        sql = """
+        SELECT * FROM sensorData 
+        WHERE sessionId = %s 
+        """
+        params = [session_id]
+        return Database.get_rows(sql, params)
+    
+    @staticmethod
+    def get_data_by_id(data_id):
+        sql = "SELECT * FROM sensorData WHERE id = %s"
+        params = [data_id]
+        return Database.get_one_row(sql, params)
+    
+    @staticmethod
+    def get_temperature_stats_for_session(session_id):
+        sql = """
+        SELECT 
+            MIN(`temperature (°C)`) as min_temp,
+            MAX(`temperature (°C)`) as max_temp,
+            AVG(`temperature (°C)`) as avg_temp
+        FROM sensorData 
+        WHERE sessionId = %s
+        """
+        params = [session_id]
+        return Database.get_one_row(sql, params)
+    
+    @staticmethod
+    def get_light_stats_for_session(session_id):
+        sql = """
+        SELECT 
+            MIN(`lightIntensity (lux)`) as min_light,
+            MAX(`lightIntensity (lux)`) as max_light,
+            AVG(`lightIntensity (lux)`) as avg_light
+        FROM sensorData 
+        WHERE sessionId = %s
+        """
+        params = [session_id]
+        return Database.get_one_row(sql, params)
+    
+    @staticmethod
+    def get_servo_stats_for_session(session_id):
+        sql = """
+        SELECT 
+            MIN(`servoPosition (°)`) as min_servo,
+            MAX(`servoPosition (°)`) as max_servo,
+            AVG(`servoPosition (°)`) as avg_servo
+        FROM sensorData 
+        WHERE sessionId = %s
+        """
+        params = [session_id]
+        return Database.get_one_row(sql, params)
+    
+    @staticmethod
+    def get_data_in_time_range(session_id, start_time, end_time):
+        sql = """
+        SELECT * FROM sensorData 
+        WHERE sessionId = %s AND timestamp BETWEEN %s AND %s
+        ORDER BY timestamp ASC
+        """
+        params = [session_id, start_time, end_time]
+        return Database.get_rows(sql, params)
+    
+    # UPDATE operations (rarely needed for sensor data, but included for completeness)
+    @staticmethod
+    def update_sensor_reading(data_id, temperature=None, lightIntensity=None, servoPosition=None):
+        updates = []
+        params = []
+        
+        if temperature is not None:
+            updates.append("`temperature (°C)` = %s")
+            params.append(temperature)
+        if lightIntensity is not None:
+            updates.append("`lightIntensity (lux)` = %s")
+            params.append(lightIntensity)
+        if servoPosition is not None:
+            updates.append("`servoPosition (°)` = %s")
+            params.append(servoPosition)
+            
+        if not updates:
+            return False
+            
+        sql = f"UPDATE sensorData SET {', '.join(updates)} WHERE id = %s"
+        params.append(data_id)
+        return Database.execute_sql(sql, params)
+    
+    # DELETE operations (use with caution)
+    @staticmethod
+    def delete_sensor_reading(data_id):
+        sql = "DELETE FROM sensorData WHERE id = %s"
+        params = [data_id]
+        return Database.execute_sql(sql, params)
+    
+    @staticmethod
+    def delete_all_data_for_session(session_id):
+        sql = "DELETE FROM sensorData WHERE sessionId = %s"
+        params = [session_id]
+        return Database.execute_sql(sql, params)

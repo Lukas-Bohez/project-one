@@ -290,3 +290,28 @@ class DirectMessage(BaseModel):
 
 class ClientActivity(BaseModel):
     client_ip: str
+
+class SensorReadingValue(BaseModel):
+    timestamp: Optional[str] # Or datetime, if you prefer to parse it here
+    value: float # <--- THIS IS LIKELY THE CULPRIT IF IT'S RECEIVING A STRING FOR VALUE
+
+class SessionSensorData(BaseModel):
+    session_id: int
+    session_name: str
+    temperatures: list[SensorReadingValue]
+    light_intensities: list[SensorReadingValue]
+    servo_positions: list[SensorReadingValue]
+
+class MultiSessionSensorResponse(BaseModel):
+    sessions: list[SessionSensorData]
+
+class UserUpdateNames(BaseModel):
+    first_name: str = Field(..., min_length=1, max_length=50, example="John")
+    last_name: str = Field(..., min_length=1, max_length=50, example="Doe")
+
+
+# --- Pydantic Model for Login/Register Requests ---
+class UserCredentials(BaseModel):
+    first_name: str = Field(..., min_length=1, max_length=50, example="Jane")
+    last_name: str = Field(..., min_length=1, max_length=50, example="Doe")
+    password: str = Field(..., min_length=8, example="StrongPassword123!") # Adjust min_length as needed
