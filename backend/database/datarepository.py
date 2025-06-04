@@ -1377,3 +1377,5 @@ class SensorDataRepository:
         sql = "DELETE FROM sensorData WHERE sessionId = %s"
         params = [session_id]
         return Database.execute_sql(sql, params)
+    
+
