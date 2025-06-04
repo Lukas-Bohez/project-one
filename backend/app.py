@@ -148,117 +148,7 @@ async def leave_room(sid, data):
 # ----------------------------------------------------
 # HTTP API endpoints
 # ----------------------------------------------------
-@app.get(f"{ENDPOINT}/health")
-async def health_check():
-    return {
-        "status": "healthy",
-        "connected_clients": len(connected_clients),
-        "timestamp": datetime.now().isoformat()
-    }
 
-@app.get(f"{ENDPOINT}/clients")
-async def get_connected_clients():
-    return {
-        "connected_clients": list(connected_clients),
-        "total": len(connected_clients),
-        "timestamp": datetime.now().isoformat()
-    }
-
-@app.post(f"{ENDPOINT}/broadcast")
-async def broadcast_message(message: BroadcastMessage):
-    """
-    Broadcast a message to all connected clients or to a specific room
-    """
-    try:
-        if message.room:
-            # Send to specific room
-            await sio.emit(message.event, {
-                **message.data,
-                'timestamp': datetime.now().isoformat(),
-                'broadcast': True,
-                'room': message.room
-            }, room=message.room)
-        else:
-            # Send to all connected clients
-            await sio.emit(message.event, {
-                **message.data,
-                'timestamp': datetime.now().isoformat(),
-                'broadcast': True
-            })
-        
-        return {
-            "success": True,
-            "message": f"Message broadcasted to {'room ' + message.room if message.room else 'all clients'}",
-            "event": message.event,
-            "timestamp": datetime.now().isoformat()
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post(f"{ENDPOINT}/send")
-async def send_direct_message(message: DirectMessage):
-    """
-    Send a message to a specific client
-    """
-    try:
-        if message.client_id not in connected_clients:
-            raise HTTPException(status_code=404, detail="Client not connected")
-        
-        await sio.emit(message.event, {
-            **message.data,
-            'timestamp': datetime.now().isoformat(),
-            'direct': True
-        }, room=message.client_id)
-        
-        return {
-            "success": True,
-            "message": f"Message sent to client {message.client_id}",
-            "event": message.event,
-            "timestamp": datetime.now().isoformat()
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post(f"{ENDPOINT}/notify")
-async def send_notification():
-    """
-    Send a sample notification to all clients
-    """
-    try:
-        notification_data = {
-            'title': 'Server Notification',
-            'message': 'This is a test notification from the server',
-            'type': 'info',
-            'timestamp': datetime.now().isoformat()
-        }
-        
-        await sio.emit('notification', notification_data)
-        
-        return {
-            "success": True,
-            "message": "Notification sent to all clients",
-            "data": notification_data
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Background task example - sends periodic updates
-async def background_task():
-    """
-    Example background task that sends periodic data to all clients
-    """
-    counter = 0
-    while True:
-        if connected_clients:  # Only send if there are connected clients
-            counter += 1
-            await sio.emit('periodic_update', {
-                'counter': counter,
-                'timestamp': datetime.now().isoformat(),
-                'connected_clients': len(connected_clients)
-            })
-        await asyncio.sleep(30)  # Send update every 30 seconds
 
 # Start background task when the app starts
 @app.on_event("startup")
@@ -312,75 +202,11 @@ async def get_question_by_id(question_id: int):
         )
     return question
 
-@app.post(
-    ENDPOINT + "/questions/",
-    summary="Create a new question",
-    response_model=QuestionResponse,
-    status_code=status.HTTP_201_CREATED,
-    tags=["Questions"]
-)
-async def create_question(question: QuestionCreate):
-    new_id = QuestionRepository.create_question(**question.dict())
-    if not new_id:
-        raise HTTPException(
-            status_code=400,
-            detail="Failed to create question"
-        )
-    return QuestionRepository.get_question_by_id(new_id)
 
-@app.put(
-    ENDPOINT + "/questions/{question_id}/",
-    summary="Update a question",
-    response_model=QuestionResponse,
-    responses={404: {"model": ErrorNotFound}},
-    tags=["Questions"]
-)
-async def update_question(question_id: int, question: QuestionUpdate):
-    updated = QuestionRepository.update_question(question_id, **question.dict(exclude_unset=True))
-    if not updated:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Question with ID {question_id} not found or update failed"
-        )
-    return QuestionRepository.get_question_by_id(question_id)
 
-@app.patch(
-    ENDPOINT + "/questions/{question_id}/status/",
-    summary="Update question status (active/inactive)",
-    response_model=QuestionResponse,
-    responses={404: {"model": ErrorNotFound}},
-    tags=["Questions"]
-)
-async def update_question_status(question_id: int, status: QuestionStatusUpdate):
-    updated = QuestionRepository.update_question(
-        question_id,
-        is_active=status.is_active
-    )
-    if not updated:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Question with ID {question_id} not found"
-        )
-    await sio.emit('question_status_changed', {
-        "question_id": question_id,
-        "new_status": status.is_active
-    })
-    return QuestionRepository.get_question_by_id(question_id)
 
-@app.delete(
-    ENDPOINT + "/questions/{question_id}/",
-    summary="Delete a question",
-    status_code=status.HTTP_204_NO_CONTENT,
-    responses={404: {"model": ErrorNotFound}},
-    tags=["Questions"]
-)
-async def delete_question(question_id: int):
-    success = QuestionRepository.delete_question(question_id)
-    if not success:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Question with ID {question_id} not found"
-        )
+
+
 
 
 
@@ -460,24 +286,7 @@ async def get_question_with_answers(question_id: int):
         )
     return question
 
-@app.patch(
-    ENDPOINT + "/questions/{question_id}/metadata/",
-    summary="Update question metadata",
-    response_model=QuestionResponse,
-    responses={404: {"model": ErrorNotFound}},
-    tags=["Special Question Operations"]
-)
-async def update_question_metadata(question_id: int, metadata: QuestionMetadataUpdate):
-    updated = QuestionRepository.update_question_metadata(
-        question_id,
-        **metadata.dict(exclude_unset=True)
-    )
-    if not updated:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Question with ID {question_id} not found"
-        )
-    return QuestionRepository.get_question_by_id(question_id)
+
 
 # ----------------------------------------------------
 # Socket.IO Handlers (Existing, unchanged)
@@ -503,34 +312,7 @@ async def request_random_question(sid, data):
 # FastAPI Endpoints - Answers (Existing, unchanged)
 # ----------------------------------------------------
 
-@app.post(
-    ENDPOINT + "/questions/{question_id}/answers/",
-    summary="Create a new answer for a question",
-    response_model=AnswerResponse,
-    status_code=status.HTTP_201_CREATED,
-    responses={404: {"model": ErrorNotFound}},
-    tags=["Answers"]
-)
-async def create_answer(question_id: int, answer: AnswerCreate):
-    # Verify question exists
-    if not QuestionRepository.get_question_by_id(question_id):
-        raise HTTPException(
-            status_code=404,
-            detail=f"Question with ID {question_id} not found"
-        )
 
-    new_id = AnswerRepository.create_answer(
-        questionId=question_id,
-        answer_text=answer.answer_text,
-        is_correct=answer.is_correct
-    )
-
-    if not new_id:
-        raise HTTPException(
-            status_code=400,
-            detail="Failed to create answer"
-        )
-    return AnswerRepository.get_answer_by_id(new_id)
 
 
 @app.get(
@@ -591,118 +373,21 @@ async def get_answer(answer_id: int):
         )
     return answer
 
-@app.put(
-    ENDPOINT + "/answers/{answer_id}/",
-    summary="Update an answer",
-    response_model=AnswerResponse,
-    responses={404: {"model": ErrorNotFound}},
-    tags=["Answers"]
-)
-async def update_answer(answer_id: int, answer: AnswerUpdate):
-    updated = AnswerRepository.update_answer(
-        answer_id,
-        **answer.dict(exclude_unset=True)
-    )
-    if not updated:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Answer with ID {answer_id} not found or update failed"
-        )
-    return AnswerRepository.get_answer_by_id(answer_id)
 
-@app.patch(
-    ENDPOINT + "/answers/{answer_id}/correctness/",
-    summary="Update answer correctness status",
-    response_model=AnswerResponse,
-    responses={404: {"model": ErrorNotFound}},
-    tags=["Answers"]
-)
-async def update_answer_correctness(answer_id: int, status: AnswerStatusUpdate):
-    updated = AnswerRepository.update_answer(
-        answer_id,
-        is_correct=status.is_correct
-    )
-    if not updated:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Answer with ID {answer_id} not found"
-        )
-    return AnswerRepository.get_answer_by_id(answer_id)
 
-@app.delete(
-    ENDPOINT + "/answers/{answer_id}/",
-    summary="Delete an answer",
-    status_code=status.HTTP_204_NO_CONTENT,
-    responses={404: {"model": ErrorNotFound}},
-    tags=["Answers"]
-)
-async def delete_answer(answer_id: int):
-    success = AnswerRepository.delete_answer(answer_id)
-    if not success:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Answer with ID {answer_id} not found"
-        )
+
 
 # ----------------------------------------------------
-# Special Answer Operations (Existing, unchanged)
+# Special Answer Operations
 # ----------------------------------------------------
 
-@app.put(
-    ENDPOINT + "/questions/{question_id}/answers/set-correct/",
-    summary="Set a specific answer as the correct one (makes others incorrect)",
-    response_model=AnswerResponse,
-    responses={404: {"model": ErrorNotFound}},
-    tags=["Special Answer Operations"]
-)
-async def set_correct_answer(question_id: int, answer_id: int):
-    # Verify both question and answer exist
-    if not QuestionRepository.get_question_by_id(question_id):
-        raise HTTPException(
-            status_code=404,
-            detail=f"Question with ID {question_id} not found"
-        )
 
-    answer = AnswerRepository.get_answer_by_id(answer_id)
-    if not answer or answer['questionId'] != question_id:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Answer with ID {answer_id} not found for this question"
-        )
-
-    updated = AnswerRepository.set_single_correct_answer_for_question(
-        question_id,
-        answer_id
-    )
-
-    if not updated:
-        raise HTTPException(
-            status_code=400,
-            detail="Failed to update answer correctness"
-        )
-
-    return AnswerRepository.get_answer_by_id(answer_id)
 
 
 # ----------------------------------------------------
 # FastAPI Endpoints - Themes (NEW)
 # ----------------------------------------------------
 
-@app.post(
-    ENDPOINT + "/themes/",
-    summary="Create a new theme",
-    response_model=ThemeResponse,
-    status_code=status.HTTP_201_CREATED,
-    tags=["Themes"]
-)
-async def create_theme(theme: ThemeCreate):
-    new_id = ThemeRepository.create_theme(**theme.dict())
-    if not new_id:
-        raise HTTPException(
-            status_code=400,
-            detail="Failed to create theme"
-        )
-    return ThemeRepository.get_theme_by_id(new_id)
 
 @app.get(
     ENDPOINT + "/themes/",
@@ -740,61 +425,9 @@ async def get_theme_by_id(theme_id: int):
         )
     return theme
 
-@app.put(
-    ENDPOINT + "/themes/{theme_id}/",
-    summary="Update a theme",
-    response_model=ThemeResponse,
-    responses={404: {"model": ErrorNotFound}},
-    tags=["Themes"]
-)
-async def update_theme(theme_id: int, theme: ThemeUpdate):
-    updated = ThemeRepository.update_theme(theme_id, **theme.dict(exclude_unset=True))
-    if not updated:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Theme with ID {theme_id} not found or update failed"
-        )
-    return ThemeRepository.get_theme_by_id(theme_id)
-
-@app.patch(
-    ENDPOINT + "/themes/{theme_id}/status/",
-    summary="Update theme active status",
-    response_model=ThemeResponse,
-    responses={404: {"model": ErrorNotFound}},
-    tags=["Themes"]
-)
-async def update_theme_status(theme_id: int, status_update: dict = Body(..., embed=True, alias="is_active")):
-    # Extract the boolean value from the dict
-    is_active_status = status_update.get('is_active')
-    if is_active_status is None or not isinstance(is_active_status, bool):
-        raise HTTPException(
-            status_code=422,
-            detail="Invalid 'is_active' value provided. Must be a boolean."
-        )
-
-    updated = ThemeRepository.set_theme_active_status(theme_id, is_active_status)
-    if not updated:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Theme with ID {theme_id} not found or status update failed"
-        )
-    return ThemeRepository.get_theme_by_id(theme_id)
 
 
-@app.delete(
-    ENDPOINT + "/themes/{theme_id}/",
-    summary="Delete a theme",
-    status_code=status.HTTP_204_NO_CONTENT,
-    responses={404: {"model": ErrorNotFound}},
-    tags=["Themes"]
-)
-async def delete_theme(theme_id: int):
-    success = ThemeRepository.delete_theme(theme_id)
-    if not success:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Theme with ID {theme_id} not found"
-        )
+
 
 
 @app.get(
@@ -811,35 +444,6 @@ async def get_theme_question_count(theme_id: int):
 # ----------------------------------------------------
 # FastAPI Endpoints - Users
 # ----------------------------------------------------
-
-@app.post(
-    ENDPOINT + "/users/",
-    response_model=UserPublic, # Return the public version
-    status_code=201, # Created
-    summary="Create a new user",
-    responses={400: {"model": ErrorMessage}},
-    tags=["Users"]
-)
-async def create_user(user_create: UserCreate):
-    # Pass the Pydantic model's data as a dictionary to the repository
-    user_data = user_create.model_dump()
-    user_id = UserRepository.create_user(user_data)
-    if user_id is None:
-        raise HTTPException(
-            status_code=400,
-            detail="User could not be created. Possible duplicate RFID or other issue."
-        )
-    
-    # Fetch the newly created user to return it
-    new_user = UserRepository.get_user_by_id(user_id)
-    if not new_user:
-        # This case should ideally not happen if create_user succeeded
-        raise HTTPException(status_code=500, detail="Failed to retrieve newly created user.")
-    
-    # Return UserPublic to exclude sensitive fields
-    return UserPublic(**new_user)
-
-
 @app.get(
     ENDPOINT + "/users/",
     response_model=List[UserPublic], # Return list of public users
@@ -863,54 +467,6 @@ async def get_user_by_id(user_id: int):
     if not user:
         raise HTTPException(status_code=404, detail=f"User with ID {user_id} not found")
     return UserPublic(**user)
-
-
-@app.put(
-    ENDPOINT + "/users/{user_id}",
-    response_model=UserPublic, # Return public user
-    summary="Update an existing user by ID",
-    responses={404: {"model": ErrorNotFound}, 400: {"model": ErrorMessage}},
-    tags=["Users"]
-)
-async def update_user(user_id: int, user_update: UserUpdate):
-    update_data = user_update.model_dump(exclude_unset=True) # Only include fields that were set
-    
-    if not update_data:
-        raise HTTPException(status_code=400, detail="No fields provided for update.")
-
-    success = UserRepository.update_user(user_id, update_data)
-    if not success:
-        # Check if user exists before saying "not found"
-        existing_user = UserRepository.get_user_by_id(user_id)
-        if not existing_user:
-            raise HTTPException(status_code=404, detail=f"User with ID {user_id} not found")
-        else:
-            # This could happen if no fields were actually changed or a DB error
-            raise HTTPException(status_code=400, detail="Failed to update user.")
-    
-    updated_user = UserRepository.get_user_by_id(user_id)
-    if not updated_user:
-        # Should not happen if update was successful
-        raise HTTPException(status_code=500, detail="Failed to retrieve updated user.")
-    
-    return UserPublic(**updated_user)
-
-
-@app.delete(
-    ENDPOINT + "/users/{user_id}",
-    status_code=204, # No Content on successful deletion
-    summary="Delete a user by ID",
-    responses={404: {"model": ErrorNotFound}},
-    tags=["Users"]
-)
-async def delete_user(user_id: int):
-    success = UserRepository.delete_user(user_id)
-    if not success:
-        raise HTTPException(status_code=404, detail=f"User with ID {user_id} not found")
-    return {"message": "User deleted successfully"}
-
-
-
 
 
 
