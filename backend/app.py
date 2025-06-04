@@ -979,17 +979,43 @@ def verify_user(user_id: int, rfid_code: str) -> str:
         raise HTTPException(status_code=403, detail="Unknown role")
 
 # Example of how you would use get_current_user_info as a dependency in other API endpoints
-async def get_current_user_info(userId: int, rfid: str):
-    # This dependency will return the role, which can then be used in the endpoint
-    # You might want to return a dict with both ID and role for more flexibility
-    role = verify_user(userId, rfid)
-    return {"id": userId, "role": role}
+from fastapi import Header
+
+async def get_current_user_info(
+    x_user_id: str = Header(None, alias="X-User-ID"),
+    x_rfid: str = Header(None, alias="X-RFID")
+):
+    if not x_user_id or not x_rfid:
+        raise HTTPException(status_code=401, detail="Missing user credentials")
+    
+    return {
+        "id": int(x_user_id),
+        "role": verify_user(x_user_id, x_rfid)
+    }
 
 
+def convert_difficulty_to_id(difficulty_string: str) -> int:
+    difficulty_mapping = {
+        "easy": 1,
+        "medium": 2,
+        "hard": 3,
+        "expert": 4
+    }
+    # Convert to lowercase for case-insensitive matching
+    difficulty_lower = difficulty_string.lower()
+    
+    if difficulty_lower in difficulty_mapping:
+        return difficulty_mapping[difficulty_lower]
+    else:
+        # Default to medium if unknown difficulty
+        return 2
+
+
+# Updated endpoint with proper error handling and data conversion
 @app.post("/api/v1/questions")
 async def create_question_endpoint(
     question_data: QuestionInput,
-    current_user_info: dict = Depends(get_current_user_info) # Use Depends for dependency injection
+    current_user_info: dict = Depends(get_current_user_info)
 ):
     user_id = current_user_info["id"]
     role = current_user_info["role"]
@@ -999,42 +1025,88 @@ async def create_question_endpoint(
             status_code=403,
             detail="Only admins and moderators can create questions"
         )
-
+    
     if role == "moderator":
         question_data.is_active = False
-
-    question_id = QuestionRepository.create_question(
-        question_text=question_data.question_text,
-        themeId=question_data.themeId,
-        difficultyLevelId=question_data.difficultyLevelId,
-        explanation=question_data.explanation,
-        Url=question_data.Url,
-        time_limit=question_data.time_limit,
-        think_time=question_data.think_time,
-        points=question_data.points,
-        is_active=question_data.is_active,
-        no_answer_correct=question_data.no_answer_correct,
-        createdBy=user_id,
-        LightMax=question_data.LightMax,
-        LightMin=question_data.LightMin,
-        TempMax=question_data.TempMax,
-        TempMin=question_data.TempMin
-    )
-
-    for answer in question_data.answers:
-        AnswerRepository.create_answer(
-            question_id=question_id,
-            answer_text=answer.answer_text,
-            is_correct=answer.is_correct
+    
+    try:
+        # Convert difficulty string to integer if needed
+        difficulty_id = question_data.difficultyLevelId
+        if isinstance(difficulty_id, str):
+            difficulty_id = convert_difficulty_to_id(difficulty_id)
+        
+        # Convert themeId to integer if it's a string
+        theme_id = question_data.themeId
+        if isinstance(theme_id, str):
+            # If themeId is a string, you might need a similar mapping
+            # For now, defaulting to 1 if it's a string
+            try:
+                theme_id = int(theme_id)
+            except ValueError:
+                theme_id = 1  # Default theme ID
+        
+        # Create the question and get the ID
+        question_id = QuestionRepository.create_question(
+            question_text=question_data.question_text,
+            themeId=theme_id,
+            difficultyLevelId=difficulty_id,
+            explanation=question_data.explanation,
+            Url=question_data.Url,
+            time_limit=question_data.time_limit,
+            think_time=question_data.think_time,
+            points=question_data.points,
+            is_active=question_data.is_active,
+            no_answer_correct=question_data.no_answer_correct,
+            createdBy=user_id,
+            LightMax=question_data.LightMax,
+            LightMin=question_data.LightMin,
+            TempMax=question_data.TempMax,
+            TempMin=question_data.TempMin
         )
-
-    return {
-        "status": "success",
-        "question_id": question_id,
-        "is_active": question_data.is_active,
-        "role": role
-    }
-
+        
+        # Verify question_id was created successfully
+        if not question_id:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to create question - no ID returned"
+            )
+        
+        # Create answers only if question was created successfully
+        created_answers = []
+        for answer in question_data.answers:
+            try:
+                answer_id = AnswerRepository.create_answer(
+                    question_id=question_id,
+                    answer_text=answer.answer_text,
+                    is_correct=answer.is_correct
+                )
+                created_answers.append(answer_id)
+            except Exception as answer_error:
+                # If answer creation fails, log it but don't fail the whole request
+                print(f"Failed to create answer: {answer_error}")
+                # Optionally, you might want to delete the question if answers fail
+                # QuestionRepository.delete_question(question_id)
+                raise HTTPException(
+                    status_code=500, 
+                    detail=f"Failed to create answer: {str(answer_error)}"
+                )
+        
+        return {
+            "status": "success",
+            "question_id": question_id,
+            "created_answers": len(created_answers),
+            "is_active": question_data.is_active,
+            "role": role,
+            "difficulty_id": difficulty_id,
+            "theme_id": theme_id
+        }
+        
+    except Exception as e:
+        print(f"Error creating question: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create question: {str(e)}"
+        )
 
 
 
