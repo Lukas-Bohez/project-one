@@ -316,24 +316,25 @@ class UserCredentials(BaseModel):
     last_name: str = Field(..., min_length=1, max_length=50, example="Doe")
     password: str = Field(..., min_length=8, example="StrongPassword123!") # Adjust min_length as needed
 
+
 class AnswerInput(BaseModel):
     answer_text: str
     is_correct: bool
 
+
 class QuestionInput(BaseModel):
     question_text: str
-    themeId: int
-    difficultyLevelId: int
-    answers: list[AnswerInput]
+    themeId: str
+    difficultyLevelId: str
     explanation: Optional[str] = None
     Url: Optional[str] = None
-    time_limit: int = 30
-    think_time: int = 0
-    points: int = 10
-    is_active: bool = False
-    no_answer_correct: bool = False
-    createdBy: Optional[int] = None
-    LightMax: Optional[int] = None
-    LightMin: Optional[int] = None
-    TempMax: Optional[int] = None
-    TempMin: Optional[int] = None
+    time_limit: Optional[int] = 30
+    think_time: Optional[int] = 5
+    points: Optional[int] = 10
+    is_active: Optional[bool] = True
+    no_answer_correct: Optional[bool] = False
+    LightMax: Optional[float] = None
+    LightMin: Optional[float] = None
+    TempMax: Optional[float] = None
+    TempMin: Optional[float] = None
+    answers: list[AnswerInput]
