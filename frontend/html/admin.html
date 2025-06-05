@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
+
 <body>
     <header class="c-header c-header--admin">
         <a href="../index.html" class="c-header__link">
@@ -45,7 +47,7 @@
                     </li>
                 </ul>
             </nav>
-            
+
             <section class="c-admin-sidebar__stats">
                 <h3 class="c-admin-sidebar__heading">Quick Stats</h3>
                 <ul class="c-stats-list">
@@ -54,7 +56,7 @@
                             <i class="fas fa-clipboard-list"></i>
                         </div>
                         <div class="c-stats-list__content">
-                            <div class="c-stats-list__value">42</div>
+                            <div class="c-stats-list__value">1</div>
                             <div class="c-stats-list__label">Active Quizzes</div>
                         </div>
                     </li>
@@ -63,7 +65,7 @@
                             <i class="fas fa-question"></i>
                         </div>
                         <div class="c-stats-list__content">
-                            <div class="c-stats-list__value">128</div>
+                            <div class="c-stats-list__value js-question-count">128</div>
                             <div class="c-stats-list__label">Total Questions</div>
                         </div>
                     </li>
@@ -79,37 +81,33 @@
                         <i class="fas fa-plus"></i> Add Question
                     </button>
                 </div>
-                
+
                 <div class="c-search-bar">
                     <div class="c-search-input-wrapper">
                         <i class="fas fa-search c-search-icon"></i>
                         <input type="text" class="c-search-input" placeholder="Search questions...">
                     </div>
-                    
+
                     <div class="c-filter-controls">
-                        <select class="c-select c-filter-select">
+                        <select class="c-select c-filter-select js-theme-filter">
                             <option value="">All Themes</option>
-                            <option value="Geography">Geography</option>
-                            <option value="Science">Science</option>
-                            <option value="Literature">Literature</option>
-                            <option value="History">History</option>
                         </select>
-                        
-                        <select class="c-select c-filter-select">
+
+                        <select class="c-select c-filter-select js-difficulty-filter">
                             <option value="">All Difficulties</option>
-                            <option value="Easy">Easy</option>
-                            <option value="Medium">Medium</option>
-                            <option value="Hard">Hard</option>
-                            <option value="Expert">Expert</option>
+                            <option value="1">Easy</option>
+                            <option value="2">Medium</option>
+                            <option value="3">Hard</option>
+                            <option value="4">Expert</option>
                         </select>
                     </div>
                 </div>
-                
+
                 <div class="c-question-list">
                     <!-- Questions will be loaded here dynamically -->
                     <div class="c-loading">Loading questions...</div>
                 </div>
-                
+
                 <div class="c-pagination">
                     <button class="c-pagination__btn c-pagination__btn--prev" disabled>
                         <i class="fas fa-chevron-left"></i> Previous
@@ -128,7 +126,7 @@
                         <i class="fas fa-plus"></i> Add Theme
                     </button>
                 </div>
-                
+
                 <div class="c-theme-management">
                     <div class="c-theme-list">
                         <!-- Themes will be loaded here dynamically -->
@@ -144,7 +142,7 @@
                         <i class="fas fa-plus"></i> Add User
                     </button>
                 </div>
-                
+
                 <div class="c-user-management">
                     <table class="c-user-table">
                         <thead>
@@ -165,23 +163,23 @@
                 </div>
             </div>
         </section>
-        
+
         <section class="c-admin-card c-stats-card">
             <h2 class="c-admin-title">System Statistics</h2>
             <div class="c-stats-grid">
                 <div class="c-stat-item">
                     <div class="c-stat-icon"><i class="fas fa-chart-line"></i></div>
-                    <div class="c-stat-value">42</div>
+                    <div class="c-stat-value">1</div>
                     <div class="c-stat-label">Active Quizzes</div>
                 </div>
                 <div class="c-stat-item">
                     <div class="c-stat-icon"><i class="fas fa-question-circle"></i></div>
-                    <div class="c-stat-value">128</div>
+                    <div class="c-stat-value js-question-count">128</div>
                     <div class="c-stat-label">Total Questions</div>
                 </div>
                 <div class="c-stat-item">
                     <div class="c-stat-icon"><i class="fas fa-users"></i></div>
-                    <div class="c-stat-value">24</div>
+                    <div class="c-stat-value js-users-count">24</div>
                     <div class="c-stat-label">Registered Users</div>
                 </div>
                 <div class="c-stat-item">
@@ -190,7 +188,7 @@
                     <div class="c-stat-label">Avg. Score</div>
                 </div>
             </div>
-            
+
             <div class="c-activity-log">
                 <h3 class="c-admin-subtitle">Recent Activity</h3>
                 <ul class="c-activity-list">
@@ -241,5 +239,7 @@
     </template>
 
     <script src="../js/admin.js"></script>
+    <script src="../js/admin2.js"></script>
 </body>
+
 </html>

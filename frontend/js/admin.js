@@ -12,95 +12,107 @@ const domAdmin = {
     saveChangesBtn: document.querySelector('.js-save-changes'),
     questionList: document.querySelector('.c-question-list'),
     themeList: document.querySelector('.c-theme-list'),
-    userTable: document.querySelector('.c-user-table tbody')
+    userTable: document.querySelector('.c-user-table tbody'),
+    themeFilter: document.querySelector('.js-theme-filter'), // Add this
+    difficultyFilter: document.querySelector('.js-difficulty-filter'), // Add this
 };
 
-const lanIP = `http://${window.location.hostname}:8000`;
+let currentForm = null;
 // #endregion
 
 // #region ***  Data & State Management                  ***********
 let currentEditItem = null;
 let currentTab = 'questions';
 
-const state = {
-    questions: [
-        { id: 1, text: 'What is the capital of France?', theme: 'Geography', difficulty: 'Easy' },
-        { id: 2, text: 'Which planet is known as the Red Planet?', theme: 'Science', difficulty: 'Easy' },
-        { id: 3, text: 'Who wrote "Romeo and Juliet"?', theme: 'Literature', difficulty: 'Medium' }
-    ],
-    themes: [
-        { id: 1, name: 'Geography', questionCount: 12 },
-        { id: 2, name: 'Science', questionCount: 15 },
-        { id: 3, name: 'Literature', questionCount: 8 },
-        { id: 4, name: 'History', questionCount: 10 }
-    ],
-    users: [
-        { id: 1, username: 'admin1', role: 'Admin', lastActive: '2023-05-15' },
-        { id: 2, username: 'moderator1', role: 'Moderator', lastActive: '2023-05-20' },
-        { id: 3, username: 'user1', role: 'User', lastActive: '2023-05-22' }
-    ],
-    stats: {
-        activeQuizzes: 42,
-        totalQuestions: 128,
-        registeredUsers: 24,
-        avgScore: '85%'
-    }
-};
+
 // #endregion
 
 const fetchQuestions = async (activeOnly = false) => {
     const questionsEndpoint = `${lanIP}/api/v1/questions/`;
-    // Assuming an endpoint like /api/v1/questions/{question_id}/answers
-    // that uses your `get_answers_for_question` logic on the backend.
     const answersBaseEndpoint = `${lanIP}/api/v1/questions/`;
-
+    const themesBaseEndpoint = `${lanIP}/api/v1/themes/`;
+    
     try {
         // Step 1: Fetch all questions
-        // Correcting the activeOnly logic for clarity if you want truly active questions
         const questionsUrl = activeOnly ? `${questionsEndpoint}?active_only=true` : questionsEndpoint;
         const questionsResponse = await fetch(questionsUrl);
-
         if (!questionsResponse.ok) {
             console.error(`HTTP error fetching questions! Status: ${questionsResponse.status}`);
             return [];
         }
-
         const questions = await questionsResponse.json();
-        const questionsWithAnswers = [];
-
-        // Step 2: For each question, fetch its answers
+        
+        // Step 2: Get unique theme IDs to minimize API calls
+        const uniqueThemeIds = [...new Set(questions.map(q => q.themeId).filter(id => id))];
+        
+        // Step 3: Fetch all themes in parallel
+        const themePromises = uniqueThemeIds.map(async (themeId) => {
+            try {
+                const themeResponse = await fetch(`${themesBaseEndpoint}${themeId}/`);
+                if (!themeResponse.ok) {
+                    console.warn(`HTTP error fetching theme ID ${themeId}! Status: ${themeResponse.status}`);
+                    return { id: themeId, name: 'Unknown Theme', error: true };
+                }
+                const theme = await themeResponse.json();
+                return theme;
+            } catch (error) {
+                console.warn(`Failed to fetch theme ID ${themeId}:`, error);
+                return { id: themeId, name: 'Unknown Theme', error: true };
+            }
+        });
+        
+        const themes = await Promise.all(themePromises);
+        
+        // Step 4: Create a theme lookup map for quick access
+        const themeMap = themes.reduce((map, theme) => {
+            map[theme.id] = theme;
+            return map;
+        }, {});
+        
+        const questionsWithAnswersAndThemes = [];
+        
+        // Step 5: For each question, fetch its answers and attach theme data
         for (const question of questions) {
+            // Fetch answers for this question
             const answersUrl = `${answersBaseEndpoint}${question.id}/answers`;
             const answersResponse = await fetch(answersUrl);
-
             let answers = [];
+            
             if (!answersResponse.ok) {
                 console.warn(`HTTP error fetching answers for question ID ${question.id}! Status: ${answersResponse.status}`);
-                // Continue even if answers for one question fail
             } else {
                 const answersData = await answersResponse.json();
-                // Assuming the backend returns an object with an 'answers' array,
-                // matching your AnswerListResponse structure.
                 answers = answersData.answers || [];
             }
-
-            questionsWithAnswers.push({
+            
+            // Get theme data for this question
+            const theme = themeMap[question.themeId] || { 
+                id: question.themeId, 
+                name: 'Unknown Theme', 
+                error: true 
+            };
+            
+            questionsWithAnswersAndThemes.push({
                 ...question, // Spread all properties of the original question
-                answers: answers // Add the fetched answers to it
+                answers: answers, // Add the fetched answers
+                theme: theme // Add the theme object - accessible as question.theme
             });
         }
-        console.log('answers below?')
-        console.log(questionsWithAnswers);
-        return questionsWithAnswers;
-
+        
+        console.log('Questions with answers and themes:');
+        console.log(questionsWithAnswersAndThemes);
+        
+        return questionsWithAnswersAndThemes;
+        
     } catch (error) {
-        console.error('Failed to fetch questions or answers:', error);
+        console.error('Failed to fetch questions, answers, or themes:', error);
         return [];
     }
 };
 
-// Example of how to use it:
-// fetchQuestionsWithAnswers(true).then(data => console.log('Final Data:', data));
+
+
+
 
 
 
@@ -186,29 +198,63 @@ const fetchUsers = async () => {
     }
 };
 
-// You should verify `lanIP` is defined somewhere like this:
-// const lanIP = "http://127.0.0.1:8000"; // Or your actual backend IP and port
 
+
+let state = {
+    questions: [],
+    themes: [],
+    users: []
+};
+
+
+
+
+// Enhanced updateQuestion function to handle API calls properly
 const updateQuestion = async (question) => {
-    // API call to update question
-    // In a real app this would be:
-    // const response = await fetch(`/api/questions/${question.id}`, {
-    //   method: 'PUT',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(question)
-    // });
-    // return await response.json();
-    
-    console.log('Updating question:', question);
-    return new Promise(resolve => {
-        setTimeout(() => {
-            const index = state.questions.findIndex(q => q.id === question.id);
-            if (index >= 0) {
-                state.questions[index] = question;
-            }
-            resolve(question);
-        }, 300);
-    });
+    try {
+        // Here you would make an actual API call to update the question
+        const response = await fetch(`${lanIP}/api/v1/questions/${question.id}/`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                question_text: question.question_text,
+                themeId: question.themeId,
+                difficultyLevelId: question.difficultyLevelId,
+                think_time: question.think_time,
+                time_limit: question.time_limit,
+                points: question.points,
+                Url: question.Url,
+                is_active: question.is_active,
+                no_answer_correct: question.no_answer_correct,
+                LightMin: question.LightMin,
+                LightMax: question.LightMax,
+                TempMin: question.TempMin,
+                TempMax: question.TempMax,
+                explanation: question.explanation,
+                answers: question.answers
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const updatedQuestion = await response.json();
+        
+        // Update the question in state
+        const index = state.questions.findIndex(q => q.id === question.id);
+        if (index >= 0) {
+            state.questions[index] = { ...state.questions[index], ...updatedQuestion };
+        }
+        
+        console.log('Question updated successfully:', updatedQuestion);
+        
+    } catch (error) {
+        console.error('Failed to update question:', error);
+        showNotification('Failed to update question. Please try again.', 'error');
+    }
 };
 
 const saveItem = async (itemType, item) => {
@@ -278,6 +324,7 @@ const deleteItem = async (itemType, itemId) => {
 // #endregion
 
 // #region ***  Callback-Visualisation - show___         ***********
+// Enhanced showTab function to populate filters when showing questions tab
 const showTab = (tabId) => {
     // Hide all tab contents
     domAdmin.tabContents.forEach(content => {
@@ -300,11 +347,16 @@ const showTab = (tabId) => {
     // Update current tab state
     currentTab = tabId;
     
+    // If switching to questions tab, populate theme filter
+    if (tabId === 'questions') {
+        populateThemeFilter();
+    }
+    
     // Load data for the selected tab
     loadTabData(tabId);
 };
 
-const showEditModal = (itemType, item = null) => {
+const showEditModal = async (itemType, item = null) => {
     const modal = domAdmin.editModal;
     const modalTitle = modal.querySelector('.c-modal-title');
     const form = modal.querySelector('.c-edit-form');
@@ -320,6 +372,17 @@ const showEditModal = (itemType, item = null) => {
             '"': '&quot;'
         }[tag] || tag));
     };
+    
+    // **FIX: Ensure themes are loaded before building question form**
+    if (itemType === 'questions' && (!state.themes || state.themes.length === 0)) {
+        try {
+            console.log('Loading themes for question modal...');
+            state.themes = await fetchThemes();
+        } catch (error) {
+            console.error('Failed to load themes for modal:', error);
+            state.themes = []; // Fallback to empty array
+        }
+    }
     
     // Helper function to generate answers HTML
     const generateAnswersHTML = (answers, count) => {
@@ -360,6 +423,23 @@ const showEditModal = (itemType, item = null) => {
         // Get initial answer count - default to 4 if no item or no answers
         const initialAnswerCount = item && item.answers ? item.answers.length : 4;
         
+        // **FIX: Build themes dropdown with proper error handling**
+        let themesOptionsHTML = '';
+        if (state.themes && state.themes.length > 0) {
+            themesOptionsHTML = state.themes.map(theme => {
+                // Compare theme IDs for proper selection
+                const isSelected = item && (
+                    (item.theme && item.theme.id === theme.id) || 
+                    item.themeId === theme.id
+                );
+                return `<option value="${theme.id}" ${isSelected ? 'selected' : ''}>
+                    ${escapeHTML(theme.name)}
+                </option>`;
+            }).join('');
+        } else {
+            themesOptionsHTML = '<option value="">No themes available - Please add themes first</option>';
+        }
+        
         form.innerHTML = `
             <div class="c-form-group">
                 <label>Question</label>
@@ -369,11 +449,7 @@ const showEditModal = (itemType, item = null) => {
             <div class="c-form-group">
                 <label>Theme</label>
                 <select name="theme" class="c-form-select" required>
-                    ${state.themes.map(theme => `
-                        <option value="${escapeHTML(theme.name)}" ${item && item.theme === theme.name ? 'selected' : ''}>
-                            ${escapeHTML(theme.name)}
-                        </option>
-                    `).join('')}
+                    ${themesOptionsHTML}
                 </select>
             </div>
             
@@ -408,7 +484,7 @@ const showEditModal = (itemType, item = null) => {
             <div class="c-form-group">
                 <label>Media URL (optional)</label>
                 <input type="text" name="Url" class="c-form-input" 
-                       value="${escapeHTML(item ? item.Url : '')}" placeholder="https://example.com/media.jpg">
+                       value="${escapeHTML(item ? item.Url : '')}" placeholder="https://example.com/media">
             </div>
             
             <div class="c-form-group c-answer-correct">
@@ -430,25 +506,25 @@ const showEditModal = (itemType, item = null) => {
             <div class="c-form-group">
                 <label>Minimum Light</label>
                 <input type="number" name="LightMin" class="c-form-input" 
-                       value="${item ? item.LightMin : ''}" placeholder="Don't leave blank if not applicable">
+                       value="${item ? item.LightMin : ''}" placeholder="leave blank if not applicable">
             </div>
             
             <div class="c-form-group">
                 <label>Maximum Light</label>
                 <input type="number" name="LightMax" class="c-form-input" 
-                       value="${item ? item.LightMax : ''}" placeholder="Don't leave blank if not applicable">
+                       value="${item ? item.LightMax : ''}" placeholder="leave blank if not applicable">
             </div>
             
             <div class="c-form-group">
                 <label>Minimum Temperature</label>
                 <input type="number" name="TempMin" class="c-form-input" 
-                       value="${item ? item.TempMin : ''}" placeholder="Don't leave blank if not applicable">
+                       value="${item ? item.TempMin : ''}" placeholder="leave blank if not applicable">
             </div>
             
             <div class="c-form-group">
                 <label>Maximum Temperature</label>
                 <input type="number" name="TempMax" class="c-form-input" 
-                       value="${item ? item.TempMax : ''}" placeholder="Don't leave blank if not applicable">
+                       value="${item ? item.TempMax : ''}" placeholder="leave blank if not applicable">
             </div>
             
             <div class="c-form-group">
@@ -474,7 +550,7 @@ const showEditModal = (itemType, item = null) => {
                 </div>
             </div>
         `;
-        
+            currentForm = form;
         // Add event listener for answer count change - using event delegation
         form.addEventListener('change', (e) => {
             if (e.target.classList.contains('js-answer-count')) {
@@ -499,7 +575,7 @@ const showEditModal = (itemType, item = null) => {
         });
     }
     
- else if (itemType === 'themes') {
+    else if (itemType === 'themes') {
         form.innerHTML = `
             <div class="c-form-group">
                 <label>Theme Name</label>
@@ -507,41 +583,41 @@ const showEditModal = (itemType, item = null) => {
             </div>
         `;
     } else if (itemType === 'users') {
-form.innerHTML = `
-    <div class="c-form-group">
-        <label>Username</label>
-        <input type="text" name="username" class="c-form-input" value="${item ? item.username : ''}">
-    </div>
-    <div class="c-form-group">
-        <label>Role</label>
-        <select name="role" class="c-form-select">
-            <option value="Admin" ${item && item.role === 'Admin' ? 'selected' : ''}>Admin</option>
-            <option value="Moderator" ${item && item.role === 'Moderator' ? 'selected' : ''}>Moderator</option>
-            <option value="User" ${item && item.role === 'User' ? 'selected' : ''}>User</option>
-        </select>
-    </div>
-    <div class="c-form-group">
-        <label>IP Address</label>
-        <input type="text" name="ip" class="c-form-input" value="${item ? item.ip || '' : ''}" readonly>
-    </div>
-    <div class="c-form-group">
-        <label>Ban Reason</label>
-        <textarea name="banReason" class="c-explanation-textarea" placeholder="Enter reason for ban...">${item ? item.banReason || '' : ''}</textarea>
-    </div>
-    <div class="c-form-group">
-        <label>Ban Duration</label>
-        <div class="c-duration-container">
-            <input type="number" name="banDurationValue" class="c-form-input" value="1" min="1">
-            <select name="banDurationUnit" class="c-form-input">
-                <option value="minutes">Minutes</option>
-                <option value="hours" selected>Hours</option>
-                <option value="days">Days</option>
-                <option value="permanent">Eternity</option>
-            </select>
-             <button type="button" class="c-btn c-btn--primary">Ban IP Address</button>
-        </div>
-    </div>
-`;
+        form.innerHTML = `
+            <div class="c-form-group">
+                <label>Username</label>
+                <input type="text" name="username" class="c-form-input" value="${item ? item.username : ''}">
+            </div>
+            <div class="c-form-group">
+                <label>Role</label>
+                <select name="role" class="c-form-select">
+                    <option value="Admin" ${item && item.role === 'Admin' ? 'selected' : ''}>Admin</option>
+                    <option value="Moderator" ${item && item.role === 'Moderator' ? 'selected' : ''}>Moderator</option>
+                    <option value="User" ${item && item.role === 'User' ? 'selected' : ''}>User</option>
+                </select>
+            </div>
+            <div class="c-form-group">
+                <label>IP Address</label>
+                <input type="text" name="ip" class="c-form-input" value="${item ? item.ip || '' : ''}" readonly>
+            </div>
+            <div class="c-form-group">
+                <label>Ban Reason</label>
+                <textarea name="banReason" class="c-explanation-textarea" placeholder="Enter reason for ban...">${item ? item.banReason || '' : ''}</textarea>
+            </div>
+            <div class="c-form-group">
+                <label>Ban Duration</label>
+                <div class="c-duration-container">
+                    <input type="number" name="banDurationValue" class="c-form-input" value="1" min="1">
+                    <select name="banDurationUnit" class="c-form-input">
+                        <option value="minutes">Minutes</option>
+                        <option value="hours" selected>Hours</option>
+                        <option value="days">Days</option>
+                        <option value="permanent">Eternity</option>
+                    </select>
+                     <button type="button" class="c-btn c-btn--primary">Ban IP Address</button>
+                </div>
+            </div>
+        `;
     }
     
     // Add form action buttons
@@ -620,6 +696,8 @@ const loadTabData = async (tabId) => {
     }
 };
 
+// Fix 1: Search by search term crash - Update loadQuestions function
+// Enhanced loadQuestions function with theme and difficulty filtering
 const loadQuestions = async () => {
     const questionList = document.querySelector('.c-question-list');
     
@@ -629,18 +707,42 @@ const loadQuestions = async () => {
     
     try {
         const questions = await fetchQuestions();
+        state.questions = questions; // Update state with fetched questions
+        
+        // Get filter values
         const searchTerm = domAdmin.searchInput?.value.toLowerCase() || '';
+        const selectedThemeId = domAdmin.themeFilter?.value ? parseInt(domAdmin.themeFilter.value) : null;
+        const selectedDifficulty = domAdmin.difficultyFilter?.value ? parseInt(domAdmin.difficultyFilter.value) : null;
         
-        // Filter questions once
-        const filteredQuestions = searchTerm 
-            ? questions.filter(q => q.text.toLowerCase().includes(searchTerm))
-            : questions;
+        // Apply all filters
+        let filteredQuestions = questions;
         
-        // Handle empty states more efficiently
+        // Filter by search term
+        if (searchTerm) {
+            filteredQuestions = filteredQuestions.filter(q => 
+                q.question_text.toLowerCase().includes(searchTerm)
+            );
+        }
+        
+        // Filter by theme
+        if (selectedThemeId) {
+            filteredQuestions = filteredQuestions.filter(q => 
+                q.themeId === selectedThemeId
+            );
+        }
+        
+        // Filter by difficulty
+        if (selectedDifficulty) {
+            filteredQuestions = filteredQuestions.filter(q => 
+                q.difficultyLevelId === selectedDifficulty
+            );
+        }
+        
+        // Handle empty states
         if (!questions.length || !filteredQuestions.length) {
             const message = !questions.length 
                 ? 'No questions found. Add a new question to get started.'
-                : 'No questions match your search.';
+                : 'No questions match your current filters.';
                 
             questionList.innerHTML = `<div class="c-empty-state">${message}</div>`;
             return;
@@ -669,26 +771,25 @@ const loadQuestions = async () => {
     }
 };
 
-// No changes needed for createQuestionElement, as it correctly passes
-// question.answers to generateAnswersHTML.
+
+// Fix 2: Themes dropdown options - Update createQuestionElement function
 const createQuestionElement = (question) => {
     const element = document.createElement('div');
     element.className = 'c-question-item';
     element.dataset.id = question.id;
 
-    // Use question.answers directly now that it's correctly structured
-    // The `answerCount` might still be useful if you want a fixed number of answer inputs
-    // even if fewer answers are provided by the backend.
-    const answerCount = question.answers.length > 4 ? question.answers.length : 4; // Ensure at least 4 inputs, or more if answers exist
+    const answerCount = question.answers.length > 4 ? question.answers.length : 4;
     const answersHTML = generateAnswersHTML(question.answers || [], answerCount);
 
-    // Get themes for dropdown
-    const themesOptions = state.themes.map(theme =>
-        `<option value="${theme.name}" ${question.theme === theme.name ? 'selected' : ''}>${theme.name}</option>`
-    ).join('');
+    // Fix: Use theme.id for value and properly match with question.themeId
+    const themesOptions = state.themes.map(theme => {
+        const isSelected = question.themeId === theme.id || 
+                          (question.theme && question.theme.id === theme.id);
+        return `<option value="${theme.id}" ${isSelected ? 'selected' : ''}>${theme.name}</option>`;
+    }).join('');
 
     element.innerHTML = `
-<div class="c-question-info">
+    <div class="c-question-info">
         <div class="c-question-edit">
             <input type="text" class="c-question-text-edit" value="${escapeHTML(question.question_text)}" placeholder="Enter question">
         </div>
@@ -869,7 +970,7 @@ const sendEditRequest = async (questionId) => {
     }
 };
 
-// Handler for question field changes (theme, difficulty, text)
+// Fix 3: Difficulty changes not working - Update handleQuestionFieldChanges function
 const handleQuestionFieldChanges = (event) => {
     const target = event.target;
     const questionItem = target.closest('.c-question-item');
@@ -889,8 +990,8 @@ const handleQuestionFieldChanges = (event) => {
         // Get current answers to preserve them
         const currentAnswers = Array.from(answerList.querySelectorAll('.c-answer-item')).map(item => {
             return {
-                text: item.querySelector('.c-answer-text').value,
-                isCorrect: item.querySelector('input[type="checkbox"]').checked
+                answer_text: item.querySelector('.c-answer-text').value,
+                is_correct: item.querySelector('input[type="checkbox"]').checked
             };
         });
         
@@ -903,30 +1004,94 @@ const handleQuestionFieldChanges = (event) => {
             question.answers = [];
         }
         while (question.answers.length < answerCount) {
-            question.answers.push({ text: '', isCorrect: false });
+            question.answers.push({ answer_text: '', is_correct: false });
         }
         
         // Save changes to backend
         updateQuestion(question);
     }
     
-    // Handle theme changes
+    // Handle theme changes - Fix: Update themeId instead of theme
     if (target.classList.contains('js-theme-select')) {
-        question.theme = target.value;
+        question.themeId = parseInt(target.value);
+        // Also update the theme object for consistency
+        question.theme = state.themes.find(t => t.id === question.themeId);
+        console.log('Theme changed to:', question.themeId, question.theme?.name);
         updateQuestion(question);
     }
     
-    // Handle difficulty changes
+    // Handle difficulty changes - Fix: Update difficultyLevelId instead of difficulty
     if (target.classList.contains('js-difficulty-select')) {
-        question.difficulty = target.value;
+        question.difficultyLevelId = parseInt(target.value);
+        console.log('Difficulty changed to:', question.difficultyLevelId);
         updateQuestion(question);
+    }
+    
+    // Handle other field changes
+    if (target.classList.contains('js-think-time')) {
+        question.think_time = parseInt(target.value) || 0;
+        updateQuestion(question);
+    }
+    
+    if (target.classList.contains('js-time-limit')) {
+        question.time_limit = parseInt(target.value) || 30;
+        updateQuestion(question);
+    }
+    
+    if (target.classList.contains('js-points')) {
+        question.points = parseInt(target.value) || 10;
+        updateQuestion(question);
+    }
+    
+    if (target.classList.contains('js-url')) {
+        question.Url = target.value;
+        updateQuestion(question);
+    }
+    
+    if (target.classList.contains('js-is-active')) {
+        question.is_active = target.checked;
+        updateQuestion(question);
+    }
+    
+    if (target.classList.contains('js-not-correct')) {
+        question.no_answer_correct = target.checked;
+        updateQuestion(question);
+    }
+    
+    // Handle environmental constraints
+    if (target.classList.contains('js-light-min')) {
+        question.LightMin = parseFloat(target.value) || null;
+        updateQuestion(question);
+    }
+    
+    if (target.classList.contains('js-light-max')) {
+        question.LightMax = parseFloat(target.value) || null;
+        updateQuestion(question);
+    }
+    
+    if (target.classList.contains('js-temp-min')) {
+        question.TempMin = parseFloat(target.value) || null;
+        updateQuestion(question);
+    }
+    
+    if (target.classList.contains('js-temp-max')) {
+        question.TempMax = parseFloat(target.value) || null;
+        updateQuestion(question);
+    }
+    
+    if (target.classList.contains('js-explanation')) {
+        // Use blur event to avoid too many updates
+        target.addEventListener('blur', () => {
+            question.explanation = target.value;
+            updateQuestion(question);
+        }, { once: true });
     }
     
     // Handle question text changes
     if (target.classList.contains('c-question-text-edit')) {
         // Use blur event to avoid too many updates
         target.addEventListener('blur', () => {
-            question.text = target.value;
+            question.question_text = target.value;
             updateQuestion(question);
         }, { once: true });
     }
@@ -1104,9 +1269,9 @@ const loadUsers = async () => {
 // This is a placeholder; you might fetch roles from the backend or have a fixed map.
 const getRoleName = (userRoleId) => {
     switch (userRoleId) {
-        case 1: return 'Admin';
+        case 3: return 'Admin';
         case 2: return 'Manager';
-        case 3: return 'Standard User';
+        case 1: return 'Standard User';
         // Add more cases as needed for your user roles
         default: return 'Unknown Role';
     }
@@ -1118,11 +1283,67 @@ const saveCurrentItem = async (itemType) => {
     const form = domAdmin.editModal.querySelector('.c-edit-form');
     
     // Gather form data
-    if (itemType === 'questions') {
-        currentEditItem.text = form.querySelector('[name="text"]').value;
-        currentEditItem.theme = form.querySelector('[name="theme"]').value;
-        currentEditItem.difficulty = form.querySelector('[name="difficulty"]').value;
-    } else if (itemType === 'themes') {
+if (itemType === 'questions') {
+const form = currentForm;
+const formData = new FormData(form);
+
+// Convert form data to match backend's expected structure
+const questionData = {
+    question_text: formData.get('text') || "Default question",
+    themeId: formData.get('theme') || "General",
+    difficultyLevelId: formData.get('difficulty') || "Medium",
+    explanation: formData.get('explanation') || "",
+    Url: formData.get('Url') || "",
+    time_limit: parseInt(formData.get('time_limit')) || 30,
+    think_time: parseInt(formData.get('think_time')) || 5,
+    points: parseInt(formData.get('points')) || 10,
+    is_active: formData.get('is_active') === 'on',
+    no_answer_correct: formData.get('no_answer_correct') === 'on',
+    LightMax: parseFloat(formData.get('LightMax')) || null,
+    LightMin: parseFloat(formData.get('LightMin')) || null,
+    TempMax: parseFloat(formData.get('TempMax')) || null,
+    TempMin: parseFloat(formData.get('TempMin')) || null,
+    answers: Array.from(form.querySelectorAll('.c-answer-item')).map(item => ({
+        answer_text: item.querySelector('input[type="text"]').value || "Default answer",
+        is_correct: item.querySelector('input[type="checkbox"]').checked
+    }))
+};
+
+try {
+    // Get user credentials from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('userId');
+    const rfidCode = urlParams.get('rfid');
+    
+    if (!userId || !rfidCode) {
+        throw new Error('User credentials not found in URL. Please access this page with proper authentication.');
+    }
+
+    const response = await fetch(`${lanIP}/api/v1/questions`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-User-ID': userId,        // Backend expects this header
+            'X-RFID': rfidCode          // Backend expects this header
+        },
+        body: JSON.stringify(questionData)
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Backend error details:", errorData);
+        throw new Error(`Server error: ${errorData.detail || response.status}`);
+    }
+
+    const result = await response.json();
+    console.log("Question saved:", result);
+    alert("Success!");
+} catch (error) {
+    console.error("Submission failed:", error);
+    alert(`Error: ${error.message}`);
+}
+
+}else if (itemType === 'themes') {
         currentEditItem.name = form.querySelector('[name="name"]').value;
     } else if (itemType === 'users') {
         currentEditItem.username = form.querySelector('[name="username"]').value;
@@ -1152,9 +1373,28 @@ const saveCurrentItem = async (itemType) => {
     }
 };
 
+// Enhanced filter function that handles all filters
 const filterQuestions = () => {
     if (currentTab === 'questions') {
         loadQuestions();
+    }
+};
+
+// Enhanced event listeners for filters
+const listenToFilters = () => {
+    // Search input listener (existing)
+    if (domAdmin.searchInput) {
+        domAdmin.searchInput.addEventListener('input', filterQuestions);
+    }
+    
+    // Theme filter listener
+    if (domAdmin.themeFilter) {
+        domAdmin.themeFilter.addEventListener('change', filterQuestions);
+    }
+    
+    // Difficulty filter listener
+    if (domAdmin.difficultyFilter) {
+        domAdmin.difficultyFilter.addEventListener('change', filterQuestions);
     }
 };
 // #endregion
@@ -1224,50 +1464,87 @@ const listenToAddButtons = () => {
 // #endregion
 
 // #region ***  Init / DOMContentLoaded                  ***********
-const initStats = () => {
-    const statItems = document.querySelectorAll('.c-stat-item');
-    statItems.forEach(item => {
-        const label = item.querySelector('.c-stat-label').textContent;
-        const value = item.querySelector('.c-stat-value');
-        
-        switch (label) {
-            case 'Active Quizzes':
-                value.textContent = state.stats.activeQuizzes;
-                break;
-            case 'Total Questions':
-                value.textContent = state.stats.totalQuestions;
-                break;
-            case 'Registered Users':
-                value.textContent = state.stats.registeredUsers;
-                break;
-            case 'Avg. Score':
-                value.textContent = state.stats.avgScore;
-                break;
-        }
-    });
-};
 
-const initAdmin = () => {
+
+// Enhanced initAdmin function
+const initAdmin = async () => {
     listenToTabs();
     listenToLogout();
     listenToModal();
-    listenToSearch();
+    listenToFilters(); // Updated to use the new function name
     listenToAddButtons();
-    initStats();
+    
+    // Preload themes at initialization
+    try {
+        console.log('Preloading themes...');
+        state.themes = await fetchThemes();
+        console.log('Themes preloaded:', state.themes.length);
+    } catch (error) {
+        console.error('Failed to preload themes:', error);
+        state.themes = [];
+    }
     
     // Initialize first tab as active
     if (domAdmin.tabBtns.length > 0) {
         const firstTabId = domAdmin.tabBtns[0].dataset.tab;
         showTab(firstTabId);
     }
+};
+
+// Update the DOMContentLoaded listener to handle async initialization
+document.addEventListener('DOMContentLoaded', async () => {
+    if (window.location.pathname.includes('admin.html')) {
+        console.log('Initial state:', state);
+        await initAdmin(); // Make sure to await the async initialization
+    }
+});
+
+// #endregion
+
+
+
+
+
+
+
+
+
+// Function to populate the theme filter dropdown
+const populateThemeFilter = () => {
+    const themeFilter = domAdmin.themeFilter;
     
+    if (!themeFilter || !state.themes) return;
     
+    // Clear existing options except the first "All Themes" option
+    themeFilter.innerHTML = '<option value="">All Themes</option>';
+    
+    // Add theme options
+    state.themes.forEach(theme => {
+        const option = document.createElement('option');
+        option.value = theme.id;
+        option.textContent = theme.name;
+        themeFilter.appendChild(option);
+    });
 };
 
 
-document.addEventListener('DOMContentLoaded', () => {
-    if (window.location.pathname.includes('admin.html')) {
-        initAdmin();
-    }
-});
-// #endregion
+
+
+
+
+
+// Helper function to clear all filters
+const clearAllFilters = () => {
+    if (domAdmin.searchInput) domAdmin.searchInput.value = '';
+    if (domAdmin.themeFilter) domAdmin.themeFilter.value = '';
+    if (domAdmin.difficultyFilter) domAdmin.difficultyFilter.value = '';
+    filterQuestions();
+};
+
+// Optional: Function to get current filter state (useful for debugging)
+const getCurrentFilterState = () => {
+    return {
+        searchTerm: domAdmin.searchInput?.value || '',
+        selectedTheme: domAdmin.themeFilter?.value || '',
+        selectedDifficulty: domAdmin.difficultyFilter?.value || '',
+    };}

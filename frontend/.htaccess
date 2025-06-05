@@ -1,0 +1,5 @@
+<IfModule mod_headers.c>
+    # Enable source map support
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET"
+</IfModule>

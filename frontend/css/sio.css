@@ -1,0 +1,139 @@
+/* --- Connection Status & Error Messages --- */
+
+/* Base style for the status message */
+#connection-status,
+#error-message {
+    padding: 8px 15px;
+    margin: 15px auto;
+    /* Centers the div horizontally and adds vertical space */
+    border-radius: 8px;
+    font-weight: bold;
+    text-align: center;
+    color: #fff;
+    /* Default text color */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-width: 300px;
+    /* Limit width for better appearance */
+    transition: background-color 0.3s ease, opacity 0.3s ease, display 0.3s ease;
+    /* Smooth transitions */
+}
+
+/* Specific style for initial/connecting state */
+.status-initial {
+    background-color: #3498db;
+    /* Blue */
+    color: #fff;
+    opacity: 1;
+    display: block;
+    /* Ensure it's visible by default */
+}
+
+
+
+
+/* Style for disconnected state */
+.status-disconnected {
+    background-color: #e74c3c;
+    /* Red */
+    color: #fff;
+    opacity: 1;
+    display: block;
+}
+
+/* Style for reconnecting state */
+.status-reconnecting {
+    background-color: #f39c12;
+    /* Orange/Amber */
+    color: #fff;
+    opacity: 1;
+    display: block;
+}
+
+/* Style for connection error state */
+.status-error {
+    background-color: #c0392b;
+    /* Darker Red */
+    color: #fff;
+    opacity: 1;
+    display: block;
+}
+
+/* Style for the error message itself */
+#error-message {
+    background-color: #c0392b;
+    /* Darker Red, consistent with status-error */
+    border: 1px solid #a94442;
+    margin-top: 10px;
+    /* Add some space if it appears below status */
+    opacity: 1;
+    /* This will be handled by the JS setting style.display = 'none' and 'block' */
+}
+
+/* Notifications (from your main.js) */
+#notifications {
+    position: fixed;
+    /* Keep notifications in a fixed position */
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    /* Ensure it's above other content */
+    max-width: 300px;
+}
+
+.notification {
+    background-color: #333;
+    color: #fff;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    opacity: 0.95;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.notification-info {
+    background-color: #3498db;
+    /* Blue for info */
+}
+
+.notification-success {
+    background-color: #2ecc71;
+    /* Green for success */
+}
+
+.notification-warning {
+    background-color: #f39c12;
+    /* Orange for warning */
+}
+
+.notification-error {
+    background-color: #e74c3c;
+    /* Red for error */
+}
+
+.notification strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 1.1em;
+}
+
+.notification p {
+    font-size: 0.9em;
+    margin: 0 0 5px 0;
+}
+
+.notification small {
+    font-size: 0.8em;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+
+#connection-status.status-connected {
+    display: none !important;
+    /* ONLY if other solutions fail after thorough debugging */
+}
+
+/* Style for connected state - HIDE IT */
+.status-connected {
+    display: none;
+}

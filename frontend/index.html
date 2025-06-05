@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Quiz The Spire</title>
     <link rel="stylesheet" href="css/styles.css">
+<<<<<<< HEAD
+=======
+    <link rel="stylesheet" href="css/sio.css">
+>>>>>>> 308f2c7 (updated frontend)
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
 
@@ -15,6 +19,8 @@
         <button id="infoBtn" class="c-info-btn">i</button>
     </header>
 
+    <div id="connection-status" class="status-initial">Connecting...</div>
+    <div id="error-message" class="error-message" style="display: none;"></div>
     <main class="o-container">
         <div class="c-welcome-message">
             <p>Welcome to Quiz The Spire! An interactive quiz game with dynamic difficulty based on your environment.
@@ -31,10 +37,6 @@
             <div class="u-flex u-gap-1">
                 <span>Temperature: <span id="tempValue">--</span>°C</span>
                 <span>Light: <span id="lightValue">--</span> lux</span>
-                <span>servomotor: <span id="soundValue">--</span> °</span>
-            </div>
-            <div class="u-flex">
-                <span>Players online: <span id="playerCount">0</span></span>
             </div>
         </div>
 
