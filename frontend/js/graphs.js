@@ -1,86 +1,217 @@
-// #region ***  DOM references                           ***********
-const domGraphs = {
-  session1: {
-    tempChartEl: document.getElementById('tempChart1'),
-    lightChartEl: document.getElementById('lightChart1'),
-    soundChartEl: document.getElementById('soundChart1'),
-  },
-  session2: {
-    tempChartEl: document.getElementById('tempChart2'),
-    lightChartEl: document.getElementById('lightChart2'),
-    soundChartEl: document.getElementById('soundChart2'),
-  },
-};
+// #region *** DOM references ***********
+const lanIP = `http://${window.location.hostname}:8000`;
+// domGraphs will now be populated dynamically
+let domGraphs = {};
 // #endregion
 
-// #region ***  Callback-Visualisation - show___         ***********
-const showTemperatureChart = (element, data) => {
+// #region *** Callback-Visualisation - show___ ***********
+const createNonInteractiveChart = (element, data, seriesName, color) => {
   const options = {
-    chart: { type: 'line', height: '100%' },
-    series: [{ name: 'Temperature', data }],
-    stroke: { curve: 'straight' },
-    colors: ['#FF6384'],
-    xaxis: { type: 'datetime' },
+    chart: {
+      type: 'line',
+      height: '100%',
+      toolbar: { show: false },
+      zoom: { enabled: false },
+      selection: { enabled: false },
+      animations: {
+        enabled: true,
+        easing: 'easeout',
+        speed: 800
+      },
+      fontFamily: 'inherit',
+      foreColor: '#333',
+      sparkline: { enabled: false },
+      redrawOnParentResize: true
+    },
+    series: [{
+      name: seriesName,
+      data
+    }],
+    stroke: {
+      curve: 'smooth',
+      width: 2.5,
+      lineCap: 'round',
+      colors: [color]
+    },
+    colors: [color],
+    fill: {
+      type: 'solid',
+      opacity: 1
+    },
+    xaxis: {
+      type: 'datetime',
+      tooltip: { enabled: false },
+      labels: {
+        style: {
+          fontSize: '11px',
+          colors: '#666'
+        }
+      },
+      axisBorder: {
+        show: false
+      },
+      axisTicks: {
+        show: false
+      }
+    },
+    yaxis: {
+      tooltip: { enabled: false },
+      labels: {
+        style: {
+          fontSize: '11px',
+          colors: '#666'
+        },
+        offsetX: -5
+      },
+      axisBorder: {
+        show: false
+      },
+      min: (min) => Math.min(min, Math.min(...data.map(d => d.y)) - 5),
+      max: (max) => Math.max(max, Math.max(...data.map(d => d.y)) + 5)
+    },
+    tooltip: { enabled: false },
+    markers: {
+      size: 0,
+      strokeWidth: 0
+    },
+    grid: {
+      borderColor: 'rgba(0, 0, 0, 0.05)',
+      strokeDashArray: 0,
+      position: 'back',
+      padding: {
+        bottom: 15
+      },
+      xaxis: {
+        lines: { show: true }
+      },
+      yaxis: {
+        lines: { show: true }
+      }
+    },
+    dataLabels: {
+      enabled: false
+    }
   };
-  new ApexCharts(element, options).render();
+
+  const chart = new ApexCharts(element, options);
+  chart.render();
+  return chart;
+};
+
+const showTemperatureChart = (element, data) => {
+  return createNonInteractiveChart(element, data, 'Temperature', '#FF6384');
 };
 
 const showLightChart = (element, data) => {
-  const options = {
-    chart: { type: 'line', height: '100%' },
-    series: [{ name: 'Light', data }],
-    stroke: { curve: 'straight' },
-    colors: ['#36A2EB'],
-    xaxis: { type: 'datetime' },
-  };
-  new ApexCharts(element, options).render();
+  return createNonInteractiveChart(element, data, 'Light', '#36A2EB');
 };
 
-const showSoundChart = (element, data) => {
-  const options = {
-    chart: { type: 'line', height: '100%' },
-    series: [{ name: 'Servo degrees', data }],
-    stroke: { curve: 'straight' },
-    colors: ['#FFCE56'],
-    xaxis: { type: 'datetime' },
-  };
-  new ApexCharts(element, options).render();
+const showSoundChart = (element, data) => { // Renamed from showSoundChart for clarity, if it's always servo
+  return createNonInteractiveChart(element, data, 'Servo degrees', '#FFCE56');
 };
 // #endregion
 
-// #region ***  Data Access - get___                     ***********
-const getRandomGraphData = (count = 10, min = 30, max = 100) => {
-  const now = new Date();
-  return Array.from({ length: count }, (_, i) => ({
-    x: new Date(now.getTime() - (count - i) * 60000).getTime(),
-    y: (min + Math.random() * (max - min)).toFixed(1),
+const listenToInfoModal = (domElements) => {
+  const { infoBtn, infoModal, closeModal } = domElements;
+
+  if (!infoBtn || !infoModal || !closeModal) {
+    console.warn('Missing required DOM elements for info modal');
+    return;
+  }
+
+  infoBtn.addEventListener('click', () => {
+    infoModal.style.display = 'block';
+  });
+
+  closeModal.addEventListener('click', () => {
+    infoModal.style.display = 'none';
+  });
+
+  window.addEventListener('click', (event) => {
+    if (event.target === infoModal) {
+      infoModal.style.display = 'none';
+    }
+  });
+};
+
+// #region *** Data Access - get___ ***********
+const transformSensorData = (sensorData) => {
+  // Ensure that item.value is treated as a number for charting
+  return sensorData.map(item => ({
+    x: new Date(item.timestamp).getTime(),
+    y: parseFloat(item.value) // Explicitly parse to float just in case
   }));
 };
 // #endregion
 
-// #region ***  Initialization                           ***********
-const initGraphs = () => {
-  if (!document.querySelector('.js-graph-temp')) return;
+// #region *** Initialization ***********
+const initGraphs = async () => {
+  const dom = {
+    infoBtn: document.getElementById('infoBtn'),
+    infoModal: document.getElementById('infoModal'),
+    closeModal: document.querySelector('.c-modal__close'),
+    quizSessionsContainer: document.querySelector('.c-quiz-sessions-container')
+  };
 
-  // Session 1 data
-  const tempData1 = getRandomGraphData(10, 20, 30); // 20-30°C
-  const lightData1 = getRandomGraphData(10, 0, 1000); // 0-1000 lux
-  const soundData1 = getRandomGraphData(10, 30, 100); // 30-100 dB
+  listenToInfoModal(dom);
 
-  // Session 2 data (slightly different ranges)
-  const tempData2 = getRandomGraphData(10, 22, 32);
-  const lightData2 = getRandomGraphData(10, 100, 1100);
-  const soundData2 = getRandomGraphData(10, 40, 110);
+  if (!dom.quizSessionsContainer) {
+    console.error('Quiz sessions container not found.');
+    return;
+  }
 
-  // Render Session 1 charts
-  showTemperatureChart(domGraphs.session1.tempChartEl, tempData1);
-  showLightChart(domGraphs.session1.lightChartEl, lightData1);
-  showSoundChart(domGraphs.session1.soundChartEl, soundData1);
+  try {
+    const response = await fetch(`${lanIP}/api/v1/sensor-data`);
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
 
-  // Render Session 2 charts
-  showTemperatureChart(domGraphs.session2.tempChartEl, tempData2);
-  showLightChart(domGraphs.session2.lightChartEl, lightData2);
-  showSoundChart(domGraphs.session2.soundChartEl, soundData2);
+    dom.quizSessionsContainer.innerHTML = '';
+    domGraphs = {};
+
+    data.sessions.forEach((session) => {
+      const sessionId = session.session_id;
+      const sessionName = session.session_name;
+
+      const sessionEl = document.createElement('div');
+      sessionEl.classList.add('c-quiz-session');
+      sessionEl.innerHTML = `
+        <h2 class="c-quiz-session__title">${sessionName}</h2>
+        <div class="c-quiz-session__charts">
+          <div class="c-chart-card">
+            <h3>Temperature (°C)</h3>
+            <div id="tempChart${sessionId}" class="c-chart-card__chart js-graph-temp"></div>
+          </div>
+          <div class="c-chart-card">
+            <h3>Light Intensity (lux)</h3>
+            <div id="lightChart${sessionId}" class="c-chart-card__chart js-graph-light"></div>
+          </div>
+          <div class="c-chart-card">
+            <h3>Servo Position (°)</h3>
+            <div id="servoChart${sessionId}" class="c-chart-card__chart js-graph-servo"></div>
+          </div>
+        </div>
+      `;
+      dom.quizSessionsContainer.appendChild(sessionEl);
+
+      domGraphs[`session${sessionId}`] = {
+        tempChartEl: document.getElementById(`tempChart${sessionId}`),
+        lightChartEl: document.getElementById(`lightChart${sessionId}`),
+        servoChartEl: document.getElementById(`servoChart${sessionId}`), // Changed from soundChartEl for consistency
+      };
+
+      const tempData = transformSensorData(session.temperatures);
+      const lightData = transformSensorData(session.light_intensities);
+      const servoData = transformSensorData(session.servo_positions); // Changed from soundData
+
+      showTemperatureChart(domGraphs[`session${sessionId}`].tempChartEl, tempData);
+      showLightChart(domGraphs[`session${sessionId}`].lightChartEl, lightData);
+      showSoundChart(domGraphs[`session${sessionId}`].servoChartEl, servoData); // Still uses showSoundChart, but passes servoData
+    });
+  } catch (error) {
+    console.error('Error fetching or processing sensor data:', error);
+  }
 };
 
 document.addEventListener('DOMContentLoaded', () => {

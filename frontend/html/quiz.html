@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,6 +9,7 @@
     <link rel="stylesheet" href="../css/quiz.css">
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
+
 <body>
     <header class="c-header">
         <a href="../index.html" class="c-header__link">
@@ -83,7 +85,7 @@
                     <!-- Player items will be added here dynamically -->
                 </div>
             </div>
-            
+
             <div class="c-chat-container">
                 <div class="c-chat-header">
                     <h3>Quiz Chat</h3>
@@ -94,8 +96,8 @@
                         <!-- Chat messages will be added here dynamically -->
                     </div>
                     <div class="c-chat-input-container">
-                        <input type="text" id="chatInput" class="c-chat-input" 
-                               placeholder="Type a message..." maxlength="1000">
+                        <input type="text" id="chatInput" class="c-chat-input" placeholder="Type a message..."
+                            maxlength="1000">
                         <button id="chatSend" class="c-chat-send-btn">Send</button>
                     </div>
                 </div>
@@ -108,13 +110,16 @@
             <h2>Welcome to Quiz The Spire</h2>
             <div class="c-info-section">
                 <h3 class="c-info-section__title">How to Play</h3>
-                <p>Join a quiz session either locally using a SNES controller or online via this website. Answer questions correctly to earn points and items!</p>
+                <p>Join a quiz session either locally using a SNES controller or online via this website. Answer
+                    questions correctly to earn points and items!</p>
             </div>
             <div class="c-info-section">
                 <h3 class="c-info-section__title">Items</h3>
                 <ul class="c-items-list">
-                    <li class="c-items-list__item"><strong>Freeze:</strong> Lowers temperature by 15°C, slowing timer</li>
-                    <li class="c-items-list__item"><strong>Fireball:</strong> Raises temperature by 15°C, speeding timer</li>
+                    <li class="c-items-list__item"><strong>Freeze:</strong> Lowers temperature by 15°C, slowing timer
+                    </li>
+                    <li class="c-items-list__item"><strong>Fireball:</strong> Raises temperature by 15°C, speeding timer
+                    </li>
                     <li class="c-items-list__item"><strong>Answer Remove:</strong> Removes one wrong answer</li>
                 </ul>
             </div>
@@ -130,6 +135,6 @@
         </div>
     </div>
     <script src="../js/quiz.js"></script>
-    <script src="../js/main.js"></script>
 </body>
+
 </html>
