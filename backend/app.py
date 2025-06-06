@@ -1144,10 +1144,7 @@ async def create_question_endpoint(
 
 
 
-# I will also add endpoints for:
-# - Login (e.g., POST /api/v1/users/login with username/password, returns token/session info)
-# - Logout (e.g., POST /api/v1/users/logout)
-# - Get user by RFID (if needed for specific frontend flows)
+
 
 
 # Global flag to signal the background thread to stop
