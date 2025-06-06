@@ -338,3 +338,8 @@ class QuestionInput(BaseModel):
     TempMax: Optional[float] = None
     TempMin: Optional[float] = None
     answers: list[AnswerInput]
+
+class ThemeInput(BaseModel):
+    name: str
+    description: Optional[str] = None
+    is_active: bool = True

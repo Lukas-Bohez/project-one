@@ -20,7 +20,7 @@ from models.models import (
     RandomQuestionRequest, QuestionMetadataUpdate,
     QuestionActivationNotification,
     AnswerBase, AnswerCreate, AnswerListResponse, AnswerResponse, 
-    AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand,BroadcastMessage,DirectMessage, ClientActivity,SessionSensorData,MultiSessionSensorResponse,UserUpdateNames,UserCredentials,AnswerInput,QuestionInput
+    AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand,BroadcastMessage,DirectMessage, ClientActivity,SessionSensorData,MultiSessionSensorResponse,UserUpdateNames,UserCredentials,AnswerInput,QuestionInput, ThemeInput
 )
 from typing import Dict, Any, Optional, List
 from fastapi import Request
@@ -1107,6 +1107,65 @@ async def create_question_endpoint(
             status_code=500,
             detail=f"Failed to create question: {str(e)}"
         )
+
+
+
+
+@app.post("/api/v1/themes")
+async def create_theme_endpoint(
+    theme_data: ThemeInput,
+    current_user_info: dict = Depends(get_current_user_info)
+):
+    user_id = current_user_info["id"]
+    role = current_user_info["role"]
+    
+    if role not in ["admin", "moderator"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins and moderators can create themes"
+        )
+    
+    # Moderators can't create active themes by default
+    if role == "moderator":
+        theme_data.is_active = False
+    
+    try:
+        # Create the theme without logoUrl
+        theme_id = ThemeRepository.create_theme(
+            name=theme_data.name,
+            description=theme_data.description,
+            is_active=theme_data.is_active
+        )
+        
+        if not theme_id:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to create theme - no ID returned"
+            )
+        
+        return {
+            "status": "success",
+            "theme_id": theme_id,
+            "is_active": theme_data.is_active,
+            "role": role
+        }
+        
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Validation error: {str(ve)}"
+        )
+    except Exception as e:
+        print(f"Error creating theme: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create theme: {str(e)}"
+        )
+
+
+
+
+
 
 
 
