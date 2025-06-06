@@ -1163,7 +1163,112 @@ async def create_theme_endpoint(
         )
 
 
-
+@app.patch("/api/v1/questions/{question_id}")
+async def update_question_endpoint(
+    question_id: int,
+    question_data: QuestionInput,
+    current_user_info: dict = Depends(get_current_user_info)
+):
+    user_id = current_user_info["id"]
+    role = current_user_info["role"]
+    
+    # Only admins can edit questions
+    if role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins can edit questions"
+        )
+    
+    try:
+        # Convert difficulty string to integer if needed
+        difficulty_id = question_data.difficultyLevelId
+        if isinstance(difficulty_id, str):
+            difficulty_id = convert_difficulty_to_id(difficulty_id)
+        
+        # Convert themeId to integer if it's a string
+        theme_id = question_data.themeId
+        if isinstance(theme_id, str):
+            try:
+                theme_id = int(theme_id)
+            except ValueError:
+                theme_id = 1  # Default theme ID
+        
+        # Update the question
+        update_success = QuestionRepository.update_question(
+            question_id=question_id,
+            question_text=question_data.question_text,
+            themeId=theme_id,
+            difficultyLevelId=difficulty_id,
+            explanation=question_data.explanation,
+            Url=question_data.Url,
+            time_limit=question_data.time_limit,
+            think_time=question_data.think_time,
+            points=question_data.points,
+            is_active=question_data.is_active,
+            no_answer_correct=question_data.no_answer_correct,
+            LightMax=question_data.LightMax,
+            LightMin=question_data.LightMin,
+            TempMax=question_data.TempMax,
+            TempMin=question_data.TempMin
+        )
+        
+        if not update_success:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to update question - no rows affected"
+            )
+        
+        # Handle answers: delete all existing answers and create new ones
+        created_answers = []
+        if question_data.answers:
+            # Delete all existing answers for this question
+            delete_success = AnswerRepository.delete_all_answers_for_question(question_id)
+            if not delete_success:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Failed to delete existing answers"
+                )
+            
+            # Create new answers
+            for answer in question_data.answers:
+                try:
+                    answer_id = AnswerRepository.create_answer(
+                        question_id=question_id,
+                        answer_text=answer.answer_text,
+                        is_correct=answer.is_correct
+                    )
+                    created_answers.append(answer_id)
+                except Exception as answer_error:
+                    print(f"Failed to create answer: {answer_error}")
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Failed to create answer: {str(answer_error)}"
+                    )
+        
+        return {
+            "status": "success",
+            "message": "Question updated successfully",
+            "question_id": question_id,
+            "updated_answers": len(created_answers),
+            "is_active": question_data.is_active,
+            "role": role,
+            "difficulty_id": difficulty_id,
+            "theme_id": theme_id
+        }
+        
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Validation error: {str(ve)}"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating question: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to update question: {str(e)}"
+        )
 
 
 
