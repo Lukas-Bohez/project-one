@@ -1496,6 +1496,7 @@ class PlayerItemRepository:
         item = PlayerItemRepository.get_player_item(user_id, item_id)
         return item['quantity'] if item else 0
 
+
 class AuditLogRepository:
     @staticmethod
     def create_audit_log(
