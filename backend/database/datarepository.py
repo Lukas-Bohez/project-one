@@ -1496,6 +1496,11 @@ class PlayerItemRepository:
         item = PlayerItemRepository.get_player_item(user_id, item_id)
         return item['quantity'] if item else 0
 
+# Enhanced Repository Method with Debug Logging
+import logging
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 class AuditLogRepository:
     @staticmethod
@@ -1542,12 +1547,50 @@ class AuditLogRepository:
         params = [changed_by]
         return Database.execute_sql(sql, params)
     
+
     @staticmethod
     def get_recent_audit_logs(limit: int = 100) -> List[Dict[str, Any]]:
         """Get the most recent audit log entries."""
-        sql = "SELECT * FROM auditLog ORDER BY id DESC LIMIT %s"
-        params = [limit]
-        return Database.execute_sql(sql, params)
+        try:
+            logger.info(f"Fetching recent audit logs with limit: {limit}")
+            
+            sql = """
+            SELECT id, table_name, record_id, action, old_values, new_values, changed_by, ip_address
+            FROM auditLog
+            ORDER BY id DESC
+            LIMIT %s
+            """
+            
+            params = [limit]
+            logger.debug(f"SQL: {sql}")
+            
+            result = Database.execute_sql(sql, params)
+            logger.debug(f"Raw result type: {type(result)}")
+            logger.debug(f"Raw result value: {result}")
+            
+            # Check if result is an integer (rows affected) instead of actual data
+            if isinstance(result, int):
+                logger.error(f"Database.execute_sql returned int ({result}) instead of query results")
+                logger.error("This suggests execute_sql is returning rowcount instead of fetchall() results")
+                return []
+            
+            # Check if result is None
+            if result is None:
+                logger.warning("Database.execute_sql returned None")
+                return []
+            
+            # Check if result is a list
+            if not isinstance(result, list):
+                logger.error(f"Database.execute_sql returned unexpected type: {type(result)}")
+                return []
+            
+            logger.info(f"Query successful, returned {len(result)} rows")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error in get_recent_audit_logs: {str(e)}")
+            raise
+
 
 class ChatLogRepository:
     @staticmethod

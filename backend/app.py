@@ -21,7 +21,7 @@ from models.models import (
     QuestionActivationNotification,
     AnswerBase, AnswerCreate, AnswerListResponse, AnswerResponse, 
     AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand,BroadcastMessage,DirectMessage, ClientActivity,SessionSensorData,MultiSessionSensorResponse,UserUpdateNames,UserCredentials,AnswerInput,QuestionInput, ThemeInput,
-    UserPublic,UserPublicWithIp,UserIpAddress,BanIpRequest
+    UserPublic,UserPublicWithIp,UserIpAddress,BanIpRequest,AuditLogResponse
 )
 from typing import Dict, Any, Optional, List
 from fastapi import Request
@@ -1118,6 +1118,62 @@ async def login_user(user_credentials: UserCredentials, request: Request):
 
 router = APIRouter()
 
+
+
+
+
+
+
+
+
+
+# Fixed API endpoints with proper error handling and validation
+
+from datetime import datetime, timedelta
+from fastapi import HTTPException, Depends, Header, Request, status
+from typing import Optional
+import json
+
+# Helper function to safely convert values
+def safe_int_convert(value, default=1):
+    """Safely convert a value to integer with a default fallback"""
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return default
+
+# Helper function to calculate ban expiry
+def calculate_ban_expiry(duration_value: int, duration_unit: str) -> Optional[datetime]:
+    """Calculate ban expiry datetime based on duration and unit"""
+    if duration_unit == "permanent":
+        return None
+    
+    now = datetime.now()
+    if duration_unit == "minutes":
+        return now + timedelta(minutes=duration_value)
+    elif duration_unit == "hours":
+        return now + timedelta(hours=duration_value)
+    elif duration_unit == "days":
+        return now + timedelta(days=duration_value)
+    else:
+        raise ValueError(f"Invalid duration unit: {duration_unit}")
+
+# Helper function to get client IP (assuming this exists)
+def get_client_ip(request: Request) -> str:
+    """Extract client IP from request"""
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+# Helper function to log user IP (assuming this exists)
+def log_user_ip_address(user_id: int, ip_address: str):
+    """Log user IP address"""
+    # Implementation depends on your logging system
+    pass
+
 # The verify_user function as provided
 def verify_user(user_id: int, rfid_code: str) -> str:
     user = UserRepository.get_user_by_id(user_id)
@@ -1139,7 +1195,7 @@ def verify_user(user_id: int, rfid_code: str) -> str:
     else:
         raise HTTPException(status_code=403, detail="Unknown role")
 
-# Example of how you would use get_current_user_info as a dependency in other API endpoints
+# Fixed dependency function
 async def get_current_user_info(
     request: Request,
     x_user_id: str = Header(None, alias="X-User-ID"),
@@ -1148,13 +1204,18 @@ async def get_current_user_info(
     if not x_user_id or not x_rfid:
         raise HTTPException(status_code=401, detail="Missing user credentials")
     
+    try:
+        user_id = int(x_user_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid user ID format")
+    
     # Log IP address for authenticated requests
     client_ip = get_client_ip(request)
-    log_user_ip_address(int(x_user_id), client_ip)
+    log_user_ip_address(user_id, client_ip)
     
     return {
-        "id": int(x_user_id),
-        "role": verify_user(int(x_user_id), x_rfid)
+        "id": user_id,
+        "role": verify_user(user_id, x_rfid)
     }
 
 def convert_difficulty_to_id(difficulty_string: str) -> int:
@@ -1173,10 +1234,7 @@ def convert_difficulty_to_id(difficulty_string: str) -> int:
         # Default to medium if unknown difficulty
         return 2
 
-
-# Complete fixed endpoints with audit logging integration
-
-
+# Fixed create question endpoint
 @app.post("/api/v1/questions")
 async def create_question_endpoint(
     question_data: QuestionInput,
@@ -1185,7 +1243,7 @@ async def create_question_endpoint(
 ):
     user_id = current_user_info["id"]
     role = current_user_info["role"]
-    client_ip = get_client_ip(request) if request else None
+    client_ip = get_client_ip(request) if request else "unknown"
     
     # Only admins and moderators can create questions
     if role not in ["admin", "moderator"]:
@@ -1198,38 +1256,42 @@ async def create_question_endpoint(
     is_active = True if role == "admin" else False
     
     try:
-        # Convert IDs to integers with defaults
-        theme_id = int(question_data.themeId) if str(question_data.themeId).isdigit() else 1
-        difficulty_id = int(question_data.difficultyLevelId) if str(question_data.difficultyLevelId).isdigit() else 1
+        # Convert IDs to integers with safe conversion
+        theme_id = safe_int_convert(question_data.themeId, 1)
+        difficulty_id = safe_int_convert(question_data.difficultyLevelId, 1)
+        
+        # Validate required fields
+        if not question_data.question_text or not question_data.question_text.strip():
+            raise HTTPException(status_code=400, detail="Question text is required")
+        
+        if not question_data.answers or len(question_data.answers) == 0:
+            raise HTTPException(status_code=400, detail="At least one answer is required")
         
         # Create the question
         question_id = QuestionRepository.create_question(
-            question_text=question_data.question_text,
+            question_text=question_data.question_text.strip(),
             themeId=theme_id,
             difficultyLevelId=difficulty_id,
-            explanation=question_data.explanation,
-            Url=question_data.Url,
-            time_limit=question_data.time_limit,
-            think_time=question_data.think_time,
-            points=question_data.points,
+            explanation=question_data.explanation or "",
+            Url=question_data.Url or "",
+            time_limit=safe_int_convert(question_data.time_limit, 30),
+            think_time=safe_int_convert(question_data.think_time, 5),
+            points=safe_int_convert(question_data.points, 10),
             is_active=is_active,
-            no_answer_correct=question_data.no_answer_correct,
+            no_answer_correct=bool(question_data.no_answer_correct),
             createdBy=user_id,
-            LightMax=question_data.LightMax,
-            LightMin=question_data.LightMin,
-            TempMax=question_data.TempMax,
-            TempMin=question_data.TempMin
+            LightMax=safe_int_convert(question_data.LightMax, 100),
+            LightMin=safe_int_convert(question_data.LightMin, 0),
+            TempMax=safe_int_convert(question_data.TempMax, 30),
+            TempMin=safe_int_convert(question_data.TempMin, 10)
         )
 
         if not question_id:
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to create question"
-            )
+            raise HTTPException(status_code=500, detail="Failed to create question")
         
         # Create audit log for question
         new_question_values = {
-            "question_text": question_data.question_text,
+            "question_text": question_data.question_text.strip(),
             "themeId": theme_id,
             "difficultyLevelId": difficulty_id,
             "createdBy": user_id,
@@ -1237,47 +1299,64 @@ async def create_question_endpoint(
             "timestamp": datetime.now().isoformat()
         }
         
-        AuditLogRepository.create_audit_log(
-            table_name="questions",
-            record_id=question_id,
-            action="CREATE",
-            old_values="N/A",
-            new_values=new_question_values,
-            changed_by=user_id,
-            ip_address=client_ip
-        )
+        # Safe audit log creation
+        try:
+            AuditLogRepository.create_audit_log(
+                table_name="questions",
+                record_id=question_id,
+                action="CREATE",
+                old_values=None,
+                new_values=json.dumps(new_question_values),
+                changed_by=user_id,
+                ip_address=client_ip
+            )
+        except Exception as audit_error:
+            print(f"Audit log creation failed: {audit_error}")
+            # Continue execution even if audit logging fails
         
         # Create answers
         created_answers = []
         for answer in question_data.answers:
-            answer_id = AnswerRepository.create_answer(
-                question_id=question_id,
-                answer_text=answer.answer_text,
-                is_correct=answer.is_correct
-            )
-            
-            if not answer_id:
-                continue  # Skip failed answers but keep going
-            
-            created_answers.append(answer_id)
-            
-            # Audit log for each answer
-            new_answer_values = {
-                "question_id": question_id,
-                "answer_text": answer.answer_text,
-                "is_correct": answer.is_correct,
-                "timestamp": datetime.now().isoformat()
-            }
-            
-            AuditLogRepository.create_audit_log(
-                table_name="answers",
-                record_id=answer_id,
-                action="CREATE",
-                old_values="N/A",
-                new_values=new_answer_values,
-                changed_by=user_id,
-                ip_address=client_ip
-            )
+            if not answer.answer_text or not answer.answer_text.strip():
+                continue  # Skip empty answers
+                
+            try:
+                answer_id = AnswerRepository.create_answer(
+                    question_id=question_id,
+                    answer_text=answer.answer_text.strip(),
+                    is_correct=bool(answer.is_correct)
+                )
+                
+                if answer_id:
+                    created_answers.append(answer_id)
+                    
+                    # Audit log for each answer
+                    new_answer_values = {
+                        "question_id": question_id,
+                        "answer_text": answer.answer_text.strip(),
+                        "is_correct": bool(answer.is_correct),
+                        "timestamp": datetime.now().isoformat()
+                    }
+                    
+                    try:
+                        AuditLogRepository.create_audit_log(
+                            table_name="answers",
+                            record_id=answer_id,
+                            action="CREATE",
+                            old_values=None,
+                            new_values=json.dumps(new_answer_values),
+                            changed_by=user_id,
+                            ip_address=client_ip
+                        )
+                    except Exception as audit_error:
+                        print(f"Answer audit log creation failed: {audit_error}")
+                        
+            except Exception as answer_error:
+                print(f"Failed to create answer: {answer_error}")
+                # Continue with other answers
+        
+        if len(created_answers) == 0:
+            raise HTTPException(status_code=400, detail="No valid answers were created")
         
         return {
             "status": "success",
@@ -1290,12 +1369,10 @@ async def create_question_endpoint(
         raise
     except Exception as e:
         print(f"Question creation error: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to create question"
-        )
+        raise HTTPException(status_code=500, detail="Failed to create question")
 
 
+# Fixed update question endpoint
 @app.patch("/api/v1/questions/{question_id}")
 async def update_question_endpoint(
     question_id: int,
@@ -1305,155 +1382,158 @@ async def update_question_endpoint(
 ):
     user_id = current_user_info["id"]
     role = current_user_info["role"]
-    client_ip = get_client_ip(request) if request else None
+    client_ip = get_client_ip(request) if request else "unknown"
     
     # Only admins can edit questions
     if role != "admin":
-        raise HTTPException(
-            status_code=403,
-            detail="Only admins can edit questions"
-        )
+        raise HTTPException(status_code=403, detail="Only admins can edit questions")
     
     try:
+        # Validate question exists
+        existing_question = QuestionRepository.get_question_by_id(question_id)
+        if not existing_question:
+            raise HTTPException(status_code=404, detail="Question not found")
+        
         # Convert difficulty string to integer if needed
         difficulty_id = question_data.difficultyLevelId
         if isinstance(difficulty_id, str):
             difficulty_id = convert_difficulty_to_id(difficulty_id)
+        else:
+            difficulty_id = safe_int_convert(difficulty_id, 1)
         
-        # Convert themeId to integer if it's a string
-        theme_id = question_data.themeId
-        if isinstance(theme_id, str):
-            try:
-                theme_id = int(theme_id)
-            except ValueError:
-                theme_id = 1  # Default theme ID
+        # Convert themeId to integer
+        theme_id = safe_int_convert(question_data.themeId, 1)
+        
+        # Validate required fields
+        if not question_data.question_text or not question_data.question_text.strip():
+            raise HTTPException(status_code=400, detail="Question text is required")
         
         # Update the question
         update_success = QuestionRepository.update_question(
             question_id=question_id,
-            question_text=question_data.question_text,
+            question_text=question_data.question_text.strip(),
             themeId=theme_id,
             difficultyLevelId=difficulty_id,
-            explanation=question_data.explanation,
-            Url=question_data.Url,
-            time_limit=question_data.time_limit,
-            think_time=question_data.think_time,
-            points=question_data.points,
-            is_active=question_data.is_active,
-            no_answer_correct=question_data.no_answer_correct,
-            LightMax=question_data.LightMax,
-            LightMin=question_data.LightMin,
-            TempMax=question_data.TempMax,
-            TempMin=question_data.TempMin
+            explanation=question_data.explanation or "",
+            Url=question_data.Url or "",
+            time_limit=safe_int_convert(question_data.time_limit, 30),
+            think_time=safe_int_convert(question_data.think_time, 5),
+            points=safe_int_convert(question_data.points, 10),
+            is_active=bool(question_data.is_active),
+            no_answer_correct=bool(question_data.no_answer_correct),
+            LightMax=safe_int_convert(question_data.LightMax, 100),
+            LightMin=safe_int_convert(question_data.LightMin, 0),
+            TempMax=safe_int_convert(question_data.TempMax, 30),
+            TempMin=safe_int_convert(question_data.TempMin, 10)
         )
         
         if not update_success:
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to update question - no rows affected"
-            )
+            raise HTTPException(status_code=500, detail="Failed to update question")
         
         # Create audit log for question update
         new_question_values = {
-            "question_text": question_data.question_text,
+            "question_text": question_data.question_text.strip(),
             "themeId": theme_id,
             "difficultyLevelId": difficulty_id,
-            "explanation": question_data.explanation,
-            "Url": question_data.Url,
-            "time_limit": question_data.time_limit,
-            "think_time": question_data.think_time,
-            "points": question_data.points,
-            "is_active": question_data.is_active,
-            "no_answer_correct": question_data.no_answer_correct,
-            "LightMax": question_data.LightMax,
-            "LightMin": question_data.LightMin,
-            "TempMax": question_data.TempMax,
-            "TempMin": question_data.TempMin,
+            "explanation": question_data.explanation or "",
+            "Url": question_data.Url or "",
+            "time_limit": safe_int_convert(question_data.time_limit, 30),
+            "think_time": safe_int_convert(question_data.think_time, 5),
+            "points": safe_int_convert(question_data.points, 10),
+            "is_active": bool(question_data.is_active),
+            "no_answer_correct": bool(question_data.no_answer_correct),
+            "LightMax": safe_int_convert(question_data.LightMax, 100),
+            "LightMin": safe_int_convert(question_data.LightMin, 0),
+            "TempMax": safe_int_convert(question_data.TempMax, 30),
+            "TempMin": safe_int_convert(question_data.TempMin, 10),
             "updated_at": datetime.now().isoformat()
         }
         
-        AuditLogRepository.create_audit_log(
-            table_name="questions",
-            record_id=question_id,
-            action="UPDATE",
-            old_values=None,
-            new_values=new_question_values,
-            changed_by=user_id,
-            ip_address=client_ip
-        )
+        try:
+            AuditLogRepository.create_audit_log(
+                table_name="questions",
+                record_id=question_id,
+                action="UPDATE",
+                old_values=None,
+                new_values=json.dumps(new_question_values),
+                changed_by=user_id,
+                ip_address=client_ip
+            )
+        except Exception as audit_error:
+            print(f"Question audit log creation failed: {audit_error}")
         
         # Handle answers: delete all existing answers and create new ones
         created_answers = []
         if question_data.answers:
-            # Delete all existing answers for this question
-            delete_success = AnswerRepository.delete_all_answers_for_question(question_id)
-            if not delete_success:
-                raise HTTPException(
-                    status_code=500,
-                    detail="Failed to delete existing answers"
-                )
-            
-            # Create new answers
-            for answer in question_data.answers:
-                try:
-                    answer_id = AnswerRepository.create_answer(
-                        question_id=question_id,
-                        answer_text=answer.answer_text,
-                        is_correct=answer.is_correct
-                    )
-                    created_answers.append(answer_id)
-                    
-                    # Create audit log for new answer creation
-                    new_answer_values = {
-                        "question_id": question_id,
-                        "answer_text": answer.answer_text,
-                        "is_correct": answer.is_correct,
-                        "created_at": datetime.now().isoformat()
-                    }
-                    
-                    AuditLogRepository.create_audit_log(
-                        table_name="answers",
-                        record_id=answer_id,
-                        action="CREATE",
-                        old_values=None,
-                        new_values=new_answer_values,
-                        changed_by=user_id,
-                        ip_address=client_ip
-                    )
-                    
-                except Exception as answer_error:
-                    print(f"Failed to create answer: {answer_error}")
-                    raise HTTPException(
-                        status_code=500,
-                        detail=f"Failed to create answer: {str(answer_error)}"
-                    )
+            try:
+                # Delete all existing answers for this question
+                delete_success = AnswerRepository.delete_all_answers_for_question(question_id)
+                if not delete_success:
+                    print(f"Warning: Failed to delete existing answers for question {question_id}")
+                
+                # Create new answers
+                for answer in question_data.answers:
+                    if not answer.answer_text or not answer.answer_text.strip():
+                        continue  # Skip empty answers
+                        
+                    try:
+                        answer_id = AnswerRepository.create_answer(
+                            question_id=question_id,
+                            answer_text=answer.answer_text.strip(),
+                            is_correct=bool(answer.is_correct)
+                        )
+                        
+                        if answer_id:
+                            created_answers.append(answer_id)
+                            
+                            # Create audit log for new answer creation
+                            new_answer_values = {
+                                "question_id": question_id,
+                                "answer_text": answer.answer_text.strip(),
+                                "is_correct": bool(answer.is_correct),
+                                "created_at": datetime.now().isoformat()
+                            }
+                            
+                            try:
+                                AuditLogRepository.create_audit_log(
+                                    table_name="answers",
+                                    record_id=answer_id,
+                                    action="CREATE",
+                                    old_values=None,
+                                    new_values=json.dumps(new_answer_values),
+                                    changed_by=user_id,
+                                    ip_address=client_ip
+                                )
+                            except Exception as audit_error:
+                                print(f"Answer audit log creation failed: {audit_error}")
+                                
+                    except Exception as answer_error:
+                        print(f"Failed to create answer: {answer_error}")
+                        continue
+                        
+            except Exception as answer_handling_error:
+                print(f"Error handling answers: {answer_handling_error}")
+                raise HTTPException(status_code=500, detail="Failed to update answers")
         
         return {
             "status": "success",
             "message": "Question updated successfully",
             "question_id": question_id,
             "updated_answers": len(created_answers),
-            "is_active": question_data.is_active,
+            "is_active": bool(question_data.is_active),
             "role": role,
             "difficulty_id": difficulty_id,
             "theme_id": theme_id
         }
         
-    except ValueError as ve:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Validation error: {str(ve)}"
-        )
     except HTTPException:
         raise
     except Exception as e:
         print(f"Error updating question: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to update question: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to update question: {str(e)}")
 
 
+# Fixed delete question endpoint
 @app.delete("/api/v1/questions/{question_id}")
 async def delete_question_endpoint(
     question_id: int,
@@ -1462,34 +1542,34 @@ async def delete_question_endpoint(
 ):
     user_id = current_user_info["id"]
     role = current_user_info["role"]
-    client_ip = get_client_ip(request) if request else None
+    client_ip = get_client_ip(request) if request else "unknown"
     
     # Only admins can delete questions
     if role != "admin":
-        raise HTTPException(
-            status_code=403,
-            detail="Only admins can delete questions"
-        )
+        raise HTTPException(status_code=403, detail="Only admins can delete questions")
     
     try:
+        # Check if question exists
+        existing_question = QuestionRepository.get_question_by_id(question_id)
+        if not existing_question:
+            raise HTTPException(status_code=404, detail="Question not found")
+        
         # First, delete all associated answers for this question
-        delete_answers_success = AnswerRepository.delete_all_answers_for_question(question_id)
-        if not delete_answers_success:
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to delete associated answers"
-            )
+        try:
+            delete_answers_success = AnswerRepository.delete_all_answers_for_question(question_id)
+            if not delete_answers_success:
+                print(f"Warning: Failed to delete associated answers for question {question_id}")
+        except Exception as e:
+            print(f"Error deleting answers: {e}")
+            # Continue with question deletion even if answer deletion fails
         
         # Then delete the question
         delete_success = QuestionRepository.delete_question(question_id)
         
         if not delete_success:
-            raise HTTPException(
-                status_code=404,
-                detail="Question not found or failed to delete"
-            )
+            raise HTTPException(status_code=500, detail="Failed to delete question")
         
-        # Create audit log for question deletion (simplified - only new values)
+        # Create audit log for question deletion
         new_values = {
             "deleted_by": user_id,
             "question_id": question_id,
@@ -1497,15 +1577,18 @@ async def delete_question_endpoint(
             "timestamp": datetime.now().isoformat()
         }
         
-        AuditLogRepository.create_audit_log(
-            table_name="questions",
-            record_id=question_id,
-            action="DELETE",
-            old_values=None,
-            new_values=new_values,
-            changed_by=user_id,
-            ip_address=client_ip
-        )
+        try:
+            AuditLogRepository.create_audit_log(
+                table_name="questions",
+                record_id=question_id,
+                action="DELETE",
+                old_values=None,
+                new_values=json.dumps(new_values),
+                changed_by=user_id,
+                ip_address=client_ip
+            )
+        except Exception as audit_error:
+            print(f"Delete audit log creation failed: {audit_error}")
         
         return {
             "status": "success",
@@ -1518,12 +1601,62 @@ async def delete_question_endpoint(
         raise
     except Exception as e:
         print(f"Error deleting question: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete question: {str(e)}")
+
+
+@app.post("/api/v1/themes")
+async def create_theme_endpoint(
+    theme_data: ThemeInput,
+    current_user_info: dict = Depends(get_current_user_info)
+):
+    user_id = current_user_info["id"]
+    role = current_user_info["role"]
+    
+    if role not in ["admin", "moderator"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins and moderators can create themes"
+        )
+    
+    # Moderators can't create active themes by default
+    if role == "moderator":
+        theme_data.is_active = False
+    
+    try:
+        # Create the theme without logoUrl
+        theme_id = ThemeRepository.create_theme(
+            name=theme_data.name,
+            description=theme_data.description,
+            is_active=theme_data.is_active
+        )
+        
+        if not theme_id:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to create theme - no ID returned"
+            )
+        
+        return {
+            "status": "success",
+            "theme_id": theme_id,
+            "is_active": theme_data.is_active,
+            "role": role
+        }
+        
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Validation error: {str(ve)}"
+        )
+    except Exception as e:
+        print(f"Error creating theme: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to delete question: {str(e)}"
+            detail=f"Failed to create theme: {str(e)}"
         )
 
 
+# Fixed delete theme endpoint
 @app.delete("/api/v1/themes/{theme_id}")
 async def delete_theme_endpoint(
     theme_id: int,
@@ -1532,7 +1665,7 @@ async def delete_theme_endpoint(
 ):
     user_id = current_user_info["id"]
     role = current_user_info["role"]
-    client_ip = get_client_ip(request) if request else None
+    client_ip = get_client_ip(request) if request else "unknown"
     
     # Only admins and moderators can delete themes
     if role not in ["admin", "moderator"]:
@@ -1542,16 +1675,18 @@ async def delete_theme_endpoint(
         )
     
     try:
+        # Check if theme exists
+        existing_theme = ThemeRepository.get_theme_by_id(theme_id)
+        if not existing_theme:
+            raise HTTPException(status_code=404, detail="Theme not found")
+        
         # Delete the theme
         delete_success = ThemeRepository.delete_theme(theme_id)
         
         if not delete_success:
-            raise HTTPException(
-                status_code=404,
-                detail="Theme not found or failed to delete"
-            )
+            raise HTTPException(status_code=500, detail="Failed to delete theme")
         
-        # Create audit log for theme deletion (simplified - only new values)
+        # Create audit log for theme deletion
         new_values = {
             "deleted_by": user_id,
             "theme_id": theme_id,
@@ -1559,15 +1694,18 @@ async def delete_theme_endpoint(
             "timestamp": datetime.now().isoformat()
         }
         
-        AuditLogRepository.create_audit_log(
-            table_name="themes",
-            record_id=theme_id,
-            action="DELETE",
-            old_values=None,
-            new_values=new_values,
-            changed_by=user_id,
-            ip_address=client_ip
-        )
+        try:
+            AuditLogRepository.create_audit_log(
+                table_name="themes",
+                record_id=theme_id,
+                action="DELETE",
+                old_values=None,
+                new_values=json.dumps(new_values),
+                changed_by=user_id,
+                ip_address=client_ip
+            )
+        except Exception as audit_error:
+            print(f"Theme delete audit log creation failed: {audit_error}")
         
         return {
             "status": "success",
@@ -1580,12 +1718,10 @@ async def delete_theme_endpoint(
         raise
     except Exception as e:
         print(f"Error deleting theme: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to delete theme: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to delete theme: {str(e)}")
 
 
+# Fixed delete user endpoint
 @app.delete("/api/v1/users/{user_id}")
 async def delete_user_endpoint(
     user_id: int,
@@ -1594,33 +1730,29 @@ async def delete_user_endpoint(
 ):
     current_user_id = current_user_info["id"]
     role = current_user_info["role"]
-    client_ip = get_client_ip(request) if request else None
+    client_ip = get_client_ip(request) if request else "unknown"
     
     # Only admins can delete users
     if role != "admin":
-        raise HTTPException(
-            status_code=403,
-            detail="Only admins can delete users"
-        )
+        raise HTTPException(status_code=403, detail="Only admins can delete users")
     
     # Prevent admin from deleting themselves
     if current_user_id == user_id:
-        raise HTTPException(
-            status_code=400,
-            detail="Cannot delete your own account"
-        )
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
     
     try:
+        # Check if user exists
+        existing_user = UserRepository.get_user_by_id(user_id)
+        if not existing_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
         # Delete the user
         delete_success = UserRepository.delete_user(user_id)
         
         if not delete_success:
-            raise HTTPException(
-                status_code=404,
-                detail="User not found or failed to delete"
-            )
+            raise HTTPException(status_code=500, detail="Failed to delete user")
         
-        # Create audit log for user deletion (simplified - only new values)
+        # Create audit log for user deletion
         new_values = {
             "deleted_by": current_user_id,
             "user_id": user_id,
@@ -1628,15 +1760,18 @@ async def delete_user_endpoint(
             "timestamp": datetime.now().isoformat()
         }
         
-        AuditLogRepository.create_audit_log(
-            table_name="users",
-            record_id=user_id,
-            action="DELETE",
-            old_values=None,
-            new_values=new_values,
-            changed_by=current_user_id,
-            ip_address=client_ip
-        )
+        try:
+            AuditLogRepository.create_audit_log(
+                table_name="users",
+                record_id=user_id,
+                action="DELETE",
+                old_values=None,
+                new_values=json.dumps(new_values),
+                changed_by=current_user_id,
+                ip_address=client_ip
+            )
+        except Exception as audit_error:
+            print(f"User delete audit log creation failed: {audit_error}")
         
         return {
             "status": "success",
@@ -1649,12 +1784,11 @@ async def delete_user_endpoint(
         raise
     except Exception as e:
         print(f"Error deleting user: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to delete user: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to delete user: {str(e)}")
 
 
+
+# Fixed ban IP endpoint
 @app.post("/api/v1/ban-ip")
 async def ban_ip_address(
     ban_request: BanIpRequest,
@@ -1663,7 +1797,7 @@ async def ban_ip_address(
 ):
     user_role = current_user["role"]
     user_id = current_user["id"]
-    client_ip = get_client_ip(request) if request else None
+    client_ip = get_client_ip(request) if request else "unknown"
     
     # Check permissions
     if user_role not in ["moderator", "admin"]:
@@ -1673,7 +1807,6 @@ async def ban_ip_address(
         )
     
     # Validate ban duration based on role
-    max_duration = None
     if user_role == "moderator":
         # Moderators can ban up to 1 minute
         if ban_request.ban_duration_unit == "minutes" and ban_request.ban_duration_value > 1:
@@ -1704,93 +1837,196 @@ async def ban_ip_address(
                 detail="Ban duration exceeds 7 day limit"
             )
     
-    # Get IP address record
-    ip_record = IpAddressRepository.get_ip_address_by_string(ban_request.ip_address)
-    if not ip_record:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"IP address {ban_request.ip_address} not found"
-        )
-    
-    # Store old values for audit logging
-    old_ip_values = dict(ip_record)
-    
-    # Calculate ban expiry
     try:
-        ban_expires_at = calculate_ban_expiry(
-            ban_request.ban_duration_value,
-            ban_request.ban_duration_unit
+        # Get IP address record
+        ip_record = IpAddressRepository.get_ip_address_by_string(ban_request.ip_address)
+        if not ip_record:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"IP address {ban_request.ip_address} not found"
+            )
+        
+        # Calculate ban expiry
+        try:
+            ban_expires_at = calculate_ban_expiry(
+                ban_request.ban_duration_value,
+                ban_request.ban_duration_unit
+            )
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
+        
+        # Update IP address with ban information
+        success = IpAddressRepository.update_ip_address(
+            ip_id=ip_record['id'],
+            is_banned=True,
+            ban_reason=ban_request.ban_reason or "No reason provided",
+            ban_date=datetime.now(),
+            banned_by=user_id,
+            ban_expires_at=ban_expires_at
         )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    
-    # Update IP address with ban information
-    success = IpAddressRepository.update_ip_address(
-        ip_id=ip_record['id'],
-        is_banned=True,
-        ban_reason=ban_request.ban_reason,
-        ban_date=datetime.now(),
-        banned_by=user_id,
-        ban_expires_at=ban_expires_at
-    )
-    
-    if not success:
+        
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to ban IP address"
+            )
+        
+        # Create audit log for IP ban
+        new_ip_values = {
+            "ip_address": ban_request.ip_address,
+            "is_banned": True,
+            "ban_reason": ban_request.ban_reason or "No reason provided",
+            "ban_date": datetime.now().isoformat(),
+            "banned_by": user_id,
+            "ban_expires_at": ban_expires_at.isoformat() if ban_expires_at else None
+        }
+        
+        try:
+            AuditLogRepository.create_audit_log(
+                table_name="ip_addresses",
+                record_id=ip_record['id'],
+                action="BAN",
+                old_values=None,
+                new_values=json.dumps(new_ip_values),
+                changed_by=user_id,
+                ip_address=client_ip
+            )
+        except Exception as audit_error:
+            print(f"IP ban audit log creation failed: {audit_error}")
+        
+        # Log the ban action
+        log_user_ip_address(user_id, client_ip)
+        
+        return {
+            "message": f"IP address {ban_request.ip_address} has been banned successfully",
+            "ban_expires_at": ban_expires_at,
+            "banned_by": user_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error banning IP address: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to ban IP address"
+            detail=f"Failed to ban IP address: {str(e)}"
+        )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import json
+
+# Fixed FastAPI endpoint
+@app.get(
+    ENDPOINT + "/audit-logs/",
+    summary="Get recent audit logs",
+    response_model=List[AuditLogResponse],
+    responses={
+        200: {"description": "List of audit logs (may be empty)"}
+    },
+    tags=["Audit Logs"]
+)
+async def get_recent_audit_logs(limit: int = 5) -> List[AuditLogResponse]:
+    """
+    Get the most recent audit log entries.
+   
+    Args:
+        limit: Maximum number of logs to return (default: 5)
+   
+    Returns:
+        List of audit log entries with all required fields
+    """
+    try:
+        audit_logs_data = AuditLogRepository.get_recent_audit_logs(limit)
+        
+        # Check if we got a valid list result
+        if not isinstance(audit_logs_data, list):
+            print(f"Expected list but got {type(audit_logs_data)}: {audit_logs_data}")
+            return []
+        
+        # Convert to Pydantic models
+        audit_logs = []
+        for log_data in audit_logs_data:
+            try:
+                # Parse JSON strings if they exist
+                old_values = None
+                new_values = None
+               
+                if log_data.get('old_values'):
+                    if isinstance(log_data['old_values'], str):
+                        old_values = json.loads(log_data['old_values'])
+                    else:
+                        old_values = log_data['old_values']
+               
+                if log_data.get('new_values'):
+                    if isinstance(log_data['new_values'], str):
+                        new_values = json.loads(log_data['new_values'])
+                    else:
+                        new_values = log_data['new_values']
+               
+                # Create AuditLogResponse object (no timestamp field)
+                audit_log = AuditLogResponse(
+                    id=log_data['id'],
+                    table_name=log_data['table_name'],
+                    record_id=str(log_data['record_id']),
+                    action=log_data['action'],
+                    old_values=old_values,
+                    new_values=new_values,
+                    changed_by=str(log_data['changed_by']),
+                    ip_address=log_data['ip_address']
+                )
+                audit_logs.append(audit_log)
+               
+            except json.JSONDecodeError as json_error:
+                print(f"Error parsing JSON for log {log_data.get('id')}: {json_error}")
+                continue
+            except Exception as model_error:
+                print(f"Error creating AuditLogResponse for log {log_data.get('id')}: {model_error}")
+                continue
+       
+        return audit_logs
+       
+    except Exception as e:
+        print(f"Error retrieving audit logs: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving audit logs"
         )
     
-    # Create audit log for IP ban
-    new_ip_values = {
-        "ip_address": ban_request.ip_address,
-        "is_banned": True,
-        "ban_reason": ban_request.ban_reason,
-        "ban_date": datetime.now().isoformat(),
-        "banned_by": user_id,
-        "ban_expires_at": ban_expires_at.isoformat() if ban_expires_at else None
-    }
-    
-    AuditLogRepository.create_audit_log(
-        table_name="ip_addresses",
-        record_id=ip_record['id'],
-        action="BAN",
-        old_values=None,
-        new_values=new_ip_values,
-        changed_by=user_id,
-        ip_address=client_ip
-    )
-    
-    # Log the ban action (optional - if you have logging)
-    if request:
-        admin_ip = get_client_ip(request)
-        log_user_ip_address(user_id, admin_ip)
-    
-    return {
-        "message": f"IP address {ban_request.ip_address} has been banned successfully",
-        "ban_expires_at": ban_expires_at,
-        "banned_by": user_id
-    }
 
 
 
-def calculate_ban_expiry(duration_value: int, duration_unit: str) -> datetime:
-    """Calculate when the ban should expire."""
-    now = datetime.now()
-    
-    if duration_unit == 'permanent':
-        # Set expiry to far future for permanent bans
-        return now + timedelta(days=7)  # 7 days
-    elif duration_unit == 'minutes':
-        return now + timedelta(minutes=duration_value)
-    elif duration_unit == 'hours':
-        return now + timedelta(hours=duration_value)
-    elif duration_unit == 'days':
-        return now + timedelta(days=duration_value)
-    else:
-        raise ValueError(f"Invalid duration unit: {duration_unit}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -380,3 +380,15 @@ class BanIpRequest(BaseModel):
     ban_reason: str
     ban_duration_value: int
     ban_duration_unit: str  # 'minutes', 'hours', 'days', 'permanent'
+
+
+# Updated Pydantic Model - removed timestamp since it doesn't exist in your table
+class AuditLogResponse(BaseModel):
+    id: int
+    table_name: str
+    record_id: str
+    action: str
+    old_values: Optional[Dict[str, Any]] = None
+    new_values: Optional[Dict[str, Any]] = None
+    changed_by: str
+    ip_address: str
