@@ -43,6 +43,7 @@ except ImportError as e:
     RPI_COMPONENTS_AVAILABLE = False
 
 
+    
 # ----------------------------------------------------
 # App setup
 # ----------------------------------------------------
@@ -1819,48 +1820,22 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
             try:
                 active_sessions = QuizSessionRepository.get_active_sessions()
                 
-                # Add this at the module level (outside your function)
-                last_update_time = 0
+                
                 
                 if active_sessions:
-                     if current_time - last_update_time >= 1:  # Only proceed if at least 1 second has passed
-                        last_update_time = current_time  # Update the last update time
-                        # --- ACTIVE QUIZ SESSION LOGIC ---
-                        session_id = active_sessions[0]['id']  # Assuming session has 'id' key
-                        
-                        # Log sensor data to the active session
+                    try:
                         if temp_sensor and light_sensor and servo:
-                            try:
-                                current_temp = temp_sensor.read_temperature()
-                                current_lux = light_sensor()
-                                current_servo_angle = servo.read_degrees()
+                            active_sessions = QuizSessionRepository.get_active_sessions()
+                            
+                            if active_sessions and should_update_quiz_session(current_time):
+                                session_id = get_active_session_id()
+                                sensor_data = read_sensor_data(temp_sensor, light_sensor, servo)
                                 
-                                QuizSessionRepository.create_sensor_data(
-                                    sessionId=session_id,
-                                    temperature=current_temp,
-                                    lightIntensity=current_lux,
-                                    servoPosition=current_servo_angle,
-                                    timestamp=datetime.now()  # You'll need to import datetime
-                                )
+                                log_quiz_sensor_data(session_id, sensor_data)
+                                emit_sensor_data(sensor_data, sio, loop)
                                 
-                                # Still emit for real-time monitoring if needed
-                                sensor_data_to_emit = {
-                                    'temperature': current_temp,
-                                    'illuminance': current_lux,
-                                    'servo_angle': current_servo_angle,
-                                }
-                                try:
-                                    asyncio.run_coroutine_threadsafe(
-                                        sio.emit('sensor_data', sensor_data_to_emit),
-                                        loop 
-                                    )
-                                except Exception as e:
-                                    print(f"Error emitting sensor_data during quiz: {e}")
-                                    
-                            except Exception as e:
-                                print(f"Error logging sensor data to quiz session: {e}")
-                        
-                        # other quiz-specific logic here
+                    except Exception as e:
+                        print(f"Error in quiz session sensor handling: {e}")
                     
 
 
@@ -2164,9 +2139,49 @@ async def log_request(request: Request, call_next):
 
 
 
+# Module level variable
+last_update_time = 0
 
+def should_update_quiz_session(current_time):
+    """Check if we should update based on time threshold."""
+    global last_update_time
+    if current_time - last_update_time >= 1:
+        last_update_time = current_time
+        return True
+    return False
 
+def get_active_session_id():
+    """Get the ID of the first active session."""
+    active_sessions = QuizSessionRepository.get_active_sessions()
+    return active_sessions[0]['id'] if active_sessions else None
 
+def read_sensor_data(temp_sensor, light_sensor, servo):
+    """Read all sensor values."""
+    return {
+        'temperature': temp_sensor.read_temperature(),
+        'illuminance': light_sensor(),
+        'servo_angle': servo.read_degrees()
+    }
+
+def log_quiz_sensor_data(session_id, sensor_data):
+    """Log sensor data to quiz session."""
+    QuizSessionRepository.create_sensor_data(
+        sessionId=session_id,
+        temperature=sensor_data['temperature'],
+        lightIntensity=sensor_data['illuminance'],
+        servoPosition=sensor_data['servo_angle'],
+        timestamp=datetime.now()
+    )
+
+def emit_sensor_data(sensor_data, sio, loop):
+    """Emit sensor data via socket.io."""
+    try:
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('sensor_data', sensor_data),
+            loop 
+        )
+    except Exception as e:
+        print(f"Error emitting sensor_data: {e}")
 
 
 #item functions
