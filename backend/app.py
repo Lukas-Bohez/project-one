@@ -1802,6 +1802,14 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
 
 
 
+
+
+
+
+
+
+
+
 #main quiz logic, this is where the questions are send to the frontend
     try:
         while not stop_event.is_set():
@@ -2154,6 +2162,17 @@ async def log_request(request: Request, call_next):
 
 
 
+
+
+
+
+
+
+
+#item functions
+def activateAdvertFlood():
+    """Call this function to trigger the 60-second ad flood on all clients"""
+    sio.emit('B2F_addItem', {}, broadcast=True)
 
 
 
