@@ -343,3 +343,40 @@ class ThemeInput(BaseModel):
     name: str
     description: Optional[str] = None
     is_active: bool = True
+
+
+# Updated response model to include IP information
+class UserIpAddress(BaseModel):
+    id: int
+    ip_address: str
+    is_banned: bool
+    ban_reason: Optional[str] = None
+    ban_date: Optional[datetime] = None
+    ban_expires_at: Optional[datetime] = None
+    usage_count: int
+    last_used: datetime
+    is_primary: bool
+
+class UserPublicWithIp(BaseModel):
+    # Include all your existing UserPublic fields here
+    id: int
+    first_name: str
+    last_name: str
+    rfid_code: Optional[str] = None
+    userRoleId: int
+    soul_points: int
+    limb_points: int
+    last_active: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    # Add IP addresses
+    ip_addresses: list[UserIpAddress] = []
+
+
+
+
+class BanIpRequest(BaseModel):
+    ip_address: str
+    ban_reason: str
+    ban_duration_value: int
+    ban_duration_unit: str  # 'minutes', 'hours', 'days', 'permanent'

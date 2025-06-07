@@ -20,7 +20,8 @@ from models.models import (
     RandomQuestionRequest, QuestionMetadataUpdate,
     QuestionActivationNotification,
     AnswerBase, AnswerCreate, AnswerListResponse, AnswerResponse, 
-    AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand,BroadcastMessage,DirectMessage, ClientActivity,SessionSensorData,MultiSessionSensorResponse,UserUpdateNames,UserCredentials,AnswerInput,QuestionInput, ThemeInput
+    AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand,BroadcastMessage,DirectMessage, ClientActivity,SessionSensorData,MultiSessionSensorResponse,UserUpdateNames,UserCredentials,AnswerInput,QuestionInput, ThemeInput,
+    UserPublic,UserPublicWithIp,UserIpAddress,BanIpRequest
 )
 from typing import Dict, Any, Optional, List
 from fastapi import Request
@@ -446,13 +447,112 @@ async def get_theme_question_count(theme_id: int):
 # ----------------------------------------------------
 @app.get(
     ENDPOINT + "/users/",
-    response_model=List[UserPublic], # Return list of public users
-    summary="Get all users",
+    response_model=List[UserPublicWithIp], # Updated response model
+    summary="Get all users with IP information",
     tags=["Users"]
 )
 async def get_all_users():
     users = UserRepository.get_all_users()
+    users_with_ip = []
+    
+    for user in users:
+        # Get IP addresses for this user
+        user_ip_data = UserIpAddressRepository.get_user_ip_addresses(user['id'])
+        
+        # Convert IP data to UserIpAddress objects
+        ip_addresses = []
+        for ip_data in user_ip_data:
+            ip_addresses.append(UserIpAddress(
+                id=ip_data['id'],
+                ip_address=ip_data['ip_address'],
+                is_banned=ip_data['is_banned'],
+                ban_reason=ip_data['ban_reason'],
+                ban_date=ip_data['ban_date'],
+                ban_expires_at=ip_data['ban_expires_at'],
+                usage_count=ip_data['usage_count'],
+                last_used=ip_data['last_used'],
+                is_primary=ip_data['is_primary']
+            ))
+        
+        # Create user object with IP information
+        user_with_ip = UserPublicWithIp(
+            **user,  # Spread all existing user fields
+            ip_addresses=ip_addresses
+        )
+        users_with_ip.append(user_with_ip)
+    
+    return users_with_ip
+
+# Alternative: If you want to keep the original endpoint and add a separate one for IP info
+@app.get(
+    ENDPOINT + "/users/with-ip/",
+    response_model=List[UserPublicWithIp],
+    summary="Get all users with detailed IP information",
+    tags=["Users"]
+)
+async def get_all_users_with_ip():
+    users = UserRepository.get_all_users()
+    users_with_ip = []
+    
+    for user in users:
+        user_ip_data = UserIpAddressRepository.get_user_ip_addresses(user['id'])
+        
+        ip_addresses = []
+        for ip_data in user_ip_data:
+            ip_addresses.append(UserIpAddress(
+                id=ip_data['id'],
+                ip_address=ip_data['ip_address'],
+                is_banned=ip_data['is_banned'],
+                ban_reason=ip_data['ban_reason'],
+                ban_date=ip_data['ban_date'],
+                ban_expires_at=ip_data['ban_expires_at'],
+                usage_count=ip_data['usage_count'],
+                last_used=ip_data['last_used'],
+                is_primary=ip_data['is_primary']
+            ))
+        
+        user_with_ip = UserPublicWithIp(
+            **user,
+            ip_addresses=ip_addresses
+        )
+        users_with_ip.append(user_with_ip)
+    
+    return users_with_ip
+
+# Keep the original endpoint if you still need it without IP data
+@app.get(
+    ENDPOINT + "/users/basic/",
+    response_model=List[UserPublic],
+    summary="Get all users (basic info only)",
+    tags=["Users"]
+)
+async def get_all_users_basic():
+    users = UserRepository.get_all_users()
     return [UserPublic(**user) for user in users]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 @app.get(
@@ -1480,7 +1580,116 @@ async def delete_user_endpoint(
 
 
 
+def calculate_ban_expiry(duration_value: int, duration_unit: str) -> datetime:
+    """Calculate when the ban should expire."""
+    now = datetime.now()
+    
+    if duration_unit == 'permanent':
+        # Set expiry to far future for permanent bans
+        return now + timedelta(days=7)  # 7 days
+    elif duration_unit == 'minutes':
+        return now + timedelta(minutes=duration_value)
+    elif duration_unit == 'hours':
+        return now + timedelta(hours=duration_value)
+    elif duration_unit == 'days':
+        return now + timedelta(days=duration_value)
+    else:
+        raise ValueError(f"Invalid duration unit: {duration_unit}")
 
+@app.post("/api/v1/ban-ip")
+async def ban_ip_address(
+    ban_request: BanIpRequest,
+    current_user: dict = Depends(get_current_user_info),
+    request: Request = None
+):
+    user_role = current_user["role"]
+    user_id = current_user["id"]
+    
+    # Check permissions
+    if user_role not in ["moderator", "admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only moderators and admins can ban IP addresses"
+        )
+    
+    # Validate ban duration based on role
+    max_duration = None
+    if user_role == "moderator":
+        # Moderators can ban up to 1 minute
+        if ban_request.ban_duration_unit == "minutes" and ban_request.ban_duration_value > 1:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Moderators can only ban for up to 1 minute"
+            )
+        elif ban_request.ban_duration_unit in ["hours", "days", "permanent"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Moderators can only use minutes for ban duration"
+            )
+    elif user_role == "admin":
+        # Admins can ban up to a week (or permanent)
+        if ban_request.ban_duration_unit == "days" and ban_request.ban_duration_value > 7:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admins can ban for up to 7 days maximum"
+            )
+        elif ban_request.ban_duration_unit == "hours" and ban_request.ban_duration_value > 168:  # 7 days in hours
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Ban duration exceeds 7 day limit"
+            )
+        elif ban_request.ban_duration_unit == "minutes" and ban_request.ban_duration_value > 10080:  # 7 days in minutes
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Ban duration exceeds 7 day limit"
+            )
+    
+    # Get IP address record
+    ip_record = IpAddressRepository.get_ip_address_by_string(ban_request.ip_address)
+    if not ip_record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"IP address {ban_request.ip_address} not found"
+        )
+    
+    # Calculate ban expiry
+    try:
+        ban_expires_at = calculate_ban_expiry(
+            ban_request.ban_duration_value,
+            ban_request.ban_duration_unit
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    
+    # Update IP address with ban information
+    success = IpAddressRepository.update_ip_address(
+        ip_id=ip_record['id'],
+        is_banned=True,
+        ban_reason=ban_request.ban_reason,
+        ban_date=datetime.now(),
+        banned_by=user_id,
+        ban_expires_at=ban_expires_at
+    )
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to ban IP address"
+        )
+    
+    # Log the ban action (optional - if you have logging)
+    if request:
+        admin_ip = get_client_ip(request)
+        log_user_ip_address(user_id, admin_ip)
+    
+    return {
+        "message": f"IP address {ban_request.ip_address} has been banned successfully",
+        "ban_expires_at": ban_expires_at,
+        "banned_by": user_id
+    }
 
 
 
