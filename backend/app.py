@@ -877,6 +877,17 @@ async def appeal_ban(payload: AppealPayload, request: Request):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 @app.get("/api/v1/sensor-data", response_model=MultiSessionSensorResponse)
 async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 10):
     requested_session_ids = [int(sid.strip()) for sid in session_ids.split(',')]
@@ -940,6 +951,29 @@ async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1
         ))
     
     return MultiSessionSensorResponse(sessions=response_sessions_data)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1234,7 +1268,7 @@ def convert_difficulty_to_id(difficulty_string: str) -> int:
         # Default to medium if unknown difficulty
         return 2
 
-# Fixed create question endpoint
+# Fixed create question endpoint - Log first, create second
 @app.post("/api/v1/questions")
 async def create_question_endpoint(
     question_data: QuestionInput,
@@ -1252,6 +1286,29 @@ async def create_question_endpoint(
             detail="Only admins and moderators can create questions"
         )
     
+    # LOG THE ATTEMPT FIRST - NOTHING ELSE
+    new_values = {
+        "question_text": question_data.question_text,
+        "created_by": user_id,
+        "role": role,
+        "timestamp": datetime.now().isoformat()
+    }
+    
+    try:
+        AuditLogRepository.create_audit_log(
+            table_name="questions",
+            record_id=0,
+            action="CREATE",
+            old_values=None,
+            new_values=json.dumps(new_values),
+            changed_by=user_id,
+            ip_address=client_ip
+        )
+    except Exception as audit_error:
+        print(f"Audit log creation failed: {audit_error}")
+        # Continue execution even if audit logging fails
+    
+    # NOW CREATE THE QUESTION
     # Moderator questions are inactive by default
     is_active = True if role == "admin" else False
     
@@ -1289,31 +1346,6 @@ async def create_question_endpoint(
         if not question_id:
             raise HTTPException(status_code=500, detail="Failed to create question")
         
-        # Create audit log for question
-        new_question_values = {
-            "question_text": question_data.question_text.strip(),
-            "themeId": theme_id,
-            "difficultyLevelId": difficulty_id,
-            "createdBy": user_id,
-            "is_active": is_active,
-            "timestamp": datetime.now().isoformat()
-        }
-        
-        # Safe audit log creation
-        try:
-            AuditLogRepository.create_audit_log(
-                table_name="questions",
-                record_id=question_id,
-                action="CREATE",
-                old_values=None,
-                new_values=json.dumps(new_question_values),
-                changed_by=user_id,
-                ip_address=client_ip
-            )
-        except Exception as audit_error:
-            print(f"Audit log creation failed: {audit_error}")
-            # Continue execution even if audit logging fails
-        
         # Create answers
         created_answers = []
         for answer in question_data.answers:
@@ -1329,27 +1361,6 @@ async def create_question_endpoint(
                 
                 if answer_id:
                     created_answers.append(answer_id)
-                    
-                    # Audit log for each answer
-                    new_answer_values = {
-                        "question_id": question_id,
-                        "answer_text": answer.answer_text.strip(),
-                        "is_correct": bool(answer.is_correct),
-                        "timestamp": datetime.now().isoformat()
-                    }
-                    
-                    try:
-                        AuditLogRepository.create_audit_log(
-                            table_name="answers",
-                            record_id=answer_id,
-                            action="CREATE",
-                            old_values=None,
-                            new_values=json.dumps(new_answer_values),
-                            changed_by=user_id,
-                            ip_address=client_ip
-                        )
-                    except Exception as audit_error:
-                        print(f"Answer audit log creation failed: {audit_error}")
                         
             except Exception as answer_error:
                 print(f"Failed to create answer: {answer_error}")
@@ -1372,7 +1383,7 @@ async def create_question_endpoint(
         raise HTTPException(status_code=500, detail="Failed to create question")
 
 
-# Fixed update question endpoint
+# Fixed update question endpoint - Log first, update second
 @app.patch("/api/v1/questions/{question_id}")
 async def update_question_endpoint(
     question_id: int,
@@ -1388,6 +1399,30 @@ async def update_question_endpoint(
     if role != "admin":
         raise HTTPException(status_code=403, detail="Only admins can edit questions")
     
+    # LOG THE UPDATE ATTEMPT FIRST - NOTHING ELSE
+    new_values = {
+        "question_id": question_id,
+        "question_text": question_data.question_text,
+        "updated_by": user_id,
+        "role": role,
+        "timestamp": datetime.now().isoformat()
+    }
+    
+    try:
+        AuditLogRepository.create_audit_log(
+            table_name="questions",
+            record_id=question_id,
+            action="UPDATE",
+            old_values=None,
+            new_values=json.dumps(new_values),
+            changed_by=user_id,
+            ip_address=client_ip
+        )
+    except Exception as audit_error:
+        print(f"Audit log creation failed: {audit_error}")
+        # Continue execution even if audit logging fails
+    
+    # NOW UPDATE THE QUESTION
     try:
         # Validate question exists
         existing_question = QuestionRepository.get_question_by_id(question_id)
@@ -1430,38 +1465,6 @@ async def update_question_endpoint(
         if not update_success:
             raise HTTPException(status_code=500, detail="Failed to update question")
         
-        # Create audit log for question update
-        new_question_values = {
-            "question_text": question_data.question_text.strip(),
-            "themeId": theme_id,
-            "difficultyLevelId": difficulty_id,
-            "explanation": question_data.explanation or "",
-            "Url": question_data.Url or "",
-            "time_limit": safe_int_convert(question_data.time_limit, 30),
-            "think_time": safe_int_convert(question_data.think_time, 5),
-            "points": safe_int_convert(question_data.points, 10),
-            "is_active": bool(question_data.is_active),
-            "no_answer_correct": bool(question_data.no_answer_correct),
-            "LightMax": safe_int_convert(question_data.LightMax, 100),
-            "LightMin": safe_int_convert(question_data.LightMin, 0),
-            "TempMax": safe_int_convert(question_data.TempMax, 30),
-            "TempMin": safe_int_convert(question_data.TempMin, 10),
-            "updated_at": datetime.now().isoformat()
-        }
-        
-        try:
-            AuditLogRepository.create_audit_log(
-                table_name="questions",
-                record_id=question_id,
-                action="UPDATE",
-                old_values=None,
-                new_values=json.dumps(new_question_values),
-                changed_by=user_id,
-                ip_address=client_ip
-            )
-        except Exception as audit_error:
-            print(f"Question audit log creation failed: {audit_error}")
-        
         # Handle answers: delete all existing answers and create new ones
         created_answers = []
         if question_data.answers:
@@ -1485,27 +1488,6 @@ async def update_question_endpoint(
                         
                         if answer_id:
                             created_answers.append(answer_id)
-                            
-                            # Create audit log for new answer creation
-                            new_answer_values = {
-                                "question_id": question_id,
-                                "answer_text": answer.answer_text.strip(),
-                                "is_correct": bool(answer.is_correct),
-                                "created_at": datetime.now().isoformat()
-                            }
-                            
-                            try:
-                                AuditLogRepository.create_audit_log(
-                                    table_name="answers",
-                                    record_id=answer_id,
-                                    action="CREATE",
-                                    old_values=None,
-                                    new_values=json.dumps(new_answer_values),
-                                    changed_by=user_id,
-                                    ip_address=client_ip
-                                )
-                            except Exception as audit_error:
-                                print(f"Answer audit log creation failed: {audit_error}")
                                 
                     except Exception as answer_error:
                         print(f"Failed to create answer: {answer_error}")
@@ -1604,24 +1586,52 @@ async def delete_question_endpoint(
         raise HTTPException(status_code=500, detail=f"Failed to delete question: {str(e)}")
 
 
+# Fixed create theme endpoint - Log first, create second
 @app.post("/api/v1/themes")
 async def create_theme_endpoint(
     theme_data: ThemeInput,
-    current_user_info: dict = Depends(get_current_user_info)
+    current_user_info: dict = Depends(get_current_user_info),
+    request: Request = None
 ):
     user_id = current_user_info["id"]
     role = current_user_info["role"]
-    
+    client_ip = get_client_ip(request) if request else "unknown"
+   
     if role not in ["admin", "moderator"]:
         raise HTTPException(
             status_code=403,
             detail="Only admins and moderators can create themes"
         )
-    
+   
     # Moderators can't create active themes by default
     if role == "moderator":
         theme_data.is_active = False
+   
+    # LOG THE THEME CREATION ATTEMPT FIRST - NOTHING ELSE
+    new_values = {
+        "name": theme_data.name,
+        "description": theme_data.description,
+        "is_active": theme_data.is_active,
+        "created_by": user_id,
+        "role": role,
+        "timestamp": datetime.now().isoformat()
+    }
     
+    try:
+        AuditLogRepository.create_audit_log(
+            table_name="themes",
+            record_id=0,
+            action="CREATE",
+            old_values=None,
+            new_values=json.dumps(new_values),
+            changed_by=user_id,
+            ip_address=client_ip
+        )
+    except Exception as audit_error:
+        print(f"Audit log creation failed: {audit_error}")
+        # Continue execution even if audit logging fails
+    
+    # NOW CREATE THE THEME
     try:
         # Create the theme without logoUrl
         theme_id = ThemeRepository.create_theme(
@@ -1629,20 +1639,20 @@ async def create_theme_endpoint(
             description=theme_data.description,
             is_active=theme_data.is_active
         )
-        
+       
         if not theme_id:
             raise HTTPException(
                 status_code=500,
                 detail="Failed to create theme - no ID returned"
             )
-        
+       
         return {
             "status": "success",
             "theme_id": theme_id,
             "is_active": theme_data.is_active,
             "role": role
         }
-        
+       
     except ValueError as ve:
         raise HTTPException(
             status_code=400,
@@ -1943,13 +1953,13 @@ import json
     },
     tags=["Audit Logs"]
 )
-async def get_recent_audit_logs(limit: int = 5) -> List[AuditLogResponse]:
+async def get_recent_audit_logs(limit: int = 15) -> List[AuditLogResponse]:
     """
     Get the most recent audit log entries.
-   
+    
     Args:
-        limit: Maximum number of logs to return (default: 5)
-   
+        limit: Maximum number of logs to return (default: 15)
+    
     Returns:
         List of audit log entries with all required fields
     """
@@ -1965,23 +1975,45 @@ async def get_recent_audit_logs(limit: int = 5) -> List[AuditLogResponse]:
         audit_logs = []
         for log_data in audit_logs_data:
             try:
-                # Parse JSON strings if they exist
+                # Parse JSON strings more robustly
                 old_values = None
                 new_values = None
-               
+                
+                # Handle old_values
                 if log_data.get('old_values'):
                     if isinstance(log_data['old_values'], str):
-                        old_values = json.loads(log_data['old_values'])
+                        try:
+                            # Handle potential double-encoded JSON
+                            raw_old = log_data['old_values']
+                            if raw_old.startswith('"') and raw_old.endswith('"'):
+                                # Remove outer quotes if double-encoded
+                                raw_old = raw_old[1:-1].replace('\\"', '"')
+                            old_values = json.loads(raw_old)
+                        except json.JSONDecodeError as e:
+                            print(f"Failed to parse old_values for log {log_data.get('id')}: {e}")
+                            print(f"Raw old_values: {repr(log_data['old_values'])}")
+                            old_values = None
                     else:
                         old_values = log_data['old_values']
-               
+                
+                # Handle new_values
                 if log_data.get('new_values'):
                     if isinstance(log_data['new_values'], str):
-                        new_values = json.loads(log_data['new_values'])
+                        try:
+                            # Handle potential double-encoded JSON
+                            raw_new = log_data['new_values']
+                            if raw_new.startswith('"') and raw_new.endswith('"'):
+                                # Remove outer quotes if double-encoded
+                                raw_new = raw_new[1:-1].replace('\\"', '"')
+                            new_values = json.loads(raw_new)
+                        except json.JSONDecodeError as e:
+                            print(f"Failed to parse new_values for log {log_data.get('id')}: {e}")
+                            print(f"Raw new_values: {repr(log_data['new_values'])}")
+                            new_values = None
                     else:
                         new_values = log_data['new_values']
-               
-                # Create AuditLogResponse object (no timestamp field)
+                
+                # Create AuditLogResponse object
                 audit_log = AuditLogResponse(
                     id=log_data['id'],
                     table_name=log_data['table_name'],
@@ -1993,16 +2025,15 @@ async def get_recent_audit_logs(limit: int = 5) -> List[AuditLogResponse]:
                     ip_address=log_data['ip_address']
                 )
                 audit_logs.append(audit_log)
-               
-            except json.JSONDecodeError as json_error:
-                print(f"Error parsing JSON for log {log_data.get('id')}: {json_error}")
-                continue
+                
             except Exception as model_error:
                 print(f"Error creating AuditLogResponse for log {log_data.get('id')}: {model_error}")
+                print(f"Log data: {log_data}")
                 continue
-       
+        
+        print(f"Successfully processed {len(audit_logs)} out of {len(audit_logs_data)} audit logs")
         return audit_logs
-       
+        
     except Exception as e:
         print(f"Error retrieving audit logs: {str(e)}")
         raise HTTPException(
