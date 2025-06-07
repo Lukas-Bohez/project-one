@@ -845,8 +845,52 @@ async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1
 
 
 
+from fastapi import APIRouter, HTTPException, Depends, Request, Header
+from datetime import datetime
+
+# Add this import for the IP address repository
+# from your_repositories import IpAddressRepository  # Adjust import path as needed
+
+def get_client_ip(request: Request) -> str:
+    """Extract client IP address from request headers."""
+    # Check for forwarded IP first (in case of proxy/load balancer)
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        # X-Forwarded-For can contain multiple IPs, take the first one
+        return forwarded_for.split(",")[0].strip()
+    
+    # Check for real IP header
+    real_ip = request.headers.get("X-Real-IP")
+    if real_ip:
+        return real_ip
+    
+    # Fall back to direct client IP
+    return request.client.host if request.client else "unknown"
+
+def log_user_ip_address(user_id: int, ip_address: str):
+    """Log the IP address for a user."""
+    try:
+        # Get or create IP address record
+        ip_record = IpAddressRepository.get_ip_address_by_string(ip_address)
+        if not ip_record:
+            # If IP doesn't exist, you'll need to create it
+            # This assumes you have a method to create IP addresses
+            # You may need to add this method to your IpAddressRepository
+            ip_id = IpAddressRepository.create_ip_address(ip_address)
+        else:
+            ip_id = ip_record['id']
+        
+        # Create/update the user-IP link
+        UserIpAddressRepository.create_user_ip_address_link(user_id, ip_id)
+    except Exception as e:
+        # Log the error but don't fail the main operation
+        print(f"Failed to log IP address for user {user_id}: {e}")
+
 @app.patch("/api/v1/users/{rfid_code}")
-async def update_user_names(rfid_code: str, user_update: UserUpdateNames):
+async def update_user_names(rfid_code: str, user_update: UserUpdateNames, request: Request):
+    # Get client IP address
+    client_ip = get_client_ip(request)
+    
     all_users = UserRepository.get_all_users()
     target_user_id = None
 
@@ -858,6 +902,9 @@ async def update_user_names(rfid_code: str, user_update: UserUpdateNames):
                 # Name and RFID match: This is the user attempting to log in
                 target_user_id = user['id']
                 UserRepository.update_user_last_active(target_user_id, datetime.now())
+                
+                # Log IP address
+                log_user_ip_address(target_user_id, client_ip)
                 break
             else:
                 # Name matches, but RFID does not
@@ -885,6 +932,9 @@ async def update_user_names(rfid_code: str, user_update: UserUpdateNames):
                     )
                 target_user_id = existing_user_by_rfid['id'] # Return the ID of the updated user
                 UserRepository.update_user_last_active(target_user_id, datetime.now())
+                
+                # Log IP address
+                log_user_ip_address(target_user_id, client_ip)
             else:
                 # RFID exists but is not "Open" and doesn't match the provided name
                 raise HTTPException(
@@ -902,7 +952,10 @@ async def update_user_names(rfid_code: str, user_update: UserUpdateNames):
 
 # --- Register Endpoint ---
 @app.post("/api/v1/register", status_code=status.HTTP_201_CREATED)
-async def register_user(user_credentials: UserCredentials):
+async def register_user(user_credentials: UserCredentials, request: Request):
+    # Get client IP address
+    client_ip = get_client_ip(request)
+    
     # Check if user with this first/last name already exists
     existing_user = UserRepository.get_user_by_name(user_credentials.first_name, user_credentials.last_name)
     if existing_user:
@@ -934,11 +987,17 @@ async def register_user(user_credentials: UserCredentials):
             detail="Failed to create user."
         )
 
+    # Log IP address for the newly created user
+    log_user_ip_address(user_id, client_ip)
+
     return {"message": "User registered successfully", "user_id": user_id}
 
 # --- Login Endpoint ---
 @app.post("/api/v1/login")
-async def login_user(user_credentials: UserCredentials):
+async def login_user(user_credentials: UserCredentials, request: Request):
+    # Get client IP address
+    client_ip = get_client_ip(request)
+    
     user_id = UserRepository.authenticate_user(
         user_credentials.first_name,
         user_credentials.last_name,
@@ -951,9 +1010,10 @@ async def login_user(user_credentials: UserCredentials):
             detail="Invalid first name, last name, or password."
         )
 
-    return {"message": "Login successful", "user_id": user_id}
+    # Log IP address for successful login
+    log_user_ip_address(user_id, client_ip)
 
-from fastapi import APIRouter, HTTPException, Depends
+    return {"message": "Login successful", "user_id": user_id}
 
 router = APIRouter()
 
@@ -979,20 +1039,22 @@ def verify_user(user_id: int, rfid_code: str) -> str:
         raise HTTPException(status_code=403, detail="Unknown role")
 
 # Example of how you would use get_current_user_info as a dependency in other API endpoints
-from fastapi import Header
-
 async def get_current_user_info(
+    request: Request,
     x_user_id: str = Header(None, alias="X-User-ID"),
     x_rfid: str = Header(None, alias="X-RFID")
 ):
     if not x_user_id or not x_rfid:
         raise HTTPException(status_code=401, detail="Missing user credentials")
     
+    # Log IP address for authenticated requests
+    client_ip = get_client_ip(request)
+    log_user_ip_address(int(x_user_id), client_ip)
+    
     return {
         "id": int(x_user_id),
-        "role": verify_user(x_user_id, x_rfid)
+        "role": verify_user(int(x_user_id), x_rfid)
     }
-
 
 def convert_difficulty_to_id(difficulty_string: str) -> int:
     difficulty_mapping = {
@@ -1271,7 +1333,149 @@ async def update_question_endpoint(
         )
 
 
+@app.delete("/api/v1/questions/{question_id}")
+async def delete_question_endpoint(
+    question_id: int,
+    current_user_info: dict = Depends(get_current_user_info)
+):
+    user_id = current_user_info["id"]
+    role = current_user_info["role"]
+    
+    # Only admins can delete questions
+    if role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins can delete questions"
+        )
+    
+    try:
+        # First, delete all associated answers for this question
+        delete_answers_success = AnswerRepository.delete_all_answers_for_question(question_id)
+        if not delete_answers_success:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to delete associated answers"
+            )
+        
+        # Then delete the question
+        delete_success = QuestionRepository.delete_question(question_id)
+        
+        if not delete_success:
+            raise HTTPException(
+                status_code=404,
+                detail="Question not found or failed to delete"
+            )
+        
+        return {
+            "status": "success",
+            "message": "Question deleted successfully",
+            "question_id": question_id,
+            "role": role
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error deleting question: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to delete question: {str(e)}"
+        )
 
+
+@app.delete("/api/v1/themes/{theme_id}")
+async def delete_theme_endpoint(
+    theme_id: int,
+    current_user_info: dict = Depends(get_current_user_info)
+):
+    user_id = current_user_info["id"]
+    role = current_user_info["role"]
+    
+    # Only admins and moderators can delete themes
+    if role not in ["admin", "moderator"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins and moderators can delete themes"
+        )
+    
+    try:
+        # Check if theme is being used by any questions
+        # This would require a method to check theme usage - adjust based on your needs
+        # For now, we'll proceed with the delete
+        
+        # Delete the theme
+        delete_success = ThemeRepository.delete_theme(theme_id)
+        
+        if not delete_success:
+            raise HTTPException(
+                status_code=404,
+                detail="Theme not found or failed to delete"
+            )
+        
+        return {
+            "status": "success",
+            "message": "Theme deleted successfully",
+            "theme_id": theme_id,
+            "role": role
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error deleting theme: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to delete theme: {str(e)}"
+        )
+    
+
+@app.delete("/api/v1/users/{user_id}")
+async def delete_user_endpoint(
+    user_id: int,
+    current_user_info: dict = Depends(get_current_user_info)
+):
+    current_user_id = current_user_info["id"]
+    role = current_user_info["role"]
+    
+    # Only admins can delete users
+    if role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins can delete users"
+        )
+    
+    # Prevent admin from deleting themselves
+    if current_user_id == user_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot delete your own account"
+        )
+    
+    try:
+        # Delete the user
+        delete_success = UserRepository.delete_user(user_id)
+        
+        if not delete_success:
+            raise HTTPException(
+                status_code=404,
+                detail="User not found or failed to delete"
+            )
+        
+        return {
+            "status": "success",
+            "message": "User deleted successfully",
+            "user_id": user_id,
+            "role": role
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error deleting user: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to delete user: {str(e)}"
+        )
 
 
 
