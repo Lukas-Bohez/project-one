@@ -11,7 +11,7 @@ from threading import Thread, Event, Lock
 import socket
 # Import the new ThemeRepository
 from fastapi.responses import HTMLResponse,JSONResponse
-from database.datarepository import QuestionRepository, AnswerRepository, ThemeRepository,UserRepository, IpAddressRepository, UserIpAddressRepository,QuizSessionRepository,SensorDataRepository,QuizSessionsRepository
+from database.datarepository import QuestionRepository, AnswerRepository, ThemeRepository,UserRepository, IpAddressRepository, UserIpAddressRepository,QuizSessionRepository,SensorDataRepository,QuizSessionsRepository,AuditLogRepository,PlayerItemRepository,ItemRepository,ChatLogRepository,SessionPlayerRepository
 from models.models import (
     QuestionBase, QuestionCreate, QuestionResponse, QuestionUpdate,
     QuestionStatusUpdate, ErrorNotFound, QuestionWithAnswers,
@@ -1174,273 +1174,15 @@ def convert_difficulty_to_id(difficulty_string: str) -> int:
         return 2
 
 
-# Updated endpoint with proper error handling and data conversion
-@app.post("/api/v1/questions")
-async def create_question_endpoint(
-    question_data: QuestionInput,
-    current_user_info: dict = Depends(get_current_user_info)
-):
-    user_id = current_user_info["id"]
-    role = current_user_info["role"]
-    
-    if role not in ["admin", "moderator"]:
-        raise HTTPException(
-            status_code=403,
-            detail="Only admins and moderators can create questions"
-        )
-    
-    if role == "moderator":
-        question_data.is_active = False
-    
-    try:
-        # Convert difficulty string to integer if needed
-        difficulty_id = question_data.difficultyLevelId
-        if isinstance(difficulty_id, str):
-            difficulty_id = convert_difficulty_to_id(difficulty_id)
-        
-        # Convert themeId to integer if it's a string
-        theme_id = question_data.themeId
-        if isinstance(theme_id, str):
-            # If themeId is a string, you might need a similar mapping
-            # For now, defaulting to 1 if it's a string
-            try:
-                theme_id = int(theme_id)
-            except ValueError:
-                theme_id = 1  # Default theme ID
-        
-        # Create the question and get the ID
-        question_id = QuestionRepository.create_question(
-            question_text=question_data.question_text,
-            themeId=theme_id,
-            difficultyLevelId=difficulty_id,
-            explanation=question_data.explanation,
-            Url=question_data.Url,
-            time_limit=question_data.time_limit,
-            think_time=question_data.think_time,
-            points=question_data.points,
-            is_active=question_data.is_active,
-            no_answer_correct=question_data.no_answer_correct,
-            createdBy=user_id,
-            LightMax=question_data.LightMax,
-            LightMin=question_data.LightMin,
-            TempMax=question_data.TempMax,
-            TempMin=question_data.TempMin
-        )
-        
-        # Verify question_id was created successfully
-        if not question_id:
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to create question - no ID returned"
-            )
-        
-        # Create answers only if question was created successfully
-        created_answers = []
-        for answer in question_data.answers:
-            try:
-                answer_id = AnswerRepository.create_answer(
-                    question_id=question_id,
-                    answer_text=answer.answer_text,
-                    is_correct=answer.is_correct
-                )
-                created_answers.append(answer_id)
-            except Exception as answer_error:
-                # If answer creation fails, log it but don't fail the whole request
-                print(f"Failed to create answer: {answer_error}")
-                # Optionally, you might want to delete the question if answers fail
-                # QuestionRepository.delete_question(question_id)
-                raise HTTPException(
-                    status_code=500, 
-                    detail=f"Failed to create answer: {str(answer_error)}"
-                )
-        
-        return {
-            "status": "success",
-            "question_id": question_id,
-            "created_answers": len(created_answers),
-            "is_active": question_data.is_active,
-            "role": role,
-            "difficulty_id": difficulty_id,
-            "theme_id": theme_id
-        }
-        
-    except Exception as e:
-        print(f"Error creating question: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to create question: {str(e)}"
-        )
-
-
-
-
-@app.post("/api/v1/themes")
-async def create_theme_endpoint(
-    theme_data: ThemeInput,
-    current_user_info: dict = Depends(get_current_user_info)
-):
-    user_id = current_user_info["id"]
-    role = current_user_info["role"]
-    
-    if role not in ["admin", "moderator"]:
-        raise HTTPException(
-            status_code=403,
-            detail="Only admins and moderators can create themes"
-        )
-    
-    # Moderators can't create active themes by default
-    if role == "moderator":
-        theme_data.is_active = False
-    
-    try:
-        # Create the theme without logoUrl
-        theme_id = ThemeRepository.create_theme(
-            name=theme_data.name,
-            description=theme_data.description,
-            is_active=theme_data.is_active
-        )
-        
-        if not theme_id:
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to create theme - no ID returned"
-            )
-        
-        return {
-            "status": "success",
-            "theme_id": theme_id,
-            "is_active": theme_data.is_active,
-            "role": role
-        }
-        
-    except ValueError as ve:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Validation error: {str(ve)}"
-        )
-    except Exception as e:
-        print(f"Error creating theme: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to create theme: {str(e)}"
-        )
-
-
-@app.patch("/api/v1/questions/{question_id}")
-async def update_question_endpoint(
-    question_id: int,
-    question_data: QuestionInput,
-    current_user_info: dict = Depends(get_current_user_info)
-):
-    user_id = current_user_info["id"]
-    role = current_user_info["role"]
-    
-    # Only admins can edit questions
-    if role != "admin":
-        raise HTTPException(
-            status_code=403,
-            detail="Only admins can edit questions"
-        )
-    
-    try:
-        # Convert difficulty string to integer if needed
-        difficulty_id = question_data.difficultyLevelId
-        if isinstance(difficulty_id, str):
-            difficulty_id = convert_difficulty_to_id(difficulty_id)
-        
-        # Convert themeId to integer if it's a string
-        theme_id = question_data.themeId
-        if isinstance(theme_id, str):
-            try:
-                theme_id = int(theme_id)
-            except ValueError:
-                theme_id = 1  # Default theme ID
-        
-        # Update the question
-        update_success = QuestionRepository.update_question(
-            question_id=question_id,
-            question_text=question_data.question_text,
-            themeId=theme_id,
-            difficultyLevelId=difficulty_id,
-            explanation=question_data.explanation,
-            Url=question_data.Url,
-            time_limit=question_data.time_limit,
-            think_time=question_data.think_time,
-            points=question_data.points,
-            is_active=question_data.is_active,
-            no_answer_correct=question_data.no_answer_correct,
-            LightMax=question_data.LightMax,
-            LightMin=question_data.LightMin,
-            TempMax=question_data.TempMax,
-            TempMin=question_data.TempMin
-        )
-        
-        if not update_success:
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to update question - no rows affected"
-            )
-        
-        # Handle answers: delete all existing answers and create new ones
-        created_answers = []
-        if question_data.answers:
-            # Delete all existing answers for this question
-            delete_success = AnswerRepository.delete_all_answers_for_question(question_id)
-            if not delete_success:
-                raise HTTPException(
-                    status_code=500,
-                    detail="Failed to delete existing answers"
-                )
-            
-            # Create new answers
-            for answer in question_data.answers:
-                try:
-                    answer_id = AnswerRepository.create_answer(
-                        question_id=question_id,
-                        answer_text=answer.answer_text,
-                        is_correct=answer.is_correct
-                    )
-                    created_answers.append(answer_id)
-                except Exception as answer_error:
-                    print(f"Failed to create answer: {answer_error}")
-                    raise HTTPException(
-                        status_code=500,
-                        detail=f"Failed to create answer: {str(answer_error)}"
-                    )
-        
-        return {
-            "status": "success",
-            "message": "Question updated successfully",
-            "question_id": question_id,
-            "updated_answers": len(created_answers),
-            "is_active": question_data.is_active,
-            "role": role,
-            "difficulty_id": difficulty_id,
-            "theme_id": theme_id
-        }
-        
-    except ValueError as ve:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Validation error: {str(ve)}"
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Error updating question: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to update question: {str(e)}"
-        )
-
-
 @app.delete("/api/v1/questions/{question_id}")
 async def delete_question_endpoint(
     question_id: int,
-    current_user_info: dict = Depends(get_current_user_info)
+    current_user_info: dict = Depends(get_current_user_info),
+    request: Request = None
 ):
     user_id = current_user_info["id"]
     role = current_user_info["role"]
+    client_ip = get_client_ip(request) if request else None
     
     # Only admins can delete questions
     if role != "admin":
@@ -1467,6 +1209,24 @@ async def delete_question_endpoint(
                 detail="Question not found or failed to delete"
             )
         
+        # Create audit log for question deletion (simplified - only new values)
+        new_values = {
+            "deleted_by": user_id,
+            "question_id": question_id,
+            "action": "DELETE",
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        AuditLogRepository.create_audit_log(
+            table_name="questions",
+            record_id=question_id,
+            action="DELETE",
+            old_values=None,
+            new_values=new_values,
+            changed_by=user_id,
+            ip_address=client_ip
+        )
+        
         return {
             "status": "success",
             "message": "Question deleted successfully",
@@ -1487,10 +1247,12 @@ async def delete_question_endpoint(
 @app.delete("/api/v1/themes/{theme_id}")
 async def delete_theme_endpoint(
     theme_id: int,
-    current_user_info: dict = Depends(get_current_user_info)
+    current_user_info: dict = Depends(get_current_user_info),
+    request: Request = None
 ):
     user_id = current_user_info["id"]
     role = current_user_info["role"]
+    client_ip = get_client_ip(request) if request else None
     
     # Only admins and moderators can delete themes
     if role not in ["admin", "moderator"]:
@@ -1500,10 +1262,6 @@ async def delete_theme_endpoint(
         )
     
     try:
-        # Check if theme is being used by any questions
-        # This would require a method to check theme usage - adjust based on your needs
-        # For now, we'll proceed with the delete
-        
         # Delete the theme
         delete_success = ThemeRepository.delete_theme(theme_id)
         
@@ -1512,6 +1270,24 @@ async def delete_theme_endpoint(
                 status_code=404,
                 detail="Theme not found or failed to delete"
             )
+        
+        # Create audit log for theme deletion (simplified - only new values)
+        new_values = {
+            "deleted_by": user_id,
+            "theme_id": theme_id,
+            "action": "DELETE",
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        AuditLogRepository.create_audit_log(
+            table_name="themes",
+            record_id=theme_id,
+            action="DELETE",
+            old_values=None,
+            new_values=new_values,
+            changed_by=user_id,
+            ip_address=client_ip
+        )
         
         return {
             "status": "success",
@@ -1528,15 +1304,17 @@ async def delete_theme_endpoint(
             status_code=500,
             detail=f"Failed to delete theme: {str(e)}"
         )
-    
+
 
 @app.delete("/api/v1/users/{user_id}")
 async def delete_user_endpoint(
     user_id: int,
-    current_user_info: dict = Depends(get_current_user_info)
+    current_user_info: dict = Depends(get_current_user_info),
+    request: Request = None
 ):
     current_user_id = current_user_info["id"]
     role = current_user_info["role"]
+    client_ip = get_client_ip(request) if request else None
     
     # Only admins can delete users
     if role != "admin":
@@ -1562,6 +1340,24 @@ async def delete_user_endpoint(
                 detail="User not found or failed to delete"
             )
         
+        # Create audit log for user deletion (simplified - only new values)
+        new_values = {
+            "deleted_by": current_user_id,
+            "user_id": user_id,
+            "action": "DELETE",
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        AuditLogRepository.create_audit_log(
+            table_name="users",
+            record_id=user_id,
+            action="DELETE",
+            old_values=None,
+            new_values=new_values,
+            changed_by=current_user_id,
+            ip_address=client_ip
+        )
+        
         return {
             "status": "success",
             "message": "User deleted successfully",
@@ -1579,8 +1375,6 @@ async def delete_user_endpoint(
         )
 
 
-
-
 def calculate_ban_expiry(duration_value: int, duration_unit: str) -> datetime:
     """Calculate when the ban should expire."""
     now = datetime.now()
@@ -1596,103 +1390,6 @@ def calculate_ban_expiry(duration_value: int, duration_unit: str) -> datetime:
         return now + timedelta(days=duration_value)
     else:
         raise ValueError(f"Invalid duration unit: {duration_unit}")
-
-@app.post("/api/v1/ban-ip")
-async def ban_ip_address(
-    ban_request: BanIpRequest,
-    current_user: dict = Depends(get_current_user_info),
-    request: Request = None
-):
-    user_role = current_user["role"]
-    user_id = current_user["id"]
-    
-    # Check permissions
-    if user_role not in ["moderator", "admin"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only moderators and admins can ban IP addresses"
-        )
-    
-    # Validate ban duration based on role
-    max_duration = None
-    if user_role == "moderator":
-        # Moderators can ban up to 1 minute
-        if ban_request.ban_duration_unit == "minutes" and ban_request.ban_duration_value > 1:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Moderators can only ban for up to 1 minute"
-            )
-        elif ban_request.ban_duration_unit in ["hours", "days", "permanent"]:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Moderators can only use minutes for ban duration"
-            )
-    elif user_role == "admin":
-        # Admins can ban up to a week (or permanent)
-        if ban_request.ban_duration_unit == "days" and ban_request.ban_duration_value > 7:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Admins can ban for up to 7 days maximum"
-            )
-        elif ban_request.ban_duration_unit == "hours" and ban_request.ban_duration_value > 168:  # 7 days in hours
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Ban duration exceeds 7 day limit"
-            )
-        elif ban_request.ban_duration_unit == "minutes" and ban_request.ban_duration_value > 10080:  # 7 days in minutes
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Ban duration exceeds 7 day limit"
-            )
-    
-    # Get IP address record
-    ip_record = IpAddressRepository.get_ip_address_by_string(ban_request.ip_address)
-    if not ip_record:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"IP address {ban_request.ip_address} not found"
-        )
-    
-    # Calculate ban expiry
-    try:
-        ban_expires_at = calculate_ban_expiry(
-            ban_request.ban_duration_value,
-            ban_request.ban_duration_unit
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    
-    # Update IP address with ban information
-    success = IpAddressRepository.update_ip_address(
-        ip_id=ip_record['id'],
-        is_banned=True,
-        ban_reason=ban_request.ban_reason,
-        ban_date=datetime.now(),
-        banned_by=user_id,
-        ban_expires_at=ban_expires_at
-    )
-    
-    if not success:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to ban IP address"
-        )
-    
-    # Log the ban action (optional - if you have logging)
-    if request:
-        admin_ip = get_client_ip(request)
-        log_user_ip_address(user_id, admin_ip)
-    
-    return {
-        "message": f"IP address {ban_request.ip_address} has been banned successfully",
-        "ban_expires_at": ban_expires_at,
-        "banned_by": user_id
-    }
-
-
 
 
 
