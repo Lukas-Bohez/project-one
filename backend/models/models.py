@@ -428,3 +428,12 @@ class SessionSensorData(BaseModel):
 
 class MultiSessionSensorResponse(BaseModel):
     sessions: list[SessionSensorData]
+
+
+# Add this model to properly structure the incoming request
+class ChatMessageCreate(BaseModel):
+    session_id: int
+    message_text: str
+    user_id: Optional[int] = None
+    message_type: str = 'chat'
+    reply_to_id: Optional[int] = None

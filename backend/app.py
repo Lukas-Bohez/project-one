@@ -21,7 +21,7 @@ from models.models import (
     QuestionActivationNotification,
     AnswerBase, AnswerCreate, AnswerListResponse, AnswerResponse, 
     AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand,BroadcastMessage,DirectMessage, ClientActivity,SessionSensorData,MultiSessionSensorResponse,UserUpdateNames,UserCredentials,AnswerInput,QuestionInput, ThemeInput,
-    UserPublic,UserPublicWithIp,UserIpAddress,BanIpRequest,AuditLogResponse
+    UserPublic,UserPublicWithIp,UserIpAddress,BanIpRequest,AuditLogResponse,ChatMessage,ChatMessageCreate
 )
 from typing import Dict, Any, Optional, List
 from fastapi import Request
@@ -2126,6 +2126,49 @@ async def get_all_items():
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve items"
         )
+    
+
+# Updated endpoint
+@app.post("/api/v1/chat/messages")
+async def create_chat_message(request: ChatMessageCreate):
+    """
+    Create a new chat message in the database.
+    """
+    try:
+        message_id = ChatLogRepository.create_chat_message(
+            session_id=request.session_id,
+            message_text=request.message_text,
+            user_id=request.user_id,
+            message_type=request.message_type,
+            reply_to_id=request.reply_to_id
+        )
+        return {"message_id": message_id}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create chat message"
+        )
+
+# Endpoint for getting chat messages by session
+@app.get("/api/v1/chat/messages/{session_id}")
+async def get_chat_messages_by_session(session_id: int, limit: int = 100):
+    """
+    Get chat messages for a specific session.
+    """
+    try:
+        messages = ChatLogRepository.get_chat_messages_by_session(
+            session_id=session_id,
+            limit=limit
+        )
+        return {"messages": messages}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve chat messages"
+        )
+
+
+
 
 
 
@@ -2617,35 +2660,60 @@ def should_update_quiz_session(current_time):
 def get_active_session_id():
     """Get the ID of the first active session."""
     active_sessions = QuizSessionRepository.get_active_sessions()
-    return active_sessions[0]['id'] if active_sessions else None
+    return active_sessions[0][0] if active_sessions else None  # Access first column of first row
 
 def read_sensor_data(temp_sensor, light_sensor, servo):
-    """Read all sensor values."""
-    return {
-        'temperature': temp_sensor.read_temperature(),
-        'illuminance': light_sensor(),
-        'servo_angle': servo.read_degrees()
-    }
+    """Read all sensor values with proper temperature validation."""
+    try:
+        # Read temperature and validate/clamp the value
+        raw_temp = temp_sensor.read_temperature()
+        
+        # Clamp temperature to reasonable range (-50°C to 100°C)
+        # This prevents database truncation errors
+        if raw_temp is None or not isinstance(raw_temp, (int, float)):
+            temperature = 0.0
+        else:
+            temperature = max(-50.0, min(100.0, float(raw_temp)))
+            # Round to 2 decimal places to avoid precision issues
+            temperature = round(temperature, 2)
+        
+        return {
+            'temperature': temperature,
+            'illuminance': light_sensor(),
+            'servo_angle': servo.read_degrees()
+        }
+    except Exception as e:
+        print(f"Error reading sensor data: {e}")
+        # Return safe default values
+        return {
+            'temperature': 0.0,
+            'illuminance': 0,
+            'servo_angle': 0
+        }
 
 def log_quiz_sensor_data(session_id, sensor_data):
     """Log sensor data to quiz session."""
-    QuizSessionRepository.create_sensor_data(
-        sessionId=session_id,
-        temperature=sensor_data['temperature'],
-        lightIntensity=sensor_data['illuminance'],
-        servoPosition=sensor_data['servo_angle'],
-        timestamp=datetime.now()
-    )
+    try:
+        SensorDataRepository.create_sensor_data(
+            sessionId=session_id,
+            temperature=sensor_data['temperature'],
+            lightIntensity=sensor_data['illuminance'],
+            servoPosition=sensor_data['servo_angle'],
+            timestamp=datetime.now()
+        )
+    except Exception as e:
+        print(f"Error logging sensor data: {e}")
 
 def emit_sensor_data(sensor_data, sio, loop):
     """Emit sensor data via socket.io."""
     try:
         asyncio.run_coroutine_threadsafe(
             sio.emit('sensor_data', sensor_data),
-            loop 
+            loop
         )
     except Exception as e:
         print(f"Error emitting sensor_data: {e}")
+
 
 
 #item functions
