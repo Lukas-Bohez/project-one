@@ -2110,6 +2110,22 @@ async def get_correct_answers_percentage():
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to calculate answers percentage"
         )
+    
+
+# FastAPI Endpoint
+@app.get("/api/v1/items")
+async def get_all_items():
+    """
+    Returns all active items from the database.
+    """
+    try:
+        items = ItemRepository.get_all_items()
+        return {"items": items}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve items"
+        )
 
 
 
