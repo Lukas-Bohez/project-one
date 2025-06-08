@@ -2339,17 +2339,60 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
                                
                                 log_quiz_sensor_data(session_id, sensor_data)
                                 emit_sensor_data(sensor_data, sio, loop)
-                                
+                                                    # Manage RFID display time
+                                if showing_rfid and (current_time - rfid_display_start) >= RFID_DISPLAY_TIME:
+                                    showing_rfid = False
+                                    if lcd:
+                                        lcd.clear()
+                                        lcd.write_line(0, ip_address[:16])
+                                    last_refresh = 0
                                 # Update LCD with sensor data during quiz
                                 if lcd and not showing_rfid:
                                     temp = temp_sensor.read_temperature()
                                     lux = light_sensor()
                                     current_angle = servo.read_degrees()
                                     lcd.write_line(1, format_second_row(temp, lux, current_angle)[:16])
-                        
-                        # Handle RFID during quiz session
-                        read_and_display_rfid(rfid, lcd, current_time, ip_address)
+                                    if rfid:
+                                        uid = rfid.read_card()
+                                        if uid:
+                                            rfid_code = uid
+                                            rfid_display_start = current_time
+                                            showing_rfid = True
+                                            print(f"RFID Scanned: {rfid_code}")
+                                            if lcd:
+                                                lcd.write_line(1, f"RFID:{rfid_code}")
+
+                                            # User creation logic
+                                            existing_user = UserRepository.get_user_by_rfid(rfid_code)
+                                            print(existing_user)
+                                            if existing_user:
+                                                print(f"User with RFID {rfid_code} found: {existing_user['first_name']} {existing_user['last_name']}")
+                                            else:
+                                                print(f"No user found for RFID {rfid_code}. Creating new 'open' user.")
+                                                open_user_data = {
+                                                    'last_name': 'Open',
+                                                    'first_name': 'Open',
+                                                    'password': 'temp_password_for_open_user',
+                                                    'rfid_code': rfid_code,
+                                                    'userRoleId': 2,
+                                                    'soul_points': 4,
+                                                    'limb_points': 4,
+                                                    'updated_by': 1
+                                                }
+                                                
+                                                new_user_id = UserRepository.create_user(open_user_data)
+                                                if new_user_id:
+                                                    print(f"Created new user with ID: {new_user_id} and RFID: {rfid_code}")
+                                                    if lcd:
+                                                        lcd.write_line(2, "New user created!")
+                                                else:
+                                                    print(f"Failed to create new user for RFID: {rfid_code}")
+                                                    if lcd:
+                                                        lcd.write_line(2, "User creation failed!")
                                
+
+
+                    
                     except Exception as e:
                         print(f"Error in quiz session sensor handling: {e}")
                     
