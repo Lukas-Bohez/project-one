@@ -11,7 +11,7 @@ from threading import Thread, Event, Lock
 import socket
 # Import the new ThemeRepository
 from fastapi.responses import HTMLResponse,JSONResponse
-from database.datarepository import QuestionRepository, AnswerRepository, ThemeRepository,UserRepository, IpAddressRepository, UserIpAddressRepository,QuizSessionRepository,SensorDataRepository,QuizSessionsRepository,AuditLogRepository,PlayerItemRepository,ItemRepository,ChatLogRepository,SessionPlayerRepository
+from database.datarepository import QuestionRepository, AnswerRepository, ThemeRepository,UserRepository, IpAddressRepository, UserIpAddressRepository,QuizSessionRepository,SensorDataRepository,QuizSessionsRepository,AuditLogRepository,PlayerItemRepository,ItemRepository,ChatLogRepository,SessionPlayerRepository,PlayerAnswerRepository
 from models.models import (
     QuestionBase, QuestionCreate, QuestionResponse, QuestionUpdate,
     QuestionStatusUpdate, ErrorNotFound, QuestionWithAnswers,
@@ -889,67 +889,120 @@ async def appeal_ban(payload: AppealPayload, request: Request):
 
 
 @app.get("/api/v1/sensor-data", response_model=MultiSessionSensorResponse)
-async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 10):
+async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 10, include_chat: bool = True, include_answers: bool = True):
     requested_session_ids = [int(sid.strip()) for sid in session_ids.split(',')]
-    
+   
     response_sessions_data = []
-    
+   
     for session_id in requested_session_ids:
         session_data = QuizSessionRepository.get_session_by_id(session_id)
         if not session_data:
             continue
-            
+           
         current_session_id = session_data['id']
         current_session_name = session_data['name']
-        
+       
+        # Get sensor data
         sensor_readings = SensorDataRepository.get_all_data_for_session(current_session_id)
-        
+       
         temperatures = []
         light_intensities = []
         servo_positions = []
-        
+       
         for reading in sensor_readings:
             timestamp = reading.get('timestamp')
             timestamp_iso = timestamp.isoformat() if timestamp else None
-            
-            # --- THE FIX IS HERE: Convert values to float if they are strings ---
+           
+            # Convert values to float if they are strings
             try:
                 temp_value = float(reading.get('temperature (°C)'))
             except (ValueError, TypeError):
-                temp_value = None # Or handle as appropriate, e.g., default to 0.0
-            
+                temp_value = None
+           
             try:
                 light_value = float(reading.get('lightIntensity (lux)'))
             except (ValueError, TypeError):
                 light_value = None
-            
+           
             try:
                 servo_value = float(reading.get('servoPosition (°)'))
             except (ValueError, TypeError):
                 servo_value = None
-            # --- END OF FIX ---
-
+                
             temperatures.append({
                 "timestamp": timestamp_iso,
-                "value": temp_value # Use the converted float value
+                "value": temp_value
             })
             light_intensities.append({
                 "timestamp": timestamp_iso,
-                "value": light_value # Use the converted float value
+                "value": light_value
             })
             servo_positions.append({
                 "timestamp": timestamp_iso,
-                "value": servo_value # Use the converted float value
+                "value": servo_value
             })
         
+        # Get chat data if requested
+        chat_messages = []
+        if include_chat:
+            chat_data = ChatLogRepository.get_chat_messages_by_session(current_session_id, limit)
+            if chat_data:  # Check if chat_data is not None
+                chat_messages = [
+                    {
+                        "id": msg.get('id'),
+                        "userId": msg.get('userId'),
+                        "username": msg.get('username'),
+                        "message": msg.get('message'),
+                        "created_at": msg.get('created_at').isoformat() if msg.get('created_at') else None
+                    }
+                    for msg in chat_data
+                ]
+        
+        # Get player answers if requested
+        player_answers_data = []
+        if include_answers:
+            # First, get all questions for this session
+            session_questions = QuestionRepository.get_questions_by_session(current_session_id)  # You might need to implement this
+            
+            if session_questions:  # Check if session_questions is not None
+                for question in session_questions:
+                    question_id = question.get('id')
+                    question_with_answers = PlayerAnswerRepository.get_question_with_player_answers(question_id)
+                    
+                    if question_with_answers and question_with_answers.get('player_answers'):
+                        formatted_answers = []
+                        for answer in question_with_answers['player_answers']:
+                            formatted_answers.append({
+                                "player_answer_id": answer.get('player_answer_id'),
+                                "sessionId": answer.get('sessionId'),
+                                "userId": answer.get('userId'),
+                                "first_name": answer.get('first_name'),
+                                "last_name": answer.get('last_name'),
+                                "questionId": answer.get('questionId'),
+                                "answerId": answer.get('answerId'),
+                                "answer_text": answer.get('answer_text'),
+                                "is_correct": answer.get('is_correct'),
+                                "points_earned": answer.get('points_earned'),
+                                "time_taken": answer.get('time_taken'),
+                                "answered_at": answer.get('answered_at').isoformat() if answer.get('answered_at') else None
+                            })
+                        
+                        player_answers_data.append({
+                            "question_id": question_id,
+                            "question_text": question_with_answers.get('question_text'),
+                            "player_answers": formatted_answers
+                        })
+       
         response_sessions_data.append(SessionSensorData(
             session_id=current_session_id,
             session_name=current_session_name,
             temperatures=temperatures,
             light_intensities=light_intensities,
-            servo_positions=servo_positions
+            servo_positions=servo_positions,
+            chat_messages=chat_messages,  # New field
+            player_answers=player_answers_data  # New field
         ))
-    
+   
     return MultiSessionSensorResponse(sessions=response_sessions_data)
 
 
