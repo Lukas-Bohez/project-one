@@ -33,6 +33,18 @@ class QuestionRepository:
         sql += " ORDER BY id ASC"
         return Database.get_rows(sql)
     
+    @staticmethod
+    def get_questions_by_session(session_id: int) -> List[Dict[str, Any]]:
+        """Get all questions that were answered in a specific session."""
+        sql = """
+            SELECT DISTINCT q.*
+            FROM questions q
+            INNER JOIN playerAnswers pa ON q.id = pa.questionId
+            WHERE pa.sessionId = %s
+            ORDER BY q.id
+        """
+        params = [session_id]
+        return Database.get_rows(sql, params)
 
     @staticmethod
     def get_questions_count_by_theme(theme_id):
@@ -1613,15 +1625,20 @@ class ChatLogRepository:
     def get_chat_messages_by_session(session_id: int, limit: int = 100) -> List[Dict[str, Any]]:
         """Get chat messages for a specific session."""
         sql = """
-            SELECT cl.*, u.username
-            FROM chatLog cl
-            LEFT JOIN users u ON cl.userId = u.id
-            WHERE cl.sessionId = %s
-            ORDER BY cl.created_at DESC
+            SELECT
+                c.id,
+                c.userId,
+                CONCAT(u.first_name, ' ', u.last_name) as username,
+                c.message_text as message,
+                c.created_at
+            FROM chatLog c
+            JOIN users u ON c.userId = u.id
+            WHERE c.sessionId = %s
+            ORDER BY c.created_at DESC
             LIMIT %s
         """
         params = [session_id, limit]
-        return Database.execute_sql(sql, params)
+        return Database.get_rows(sql, params)  # Use get_rows instead of execute_sql
     
     @staticmethod
     def flag_message(
@@ -1871,3 +1888,173 @@ class SessionPlayerRepository:
         params = [session_id]
         result = Database.execute_sql(sql, params)
         return result[0] if result else {}
+    
+
+
+
+
+class PlayerAnswerRepository:
+
+    # CREATE operations
+    @staticmethod
+    def create_player_answer(session_id, user_id, question_id, answer_id, is_correct, points_earned=0, time_taken=None):
+        sql = """
+            INSERT INTO playerAnswers 
+            (sessionId, userId, questionId, answerId, is_correct, points_earned, time_taken) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """
+        params = [session_id, user_id, question_id, answer_id, is_correct, points_earned, time_taken]
+        return Database.execute_sql(sql, params)
+
+    # READ operations
+    @staticmethod
+    def get_player_answer_by_id(player_answer_id):
+        sql = "SELECT * FROM playerAnswers WHERE id = %s"
+        params = [player_answer_id]
+        return Database.get_one_row(sql, params)
+
+    @staticmethod
+    def get_all_player_answers_for_session(session_id):
+        sql = "SELECT * FROM playerAnswers WHERE sessionId = %s ORDER BY answered_at ASC"
+        params = [session_id]
+        return Database.get_rows(sql, params)
+
+    @staticmethod
+    def get_player_answers_for_user_in_session(session_id, user_id):
+        sql = "SELECT * FROM playerAnswers WHERE sessionId = %s AND userId = %s ORDER BY answered_at ASC"
+        params = [session_id, user_id]
+        return Database.get_rows(sql, params)
+    
+    @staticmethod
+    def get_player_answer_for_question(session_id, user_id, question_id):
+        sql = "SELECT * FROM playerAnswers WHERE sessionId = %s AND userId = %s AND questionId = %s"
+        params = [session_id, user_id, question_id]
+        return Database.get_one_row(sql, params)
+
+    @staticmethod
+    def get_player_answers_count_for_question(question_id):
+        sql = "SELECT COUNT(*) as count FROM playerAnswers WHERE questionId = %s"
+        params = [question_id]
+        result = Database.get_one_row(sql, params)
+        return result['count'] if result else 0
+
+    @staticmethod
+    def get_correct_player_answers_count_for_question(question_id):
+        sql = "SELECT COUNT(*) as count FROM playerAnswers WHERE questionId = %s AND is_correct = TRUE"
+        params = [question_id]
+        result = Database.get_one_row(sql, params)
+        return result['count'] if result else 0
+
+    @staticmethod
+    def get_total_points_earned_by_user_in_session(session_id, user_id):
+        sql = "SELECT SUM(points_earned) as total_points FROM playerAnswers WHERE sessionId = %s AND userId = %s"
+        params = [session_id, user_id]
+        result = Database.get_one_row(sql, params)
+        return result['total_points'] if result and result['total_points'] is not None else 0
+
+    # UPDATE operations
+    @staticmethod
+    def update_player_answer(player_answer_id, answer_id=None, is_correct=None, points_earned=None, time_taken=None):
+        sql = "UPDATE playerAnswers SET "
+        updates = []
+        params = []
+
+        if answer_id is not None:
+            updates.append("answerId = %s")
+            params.append(answer_id)
+        if is_correct is not None:
+            updates.append("is_correct = %s")
+            params.append(is_correct)
+        if points_earned is not None:
+            updates.append("points_earned = %s")
+            params.append(points_earned)
+        if time_taken is not None:
+            updates.append("time_taken = %s")
+            params.append(time_taken)
+        
+        if not updates:
+            return False  # Nothing to update
+            
+        sql += ", ".join(updates)
+        sql += " WHERE id = %s"
+        params.append(player_answer_id)
+        
+        return Database.execute_sql(sql, params)
+
+    @staticmethod
+    def mark_player_answer_correct_status(player_answer_id, is_correct: bool):
+        sql = "UPDATE playerAnswers SET is_correct = %s WHERE id = %s"
+        params = [is_correct, player_answer_id]
+        return Database.execute_sql(sql, params)
+    
+    @staticmethod
+    def update_player_answer_points_earned(player_answer_id, points_earned):
+        sql = "UPDATE playerAnswers SET points_earned = %s WHERE id = %s"
+        params = [points_earned, player_answer_id]
+        return Database.execute_sql(sql, params)
+
+    # DELETE operations
+    @staticmethod
+    def delete_player_answer(player_answer_id):
+        sql = "DELETE FROM playerAnswers WHERE id = %s"
+        params = [player_answer_id]
+        return Database.execute_sql(sql, params)
+
+    @staticmethod
+    def delete_all_player_answers_for_session(session_id):
+        sql = "DELETE FROM playerAnswers WHERE sessionId = %s"
+        params = [session_id]
+        return Database.execute_sql(sql, params)
+    
+    @staticmethod
+    def delete_player_answers_for_user_in_session(session_id, user_id):
+        sql = "DELETE FROM playerAnswers WHERE sessionId = %s AND userId = %s"
+        params = [session_id, user_id]
+        return Database.execute_sql(sql, params)
+
+    @staticmethod
+    def delete_player_answers_for_question(question_id):
+        sql = "DELETE FROM playerAnswers WHERE questionId = %s"
+        params = [question_id]
+        return Database.execute_sql(sql, params)
+
+    # SPECIAL operations
+    @staticmethod
+    def get_question_with_player_answers(question_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Retrieves a question along with all player answers for that question,
+        including player's first name, last name, and the text of the answer they selected.
+        """
+        question = Database.get_one_row("SELECT * FROM questions WHERE id = %s", [question_id])
+        if not question:
+            return None
+
+        sql = """
+            SELECT
+                pa.id AS player_answer_id,
+                pa.sessionId,
+                pa.userId,
+                u.first_name,
+                u.last_name,
+                pa.questionId,
+                pa.answerId,
+                a.answer_text,
+                pa.is_correct,
+                pa.points_earned,
+                pa.time_taken,
+                pa.answered_at
+            FROM
+                playerAnswers pa
+            JOIN
+                users u ON pa.userId = u.id
+            LEFT JOIN
+                answers a ON pa.answerId = a.id
+            WHERE
+                pa.questionId = %s
+            ORDER BY
+                pa.answered_at ASC;
+        """
+        player_answers = Database.get_rows(sql, [question_id])
+
+        question['player_answers'] = player_answers
+        return question

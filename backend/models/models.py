@@ -291,19 +291,7 @@ class DirectMessage(BaseModel):
 class ClientActivity(BaseModel):
     client_ip: str
 
-class SensorReadingValue(BaseModel):
-    timestamp: Optional[str] # Or datetime, if you prefer to parse it here
-    value: float # <--- THIS IS LIKELY THE CULPRIT IF IT'S RECEIVING A STRING FOR VALUE
 
-class SessionSensorData(BaseModel):
-    session_id: int
-    session_name: str
-    temperatures: list[SensorReadingValue]
-    light_intensities: list[SensorReadingValue]
-    servo_positions: list[SensorReadingValue]
-
-class MultiSessionSensorResponse(BaseModel):
-    sessions: list[SessionSensorData]
 
 class UserUpdateNames(BaseModel):
     first_name: str = Field(..., min_length=1, max_length=50, example="John")
@@ -392,3 +380,51 @@ class AuditLogResponse(BaseModel):
     new_values: Optional[Dict[str, Any]] = None
     changed_by: str
     ip_address: str
+
+
+
+
+
+class ChatMessage(BaseModel):
+    id: Optional[int]
+    userId: Optional[int]
+    username: Optional[str]
+    message: Optional[str]
+    created_at: Optional[str]
+
+class PlayerAnswer(BaseModel):
+    player_answer_id: Optional[int]
+    sessionId: Optional[int]
+    userId: Optional[int]
+    first_name: Optional[str]
+    last_name: Optional[str]
+    questionId: Optional[int]
+    answerId: Optional[int]
+    answer_text: Optional[str]
+    is_correct: Optional[bool]
+    points_earned: Optional[int]
+    time_taken: Optional[float]
+    answered_at: Optional[str]
+
+class QuestionWithAnswers(BaseModel):
+    question_id: Optional[int]
+    question_text: Optional[str]
+    player_answers: list[PlayerAnswer]
+
+
+
+class SensorReading(BaseModel):
+    timestamp: Optional[str]
+    value: Optional[float]
+
+class SessionSensorData(BaseModel):
+    session_id: int
+    session_name: str
+    temperatures: list[SensorReading]
+    light_intensities: list[SensorReading]
+    servo_positions: list[SensorReading]
+    chat_messages: list[ChatMessage] = []  # New field with default empty list
+    player_answers: list[QuestionWithAnswers] = []  # New field with default empty list
+
+class MultiSessionSensorResponse(BaseModel):
+    sessions: list[SessionSensorData]
