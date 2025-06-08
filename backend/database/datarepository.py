@@ -2058,3 +2058,49 @@ class PlayerAnswerRepository:
 
         question['player_answers'] = player_answers
         return question
+    
+    @staticmethod
+    def get_all_answers() -> List[Dict[str, Any]]:
+        """
+        Retrieves all player answers from the database.
+        """
+        sql = """
+            SELECT
+                id,
+                sessionId,
+                userId,
+                questionId,
+                answerId,
+                is_correct,
+                points_earned,
+                time_taken,
+                answered_at
+            FROM
+                playerAnswers
+            ORDER BY
+                answered_at ASC;
+        """
+        return Database.get_rows(sql)
+    
+    @staticmethod
+    def get_correct_answers_percentage() -> int:
+        """
+        Calculates the percentage of correct answers.
+        Returns the percentage as an integer (e.g., 50 for 50%).
+        """
+        sql = """
+            SELECT
+                COUNT(*) as total_answers,
+                SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) as correct_answers
+            FROM
+                playerAnswers;
+        """
+        result = Database.get_one_row(sql)
+        
+        if not result or result['total_answers'] == 0:
+            return 0
+        
+        percentage = (result['correct_answers'] / result['total_answers']) * 100
+        return round(percentage)
+
+
