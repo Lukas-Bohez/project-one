@@ -8,11 +8,54 @@ class QuizAuth {
     }
 
     init() {
-        this.createAuthModal();
-        this.bindEvents();
-        this.bindChatEvents();
-        this.showAuthModal(); // Show modal on page load
+    this.createAuthModal();
+    this.bindEvents();
+    this.bindChatEvents();
+    
+    // Try auto-login first, only show modal if it fails
+    this.autoLogin().then(success => {
+        if (!success) {
+            this.showAuthModal(); // Only show modal if auto-login failed
+        }
+    }).catch(error => {
+        console.error('Auto-login attempt failed:', error);
+        this.showAuthModal(); // Show modal on any error
+    });
+}
+
+// Add this method inside the QuizAuth class, after the init() method
+async autoLogin() {
+    const firstName = localStorage.getItem(STORAGE_KEYS.USER.FIRST_NAME);
+    const lastName = localStorage.getItem(STORAGE_KEYS.USER.LAST_NAME);
+    const password = localStorage.getItem(STORAGE_KEYS.USER.PASSWORD);
+
+    if (firstName && lastName && password) {
+        console.log('Attempting auto-login for:', firstName, lastName);
+        
+        const formData = { firstName, lastName, password };
+
+        try {
+            const result = await this.sendAuthenticationRequest('login', firstName, lastName, password);
+            
+            if (result && result.user_id) {
+                this.loginUser(formData, result.user_id);
+                console.log('Auto-login successful');
+                return true; // Indicate successful auto-login
+            } else {
+                console.warn('Auto-login failed: Invalid response from server');
+                this.clearStoredCredentials(); // Clear invalid credentials
+                return false;
+            }
+        } catch (error) {
+            console.error('Auto-login error:', error);
+            this.clearStoredCredentials(); // Clear credentials on error
+            return false;
+        }
+    } else {
+        console.log('No stored credentials found for auto-login');
+        return false;
     }
+}
 
     createAuthModal() {
         // Create modal HTML
@@ -126,36 +169,7 @@ class QuizAuth {
             <span class="c-chat-text">${message}</span>
         `;
 
-<<<<<<< HEAD
-    this.showLoading(loginBtn);
-
-    let loginSuccessful = false;
-
-    try {
-      // Simulate API call
-      await this.simulateApiCall();
-
-      // Check if user exists (simulate database check)
-      const userExists = this.checkUserExists(formData);
-
-      if (userExists) {
-        this.loginUser(formData);
-        loginSuccessful = true;
-      } else {
-        this.showError('User not found. Please register first.');
-      }
-    } catch (error) {
-      this.showError('Login failed. Please try again.');
-    } finally {
-      this.hideLoading(loginBtn, 'Login');
-      
-      // Only add chat message if login was successful and currentUser exists
-      if (loginSuccessful && this.currentUser) {
-        this.addChatMessage('System', `${this.currentUser.fullName} has joined the quiz!`);
-      }
-=======
         chatMessages.appendChild(messageElement);
->>>>>>> 308f2c7 (updated frontend)
     }
 
     bindEvents() {
@@ -171,32 +185,6 @@ class QuizAuth {
         loginBtn.addEventListener('click', (e) => this.handleLogin(e));
         registerBtn.addEventListener('click', (e) => this.handleRegister(e));
 
-<<<<<<< HEAD
-    let registrationSuccessful = false;
-
-    try {
-      // Simulate API call
-      await this.simulateApiCall();
-
-      // Check if user already exists
-      const userExists = this.checkUserExists(formData);
-
-      if (userExists) {
-        this.showError('User already exists. Please login instead.');
-      } else {
-        this.registerUser(formData);
-        registrationSuccessful = true;
-      }
-    } catch (error) {
-      this.showError('Registration failed. Please try again.');
-    } finally {
-      this.hideLoading(registerBtn, 'Register');
-      
-      // Only add chat message if registration was successful and currentUser exists
-      if (registrationSuccessful && this.currentUser) {
-        this.addChatMessage('System', `${this.currentUser.fullName} has joined the quiz!`);
-      }
-=======
         // Prevent default form submission
         authForm.addEventListener('submit', (e) => e.preventDefault());
 
@@ -206,7 +194,6 @@ class QuizAuth {
                 this.handleLogin(e);
             }
         });
->>>>>>> 308f2c7 (updated frontend)
     }
 
     showAuthModal() {
@@ -247,14 +234,24 @@ class QuizAuth {
         button.disabled = false;
     }
 
+
+
+
+
+
     validateForm() {
         const firstNameInput = document.getElementById('firstName');
         const lastNameInput = document.getElementById('lastName');
-        const passwordInput = document.getElementById('password'); // Changed from passwordRfid
+        const passwordInput = document.getElementById('password');
 
         const firstName = firstNameInput ? firstNameInput.value.trim() : '';
         const lastName = lastNameInput ? lastNameInput.value.trim() : '';
         const password = passwordInput ? passwordInput.value : ''; // Do not trim password
+
+        // Move localStorage operations AFTER variable declarations
+        localStorage.setItem(STORAGE_KEYS.USER.FIRST_NAME, firstName);
+        localStorage.setItem(STORAGE_KEYS.USER.LAST_NAME, lastName);
+        localStorage.setItem(STORAGE_KEYS.USER.PASSWORD, password);
 
         if (!firstName) {
             this.showError('First name is required');
@@ -520,17 +517,17 @@ class QuizAuth {
     }
 }
 
+
 // Initialize the authentication system when the page loads
 let quizAuth;
 document.addEventListener('DOMContentLoaded', () => {
-    quizAuth = new QuizAuth();
+    const storedIP = sessionStorage.getItem('IP');
+    console.log('Stored IP:', storedIP);
+    quizAuth = new QuizAuth(); // autoLogin will be called automatically in init()
     listenToInfoModal(dom);
 });
 
 // Export for use in other scripts
-<<<<<<< HEAD
-window.QuizAuth = QuizAuth;
-=======
 window.QuizAuth = QuizAuth;
 
 
@@ -538,6 +535,14 @@ window.QuizAuth = QuizAuth;
 
 
 
+STORAGE_KEYS = {
+  USER: {
+    USER_ID: 'user_user_id',
+    FIRST_NAME: 'user_first_name', 
+    LAST_NAME: 'user_last_name',
+    PASSWORD: 'user_password'
+  }
+};
 
 
 
@@ -580,4 +585,3 @@ const listenToInfoModal = (domElements) => {
     }
   });
 };
->>>>>>> 308f2c7 (updated frontend)
