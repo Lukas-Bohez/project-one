@@ -2322,25 +2322,34 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
     try:
         while not stop_event.is_set():
             current_time = time.time()
-
             # --- Check for active Quiz Session ---
             try:
                 active_sessions = QuizSessionRepository.get_active_sessions()
-                
-                
-                
+               
+               
+               
                 if active_sessions:
                     try:
                         if temp_sensor and light_sensor and servo:
                             active_sessions = QuizSessionRepository.get_active_sessions()
-                            
+                           
                             if active_sessions and should_update_quiz_session(current_time):
                                 session_id = get_active_session_id()
                                 sensor_data = read_sensor_data(temp_sensor, light_sensor, servo)
-                                
+                               
                                 log_quiz_sensor_data(session_id, sensor_data)
                                 emit_sensor_data(sensor_data, sio, loop)
                                 
+                                # Update LCD with sensor data during quiz
+                                if lcd and not showing_rfid:
+                                    temp = temp_sensor.read_temperature()
+                                    lux = light_sensor()
+                                    current_angle = servo.read_degrees()
+                                    lcd.write_line(1, format_second_row(temp, lux, current_angle)[:16])
+                        
+                        # Handle RFID during quiz session
+                        read_and_display_rfid(rfid, lcd, current_time, ip_address)
+                               
                     except Exception as e:
                         print(f"Error in quiz session sensor handling: {e}")
                     
@@ -2524,27 +2533,46 @@ servo_cooldown_lock = Lock() # A dedicated lock to protect access to last_servo_
 
 @app.post("/api/v1/trigger-servo")
 async def trigger_servo(cmd: ServoCommand):
-    global last_servo_command_time # <--- MOVE THIS TO THE TOP OF THE FUNCTION
-
-    if cmd.command != "SWEEP_SERVO":
-        raise HTTPException(status_code=400, detail="Invalid servo command.")
-
-    # 1. Check for active quiz sessions (KEEP THIS AS IS)
+    import json
+    global last_servo_command_time
+    
+    # 1. FIRST - Check for active quiz sessions before doing ANYTHING else
     try:
-        active_sessions = QuizSessionRepository.get_active_sessions()
-        if active_sessions:
-            active_session_info = active_sessions[0] if active_sessions else None
-            raise HTTPException(
-                status_code=409,
-                detail="A quiz session is currently active. Servo movement is restricted.",
-                headers={"X-Active-Session": "true", "X-Session-Name": active_session_info.name}
-            )
+        active_session_id = get_active_session_id()
+        print(f"DEBUG: active_session_id = {active_session_id}")
+        
+        if active_session_id:
+            # Get the full session details using the ID
+            active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+            print(f"DEBUG: active_session_info = {active_session_info}")
+            
+            if active_session_info:
+                session_name = active_session_info.get('name', f'Session ID {active_session_id}')
+                print(f"DEBUG: session_name = {session_name}")
+                
+                # Return a normal 200 response with the message
+                return {
+                    "message": f"Servo test is currently unavailable. The system is busy with an active quiz session (ID: {active_session_id}) named '{session_name}'. Please wait until the quiz session ends before testing the servo."
+                }
+            else:
+                # Session ID exists but we couldn't fetch details
+                print(f"DEBUG: Could not fetch session details for ID {active_session_id}")
+                
+                return {
+                    "message": f"Servo test is currently unavailable. The system is busy with an active quiz session (ID: {active_session_id}). Please wait until the quiz session ends before testing the servo."
+                }
+        else:
+            print("DEBUG: No active session found")
     except HTTPException:
         raise
     except Exception as e:
         print(f"Error checking active quiz sessions during servo trigger: {e}")
         raise HTTPException(status_code=500, detail="Internal server error checking quiz status.")
-
+    
+    # 2. Only check command validity if no active quiz session
+    if cmd.command != "SWEEP_SERVO":
+        raise HTTPException(status_code=400, detail="Invalid servo command.")
+    
     # --- NEW LOGIC: Cooldown Check ---
     with servo_cooldown_lock:
         current_time = time.time()
@@ -2554,16 +2582,15 @@ async def trigger_servo(cmd: ServoCommand):
                 status_code=429,
                 detail=f"Servo is on cooldown. Please wait {remaining_cooldown:.1f} seconds before trying again."
             )
-        # The 'global' declaration is now at the top, so this modification is fine here.
         last_servo_command_time = current_time
     # --- END NEW LOGIC ---
-
-    # 2. Acquire the existing lock for queue access
+    
+    # 3. Acquire the existing lock for queue access
     if not servo_lock.acquire(blocking=False):
         raise HTTPException(status_code=429, detail="Servo command queue is temporarily locked by another request.")
-
+    
     try:
-        # 3. Attempt to put the command into the queue
+        # 4. Attempt to put the command into the queue
         servo_command_queue.put_nowait("SWEEP_SERVO")
         return {"message": "Servo sweep command sent to Raspberry Pi."}
     except queue.Full:
