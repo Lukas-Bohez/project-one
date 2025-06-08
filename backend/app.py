@@ -2096,6 +2096,36 @@ async def get_recent_audit_logs(limit: int = 15) -> List[AuditLogResponse]:
     
 
 
+# FastAPI Endpoint
+@app.get("/api/v1/answers/percentage")
+async def get_correct_answers_percentage():
+    """
+    Returns the percentage of correct answers as an integer.
+    """
+    try:
+        percentage = PlayerAnswerRepository.get_correct_answers_percentage()
+        return percentage
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to calculate answers percentage"
+        )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
