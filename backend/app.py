@@ -2147,6 +2147,19 @@ async def get_all_items():
         )
     
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Add endpoint to get active sessions
 @app.get("/api/v1/sessions/active")
 async def get_active_sessions():
