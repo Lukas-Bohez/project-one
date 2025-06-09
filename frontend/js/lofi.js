@@ -1,9 +1,11 @@
-// Simple Random Lofi Player - Folder Scanner Version with Audio Normalization and Persistence
+// Simple Random Lofi Player - Enhanced with Shuffle and Repeat Modes
 // Configuration
 const config = {
     folder: '../lofi/', // Path from js/ to lofi/
     volume: 0.2,
-    fadeDuration: 1000,
+    fadeDuration: 500, // Reduced from 1000ms to 500ms for faster transitions
+    shuffle: true, // Default shuffle mode (true = random, false = sequential)
+    repeat: false, // Repeat mode: false, 'one', or 'all'
     normalization: {
         enabled: true,
         targetLoudness: -23, // LUFS (Loudness Units relative to Full Scale)
@@ -30,9 +32,11 @@ let analyser = null;
 let source = null;
 let gainNode = null;
 let songList = [];
+let shuffledPlaylist = []; // For shuffle mode
 let isPlaying = false; // Tracks if the player *should* be playing (can be paused)
 let lastPlayedSongs = []; // Track recently played songs
-let currentSongIndex = -1; // Not strictly used for individual song tracking anymore, but kept.
+let currentSongIndex = -1; // Current position in playlist
+let currentPlaylistIndex = -1; // Current position in shuffled playlist (for shuffle mode)
 let normalizationCache = new Map(); // Cache for normalization data
 
 // --- Persistence Variables ---
@@ -40,7 +44,7 @@ let savedPlaybackState = null; // To hold state loaded from localStorage
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Lofi player ready - click anywhere to start or resume');
+    console.log('Lofi player ready - starting automatically...');
 
     // Load persisted state if persistence is enabled
     if (config.persistence.enabled) {
@@ -52,25 +56,28 @@ document.addEventListener('DOMContentLoaded', () => {
     createFloatingIcon();
     createLofiModal();
 
-    // Check if there's a saved state to resume
-    if (savedPlaybackState && savedPlaybackState.isPlaying) {
-        console.log('Attempting to resume playback from saved state...');
-        // We'll call startPlayback which will then handle loading the saved song
-        // However, we need a user gesture to start playing, so attach it for now.
-        // The modal's play/pause button handler will take care of immediate play.
-        document.addEventListener('click', initialResumeAttempt, { once: true });
-        document.addEventListener('keydown', initialResumeAttempt, { once: true });
-    } else {
-        document.addEventListener('click', startPlayback, { once: true });
-        document.addEventListener('keydown', startPlayback, { once: true });
-    }
+    // Try to start immediately without waiting for user interaction
+    tryAutoStart();
 
     // Save state before leaving the page
     window.addEventListener('beforeunload', savePlayerState);
 });
 
+// Try to auto-start playback
+const tryAutoStart = () => {
+    // Try to start playback immediately
+    startPlayback();
+    
+    // If that fails due to autoplay restrictions, set up click listener
+    audioPlayer.addEventListener('error', () => {
+        console.log('Auto-start failed, click anywhere to start');
+        document.addEventListener('click', startPlayback, { once: true });
+        document.addEventListener('keydown', startPlayback, { once: true });
+    });
+};
+
 // Initial resume attempt, triggered by first user gesture
-function initialResumeAttempt() {
+const initialResumeAttempt = () => {
     if (savedPlaybackState && savedPlaybackState.isPlaying) {
         // This will trigger the full resume flow
         startPlayback();
@@ -78,11 +85,10 @@ function initialResumeAttempt() {
         // If no active saved state, proceed with normal start
         startPlayback();
     }
-}
-
+};
 
 // Initialize Web Audio API
-function initializeAudioContext() {
+const initializeAudioContext = () => {
     if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -102,10 +108,10 @@ function initializeAudioContext() {
 
         console.log('🎛️ Audio normalization initialized');
     }
-}
+};
 
 // Calculate RMS (Root Mean Square) for loudness estimation
-function calculateRMS(audioBuffer) {
+const calculateRMS = (audioBuffer) => {
     const channelData = audioBuffer.getChannelData(0);
     let sum = 0;
 
@@ -114,10 +120,10 @@ function calculateRMS(audioBuffer) {
     }
 
     return Math.sqrt(sum / channelData.length);
-}
+};
 
 // Analyze audio loudness using Web Audio API
-function analyzeAudioLoudness(audioElement, duration = config.normalization.analysisTime) {
+const analyzeAudioLoudness = (audioElement, duration = config.normalization.analysisTime) => {
     return new Promise((resolve) => {
         if (!config.normalization.enabled) {
             resolve(1.0); // No normalization
@@ -173,10 +179,102 @@ function analyzeAudioLoudness(audioElement, duration = config.normalization.anal
         // Start analysis after a short delay to let audio start playing
         setTimeout(analyzeSample, 100);
     });
-}
+};
+
+// Create shuffled playlist
+const createShuffledPlaylist = () => {
+    shuffledPlaylist = [...songList];
+    
+    // Fisher-Yates shuffle algorithm
+    for (let i = shuffledPlaylist.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledPlaylist[i], shuffledPlaylist[j]] = [shuffledPlaylist[j], shuffledPlaylist[i]];
+    }
+    
+    currentPlaylistIndex = 0;
+    console.log('🔀 Created shuffled playlist:', shuffledPlaylist);
+};
+
+// Get next song based on current mode
+const getNextSong = () => {
+    if (songList.length === 0) return null;
+
+    if (config.shuffle) {
+        // Shuffle mode - use shuffled playlist
+        if (shuffledPlaylist.length === 0 || currentPlaylistIndex >= shuffledPlaylist.length) {
+            // Create new shuffled playlist or restart
+            if (config.repeat === 'all' || shuffledPlaylist.length === 0) {
+                createShuffledPlaylist();
+            } else if (config.repeat === false) {
+                // End of playlist, no repeat
+                return null;
+            }
+        }
+        
+        if (currentPlaylistIndex < shuffledPlaylist.length) {
+            const song = shuffledPlaylist[currentPlaylistIndex];
+            currentPlaylistIndex++;
+            return song;
+        }
+    } else {
+        // Sequential mode
+        if (currentSongIndex === -1) {
+            // First song
+            currentSongIndex = 0;
+        } else {
+            currentSongIndex++;
+            
+            if (currentSongIndex >= songList.length) {
+                if (config.repeat === 'all') {
+                    currentSongIndex = 0; // Restart playlist
+                } else if (config.repeat === false) {
+                    // End of playlist
+                    return null;
+                } else {
+                    currentSongIndex = songList.length - 1; // Stay on last song for 'one' mode
+                }
+            }
+        }
+        
+        return songList[currentSongIndex];
+    }
+    
+    return null;
+};
+
+// Get previous song based on current mode
+const getPreviousSong = () => {
+    if (songList.length === 0) return null;
+
+    if (config.shuffle) {
+        // In shuffle mode, go back in shuffled playlist
+        if (currentPlaylistIndex > 1) {
+            currentPlaylistIndex -= 2; // Go back 2 because getNextSong will increment
+            return getNextSong();
+        } else {
+            // At beginning of shuffled playlist
+            if (config.repeat === 'all') {
+                currentPlaylistIndex = shuffledPlaylist.length - 1;
+                return shuffledPlaylist[currentPlaylistIndex - 1] || shuffledPlaylist[shuffledPlaylist.length - 1];
+            }
+            return shuffledPlaylist[0];
+        }
+    } else {
+        // Sequential mode
+        if (currentSongIndex > 0) {
+            currentSongIndex--;
+        } else if (config.repeat === 'all') {
+            currentSongIndex = songList.length - 1; // Go to last song
+        } else {
+            currentSongIndex = 0; // Stay at first song
+        }
+        
+        return songList[currentSongIndex];
+    }
+};
 
 // Main playback starter
-function startPlayback() {
+const startPlayback = () => {
     if (isPlaying && !savedPlaybackState) return; // Prevent multiple starts if already playing and not resuming
 
     console.log('Starting playback...');
@@ -190,6 +288,12 @@ function startPlayback() {
             if (files && files.length > 0) {
                 songList = files;
                 console.log('📁 Scanned folder, found', songList.length, 'songs:', songList);
+                
+                // Initialize playlist based on shuffle mode
+                if (config.shuffle) {
+                    createShuffledPlaylist();
+                }
+                
                 handleInitialSongLoad();
                 isPlaying = true;
             } else {
@@ -197,6 +301,12 @@ function startPlayback() {
                 if (manualSongList.length > 0) {
                     console.log('📝 Using manual song list:', manualSongList);
                     songList = [...manualSongList];
+                    
+                    // Initialize playlist based on shuffle mode
+                    if (config.shuffle) {
+                        createShuffledPlaylist();
+                    }
+                    
                     handleInitialSongLoad();
                     isPlaying = true;
                 } else {
@@ -214,30 +324,49 @@ function startPlayback() {
             if (manualSongList.length > 0) {
                 console.log('📝 Folder scan failed, using manual list');
                 songList = [...manualSongList];
+                
+                // Initialize playlist based on shuffle mode
+                if (config.shuffle) {
+                    createShuffledPlaylist();
+                }
+                
                 handleInitialSongLoad();
                 isPlaying = true;
             } else {
                 console.error('❌ No fallback available. Add songs to manualSongList array.');
             }
         });
-}
+};
 
-// Handles loading the first song, either from persistence or randomly
-function handleInitialSongLoad() {
+// Handles loading the first song, either from persistence or based on mode
+const handleInitialSongLoad = () => {
     if (config.persistence.enabled && savedPlaybackState && savedPlaybackState.currentSong) {
         const savedSongName = savedPlaybackState.currentSong.split('/').pop().split('?')[0];
         const fullSavedPath = config.folder + savedSongName; // Reconstruct full path
         console.log(`Attempting to load saved song: ${savedSongName} at ${savedPlaybackState.currentTime.toFixed(1)}s`);
+        
+        // Set current indices based on saved song
+        const savedIndex = songList.indexOf(savedSongName);
+        if (savedIndex !== -1) {
+            currentSongIndex = savedIndex;
+            if (config.shuffle && shuffledPlaylist.length > 0) {
+                const shuffledIndex = shuffledPlaylist.indexOf(savedSongName);
+                if (shuffledIndex !== -1) {
+                    currentPlaylistIndex = shuffledIndex + 1; // +1 because it will be used for next song
+                }
+            }
+        }
+        
         loadAndPlay(fullSavedPath, savedSongName, savedPlaybackState.currentTime, savedPlaybackState.volume, savedPlaybackState.isPlaying);
-        // Clear saved state after attempting to load it to avoid re-loading on subsequent new page loads within the same session
+        // Clear saved state after attempting to load it
         savedPlaybackState = null;
     } else {
-        playRandomSong(); // No saved state or persistence disabled
+        playNextSong(); // Use the new mode-aware function
     }
-}
+};
 
 // Scan folder for audio files (MP3 and WAV)
-async function scanFolderForMP3s() {
+const scanFolderForMP3s = async () => {
     try {
         console.log('🔍 Scanning folder for audio files:', config.folder);
 
@@ -317,60 +446,88 @@ async function scanFolderForMP3s() {
 
         throw error;
     }
-}
+};
 
-// Play random song with crossfade (avoiding recent repeats)
-function playRandomSong() {
+// Play next song with mode awareness
+const playNextSong = () => {
     if (songList.length === 0) {
         console.log('No songs available');
         return;
     }
 
-    let randomSong;
-    let attempts = 0;
-    const maxAttempts = 20;
-
-    // For small playlists, avoid immediate repeats
-    // For larger playlists, avoid recently played songs
-    const avoidanceCount = Math.min(songList.length - 1, Math.max(1, Math.floor(songList.length / 4)));
-
-    do {
-        const randomIndex = Math.floor(Math.random() * songList.length);
-        randomSong = songList[randomIndex];
-        attempts++;
-
-        // If we've tried too many times, just play whatever we got
-        if (attempts >= maxAttempts) {
-            console.log('⚠️ Max selection attempts reached, playing:', randomSong);
-            break;
-        }
-
-    } while (lastPlayedSongs.includes(randomSong) && songList.length > 1);
-
-    // Update recently played list
-    lastPlayedSongs.push(randomSong);
-
-    // Keep the recent list at reasonable size
-    if (lastPlayedSongs.length > avoidanceCount) {
-        lastPlayedSongs.shift(); // Remove oldest
+    // Handle repeat one mode
+    if (config.repeat === 'one' && !audioPlayer.paused && audioPlayer.src) {
+        // Repeat current song
+        audioPlayer.currentTime = 0;
+        console.log('🔂 Repeating current song');
+        return;
     }
 
-    const songPath = config.folder + randomSong;
+    const nextSong = getNextSong();
+    
+    if (!nextSong) {
+        console.log('📻 End of playlist reached');
+        isPlaying = false;
+        // Update UI
+        const nowPlayingDiv = document.getElementById('now-playing');
+        if (nowPlayingDiv) nowPlayingDiv.textContent = 'Playlist ended.';
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        if (playPauseBtn) {
+            playPauseBtn.textContent = '▶ Play';
+            playPauseBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
+        }
+        return;
+    }
 
-    console.log('▶ Playing:', randomSong, `(avoiding last ${lastPlayedSongs.length - 1} songs)`);
+    const songPath = config.folder + nextSong;
+
+    console.log('▶ Playing:', nextSong, `(${config.shuffle ? 'shuffle' : 'sequential'} mode)`);
 
     // Fade out current song if playing
     if (!audioPlayer.paused) {
         fadeOut(audioPlayer, () => {
-            loadAndPlay(songPath, randomSong);
+            loadAndPlay(songPath, nextSong);
         });
     } else {
-        loadAndPlay(songPath, randomSong);
+        loadAndPlay(songPath, nextSong);
     }
-}
+};
+
+// Play previous song
+const playPreviousSong = () => {
+    if (songList.length === 0) {
+        console.log('No songs available');
+        return;
+    }
+
+    const previousSong = getPreviousSong();
+    
+    if (!previousSong) {
+        console.log('📻 At beginning of playlist');
+        return;
+    }
+
+    const songPath = config.folder + previousSong;
+
+    console.log('⏮ Previous:', previousSong, `(${config.shuffle ? 'shuffle' : 'sequential'} mode)`);
+
+    // Fade out current song if playing
+    if (!audioPlayer.paused) {
+        fadeOut(audioPlayer, () => {
+            loadAndPlay(songPath, previousSong);
+        });
+    } else {
+        loadAndPlay(songPath, previousSong);
+    }
+};
+
+// Legacy function for compatibility - now uses mode-aware playback
+const playRandomSong = () => {
+    playNextSong();
+};
 
 // Load and play new song with fade in and normalization
-function loadAndPlay(songPath, songName, startTime = 0, initialVolume = 0, shouldPlay = true) {
+const loadAndPlay = (songPath, songName, startTime = 0, initialVolume = 0, shouldPlay = true) => {
     audioPlayer.src = songPath;
     audioPlayer.volume = initialVolume; // Start at 0 or the saved initialVolume for fade in
 
@@ -407,7 +564,6 @@ function loadAndPlay(songPath, songName, startTime = 0, initialVolume = 0, shoul
                     playPauseBtn.onmouseover = () => playPauseBtn.style.backgroundColor = 'var(--info-color, #0d61aa)';
                     playPauseBtn.onmouseout = () => playPauseBtn.style.backgroundColor = 'var(--tertiary-color, #0d9edb)';
                 }
-
 
                 if (cachedGain !== null) {
                     // Use cached gain immediately
@@ -454,14 +610,20 @@ function loadAndPlay(songPath, songName, startTime = 0, initialVolume = 0, shoul
 
                 // Remove failed song and try another
                 songList = songList.filter(song => song !== songName);
-                // Also remove from recently played list
-                lastPlayedSongs = lastPlayedSongs.filter(song => song !== songName);
+                
+                // Also remove from shuffled playlist
+                if (config.shuffle) {
+                    shuffledPlaylist = shuffledPlaylist.filter(song => song !== songName);
+                    // Adjust current index if needed
+                    if (currentPlaylistIndex > 0) currentPlaylistIndex--;
+                }
+                
                 // Remove from normalization cache
                 normalizationCache.delete(cacheKey);
                 console.log('Removed failed song, remaining:', songList.length);
 
                 if (songList.length > 0) {
-                    setTimeout(playRandomSong, 1000);
+                    setTimeout(playNextSong, 200); // Use mode-aware function
                 } else {
                     console.error('No more songs to play!');
                     isPlaying = false;
@@ -488,20 +650,18 @@ function loadAndPlay(songPath, songName, startTime = 0, initialVolume = 0, shoul
             playPauseBtn.onmouseout = () => playPauseBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
         }
     }
-}
+};
 
 // Helper function for 'ended' event listener
-function handleSongEnded() {
+const handleSongEnded = () => {
     console.log('Song ended, playing next...');
-    // Ensure the current song path is removed from lastPlayedSongs if it was the only one.
-    // This is generally handled by push/shift in playRandomSong, but good to be explicit.
-    setTimeout(playRandomSong, 500);
-}
-
+    // Reduced delay from 500ms to 100ms for much faster transitions
+    setTimeout(playNextSong, 100);
+};
 
 // Fade effects
-function fadeOut(audio, callback) {
-    const fadeSteps = 20;
+const fadeOut = (audio, callback) => {
+    const fadeSteps = 10; // Reduced from 20 to 10 for faster fade
     const stepTime = config.fadeDuration / fadeSteps;
     const initialVolume = audio.volume;
     const stepVolume = initialVolume / fadeSteps; // Calculate step volume based on current volume
@@ -519,10 +679,10 @@ function fadeOut(audio, callback) {
             if (callback) callback();
         }
     }, stepTime);
-}
+};
 
-function fadeIn(audio) {
-    const fadeSteps = 20;
+const fadeIn = (audio) => {
+    const fadeSteps = 10; // Reduced from 20 to 10 for faster fade
     const stepTime = config.fadeDuration / fadeSteps;
     const targetVolume = config.volume; // Use the configured volume as the target
     const stepVolume = targetVolume / fadeSteps;
@@ -539,30 +699,35 @@ function fadeIn(audio) {
             clearInterval(fadeInterval);
         }
     }, stepTime);
-}
+};
 
-// --- Persistence Functions ---
-function savePlayerState() {
+const savePlayerState = () => {
     if (!config.persistence.enabled) return;
 
     const state = {
         currentSong: audioPlayer.src,
         currentTime: audioPlayer.currentTime,
         volume: audioPlayer.volume,
-        isPlaying: !audioPlayer.paused,
-        configVolume: config.volume, // Save the user's preferred max volume
+        isPlaying: isPlaying,
+        configVolume: config.volume,
+        shuffle: config.shuffle,
+        repeat: config.repeat,
+        currentSongIndex: currentSongIndex,
+        currentPlaylistIndex: currentPlaylistIndex,
         normalizationEnabled: config.normalization.enabled,
-        targetLoudness: config.normalization.targetLoudness
+        targetLoudness: config.normalization.targetLoudness,
+        lastUpdated: new Date().toISOString() // Add timestamp for debugging
     };
+    
     try {
         localStorage.setItem(config.persistence.localStorageKey, JSON.stringify(state));
         console.log('💾 Player state saved:', state);
     } catch (e) {
         console.error('Error saving player state to localStorage:', e);
     }
-}
+};
 
-function loadPlayerState() {
+const loadPlayerState = () => {
     if (!config.persistence.enabled) return;
 
     try {
@@ -570,38 +735,25 @@ function loadPlayerState() {
         if (savedStateString) {
             savedPlaybackState = JSON.parse(savedStateString);
             config.volume = savedPlaybackState.configVolume || config.volume;
+            config.shuffle = savedPlaybackState.shuffle !== undefined ? savedPlaybackState.shuffle : config.shuffle;
+            config.repeat = savedPlaybackState.repeat !== undefined ? savedPlaybackState.repeat : config.repeat;
+            currentSongIndex = savedPlaybackState.currentSongIndex || -1;
+            currentPlaylistIndex = savedPlaybackState.currentPlaylistIndex || -1;
             config.normalization.enabled = savedPlaybackState.normalizationEnabled !== undefined ? savedPlaybackState.normalizationEnabled : config.normalization.enabled;
             config.normalization.targetLoudness = savedPlaybackState.targetLoudness || config.normalization.targetLoudness;
 
             audioPlayer.volume = savedPlaybackState.volume; // Apply initial volume
 
-            // Update UI elements from loaded config
-            const volumeSlider = document.getElementById('volume-slider');
-            const volumeDisplay = document.getElementById('volume-display');
-            if (volumeSlider) volumeSlider.value = config.volume;
-            if (volumeDisplay) volumeDisplay.textContent = `${Math.round(config.volume * 100)}%`;
-
-            const normToggle = document.getElementById('normalization-toggle');
-            const normStatus = document.getElementById('norm-status');
-            if (normToggle) normToggle.checked = config.normalization.enabled;
-            if (normStatus) {
-                normStatus.textContent = `(${config.normalization.enabled ? 'On' : 'Off'})`;
-                normStatus.style.color = config.normalization.enabled ? 'var(--success-color, #2e8b34)' : 'var(--warning-color, #e65100)';
-            }
-
-            const targetLufsInput = document.getElementById('target-lufs');
-            if (targetLufsInput) targetLufsInput.value = config.normalization.targetLoudness;
-
-
+            // Update UI elements from loaded config will be handled by modal script
             console.log('✅ Player state loaded:', savedPlaybackState);
         }
     } catch (e) {
         console.error('Error loading player state from localStorage:', e);
         savedPlaybackState = null; // Clear corrupted state
     }
-}
+};
 
-function saveNormalizationCache() {
+const saveNormalizationCache = () => {
     if (!config.persistence.enabled || !config.normalization.cache) return;
     try {
         // Convert Map to array of [key, value] pairs for JSON stringification
@@ -611,9 +763,9 @@ function saveNormalizationCache() {
     } catch (e) {
         console.error('Error saving normalization cache to localStorage:', e);
     }
-}
+};
 
-function loadNormalizationCache() {
+const loadNormalizationCache = () => {
     if (!config.persistence.enabled || !config.normalization.cache) return;
     try {
         const cachedData = localStorage.getItem(config.persistence.normalizationCacheKey);
@@ -626,15 +778,16 @@ function loadNormalizationCache() {
         console.error('Error loading normalization cache from localStorage:', e);
         normalizationCache = new Map(); // Clear corrupted cache
     }
-}
-
+};
 
 // Manual controls
 window.lofi = {
-    skip: playRandomSong,
+    skip: playNextSong,
+    next: playNextSong,
+    previous: playPreviousSong,
     stop: () => {
         audioPlayer.pause();
-        isPlaying = false; // Player is intentionally paused
+        isPlaying = false; // Player is intentionally pa
         console.log('⏹ Stopped');
         // Update UI
         const nowPlayingDiv = document.getElementById('now-playing');
@@ -647,9 +800,37 @@ window.lofi = {
             playPauseBtn.onmouseout = () => playPauseBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
         }
     },
-    start: () => {
-        // This will attempt to play/resume based on current audioPlayer state or saved state
-        startPlayback();
+     start: () => {
+        // If there's a current song and we're paused, resume it
+        if (audioPlayer.src && audioPlayer.paused) {
+            audioPlayer.play()
+                .then(() => {
+                    isPlaying = true;
+                    console.log('▶ Resumed playback');
+                    // Update UI
+                    const nowPlayingDiv = document.getElementById('now-playing');
+                    if (nowPlayingDiv) {
+                        const currentSong = audioPlayer.src.split('/').pop();
+                        nowPlayingDiv.textContent = `Now Playing: ${decodeURIComponent(currentSong)}`;
+                    }
+                    const playPauseBtn = document.getElementById('play-pause-btn');
+                    if (playPauseBtn) {
+                        playPauseBtn.textContent = '⏸ Pause';
+                        playPauseBtn.style.backgroundColor = 'var(--tertiary-color, #0d9edb)';
+                        playPauseBtn.onmouseover = () => playPauseBtn.style.backgroundColor = 'var(--info-color, #0d61aa)';
+                        playPauseBtn.onmouseout = () => playPauseBtn.style.backgroundColor = 'var(--tertiary-color, #0d9edb)';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error resuming playback:', error);
+                    // If resume fails, fall back to playing a new song
+                    playRandomSong();
+                });
+        } else if (!audioPlayer.src || audioPlayer.ended) {
+            // If no song is loaded or song has ended, start a new one
+            playRandomSong();
+        }
+        // If already playing, do nothing
     },
     volume: (v) => {
         config.volume = Math.max(0, Math.min(1, v));
@@ -700,7 +881,7 @@ window.lofi = {
             console.log('   (Cache is empty)');
         } else {
             normalizationCache.forEach((gain, song) => {
-                console.log(`  ${song}: ${gain.toFixed(2)}x`);
+                console.log(`  ${song}: ${gain.toFixed(2)}x`);
             });
         }
     },
@@ -714,7 +895,7 @@ window.lofi = {
             console.log('🗑️ All player persistence data cleared from localStorage.');
         }
         // Update UI if a toggle button is added for persistence
-    }
+    },
 };
 
 console.log('🎧 Lofi Player with Normalization and Persistence loaded');
@@ -724,10 +905,16 @@ console.log('Persistence: lofi.togglePersistence()');
 console.log('📊 Current normalization target:', config.normalization.targetLoudness, 'LUFS');
 
 
+
+
+
+
+
+
 // --- Modal Creation and Control ---
 
 // Create the floating icon
-function createFloatingIcon() {
+const createFloatingIcon = () => {
     const icon = document.createElement('div');
     icon.id = 'lofi-player-icon';
     icon.style.position = 'fixed';
@@ -749,27 +936,122 @@ function createFloatingIcon() {
     icon.title = 'Open Lofi Player Controls';
 
     document.body.appendChild(icon);
-
     icon.addEventListener('click', toggleModal);
-}
+};
+
+// Update progress bar
+const updateProgressBar = () => {
+    const progressBar = document.getElementById('progress-bar');
+    const currentTimeSpan = document.getElementById('current-time');
+    const durationSpan = document.getElementById('duration');
+    
+    if (progressBar && currentTimeSpan && durationSpan && audioPlayer) {
+        const currentTime = audioPlayer.currentTime || 0;
+        const duration = audioPlayer.duration || 0;
+        
+        if (duration > 0) {
+            const progress = (currentTime / duration) * 100;
+            progressBar.value = progress;
+            currentTimeSpan.textContent = formatTime(currentTime);
+            durationSpan.textContent = formatTime(duration);
+        }
+    }
+};
+
+// Format time in MM:SS format
+const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
+// Handle progress bar click
+const handleProgressBarClick = (e) => {
+    const progressBar = e.target;
+    const rect = progressBar.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percentage = (clickX / rect.width) * 100;
+    
+    if (audioPlayer && audioPlayer.duration) {
+        const newTime = (percentage / 100) * audioPlayer.duration;
+        audioPlayer.currentTime = newTime;
+        progressBar.value = percentage;
+    }
+};
+
+// Populate song selector dropdown
+const populateSongSelector = () => {
+    const songSelector = document.getElementById('song-selector');
+    if (songSelector && songList) {
+        songSelector.innerHTML = '<option value="">Select a song...</option>';
+        
+        songList.forEach((song, index) => {
+            const option = document.createElement('option');
+            option.value = song;
+            option.textContent = decodeURIComponent(song);
+            songSelector.appendChild(option);
+        });
+    }
+};
+
+// Handle song selection from dropdown
+const handleSongSelection = (selectedSong) => {
+    if (selectedSong && songList.includes(selectedSong)) {
+        const songPath = `${config.folder}${selectedSong}`;
+        loadAndPlay(songPath, selectedSong, 0, 0, true);
+    }
+};
+
+// Toggle shuffle mode
+const toggleShuffle = () => {
+    config.shuffle = !config.shuffle;
+    const shuffleBtn = document.getElementById('shuffle-btn');
+    if (shuffleBtn) {
+        shuffleBtn.textContent = config.shuffle ? '🔀 Shuffle: On' : '🔀 Shuffle: Off';
+        shuffleBtn.style.backgroundColor = config.shuffle ? 'var(--success-color, #2e8b34)' : 'var(--primary-color, #2c4c7c)';
+    }
+};
+
+// Toggle repeat mode
+const toggleRepeat = () => {
+    if (!config.repeat) {
+        config.repeat = 'one';
+    } else if (config.repeat === 'one') {
+        config.repeat = 'all';
+    } else {
+        config.repeat = false;
+    }
+    
+    const repeatBtn = document.getElementById('repeat-btn');
+    if (repeatBtn) {
+        if (config.repeat === 'one') {
+            repeatBtn.textContent = '🔂 Repeat: One';
+            repeatBtn.style.backgroundColor = 'var(--info-color, #0d61aa)';
+        } else if (config.repeat === 'all') {
+            repeatBtn.textContent = '🔁 Repeat: All';
+            repeatBtn.style.backgroundColor = 'var(--success-color, #2e8b34)';
+        } else {
+            repeatBtn.textContent = '🔁 Repeat: Off';
+            repeatBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
+        }
+    }
+};
 
 // Create the modal
-function createLofiModal() {
+const createLofiModal = () => {
     const modal = document.createElement('div');
     modal.id = 'lofi-player-modal';
     modal.style.position = 'fixed';
     modal.style.bottom = '90px'; // Above the icon
     modal.style.left = '20px';
-
     modal.style.width = 'auto';
     modal.style.height = 'auto';
-    modal.style.minWidth = '280px';
+    modal.style.minWidth = '320px';
     modal.style.maxWidth = '90vw';
     modal.style.maxHeight = '80vh';
     modal.style.overflowY = 'auto';
     modal.style.overflowX = 'hidden';
     modal.style.boxSizing = 'border-box';
-
     modal.style.backgroundColor = 'var(--dark-color, #0e1827)';
     modal.style.color = 'var(--light-color, #f4f8fc)';
     modal.style.borderRadius = '10px';
@@ -781,13 +1063,11 @@ function createLofiModal() {
     modal.style.flexDirection = 'column';
     modal.style.gap = '10px';
 
-
     // Make modal draggable
     let isDragging = false;
     let offsetX, offsetY;
 
     modal.addEventListener('mousedown', (e) => {
-        // Only drag from modal header or direct modal background (not children)
         if (e.target === modal || e.target.closest('#modal-header') === e.target) {
             isDragging = true;
             offsetX = e.clientX - modal.getBoundingClientRect().left;
@@ -798,11 +1078,9 @@ function createLofiModal() {
 
     document.addEventListener('mousemove', (e) => {
         if (!isDragging) return;
-        // Ensure modal stays within viewport bounds
         let newLeft = e.clientX - offsetX;
         let newTop = e.clientY - offsetY;
 
-        // Clamp to window edges
         newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - modal.offsetWidth));
         newTop = Math.max(0, Math.min(newTop, window.innerHeight - modal.offsetHeight));
 
@@ -815,7 +1093,6 @@ function createLofiModal() {
         modal.style.cursor = 'grab';
     });
 
-
     // Modal Header
     const modalHeader = document.createElement('div');
     modalHeader.id = 'modal-header';
@@ -825,7 +1102,7 @@ function createLofiModal() {
     modalHeader.style.paddingBottom = '10px';
     modalHeader.style.borderBottom = '1px solid var(--primary-color, #2c4c7c)';
     modalHeader.style.marginBottom = '10px';
-    modalHeader.style.cursor = 'grab'; // Indicate draggable
+    modalHeader.style.cursor = 'grab';
     modalHeader.innerHTML = `
         <h3 style="margin: 0; color: var(--tertiary-color, #0d9edb);">Lofi Player</h3>
         <span id="close-modal" style="cursor: pointer; font-size: 20px; color: var(--light-color, #f4f8fc);">&times;</span>
@@ -834,6 +1111,19 @@ function createLofiModal() {
 
     modalHeader.querySelector('#close-modal').addEventListener('click', toggleModal);
 
+    // Song Selector
+    const songSelectorDiv = document.createElement('div');
+    songSelectorDiv.style.marginBottom = '10px';
+    songSelectorDiv.innerHTML = `
+        <label for="song-selector" style="display: block; margin-bottom: 5px; color: var(--light-color, #f4f8fc);">Select Song:</label>
+        <select id="song-selector" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid var(--primary-color, #2c4c7c); background-color: var(--secondary-color, #0c4061); color: var(--light-color, #f4f8fc);">
+            <option value="">Select a song...</option>
+        </select>
+    `;
+    modal.appendChild(songSelectorDiv);
+
+    const songSelector = songSelectorDiv.querySelector('#song-selector');
+    songSelector.addEventListener('change', (e) => handleSongSelection(e.target.value));
 
     // Now Playing display
     const nowPlayingDiv = document.createElement('div');
@@ -841,38 +1131,80 @@ function createLofiModal() {
     nowPlayingDiv.style.fontWeight = 'bold';
     nowPlayingDiv.style.marginBottom = '10px';
     nowPlayingDiv.style.color = 'rgba(var(--light-color-r, 244), var(--light-color-g, 248), var(--light-color-b, 252), 0.8)';
-    nowPlayingDiv.style.wordBreak = 'break-word'; // Ensures long song names wrap to prevent overflow
+    nowPlayingDiv.style.wordBreak = 'break-word';
     nowPlayingDiv.textContent = 'Not playing...';
     modal.appendChild(nowPlayingDiv);
 
-    // Controls Container
+    // Progress Bar Section
+    const progressSection = document.createElement('div');
+    progressSection.style.marginBottom = '10px';
+    progressSection.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+            <span id="current-time" style="font-size: 0.8em; color: var(--light-color, #f4f8fc);">0:00</span>
+            <span id="duration" style="font-size: 0.8em; color: var(--light-color, #f4f8fc);">0:00</span>
+        </div>
+        <input type="range" id="progress-bar" min="0" max="100" value="0" style="width: 100%; height: 6px; background: var(--secondary-color, #0c4061); outline: none; border-radius: 3px; cursor: pointer;">
+    `;
+    modal.appendChild(progressSection);
+
+    const progressBar = progressSection.querySelector('#progress-bar');
+    progressBar.style.accentColor = 'var(--tertiary-color, #0d9edb)';
+    progressBar.addEventListener('click', handleProgressBarClick);
+
+    // Main Controls Container
     const controlsContainer = document.createElement('div');
     controlsContainer.style.display = 'grid';
-    controlsContainer.style.gridTemplateColumns = '1fr 1fr';
+    controlsContainer.style.gridTemplateColumns = '1fr 1fr 1fr';
     controlsContainer.style.gap = '8px';
+    controlsContainer.style.marginBottom = '10px';
     modal.appendChild(controlsContainer);
+
+    // Previous Button
+// Previous Button
+    const prevBtn = createButton('⏮ Prev', () => {
+        window.lofi.previous(); // Use the standardized previous function
+    }, 'var(--primary-color, #2c4c7c)');
+    controlsContainer.appendChild(prevBtn);
 
     // Play/Pause Button
     const playPauseBtn = createButton('▶ Play', () => {
-        if (audioPlayer.paused) { // Check actual audio player state
-            lofi.start(); // This will handle resuming if there's a saved state
+        if (audioPlayer.paused) {
+            lofi.start();
         } else {
             lofi.stop();
         }
-    }, 'var(--primary-color, #2c4c7c)'); // Default button color
+    }, 'var(--primary-color, #2c4c7c)');
     playPauseBtn.id = 'play-pause-btn';
     controlsContainer.appendChild(playPauseBtn);
 
     // Skip Button
-    const skipBtn = createButton('⏭ Skip', lofi.skip, 'var(--primary-color, #2c4c7c)'); // Default button color
+    const skipBtn = createButton('⏭ Skip', lofi.skip, 'var(--primary-color, #2c4c7c)');
     controlsContainer.appendChild(skipBtn);
+
+    // Additional Controls
+    const additionalControls = document.createElement('div');
+    additionalControls.style.display = 'grid';
+    additionalControls.style.gridTemplateColumns = '1fr 1fr';
+    additionalControls.style.gap = '8px';
+    additionalControls.style.marginBottom = '10px';
+    modal.appendChild(additionalControls);
+
+    // Shuffle Button
+    const shuffleBtn = createButton('🔀 Shuffle: Off', toggleShuffle, 'var(--primary-color, #2c4c7c)');
+    shuffleBtn.id = 'shuffle-btn';
+    additionalControls.appendChild(shuffleBtn);
+
+    // Repeat Button
+    const repeatBtn = createButton('🔁 Repeat: Off', toggleRepeat, 'var(--primary-color, #2c4c7c)');
+    repeatBtn.id = 'repeat-btn';
+    additionalControls.appendChild(repeatBtn);
 
     // Volume Slider
     const volumeDiv = document.createElement('div');
-    volumeDiv.style.gridColumn = '1 / -1'; // Span two columns
     volumeDiv.style.display = 'flex';
     volumeDiv.style.alignItems = 'center';
     volumeDiv.style.gap = '10px';
+    volumeDiv.style.marginBottom = '10px';
     volumeDiv.innerHTML = `
         <label for="volume-slider" style="white-space: nowrap;">Volume:</label>
         <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="${config.volume}" style="width: 100%;">
@@ -947,16 +1279,21 @@ function createLofiModal() {
         if (confirm('Are you sure you want to log out? This will log you out.')) {
             localStorage.clear();
             alert('Local cache cleared. Please refresh the page.');
-            // Optionally, reload the page to apply a clean state
             window.location.reload();
         }
     }, 'var(--danger-color, #d32f2f)');
     normalizationSection.appendChild(logoutClearCacheBtn);
 
-
     document.body.appendChild(modal);
 
-    // Update now playing song display
+    // Set up event listeners for audio player
+    audioPlayer.addEventListener('timeupdate', updateProgressBar);
+    audioPlayer.addEventListener('loadedmetadata', () => {
+        updateProgressBar();
+        populateSongSelector();
+    });
+
+    // Update UI based on audio player events
     audioPlayer.addEventListener('playing', () => {
         const currentSong = audioPlayer.src.split('/').pop().split('?')[0];
         nowPlayingDiv.textContent = `Now Playing: ${decodeURIComponent(currentSong)}`;
@@ -964,6 +1301,12 @@ function createLofiModal() {
         playPauseBtn.style.backgroundColor = 'var(--tertiary-color, #0d9edb)';
         playPauseBtn.onmouseover = () => playPauseBtn.style.backgroundColor = 'var(--info-color, #0d61aa)';
         playPauseBtn.onmouseout = () => playPauseBtn.style.backgroundColor = 'var(--tertiary-color, #0d9edb)';
+        
+        // Update song selector
+        const songSelector = document.getElementById('song-selector');
+        if (songSelector) {
+            songSelector.value = decodeURIComponent(currentSong);
+        }
     });
 
     audioPlayer.addEventListener('pause', () => {
@@ -978,7 +1321,7 @@ function createLofiModal() {
         nowPlayingDiv.textContent = 'Loading next...';
     });
 
-    // Initial UI update based on loaded state (if any)
+    // Initialize UI based on saved state
     if (savedPlaybackState) {
         if (savedPlaybackState.currentSong) {
             const savedSongName = savedPlaybackState.currentSong.split('/').pop().split('?')[0];
@@ -996,10 +1339,13 @@ function createLofiModal() {
             playPauseBtn.onmouseout = () => playPauseBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
         }
     }
-}
+
+    // Populate song selector initially
+    populateSongSelector();
+};
 
 // Helper to create buttons
-function createButton(text, onClickHandler, bgColor) {
+const createButton = (text, onClickHandler, bgColor) => {
     const button = document.createElement('button');
     button.textContent = text;
     button.style.backgroundColor = bgColor;
@@ -1023,10 +1369,10 @@ function createButton(text, onClickHandler, bgColor) {
     button.addEventListener('mouseout', () => button.style.backgroundColor = bgColor);
     button.addEventListener('click', onClickHandler);
     return button;
-}
+};
 
 // Helper function to darken a hex or rgb color
-function darkenColor(color, percent) {
+const darkenColor = (color, percent) => {
     if (color.startsWith('rgb')) {
         const rgb = color.match(/\d+/g).map(Number);
         const r = Math.max(0, rgb[0] - percent);
@@ -1036,7 +1382,7 @@ function darkenColor(color, percent) {
     } else {
         let f = parseInt(color.slice(1), 16),
             t = percent < 0 ? 0 : 255,
-            p = percent < 0 ? percent * -1 : percent / 100, // Corrected percentage calculation for hex
+            p = percent < 0 ? percent * -1 : percent / 100,
             R = f >> 16,
             G = (f >> 8) & 0x00ff,
             B = f & 0x0000ff;
@@ -1047,23 +1393,22 @@ function darkenColor(color, percent) {
             (Math.round((t - B) * p) + B)
         ).toString(16).slice(1);
     }
-}
-
+};
 
 // Toggle modal visibility
-function toggleModal() {
+const toggleModal = () => {
     const modal = document.getElementById('lofi-player-modal');
     const icon = document.getElementById('lofi-player-icon');
     if (modal.style.display === 'none' || modal.style.display === '') {
         modal.style.display = 'flex';
-        icon.style.display = 'none'; // Hide icon when modal is open
+        icon.style.display = 'none';
     } else {
         modal.style.display = 'none';
-        icon.style.display = 'flex'; // Show icon when modal is closed
+        icon.style.display = 'flex';
     }
-}
+};
 
-// Dynamically add the CSS variables if they are not already present in your main CSS
+// Enhanced CSS styles
 const style = document.createElement('style');
 style.innerHTML = `
     :root {
@@ -1078,9 +1423,8 @@ style.innerHTML = `
         --info-color: #0d61aa;
     }
 
-    /* Basic slider styling for better appearance (hard to do with inline JS) */
     #lofi-player-modal input[type="range"] {
-        -webkit-appearance: none; /* Override default */
+        -webkit-appearance: none;
         appearance: none;
         height: 8px;
         background: var(--secondary-color, #0c4061);
@@ -1098,7 +1442,7 @@ style.innerHTML = `
         border-radius: 50%;
         background: var(--tertiary-color, #0d9edb);
         cursor: grab;
-        margin-top: -6px; /* Center thumb vertically */
+        margin-top: -6px;
         box-shadow: 0 0 5px rgba(0,0,0,0.5);
     }
 
@@ -1109,16 +1453,58 @@ style.innerHTML = `
         background: var(--tertiary-color, #0d9edb);
         cursor: grab;
         box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        border: none;
     }
 
     #lofi-player-modal input[type="range"]::-webkit-slider-runnable-track {
-            background: var(--secondary-color, #0c4061);
-            border-radius: 5px;
+        background: var(--secondary-color, #0c4061);
+        border-radius: 5px;
     }
 
     #lofi-player-modal input[type="range"]::-moz-range-track {
         background: var(--secondary-color, #0c4061);
         border-radius: 5px;
+    }
+
+    #progress-bar {
+        -webkit-appearance: none;
+        appearance: none;
+        height: 6px !important;
+        background: var(--secondary-color, #0c4061);
+        outline: none;
+        border-radius: 3px;
+        cursor: pointer;
+        box-shadow: inset 0 0 3px rgba(0,0,0,0.3);
+    }
+
+    #progress-bar::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--tertiary-color, #0d9edb);
+        cursor: pointer;
+        box-shadow: 0 0 3px rgba(0,0,0,0.5);
+    }
+
+    #progress-bar::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--tertiary-color, #0d9edb);
+        cursor: pointer;
+        box-shadow: 0 0 3px rgba(0,0,0,0.5);
+        border: none;
+    }
+
+    #song-selector {
+        font-size: 14px;
+    }
+
+    #song-selector option {
+        background-color: var(--secondary-color, #0c4061);
+        color: var(--light-color, #f4f8fc);
     }
 `;
 document.head.appendChild(style);

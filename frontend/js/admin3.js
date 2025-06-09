@@ -633,7 +633,7 @@ class AuditLogsManager {
     const action = (log.action || 'unknown').toLowerCase();
     const iconClass = this.getAuditLogIcon(action);
     const message = this.generateCompactMessage(log);
-    const timestamp = this.formatTimestamp(log.timestamp);
+    const timestamp = this.formatTimestamp(log.new_values.timestamp);
     
     logDiv.innerHTML = `
       <div class="audit-log-header">
@@ -747,29 +747,137 @@ class AuditLogsManager {
   }
 
   /**
-   * Format timestamp for display
-   */
-  formatTimestamp(timestamp) {
-    if (!timestamp) return 'Unknown time';
-    
-    try {
-      const date = new Date(timestamp);
-      const now = new Date();
-      const diffMs = now - date;
-      const diffMins = Math.floor(diffMs / 60000);
-      const diffHours = Math.floor(diffMs / 3600000);
-      const diffDays = Math.floor(diffMs / 86400000);
-      
-      if (diffMins < 1) return 'Just now';
-      if (diffMins < 60) return `${diffMins}m ago`;
-      if (diffHours < 24) return `${diffHours}h ago`;
-      if (diffDays < 7) return `${diffDays}d ago`;
-      
-      return date.toLocaleDateString();
-    } catch (error) {
-      return 'Invalid date';
-    }
+ * Format timestamp for display - Improved version with better date parsing
+ */
+formatTimestamp(timestamp) {
+  // Debug logging to see what we're actually getting
+  console.log('formatTimestamp received:', timestamp, 'type:', typeof timestamp);
+  
+  if (!timestamp) {
+    console.log('No timestamp provided');
+    return 'Unknown time';
   }
+  
+  try {
+    let date;
+    
+    // Try multiple parsing approaches
+    if (typeof timestamp === 'string') {
+      // Method 1: Clean the timestamp and try direct parsing
+      let cleanTimestamp = timestamp.trim();
+      
+      // Handle microseconds by truncating to milliseconds
+      if (cleanTimestamp.includes('.') && !cleanTimestamp.endsWith('Z')) {
+        const parts = cleanTimestamp.split('.');
+        if (parts[1] && parts[1].length > 3) {
+          // Truncate microseconds to milliseconds
+          cleanTimestamp = parts[0] + '.' + parts[1].substring(0, 3);
+        }
+      }
+      
+      // Try adding Z for UTC if no timezone info
+      if (!cleanTimestamp.includes('Z') && !cleanTimestamp.includes('+') && !cleanTimestamp.includes('-', 10)) {
+        date = new Date(cleanTimestamp + 'Z');
+      } else {
+        date = new Date(cleanTimestamp);
+      }
+      
+      // Method 2: Manual parsing for problematic formats
+      if (isNaN(date.getTime())) {
+        const match = cleanTimestamp.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,6}))?(?:Z|[+-]\d{2}:\d{2})?$/);
+        if (match) {
+          const [, year, month, day, hour, minute, second, fraction] = match;
+          const milliseconds = fraction ? parseInt(fraction.padEnd(3, '0').substring(0, 3)) : 0;
+          
+          date = new Date(Date.UTC(
+            parseInt(year), 
+            parseInt(month) - 1, 
+            parseInt(day), 
+            parseInt(hour), 
+            parseInt(minute), 
+            parseInt(second),
+            milliseconds
+          ));
+        }
+      }
+      
+      // Method 3: Try as local time (remove T and Z)
+      if (isNaN(date.getTime())) {
+        const localFormat = cleanTimestamp.replace('T', ' ').replace('Z', '').replace(/\.\d+$/, '');
+        date = new Date(localFormat);
+      }
+      
+      // Method 4: Try epoch timestamp (if it's a string of numbers)
+      if (isNaN(date.getTime()) && /^\d+$/.test(cleanTimestamp)) {
+        const numTimestamp = parseInt(cleanTimestamp);
+        // Check if it's in seconds (Unix timestamp) or milliseconds
+        if (numTimestamp < 10000000000) { // Less than year 2286 in seconds
+          date = new Date(numTimestamp * 1000);
+        } else {
+          date = new Date(numTimestamp);
+        }
+      }
+      
+    } else if (typeof timestamp === 'number') {
+      // Handle numeric timestamps
+      if (timestamp < 10000000000) { // Unix timestamp in seconds
+        date = new Date(timestamp * 1000);
+      } else {
+        date = new Date(timestamp);
+      }
+    } else {
+      // If it's already a Date object or other type
+      date = new Date(timestamp);
+    }
+    
+    console.log('Parsed date:', date, 'Valid:', !isNaN(date.getTime()));
+    
+    // Final validation
+    if (isNaN(date.getTime())) {
+      console.error('All parsing methods failed for timestamp:', timestamp);
+      return `Invalid: ${timestamp}`;
+    }
+    
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    const diffWeeks = Math.floor(diffDays / 7);
+    const diffMonths = Math.floor(diffDays / 30);
+    const diffYears = Math.floor(diffDays / 365);
+    
+    console.log('Time difference - Minutes:', diffMins, 'Hours:', diffHours, 'Days:', diffDays);
+    
+    // Handle future dates (negative differences)
+    if (diffMs < 0) {
+      const absDiffMs = Math.abs(diffMs);
+      const futureHours = Math.floor(absDiffMs / 3600000);
+      const futureDays = Math.floor(absDiffMs / 86400000);
+      
+      if (futureHours < 1) return 'in a few minutes';
+      if (futureHours < 24) return `in ${futureHours}h`;
+      if (futureDays < 7) return `in ${futureDays}d`;
+      return `on ${date.toLocaleDateString()}`;
+    }
+    
+    // Format based on time difference
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffWeeks < 4) return `${diffWeeks}w ago`;
+    if (diffMonths < 12) return `${diffMonths}mo ago`;
+    if (diffYears < 2) return '1y ago';
+    
+    // For very old dates, show the actual date
+    return date.toLocaleDateString();
+    
+  } catch (error) {
+    console.error('Error in formatTimestamp:', error, 'for timestamp:', timestamp);
+    return `Error: ${String(timestamp).substring(0, 20)}`;
+  }
+}
 
   /**
    * Render error message in the container

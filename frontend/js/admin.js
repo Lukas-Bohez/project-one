@@ -1918,6 +1918,19 @@ const listenToFilters = () => {
 };
 // #endregion
 
+// Debounce helper function
+const debounce = (func, delay) => {
+    let timeoutId;
+    return function() {
+        const context = this;
+        const args = arguments;
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+            func.apply(context, args);
+        }, delay);
+    };
+};
+
 // #region ***  Event Listeners - listenTo___            ***********
 const listenToTabs = () => {
     domAdmin.tabBtns.forEach(btn => {
@@ -1941,7 +1954,9 @@ const listenToLogout = () => {
 
 const listenToModal = () => {
     if (domAdmin.closeModal) {
-        domAdmin.closeModal.addEventListener('click', hideEditModal);
+        // Create debounced version with 2-second delay
+        const debouncedFilter = debounce(filterQuestions, 500);
+        domAdmin.searchInput.addEventListener('input', debouncedFilter);
     }
     
     if (domAdmin.cancelBtn) {
@@ -1957,7 +1972,9 @@ const listenToModal = () => {
 
 const listenToSearch = () => {
     if (domAdmin.searchInput) {
-        domAdmin.searchInput.addEventListener('input', filterQuestions);
+        // Create debounced version with 2-second delay
+        const debouncedFilter = debounce(filterQuestions, 500);
+        domAdmin.searchInput.addEventListener('input', debouncedFilter);
     }
 };
 
