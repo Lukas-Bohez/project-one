@@ -890,7 +890,11 @@ async def appeal_ban(payload: AppealPayload, request: Request):
 
 @app.get("/api/v1/sensor-data", response_model=MultiSessionSensorResponse)
 async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 10, include_chat: bool = True, include_answers: bool = True):
-    requested_session_ids = [int(sid.strip()) for sid in session_ids.split(',')]
+    # Convert and sort session IDs in descending order (newest first)
+    requested_session_ids = sorted(
+        [int(sid.strip()) for sid in session_ids.split(',')],
+        reverse=True
+    )
    
     response_sessions_data = []
    
@@ -902,14 +906,20 @@ async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1
         current_session_id = session_data['id']
         current_session_name = session_data['name']
        
-        # Get sensor data
+        # Get sensor data and sort by timestamp descending
         sensor_readings = SensorDataRepository.get_all_data_for_session(current_session_id)
+        # Assuming sensor_readings is a list of dictionaries with 'timestamp' key
+        sensor_readings_sorted = sorted(
+            sensor_readings,
+            key=lambda x: x.get('timestamp') or datetime.min,
+            reverse=True
+        )
        
         temperatures = []
         light_intensities = []
         servo_positions = []
        
-        for reading in sensor_readings:
+        for reading in sensor_readings_sorted:  # Process sorted readings
             timestamp = reading.get('timestamp')
             timestamp_iso = timestamp.isoformat() if timestamp else None
            
@@ -942,11 +952,16 @@ async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1
                 "value": servo_value
             })
         
-        # Get chat data if requested
+        # Get chat data if requested - sort by created_at descending
         chat_messages = []
         if include_chat:
             chat_data = ChatLogRepository.get_chat_messages_by_session(current_session_id, limit)
             if chat_data:  # Check if chat_data is not None
+                chat_data_sorted = sorted(
+                    chat_data,
+                    key=lambda x: x.get('created_at') or datetime.min,
+                    reverse=True
+                )
                 chat_messages = [
                     {
                         "id": msg.get('id'),
@@ -955,14 +970,13 @@ async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1
                         "message": msg.get('message'),
                         "created_at": msg.get('created_at').isoformat() if msg.get('created_at') else None
                     }
-                    for msg in chat_data
+                    for msg in chat_data_sorted
                 ]
         
-        # Get player answers if requested
+        # Get player answers if requested - sort by answered_at descending
         player_answers_data = []
         if include_answers:
-            # First, get all questions for this session
-            session_questions = QuestionRepository.get_questions_by_session(current_session_id)  # You might need to implement this
+            session_questions = QuestionRepository.get_questions_by_session(current_session_id)
             
             if session_questions:  # Check if session_questions is not None
                 for question in session_questions:
@@ -970,8 +984,14 @@ async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1
                     question_with_answers = PlayerAnswerRepository.get_question_with_player_answers(question_id)
                     
                     if question_with_answers and question_with_answers.get('player_answers'):
+                        # Sort player answers by answered_at descending
+                        sorted_answers = sorted(
+                            question_with_answers['player_answers'],
+                            key=lambda x: x.get('answered_at') or datetime.min,
+                            reverse=True
+                        )
                         formatted_answers = []
-                        for answer in question_with_answers['player_answers']:
+                        for answer in sorted_answers:
                             formatted_answers.append({
                                 "player_answer_id": answer.get('player_answer_id'),
                                 "sessionId": answer.get('sessionId'),
@@ -999,8 +1019,8 @@ async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1
             temperatures=temperatures,
             light_intensities=light_intensities,
             servo_positions=servo_positions,
-            chat_messages=chat_messages,  # New field
-            player_answers=player_answers_data  # New field
+            chat_messages=chat_messages,
+            player_answers=player_answers_data
         ))
    
     return MultiSessionSensorResponse(sessions=response_sessions_data)
@@ -1203,7 +1223,6 @@ async def login_user(user_credentials: UserCredentials, request: Request):
 
     return {"message": "Login successful", "user_id": user_id}
 
-router = APIRouter()
 
 
 
@@ -2128,13 +2147,39 @@ async def get_all_items():
         )
     
 
-# Updated endpoint
+# Add endpoint to get active sessions
+@app.get("/api/v1/sessions/active")
+async def get_active_sessions():
+    """
+    Get all currently active quiz sessions.
+    """
+    try:
+        active_sessions = QuizSessionRepository.get_sessions_by_status(2)
+        return {"sessions": active_sessions}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve active sessions"
+        )
+
+# Updated chat message creation endpoint
 @app.post("/api/v1/chat/messages")
 async def create_chat_message(request: ChatMessageCreate):
     """
-    Create a new chat message in the database.
+    Create a new chat message in the database and broadcast it via Socket.IO.
     """
     try:
+        # Verify the session is active
+        active_sessions = QuizSessionRepository.get_sessions_by_status(2)
+        active_session_ids = [session['sessionId'] for session in active_sessions]
+        
+        if request.session_id not in active_session_ids:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Session is not active or does not exist"
+            )
+
+        # Create the message in database
         message_id = ChatLogRepository.create_chat_message(
             session_id=request.session_id,
             message_text=request.message_text,
@@ -2142,31 +2187,266 @@ async def create_chat_message(request: ChatMessageCreate):
             message_type=request.message_type,
             reply_to_id=request.reply_to_id
         )
-        return {"message_id": message_id}
+
+        # Get user information for the broadcast
+        try:
+            # For now, we'll get the username from the message creation
+            message_details = ChatLogRepository.get_chat_message_by_id(message_id)
+            username = message_details.get('username', 'Unknown User')
+        except Exception: # Catch specific exceptions if possible, e.g., if message_details is None
+            username = 'Unknown User'
+
+        # Broadcast the new message to all clients in the quiz session
+        await sio.emit('new_chat_message', {
+            'messageId': message_id,
+            'sessionId': request.session_id,
+            'sender': username,
+            'message': request.message_text,
+            'userId': request.user_id,
+            'messageType': request.message_type,
+            'timestamp': datetime.now().isoformat(),
+            'replyToId': request.reply_to_id
+        }, room=f'quiz_session_{request.session_id}')
+
+        # Also emit to general quiz room for broader notifications
+        await sio.emit('quiz_activity', {
+            'type': 'new_message',
+            'sessionId': request.session_id,
+            'userId': request.user_id,
+            'username': username,
+            'timestamp': datetime.now().isoformat()
+        }, room='quiz_general')
+
+        return {
+            "message_id": message_id,
+            "status": "sent",
+            "broadcast": True
+        }
+        
+    except HTTPException:
+        raise
     except Exception as e:
+        print(f"Error creating chat message: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create chat message"
         )
 
-# Endpoint for getting chat messages by session
+# Updated endpoint for getting chat messages by session
 @app.get("/api/v1/chat/messages/{session_id}")
 async def get_chat_messages_by_session(session_id: int, limit: int = 100):
     """
     Get chat messages for a specific session.
+    Only returns messages if the session is active.
     """
     try:
+        # Verify the session is active
+        active_sessions = QuizSessionRepository.get_active_sessions()
+        active_session_ids = [session['sessionId'] for session in active_sessions]
+        
+        if session_id not in active_session_ids:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Session is not active or does not exist"
+            )
+
         messages = ChatLogRepository.get_chat_messages_by_session(
             session_id=session_id,
             limit=limit
         )
-        return {"messages": messages}
+        
+        return {
+            "messages": messages,
+            "session_id": session_id,
+            "message_count": len(messages),
+            "is_active": True
+        }
+        
+    except HTTPException:
+        raise
     except Exception as e:
+        print(f"Error retrieving chat messages: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve chat messages"
         )
 
+# New endpoint to get chat statistics for a session
+@app.get("/api/v1/chat/stats/{session_id}")
+async def get_chat_stats(session_id: int):
+    """
+    Get chat statistics for a specific session.
+    """
+    try:
+        # Verify the session is active
+        active_sessions = QuizSessionRepository.get_active_sessions()
+        active_session_ids = [session['sessionId'] for session in active_sessions]
+        
+        if session_id not in active_session_ids:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Session is not active or does not exist"
+            )
+
+        # Call the new get_chat_statistics method from the repository
+        stats = ChatLogRepository.get_chat_statistics(session_id)
+        
+        return {
+            "session_id": session_id,
+            "stats": stats,
+            "is_active": True
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve chat statistics"
+        )
+
+# Socket.IO event handlers for enhanced chat functionality
+@sio.event
+async def user_joined_quiz(sid, data):
+    """
+    Handle when a user joins a quiz session.
+    """
+    try:
+        session_id = data.get('sessionId')
+        user_id = data.get('userId')
+        username = data.get('username')
+        
+        if not all([session_id, user_id, username]):
+            return False
+            
+        # Verify session is active
+        active_sessions = QuizSessionRepository.get_active_sessions()
+        active_session_ids = [session['sessionId'] for session in active_sessions]
+        
+        if session_id not in active_session_ids:
+            return False
+            
+        # Join the user to the quiz session room
+        await sio.enter_room(sid, f'quiz_session_{session_id}')
+        await sio.enter_room(sid, 'quiz_general')
+        
+        # Broadcast that user joined
+        await sio.emit('user_joined_chat', {
+            'userId': user_id,
+            'username': username,
+            'sessionId': session_id,
+            'timestamp': datetime.now().isoformat()
+        }, room=f'quiz_session_{session_id}', skip_sid=sid)
+        
+        # Log the join event
+        ChatLogRepository.create_chat_message(
+            session_id=session_id,
+            message_text=f"{username} joined the quiz",
+            user_id=user_id,
+            message_type="system"
+        )
+        
+        return True
+        
+    except Exception as e:
+        print(f"Error in user_joined_quiz: {e}")
+        return False
+
+@sio.event
+async def user_left_quiz(sid, data):
+    """
+    Handle when a user leaves a quiz session.
+    """
+    try:
+        session_id = data.get('sessionId')
+        user_id = data.get('userId')
+        username = data.get('username')
+        
+        if not all([session_id, user_id, username]):
+            return False
+            
+        # Leave the quiz session room
+        await sio.leave_room(sid, f'quiz_session_{session_id}')
+        await sio.leave_room(sid, 'quiz_general')
+        
+        # Broadcast that user left
+        await sio.emit('user_left_chat', {
+            'userId': user_id,
+            'username': username,
+            'sessionId': session_id,
+            'timestamp': datetime.now().isoformat()
+        }, room=f'quiz_session_{session_id}')
+        
+        # Log the leave event
+        ChatLogRepository.create_chat_message(
+            session_id=session_id,
+            message_text=f"{username} left the quiz",
+            user_id=user_id,
+            message_type="system"
+        )
+        
+        return True
+        
+    except Exception as e:
+        print(f"Error in user_left_quiz: {e}")
+        return False
+
+@sio.event
+async def disconnect(sid):
+    """
+    Handle client disconnection.
+    """
+    print(f"Client {sid} disconnected")
+
+# Additional endpoint to broadcast system messages
+@app.post("/api/v1/chat/system-message")
+async def send_system_message(session_id: int, message: str, message_type: str = "system"):
+    """
+    Send a system message to all users in a quiz session.
+    """
+    try:
+        # Verify the session is active
+        active_sessions = QuizSessionRepository.get_active_sessions()
+        active_session_ids = [session['sessionId'] for session in active_sessions]
+        
+        if session_id not in active_session_ids:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Session is not active or does not exist"
+            )
+
+        # Create system message in database
+        message_id = ChatLogRepository.create_chat_message(
+            session_id=session_id,
+            message_text=message,
+            user_id=0,  # System user ID
+            message_type=message_type
+        )
+
+        # Broadcast the system message
+        await sio.emit('new_chat_message', {
+            'messageId': message_id,
+            'sessionId': session_id,
+            'sender': 'System',
+            'message': message,
+            'userId': 0,
+            'messageType': message_type,
+            'timestamp': datetime.now().isoformat()
+        }, room=f'quiz_session_{session_id}')
+
+        return {
+            "message_id": message_id,
+            "status": "sent",
+            "broadcast": True
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send system message"
+        )
 
 
 
