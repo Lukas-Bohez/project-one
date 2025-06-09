@@ -430,10 +430,9 @@ class MultiSessionSensorResponse(BaseModel):
     sessions: list[SessionSensorData]
 
 
-# Add this model to properly structure the incoming request
 class ChatMessageCreate(BaseModel):
     session_id: int
     message_text: str
-    user_id: Optional[int] = None
-    message_type: str = 'chat'
+    user_id: int
+    message_type: str = "user"
     reply_to_id: Optional[int] = None
