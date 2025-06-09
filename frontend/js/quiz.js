@@ -106,9 +106,12 @@ async autoLogin() {
         }
 
         // Initialize chat container height and scrolling
-        chatMessages.style.maxHeight = '250px'; // Fixed height for messages
+        chatMessages.style.maxHeight = '250px';
         chatMessages.style.overflowY = 'auto';
         this.scrollChatToBottom();
+
+        // Load existing messages
+        this.loadChatMessages();
 
         // Send message on button click
         chatSend.addEventListener('click', () => this.sendChatMessage());
@@ -130,14 +133,30 @@ async autoLogin() {
         });
     }
 
-    scrollChatToBottom() {
-        const chatMessages = document.getElementById('chatMessages');
-        if (chatMessages) {
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+    async loadChatMessages() {
+        try {
+            const response = await fetch(`${this.lanIP}/api/v1/chat/messages/2`); // Using session ID 2 as requested
+            if (!response.ok) throw new Error('Failed to load messages');
+            
+            const data = await response.json();
+            const messages = data.messages || [];
+            
+            // Clear existing messages
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = '';
+            
+            // Add all messages to chat
+            messages.reverse().forEach(msg => { // Reverse to show oldest first
+                this.addChatMessage(msg.username, msg.message);
+            });
+            
+            this.scrollChatToBottom();
+        } catch (error) {
+            console.error('Error loading chat messages:', error);
         }
     }
 
-    sendChatMessage() {
+    async sendChatMessage() {
         const chatInput = document.getElementById('chatInput');
         const message = chatInput.value.trim();
 
@@ -146,15 +165,40 @@ async autoLogin() {
             return;
         }
 
-        // Add message to chat
-        this.addChatMessage(this.currentUser.fullName, message);
+        try {
+            // First add message locally for immediate feedback
+            this.addChatMessage(this.currentUser.fullName, message);
+            chatInput.value = '';
+            this.scrollChatToBottom();
 
-        // Clear input
-        chatInput.value = '';
+            // Send to server
+            const response = await fetch(`${this.lanIP}/api/v1/chat/messages`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    session_id: 2, // Using session ID 2 as requested
+                    message_text: message,
+                    user_id: this.currentUser.id // Assuming currentUser has an id property
+                })
+            });
 
-        // Scroll to bottom after adding new message
-        this.scrollChatToBottom();
-        // TODO: In a real app, send this message to a WebSocket or another API endpoint
+            if (!response.ok) {
+                throw new Error('Failed to send message');
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
+            this.showError('Failed to send message. Please try again.');
+        }
+    }
+
+    // Rest of your methods remain the same...
+    scrollChatToBottom() {
+        const chatMessages = document.getElementById('chatMessages');
+        if (chatMessages) {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
     }
 
     addChatMessage(sender, message) {
@@ -372,7 +416,6 @@ async autoLogin() {
         this.addPlayerToList(this.currentUser); // Add to local players list if needed for display
         this.hideAuthModal();
         this.showWelcomeMessage();
-        this.addChatMessage('System', `${this.currentUser.fullName} has joined the quiz!`);
     }
 
     // Modified to use actual backend success and user_id

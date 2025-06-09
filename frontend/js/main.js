@@ -114,28 +114,17 @@ const testServoMovement = async () => {
             },
             body: JSON.stringify({ command: "SWEEP_SERVO" })
         });
-
         const data = await response.json();
-
+        
+        // DEBUG: Log what we actually receive
+        console.log("Response status:", response.status);
+        console.log("Response data:", data);
+        console.log("data.detail:", data.detail);
+        
         if (response.ok) {
             alert(data.message);
         } else {
-            if (response.status === 409) {
-                let alertMessage = `${data.message}\n\n`;
-                if (data.active_session) {
-                    alertMessage += `Active Quiz: ${data.active_session.name}\n`;
-                    alertMessage += `Description: ${data.active_session.description || 'N/A'}\n`;
-                    if (data.active_session.start_time) {
-                        const startTime = new Date(data.active_session.start_time).toLocaleString();
-                        alertMessage += `Started: ${startTime}`;
-                    }
-                }
-                alert(alertMessage);
-            } else if (response.status === 429) {
-                alert(`Failed to trigger servo: ${data.detail}`);
-            } else {
-                alert(`Failed to trigger servo: ${data.detail || `HTTP error! Status: ${response.status}`}`);
-            }
+            alert(data.detail || JSON.stringify(data) || "Unknown error");
         }
     } catch (error) {
         alert(`Network error during servo trigger: ${error.message}`);
