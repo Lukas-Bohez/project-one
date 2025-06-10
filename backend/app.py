@@ -889,7 +889,7 @@ async def appeal_ban(payload: AppealPayload, request: Request):
 
 
 @app.get("/api/v1/sensor-data", response_model=MultiSessionSensorResponse)
-async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 10, include_chat: bool = True, include_answers: bool = True):
+async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1000, include_chat: bool = True, include_answers: bool = True):
     # Convert and sort session IDs in descending order (newest first)
     requested_session_ids = sorted(
         [int(sid.strip()) for sid in session_ids.split(',')],
@@ -2205,19 +2205,32 @@ logger = logging.getLogger(__name__)
 
 # Assume ChatMessageCreate, QuizSessionRepository, ChatLogRepository, and sio are imported and defined
 
+user_last_request_time = {}
+RATE_LIMIT_SECONDS = 1
+
 @app.post("/api/v1/chat/messages")
 async def create_chat_message(request: ChatMessageCreate):
     """
     Create a new chat message in the database and broadcast it via Socket.IO.
     """
     try:
-        logger.info("Starting create_chat_message endpoint.")
+        current_time = time.time()
+        user_id = request.user_id
 
+        if user_id in user_last_request_time:
+            if current_time - user_last_request_time[user_id] < RATE_LIMIT_SECONDS:
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail=f"Please wait {RATE_LIMIT_SECONDS} second(s) before sending another message."
+                )
+        user_last_request_time[user_id] = current_time
+
+        logger.info("Starting create_chat_message endpoint.")
+        
         active_sessions = QuizSessionRepository.get_sessions_by_status(2)
-        # Still assuming 'sessionId' is at index 0 for the tuple returned by QuizSessionRepository.get_sessions_by_status
         active_session_ids = [session[0] for session in active_sessions]
         logger.info(f"Active session IDs: {active_session_ids}")
-
+        
         if request.session_id not in active_session_ids:
             logger.warning(f"Session {request.session_id} not found in active sessions.")
             raise HTTPException(
@@ -2233,57 +2246,27 @@ async def create_chat_message(request: ChatMessageCreate):
             message_type=request.message_type,
             reply_to_id=request.reply_to_id
         )
-        logger.info(f"Message creation attempt completed. Message ID: {message_id}")
-
+        
         if message_id is None:
             logger.error("Message ID is None after create_chat_message. Database insertion might have failed.")
             raise Exception("Failed to create message: message_id is None")
 
-        logger.info(f"Retrieving message details for message ID: {message_id}")
-        # message_details_tuple is actually a dict, as per your logs!
-        message_details = ChatLogRepository.get_chat_message_by_id(message_id)
-        logger.info(f"Message details retrieved (dict): {message_details}") # Updated log message
+        logger.info(f"Message created successfully with ID: {message_id}")
 
-        username = 'Unknown User'
-        if message_details:
-            # FIX: Access username using dictionary key 'username'
-            username = message_details.get('username', 'Unknown User')
-            logger.info(f"Extracted username: {username}")
-        else:
-            logger.warning(f"Could not retrieve details for message_id {message_id}. Using 'Unknown User'.")
+        logger.info("Emitting 'message_sent' globally via Socket.IO.")
+        await sio.emit('message_sent', {
+            'session_id': request.session_id
+        })
+        
+        logger.info("Global Socket.IO emit completed successfully.")
 
-        logger.info("Attempting to emit 'new_chat_message' via Socket.IO.")
-        await sio.emit('new_chat_message', {
-            'messageId': message_id,
-            'sessionId': request.session_id,
-            'sender': username,
-            'message': request.message_text,
-            'userId': request.user_id,
-            'messageType': request.message_type,
-            'timestamp': datetime.now().isoformat(),
-            'replyToId': request.reply_to_id
-        }, room=f'quiz_session_{request.session_id}')
-        logger.info("Finished emitting 'new_chat_message'.")
-
-        logger.info("Attempting to emit 'quiz_activity' via Socket.IO.")
-        await sio.emit('quiz_activity', {
-            'type': 'new_message',
-            'sessionId': request.session_id,
-            'userId': request.user_id,
-            'username': username,
-            'timestamp': datetime.now().isoformat()
-        }, room='quiz_general')
-        logger.info("Finished emitting 'quiz_activity'.")
-
-        logger.info("Returning success response.")
         return {
             "message_id": message_id,
             "status": "sent",
             "broadcast": True
         }
-
+        
     except HTTPException:
-        logger.exception("HTTPException occurred in create_chat_message.")
         raise
     except Exception as e:
         logger.exception(f"Unhandled exception in create_chat_message: {e}")
@@ -2350,51 +2333,11 @@ async def get_chat_stats(session_id: int):
         )
 
 # Socket.IO event handlers for enhanced chat functionality
-@sio.event
-async def user_joined_quiz(sid, data):
-    """
-    Handle when a user joins a quiz session.
-    """
-    try:
-        session_id = data.get('sessionId')
-        user_id = data.get('userId')
-        username = data.get('username')
-        
-        if not all([session_id, user_id, username]):
-            return False
-            
-        # Verify session is active
-        active_sessions = QuizSessionRepository.get_sessions_by_status(2)
-        active_session_ids = [session['sessionId'] for session in active_sessions]
-        
-        if session_id not in active_session_ids:
-            return False
-            
-        # Join the user to the quiz session room
-        await sio.enter_room(sid, f'quiz_session_{session_id}')
-        await sio.enter_room(sid, 'quiz_general')
-        
-        # Broadcast that user joined
-        await sio.emit('user_joined_chat', {
-            'userId': user_id,
-            'username': username,
-            'sessionId': session_id,
-            'timestamp': datetime.now().isoformat()
-        }, room=f'quiz_session_{session_id}', skip_sid=sid)
-        
-        # Log the join event
-        ChatLogRepository.create_chat_message(
-            session_id=session_id,
-            message_text=f"{username} joined the quiz",
-            user_id=user_id,
-            message_type="system"
-        )
-        
-        return True
-        
-    except Exception as e:
-        print(f"Error in user_joined_quiz: {e}")
-        return False
+@sio.on('join')
+async def join_room(sid, room_name):
+    sio.enter_room(sid, room_name)
+    print(f"Client {sid} joined room: {room_name}")
+    return {'status': 'success'} # Send acknowledgment back to client
 
 @sio.event
 async def user_left_quiz(sid, data):
