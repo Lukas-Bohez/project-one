@@ -2168,31 +2168,64 @@ async def get_active_sessions():
     """
     try:
         active_sessions = QuizSessionRepository.get_sessions_by_status(2)
-        return {"sessions": active_sessions}
+
+        # Check if active_sessions is a list of tuples or dictionaries
+        # Let's add a robust check and assume it's most likely dictionaries now given previous fixes
+        # Or, if it's still tuples, keep session[0].
+        # For safety, let's try to get the first element and check its type.
+        
+        # This assumes get_sessions_by_status returns at least one session if active sessions exist
+        if active_sessions and isinstance(active_sessions[0], dict):
+            # If it's a list of dictionaries, access by key
+            active_session_ids = [session['sessionId'] for session in active_sessions]
+        else:
+            # If it's a list of tuples (or empty), access by index 0 (as previously assumed)
+            active_session_ids = [session[0] for session in active_sessions]
+        
+        # Return as a dictionary with a clear key for JSON serialization
+        return {"active_session_ids": active_session_ids}
     except Exception as e:
+        # For better debugging, log the actual exception and traceback
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.exception("Failed to retrieve active sessions due to an unexpected error.")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve active sessions"
         )
 
-# Updated chat message creation endpoint
+
+import logging # Import the logging module
+
+# Configure basic logging. This will show INFO messages and above.
+# The 'logger.exception()' calls will print a full traceback.
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Assume ChatMessageCreate, QuizSessionRepository, ChatLogRepository, and sio are imported and defined
+
 @app.post("/api/v1/chat/messages")
 async def create_chat_message(request: ChatMessageCreate):
     """
     Create a new chat message in the database and broadcast it via Socket.IO.
     """
     try:
-        # Verify the session is active
+        logger.info("Starting create_chat_message endpoint.")
+
         active_sessions = QuizSessionRepository.get_sessions_by_status(2)
-        active_session_ids = [session['sessionId'] for session in active_sessions]
-        
+        # Still assuming 'sessionId' is at index 0 for the tuple returned by QuizSessionRepository.get_sessions_by_status
+        active_session_ids = [session[0] for session in active_sessions]
+        logger.info(f"Active session IDs: {active_session_ids}")
+
         if request.session_id not in active_session_ids:
+            logger.warning(f"Session {request.session_id} not found in active sessions.")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Session is not active or does not exist"
             )
 
-        # Create the message in database
+        logger.info("Attempting to create chat message in DB.")
         message_id = ChatLogRepository.create_chat_message(
             session_id=request.session_id,
             message_text=request.message_text,
@@ -2200,16 +2233,26 @@ async def create_chat_message(request: ChatMessageCreate):
             message_type=request.message_type,
             reply_to_id=request.reply_to_id
         )
+        logger.info(f"Message creation attempt completed. Message ID: {message_id}")
 
-        # Get user information for the broadcast
-        try:
-            # For now, we'll get the username from the message creation
-            message_details = ChatLogRepository.get_chat_message_by_id(message_id)
+        if message_id is None:
+            logger.error("Message ID is None after create_chat_message. Database insertion might have failed.")
+            raise Exception("Failed to create message: message_id is None")
+
+        logger.info(f"Retrieving message details for message ID: {message_id}")
+        # message_details_tuple is actually a dict, as per your logs!
+        message_details = ChatLogRepository.get_chat_message_by_id(message_id)
+        logger.info(f"Message details retrieved (dict): {message_details}") # Updated log message
+
+        username = 'Unknown User'
+        if message_details:
+            # FIX: Access username using dictionary key 'username'
             username = message_details.get('username', 'Unknown User')
-        except Exception: # Catch specific exceptions if possible, e.g., if message_details is None
-            username = 'Unknown User'
+            logger.info(f"Extracted username: {username}")
+        else:
+            logger.warning(f"Could not retrieve details for message_id {message_id}. Using 'Unknown User'.")
 
-        # Broadcast the new message to all clients in the quiz session
+        logger.info("Attempting to emit 'new_chat_message' via Socket.IO.")
         await sio.emit('new_chat_message', {
             'messageId': message_id,
             'sessionId': request.session_id,
@@ -2220,8 +2263,9 @@ async def create_chat_message(request: ChatMessageCreate):
             'timestamp': datetime.now().isoformat(),
             'replyToId': request.reply_to_id
         }, room=f'quiz_session_{request.session_id}')
+        logger.info("Finished emitting 'new_chat_message'.")
 
-        # Also emit to general quiz room for broader notifications
+        logger.info("Attempting to emit 'quiz_activity' via Socket.IO.")
         await sio.emit('quiz_activity', {
             'type': 'new_message',
             'sessionId': request.session_id,
@@ -2229,23 +2273,27 @@ async def create_chat_message(request: ChatMessageCreate):
             'username': username,
             'timestamp': datetime.now().isoformat()
         }, room='quiz_general')
+        logger.info("Finished emitting 'quiz_activity'.")
 
+        logger.info("Returning success response.")
         return {
             "message_id": message_id,
             "status": "sent",
             "broadcast": True
         }
-        
+
     except HTTPException:
+        logger.exception("HTTPException occurred in create_chat_message.")
         raise
     except Exception as e:
+        logger.exception(f"Unhandled exception in create_chat_message: {e}")
         print(f"Error creating chat message: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create chat message"
         )
 
-# Updated endpoint for getting chat messages by session
+
 # Updated endpoint for getting chat messages by session
 @app.get("/api/v1/chat/messages/{session_id}")
 async def get_chat_messages(session_id: int) -> Dict[str, List[Dict]]:

@@ -1729,7 +1729,7 @@ class ChatLogRepository:
         return result[0]['count'] if result and result[0] else 0
 
     @staticmethod
-    def get_chat_message_by_id(message_id: int) -> Optional[Dict[str, Any]]:
+    def get_chat_message_by_id(message_id: int) -> Optional[Any]: # Changed return type to Any or tuple
         """Get a chat message by its ID."""
         sql = """
             SELECT 
@@ -1740,7 +1740,7 @@ class ChatLogRepository:
             WHERE c.id = %s
         """
         params = [message_id]
-        result = Database.get_one_row(sql, params) # Assuming get_one_row for single result
+        result = Database.get_one_row(sql, params)
         return result
 
     @staticmethod
