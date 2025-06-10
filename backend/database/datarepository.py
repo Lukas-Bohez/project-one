@@ -1310,14 +1310,6 @@ class SensorDataRepository:
             return rows[::-1]  # Reverse to get ascending order by timestamp for charting
         return []
     
-    @staticmethod
-    def get_all_data_for_session(session_id):
-        sql = """
-        SELECT * FROM sensorData 
-        WHERE sessionId = %s 
-        """
-        params = [session_id]
-        return Database.get_rows(sql, params)
     
     @staticmethod
     def get_data_by_id(data_id):
