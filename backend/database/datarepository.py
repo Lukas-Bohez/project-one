@@ -1604,6 +1604,12 @@ class AuditLogRepository:
             raise
 
 
+
+
+
+
+
+
 class ChatLogRepository:
     @staticmethod
     def create_chat_message(
@@ -2032,6 +2038,11 @@ class SessionPlayerRepository:
         params = [session_id]
         result = Database.get_one(sql, params) # Assuming get_one for single result
         return result if result else {}
+
+
+
+
+
 
 
 

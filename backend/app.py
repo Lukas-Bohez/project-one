@@ -2246,39 +2246,22 @@ async def create_chat_message(request: ChatMessageCreate):
         )
 
 # Updated endpoint for getting chat messages by session
+# Updated endpoint for getting chat messages by session
 @app.get("/api/v1/chat/messages/{session_id}")
-async def get_chat_messages_by_session(session_id: int, limit: int = 100):
+async def get_chat_messages(session_id: int) -> Dict[str, List[Dict]]:
     """
-    Get chat messages for a specific session.
-    Only returns messages if the session is active.
+    Retrieve chat messages for a specific session.
     """
     try:
-        # Verify the session is active
-        active_sessions = QuizSessionRepository.get_active_sessions()
-        active_session_ids = [session['sessionId'] for session in active_sessions]
-        
-        if session_id not in active_session_ids:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Session is not active or does not exist"
-            )
-
-        messages = ChatLogRepository.get_chat_messages_by_session(
-            session_id=session_id,
-            limit=limit
-        )
-        
-        return {
-            "messages": messages,
-            "session_id": session_id,
-            "message_count": len(messages),
-            "is_active": True
-        }
-        
-    except HTTPException:
-        raise
+        messages = ChatLogRepository.get_chat_messages_by_session(session_id)
+        formatted_messages = []
+        for msg in messages:
+            formatted_messages.append({
+                "username": msg.get("username", "Unknown User"),
+                "message": msg.get("message", "")
+            })
+        return {"messages": formatted_messages}
     except Exception as e:
-        print(f"Error retrieving chat messages: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve chat messages"
@@ -2292,7 +2275,7 @@ async def get_chat_stats(session_id: int):
     """
     try:
         # Verify the session is active
-        active_sessions = QuizSessionRepository.get_active_sessions()
+        active_sessions = QuizSessionRepository.get_sessions_by_status(2)
         active_session_ids = [session['sessionId'] for session in active_sessions]
         
         if session_id not in active_session_ids:
@@ -2333,7 +2316,7 @@ async def user_joined_quiz(sid, data):
             return False
             
         # Verify session is active
-        active_sessions = QuizSessionRepository.get_active_sessions()
+        active_sessions = QuizSessionRepository.get_sessions_by_status(2)
         active_session_ids = [session['sessionId'] for session in active_sessions]
         
         if session_id not in active_session_ids:
@@ -2419,7 +2402,7 @@ async def send_system_message(session_id: int, message: str, message_type: str =
     """
     try:
         # Verify the session is active
-        active_sessions = QuizSessionRepository.get_active_sessions()
+        active_sessions = QuizSessionRepository.get_sessions_by_status(2)
         active_session_ids = [session['sessionId'] for session in active_sessions]
         
         if session_id not in active_session_ids:
