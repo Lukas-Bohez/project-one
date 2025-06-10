@@ -21,7 +21,7 @@ from models.models import (
     QuestionActivationNotification,
     AnswerBase, AnswerCreate, AnswerListResponse, AnswerResponse, 
     AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand,BroadcastMessage,DirectMessage, ClientActivity,SessionSensorData,MultiSessionSensorResponse,UserUpdateNames,UserCredentials,AnswerInput,QuestionInput, ThemeInput,
-    UserPublic,UserPublicWithIp,UserIpAddress,BanIpRequest,AuditLogResponse,ChatMessage,ChatMessageCreate
+    UserPublic,UserPublicWithIp,UserIpAddress,BanIpRequest,AuditLogResponse,ChatMessage,ChatMessageCreate,ShutdownRequest
 )
 from typing import Dict, Any, Optional, List
 from fastapi import Request
@@ -2435,9 +2435,29 @@ async def send_system_message(session_id: int, message: str, message_type: str =
             detail="Failed to send system message"
         )
 
+import subprocess
+from fastapi import Body,Request
 
 
 
+
+@app.post("/api/shutdown")
+async def immediate_shutdown(
+    x_user_id: str = Header(..., alias="X-User-ID"),
+    x_rfid: str = Header(..., alias="X-RFID")
+):
+    # Verify admin privileges
+    if not verify_user(x_user_id, x_rfid) == "admin":
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+    
+    # Execute IMMEDIATE shutdown (no delay)
+    try:
+        subprocess.Popen(["sudo", "poweroff"], 
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL)
+        return {"message": "System powering off NOW"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Shutdown failed: {str(e)}")
 
 
 

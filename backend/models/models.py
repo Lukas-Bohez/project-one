@@ -437,3 +437,8 @@ class ChatMessageCreate(BaseModel):
     # Ensure message_type is restricted to your ENUM values
     message_type: Literal['chat', 'system', 'announcement', 'warning'] = 'chat'
     reply_to_id: Optional[int] = None
+
+
+
+class ShutdownRequest(BaseModel):
+    action: str = "shutdown"
