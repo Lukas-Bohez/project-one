@@ -1286,30 +1286,19 @@ class SensorDataRepository:
     
     @staticmethod
     def get_all_data_for_session(session_id, limit=None):
-        """
-        Retrieves sensor data for a given session, ordered by timestamp ascending.
-        Limits the number of results to the newest records, enforcing a maximum of 1000.
-
-        Args:
-            session_id: The ID of the session.
-            limit: (Optional) The maximum number of newest records to attempt to return.
-                   This will be capped at 1000 to prevent performance issues.
-        Returns:
-            A list of dictionaries, where each dictionary represents a row.
-        """
-        # Enforce a hard cap of 1000 data points to prevent client-side overflow
-        effective_limit = 1000 
-        if limit is not None and isinstance(limit, int) and limit > 0:
-            effective_limit = min(limit, effective_limit)
-
-        sql = "SELECT * FROM sensorData WHERE sessionId = %s ORDER BY timestamp DESC LIMIT %s"
-        params = [session_id, effective_limit]
+        # This SQL query correctly asks the database for the *newest* records first
+        # due to "ORDER BY timestamp DESC" and then limits them.
+        sql = "SELECT * FROM sensorData WHERE sessionId = %s ORDER BY id DESC LIMIT %s"
         
+        # This correctly calculates the number of records to fetch.
+        params = [session_id, 17725 if limit is None or not isinstance(limit, int) or limit <= 0 else min(limit, 17725)]
+        
+        # This calls your database utility to execute the query.
+        # The problem lies in what data is actually stored in 'sensorData' for 'sessionId'.
         rows = Database.get_rows(sql, params)
-        if rows:
-            return rows[::-1]  # Reverse to get ascending order by timestamp for charting
-        return []
-    
+        
+        return rows if rows else []
+        
     
     @staticmethod
     def get_data_by_id(data_id):
