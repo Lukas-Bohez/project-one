@@ -2626,6 +2626,7 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
                                
                                 log_quiz_sensor_data(session_id, sensor_data)
                                 emit_sensor_data(sensor_data, sio, loop)
+                                emit_combined_theme_selection(sio, loop)
                                                     # Manage RFID display time
                                 if showing_rfid and (current_time - rfid_display_start) >= RFID_DISPLAY_TIME:
                                     showing_rfid = False
@@ -2678,7 +2679,7 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
                                                         lcd.write_line(2, "User creation failed!")
                                                 
 
-                                                emit_combined_theme_selection()
+                                                
                                
 
 
@@ -3135,55 +3136,12 @@ def emit_answers_for_question(question_id, sio, loop):
     except Exception as e:
         print(f"Error emitting answers_for_question: {e}")
 
-def emit_theme_selection_question(sio, loop):
-    """Emit theme selection question via socket.io."""
-    try:
-        question_data = {
-            'id': 'theme_selection',
-            'question': 'Choose a theme?',
-            'type': 'theme_selection',
-            'timestamp': asyncio.get_event_loop().time()
-        }
-        asyncio.run_coroutine_threadsafe(
-            sio.emit('theme_question', question_data),
-            loop
-        )
-    except Exception as e:
-        print(f"Error emitting theme_selection_question: {e}")
-
-def emit_all_themes(sio, loop, active_only=True):
-    """Emit all themes via socket.io."""
-    try:
-        if active_only:
-            themes = ThemeRepository.get_active_themes()
-        else:
-            themes = ThemeRepository.get_all_themes()
-            
-        if not themes:
-            error_data = {
-                'error': 'not_found',
-                'message': 'No themes found',
-                'status_code': 404
-            }
-            asyncio.run_coroutine_threadsafe(
-                sio.emit('themes_error', error_data),
-                loop
-            )
-        else:
-            response_data = {
-                'themes': themes,
-                'count': len(themes),
-                'active_only': active_only
-            }
-            asyncio.run_coroutine_threadsafe(
-                sio.emit('themes_data', response_data),
-                loop
-            )
-    except Exception as e:
-        print(f"Error emitting all_themes: {e}")
 
 def emit_combined_theme_selection(sio, loop, active_only=True):
-    """Emit theme selection question with theme options via socket.io."""
+    """
+    Emit theme selection question with theme options via socket.io.
+    Extensive logging has been added to track the function's execution.
+    """
     try:
         if active_only:
             themes = ThemeRepository.get_active_themes()
@@ -3196,11 +3154,18 @@ def emit_combined_theme_selection(sio, loop, active_only=True):
                 'message': 'No themes found',
                 'status_code': 404
             }
-            asyncio.run_coroutine_threadsafe(
-                sio.emit('theme_selection_error', error_data),
-                loop
-            )
+            try:
+                # Schedule the coroutine to run on the event loop
+                future = asyncio.run_coroutine_threadsafe(
+                    sio.emit('theme_selection_error', error_data),
+                    loop
+                )
+                # You might want to add a timeout or handle the future result if needed
+                # For basic logging, just scheduling is enough.
+            except Exception as e:
+                logger.error(f"Failed to schedule 'theme_selection_error' emit: {e}")
         else:
+            theme_names = [t.get('name') or t.get('title') for t in themes]
             combined_data = {
                 'id': 'theme_selection',
                 'question': 'Choose a theme?',
@@ -3208,14 +3173,21 @@ def emit_combined_theme_selection(sio, loop, active_only=True):
                 'themes': themes,
                 'count': len(themes),
                 'active_only': active_only,
-                'timestamp': asyncio.get_event_loop().time()
+                'timestamp': time.time() # Using time.time() for consistency with other current_time checks
             }
-            asyncio.run_coroutine_threadsafe(
-                sio.emit('theme_selection_data', combined_data),
-                loop
-            )
+            try:
+                # Schedule the coroutine to run on the event loop
+                future = asyncio.run_coroutine_threadsafe(
+                    sio.emit('theme_selection_data', combined_data),
+                    loop
+                )
+            except Exception as e:
+                logger.error(f"Failed to schedule 'theme_selection_data' emit: {e}")
+
     except Exception as e:
-        print(f"Error emitting combined_theme_selection: {e}")
+        logger.exception(f"An unexpected error occurred during emit_combined_theme_selection: {e}")
+        # The 'logger.exception' call automatically includes traceback information.
+
 
 
 # ----------------------------------------------------
