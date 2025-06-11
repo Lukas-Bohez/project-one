@@ -3079,6 +3079,139 @@ def activateAdvertFlood():
 
 
 
+# sio emits for quiz data
+
+def emit_question_by_id(question_id, sio, loop):
+    """Emit question data by ID via socket.io."""
+    try:
+        question = QuestionRepository.get_question_by_id(question_id)
+        if not question:
+            error_data = {
+                'error': 'not_found',
+                'message': f"Question with ID {question_id} not found",
+                'status_code': 404
+            }
+            asyncio.run_coroutine_threadsafe(
+                sio.emit('question_error', error_data),
+                loop
+            )
+        else:
+            asyncio.run_coroutine_threadsafe(
+                sio.emit('question_data', question),
+                loop
+            )
+    except Exception as e:
+        print(f"Error emitting question_by_id: {e}")
+
+def emit_answers_for_question(question_id, sio, loop):
+    """Emit all answers for a question via socket.io."""
+    try:
+        if not QuestionRepository.get_question_by_id(question_id):
+            error_data = {
+                'error': 'not_found',
+                'message': f"Question with ID {question_id} not found",
+                'status_code': 404
+            }
+            asyncio.run_coroutine_threadsafe(
+                sio.emit('answers_error', error_data),
+                loop
+            )
+        else:
+            answers = AnswerRepository.get_all_answers_for_question(question_id)
+            response_data = {
+                'answers': answers,
+                'count': len(answers),
+                'question_id': question_id
+            }
+            asyncio.run_coroutine_threadsafe(
+                sio.emit('answers_data', response_data),
+                loop
+            )
+    except Exception as e:
+        print(f"Error emitting answers_for_question: {e}")
+
+def emit_theme_selection_question(sio, loop):
+    """Emit theme selection question via socket.io."""
+    try:
+        question_data = {
+            'id': 'theme_selection',
+            'question': 'Choose a theme?',
+            'type': 'theme_selection',
+            'timestamp': asyncio.get_event_loop().time()
+        }
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('theme_question', question_data),
+            loop
+        )
+    except Exception as e:
+        print(f"Error emitting theme_selection_question: {e}")
+
+def emit_all_themes(active_only, sio, loop):
+    """Emit all themes via socket.io."""
+    try:
+        if active_only:
+            themes = ThemeRepository.get_active_themes()
+        else:
+            themes = ThemeRepository.get_all_themes()
+            
+        if not themes:
+            error_data = {
+                'error': 'not_found',
+                'message': 'No themes found',
+                'status_code': 404
+            }
+            asyncio.run_coroutine_threadsafe(
+                sio.emit('themes_error', error_data),
+                loop
+            )
+        else:
+            response_data = {
+                'themes': themes,
+                'count': len(themes),
+                'active_only': active_only
+            }
+            asyncio.run_coroutine_threadsafe(
+                sio.emit('themes_data', response_data),
+                loop
+            )
+    except Exception as e:
+        print(f"Error emitting all_themes: {e}")
+
+def emit_combined_theme_selection(active_only, sio, loop):
+    """Emit theme selection question with theme options via socket.io."""
+    try:
+        if active_only:
+            themes = ThemeRepository.get_active_themes()
+        else:
+            themes = ThemeRepository.get_all_themes()
+            
+        if not themes:
+            error_data = {
+                'error': 'not_found',
+                'message': 'No themes found',
+                'status_code': 404
+            }
+            asyncio.run_coroutine_threadsafe(
+                sio.emit('theme_selection_error', error_data),
+                loop
+            )
+        else:
+            combined_data = {
+                'id': 'theme_selection',
+                'question': 'Choose a theme?',
+                'type': 'theme_selection',
+                'themes': themes,
+                'count': len(themes),
+                'active_only': active_only,
+                'timestamp': asyncio.get_event_loop().time()
+            }
+            asyncio.run_coroutine_threadsafe(
+                sio.emit('theme_selection_data', combined_data),
+                loop
+            )
+    except Exception as e:
+        print(f"Error emitting combined_theme_selection: {e}")
+
 
 # ----------------------------------------------------
 # Run the app
