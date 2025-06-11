@@ -2206,7 +2206,7 @@ logger = logging.getLogger(__name__)
 # Assume ChatMessageCreate, QuizSessionRepository, ChatLogRepository, and sio are imported and defined
 
 user_last_request_time = {}
-RATE_LIMIT_SECONDS = 1
+RATE_LIMIT_SECONDS = 0.25
 
 @app.post("/api/v1/chat/messages")
 async def create_chat_message(request: ChatMessageCreate):
@@ -2280,16 +2280,16 @@ async def create_chat_message(request: ChatMessageCreate):
 # Updated endpoint for getting chat messages by session
 @app.get("/api/v1/chat/messages/{session_id}")
 async def get_chat_messages(session_id: int) -> Dict[str, List[Dict]]:
-    """
-    Retrieve chat messages for a specific session.
-    """
     try:
         messages = ChatLogRepository.get_chat_messages_by_session(session_id)
         formatted_messages = []
         for msg in messages:
             formatted_messages.append({
                 "username": msg.get("username", "Unknown User"),
-                "message": msg.get("message", "")
+                "message": msg.get("message", ""),
+                "is_flagged": msg.get("is_flagged", False),
+                "flagged_by": msg.get("flagged_by"),
+                "flagged_reason": msg.get("flagged_reason")
             })
         return {"messages": formatted_messages}
     except Exception as e:
