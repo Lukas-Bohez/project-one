@@ -62,11 +62,11 @@ Lector: Geert
 
 Vragen voor dit gesprek:
 
-- [x] vraag 1: Mag ik deze libraries gebruiken, pygame en ydotool
+- [x] vraag 1: Mag ik Ydotool gebruiken?
 
 Dit is de feedback op mijn vragen.
 
-- feedback 1: Nee!
+- feedback 1: Nee, dit is niet binnen de scope van project one.
 
 
 ## Gesprek 4 (Datum: xx/xx/2025)
