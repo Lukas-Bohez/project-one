@@ -46,7 +46,7 @@ Dit is de feedback op mijn vragen.
 
 ## Gesprek 2 (Datum: 02/06/2025)
 
-Lector:
+Lector: Geert
 
 Vragen voor dit gesprek:
 
@@ -56,17 +56,17 @@ Dit is de feedback op mijn vragen.
 
 - feedback 1: Het is niet gesoldeerd.
 
-## Gesprek 3 (Datum: xx/xx/2025)
+## Gesprek 3 (Datum: 11/06/2025)
 
-Lector:
+Lector: Geert
 
 Vragen voor dit gesprek:
 
-- [x] vraag 1: V
+- [x] vraag 1: Mag ik deze libraries gebruiken, pygame en ydotool
 
 Dit is de feedback op mijn vragen.
 
-- feedback 1: G
+- feedback 1: Nee!
 
 
 ## Gesprek 4 (Datum: xx/xx/2025)
