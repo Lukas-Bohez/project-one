@@ -3178,7 +3178,7 @@ def emit_combined_theme_selection(sio, loop, active_only=True):
             try:
                 # Schedule the coroutine to run on the event loop
                 future = asyncio.run_coroutine_threadsafe(
-                    sio.emit('theme_selection_data', combined_data),
+                    sio.emit('questionData', combined_data),
                     loop
                 )
             except Exception as e:
