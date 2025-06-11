@@ -2676,6 +2676,9 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
                                                     print(f"Failed to create new user for RFID: {rfid_code}")
                                                     if lcd:
                                                         lcd.write_line(2, "User creation failed!")
+                                                
+
+                                                emit_combined_theme_selection()
                                
 
 
@@ -3081,6 +3084,8 @@ def activateAdvertFlood():
 
 # sio emits for quiz data
 
+import asyncio
+
 def emit_question_by_id(question_id, sio, loop):
     """Emit question data by ID via socket.io."""
     try:
@@ -3146,7 +3151,7 @@ def emit_theme_selection_question(sio, loop):
     except Exception as e:
         print(f"Error emitting theme_selection_question: {e}")
 
-def emit_all_themes(active_only, sio, loop):
+def emit_all_themes(sio, loop, active_only=True):
     """Emit all themes via socket.io."""
     try:
         if active_only:
@@ -3177,7 +3182,7 @@ def emit_all_themes(active_only, sio, loop):
     except Exception as e:
         print(f"Error emitting all_themes: {e}")
 
-def emit_combined_theme_selection(active_only, sio, loop):
+def emit_combined_theme_selection(sio, loop, active_only=True):
     """Emit theme selection question with theme options via socket.io."""
     try:
         if active_only:
