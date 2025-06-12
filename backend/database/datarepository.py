@@ -1158,120 +1158,23 @@ class QuizSessionRepository:
         """Sets session status to 'pending' (1)."""
         return QuizSessionRepository.update_session_status(session_id, 1)
     
-class QuizSessionsRepository:
-    # CREATE operations
     @staticmethod
-    def create_quiz_session(session_date, name, description, sessionStatusId, themeId, 
-                          hostUserId, start_time=None, end_time=None):
+    def update_session_theme(session_id: int, theme_id: int) -> bool:
+        """Update the theme for a specific session."""
         sql = """
-        INSERT INTO quizSessions 
-        (session_date, name, description, sessionStatusId, themeId, hostUserId, start_time, end_time) 
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            UPDATE quizSessions 
+            SET themeId = %s 
+            WHERE id = %s
         """
-        params = [session_date, name, description, sessionStatusId, themeId, 
-                 hostUserId, start_time, end_time]
-        return Database.execute_sql(sql, params)
-    
-    # READ operations
-    @staticmethod
-    def get_all_sessions(active_only=False):
-        sql = "SELECT * FROM quizSessions"
-        if active_only:
-            sql += " WHERE sessionStatusId IN (SELECT id FROM sessionStatuses WHERE is_active = TRUE)"
-        sql += " ORDER BY session_date DESC"
-        return Database.get_rows(sql)
-    
-    @staticmethod
-    def get_session_by_id(session_id):
-        sql = """
-        SELECT qs.*, 
-               ss.name as status_name, 
-               t.name as theme_name,
-               u.username as host_username
-        FROM quizSessions qs
-        JOIN sessionStatuses ss ON qs.sessionStatusId = ss.id
-        JOIN themes t ON qs.themeId = t.id
-        JOIN users u ON qs.hostUserId = u.id
-        WHERE qs.id = %s
-        """
-        params = [session_id]
-        return Database.get_one_row(sql, params)
-    
-    @staticmethod
-    def get_sessions_by_host(user_id):
-        sql = "SELECT * FROM quizSessions WHERE hostUserId = %s ORDER BY session_date DESC"
-        params = [user_id]
-        return Database.get_rows(sql, params)
-    
-    @staticmethod
-    def get_active_sessions_by_theme(theme_id):
-        sql = """
-        SELECT qs.* 
-        FROM quizSessions qs
-        JOIN sessionStatuses ss ON qs.sessionStatusId = ss.id
-        WHERE qs.themeId = %s AND ss.is_active = TRUE
-        ORDER BY qs.session_date DESC
-        """
-        params = [theme_id]
-        return Database.get_rows(sql, params)
-    
-    @staticmethod
-    def get_sessions_count_by_status(status_id):
-        sql = "SELECT COUNT(*) as count FROM quizSessions WHERE sessionStatusId = %s"
-        params = [status_id]
-        result = Database.get_one_row(sql, params)
-        return result['count'] if result else 0
-    
-    # UPDATE operations
-    @staticmethod
-    def update_session_status(session_id, new_status_id):
-        sql = "UPDATE quizSessions SET sessionStatusId = %s WHERE id = %s"
-        params = [new_status_id, session_id]
-        return Database.execute_sql(sql, params)
-    
-    @staticmethod
-    def update_session_times(session_id, start_time=None, end_time=None):
-        if start_time and end_time:
-            sql = "UPDATE quizSessions SET start_time = %s, end_time = %s WHERE id = %s"
-            params = [start_time, end_time, session_id]
-        elif start_time:
-            sql = "UPDATE quizSessions SET start_time = %s WHERE id = %s"
-            params = [start_time, session_id]
-        elif end_time:
-            sql = "UPDATE quizSessions SET end_time = %s WHERE id = %s"
-            params = [end_time, session_id]
-        else:
-            return False
-        return Database.execute_sql(sql, params)
-    
-    @staticmethod
-    def update_session_details(session_id, name=None, description=None, themeId=None):
-        updates = []
-        params = []
+        params = (theme_id, session_id)
         
-        if name:
-            updates.append("name = %s")
-            params.append(name)
-        if description:
-            updates.append("description = %s")
-            params.append(description)
-        if themeId:
-            updates.append("themeId = %s")
-            params.append(themeId)
-            
-        if not updates:
+        try:
+            result = Database.execute_query(sql, params)
+            return result > 0
+        except Exception as e:
+            logger.error(f"Error updating session theme: {e}")
             return False
-            
-        sql = f"UPDATE quizSessions SET {', '.join(updates)} WHERE id = %s"
-        params.append(session_id)
-        return Database.execute_sql(sql, params)
     
-    # DELETE operations (use with caution)
-    @staticmethod
-    def delete_session(session_id):
-        sql = "DELETE FROM quizSessions WHERE id = %s"
-        params = [session_id]
-        return Database.execute_sql(sql, params)
     
 
 
