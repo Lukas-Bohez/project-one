@@ -1887,17 +1887,16 @@ class SessionPlayerRepository:
         return result
 
     @staticmethod
-    def get_session_players(session_id: int) -> List[Dict[str, Any]]:
-        """Get all players in a session ordered by score."""
-        sql = """
-            SELECT sp.*, COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Unknown User') as username, u.email
-            FROM sessionPlayers sp
-            JOIN users u ON sp.userId = u.id
-            WHERE sp.sessionId = %s AND sp.is_active = TRUE
-            ORDER BY sp.score DESC, sp.correctAnswers DESC, sp.streak_count DESC
-        """
-        params = [session_id]
-        return Database.get_rows(sql, params)
+    def get_session_player(session_id: int, user_id: int):
+        try:
+            sql = "SELECT * FROM session_players WHERE session_id = %s AND user_id = %s"
+            params = [session_id, user_id]
+            # Use get_rows instead of get_one, then take first result
+            results = Database.get_rows(sql, params)
+            return results[0] if results else None
+        except Exception as e:
+            logger.error(f"Error getting session player: {e}")
+            return None
 
     @staticmethod
     def get_player_sessions(user_id: int) -> List[Dict[str, Any]]:
