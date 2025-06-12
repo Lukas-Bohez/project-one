@@ -2850,7 +2850,7 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
                                
                                 log_quiz_sensor_data(session_id, sensor_data)
                                 emit_sensor_data(sensor_data, sio, loop)
-                                emit_combined_theme_selection(sio, loop)
+                                emit_theme_selection_if_needed(sio, loop)
                                                     # Manage RFID display time
                                 if showing_rfid and (current_time - rfid_display_start) >= RFID_DISPLAY_TIME:
                                     showing_rfid = False
@@ -3417,14 +3417,16 @@ def emit_combined_theme_selection(sio, loop, active_only=True):
 def emit_theme_selection_if_needed(sio, loop):
     """Emit theme selection only if active session has no theme."""
     try:
-        active_sessions = QuizSessionRepository.get_sessions_by_status(2)
-        if active_sessions:
-            session = active_sessions[0]
-            # Only emit theme selection if session has no theme
-            if not session.get('themeId'):
+        active_session_id = get_active_session_id()
+        
+        if active_session_id:
+            # Get the full session details using the ID
+            active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+            if not active_session_info.get('themId'):
                 emit_combined_theme_selection(sio, loop)
     except Exception as e:
         logger.error(f"Error checking theme selection: {e}")
+
 
 # Timer function for quiz countdown
 def start_quiz_timer(sio, loop, session_id):
