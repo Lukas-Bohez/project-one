@@ -1301,63 +1301,8 @@ async def handle_answer_submission(sid, data):
             'error': 'An error occurred while processing your answer'
         }, room=sid)
 
-from collections import defaultdict
-theme_votes = {}  # Format: {session_id: {"votes": {theme_id: count}, "voted_users": set(user_ids)}}
-theme_votes_lock = Lock()
 
-def get_winning_theme(session_id):
-    """Returns the theme ID with the most votes for a session"""
-    with theme_votes_lock:
-        session_votes = theme_votes.get(session_id, {})
-        votes = session_votes.get("votes", {})
-        if not votes:
-            return None
-        return max(votes.items(), key=lambda x: x[1])[0]
 
-@sio.on('theme_selected')
-async def handle_theme_selection(sid, data):
-    try:
-        user_id = data.get('userId')
-        theme_id = int(data['themeId'])
-        session_id = data.get('session_id')
-
-        with theme_votes_lock:
-            # Initialize session entry if not exists
-            if session_id not in theme_votes:
-                theme_votes[session_id] = {
-                    "votes": defaultdict(int),
-                    "voted_users": set()
-                }
-            
-            # Check if user already voted
-            if user_id in theme_votes[session_id]["voted_users"]:
-                await sio.emit('answer_response', {
-                    'success': False,
-                    'error': 'You already voted for a theme'
-                }, room=sid)
-                return
-
-            # Record vote
-            theme_votes[session_id]["votes"][theme_id] += 1
-            theme_votes[session_id]["voted_users"].add(user_id)
-
-        await sio.emit('answer_response', {
-            'success': True,
-            'message': 'Vote recorded successfully'
-        }, room=sid)
-
-        # Broadcast updated votes to all clients
-        await sio.emit('theme_votes_update', {
-            'session_id': session_id,
-            'votes': dict(theme_votes[session_id]["votes"])
-        })
-
-    except Exception as e:
-        logger.error(f"Theme voting error: {str(e)}", exc_info=True)
-        await sio.emit('answer_response', {
-            'success': False,
-            'error': 'Failed to process theme vote'
-        }, room=sid)
 
 
 async def get_complete_user_data(user_id: int):
@@ -3439,99 +3384,128 @@ def emit_theme_selection_if_needed(sio, loop):
         logger.error(f"Error checking theme selection: {e}")
 
 
+
+
+
+
+
+
+
+
+
+
+# ---------- Voting System ----------
+from collections import defaultdict
+from threading import Lock
+import random
+
+theme_votes = {}  # Format: {session_id: {"votes": {theme_id: count}, "user_votes": {user_id: theme_id}}}
+theme_votes_lock = Lock()
+
+def get_winning_theme(session_id):
+    """Returns random top theme in case of tie"""
+    with theme_votes_lock:
+        session_data = theme_votes.get(session_id, {})
+        votes = session_data.get("votes", {})
+        return max(votes.items(), key=lambda x: x[1])[0] if votes else None
+
+# ---------- Timer System ----------
 from threading import Thread, Lock
 import time
 import asyncio
 
-# Global timer management
 timer_lock = Lock()
 active_timers = {}
 
-
 def start_quiz_timer(sio, loop, session_id, total_time=60):
-    global servo
-    """Start a countdown timer with servo feedback and session management."""
-    global active_timers
-
-    def calculate_servo_angle(current_time, total_time):
-        """Calculate servo angle based on remaining time percentage"""
-        progress = current_time / total_time
-        angle = 360 * progress  # Scale to 0-180° range but, maybe 360 could work
-        return max(0, min(360, angle))  # Clamp to valid servo range
-
+    """Start timer that resolves votes when finished"""
     with timer_lock:
-        # Prevent duplicate timers for the same session
         if session_id in active_timers:
-            existing_timer = active_timers[session_id]
-            if existing_timer['thread'].is_alive():
-                print(f"Timer already running for session {session_id}")
-                return
+            return  # Timer already running
 
-        # Create new timer entry
-        stop_event = {'stop': False}
-        timer_data = {
-            'thread': None,
-            'stop_event': stop_event,
-            'session_id': session_id,
-            'total_time': total_time
-        }
-        
         def timer_task():
             try:
-                current_time = total_time
-                
-                while current_time > 0 and not stop_event['stop']:
-                    # Update servo position
-                    servo.set_angle(calculate_servo_angle(current_time, total_time))
-                    
-                    # Emit current timer to all clients
-                    timer_data = {
-                        'time_remaining': current_time,
-                        'session_id': session_id,
-                        'total_time': total_time
-                    }
-                    
-                    asyncio.run_coroutine_threadsafe(
-                        sio.emit('quiz_timer', timer_data),
-                        loop
-                    )
-                    
-                    # Sleep with dynamic increment
+                for current_time in range(total_time, -1, -1):
+                    if current_time <= 0:
+                        break
                     time.sleep(1)
-                    current_time -= 1
                 
-                # Final cleanup if not stopped
-                if not stop_event['stop']:
-                    servo.set_angle(0)  # Reset servo at end
+                # Timer finished - process votes
+                winning_theme = get_winning_theme(session_id)
+                if winning_theme:
+                    # Update session theme
+                    QuizSessionRepository.update_session_theme(session_id, winning_theme)
+                    # Broadcast winning theme
                     asyncio.run_coroutine_threadsafe(
-                        sio.emit('quiz_timer_finished', {
+                        sio.emit('theme_selected', {
                             'session_id': session_id,
-                            'total_time': total_time
+                            'theme_id': winning_theme
                         }),
                         loop
                     )
+                
+                # Cleanup votes
+                with theme_votes_lock:
+                    if session_id in theme_votes:
+                        del theme_votes[session_id]
 
-            except Exception as e:
-                logger.error(f"Timer error: {e}")
-                servo.set_angle(0)  # Reset on error
             finally:
                 with timer_lock:
-                    if session_id in active_timers:
-                        del active_timers[session_id]
+                    active_timers.pop(session_id, None)
 
-        # Create and store the thread
+        # Start timer thread
         timer_thread = Thread(target=timer_task, daemon=True)
-        timer_data['thread'] = timer_thread
-        active_timers[session_id] = timer_data
+        active_timers[session_id] = timer_thread
         timer_thread.start()
 
-def stop_quiz_timer(session_id):
-    """Stop an active timer and reset servo."""
-    with timer_lock:
-        if session_id in active_timers:
-            active_timers[session_id]['stop_event']['stop'] = True
-            servo.set_angle(0)  # Reset servo position
-            del active_timers[session_id]
+# ---------- Socket Handler ----------
+@sio.on('theme_selected')
+async def handle_theme_selection(sid, data):
+    try:
+        user_id = data.get('userId', 1)
+        theme_id = int(data['themeId'])
+        session_id = data.get('session_id', 'default')
+
+        with theme_votes_lock:
+            # Initialize session structure
+            if session_id not in theme_votes:
+                theme_votes[session_id] = {
+                    "votes": defaultdict(int),
+                    "user_votes": {}
+                }
+
+            session_data = theme_votes[session_id]
+            votes = session_data["votes"]
+            user_votes = session_data["user_votes"]
+
+            # Remove previous vote
+            if user_id in user_votes:
+                old_theme = user_votes[user_id]
+                votes[old_theme] -= 1
+                if votes[old_theme] <= 0:
+                    del votes[old_theme]
+
+            # Add new vote
+            votes[theme_id] += 1
+            user_votes[user_id] = theme_id
+
+        # Broadcast updates
+        await sio.emit('theme_votes_update', {
+            'session_id': session_id,
+            'votes': dict(votes)
+        })
+
+        # Start timer on first vote
+        if sum(votes.values()) == 1:
+            start_quiz_timer(sio, asyncio.get_event_loop(), session_id)
+
+        await sio.emit('answer_response', {'success': True})
+
+    except Exception as e:
+        await sio.emit('answer_response', {
+            'success': False,
+            'error': 'Vote failed: ' + str(e)
+        })
 
 
 
