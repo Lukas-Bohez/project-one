@@ -1874,22 +1874,20 @@ class SessionPlayerRepository:
         return Database.execute_sql(sql, params)
 
     @staticmethod
-    def get_session_player(session_id: int, user_id: int) -> Optional[Dict[str, Any]]:
-        """Get a specific player's data for a session."""
-        sql = """
-            SELECT sp.*, COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Unknown User') as username, u.email
-            FROM sessionPlayers sp
-            JOIN users u ON sp.userId = u.id
-            WHERE sp.sessionId = %s AND sp.userId = %s AND sp.is_active = TRUE
-        """
-        params = [session_id, user_id]
-        result = Database.get_one(sql, params) # Assuming get_one for single result
-        return result
+    def get_session_players(session_id: int):
+        try:
+            sql = "SELECT userId FROM sessionPlayers WHERE sessionId = %s"
+            params = [session_id]
+            results = Database.get_rows(sql, params)
+            return results if results else None
+        except Exception as e:
+            logger.error(f"Error getting session players: {e}")
+            return None
 
     @staticmethod
     def get_session_player(session_id: int, user_id: int):
         try:
-            sql = "SELECT * FROM session_players WHERE session_id = %s AND user_id = %s"
+            sql = "SELECT * FROM sessionPlayers WHERE sessionId = %s AND user_id = %s"
             params = [session_id, user_id]
             # Use get_rows instead of get_one, then take first result
             results = Database.get_rows(sql, params)

@@ -1160,34 +1160,72 @@ def calculate_player_score(session_id: int, user_id: int) -> int:
         logger.error(f"Could not calculate score for user {user_id} in session {session_id}: {e}")
         return 0
 
+
 @sio.on('request_user_data')
 async def handle_user_data_request(sid, data):
     try:
-        requesting_user_id = data.get('user_id')
-        
-        all_users_details = UserRepository.get_all_users()
-        all_players_data = []
-
-        if not all_users_details:
-            logger.warning("No users found to send data.")
-            await sio.emit('all_users_data_updated', {'users': []}, room=sid)
+        # Validate input data
+        if not data or 'user_id' not in data:
+            logger.warning(f"Invalid request data from SID {sid}: {data}")
+            await sio.emit('error', {'message': 'Missing user_id'}, room=sid)
             return
 
-        active_session_id = get_active_session_id()
-        active_session_info = None
-        if active_session_id:
-            active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+        requesting_user_id = data['user_id']
+        logger.info(f"Processing user data request from user {requesting_user_id} (SID: {sid})")
 
-        for user_details in all_users_details:
-            user_id = user_details.get('id')
+        # Get active session
+        active_session_id = get_active_session_id()
+        logger.debug(f"Active session ID: {active_session_id}")
+        
+        if not active_session_id:
+            logger.info("No active session found")
+            await sio.emit('all_users_data_updated', {
+                'session_id': None,
+                'session_name': "No Active Session",
+                'players': [],
+                'total_players': 0
+            }, room=sid)
+            return
+
+        # Get session players
+        logger.debug(f"Fetching players for session {active_session_id}")
+        player_records = SessionPlayerRepository.get_session_players(active_session_id)
+        logger.debug(f"Raw players data from DB: {player_records}")
+
+        if not player_records:
+            logger.warning(f"No players found in session {active_session_id}")
+            active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+            await sio.emit('all_users_data_updated', {
+                'session_id': active_session_id,
+                'session_name': active_session_info.get('name', f'Session {active_session_id}') if active_session_info else "Unknown Session",
+                'players': [],
+                'total_players': 0,
+                'requesting_user_position': 1
+            }, room=sid)
+            return
+
+        # Process all players
+        all_players_data = []
+        logger.debug(f"Processing {len(player_records)} players")
+        
+        for player in player_records:
+            user_id = player.get('userId')  # Changed from 'user_id' to 'id'
             if not user_id:
+                logger.warning(f"Player record missing id: {player}")
                 continue
 
-            session_score = 0
-            if active_session_id:
-                session_score = calculate_player_score(active_session_id, user_id)
+            logger.debug(f"Fetching details for user {user_id}")
+            user_details = UserRepository.get_user_by_id(user_id)
             
-            user_data = {
+            if not user_details:
+                logger.warning(f"User {user_id} not found but exists in session {active_session_id}")
+                continue
+
+            logger.debug(f"Calculating score for user {user_id}")
+            session_score = calculate_player_score(active_session_id, user_id)
+            questions_answered = get_user_questions_answered_count(user_id, active_session_id)
+
+            player_data = {
                 'user_id': user_id,
                 'username': f"{user_details.get('first_name', '')} {user_details.get('last_name', '')}".strip(),
                 'first_name': user_details.get('first_name', ''),
@@ -1195,27 +1233,36 @@ async def handle_user_data_request(sid, data):
                 'soul_points': user_details.get('soul_points', 0),
                 'limb_points': user_details.get('limb_points', 0),
                 'session_score': session_score,
-                'total_questions_answered': get_user_questions_answered_count(user_id, active_session_id),
+                'total_questions_answered': questions_answered,
+                'is_requesting_user': user_id == requesting_user_id
             }
-            all_players_data.append(user_data)
-        
-        # Sort data: requesting user first, then by session score (highest first)
-        all_players_data.sort(key=lambda x: (x['user_id'] != requesting_user_id, -x['session_score']))
-
-        session_name = active_session_info.get('name', f'Session {active_session_id}') if active_session_info else "No Active Session"
-        
-        emit_data = {
-            'session_id': active_session_id,
-            'session_name': session_name,
-            'players': all_players_data,
-            'total_players': len(all_players_data)
-        }
-        
-        await sio.emit('all_users_data_updated', emit_data, room=sid)
-        logger.info(f"Sent all user data update to SID {sid}. Requesting user: {requesting_user_id}")
             
+            logger.debug(f"Processed player data: {player_data}")
+            all_players_data.append(player_data)
+
+        # Final response
+        active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+        response = {
+            'session_id': active_session_id,
+            'session_name': active_session_info.get('name', f'Session {active_session_id}') if active_session_info else "Unknown Session",
+            'players': all_players_data,
+            'total_players': len(all_players_data),
+            'requesting_user_position': next(
+                (i+1 for i, p in enumerate(all_players_data) if p['is_requesting_user']),
+                len(all_players_data)+1)
+        }
+
+        logger.debug(f"Final response data: {response}")
+        await sio.emit('all_users_data_updated', response, room=sid)
+        logger.info(f"Sent user data for session {active_session_id} to user {requesting_user_id}")
+
     except Exception as e:
-        logger.error(f"Error handling all user data request: {e}", exc_info=True)
+        logger.error(f"Error in handle_user_data_request: {str(e)}", exc_info=True)
+        await sio.emit('error', {
+            'message': 'Failed to process user data request',
+            'details': str(e)
+        }, room=sid)
+
 
 @sio.on('answer_submitted')
 async def handle_answer_submission(sid, data):
