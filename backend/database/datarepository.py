@@ -2259,4 +2259,39 @@ class PlayerAnswerRepository:
         percentage = (result['correct_answers'] / result['total_answers']) * 100
         return round(percentage)
 
+    @staticmethod
+    def get_all_player_answers_for_user_in_session(session_id: int, user_id: int) -> List[Dict[str, Any]]:
+        """
+        Retrieves all player answers for a specific user within a given session,
+        ordered by the time they were answered.
+
+        Args:
+            session_id (int): The ID of the session.
+            user_id (int): The ID of the user.
+
+        Returns:
+            List[Dict[str, Any]]: A list of dictionaries, where each dictionary
+                                   represents a player answer. Returns an empty
+                                   list if no answers are found.
+        """
+        sql = """
+            SELECT
+                id,
+                sessionId,
+                userId,
+                questionId,
+                answerId,
+                is_correct,
+                points_earned,
+                time_taken,
+                answered_at
+            FROM
+                playerAnswers
+            WHERE
+                sessionId = %s AND userId = %s
+            ORDER BY
+                answered_at ASC;
+        """
+        params = [session_id, user_id]
+        return Database.get_rows(sql, params)
 
