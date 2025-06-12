@@ -1158,6 +1158,21 @@ async def update_user_names(rfid_code: str, user_update: UserUpdateNames, reques
 
     return {"user_id": target_user_id}
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # --- Register Endpoint ---
 @app.post("/api/v1/register", status_code=status.HTTP_201_CREATED)
 async def register_user(user_credentials: UserCredentials, request: Request):
@@ -1222,6 +1237,27 @@ async def login_user(user_credentials: UserCredentials, request: Request):
     log_user_ip_address(user_id, client_ip)
 
     return {"message": "Login successful", "user_id": user_id}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2611,14 +2647,14 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
             current_time = time.time()
             # --- Check for active Quiz Session ---
             try:
-                active_sessions = QuizSessionRepository.get_active_sessions()
+                active_sessions = QuizSessionRepository.get_sessions_by_status(2)
                
                
                
                 if active_sessions:
                     try:
                         if temp_sensor and light_sensor and servo:
-                            active_sessions = QuizSessionRepository.get_active_sessions()
+                            active_sessions = QuizSessionRepository.get_sessions_by_status(2)
                            
                             if active_sessions and should_update_quiz_session(current_time):
                                 session_id = get_active_session_id()
@@ -3020,7 +3056,7 @@ def should_update_quiz_session(current_time):
 
 def get_active_session_id():
     """Get the ID of the first active session."""
-    active_sessions = QuizSessionRepository.get_active_sessions()
+    active_sessions = QuizSessionRepository.get_sessions_by_status(2)
     return active_sessions[0][0] if active_sessions else None  # Access first column of first row
 
 def read_sensor_data(temp_sensor, light_sensor, servo):
