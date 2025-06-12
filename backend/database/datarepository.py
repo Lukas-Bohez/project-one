@@ -1169,7 +1169,7 @@ class QuizSessionRepository:
         params = (theme_id, session_id)
         
         try:
-            result = Database.execute_query(sql, params)
+            result = Database.execute_sql(sql, params)
             return result > 0
         except Exception as e:
             logger.error(f"Error updating session theme: {e}")

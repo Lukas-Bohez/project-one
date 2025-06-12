@@ -1301,57 +1301,94 @@ async def handle_answer_submission(sid, data):
             'error': 'An error occurred while processing your answer'
         }, room=sid)
 
-# Updated socket.io handler for theme selection
 @sio.on('theme_selected')
 async def handle_theme_selection(sid, data):
     try:
+        # Extract with fallbacks
         user_id = data.get('userId')
         theme_id = data.get('themeId')
-        theme_name = data.get('themeName')
+        theme_name = data.get('themeName') or ""
         request_user_data = data.get('request_user_data', False)
-       
-        if not all([user_id, theme_id]):
+
+        # Flexible theme ID handling
+        processed_theme_id = None
+        
+        # Try to convert theme_id to integer if it exists
+        if theme_id is not None:
+            try:
+                processed_theme_id = int(theme_id)
+            except (ValueError, TypeError):
+                pass  # Will try name lookup instead
+
+        # If ID conversion failed but we have a name, try name lookup
+        if processed_theme_id is None and theme_name:
+            theme_row = QuizSessionRepository.get_theme_by_name(theme_name.strip())
+            if theme_row:
+                # Handle both tuple and dict responses
+                processed_theme_id = theme_row[0] if isinstance(theme_row, tuple) else theme_row.get('id')
+
+        # Final validation
+        if not processed_theme_id:
             await sio.emit('answer_response', {
                 'success': False,
-                'error': 'Missing required data for theme selection'
+                'error': 'Invalid theme identifier. Please try again.'
             }, room=sid)
             return
-       
-        # Get active session and update theme if not already set
+
+        # Get active session with flexible response handling
         active_sessions = QuizSessionRepository.get_sessions_by_status(2)
-        if active_sessions:
-            session = active_sessions[0]  # Get first active session
-            session_id = session['id']
-            
-            # Only update theme if session doesn't have one yet
-            if not session.get('themeId'):
-                success = QuizSessionRepository.update_session_theme(session_id, theme_id)
-                if success:
-                    # Start the timer after theme selection
-                    loop = asyncio.get_running_loop()
-                    start_quiz_timer(sio, loop, session_id)
-       
-        result = await process_theme_selection(user_id, theme_id, theme_name)
-       
+        if not active_sessions:
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'No active quiz session found'
+            }, room=sid)
+            return
+
+        # Handle both tuple and dict session responses
+        session = active_sessions[0]
+        session_id = session[0] if isinstance(session, tuple) else session.get('id')
+
+
+        # Update session theme
+        if not QuizSessionRepository.update_session_theme(session_id, processed_theme_id):
+            logger.warning(f"Theme update failed for session {session_id}")
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'Could not update session theme'
+            }, room=sid)
+            return
+
+        # Start timer with error handling
+        try:
+            loop = asyncio.get_running_loop()
+            start_quiz_timer(sio, loop, session_id)
+        except Exception as timer_error:
+            logger.error(f"Timer start failed: {timer_error}")
+            # Non-critical error, continue processing
+
+        # Process selection
+        await process_theme_selection(user_id, processed_theme_id, theme_name)
+
+        # Successful response
         response_data = {
-            'success': result.get('success', False),
-            'feedback': result.get('feedback'),
+            'success': True,
+            'feedback': f"Theme selected: {theme_name or 'Custom Theme'}",
             'theme_name': theme_name
         }
-       
-        if request_user_data and result.get('success'):
+
+        if request_user_data:
             await handle_user_data_request(sid, {'user_id': user_id})
-       
+
         await sio.emit('answer_response', response_data, room=sid)
-       
-        logger.info(f"Processed theme selection for user {user_id}: {theme_name}")
-       
+        logger.info(f"Theme selection processed for user {user_id}")
+
     except Exception as e:
-        logger.error(f"Error handling theme selection: {e}", exc_info=True)
+        logger.error(f"Theme selection error: {str(e)}", exc_info=True)
         await sio.emit('answer_response', {
             'success': False,
-            'error': 'An error occurred while processing your theme selection'
+            'error': 'Could not process theme selection. Please try again.'
         }, room=sid)
+
 
 async def get_complete_user_data(user_id: int):
     try:
@@ -3422,7 +3459,7 @@ def emit_theme_selection_if_needed(sio, loop):
         if active_session_id:
             # Get the full session details using the ID
             active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
-            if not active_session_info.get('themId'):
+            if not active_session_info.get('themeId'):
                 emit_combined_theme_selection(sio, loop)
     except Exception as e:
         logger.error(f"Error checking theme selection: {e}")
