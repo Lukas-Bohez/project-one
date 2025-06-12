@@ -1301,96 +1301,62 @@ async def handle_answer_submission(sid, data):
             'error': 'An error occurred while processing your answer'
         }, room=sid)
 
+from collections import defaultdict
+theme_votes = {}  # Format: {session_id: {"votes": {theme_id: count}, "voted_users": set(user_ids)}}
+theme_votes_lock = Lock()
+
+def get_winning_theme(session_id):
+    """Returns the theme ID with the most votes for a session"""
+    with theme_votes_lock:
+        session_votes = theme_votes.get(session_id, {})
+        votes = session_votes.get("votes", {})
+        if not votes:
+            return None
+        return max(votes.items(), key=lambda x: x[1])[0]
+
 @sio.on('theme_selected')
 async def handle_theme_selection(sid, data):
     try:
-        active_session_id = get_active_session_id()
-        active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
-        if not active_session_info.get('themeId'):
+        user_id = data.get('userId')
+        theme_id = int(data['themeId'])
+        session_id = data.get('session_id')
+
+        with theme_votes_lock:
+            # Initialize session entry if not exists
+            if session_id not in theme_votes:
+                theme_votes[session_id] = {
+                    "votes": defaultdict(int),
+                    "voted_users": set()
+                }
             
-            # Extract with fallbacks
-            user_id = data.get('userId')
-            theme_id = data.get('themeId')
-            theme_name = data.get('themeName') or ""
-            request_user_data = data.get('request_user_data', False)
-
-            # Flexible theme ID handling
-            processed_theme_id = None
-            
-            # Try to convert theme_id to integer if it exists
-            if theme_id is not None:
-                try:
-                    processed_theme_id = int(theme_id)
-                except (ValueError, TypeError):
-                    pass  # Will try name lookup instead
-
-            # If ID conversion failed but we have a name, try name lookup
-            if processed_theme_id is None and theme_name:
-                theme_row = QuizSessionRepository.get_theme_by_name(theme_name.strip())
-                if theme_row:
-                    # Handle both tuple and dict responses
-                    processed_theme_id = theme_row[0] if isinstance(theme_row, tuple) else theme_row.get('id')
-
-            # Final validation
-            if not processed_theme_id:
+            # Check if user already voted
+            if user_id in theme_votes[session_id]["voted_users"]:
                 await sio.emit('answer_response', {
                     'success': False,
-                    'error': 'Invalid theme identifier. Please try again.'
+                    'error': 'You already voted for a theme'
                 }, room=sid)
                 return
 
-            # Get active session with flexible response handling
-            active_sessions = QuizSessionRepository.get_sessions_by_status(2)
-            if not active_sessions:
-                await sio.emit('answer_response', {
-                    'success': False,
-                    'error': 'No active quiz session found'
-                }, room=sid)
-                return
+            # Record vote
+            theme_votes[session_id]["votes"][theme_id] += 1
+            theme_votes[session_id]["voted_users"].add(user_id)
 
-            # Handle both tuple and dict session responses
-            session = active_sessions[0]
-            session_id = session[0] if isinstance(session, tuple) else session.get('id')
+        await sio.emit('answer_response', {
+            'success': True,
+            'message': 'Vote recorded successfully'
+        }, room=sid)
 
-
-            # Update session theme
-            if not QuizSessionRepository.update_session_theme(session_id, processed_theme_id):
-                logger.warning(f"Theme update failed for session {session_id}")
-                await sio.emit('answer_response', {
-                    'success': False,
-                    'error': 'Could not update session theme'
-                }, room=sid)
-                return
-
-            # Start timer with error handling
-            try:
-                loop = asyncio.get_running_loop()
-                start_quiz_timer(sio, loop, session_id)
-            except Exception as timer_error:
-                logger.error(f"Timer start failed: {timer_error}")
-                # Non-critical error, continue processing
-
-            # Process selection
-            await process_theme_selection(user_id, processed_theme_id, theme_name)
-
-            # Successful response
-            response_data = {
-                'success': True,
-                'feedback': f"Theme selected: {theme_name or 'Custom Theme'}",
-                'theme_name': theme_name
-            }
-
-            if request_user_data:
-                await handle_user_data_request(sid, {'user_id': user_id})
-
-            await sio.emit('answer_response', response_data, room=sid)
-            logger.info(f"Theme selection processed for user {user_id}")
+        # Broadcast updated votes to all clients
+        await sio.emit('theme_votes_update', {
+            'session_id': session_id,
+            'votes': dict(theme_votes[session_id]["votes"])
+        })
 
     except Exception as e:
-        logger.error(f"Theme selection error: {str(e)}", exc_info=True)
+        logger.error(f"Theme voting error: {str(e)}", exc_info=True)
         await sio.emit('answer_response', {
             'success': False,
-            'error': 'Could not process theme selection. Please try again.'
+            'error': 'Failed to process theme vote'
         }, room=sid)
 
 
@@ -2812,7 +2778,12 @@ def format_second_row(temp, lux, angle):
 def format_second_row(temp, lux, angle):
     return f"{temp:.1f}C {lux:.0f}L {angle}deg"
 
+
+servo = None 
+
+
 def raspberry_pi_main_thread(stop_event, sio, loop):
+    global servo  # Reference the global variable
     if not RPI_COMPONENTS_AVAILABLE:
         print("Skipping Raspberry Pi thread start due to component import errors.")
         return
@@ -2820,15 +2791,14 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
     # Initialize components
     lcd = None
     rfid = None
-    servo = None
     temp_sensor = None
     light_sensor = None
     try:
         lcd = LCD1602A()
         rfid = HardcoreRFID()
-        servo = ServoMotor()
         temp_sensor = TemperatureSensor()
         light_sensor = LightSensor()
+        servo = ServoMotor()  # This will update the global variable
     except Exception as e:
         print(f"Failed to initialize Raspberry Pi components in thread: {e}")
         print(traceback.format_exc())
@@ -3477,9 +3447,17 @@ import asyncio
 timer_lock = Lock()
 active_timers = {}
 
-def start_quiz_timer(sio, loop, session_id):
-    """Start a 60-second countdown timer with session-aware management."""
+
+def start_quiz_timer(sio, loop, session_id, total_time=60):
+    global servo
+    """Start a countdown timer with servo feedback and session management."""
     global active_timers
+
+    def calculate_servo_angle(current_time, total_time):
+        """Calculate servo angle based on remaining time percentage"""
+        progress = current_time / total_time
+        angle = 360 * progress  # Scale to 0-180° range but, maybe 360 could work
+        return max(0, min(360, angle))  # Clamp to valid servo range
 
     with timer_lock:
         # Prevent duplicate timers for the same session
@@ -3494,19 +3472,23 @@ def start_quiz_timer(sio, loop, session_id):
         timer_data = {
             'thread': None,
             'stop_event': stop_event,
-            'session_id': session_id
+            'session_id': session_id,
+            'total_time': total_time
         }
         
         def timer_task():
             try:
-                base_time = 60
-                current_time = base_time
+                current_time = total_time
                 
                 while current_time > 0 and not stop_event['stop']:
+                    # Update servo position
+                    servo.set_angle(calculate_servo_angle(current_time, total_time))
+                    
                     # Emit current timer to all clients
                     timer_data = {
                         'time_remaining': current_time,
-                        'session_id': session_id
+                        'session_id': session_id,
+                        'total_time': total_time
                     }
                     
                     asyncio.run_coroutine_threadsafe(
@@ -3514,21 +3496,24 @@ def start_quiz_timer(sio, loop, session_id):
                         loop
                     )
                     
-                    # Calculate dynamic increment
-                    increment = 1  # Replace with your logic
-                    
-                    time.sleep(increment)
-                    current_time -= increment
+                    # Sleep with dynamic increment
+                    time.sleep(1)
+                    current_time -= 1
                 
-                # Cleanup if not stopped
+                # Final cleanup if not stopped
                 if not stop_event['stop']:
+                    servo.set_angle(0)  # Reset servo at end
                     asyncio.run_coroutine_threadsafe(
-                        sio.emit('quiz_timer_finished', {'session_id': session_id}),
+                        sio.emit('quiz_timer_finished', {
+                            'session_id': session_id,
+                            'total_time': total_time
+                        }),
                         loop
                     )
 
             except Exception as e:
                 logger.error(f"Timer error: {e}")
+                servo.set_angle(0)  # Reset on error
             finally:
                 with timer_lock:
                     if session_id in active_timers:
@@ -3541,10 +3526,11 @@ def start_quiz_timer(sio, loop, session_id):
         timer_thread.start()
 
 def stop_quiz_timer(session_id):
-    """Stop an active timer for a specific session."""
+    """Stop an active timer and reset servo."""
     with timer_lock:
         if session_id in active_timers:
             active_timers[session_id]['stop_event']['stop'] = True
+            servo.set_angle(0)  # Reset servo position
             del active_timers[session_id]
 
 
