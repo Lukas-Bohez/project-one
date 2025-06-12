@@ -1304,83 +1304,87 @@ async def handle_answer_submission(sid, data):
 @sio.on('theme_selected')
 async def handle_theme_selection(sid, data):
     try:
-        # Extract with fallbacks
-        user_id = data.get('userId')
-        theme_id = data.get('themeId')
-        theme_name = data.get('themeName') or ""
-        request_user_data = data.get('request_user_data', False)
+        active_session_id = get_active_session_id()
+        active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+        if not active_session_info.get('themeId'):
+            
+            # Extract with fallbacks
+            user_id = data.get('userId')
+            theme_id = data.get('themeId')
+            theme_name = data.get('themeName') or ""
+            request_user_data = data.get('request_user_data', False)
 
-        # Flexible theme ID handling
-        processed_theme_id = None
-        
-        # Try to convert theme_id to integer if it exists
-        if theme_id is not None:
+            # Flexible theme ID handling
+            processed_theme_id = None
+            
+            # Try to convert theme_id to integer if it exists
+            if theme_id is not None:
+                try:
+                    processed_theme_id = int(theme_id)
+                except (ValueError, TypeError):
+                    pass  # Will try name lookup instead
+
+            # If ID conversion failed but we have a name, try name lookup
+            if processed_theme_id is None and theme_name:
+                theme_row = QuizSessionRepository.get_theme_by_name(theme_name.strip())
+                if theme_row:
+                    # Handle both tuple and dict responses
+                    processed_theme_id = theme_row[0] if isinstance(theme_row, tuple) else theme_row.get('id')
+
+            # Final validation
+            if not processed_theme_id:
+                await sio.emit('answer_response', {
+                    'success': False,
+                    'error': 'Invalid theme identifier. Please try again.'
+                }, room=sid)
+                return
+
+            # Get active session with flexible response handling
+            active_sessions = QuizSessionRepository.get_sessions_by_status(2)
+            if not active_sessions:
+                await sio.emit('answer_response', {
+                    'success': False,
+                    'error': 'No active quiz session found'
+                }, room=sid)
+                return
+
+            # Handle both tuple and dict session responses
+            session = active_sessions[0]
+            session_id = session[0] if isinstance(session, tuple) else session.get('id')
+
+
+            # Update session theme
+            if not QuizSessionRepository.update_session_theme(session_id, processed_theme_id):
+                logger.warning(f"Theme update failed for session {session_id}")
+                await sio.emit('answer_response', {
+                    'success': False,
+                    'error': 'Could not update session theme'
+                }, room=sid)
+                return
+
+            # Start timer with error handling
             try:
-                processed_theme_id = int(theme_id)
-            except (ValueError, TypeError):
-                pass  # Will try name lookup instead
+                loop = asyncio.get_running_loop()
+                start_quiz_timer(sio, loop, session_id)
+            except Exception as timer_error:
+                logger.error(f"Timer start failed: {timer_error}")
+                # Non-critical error, continue processing
 
-        # If ID conversion failed but we have a name, try name lookup
-        if processed_theme_id is None and theme_name:
-            theme_row = QuizSessionRepository.get_theme_by_name(theme_name.strip())
-            if theme_row:
-                # Handle both tuple and dict responses
-                processed_theme_id = theme_row[0] if isinstance(theme_row, tuple) else theme_row.get('id')
+            # Process selection
+            await process_theme_selection(user_id, processed_theme_id, theme_name)
 
-        # Final validation
-        if not processed_theme_id:
-            await sio.emit('answer_response', {
-                'success': False,
-                'error': 'Invalid theme identifier. Please try again.'
-            }, room=sid)
-            return
+            # Successful response
+            response_data = {
+                'success': True,
+                'feedback': f"Theme selected: {theme_name or 'Custom Theme'}",
+                'theme_name': theme_name
+            }
 
-        # Get active session with flexible response handling
-        active_sessions = QuizSessionRepository.get_sessions_by_status(2)
-        if not active_sessions:
-            await sio.emit('answer_response', {
-                'success': False,
-                'error': 'No active quiz session found'
-            }, room=sid)
-            return
+            if request_user_data:
+                await handle_user_data_request(sid, {'user_id': user_id})
 
-        # Handle both tuple and dict session responses
-        session = active_sessions[0]
-        session_id = session[0] if isinstance(session, tuple) else session.get('id')
-
-
-        # Update session theme
-        if not QuizSessionRepository.update_session_theme(session_id, processed_theme_id):
-            logger.warning(f"Theme update failed for session {session_id}")
-            await sio.emit('answer_response', {
-                'success': False,
-                'error': 'Could not update session theme'
-            }, room=sid)
-            return
-
-        # Start timer with error handling
-        try:
-            loop = asyncio.get_running_loop()
-            start_quiz_timer(sio, loop, session_id)
-        except Exception as timer_error:
-            logger.error(f"Timer start failed: {timer_error}")
-            # Non-critical error, continue processing
-
-        # Process selection
-        await process_theme_selection(user_id, processed_theme_id, theme_name)
-
-        # Successful response
-        response_data = {
-            'success': True,
-            'feedback': f"Theme selected: {theme_name or 'Custom Theme'}",
-            'theme_name': theme_name
-        }
-
-        if request_user_data:
-            await handle_user_data_request(sid, {'user_id': user_id})
-
-        await sio.emit('answer_response', response_data, room=sid)
-        logger.info(f"Theme selection processed for user {user_id}")
+            await sio.emit('answer_response', response_data, room=sid)
+            logger.info(f"Theme selection processed for user {user_id}")
 
     except Exception as e:
         logger.error(f"Theme selection error: {str(e)}", exc_info=True)
@@ -3465,48 +3469,84 @@ def emit_theme_selection_if_needed(sio, loop):
         logger.error(f"Error checking theme selection: {e}")
 
 
-# Timer function for quiz countdown
+from threading import Thread, Lock
+import time
+import asyncio
+
+# Global timer management
+timer_lock = Lock()
+active_timers = {}
+
 def start_quiz_timer(sio, loop, session_id):
-    """Start a 60-second countdown timer with dynamic increments."""
-    def timer_task():
-        try:
-            base_time = 60
-            current_time = base_time
-            
-            while current_time > 0:
-                # Emit current timer to all clients
-                timer_data = {
-                    'time_remaining': current_time,
-                    'session_id': session_id
-                }
+    """Start a 60-second countdown timer with session-aware management."""
+    global active_timers
+
+    with timer_lock:
+        # Prevent duplicate timers for the same session
+        if session_id in active_timers:
+            existing_timer = active_timers[session_id]
+            if existing_timer['thread'].is_alive():
+                print(f"Timer already running for session {session_id}")
+                return
+
+        # Create new timer entry
+        stop_event = {'stop': False}
+        timer_data = {
+            'thread': None,
+            'stop_event': stop_event,
+            'session_id': session_id
+        }
+        
+        def timer_task():
+            try:
+                base_time = 60
+                current_time = base_time
                 
-                asyncio.run_coroutine_threadsafe(
-                    sio.emit('quiz_timer', timer_data),
-                    loop
-                )
+                while current_time > 0 and not stop_event['stop']:
+                    # Emit current timer to all clients
+                    timer_data = {
+                        'time_remaining': current_time,
+                        'session_id': session_id
+                    }
+                    
+                    asyncio.run_coroutine_threadsafe(
+                        sio.emit('quiz_timer', timer_data),
+                        loop
+                    )
+                    
+                    # Calculate dynamic increment
+                    increment = 1  # Replace with your logic
+                    
+                    time.sleep(increment)
+                    current_time -= increment
                 
-                # Calculate dynamic increment (simplified version)
-                # increment = 1 * (2 * (player_theme_votes) / session_players + 5)
-                # For now, using base increment of 1 second
-                increment = 1
-                
-                time.sleep(increment)
-                current_time -= increment
-            
-            # Timer finished
-            asyncio.run_coroutine_threadsafe(
-                sio.emit('quiz_timer_finished', {'session_id': session_id}),
-                loop
-            )
-            
-        except Exception as e:
-            logger.error(f"Error in quiz timer: {e}")
-    
-    # Start timer in background thread
-    import threading
-    timer_thread = threading.Thread(target=timer_task)
-    timer_thread.daemon = True
-    timer_thread.start()
+                # Cleanup if not stopped
+                if not stop_event['stop']:
+                    asyncio.run_coroutine_threadsafe(
+                        sio.emit('quiz_timer_finished', {'session_id': session_id}),
+                        loop
+                    )
+
+            except Exception as e:
+                logger.error(f"Timer error: {e}")
+            finally:
+                with timer_lock:
+                    if session_id in active_timers:
+                        del active_timers[session_id]
+
+        # Create and store the thread
+        timer_thread = Thread(target=timer_task, daemon=True)
+        timer_data['thread'] = timer_thread
+        active_timers[session_id] = timer_data
+        timer_thread.start()
+
+def stop_quiz_timer(session_id):
+    """Stop an active timer for a specific session."""
+    with timer_lock:
+        if session_id in active_timers:
+            active_timers[session_id]['stop_event']['stop'] = True
+            del active_timers[session_id]
+
 
 
 # ----------------------------------------------------
