@@ -1050,17 +1050,20 @@ class QuizSessionRepository:
 
     @staticmethod
     def get_sessions_by_status(status_id: int) -> List[Dict[str, Any]]:
-        """
-        Fetches quiz sessions filtered by their status ID.
-        """
         sql = """
             SELECT id, session_date, name, description, sessionStatusId, themeId, hostUserId, start_time, end_time
             FROM quizSessions
             WHERE sessionStatusId = %s
             ORDER BY session_date DESC, start_time DESC
         """
-        params = [status_id]
-        return Database.get_all_rows(sql, params)
+        params = (status_id,)
+        
+        try:
+            sessions = Database.get_all_rows(sql, params)
+            return sessions
+        except Exception as e:
+            print(f"Error in QuizSession.get_sessions_by_status: {e}")
+            return []
 
     @staticmethod
     def get_active_sessions() -> List[Dict[str, Any]]:
