@@ -1053,138 +1053,14 @@ async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1
 
 
 
-from fastapi import APIRouter, HTTPException, Depends, Request, Header
-from datetime import datetime
-
-# Add this import for the IP address repository
-# from your_repositories import IpAddressRepository  # Adjust import path as needed
-
-def get_client_ip(request: Request) -> str:
-    """Extract client IP address from request headers."""
-    # Check for forwarded IP first (in case of proxy/load balancer)
-    forwarded_for = request.headers.get("X-Forwarded-For")
-    if forwarded_for:
-        # X-Forwarded-For can contain multiple IPs, take the first one
-        return forwarded_for.split(",")[0].strip()
-    
-    # Check for real IP header
-    real_ip = request.headers.get("X-Real-IP")
-    if real_ip:
-        return real_ip
-    
-    # Fall back to direct client IP
-    return request.client.host if request.client else "unknown"
-
-def log_user_ip_address(user_id: int, ip_address: str):
-    """Log the IP address for a user."""
-    try:
-        # Get or create IP address record
-        ip_record = IpAddressRepository.get_ip_address_by_string(ip_address)
-        if not ip_record:
-            # If IP doesn't exist, you'll need to create it
-            # This assumes you have a method to create IP addresses
-            # You may need to add this method to your IpAddressRepository
-            ip_id = IpAddressRepository.create_ip_address(ip_address)
-        else:
-            ip_id = ip_record['id']
-        
-        # Create/update the user-IP link
-        UserIpAddressRepository.create_user_ip_address_link(user_id, ip_id)
-    except Exception as e:
-        # Log the error but don't fail the main operation
-        print(f"Failed to log IP address for user {user_id}: {e}")
-
-@app.patch("/api/v1/users/{rfid_code}")
-async def update_user_names(rfid_code: str, user_update: UserUpdateNames, request: Request):
-    # Get client IP address
-    client_ip = get_client_ip(request)
-    
-    all_users = UserRepository.get_all_users()
-    target_user_id = None
-
-    for user in all_users:
-        # Check if first and last name already exist for any user
-        if user['first_name'] == user_update.first_name and user['last_name'] == user_update.last_name:
-            # Found a user with matching name
-            if user['rfid_code'] == rfid_code:
-                # Name and RFID match: This is the user attempting to log in
-                target_user_id = user['id']
-                UserRepository.update_user_last_active(target_user_id, datetime.now())
-                
-                # Log IP address
-                log_user_ip_address(target_user_id, client_ip)
-                break
-            else:
-                # Name matches, but RFID does not
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="A user with this name already exists, but the provided RFID does not match."
-                )
-    
-    # If no user found by name or if the loop completed without a direct match
-    if target_user_id is None:
-        # Check if the RFID is associated with an 'open' account
-        existing_user_by_rfid = UserRepository.get_user_by_rfid(rfid_code)
-        if existing_user_by_rfid:
-            if existing_user_by_rfid['first_name'] == 'Open' and existing_user_by_rfid['last_name'] == 'Open':
-                # RFID linked to an 'Open' account, update its details
-                success = UserRepository.update_user_names_by_rfid(
-                    rfid_code,
-                    user_update.first_name,
-                    user_update.last_name
-                )
-                if not success:
-                    raise HTTPException(
-                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                        detail="Failed to update 'Open' user account."
-                    )
-                target_user_id = existing_user_by_rfid['id'] # Return the ID of the updated user
-                UserRepository.update_user_last_active(target_user_id, datetime.now())
-                
-                # Log IP address
-                log_user_ip_address(target_user_id, client_ip)
-            else:
-                # RFID exists but is not "Open" and doesn't match the provided name
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail=f"RFID code '{rfid_code}' is already associated with another user and is not an 'Open' account."
-                )
-        else:
-            # RFID not found at all.
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with RFID code '{rfid_code}' not found and no 'Open' account to update."
-            )
-
-    return {"user_id": target_user_id}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# --- Helper function to emit session players (FIXED) ---
 async def emit_session_players(session_id: int, active_session_info: dict):
-    """
-    Gathers all players in a session with their scores and emits the list
-    via Socket.IO to all clients in the session room.
-    """
     try:
         session_players = SessionPlayerRepository.get_session_players(session_id)
         if not session_players:
             logger.info(f"No players found for session {session_id} to emit.")
-            # Emit an empty list to clear the frontend if necessary
-            await socketio.emit('session_players_updated', {'players': []}, room=f'session_{session_id}')
+            await sio.emit('session_players_updated', {'players': []}, room=f'session_{session_id}')
             return
 
         players_with_scores = []
@@ -1210,10 +1086,8 @@ async def emit_session_players(session_id: int, active_session_info: dict):
             }
             players_with_scores.append(player_data)
 
-        # Sort players by session score (highest first)
         players_with_scores.sort(key=lambda x: x['session_score'], reverse=True)
         
-        # The active_session_info is now passed correctly
         session_name = active_session_info.get('name', f'Session {session_id}')
         
         emit_data = {
@@ -1223,19 +1097,13 @@ async def emit_session_players(session_id: int, active_session_info: dict):
             'total_players': len(players_with_scores)
         }
         
-        await socketio.emit('session_players_updated', emit_data, room=f'session_{session_id}')
+        await sio.emit('session_players_updated', emit_data, room=f'session_{session_id}')
         logger.info(f"Emitted updates for {len(players_with_scores)} players in session {session_id}.")
 
     except Exception as e:
         logger.error(f"Failed to emit session players for session {session_id}: {e}", exc_info=True)
 
-
-# --- Helper function to add user to active session (FIXED) ---
 async def add_user_to_active_session(user_id: int):
-    """
-    Checks for an active quiz session and adds the user to it if not already present.
-    Then triggers an update to all clients.
-    """
     try:
         active_session_id = get_active_session_id()
         if not active_session_id:
@@ -1247,46 +1115,37 @@ async def add_user_to_active_session(user_id: int):
             logger.error(f"Active session ID {active_session_id} returned no session info.")
             return
 
-        # Add player to session if not already in it
         if not SessionPlayerRepository.get_session_player(active_session_id, user_id):
             SessionPlayerRepository.add_player_to_session(active_session_id, user_id)
             logger.info(f"Added user {user_id} to session {active_session_id}")
         else:
             logger.info(f"User {user_id} is already in session {active_session_id}")
 
-        # Get and emit updated session players with scores
-        # We now pass active_session_info to the emit function
         await emit_session_players(active_session_id, active_session_info)
 
     except Exception as e:
         logger.error(f"Failed to add user {user_id} to active session: {e}", exc_info=True)
 
-
-# --- Register Endpoint (FIXED & CLEANED) ---
 @app.post("/api/v1/register", status_code=status.HTTP_201_CREATED)
 async def register_user(user_credentials: UserCredentials, request: Request):
-    """Handles new user registration, hashing passwords, and adding to sessions."""
     try:
-        # Check if user with this first/last name already exists
         if UserRepository.get_user_by_name(user_credentials.first_name, user_credentials.last_name):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="A user with this first and last name already exists. Please choose another name or login."
             )
 
-        # Hash the password
         hashed_info = UserRepository.hash_password(user_credentials.password)
         
-        # Prepare user data for creation
         user_data = {
             'first_name': user_credentials.first_name,
             'last_name': user_credentials.last_name,
             'password_hash': hashed_info['password_hash'],
             'salt': hashed_info['salt'],
-            'userRoleId': 1, # Default role
+            'userRoleId': 1,
             'soul_points': 4,
             'limb_points': 4,
-            'updated_by': 1 # System user ID
+            'updated_by': 1
         }
         
         user_id = UserRepository.create_user_with_password(user_data)
@@ -1296,7 +1155,6 @@ async def register_user(user_credentials: UserCredentials, request: Request):
                 detail="A critical error occurred while creating the user."
             )
         
-        # Perform post-registration actions
         log_user_ip_address(user_id, get_client_ip(request))
         await add_user_to_active_session(user_id)
         
@@ -1304,21 +1162,16 @@ async def register_user(user_credentials: UserCredentials, request: Request):
         return {"message": "User registered successfully", "user_id": user_id}
 
     except HTTPException:
-        # Re-raise HTTPExceptions to let FastAPI handle them
         raise
     except Exception as e:
-        # Catch any other unexpected errors
         logger.error(f"An unexpected error occurred during user registration: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected server error occurred."
         )
 
-
-# --- Login Endpoint (CLEANED) ---
 @app.post("/api/v1/login")
 async def login_user(user_credentials: UserCredentials, request: Request):
-    """Authenticates a user and adds them to an active session."""
     try:
         user_id = UserRepository.authenticate_user(
             user_credentials.first_name,
@@ -1331,7 +1184,6 @@ async def login_user(user_credentials: UserCredentials, request: Request):
                 detail="Invalid first name, last name, or password."
             )
         
-        # Perform post-login actions
         log_user_ip_address(user_id, get_client_ip(request))
         await add_user_to_active_session(user_id)
         
@@ -1347,15 +1199,10 @@ async def login_user(user_credentials: UserCredentials, request: Request):
             detail="An unexpected server error occurred."
         )
 
-
-# --- Helper function to calculate player scores (CLEANED) ---
 def calculate_player_score(session_id: int, user_id: int) -> int:
-    """Calculate the total score for a single player within a given session."""
     try:
-        # This can be optimized by fetching answers only for the specific user
         all_answers = PlayerAnswerRepository.get_all_player_answers_for_user_in_session(session_id, user_id)
         
-        # Sum points from the filtered list of answers
         user_score = sum(answer.get('points_earned', 0) for answer in all_answers if answer.get('points_earned'))
         return user_score
     
@@ -1380,7 +1227,6 @@ async def handle_user_data_request(sid, data):
             
     except Exception as e:
         logger.error(f"Error handling user data request: {e}", exc_info=True)
-
 
 @sio.on('answer_submitted')
 async def handle_answer_submission(sid, data):
@@ -1427,7 +1273,6 @@ async def handle_answer_submission(sid, data):
             'error': 'An error occurred while processing your answer'
         }, room=sid)
 
-
 @sio.on('theme_selected')
 async def handle_theme_selection(sid, data):
     try:
@@ -1467,7 +1312,6 @@ async def handle_theme_selection(sid, data):
             'error': 'An error occurred while processing your theme selection'
         }, room=sid)
 
-
 async def get_complete_user_data(user_id: int):
     try:
         user_details = UserRepository.get_user_by_id(user_id)
@@ -1498,7 +1342,6 @@ async def get_complete_user_data(user_id: int):
         logger.error(f"Error retrieving complete user data for user {user_id}: {e}", exc_info=True)
         return None
 
-
 async def process_answer_submission(user_id: int, question_id: int, answer_index: int):
     try:
         return {
@@ -1511,7 +1354,6 @@ async def process_answer_submission(user_id: int, question_id: int, answer_index
     except Exception as e:
         logger.error(f"Error processing answer submission: {e}", exc_info=True)
         return {'success': False, 'error': 'Failed to process answer'}
-
 
 async def process_theme_selection(user_id: int, theme_id: int, theme_name: str):
     try:
@@ -1528,7 +1370,6 @@ async def process_theme_selection(user_id: int, theme_id: int, theme_name: str):
         logger.error(f"Error processing theme selection: {e}", exc_info=True)
         return {'success': False, 'error': 'Failed to process theme selection'}
 
-
 def get_user_questions_answered_count(user_id: int, session_id: int):
     try:
         if not session_id:
@@ -1537,7 +1378,7 @@ def get_user_questions_answered_count(user_id: int, session_id: int):
         answers = PlayerAnswerRepository.get_all_player_answers_for_user_in_session(session_id, user_id)
         return len(answers) if answers else 0
         
-    except Exception in e:
+    except Exception as e:
         logger.error(f"Error getting questions answered count for user {user_id}: {e}")
         return 0
 
