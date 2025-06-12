@@ -1055,54 +1055,6 @@ async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1
 
 
 
-async def emit_session_players(session_id: int, active_session_info: dict):
-    try:
-        session_players = SessionPlayerRepository.get_session_players(session_id)
-        if not session_players:
-            logger.info(f"No players found for session {session_id} to emit.")
-            await sio.emit('session_players_updated', {'players': []}, room=f'session_{session_id}')
-            return
-
-        players_with_scores = []
-        for player in session_players:
-            user_id = player.get('userId')
-            if not user_id:
-                continue
-
-            user_details = UserRepository.get_user_by_id(user_id)
-            if not user_details:
-                logger.warning(f"Could not find details for user_id: {user_id} in session {session_id}")
-                continue
-
-            session_score = calculate_player_score(session_id, user_id)
-            
-            player_data = {
-                'user_id': user_id,
-                'username': f"{user_details.get('first_name', '')} {user_details.get('last_name', '')}".strip(),
-                'session_score': session_score,
-                'soul_points': user_details.get('soul_points', 0),
-                'limb_points': user_details.get('limb_points', 0),
-                'joined_at': player.get('created_at')
-            }
-            players_with_scores.append(player_data)
-
-        players_with_scores.sort(key=lambda x: x['session_score'], reverse=True)
-        
-        session_name = active_session_info.get('name', f'Session {session_id}')
-        
-        emit_data = {
-            'session_id': session_id,
-            'session_name': session_name,
-            'players': players_with_scores,
-            'total_players': len(players_with_scores)
-        }
-        
-        await sio.emit('session_players_updated', emit_data, room=f'session_{session_id}')
-        logger.info(f"Emitted updates for {len(players_with_scores)} players in session {session_id}.")
-
-    except Exception as e:
-        logger.error(f"Failed to emit session players for session {session_id}: {e}", exc_info=True)
-
 async def add_user_to_active_session(user_id: int):
     try:
         active_session_id = get_active_session_id()
@@ -1120,8 +1072,6 @@ async def add_user_to_active_session(user_id: int):
             logger.info(f"Added user {user_id} to session {active_session_id}")
         else:
             logger.info(f"User {user_id} is already in session {active_session_id}")
-
-        await emit_session_players(active_session_id, active_session_info)
 
     except Exception as e:
         logger.error(f"Failed to add user {user_id} to active session: {e}", exc_info=True)
@@ -1213,20 +1163,59 @@ def calculate_player_score(session_id: int, user_id: int) -> int:
 @sio.on('request_user_data')
 async def handle_user_data_request(sid, data):
     try:
-        user_id = data.get('user_id')
-        if not user_id:
-            logger.warning("User data request received without user_id")
-            return
+        requesting_user_id = data.get('user_id')
         
-        user_data = await get_complete_user_data(user_id)
-        if user_data:
-            await sio.emit('user_data_updated', user_data, room=sid)
-            logger.info(f"Sent user data update for user {user_id}")
-        else:
-            logger.warning(f"Could not retrieve user data for user {user_id}")
+        all_users_details = UserRepository.get_all_users()
+        all_players_data = []
+
+        if not all_users_details:
+            logger.warning("No users found to send data.")
+            await sio.emit('all_users_data_updated', {'users': []}, room=sid)
+            return
+
+        active_session_id = get_active_session_id()
+        active_session_info = None
+        if active_session_id:
+            active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+
+        for user_details in all_users_details:
+            user_id = user_details.get('id')
+            if not user_id:
+                continue
+
+            session_score = 0
+            if active_session_id:
+                session_score = calculate_player_score(active_session_id, user_id)
+            
+            user_data = {
+                'user_id': user_id,
+                'username': f"{user_details.get('first_name', '')} {user_details.get('last_name', '')}".strip(),
+                'first_name': user_details.get('first_name', ''),
+                'last_name': user_details.get('last_name', ''),
+                'soul_points': user_details.get('soul_points', 0),
+                'limb_points': user_details.get('limb_points', 0),
+                'session_score': session_score,
+                'total_questions_answered': get_user_questions_answered_count(user_id, active_session_id),
+            }
+            all_players_data.append(user_data)
+        
+        # Sort data: requesting user first, then by session score (highest first)
+        all_players_data.sort(key=lambda x: (x['user_id'] != requesting_user_id, -x['session_score']))
+
+        session_name = active_session_info.get('name', f'Session {active_session_id}') if active_session_info else "No Active Session"
+        
+        emit_data = {
+            'session_id': active_session_id,
+            'session_name': session_name,
+            'players': all_players_data,
+            'total_players': len(all_players_data)
+        }
+        
+        await sio.emit('all_users_data_updated', emit_data, room=sid)
+        logger.info(f"Sent all user data update to SID {sid}. Requesting user: {requesting_user_id}")
             
     except Exception as e:
-        logger.error(f"Error handling user data request: {e}", exc_info=True)
+        logger.error(f"Error handling all user data request: {e}", exc_info=True)
 
 @sio.on('answer_submitted')
 async def handle_answer_submission(sid, data):
@@ -1252,17 +1241,9 @@ async def handle_answer_submission(sid, data):
         }
         
         if request_user_data and result.get('success'):
-            user_data = await get_complete_user_data(user_id)
-            if user_data:
-                response_data['user_data'] = user_data
+            await handle_user_data_request(sid, {'user_id': user_id})
         
         await sio.emit('answer_response', response_data, room=sid)
-        
-        active_session_id = get_active_session_id()
-        if active_session_id:
-            active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
-            if active_session_info:
-                await emit_session_players(active_session_id, active_session_info)
         
         logger.info(f"Processed answer submission for user {user_id}")
         
@@ -1297,9 +1278,7 @@ async def handle_theme_selection(sid, data):
         }
         
         if request_user_data and result.get('success'):
-            user_data = await get_complete_user_data(user_id)
-            if user_data:
-                response_data['user_data'] = user_data
+            await handle_user_data_request(sid, {'user_id': user_id})
         
         await sio.emit('answer_response', response_data, room=sid)
         
