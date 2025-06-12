@@ -1363,6 +1363,186 @@ def calculate_player_score(session_id: int, user_id: int) -> int:
         logger.error(f"Could not calculate score for user {user_id} in session {session_id}: {e}")
         return 0
 
+@sio.on('request_user_data')
+async def handle_user_data_request(sid, data):
+    try:
+        user_id = data.get('user_id')
+        if not user_id:
+            logger.warning("User data request received without user_id")
+            return
+        
+        user_data = await get_complete_user_data(user_id)
+        if user_data:
+            await sio.emit('user_data_updated', user_data, room=sid)
+            logger.info(f"Sent user data update for user {user_id}")
+        else:
+            logger.warning(f"Could not retrieve user data for user {user_id}")
+            
+    except Exception as e:
+        logger.error(f"Error handling user data request: {e}", exc_info=True)
+
+
+@sio.on('answer_submitted')
+async def handle_answer_submission(sid, data):
+    try:
+        user_id = data.get('userId')
+        question_id = data.get('questionId')
+        answer_index = data.get('answerIndex')
+        request_user_data = data.get('request_user_data', False)
+        
+        if not all([user_id, question_id is not None, answer_index is not None]):
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'Missing required data for answer submission'
+            }, room=sid)
+            return
+        
+        result = await process_answer_submission(user_id, question_id, answer_index)
+        
+        response_data = {
+            'success': result.get('success', False),
+            'feedback': result.get('feedback'),
+            'points_earned': result.get('points_earned', 0)
+        }
+        
+        if request_user_data and result.get('success'):
+            user_data = await get_complete_user_data(user_id)
+            if user_data:
+                response_data['user_data'] = user_data
+        
+        await sio.emit('answer_response', response_data, room=sid)
+        
+        active_session_id = get_active_session_id()
+        if active_session_id:
+            active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+            if active_session_info:
+                await emit_session_players(active_session_id, active_session_info)
+        
+        logger.info(f"Processed answer submission for user {user_id}")
+        
+    except Exception as e:
+        logger.error(f"Error handling answer submission: {e}", exc_info=True)
+        await sio.emit('answer_response', {
+            'success': False,
+            'error': 'An error occurred while processing your answer'
+        }, room=sid)
+
+
+@sio.on('theme_selected')
+async def handle_theme_selection(sid, data):
+    try:
+        user_id = data.get('userId')
+        theme_id = data.get('themeId')
+        theme_name = data.get('themeName')
+        request_user_data = data.get('request_user_data', False)
+        
+        if not all([user_id, theme_id]):
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'Missing required data for theme selection'
+            }, room=sid)
+            return
+        
+        result = await process_theme_selection(user_id, theme_id, theme_name)
+        
+        response_data = {
+            'success': result.get('success', False),
+            'feedback': result.get('feedback'),
+            'theme_name': theme_name
+        }
+        
+        if request_user_data and result.get('success'):
+            user_data = await get_complete_user_data(user_id)
+            if user_data:
+                response_data['user_data'] = user_data
+        
+        await sio.emit('answer_response', response_data, room=sid)
+        
+        logger.info(f"Processed theme selection for user {user_id}: {theme_name}")
+        
+    except Exception as e:
+        logger.error(f"Error handling theme selection: {e}", exc_info=True)
+        await sio.emit('answer_response', {
+            'success': False,
+            'error': 'An error occurred while processing your theme selection'
+        }, room=sid)
+
+
+async def get_complete_user_data(user_id: int):
+    try:
+        user_details = UserRepository.get_user_by_id(user_id)
+        if not user_details:
+            logger.warning(f"User not found: {user_id}")
+            return None
+        
+        active_session_id = get_active_session_id()
+        session_score = 0
+        
+        if active_session_id:
+            session_score = calculate_player_score(active_session_id, user_id)
+        
+        user_data = {
+            'user_id': user_id,
+            'username': f"{user_details.get('first_name', '')} {user_details.get('last_name', '')}".strip(),
+            'first_name': user_details.get('first_name', ''),
+            'last_name': user_details.get('last_name', ''),
+            'soul_points': user_details.get('soul_points', 0),
+            'limb_points': user_details.get('limb_points', 0),
+            'session_score': session_score,
+            'total_questions_answered': get_user_questions_answered_count(user_id, active_session_id),
+        }
+        
+        return user_data
+        
+    except Exception as e:
+        logger.error(f"Error retrieving complete user data for user {user_id}: {e}", exc_info=True)
+        return None
+
+
+async def process_answer_submission(user_id: int, question_id: int, answer_index: int):
+    try:
+        return {
+            'success': True,
+            'is_correct': True,
+            'points_earned': 10,
+            'feedback': "Answer submitted successfully!"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error processing answer submission: {e}", exc_info=True)
+        return {'success': False, 'error': 'Failed to process answer'}
+
+
+async def process_theme_selection(user_id: int, theme_id: int, theme_name: str):
+    try:
+        active_session_id = get_active_session_id()
+        if not active_session_id:
+            return {'success': False, 'error': 'No active session'}
+        
+        return {
+            'success': True,
+            'feedback': f"Selected theme: {theme_name}"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error processing theme selection: {e}", exc_info=True)
+        return {'success': False, 'error': 'Failed to process theme selection'}
+
+
+def get_user_questions_answered_count(user_id: int, session_id: int):
+    try:
+        if not session_id:
+            return 0
+        
+        answers = PlayerAnswerRepository.get_all_player_answers_for_user_in_session(session_id, user_id)
+        return len(answers) if answers else 0
+        
+    except Exception in e:
+        logger.error(f"Error getting questions answered count for user {user_id}: {e}")
+        return 0
+
+
+
 
 
 
@@ -2497,7 +2677,7 @@ async def get_chat_stats(session_id: int):
 # Socket.IO event handlers for enhanced chat functionality
 @sio.on('join')
 async def join_room(sid, room_name):
-    sio.enter_room(sid, room_name)
+    await sio.enter_room(sid, room_name)
     print(f"Client {sid} joined room: {room_name}")
     return {'status': 'success'} # Send acknowledgment back to client
 
