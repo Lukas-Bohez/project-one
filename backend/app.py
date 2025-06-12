@@ -1173,70 +1173,196 @@ async def update_user_names(rfid_code: str, user_update: UserUpdateNames, reques
 
 
 
-# --- Register Endpoint ---
+# --- Helper function to emit session players (FIXED) ---
+async def emit_session_players(session_id: int, active_session_info: dict):
+    """
+    Gathers all players in a session with their scores and emits the list
+    via Socket.IO to all clients in the session room.
+    """
+    try:
+        session_players = SessionPlayerRepository.get_session_players(session_id)
+        if not session_players:
+            logger.info(f"No players found for session {session_id} to emit.")
+            # Emit an empty list to clear the frontend if necessary
+            await socketio.emit('session_players_updated', {'players': []}, room=f'session_{session_id}')
+            return
+
+        players_with_scores = []
+        for player in session_players:
+            user_id = player.get('userId')
+            if not user_id:
+                continue
+
+            user_details = UserRepository.get_user_by_id(user_id)
+            if not user_details:
+                logger.warning(f"Could not find details for user_id: {user_id} in session {session_id}")
+                continue
+
+            session_score = calculate_player_score(session_id, user_id)
+            
+            player_data = {
+                'user_id': user_id,
+                'username': f"{user_details.get('first_name', '')} {user_details.get('last_name', '')}".strip(),
+                'session_score': session_score,
+                'soul_points': user_details.get('soul_points', 0),
+                'limb_points': user_details.get('limb_points', 0),
+                'joined_at': player.get('created_at')
+            }
+            players_with_scores.append(player_data)
+
+        # Sort players by session score (highest first)
+        players_with_scores.sort(key=lambda x: x['session_score'], reverse=True)
+        
+        # The active_session_info is now passed correctly
+        session_name = active_session_info.get('name', f'Session {session_id}')
+        
+        emit_data = {
+            'session_id': session_id,
+            'session_name': session_name,
+            'players': players_with_scores,
+            'total_players': len(players_with_scores)
+        }
+        
+        await socketio.emit('session_players_updated', emit_data, room=f'session_{session_id}')
+        logger.info(f"Emitted updates for {len(players_with_scores)} players in session {session_id}.")
+
+    except Exception as e:
+        logger.error(f"Failed to emit session players for session {session_id}: {e}", exc_info=True)
+
+
+# --- Helper function to add user to active session (FIXED) ---
+async def add_user_to_active_session(user_id: int):
+    """
+    Checks for an active quiz session and adds the user to it if not already present.
+    Then triggers an update to all clients.
+    """
+    try:
+        active_session_id = get_active_session_id()
+        if not active_session_id:
+            logger.info(f"User {user_id} logged in, but no active session was found.")
+            return
+
+        active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+        if not active_session_info:
+            logger.error(f"Active session ID {active_session_id} returned no session info.")
+            return
+
+        # Add player to session if not already in it
+        if not SessionPlayerRepository.get_session_player(active_session_id, user_id):
+            SessionPlayerRepository.add_player_to_session(active_session_id, user_id)
+            logger.info(f"Added user {user_id} to session {active_session_id}")
+        else:
+            logger.info(f"User {user_id} is already in session {active_session_id}")
+
+        # Get and emit updated session players with scores
+        # We now pass active_session_info to the emit function
+        await emit_session_players(active_session_id, active_session_info)
+
+    except Exception as e:
+        logger.error(f"Failed to add user {user_id} to active session: {e}", exc_info=True)
+
+
+# --- Register Endpoint (FIXED & CLEANED) ---
 @app.post("/api/v1/register", status_code=status.HTTP_201_CREATED)
 async def register_user(user_credentials: UserCredentials, request: Request):
-    # Get client IP address
-    client_ip = get_client_ip(request)
-    
-    # Check if user with this first/last name already exists
-    existing_user = UserRepository.get_user_by_name(user_credentials.first_name, user_credentials.last_name)
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="A user with this first and last name already exists. Please choose another name or login."
-        )
+    """Handles new user registration, hashing passwords, and adding to sessions."""
+    try:
+        # Check if user with this first/last name already exists
+        if UserRepository.get_user_by_name(user_credentials.first_name, user_credentials.last_name):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="A user with this first and last name already exists. Please choose another name or login."
+            )
 
-    # Hash the password
-    hashed_info = UserRepository.hash_password(user_credentials.password)
+        # Hash the password
+        hashed_info = UserRepository.hash_password(user_credentials.password)
+        
+        # Prepare user data for creation
+        user_data = {
+            'first_name': user_credentials.first_name,
+            'last_name': user_credentials.last_name,
+            'password_hash': hashed_info['password_hash'],
+            'salt': hashed_info['salt'],
+            'userRoleId': 1, # Default role
+            'soul_points': 4,
+            'limb_points': 4,
+            'updated_by': 1 # System user ID
+        }
+        
+        user_id = UserRepository.create_user_with_password(user_data)
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="A critical error occurred while creating the user."
+            )
+        
+        # Perform post-registration actions
+        log_user_ip_address(user_id, get_client_ip(request))
+        await add_user_to_active_session(user_id)
+        
+        logger.info(f"User '{user_credentials.first_name} {user_credentials.last_name}' registered successfully with ID: {user_id}")
+        return {"message": "User registered successfully", "user_id": user_id}
 
-    # Prepare user data for creation
-    user_data = {
-        'first_name': user_credentials.first_name,
-        'last_name': user_credentials.last_name,
-        'password_hash': hashed_info['password_hash'],
-        'salt': hashed_info['salt'],
-        'rfid_code': None, # RFID will be assigned later via the PATCH endpoint if needed
-        'userRoleId': 1, # Default to a standard player role, adjust as per your roles table
-        'soul_points': 4,
-        'limb_points': 4,
-        'updated_by': 1 # Assuming a system user ID or default
-    }
-
-    user_id = UserRepository.create_user_with_password(user_data)
-    if not user_id:
+    except HTTPException:
+        # Re-raise HTTPExceptions to let FastAPI handle them
+        raise
+    except Exception as e:
+        # Catch any other unexpected errors
+        logger.error(f"An unexpected error occurred during user registration: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create user."
+            detail="An unexpected server error occurred."
         )
 
-    # Log IP address for the newly created user
-    log_user_ip_address(user_id, client_ip)
 
-    return {"message": "User registered successfully", "user_id": user_id}
-
-# --- Login Endpoint ---
+# --- Login Endpoint (CLEANED) ---
 @app.post("/api/v1/login")
 async def login_user(user_credentials: UserCredentials, request: Request):
-    # Get client IP address
-    client_ip = get_client_ip(request)
-    
-    user_id = UserRepository.authenticate_user(
-        user_credentials.first_name,
-        user_credentials.last_name,
-        user_credentials.password
-    )
+    """Authenticates a user and adds them to an active session."""
+    try:
+        user_id = UserRepository.authenticate_user(
+            user_credentials.first_name,
+            user_credentials.last_name,
+            user_credentials.password
+        )
+        if user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid first name, last name, or password."
+            )
+        
+        # Perform post-login actions
+        log_user_ip_address(user_id, get_client_ip(request))
+        await add_user_to_active_session(user_id)
+        
+        logger.info(f"User ID {user_id} logged in successfully.")
+        return {"message": "Login successful", "user_id": user_id}
 
-    if user_id is None:
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"An unexpected error occurred during login for user '{user_credentials.first_name}': {e}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid first name, last name, or password."
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected server error occurred."
         )
 
-    # Log IP address for successful login
-    log_user_ip_address(user_id, client_ip)
 
-    return {"message": "Login successful", "user_id": user_id}
+# --- Helper function to calculate player scores (CLEANED) ---
+def calculate_player_score(session_id: int, user_id: int) -> int:
+    """Calculate the total score for a single player within a given session."""
+    try:
+        # This can be optimized by fetching answers only for the specific user
+        all_answers = PlayerAnswerRepository.get_all_player_answers_for_user_in_session(session_id, user_id)
+        
+        # Sum points from the filtered list of answers
+        user_score = sum(answer.get('points_earned', 0) for answer in all_answers if answer.get('points_earned'))
+        return user_score
+    
+    except Exception as e:
+        logger.error(f"Could not calculate score for user {user_id} in session {session_id}: {e}")
+        return 0
+
 
 
 
