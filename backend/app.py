@@ -11,7 +11,7 @@ from threading import Thread, Event, Lock
 import socket
 # Import the new ThemeRepository
 from fastapi.responses import HTMLResponse,JSONResponse
-from database.datarepository import QuestionRepository, AnswerRepository, ThemeRepository,UserRepository, IpAddressRepository, UserIpAddressRepository,QuizSessionRepository,SensorDataRepository,QuizSessionsRepository,AuditLogRepository,PlayerItemRepository,ItemRepository,ChatLogRepository,SessionPlayerRepository,PlayerAnswerRepository
+from database.datarepository import QuestionRepository, AnswerRepository, ThemeRepository,UserRepository, IpAddressRepository, UserIpAddressRepository,QuizSessionRepository,SensorDataRepository,AuditLogRepository,PlayerItemRepository,ItemRepository,ChatLogRepository,SessionPlayerRepository,PlayerAnswerRepository
 from models.models import (
     QuestionBase, QuestionCreate, QuestionResponse, QuestionUpdate,
     QuestionStatusUpdate, ErrorNotFound, QuestionWithAnswers,
@@ -1301,6 +1301,7 @@ async def handle_answer_submission(sid, data):
             'error': 'An error occurred while processing your answer'
         }, room=sid)
 
+# Updated socket.io handler for theme selection
 @sio.on('theme_selected')
 async def handle_theme_selection(sid, data):
     try:
@@ -1308,29 +1309,43 @@ async def handle_theme_selection(sid, data):
         theme_id = data.get('themeId')
         theme_name = data.get('themeName')
         request_user_data = data.get('request_user_data', False)
-        
+       
         if not all([user_id, theme_id]):
             await sio.emit('answer_response', {
                 'success': False,
                 'error': 'Missing required data for theme selection'
             }, room=sid)
             return
-        
+       
+        # Get active session and update theme if not already set
+        active_sessions = QuizSessionRepository.get_sessions_by_status(2)
+        if active_sessions:
+            session = active_sessions[0]  # Get first active session
+            session_id = session['id']
+            
+            # Only update theme if session doesn't have one yet
+            if not session.get('themeId'):
+                success = QuizSessionRepository.update_session_theme(session_id, theme_id)
+                if success:
+                    # Start the timer after theme selection
+                    loop = asyncio.get_running_loop()
+                    start_quiz_timer(sio, loop, session_id)
+       
         result = await process_theme_selection(user_id, theme_id, theme_name)
-        
+       
         response_data = {
             'success': result.get('success', False),
             'feedback': result.get('feedback'),
             'theme_name': theme_name
         }
-        
+       
         if request_user_data and result.get('success'):
             await handle_user_data_request(sid, {'user_id': user_id})
-        
+       
         await sio.emit('answer_response', response_data, room=sid)
-        
+       
         logger.info(f"Processed theme selection for user {user_id}: {theme_name}")
-        
+       
     except Exception as e:
         logger.error(f"Error handling theme selection: {e}", exc_info=True)
         await sio.emit('answer_response', {
@@ -3397,6 +3412,62 @@ def emit_combined_theme_selection(sio, loop, active_only=True):
         logger.exception(f"An unexpected error occurred during emit_combined_theme_selection: {e}")
         # The 'logger.exception' call automatically includes traceback information.
 
+
+# Separate function for theme selection emission with session check
+def emit_theme_selection_if_needed(sio, loop):
+    """Emit theme selection only if active session has no theme."""
+    try:
+        active_sessions = QuizSessionRepository.get_sessions_by_status(2)
+        if active_sessions:
+            session = active_sessions[0]
+            # Only emit theme selection if session has no theme
+            if not session.get('themeId'):
+                emit_combined_theme_selection(sio, loop)
+    except Exception as e:
+        logger.error(f"Error checking theme selection: {e}")
+
+# Timer function for quiz countdown
+def start_quiz_timer(sio, loop, session_id):
+    """Start a 60-second countdown timer with dynamic increments."""
+    def timer_task():
+        try:
+            base_time = 60
+            current_time = base_time
+            
+            while current_time > 0:
+                # Emit current timer to all clients
+                timer_data = {
+                    'time_remaining': current_time,
+                    'session_id': session_id
+                }
+                
+                asyncio.run_coroutine_threadsafe(
+                    sio.emit('quiz_timer', timer_data),
+                    loop
+                )
+                
+                # Calculate dynamic increment (simplified version)
+                # increment = 1 * (2 * (player_theme_votes) / session_players + 5)
+                # For now, using base increment of 1 second
+                increment = 1
+                
+                time.sleep(increment)
+                current_time -= increment
+            
+            # Timer finished
+            asyncio.run_coroutine_threadsafe(
+                sio.emit('quiz_timer_finished', {'session_id': session_id}),
+                loop
+            )
+            
+        except Exception as e:
+            logger.error(f"Error in quiz timer: {e}")
+    
+    # Start timer in background thread
+    import threading
+    timer_thread = threading.Thread(target=timer_task)
+    timer_thread.daemon = True
+    timer_thread.start()
 
 
 # ----------------------------------------------------
