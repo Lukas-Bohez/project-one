@@ -3676,24 +3676,32 @@ def handle_voting_phase(sio, loop, session_id, voting_time):
             # Move to theme display phase
             set_session_phase(session_id, 'theme_display')
             
-            # Get theme data
-            theme_data = ThemeRepository.get_theme_by_id(winning_theme)
-            
+            # Get the winning theme data
+            winning_theme_data = ThemeRepository.get_theme_by_id(winning_theme)
+
+            # Structure the data to exactly match theme_selection format
             combined_data = {
-                    'id': 'voting_result',
-                    'question': f'Voting has finished! Theme "{winning_theme}" has won.',
-                    'type': 'theme_selection',
-                    'themes': theme_data,  # Assuming theme_data contains the list of themes
-                    'count': 1,
-                    'winning_theme': winning_theme,
-                    'session_id': session_id,
-                    'timestamp': time.time()
-                }
+                'id': 'voting_result',
+                'question': f'The winning theme is: {winning_theme}',
+                'type': 'theme_selection',
+                'themes': [{
+                    'id': winning_theme_data['id'],
+                    'name': winning_theme_data['name'],
+                    'description': winning_theme_data.get('description', ''),
+                    'logoUrl': winning_theme_data.get('logoUrl', None),
+                    'is_active': winning_theme_data.get('is_active', 1)
+                }],
+                'count': 1,
+                'active_only': True,  # Assuming we want only active themes
+                'timestamp': time.time(),
+                'winning_theme': winning_theme,  # Additional voting-specific field
+                'session_id': session_id  # Additional voting-specific field
+            }
 
             future = asyncio.run_coroutine_threadsafe(
-                    sio.emit('questionData', combined_data),
-                    loop
-                )
+                sio.emit('questionData', combined_data),
+                loop
+        )
             future.result(timeout=1)
             
             # Continue to theme display phase immediately
@@ -4048,7 +4056,7 @@ async def handle_theme_selection(sid, data):
         if total_votes == 1:
             print(f"Starting voting timer for session {session_id}")
             timer_config = {
-                'voting_time': 60,
+                'voting_time': 10,
                 'theme_display_time': 10,
                 'question_time': 10,
                 'explanation_time': 5
