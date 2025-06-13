@@ -3227,54 +3227,7 @@ def activateAdvertFlood():
 
 import asyncio
 
-def emit_question_by_id(question_id, sio, loop):
-    """Emit question data by ID via socket.io."""
-    try:
-        question = QuestionRepository.get_question_by_id(question_id)
-        if not question:
-            error_data = {
-                'error': 'not_found',
-                'message': f"Question with ID {question_id} not found",
-                'status_code': 404
-            }
-            asyncio.run_coroutine_threadsafe(
-                sio.emit('question_error', error_data),
-                loop
-            )
-        else:
-            asyncio.run_coroutine_threadsafe(
-                sio.emit('question_data', question),
-                loop
-            )
-    except Exception as e:
-        print(f"Error emitting question_by_id: {e}")
 
-def emit_answers_for_question(question_id, sio, loop):
-    """Emit all answers for a question via socket.io."""
-    try:
-        if not QuestionRepository.get_question_by_id(question_id):
-            error_data = {
-                'error': 'not_found',
-                'message': f"Question with ID {question_id} not found",
-                'status_code': 404
-            }
-            asyncio.run_coroutine_threadsafe(
-                sio.emit('answers_error', error_data),
-                loop
-            )
-        else:
-            answers = AnswerRepository.get_all_answers_for_question(question_id)
-            response_data = {
-                'answers': answers,
-                'count': len(answers),
-                'question_id': question_id
-            }
-            asyncio.run_coroutine_threadsafe(
-                sio.emit('answers_data', response_data),
-                loop
-            )
-    except Exception as e:
-        print(f"Error emitting answers_for_question: {e}")
 
 
 
@@ -3630,90 +3583,90 @@ def handle_theme_display_phase(sio, loop, session_id, display_time):
     print(f"Theme display finished for session {session_id}, ready for quiz")
 
 def handle_quiz_phase(sio, loop, session_id, timer_config):
-    """Handle the quiz questions phase"""
+    """Handle the quiz questions phase with sensor-based question selection."""
     print(f"Starting quiz phase for session {session_id}")
-    
+
     # Get session and theme info
     session_info = QuizSessionRepository.get_session_by_id(session_id)
     if not session_info or not session_info.get('themeId'):
         emit_error(sio, loop, session_id, 'No theme found for quiz')
         return
-    
+
     theme_id = session_info['themeId']
-    questions = QuestionRepository.get_questions_by_theme(theme_id, active_only=True)
-    
-    if not questions:
+    all_questions = QuestionRepository.get_questions_by_theme(theme_id, active_only=True)
+
+    if not all_questions:
         emit_error(sio, loop, session_id, 'No questions found for this theme')
         return
-    
-    # Shuffle questions for random order
-    random.shuffle(questions)
+
+    # Create a mutable list of available questions to ask
+    available_questions = list(all_questions)
+    num_questions_to_ask = len(available_questions)
     
     question_time = timer_config.get('question_time', 10)
     explanation_time = timer_config.get('explanation_time', 5)
-    
-    for question in questions:
+
+    for i in range(num_questions_to_ask):
+        print(f"\n--- Selecting Question {i+1} of {num_questions_to_ask} ---")
+        
+        # Use the new function to select the next question
+        question = select_question_based_on_sensors(available_questions, temp_sensor, light_sensor)
+        
+        if not question:
+            emit_error(sio, loop, session_id, 'Failed to select a question; ending quiz.')
+            break # Exit the loop if no question could be selected
+
+        # Remove the selected question from the available pool to prevent repeats
+        available_questions.remove(question)
+        
+        # --- The rest of the logic remains the same ---
+
         # Show question
-        future = asyncio.run_coroutine_threadsafe(
+        asyncio.run_coroutine_threadsafe(
             sio.emit('question_started', {
-                'session_id': session_id,
-                'question': question,
-                'duration': question_time
-            }),
-            loop
-        )
-        future.result(timeout=1)
+                'session_id': session_id, 'question': question, 'duration': question_time
+            }), loop
+        ).result(timeout=1)
         
         # Reset servo to start position
         if 'servo' in globals():
             servo.set_angle(0)
-        
+
         # Question countdown with servo movement
         for current_time in range(question_time, -1, -1):
             emit_timer_update(sio, loop, session_id, current_time, 'question', question_time, question_id=question['id'])
-            
-            if current_time <= 0:
-                break
+            if current_time <= 0: break
             time.sleep(1)
         
-        # Emit timer finished for question
         emit_timer_finished(sio, loop, session_id, 'question', question_id=question['id'])
-        
+
         # Show explanation
-        future = asyncio.run_coroutine_threadsafe(
+        asyncio.run_coroutine_threadsafe(
             sio.emit('explanation_started', {
-                'session_id': session_id,
-                'question': question,
-                'explanation': question.get('explanation', ''),
-                'duration': explanation_time
-            }),
-            loop
-        )
-        future.result(timeout=1)
-        
-        # Reset servo to start position
+                'session_id': session_id, 'question': question, 
+                'explanation': question.get('explanation', ''), 'duration': explanation_time
+            }), loop
+        ).result(timeout=1)
+
+        # Reset servo for explanation
         if 'servo' in globals():
             servo.set_angle(0)
-        
-        # Explanation countdown with servo movement
+
+        # Explanation countdown
         for current_time in range(explanation_time, -1, -1):
             emit_timer_update(sio, loop, session_id, current_time, 'explanation', explanation_time, question_id=question['id'])
-            
-            if current_time <= 0:
-                break
+            if current_time <= 0: break
             time.sleep(1)
-        
-        # Emit timer finished for explanation
+
         emit_timer_finished(sio, loop, session_id, 'explanation', question_id=question['id'])
-    
+
     # Quiz finished
-    future = asyncio.run_coroutine_threadsafe(
-        sio.emit('quiz_finished', {
-            'session_id': session_id
-        }),
-        loop
-    )
-    future.result(timeout=1)
+    print(f"\n--- Quiz finished for session {session_id} ---")
+    session_id = get_active_session_id()
+    QuizSessionRepository.update_session_status(session_id,3)
+    asyncio.run_coroutine_threadsafe(
+        sio.emit('quiz_finished', {'session_id': session_id}), loop
+    ).result(timeout=1)
 
 def emit_error(sio, loop, session_id, error_message):
     """Emit error message to clients"""
@@ -3799,7 +3752,60 @@ def check_sensor_data(temp_sensor, light_sensor):
             'illuminance': 0,
         }
 
+def emit_combined_question_and_answers(question_id, sio, loop):
+    """
+    Fetches a question and its answers, combines them into a single structured
+    object, and emits it via socket.io on the 'questionData' channel.
 
+    This function replaces the separate emit_question_by_id and 
+    emit_answers_for_question functions.
+    """
+    try:
+        # 1. Fetch the primary resource: the question
+        question = QuestionRepository.get_question_by_id(question_id)
+
+        # Handle case where the question doesn't exist
+        if not question:
+            error_data = {
+                'error': 'not_found',
+                'message': f"Question with ID {question_id} not found",
+                'status_code': 404
+            }
+            # Emit the error and stop execution
+            asyncio.run_coroutine_threadsafe(
+                sio.emit('question_error', error_data), loop
+            )
+            return
+
+        # 2. Fetch the related resources: the answers for that question
+        answers = AnswerRepository.get_all_answers_for_question(question_id)
+
+        # 3. Combine all data into a single, consistent payload
+        combined_data = {
+            'id': question.get('id'),
+            'question': question.get('question_text'),
+            'type': question.get('type', 'multiple_choice'), # Provide a default type
+            'answers': answers, # Nest the answers within the payload
+            'count': len(answers),
+            'timestamp': time.time()
+        }
+
+        # 4. Emit the unified data on a single, predictable channel
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('questionData', combined_data), loop
+        )
+
+    except Exception as e:
+        # Catch any other unexpected errors during the process
+        print(f"An unexpected error occurred during emit_combined_question_and_answers: {e}")
+        error_data = {
+            'error': 'server_error',
+            'message': 'An internal error occurred while preparing the question.',
+            'status_code': 500
+        }
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('question_error', error_data), loop
+        )
 
 def emit_theme_selection_if_needed(sio, loop):
     global light_sensor
@@ -4117,6 +4123,59 @@ async def handle_answer_submission(sid, data):
             'success': False,
             'error': 'An error occurred while processing your answer'
         }, room=sid)
+
+def select_question_based_on_sensors(available_questions, temp_sensor, light_sensor):
+    """
+    Selects a question based on sensor data with fallback mechanisms.
+
+    Args:
+        available_questions (list): A list of question dictionaries to choose from.
+        temp_sensor: The temperature sensor object.
+        light_sensor: The light sensor object.
+
+    Returns:
+        dict: The selected question dictionary, or None if no question could be selected.
+    """
+    if not available_questions:
+        return None
+
+    sensor_data = check_sensor_data(temp_sensor, light_sensor)
+    current_temp = sensor_data['temperature']
+    current_lux = sensor_data['illuminance']
+    print(f"Selecting question with sensor data: Temp={current_temp}°C, Lux={current_lux}")
+
+    # --- Attempt 1: Targeted selection based on sensors (50 tries) ---
+    for _ in range(50):
+        question = random.choice(available_questions)
+        
+        # Get sensor ranges from question, with safe defaults if keys are missing
+        min_temp = question.get('min_temp', -float('inf'))
+        max_temp = question.get('max_temp', float('inf'))
+        min_lux = question.get('min_lux', -float('inf'))
+        max_lux = question.get('max_lux', float('inf'))
+
+        # Check if current sensor values are within the question's defined range
+        temp_match = (min_temp is None or current_temp >= min_temp) and \
+                     (max_temp is None or current_temp <= max_temp)
+        lux_match = (min_lux is None or current_lux >= min_lux) and \
+                    (max_lux is None or current_lux <= max_lux)
+
+        if temp_match and lux_match:
+            print(f"Found matching question (ID: {question['id']}) on targeted attempt.")
+            return question
+
+    # --- Attempt 2: Fallback to any random question (50 more tries) ---
+    print("No ideal sensor-matched question found after 50 tries. Selecting any random question.")
+    for _ in range(50):
+        question = random.choice(available_questions)
+        if question:
+            print(f"Selected fallback random question (ID: {question['id']}).")
+            return question
+
+    # --- Failure Condition ---
+    print("Could not select a question after 100 total attempts. Stopping quiz.")
+    return None
+
 
 
 
