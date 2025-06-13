@@ -2794,10 +2794,13 @@ def format_second_row(temp, lux, angle):
 
 
 servo = None 
-
+temp_sensor = None
+light_sensor = None
 
 def raspberry_pi_main_thread(stop_event, sio, loop):
     global servo  # Reference the global variable
+    global light_sensor
+    global temp_sensor
     if not RPI_COMPONENTS_AVAILABLE:
         print("Skipping Raspberry Pi thread start due to component import errors.")
         return
@@ -2805,8 +2808,7 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
     # Initialize components
     lcd = None
     rfid = None
-    temp_sensor = None
-    light_sensor = None
+
     try:
         lcd = LCD1602A()
         rfid = HardcoreRFID()
@@ -3877,7 +3879,39 @@ def emit_combined_theme_selection(sio, loop, active_only=True):
     except Exception as e:
         print(f"An unexpected error occurred during emit_combined_theme_selection: {e}")
 
+
+def check_sensor_data(temp_sensor, light_sensor):
+    """Read all sensor values with proper temperature validation."""
+    try:
+        # Read temperature and validate/clamp the value
+        raw_temp = temp_sensor.read_temperature()
+        
+        # Clamp temperature to reasonable range (-50°C to 100°C)
+        # This prevents database truncation errors
+        if raw_temp is None or not isinstance(raw_temp, (int, float)):
+            temperature = 0.0
+        else:
+            temperature = max(-50.0, min(100.0, float(raw_temp)))
+            # Round to 2 decimal places to avoid precision issues
+            temperature = round(temperature, 2)
+        
+        return {
+            'temperature': temperature,
+            'illuminance': light_sensor(),
+        }
+    except Exception as e:
+        print(f"Error reading sensor data: {e}")
+        # Return safe default values
+        return {
+            'temperature': 0.0,
+            'illuminance': 0,
+        }
+
+
+
 def emit_theme_selection_if_needed(sio, loop):
+    global light_sensor
+    global temp_sensor
     """
     Emit theme selection only if active session has no theme - called every second in main loop
     This is the main coordination function called from your main loop
@@ -3926,16 +3960,15 @@ def emit_theme_selection_if_needed(sio, loop):
                         'explanation_time': 5
                     }
                     start_generic_timer(sio, loop, active_session_id, timer_config)
+
+                
+                elif current_phase == 'quiz':
+                    sensor_data = check_sensor_data(temp_sensor, light_sensor) #{'temperature': 31.69, 'illuminance': 18.57282502443793}
+
+
                 elif not current_phase or (current_phase not in ['voting', 'theme_display', 'quiz'] and not is_timer_running):
                     # No phase set but theme exists - start theme display
-                    set_session_phase(active_session_id, 'theme_display')
-                    timer_config = {
-                        'voting_time': 60,
-                        'theme_display_time': 10,
-                        'question_time': 10,
-                        'explanation_time': 5
-                    }
-                    start_generic_timer(sio, loop, active_session_id, timer_config)
+                    set_session_phase(active_session_id, 'quiz')
                     
     except Exception as e:
         print(f"Error checking theme selection: {e}")
