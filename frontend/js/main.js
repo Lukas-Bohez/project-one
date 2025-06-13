@@ -13,74 +13,11 @@ const dom = {
     servoVisual: document.getElementById('servoVisual')
 };
 
-<<<<<<< HEAD
-const socket = io(lanIP, {
-  transports: ["websocket", "polling"]
-});
-
-// Event listeners
-socket.on('connect', () => {
-  console.log('Connected to server with ID:', socket.id);
-  document.getElementById('connection-status').textContent = 'Connected';
-});
-
-socket.on('disconnect', () => {
-  console.log('Disconnected');
-  document.getElementById('connection-status').textContent = 'Disconnected';
-});
-
-// Handle sensor data updates
-socket.on('sensor_data', (data) => {
-  console.log('Sensor update:', data);
-  
-  // Update your UI elements
-  if (data.temperature !== undefined) {
-    document.getElementById('temperature').textContent = `${data.temperature.toFixed(1)}°C`;
-  }
-  if (data.illuminance !== undefined) {
-    document.getElementById('light').textContent = `${data.illuminance.toFixed(0)} lux`;
-  }
-  if (data.servo_angle !== undefined) {
-    document.getElementById('servo-angle').textContent = `${data.servo_angle}°`;
-    // Optional: Update a visual servo position indicator
-    document.getElementById('servo-indicator').style.transform = `rotate(${data.servo_angle}deg)`;
-  }
-});
-
-socket.on('connect_error', (err) => {
-  console.error('Connection error:', err);
-  const errorElement = document.getElementById('error-message');
-  if (errorElement) {
-    errorElement.textContent = `Connection error: ${err.message}`;
-  }
-});
-
-// Add this to debug connection issues
-socket.onAny((event, ...args) => {
-  console.log('Socket event:', event, args);
-});
-
-
-
-
-
-
-
-
-
-
-=======
 let initialData
->>>>>>> 308f2c7 (updated frontend)
 
 const showSensorData = (temp, light, degrees, players) => {
     if (dom.tempValue) dom.tempValue.textContent = temp;
     if (dom.lightValue) dom.lightValue.textContent = light;
-<<<<<<< HEAD
-    if (dom.soundValue) dom.soundValue.textContent = degrees;
-    if (dom.playerCount) dom.playerCount.textContent = players;
-=======
->>>>>>> 308f2c7 (updated frontend)
 };
 
 const showServoMovement = (angle) => {
@@ -177,28 +114,17 @@ const testServoMovement = async () => {
             },
             body: JSON.stringify({ command: "SWEEP_SERVO" })
         });
-
         const data = await response.json();
-
+        
+        // DEBUG: Log what we actually receive
+        console.log("Response status:", response.status);
+        console.log("Response data:", data);
+        console.log("data.detail:", data.detail);
+        
         if (response.ok) {
             alert(data.message);
         } else {
-            if (response.status === 409) {
-                let alertMessage = `${data.message}\n\n`;
-                if (data.active_session) {
-                    alertMessage += `Active Quiz: ${data.active_session.name}\n`;
-                    alertMessage += `Description: ${data.active_session.description || 'N/A'}\n`;
-                    if (data.active_session.start_time) {
-                        const startTime = new Date(data.active_session.start_time).toLocaleString();
-                        alertMessage += `Started: ${startTime}`;
-                    }
-                }
-                alert(alertMessage);
-            } else if (response.status === 429) {
-                alert(`Failed to trigger servo: ${data.detail}`);
-            } else {
-                alert(`Failed to trigger servo: ${data.detail || `HTTP error! Status: ${response.status}`}`);
-            }
+            alert(data.detail || JSON.stringify(data) || "Unknown error");
         }
     } catch (error) {
         alert(`Network error during servo trigger: ${error.message}`);
@@ -211,23 +137,16 @@ const initIndexPage = () => {
     listenToButtons();
     markInitializationSuccess();
 
-<<<<<<< HEAD
-    const initialData = getInitialPlaceholderData();
-=======
     initialData = getInitialPlaceholderData();
->>>>>>> 308f2c7 (updated frontend)
     showSensorData(
         initialData.temp,
         initialData.light,
         initialData.degrees,
         initialData.players
     );
-<<<<<<< HEAD
-=======
     if (initialData.degrees == null){
       initialData.degrees = 90  
     } 
->>>>>>> 308f2c7 (updated frontend)
     showServoMovement(initialData.degrees);
 };
 
@@ -258,8 +177,6 @@ const initApp = () => {
         initQuizPage();
     } else if (path.includes('login.html')) {
         initLoginPage();
-<<<<<<< HEAD
-=======
     }
 
     setTimeout(() => {
@@ -302,7 +219,11 @@ if (document.readyState !== 'loading') {
 
 
 
-
+STORAGE_IP = {
+  IP: {
+    IP:'IP'
+  }
+};
 
 
 
@@ -322,6 +243,7 @@ const getClientIpAddress = async () => {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const data = await response.json();
+        sessionStorage.setItem(STORAGE_IP.IP.IP, data.ip_address);
         return data.ip_address;
     } catch (error) {
         console.error("Error fetching client IP:", error);
@@ -366,144 +288,8 @@ const handleIpStatus = async (ipAddress) => {
             return true; // Indicate that the user is banned
         } else {
             console.log(`IP Address ${ipAddress} is not banned. Welcome!`);
-            // IP is not banned, continue normal site operations
-            return false; // Indicate that the user is not banned
-        }
-
-    } catch (error) {
-        console.error("Error handling IP status:", error);
-        // Decide how to handle this error. For security, you might want to default to denying access
-        // or logging this attempt on the backend.
-        // For now, we'll let them through but log the issue.
-        return false; // Assume not banned if error occurs
-    }
-};
-
-// Main execution block when the DOM is fully loaded
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log("DOM Content Loaded. Initiating IP check...");
-
-    // Get the client's IP address
-    const clientIp = await getClientIpAddress();
-
-    if (clientIp) {
-        // Handle IP status (check ban, create/track if new)
-        const isBanned = await handleIpStatus(clientIp);
-        if (isBanned) {
-            // The handleIpStatus function already redirected, so just return
-            return;
-        }
-    } else {
-        console.error("Could not determine client IP address. Proceeding with caution.");
-        // Decide on a policy here: allow access but log, or restrict access.
-        // For simplicity, we proceed without a ban check if IP is unknown.
->>>>>>> 308f2c7 (updated frontend)
-    }
-
-    setTimeout(() => {
-        if (!document.querySelector('#init-success')) {
-            manualInitialize();
-        }
-    }, 1000);
-};
-
-const testAllFunctions = () => {
-    const testData = getInitialPlaceholderData();
-    showSensorData(testData.temp, testData.light, testData.degrees, testData.players);
-    showServoMovement(testData.degrees);
-    callbackUpdateDifficulty(testData.temp, testData.light, 75);
-};
-
-const manualInitialize = () => {
-    listenToButtons();
-};
-
-document.addEventListener('DOMContentLoaded', initApp);
-
-if (document.readyState !== 'loading') {
-    initApp();
-} else {
-    document.addEventListener('DOMContentLoaded', initApp);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// admin.js (or a new script file loaded on your admin page)
-
-// Function to fetch the client's IP address from your backend
-const getClientIpAddress = async () => {
-    try {
-        // Assuming your FastAPI app is running on lanIP:8000
-        const url = `${lanIP}/api/v1/client-ip`;
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        const data = await response.json();
-        return data.ip_address;
-    } catch (error) {
-        console.error("Error fetching client IP:", error);
-        // Fallback or error handling if IP cannot be fetched
-        return null;
-    }
-};
-
-// Function to check IP ban status and create/track IP
-const handleIpStatus = async (ipAddress) => {
-    if (!ipAddress) {
-        console.warn("No IP address available to check status.");
-        return;
-    }
-
-    try {
-        const url = `${lanIP}/api/v1/ip-status`; // New endpoint
-        const response = await fetch(url, {
-            method: 'POST', // Use POST to send IP address securely in body
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({ ip_address: ipAddress })
-        });
-
-        if (!response.ok) {
-            // Even if the IP is banned, the backend might return 200 with is_banned: true
-            // So, check for actual HTTP errors here
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        console.log("IP Status Check Result:", result);
-
-        if (result.is_banned) {
-            console.warn(`IP Address ${ipAddress} is banned! Kicking user...`);
-            // Redirect to a banned page or show a prominent message
-            window.location.href = `${lanIP}/banned`; // Redirect to a dedicated banned page
-            // Or, if you want to display on the current page:
-            // document.body.innerHTML = '<div style="text-align: center; margin-top: 100px; font-size: 2em; color: red;">Your IP address is banned. Access Denied.</div>';
-            return true; // Indicate that the user is banned
-        } else {
-            console.log(`IP Address ${ipAddress} is not banned. Welcome!`);
+            const storedIP = sessionStorage.getItem(STORAGE_IP.IP.IP);
+            console.log('Stored IP:', storedIP);
             // IP is not banned, continue normal site operations
             return false; // Indicate that the user is not banned
         }
@@ -536,18 +322,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Decide on a policy here: allow access but log, or restrict access.
         // For simplicity, we proceed without a ban check if IP is unknown.
     }
-
-    // If IP is not banned or not determined, proceed with loading other page content
-    // e.g., loadUsers() or other admin panel initialization
-    // console.log("Proceeding with normal page load functions.");
-    // loadUsers(); // Example: if loadUsers is part of your initial page setup
 });
 
-<<<<<<< HEAD
-// IMPORTANT: Ensure `lanIP` is defined and accessible in this scope.
-// For example, it might be defined globally in an `app.js` or `config.js` file:
-// const lanIP = "http://your_raspberry_pi_ip:8000";
-=======
 
 
 
@@ -921,4 +697,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 });
->>>>>>> 308f2c7 (updated frontend)

@@ -656,6 +656,20 @@ body {
     pointer-events: none;
 }
 
+.c-question-correct-special {
+    display: flex !important;       /* FORCE flex */
+    flex-direction: row !important; /* FORCE row layout */
+    flex-wrap: nowrap !important;   /* NO WRAPPING */
+    gap: 10px !important;          /* FORCE gap */
+    align-items: center !important; /* Align items vertically */
+    width: max-content !important;  /* Expand to fit content */
+}
+
+/* FORCE flex children to stay inline */
+.c-question-correct-special > .c-question-correct {
+    flex-shrink: 0 !important;     /* Prevent shrinking */
+    white-space: nowrap !important; /* Prevent text wrapping */
+}
 
 /*---------------------------------------/*
  # THEME
@@ -1339,3 +1353,9 @@ body {
     align-items: baseline;
     /* Aligns based on content */
 }
+
+
+
+
+
+
