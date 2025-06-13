@@ -4094,7 +4094,7 @@ async def handle_theme_selection(sid, data):
         })
 
 # ---------- Answer Submission Handler ----------
-@sio.on('answer_submitted')
+@sio.on('submit_answer')  # Changed from 'answer_submitted' to match frontend
 async def handle_answer_submission(sid, data):
     try:
         user_id = data.get('userId')
@@ -4154,9 +4154,29 @@ async def handle_answer_submission(sid, data):
             }, room=sid)
             return
         
-        # Check if the submitted answer is correct
+        # Get the submitted answer and check if it's correct
         submitted_answer = answers[answer_index] if 0 <= answer_index < len(answers) else None
-        is_correct = submitted_answer and submitted_answer.get('is_correct', False)
+        if not submitted_answer:
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'Invalid answer selection'
+            }, room=sid)
+            return
+        
+        # Get the full answer details from database to check correctness
+        answer_id = submitted_answer.get('id')
+        answer_details = AnswerRepository.get_answer_by_id(answer_id) if answer_id else None
+        
+        if not answer_details:
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'Answer details not found'
+            }, room=sid)
+            return
+        
+        # Check if answer is correct (handle both string and boolean values)
+        is_correct_value = answer_details.get('is_correct', '0')
+        is_correct = str(is_correct_value).lower() in ['1', 'true', 'yes'] or is_correct_value is True
         
         # Calculate points based on time remaining
         points_earned = 0
@@ -4180,7 +4200,8 @@ async def handle_answer_submission(sid, data):
             session_id=sessionid,
             user_id=user_id,
             question_id=question_id,
-            answer_id=submitted_answer.get('id') if submitted_answer else None,
+            answer_id=answer_id,
+            is_correct=is_correct,
             points_earned=points_earned,
             time_taken=(10 - time_remaining)  # Assuming 10 second question time
         )
