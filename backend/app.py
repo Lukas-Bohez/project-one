@@ -3678,11 +3678,12 @@ def handle_voting_phase(sio, loop, session_id, voting_time):
             
             # Get the winning theme data
             winning_theme_data = ThemeRepository.get_theme_by_id(winning_theme)
+            winning_theme_name = winning_theme_data['name']
 
             # Structure the data to exactly match theme_selection format
             combined_data = {
                 'id': 'voting_result',
-                'question': f'The winning theme is: {winning_theme}',
+                'question': f'The winning theme is: {winning_theme_name}',
                 'type': 'theme_selection',
                 'themes': [{
                     'id': winning_theme_data['id'],
@@ -4056,7 +4057,7 @@ async def handle_theme_selection(sid, data):
         if total_votes == 1:
             print(f"Starting voting timer for session {session_id}")
             timer_config = {
-                'voting_time': 10,
+                'voting_time': 60,
                 'theme_display_time': 10,
                 'question_time': 10,
                 'explanation_time': 5
