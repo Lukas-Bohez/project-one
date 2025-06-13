@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Literal
 from datetime import datetime
 
 # Existing Question Models (unchanged)
@@ -291,19 +291,7 @@ class DirectMessage(BaseModel):
 class ClientActivity(BaseModel):
     client_ip: str
 
-class SensorReadingValue(BaseModel):
-    timestamp: Optional[str] # Or datetime, if you prefer to parse it here
-    value: float # <--- THIS IS LIKELY THE CULPRIT IF IT'S RECEIVING A STRING FOR VALUE
 
-class SessionSensorData(BaseModel):
-    session_id: int
-    session_name: str
-    temperatures: list[SensorReadingValue]
-    light_intensities: list[SensorReadingValue]
-    servo_positions: list[SensorReadingValue]
-
-class MultiSessionSensorResponse(BaseModel):
-    sessions: list[SessionSensorData]
 
 class UserUpdateNames(BaseModel):
     first_name: str = Field(..., min_length=1, max_length=50, example="John")
@@ -338,3 +326,119 @@ class QuestionInput(BaseModel):
     TempMax: Optional[float] = None
     TempMin: Optional[float] = None
     answers: list[AnswerInput]
+
+class ThemeInput(BaseModel):
+    name: str
+    description: Optional[str] = None
+    is_active: bool = True
+
+
+# Updated response model to include IP information
+class UserIpAddress(BaseModel):
+    id: int
+    ip_address: str
+    is_banned: bool
+    ban_reason: Optional[str] = None
+    ban_date: Optional[datetime] = None
+    ban_expires_at: Optional[datetime] = None
+    usage_count: int
+    last_used: datetime
+    is_primary: bool
+
+class UserPublicWithIp(BaseModel):
+    # Include all your existing UserPublic fields here
+    id: int
+    first_name: str
+    last_name: str
+    rfid_code: Optional[str] = None
+    userRoleId: int
+    soul_points: int
+    limb_points: int
+    last_active: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    # Add IP addresses
+    ip_addresses: list[UserIpAddress] = []
+
+
+
+
+class BanIpRequest(BaseModel):
+    ip_address: str
+    ban_reason: str
+    ban_duration_value: int
+    ban_duration_unit: str  # 'minutes', 'hours', 'days', 'permanent'
+
+
+# Updated Pydantic Model - removed timestamp since it doesn't exist in your table
+class AuditLogResponse(BaseModel):
+    id: int
+    table_name: str
+    record_id: str
+    action: str
+    old_values: Optional[Dict[str, Any]] = None
+    new_values: Optional[Dict[str, Any]] = None
+    changed_by: str
+    ip_address: str
+
+
+
+
+
+class ChatMessage(BaseModel):
+    id: Optional[int]
+    userId: Optional[int]
+    username: Optional[str]
+    message: Optional[str]
+    created_at: Optional[str]
+
+class PlayerAnswer(BaseModel):
+    player_answer_id: Optional[int]
+    sessionId: Optional[int]
+    userId: Optional[int]
+    first_name: Optional[str]
+    last_name: Optional[str]
+    questionId: Optional[int]
+    answerId: Optional[int]
+    answer_text: Optional[str]
+    is_correct: Optional[bool]
+    points_earned: Optional[int]
+    time_taken: Optional[float]
+    answered_at: Optional[str]
+
+class QuestionWithAnswers(BaseModel):
+    question_id: Optional[int]
+    question_text: Optional[str]
+    player_answers: list[PlayerAnswer]
+
+
+
+class SensorReading(BaseModel):
+    timestamp: Optional[str]
+    value: Optional[float]
+
+class SessionSensorData(BaseModel):
+    session_id: int
+    session_name: str
+    temperatures: list[SensorReading]
+    light_intensities: list[SensorReading]
+    servo_positions: list[SensorReading]
+    chat_messages: list[ChatMessage] = []  # New field with default empty list
+    player_answers: list[QuestionWithAnswers] = []  # New field with default empty list
+
+class MultiSessionSensorResponse(BaseModel):
+    sessions: list[SessionSensorData]
+
+
+class ChatMessageCreate(BaseModel):
+    session_id: int
+    message_text: str
+    user_id: Optional[int] = None
+    # Ensure message_type is restricted to your ENUM values
+    message_type: Literal['chat', 'system', 'announcement', 'warning'] = 'chat'
+    reply_to_id: Optional[int] = None
+
+
+
+class ShutdownRequest(BaseModel):
+    action: str = "shutdown"

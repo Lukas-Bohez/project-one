@@ -89,12 +89,21 @@ class Database:
         try:
             cls.__open_connection()
             cls.cursor.execute(sql_query, params)
-            cls.db.commit()
             
-            if cls.cursor.lastrowid:  # For INSERT
-                return cls.cursor.lastrowid
-            return cls.cursor.rowcount  # For UPDATE/DELETE
+            # Check if it's a SELECT query
+            query_type = sql_query.strip().upper().split()[0]
             
+            if query_type == 'SELECT':
+                # For SELECT queries, return the actual results
+                return cls.cursor.fetchall()
+            else:
+                # For INSERT/UPDATE/DELETE queries, commit and return appropriate info
+                cls.db.commit()
+                
+                if cls.cursor.lastrowid:  # For INSERT
+                    return cls.cursor.lastrowid
+                return cls.cursor.rowcount  # For UPDATE/DELETE
+                
         except connector.Error as error:
             if cls.db:
                 cls.db.rollback()

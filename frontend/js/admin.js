@@ -143,7 +143,7 @@ const fetchThemes = async () => {
                 }
             })
         );
-
+        console.log(themesWithCounts)
         return themesWithCounts;
     } catch (error) {
         console.error("Error fetching themes:", error);
@@ -155,47 +155,91 @@ const fetchThemes = async () => {
 // const lanIP = "http://localhost:8000"; // Or your actual server IP/domain
 
 const fetchUsers = async () => {
-    const url = `${lanIP}/api/v1/users/`;
-    console.log("Attempting to fetch users from:", url); // Crucial debug output
-
+    // Use the new endpoint with IP information
+    const url = `${lanIP}/api/v1/users/`; // or `/api/v1/users/with-ip/` if you want the separate endpoint
+    console.log("Attempting to fetch users from:", url);
+    
     try {
         const response = await fetch(url, {
-            method: 'GET', // Explicitly state the method
-            mode: 'cors',  // Explicitly set CORS mode
-            credentials: 'omit', // Explicitly omit credentials unless you specifically need them for this endpoint
+            method: 'GET',
+            mode: 'cors',
+            credentials: 'omit',
             headers: {
-                'Accept': 'application/json', // Request JSON response
-                // No 'Content-Type' for GET requests typically
+                'Accept': 'application/json',
             },
         });
-
+        
         console.log("Response status for users:", response.status);
-        console.log("Response headers for users:", Array.from(response.headers.entries())); // Inspect headers
-
+        console.log("Response headers for users:", Array.from(response.headers.entries()));
+        
         if (!response.ok) {
-            // Attempt to read error details from the response
             let errorDetail = `HTTP error! Status: ${response.status}`;
             try {
                 const errorBody = await response.json();
                 errorDetail = errorBody.detail || errorDetail;
             } catch (e) {
-                // If response is not JSON, use the raw text
                 const errorText = await response.text();
                 errorDetail = `HTTP error! Status: ${response.status}, Response: ${errorText.substring(0, 150)}...`;
             }
             throw new Error(errorDetail);
         }
-
+        
         const users = await response.json();
-        console.log("Successfully fetched users:", users); // Confirm data receipt
+        console.log("Successfully fetched users with IP info:", users);
+        
+        // Now you can access IP information for each user
+        users.forEach(user => {
+            console.log(`User ${user.first_name} ${user.last_name}:`);
+            console.log(`  ID: ${user.id}`);
+            console.log(`  IP Addresses (${user.ip_addresses.length}):`);
+            user.ip_addresses.forEach(ip => {
+                console.log(`    - ${ip.ip_address} (used ${ip.usage_count} times, last: ${ip.last_used})`);
+                if (ip.is_banned) {
+                    console.log(`      BANNED: ${ip.ban_reason || 'No reason provided'}`);
+                }
+                if (ip.is_primary) {
+                    console.log(`      PRIMARY IP`);
+                }
+            });
+        });
+        
         return users;
-
     } catch (error) {
         console.error("Critical Error in fetchUsers:", error);
-        // Provide more context to the error message
         const finalError = new Error(`Failed to fetch users from ${url}. Original error: ${error.message}`);
         throw finalError;
     }
+};
+
+// Example function to display user IP information in your UI
+const displayUserIpInfo = (user) => {
+    const ipInfo = user.ip_addresses.map(ip => {
+        let status = '';
+        if (ip.is_banned) {
+            status = ' [BANNED]';
+        }
+        if (ip.is_primary) {
+            status += ' [PRIMARY]';
+        }
+        return `${ip.ip_address}${status} (${ip.usage_count} uses)`;
+    }).join(', ');
+    
+    return ipInfo || 'No IP addresses recorded';
+};
+
+// Example usage in your UI rendering
+const renderUserTable = (users) => {
+    return users.map(user => {
+        const ipDisplay = displayUserIpInfo(user);
+        return `
+            <tr>
+                <td>${user.first_name} ${user.last_name}</td>
+                <td>${user.rfid_code || 'N/A'}</td>
+                <td>${ipDisplay}</td>
+                <td>${user.last_active || 'Never'}</td>
+            </tr>
+        `;
+    }).join('');
 };
 
 
@@ -209,118 +253,404 @@ let state = {
 
 
 
-// Enhanced updateQuestion function to handle API calls properly
+// Enhanced updateQuestion function to read actual form data from DOM
 const updateQuestion = async (question) => {
     try {
-        // Here you would make an actual API call to update the question
-        const response = await fetch(`${lanIP}/api/v1/questions/${question.id}/`, {
-            method: 'PUT',
+        const userId = sessionStorage.getItem('admin_user_id');
+        const rfidCode = sessionStorage.getItem('admin_rfid_code');
+        
+        if (!userId || !rfidCode) {
+            throw new Error('Authentication required. Please log in again.');
+        }
+        
+        // Read the actual current values from the DOM elements
+        const questionElement = document.querySelector(`[data-id="${question.id}"]`);
+        if (!questionElement) {
+            throw new Error('Question element not found in DOM');
+        }
+        
+        // Get current form values
+        const questionText = questionElement.querySelector('.c-question-text-edit')?.value || '';
+        const themeSelect = questionElement.querySelector('.js-theme-select');
+        const difficultySelect = questionElement.querySelector('.js-difficulty-select');
+        const thinkTimeInput = questionElement.querySelector('.js-think-time');
+        const timeLimitInput = questionElement.querySelector('.js-time-limit');
+        const pointsInput = questionElement.querySelector('.js-points');
+        const urlInput = questionElement.querySelector('.js-url');
+        const isActiveCheckbox = questionElement.querySelector('.js-is-active');
+        const noCorrectCheckbox = questionElement.querySelector('.js-not-correct');
+        const explanationTextarea = questionElement.querySelector('.js-explanation');
+        
+        // Get environmental controls
+        const lightMinInput = questionElement.querySelector('.js-light-min');
+        const lightMaxInput = questionElement.querySelector('.js-light-max');
+        const tempMinInput = questionElement.querySelector('.js-temp-min');
+        const tempMaxInput = questionElement.querySelector('.js-temp-max');
+        
+        // Read current answers from the form
+        const answerElements = questionElement.querySelectorAll('.c-answer-item');
+        const currentAnswers = Array.from(answerElements).map(answerEl => {
+            const textInput = answerEl.querySelector('.c-answer-text');
+            const correctCheckbox = answerEl.querySelector('input[type="checkbox"]');
+            return {
+                answer_text: textInput?.value || '',
+                is_correct: correctCheckbox?.checked || false
+            };
+        }).filter(answer => answer.answer_text.trim() !== ''); // Only include non-empty answers
+        
+        console.log('Current answers from DOM:', currentAnswers);
+        
+        // Helper function to safely get numeric value
+        const getNumericValue = (input, defaultValue = null) => {
+            if (!input || input.value === '') return defaultValue;
+            const val = Number(input.value);
+            return isNaN(val) ? defaultValue : val;
+        };
+        
+        // Prepare the update data with current form values
+        const updateData = {
+            question_text: questionText,
+            themeId: String(themeSelect?.value || 1),
+            difficultyLevelId: String(difficultySelect?.value || 1),
+            think_time: getNumericValue(thinkTimeInput, 0),
+            time_limit: getNumericValue(timeLimitInput, 30),
+            points: getNumericValue(pointsInput, 10),
+            Url: urlInput?.value || null,
+            is_active: isActiveCheckbox?.checked !== undefined ? isActiveCheckbox.checked : true,
+            no_answer_correct: noCorrectCheckbox?.checked !== undefined ? noCorrectCheckbox.checked : false,
+            LightMin: getNumericValue(lightMinInput),
+            LightMax: getNumericValue(lightMaxInput),
+            TempMin: getNumericValue(tempMinInput),
+            TempMax: getNumericValue(tempMaxInput),
+            explanation: explanationTextarea?.value || null,
+            answers: currentAnswers
+        };
+        
+        console.log('Updating question ID:', question.id);
+        console.log('Sending update data:', updateData);
+        
+        // Make API call to update the question using PATCH method
+        const response = await fetch(`${lanIP}/api/v1/questions/${question.id}`, {
+            method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
+                'X-User-ID': userId,
+                'X-RFID': rfidCode
             },
-            body: JSON.stringify({
-                question_text: question.question_text,
-                themeId: question.themeId,
-                difficultyLevelId: question.difficultyLevelId,
-                think_time: question.think_time,
-                time_limit: question.time_limit,
-                points: question.points,
-                Url: question.Url,
-                is_active: question.is_active,
-                no_answer_correct: question.no_answer_correct,
-                LightMin: question.LightMin,
-                LightMax: question.LightMax,
-                TempMin: question.TempMin,
-                TempMax: question.TempMax,
-                explanation: question.explanation,
-                answers: question.answers
-            })
+            body: JSON.stringify(updateData)
         });
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            let errorData = {};
+            try {
+                errorData = JSON.parse(errorText);
+            } catch (e) {
+                console.error('Could not parse error response:', errorText);
+            }
+            
+            // Better error message handling for validation errors
+            let errorMessage;
+            if (errorData.detail && Array.isArray(errorData.detail)) {
+                // Format validation errors more clearly
+                const validationErrors = errorData.detail.map(err => 
+                    `${err.loc.join('.')}: ${err.msg}`
+                ).join(', ');
+                errorMessage = `Validation error: ${validationErrors}`;
+            } else {
+                errorMessage = errorData.detail || errorData.message || `HTTP error! status: ${response.status}`;
+            }
+            
+            console.error('Update failed with error:', errorMessage);
+            console.error('Response body:', errorText);
+            throw new Error(errorMessage);
         }
         
-        const updatedQuestion = await response.json();
+        const result = await response.json();
         
-        // Update the question in state
+        // Update the question in state with the actual form data
         const index = state.questions.findIndex(q => q.id === question.id);
         if (index >= 0) {
-            state.questions[index] = { ...state.questions[index], ...updatedQuestion };
+            // Merge the updated data back into the state
+            state.questions[index] = { ...state.questions[index], ...updateData };
         }
         
-        console.log('Question updated successfully:', updatedQuestion);
+        console.log('Question updated successfully:', result);
+        showNotification(`Question updated successfully! ${result.updated_answers || 0} answers updated.`, 'success');
+        
+        return result;
         
     } catch (error) {
         console.error('Failed to update question:', error);
-        showNotification('Failed to update question. Please try again.', 'error');
+        
+        // Handle specific error cases
+        if (error.message.includes('403') || error.message.includes('Only admins can edit')) {
+            showNotification('Access denied. Only admins can edit questions.', 'error');
+        } else if (error.message.includes('404') || error.message.includes('not found')) {
+            showNotification('Question not found. It may have been deleted.', 'error');
+        } else if (error.message.includes('422') || error.message.includes('Unprocessable Entity')) {
+            showNotification('Invalid data format. Please check all fields.', 'error');
+        } else {
+            console.log(`Failed to update question: ${error.message}`, 'error');
+        }
+        
+        throw error; // Re-throw so calling code can handle it if needed
     }
 };
 
-const saveItem = async (itemType, item) => {
-    // In a real app, this would be an API call
-    // Example: const response = await fetch(`/api/${itemType}/${item.id}`, {
-    //   method: 'PUT',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(item)
-    // });
-    // return await response.json();
-    
+
+
+
+
+
+const saveItem = async (itemType, item, isNewQuestion = false) => {
     console.log(`Saving ${itemType}:`, item);
-    return new Promise(resolve => {
-        setTimeout(() => {
-            if (itemType === 'questions') {
-                const index = state.questions.findIndex(q => q.id === item.id);
-                if (index >= 0) {
-                    state.questions[index] = item;
-                } else {
-                    item.id = state.questions.length + 1;
-                    state.questions.push(item);
-                }
-            } else if (itemType === 'themes') {
-                const index = state.themes.findIndex(t => t.id === item.id);
-                if (index >= 0) {
-                    state.themes[index] = item;
-                } else {
-                    item.id = state.themes.length + 1;
-                    item.questionCount = 0;
-                    state.themes.push(item);
-                }
-            } else if (itemType === 'users') {
-                const index = state.users.findIndex(u => u.id === item.id);
-                if (index >= 0) {
-                    state.users[index] = item;
-                } else {
-                    item.id = state.users.length + 1;
-                    state.users.push(item);
-                }
+    
+    if (itemType === 'questions') {
+        const questionForm = document.querySelector('.c-question-edit-container.active');
+        
+        // If it's a new question and we can't find the form, just reload and bail out
+        if (isNewQuestion && !questionForm) {
+            window.location.reload();
+            return;
+        }
+        
+        // If we get here, either it's not a new question or we found the form
+        if (questionForm) {
+            // [Keep all your existing form data collection logic here]
+            
+            if (isNewQuestion || !item.id) {
+                await createQuestion(questionData);
+                window.location.reload();
+                return;
+            } else {
+                // Existing question update logic
+                const updatedQuestion = await updateQuestion(questionData);
+                // [Rest of your update logic]
+                return updatedQuestion;
             }
-            resolve(item);
-        }, 300);
-    });
+        }
+        
+        // If we get here and it's not a new question, then silently reload
+        window.location.reload();
+        return;
+    }
+    // Code for themes and users ...
+ else if (itemType === 'themes') {
+        const index = state.themes.findIndex(t => t.id === item.id);
+        if (index >= 0) {
+            state.themes[index] = item;
+        } else {
+            item.id = state.themes.length + 1;
+            item.questionCount = 0;
+            state.themes.push(item);
+        }
+        return item;
+    } else if (itemType === 'users') {
+        const index = state.users.findIndex(u => u.id === item.id);
+        if (index >= 0) {
+            state.users[index] = item;
+        } else {
+            item.id = state.users.length + 1;
+            state.users.push(item);
+        }
+        return item;
+    }
+   
+    // If itemType doesn't match any known type
+    throw new Error(`Unknown item type: ${itemType}`);
 };
 
+
+
 const deleteItem = async (itemType, itemId) => {
-    // In a real app, this would be an API call
-    // Example: const response = await fetch(`/api/${itemType}/${itemId}`, {
-    //   method: 'DELETE'
-    // });
-    // return response.ok;
-    
-    console.log(`Deleting ${itemType} with ID:`, itemId);
-    return new Promise(resolve => {
-        setTimeout(() => {
-            if (itemType === 'questions') {
-                state.questions = state.questions.filter(q => q.id !== itemId);
-            } else if (itemType === 'themes') {
-                state.themes = state.themes.filter(t => t.id !== itemId);
-            } else if (itemType === 'users') {
-                state.users = state.users.filter(u => u.id !== itemId);
+    try {
+        if (itemType === 'questions') {
+            const userId = sessionStorage.getItem('admin_user_id');
+            const rfidCode = sessionStorage.getItem('admin_rfid_code');
+            
+            if (!userId || !rfidCode) {
+                throw new Error('Authentication required. Please log in again.');
             }
-            resolve(true);
-        }, 300);
-    });
+            
+            // Make API call to delete question
+            const response = await fetch(`${lanIP}/api/v1/questions/${itemId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-User-ID': userId,
+                    'X-RFID': rfidCode
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                let errorData = {};
+                try {
+                    errorData = JSON.parse(errorText);
+                } catch (e) {
+                    console.error('Could not parse error response:', errorText);
+                }
+                
+                let errorMessage;
+                if (errorData.detail && Array.isArray(errorData.detail)) {
+                    const validationErrors = errorData.detail.map(err => 
+                        `${err.loc.join('.')}: ${err.msg}`
+                    ).join(', ');
+                    errorMessage = `Validation error: ${validationErrors}`;
+                } else {
+                    errorMessage = errorData.detail || errorData.message || `HTTP error! status: ${response.status}`;
+                }
+                
+                console.error('Delete failed with error:', errorMessage);
+                console.error('Response body:', errorText);
+                throw new Error(errorMessage);
+            }
+
+            const result = await response.json();
+            console.log('Question deleted successfully:', result);
+
+            // Remove from local state after successful API call
+            state.questions = state.questions.filter(q => q.id !== itemId);
+            
+            showNotification('Question deleted successfully!', 'success');
+            return true;
+        } else if (itemType === 'themes') {
+            const userId = sessionStorage.getItem('admin_user_id');
+            const rfidCode = sessionStorage.getItem('admin_rfid_code');
+            
+            if (!userId || !rfidCode) {
+                throw new Error('Authentication required. Please log in again.');
+            }
+            
+            // Make API call to delete theme
+            const response = await fetch(`${lanIP}/api/v1/themes/${itemId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-User-ID': userId,
+                    'X-RFID': rfidCode
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                let errorData = {};
+                try {
+                    errorData = JSON.parse(errorText);
+                } catch (e) {
+                    console.error('Could not parse error response:', errorText);
+                }
+                
+                let errorMessage;
+                if (errorData.detail && Array.isArray(errorData.detail)) {
+                    const validationErrors = errorData.detail.map(err => 
+                        `${err.loc.join('.')}: ${err.msg}`
+                    ).join(', ');
+                    errorMessage = `Validation error: ${validationErrors}`;
+                } else {
+                    errorMessage = errorData.detail || errorData.message || `HTTP error! status: ${response.status}`;
+                }
+                
+                console.error('Delete failed with error:', errorMessage);
+                console.error('Response body:', errorText);
+                throw new Error(errorMessage);
+            }
+
+            const result = await response.json();
+            console.log('Theme deleted successfully:', result);
+
+            // Remove from local state after successful API call
+            state.themes = state.themes.filter(t => t.id !== itemId);
+            
+            showNotification('Theme deleted successfully!', 'success');
+            return true;
+        } else if (itemType === 'users') {
+            const userId = sessionStorage.getItem('admin_user_id');
+            const rfidCode = sessionStorage.getItem('admin_rfid_code');
+            
+            if (!userId || !rfidCode) {
+                throw new Error('Authentication required. Please log in again.');
+            }
+            
+            // Check if trying to delete own account
+            if (parseInt(userId) === itemId) {
+                throw new Error('Cannot delete your own account');
+            }
+            
+            // Make API call to delete user
+            const response = await fetch(`${lanIP}/api/v1/users/${itemId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-User-ID': userId,
+                    'X-RFID': rfidCode
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                let errorData = {};
+                try {
+                    errorData = JSON.parse(errorText);
+                } catch (e) {
+                    console.error('Could not parse error response:', errorText);
+                }
+                
+                let errorMessage;
+                if (errorData.detail && Array.isArray(errorData.detail)) {
+                    const validationErrors = errorData.detail.map(err => 
+                        `${err.loc.join('.')}: ${err.msg}`
+                    ).join(', ');
+                    errorMessage = `Validation error: ${validationErrors}`;
+                } else {
+                    errorMessage = errorData.detail || errorData.message || `HTTP error! status: ${response.status}`;
+                }
+                
+                console.error('Delete failed with error:', errorMessage);
+                console.error('Response body:', errorText);
+                throw new Error(errorMessage);
+            }
+
+            const result = await response.json();
+            console.log('User deleted successfully:', result);
+
+            // Remove from local state after successful API call
+            state.users = state.users.filter(u => u.id !== itemId);
+            
+            showNotification('User deleted successfully!', 'success');
+            return true;
+        }
+        
+        console.log(`Deleting ${itemType} with ID:`, itemId);
+        return true;
+        
+    } catch (error) {
+        console.error(`Error deleting ${itemType}:`, error);
+        
+        // Handle specific error cases
+        if (error.message.includes('403')) {
+            if (itemType === 'questions') {
+                showNotification('Access denied. Only admins can delete questions.', 'error');
+            } else if (itemType === 'themes') {
+                showNotification('Access denied. Only admins and moderators can delete themes.', 'error');
+            } else if (itemType === 'users') {
+                showNotification('Access denied. Only admins can delete users.', 'error');
+            }
+        } else if (error.message.includes('Cannot delete your own account')) {
+            showNotification('You cannot delete your own account.', 'error');
+        } else if (error.message.includes('404') || error.message.includes('not found')) {
+            showNotification(`${itemType.charAt(0).toUpperCase() + itemType.slice(1, -1)} not found. It may have been already deleted.`, 'error');
+        } else if (error.message.includes('Authentication required')) {
+            showNotification('Please log in again to continue.', 'error');
+        } else {
+            showNotification(`Failed to delete ${itemType}: ${error.message}`, 'error');
+        }
+        
+        return false;
+    }
 };
+
 // #endregion
 
 // #region ***  Callback-Visualisation - show___         ***********
@@ -577,48 +907,156 @@ const showEditModal = async (itemType, item = null) => {
     
     else if (itemType === 'themes') {
         form.innerHTML = `
-            <div class="c-form-group">
-                <label>Theme Name</label>
-                <input type="text" name="name" class="c-form-input" value="${item ? item.name : ''}">
-            </div>
+<div class="c-form-group">
+    <label>Theme Name</label>
+    <input type="text" name="name" class="c-form-input" value="${item ? item.name : ''}" required>
+</div>
+
+<div class="c-form-group">
+    <label>Description (optional)</label>
+    <textarea name="description" class="c-form-textarea c-explanation-textarea"  
+              placeholder="Description of the theme">${escapeHTML(item ? item.description : '')}</textarea>
+</div>
+
+<div class="c-form-group c-answer-correct">
+    <label>
+        <input type="checkbox" name="is_active" class="c-form-checkbox" 
+               ${item && item.is_active !== false ? 'checked' : ''}>
+        Active Theme
+    </label>
+</div>
         `;
-    } else if (itemType === 'users') {
-        form.innerHTML = `
-            <div class="c-form-group">
-                <label>Username</label>
-                <input type="text" name="username" class="c-form-input" value="${item ? item.username : ''}">
-            </div>
-            <div class="c-form-group">
-                <label>Role</label>
-                <select name="role" class="c-form-select">
-                    <option value="Admin" ${item && item.role === 'Admin' ? 'selected' : ''}>Admin</option>
-                    <option value="Moderator" ${item && item.role === 'Moderator' ? 'selected' : ''}>Moderator</option>
-                    <option value="User" ${item && item.role === 'User' ? 'selected' : ''}>User</option>
-                </select>
-            </div>
-            <div class="c-form-group">
-                <label>IP Address</label>
-                <input type="text" name="ip" class="c-form-input" value="${item ? item.ip || '' : ''}" readonly>
-            </div>
-            <div class="c-form-group">
-                <label>Ban Reason</label>
-                <textarea name="banReason" class="c-explanation-textarea" placeholder="Enter reason for ban...">${item ? item.banReason || '' : ''}</textarea>
-            </div>
-            <div class="c-form-group">
-                <label>Ban Duration</label>
-                <div class="c-duration-container">
-                    <input type="number" name="banDurationValue" class="c-form-input" value="1" min="1">
-                    <select name="banDurationUnit" class="c-form-input">
-                        <option value="minutes">Minutes</option>
-                        <option value="hours" selected>Hours</option>
-                        <option value="days">Days</option>
-                        <option value="permanent">Eternity</option>
-                    </select>
-                     <button type="button" class="c-btn c-btn--primary">Ban IP Address</button>
-                </div>
-            </div>
-        `;
-    }
+        currentForm = form;
+} else if (itemType === 'users') {
+    form.innerHTML = `
+<div class="c-form-group">
+    <label>Username</label>
+    <input type="text" name="username" class="c-form-input" value="${item ? item.first_name + ' ' + item.last_name : ''}">
+</div>
+<div class="c-form-group">
+    <label>Role</label>
+    <select name="role" class="c-form-select">
+        <option value="Admin" ${item && item.userRoleId === 3 ? 'selected' : ''}>Admin</option>
+        <option value="Moderator" ${item && item.userRoleId === 2 ? 'selected' : ''}>Moderator</option>
+        <option value="User" ${item && item.userRoleId === 1 ? 'selected' : ''}>User</option>
+    </select>
+</div>
+<div class="c-form-group">
+    <label>IP Address</label>
+    <select name="ip" class="c-form-select">
+        ${item && item.ip_addresses ? item.ip_addresses.map(ip => `
+            <option value="${ip.ip_address}" ${ip.is_primary ? 'selected' : ''}>
+                ${ip.ip_address} (used ${ip.usage_count} times)${ip.is_banned ? ' [BANNED]' : ''}${ip.is_primary ? ' [PRIMARY]' : ''}
+            </option>
+        `).join('') : '<option value="">No IP addresses found</option>'}
+    </select>
+</div>
+<div class="c-form-group">
+    <label>Ban Reason</label>
+    <textarea name="banReason" class="c-explanation-textarea" placeholder="Enter reason for ban...">${item ? item.banReason || '' : ''}</textarea>
+</div>
+<div class="c-form-group">
+    <label>Ban Duration</label>
+    <div class="c-duration-container">
+        <input type="number" name="banDurationValue" class="c-form-input" value="1" min="1">
+        <select name="banDurationUnit" class="c-form-input">
+            <option value="minutes">Minutes</option>
+            <option value="hours" selected>Hours</option>
+            <option value="days">Days</option>
+            <option value="permanent">Eternity</option>
+        </select>
+        <button type="button" class="c-btn c-btn--primary" onclick="banIpAddress()">Ban IP Address</button>
+    </div>
+</div>
+    `;
+
+    // Define the ban function globally so onclick can access it
+    window.banIpAddress = async function() {
+            // Get form data
+            const ipSelect = form.querySelector('select[name="ip"]');
+            const banReasonTextarea = form.querySelector('textarea[name="banReason"]');
+            const banDurationValueInput = form.querySelector('input[name="banDurationValue"]');
+            const banDurationUnitSelect = form.querySelector('select[name="banDurationUnit"]');
+
+            // Validate form data
+            if (!ipSelect.value) {
+                alert('Please select an IP address to ban');
+                return;
+            }
+
+            if (!banReasonTextarea.value.trim()) {
+                alert('Please enter a ban reason');
+                return;
+            }
+
+            const banDurationValue = parseInt(banDurationValueInput.value);
+            if (banDurationValue < 1) {
+                alert('Ban duration must be at least 1');
+                return;
+            }
+
+            // Prepare ban data
+            const banData = {
+                ip_address: ipSelect.value,
+                ban_reason: banReasonTextarea.value.trim(),
+                ban_duration_value: banDurationValue,
+                ban_duration_unit: banDurationUnitSelect.value
+            };
+
+            // Get user credentials
+            const userId = sessionStorage.getItem('admin_user_id');
+            const rfidCode = sessionStorage.getItem('admin_rfid_code');
+
+            if (!userId || !rfidCode) {
+                alert('Admin credentials not found. Please log in again.');
+                return;
+            }
+
+            try {
+                // Get the button element
+                const banButton = document.querySelector('.c-btn--primary');
+                if (banButton) {
+                    banButton.disabled = true;
+                    banButton.textContent = 'Banning...';
+                }
+
+                const response = await fetch(`${lanIP}/api/v1/ban-ip`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-User-ID': userId,
+                        'X-RFID': rfidCode
+                    },
+                    body: JSON.stringify(banData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `HTTP error! Status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                // Success
+                alert(`IP address ${banData.ip_address} has been banned successfully!`);
+                console.log('Ban result:', result);
+                
+                // Optionally refresh the user data or close the form
+                // You might want to call your refresh function here
+                
+            } catch (error) {
+                console.error('Error banning IP address:', error);
+                alert(`Failed to ban IP address: ${error.message}`);
+            } finally {
+                // Re-enable button
+                const banButton = document.querySelector('.c-btn--primary');
+                if (banButton) {
+                    banButton.disabled = false;
+                    banButton.textContent = 'Ban IP Address';
+                }
+            }
+    };
+}
     
     // Add form action buttons
     form.innerHTML += `
@@ -835,17 +1273,18 @@ const createQuestionElement = (question) => {
                 <input type="text" id="url-${question.id}" class="c-answer-text js-url"
                         data-question-id="${question.id}" value="${question.Url || ''}" placeholder="Optional media URL">
             </div>
-
+            <div class="c-question-correct-special">
             <div class="c-question-correct c-answer-correct">
                 <input type="checkbox" id="is-active-${question.id}" class="js-is-active c-answer-correct"
                         data-question-id="${question.id}" ${question.is_active ? 'checked' : ''}>
                 <label for="is-active-${question.id}">Active Question</label>
             </div>
 
-            <div class="c-question-correct c-answer-correct">
+            <div class="c-question-correct-special" style="display: flex !important;">
                 <input type="checkbox" id="not-correct-${question.id}" class="js-not-correct c-answer-correct"
                         data-question-id="${question.id}" ${question.no_answer_correct ? 'checked' : ''}>
                 <label for="not-correct-${question.id}">No correct answer</label>
+            </div>
             </div>
         </div>
 
@@ -898,7 +1337,6 @@ const createQuestionElement = (question) => {
         </div>
 
         <div class="c-question-actions">
-            <button class="c-btn c-btn--edit js-edit-question" data-id="${question.id}">Save Changes</button>
             <button class="c-btn c-btn--delete js-delete-question" data-id="${question.id}">Delete Question</button>
         </div>
     </div>
@@ -928,25 +1366,54 @@ const generateAnswersHTML = (answers, count) => {
 };
 
 
-// Event delegation handler for question actions
-const handleQuestionActions = (event) => {
+const handleQuestionActions = async (event) => {
     const target = event.target;
-    
+   
     // Edit button handler
     if (target.classList.contains('js-edit-question')) {
         const questionId = parseInt(target.dataset.id);
-        sendEditRequest(questionId);
+        const question = state.questions.find(q => q.id === questionId);
+        
+        if (!question) {
+            showNotification('Question not found', 'error');
+            return;
+        }
+        
+        console.log('Original question:', question);
+        
+        try {
+            // Disable the button to prevent multiple clicks
+            target.disabled = true;
+            target.textContent = 'Saving...';
+            
+ 
+            await saveItem('questions', question);
+            
+            showNotification('Question saved successfully', 'success');
+            
+        } catch (error) {
+            console.error('Error saving question:', error);
+        } finally {
+            // Re-enable the button
+            target.disabled = false;
+            target.textContent = 'Save Changes';
+        }
     }
-    
+   
     // Delete button handler
     if (target.classList.contains('js-delete-question')) {
         const questionItem = target.closest('.c-question-item');
         const id = parseInt(questionItem.dataset.id);
-        
+       
         showConfirmDialog('Are you sure you want to delete this question?', async () => {
-            await deleteItem('questions', id);
-            loadQuestions();
-            showNotification('Question deleted successfully');
+            try {
+                await deleteItem('questions', id);
+                await loadQuestions(); // Make sure this completes before showing notification
+                showNotification('Question deleted successfully', 'success');
+            } catch (error) {
+                console.error('Error deleting question:', error);
+                showNotification(`Failed to delete question: ${error.message}`, 'error');
+            }
         });
     }
 };
@@ -1174,14 +1641,12 @@ const loadThemes = async () => {
 
 const loadUsers = async () => {
     const userTableBody = document.querySelector('.c-user-table tbody');
-
     if (!userTableBody) return;
 
     showLoading(userTableBody);
 
     try {
         const users = await fetchUsers();
-
         if (!users || users.length === 0) { // Check if users is null/undefined or empty
             userTableBody.innerHTML = `
                 <tr>
@@ -1199,7 +1664,6 @@ const loadUsers = async () => {
             // A more robust solution involves fetching roles from the backend or having a global roles mapping.
             const roleName = getRoleName(user.userRoleId); // You need to define getRoleName
             const lastActiveDisplay = user.last_active ? new Date(user.last_active).toLocaleString() : 'Never';
-
             // Combine first_name and last_name for display username
             const displayName = `${user.first_name} ${user.last_name}`;
 
@@ -1239,14 +1703,8 @@ const loadUsers = async () => {
             btn.addEventListener('click', async () => {
                 const id = parseInt(btn.closest('tr').dataset.id);
                 const user = users.find(u => u.id === id);
-
-                // Assuming state.users is updated elsewhere or needs to be refreshed.
-                // For now, using 'users' array from fetch, which is already up-to-date.
-                if (user && roleName === 'Admin' && users.filter(u => getRoleName(u.userRoleId) === 'Admin').length === 1) {
-                    showNotification('Cannot delete the last admin user.', 'error');
-                    return;
-                }
-
+                
+                // Removed the admin check - now allows deletion of any user
                 showConfirmDialog('Are you sure you want to delete this user?', async () => {
                     await deleteItem('users', id);
                     loadUsers(); // Reload users after deletion
@@ -1254,6 +1712,7 @@ const loadUsers = async () => {
                 });
             });
         });
+
     } catch (error) {
         console.error('Error loading users:', error);
         userTableBody.innerHTML = `
@@ -1295,7 +1754,7 @@ const questionData = {
     explanation: formData.get('explanation') || "",
     Url: formData.get('Url') || "",
     time_limit: parseInt(formData.get('time_limit')) || 30,
-    think_time: parseInt(formData.get('think_time')) || 5,
+    think_time: parseInt(formData.get('think_time')) || 0,
     points: parseInt(formData.get('points')) || 10,
     is_active: formData.get('is_active') === 'on',
     no_answer_correct: formData.get('no_answer_correct') === 'on',
@@ -1310,13 +1769,12 @@ const questionData = {
 };
 
 try {
-    // Get user credentials from URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get('userId');
-    const rfidCode = urlParams.get('rfid');
+    // Get user credentials from session storage
+    const userId = sessionStorage.getItem('admin_user_id');
+    const rfidCode = sessionStorage.getItem('admin_rfid_code');
     
     if (!userId || !rfidCode) {
-        throw new Error('User credentials not found in URL. Please access this page with proper authentication.');
+        throw new Error('User credentials not found. Please access this page with proper authentication.');
     }
 
     const response = await fetch(`${lanIP}/api/v1/questions`, {
@@ -1344,7 +1802,68 @@ try {
 }
 
 }else if (itemType === 'themes') {
-        currentEditItem.name = form.querySelector('[name="name"]').value;
+
+const form = currentForm;
+const formData = new FormData(form);
+
+// Validate and sanitize form data
+const themeName = formData.get('name')?.toString().trim();
+if (!themeName || themeName.length < 3) {
+    console.error('Theme name must be at least 3 characters long');
+    return;
+}
+
+const themeData = {
+    name: themeName,
+    description: formData.get('description')?.toString().trim() || null,
+    is_active: formData.get('is_active') === 'on'
+};
+
+try {
+    // Get user credentials
+    const userId = sessionStorage.getItem('admin_user_id');
+    const rfidCode = sessionStorage.getItem('admin_rfid_code');
+    
+    if (!userId || !rfidCode) {
+        console.error('Authentication required. Please log in again.');
+        return;
+    }
+
+    const response = await fetch(`${lanIP}/api/v1/themes`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-User-ID': userId,
+            'X-RFID': rfidCode,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(themeData)
+        // Removed credentials: 'include' to fix CORS issue
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        const errorMessage = errorData?.detail || errorData?.message || `HTTP error ${response.status}`;
+        console.error('Theme creation failed:', errorMessage);
+        return;
+    }
+
+    const result = await response.json();
+    
+    if (!result.theme_id) {
+        console.error('Server did not return a valid theme ID');
+        return;
+    }
+
+    // Success - log the created theme
+    console.log(`Theme "${themeData.name}" created successfully with ID: ${result.theme_id}`);
+    form.reset();
+    
+} catch (error) {
+    console.error('Theme creation failed:', error.message);
+}
+
+
     } else if (itemType === 'users') {
         currentEditItem.username = form.querySelector('[name="username"]').value;
         currentEditItem.role = form.querySelector('[name="role"]').value;
@@ -1399,6 +1918,19 @@ const listenToFilters = () => {
 };
 // #endregion
 
+// Debounce helper function
+const debounce = (func, delay) => {
+    let timeoutId;
+    return function() {
+        const context = this;
+        const args = arguments;
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+            func.apply(context, args);
+        }, delay);
+    };
+};
+
 // #region ***  Event Listeners - listenTo___            ***********
 const listenToTabs = () => {
     domAdmin.tabBtns.forEach(btn => {
@@ -1412,6 +1944,9 @@ const listenToTabs = () => {
 const listenToLogout = () => {
     if (domAdmin.logoutBtn) {
         domAdmin.logoutBtn.addEventListener('click', () => {
+            // Clear ALL session storage data
+            sessionStorage.clear();
+            console.log('Cleared all sessionStorage and logging out');
             window.location.href = 'login.html';
         });
     }
@@ -1419,7 +1954,9 @@ const listenToLogout = () => {
 
 const listenToModal = () => {
     if (domAdmin.closeModal) {
-        domAdmin.closeModal.addEventListener('click', hideEditModal);
+        // Create debounced version with 2-second delay
+        const debouncedFilter = debounce(filterQuestions, 500);
+        domAdmin.searchInput.addEventListener('input', debouncedFilter);
     }
     
     if (domAdmin.cancelBtn) {
@@ -1435,7 +1972,9 @@ const listenToModal = () => {
 
 const listenToSearch = () => {
     if (domAdmin.searchInput) {
-        domAdmin.searchInput.addEventListener('input', filterQuestions);
+        // Create debounced version with 2-second delay
+        const debouncedFilter = debounce(filterQuestions, 500);
+        domAdmin.searchInput.addEventListener('input', debouncedFilter);
     }
 };
 

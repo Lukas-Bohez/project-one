@@ -11,7 +11,7 @@ from threading import Thread, Event, Lock
 import socket
 # Import the new ThemeRepository
 from fastapi.responses import HTMLResponse,JSONResponse
-from database.datarepository import QuestionRepository, AnswerRepository, ThemeRepository,UserRepository, IpAddressRepository, UserIpAddressRepository,QuizSessionRepository,SensorDataRepository,QuizSessionsRepository
+from database.datarepository import QuestionRepository, AnswerRepository, ThemeRepository,UserRepository, IpAddressRepository, UserIpAddressRepository,QuizSessionRepository,SensorDataRepository,AuditLogRepository,PlayerItemRepository,ItemRepository,ChatLogRepository,SessionPlayerRepository,PlayerAnswerRepository
 from models.models import (
     QuestionBase, QuestionCreate, QuestionResponse, QuestionUpdate,
     QuestionStatusUpdate, ErrorNotFound, QuestionWithAnswers,
@@ -20,7 +20,8 @@ from models.models import (
     RandomQuestionRequest, QuestionMetadataUpdate,
     QuestionActivationNotification,
     AnswerBase, AnswerCreate, AnswerListResponse, AnswerResponse, 
-    AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand,BroadcastMessage,DirectMessage, ClientActivity,SessionSensorData,MultiSessionSensorResponse,UserUpdateNames,UserCredentials,AnswerInput,QuestionInput
+    AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand,BroadcastMessage,DirectMessage, ClientActivity,SessionSensorData,MultiSessionSensorResponse,UserUpdateNames,UserCredentials,AnswerInput,QuestionInput, ThemeInput,
+    UserPublic,UserPublicWithIp,UserIpAddress,BanIpRequest,AuditLogResponse,ChatMessage,ChatMessageCreate,ShutdownRequest
 )
 from typing import Dict, Any, Optional, List
 from fastapi import Request
@@ -42,6 +43,7 @@ except ImportError as e:
     RPI_COMPONENTS_AVAILABLE = False
 
 
+    
 # ----------------------------------------------------
 # App setup
 # ----------------------------------------------------
@@ -446,13 +448,112 @@ async def get_theme_question_count(theme_id: int):
 # ----------------------------------------------------
 @app.get(
     ENDPOINT + "/users/",
-    response_model=List[UserPublic], # Return list of public users
-    summary="Get all users",
+    response_model=List[UserPublicWithIp], # Updated response model
+    summary="Get all users with IP information",
     tags=["Users"]
 )
 async def get_all_users():
     users = UserRepository.get_all_users()
+    users_with_ip = []
+    
+    for user in users:
+        # Get IP addresses for this user
+        user_ip_data = UserIpAddressRepository.get_user_ip_addresses(user['id'])
+        
+        # Convert IP data to UserIpAddress objects
+        ip_addresses = []
+        for ip_data in user_ip_data:
+            ip_addresses.append(UserIpAddress(
+                id=ip_data['id'],
+                ip_address=ip_data['ip_address'],
+                is_banned=ip_data['is_banned'],
+                ban_reason=ip_data['ban_reason'],
+                ban_date=ip_data['ban_date'],
+                ban_expires_at=ip_data['ban_expires_at'],
+                usage_count=ip_data['usage_count'],
+                last_used=ip_data['last_used'],
+                is_primary=ip_data['is_primary']
+            ))
+        
+        # Create user object with IP information
+        user_with_ip = UserPublicWithIp(
+            **user,  # Spread all existing user fields
+            ip_addresses=ip_addresses
+        )
+        users_with_ip.append(user_with_ip)
+    
+    return users_with_ip
+
+# Alternative: If you want to keep the original endpoint and add a separate one for IP info
+@app.get(
+    ENDPOINT + "/users/with-ip/",
+    response_model=List[UserPublicWithIp],
+    summary="Get all users with detailed IP information",
+    tags=["Users"]
+)
+async def get_all_users_with_ip():
+    users = UserRepository.get_all_users()
+    users_with_ip = []
+    
+    for user in users:
+        user_ip_data = UserIpAddressRepository.get_user_ip_addresses(user['id'])
+        
+        ip_addresses = []
+        for ip_data in user_ip_data:
+            ip_addresses.append(UserIpAddress(
+                id=ip_data['id'],
+                ip_address=ip_data['ip_address'],
+                is_banned=ip_data['is_banned'],
+                ban_reason=ip_data['ban_reason'],
+                ban_date=ip_data['ban_date'],
+                ban_expires_at=ip_data['ban_expires_at'],
+                usage_count=ip_data['usage_count'],
+                last_used=ip_data['last_used'],
+                is_primary=ip_data['is_primary']
+            ))
+        
+        user_with_ip = UserPublicWithIp(
+            **user,
+            ip_addresses=ip_addresses
+        )
+        users_with_ip.append(user_with_ip)
+    
+    return users_with_ip
+
+# Keep the original endpoint if you still need it without IP data
+@app.get(
+    ENDPOINT + "/users/basic/",
+    response_model=List[UserPublic],
+    summary="Get all users (basic info only)",
+    tags=["Users"]
+)
+async def get_all_users_basic():
+    users = UserRepository.get_all_users()
     return [UserPublic(**user) for user in users]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 @app.get(
@@ -776,68 +877,152 @@ async def appeal_ban(payload: AppealPayload, request: Request):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 @app.get("/api/v1/sensor-data", response_model=MultiSessionSensorResponse)
-async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 10):
-    requested_session_ids = [int(sid.strip()) for sid in session_ids.split(',')]
-    
+async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1000, include_chat: bool = True, include_answers: bool = True):
+    # Convert and sort session IDs in descending order (newest first)
+    requested_session_ids = sorted(
+        [int(sid.strip()) for sid in session_ids.split(',')],
+        reverse=True
+    )
+   
     response_sessions_data = []
-    
+   
     for session_id in requested_session_ids:
         session_data = QuizSessionRepository.get_session_by_id(session_id)
         if not session_data:
             continue
-            
+           
         current_session_id = session_data['id']
         current_session_name = session_data['name']
-        
+       
+        # Get sensor data and sort by timestamp descending
         sensor_readings = SensorDataRepository.get_all_data_for_session(current_session_id)
-        
+        # Assuming sensor_readings is a list of dictionaries with 'timestamp' key
+        sensor_readings_sorted = sorted(
+            sensor_readings,
+            key=lambda x: x.get('timestamp') or datetime.min,
+            reverse=True
+        )
+       
         temperatures = []
         light_intensities = []
         servo_positions = []
-        
-        for reading in sensor_readings:
+       
+        for reading in sensor_readings_sorted:  # Process sorted readings
             timestamp = reading.get('timestamp')
             timestamp_iso = timestamp.isoformat() if timestamp else None
-            
-            # --- THE FIX IS HERE: Convert values to float if they are strings ---
+           
+            # Convert values to float if they are strings
             try:
                 temp_value = float(reading.get('temperature (°C)'))
             except (ValueError, TypeError):
-                temp_value = None # Or handle as appropriate, e.g., default to 0.0
-            
+                temp_value = None
+           
             try:
                 light_value = float(reading.get('lightIntensity (lux)'))
             except (ValueError, TypeError):
                 light_value = None
-            
+           
             try:
                 servo_value = float(reading.get('servoPosition (°)'))
             except (ValueError, TypeError):
                 servo_value = None
-            # --- END OF FIX ---
-
+                
             temperatures.append({
                 "timestamp": timestamp_iso,
-                "value": temp_value # Use the converted float value
+                "value": temp_value
             })
             light_intensities.append({
                 "timestamp": timestamp_iso,
-                "value": light_value # Use the converted float value
+                "value": light_value
             })
             servo_positions.append({
                 "timestamp": timestamp_iso,
-                "value": servo_value # Use the converted float value
+                "value": servo_value
             })
         
+        # Get chat data if requested - sort by created_at descending
+        chat_messages = []
+        if include_chat:
+            chat_data = ChatLogRepository.get_chat_messages_by_session(current_session_id, limit)
+            if chat_data:  # Check if chat_data is not None
+                chat_data_sorted = sorted(
+                    chat_data,
+                    key=lambda x: x.get('created_at') or datetime.min,
+                    reverse=True
+                )
+                chat_messages = [
+                    {
+                        "id": msg.get('id'),
+                        "userId": msg.get('userId'),
+                        "username": msg.get('username'),
+                        "message": msg.get('message'),
+                        "created_at": msg.get('created_at').isoformat() if msg.get('created_at') else None
+                    }
+                    for msg in chat_data_sorted
+                ]
+        
+        # Get player answers if requested - sort by answered_at descending
+        player_answers_data = []
+        if include_answers:
+            session_questions = QuestionRepository.get_questions_by_session(current_session_id)
+            
+            if session_questions:  # Check if session_questions is not None
+                for question in session_questions:
+                    question_id = question.get('id')
+                    question_with_answers = PlayerAnswerRepository.get_question_with_player_answers(question_id)
+                    
+                    if question_with_answers and question_with_answers.get('player_answers'):
+                        # Sort player answers by answered_at descending
+                        sorted_answers = sorted(
+                            question_with_answers['player_answers'],
+                            key=lambda x: x.get('answered_at') or datetime.min,
+                            reverse=True
+                        )
+                        formatted_answers = []
+                        for answer in sorted_answers:
+                            formatted_answers.append({
+                                "player_answer_id": answer.get('player_answer_id'),
+                                "sessionId": answer.get('sessionId'),
+                                "userId": answer.get('userId'),
+                                "first_name": answer.get('first_name'),
+                                "last_name": answer.get('last_name'),
+                                "questionId": answer.get('questionId'),
+                                "answerId": answer.get('answerId'),
+                                "answer_text": answer.get('answer_text'),
+                                "is_correct": answer.get('is_correct'),
+                                "points_earned": answer.get('points_earned'),
+                                "time_taken": answer.get('time_taken'),
+                                "answered_at": answer.get('answered_at').isoformat() if answer.get('answered_at') else None
+                            })
+                        
+                        player_answers_data.append({
+                            "question_id": question_id,
+                            "question_text": question_with_answers.get('question_text'),
+                            "player_answers": formatted_answers
+                        })
+       
         response_sessions_data.append(SessionSensorData(
             session_id=current_session_id,
             session_name=current_session_name,
             temperatures=temperatures,
             light_intensities=light_intensities,
-            servo_positions=servo_positions
+            servo_positions=servo_positions,
+            chat_messages=chat_messages,
+            player_answers=player_answers_data
         ))
-    
+   
     return MultiSessionSensorResponse(sessions=response_sessions_data)
 
 
@@ -845,117 +1030,431 @@ async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1
 
 
 
-@app.patch("/api/v1/users/{rfid_code}")
-async def update_user_names(rfid_code: str, user_update: UserUpdateNames):
-    all_users = UserRepository.get_all_users()
-    target_user_id = None
 
-    for user in all_users:
-        # Check if first and last name already exist for any user
-        if user['first_name'] == user_update.first_name and user['last_name'] == user_update.last_name:
-            # Found a user with matching name
-            if user['rfid_code'] == rfid_code:
-                # Name and RFID match: This is the user attempting to log in
-                target_user_id = user['id']
-                UserRepository.update_user_last_active(target_user_id, datetime.now())
-                break
-            else:
-                # Name matches, but RFID does not
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="A user with this name already exists, but the provided RFID does not match."
-                )
-    
-    # If no user found by name or if the loop completed without a direct match
-    if target_user_id is None:
-        # Check if the RFID is associated with an 'open' account
-        existing_user_by_rfid = UserRepository.get_user_by_rfid(rfid_code)
-        if existing_user_by_rfid:
-            if existing_user_by_rfid['first_name'] == 'Open' and existing_user_by_rfid['last_name'] == 'Open':
-                # RFID linked to an 'Open' account, update its details
-                success = UserRepository.update_user_names_by_rfid(
-                    rfid_code,
-                    user_update.first_name,
-                    user_update.last_name
-                )
-                if not success:
-                    raise HTTPException(
-                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                        detail="Failed to update 'Open' user account."
-                    )
-                target_user_id = existing_user_by_rfid['id'] # Return the ID of the updated user
-                UserRepository.update_user_last_active(target_user_id, datetime.now())
-            else:
-                # RFID exists but is not "Open" and doesn't match the provided name
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail=f"RFID code '{rfid_code}' is already associated with another user and is not an 'Open' account."
-                )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+async def add_user_to_active_session(user_id: int):
+    try:
+        active_session_id = get_active_session_id()
+        if not active_session_id:
+            logger.info(f"User {user_id} logged in, but no active session was found.")
+            return
+
+        active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+        if not active_session_info:
+            logger.error(f"Active session ID {active_session_id} returned no session info.")
+            return
+
+        if not SessionPlayerRepository.get_session_player(active_session_id, user_id):
+            SessionPlayerRepository.add_player_to_session(active_session_id, user_id)
+            logger.info(f"Added user {user_id} to session {active_session_id}")
         else:
-            # RFID not found at all.
+            logger.info(f"User {user_id} is already in session {active_session_id}")
+
+    except Exception as e:
+        logger.error(f"Failed to add user {user_id} to active session: {e}", exc_info=True)
+
+@app.post("/api/v1/register", status_code=status.HTTP_201_CREATED)
+async def register_user(user_credentials: UserCredentials, request: Request):
+    try:
+        if UserRepository.get_user_by_name(user_credentials.first_name, user_credentials.last_name):
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with RFID code '{rfid_code}' not found and no 'Open' account to update."
+                status_code=status.HTTP_409_CONFLICT,
+                detail="A user with this first and last name already exists. Please choose another name or login."
             )
 
-    return {"user_id": target_user_id}
+        hashed_info = UserRepository.hash_password(user_credentials.password)
+        
+        user_data = {
+            'first_name': user_credentials.first_name,
+            'last_name': user_credentials.last_name,
+            'password_hash': hashed_info['password_hash'],
+            'salt': hashed_info['salt'],
+            'userRoleId': 1,
+            'soul_points': 4,
+            'limb_points': 4,
+            'updated_by': 1
+        }
+        
+        user_id = UserRepository.create_user_with_password(user_data)
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="A critical error occurred while creating the user."
+            )
+        
+        log_user_ip_address(user_id, get_client_ip(request))
+        await add_user_to_active_session(user_id)
+        
+        logger.info(f"User '{user_credentials.first_name} {user_credentials.last_name}' registered successfully with ID: {user_id}")
+        return {"message": "User registered successfully", "user_id": user_id}
 
-# --- Register Endpoint ---
-@app.post("/api/v1/register", status_code=status.HTTP_201_CREATED)
-async def register_user(user_credentials: UserCredentials):
-    # Check if user with this first/last name already exists
-    existing_user = UserRepository.get_user_by_name(user_credentials.first_name, user_credentials.last_name)
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="A user with this first and last name already exists. Please choose another name or login."
-        )
-
-    # Hash the password
-    hashed_info = UserRepository.hash_password(user_credentials.password)
-
-    # Prepare user data for creation
-    user_data = {
-        'first_name': user_credentials.first_name,
-        'last_name': user_credentials.last_name,
-        'password_hash': hashed_info['password_hash'],
-        'salt': hashed_info['salt'],
-        'rfid_code': None, # RFID will be assigned later via the PATCH endpoint if needed
-        'userRoleId': 1, # Default to a standard player role, adjust as per your roles table
-        'soul_points': 4,
-        'limb_points': 4,
-        'updated_by': 1 # Assuming a system user ID or default
-    }
-
-    user_id = UserRepository.create_user_with_password(user_data)
-    if not user_id:
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"An unexpected error occurred during user registration: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create user."
+            detail="An unexpected server error occurred."
         )
 
-    return {"message": "User registered successfully", "user_id": user_id}
-
-# --- Login Endpoint ---
 @app.post("/api/v1/login")
-async def login_user(user_credentials: UserCredentials):
-    user_id = UserRepository.authenticate_user(
-        user_credentials.first_name,
-        user_credentials.last_name,
-        user_credentials.password
-    )
+async def login_user(user_credentials: UserCredentials, request: Request):
+    try:
+        user_id = UserRepository.authenticate_user(
+            user_credentials.first_name,
+            user_credentials.last_name,
+            user_credentials.password
+        )
+        if user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid first name, last name, or password."
+            )
+        
+        log_user_ip_address(user_id, get_client_ip(request))
+        await add_user_to_active_session(user_id)
+        
+        logger.info(f"User ID {user_id} logged in successfully.")
+        return {"message": "Login successful", "user_id": user_id}
 
-    if user_id is None:
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"An unexpected error occurred during login for user '{user_credentials.first_name}': {e}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid first name, last name, or password."
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected server error occurred."
         )
 
-    return {"message": "Login successful", "user_id": user_id}
+def calculate_player_score(session_id: int, user_id: int) -> int:
+    try:
+        all_answers = PlayerAnswerRepository.get_all_player_answers_for_user_in_session(session_id, user_id)
+        
+        user_score = sum(answer.get('points_earned', 0) for answer in all_answers if answer.get('points_earned'))
+        return user_score
+    
+    except Exception as e:
+        logger.error(f"Could not calculate score for user {user_id} in session {session_id}: {e}")
+        return 0
 
-from fastapi import APIRouter, HTTPException, Depends
 
-router = APIRouter()
+@sio.on('request_user_data')
+async def handle_user_data_request(sid, data):
+    try:
+        # Validate input data
+        if not data or 'user_id' not in data:
+            logger.warning(f"Invalid request data from SID {sid}: {data}")
+            await sio.emit('error', {'message': 'Missing user_id'}, room=sid)
+            return
+
+        requesting_user_id = data['user_id']
+        logger.info(f"Processing user data request from user {requesting_user_id} (SID: {sid})")
+
+        # Get active session
+        active_session_id = get_active_session_id()
+        logger.debug(f"Active session ID: {active_session_id}")
+        
+        if not active_session_id:
+            logger.info("No active session found")
+            await sio.emit('all_users_data_updated', {
+                'session_id': None,
+                'session_name': "No Active Session",
+                'players': [],
+                'total_players': 0
+            }, room=sid)
+            return
+
+        # Get session players
+        logger.debug(f"Fetching players for session {active_session_id}")
+        player_records = SessionPlayerRepository.get_session_players(active_session_id)
+        logger.debug(f"Raw players data from DB: {player_records}")
+
+        if not player_records:
+            logger.warning(f"No players found in session {active_session_id}")
+            active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+            await sio.emit('all_users_data_updated', {
+                'session_id': active_session_id,
+                'session_name': active_session_info.get('name', f'Session {active_session_id}') if active_session_info else "Unknown Session",
+                'players': [],
+                'total_players': 0,
+                'requesting_user_position': 1
+            }, room=sid)
+            return
+
+        # Process all players
+        all_players_data = []
+        logger.debug(f"Processing {len(player_records)} players")
+        
+        for player in player_records:
+            user_id = player.get('userId')  # Changed from 'user_id' to 'id'
+            if not user_id:
+                logger.warning(f"Player record missing id: {player}")
+                continue
+
+            logger.debug(f"Fetching details for user {user_id}")
+            user_details = UserRepository.get_user_by_id(user_id)
+            
+            if not user_details:
+                logger.warning(f"User {user_id} not found but exists in session {active_session_id}")
+                continue
+
+            logger.debug(f"Calculating score for user {user_id}")
+            session_score = calculate_player_score(active_session_id, user_id)
+            questions_answered = get_user_questions_answered_count(user_id, active_session_id)
+
+            player_data = {
+                'user_id': user_id,
+                'username': f"{user_details.get('first_name', '')} {user_details.get('last_name', '')}".strip(),
+                'first_name': user_details.get('first_name', ''),
+                'last_name': user_details.get('last_name', ''),
+                'soul_points': user_details.get('soul_points', 0),
+                'limb_points': user_details.get('limb_points', 0),
+                'session_score': session_score,
+                'total_questions_answered': questions_answered,
+                'is_requesting_user': user_id == requesting_user_id
+            }
+            
+            logger.debug(f"Processed player data: {player_data}")
+            all_players_data.append(player_data)
+
+        # Final response
+        active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+        response = {
+            'session_id': active_session_id,
+            'session_name': active_session_info.get('name', f'Session {active_session_id}') if active_session_info else "Unknown Session",
+            'players': all_players_data,
+            'total_players': len(all_players_data),
+            'requesting_user_position': next(
+                (i+1 for i, p in enumerate(all_players_data) if p['is_requesting_user']),
+                len(all_players_data)+1)
+        }
+
+        logger.debug(f"Final response data: {response}")
+        await sio.emit('all_users_data_updated', response, room=sid)
+        logger.info(f"Sent user data for session {active_session_id} to user {requesting_user_id}")
+
+    except Exception as e:
+        logger.error(f"Error in handle_user_data_request: {str(e)}", exc_info=True)
+        await sio.emit('error', {
+            'message': 'Failed to process user data request',
+            'details': str(e)
+        }, room=sid)
+
+
+@sio.on('answer_submitted')
+async def handle_answer_submission(sid, data):
+    try:
+        user_id = data.get('userId')
+        question_id = data.get('questionId')
+        answer_index = data.get('answerIndex')
+        request_user_data = data.get('request_user_data', False)
+        
+        if not all([user_id, question_id is not None, answer_index is not None]):
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'Missing required data for answer submission'
+            }, room=sid)
+            return
+        
+        result = await process_answer_submission(user_id, question_id, answer_index)
+        
+        response_data = {
+            'success': result.get('success', False),
+            'feedback': result.get('feedback'),
+            'points_earned': result.get('points_earned', 0)
+        }
+        
+        if request_user_data and result.get('success'):
+            await handle_user_data_request(sid, {'user_id': user_id})
+        
+        await sio.emit('answer_response', response_data, room=sid)
+        
+        logger.info(f"Processed answer submission for user {user_id}")
+        
+    except Exception as e:
+        logger.error(f"Error handling answer submission: {e}", exc_info=True)
+        await sio.emit('answer_response', {
+            'success': False,
+            'error': 'An error occurred while processing your answer'
+        }, room=sid)
+
+
+
+
+
+async def get_complete_user_data(user_id: int):
+    try:
+        user_details = UserRepository.get_user_by_id(user_id)
+        if not user_details:
+            logger.warning(f"User not found: {user_id}")
+            return None
+        
+        active_session_id = get_active_session_id()
+        session_score = 0
+        
+        if active_session_id:
+            session_score = calculate_player_score(active_session_id, user_id)
+        
+        user_data = {
+            'user_id': user_id,
+            'username': f"{user_details.get('first_name', '')} {user_details.get('last_name', '')}".strip(),
+            'first_name': user_details.get('first_name', ''),
+            'last_name': user_details.get('last_name', ''),
+            'soul_points': user_details.get('soul_points', 0),
+            'limb_points': user_details.get('limb_points', 0),
+            'session_score': session_score,
+            'total_questions_answered': get_user_questions_answered_count(user_id, active_session_id),
+        }
+        
+        return user_data
+        
+    except Exception as e:
+        logger.error(f"Error retrieving complete user data for user {user_id}: {e}", exc_info=True)
+        return None
+
+async def process_answer_submission(user_id: int, question_id: int, answer_index: int):
+    try:
+        return {
+            'success': True,
+            'is_correct': True,
+            'points_earned': 10,
+            'feedback': "Answer submitted successfully!"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error processing answer submission: {e}", exc_info=True)
+        return {'success': False, 'error': 'Failed to process answer'}
+
+async def process_theme_selection(user_id: int, theme_id: int, theme_name: str):
+    try:
+        active_session_id = get_active_session_id()
+        if not active_session_id:
+            return {'success': False, 'error': 'No active session'}
+        
+        return {
+            'success': True,
+            'feedback': f"Selected theme: {theme_name}"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error processing theme selection: {e}", exc_info=True)
+        return {'success': False, 'error': 'Failed to process theme selection'}
+
+def get_user_questions_answered_count(user_id: int, session_id: int):
+    try:
+        if not session_id:
+            return 0
+        
+        answers = PlayerAnswerRepository.get_all_player_answers_for_user_in_session(session_id, user_id)
+        return len(answers) if answers else 0
+        
+    except Exception as e:
+        logger.error(f"Error getting questions answered count for user {user_id}: {e}")
+        return 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Fixed API endpoints with proper error handling and validation
+
+from datetime import datetime, timedelta
+from fastapi import HTTPException, Depends, Header, Request, status
+from typing import Optional
+import json
+
+# Helper function to safely convert values
+def safe_int_convert(value, default=1):
+    """Safely convert a value to integer with a default fallback"""
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return default
+
+# Helper function to calculate ban expiry
+def calculate_ban_expiry(duration_value: int, duration_unit: str) -> Optional[datetime]:
+    """Calculate ban expiry datetime based on duration and unit"""
+    if duration_unit == "permanent":
+        return None
+    
+    now = datetime.now()
+    if duration_unit == "minutes":
+        return now + timedelta(minutes=duration_value)
+    elif duration_unit == "hours":
+        return now + timedelta(hours=duration_value)
+    elif duration_unit == "days":
+        return now + timedelta(days=duration_value)
+    else:
+        raise ValueError(f"Invalid duration unit: {duration_unit}")
+
+# Helper function to get client IP (assuming this exists)
+def get_client_ip(request: Request) -> str:
+    """Extract client IP from request"""
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+# Helper function to log user IP (assuming this exists)
+def log_user_ip_address(user_id: int, ip_address: str):
+    """Log user IP address"""
+    # Implementation depends on your logging system
+    pass
 
 # The verify_user function as provided
 def verify_user(user_id: int, rfid_code: str) -> str:
@@ -978,21 +1477,28 @@ def verify_user(user_id: int, rfid_code: str) -> str:
     else:
         raise HTTPException(status_code=403, detail="Unknown role")
 
-# Example of how you would use get_current_user_info as a dependency in other API endpoints
-from fastapi import Header
-
+# Fixed dependency function
 async def get_current_user_info(
+    request: Request,
     x_user_id: str = Header(None, alias="X-User-ID"),
     x_rfid: str = Header(None, alias="X-RFID")
 ):
     if not x_user_id or not x_rfid:
         raise HTTPException(status_code=401, detail="Missing user credentials")
     
+    try:
+        user_id = int(x_user_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid user ID format")
+    
+    # Log IP address for authenticated requests
+    client_ip = get_client_ip(request)
+    log_user_ip_address(user_id, client_ip)
+    
     return {
-        "id": int(x_user_id),
-        "role": verify_user(x_user_id, x_rfid)
+        "id": user_id,
+        "role": verify_user(user_id, x_rfid)
     }
-
 
 def convert_difficulty_to_id(difficulty_string: str) -> int:
     difficulty_mapping = {
@@ -1010,102 +1516,661 @@ def convert_difficulty_to_id(difficulty_string: str) -> int:
         # Default to medium if unknown difficulty
         return 2
 
-
-# Updated endpoint with proper error handling and data conversion
+# Fixed create question endpoint - Log first, create second
 @app.post("/api/v1/questions")
 async def create_question_endpoint(
     question_data: QuestionInput,
-    current_user_info: dict = Depends(get_current_user_info)
+    current_user_info: dict = Depends(get_current_user_info),
+    request: Request = None
 ):
     user_id = current_user_info["id"]
     role = current_user_info["role"]
+    client_ip = get_client_ip(request) if request else "unknown"
     
+    # Only admins and moderators can create questions
     if role not in ["admin", "moderator"]:
         raise HTTPException(
             status_code=403,
             detail="Only admins and moderators can create questions"
         )
     
-    if role == "moderator":
-        question_data.is_active = False
+    # LOG THE ATTEMPT FIRST - NOTHING ELSE
+    new_values = {
+        "question_text": question_data.question_text,
+        "created_by": user_id,
+        "role": role,
+        "timestamp": datetime.now().isoformat()
+    }
     
     try:
-        # Convert difficulty string to integer if needed
-        difficulty_id = question_data.difficultyLevelId
-        if isinstance(difficulty_id, str):
-            difficulty_id = convert_difficulty_to_id(difficulty_id)
+        AuditLogRepository.create_audit_log(
+            table_name="questions",
+            record_id=0,
+            action="CREATE",
+            old_values=None,
+            new_values=json.dumps(new_values),
+            changed_by=user_id,
+            ip_address=client_ip
+        )
+    except Exception as audit_error:
+        print(f"Audit log creation failed: {audit_error}")
+        # Continue execution even if audit logging fails
+    
+    # NOW CREATE THE QUESTION
+    # Moderator questions are inactive by default
+    is_active = True if role == "admin" else False
+    
+    try:
+        # Convert IDs to integers with safe conversion
+        theme_id = safe_int_convert(question_data.themeId, 1)
+        difficulty_id = safe_int_convert(question_data.difficultyLevelId, 1)
         
-        # Convert themeId to integer if it's a string
-        theme_id = question_data.themeId
-        if isinstance(theme_id, str):
-            # If themeId is a string, you might need a similar mapping
-            # For now, defaulting to 1 if it's a string
-            try:
-                theme_id = int(theme_id)
-            except ValueError:
-                theme_id = 1  # Default theme ID
+        # Validate required fields
+        if not question_data.question_text or not question_data.question_text.strip():
+            raise HTTPException(status_code=400, detail="Question text is required")
         
-        # Create the question and get the ID
+        if not question_data.answers or len(question_data.answers) == 0:
+            raise HTTPException(status_code=400, detail="At least one answer is required")
+        
+        # Create the question
         question_id = QuestionRepository.create_question(
-            question_text=question_data.question_text,
+            question_text=question_data.question_text.strip(),
             themeId=theme_id,
             difficultyLevelId=difficulty_id,
-            explanation=question_data.explanation,
-            Url=question_data.Url,
-            time_limit=question_data.time_limit,
-            think_time=question_data.think_time,
-            points=question_data.points,
-            is_active=question_data.is_active,
-            no_answer_correct=question_data.no_answer_correct,
+            explanation=question_data.explanation or "",
+            Url=question_data.Url or "",
+            time_limit=safe_int_convert(question_data.time_limit, 30),
+            think_time=safe_int_convert(question_data.think_time, 5),
+            points=safe_int_convert(question_data.points, 10),
+            is_active=is_active,
+            no_answer_correct=bool(question_data.no_answer_correct),
             createdBy=user_id,
-            LightMax=question_data.LightMax,
-            LightMin=question_data.LightMin,
-            TempMax=question_data.TempMax,
-            TempMin=question_data.TempMin
+            LightMax=safe_int_convert(question_data.LightMax, 100),
+            LightMin=safe_int_convert(question_data.LightMin, 0),
+            TempMax=safe_int_convert(question_data.TempMax, 30),
+            TempMin=safe_int_convert(question_data.TempMin, 10)
         )
-        
-        # Verify question_id was created successfully
+
         if not question_id:
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to create question - no ID returned"
-            )
+            raise HTTPException(status_code=500, detail="Failed to create question")
         
-        # Create answers only if question was created successfully
+        # Create answers
         created_answers = []
         for answer in question_data.answers:
+            if not answer.answer_text or not answer.answer_text.strip():
+                continue  # Skip empty answers
+                
             try:
                 answer_id = AnswerRepository.create_answer(
                     question_id=question_id,
-                    answer_text=answer.answer_text,
-                    is_correct=answer.is_correct
+                    answer_text=answer.answer_text.strip(),
+                    is_correct=bool(answer.is_correct)
                 )
-                created_answers.append(answer_id)
+                
+                if answer_id:
+                    created_answers.append(answer_id)
+                        
             except Exception as answer_error:
-                # If answer creation fails, log it but don't fail the whole request
                 print(f"Failed to create answer: {answer_error}")
-                # Optionally, you might want to delete the question if answers fail
-                # QuestionRepository.delete_question(question_id)
-                raise HTTPException(
-                    status_code=500, 
-                    detail=f"Failed to create answer: {str(answer_error)}"
-                )
+                # Continue with other answers
+        
+        if len(created_answers) == 0:
+            raise HTTPException(status_code=400, detail="No valid answers were created")
         
         return {
             "status": "success",
             "question_id": question_id,
-            "created_answers": len(created_answers),
-            "is_active": question_data.is_active,
+            "answers_created": len(created_answers),
+            "is_active": is_active
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Question creation error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create question")
+
+
+# Fixed update question endpoint - Log first, update second
+@app.patch("/api/v1/questions/{question_id}")
+async def update_question_endpoint(
+    question_id: int,
+    question_data: QuestionInput,
+    current_user_info: dict = Depends(get_current_user_info),
+    request: Request = None
+):
+    user_id = current_user_info["id"]
+    role = current_user_info["role"]
+    client_ip = get_client_ip(request) if request else "unknown"
+    
+    # Only admins can edit questions
+    if role != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can edit questions")
+    
+    # LOG THE UPDATE ATTEMPT FIRST - NOTHING ELSE
+    new_values = {
+        "question_id": question_id,
+        "question_text": question_data.question_text,
+        "updated_by": user_id,
+        "role": role,
+        "timestamp": datetime.now().isoformat()
+    }
+    
+    try:
+        AuditLogRepository.create_audit_log(
+            table_name="questions",
+            record_id=question_id,
+            action="UPDATE",
+            old_values=None,
+            new_values=json.dumps(new_values),
+            changed_by=user_id,
+            ip_address=client_ip
+        )
+    except Exception as audit_error:
+        print(f"Audit log creation failed: {audit_error}")
+        # Continue execution even if audit logging fails
+    
+    # NOW UPDATE THE QUESTION
+    try:
+        # Validate question exists
+        existing_question = QuestionRepository.get_question_by_id(question_id)
+        if not existing_question:
+            raise HTTPException(status_code=404, detail="Question not found")
+        
+        # Convert difficulty string to integer if needed
+        difficulty_id = question_data.difficultyLevelId
+        if isinstance(difficulty_id, str):
+            difficulty_id = convert_difficulty_to_id(difficulty_id)
+        else:
+            difficulty_id = safe_int_convert(difficulty_id, 1)
+        
+        # Convert themeId to integer
+        theme_id = safe_int_convert(question_data.themeId, 1)
+        
+        # Validate required fields
+        if not question_data.question_text or not question_data.question_text.strip():
+            raise HTTPException(status_code=400, detail="Question text is required")
+        
+        # Update the question
+        update_success = QuestionRepository.update_question(
+            question_id=question_id,
+            question_text=question_data.question_text.strip(),
+            themeId=theme_id,
+            difficultyLevelId=difficulty_id,
+            explanation=question_data.explanation or "",
+            Url=question_data.Url or "",
+            time_limit=safe_int_convert(question_data.time_limit, 30),
+            think_time=safe_int_convert(question_data.think_time, 5),
+            points=safe_int_convert(question_data.points, 10),
+            is_active=bool(question_data.is_active),
+            no_answer_correct=bool(question_data.no_answer_correct),
+            LightMax=safe_int_convert(question_data.LightMax, 100),
+            LightMin=safe_int_convert(question_data.LightMin, 0),
+            TempMax=safe_int_convert(question_data.TempMax, 30),
+            TempMin=safe_int_convert(question_data.TempMin, 10)
+        )
+        
+        if not update_success:
+            raise HTTPException(status_code=500, detail="Failed to update question")
+        
+        # Handle answers: delete all existing answers and create new ones
+        created_answers = []
+        if question_data.answers:
+            try:
+                # Delete all existing answers for this question
+                delete_success = AnswerRepository.delete_all_answers_for_question(question_id)
+                if not delete_success:
+                    print(f"Warning: Failed to delete existing answers for question {question_id}")
+                
+                # Create new answers
+                for answer in question_data.answers:
+                    if not answer.answer_text or not answer.answer_text.strip():
+                        continue  # Skip empty answers
+                        
+                    try:
+                        answer_id = AnswerRepository.create_answer(
+                            question_id=question_id,
+                            answer_text=answer.answer_text.strip(),
+                            is_correct=bool(answer.is_correct)
+                        )
+                        
+                        if answer_id:
+                            created_answers.append(answer_id)
+                                
+                    except Exception as answer_error:
+                        print(f"Failed to create answer: {answer_error}")
+                        continue
+                        
+            except Exception as answer_handling_error:
+                print(f"Error handling answers: {answer_handling_error}")
+                raise HTTPException(status_code=500, detail="Failed to update answers")
+        
+        return {
+            "status": "success",
+            "message": "Question updated successfully",
+            "question_id": question_id,
+            "updated_answers": len(created_answers),
+            "is_active": bool(question_data.is_active),
             "role": role,
             "difficulty_id": difficulty_id,
             "theme_id": theme_id
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"Error creating question: {e}")
+        print(f"Error updating question: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update question: {str(e)}")
+
+
+# Fixed delete question endpoint
+@app.delete("/api/v1/questions/{question_id}")
+async def delete_question_endpoint(
+    question_id: int,
+    current_user_info: dict = Depends(get_current_user_info),
+    request: Request = None
+):
+    user_id = current_user_info["id"]
+    role = current_user_info["role"]
+    client_ip = get_client_ip(request) if request else "unknown"
+    
+    # Only admins can delete questions
+    if role != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can delete questions")
+    
+    try:
+        # Check if question exists
+        existing_question = QuestionRepository.get_question_by_id(question_id)
+        if not existing_question:
+            raise HTTPException(status_code=404, detail="Question not found")
+        
+        # First, delete all associated answers for this question
+        try:
+            delete_answers_success = AnswerRepository.delete_all_answers_for_question(question_id)
+            if not delete_answers_success:
+                print(f"Warning: Failed to delete associated answers for question {question_id}")
+        except Exception as e:
+            print(f"Error deleting answers: {e}")
+            # Continue with question deletion even if answer deletion fails
+        
+        # Then delete the question
+        delete_success = QuestionRepository.delete_question(question_id)
+        
+        if not delete_success:
+            raise HTTPException(status_code=500, detail="Failed to delete question")
+        
+        # Create audit log for question deletion
+        new_values = {
+            "deleted_by": user_id,
+            "question_id": question_id,
+            "action": "DELETE",
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        try:
+            AuditLogRepository.create_audit_log(
+                table_name="questions",
+                record_id=question_id,
+                action="DELETE",
+                old_values=None,
+                new_values=json.dumps(new_values),
+                changed_by=user_id,
+                ip_address=client_ip
+            )
+        except Exception as audit_error:
+            print(f"Delete audit log creation failed: {audit_error}")
+        
+        return {
+            "status": "success",
+            "message": "Question deleted successfully",
+            "question_id": question_id,
+            "role": role
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error deleting question: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete question: {str(e)}")
+
+
+# Fixed create theme endpoint - Log first, create second
+@app.post("/api/v1/themes")
+async def create_theme_endpoint(
+    theme_data: ThemeInput,
+    current_user_info: dict = Depends(get_current_user_info),
+    request: Request = None
+):
+    user_id = current_user_info["id"]
+    role = current_user_info["role"]
+    client_ip = get_client_ip(request) if request else "unknown"
+   
+    if role not in ["admin", "moderator"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins and moderators can create themes"
+        )
+   
+    # Moderators can't create active themes by default
+    if role == "moderator":
+        theme_data.is_active = False
+   
+    # LOG THE THEME CREATION ATTEMPT FIRST - NOTHING ELSE
+    new_values = {
+        "name": theme_data.name,
+        "description": theme_data.description,
+        "is_active": theme_data.is_active,
+        "created_by": user_id,
+        "role": role,
+        "timestamp": datetime.now().isoformat()
+    }
+    
+    try:
+        AuditLogRepository.create_audit_log(
+            table_name="themes",
+            record_id=0,
+            action="CREATE",
+            old_values=None,
+            new_values=json.dumps(new_values),
+            changed_by=user_id,
+            ip_address=client_ip
+        )
+    except Exception as audit_error:
+        print(f"Audit log creation failed: {audit_error}")
+        # Continue execution even if audit logging fails
+    
+    # NOW CREATE THE THEME
+    try:
+        # Create the theme without logoUrl
+        theme_id = ThemeRepository.create_theme(
+            name=theme_data.name,
+            description=theme_data.description,
+            is_active=theme_data.is_active
+        )
+       
+        if not theme_id:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to create theme - no ID returned"
+            )
+       
+        return {
+            "status": "success",
+            "theme_id": theme_id,
+            "is_active": theme_data.is_active,
+            "role": role
+        }
+       
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Validation error: {str(ve)}"
+        )
+    except Exception as e:
+        print(f"Error creating theme: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to create question: {str(e)}"
+            detail=f"Failed to create theme: {str(e)}"
+        )
+
+
+# Fixed delete theme endpoint
+@app.delete("/api/v1/themes/{theme_id}")
+async def delete_theme_endpoint(
+    theme_id: int,
+    current_user_info: dict = Depends(get_current_user_info),
+    request: Request = None
+):
+    user_id = current_user_info["id"]
+    role = current_user_info["role"]
+    client_ip = get_client_ip(request) if request else "unknown"
+    
+    # Only admins and moderators can delete themes
+    if role not in ["admin", "moderator"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins and moderators can delete themes"
+        )
+    
+    try:
+        # Check if theme exists
+        existing_theme = ThemeRepository.get_theme_by_id(theme_id)
+        if not existing_theme:
+            raise HTTPException(status_code=404, detail="Theme not found")
+        
+        # Delete the theme
+        delete_success = ThemeRepository.delete_theme(theme_id)
+        
+        if not delete_success:
+            raise HTTPException(status_code=500, detail="Failed to delete theme")
+        
+        # Create audit log for theme deletion
+        new_values = {
+            "deleted_by": user_id,
+            "theme_id": theme_id,
+            "action": "DELETE",
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        try:
+            AuditLogRepository.create_audit_log(
+                table_name="themes",
+                record_id=theme_id,
+                action="DELETE",
+                old_values=None,
+                new_values=json.dumps(new_values),
+                changed_by=user_id,
+                ip_address=client_ip
+            )
+        except Exception as audit_error:
+            print(f"Theme delete audit log creation failed: {audit_error}")
+        
+        return {
+            "status": "success",
+            "message": "Theme deleted successfully",
+            "theme_id": theme_id,
+            "role": role
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error deleting theme: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete theme: {str(e)}")
+
+
+# Fixed delete user endpoint
+@app.delete("/api/v1/users/{user_id}")
+async def delete_user_endpoint(
+    user_id: int,
+    current_user_info: dict = Depends(get_current_user_info),
+    request: Request = None
+):
+    current_user_id = current_user_info["id"]
+    role = current_user_info["role"]
+    client_ip = get_client_ip(request) if request else "unknown"
+    
+    # Only admins can delete users
+    if role != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can delete users")
+    
+    # Prevent admin from deleting themselves
+    if current_user_id == user_id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    
+    try:
+        # Check if user exists
+        existing_user = UserRepository.get_user_by_id(user_id)
+        if not existing_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Delete the user
+        delete_success = UserRepository.delete_user(user_id)
+        
+        if not delete_success:
+            raise HTTPException(status_code=500, detail="Failed to delete user")
+        
+        # Create audit log for user deletion
+        new_values = {
+            "deleted_by": current_user_id,
+            "user_id": user_id,
+            "action": "DELETE",
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        try:
+            AuditLogRepository.create_audit_log(
+                table_name="users",
+                record_id=user_id,
+                action="DELETE",
+                old_values=None,
+                new_values=json.dumps(new_values),
+                changed_by=current_user_id,
+                ip_address=client_ip
+            )
+        except Exception as audit_error:
+            print(f"User delete audit log creation failed: {audit_error}")
+        
+        return {
+            "status": "success",
+            "message": "User deleted successfully",
+            "user_id": user_id,
+            "role": role
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error deleting user: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete user: {str(e)}")
+
+
+
+# Fixed ban IP endpoint
+@app.post("/api/v1/ban-ip")
+async def ban_ip_address(
+    ban_request: BanIpRequest,
+    current_user: dict = Depends(get_current_user_info),
+    request: Request = None
+):
+    user_role = current_user["role"]
+    user_id = current_user["id"]
+    client_ip = get_client_ip(request) if request else "unknown"
+    
+    # Check permissions
+    if user_role not in ["moderator", "admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only moderators and admins can ban IP addresses"
+        )
+    
+    # Validate ban duration based on role
+    if user_role == "moderator":
+        # Moderators can ban up to 1 minute
+        if ban_request.ban_duration_unit == "minutes" and ban_request.ban_duration_value > 1:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Moderators can only ban for up to 1 minute"
+            )
+        elif ban_request.ban_duration_unit in ["hours", "days", "permanent"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Moderators can only use minutes for ban duration"
+            )
+    elif user_role == "admin":
+        # Admins can ban up to a week (or permanent)
+        if ban_request.ban_duration_unit == "days" and ban_request.ban_duration_value > 7:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admins can ban for up to 7 days maximum"
+            )
+        elif ban_request.ban_duration_unit == "hours" and ban_request.ban_duration_value > 168:  # 7 days in hours
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Ban duration exceeds 7 day limit"
+            )
+        elif ban_request.ban_duration_unit == "minutes" and ban_request.ban_duration_value > 10080:  # 7 days in minutes
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Ban duration exceeds 7 day limit"
+            )
+    
+    try:
+        # Get IP address record
+        ip_record = IpAddressRepository.get_ip_address_by_string(ban_request.ip_address)
+        if not ip_record:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"IP address {ban_request.ip_address} not found"
+            )
+        
+        # Calculate ban expiry
+        try:
+            ban_expires_at = calculate_ban_expiry(
+                ban_request.ban_duration_value,
+                ban_request.ban_duration_unit
+            )
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
+        
+        # Update IP address with ban information
+        success = IpAddressRepository.update_ip_address(
+            ip_id=ip_record['id'],
+            is_banned=True,
+            ban_reason=ban_request.ban_reason or "No reason provided",
+            ban_date=datetime.now(),
+            banned_by=user_id,
+            ban_expires_at=ban_expires_at
+        )
+        
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to ban IP address"
+            )
+        
+        # Create audit log for IP ban
+        new_ip_values = {
+            "ip_address": ban_request.ip_address,
+            "is_banned": True,
+            "ban_reason": ban_request.ban_reason or "No reason provided",
+            "ban_date": datetime.now().isoformat(),
+            "banned_by": user_id,
+            "ban_expires_at": ban_expires_at.isoformat() if ban_expires_at else None
+        }
+        
+        try:
+            AuditLogRepository.create_audit_log(
+                table_name="ip_addresses",
+                record_id=ip_record['id'],
+                action="BAN",
+                old_values=None,
+                new_values=json.dumps(new_ip_values),
+                changed_by=user_id,
+                ip_address=client_ip
+            )
+        except Exception as audit_error:
+            print(f"IP ban audit log creation failed: {audit_error}")
+        
+        # Log the ban action
+        log_user_ip_address(user_id, client_ip)
+        
+        return {
+            "message": f"IP address {ban_request.ip_address} has been banned successfully",
+            "ban_expires_at": ban_expires_at,
+            "banned_by": user_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error banning IP address: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to ban IP address: {str(e)}"
         )
 
 
@@ -1124,6 +2189,451 @@ async def create_question_endpoint(
 
 
 
+import json
+
+# Fixed FastAPI endpoint
+@app.get(
+    ENDPOINT + "/audit-logs/",
+    summary="Get recent audit logs",
+    response_model=List[AuditLogResponse],
+    responses={
+        200: {"description": "List of audit logs (may be empty)"}
+    },
+    tags=["Audit Logs"]
+)
+async def get_recent_audit_logs(limit: int = 15) -> List[AuditLogResponse]:
+    """
+    Get the most recent audit log entries.
+    
+    Args:
+        limit: Maximum number of logs to return (default: 15)
+    
+    Returns:
+        List of audit log entries with all required fields
+    """
+    try:
+        audit_logs_data = AuditLogRepository.get_recent_audit_logs(limit)
+        
+        # Check if we got a valid list result
+        if not isinstance(audit_logs_data, list):
+            print(f"Expected list but got {type(audit_logs_data)}: {audit_logs_data}")
+            return []
+        
+        # Convert to Pydantic models
+        audit_logs = []
+        for log_data in audit_logs_data:
+            try:
+                # Parse JSON strings more robustly
+                old_values = None
+                new_values = None
+                
+                # Handle old_values
+                if log_data.get('old_values'):
+                    if isinstance(log_data['old_values'], str):
+                        try:
+                            # Handle potential double-encoded JSON
+                            raw_old = log_data['old_values']
+                            if raw_old.startswith('"') and raw_old.endswith('"'):
+                                # Remove outer quotes if double-encoded
+                                raw_old = raw_old[1:-1].replace('\\"', '"')
+                            old_values = json.loads(raw_old)
+                        except json.JSONDecodeError as e:
+                            print(f"Failed to parse old_values for log {log_data.get('id')}: {e}")
+                            print(f"Raw old_values: {repr(log_data['old_values'])}")
+                            old_values = None
+                    else:
+                        old_values = log_data['old_values']
+                
+                # Handle new_values
+                if log_data.get('new_values'):
+                    if isinstance(log_data['new_values'], str):
+                        try:
+                            # Handle potential double-encoded JSON
+                            raw_new = log_data['new_values']
+                            if raw_new.startswith('"') and raw_new.endswith('"'):
+                                # Remove outer quotes if double-encoded
+                                raw_new = raw_new[1:-1].replace('\\"', '"')
+                            new_values = json.loads(raw_new)
+                        except json.JSONDecodeError as e:
+                            print(f"Failed to parse new_values for log {log_data.get('id')}: {e}")
+                            print(f"Raw new_values: {repr(log_data['new_values'])}")
+                            new_values = None
+                    else:
+                        new_values = log_data['new_values']
+                
+                # Create AuditLogResponse object
+                audit_log = AuditLogResponse(
+                    id=log_data['id'],
+                    table_name=log_data['table_name'],
+                    record_id=str(log_data['record_id']),
+                    action=log_data['action'],
+                    old_values=old_values,
+                    new_values=new_values,
+                    changed_by=str(log_data['changed_by']),
+                    ip_address=log_data['ip_address']
+                )
+                audit_logs.append(audit_log)
+                
+            except Exception as model_error:
+                print(f"Error creating AuditLogResponse for log {log_data.get('id')}: {model_error}")
+                print(f"Log data: {log_data}")
+                continue
+        
+        print(f"Successfully processed {len(audit_logs)} out of {len(audit_logs_data)} audit logs")
+        return audit_logs
+        
+    except Exception as e:
+        print(f"Error retrieving audit logs: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving audit logs"
+        )
+    
+
+
+# FastAPI Endpoint
+@app.get("/api/v1/answers/percentage")
+async def get_correct_answers_percentage():
+    """
+    Returns the percentage of correct answers as an integer.
+    """
+    try:
+        percentage = PlayerAnswerRepository.get_correct_answers_percentage()
+        return percentage
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to calculate answers percentage"
+        )
+    
+
+# FastAPI Endpoint
+@app.get("/api/v1/items")
+async def get_all_items():
+    """
+    Returns all active items from the database.
+    """
+    try:
+        items = ItemRepository.get_all_items()
+        return {"items": items}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve items"
+        )
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Add endpoint to get active sessions
+@app.get("/api/v1/sessions/active")
+async def get_active_sessions():
+    """
+    Get all currently active quiz sessions.
+    """
+    try:
+        active_sessions = QuizSessionRepository.get_sessions_by_status(2)
+
+        # Check if active_sessions is a list of tuples or dictionaries
+        # Let's add a robust check and assume it's most likely dictionaries now given previous fixes
+        # Or, if it's still tuples, keep session[0].
+        # For safety, let's try to get the first element and check its type.
+        
+        # This assumes get_sessions_by_status returns at least one session if active sessions exist
+        if active_sessions and isinstance(active_sessions[0], dict):
+            # If it's a list of dictionaries, access by key
+            active_session_ids = [session['sessionId'] for session in active_sessions]
+        else:
+            # If it's a list of tuples (or empty), access by index 0 (as previously assumed)
+            active_session_ids = [session[0] for session in active_sessions]
+        
+        # Return as a dictionary with a clear key for JSON serialization
+        return {"active_session_ids": active_session_ids}
+    except Exception as e:
+        # For better debugging, log the actual exception and traceback
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.exception("Failed to retrieve active sessions due to an unexpected error.")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve active sessions"
+        )
+
+
+import logging # Import the logging module
+
+# Configure basic logging. This will show INFO messages and above.
+# The 'logger.exception()' calls will print a full traceback.
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Assume ChatMessageCreate, QuizSessionRepository, ChatLogRepository, and sio are imported and defined
+
+user_last_request_time = {}
+RATE_LIMIT_SECONDS = 0.25
+
+@app.post("/api/v1/chat/messages")
+async def create_chat_message(request: ChatMessageCreate):
+    """
+    Create a new chat message in the database and broadcast it via Socket.IO.
+    """
+    try:
+        current_time = time.time()
+        user_id = request.user_id
+
+        if user_id in user_last_request_time:
+            if current_time - user_last_request_time[user_id] < RATE_LIMIT_SECONDS:
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail=f"Please wait {RATE_LIMIT_SECONDS} second(s) before sending another message."
+                )
+        user_last_request_time[user_id] = current_time
+
+        logger.info("Starting create_chat_message endpoint.")
+        
+        active_sessions = QuizSessionRepository.get_sessions_by_status(2)
+        active_session_ids = [session[0] for session in active_sessions]
+        logger.info(f"Active session IDs: {active_session_ids}")
+        
+        if request.session_id not in active_session_ids:
+            logger.warning(f"Session {request.session_id} not found in active sessions.")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Session is not active or does not exist"
+            )
+
+        logger.info("Attempting to create chat message in DB.")
+        message_id = ChatLogRepository.create_chat_message(
+            session_id=request.session_id,
+            message_text=request.message_text,
+            user_id=request.user_id,
+            message_type=request.message_type,
+            reply_to_id=request.reply_to_id
+        )
+        
+        if message_id is None:
+            logger.error("Message ID is None after create_chat_message. Database insertion might have failed.")
+            raise Exception("Failed to create message: message_id is None")
+
+        logger.info(f"Message created successfully with ID: {message_id}")
+
+        logger.info("Emitting 'message_sent' globally via Socket.IO.")
+        await sio.emit('message_sent', {
+            'session_id': request.session_id
+        })
+        
+        logger.info("Global Socket.IO emit completed successfully.")
+
+        return {
+            "message_id": message_id,
+            "status": "sent",
+            "broadcast": True
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Unhandled exception in create_chat_message: {e}")
+        print(f"Error creating chat message: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create chat message"
+        )
+
+
+# Updated endpoint for getting chat messages by session
+@app.get("/api/v1/chat/messages/{session_id}")
+async def get_chat_messages(session_id: int) -> Dict[str, List[Dict]]:
+    try:
+        messages = ChatLogRepository.get_chat_messages_by_session(session_id)
+        formatted_messages = []
+        for msg in messages:
+            formatted_messages.append({
+                "username": msg.get("username", "Unknown User"),
+                "message": msg.get("message", ""),
+                "is_flagged": msg.get("is_flagged", False),
+                "flagged_by": msg.get("flagged_by"),
+                "flagged_reason": msg.get("flagged_reason")
+            })
+        return {"messages": formatted_messages}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve chat messages"
+        )
+
+# New endpoint to get chat statistics for a session
+@app.get("/api/v1/chat/stats/{session_id}")
+async def get_chat_stats(session_id: int):
+    """
+    Get chat statistics for a specific session.
+    """
+    try:
+        # Verify the session is active
+        active_sessions = QuizSessionRepository.get_sessions_by_status(2)
+        active_session_ids = [session['sessionId'] for session in active_sessions]
+        
+        if session_id not in active_session_ids:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Session is not active or does not exist"
+            )
+
+        # Call the new get_chat_statistics method from the repository
+        stats = ChatLogRepository.get_chat_statistics(session_id)
+        
+        return {
+            "session_id": session_id,
+            "stats": stats,
+            "is_active": True
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve chat statistics"
+        )
+
+# Socket.IO event handlers for enhanced chat functionality
+@sio.on('join')
+async def join_room(sid, room_name):
+    await sio.enter_room(sid, room_name)
+    print(f"Client {sid} joined room: {room_name}")
+    return {'status': 'success'} # Send acknowledgment back to client
+
+@sio.event
+async def user_left_quiz(sid, data):
+    """
+    Handle when a user leaves a quiz session.
+    """
+    try:
+        session_id = data.get('sessionId')
+        user_id = data.get('userId')
+        username = data.get('username')
+        
+        if not all([session_id, user_id, username]):
+            return False
+            
+        # Leave the quiz session room
+        await sio.leave_room(sid, f'quiz_session_{session_id}')
+        await sio.leave_room(sid, 'quiz_general')
+        
+        # Broadcast that user left
+        await sio.emit('user_left_chat', {
+            'userId': user_id,
+            'username': username,
+            'sessionId': session_id,
+            'timestamp': datetime.now().isoformat()
+        }, room=f'quiz_session_{session_id}')
+        
+        # Log the leave event
+        ChatLogRepository.create_chat_message(
+            session_id=session_id,
+            message_text=f"{username} left the quiz",
+            user_id=user_id,
+            message_type="system"
+        )
+        
+        return True
+        
+    except Exception as e:
+        print(f"Error in user_left_quiz: {e}")
+        return False
+
+@sio.event
+async def disconnect(sid):
+    """
+    Handle client disconnection.
+    """
+    print(f"Client {sid} disconnected")
+
+# Additional endpoint to broadcast system messages
+@app.post("/api/v1/chat/system-message")
+async def send_system_message(session_id: int, message: str, message_type: str = "system"):
+    """
+    Send a system message to all users in a quiz session.
+    """
+    try:
+        # Verify the session is active
+        active_sessions = QuizSessionRepository.get_sessions_by_status(2)
+        active_session_ids = [session['sessionId'] for session in active_sessions]
+        
+        if session_id not in active_session_ids:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Session is not active or does not exist"
+            )
+
+        # Create system message in database
+        message_id = ChatLogRepository.create_chat_message(
+            session_id=session_id,
+            message_text=message,
+            user_id=0,  # System user ID
+            message_type=message_type
+        )
+
+        # Broadcast the system message
+        await sio.emit('new_chat_message', {
+            'messageId': message_id,
+            'sessionId': session_id,
+            'sender': 'System',
+            'message': message,
+            'userId': 0,
+            'messageType': message_type,
+            'timestamp': datetime.now().isoformat()
+        }, room=f'quiz_session_{session_id}')
+
+        return {
+            "message_id": message_id,
+            "status": "sent",
+            "broadcast": True
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send system message"
+        )
+
+import subprocess
+from fastapi import Body,Request
+
+
+
+
+@app.post("/api/shutdown")
+async def immediate_shutdown(
+    x_user_id: str = Header(..., alias="X-User-ID"),
+    x_rfid: str = Header(..., alias="X-RFID")
+):
+    # Verify admin privileges
+    if not verify_user(x_user_id, x_rfid) == "admin":
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+    
+    # Execute IMMEDIATE shutdown (no delay)
+    try:
+        subprocess.Popen(["sudo", "poweroff"], 
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL)
+        return {"message": "System powering off NOW"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Shutdown failed: {str(e)}")
 
 
 
@@ -1144,10 +2654,45 @@ async def create_question_endpoint(
 
 
 
-# I will also add endpoints for:
-# - Login (e.g., POST /api/v1/users/login with username/password, returns token/session info)
-# - Logout (e.g., POST /api/v1/users/logout)
-# - Get user by RFID (if needed for specific frontend flows)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # Global flag to signal the background thread to stop
@@ -1178,7 +2723,12 @@ def format_second_row(temp, lux, angle):
 def format_second_row(temp, lux, angle):
     return f"{temp:.1f}C {lux:.0f}L {angle}deg"
 
+
+servo = None 
+
+
 def raspberry_pi_main_thread(stop_event, sio, loop):
+    global servo  # Reference the global variable
     if not RPI_COMPONENTS_AVAILABLE:
         print("Skipping Raspberry Pi thread start due to component import errors.")
         return
@@ -1186,15 +2736,14 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
     # Initialize components
     lcd = None
     rfid = None
-    servo = None
     temp_sensor = None
     light_sensor = None
     try:
         lcd = LCD1602A()
         rfid = HardcoreRFID()
-        servo = ServoMotor()
         temp_sensor = TemperatureSensor()
         light_sensor = LightSensor()
+        servo = ServoMotor()  # This will update the global variable
     except Exception as e:
         print(f"Failed to initialize Raspberry Pi components in thread: {e}")
         print(traceback.format_exc())
@@ -1228,57 +2777,95 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
 
 
 
+
+
+
+
+
+
+
+
 #main quiz logic, this is where the questions are send to the frontend
     try:
         while not stop_event.is_set():
             current_time = time.time()
-
             # --- Check for active Quiz Session ---
             try:
-                active_sessions = QuizSessionRepository.get_active_sessions()
-                
-                # Add this at the module level (outside your function)
-                last_update_time = 0
-                
+                active_sessions = QuizSessionRepository.get_sessions_by_status(2)
+               
+               
+               
                 if active_sessions:
-                     if current_time - last_update_time >= 1:  # Only proceed if at least 1 second has passed
-                        last_update_time = current_time  # Update the last update time
-                        # --- ACTIVE QUIZ SESSION LOGIC ---
-                        session_id = active_sessions[0]['id']  # Assuming session has 'id' key
-                        
-                        # Log sensor data to the active session
+                    try:
                         if temp_sensor and light_sensor and servo:
-                            try:
-                                current_temp = temp_sensor.read_temperature()
-                                current_lux = light_sensor()
-                                current_servo_angle = servo.read_degrees()
-                                
-                                QuizSessionRepository.create_sensor_data(
-                                    sessionId=session_id,
-                                    temperature=current_temp,
-                                    lightIntensity=current_lux,
-                                    servoPosition=current_servo_angle,
-                                    timestamp=datetime.now()  # You'll need to import datetime
-                                )
-                                
-                                # Still emit for real-time monitoring if needed
-                                sensor_data_to_emit = {
-                                    'temperature': current_temp,
-                                    'illuminance': current_lux,
-                                    'servo_angle': current_servo_angle,
-                                }
-                                try:
-                                    asyncio.run_coroutine_threadsafe(
-                                        sio.emit('sensor_data', sensor_data_to_emit),
-                                        loop 
-                                    )
-                                except Exception as e:
-                                    print(f"Error emitting sensor_data during quiz: {e}")
-                                    
-                            except Exception as e:
-                                print(f"Error logging sensor data to quiz session: {e}")
-                        
-                        # other quiz-specific logic here
+                            active_sessions = QuizSessionRepository.get_sessions_by_status(2)
+                           
+                            if active_sessions and should_update_quiz_session(current_time):
+                                session_id = get_active_session_id()
+                                sensor_data = read_sensor_data(temp_sensor, light_sensor, servo)
+                               
+                                log_quiz_sensor_data(session_id, sensor_data)
+                                emit_sensor_data(sensor_data, sio, loop)
+                                emit_theme_selection_if_needed(sio, loop)
+                                                    # Manage RFID display time
+                                if showing_rfid and (current_time - rfid_display_start) >= RFID_DISPLAY_TIME:
+                                    showing_rfid = False
+                                    if lcd:
+                                        lcd.clear()
+                                        lcd.write_line(0, ip_address[:16])
+                                    last_refresh = 0
+                                # Update LCD with sensor data during quiz
+                                if lcd and not showing_rfid:
+                                    temp = temp_sensor.read_temperature()
+                                    lux = light_sensor()
+                                    current_angle = servo.read_degrees()
+                                    lcd.write_line(1, format_second_row(temp, lux, current_angle)[:16])
+                                    if rfid:
+                                        uid = rfid.read_card()
+                                        if uid:
+                                            rfid_code = uid
+                                            rfid_display_start = current_time
+                                            showing_rfid = True
+                                            print(f"RFID Scanned: {rfid_code}")
+                                            if lcd:
+                                                lcd.write_line(1, f"RFID:{rfid_code}")
+
+                                            # User creation logic
+                                            existing_user = UserRepository.get_user_by_rfid(rfid_code)
+                                            print(existing_user)
+                                            if existing_user:
+                                                print(f"User with RFID {rfid_code} found: {existing_user['first_name']} {existing_user['last_name']}")
+                                            else:
+                                                print(f"No user found for RFID {rfid_code}. Creating new 'open' user.")
+                                                open_user_data = {
+                                                    'last_name': 'Open',
+                                                    'first_name': 'Open',
+                                                    'password': 'temp_password_for_open_user',
+                                                    'rfid_code': rfid_code,
+                                                    'userRoleId': 2,
+                                                    'soul_points': 4,
+                                                    'limb_points': 4,
+                                                    'updated_by': 1
+                                                }
+                                                
+                                                new_user_id = UserRepository.create_user(open_user_data)
+                                                if new_user_id:
+                                                    print(f"Created new user with ID: {new_user_id} and RFID: {rfid_code}")
+                                                    if lcd:
+                                                        lcd.write_line(2, "New user created!")
+                                                else:
+                                                    print(f"Failed to create new user for RFID: {rfid_code}")
+                                                    if lcd:
+                                                        lcd.write_line(2, "User creation failed!")
+                                                
+
+                                                
+                               
+
+
+                    
+                    except Exception as e:
+                        print(f"Error in quiz session sensor handling: {e}")
                     
 
 
@@ -1460,27 +3047,46 @@ servo_cooldown_lock = Lock() # A dedicated lock to protect access to last_servo_
 
 @app.post("/api/v1/trigger-servo")
 async def trigger_servo(cmd: ServoCommand):
-    global last_servo_command_time # <--- MOVE THIS TO THE TOP OF THE FUNCTION
-
-    if cmd.command != "SWEEP_SERVO":
-        raise HTTPException(status_code=400, detail="Invalid servo command.")
-
-    # 1. Check for active quiz sessions (KEEP THIS AS IS)
+    import json
+    global last_servo_command_time
+    
+    # 1. FIRST - Check for active quiz sessions before doing ANYTHING else
     try:
-        active_sessions = QuizSessionRepository.get_active_sessions()
-        if active_sessions:
-            active_session_info = active_sessions[0] if active_sessions else None
-            raise HTTPException(
-                status_code=409,
-                detail="A quiz session is currently active. Servo movement is restricted.",
-                headers={"X-Active-Session": "true", "X-Session-Name": active_session_info.name}
-            )
+        active_session_id = get_active_session_id()
+        print(f"DEBUG: active_session_id = {active_session_id}")
+        
+        if active_session_id:
+            # Get the full session details using the ID
+            active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+            print(f"DEBUG: active_session_info = {active_session_info}")
+            
+            if active_session_info:
+                session_name = active_session_info.get('name', f'Session ID {active_session_id}')
+                print(f"DEBUG: session_name = {session_name}")
+                
+                # Return a normal 200 response with the message
+                return {
+                    "message": f"Servo test is currently unavailable. The system is busy with an active quiz session (ID: {active_session_id}) named '{session_name}'. Please wait until the quiz session ends before testing the servo."
+                }
+            else:
+                # Session ID exists but we couldn't fetch details
+                print(f"DEBUG: Could not fetch session details for ID {active_session_id}")
+                
+                return {
+                    "message": f"Servo test is currently unavailable. The system is busy with an active quiz session (ID: {active_session_id}). Please wait until the quiz session ends before testing the servo."
+                }
+        else:
+            print("DEBUG: No active session found")
     except HTTPException:
         raise
     except Exception as e:
         print(f"Error checking active quiz sessions during servo trigger: {e}")
         raise HTTPException(status_code=500, detail="Internal server error checking quiz status.")
-
+    
+    # 2. Only check command validity if no active quiz session
+    if cmd.command != "SWEEP_SERVO":
+        raise HTTPException(status_code=400, detail="Invalid servo command.")
+    
     # --- NEW LOGIC: Cooldown Check ---
     with servo_cooldown_lock:
         current_time = time.time()
@@ -1490,16 +3096,15 @@ async def trigger_servo(cmd: ServoCommand):
                 status_code=429,
                 detail=f"Servo is on cooldown. Please wait {remaining_cooldown:.1f} seconds before trying again."
             )
-        # The 'global' declaration is now at the top, so this modification is fine here.
         last_servo_command_time = current_time
     # --- END NEW LOGIC ---
-
-    # 2. Acquire the existing lock for queue access
+    
+    # 3. Acquire the existing lock for queue access
     if not servo_lock.acquire(blocking=False):
         raise HTTPException(status_code=429, detail="Servo command queue is temporarily locked by another request.")
-
+    
     try:
-        # 3. Attempt to put the command into the queue
+        # 4. Attempt to put the command into the queue
         servo_command_queue.put_nowait("SWEEP_SERVO")
         return {"message": "Servo sweep command sent to Raspberry Pi."}
     except queue.Full:
@@ -1581,6 +3186,362 @@ async def log_request(request: Request, call_next):
 
 
 
+
+# Module level variable
+last_update_time = 0
+
+def should_update_quiz_session(current_time):
+    """Check if we should update based on time threshold."""
+    global last_update_time
+    if current_time - last_update_time >= 1:
+        last_update_time = current_time
+        return True
+    return False
+
+def get_active_session_id():
+    """Get the ID of the first active session."""
+    active_sessions = QuizSessionRepository.get_sessions_by_status(2)
+    return active_sessions[0][0] if active_sessions else None  # Access first column of first row
+
+def read_sensor_data(temp_sensor, light_sensor, servo):
+    """Read all sensor values with proper temperature validation."""
+    try:
+        # Read temperature and validate/clamp the value
+        raw_temp = temp_sensor.read_temperature()
+        
+        # Clamp temperature to reasonable range (-50°C to 100°C)
+        # This prevents database truncation errors
+        if raw_temp is None or not isinstance(raw_temp, (int, float)):
+            temperature = 0.0
+        else:
+            temperature = max(-50.0, min(100.0, float(raw_temp)))
+            # Round to 2 decimal places to avoid precision issues
+            temperature = round(temperature, 2)
+        
+        return {
+            'temperature': temperature,
+            'illuminance': light_sensor(),
+            'servo_angle': servo.read_degrees()
+        }
+    except Exception as e:
+        print(f"Error reading sensor data: {e}")
+        # Return safe default values
+        return {
+            'temperature': 0.0,
+            'illuminance': 0,
+            'servo_angle': 0
+        }
+
+def log_quiz_sensor_data(session_id, sensor_data):
+    """Log sensor data to quiz session."""
+    try:
+        SensorDataRepository.create_sensor_data(
+            sessionId=session_id,
+            temperature=sensor_data['temperature'],
+            lightIntensity=sensor_data['illuminance'],
+            servoPosition=sensor_data['servo_angle'],
+            timestamp=datetime.now()
+        )
+    except Exception as e:
+        print(f"Error logging sensor data: {e}")
+
+def emit_sensor_data(sensor_data, sio, loop):
+    """Emit sensor data via socket.io."""
+    try:
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('sensor_data', sensor_data),
+            loop
+        )
+    except Exception as e:
+        print(f"Error emitting sensor_data: {e}")
+
+
+#item functions
+def activateAdvertFlood():
+    """Call this function to trigger the 60-second ad flood on all clients"""
+    sio.emit('B2F_addItem', {}, broadcast=True)
+
+
+
+# sio emits for quiz data
+
+import asyncio
+
+def emit_question_by_id(question_id, sio, loop):
+    """Emit question data by ID via socket.io."""
+    try:
+        question = QuestionRepository.get_question_by_id(question_id)
+        if not question:
+            error_data = {
+                'error': 'not_found',
+                'message': f"Question with ID {question_id} not found",
+                'status_code': 404
+            }
+            asyncio.run_coroutine_threadsafe(
+                sio.emit('question_error', error_data),
+                loop
+            )
+        else:
+            asyncio.run_coroutine_threadsafe(
+                sio.emit('question_data', question),
+                loop
+            )
+    except Exception as e:
+        print(f"Error emitting question_by_id: {e}")
+
+def emit_answers_for_question(question_id, sio, loop):
+    """Emit all answers for a question via socket.io."""
+    try:
+        if not QuestionRepository.get_question_by_id(question_id):
+            error_data = {
+                'error': 'not_found',
+                'message': f"Question with ID {question_id} not found",
+                'status_code': 404
+            }
+            asyncio.run_coroutine_threadsafe(
+                sio.emit('answers_error', error_data),
+                loop
+            )
+        else:
+            answers = AnswerRepository.get_all_answers_for_question(question_id)
+            response_data = {
+                'answers': answers,
+                'count': len(answers),
+                'question_id': question_id
+            }
+            asyncio.run_coroutine_threadsafe(
+                sio.emit('answers_data', response_data),
+                loop
+            )
+    except Exception as e:
+        print(f"Error emitting answers_for_question: {e}")
+
+
+def emit_combined_theme_selection(sio, loop, active_only=True):
+    """
+    Emit theme selection question with theme options via socket.io.
+    Extensive logging has been added to track the function's execution.
+    """
+    try:
+        if active_only:
+            themes = ThemeRepository.get_active_themes()
+        else:
+            themes = ThemeRepository.get_all_themes()
+            
+        if not themes:
+            error_data = {
+                'error': 'not_found',
+                'message': 'No themes found',
+                'status_code': 404
+            }
+            try:
+                # Schedule the coroutine to run on the event loop
+                future = asyncio.run_coroutine_threadsafe(
+                    sio.emit('theme_selection_error', error_data),
+                    loop
+                )
+                # You might want to add a timeout or handle the future result if needed
+                # For basic logging, just scheduling is enough.
+            except Exception as e:
+                logger.error(f"Failed to schedule 'theme_selection_error' emit: {e}")
+        else:
+            theme_names = [t.get('name') or t.get('title') for t in themes]
+            combined_data = {
+                'id': 'theme_selection',
+                'question': 'Choose a theme?',
+                'type': 'theme_selection',
+                'themes': themes,
+                'count': len(themes),
+                'active_only': active_only,
+                'timestamp': time.time() # Using time.time() for consistency with other current_time checks
+            }
+            try:
+                # Schedule the coroutine to run on the event loop
+                future = asyncio.run_coroutine_threadsafe(
+                    sio.emit('questionData', combined_data),
+                    loop
+                )
+            except Exception as e:
+                logger.error(f"Failed to schedule 'theme_selection_data' emit: {e}")
+
+    except Exception as e:
+        logger.exception(f"An unexpected error occurred during emit_combined_theme_selection: {e}")
+        # The 'logger.exception' call automatically includes traceback information.
+
+
+# Separate function for theme selection emission with session check
+def emit_theme_selection_if_needed(sio, loop):
+    """Emit theme selection only if active session has no theme."""
+    try:
+        active_session_id = get_active_session_id()
+        
+        if active_session_id:
+            # Get the full session details using the ID
+            active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+            if not active_session_info.get('themeId'):
+                emit_combined_theme_selection(sio, loop)
+    except Exception as e:
+        logger.error(f"Error checking theme selection: {e}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ---------- Voting System ----------
+from collections import defaultdict
+from threading import Lock
+import random
+
+theme_votes = {}  # Format: {session_id: {"votes": {theme_id: count}, "user_votes": {user_id: theme_id}}}
+theme_votes_lock = Lock()
+
+def get_winning_theme(session_id):
+    """Returns random top theme in case of tie"""
+    with theme_votes_lock:
+        session_data = theme_votes.get(session_id, {})
+        votes = session_data.get("votes", {})
+        if not votes:
+            return None
+        max_votes = max(votes.values())
+        top_themes = [theme_id for theme_id, count in votes.items() if count == max_votes]
+        return random.choice(top_themes)
+
+# ---------- Timer System ----------
+from threading import Thread, Lock
+import time
+import asyncio
+
+timer_lock = Lock()
+active_timers = {}
+
+def start_quiz_timer(sio, loop, session_id, total_time=60):
+    """Start timer that resolves votes when finished"""
+    with timer_lock:
+        if session_id in active_timers:
+            return  # Timer already running
+        
+        def timer_task():
+            try:
+                for current_time in range(total_time, -1, -1):
+                    # Emit timer update
+                    asyncio.run_coroutine_threadsafe(
+                        sio.emit('quiz_timer', {
+                            'session_id': session_id,
+                            'time_remaining': current_time
+                        }),
+                        loop
+                    )
+                    
+                    if current_time <= 0:
+                        break
+                    time.sleep(1)
+               
+                # Timer finished - process votes
+                winning_theme = get_winning_theme(session_id)
+                if winning_theme:
+                    # Update session theme
+                    QuizSessionRepository.update_session_theme(session_id, winning_theme)
+                    # Broadcast winning theme
+                    asyncio.run_coroutine_threadsafe(
+                        sio.emit('theme_selected', {
+                            'session_id': session_id,
+                            'theme_id': winning_theme
+                        }),
+                        loop
+                    )
+                
+                # Emit timer finished event
+                asyncio.run_coroutine_threadsafe(
+                    sio.emit('quiz_timer_finished', {
+                        'session_id': session_id
+                    }),
+                    loop
+                )
+               
+                # Cleanup votes
+                with theme_votes_lock:
+                    if session_id in theme_votes:
+                        del theme_votes[session_id]
+                        
+            except Exception as e:
+                print(f"Timer error for session {session_id}: {e}")
+            finally:
+                with timer_lock:
+                    active_timers.pop(session_id, None)
+        
+        # Start timer thread
+        timer_thread = Thread(target=timer_task, daemon=True)
+        active_timers[session_id] = timer_thread
+        timer_thread.start()
+
+# ---------- Socket Handler ----------
+@sio.on('theme_selected')
+async def handle_theme_selection(sid, data):
+    try:
+        user_id = data.get('userId', 1)
+        theme_id = int(data['themeId'])
+        session_id = data.get('session_id', 'default')
+        
+        with theme_votes_lock:
+            # Initialize session structure
+            if session_id not in theme_votes:
+                theme_votes[session_id] = {
+                    "votes": defaultdict(int),
+                    "user_votes": {}
+                }
+            
+            session_data = theme_votes[session_id]
+            votes = session_data["votes"]
+            user_votes = session_data["user_votes"]
+            
+            # Remove previous vote
+            if user_id in user_votes:
+                old_theme = user_votes[user_id]
+                votes[old_theme] -= 1
+                if votes[old_theme] <= 0:
+                    del votes[old_theme]
+            
+            # Add new vote
+            votes[theme_id] += 1
+            user_votes[user_id] = theme_id
+        
+        # Broadcast updates
+        await sio.emit('theme_votes_update', {
+            'session_id': session_id,
+            'votes': dict(votes)
+        })
+        
+        # Start timer on first vote
+        if sum(votes.values()) == 1:
+            start_quiz_timer(sio, asyncio.get_event_loop(), session_id)
+        
+        await sio.emit('answer_response', {'success': True})
+        
+    except Exception as e:
+        await sio.emit('answer_response', {
+            'success': False,
+            'error': 'Vote failed: ' + str(e)
+        })
 
 
 
