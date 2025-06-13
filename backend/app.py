@@ -1026,6 +1026,110 @@ async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1
     return MultiSessionSensorResponse(sessions=response_sessions_data)
 
 
+from fastapi import APIRouter, HTTPException, Depends, Request, Header
+from datetime import datetime
+
+# Add this import for the IP address repository
+# from your_repositories import IpAddressRepository  # Adjust import path as needed
+
+def get_client_ip(request: Request) -> str:
+    """Extract client IP address from request headers."""
+    # Check for forwarded IP first (in case of proxy/load balancer)
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        # X-Forwarded-For can contain multiple IPs, take the first one
+        return forwarded_for.split(",")[0].strip()
+    
+    # Check for real IP header
+    real_ip = request.headers.get("X-Real-IP")
+    if real_ip:
+        return real_ip
+    
+    # Fall back to direct client IP
+    return request.client.host if request.client else "unknown"
+
+def log_user_ip_address(user_id: int, ip_address: str):
+    """Log the IP address for a user."""
+    try:
+        # Get or create IP address record
+        ip_record = IpAddressRepository.get_ip_address_by_string(ip_address)
+        if not ip_record:
+            # If IP doesn't exist, you'll need to create it
+            # This assumes you have a method to create IP addresses
+            # You may need to add this method to your IpAddressRepository
+            ip_id = IpAddressRepository.create_ip_address(ip_address)
+        else:
+            ip_id = ip_record['id']
+        
+        # Create/update the user-IP link
+        UserIpAddressRepository.create_user_ip_address_link(user_id, ip_id)
+    except Exception as e:
+        # Log the error but don't fail the main operation
+        print(f"Failed to log IP address for user {user_id}: {e}")
+
+@app.patch("/api/v1/users/{rfid_code}")
+async def update_user_names(rfid_code: str, user_update: UserUpdateNames, request: Request):
+    # Get client IP address
+    client_ip = get_client_ip(request)
+    
+    all_users = UserRepository.get_all_users()
+    target_user_id = None
+
+    for user in all_users:
+        # Check if first and last name already exist for any user
+        if user['first_name'] == user_update.first_name and user['last_name'] == user_update.last_name:
+            # Found a user with matching name
+            if user['rfid_code'] == rfid_code:
+                # Name and RFID match: This is the user attempting to log in
+                target_user_id = user['id']
+                UserRepository.update_user_last_active(target_user_id, datetime.now())
+                
+                # Log IP address
+                log_user_ip_address(target_user_id, client_ip)
+                break
+            else:
+                # Name matches, but RFID does not
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="A user with this name already exists, but the provided RFID does not match."
+                )
+    
+    # If no user found by name or if the loop completed without a direct match
+    if target_user_id is None:
+        # Check if the RFID is associated with an 'open' account
+        existing_user_by_rfid = UserRepository.get_user_by_rfid(rfid_code)
+        if existing_user_by_rfid:
+            if existing_user_by_rfid['first_name'] == 'Open' and existing_user_by_rfid['last_name'] == 'Open':
+                # RFID linked to an 'Open' account, update its details
+                success = UserRepository.update_user_names_by_rfid(
+                    rfid_code,
+                    user_update.first_name,
+                    user_update.last_name
+                )
+                if not success:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="Failed to update 'Open' user account."
+                    )
+                target_user_id = existing_user_by_rfid['id'] # Return the ID of the updated user
+                UserRepository.update_user_last_active(target_user_id, datetime.now())
+                
+                # Log IP address
+                log_user_ip_address(target_user_id, client_ip)
+            else:
+                # RFID exists but is not "Open" and doesn't match the provided name
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"RFID code '{rfid_code}' is already associated with another user and is not an 'Open' account."
+                )
+        else:
+            # RFID not found at all.
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User with RFID code '{rfid_code}' not found and no 'Open' account to update."
+            )
+
+    return {"user_id": target_user_id}
 
 
 
@@ -3198,10 +3302,6 @@ def should_update_quiz_session(current_time):
         return True
     return False
 
-def get_active_session_id():
-    """Get the ID of the first active session."""
-    active_sessions = QuizSessionRepository.get_sessions_by_status(2)
-    return active_sessions[0][0] if active_sessions else None  # Access first column of first row
 
 def read_sensor_data(temp_sensor, light_sensor, servo):
     """Read all sensor values with proper temperature validation."""
@@ -3317,10 +3417,450 @@ def emit_answers_for_question(question_id, sio, loop):
         print(f"Error emitting answers_for_question: {e}")
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ---------- Modular Quiz Timer System with Servo Integration ----------
+from collections import defaultdict
+from threading import Lock, Thread
+import random
+import time
+import asyncio
+
+# Global state management
+theme_votes = {}  # Format: {session_id: {"votes": {theme_id: count}, "user_votes": {user_id: theme_id}}}
+quiz_sessions = {}  # Format: {session_id: {"phase": "voting/theme_display/quiz", "current_question": None, ...}}
+theme_votes_lock = Lock()
+timer_lock = Lock()
+session_lock = Lock()
+active_timers = {}
+
+# Global servo variable (assumed to be initialized elsewhere)
+# servo = ServoController()  # This should be initialized in your main application
+
+def get_active_session_id():
+    """Get the ID of the first active session."""
+    active_sessions = QuizSessionRepository.get_sessions_by_status(2)
+    return active_sessions[0][0] if active_sessions else None  # Access first column of first row
+
+def get_winning_theme(session_id):
+    """Returns random top theme in case of tie"""
+    with theme_votes_lock:
+        session_data = theme_votes.get(session_id, {})
+        votes = session_data.get("votes", {})
+        if not votes:
+            return None
+        max_votes = max(votes.values())
+        top_themes = [theme_id for theme_id, count in votes.items() if count == max_votes]
+        return random.choice(top_themes)
+
+def get_session_phase(session_id):
+    """Get current phase of a session"""
+    with session_lock:
+        return quiz_sessions.get(session_id, {}).get('phase', 'voting')
+
+def set_session_phase(session_id, phase):
+    """Set current phase of a session"""
+    with session_lock:
+        if session_id not in quiz_sessions:
+            quiz_sessions[session_id] = {}
+        quiz_sessions[session_id]['phase'] = phase
+
+def move_servo_smoothly(start_angle, end_angle, duration, reverse=False):
+    """
+    Move servo smoothly from start_angle to end_angle over duration seconds
+    reverse=True means we're going backwards (post-timer)
+    """
+    try:
+        if 'servo' not in globals():
+            print("Warning: servo not available")
+            return
+            
+        steps = max(1, duration)  # At least 1 step
+        sleep_time = duration / steps
+        
+        for i in range(steps + 1):
+            progress = i / steps
+            if reverse:
+                # For post-timer, reverse the progress calculation
+                progress = 1 - progress
+                
+            raw_angle = start_angle + (end_angle - start_angle) * progress
+            angle = round(raw_angle / 5) * 5  # Round to nearest 5 degrees
+            servo.set_angle(angle)
+            
+            if i < steps:  # Don't sleep after the last step
+                time.sleep(sleep_time)
+                
+    except Exception as e:
+        print(f"Servo movement error: {e}")
+
+def emit_timer_update(sio, loop, session_id, time_remaining, phase, total_time, **extra_data):
+    """
+    Emit both timer_update and quiz_timer events for frontend compatibility
+    Also handle servo movement during timer
+    """
+    try:
+        # Calculate servo position (0 degrees at start, 180 degrees at end)
+        if total_time > 0:
+            progress = (total_time - time_remaining) / total_time
+            raw_angle = 0 + (180 - 0) * progress
+            angle = round(raw_angle / 5) * 5
+            
+            if 'servo' in globals():
+                servo.set_angle(angle)
+        
+        # Prepare timer data
+        timer_data = {
+            'session_id': session_id,
+            'time_remaining': time_remaining,
+            'phase': phase,
+            'total_time': total_time,
+            **extra_data
+        }
+        
+        # Emit both events for compatibility
+        future1 = asyncio.run_coroutine_threadsafe(
+            sio.emit('timer_update', timer_data),
+            loop
+        )
+        future2 = asyncio.run_coroutine_threadsafe(
+            sio.emit('quiz_timer', timer_data),
+            loop
+        )
+        
+        # Wait for both emissions to complete
+        future1.result(timeout=1)
+        future2.result(timeout=1)
+        
+    except Exception as e:
+        print(f"Error emitting timer update: {e}")
+
+def emit_timer_finished(sio, loop, session_id, phase, **extra_data):
+    """
+    Emit timer finished events and handle post-timer servo movement
+    """
+    try:
+        # Post-timer servo movement (180 to 0 degrees, reverse direction)
+        thread = Thread(target=move_servo_smoothly, args=(180, 0, 2, True), daemon=True)
+        thread.start()
+        
+        # Prepare finish data
+        finish_data = {
+            'session_id': session_id,
+            'phase': phase,
+            **extra_data
+        }
+        
+        # Emit both events for compatibility
+        future1 = asyncio.run_coroutine_threadsafe(
+            sio.emit('timer_finished', finish_data),
+            loop
+        )
+        future2 = asyncio.run_coroutine_threadsafe(
+            sio.emit('quiz_timer_finished', finish_data),
+            loop
+        )
+        
+        # Wait for both emissions to complete
+        future1.result(timeout=1)
+        future2.result(timeout=1)
+        
+    except Exception as e:
+        print(f"Error emitting timer finished: {e}")
+
+def start_generic_timer(sio, loop, session_id, timer_config):
+    """
+    Generic timer function that handles different phases
+    timer_config: {
+        'voting_time': 60,
+        'theme_display_time': 10,
+        'question_time': 10,
+        'explanation_time': 5
+    }
+    """
+    with timer_lock:
+        if session_id in active_timers:
+            return False  # Timer already running
+        
+        def timer_task():
+            try:
+                current_phase = get_session_phase(session_id)
+                print(f"Starting timer for session {session_id}, phase: {current_phase}")
+                
+                if current_phase == 'voting':
+                    handle_voting_phase(sio, loop, session_id, timer_config.get('voting_time', 60))
+                elif current_phase == 'theme_display':
+                    handle_theme_display_phase(sio, loop, session_id, timer_config.get('theme_display_time', 10))
+                elif current_phase == 'quiz':
+                    handle_quiz_phase(sio, loop, session_id, timer_config)
+                    
+            except Exception as e:
+                print(f"Timer error for session {session_id}: {e}")
+                import traceback
+                traceback.print_exc()
+            finally:
+                with timer_lock:
+                    active_timers.pop(session_id, None)
+        
+        # Start timer thread
+        timer_thread = Thread(target=timer_task, daemon=True)
+        active_timers[session_id] = timer_thread
+        timer_thread.start()
+        return True
+
+def handle_voting_phase(sio, loop, session_id, voting_time):
+    """Handle the voting countdown phase"""
+    print(f"Starting voting phase for session {session_id}")
+    
+    # Emit voting phase start
+    future = asyncio.run_coroutine_threadsafe(
+        sio.emit('phase_started', {
+            'session_id': session_id,
+            'phase': 'voting',
+            'duration': voting_time
+        }),
+        loop
+    )
+    future.result(timeout=1)
+    
+    # Reset servo to start position
+    if 'servo' in globals():
+        servo.set_angle(0)
+    
+    # Voting countdown with servo movement
+    for current_time in range(voting_time, -1, -1):
+        emit_timer_update(sio, loop, session_id, current_time, 'voting', voting_time)
+        
+        if current_time <= 0:
+            break
+        time.sleep(1)
+    
+    # Emit timer finished
+    emit_timer_finished(sio, loop, session_id, 'voting')
+    
+    # Process voting results
+    winning_theme = get_winning_theme(session_id)
+    print(f"Voting finished for session {session_id}, winning theme: {winning_theme}")
+    
+    if winning_theme:
+        # Update session theme in database immediately
+        success = QuizSessionRepository.update_session_theme(session_id, winning_theme)
+        print(f"Database update result: {success}")
+        
+        if success:
+            # Move to theme display phase
+            set_session_phase(session_id, 'theme_display')
+            
+            # Get theme data
+            theme_data = ThemeRepository.get_theme_by_id(winning_theme)
+            
+            combined_data = {
+                    'id': 'voting_result',
+                    'question': f'Voting has finished! Theme "{winning_theme}" has won.',
+                    'type': 'theme_selection',
+                    'themes': theme_data,  # Assuming theme_data contains the list of themes
+                    'count': 1,
+                    'winning_theme': winning_theme,
+                    'session_id': session_id,
+                    'timestamp': time.time()
+                }
+
+            future = asyncio.run_coroutine_threadsafe(
+                    sio.emit('questionData', combined_data),
+                    loop
+                )
+            future.result(timeout=1)
+            
+            # Continue to theme display phase immediately
+            handle_theme_display_phase(sio, loop, session_id, 10)
+        else:
+            emit_error(sio, loop, session_id, 'Failed to save theme selection')
+    else:
+        emit_error(sio, loop, session_id, 'No theme was selected')
+    
+    # Cleanup votes
+    with theme_votes_lock:
+        if session_id in theme_votes:
+            del theme_votes[session_id]
+
+def handle_theme_display_phase(sio, loop, session_id, display_time):
+    """Handle the theme display countdown phase"""
+    print(f"Starting theme display phase for session {session_id}")
+    
+    # Get theme data for display
+    session_info = QuizSessionRepository.get_session_by_id(session_id)
+    if not session_info or not session_info.get('themeId'):
+        emit_error(sio, loop, session_id, 'No theme found for session')
+        return
+        
+    theme_data = ThemeRepository.get_theme_by_id(session_info['themeId'])
+    
+    # Emit theme display start
+    future = asyncio.run_coroutine_threadsafe(
+        sio.emit('phase_started', {
+            'session_id': session_id,
+            'phase': 'theme_display',
+            'duration': display_time,
+            'theme_data': theme_data
+        }),
+        loop
+    )
+    future.result(timeout=1)
+    
+    # Reset servo to start position
+    if 'servo' in globals():
+        servo.set_angle(0)
+    
+    # Theme display countdown with servo movement
+    for current_time in range(display_time, -1, -1):
+        emit_timer_update(sio, loop, session_id, current_time, 'theme_display', display_time, theme_data=theme_data)
+        
+        if current_time <= 0:
+            break
+        time.sleep(1)
+    
+    # Emit timer finished
+    emit_timer_finished(sio, loop, session_id, 'theme_display', theme_data=theme_data)
+    
+    # Theme display finished - move to quiz phase
+    set_session_phase(session_id, 'quiz')
+    
+    future = asyncio.run_coroutine_threadsafe(
+        sio.emit('theme_display_finished', {
+            'session_id': session_id,
+            'theme_data': theme_data
+        }),
+        loop
+    )
+    future.result(timeout=1)
+    
+    print(f"Theme display finished for session {session_id}, ready for quiz")
+
+def handle_quiz_phase(sio, loop, session_id, timer_config):
+    """Handle the quiz questions phase"""
+    print(f"Starting quiz phase for session {session_id}")
+    
+    # Get session and theme info
+    session_info = QuizSessionRepository.get_session_by_id(session_id)
+    if not session_info or not session_info.get('themeId'):
+        emit_error(sio, loop, session_id, 'No theme found for quiz')
+        return
+    
+    theme_id = session_info['themeId']
+    questions = QuestionRepository.get_questions_by_theme(theme_id, active_only=True)
+    
+    if not questions:
+        emit_error(sio, loop, session_id, 'No questions found for this theme')
+        return
+    
+    # Shuffle questions for random order
+    random.shuffle(questions)
+    
+    question_time = timer_config.get('question_time', 10)
+    explanation_time = timer_config.get('explanation_time', 5)
+    
+    for question in questions:
+        # Show question
+        future = asyncio.run_coroutine_threadsafe(
+            sio.emit('question_started', {
+                'session_id': session_id,
+                'question': question,
+                'duration': question_time
+            }),
+            loop
+        )
+        future.result(timeout=1)
+        
+        # Reset servo to start position
+        if 'servo' in globals():
+            servo.set_angle(0)
+        
+        # Question countdown with servo movement
+        for current_time in range(question_time, -1, -1):
+            emit_timer_update(sio, loop, session_id, current_time, 'question', question_time, question_id=question['id'])
+            
+            if current_time <= 0:
+                break
+            time.sleep(1)
+        
+        # Emit timer finished for question
+        emit_timer_finished(sio, loop, session_id, 'question', question_id=question['id'])
+        
+        # Show explanation
+        future = asyncio.run_coroutine_threadsafe(
+            sio.emit('explanation_started', {
+                'session_id': session_id,
+                'question': question,
+                'explanation': question.get('explanation', ''),
+                'duration': explanation_time
+            }),
+            loop
+        )
+        future.result(timeout=1)
+        
+        # Reset servo to start position
+        if 'servo' in globals():
+            servo.set_angle(0)
+        
+        # Explanation countdown with servo movement
+        for current_time in range(explanation_time, -1, -1):
+            emit_timer_update(sio, loop, session_id, current_time, 'explanation', explanation_time, question_id=question['id'])
+            
+            if current_time <= 0:
+                break
+            time.sleep(1)
+        
+        # Emit timer finished for explanation
+        emit_timer_finished(sio, loop, session_id, 'explanation', question_id=question['id'])
+    
+    # Quiz finished
+    future = asyncio.run_coroutine_threadsafe(
+        sio.emit('quiz_finished', {
+            'session_id': session_id
+        }),
+        loop
+    )
+    future.result(timeout=1)
+
+def emit_error(sio, loop, session_id, error_message):
+    """Emit error message to clients"""
+    future = asyncio.run_coroutine_threadsafe(
+        sio.emit('quiz_error', {
+            'session_id': session_id,
+            'error': error_message
+        }),
+        loop
+    )
+    future.result(timeout=1)
+
 def emit_combined_theme_selection(sio, loop, active_only=True):
     """
     Emit theme selection question with theme options via socket.io.
-    Extensive logging has been added to track the function's execution.
     """
     try:
         if active_only:
@@ -3335,15 +3875,12 @@ def emit_combined_theme_selection(sio, loop, active_only=True):
                 'status_code': 404
             }
             try:
-                # Schedule the coroutine to run on the event loop
                 future = asyncio.run_coroutine_threadsafe(
                     sio.emit('theme_selection_error', error_data),
                     loop
                 )
-                # You might want to add a timeout or handle the future result if needed
-                # For basic logging, just scheduling is enough.
             except Exception as e:
-                logger.error(f"Failed to schedule 'theme_selection_error' emit: {e}")
+                print(f"Failed to schedule 'theme_selection_error' emit: {e}")
         else:
             theme_names = [t.get('name') or t.get('title') for t in themes]
             combined_data = {
@@ -3353,154 +3890,129 @@ def emit_combined_theme_selection(sio, loop, active_only=True):
                 'themes': themes,
                 'count': len(themes),
                 'active_only': active_only,
-                'timestamp': time.time() # Using time.time() for consistency with other current_time checks
+                'timestamp': time.time()
             }
             try:
-                # Schedule the coroutine to run on the event loop
                 future = asyncio.run_coroutine_threadsafe(
                     sio.emit('questionData', combined_data),
                     loop
                 )
             except Exception as e:
-                logger.error(f"Failed to schedule 'theme_selection_data' emit: {e}")
+                print(f"Failed to schedule 'theme_selection_data' emit: {e}")
 
     except Exception as e:
-        logger.exception(f"An unexpected error occurred during emit_combined_theme_selection: {e}")
-        # The 'logger.exception' call automatically includes traceback information.
+        print(f"An unexpected error occurred during emit_combined_theme_selection: {e}")
 
-
-# Separate function for theme selection emission with session check
 def emit_theme_selection_if_needed(sio, loop):
-    """Emit theme selection only if active session has no theme."""
+    """
+    Emit theme selection only if active session has no theme - called every second in main loop
+    This is the main coordination function called from your main loop
+    """
     try:
         active_session_id = get_active_session_id()
         
         if active_session_id:
             # Get the full session details using the ID
             active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+            
             if not active_session_info.get('themeId'):
-                emit_combined_theme_selection(sio, loop)
-    except Exception as e:
-        logger.error(f"Error checking theme selection: {e}")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# ---------- Voting System ----------
-from collections import defaultdict
-from threading import Lock
-import random
-
-theme_votes = {}  # Format: {session_id: {"votes": {theme_id: count}, "user_votes": {user_id: theme_id}}}
-theme_votes_lock = Lock()
-
-def get_winning_theme(session_id):
-    """Returns random top theme in case of tie"""
-    with theme_votes_lock:
-        session_data = theme_votes.get(session_id, {})
-        votes = session_data.get("votes", {})
-        if not votes:
-            return None
-        max_votes = max(votes.values())
-        top_themes = [theme_id for theme_id, count in votes.items() if count == max_votes]
-        return random.choice(top_themes)
-
-# ---------- Timer System ----------
-from threading import Thread, Lock
-import time
-import asyncio
-
-timer_lock = Lock()
-active_timers = {}
-
-def start_quiz_timer(sio, loop, session_id, total_time=60):
-    """Start timer that resolves votes when finished"""
-    with timer_lock:
-        if session_id in active_timers:
-            return  # Timer already running
-        
-        def timer_task():
-            try:
-                for current_time in range(total_time, -1, -1):
-                    # Emit timer update
-                    asyncio.run_coroutine_threadsafe(
-                        sio.emit('quiz_timer', {
-                            'session_id': session_id,
-                            'time_remaining': current_time
-                        }),
-                        loop
-                    )
-                    
-                    if current_time <= 0:
-                        break
-                    time.sleep(1)
-               
-                # Timer finished - process votes
-                winning_theme = get_winning_theme(session_id)
-                if winning_theme:
-                    # Update session theme
-                    QuizSessionRepository.update_session_theme(session_id, winning_theme)
-                    # Broadcast winning theme
-                    asyncio.run_coroutine_threadsafe(
-                        sio.emit('theme_selected', {
-                            'session_id': session_id,
-                            'theme_id': winning_theme
-                        }),
-                        loop
-                    )
+                # No theme set - check if we should start voting or emit theme selection
+                current_phase = get_session_phase(active_session_id)
+                is_timer_running = is_timer_active(active_session_id)
                 
-                # Emit timer finished event
-                asyncio.run_coroutine_threadsafe(
-                    sio.emit('quiz_timer_finished', {
-                        'session_id': session_id
-                    }),
-                    loop
-                )
-               
-                # Cleanup votes
-                with theme_votes_lock:
-                    if session_id in theme_votes:
-                        del theme_votes[session_id]
-                        
-            except Exception as e:
-                print(f"Timer error for session {session_id}: {e}")
-            finally:
-                with timer_lock:
-                    active_timers.pop(session_id, None)
-        
-        # Start timer thread
-        timer_thread = Thread(target=timer_task, daemon=True)
-        active_timers[session_id] = timer_thread
-        timer_thread.start()
+                if current_phase == 'voting' and not is_timer_running:
+                    # Voting phase but no timer running - emit theme selection to allow voting
+                    emit_combined_theme_selection(sio, loop)
+                elif current_phase not in ['voting', 'theme_display', 'quiz']:
+                    # No phase set - initialize voting phase and emit theme selection
+                    set_session_phase(active_session_id, 'voting')
+                    emit_combined_theme_selection(sio, loop)
+            else:
+                # Theme is already set - check if we need to transition phases
+                current_phase = get_session_phase(active_session_id)
+                is_timer_running = is_timer_active(active_session_id)
+                
+                if current_phase == 'voting' and not is_timer_running:
+                    # Theme exists but we're stuck in voting phase - move to theme display
+                    set_session_phase(active_session_id, 'theme_display')
+                    timer_config = {
+                        'voting_time': 60,
+                        'theme_display_time': 10,
+                        'question_time': 10,
+                        'explanation_time': 5
+                    }
+                    start_generic_timer(sio, loop, active_session_id, timer_config)
+                elif current_phase == 'theme_display' and not is_timer_running:
+                    # Theme display finished but stuck - move to quiz
+                    set_session_phase(active_session_id, 'quiz')
+                    timer_config = {
+                        'voting_time': 60,
+                        'theme_display_time': 10,
+                        'question_time': 10,
+                        'explanation_time': 5
+                    }
+                    start_generic_timer(sio, loop, active_session_id, timer_config)
+                elif not current_phase or (current_phase not in ['voting', 'theme_display', 'quiz'] and not is_timer_running):
+                    # No phase set but theme exists - start theme display
+                    set_session_phase(active_session_id, 'theme_display')
+                    timer_config = {
+                        'voting_time': 60,
+                        'theme_display_time': 10,
+                        'question_time': 10,
+                        'explanation_time': 5
+                    }
+                    start_generic_timer(sio, loop, active_session_id, timer_config)
+                    
+    except Exception as e:
+        print(f"Error checking theme selection: {e}")
 
 # ---------- Socket Handler ----------
 @sio.on('theme_selected')
 async def handle_theme_selection(sid, data):
+    """
+    Handle theme selection votes and start voting timer when first vote is cast
+    """
     try:
+        # Get active session and check phase
+        active_session_id = get_active_session_id()
+        
+        if not active_session_id:
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'No active session found'
+            })
+            return
+        
+        # Check if we're in voting phase
+        current_phase = get_session_phase(active_session_id)
+        if current_phase != 'voting':
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': f'Cannot vote during {current_phase} phase'
+            })
+            return
+            
+        # Get the full session details using the ID
+        active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+        
+        if not active_session_info:
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'Session not found'
+            })
+            return
+            
+        # Check if theme is already set
+        if active_session_info.get('themeId'):
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'Theme already selected for this session'
+            })
+            return
+        
         user_id = data.get('userId', 1)
         theme_id = int(data['themeId'])
-        session_id = data.get('session_id', 'default')
+        session_id = active_session_id
         
         with theme_votes_lock:
             # Initialize session structure
@@ -3525,23 +4037,155 @@ async def handle_theme_selection(sid, data):
             votes[theme_id] += 1
             user_votes[user_id] = theme_id
         
-        # Broadcast updates
+        # Broadcast vote updates
         await sio.emit('theme_votes_update', {
             'session_id': session_id,
             'votes': dict(votes)
         })
         
         # Start timer on first vote
-        if sum(votes.values()) == 1:
-            start_quiz_timer(sio, asyncio.get_event_loop(), session_id)
+        total_votes = sum(votes.values())
+        if total_votes == 1:
+            print(f"Starting voting timer for session {session_id}")
+            timer_config = {
+                'voting_time': 60,
+                'theme_display_time': 10,
+                'question_time': 10,
+                'explanation_time': 5
+            }
+            set_session_phase(session_id, 'voting')
+            start_generic_timer(sio, asyncio.get_event_loop(), session_id, timer_config)
         
         await sio.emit('answer_response', {'success': True})
         
     except Exception as e:
+        print(f"Error in handle_theme_selection: {e}")
+        import traceback
+        traceback.print_exc()
         await sio.emit('answer_response', {
             'success': False,
             'error': 'Vote failed: ' + str(e)
         })
+
+# ---------- Manual Timer Control (for testing/debugging) ----------
+@sio.on('start_timer_manually')
+async def handle_manual_timer_start(sid, data):
+    """
+    Manual timer start for testing purposes
+    """
+    try:
+        session_id = data.get('session_id')
+        phase = data.get('phase', 'voting')
+        
+        if not session_id:
+            session_id = get_active_session_id()
+            
+        if not session_id:
+            await sio.emit('timer_error', {'error': 'No active session found'})
+            return
+            
+        timer_config = {
+            'voting_time': data.get('voting_time', 60),
+            'theme_display_time': data.get('theme_display_time', 10),
+            'question_time': data.get('question_time', 10),
+            'explanation_time': data.get('explanation_time', 5)
+        }
+        
+        set_session_phase(session_id, phase)
+        success = start_generic_timer(sio, asyncio.get_event_loop(), session_id, timer_config)
+        
+        await sio.emit('timer_start_response', {
+            'success': success,
+            'session_id': session_id,
+            'phase': phase
+        })
+        
+    except Exception as e:
+        print(f"Error in manual timer start: {e}")
+        await sio.emit('timer_error', {'error': str(e)})
+
+# ---------- Utility Functions ----------
+def stop_timer(session_id):
+    """Manually stop a timer if needed"""
+    with timer_lock:
+        if session_id in active_timers:
+            active_timers.pop(session_id, None)
+            # Reset servo to 0 position when stopping timer
+            if 'servo' in globals():
+                servo.set_angle(0)
+            
+def get_session_votes(session_id):
+    """Get current vote counts for a session"""
+    with theme_votes_lock:
+        session_data = theme_votes.get(session_id, {})
+        return dict(session_data.get("votes", {}))
+
+def clear_session_votes(session_id):
+    """Clear votes for a specific session"""
+    with theme_votes_lock:
+        if session_id in theme_votes:
+            del theme_votes[session_id]
+
+def is_timer_active(session_id):
+    """Check if a timer is currently running for a session"""
+    with timer_lock:
+        return session_id in active_timers
+
+def get_timer_status():
+    """Get status of all active timers"""
+    with timer_lock:
+        return list(active_timers.keys())
+
+# ---------- Frontend Events Reference ----------
+"""
+Frontend will receive these events:
+
+Core Timer Events:
+1. 'quiz_timer' - Regular countdown updates (what your frontend expects)
+   Data: {session_id, time_remaining, phase, total_time, [extra_data]}
+
+2. 'quiz_timer_finished' - When timer ends (what your frontend expects)
+   Data: {session_id, phase, [extra_data]}
+
+Legacy/Compatibility Events:
+3. 'timer_update' - Also emitted for backward compatibility
+4. 'timer_finished' - Also emitted for backward compatibility
+
+Phase Events:
+5. 'phase_started' - When any phase begins
+   Data: {session_id, phase: 'voting'/'theme_display'/'quiz', duration, [theme_data]}
+
+6. 'voting_finished' - When voting ends
+   Data: {session_id, winning_theme, theme_data}
+
+7. 'theme_display_finished' - When theme display ends
+   Data: {session_id, theme_data}
+
+8. 'question_started' - When a new question appears
+   Data: {session_id, question, duration}
+
+9. 'explanation_started' - When explanation shows
+   Data: {session_id, question, explanation, duration}
+
+10. 'quiz_finished' - When all questions are done
+    Data: {session_id}
+
+Error Events:
+11. 'quiz_error' - When something goes wrong
+    Data: {session_id, error}
+
+Vote Events:
+12. 'theme_votes_update' - Vote count updates
+    Data: {session_id, votes}
+
+Manual Control Events (for testing):
+13. 'timer_start_response' - Response to manual timer start
+14. 'timer_error' - Timer-related errors
+"""
+
+
+
+
 
 
 
