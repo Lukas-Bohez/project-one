@@ -1368,42 +1368,7 @@ async def handle_user_data_request(sid, data):
         }, room=sid)
 
 
-@sio.on('answer_submitted')
-async def handle_answer_submission(sid, data):
-    try:
-        user_id = data.get('userId')
-        question_id = data.get('questionId')
-        answer_index = data.get('answerIndex')
-        request_user_data = data.get('request_user_data', False)
-        
-        if not all([user_id, question_id is not None, answer_index is not None]):
-            await sio.emit('answer_response', {
-                'success': False,
-                'error': 'Missing required data for answer submission'
-            }, room=sid)
-            return
-        
-        result = await process_answer_submission(user_id, question_id, answer_index)
-        
-        response_data = {
-            'success': result.get('success', False),
-            'feedback': result.get('feedback'),
-            'points_earned': result.get('points_earned', 0)
-        }
-        
-        if request_user_data and result.get('success'):
-            await handle_user_data_request(sid, {'user_id': user_id})
-        
-        await sio.emit('answer_response', response_data, room=sid)
-        
-        logger.info(f"Processed answer submission for user {user_id}")
-        
-    except Exception as e:
-        logger.error(f"Error handling answer submission: {e}", exc_info=True)
-        await sio.emit('answer_response', {
-            'success': False,
-            'error': 'An error occurred while processing your answer'
-        }, room=sid)
+
 
 
 
@@ -4192,7 +4157,42 @@ Manual Control Events (for testing):
 14. 'timer_error' - Timer-related errors
 """
 
-
+@sio.on('answer_submitted')
+async def handle_answer_submission(sid, data):
+    try:
+        user_id = data.get('userId')
+        question_id = data.get('questionId')
+        answer_index = data.get('answerIndex')
+        request_user_data = data.get('request_user_data', False)
+        
+        if not all([user_id, question_id is not None, answer_index is not None]):
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'Missing required data for answer submission'
+            }, room=sid)
+            return
+        
+        result = await process_answer_submission(user_id, question_id, answer_index)
+        
+        response_data = {
+            'success': result.get('success', False),
+            'feedback': result.get('feedback'),
+            'points_earned': result.get('points_earned', 0)
+        }
+        
+        if request_user_data and result.get('success'):
+            await handle_user_data_request(sid, {'user_id': user_id})
+        
+        await sio.emit('answer_response', response_data, room=sid)
+        
+        logger.info(f"Processed answer submission for user {user_id}")
+        
+    except Exception as e:
+        logger.error(f"Error handling answer submission: {e}", exc_info=True)
+        await sio.emit('answer_response', {
+            'success': False,
+            'error': 'An error occurred while processing your answer'
+        }, room=sid)
 
 
 
