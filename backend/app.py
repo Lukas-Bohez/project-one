@@ -3565,8 +3565,11 @@ def handle_voting_phase(sio, loop, session_id, voting_time):
     if 'servo' in globals():
         servo.set_angle(0)
     
-    # Voting countdown with servo movement
+    # Voting countdown with servo movement and continuous theme emission
     for current_time in range(voting_time, -1, -1):
+        # Emit theme selection data every second during voting
+        emit_combined_theme_selection(sio, loop)
+        
         emit_timer_update(sio, loop, session_id, current_time, 'voting', voting_time)
         
         if current_time <= 0:
@@ -3704,8 +3707,8 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
     quiz_state = get_quiz_state(session_id)
     available_questions = [q for q in all_questions if q['id'] not in quiz_state['asked_questions']]
     
-    question_time = timer_config.get('question_time', 10)
-    explanation_time = timer_config.get('explanation_time', 5)
+    question_time = timer_config.get('question_time', 15)  # Updated to 15 seconds
+    explanation_time = timer_config.get('explanation_time', 15)  # Updated to 15 seconds
 
     while available_questions:
         print(f"\n--- Selecting Question {quiz_state['question_count'] + 1} ---")
@@ -3980,8 +3983,8 @@ def emit_theme_selection_if_needed(sio, loop):
                 timer_config = {
                     'voting_time': 60,
                     'theme_display_time': 10,
-                    'question_time': 10,
-                    'explanation_time': 5
+                    'question_time': 15,  # Updated to 15 seconds
+                    'explanation_time': 15  # Updated to 15 seconds
                 }
                 start_generic_timer(sio, loop, active_session_id, timer_config)
             elif current_phase == 'theme_display' and not is_timer_running:
@@ -3990,8 +3993,8 @@ def emit_theme_selection_if_needed(sio, loop):
                 timer_config = {
                     'voting_time': 60,
                     'theme_display_time': 10,
-                    'question_time': 10,
-                    'explanation_time': 5
+                    'question_time': 15,  # Updated to 15 seconds
+                    'explanation_time': 15  # Updated to 15 seconds
                 }
                 start_generic_timer(sio, loop, active_session_id, timer_config)
             elif current_phase == 'quiz' and not is_timer_running:
@@ -4013,8 +4016,8 @@ def emit_theme_selection_if_needed(sio, loop):
                         timer_config = {
                             'voting_time': 60,
                             'theme_display_time': 10,
-                            'question_time': 10,
-                            'explanation_time': 5
+                            'question_time': 15,  # Updated to 15 seconds
+                            'explanation_time': 15  # Updated to 15 seconds
                         }
                         start_generic_timer(sio, loop, active_session_id, timer_config)
                     else:
@@ -4037,6 +4040,7 @@ def emit_theme_selection_if_needed(sio, loop):
         traceback.print_exc()
 
 # ---------- Socket Handler ----------
+# Updated socket handler to use new timer config
 @sio.on('theme_selected')
 async def handle_theme_selection(sid, data):
     """
@@ -4120,8 +4124,8 @@ async def handle_theme_selection(sid, data):
             timer_config = {
                 'voting_time': 60,
                 'theme_display_time': 10,
-                'question_time': 10,
-                'explanation_time': 5
+                'question_time': 15,  # Updated to 15 seconds
+                'explanation_time': 15  # Updated to 15 seconds
             }
             set_session_phase(session_id, 'voting')
             start_generic_timer(sio, asyncio.get_event_loop(), session_id, timer_config)
@@ -4136,7 +4140,9 @@ async def handle_theme_selection(sid, data):
             'error': 'Vote failed: ' + str(e)
         })
 
+
 # ---------- Answer Submission Handler ----------
+# Updated answer submission handler to use new question time
 @sio.on('submit_answer')  # Changed from 'answer_submitted' to match frontend
 async def handle_answer_submission(sid, data):
     try:
@@ -4221,10 +4227,10 @@ async def handle_answer_submission(sid, data):
         is_correct_value = answer_details.get('is_correct', '0')
         is_correct = str(is_correct_value).lower() in ['1', 'true', 'yes'] or is_correct_value is True
         
-        # Calculate points based on time remaining
+        # Calculate points based on time remaining (updated for 15 second question time)
         points_earned = 0
         if is_correct:
-            question_time = 10  # Default question time
+            question_time = 15  # Updated question time
             time_percentage = max(0, time_remaining / question_time)
             points_earned = int(10 * time_percentage)  # Base 10 points multiplied by time percentage
         
@@ -4246,7 +4252,7 @@ async def handle_answer_submission(sid, data):
             answer_id=answer_id,
             is_correct=is_correct,
             points_earned=points_earned,
-            time_taken=(10 - time_remaining)  # Assuming 10 second question time
+            time_taken=(15 - time_remaining)  # Updated for 15 second question time
         )
         
         response_data = {
