@@ -394,5 +394,13 @@ class ChatSystem {
     }
 }
 
+document.addEventListener('userAuthenticated', (event) => {
+        console.log("User authenticated event received");
+        const user = event.detail.user;
+        console.log("User data:", user);
+        ChatSystem.currentUser = user
+    });
+
+
 // Export for use in other scripts
 window.ChatSystem = ChatSystem;

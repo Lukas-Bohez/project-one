@@ -1327,16 +1327,163 @@ async def login_user(user_credentials: UserCredentials, request: Request):
         )
 
 def calculate_player_score(session_id: int, user_id: int) -> int:
-    try:
-        all_answers = PlayerAnswerRepository.get_all_player_answers_for_user_in_session(session_id, user_id)
+    """
+    Calculate the total score for a player in a session.
+    
+    Args:
+        session_id (int): The ID of the session
+        user_id (int): The ID of the user/player
         
-        user_score = sum(answer.get('points_earned', 0) for answer in all_answers if answer.get('points_earned'))
+    Returns:
+        int: Total points earned by the player in the session
+    """
+    try:
+        logger.debug(f"Calculating score for user {user_id} in session {session_id}")
+        
+        # Use the repository method we created earlier for better performance
+        user_score = PlayerAnswerRepository.get_player_score_for_session(session_id, user_id)
+        
+        logger.debug(f"Score calculated for user {user_id}: {user_score}")
         return user_score
     
     except Exception as e:
         logger.error(f"Could not calculate score for user {user_id} in session {session_id}: {e}")
         return 0
 
+
+def calculate_player_score_detailed(session_id: int, user_id: int) -> dict:
+    """
+    Calculate detailed score information for debugging purposes.
+    
+    Args:
+        session_id (int): The ID of the session
+        user_id (int): The ID of the user/player
+        
+    Returns:
+        dict: Detailed score information including breakdown
+    """
+    try:
+        logger.debug(f"Calculating detailed score for user {user_id} in session {session_id}")
+        
+        # Get all answers for the user in this session
+        all_answers = PlayerAnswerRepository.get_all_player_answers_for_user_in_session(session_id, user_id)
+        
+        if not all_answers:
+            logger.warning(f"No answers found for user {user_id} in session {session_id}")
+            return {
+                'total_score': 0,
+                'total_answers': 0,
+                'correct_answers': 0,
+                'answers_breakdown': []
+            }
+        
+        logger.debug(f"Found {len(all_answers)} answers for user {user_id}")
+        
+        total_score = 0
+        correct_count = 0
+        answers_breakdown = []
+        
+        for answer in all_answers:
+            logger.debug(f"Processing answer: {answer}")
+            
+            # Handle different possible key names for points
+            points = 0
+            if 'points_earned' in answer and answer['points_earned'] is not None:
+                points = int(answer['points_earned'])
+            elif 'score' in answer and answer['score'] is not None:
+                points = int(answer['score'])
+            
+            is_correct = answer.get('is_correct', 0)
+            if isinstance(is_correct, str):
+                is_correct = is_correct.lower() in ('1', 'true', 'yes')
+            else:
+                is_correct = bool(is_correct)
+            
+            if is_correct:
+                correct_count += 1
+            
+            total_score += points
+            
+            answers_breakdown.append({
+                'question_id': answer.get('questionId'),
+                'answer_id': answer.get('answerId'),
+                'points': points,
+                'is_correct': is_correct,
+                'answered_at': answer.get('answered_at')
+            })
+        
+        result = {
+            'total_score': total_score,
+            'total_answers': len(all_answers),
+            'correct_answers': correct_count,
+            'answers_breakdown': answers_breakdown
+        }
+        
+        logger.info(f"Detailed score for user {user_id} in session {session_id}: {result}")
+        return result
+    
+    except Exception as e:
+        logger.error(f"Could not calculate detailed score for user {user_id} in session {session_id}: {e}")
+        return {
+            'total_score': 0,
+            'total_answers': 0,
+            'correct_answers': 0,
+            'answers_breakdown': [],
+            'error': str(e)
+        }
+
+
+def debug_player_score_calculation(session_id: int, user_id: int) -> None:
+    """
+    Debug function to help identify why scores might be 0.
+    """
+    try:
+        logger.info(f"=== DEBUGGING SCORE CALCULATION ===")
+        logger.info(f"Session ID: {session_id}, User ID: {user_id}")
+        
+        # Check if user exists
+        user = UserRepository.get_user_by_id(user_id)
+        logger.info(f"User exists: {user is not None}")
+        if user:
+            logger.info(f"User details: {user.get('first_name')} {user.get('last_name')}")
+        
+        # Check if session exists
+        session = QuizSessionRepository.get_session_by_id(session_id)
+        logger.info(f"Session exists: {session is not None}")
+        if session:
+            logger.info(f"Session name: {session.get('name')}")
+        
+        # Check if user is in session
+        session_players = SessionPlayerRepository.get_session_players(session_id)
+        user_in_session = any(p.get('userId') == user_id for p in session_players)
+        logger.info(f"User in session: {user_in_session}")
+        
+        # Get raw answers data
+        raw_answers = PlayerAnswerRepository.get_all_player_answers_for_user_in_session(session_id, user_id)
+        logger.info(f"Raw answers count: {len(raw_answers) if raw_answers else 0}")
+        
+        if raw_answers:
+            for i, answer in enumerate(raw_answers):
+                logger.info(f"Answer {i+1}: {answer}")
+        
+        # Get detailed calculation
+        detailed_score = calculate_player_score_detailed(session_id, user_id)
+        logger.info(f"Detailed score calculation: {detailed_score}")
+        
+        # Try direct repository method
+        repo_score = PlayerAnswerRepository.get_player_score_for_session(session_id, user_id)
+        logger.info(f"Repository method score: {repo_score}")
+        
+        logger.info(f"=== END DEBUG ===")
+        
+    except Exception as e:
+        logger.error(f"Error in debug function: {e}", exc_info=True)
+
+
+# Updated handler function with better debugging
+from decimal import Decimal  # Add this import at the top of your file
+
+# ... [rest of your imports] ...
 
 @sio.on('request_user_data')
 async def handle_user_data_request(sid, data):
@@ -1386,9 +1533,9 @@ async def handle_user_data_request(sid, data):
         logger.debug(f"Processing {len(player_records)} players")
         
         for player in player_records:
-            user_id = player.get('userId')  # Changed from 'user_id' to 'id'
+            user_id = player.get('userId')
             if not user_id:
-                logger.warning(f"Player record missing id: {player}")
+                logger.warning(f"Player record missing userId: {player}")
                 continue
 
             logger.debug(f"Fetching details for user {user_id}")
@@ -1399,23 +1546,31 @@ async def handle_user_data_request(sid, data):
                 continue
 
             logger.debug(f"Calculating score for user {user_id}")
+            
+            # Debug the score calculation for the requesting user
+            if user_id == requesting_user_id:
+                debug_player_score_calculation(active_session_id, user_id)
+            
             session_score = calculate_player_score(active_session_id, user_id)
-            questions_answered = get_user_questions_answered_count(user_id, active_session_id)
-
+            questions_answered = len(PlayerAnswerRepository.get_player_answers_for_user_in_session(user_id, active_session_id))
+            
             player_data = {
                 'user_id': user_id,
                 'username': f"{user_details.get('first_name', '')} {user_details.get('last_name', '')}".strip(),
                 'first_name': user_details.get('first_name', ''),
                 'last_name': user_details.get('last_name', ''),
-                'soul_points': user_details.get('soul_points', 0),
-                'limb_points': user_details.get('limb_points', 0),
-                'session_score': session_score,
+                'soul_points': float(user_details.get('soul_points', 0)),
+                'limb_points': float(user_details.get('limb_points', 0)),
+                'session_score': int(session_score),
                 'total_questions_answered': questions_answered,
                 'is_requesting_user': user_id == requesting_user_id
             }
             
             logger.debug(f"Processed player data: {player_data}")
             all_players_data.append(player_data)
+
+        # Sort players by session score (highest first)
+        all_players_data.sort(key=lambda x: x['session_score'], reverse=True)
 
         # Final response
         active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
@@ -1430,6 +1585,19 @@ async def handle_user_data_request(sid, data):
         }
 
         logger.debug(f"Final response data: {response}")
+        
+        # Convert Decimal values to float (now that Decimal is imported)
+        def convert_decimals(obj):
+            if isinstance(obj, Decimal):
+                return float(obj)
+            elif isinstance(obj, dict):
+                return {k: convert_decimals(v) for k, v in obj.items()}
+            elif isinstance(obj, (list, tuple)):
+                return [convert_decimals(x) for x in obj]
+            return obj
+        
+        response = convert_decimals(response)
+        
         await sio.emit('all_users_data_updated', response, room=sid)
         logger.info(f"Sent user data for session {active_session_id} to user {requesting_user_id}")
 
@@ -1439,76 +1607,6 @@ async def handle_user_data_request(sid, data):
             'message': 'Failed to process user data request',
             'details': str(e)
         }, room=sid)
-
-async def get_complete_user_data(user_id: int):
-    try:
-        user_details = UserRepository.get_user_by_id(user_id)
-        if not user_details:
-            logger.warning(f"User not found: {user_id}")
-            return None
-        
-        active_session_id = get_active_session_id()
-        session_score = 0
-        
-        if active_session_id:
-            session_score = calculate_player_score(active_session_id, user_id)
-        
-        user_data = {
-            'user_id': user_id,
-            'username': f"{user_details.get('first_name', '')} {user_details.get('last_name', '')}".strip(),
-            'first_name': user_details.get('first_name', ''),
-            'last_name': user_details.get('last_name', ''),
-            'soul_points': user_details.get('soul_points', 0),
-            'limb_points': user_details.get('limb_points', 0),
-            'session_score': session_score,
-            'total_questions_answered': get_user_questions_answered_count(user_id, active_session_id),
-        }
-        
-        return user_data
-        
-    except Exception as e:
-        logger.error(f"Error retrieving complete user data for user {user_id}: {e}", exc_info=True)
-        return None
-
-async def process_answer_submission(user_id: int, question_id: int, answer_index: int):
-    try:
-        return {
-            'success': True,
-            'is_correct': True,
-            'points_earned': 10,
-            'feedback': "Answer submitted successfully!"
-        }
-        
-    except Exception as e:
-        logger.error(f"Error processing answer submission: {e}", exc_info=True)
-        return {'success': False, 'error': 'Failed to process answer'}
-
-async def process_theme_selection(user_id: int, theme_id: int, theme_name: str):
-    try:
-        active_session_id = get_active_session_id()
-        if not active_session_id:
-            return {'success': False, 'error': 'No active session'}
-        
-        return {
-            'success': True,
-            'feedback': f"Selected theme: {theme_name}"
-        }
-        
-    except Exception as e:
-        logger.error(f"Error processing theme selection: {e}", exc_info=True)
-        return {'success': False, 'error': 'Failed to process theme selection'}
-
-def get_user_questions_answered_count(user_id: int, session_id: int):
-    try:
-        if not session_id:
-            return 0
-        
-        answers = PlayerAnswerRepository.get_all_player_answers_for_user_in_session(session_id, user_id)
-        return len(answers) if answers else 0
-        
-    except Exception as e:
-        logger.error(f"Error getting questions answered count for user {user_id}: {e}")
-        return 0
 
 
 
@@ -3362,7 +3460,7 @@ timer_lock = Lock()
 session_lock = Lock()
 quiz_state_lock = Lock()
 active_timers = {}
-
+progress = None
 # Global servo variable (assumed to be initialized elsewhere)
 # servo = ServoController()  # This should be initialized in your main application
 
@@ -3483,6 +3581,7 @@ def emit_timer_update(sio, loop, session_id, time_remaining, phase, total_time, 
     Emit both timer_update and quiz_timer events for frontend compatibility
     Also handle servo movement during timer
     """
+    global progress
     try:
         # Calculate servo position (0 degrees at start, 180 degrees at end)
         if total_time > 0:
@@ -3837,7 +3936,14 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
         if current_state['question_count'] >= 5:
             player_count = max(1, current_state['player_count'])  # Avoid division by zero
             required_score = 10 * player_count * current_state['question_count']
-            
+            current_phase['total_score'] = PlayerAnswerRepository.getget_total_score_for_session(session_id)
+            ChatLogRepository.create_chat_message(
+            session_id=get_active_session_id(),
+            message_text=f"The new required score is {required_score}, don't fall below it now" ,
+            user_id=1,
+            message_type='system',
+            reply_to_id=1
+            )
             if current_state['total_score'] < required_score:
                 print(f"Quiz ending early: Score {current_state['total_score']} < required {required_score}")
                 break
@@ -4187,137 +4293,108 @@ async def handle_theme_selection(sid, data):
 
 # ---------- Answer Submission Handler ----------
 # Updated answer submission handler to use new question time
-@sio.on('submit_answer')  # Changed from 'answer_submitted' to match frontend
+@sio.on('submit_answer')
 async def handle_answer_submission(sid, data):
-    global current_phase
     try:
+        # Validate input data
         user_id = data.get('userId')
         question_id = data.get('questionId')
         answer_index = data.get('answerIndex')
         time_remaining = data.get('timeRemaining', 0)
         
-        if not all([user_id, question_id is not None, answer_index is not None]):
+        if None in [user_id, question_id, answer_index]:
             await sio.emit('answer_response', {
                 'success': False,
-                'error': 'Missing required data for answer submission'
+                'error': 'Missing required fields'
             }, room=sid)
             return
-        
+
         # Get active session
         active_session_id = get_active_session_id()
         if not active_session_id:
             await sio.emit('answer_response', {
                 'success': False,
-                'error': 'No active session found'
+                'error': 'No active session'
             }, room=sid)
             return
-        
-        # Check if we're in quiz phase and waiting for answers
-        current_phase = get_session_phase(active_session_id)
-        quiz_state = get_quiz_state(active_session_id)
-        
-        if current_phase != 'quiz' or not quiz_state.get('waiting_for_answers', False):
+
+        # Check if accepting answers
+        if get_session_phase(active_session_id) != 'quiz':
             await sio.emit('answer_response', {
                 'success': False,
-                'error': 'Not accepting answers at this time'
+                'error': 'Not accepting answers now'
             }, room=sid)
             return
-        
+
         # Get question and answers
         question = QuestionRepository.get_question_by_id(question_id)
         answers = AnswerRepository.get_all_answers_for_question(question_id)
-        
         if not question or not answers:
             await sio.emit('answer_response', {
                 'success': False,
-                'error': 'Question or answers not found'
+                'error': 'Question not found'
             }, room=sid)
             return
-        
-        # Find the correct answer
-        correct_answer = None
-        for answer in answers:
-            if answer.get('is_correct', False):
-                correct_answer = answer
-                break
-        
-        if not correct_answer:
+
+        # Validate answer index
+        if answer_index < 0 or answer_index >= len(answers):
             await sio.emit('answer_response', {
                 'success': False,
-                'error': 'No correct answer found for this question'
+                'error': 'Invalid answer'
             }, room=sid)
             return
+
+        # Get selected answer
+        selected_answer = answers[answer_index]
+        answer_id = selected_answer.get('id')
+
+        # Determine if answer is correct
+        is_correct = str(selected_answer.get('is_correct', False)).lower() in ['1', 'true', 'yes']
+
+        # Calculate points based on progress percentage (simplified)
+        max_points = 10  # Maximum points for correct answer
+        question_duration = 15  # Total question time in seconds
+        time_taken = question_duration - time_remaining
         
-        # Get the submitted answer and check if it's correct
-        submitted_answer = answers[answer_index] if 0 <= answer_index < len(answers) else None
-        if not submitted_answer:
-            await sio.emit('answer_response', {
-                'success': False,
-                'error': 'Invalid answer selection'
-            }, room=sid)
-            return
-        
-        # Get the full answer details from database to check correctness
-        answer_id = submitted_answer.get('id')
-        answer_details = AnswerRepository.get_answer_by_id(answer_id) if answer_id else None
-        
-        if not answer_details:
-            await sio.emit('answer_response', {
-                'success': False,
-                'error': 'Answer details not found'
-            }, room=sid)
-            return
-        
-        # Check if answer is correct (handle both string and boolean values)
-        is_correct_value = answer_details.get('is_correct', '0')
-        is_correct = str(is_correct_value).lower() in ['1', 'true', 'yes'] or is_correct_value is True
-        
-        # Calculate points based on time remaining (updated for 15 second question time)
-        points_earned = 0
         if is_correct:
-            question_time = 15  # Updated question time
-            time_percentage = max(0, time_remaining / question_time)
-            points_earned = int(10 * time_percentage)  # Base 10 points multiplied by time percentage
-        
-        # Update quiz state with new score and player count
-        current_quiz_state = get_quiz_state(active_session_id)
-        new_total_score = current_quiz_state['total_score'] + points_earned
-        new_player_count = max(current_quiz_state['player_count'], 1)  # Ensure at least 1 player
-        
-        update_quiz_state(active_session_id, 
-                         total_score=new_total_score,
-                         player_count=new_player_count)
-        
-        sessionid = get_active_session_id()
-        # Store answer submission
+            progress = time_remaining / question_duration  # Percentage of time remaining
+            points_earned = int(max_points * progress)
+            points_earned = max(1, points_earned)  # At least 1 point for correct answer
+        else:
+            points_earned = 0
+
+        # Save answer to database
         PlayerAnswerRepository.create_player_answer(
-            session_id=sessionid,
+            session_id=active_session_id,
             user_id=user_id,
             question_id=question_id,
             answer_id=answer_id,
             is_correct=is_correct,
             points_earned=points_earned,
-            time_taken=(15 - time_remaining)  # Updated for 15 second question time
+            time_taken=time_taken
         )
-        
-        response_data = {
+
+        # Get correct answer details
+        correct_answer = next((a for a in answers if str(a.get('is_correct', False)).lower() in ['1', 'true', 'yes']), None)
+
+        # Prepare response
+        response = {
             'success': True,
             'is_correct': is_correct,
             'points_earned': points_earned,
-            'correct_answer_text': correct_answer['answer_text'],
-            'explanation': question.get('explanation', 'Explanation not available')
+            'correct_answer_index': answers.index(correct_answer) if correct_answer else -1,
+            'correct_answer_text': correct_answer.get('answer_text', '') if correct_answer else '',
+            'explanation': question.get('explanation', 'No explanation available')
         }
-        
-        await sio.emit('answer_response', response_data, room=sid)
-        
-        print(f"Answer processed for user {user_id}: {'Correct' if is_correct else 'Incorrect'}, Points: {points_earned}")
-        
+
+        await sio.emit('answer_response', response, room=sid)
+        logger.info(f"User {user_id} answered {'correctly' if is_correct else 'incorrectly'} on Q{question_id} (Points: {points_earned})")
+
     except Exception as e:
-        print(f"Error handling answer submission: {e}")
-        traceback.print_exc()
+        logger.error(f"Answer submission error: {str(e)}", exc_info=True)
         await sio.emit('answer_response', {
             'success': False,
-            'error': 'An error occurred while processing your answer'
+            'error': 'Server error processing answer'
         }, room=sid)
 
 
