@@ -24,8 +24,6 @@ class QuizApp {
         this.authSystem = new AuthSystem();
         this.quizLogic = new QuizLogic();
 
-        // Initialize info modal
-        this.quizLogic.initInfoModal();
 
         // Set up cross-system communication
         this.setupCrossSystemEvents();
@@ -38,7 +36,6 @@ class QuizApp {
         document.addEventListener('userAuthenticated', (event) => {
             const user = event.detail.user;
             this.quizLogic.setCurrentUser(user);
-            this.quizLogic.showWelcomeMessage(user);
         });
 
         // Listen for score updates to potentially update chat or other systems
