@@ -999,29 +999,32 @@ class QuizSessionRepository:
         session_date: datetime,
         name: str,
         description: Optional[str],
-        session_status_id: int,
-        theme_id: int,
-        host_user_id: int,
-        start_time: Optional[datetime] = None
+        session_status_id: int,  # Using snake_case for Python consistency
+        theme_id: int,           # Using snake_case
+        host_user_id: int,       # Using snake_case
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None
     ) -> Optional[int]:
         """
         Creates a new quiz session in the database.
         Returns the ID of the newly created session, or None if creation fails.
         """
         sql = """
-            INSERT INTO quizSessions (session_date, name, description, sessionStatusId, themeId, hostUserId, start_time)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO quizSessions 
+                (session_date, name, description, sessionStatusId, themeId, hostUserId, start_time, end_time)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """
         params = [
             session_date,
             name,
             description,
-            session_status_id,
-            theme_id,
-            host_user_id,
-            start_time if start_time is not None else datetime.now()
+            session_status_id,  # Python snake_case
+            theme_id,          # Python snake_case
+            host_user_id,      # Python snake_case
+            start_time if start_time is not None else session_date,
+            end_time
         ]
-        return Database.execute_and_get_last_id(sql, params)
+        return Database.execute_sql(sql, params)
 
     @staticmethod
     def get_session_by_id(session_id: int) -> Optional[Dict[str, Any]]:

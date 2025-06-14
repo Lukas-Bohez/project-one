@@ -43,7 +43,7 @@ except ImportError as e:
     RPI_COMPONENTS_AVAILABLE = False
 
 
-    
+current_phase = None
 # ----------------------------------------------------
 # App setup
 # ----------------------------------------------------
@@ -1184,6 +1184,7 @@ async def add_user_to_active_session(user_id: int):
 
 @app.post("/api/v1/register", status_code=status.HTTP_201_CREATED)
 async def register_user(user_credentials: UserCredentials, request: Request):
+    global current_phase
     try:
         if UserRepository.get_user_by_name(user_credentials.first_name, user_credentials.last_name):
             raise HTTPException(
@@ -1211,6 +1212,33 @@ async def register_user(user_credentials: UserCredentials, request: Request):
                 detail="A critical error occurred while creating the user."
             )
         
+
+
+        if not get_active_session_id():
+            # Auto-generated name and description
+            auto_name = f"Session {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            auto_description = f"Automatically created session on {datetime.now().strftime('%B %d, %Y at %H:%M')}"
+
+            new_session_id = QuizSessionRepository.create_session(
+                session_date=datetime.now(),
+                name="Auto Session",
+                description="Automatically created session",
+                session_status_id=2,  # Must be provided
+                theme_id=1,          # Must be provided (default theme)
+                host_user_id=current_user.id,  # Must be provided
+                start_time=datetime.now()
+            )
+            current_phase = 'voting'
+        ChatLogRepository.create_chat_message(
+            session_id=get_active_session_id(),
+            message_text=f'User {user_credentials.first_name} has logged in',  # Comma was missing here
+            user_id=1,
+            message_type='system',
+            reply_to_id=1
+        )
+
+
+
         log_user_ip_address(user_id, get_client_ip(request))
         await add_user_to_active_session(user_id)
         
@@ -1228,6 +1256,7 @@ async def register_user(user_credentials: UserCredentials, request: Request):
 
 @app.post("/api/v1/login")
 async def login_user(user_credentials: UserCredentials, request: Request):
+    global current_phase
     try:
         user_id = UserRepository.authenticate_user(
             user_credentials.first_name,
@@ -1240,9 +1269,32 @@ async def login_user(user_credentials: UserCredentials, request: Request):
                 detail="Invalid first name, last name, or password."
             )
         
+        if not get_active_session_id():
+            # Auto-generated name and description
+            auto_name = f"Session {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            auto_description = f"Automatically created session on {datetime.now().strftime('%B %d, %Y at %H:%M')}"
+
+            QuizSessionRepository.create_session(
+                session_date=datetime.now(),
+                name=auto_name,
+                description=auto_description,
+                session_status_id=2,
+                theme_id=None,  # or whatever default your function expects
+                host_user_id=user_id,  # or whatever default your function expects
+                start_time=datetime.now()  # already optional in your function definition
+            )
+            current_phase = 'voting'
+        ChatLogRepository.create_chat_message(
+            session_id=get_active_session_id(),
+            message_text=f'User {user_credentials.first_name} has logged in',  # Comma was missing here
+            user_id=1,
+            message_type='system',
+            reply_to_id=1
+        )
+
+
         log_user_ip_address(user_id, get_client_ip(request))
         await add_user_to_active_session(user_id)
-        
         logger.info(f"User ID {user_id} logged in successfully.")
         return {"message": "Login successful", "user_id": user_id}
 
@@ -1369,13 +1421,6 @@ async def handle_user_data_request(sid, data):
             'details': str(e)
         }, room=sid)
 
-
-
-
-
-
-
-
 async def get_complete_user_data(user_id: int):
     try:
         user_details = UserRepository.get_user_by_id(user_id)
@@ -1445,25 +1490,6 @@ def get_user_questions_answered_count(user_id: int, session_id: int):
     except Exception as e:
         logger.error(f"Error getting questions answered count for user {user_id}: {e}")
         return 0
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -2954,8 +2980,8 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
 
             # --- Step 3: Handle Quiz Session Specific Logic ---
             try:
-                active_sessions = QuizSessionRepository.get_sessions_by_status(2)
-                if active_sessions:
+                active_sessions = get_active_session_id()
+                if get_active_session_id():
                     # Logic specific to an active quiz can be placed here
                     # For example, logging sensor data to the quiz session
                     if should_update_quiz_session(current_time):
@@ -3954,12 +3980,10 @@ def emit_theme_selection_if_needed(sio, loop):
     """
     global light_sensor
     global temp_sensor
-    
+    global current_phase
+
     try:
         active_session_id = get_active_session_id()
-        
-        if not active_session_id:
-            return
         
         # Get the full session details using the ID
         active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
@@ -3968,6 +3992,7 @@ def emit_theme_selection_if_needed(sio, loop):
         
         if not active_session_info.get('themeId'):
             # No theme set - handle voting phase
+            current_phase = 'voting'
             if current_phase == 'voting' and not is_timer_running:
                 # Voting phase but no timer running - emit theme selection to allow voting
                 emit_combined_theme_selection(sio, loop)
@@ -4145,6 +4170,7 @@ async def handle_theme_selection(sid, data):
 # Updated answer submission handler to use new question time
 @sio.on('submit_answer')  # Changed from 'answer_submitted' to match frontend
 async def handle_answer_submission(sid, data):
+    global current_phase
     try:
         user_id = data.get('userId')
         question_id = data.get('questionId')
