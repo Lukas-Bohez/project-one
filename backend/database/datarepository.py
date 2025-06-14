@@ -2349,3 +2349,10 @@ class PlayerAnswerRepository:
         """
         params = [session_id, user_id, question_id]
         return Database.get_one_row(sql, params)
+
+    @staticmethod
+    def get_player_answers_count_for_user_in_session(session_id, user_id):
+        sql = "SELECT COUNT(*) as count FROM playerAnswers WHERE sessionId = %s AND userId = %s"
+        params = [session_id, user_id]
+        result = Database.get_one_row(sql, params)
+        return result['count'] if result else 0

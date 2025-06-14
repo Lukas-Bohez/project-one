@@ -1552,7 +1552,7 @@ async def handle_user_data_request(sid, data):
                 debug_player_score_calculation(active_session_id, user_id)
             
             session_score = calculate_player_score(active_session_id, user_id)
-            questions_answered = len(PlayerAnswerRepository.get_player_answers_for_user_in_session(user_id, active_session_id))
+            questions_answered = PlayerAnswerRepository.get_player_answers_count_for_user_in_session(active_session_id, user_id)
             
             player_data = {
                 'user_id': user_id,
@@ -3939,7 +3939,7 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
             current_phase['total_score'] = PlayerAnswerRepository.getget_total_score_for_session(session_id)
             ChatLogRepository.create_chat_message(
             session_id=get_active_session_id(),
-            message_text=f"The new required score is {required_score}, don't fall below it now" ,
+            message_text=f"The new required score is {required_score}, don't fall below it now, you're current score is {current_phase['total_score']}" ,
             user_id=1,
             message_type='system',
             reply_to_id=1
