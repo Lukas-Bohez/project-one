@@ -63,17 +63,36 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('beforeunload', savePlayerState);
 });
 
-// Try to auto-start playback
 const tryAutoStart = () => {
     // Try to start playback immediately
-    startPlayback();
-    
-    // If that fails due to autoplay restrictions, set up click listener
-    audioPlayer.addEventListener('error', () => {
-        console.log('Auto-start failed, click anywhere to start');
-        document.addEventListener('click', startPlayback, { once: true });
-        document.addEventListener('keydown', startPlayback, { once: true });
-    });
+    const playPromise = audioPlayer.play();
+
+    if (playPromise !== undefined) {
+        playPromise.then(() => {
+            // Automatic playback started!
+            console.log('Auto-start successful!');
+        }).catch(error => {
+            // Auto-start failed, likely due to user interaction requirement
+            if (error.name === "NotAllowedError" || error.name === "AbortError") {
+                console.log('Auto-start failed: User interaction required. Click anywhere or press a key to start playback.');
+                // Set up click/keydown listeners to start playback
+                document.addEventListener('click', startPlayback, { once: true });
+                document.addEventListener('keydown', startPlayback, { once: true });
+            } else {
+                console.error('An unexpected error occurred during auto-start:', error);
+            }
+        });
+    } else {
+        // Fallback for older browsers that might not return a Promise from play()
+        console.warn('`play()` did not return a Promise. Auto-start might not be handled gracefully.');
+        // You might still want to add fallback error listener here,
+        // although it's less reliable for autoplay issues.
+        audioPlayer.addEventListener('error', () => {
+            console.log('Playback error detected, attempting to prompt for user interaction.');
+            document.addEventListener('click', startPlayback, { once: true });
+            document.addEventListener('keydown', startPlayback, { once: true });
+        }, { once: true });
+    }
 };
 
 // Initial resume attempt, triggered by first user gesture

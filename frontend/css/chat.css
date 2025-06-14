@@ -1,0 +1,360 @@
+:root {
+    /* Enhanced color palette with modern gradients and shadows */
+    --quiz-primary: #4a6fa5;
+    --quiz-primary-light: #5a7fb5;
+    --quiz-primary-dark: #3a5f95;
+    --quiz-secondary: #166088;
+    --quiz-tertiary: #4fc3f7;
+    --quiz-dark: #1a2639;
+    --quiz-light: #dbe4ee;
+
+    /* Semantic colors with improved contrast and accessibility */
+    --primary-color: var(--quiz-primary);
+    --primary-gradient: linear-gradient(135deg, var(--quiz-primary) 0%, var(--quiz-primary-light) 100%);
+    --secondary-color: var(--quiz-secondary);
+    --info-color: #10b981;
+    --success-color: #059669;
+    --warning-color: #f59e0b;
+    --danger-color: #ef4444;
+    --danger-light: #fca5a5;
+
+    /* Enhanced text colors */
+    --dark-text-color: #111827;
+    --medium-text-color: #374151;
+    --light-text-color: #6b7280;
+    --white-text-color: #ffffff;
+    --muted-text-color: #9ca3af;
+}
+
+/* Chat Container - Main wrapper with modern layered design */
+.c-chat-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 380px;
+    max-height: 500px;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(145deg,
+            rgba(255, 255, 255, 0.98) 0%,
+            rgba(249, 250, 251, 0.95) 100%);
+    border: 1px solid rgba(219, 228, 238, 0.6);
+    border-radius: 20px;
+    box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.1),
+        0 8px 32px rgba(74, 111, 165, 0.2);
+    z-index: 1000;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.c-chat-container:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        0 25px 50px rgba(0, 0, 0, 0.15),
+        0 12px 40px rgba(74, 111, 165, 0.3);
+}
+
+/* Chat Header - Clean gradient header */
+.c-chat-header {
+    background: var(--primary-gradient);
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 20px 20px 0 0;
+    position: relative;
+}
+
+.c-chat-header h3 {
+    margin: 0;
+    color: var(--white-text-color);
+    font-size: 18px;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Toggle Button - Fixed positioning and consistent styling */
+.c-chat-toggle {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: var(--white-text-color);
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 400;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.c-chat-toggle:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+.c-chat-toggle:active {
+    transform: scale(0.95);
+}
+
+/* Chat Content - Main content area */
+.c-chat-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    background: linear-gradient(to bottom,
+            rgba(248, 250, 252, 0.8) 0%,
+            rgba(241, 245, 249, 0.6) 100%);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+/* Chat Messages - Scrollable message area */
+.c-chat-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+}
+
+.c-chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.c-chat-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.c-chat-messages::-webkit-scrollbar-thumb {
+    background: rgba(74, 111, 165, 0.4);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+}
+
+.c-chat-messages::-webkit-scrollbar-thumb:hover {
+    background: rgba(74, 111, 165, 0.6);
+}
+
+/* Individual Chat Messages - Clean message bubbles */
+.c-chat-message {
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    border-left: 3px solid var(--primary-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+    animation: messageSlideIn 0.3s ease-out;
+}
+
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.c-chat-message:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    background: rgba(255, 255, 255, 1);
+}
+
+/* Message Sender - Username styling */
+.c-chat-sender {
+    font-weight: 600;
+    color: var(--primary-color);
+    font-size: 14px;
+    margin-right: 8px;
+}
+
+/* Message Text - Message content styling */
+.c-chat-text {
+    color: var(--dark-text-color);
+    font-size: 14px;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+/* Error Messages - Special styling for errors */
+.c-chat-error {
+    background: rgba(239, 68, 68, 0.1);
+    border-left-color: var(--danger-color);
+}
+
+.c-chat-error .c-chat-sender {
+    color: var(--danger-color);
+}
+
+.c-chat-error .c-chat-text {
+    color: #dc2626;
+}
+
+/* System Messages - Special styling for system notifications */
+.c-chat-system {
+    background: rgba(16, 185, 129, 0.1);
+    border-left-color: var(--info-color);
+    font-style: italic;
+}
+
+.c-chat-system .c-chat-sender {
+    color: var(--info-color);
+}
+
+/* Input Container - Consistent input area positioning */
+.c-chat-input-container {
+    padding: 16px 20px;
+    background: rgba(255, 255, 255, 0.95);
+    border-top: 1px solid rgba(74, 111, 165, 0.1);
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+    flex-shrink: 0;
+    border-radius: 0 0 20px 20px;
+}
+
+/* Chat Input - Fixed sizing and consistent styling */
+.c-chat-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid rgba(74, 111, 165, 0.2);
+    border-radius: 20px;
+    font-size: 14px;
+    color: var(--dark-text-color);
+    background: rgba(255, 255, 255, 0.95);
+    transition: all 0.2s ease;
+    outline: none;
+    min-height: 20px;
+    resize: none;
+}
+
+.c-chat-input:focus {
+    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.1);
+}
+
+.c-chat-input::placeholder {
+    color: var(--muted-text-color);
+}
+
+/* Send Button - Consistent positioning and size */
+.c-chat-send-btn {
+    padding: 12px 20px;
+    background: var(--primary-gradient);
+    color: var(--white-text-color);
+    border: none;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    min-width: 70px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.c-chat-send-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(74, 111, 165, 0.3);
+}
+
+.c-chat-send-btn:active {
+    transform: translateY(0);
+}
+
+.c-chat-send-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Collapsed state */
+.c-chat-container.collapsed .c-chat-content {
+    display: none;
+}
+
+.c-chat-container.collapsed {
+    max-height: auto;
+}
+
+/* Responsive Design - Mobile optimization */
+@media (max-width: 768px) {
+    .c-chat-container {
+        bottom: 10px;
+        right: 10px;
+        left: 10px;
+        width: auto;
+        max-width: none;
+        border-radius: 16px;
+    }
+
+    .c-chat-header {
+        padding: 14px 16px;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .c-chat-content {
+        flex: 1;
+        min-height: 0;
+    }
+
+    .c-chat-messages {
+        padding: 16px;
+    }
+
+    .c-chat-input-container {
+        padding: 12px 16px;
+        gap: 8px;
+        border-radius: 0 0 16px 16px;
+    }
+
+    .c-chat-input {
+        font-size: 16px;
+        /* Prevents zoom on iOS */
+    }
+
+    .c-chat-send-btn {
+        min-width: 60px;
+        padding: 12px 16px;
+    }
+}
+
+
+
+/* Accessibility enhancements */
+@media (prefers-reduced-motion: reduce) {
+
+    .c-chat-container,
+    .c-chat-message,
+    .c-chat-input,
+    .c-chat-send-btn,
+    .c-chat-toggle {
+        transition: none;
+        animation: none;
+    }
+
+    @keyframes messageSlideIn {
+
+        from,
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+}

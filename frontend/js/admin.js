@@ -31,8 +31,34 @@ const fetchQuestions = async (activeOnly = false) => {
     const questionsEndpoint = `${lanIP}/api/v1/questions/`;
     const answersBaseEndpoint = `${lanIP}/api/v1/questions/`;
     const themesBaseEndpoint = `${lanIP}/api/v1/themes/`;
-    
+
+    // A more specific and unique key for your application's cache
+    const CACHE_KEY = `myApp_questionsCache_${activeOnly ? 'active' : 'all'}`;
+    const CACHE_DURATION = 60 * 1000; // 1 minute in milliseconds
+
     try {
+        // --- ATTEMPT TO RETURN FROM CACHE FIRST ---
+        const cachedDataString = localStorage.getItem(CACHE_KEY);
+
+        if (cachedDataString) {
+            const { timestamp, data } = JSON.parse(cachedDataString);
+            const now = new Date().getTime();
+
+            if (now - timestamp < CACHE_DURATION) {
+                console.log(`[Cache Hit] Returning data from local cache for key: ${CACHE_KEY}`);
+                return data; // IMMEDIATELY RETURN CACHED DATA
+            } else {
+                console.log(`[Cache Expired] Cache for key: ${CACHE_KEY} is older than 1 minute. Fetching new data...`);
+                // Proceed to fetch new data
+            }
+        } else {
+            console.log(`[Cache Miss] No data found in local cache for key: ${CACHE_KEY}. Fetching new data...`);
+            // Proceed to fetch new data
+        }
+
+        // --- IF WE REACH THIS POINT, IT MEANS CACHE IS INVALID OR NON-EXISTENT.
+        // --- PROCEED WITH API CALLS.
+
         // Step 1: Fetch all questions
         const questionsUrl = activeOnly ? `${questionsEndpoint}?active_only=true` : questionsEndpoint;
         const questionsResponse = await fetch(questionsUrl);
@@ -41,10 +67,10 @@ const fetchQuestions = async (activeOnly = false) => {
             return [];
         }
         const questions = await questionsResponse.json();
-        
+
         // Step 2: Get unique theme IDs to minimize API calls
         const uniqueThemeIds = [...new Set(questions.map(q => q.themeId).filter(id => id))];
-        
+
         // Step 3: Fetch all themes in parallel
         const themePromises = uniqueThemeIds.map(async (themeId) => {
             try {
@@ -60,53 +86,67 @@ const fetchQuestions = async (activeOnly = false) => {
                 return { id: themeId, name: 'Unknown Theme', error: true };
             }
         });
-        
+
         const themes = await Promise.all(themePromises);
-        
+
         // Step 4: Create a theme lookup map for quick access
         const themeMap = themes.reduce((map, theme) => {
             map[theme.id] = theme;
             return map;
         }, {});
-        
+
         const questionsWithAnswersAndThemes = [];
-        
+
         // Step 5: For each question, fetch its answers and attach theme data
         for (const question of questions) {
             // Fetch answers for this question
             const answersUrl = `${answersBaseEndpoint}${question.id}/answers`;
             const answersResponse = await fetch(answersUrl);
             let answers = [];
-            
+
             if (!answersResponse.ok) {
                 console.warn(`HTTP error fetching answers for question ID ${question.id}! Status: ${answersResponse.status}`);
             } else {
                 const answersData = await answersResponse.json();
                 answers = answersData.answers || [];
             }
-            
+
             // Get theme data for this question
-            const theme = themeMap[question.themeId] || { 
-                id: question.themeId, 
-                name: 'Unknown Theme', 
-                error: true 
+            const theme = themeMap[question.themeId] || {
+                id: question.themeId,
+                name: 'Unknown Theme',
+                error: true
             };
-            
+
             questionsWithAnswersAndThemes.push({
                 ...question, // Spread all properties of the original question
                 answers: answers, // Add the fetched answers
                 theme: theme // Add the theme object - accessible as question.theme
             });
         }
-        
-        console.log('Questions with answers and themes:');
-        console.log(questionsWithAnswersAndThemes);
-        
+
+        console.log('[API Fetch] Successfully fetched new data from API.');
+        // console.log(questionsWithAnswersAndThemes); // Uncomment if you want to see the full data on every fetch
+
+        // Step 6: Save the newly fetched data to local cache with a timestamp
+        const dataToCache = {
+            timestamp: new Date().getTime(),
+            data: questionsWithAnswersAndThemes
+        };
+        localStorage.setItem(CACHE_KEY, JSON.stringify(dataToCache));
+        console.log(`[Cache Update] New data saved to local cache for key: ${CACHE_KEY}`);
+
         return questionsWithAnswersAndThemes;
-        
+
     } catch (error) {
         console.error('Failed to fetch questions, answers, or themes:', error);
-        return [];
+        // if fetching fails, you might want to return the stale cache if available
+        const cachedDataString = localStorage.getItem(CACHE_KEY);
+        if (cachedDataString) {
+            const { data } = JSON.parse(cachedDataString);
+            console.warn('Returning stale data due to fetch error:', data);
+            return data;
+        }
     }
 };
 
