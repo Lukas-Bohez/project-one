@@ -1,4 +1,3 @@
-
 const lanIP = `http://${window.location.hostname}`;
 
 const dom = {
@@ -29,8 +28,6 @@ const showServoMovement = (angle) => {
 const callbackUpdateDifficulty = (temp, light, sound) => {
     console.log(`Updating difficulty based on temp: ${temp}°C, light: ${light} lux, sound: ${sound} dB`);
 };
-
-
 
 const getInitialPlaceholderData = () => {
     return {
@@ -124,8 +121,6 @@ const testServoMovement = async () => {
     }
 };
 
-
-
 const initIndexPage = () => {
     listenToButtons();
     markInitializationSuccess();
@@ -198,144 +193,62 @@ if (document.readyState !== 'loading') {
     document.addEventListener('DOMContentLoaded', initApp);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Socket.IO client connection
 const socket = io(lanIP, {
-    transports: ["websocket", "polling"],
+    transports: ["polling", "websocket"],
     timeout: 20000,
     reconnection: true,
     reconnectionAttempts: 5,
-    reconnectionDelay: 1000
+    reconnectionDelay: 1000,
+    forceNew: true,
+    upgrade: true,
+    rememberUpgrade: false
 });
 
 // Get DOM elements for updating
-const connectionStatusElement = document.getElementById('connection-status'); // You might want to add this div in HTML for status messages
-const errorMessageElement = document.getElementById('error-message'); // You might want to add this div in HTML for error messages
+const connectionStatusElement = document.getElementById('connection-status');
+const errorMessageElement = document.getElementById('error-message');
 const tempValueElement = document.getElementById('tempValue');
 const lightValueElement = document.getElementById('lightValue');
-const soundValueElement = document.getElementById('soundValue'); // Assuming 'soundValue' is for servo angle
+const soundValueElement = document.getElementById('soundValue');
 const playerCountElement = document.getElementById('playerCount');
 const servoVisualElement = document.getElementById('servoVisual');
-const welcomeMessageElement = document.querySelector('.c-welcome-message p'); // Selecting the paragraph within the welcome message div
+const welcomeMessageElement = document.querySelector('.c-welcome-message p');
+
+// Connection status helper function
+const updateConnectionStatus = (status, message, className) => {
+    if (connectionStatusElement) {
+        connectionStatusElement.textContent = message || status;
+        connectionStatusElement.className = className || `status-${status.toLowerCase()}`;
+    }
+    
+    // Clear error messages when connected
+    if (status === 'Connected' && errorMessageElement) {
+        errorMessageElement.style.display = 'none';
+        errorMessageElement.textContent = '';
+    }
+    
+    console.log(`Connection status: ${status} - ${message || ''}`);
+};
 
 // --- Connection Event Listeners ---
 
+// When socket is connecting
+socket.on('connecting', () => {
+    updateConnectionStatus('Connecting', 'Connecting to server...', 'status-connecting');
+});
+
+// When socket successfully connects
 socket.on('connect', () => {
-    console.log('Connected to server with ID:', socket.id);
-    if (connectionStatusElement) {
-        connectionStatusElement.textContent = 'Connected';
-        // CORRECTED LINE: Use connectionStatusElement instead of dom.connectionStatus
-        connectionStatusElement.className = 'status-connected';
-    }
-    if (errorMessageElement) {
-        errorMessageElement.textContent = '';
-        errorMessageElement.style.display = 'none';
-    }
+    updateConnectionStatus('Connected', 'Connected to server', 'status-connected');
+    console.log('Socket connected with ID:', socket.id);
 });
 
+// When socket disconnects
 socket.on('disconnect', (reason) => {
-    console.log('Disconnected:', reason);
-    if (connectionStatusElement) {
-        connectionStatusElement.textContent = 'Disconnected';
-        connectionStatusElement.className = 'status-disconnected';
-    }
+    updateConnectionStatus('Disconnected', `Disconnected: ${reason}`, 'status-disconnected');
+    console.log('Socket disconnected:', reason);
 });
-
-// --- Handle Welcome Message ---
-
-socket.on('welcome', (data) => {
-    console.log('Welcome message:', data);
-    if (welcomeMessageElement && data.message) {
-        // Assuming the welcome message should be added to the existing paragraph
-        welcomeMessageElement.textContent = data.message;
-    }
-});
-
-
-
-
-
-
-
-// --- Handle Sensor Data Updates ---
-        // initialData.temp,
-        // initialData.light,
-        // initialData.degrees,
-
-socket.on('sensor_data', (data) => {
-    if (data.temperature !== undefined && tempValueElement) {
-        tempValueElement.textContent = `${data.temperature.toFixed(1)}`;
-        initialData.temp = data.temperature.toFixed(1); // This line will now work
-    }
-
-    if (data.illuminance !== undefined && lightValueElement) {
-        lightValueElement.textContent = `${data.illuminance.toFixed(0)}`;
-        initialData.light = data.illuminance.toFixed(0); // This line will now work
-    }
-
-    if (data.servo_angle !== undefined) {
-;
-        initialData.degrees = data.servo_angle; // This line will now work
-    }
-    if (data.connected !== undefined) {
-
-        initialData.degrees = data.connected;
-    }
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // Listener for when a new client connects
 socket.on('client_connected', (data) => {
@@ -343,9 +256,13 @@ socket.on('client_connected', (data) => {
     if (dom.playerCount) {
         dom.playerCount.textContent = data.total_clients;
     }
-    // Update your global initialData as well, for consistency
-    initialData.players = data.total_clients;
-    console.log(initialData.players)
+    if (playerCountElement) {
+        playerCountElement.textContent = data.total_clients;
+    }
+    if (initialData) {
+        initialData.players = data.total_clients;
+    }
+    console.log('Updated player count:', data.total_clients);
 });
 
 // Listener for when a client disconnects
@@ -354,14 +271,50 @@ socket.on('client_disconnected', (data) => {
     if (dom.playerCount) {
         dom.playerCount.textContent = data.total_clients;
     }
-    // Update your global initialData as well
-    initialData.players = data.total_clients;
-    console.log(initialData.players)
+    if (playerCountElement) {
+        playerCountElement.textContent = data.total_clients;
+    }
+    if (initialData) {
+        initialData.players = data.total_clients;
+    }
+    console.log('Updated player count:', data.total_clients);
 });
 
+// --- Handle Welcome Message ---
+socket.on('welcome', (data) => {
+    console.log('Welcome message:', data);
+    if (welcomeMessageElement && data.message) {
+        welcomeMessageElement.textContent = data.message;
+    }
+});
+
+// --- Handle Sensor Data Updates ---
+socket.on('sensor_data', (data) => {
+    if (data.temperature !== undefined && tempValueElement) {
+        tempValueElement.textContent = `${data.temperature.toFixed(1)}`;
+        if (initialData) {
+            initialData.temp = data.temperature.toFixed(1);
+        }
+    }
+
+    if (data.illuminance !== undefined && lightValueElement) {
+        lightValueElement.textContent = `${data.illuminance.toFixed(0)}`;
+        if (initialData) {
+            initialData.light = data.illuminance.toFixed(0);
+        }
+    }
+
+    if (data.servo_angle !== undefined && initialData) {
+        initialData.degrees = data.servo_angle;
+        showServoMovement(data.servo_angle);
+    }
+    
+    if (data.connected !== undefined && initialData) {
+        initialData.degrees = data.connected;
+    }
+});
 
 // --- Handle Server Notifications ---
-// You'll need to add a div with id="notifications" in your HTML to display these.
 socket.on('notification', (data) => {
     console.log('Server notification:', data);
     const notificationElement = document.getElementById('notifications');
@@ -382,50 +335,20 @@ socket.on('notification', (data) => {
     }
 });
 
-
-
-
-
-
-
-
-
 // --- Handle Periodic Updates ---
-// These values are currently not mapped to specific elements in your HTML.
-// If you want to display 'Updates' or 'Connected clients' from periodic_update,
-// you'll need to add elements like <span id="updateCounter"></span> or <span id="clientCountPeriodic"></span>.
 socket.on('periodic_update', (data) => {
     console.log('Periodic update:', data);
-    // You might want to update playerCountElement here as well if 'connected_clients' is the source
-    if (data.connected_clients !== undefined && playerCountElement) {
-        initialData.players = data.connected_clients;
+    if (data.connected_clients !== undefined) {
+        if (playerCountElement) {
+            playerCountElement.textContent = data.connected_clients;
+        }
+        if (initialData) {
+            initialData.players = data.connected_clients;
+        }
     }
 });
 
-
-
-
-
-
-
-
-
-
-
-// --- Handle Client Connection/Disconnection Events ---
-
-socket.on('client_connected', (data) => {
-    console.log('New client connected:', data);
-    updateClientCount(data.total_clients);
-});
-
-socket.on('client_disconnected', (data) => {
-    console.log('Client disconnected:', data);
-    updateClientCount(data.total_clients);
-});
-
 // --- Handle Broadcasted Messages ---
-// You'll need a div with id="messages" in your HTML to display these.
 socket.on('message_received', (data) => {
     console.log('Message received:', data);
     const messagesElement = document.getElementById('messages');
@@ -445,7 +368,6 @@ socket.on('message_received', (data) => {
 });
 
 // --- Handle Room Events ---
-// You'll need a div with id="current-room" in your HTML to display this.
 socket.on('room_joined', (data) => {
     console.log('Joined room:', data);
     const roomElement = document.getElementById('current-room');
@@ -463,55 +385,39 @@ socket.on('room_left', (data) => {
 });
 
 // --- Connection Error Handling ---
-
 socket.on('connect_error', (err) => {
     console.error('Connection error:', err);
+    updateConnectionStatus('Error', `Connection error: ${err.message}`, 'status-error');
+    
     if (errorMessageElement) {
         errorMessageElement.textContent = `Connection error: ${err.message}`;
         errorMessageElement.style.display = 'block';
         errorMessageElement.className = 'error-message';
     }
-    if (connectionStatusElement) {
-        connectionStatusElement.textContent = 'Connection Error';
-        connectionStatusElement.className = 'status-error';
-    }
 });
 
 // --- Reconnection Events ---
-
 socket.on('reconnect', (attemptNumber) => {
     console.log('Reconnected after', attemptNumber, 'attempts');
-    if (connectionStatusElement) {
-        connectionStatusElement.textContent = 'Reconnected';
-        connectionStatusElement.className = 'status-connected';
-    }
+    updateConnectionStatus('Connected', 'Reconnected to server', 'status-connected');
 });
 
 socket.on('reconnect_attempt', (attemptNumber) => {
     console.log('Reconnection attempt:', attemptNumber);
-    if (connectionStatusElement) {
-        connectionStatusElement.textContent = `Reconnecting... (${attemptNumber})`;
-        connectionStatusElement.className = 'status-reconnecting';
-    }
+    updateConnectionStatus('Reconnecting', `Reconnecting... (attempt ${attemptNumber})`, 'status-reconnecting');
 });
 
 socket.on('reconnect_failed', () => {
     console.error('Reconnection failed');
-    if (connectionStatusElement) {
-        connectionStatusElement.textContent = 'Connection Failed';
-        connectionStatusElement.className = 'status-error';
-    }
+    updateConnectionStatus('Failed', 'Connection failed - all reconnection attempts exhausted', 'status-error');
 });
 
-// --- Debug: Log all socket events --- in case of emergency
-// socket.onAny((event, ...args) => {
-//     console.log('Socket event:', event, args);
-// });
-
 // --- Helper Functions ---
-
 function updateClientCount(count) {
     if (playerCountElement) {
+        playerCountElement.textContent = count;
+    }
+    if (initialData) {
         initialData.players = count;
     }
 }
@@ -549,10 +455,11 @@ window.socketFunctions = {
     joinRoom,
     leaveRoom,
     isConnected: () => socket.connected,
-    getSocketId: () => socket.id
+    getSocketId: () => socket.id,
+    getConnectionStatus: () => connectionStatusElement?.textContent || 'Unknown'
 };
 
-// --- Modal and Button Event Listeners (from your original HTML context) ---
+// --- Modal and Button Event Listeners ---
 document.addEventListener('DOMContentLoaded', () => {
     const infoBtn = document.getElementById('infoBtn');
     const infoModal = document.getElementById('infoModal');
@@ -580,10 +487,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (servoTestBtn) {
         servoTestBtn.addEventListener('click', () => {
             console.log('Test Servo button clicked');
-            // Emit an event to the server to test the servo
-            // The server will then likely send back sensor_data with the updated servo angle
-            socket.emit('test_servo', { /* any data needed for testing servo */ });
+            socket.emit('test_servo', {});
         });
     }
-
 });
