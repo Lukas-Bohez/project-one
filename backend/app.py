@@ -71,6 +71,9 @@ ENDPOINT = "/api/v1"  # API base endpoint
 # Store connected clients
 connected_clients = set()
 
+# Mount Socket.IO on the same app
+app.mount("/socket.io", socketio.ASGIApp(sio, app))
+
 
 # ----------------------------------------------------
 # Socket.IO event handlers
@@ -159,8 +162,7 @@ async def startup_event():
     # asyncio.create_task(background_task())
     print("Server started - Socket.IO backend is ready!")
 
-# Mount Socket.IO on the same app
-app.mount("/socket.io", socketio.ASGIApp(sio, app))
+
 
 
 
