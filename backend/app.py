@@ -3660,6 +3660,8 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
 
 # ---------- EMISSION FUNCTIONS ----------
 
+# Replace emit_combined_theme_selection with this fixed version:
+
 def emit_combined_theme_selection(sio, loop, active_only=True):
     """
     Emit theme selection question with theme options via socket.io.
@@ -3683,6 +3685,14 @@ def emit_combined_theme_selection(sio, loop, active_only=True):
                 'timestamp': time.time()
             }
             emit_question_data(sio, loop, combined_data)
+            
+            # Also emit theme votes if they exist
+            active_session_id = get_active_session_id()
+            if active_session_id:
+                with theme_votes_lock:
+                    session_votes = theme_votes.get(active_session_id, {})
+                    if session_votes.get('votes'):
+                        emit_theme_votes_update(sio, loop, active_session_id, session_votes['votes'])
 
     except Exception as e:
         print(f"Error in emit_combined_theme_selection: {e}")
@@ -3722,9 +3732,11 @@ def emit_combined_question_and_answers(question_id, sio, loop):
         print(f"Error in emit_combined_question_and_answers: {e}")
         emit_error(sio, loop, None, 'An internal error occurred while preparing the question.', 'question_error')
 
+# Replace emit_current_phase_content with this fixed version:
+
 def emit_current_phase_content(sio, loop, session_id):
     """
-    Emit the current phase content continuously for new players
+    Emit the current phase content continuously for all players
     """
     try:
         phase_info = get_phase_state(session_id)
@@ -3736,35 +3748,19 @@ def emit_current_phase_content(sio, loop, session_id):
         time_remaining = get_phase_time_remaining(session_id)
         
         if time_remaining <= 0:
-            return False  # Phase has ended
+            return False
             
-        # Emit the appropriate content based on phase
-        if current_phase == 'voting' and content:
-            # Update timestamp but keep original content
-            content['timestamp'] = time.time()
-            content['time_remaining'] = time_remaining
+        # Always update timestamp and time remaining for fresh data
+        content['timestamp'] = time.time()
+        content['time_remaining'] = int(time_remaining)
+        
+        # Emit content based on phase type
+        if current_phase in ['voting', 'theme_display', 'question', 'explanation']:
             emit_question_data(sio, loop, content)
-            return True
             
-        elif current_phase == 'theme_display' and content:
-            # Update timestamp but keep original content
-            content['timestamp'] = time.time()
-            content['time_remaining'] = time_remaining
-            emit_question_data(sio, loop, content)
-            return True
-            
-        elif current_phase == 'question' and content:
-            # Update timestamp but keep original content
-            content['timestamp'] = time.time()
-            content['time_remaining'] = time_remaining
-            emit_question_data(sio, loop, content)
-            return True
-            
-        elif current_phase == 'explanation' and content:
-            # Update timestamp but keep original content
-            content['timestamp'] = time.time()
-            content['time_remaining'] = time_remaining
-            emit_question_data(sio, loop, content)
+            # Also emit timer updates for consistency
+            total_time = phase_info.get('phase_duration', 0)
+            emit_timer_update(sio, loop, session_id, int(time_remaining), current_phase, total_time)
             return True
             
         return False
@@ -3773,12 +3769,15 @@ def emit_current_phase_content(sio, loop, session_id):
         print(f"Error in emit_current_phase_content: {e}")
         return False
 
+
 # ---------- MAIN COORDINATION FUNCTION ----------
+
+# Replace emit_theme_selection_if_needed with this fixed version:
 
 def emit_theme_selection_if_needed(sio, loop):
     """
     Main coordination function called from main loop every second.
-    Handles phase transitions and sensor-based question selection.
+    Handles phase transitions and continuous content emission.
     """
     global light_sensor
     global temp_sensor
@@ -3789,67 +3788,63 @@ def emit_theme_selection_if_needed(sio, loop):
         if not active_session_id:
             return
         
-        # Get the full session details using the ID
         active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
         current_phase = get_session_phase(active_session_id)
         is_timer_running = is_timer_active(active_session_id)
+        phase_info = get_phase_state(active_session_id)
+        time_remaining = get_phase_time_remaining(active_session_id)
+        
+        # If there's an active phase with content, emit it continuously
+        if phase_info and time_remaining > 0:
+            emit_current_phase_content(sio, loop, active_session_id)
+            return
         
         if not active_session_info.get('themeId'):
             # No theme set - handle voting phase
             if current_phase == 'voting' and not is_timer_running:
-                # Voting phase but no timer running - emit theme selection to allow voting
+                # Continuously emit theme selection during voting
                 emit_combined_theme_selection(sio, loop)
             elif current_phase not in ['voting', 'theme_display', 'quiz']:
-                # No phase set - initialize voting phase and emit theme selection
+                # No phase set - initialize voting phase
                 set_session_phase(active_session_id, 'voting')
                 emit_combined_theme_selection(sio, loop)
         else:
             # Theme is already set - handle transitions
             if current_phase == 'voting' and not is_timer_running:
-                # Theme exists but we're stuck in voting phase - move to theme display
                 set_session_phase(active_session_id, 'theme_display')
                 timer_config = {
                     'voting_time': 10,
                     'theme_display_time': 10,
-                    'question_time': 15,  # Use actual question time_limit from database
-                    'explanation_time': 15  # Default explanation time
+                    'question_time': 15,
+                    'explanation_time': 15
                 }
                 start_generic_timer(sio, loop, active_session_id, timer_config)
             elif current_phase == 'theme_display' and not is_timer_running:
-                # Theme display finished but stuck - move to quiz
                 set_session_phase(active_session_id, 'quiz')
                 timer_config = {
                     'voting_time': 10,
                     'theme_display_time': 10,
-                    'question_time': 15,  # Default fallback, actual time from question
-                    'explanation_time': 15  # Default fallback
+                    'question_time': 15,
+                    'explanation_time': 15
                 }
                 start_generic_timer(sio, loop, active_session_id, timer_config)
             elif current_phase == 'quiz' and not is_timer_running:
-                # Quiz phase - handle sensor-based question selection
                 quiz_state = get_quiz_state(active_session_id)
                 
-                # Only proceed if we're not waiting for answers and no timer is running
                 if not quiz_state.get('waiting_for_answers', False):
-                    sensor_data = check_sensor_data(temp_sensor, light_sensor)
-                    print(f"Quiz phase sensor check: {sensor_data}")
-                    
-                    # Get theme and available questions
                     theme_id = active_session_info['themeId']
                     all_questions = QuestionRepository.get_questions_by_theme(theme_id, active_only=True)
                     available_questions = [q for q in all_questions if q['id'] not in quiz_state['asked_questions']]
                     
                     if available_questions:
-                        # Start the quiz timer if conditions are met
                         timer_config = {
                             'voting_time': 10,
                             'theme_display_time': 10,
-                            'question_time': 15,  # Default fallback, actual time from question
-                            'explanation_time': 15  # Default fallback
+                            'question_time': 15,
+                            'explanation_time': 15
                         }
                         start_generic_timer(sio, loop, active_session_id, timer_config)
                     else:
-                        # No more questions - end quiz
                         print("No more questions available, ending quiz")
                         QuizSessionRepository.update_session_status(active_session_id, 3)
                         safe_emit(sio, loop, 'quiz_finished', {
@@ -3858,7 +3853,6 @@ def emit_theme_selection_if_needed(sio, loop):
                             'questions_asked': quiz_state['question_count']
                         })
             elif not current_phase or (current_phase not in ['voting', 'theme_display', 'quiz'] and not is_timer_running):
-                # No phase set but theme exists - start theme display
                 set_session_phase(active_session_id, 'quiz')
                 
     except Exception as e:
