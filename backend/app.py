@@ -11,7 +11,7 @@ from threading import Thread, Event, Lock
 import socket
 # Import the new ThemeRepository
 from fastapi.responses import HTMLResponse,JSONResponse
-from database.datarepository import QuestionRepository, AnswerRepository, ThemeRepository,UserRepository, IpAddressRepository, UserIpAddressRepository,QuizSessionRepository,SensorDataRepository,QuizSessionsRepository,AuditLogRepository,PlayerItemRepository,ItemRepository,ChatLogRepository,SessionPlayerRepository,PlayerAnswerRepository
+from database.datarepository import QuestionRepository, AnswerRepository, ThemeRepository,UserRepository, IpAddressRepository, UserIpAddressRepository,QuizSessionRepository,SensorDataRepository,AuditLogRepository,PlayerItemRepository,ItemRepository,ChatLogRepository,SessionPlayerRepository,PlayerAnswerRepository
 from models.models import (
     QuestionBase, QuestionCreate, QuestionResponse, QuestionUpdate,
     QuestionStatusUpdate, ErrorNotFound, QuestionWithAnswers,
@@ -21,7 +21,7 @@ from models.models import (
     QuestionActivationNotification,
     AnswerBase, AnswerCreate, AnswerListResponse, AnswerResponse, 
     AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand,BroadcastMessage,DirectMessage, ClientActivity,SessionSensorData,MultiSessionSensorResponse,UserUpdateNames,UserCredentials,AnswerInput,QuestionInput, ThemeInput,
-    UserPublic,UserPublicWithIp,UserIpAddress,BanIpRequest,AuditLogResponse,ChatMessage,ChatMessageCreate
+    UserPublic,UserPublicWithIp,UserIpAddress,BanIpRequest,AuditLogResponse,ChatMessage,ChatMessageCreate,ShutdownRequest
 )
 from typing import Dict, Any, Optional, List
 from fastapi import Request
@@ -889,8 +889,12 @@ async def appeal_ban(payload: AppealPayload, request: Request):
 
 
 @app.get("/api/v1/sensor-data", response_model=MultiSessionSensorResponse)
-async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 10, include_chat: bool = True, include_answers: bool = True):
-    requested_session_ids = [int(sid.strip()) for sid in session_ids.split(',')]
+async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1000, include_chat: bool = True, include_answers: bool = True):
+    # Convert and sort session IDs in descending order (newest first)
+    requested_session_ids = sorted(
+        [int(sid.strip()) for sid in session_ids.split(',')],
+        reverse=True
+    )
    
     response_sessions_data = []
    
@@ -902,14 +906,20 @@ async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1
         current_session_id = session_data['id']
         current_session_name = session_data['name']
        
-        # Get sensor data
+        # Get sensor data and sort by timestamp descending
         sensor_readings = SensorDataRepository.get_all_data_for_session(current_session_id)
+        # Assuming sensor_readings is a list of dictionaries with 'timestamp' key
+        sensor_readings_sorted = sorted(
+            sensor_readings,
+            key=lambda x: x.get('timestamp') or datetime.min,
+            reverse=True
+        )
        
         temperatures = []
         light_intensities = []
         servo_positions = []
        
-        for reading in sensor_readings:
+        for reading in sensor_readings_sorted:  # Process sorted readings
             timestamp = reading.get('timestamp')
             timestamp_iso = timestamp.isoformat() if timestamp else None
            
@@ -942,11 +952,16 @@ async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1
                 "value": servo_value
             })
         
-        # Get chat data if requested
+        # Get chat data if requested - sort by created_at descending
         chat_messages = []
         if include_chat:
             chat_data = ChatLogRepository.get_chat_messages_by_session(current_session_id, limit)
             if chat_data:  # Check if chat_data is not None
+                chat_data_sorted = sorted(
+                    chat_data,
+                    key=lambda x: x.get('created_at') or datetime.min,
+                    reverse=True
+                )
                 chat_messages = [
                     {
                         "id": msg.get('id'),
@@ -955,14 +970,13 @@ async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1
                         "message": msg.get('message'),
                         "created_at": msg.get('created_at').isoformat() if msg.get('created_at') else None
                     }
-                    for msg in chat_data
+                    for msg in chat_data_sorted
                 ]
         
-        # Get player answers if requested
+        # Get player answers if requested - sort by answered_at descending
         player_answers_data = []
         if include_answers:
-            # First, get all questions for this session
-            session_questions = QuestionRepository.get_questions_by_session(current_session_id)  # You might need to implement this
+            session_questions = QuestionRepository.get_questions_by_session(current_session_id)
             
             if session_questions:  # Check if session_questions is not None
                 for question in session_questions:
@@ -970,8 +984,14 @@ async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1
                     question_with_answers = PlayerAnswerRepository.get_question_with_player_answers(question_id)
                     
                     if question_with_answers and question_with_answers.get('player_answers'):
+                        # Sort player answers by answered_at descending
+                        sorted_answers = sorted(
+                            question_with_answers['player_answers'],
+                            key=lambda x: x.get('answered_at') or datetime.min,
+                            reverse=True
+                        )
                         formatted_answers = []
-                        for answer in question_with_answers['player_answers']:
+                        for answer in sorted_answers:
                             formatted_answers.append({
                                 "player_answer_id": answer.get('player_answer_id'),
                                 "sessionId": answer.get('sessionId'),
@@ -999,38 +1019,11 @@ async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1
             temperatures=temperatures,
             light_intensities=light_intensities,
             servo_positions=servo_positions,
-            chat_messages=chat_messages,  # New field
-            player_answers=player_answers_data  # New field
+            chat_messages=chat_messages,
+            player_answers=player_answers_data
         ))
    
     return MultiSessionSensorResponse(sessions=response_sessions_data)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 from fastapi import APIRouter, HTTPException, Depends, Request, Header
@@ -1138,72 +1131,343 @@ async def update_user_names(rfid_code: str, user_update: UserUpdateNames, reques
 
     return {"user_id": target_user_id}
 
-# --- Register Endpoint ---
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+async def add_user_to_active_session(user_id: int):
+    try:
+        active_session_id = get_active_session_id()
+        if not active_session_id:
+            logger.info(f"User {user_id} logged in, but no active session was found.")
+            return
+
+        active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+        if not active_session_info:
+            logger.error(f"Active session ID {active_session_id} returned no session info.")
+            return
+
+        if not SessionPlayerRepository.get_session_player(active_session_id, user_id):
+            SessionPlayerRepository.add_player_to_session(active_session_id, user_id)
+            logger.info(f"Added user {user_id} to session {active_session_id}")
+        else:
+            logger.info(f"User {user_id} is already in session {active_session_id}")
+
+    except Exception as e:
+        logger.error(f"Failed to add user {user_id} to active session: {e}", exc_info=True)
+
 @app.post("/api/v1/register", status_code=status.HTTP_201_CREATED)
 async def register_user(user_credentials: UserCredentials, request: Request):
-    # Get client IP address
-    client_ip = get_client_ip(request)
-    
-    # Check if user with this first/last name already exists
-    existing_user = UserRepository.get_user_by_name(user_credentials.first_name, user_credentials.last_name)
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="A user with this first and last name already exists. Please choose another name or login."
-        )
+    try:
+        if UserRepository.get_user_by_name(user_credentials.first_name, user_credentials.last_name):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="A user with this first and last name already exists. Please choose another name or login."
+            )
 
-    # Hash the password
-    hashed_info = UserRepository.hash_password(user_credentials.password)
+        hashed_info = UserRepository.hash_password(user_credentials.password)
+        
+        user_data = {
+            'first_name': user_credentials.first_name,
+            'last_name': user_credentials.last_name,
+            'password_hash': hashed_info['password_hash'],
+            'salt': hashed_info['salt'],
+            'userRoleId': 1,
+            'soul_points': 4,
+            'limb_points': 4,
+            'updated_by': 1
+        }
+        
+        user_id = UserRepository.create_user_with_password(user_data)
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="A critical error occurred while creating the user."
+            )
+        
+        log_user_ip_address(user_id, get_client_ip(request))
+        await add_user_to_active_session(user_id)
+        
+        logger.info(f"User '{user_credentials.first_name} {user_credentials.last_name}' registered successfully with ID: {user_id}")
+        return {"message": "User registered successfully", "user_id": user_id}
 
-    # Prepare user data for creation
-    user_data = {
-        'first_name': user_credentials.first_name,
-        'last_name': user_credentials.last_name,
-        'password_hash': hashed_info['password_hash'],
-        'salt': hashed_info['salt'],
-        'rfid_code': None, # RFID will be assigned later via the PATCH endpoint if needed
-        'userRoleId': 1, # Default to a standard player role, adjust as per your roles table
-        'soul_points': 4,
-        'limb_points': 4,
-        'updated_by': 1 # Assuming a system user ID or default
-    }
-
-    user_id = UserRepository.create_user_with_password(user_data)
-    if not user_id:
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"An unexpected error occurred during user registration: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create user."
+            detail="An unexpected server error occurred."
         )
 
-    # Log IP address for the newly created user
-    log_user_ip_address(user_id, client_ip)
-
-    return {"message": "User registered successfully", "user_id": user_id}
-
-# --- Login Endpoint ---
 @app.post("/api/v1/login")
 async def login_user(user_credentials: UserCredentials, request: Request):
-    # Get client IP address
-    client_ip = get_client_ip(request)
-    
-    user_id = UserRepository.authenticate_user(
-        user_credentials.first_name,
-        user_credentials.last_name,
-        user_credentials.password
-    )
+    try:
+        user_id = UserRepository.authenticate_user(
+            user_credentials.first_name,
+            user_credentials.last_name,
+            user_credentials.password
+        )
+        if user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid first name, last name, or password."
+            )
+        
+        log_user_ip_address(user_id, get_client_ip(request))
+        await add_user_to_active_session(user_id)
+        
+        logger.info(f"User ID {user_id} logged in successfully.")
+        return {"message": "Login successful", "user_id": user_id}
 
-    if user_id is None:
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"An unexpected error occurred during login for user '{user_credentials.first_name}': {e}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid first name, last name, or password."
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected server error occurred."
         )
 
-    # Log IP address for successful login
-    log_user_ip_address(user_id, client_ip)
+def calculate_player_score(session_id: int, user_id: int) -> int:
+    try:
+        all_answers = PlayerAnswerRepository.get_all_player_answers_for_user_in_session(session_id, user_id)
+        
+        user_score = sum(answer.get('points_earned', 0) for answer in all_answers if answer.get('points_earned'))
+        return user_score
+    
+    except Exception as e:
+        logger.error(f"Could not calculate score for user {user_id} in session {session_id}: {e}")
+        return 0
 
-    return {"message": "Login successful", "user_id": user_id}
 
-router = APIRouter()
+@sio.on('request_user_data')
+async def handle_user_data_request(sid, data):
+    try:
+        # Validate input data
+        if not data or 'user_id' not in data:
+            logger.warning(f"Invalid request data from SID {sid}: {data}")
+            await sio.emit('error', {'message': 'Missing user_id'}, room=sid)
+            return
+
+        requesting_user_id = data['user_id']
+        logger.info(f"Processing user data request from user {requesting_user_id} (SID: {sid})")
+
+        # Get active session
+        active_session_id = get_active_session_id()
+        logger.debug(f"Active session ID: {active_session_id}")
+        
+        if not active_session_id:
+            logger.info("No active session found")
+            await sio.emit('all_users_data_updated', {
+                'session_id': None,
+                'session_name': "No Active Session",
+                'players': [],
+                'total_players': 0
+            }, room=sid)
+            return
+
+        # Get session players
+        logger.debug(f"Fetching players for session {active_session_id}")
+        player_records = SessionPlayerRepository.get_session_players(active_session_id)
+        logger.debug(f"Raw players data from DB: {player_records}")
+
+        if not player_records:
+            logger.warning(f"No players found in session {active_session_id}")
+            active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+            await sio.emit('all_users_data_updated', {
+                'session_id': active_session_id,
+                'session_name': active_session_info.get('name', f'Session {active_session_id}') if active_session_info else "Unknown Session",
+                'players': [],
+                'total_players': 0,
+                'requesting_user_position': 1
+            }, room=sid)
+            return
+
+        # Process all players
+        all_players_data = []
+        logger.debug(f"Processing {len(player_records)} players")
+        
+        for player in player_records:
+            user_id = player.get('userId')  # Changed from 'user_id' to 'id'
+            if not user_id:
+                logger.warning(f"Player record missing id: {player}")
+                continue
+
+            logger.debug(f"Fetching details for user {user_id}")
+            user_details = UserRepository.get_user_by_id(user_id)
+            
+            if not user_details:
+                logger.warning(f"User {user_id} not found but exists in session {active_session_id}")
+                continue
+
+            logger.debug(f"Calculating score for user {user_id}")
+            session_score = calculate_player_score(active_session_id, user_id)
+            questions_answered = get_user_questions_answered_count(user_id, active_session_id)
+
+            player_data = {
+                'user_id': user_id,
+                'username': f"{user_details.get('first_name', '')} {user_details.get('last_name', '')}".strip(),
+                'first_name': user_details.get('first_name', ''),
+                'last_name': user_details.get('last_name', ''),
+                'soul_points': user_details.get('soul_points', 0),
+                'limb_points': user_details.get('limb_points', 0),
+                'session_score': session_score,
+                'total_questions_answered': questions_answered,
+                'is_requesting_user': user_id == requesting_user_id
+            }
+            
+            logger.debug(f"Processed player data: {player_data}")
+            all_players_data.append(player_data)
+
+        # Final response
+        active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+        response = {
+            'session_id': active_session_id,
+            'session_name': active_session_info.get('name', f'Session {active_session_id}') if active_session_info else "Unknown Session",
+            'players': all_players_data,
+            'total_players': len(all_players_data),
+            'requesting_user_position': next(
+                (i+1 for i, p in enumerate(all_players_data) if p['is_requesting_user']),
+                len(all_players_data)+1)
+        }
+
+        logger.debug(f"Final response data: {response}")
+        await sio.emit('all_users_data_updated', response, room=sid)
+        logger.info(f"Sent user data for session {active_session_id} to user {requesting_user_id}")
+
+    except Exception as e:
+        logger.error(f"Error in handle_user_data_request: {str(e)}", exc_info=True)
+        await sio.emit('error', {
+            'message': 'Failed to process user data request',
+            'details': str(e)
+        }, room=sid)
+
+
+
+
+
+
+
+
+async def get_complete_user_data(user_id: int):
+    try:
+        user_details = UserRepository.get_user_by_id(user_id)
+        if not user_details:
+            logger.warning(f"User not found: {user_id}")
+            return None
+        
+        active_session_id = get_active_session_id()
+        session_score = 0
+        
+        if active_session_id:
+            session_score = calculate_player_score(active_session_id, user_id)
+        
+        user_data = {
+            'user_id': user_id,
+            'username': f"{user_details.get('first_name', '')} {user_details.get('last_name', '')}".strip(),
+            'first_name': user_details.get('first_name', ''),
+            'last_name': user_details.get('last_name', ''),
+            'soul_points': user_details.get('soul_points', 0),
+            'limb_points': user_details.get('limb_points', 0),
+            'session_score': session_score,
+            'total_questions_answered': get_user_questions_answered_count(user_id, active_session_id),
+        }
+        
+        return user_data
+        
+    except Exception as e:
+        logger.error(f"Error retrieving complete user data for user {user_id}: {e}", exc_info=True)
+        return None
+
+async def process_answer_submission(user_id: int, question_id: int, answer_index: int):
+    try:
+        return {
+            'success': True,
+            'is_correct': True,
+            'points_earned': 10,
+            'feedback': "Answer submitted successfully!"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error processing answer submission: {e}", exc_info=True)
+        return {'success': False, 'error': 'Failed to process answer'}
+
+async def process_theme_selection(user_id: int, theme_id: int, theme_name: str):
+    try:
+        active_session_id = get_active_session_id()
+        if not active_session_id:
+            return {'success': False, 'error': 'No active session'}
+        
+        return {
+            'success': True,
+            'feedback': f"Selected theme: {theme_name}"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error processing theme selection: {e}", exc_info=True)
+        return {'success': False, 'error': 'Failed to process theme selection'}
+
+def get_user_questions_answered_count(user_id: int, session_id: int):
+    try:
+        if not session_id:
+            return 0
+        
+        answers = PlayerAnswerRepository.get_all_player_answers_for_user_in_session(session_id, user_id)
+        return len(answers) if answers else 0
+        
+    except Exception as e:
+        logger.error(f"Error getting questions answered count for user {user_id}: {e}")
+        return 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2128,13 +2392,98 @@ async def get_all_items():
         )
     
 
-# Updated endpoint
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Add endpoint to get active sessions
+@app.get("/api/v1/sessions/active")
+async def get_active_sessions():
+    """
+    Get all currently active quiz sessions.
+    """
+    try:
+        active_sessions = QuizSessionRepository.get_sessions_by_status(2)
+
+        # Check if active_sessions is a list of tuples or dictionaries
+        # Let's add a robust check and assume it's most likely dictionaries now given previous fixes
+        # Or, if it's still tuples, keep session[0].
+        # For safety, let's try to get the first element and check its type.
+        
+        # This assumes get_sessions_by_status returns at least one session if active sessions exist
+        if active_sessions and isinstance(active_sessions[0], dict):
+            # If it's a list of dictionaries, access by key
+            active_session_ids = [session['sessionId'] for session in active_sessions]
+        else:
+            # If it's a list of tuples (or empty), access by index 0 (as previously assumed)
+            active_session_ids = [session[0] for session in active_sessions]
+        
+        # Return as a dictionary with a clear key for JSON serialization
+        return {"active_session_ids": active_session_ids}
+    except Exception as e:
+        # For better debugging, log the actual exception and traceback
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.exception("Failed to retrieve active sessions due to an unexpected error.")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve active sessions"
+        )
+
+
+import logging # Import the logging module
+
+# Configure basic logging. This will show INFO messages and above.
+# The 'logger.exception()' calls will print a full traceback.
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Assume ChatMessageCreate, QuizSessionRepository, ChatLogRepository, and sio are imported and defined
+
+user_last_request_time = {}
+RATE_LIMIT_SECONDS = 0.25
+
 @app.post("/api/v1/chat/messages")
 async def create_chat_message(request: ChatMessageCreate):
     """
-    Create a new chat message in the database.
+    Create a new chat message in the database and broadcast it via Socket.IO.
     """
     try:
+        current_time = time.time()
+        user_id = request.user_id
+
+        if user_id in user_last_request_time:
+            if current_time - user_last_request_time[user_id] < RATE_LIMIT_SECONDS:
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail=f"Please wait {RATE_LIMIT_SECONDS} second(s) before sending another message."
+                )
+        user_last_request_time[user_id] = current_time
+
+        logger.info("Starting create_chat_message endpoint.")
+        
+        active_sessions = QuizSessionRepository.get_sessions_by_status(2)
+        active_session_ids = [session[0] for session in active_sessions]
+        logger.info(f"Active session IDs: {active_session_ids}")
+        
+        if request.session_id not in active_session_ids:
+            logger.warning(f"Session {request.session_id} not found in active sessions.")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Session is not active or does not exist"
+            )
+
+        logger.info("Attempting to create chat message in DB.")
         message_id = ChatLogRepository.create_chat_message(
             session_id=request.session_id,
             message_text=request.message_text,
@@ -2142,35 +2491,218 @@ async def create_chat_message(request: ChatMessageCreate):
             message_type=request.message_type,
             reply_to_id=request.reply_to_id
         )
-        return {"message_id": message_id}
+        
+        if message_id is None:
+            logger.error("Message ID is None after create_chat_message. Database insertion might have failed.")
+            raise Exception("Failed to create message: message_id is None")
+
+        logger.info(f"Message created successfully with ID: {message_id}")
+
+        logger.info("Emitting 'message_sent' globally via Socket.IO.")
+        await sio.emit('message_sent', {
+            'session_id': request.session_id
+        })
+        
+        logger.info("Global Socket.IO emit completed successfully.")
+
+        return {
+            "message_id": message_id,
+            "status": "sent",
+            "broadcast": True
+        }
+        
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.exception(f"Unhandled exception in create_chat_message: {e}")
+        print(f"Error creating chat message: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create chat message"
         )
 
-# Endpoint for getting chat messages by session
+
+# Updated endpoint for getting chat messages by session
 @app.get("/api/v1/chat/messages/{session_id}")
-async def get_chat_messages_by_session(session_id: int, limit: int = 100):
-    """
-    Get chat messages for a specific session.
-    """
+async def get_chat_messages(session_id: int) -> Dict[str, List[Dict]]:
     try:
-        messages = ChatLogRepository.get_chat_messages_by_session(
-            session_id=session_id,
-            limit=limit
-        )
-        return {"messages": messages}
+        messages = ChatLogRepository.get_chat_messages_by_session(session_id)
+        formatted_messages = []
+        for msg in messages:
+            formatted_messages.append({
+                "username": msg.get("username", "Unknown User"),
+                "message": msg.get("message", ""),
+                "is_flagged": msg.get("is_flagged", False),
+                "flagged_by": msg.get("flagged_by"),
+                "flagged_reason": msg.get("flagged_reason")
+            })
+        return {"messages": formatted_messages}
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve chat messages"
         )
 
+# New endpoint to get chat statistics for a session
+@app.get("/api/v1/chat/stats/{session_id}")
+async def get_chat_stats(session_id: int):
+    """
+    Get chat statistics for a specific session.
+    """
+    try:
+        # Verify the session is active
+        active_sessions = QuizSessionRepository.get_sessions_by_status(2)
+        active_session_ids = [session['sessionId'] for session in active_sessions]
+        
+        if session_id not in active_session_ids:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Session is not active or does not exist"
+            )
+
+        # Call the new get_chat_statistics method from the repository
+        stats = ChatLogRepository.get_chat_statistics(session_id)
+        
+        return {
+            "session_id": session_id,
+            "stats": stats,
+            "is_active": True
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve chat statistics"
+        )
+
+# Socket.IO event handlers for enhanced chat functionality
+@sio.on('join')
+async def join_room(sid, room_name):
+    await sio.enter_room(sid, room_name)
+    print(f"Client {sid} joined room: {room_name}")
+    return {'status': 'success'} # Send acknowledgment back to client
+
+@sio.event
+async def user_left_quiz(sid, data):
+    """
+    Handle when a user leaves a quiz session.
+    """
+    try:
+        session_id = data.get('sessionId')
+        user_id = data.get('userId')
+        username = data.get('username')
+        
+        if not all([session_id, user_id, username]):
+            return False
+            
+        # Leave the quiz session room
+        await sio.leave_room(sid, f'quiz_session_{session_id}')
+        await sio.leave_room(sid, 'quiz_general')
+        
+        # Broadcast that user left
+        await sio.emit('user_left_chat', {
+            'userId': user_id,
+            'username': username,
+            'sessionId': session_id,
+            'timestamp': datetime.now().isoformat()
+        }, room=f'quiz_session_{session_id}')
+        
+        # Log the leave event
+        ChatLogRepository.create_chat_message(
+            session_id=session_id,
+            message_text=f"{username} left the quiz",
+            user_id=user_id,
+            message_type="system"
+        )
+        
+        return True
+        
+    except Exception as e:
+        print(f"Error in user_left_quiz: {e}")
+        return False
+
+@sio.event
+async def disconnect(sid):
+    """
+    Handle client disconnection.
+    """
+    print(f"Client {sid} disconnected")
+
+# Additional endpoint to broadcast system messages
+@app.post("/api/v1/chat/system-message")
+async def send_system_message(session_id: int, message: str, message_type: str = "system"):
+    """
+    Send a system message to all users in a quiz session.
+    """
+    try:
+        # Verify the session is active
+        active_sessions = QuizSessionRepository.get_sessions_by_status(2)
+        active_session_ids = [session['sessionId'] for session in active_sessions]
+        
+        if session_id not in active_session_ids:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Session is not active or does not exist"
+            )
+
+        # Create system message in database
+        message_id = ChatLogRepository.create_chat_message(
+            session_id=session_id,
+            message_text=message,
+            user_id=0,  # System user ID
+            message_type=message_type
+        )
+
+        # Broadcast the system message
+        await sio.emit('new_chat_message', {
+            'messageId': message_id,
+            'sessionId': session_id,
+            'sender': 'System',
+            'message': message,
+            'userId': 0,
+            'messageType': message_type,
+            'timestamp': datetime.now().isoformat()
+        }, room=f'quiz_session_{session_id}')
+
+        return {
+            "message_id": message_id,
+            "status": "sent",
+            "broadcast": True
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send system message"
+        )
+
+import subprocess
+from fastapi import Body,Request
 
 
 
 
+@app.post("/api/shutdown")
+async def immediate_shutdown(
+    x_user_id: str = Header(..., alias="X-User-ID"),
+    x_rfid: str = Header(..., alias="X-RFID")
+):
+    # Verify admin privileges
+    if not verify_user(x_user_id, x_rfid) == "admin":
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+    
+    # Execute IMMEDIATE shutdown (no delay)
+    try:
+        subprocess.Popen(["sudo", "poweroff"], 
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL)
+        return {"message": "System powering off NOW"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Shutdown failed: {str(e)}")
 
 
 
@@ -2239,7 +2771,7 @@ servo_command_queue = queue.Queue()
 
 # Constants (re-declare or import if they were in a separate config for the Pi script)
 REFRESH_INTERVAL = 1  # seconds
-RFID_DISPLAY_TIME = 6  # seconds to display RFID code (matches RFID cooldown)
+RFID_DISPLAY_TIME = 20  # seconds to display RFID code (matches RFID cooldown)
 SERVO_IDLE_ANGLE = 90  # Neutral position when idle
 
 def get_ip_address():
@@ -2260,303 +2792,196 @@ def format_second_row(temp, lux, angle):
 def format_second_row(temp, lux, angle):
     return f"{temp:.1f}C {lux:.0f}L {angle}deg"
 
+
+
+
+# --- Global Variables and Constants ---
+servo = None
+temp_sensor = None
+light_sensor = None
+RPI_COMPONENTS_AVAILABLE = True  # Placeholder
+SERVO_IDLE_ANGLE = 90
+RFID_DISPLAY_TIME = 20
+REFRESH_INTERVAL = 1
+servo_command_queue = queue.Queue() # Assuming this is defined elsewhere
+
+# --- RFID Reader Thread ---
+def rfid_reader_thread(rfid_sensor, rfid_queue, stop_event):
+    """
+    This function runs in a dedicated thread to continuously read from the RFID sensor.
+    It puts any detected card UIDs into a thread-safe queue.
+    
+    Args:
+        rfid_sensor: The initialized RFID sensor object.
+        rfid_queue (queue.Queue): The queue to place scanned UIDs into.
+        stop_event (threading.Event): The event to signal when the thread should stop.
+    """
+    print("RFID reader thread started.")
+    while not stop_event.is_set():
+        try:
+            # This is a blocking call, but it's now in its own thread.
+            uid = rfid_sensor.read_card()
+            if uid:
+                rfid_queue.put(str(uid)) # Add the scanned UID to the queue
+        except Exception as e:
+            print(f"Error in RFID reader thread: {e}")
+            # Avoid rapid-fire error logging on persistent hardware failure
+            time.sleep(2)
+    print("RFID reader thread finished.")
+
+# --- Main Raspberry Pi Thread ---
 def raspberry_pi_main_thread(stop_event, sio, loop):
+    global servo, light_sensor, temp_sensor
     if not RPI_COMPONENTS_AVAILABLE:
         print("Skipping Raspberry Pi thread start due to component import errors.")
         return
 
     # Initialize components
-    lcd = None
-    rfid = None
-    servo = None
-    temp_sensor = None
-    light_sensor = None
+    lcd, rfid, temp_sensor, light_sensor, servo = (None,) * 5
+    rfid_thread = None
+
     try:
         lcd = LCD1602A()
         rfid = HardcoreRFID()
-        servo = ServoMotor()
         temp_sensor = TemperatureSensor()
         light_sensor = LightSensor()
+        servo = ServoMotor()
+        
+        # Create a thread-safe queue for RFID data
+        rfid_queue = queue.Queue()
+
+        # Create and start the dedicated RFID reader thread
+        rfid_thread = Thread(
+            target=rfid_reader_thread, 
+            args=(rfid, rfid_queue, stop_event),
+            daemon=True
+        )
+        rfid_thread.start()
+
     except Exception as e:
         print(f"Failed to initialize Raspberry Pi components in thread: {e}")
         print(traceback.format_exc())
         stop_event.set()
         return
 
-    # Initial positions
+    # Initial positions and state
     if servo:
         servo.set_angle(SERVO_IDLE_ANGLE)
-    current_angle = SERVO_IDLE_ANGLE
-
-    # State variables
     last_refresh = 0
     rfid_display_start = 0
     showing_rfid = False
-    rfid_code = ""
-
-    # Initial display setup
+    
     if lcd:
         lcd.clear()
         ip_address = get_ip_address()
         lcd.write_line(0, ip_address[:16])
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#main quiz logic, this is where the questions are send to the frontend
     try:
         while not stop_event.is_set():
             current_time = time.time()
-            # --- Check for active Quiz Session ---
+
+            # --- Step 1: Check for new RFID scans from the queue ---
             try:
-                active_sessions = QuizSessionRepository.get_active_sessions()
-               
-               
-               
-                if active_sessions:
-                    try:
-                        if temp_sensor and light_sensor and servo:
-                            active_sessions = QuizSessionRepository.get_active_sessions()
-                           
-                            if active_sessions and should_update_quiz_session(current_time):
-                                session_id = get_active_session_id()
-                                sensor_data = read_sensor_data(temp_sensor, light_sensor, servo)
-                               
-                                log_quiz_sensor_data(session_id, sensor_data)
-                                emit_sensor_data(sensor_data, sio, loop)
-                                                    # Manage RFID display time
-                                if showing_rfid and (current_time - rfid_display_start) >= RFID_DISPLAY_TIME:
-                                    showing_rfid = False
-                                    if lcd:
-                                        lcd.clear()
-                                        lcd.write_line(0, ip_address[:16])
-                                    last_refresh = 0
-                                # Update LCD with sensor data during quiz
-                                if lcd and not showing_rfid:
-                                    temp = temp_sensor.read_temperature()
-                                    lux = light_sensor()
-                                    current_angle = servo.read_degrees()
-                                    lcd.write_line(1, format_second_row(temp, lux, current_angle)[:16])
-                                    if rfid:
-                                        uid = rfid.read_card()
-                                        if uid:
-                                            rfid_code = uid
-                                            rfid_display_start = current_time
-                                            showing_rfid = True
-                                            print(f"RFID Scanned: {rfid_code}")
-                                            if lcd:
-                                                lcd.write_line(1, f"RFID:{rfid_code}")
+                # Check the queue for a newly scanned card (non-blocking)
+                rfid_code = rfid_queue.get_nowait()
+                
+                showing_rfid = True
+                rfid_display_start = current_time
 
-                                            # User creation logic
-                                            existing_user = UserRepository.get_user_by_rfid(rfid_code)
-                                            print(existing_user)
-                                            if existing_user:
-                                                print(f"User with RFID {rfid_code} found: {existing_user['first_name']} {existing_user['last_name']}")
-                                            else:
-                                                print(f"No user found for RFID {rfid_code}. Creating new 'open' user.")
-                                                open_user_data = {
-                                                    'last_name': 'Open',
-                                                    'first_name': 'Open',
-                                                    'password': 'temp_password_for_open_user',
-                                                    'rfid_code': rfid_code,
-                                                    'userRoleId': 2,
-                                                    'soul_points': 4,
-                                                    'limb_points': 4,
-                                                    'updated_by': 1
-                                                }
-                                                
-                                                new_user_id = UserRepository.create_user(open_user_data)
-                                                if new_user_id:
-                                                    print(f"Created new user with ID: {new_user_id} and RFID: {rfid_code}")
-                                                    if lcd:
-                                                        lcd.write_line(2, "New user created!")
-                                                else:
-                                                    print(f"Failed to create new user for RFID: {rfid_code}")
-                                                    if lcd:
-                                                        lcd.write_line(2, "User creation failed!")
-                               
-
-
-                    
-                    except Exception as e:
-                        print(f"Error in quiz session sensor handling: {e}")
-                    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                # Centralized logic to handle the RFID scan
+                if lcd:
+                    lcd.clear()
+                    lcd.write_line(0, f"RFID:{rfid_code[:16]}")
+                
+                existing_user = UserRepository.get_user_by_rfid(rfid_code)
+                if existing_user:
+                    if lcd:
+                        name_line = f"{existing_user['first_name']} {existing_user['last_name']}"
+                        lcd.write_line(1, name_line[:16])
                 else:
-                    # --- NORMAL OPERATION LOGIC (No active quiz session) ---
-                    
-                    # RFID Logic
-                    if not showing_rfid:
-                        if rfid:
-                            uid = rfid.read_card()
-                            if uid:
-                                rfid_code = uid
-                                rfid_display_start = current_time
-                                showing_rfid = True
-                                print(f"RFID Scanned: {rfid_code}")
-                                if lcd:
-                                    lcd.write_line(1, f"RFID:{rfid_code}")
+                    open_user_data = {
+                        'last_name': 'Open', 'first_name': 'Open',
+                        'password': 'temp_password_for_open_user', 'rfid_code': rfid_code,
+                        'userRoleId': 2, 'soul_points': 4, 'limb_points': 4, 'updated_by': 1
+                    }
+                    new_user_id = UserRepository.create_user(open_user_data)
+                    if lcd:
+                        if new_user_id:
+                            print(f"Created user ID: {new_user_id}")
+                            lcd.write_line(1, "New user created!")
+                        else:
+                            print("User creation failed!")
+                            lcd.write_line(1, "Creation failed!")
+            
+            except queue.Empty:
+                # This is normal; it just means no new card has been scanned.
+                pass
+            except Exception as e:
+                print(f"Error processing RFID from queue: {e}")
 
-                                # User creation logic
-                                existing_user = UserRepository.get_user_by_rfid(rfid_code)
-                                print(existing_user)
-                                if existing_user:
-                                    print(f"User with RFID {rfid_code} found: {existing_user['first_name']} {existing_user['last_name']}")
-                                else:
-                                    print(f"No user found for RFID {rfid_code}. Creating new 'open' user.")
-                                    open_user_data = {
-                                        'last_name': 'Open',
-                                        'first_name': 'Open',
-                                        'password': 'temp_password_for_open_user',
-                                        'rfid_code': rfid_code,
-                                        'userRoleId': 2,
-                                        'soul_points': 4,
-                                        'limb_points': 4,
-                                        'updated_by': 1
-                                    }
-                                    
-                                    new_user_id = UserRepository.create_user(open_user_data)
-                                    if new_user_id:
-                                        print(f"Created new user with ID: {new_user_id} and RFID: {rfid_code}")
-                                        if lcd:
-                                            lcd.write_line(2, "New user created!")
-                                    else:
-                                        print(f"Failed to create new user for RFID: {rfid_code}")
-                                        if lcd:
-                                            lcd.write_line(2, "User creation failed!")
 
-                    # Manage RFID display time
-                    if showing_rfid and (current_time - rfid_display_start) >= RFID_DISPLAY_TIME:
-                        showing_rfid = False
-                        if lcd:
-                            lcd.clear()
-                            lcd.write_line(0, ip_address[:16])
-                        last_refresh = 0
+            # --- Step 2: Handle Display and Sensor Logic ---
+            
+            # Reset display after showing RFID info for a few seconds
+            if showing_rfid and (current_time - rfid_display_start) >= RFID_DISPLAY_TIME:
+                showing_rfid = False
+                if lcd:
+                    lcd.clear()
+                    lcd.write_line(0, ip_address[:16])
+                last_refresh = 0 # Force immediate refresh of sensor data
 
-                    # Update normal display at regular intervals
-                    if not showing_rfid and (current_time - last_refresh) >= REFRESH_INTERVAL:
-                        try:
-                            if temp_sensor and light_sensor and servo and lcd:
-                                temp = temp_sensor.read_temperature()
-                                lux = light_sensor()
-                                current_angle = servo.read_degrees()
-                                lcd.write_line(1, format_second_row(temp, lux, current_angle)[:16])
-                                last_refresh = current_time
-                                
-                                sensor_data_to_emit = {
-                                    'temperature': temp,
-                                    'illuminance': lux,
-                                    'servo_angle': current_angle,
-                                }   
-                                try:
-                                    asyncio.run_coroutine_threadsafe(
-                                        sio.emit('sensor_data', sensor_data_to_emit),
-                                        loop 
-                                    )
-                                except Exception as e:
-                                    print(f"Error emitting sensor_data from thread: {e}")
+            # Update sensor display if not showing RFID info
+            if not showing_rfid and (current_time - last_refresh) >= REFRESH_INTERVAL:
+                try:
+                    if all((temp_sensor, light_sensor, servo, lcd)):
+                        temp = temp_sensor.read_temperature()
+                        lux = light_sensor()
+                        current_angle = servo.read_degrees()
+                        lcd.write_line(1, format_second_row(temp, lux, current_angle)[:16])
+                        last_refresh = current_time
+                        
+                        # Emit sensor data (whether quiz is active or not)
+                        sensor_data = {'temperature': temp, 'illuminance': lux, 'servo_angle': current_angle}
+                        emit_sensor_data(sensor_data, sio, loop)
 
-                        except Exception as e:
-                            print(f"Sensor read error: {e}")
-                            if lcd:
-                                lcd.write_line(1, "Sensor Error")
-                            last_refresh = current_time
+                except Exception as e:
+                    print(f"Sensor read/display error: {e}")
+                    if lcd:
+                        lcd.write_line(1, "Sensor Error")
+                    last_refresh = current_time
 
-                    # Handle Servo Commands from Queue (normal operation)
-                    try:
-                        command = servo_command_queue.get(block=False)
-                        if command == "SWEEP_SERVO":
-                            print("Received SWEEP_SERVO command.")
-                            if servo and lcd and temp_sensor and light_sensor:
-                                sweep_start_time = time.time()
-                                sweep_duration = 1.0
-                                start_angle = 0
-                                end_angle = 180
-
-                                while (time.time() - sweep_start_time < sweep_duration) and not stop_event.is_set():
-                                    elapsed = time.time() - sweep_start_time
-                                    progress = elapsed / sweep_duration
-                                    if progress > 1.0:
-                                        progress = 1.0
-
-                                    raw_angle = start_angle + (end_angle - start_angle) * progress
-                                    angle = round(raw_angle / 5) * 5
-
-                                    servo.set_angle(angle)
-                                    temp = temp_sensor.read_temperature()
-                                    lux = light_sensor()
-                                    current_degrees = servo.read_degrees()
-                                    lcd.write_line(1, format_second_row(temp, lux, current_degrees)[:16])
-                                    
-                                    sensor_data_to_emit = {
-                                        'temperature': temp,
-                                        'illuminance': lux,
-                                        'servo_angle': current_degrees,
-                                    }   
-                                    try:
-                                        asyncio.run_coroutine_threadsafe(
-                                            sio.emit('sensor_data', sensor_data_to_emit),
-                                            loop 
-                                        )
-                                    except Exception as e:
-                                        print(f"Error emitting sensor_data from thread: {e}")
-
-                                if not stop_event.is_set():
-                                    servo.set_angle(180)
-                                    time.sleep(0.1)
-                                    servo.set_angle(SERVO_IDLE_ANGLE)
-                                    current_angle = servo.read_degrees()
-
-                                print("Servo sweep complete.")
-                                if lcd:
-                                    lcd.clear()
-                                    lcd.write_line(0, ip_address[:16])
-                                    last_refresh = 0
-                    except queue.Empty:
-                        pass
-                    except Exception as e:
-                        print(f"Error processing servo command: {e}")
-                        print(traceback.format_exc())
+            # --- Step 3: Handle Quiz Session Specific Logic ---
+            try:
+                active_sessions = QuizSessionRepository.get_sessions_by_status(2)
+                if active_sessions:
+                    # Logic specific to an active quiz can be placed here
+                    # For example, logging sensor data to the quiz session
+                    if should_update_quiz_session(current_time):
+                        session_id = get_active_session_id()
+                        sensor_data = read_sensor_data(temp_sensor, light_sensor, servo)
+                        log_quiz_sensor_data(session_id, sensor_data)
+                        emit_theme_selection_if_needed(sio, loop)
+                else:
+                    # Logic for when no quiz is active
+                    # This could involve processing servo commands from a queue, etc.
+                    pass # Most of the "normal" logic is already handled above
 
             except Exception as e:
-                print(f"Error checking active quiz sessions: {e}")
+                print(f"Error in quiz session logic block: {e}")
 
-            time.sleep(0.05)
+            time.sleep(0.05) # Main loop delay
 
     except Exception as e:
         print(f"Fatal error in Pi thread: {e}")
         print(traceback.format_exc())
     finally:
         print("Pi thread cleanup initiated.")
+        stop_event.set() # Signal all threads to stop
+        
+        if rfid_thread and rfid_thread.is_alive():
+            print("Waiting for RFID thread to finish...")
+            rfid_thread.join(timeout=2) # Wait for the thread to terminate
+
         try:
             if servo:
                 servo.set_angle(SERVO_IDLE_ANGLE)
@@ -2568,6 +2993,16 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
             print("Pi thread cleanup complete.")
         except Exception as e:
             print(f"Pi thread cleanup error: {e}")
+
+# Helper functions to be defined elsewhere
+def emit_sensor_data(sensor_data, sio, loop):
+    try:
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('sensor_data', sensor_data),
+            loop
+        )
+    except Exception as e:
+        print(f"Error emitting sensor_data from thread: {e}")
 
 servo_lock = Lock()
 last_servo_command_time = 0.0 # Stores the Unix timestamp (seconds since epoch) of the last command
@@ -2727,10 +3162,6 @@ def should_update_quiz_session(current_time):
         return True
     return False
 
-def get_active_session_id():
-    """Get the ID of the first active session."""
-    active_sessions = QuizSessionRepository.get_active_sessions()
-    return active_sessions[0][0] if active_sessions else None  # Access first column of first row
 
 def read_sensor_data(temp_sensor, light_sensor, servo):
     """Read all sensor values with proper temperature validation."""
@@ -2789,6 +3220,1013 @@ def emit_sensor_data(sensor_data, sio, loop):
 def activateAdvertFlood():
     """Call this function to trigger the 60-second ad flood on all clients"""
     sio.emit('B2F_addItem', {}, broadcast=True)
+
+
+
+# sio emits for quiz data
+
+import asyncio
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ---------- Modular Quiz Timer System with Servo Integration ----------
+from collections import defaultdict
+from threading import Lock, Thread
+import random
+import time
+import asyncio
+import traceback
+
+# Global state management
+theme_votes = {}  # Format: {session_id: {"votes": {theme_id: count}, "user_votes": {user_id: theme_id}}}
+quiz_sessions = {}  # Format: {session_id: {"phase": "voting/theme_display/quiz", "current_question": None, ...}}
+quiz_state = {}  # Format: {session_id: {"asked_questions": [], "question_count": 0, "total_score": 0, "player_count": 0}}
+theme_votes_lock = Lock()
+timer_lock = Lock()
+session_lock = Lock()
+quiz_state_lock = Lock()
+active_timers = {}
+
+# Global servo variable (assumed to be initialized elsewhere)
+# servo = ServoController()  # This should be initialized in your main application
+
+def is_timer_active(session_id):
+    with timer_lock:
+        timer_thread = active_timers.get(session_id)
+        return timer_thread.is_alive() if timer_thread else False
+
+
+def select_question_based_on_sensors(available_questions, temp_sensor, light_sensor):
+    sensor_data = check_sensor_data(temp_sensor, light_sensor)
+    temp = sensor_data['temperature']
+    light = sensor_data['illuminance']
+
+    def get_bound(q, key, default):
+        value = q.get(key)
+        return default if value is None else value
+
+    filtered = [
+        q for q in available_questions
+        if (get_bound(q, 'TempMin', 0) <= temp <= get_bound(q, 'TempMax', 30))
+        and (get_bound(q, 'LightMin', 0) <= light <= get_bound(q, 'LightMax', 30))
+    ]
+
+    return random.choice(filtered or available_questions) if available_questions else None
+
+
+
+
+
+def get_active_session_id():
+    """Get the ID of the first active session."""
+    active_sessions = QuizSessionRepository.get_sessions_by_status(2)
+    return active_sessions[0][0] if active_sessions else None  # Access first column of first row
+
+def get_winning_theme(session_id):
+    """Returns random top theme in case of tie"""
+    with theme_votes_lock:
+        session_data = theme_votes.get(session_id, {})
+        votes = session_data.get("votes", {})
+        if not votes:
+            return None
+        max_votes = max(votes.values())
+        top_themes = [theme_id for theme_id, count in votes.items() if count == max_votes]
+        return random.choice(top_themes)
+
+def get_session_phase(session_id):
+    """Get current phase of a session"""
+    with session_lock:
+        return quiz_sessions.get(session_id, {}).get('phase', 'voting')
+
+def set_session_phase(session_id, phase):
+    """Set current phase of a session"""
+    with session_lock:
+        if session_id not in quiz_sessions:
+            quiz_sessions[session_id] = {}
+        quiz_sessions[session_id]['phase'] = phase
+
+def get_quiz_state(session_id):
+    """Get quiz state for a session"""
+    with quiz_state_lock:
+        if session_id not in quiz_state:
+            quiz_state[session_id] = {
+                "asked_questions": [],
+                "question_count": 0,
+                "total_score": 0,
+                "player_count": 0,
+                "current_question": None,
+                "waiting_for_answers": False
+            }
+        return quiz_state[session_id]
+
+def update_quiz_state(session_id, **kwargs):
+    """Update quiz state for a session"""
+    with quiz_state_lock:
+        if session_id not in quiz_state:
+            quiz_state[session_id] = {
+                "asked_questions": [],
+                "question_count": 0,
+                "total_score": 0,
+                "player_count": 0,
+                "current_question": None,
+                "waiting_for_answers": False
+            }
+        quiz_state[session_id].update(kwargs)
+
+def move_servo_smoothly(start_angle, end_angle, duration, reverse=False):
+    """
+    Move servo smoothly from start_angle to end_angle over duration seconds
+    reverse=True means we're going backwards (post-timer)
+    """
+    try:
+        if 'servo' not in globals():
+            print("Warning: servo not available")
+            return
+            
+        steps = max(1, duration)  # At least 1 step
+        sleep_time = duration / steps
+        
+        for i in range(steps + 1):
+            progress = i / steps
+            if reverse:
+                # For post-timer, reverse the progress calculation
+                progress = 1 - progress
+                
+            raw_angle = start_angle + (end_angle - start_angle) * progress
+            angle = round(raw_angle / 5) * 5  # Round to nearest 5 degrees
+            servo.set_angle(angle)
+            
+            if i < steps:  # Don't sleep after the last step
+                time.sleep(sleep_time)
+                
+    except Exception as e:
+        print(f"Servo movement error: {e}")
+
+def emit_timer_update(sio, loop, session_id, time_remaining, phase, total_time, **extra_data):
+    """
+    Emit both timer_update and quiz_timer events for frontend compatibility
+    Also handle servo movement during timer
+    """
+    try:
+        # Calculate servo position (0 degrees at start, 180 degrees at end)
+        if total_time > 0:
+            progress = (total_time - time_remaining) / total_time
+            raw_angle = 0 + (180 - 0) * progress
+            angle = round(raw_angle / 5) * 5
+            
+            if 'servo' in globals():
+                servo.set_angle(angle)
+        
+        # Prepare timer data
+        timer_data = {
+            'session_id': session_id,
+            'time_remaining': time_remaining,
+            'phase': phase,
+            'total_time': total_time,
+            **extra_data
+        }
+        
+        # Emit both events for compatibility
+        future1 = asyncio.run_coroutine_threadsafe(
+            sio.emit('timer_update', timer_data),
+            loop
+        )
+        future2 = asyncio.run_coroutine_threadsafe(
+            sio.emit('quiz_timer', timer_data),
+            loop
+        )
+        
+        # Wait for both emissions to complete
+        future1.result(timeout=1)
+        future2.result(timeout=1)
+        
+    except Exception as e:
+        print(f"Error emitting timer update: {e}")
+
+def emit_timer_finished(sio, loop, session_id, phase, **extra_data):
+    """
+    Emit timer finished events and handle post-timer servo movement
+    """
+    try:
+        # Post-timer servo movement (180 to 0 degrees, reverse direction)
+        thread = Thread(target=move_servo_smoothly, args=(180, 0, 2, True), daemon=True)
+        thread.start()
+        
+        # Prepare finish data
+        finish_data = {
+            'session_id': session_id,
+            'phase': phase,
+            **extra_data
+        }
+        
+        # Emit both events for compatibility
+        future1 = asyncio.run_coroutine_threadsafe(
+            sio.emit('timer_finished', finish_data),
+            loop
+        )
+        future2 = asyncio.run_coroutine_threadsafe(
+            sio.emit('quiz_timer_finished', finish_data),
+            loop
+        )
+        
+        # Wait for both emissions to complete
+        future1.result(timeout=1)
+        future2.result(timeout=1)
+        
+    except Exception as e:
+        print(f"Error emitting timer finished: {e}")
+
+def start_generic_timer(sio, loop, session_id, timer_config):
+    """
+    Generic timer function that handles different phases
+    timer_config: {
+        'voting_time': 60,
+        'theme_display_time': 10,
+        'question_time': 10,
+        'explanation_time': 5
+    }
+    """
+    with timer_lock:
+        if session_id in active_timers:
+            return False  # Timer already running
+        
+        def timer_task():
+            try:
+                current_phase = get_session_phase(session_id)
+                print(f"Starting timer for session {session_id}, phase: {current_phase}")
+                
+                if current_phase == 'voting':
+                    handle_voting_phase(sio, loop, session_id, timer_config.get('voting_time', 60))
+                elif current_phase == 'theme_display':
+                    handle_theme_display_phase(sio, loop, session_id, timer_config.get('theme_display_time', 10))
+                elif current_phase == 'quiz':
+                    handle_quiz_phase(sio, loop, session_id, timer_config)
+                    
+            except Exception as e:
+                print(f"Timer error for session {session_id}: {e}")
+                traceback.print_exc()
+            finally:
+                with timer_lock:
+                    active_timers.pop(session_id, None)
+        
+        # Start timer thread
+        timer_thread = Thread(target=timer_task, daemon=True)
+        active_timers[session_id] = timer_thread
+        timer_thread.start()
+        return True
+
+def handle_voting_phase(sio, loop, session_id, voting_time):
+    """Handle the voting countdown phase"""
+    print(f"Starting voting phase for session {session_id}")
+    
+    # Emit voting phase start
+    future = asyncio.run_coroutine_threadsafe(
+        sio.emit('phase_started', {
+            'session_id': session_id,
+            'phase': 'voting',
+            'duration': voting_time
+        }),
+        loop
+    )
+    future.result(timeout=1)
+    
+    # Reset servo to start position
+    if 'servo' in globals():
+        servo.set_angle(0)
+    
+    # Voting countdown with servo movement
+    for current_time in range(voting_time, -1, -1):
+        emit_timer_update(sio, loop, session_id, current_time, 'voting', voting_time)
+        
+        if current_time <= 0:
+            break
+        time.sleep(1)
+    
+    # Emit timer finished
+    emit_timer_finished(sio, loop, session_id, 'voting')
+    
+    # Process voting results
+    winning_theme = get_winning_theme(session_id)
+    print(f"Voting finished for session {session_id}, winning theme: {winning_theme}")
+    
+    if winning_theme:
+        # Update session theme in database immediately
+        success = QuizSessionRepository.update_session_theme(session_id, winning_theme)
+        print(f"Database update result: {success}")
+        
+        if success:
+            # Move to theme display phase
+            set_session_phase(session_id, 'theme_display')
+            
+            # Get the winning theme data
+            winning_theme_data = ThemeRepository.get_theme_by_id(winning_theme)
+            winning_theme_name = winning_theme_data['name']
+
+            # Structure the data to exactly match theme_selection format
+            combined_data = {
+                'id': 'voting_result',
+                'question': f'The winning theme is: {winning_theme_name}',
+                'type': 'theme_selection',
+                'themes': [{
+                    'id': winning_theme_data['id'],
+                    'name': winning_theme_data['name'],
+                    'description': winning_theme_data.get('description', ''),
+                    'logoUrl': winning_theme_data.get('logoUrl', None),
+                    'is_active': winning_theme_data.get('is_active', 1)
+                }],
+                'count': 1,
+                'active_only': True,  # Assuming we want only active themes
+                'timestamp': time.time(),
+                'winning_theme': winning_theme,  # Additional voting-specific field
+                'session_id': session_id  # Additional voting-specific field
+            }
+
+            future = asyncio.run_coroutine_threadsafe(
+                sio.emit('questionData', combined_data),
+                loop
+        )
+            future.result(timeout=1)
+            
+            # Continue to theme display phase immediately
+            handle_theme_display_phase(sio, loop, session_id, 10)
+        else:
+            emit_error(sio, loop, session_id, 'Failed to save theme selection')
+    else:
+        emit_error(sio, loop, session_id, 'No theme was selected')
+    
+    # Cleanup votes
+    with theme_votes_lock:
+        if session_id in theme_votes:
+            del theme_votes[session_id]
+
+def handle_theme_display_phase(sio, loop, session_id, display_time):
+    """Handle the theme display countdown phase"""
+    print(f"Starting theme display phase for session {session_id}")
+    
+    # Get theme data for display
+    session_info = QuizSessionRepository.get_session_by_id(session_id)
+    if not session_info or not session_info.get('themeId'):
+        emit_error(sio, loop, session_id, 'No theme found for session')
+        return
+        
+    theme_data = ThemeRepository.get_theme_by_id(session_info['themeId'])
+    
+    # Emit theme display start
+    future = asyncio.run_coroutine_threadsafe(
+        sio.emit('phase_started', {
+            'session_id': session_id,
+            'phase': 'theme_display',
+            'duration': display_time,
+            'theme_data': theme_data
+        }),
+        loop
+    )
+    future.result(timeout=1)
+    
+    # Reset servo to start position
+    if 'servo' in globals():
+        servo.set_angle(0)
+    
+    # Theme display countdown with servo movement
+    for current_time in range(display_time, -1, -1):
+        emit_timer_update(sio, loop, session_id, current_time, 'theme_display', display_time, theme_data=theme_data)
+        
+        if current_time <= 0:
+            break
+        time.sleep(1)
+    
+    # Emit timer finished
+    emit_timer_finished(sio, loop, session_id, 'theme_display', theme_data=theme_data)
+    
+    # Theme display finished - move to quiz phase
+    set_session_phase(session_id, 'quiz')
+    
+    future = asyncio.run_coroutine_threadsafe(
+        sio.emit('theme_display_finished', {
+            'session_id': session_id,
+            'theme_data': theme_data
+        }),
+        loop
+    )
+    future.result(timeout=1)
+    
+    print(f"Theme display finished for session {session_id}, ready for quiz")
+
+def handle_quiz_phase(sio, loop, session_id, timer_config):
+    """Handle the quiz questions phase with sensor-based question selection."""
+    print(f"Starting quiz phase for session {session_id}")
+
+    # Get session and theme info
+    session_info = QuizSessionRepository.get_session_by_id(session_id)
+    if not session_info or not session_info.get('themeId'):
+        emit_error(sio, loop, session_id, 'No theme found for quiz')
+        return
+
+    theme_id = session_info['themeId']
+    all_questions = QuestionRepository.get_questions_by_theme(theme_id, active_only=True)
+
+    if not all_questions:
+        emit_error(sio, loop, session_id, 'No questions found for this theme')
+        return
+
+    # Initialize quiz state
+    quiz_state = get_quiz_state(session_id)
+    available_questions = [q for q in all_questions if q['id'] not in quiz_state['asked_questions']]
+    
+    question_time = timer_config.get('question_time', 10)
+    explanation_time = timer_config.get('explanation_time', 5)
+
+    while available_questions:
+        print(f"\n--- Selecting Question {quiz_state['question_count'] + 1} ---")
+        
+        # Use the new function to select the next question
+        question = select_question_based_on_sensors(available_questions, temp_sensor, light_sensor)
+        
+        if not question:
+            print("No suitable question found based on sensors, trying any available question")
+            question = random.choice(available_questions) if available_questions else None
+            
+        if not question:
+            print("No questions available, ending quiz")
+            break
+
+        # Remove the selected question from the available pool and add to asked
+        available_questions.remove(question)
+        update_quiz_state(session_id, 
+                         asked_questions=quiz_state['asked_questions'] + [question['id']],
+                         question_count=quiz_state['question_count'] + 1,
+                         current_question=question,
+                         waiting_for_answers=True)
+
+        # Show question and emit it
+        emit_combined_question_and_answers(question['id'], sio, loop)
+        answers = AnswerRepository.get_correct_answers_for_question(question['id'])
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('question_started', {
+                'session_id': session_id,
+                'question_id': question['id'],
+                'question_text': question['question_text'],
+                'answers': [{'id': a['id'], 'text': a['answer_text']} for a in answers],
+                'duration': question_time,
+                'question_number': quiz_state['question_count'] + 1
+            }), loop
+        ).result(timeout=1)
+        
+        # Reset servo to start position
+        if 'servo' in globals():
+            servo.set_angle(0)
+
+        # Question countdown with servo movement
+        for current_time in range(question_time, -1, -1):
+            emit_timer_update(sio, loop, session_id, current_time, 'question', question_time, 
+                            question_id=question['id'], question_number=quiz_state['question_count'])
+            if current_time <= 0: 
+                break
+            time.sleep(1)
+        
+        # Mark no longer waiting for answers
+        update_quiz_state(session_id, waiting_for_answers=False)
+        
+        emit_timer_finished(sio, loop, session_id, 'question', question_id=question['id'])
+
+        # Show explanation
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('explanation_started', {
+                'session_id': session_id,
+                'question_id': question['id'],
+                'explanation_text': question.get('explanation', 'No explanation available'),
+                'duration': explanation_time
+            }), loop
+        ).result(timeout=1)
+
+        # Reset servo for explanation
+        if 'servo' in globals():
+            servo.set_angle(0)
+
+        # Explanation countdown
+        for current_time in range(explanation_time, -1, -1):
+            emit_timer_update(sio, loop, session_id, current_time, 'explanation', explanation_time, 
+                            question_id=question['id'])
+            if current_time <= 0: 
+                break
+            time.sleep(1)
+
+        emit_timer_finished(sio, loop, session_id, 'explanation', question_id=question['id'])
+
+        # Check if we should stop the quiz early (from 5th question onwards)
+        current_state = get_quiz_state(session_id)
+        if current_state['question_count'] >= 5:
+            player_count = max(1, current_state['player_count'])  # Avoid division by zero
+            required_score = 10 * player_count * current_state['question_count']
+            
+            if current_state['total_score'] < required_score:
+                print(f"Quiz ending early: Score {current_state['total_score']} < required {required_score}")
+                break
+
+        # Refresh available questions for next iteration
+        quiz_state = get_quiz_state(session_id)
+        available_questions = [q for q in all_questions if q['id'] not in quiz_state['asked_questions']]
+
+    # Quiz finished
+    print(f"\n--- Quiz finished for session {session_id} ---")
+    QuizSessionRepository.update_session_status(session_id, 3)
+    asyncio.run_coroutine_threadsafe(
+        sio.emit('quiz_finished', {
+            'session_id': session_id,
+            'final_score': get_quiz_state(session_id)['total_score'],
+            'questions_asked': get_quiz_state(session_id)['question_count']
+        }), loop
+    ).result(timeout=1)
+
+def emit_error(sio, loop, session_id, error_message):
+    """Emit error message to clients"""
+    future = asyncio.run_coroutine_threadsafe(
+        sio.emit('quiz_error', {
+            'session_id': session_id,
+            'error': error_message
+        }),
+        loop
+    )
+    future.result(timeout=1)
+
+def emit_combined_theme_selection(sio, loop, active_only=True):
+    """
+    Emit theme selection question with theme options via socket.io.
+    """
+    try:
+        if active_only:
+            themes = ThemeRepository.get_active_themes()
+        else:
+            themes = ThemeRepository.get_all_themes()
+            
+        if not themes:
+            error_data = {
+                'error': 'not_found',
+                'message': 'No themes found',
+                'status_code': 404
+            }
+            try:
+                future = asyncio.run_coroutine_threadsafe(
+                    sio.emit('theme_selection_error', error_data),
+                    loop
+                )
+            except Exception as e:
+                print(f"Failed to schedule 'theme_selection_error' emit: {e}")
+        else:
+            theme_names = [t.get('name') or t.get('title') for t in themes]
+            combined_data = {
+                'id': 'theme_selection',
+                'question': 'Choose a theme?',
+                'type': 'theme_selection',
+                'themes': themes,
+                'count': len(themes),
+                'active_only': active_only,
+                'timestamp': time.time()
+            }
+            try:
+                future = asyncio.run_coroutine_threadsafe(
+                    sio.emit('questionData', combined_data),
+                    loop
+                )
+            except Exception as e:
+                print(f"Failed to schedule 'theme_selection_data' emit: {e}")
+
+    except Exception as e:
+        print(f"An unexpected error occurred during emit_combined_theme_selection: {e}")
+
+def check_sensor_data(temp_sensor, light_sensor):
+    """Read all sensor values with proper temperature validation."""
+    try:
+        # Read temperature and validate/clamp the value
+        raw_temp = temp_sensor.read_temperature()
+        
+        # Clamp temperature to reasonable range (-50°C to 100°C)
+        # This prevents database truncation errors
+        if raw_temp is None or not isinstance(raw_temp, (int, float)):
+            temperature = 0.0
+        else:
+            temperature = max(-50.0, min(100.0, float(raw_temp)))
+            # Round to 2 decimal places to avoid precision issues
+            temperature = round(temperature, 2)
+        
+        return {
+            'temperature': temperature,
+            'illuminance': light_sensor(),
+        }
+    except Exception as e:
+        print(f"Error reading sensor data: {e}")
+        # Return safe default values
+        return {
+            'temperature': 0.0,
+            'illuminance': 0,
+        }
+
+def emit_combined_question_and_answers(question_id, sio, loop):
+    """
+    Fetches a question and its answers, combines them into a single structured
+    object, and emits it via socket.io on the 'questionData' channel.
+    """
+    try:
+        # 1. Fetch the primary resource: the question
+        question = QuestionRepository.get_question_by_id(question_id)
+
+        # Handle case where the question doesn't exist
+        if not question:
+            error_data = {
+                'error': 'not_found',
+                'message': f"Question with ID {question_id} not found",
+                'status_code': 404
+            }
+            # Emit the error and stop execution
+            asyncio.run_coroutine_threadsafe(
+                sio.emit('question_error', error_data), loop
+            )
+            return
+
+        # 2. Fetch the related resources: the answers for that question
+        answers = AnswerRepository.get_all_answers_for_question(question_id)
+
+        # 3. Combine all data into a single, consistent payload
+        combined_data = {
+            'id': question.get('id'),
+            'question': question.get('question_text'),
+            'type': question.get('type', 'multiple_choice'), # Provide a default type
+            'answers': answers, # Nest the answers within the payload
+            'count': len(answers),
+            'timestamp': time.time()
+        }
+
+        # 4. Emit the unified data on a single, predictable channel
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('questionData', combined_data), loop
+        )
+
+    except Exception as e:
+        # Catch any other unexpected errors during the process
+        print(f"An unexpected error occurred during emit_combined_question_and_answers: {e}")
+        error_data = {
+            'error': 'server_error',
+            'message': 'An internal error occurred while preparing the question.',
+            'status_code': 500
+        }
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('question_error', error_data), loop
+        )
+
+def emit_theme_selection_if_needed(sio, loop):
+    """
+    Main coordination function called from main loop every second.
+    Handles phase transitions and sensor-based question selection.
+    """
+    global light_sensor
+    global temp_sensor
+    
+    try:
+        active_session_id = get_active_session_id()
+        
+        if not active_session_id:
+            return
+        
+        # Get the full session details using the ID
+        active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+        current_phase = get_session_phase(active_session_id)
+        is_timer_running = is_timer_active(active_session_id)
+        
+        if not active_session_info.get('themeId'):
+            # No theme set - handle voting phase
+            if current_phase == 'voting' and not is_timer_running:
+                # Voting phase but no timer running - emit theme selection to allow voting
+                emit_combined_theme_selection(sio, loop)
+            elif current_phase not in ['voting', 'theme_display', 'quiz']:
+                # No phase set - initialize voting phase and emit theme selection
+                set_session_phase(active_session_id, 'voting')
+                emit_combined_theme_selection(sio, loop)
+        else:
+            # Theme is already set - handle transitions
+            if current_phase == 'voting' and not is_timer_running:
+                # Theme exists but we're stuck in voting phase - move to theme display
+                set_session_phase(active_session_id, 'theme_display')
+                timer_config = {
+                    'voting_time': 60,
+                    'theme_display_time': 10,
+                    'question_time': 10,
+                    'explanation_time': 5
+                }
+                start_generic_timer(sio, loop, active_session_id, timer_config)
+            elif current_phase == 'theme_display' and not is_timer_running:
+                # Theme display finished but stuck - move to quiz
+                set_session_phase(active_session_id, 'quiz')
+                timer_config = {
+                    'voting_time': 60,
+                    'theme_display_time': 10,
+                    'question_time': 10,
+                    'explanation_time': 5
+                }
+                start_generic_timer(sio, loop, active_session_id, timer_config)
+            elif current_phase == 'quiz' and not is_timer_running:
+                # Quiz phase - handle sensor-based question selection
+                quiz_state = get_quiz_state(active_session_id)
+                
+                # Only proceed if we're not waiting for answers and no timer is running
+                if not quiz_state.get('waiting_for_answers', False):
+                    sensor_data = check_sensor_data(temp_sensor, light_sensor)
+                    print(f"Quiz phase sensor check: {sensor_data}")
+                    
+                    # Get theme and available questions
+                    theme_id = active_session_info['themeId']
+                    all_questions = QuestionRepository.get_questions_by_theme(theme_id, active_only=True)
+                    available_questions = [q for q in all_questions if q['id'] not in quiz_state['asked_questions']]
+                    
+                    if available_questions:
+                        # Start the quiz timer if conditions are met
+                        timer_config = {
+                            'voting_time': 60,
+                            'theme_display_time': 10,
+                            'question_time': 10,
+                            'explanation_time': 5
+                        }
+                        start_generic_timer(sio, loop, active_session_id, timer_config)
+                    else:
+                        # No more questions - end quiz
+                        print("No more questions available, ending quiz")
+                        QuizSessionRepository.update_session_status(active_session_id, 3)
+                        asyncio.run_coroutine_threadsafe(
+                            sio.emit('quiz_finished', {
+                                'session_id': active_session_id,
+                                'final_score': quiz_state['total_score'],
+                                'questions_asked': quiz_state['question_count']
+                            }), loop
+                        ).result(timeout=1)
+            elif not current_phase or (current_phase not in ['voting', 'theme_display', 'quiz'] and not is_timer_running):
+                # No phase set but theme exists - start theme display
+                set_session_phase(active_session_id, 'quiz')
+                
+    except Exception as e:
+        print(f"Error in emit_theme_selection_if_needed: {e}")
+        traceback.print_exc()
+
+# ---------- Socket Handler ----------
+@sio.on('theme_selected')
+async def handle_theme_selection(sid, data):
+    """
+    Handle theme selection votes and start voting timer when first vote is cast
+    """
+    try:
+        # Get active session and check phase
+        active_session_id = get_active_session_id()
+        
+        if not active_session_id:
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'No active session found'
+            })
+            return
+        
+        # Check if we're in voting phase
+        current_phase = get_session_phase(active_session_id)
+        if current_phase != 'voting':
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': f'Cannot vote during {current_phase} phase'
+            })
+            return
+            
+        # Get the full session details using the ID
+        active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+        
+        if not active_session_info:
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'Session not found'
+            })
+            return
+            
+        # Check if theme is already set
+        if active_session_info.get('themeId'):
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'Theme already selected for this session'
+            })
+            return
+        
+        user_id = data.get('userId', 1)
+        theme_id = int(data['themeId'])
+        session_id = active_session_id
+        
+        with theme_votes_lock:
+            # Initialize session structure
+            if session_id not in theme_votes:
+                theme_votes[session_id] = {
+                    "votes": defaultdict(int),
+                    "user_votes": {}
+                }
+            
+            session_data = theme_votes[session_id]
+            votes = session_data["votes"]
+            user_votes = session_data["user_votes"]
+            
+            # Remove previous vote
+            if user_id in user_votes:
+                old_theme = user_votes[user_id]
+                votes[old_theme] -= 1
+                if votes[old_theme] <= 0:
+                    del votes[old_theme]
+            
+            # Add new vote
+            votes[theme_id] += 1
+            user_votes[user_id] = theme_id
+        
+        # Broadcast vote updates
+        await sio.emit('theme_votes_update', {
+            'session_id': session_id,
+            'votes': dict(votes)
+        })
+        
+        # Start timer on first vote
+        total_votes = sum(votes.values())
+        if total_votes == 1:
+            print(f"Starting voting timer for session {session_id}")
+            timer_config = {
+                'voting_time': 60,
+                'theme_display_time': 10,
+                'question_time': 10,
+                'explanation_time': 5
+            }
+            set_session_phase(session_id, 'voting')
+            start_generic_timer(sio, asyncio.get_event_loop(), session_id, timer_config)
+        
+        await sio.emit('answer_response', {'success': True})
+        
+    except Exception as e:
+        print(f"Error in handle_theme_selection: {e}")
+        traceback.print_exc()
+        await sio.emit('answer_response', {
+            'success': False,
+            'error': 'Vote failed: ' + str(e)
+        })
+
+# ---------- Answer Submission Handler ----------
+@sio.on('submit_answer')  # Changed from 'answer_submitted' to match frontend
+async def handle_answer_submission(sid, data):
+    try:
+        user_id = data.get('userId')
+        question_id = data.get('questionId')
+        answer_index = data.get('answerIndex')
+        time_remaining = data.get('timeRemaining', 0)
+        
+        if not all([user_id, question_id is not None, answer_index is not None]):
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'Missing required data for answer submission'
+            }, room=sid)
+            return
+        
+        # Get active session
+        active_session_id = get_active_session_id()
+        if not active_session_id:
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'No active session found'
+            }, room=sid)
+            return
+        
+        # Check if we're in quiz phase and waiting for answers
+        current_phase = get_session_phase(active_session_id)
+        quiz_state = get_quiz_state(active_session_id)
+        
+        if current_phase != 'quiz' or not quiz_state.get('waiting_for_answers', False):
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'Not accepting answers at this time'
+            }, room=sid)
+            return
+        
+        # Get question and answers
+        question = QuestionRepository.get_question_by_id(question_id)
+        answers = AnswerRepository.get_all_answers_for_question(question_id)
+        
+        if not question or not answers:
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'Question or answers not found'
+            }, room=sid)
+            return
+        
+        # Find the correct answer
+        correct_answer = None
+        for answer in answers:
+            if answer.get('is_correct', False):
+                correct_answer = answer
+                break
+        
+        if not correct_answer:
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'No correct answer found for this question'
+            }, room=sid)
+            return
+        
+        # Get the submitted answer and check if it's correct
+        submitted_answer = answers[answer_index] if 0 <= answer_index < len(answers) else None
+        if not submitted_answer:
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'Invalid answer selection'
+            }, room=sid)
+            return
+        
+        # Get the full answer details from database to check correctness
+        answer_id = submitted_answer.get('id')
+        answer_details = AnswerRepository.get_answer_by_id(answer_id) if answer_id else None
+        
+        if not answer_details:
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'Answer details not found'
+            }, room=sid)
+            return
+        
+        # Check if answer is correct (handle both string and boolean values)
+        is_correct_value = answer_details.get('is_correct', '0')
+        is_correct = str(is_correct_value).lower() in ['1', 'true', 'yes'] or is_correct_value is True
+        
+        # Calculate points based on time remaining
+        points_earned = 0
+        if is_correct:
+            question_time = 10  # Default question time
+            time_percentage = max(0, time_remaining / question_time)
+            points_earned = int(10 * time_percentage)  # Base 10 points multiplied by time percentage
+        
+        # Update quiz state with new score and player count
+        current_quiz_state = get_quiz_state(active_session_id)
+        new_total_score = current_quiz_state['total_score'] + points_earned
+        new_player_count = max(current_quiz_state['player_count'], 1)  # Ensure at least 1 player
+        
+        update_quiz_state(active_session_id, 
+                         total_score=new_total_score,
+                         player_count=new_player_count)
+        
+        sessionid = get_active_session_id()
+        # Store answer submission
+        PlayerAnswerRepository.create_player_answer(
+            session_id=sessionid,
+            user_id=user_id,
+            question_id=question_id,
+            answer_id=answer_id,
+            is_correct=is_correct,
+            points_earned=points_earned,
+            time_taken=(10 - time_remaining)  # Assuming 10 second question time
+        )
+        
+        response_data = {
+            'success': True,
+            'is_correct': is_correct,
+            'points_earned': points_earned,
+            'correct_answer_text': correct_answer['answer_text'],
+            'explanation': question.get('explanation', 'Explanation not available')
+        }
+        
+        await sio.emit('answer_response', response_data, room=sid)
+        
+        print(f"Answer processed for user {user_id}: {'Correct' if is_correct else 'Incorrect'}, Points: {points_earned}")
+        
+    except Exception as e:
+        print(f"Error handling answer submission: {e}")
+        traceback.print_exc()
+        await sio.emit('answer_response', {
+            'success': False,
+            'error': 'An error occurred while processing your answer'
+        }, room=sid)
+
+
 
 
 
