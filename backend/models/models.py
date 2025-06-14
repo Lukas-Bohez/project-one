@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Literal
 from datetime import datetime
 
 # Existing Question Models (unchanged)
@@ -430,10 +430,15 @@ class MultiSessionSensorResponse(BaseModel):
     sessions: list[SessionSensorData]
 
 
-# Add this model to properly structure the incoming request
 class ChatMessageCreate(BaseModel):
     session_id: int
     message_text: str
     user_id: Optional[int] = None
-    message_type: str = 'chat'
+    # Ensure message_type is restricted to your ENUM values
+    message_type: Literal['chat', 'system', 'announcement', 'warning'] = 'chat'
     reply_to_id: Optional[int] = None
+
+
+
+class ShutdownRequest(BaseModel):
+    action: str = "shutdown"

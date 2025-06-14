@@ -151,17 +151,20 @@ class SNESGamepadController:
                     self.button_states['B']['pressed'] = False
                     time.sleep(0.5)  # Debounce
                 
-                # Check START+SELECT combo
-                start_pressed = self.button_states['START']['pressed']
-                select_pressed = self.button_states['SELECT']['pressed']
-                start_time = self.button_states['START']['time']
-                select_time = self.button_states['SELECT']['time']
-                
-                if start_pressed and select_pressed and abs(start_time - select_time) < 0.3:
-                    print("\nSTART+SELECT combo detected - sleeping system!")
+                # --- NEW COMBO: L+R for Shutdown ---
+                l_pressed = self.button_states['L']['pressed']
+                r_pressed = self.button_states['R']['pressed']
+                l_time = self.button_states['L']['time']
+                r_time = self.button_states['R']['time']
+
+                if l_pressed and r_pressed and abs(l_time - r_time) < 0.3:
+                    print("\nL+R combo detected - shutting down system!")
                     self.system_sleep()
-                    self.button_states['START']['pressed'] = False
-                    self.button_states['SELECT']['pressed'] = False
+                    # Reset button states and exit the loop as system is shutting down
+                    self.button_states['L']['pressed'] = False
+                    self.button_states['R']['pressed'] = False
+                    self.running = False # Signal main loop to exit
+                    sys.exit(0) # Exit the thread immediately
 
     def handle_dpad(self, hat_x, hat_y):
         """Handle D-pad movement"""
@@ -350,8 +353,10 @@ class SNESGamepadController:
     def system_sleep(self):
         """Put system to sleep"""
         try:
-            print("Putting system to sleep...")
-            subprocess.run(['systemctl', 'suspend'], check=True, timeout=5)
+            print("Putting system to down...")
+            subprocess.Popen(["sudo", "poweroff"], 
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL)
         except Exception as e:
             print(f"Could not suspend system: {e}")
 
