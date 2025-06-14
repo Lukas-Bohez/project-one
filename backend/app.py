@@ -4266,12 +4266,15 @@ async def handle_answer_submission(sid, data):
         is_correct = str(is_correct_value).lower() in ['1', 'true', 'yes'] or is_correct_value is True
         logger.debug(f"Answer correctness: {is_correct}")
 
-        # Calculate points using global progress (0-100)
+        # Calculate points using global progress (should be 0-1 for 0%-100%)
         points_earned = 0
         if is_correct:
-            points_earned = int(max_points * (progress))
+            # Convert progress to proper decimal (if it's coming as percentage)
+            progress_decimal = float(progress) / 100.0 if float(progress) > 1.0 else float(progress)
+            progress_decimal = max(0.0, min(1.0, progress_decimal))  # Clamp between 0 and 1
+            points_earned = int(max_points * progress_decimal)
             points_earned = max(1, points_earned)  # Minimum 1 point for correct answer
-        logger.debug(f"Points calculated: {points_earned}")
+        logger.debug(f"Points calculated: {points_earned} (progress: {progress}, treated as: {progress_decimal})")
 
         # Store answer submission with debug logging
         try:
@@ -4320,7 +4323,7 @@ async def handle_answer_submission(sid, data):
         await sio.emit('answer_response', response_data, room=sid)
         logger.info(f"Answer processed - User: {user_id}, Q: {question_id}, "
                    f"Correct: {is_correct}, Points: {points_earned}/{max_points}, "
-                   f"Progress: {progress}%")
+                   f"Progress: {progress}")
         
     except Exception as e:
         logger.error(f"Unexpected error handling answer submission: {str(e)}", exc_info=True)
