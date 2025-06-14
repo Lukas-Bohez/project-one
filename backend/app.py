@@ -4191,210 +4191,142 @@ def emit_theme_selection_if_needed(sio, loop):
 
 # ---------- Socket Handler ----------
 # Updated socket handler to use new timer config
-@sio.on('theme_selected')
-async def handle_theme_selection(sid, data):
-    """
-    Handle theme selection votes and start voting timer when first vote is cast
-    """
-    try:
-        # Get active session and check phase
-        active_session_id = get_active_session_id()
-        
-        if not active_session_id:
-            await sio.emit('answer_response', {
-                'success': False,
-                'error': 'No active session found'
-            })
-            return
-        
-        # Check if we're in voting phase
-        current_phase = get_session_phase(active_session_id)
-        if current_phase != 'voting':
-            await sio.emit('answer_response', {
-                'success': False,
-                'error': f'Cannot vote during {current_phase} phase'
-            })
-            return
-            
-        # Get the full session details using the ID
-        active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
-        
-        if not active_session_info:
-            await sio.emit('answer_response', {
-                'success': False,
-                'error': 'Session not found'
-            })
-            return
-            
-        # Check if theme is already set
-        if active_session_info.get('themeId'):
-            await sio.emit('answer_response', {
-                'success': False,
-                'error': 'Theme already selected for this session'
-            })
-            return
-        
-        user_id = data.get('userId', 1)
-        theme_id = int(data['themeId'])
-        session_id = active_session_id
-        
-        with theme_votes_lock:
-            # Initialize session structure
-            if session_id not in theme_votes:
-                theme_votes[session_id] = {
-                    "votes": defaultdict(int),
-                    "user_votes": {}
-                }
-            
-            session_data = theme_votes[session_id]
-            votes = session_data["votes"]
-            user_votes = session_data["user_votes"]
-            
-            # Remove previous vote
-            if user_id in user_votes:
-                old_theme = user_votes[user_id]
-                votes[old_theme] -= 1
-                if votes[old_theme] <= 0:
-                    del votes[old_theme]
-            
-            # Add new vote
-            votes[theme_id] += 1
-            user_votes[user_id] = theme_id
-        
-        # Broadcast vote updates
-        await sio.emit('theme_votes_update', {
-            'session_id': session_id,
-            'votes': dict(votes)
-        })
-        
-        # Start timer on first vote
-        total_votes = sum(votes.values())
-        if total_votes == 1:
-            print(f"Starting voting timer for session {session_id}")
-            timer_config = {
-                'voting_time': 60,
-                'theme_display_time': 10,
-                'question_time': 15,  # Updated to 15 seconds
-                'explanation_time': 15  # Updated to 15 seconds
-            }
-            set_session_phase(session_id, 'voting')
-            start_generic_timer(sio, asyncio.get_event_loop(), session_id, timer_config)
-        
-        await sio.emit('answer_response', {'success': True})
-        
-    except Exception as e:
-        print(f"Error in handle_theme_selection: {e}")
-        traceback.print_exc()
-        await sio.emit('answer_response', {
-            'success': False,
-            'error': 'Vote failed: ' + str(e)
-        })
-
-
-# ---------- Answer Submission Handler ----------
-# Updated answer submission handler to use new question time
 @sio.on('submit_answer')
 async def handle_answer_submission(sid, data):
+    global current_phase, progress
     try:
+        logger.debug(f"Starting answer submission with data: {data}")
+        
         # Validate input data
         user_id = data.get('userId')
         question_id = data.get('questionId')
         answer_index = data.get('answerIndex')
-        time_remaining = data.get('timeRemaining', 0)
         
-        if None in [user_id, question_id, answer_index]:
-            await sio.emit('answer_response', {
-                'success': False,
-                'error': 'Missing required fields'
-            }, room=sid)
+        if not all([user_id, question_id is not None, answer_index is not None]):
+            error_msg = 'Missing required data for answer submission'
+            logger.error(error_msg)
+            await sio.emit('answer_response', {'success': False, 'error': error_msg}, room=sid)
             return
+        
+        logger.debug(f"Valid submission from user {user_id} for question {question_id}")
 
         # Get active session
         active_session_id = get_active_session_id()
         if not active_session_id:
-            await sio.emit('answer_response', {
-                'success': False,
-                'error': 'No active session'
-            }, room=sid)
+            error_msg = 'No active session found'
+            logger.error(error_msg)
+            await sio.emit('answer_response', {'success': False, 'error': error_msg}, room=sid)
             return
+        
+        logger.debug(f"Active session ID: {active_session_id}")
 
-        # Check if accepting answers
-        if get_session_phase(active_session_id) != 'quiz':
-            await sio.emit('answer_response', {
-                'success': False,
-                'error': 'Not accepting answers now'
-            }, room=sid)
+        # Check if we're in quiz phase
+        current_phase = get_session_phase(active_session_id)
+        if current_phase != 'quiz':
+            error_msg = 'Not accepting answers at this time'
+            logger.error(error_msg)
+            await sio.emit('answer_response', {'success': False, 'error': error_msg}, room=sid)
             return
+        
+        logger.debug("Current phase is quiz - proceeding")
 
-        # Get question and answers
+        # Get question with its point value
         question = QuestionRepository.get_question_by_id(question_id)
-        answers = AnswerRepository.get_all_answers_for_question(question_id)
-        if not question or not answers:
-            await sio.emit('answer_response', {
-                'success': False,
-                'error': 'Question not found'
-            }, room=sid)
+        if not question:
+            error_msg = f'Question {question_id} not found'
+            logger.error(error_msg)
+            await sio.emit('answer_response', {'success': False, 'error': error_msg}, room=sid)
             return
+        
+        max_points = question.get('points', 10)
+        logger.debug(f"Question found with max points: {max_points}")
+
+        answers = AnswerRepository.get_all_answers_for_question(question_id)
+        if not answers:
+            error_msg = f'No answers found for question {question_id}'
+            logger.error(error_msg)
+            await sio.emit('answer_response', {'success': False, 'error': error_msg}, room=sid)
+            return
+        
+        logger.debug(f"Found {len(answers)} answers for question")
 
         # Validate answer index
         if answer_index < 0 or answer_index >= len(answers):
+            error_msg = f'Invalid answer index {answer_index} (max {len(answers)-1})'
+            logger.error(error_msg)
+            await sio.emit('answer_response', {'success': False, 'error': error_msg}, room=sid)
+            return
+            
+        submitted_answer = answers[answer_index]
+        answer_id = submitted_answer.get('id')
+        logger.debug(f"Submitted answer ID: {answer_id}")
+
+        # Determine if answer is correct
+        is_correct_value = submitted_answer.get('is_correct', False)
+        is_correct = str(is_correct_value).lower() in ['1', 'true', 'yes'] or is_correct_value is True
+        logger.debug(f"Answer correctness: {is_correct}")
+
+        # Calculate points using global progress (0-100)
+        points_earned = 0
+        if is_correct:
+            points_earned = int(max_points * (progress))
+            points_earned = max(1, points_earned)  # Minimum 1 point for correct answer
+        logger.debug(f"Points calculated: {points_earned}")
+
+        # Store answer submission with debug logging
+        try:
+            logger.debug("Attempting to create player answer record with params: "
+                       f"session_id={active_session_id}, user_id={user_id}, "
+                       f"question_id={question_id}, answer_id={answer_id}, "
+                       f"is_correct={is_correct}, points_earned={points_earned}, time_taken=15")
+            
+            result = PlayerAnswerRepository.create_player_answer(
+                session_id=active_session_id,
+                user_id=user_id,
+                question_id=question_id,
+                answer_id=answer_id,
+                is_correct=is_correct,
+                points_earned=points_earned,
+                time_taken=15
+            )
+            
+            if result is None or result == 0:
+                logger.error("Failed to create player answer - no rows affected")
+                raise Exception("Database insert failed")
+                
+            logger.info(f"Successfully created player answer record for user {user_id}")
+            
+        except Exception as db_error:
+            logger.error(f"Database error creating player answer: {str(db_error)}", exc_info=True)
             await sio.emit('answer_response', {
                 'success': False,
-                'error': 'Invalid answer'
+                'error': 'Failed to save your answer'
             }, room=sid)
             return
 
-        # Get selected answer
-        selected_answer = answers[answer_index]
-        answer_id = selected_answer.get('id')
-
-        # Determine if answer is correct
-        is_correct = str(selected_answer.get('is_correct', False)).lower() in ['1', 'true', 'yes']
-
-        # Calculate points based on progress percentage (simplified)
-        max_points = 10  # Maximum points for correct answer
-        question_duration = 15  # Total question time in seconds
-        time_taken = question_duration - time_remaining
+        # Get correct answer for response
+        correct_answer = next((a for a in answers if a.get('is_correct')), None)
         
-        if is_correct:
-            progress = time_remaining / question_duration  # Percentage of time remaining
-            points_earned = int(max_points * progress)
-            points_earned = max(1, points_earned)  # At least 1 point for correct answer
-        else:
-            points_earned = 0
-
-        # Save answer to database
-        PlayerAnswerRepository.create_player_answer(
-            session_id=active_session_id,
-            user_id=user_id,
-            question_id=question_id,
-            answer_id=answer_id,
-            is_correct=is_correct,
-            points_earned=points_earned,
-            time_taken=time_taken
-        )
-
-        # Get correct answer details
-        correct_answer = next((a for a in answers if str(a.get('is_correct', False)).lower() in ['1', 'true', 'yes']), None)
-
-        # Prepare response
-        response = {
+        response_data = {
             'success': True,
             'is_correct': is_correct,
             'points_earned': points_earned,
+            'max_points': max_points,
             'correct_answer_index': answers.index(correct_answer) if correct_answer else -1,
             'correct_answer_text': correct_answer.get('answer_text', '') if correct_answer else '',
-            'explanation': question.get('explanation', 'No explanation available')
+            'explanation': question.get('explanation', 'Explanation not available')
         }
-
-        await sio.emit('answer_response', response, room=sid)
-        logger.info(f"User {user_id} answered {'correctly' if is_correct else 'incorrectly'} on Q{question_id} (Points: {points_earned})")
-
+        
+        await sio.emit('answer_response', response_data, room=sid)
+        logger.info(f"Answer processed - User: {user_id}, Q: {question_id}, "
+                   f"Correct: {is_correct}, Points: {points_earned}/{max_points}, "
+                   f"Progress: {progress}%")
+        
     except Exception as e:
-        logger.error(f"Answer submission error: {str(e)}", exc_info=True)
+        logger.error(f"Unexpected error handling answer submission: {str(e)}", exc_info=True)
         await sio.emit('answer_response', {
             'success': False,
-            'error': 'Server error processing answer'
+            'error': 'An unexpected error occurred'
         }, room=sid)
 
 

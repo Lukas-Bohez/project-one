@@ -1962,6 +1962,11 @@ class PlayerAnswerRepository:
             INSERT INTO playerAnswers 
             (sessionId, userId, questionId, answerId, is_correct, points_earned, time_taken) 
             VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+            answerId = VALUES(answerId),
+            is_correct = VALUES(is_correct),
+            points_earned = VALUES(points_earned),
+            time_taken = VALUES(time_taken)
         """
         params = [session_id, user_id, question_id, answer_id, is_correct, points_earned, time_taken]
         return Database.execute_sql(sql, params)
@@ -1985,11 +1990,6 @@ class PlayerAnswerRepository:
         params = [session_id, user_id]
         return Database.get_rows(sql, params)
     
-    @staticmethod
-    def get_player_answer_for_question(session_id, user_id, question_id):
-        sql = "SELECT * FROM playerAnswers WHERE sessionId = %s AND userId = %s AND questionId = %s"
-        params = [session_id, user_id, question_id]
-        return Database.get_one_row(sql, params)
 
     @staticmethod
     def get_player_answers_count_for_question(question_id):
@@ -2332,3 +2332,20 @@ class PlayerAnswerRepository:
             'highest_single_answer_points': 0,
             'overall_accuracy_percentage': 0
         }
+    
+    @staticmethod
+    def check_answer_exists(session_id, user_id, question_id):
+        sql = "SELECT 1 FROM playerAnswers WHERE sessionId = %s AND userId = %s AND questionId = %s LIMIT 1"
+        params = [session_id, user_id, question_id]
+        return bool(Database.get_one_row(sql, params))
+    
+    @staticmethod
+    def get_player_answer_for_question(session_id, user_id, question_id):
+        sql = """
+            SELECT * FROM playerAnswers 
+            WHERE sessionId = %s AND userId = %s AND questionId = %s
+            ORDER BY id DESC
+            LIMIT 1
+        """
+        params = [session_id, user_id, question_id]
+        return Database.get_one_row(sql, params)
