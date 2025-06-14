@@ -15,7 +15,7 @@ class QuizLogic {
         
         this.init();
     }
-
+    
     async init() {
         // Wait for socket connection
         if (!window.sharedSocket) {
@@ -43,7 +43,6 @@ class QuizLogic {
     initializeModules() {
         // Initialize question handler FIRST
         this.questionHandler = new QuizQuestionHandler(this, this.socket);
-        
         // Then initialize socket handler with proper reference
         this.socketHandler = new QuizSocketHandler(this.socket, this.questionHandler); // Pass question handler directly
         
@@ -58,7 +57,6 @@ class QuizLogic {
     setCurrentUser(user) {
     console.log("Setting current user:", user);
     this.currentUser = user;
-    this.playerHandler.requestAllUsersData(this.socket);
     // Make sure the question handler also knows the user!
     if (this.questionHandler) {
         this.questionHandler.setCurrentUser(user);
@@ -126,18 +124,14 @@ class QuizLogic {
     }
 }
 
-    // Stub methods
-    updateItems(itemsData) { /* ... */ }
-    updateGameState(gameState) { /* ... */ }
-    bindGlobalEvents() { /* ... */ }
-    useItem(itemIndex) { /* ... */ }
-    deleteItem(itemIndex) { /* ... */ }
-    updateUserScore(newScore) { /* ... */ }
-    updateUserLP(newLP) { /* ... */ }
-    updateUserSP(newSP) { /* ... */ }
-    showWelcomeMessage(user) { /* ... */ }
-    initInfoModal() { /* ... */ }
-    listenToInfoModal(domElements) { /* ... */ }
 }
 
 window.QuizLogic = QuizLogic;
+
+
+document.addEventListener('userAuthenticated', (event) => {
+    console.log("user logged in")
+    const user = event.detail.user;
+    console.log(user)
+    new initializePlayersListManager(socket, user);
+});
