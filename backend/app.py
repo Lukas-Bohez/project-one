@@ -891,12 +891,20 @@ async def appeal_ban(payload: AppealPayload, request: Request):
 
 
 @app.get("/api/v1/sensor-data", response_model=MultiSessionSensorResponse)
-async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1000, include_chat: bool = True, include_answers: bool = True):
-    # Convert and sort session IDs in descending order (newest first)
-    requested_session_ids = sorted(
-        [int(sid.strip()) for sid in session_ids.split(',')],
-        reverse=True
-    )
+async def get_multi_session_sensor_data(session_ids: str = None, limit: int = 1000, include_chat: bool = True, include_answers: bool = True):
+    # If session_ids is provided, use those; otherwise get all sessions
+    if session_ids:
+        # Convert and sort session IDs in descending order (newest first)
+        requested_session_ids = sorted(
+            [int(sid.strip()) for sid in session_ids.split(',')],
+            reverse=True
+        )
+    else:
+        # Get all sessions from the database
+        all_sessions = QuizSessionRepository.get_all_sessions()
+        # Extract session IDs - assuming tuples with id as first element
+        # Based on SQL: SELECT id, session_date, name, description, sessionStatusId, themeId, hostUserId, start_time, end_time
+        requested_session_ids = [session[0] for session in all_sessions]
    
     response_sessions_data = []
    
@@ -1026,6 +1034,17 @@ async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1
         ))
    
     return MultiSessionSensorResponse(sessions=response_sessions_data)
+
+
+
+
+
+
+
+
+
+
+
 
 
 from fastapi import APIRouter, HTTPException, Depends, Request, Header
@@ -1224,7 +1243,7 @@ async def register_user(user_credentials: UserCredentials, request: Request):
                 name="Auto Session",
                 description="Automatically created session",
                 session_status_id=2,  # Must be provided
-                theme_id=1,          # Must be provided (default theme)
+                theme_id=None,          # Must be provided (default theme)
                 host_user_id=user_id,  # Must be provided
                 start_time=datetime.now()
             )
@@ -1279,7 +1298,7 @@ async def login_user(user_credentials: UserCredentials, request: Request):
                 name="Auto Session",
                 description="Automatically created session",
                 session_status_id=2,  # Must be provided
-                theme_id=1,          # Must be provided (default theme)
+                theme_id=None,          # Must be provided (default theme)
                 host_user_id=user_id,  # Must be provided
                 start_time=datetime.now()
             )
