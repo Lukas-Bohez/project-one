@@ -1,4 +1,4 @@
-const lanIP = `http://${window.location.hostname}:8000`;
+const lanIP = `http://127.0.0.1:8000`;
 const dom = {
     startQuizBtn: document.getElementById('startQuizBtn'),
     joinQuizBtn: document.getElementById('joinQuizBtn'),
