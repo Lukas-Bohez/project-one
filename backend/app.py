@@ -1225,7 +1225,7 @@ async def register_user(user_credentials: UserCredentials, request: Request):
                 description="Automatically created session",
                 session_status_id=2,  # Must be provided
                 theme_id=1,          # Must be provided (default theme)
-                host_user_id=current_user.id,  # Must be provided
+                host_user_id=user_id,  # Must be provided
                 start_time=datetime.now()
             )
             current_phase = 'voting'
@@ -1274,14 +1274,14 @@ async def login_user(user_credentials: UserCredentials, request: Request):
             auto_name = f"Session {datetime.now().strftime('%Y-%m-%d %H:%M')}"
             auto_description = f"Automatically created session on {datetime.now().strftime('%B %d, %Y at %H:%M')}"
 
-            QuizSessionRepository.create_session(
+            new_session_id = QuizSessionRepository.create_session(
                 session_date=datetime.now(),
-                name=auto_name,
-                description=auto_description,
-                session_status_id=2,
-                theme_id=None,  # or whatever default your function expects
-                host_user_id=user_id,  # or whatever default your function expects
-                start_time=datetime.now()  # already optional in your function definition
+                name="Auto Session",
+                description="Automatically created session",
+                session_status_id=2,  # Must be provided
+                theme_id=1,          # Must be provided (default theme)
+                host_user_id=user_id,  # Must be provided
+                start_time=datetime.now()
             )
             current_phase = 'voting'
         ChatLogRepository.create_chat_message(
