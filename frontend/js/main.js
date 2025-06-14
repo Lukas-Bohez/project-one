@@ -122,12 +122,12 @@ const testServoMovement = async () => {
         console.log("data.detail:", data.detail);
         
         if (response.ok) {
-            alert(data.message);
+            console.log(data.message);
         } else {
-            alert(data.detail || JSON.stringify(data) || "Unknown error");
+            console.log(data.detail || JSON.stringify(data) || "Unknown error");
         }
     } catch (error) {
-        alert(`Network error during servo trigger: ${error.message}`);
+        console.log(`Network error during servo trigger: ${error.message}`);
     }
 };
 
