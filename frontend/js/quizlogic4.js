@@ -1,3 +1,4 @@
+// Fixed QuizQuestionHandler with proper user handling
 class QuizQuestionHandler {
     constructor(quizLogic, socket) {
         this.quizLogic = quizLogic;
@@ -9,51 +10,62 @@ class QuizQuestionHandler {
     }
 
     setCurrentUser(user) {
+        console.log("QuizQuestionHandler: Setting current user:", user);
         this.currentUser = user;
+        
+        // Ensure both id and user_id are available for compatibility
+        if (this.currentUser && !this.currentUser.user_id && this.currentUser.id) {
+            this.currentUser.user_id = this.currentUser.id;
+        }
+        if (this.currentUser && !this.currentUser.id && this.currentUser.user_id) {
+            this.currentUser.id = this.currentUser.user_id;
+        }
+        
+        console.log("QuizQuestionHandler: Current user after processing:", this.currentUser);
     }
 
-loadQuestion(questionData) {
-    console.log("Loading question:", questionData);
-    this.currentQuestion = questionData;
+    loadQuestion(questionData) {
+        console.log("Loading question:", questionData);
+        this.currentQuestion = questionData;
 
-    // Clean up any existing explanation displays
-    this.clearExplanations();
+        // Clean up any existing explanation displays
+        this.clearExplanations();
 
-    // Clear previous question
-    this.clearQuestion();
+        // Clear previous question
+        this.clearQuestion();
 
-    // Set question text
-    this.setQuestionText(questionData);
+        // Set question text
+        this.setQuestionText(questionData);
 
-    // Set question image if exists
-    this.setQuestionImage(questionData);
+        // Set question image if exists
+        this.setQuestionImage(questionData);
 
-    // Set up answer options
-    this.setupAnswerOptions(questionData);
+        // Set up answer options
+        this.setupAnswerOptions(questionData);
 
-    // Bind events
-    this.bindAnswerEvents();
+        // Bind events
+        this.bindAnswerEvents();
 
-    // Emit custom event
-    document.dispatchEvent(new CustomEvent('questionLoaded', {
-        detail: questionData
-    }));
-}
-
-// Method to clear any explanation displays when new question loads
-clearExplanations() {
-    // Remove explanation modal if it exists
-    const explanationModal = document.getElementById('explanationModal');
-    if (explanationModal) {
-        explanationModal.remove();
+        // Emit custom event
+        document.dispatchEvent(new CustomEvent('questionLoaded', {
+            detail: questionData
+        }));
     }
-    
-    // Clear any explanation content from the main question area
-    const questionText = document.getElementById('questionText');
-    if (questionText && questionText.querySelector('.explanation-content')) {
-        questionText.innerHTML = '';
+
+    // Method to clear any explanation displays when new question loads
+    clearExplanations() {
+        // Remove explanation modal if it exists
+        const explanationModal = document.getElementById('explanationModal');
+        if (explanationModal) {
+            explanationModal.remove();
+        }
+        
+        // Clear any explanation content from the main question area
+        const questionText = document.getElementById('questionText');
+        if (questionText && questionText.querySelector('.explanation-content')) {
+            questionText.innerHTML = '';
+        }
     }
-}
 
     clearQuestion() {
         const questionText = document.getElementById('questionText');
@@ -156,6 +168,7 @@ clearExplanations() {
 
     handleAnswerClick(answerIndex, buttonElement) {
         console.log("Answer clicked:", answerIndex);
+        console.log("Current user at time of click:", this.currentUser);
 
         if (!this.currentQuestion || !this.currentQuestion.type) {
             console.error("Invalid question state");
@@ -166,12 +179,24 @@ clearExplanations() {
         const questionType = this.currentQuestion.type;
         answerButtons.forEach(btn => btn.disabled = true);
 
-        if (!this.currentUser?.user_id) {
-            console.error("User not set in handler:", this.currentUser);
-            this.handleErrorDisplay("Please log in again");
+        // FIXED: Better user validation
+        if (!this.currentUser) {
+            console.error("No current user set in handler");
+            this.handleErrorDisplay("Please log in again - no user data");
             answerButtons.forEach(btn => btn.disabled = false);
             return;
         }
+
+        // Check for both possible user ID fields
+        const userId = this.currentUser.user_id || this.currentUser.id;
+        if (!userId) {
+            console.error("User object missing ID field:", this.currentUser);
+            this.handleErrorDisplay("Please log in again - missing user ID");
+            answerButtons.forEach(btn => btn.disabled = false);
+            return;
+        }
+
+        console.log("Using user ID:", userId);
 
         const options = questionType === 'theme_selection'
             ? this.currentQuestion.themes
@@ -211,7 +236,7 @@ clearExplanations() {
             }
 
             const emissionData = {
-                userId: Number(this.currentUser.user_id),
+                userId: Number(userId), // Use the validated userId
                 themeId: themeId,
                 themeName: String(selectedOption.name || selectedOption.title || ""),
                 request_user_data: true
@@ -223,7 +248,7 @@ clearExplanations() {
         } else {
             // Handle regular answer submission
             const emissionData = {
-                userId: Number(this.currentUser.user_id),
+                userId: Number(userId), // Use the validated userId
                 questionId: this.currentQuestion.id,
                 answerIndex: answerIndex,
                 answerText: selectedOption.answer_text || selectedOption.text || selectedOption,
@@ -242,150 +267,147 @@ clearExplanations() {
         }, 1500);
     }
 
-showExplanation(data) {
-    console.log("Showing explanation for question", data.question_id || 'unknown', data);
-    
-    // Pass the entire data object to displayExplanation
-    this.displayExplanation(data);
-}
-
-displayExplanation(explanationData) {
-    console.log("Displaying explanation in existing question area", explanationData);
-    
-    // Extract data from the explanation object
-    const explanationText = explanationData?.explanation_text || 'No explanation provided';
-    const duration = explanationData?.duration || 5;
-    const questionId = explanationData?.question_id;
-    
-    // Try to find existing containers first
-    let questionTextEl = document.getElementById('questionText');
-    let answerContainer = document.getElementById('answerContainer');
-    
-    // If core containers don't exist, try to find or create them
-    if (!questionTextEl || !answerContainer) {
-        console.warn("Core containers missing, attempting to find or create them");
+    showExplanation(data) {
+        console.log("Showing explanation for question", data.question_id || 'unknown', data);
         
-        // Try to find alternative containers that might exist
-        const quizContainer = document.querySelector('.quiz-container') || 
-                             document.querySelector('#quizContainer') ||
-                             document.querySelector('.c-quiz-area') ||
-                             document.querySelector('main') ||
-                             document.body;
-        
-        if (!quizContainer) {
-            console.error("No suitable container found for explanation display");
-            // Fallback: create a modal-style overlay
-            this.createExplanationModal(explanationText);
-            return;
-        }
-        
-        // Create the missing elements if they don't exist
-        if (!questionTextEl) {
-            questionTextEl = document.createElement('div');
-            questionTextEl.id = 'questionText';
-            questionTextEl.className = 'question-text';
-            quizContainer.appendChild(questionTextEl);
-        }
-        
-        if (!answerContainer) {
-            answerContainer = document.createElement('div');
-            answerContainer.id = 'answerContainer';
-            answerContainer.className = 'answer-container';
-            quizContainer.appendChild(answerContainer);
-        }
+        // Pass the entire data object to displayExplanation
+        this.displayExplanation(data);
     }
-    
-    // Now display the explanation
-    questionTextEl.innerHTML = `
-        <div class="explanation-content">
-            <h3>Explanation</h3>
-            <p style="white-space: pre-line;">${explanationText}</p>
-        </div>
-    `;
-    
-    // Clear answers - no continue button needed, server will send next question
-    answerContainer.innerHTML = '';
-    answerContainer.style.display = 'none';
-    
-    // Emit custom event for other parts of the app
-    document.dispatchEvent(new CustomEvent('explanationDisplayed', {
-        detail: { explanationText, duration, questionId }
-    }));
-}
 
-// Fallback method to create a modal-style explanation display
-createExplanationModal(explanationText) {
-    console.log("Creating explanation modal as fallback");
-    
-    // Remove any existing explanation modal
-    const existingModal = document.getElementById('explanationModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    // Create modal overlay
-    const modal = document.createElement('div');
-    modal.id = 'explanationModal';
-    modal.className = 'explanation-modal-overlay';
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.8);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1002;
-        animation: fadeIn 0.3s ease;
-    `;
-    
-    // Create modal content (no continue button - server will handle next question)
-    modal.innerHTML = `
-        <div class="explanation-modal-content" style="
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-            margin: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        ">
+    displayExplanation(explanationData) {
+        console.log("Displaying explanation in existing question area", explanationData);
+        
+        // Extract data from the explanation object
+        const explanationText = explanationData?.explanation_text || 'No explanation provided';
+        const duration = explanationData?.duration || 5;
+        const questionId = explanationData?.question_id;
+        
+        // Try to find existing containers first
+        let questionTextEl = document.getElementById('questionText');
+        let answerContainer = document.getElementById('answerContainer');
+        
+        // If core containers don't exist, try to find or create them
+        if (!questionTextEl || !answerContainer) {
+            console.warn("Core containers missing, attempting to find or create them");
+            
+            // Try to find alternative containers that might exist
+            const quizContainer = document.querySelector('.quiz-container') || 
+                                 document.querySelector('#quizContainer') ||
+                                 document.querySelector('.c-quiz-area') ||
+                                 document.querySelector('main') ||
+                                 document.body;
+            
+            if (!quizContainer) {
+                console.error("No suitable container found for explanation display");
+                // Fallback: create a modal-style overlay
+                this.createExplanationModal(explanationText);
+                return;
+            }
+            
+            // Create the missing elements if they don't exist
+            if (!questionTextEl) {
+                questionTextEl = document.createElement('div');
+                questionTextEl.id = 'questionText';
+                questionTextEl.className = 'question-text';
+                quizContainer.appendChild(questionTextEl);
+            }
+            
+            if (!answerContainer) {
+                answerContainer = document.createElement('div');
+                answerContainer.id = 'answerContainer';
+                answerContainer.className = 'answer-container';
+                quizContainer.appendChild(answerContainer);
+            }
+        }
+        
+        // Now display the explanation
+        questionTextEl.innerHTML = `
             <div class="explanation-content">
-                <h3 style="color: #333; margin-bottom: 20px;">Explanation</h3>
-                <p style="color: #666; line-height: 1.6; margin-bottom: 30px; white-space: pre-line;">
-                    ${explanationText}
-                </p>
+                <h3>Explanation</h3>
+                <p style="white-space: pre-line;">${explanationText}</p>
             </div>
-        </div>
-    `;
-    
-    // Add fade-in animation
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        `;
+        
+        // Clear answers - no continue button needed, server will send next question
+        answerContainer.innerHTML = '';
+        answerContainer.style.display = 'none';
+        
+        // Emit custom event for other parts of the app
+        document.dispatchEvent(new CustomEvent('explanationDisplayed', {
+            detail: { explanationText, duration, questionId }
+        }));
+    }
+
+    // Fallback method to create a modal-style explanation display
+    createExplanationModal(explanationText) {
+        console.log("Creating explanation modal as fallback");
+        
+        // Remove any existing explanation modal
+        const existingModal = document.getElementById('explanationModal');
+        if (existingModal) {
+            existingModal.remove();
         }
-    `;
-    document.head.appendChild(style);
-    
-    // Add to page
-    document.body.appendChild(modal);
-    
-    // Store reference to modal for cleanup when next question loads
-    this.currentExplanationModal = modal;
-    
-    // Emit custom event
-    document.dispatchEvent(new CustomEvent('explanationDisplayed', {
-        detail: { explanationText, modalMode: true }
-    }));
-}
-
-
-
+        
+        // Create modal overlay
+        const modal = document.createElement('div');
+        modal.id = 'explanationModal';
+        modal.className = 'explanation-modal-overlay';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1002;
+            animation: fadeIn 0.3s ease;
+        `;
+        
+        // Create modal content (no continue button - server will handle next question)
+        modal.innerHTML = `
+            <div class="explanation-modal-content" style="
+                background: white;
+                padding: 30px;
+                border-radius: 10px;
+                max-width: 600px;
+                max-height: 80vh;
+                overflow-y: auto;
+                margin: 20px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            ">
+                <div class="explanation-content">
+                    <h3 style="color: #333; margin-bottom: 20px;">Explanation</h3>
+                    <p style="color: #666; line-height: 1.6; margin-bottom: 30px; white-space: pre-line;">
+                        ${explanationText}
+                    </p>
+                </div>
+            </div>
+        `;
+        
+        // Add fade-in animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Add to page
+        document.body.appendChild(modal);
+        
+        // Store reference to modal for cleanup when next question loads
+        this.currentExplanationModal = modal;
+        
+        // Emit custom event
+        document.dispatchEvent(new CustomEvent('explanationDisplayed', {
+            detail: { explanationText, modalMode: true }
+        }));
+    }
 
     // Method to handle the end of the quiz
     showQuizEnd(data) {
