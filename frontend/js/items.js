@@ -1,82 +1,99 @@
 let adInterval;
 let adDurationTimeout;
-const AD_SPAWN_FREQUENCY_MS = 1500; // How often a new ad pops up (1.5 seconds)
-const AD_SLOT_ID = '7822007431'; // YOUR Ad Slot ID, directly from the AdSense code
-const AD_CLIENT_ID = 'ca-pub-8418485814964449'; // Your AdSense Publisher ID
+const AD_SPAWN_FREQUENCY_MS = 1500; // How often a new "ad" box pops up (1.5 seconds)
+
+// We no longer need AD_SLOT_ID and AD_CLIENT_ID for the "scream box" version.
+// const AD_SLOT_ID = '7822007431';
+// const AD_CLIENT_ID = 'ca-pub-8418485814964449';
 
 // Determine the local IP for the socket connection
 const lanIP = `http://${window.location.hostname}`;
-const socket = io(lanIP, {
-    transports: ["websocket", "polling"],
-    timeout: 20000,
-    reconnection: true,
-    reconnectionAttempts: 5,
-    reconnectionDelay: 1000
-});
-
-// Load the AdSense script globally once
-// This script needs to be present on the page where this JavaScript runs.
-// It's usually placed in the <head> section.
-// <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449" crossorigin="anonymous"></script>
+const socket = window.sharedSocket;
 
 // Listen for the B2F_addItem event and automatically activate the flood
 socket.on('B2F_addItem', () => {
-    console.log('📢📢📢 Prepare for a torrent of advertisements! 📢📢📢');
-    activateAdvertFlood(10); // Fixed 10-second duration for the flood
+    console.log('📢📢📢 Initiating the Anti-Adblocker Scream Flood! 📢📢📢');
+    activateAdvertFlood(10); // Fixed 10-second duration for the scream flood
 });
 
 /**
- * Activates a flood of AdSense advertisements, spawning them randomly on the page.
- * @param {number} durationSeconds - The duration in seconds for which the ad flood will last.
+ * Activates a flood of custom "scream boxes" that urge users to turn off ad blockers.
+ * @param {number} durationSeconds - The duration in seconds for which the scream flood will last.
  */
 const activateAdvertFlood = (durationSeconds) => {
     // Clear any existing intervals or timeouts to prevent overlaps
     if (adInterval) clearInterval(adInterval);
     if (adDurationTimeout) clearTimeout(adDurationTimeout);
 
-    // Function to create and append a single ad container
-    const createAdContainer = () => {
-        const adContainer = document.createElement('div');
-        adContainer.className = 'random-ad-container'; // Class for easy selection later
-        adContainer.style.position = 'fixed'; // Position it absolutely relative to the viewport
-        adContainer.style.zIndex = '9999'; // Ensure it's on top of almost everything
-        // Random positioning within the viewport, ensuring it's mostly visible
-        adContainer.style.left = `${Math.random() * (window.innerWidth - 320)}px`; // -320 to keep it somewhat within bounds
-        adContainer.style.top = `${Math.random() * (window.innerHeight - 270)}px`; // -270 to keep it somewhat within bounds
-        adContainer.style.width = '300px'; // Standard AdSense unit width
-        adContainer.style.height = '250px'; // Standard AdSense unit height
-        adContainer.style.overflow = 'hidden'; // Hide anything that overflows
-        adContainer.style.border = '2px dashed red'; // Make it visually distinct for testing!
-        adContainer.style.backgroundColor = 'rgba(255, 255, 0, 0.2)'; // Semi-transparent yellow background
+    // Function to create and append a single scream box
+    const createScreamBox = () => {
+        const screamBox = document.createElement('div');
+        screamBox.className = 'scream-box'; // Class for easy selection later
+        screamBox.style.position = 'fixed'; // Position it absolutely relative to the viewport
+        screamBox.style.zIndex = '99999'; // Even higher z-index to be SUPER intrusive
+        
+        // Random positioning within the viewport
+        screamBox.style.left = `${Math.random() * (window.innerWidth - 350)}px`; // -350 for width of box
+        screamBox.style.top = `${Math.random() * (window.innerHeight - 180)}px`; // -180 for height of box
 
-        const insElement = document.createElement('ins');
-        insElement.className = 'adsbygoogle';
-        insElement.style.display = 'block';
-        insElement.setAttribute('data-ad-client', AD_CLIENT_ID); // Use your extracted client ID
-        insElement.setAttribute('data-ad-slot', AD_SLOT_ID); // Use your extracted ad slot ID
-        insElement.setAttribute('data-ad-format', 'auto'); // Auto format for flexibility
-        insElement.setAttribute('data-full-width-responsive', 'true'); // Make it responsive
+        // Styling for maximum annoyance and visibility
+        screamBox.style.width = '300px';
+        screamBox.style.height = '150px';
+        screamBox.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 70%)`; // Random bright color
+        screamBox.style.border = '5px solid black';
+        screamBox.style.borderRadius = '15px';
+        screamBox.style.padding = '15px';
+        screamBox.style.boxShadow = '5px 5px 15px rgba(0,0,0,0.5)';
+        screamBox.style.fontFamily = 'Impact, sans-serif'; // Loud font
+        screamBox.style.fontSize = `${20 + Math.random() * 10}px`; // Slightly varied font size
+        screamBox.style.color = 'black';
+        screamBox.style.textAlign = 'center';
+        screamBox.style.display = 'flex';
+        screamBox.style.alignItems = 'center';
+        screamBox.style.justifyContent = 'center';
+        screamBox.style.textShadow = '2px 2px 0px white';
+        screamBox.style.animation = `screamPulse 0.5s infinite alternate ease-in-out`; // Pulsing animation
 
-        adContainer.appendChild(insElement);
-        document.body.appendChild(adContainer);
+        screamBox.innerHTML = `
+            <strong>HEY! TURN OFF THAT AD BLOCKER!</strong><br>
+            <small>WE NEED YOUR CLICKS!</small><br>
+            <small>THIS CONTENT ISN'T FREE!</small>
+        `;
 
-        // Push the ad to AdSense to be rendered. This is crucial!
-        (adsbygoogle = window.adsbygoogle || []).push({});
-        console.log('💰 Ad container spawned!');
+        document.body.appendChild(screamBox);
+        console.log('💥 Anti-Adblocker Scream Box spawned!');
     };
 
-    // Start spawning ads at the defined frequency
-    adInterval = setInterval(createAdContainer, AD_SPAWN_FREQUENCY_MS);
-    console.log(`🚀 Ad flood initiated for ${durationSeconds} seconds!`);
+    // Add a pulsing keyframe animation to the document if not already present
+    const styleSheet = document.head.querySelector('#scream-box-styles') || document.createElement('style');
+    styleSheet.id = 'scream-box-styles';
+    styleSheet.innerHTML = `
+        @keyframes screamPulse {
+            from {
+                transform: scale(1);
+                opacity: 1;
+            }
+            to {
+                transform: scale(1.05);
+                opacity: 0.9;
+            }
+        }
+    `;
+    document.head.appendChild(styleSheet);
 
-    // Set a timeout to stop the ad flood and remove all spawned ads after the duration
+
+    // Start spawning scream boxes at the defined frequency
+    adInterval = setInterval(createScreamBox, AD_SPAWN_FREQUENCY_MS);
+    console.log(`🚀 Scream flood initiated for ${durationSeconds} seconds!`);
+
+    // Set a timeout to stop the scream flood and remove all spawned boxes after the duration
     adDurationTimeout = setTimeout(() => {
-        clearInterval(adInterval); // Stop spawning new ads
-        // Remove all dynamically created ad containers
-        document.querySelectorAll('.random-ad-container').forEach(ad => {
-            ad.remove();
-            console.log('❌ Ad container removed.');
+        clearInterval(adInterval); // Stop spawning new boxes
+        // Remove all dynamically created scream boxes
+        document.querySelectorAll('.scream-box').forEach(box => {
+            box.remove();
+            console.log('🚫 Scream Box removed.');
         });
-        console.log('🌊 Ad flood has subsided. The page breathes again.');
+        console.log('🌊 The scream flood has subsided. Silence... for now.');
     }, durationSeconds * 1000); // Convert seconds to milliseconds
 };
