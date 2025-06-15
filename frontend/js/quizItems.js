@@ -1,5 +1,6 @@
 // Global variable to store current user
 let currentUser = null;
+let itemUpdateInterval = null;
 
 // Listen for user authentication
 document.addEventListener('userAuthenticated', (event) => {
@@ -10,7 +11,33 @@ document.addEventListener('userAuthenticated', (event) => {
     
     // Load player items when user is authenticated
     loadPlayerItems();
+    
+    // Start auto-refresh interval (every second)
+    startItemAutoRefresh();
 });
+
+// Function to start auto-refresh of items
+function startItemAutoRefresh() {
+    // Clear any existing interval
+    if (itemUpdateInterval) {
+        clearInterval(itemUpdateInterval);
+    }
+    
+    // Set up new interval to refresh every second
+    itemUpdateInterval = setInterval(() => {
+        if (currentUser && currentUser.id) {
+            loadPlayerItems();
+        }
+    }, 1000);
+}
+
+// Function to stop auto-refresh
+function stopItemAutoRefresh() {
+    if (itemUpdateInterval) {
+        clearInterval(itemUpdateInterval);
+        itemUpdateInterval = null;
+    }
+}
 
 // Function to load and display player items
 async function loadPlayerItems() {
@@ -21,10 +48,14 @@ async function loadPlayerItems() {
     }
 
     try {
+        console.log("Loading items for user:", currentUser.id);
         const response = await fetch(`/api/player/${currentUser.id}/items`);
         const data = await response.json();
         
+        console.log("Items API response:", data);
+        
         if (data.success) {
+            console.log("Items loaded successfully:", data.items);
             displayPlayerItems(data.items);
         } else {
             console.error("Failed to load items:", data.error);
@@ -38,6 +69,8 @@ async function loadPlayerItems() {
 
 // Function to display items in the 3 slots
 function displayPlayerItems(items) {
+    console.log("Displaying items:", items);
+    
     // Clear all slots first
     clearAllItemSlots();
     
@@ -45,12 +78,18 @@ function displayPlayerItems(items) {
     const maxSlots = 3;
     const itemsToShow = items.slice(0, maxSlots);
     
+    console.log("Items to show:", itemsToShow);
+    
     itemsToShow.forEach((item, index) => {
         const slotNumber = index + 1;
         const slotElement = document.getElementById(`item${slotNumber}`);
         
+        console.log(`Populating slot ${slotNumber} with item:`, item);
+        
         if (slotElement) {
             populateItemSlot(slotElement, item, slotNumber);
+        } else {
+            console.error(`Slot element item${slotNumber} not found`);
         }
     });
 }
@@ -96,16 +135,34 @@ function populateItemSlot(slotElement, item, slotNumber) {
         slotElement.insertBefore(titleElement, slotElement.firstChild);
     }
     
-    // Add logo/image if available
+    // Add icon using logoUrl or SVG from /svg/ folder
+    let iconElement = slotElement.querySelector('.c-item-icon');
+    if (!iconElement) {
+        iconElement = document.createElement('img');
+        iconElement.className = 'c-item-icon';
+        iconElement.style.width = '32px';
+        iconElement.style.height = '32px';
+        slotElement.insertBefore(iconElement, slotElement.firstChild);
+    }
+    
+    // Use logoUrl if available, otherwise try SVG from ../svg/ folder (relative to js/)
     if (item.logoUrl) {
-        let imgElement = slotElement.querySelector('.c-item-image');
-        if (!imgElement) {
-            imgElement = document.createElement('img');
-            imgElement.className = 'c-item-image';
-            slotElement.insertBefore(imgElement, slotElement.firstChild);
-        }
-        imgElement.src = item.logoUrl;
-        imgElement.alt = item.name;
+        iconElement.src = item.logoUrl;
+        iconElement.alt = item.name;
+        iconElement.style.display = 'block';
+    } else if (item.name) {
+        // Convert item name to filename (lowercase, replace spaces with underscores)
+        const svgFilename = item.name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') + '.svg';
+        iconElement.src = `../svg/${svgFilename}`;
+        iconElement.alt = item.name;
+        iconElement.style.display = 'block';
+        
+        // Hide icon if SVG fails to load
+        iconElement.onerror = () => {
+            iconElement.style.display = 'none';
+        };
+    } else {
+        iconElement.style.display = 'none';
     }
     
     // Setup button event listeners
@@ -244,10 +301,10 @@ function clearItemSlot(slotElement) {
         titleElement.remove();
     }
     
-    // Remove image if it exists
-    const imgElement = slotElement.querySelector('.c-item-image');
-    if (imgElement) {
-        imgElement.remove();
+    // Remove icon if it exists
+    const iconElement = slotElement.querySelector('.c-item-icon');
+    if (iconElement) {
+        iconElement.remove();
     }
     
     // Reset button listeners to do nothing
@@ -316,6 +373,12 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         if (currentUser) {
             loadPlayerItems();
+            startItemAutoRefresh();
         }
     }, 500);
+});
+
+// Clean up interval when page is unloaded
+window.addEventListener('beforeunload', () => {
+    stopItemAutoRefresh();
 });
