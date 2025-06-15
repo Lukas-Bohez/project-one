@@ -2,7 +2,7 @@ let adInterval;
 let adDurationTimeout;
 const AD_SPAWN_FREQUENCY_MS = 1500;
 const AD_SLOT_ID = 'YOUR_AD_SLOT_ID';
-const lanIP = `http://${window.location.hostname}:8000`;
+const lanIP = `http://${window.location.hostname}`;
 const socket = io(lanIP, {
     transports: ["websocket", "polling"],
     timeout: 20000,

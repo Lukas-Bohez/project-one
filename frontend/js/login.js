@@ -1,5 +1,5 @@
 // #region *** Constants and Storage Keys ***********
-const lanIP = `http://${window.location.hostname}:8000`;
+const lanIP = `http://${window.location.hostname}`;
 
 // Separate storage keys for admin vs regular user identification
 const STORAGE_KEYS = {

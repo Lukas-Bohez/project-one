@@ -2,7 +2,7 @@
 class ChatSystem {
     constructor() {
         this.currentUser = null;
-        this.lanIP = `http://${window.location.hostname}:8000`;
+        this.lanIP = `http://${window.location.hostname}`;
         this.sessionId = null;
         this.lastMessageCount = 0; // Track message count for smart scrolling
 
@@ -393,6 +393,14 @@ class ChatSystem {
         return this.currentUser;
     }
 }
+
+document.addEventListener('userAuthenticated', (event) => {
+        console.log("User authenticated event received");
+        const user = event.detail.user;
+        console.log("User data:", user);
+        ChatSystem.currentUser = user
+    });
+
 
 // Export for use in other scripts
 window.ChatSystem = ChatSystem;
