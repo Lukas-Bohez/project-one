@@ -33,36 +33,86 @@
     text-align: center;
 }
 
-
+.c-quiz-session {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(14, 24, 39, 0.1);
+}
 
 /* Mobile-specific styles */
 @media only screen and (max-width: 768px) {
     .c-graphs-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        /* Centers cards horizontally */
-        justify-content: center;
-        /* Centers cards vertically if needed */
         padding: 1rem;
         gap: 1.5rem;
     }
-
+    
+    .c-quiz-session {
+        width: 100%;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        box-sizing: border-box;
+    }
+    
+    .c-quiz-session > div:first-child {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
     .c-graph-card {
-        width: 90%;
-        /* Makes cards take up most of screen width */
-        max-width: 350px;
-        /* Prevents cards from becoming too wide */
+        width: 100%;
+        max-width: none;
+        padding: 1rem;
     }
-
+    
     .c-graph {
-        height: 280px;
-        margin-bottom: 10px;
-        /* Prevents bottom cutoff */
+        height: 250px;
+        margin-bottom: 0;
     }
-
+    
     .apexcharts-svg {
         overflow: visible !important;
     }
+    
+    /* Specific styles for the quiz session layout */
+    .c-quiz-session h2 {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+    }
+    
+    .c-quiz-session > div > div {
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .c-quiz-session h3 {
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .tab-button {
+        font-size: 0.8rem !important;
+        padding: 6px 12px !important;
+    }
+}
 
+/* Very small devices (phones, 400px and down) */
+@media only screen and (max-width: 400px) {
+    .c-graph {
+        height: 220px;
+    }
+    
+    .c-quiz-session {
+        padding: 0.75rem;
+    }
+    
+    .c-quiz-session h2 {
+        font-size: 1.1rem;
+    }
+    
+    .c-quiz-session h3 {
+        font-size: 0.85rem;
+    }
 }
