@@ -2590,7 +2590,7 @@ import logging # Import the logging module
 # Configure basic logging. This will show INFO messages and above.
 # The 'logger.exception()' calls will print a full traceback.
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
 
 # Assume ChatMessageCreate, QuizSessionRepository, ChatLogRepository, and sio are imported and defined
@@ -3798,6 +3798,13 @@ def handle_theme_display_phase(sio, loop, session_id, display_time):
     )
     future.result(timeout=1)
     
+    future = asyncio.run_coroutine_threadsafe(
+        sio.emit('theme_display', {
+            'session_id': session_id,
+            'theme_data': theme_data
+        }),
+        loop
+    )
     # Reset servo to start position
     if 'servo' in globals():
         servo.set_angle(0)
@@ -3816,13 +3823,6 @@ def handle_theme_display_phase(sio, loop, session_id, display_time):
     # Theme display finished - move to quiz phase
     set_session_phase(session_id, 'quiz')
     
-    future = asyncio.run_coroutine_threadsafe(
-        sio.emit('theme_display_finished', {
-            'session_id': session_id,
-            'theme_data': theme_data
-        }),
-        loop
-    )
     future.result(timeout=1)
     
     print(f"Theme display finished for session {session_id}, ready for quiz")
@@ -4330,6 +4330,104 @@ async def handle_answer_submission(sid, data):
         }, room=sid)
 
 
+@sio.on('theme_selected')
+async def handle_theme_selection(sid, data):
+    """
+    Handle theme selection votes and start voting timer when first vote is cast
+    """
+    try:
+        # Get active session and check phase
+        active_session_id = get_active_session_id()
+        
+        if not active_session_id:
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'No active session found'
+            })
+            return
+        
+        # Check if we're in voting phase
+        current_phase = get_session_phase(active_session_id)
+        if current_phase != 'voting':
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': f'Cannot vote during {current_phase} phase'
+            })
+            return
+            
+        # Get the full session details using the ID
+        active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+        
+        if not active_session_info:
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'Session not found'
+            })
+            return
+            
+        # Check if theme is already set
+        if active_session_info.get('themeId'):
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'Theme already selected for this session'
+            })
+            return
+        
+        user_id = data.get('userId', 1)
+        theme_id = int(data['themeId'])
+        session_id = active_session_id
+        
+        with theme_votes_lock:
+            # Initialize session structure
+            if session_id not in theme_votes:
+                theme_votes[session_id] = {
+                    "votes": defaultdict(int),
+                    "user_votes": {}
+                }
+            
+            session_data = theme_votes[session_id]
+            votes = session_data["votes"]
+            user_votes = session_data["user_votes"]
+            
+            # Remove previous vote
+            if user_id in user_votes:
+                old_theme = user_votes[user_id]
+                votes[old_theme] -= 1
+                if votes[old_theme] <= 0:
+                    del votes[old_theme]
+            
+            # Add new vote
+            votes[theme_id] += 1
+            user_votes[user_id] = theme_id
+        
+        # Broadcast vote updates
+        await sio.emit('theme_votes_update', {
+            'session_id': session_id,
+            'votes': dict(votes)
+        })
+        
+        # Start timer on first vote
+        total_votes = sum(votes.values())
+        if total_votes == 1:
+            print(f"Starting voting timer for session {session_id}")
+            timer_config = {
+                'voting_time': 60,
+                'theme_display_time': 10,
+                'question_time': 15,  # Updated to 15 seconds
+                'explanation_time': 15  # Updated to 15 seconds
+            }
+            set_session_phase(session_id, 'voting')
+            start_generic_timer(sio, asyncio.get_event_loop(), session_id, timer_config)
+        
+        await sio.emit('answer_response', {'success': True})
+        
+    except Exception as e:
+        print(f"Error in handle_theme_selection: {e}")
+        traceback.print_exc()
+        await sio.emit('answer_response', {
+            'success': False,
+            'error': 'Vote failed: ' + str(e)
+        })
 
 
 
@@ -4342,9 +4440,13 @@ async def handle_answer_submission(sid, data):
 
 
 
-# -----
+
+
+
+
+# --------------
 # items
-# -----
+# --------------
 
 
 
