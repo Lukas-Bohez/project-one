@@ -4221,6 +4221,14 @@ async def handle_answer_submission(sid, data):
             await sio.emit('answer_response', {'success': False, 'error': error_msg}, room=sid)
             return
         
+        if PlayerAnswerRepository.get_player_answers_for_user_in_session_by_question(get_active_session_id,user_id,question_id):
+            error_msg = 'Answer already submitted before'
+            logger.error(error_msg)
+            await sio.emit('answer_response', {'success': False, 'error': error_msg}, room=sid)
+            return
+
+
+
         logger.debug(f"Valid submission from user {user_id} for question {question_id}")
 
         # Get active session
@@ -4284,7 +4292,7 @@ async def handle_answer_submission(sid, data):
         if is_correct:
             get_random_item(user_id=user_id,luck=float(progress))
             # Convert progress to proper decimal (if it's coming as percentage)
-            progress_decimal = float(progress)
+            progress_decimal = float(1-progress)
             progress_decimal = max(0.0, min(1.0, progress_decimal))  # Clamp between 0 and 1
             points_earned = int(max_points * progress_decimal)
             points_earned = max(1, points_earned)  # Minimum 1 point for correct answer
