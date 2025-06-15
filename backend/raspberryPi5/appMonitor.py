@@ -12,10 +12,7 @@ class AppMonitor(threading.Thread):
         self.app_path = app_path
         self.check_interval = check_interval
         self.error_patterns = [
-            r"Query error: weakly-referenced object no longer exists",
-            r"Query error: 2013 \(HY000\): Lost connection to MySQL server during query",
-            r"Error in emit_theme_selection_if_needed: 'NoneType' object has no attribute 'get'",
-            r"malloc\(\): mismatching next->prev_size \(unsorted\)"
+            r"Query error: weakly-referenced object no longer exists"
         ]
         self.running = True
         self.process = None
