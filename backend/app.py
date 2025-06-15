@@ -4528,8 +4528,8 @@ async def delete_item(user_id: int, item_id: int, quantity: int = 1):
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-@app.get("/api/items")
-async def get_all_items():
+
+def get_all_items():
     """Get all available items"""
     try:
         items = ItemRepository.get_all_items()
@@ -4537,8 +4537,8 @@ async def get_all_items():
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-@app.get("/api/items/rarity/{rarity}")
-async def get_items_by_rarity(rarity: str):
+
+def get_items_by_rarity(rarity: str):
     """Get items by rarity level"""
     try:
         items = ItemRepository.get_items_by_rarity(rarity)
@@ -4546,13 +4546,8 @@ async def get_items_by_rarity(rarity: str):
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-@app.get("/api/temperature")
-async def get_temperature():
-    """Get current virtual temperature"""
-    return {"success": True, "temperature": virtualTemperature}
 
-@app.post("/api/temperature/reset")
-async def reset_temperature():
+def reset_temperature():
     """Reset virtual temperature to 0"""
     global virtualTemperature
     virtualTemperature = 0
