@@ -1302,6 +1302,9 @@ class SensorDataRepository:
     
 
 
+
+
+
 class ItemRepository:
     @staticmethod
     def get_all_items() -> List[Dict[str, Any]]:
@@ -1334,6 +1337,10 @@ class ItemRepository:
             sql = "SELECT * FROM items WHERE cost >= %s AND cost <= %s AND is_active = TRUE ORDER BY cost ASC"
             params = [min_cost, max_cost]
         return Database.execute_sql(sql, params)
+
+
+
+
 
 class PlayerItemRepository:
     @staticmethod
@@ -1416,6 +1423,24 @@ class PlayerItemRepository:
         """Get the quantity of a specific item a player owns."""
         item = PlayerItemRepository.get_player_item(user_id, item_id)
         return item['quantity'] if item else 0
+    
+    @staticmethod
+    def delete_all_player_items(user_id: int) -> bool:
+        """Delete all items from a player's inventory"""
+        try:
+            sql = "DELETE FROM playerItems WHERE userId = %s"
+            params = [user_id]
+            Database.execute_sql(sql, params)
+            return True
+        except Exception as e:
+            print(f"Error deleting player items: {e}")
+            return False
+
+
+
+
+
+
 
 # Enhanced Repository Method with Debug Logging
 import logging

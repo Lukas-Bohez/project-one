@@ -3345,10 +3345,7 @@ def emit_sensor_data(sensor_data, sio, loop):
         print(f"Error emitting sensor_data: {e}")
 
 
-#item functions
-def activateAdvertFlood():
-    """Call this function to trigger the 60-second ad flood on all clients"""
-    sio.emit('B2F_addItem', {}, broadcast=True)
+
 
 
 
@@ -3481,8 +3478,8 @@ def select_question_based_on_sensors(available_questions, temp_sensor, light_sen
 
     filtered = [
         q for q in available_questions
-        if (get_bound(q, 'TempMin', 0) <= temp <= get_bound(q, 'TempMax', 30))
-        and (get_bound(q, 'LightMin', 0) <= light <= get_bound(q, 'LightMax', 30))
+        if (get_bound(q, 'TempMin', 20) <= temp <= get_bound(q, 'TempMax', 25))
+        and (get_bound(q, 'LightMin', 10) <= light <= get_bound(q, 'LightMax', 20))
     ]
 
     return random.choice(filtered or available_questions) if available_questions else None
@@ -4331,6 +4328,249 @@ async def handle_answer_submission(sid, data):
             'success': False,
             'error': 'An unexpected error occurred'
         }, room=sid)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# -----
+# items
+# -----
+
+
+
+# Global variable for temperature effects
+virtualTemperature = 0
+
+# Item effect functions
+def activateAdvertFlood():
+    """Call this function to trigger the 60-second ad flood on all clients"""
+    sio.emit('B2F_addItem', {}, broadcast=True)
+
+def tempDown():
+    """Lower the virtual temperature by 20 degrees"""
+    global virtualTemperature
+    virtualTemperature -= 20
+    # Emit temperature change to all clients
+    sio.emit('B2F_temperatureChange', {'temperature': virtualTemperature}, broadcast=True)
+
+def tempUp():
+    """Raise the virtual temperature by 20 degrees"""
+    global virtualTemperature
+    virtualTemperature += 20
+    # Emit temperature change to all clients
+    sio.emit('B2F_temperatureChange', {'temperature': virtualTemperature}, broadcast=True)
+
+# Item management functions
+
+
+def get_random_item_by_luck(luck_value: float) -> Optional[Dict[str, Any]]:
+    """
+    Get a random item based on luck value (0-1, lower = better items)
+    Rarity distribution based on how many items exist in each rarity tier
+    """
+    try:
+        # Get all active items grouped by rarity
+        all_items = ItemRepository.get_all_items()
+        
+        if not all_items:
+            return None
+        
+        # Group items by rarity and count them
+        rarity_groups = {}
+        for item in all_items:
+            rarity = item['rarity']
+            if rarity not in rarity_groups:
+                rarity_groups[rarity] = []
+            rarity_groups[rarity].append(item)
+        
+        # Calculate rarity weights (fewer items = rarer = lower weight threshold)
+        rarity_counts = {rarity: len(items) for rarity, items in rarity_groups.items()}
+        total_items = len(all_items)
+        
+        # Create probability thresholds (rarer items get lower thresholds)
+        # Sort rarities by count (ascending = rarest first)
+        sorted_rarities = sorted(rarity_counts.items(), key=lambda x: x[1])
+        
+        # Assign probability ranges
+        cumulative_prob = 0
+        rarity_thresholds = []
+        
+        for rarity, count in sorted_rarities:
+            # Rarer items (fewer count) get smaller probability windows but at lower luck values
+            prob_weight = 1.0 / count  # Inverse relationship
+            prob_range = prob_weight / sum(1.0 / c for _, c in sorted_rarities)
+            
+            rarity_thresholds.append({
+                'rarity': rarity,
+                'min_threshold': cumulative_prob,
+                'max_threshold': cumulative_prob + prob_range,
+                'items': rarity_groups[rarity]
+            })
+            cumulative_prob += prob_range
+        
+        # Select rarity based on luck value
+        selected_rarity_group = None
+        for threshold_info in rarity_thresholds:
+            if luck_value >= threshold_info['min_threshold'] and luck_value < threshold_info['max_threshold']:
+                selected_rarity_group = threshold_info
+                break
+        
+        # Fallback to last group if no match
+        if not selected_rarity_group:
+            selected_rarity_group = rarity_thresholds[-1]
+        
+        # Randomly select an item from the chosen rarity group
+        import random
+        selected_item = random.choice(selected_rarity_group['items'])
+        return selected_item
+        
+    except Exception as e:
+        print(f"Error getting random item: {e}")
+        return None
+
+# FastAPI endpoints
+@app.get("/api/player/{user_id}/items")
+async def get_player_items(user_id: int):
+    """Get all items owned by a player"""
+    try:
+        items = PlayerItemRepository.get_player_items(user_id)
+        return {"success": True, "items": items}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/player/{user_id}/items/clear")
+async def clear_player_items(user_id: int):
+    """Delete all items from a player's inventory"""
+    try:
+        success = PlayerItemRepository.delete_all_player_items(user_id)
+        return {"success": success}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+def get_random_item(user_id: int, luck: float = 0.5):
+    """Get a random item based on luck value and add it to player inventory"""
+    try:
+        # Validate luck value
+        if luck < 0 or luck > 1:
+            return {"success": False, "error": "Luck value must be between 0 and 1"}
+        
+        # Get random item
+        item = get_random_item_by_luck(luck)
+        if not item:
+            return {"success": False, "error": "No items available"}
+        
+        # Add item to player inventory
+        result = PlayerItemRepository.add_item_to_player(user_id, item['id'], 1)
+        if result:
+            return {"success": True, "item": item}
+        else:
+            return {"success": False, "error": "Failed to add item to inventory"}
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/player/{user_id}/items/{item_id}/use")
+async def use_item(user_id: int, item_id: int):
+    """Use an item (activate its effect and remove from inventory)"""
+    try:
+        # Get item details first
+        item = PlayerItemRepository.get_player_item(user_id, item_id)
+        if not item:
+            return {"success": False, "error": "Item not found in player inventory"}
+        
+        # Use the item (removes from inventory)
+        success = PlayerItemRepository.use_item(user_id, item_id, 1)
+        if not success:
+            return {"success": False, "error": "Failed to use item"}
+        
+        # Activate item effect based on the effect string
+        effect = item.get('effect', '')
+        try:
+            if effect == 'activateAdvertFlood()':
+                activateAdvertFlood()
+            elif effect == 'tempDown()':
+                tempDown()
+            elif effect == 'tempUp()':
+                tempUp()
+            else:
+                # For other effects, try to execute as function call
+                if effect and effect.endswith('()'):
+                    function_name = effect[:-2]
+                    if function_name in globals():
+                        globals()[function_name]()
+        except Exception as effect_error:
+            print(f"Error executing item effect: {effect_error}")
+        
+        return {"success": True, "item_used": item}
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.delete("/api/player/{user_id}/items/{item_id}")
+async def delete_item(user_id: int, item_id: int, quantity: int = 1):
+    """Delete/discard an item from player inventory without using it"""
+    try:
+        success = PlayerItemRepository.use_item(user_id, item_id, quantity)
+        if success:
+            return {"success": True, "message": f"Deleted {quantity} of item {item_id}"}
+        else:
+            return {"success": False, "error": "Item not found or insufficient quantity"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.get("/api/items")
+async def get_all_items():
+    """Get all available items"""
+    try:
+        items = ItemRepository.get_all_items()
+        return {"success": True, "items": items}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.get("/api/items/rarity/{rarity}")
+async def get_items_by_rarity(rarity: str):
+    """Get items by rarity level"""
+    try:
+        items = ItemRepository.get_items_by_rarity(rarity)
+        return {"success": True, "items": items}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.get("/api/temperature")
+async def get_temperature():
+    """Get current virtual temperature"""
+    return {"success": True, "temperature": virtualTemperature}
+
+@app.post("/api/temperature/reset")
+async def reset_temperature():
+    """Reset virtual temperature to 0"""
+    global virtualTemperature
+    virtualTemperature = 0
+    sio.emit('B2F_temperatureChange', {'temperature': virtualTemperature}, broadcast=True)
+    return {"success": True, "temperature": virtualTemperature}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
