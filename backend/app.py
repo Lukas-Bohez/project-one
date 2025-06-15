@@ -43,7 +43,8 @@ except ImportError as e:
     RPI_COMPONENTS_AVAILABLE = False
 
 
-
+# Global variable for temperature effects
+virtualTemperature = 0
 
 
 current_phase = None
@@ -4221,7 +4222,7 @@ async def handle_answer_submission(sid, data):
             await sio.emit('answer_response', {'success': False, 'error': error_msg}, room=sid)
             return
         
-        if PlayerAnswerRepository.get_player_answers_for_user_in_session_by_question(get_active_session_id,user_id,question_id):
+        if PlayerAnswerRepository.get_player_answers_for_user_in_session_by_question(get_active_session_id(),user_id,question_id):
             error_msg = 'Answer already submitted before'
             logger.error(error_msg)
             await sio.emit('answer_response', {'success': False, 'error': error_msg}, room=sid)
@@ -4475,12 +4476,12 @@ async def handle_theme_selection(sid, data):
 
 
 
-# Global variable for temperature effects
-virtualTemperature = 0
+
 
 # Item effect functions
 def activateAdvertFlood():
     """Call this function to trigger the 60-second ad flood on all clients"""
+    print("sending advert flood emit")
     sio.emit('B2F_addItem', {}, broadcast=True)
 
 def tempDown():
@@ -4619,9 +4620,9 @@ async def use_item(user_id: int, item_id: int):
         success = PlayerItemRepository.use_item(user_id, item_id, 1)
         if not success:
             return {"success": False, "error": "Failed to use item"}
-        
         # Activate item effect based on the effect string
         effect = item.get('effect', '')
+        print(f"Player {user_id} activated {item_id} with effect {effect}")
         try:
             if effect == 'activateAdvertFlood()':
                 activateAdvertFlood()
@@ -4643,17 +4644,6 @@ async def use_item(user_id: int, item_id: int):
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-@app.delete("/api/player/{user_id}/items/{item_id}")
-async def delete_item(user_id: int, item_id: int, quantity: int = 1):
-    """Delete/discard an item from player inventory without using it"""
-    try:
-        success = PlayerItemRepository.use_item(user_id, item_id, quantity)
-        if success:
-            return {"success": True, "message": f"Deleted {quantity} of item {item_id}"}
-        else:
-            return {"success": False, "error": "Item not found or insufficient quantity"}
-    except Exception as e:
-        return {"success": False, "error": str(e)}
 
 
 def get_all_items():
