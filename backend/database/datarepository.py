@@ -1347,7 +1347,8 @@ class PlayerItemRepository:
     def get_player_items(user_id: int) -> List[Dict[str, Any]]:
         """Get all items owned by a player with item details."""
         sql = """
-            SELECT pi.*, i.name, i.description, i.effect, i.effect_value, 
+            SELECT pi.id, pi.userId, pi.itemId, pi.quantity, pi.acquired_at,
+                   i.name, i.description, i.effect, i.effect_value, 
                    i.rarity, i.cost, i.logoUrl
             FROM playerItems pi
             JOIN items i ON pi.itemId = i.id
@@ -1355,13 +1356,18 @@ class PlayerItemRepository:
             ORDER BY pi.acquired_at DESC
         """
         params = [user_id]
-        return Database.execute_sql(sql, params)
+        result = Database.execute_sql(sql, params)
+        # Handle case where Database.execute_sql returns int instead of results
+        if isinstance(result, int) or result is None:
+            return []
+        return result if isinstance(result, list) else []
     
     @staticmethod
     def get_player_item(user_id: int, item_id: int) -> Optional[Dict[str, Any]]:
         """Get a specific item owned by a player."""
         sql = """
-            SELECT pi.*, i.name, i.description, i.effect, i.effect_value, 
+            SELECT pi.id, pi.userId, pi.itemId, pi.quantity, pi.acquired_at,
+                   i.name, i.description, i.effect, i.effect_value, 
                    i.rarity, i.cost, i.logoUrl
             FROM playerItems pi
             JOIN items i ON pi.itemId = i.id
@@ -1369,60 +1375,94 @@ class PlayerItemRepository:
         """
         params = [user_id, item_id]
         result = Database.execute_sql(sql, params)
-        return result[0] if result else None
+        # Handle case where Database.execute_sql returns int instead of results
+        if isinstance(result, int) or result is None or not isinstance(result, list):
+            return None
+        return result[0] if len(result) > 0 else None
     
     @staticmethod
     def add_item_to_player(user_id: int, item_id: int, quantity: int = 1) -> Optional[int]:
         """Add an item to a player's inventory or increase quantity if already owned."""
-        # Check if player already has this item
-        existing_item = PlayerItemRepository.get_player_item(user_id, item_id)
-        
-        if existing_item:
-            # Update quantity
-            sql = """
-                UPDATE playerItems 
-                SET quantity = quantity + %s 
-                WHERE userId = %s AND itemId = %s
-            """
-            params = [quantity, user_id, item_id]
-            Database.execute_sql(sql, params)
-            return existing_item['id']
-        else:
-            # Create new entry
-            sql = """
-                INSERT INTO playerItems (userId, itemId, quantity)
-                VALUES (%s, %s, %s)
-            """
-            params = [user_id, item_id, quantity]
-            return Database.execute_sql(sql, params)
+        try:
+            # Check if player already has this item
+            existing_item = PlayerItemRepository.get_player_item(user_id, item_id)
+            
+            if existing_item:
+                # Update quantity
+                sql = """
+                    UPDATE playerItems 
+                    SET quantity = quantity + %s 
+                    WHERE userId = %s AND itemId = %s
+                """
+                params = [quantity, user_id, item_id]
+                Database.execute_sql(sql, params)
+                return existing_item['id']
+            else:
+                # Create new entry with explicit acquired_at
+                sql = """
+                    INSERT INTO playerItems (userId, itemId, quantity, acquired_at)
+                    VALUES (%s, %s, %s, NOW())
+                """
+                params = [user_id, item_id, quantity]
+                result = Database.execute_sql(sql, params)
+                
+                # If Database.execute_sql doesn't return the insert ID, get it manually
+                if isinstance(result, int) and result > 0:
+                    return result
+                else:
+                    # Try to get the most recently inserted record
+                    get_sql = """
+                        SELECT id FROM playerItems 
+                        WHERE userId = %s AND itemId = %s 
+                        ORDER BY acquired_at DESC, id DESC 
+                        LIMIT 1
+                    """
+                    get_params = [user_id, item_id]
+                    get_result = Database.execute_sql(get_sql, get_params)
+                    if isinstance(get_result, list) and len(get_result) > 0:
+                        return get_result[0]['id']
+                    return None
+                    
+        except Exception as e:
+            print(f"Error adding item to player: {e}")
+            return None
     
     @staticmethod
     def use_item(user_id: int, item_id: int, quantity: int = 1) -> bool:
         """Use an item (decrease quantity) and return True if successful."""
-        existing_item = PlayerItemRepository.get_player_item(user_id, item_id)
-        
-        if not existing_item or existing_item['quantity'] < quantity:
+        try:
+            existing_item = PlayerItemRepository.get_player_item(user_id, item_id)
+            
+            if not existing_item or existing_item['quantity'] < quantity:
+                return False
+            
+            new_quantity = existing_item['quantity'] - quantity
+            
+            if new_quantity <= 0:
+                # Remove item from inventory
+                sql = "DELETE FROM playerItems WHERE userId = %s AND itemId = %s"
+                params = [user_id, item_id]
+            else:
+                # Update quantity
+                sql = "UPDATE playerItems SET quantity = %s WHERE userId = %s AND itemId = %s"
+                params = [new_quantity, user_id, item_id]
+            
+            Database.execute_sql(sql, params)
+            return True
+            
+        except Exception as e:
+            print(f"Error using item: {e}")
             return False
-        
-        new_quantity = existing_item['quantity'] - quantity
-        
-        if new_quantity <= 0:
-            # Remove item from inventory
-            sql = "DELETE FROM playerItems WHERE userId = %s AND itemId = %s"
-            params = [user_id, item_id]
-        else:
-            # Update quantity
-            sql = "UPDATE playerItems SET quantity = %s WHERE userId = %s AND itemId = %s"
-            params = [new_quantity, user_id, item_id]
-        
-        Database.execute_sql(sql, params)
-        return True
     
     @staticmethod
     def get_player_item_count(user_id: int, item_id: int) -> int:
         """Get the quantity of a specific item a player owns."""
-        item = PlayerItemRepository.get_player_item(user_id, item_id)
-        return item['quantity'] if item else 0
+        try:
+            item = PlayerItemRepository.get_player_item(user_id, item_id)
+            return item['quantity'] if item else 0
+        except Exception as e:
+            print(f"Error getting player item count: {e}")
+            return 0
     
     @staticmethod
     def delete_all_player_items(user_id: int) -> bool:
@@ -1435,6 +1475,47 @@ class PlayerItemRepository:
         except Exception as e:
             print(f"Error deleting player items: {e}")
             return False
+
+    @staticmethod
+    def debug_insert_test(user_id: int, item_id: int, quantity: int = 1) -> Dict[str, Any]:
+        """Debug method to test insertion and see what's happening."""
+        try:
+            print(f"DEBUG: Attempting to insert - userId: {user_id}, itemId: {item_id}, quantity: {quantity}")
+            
+            # First check if the item exists in the items table
+            item_check_sql = "SELECT id, name, is_active FROM items WHERE id = %s"
+            item_check_result = Database.execute_sql(item_check_sql, [item_id])
+            print(f"DEBUG: Item check result: {item_check_result}")
+            
+            if not item_check_result or (isinstance(item_check_result, list) and len(item_check_result) == 0):
+                return {"error": "Item does not exist", "item_id": item_id}
+            
+            # Try the insert
+            sql = """
+                INSERT INTO playerItems (userId, itemId, quantity, acquired_at)
+                VALUES (%s, %s, %s, NOW())
+            """
+            params = [user_id, item_id, quantity]
+            print(f"DEBUG: Executing SQL: {sql}")
+            print(f"DEBUG: With params: {params}")
+            
+            result = Database.execute_sql(sql, params)
+            print(f"DEBUG: Insert result: {result}, type: {type(result)}")
+            
+            # Verify the insert by checking the table
+            verify_sql = "SELECT * FROM playerItems WHERE userId = %s AND itemId = %s"
+            verify_result = Database.execute_sql(verify_sql, [user_id, item_id])
+            print(f"DEBUG: Verification result: {verify_result}")
+            
+            return {
+                "insert_result": result,
+                "verification": verify_result,
+                "success": True
+            }
+            
+        except Exception as e:
+            print(f"DEBUG: Exception occurred: {e}")
+            return {"error": str(e), "success": False}
 
 
 
