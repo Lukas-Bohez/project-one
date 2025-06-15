@@ -43,7 +43,10 @@ except ImportError as e:
     RPI_COMPONENTS_AVAILABLE = False
 
 
-    
+
+
+
+current_phase = None
 # ----------------------------------------------------
 # App setup
 # ----------------------------------------------------
@@ -70,6 +73,9 @@ ENDPOINT = "/api/v1"  # API base endpoint
 
 # Store connected clients
 connected_clients = set()
+
+# Mount Socket.IO on the same app
+app.mount("/socket.io", socketio.ASGIApp(sio, app))
 
 
 # ----------------------------------------------------
@@ -159,8 +165,7 @@ async def startup_event():
     # asyncio.create_task(background_task())
     print("Server started - Socket.IO backend is ready!")
 
-# Mount Socket.IO on the same app
-app.mount("/socket.io", socketio.ASGIApp(sio, app))
+
 
 
 
@@ -889,12 +894,20 @@ async def appeal_ban(payload: AppealPayload, request: Request):
 
 
 @app.get("/api/v1/sensor-data", response_model=MultiSessionSensorResponse)
-async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1000, include_chat: bool = True, include_answers: bool = True):
-    # Convert and sort session IDs in descending order (newest first)
-    requested_session_ids = sorted(
-        [int(sid.strip()) for sid in session_ids.split(',')],
-        reverse=True
-    )
+async def get_multi_session_sensor_data(session_ids: str = None, limit: int = 1000, include_chat: bool = True, include_answers: bool = True):
+    # If session_ids is provided, use those; otherwise get all sessions
+    if session_ids:
+        # Convert and sort session IDs in descending order (newest first)
+        requested_session_ids = sorted(
+            [int(sid.strip()) for sid in session_ids.split(',')],
+            reverse=True
+        )
+    else:
+        # Get all sessions from the database
+        all_sessions = QuizSessionRepository.get_all_sessions()
+        # Extract session IDs - assuming tuples with id as first element
+        # Based on SQL: SELECT id, session_date, name, description, sessionStatusId, themeId, hostUserId, start_time, end_time
+        requested_session_ids = [session[0] for session in all_sessions]
    
     response_sessions_data = []
    
@@ -1024,6 +1037,17 @@ async def get_multi_session_sensor_data(session_ids: str = "1,2", limit: int = 1
         ))
    
     return MultiSessionSensorResponse(sessions=response_sessions_data)
+
+
+
+
+
+
+
+
+
+
+
 
 
 from fastapi import APIRouter, HTTPException, Depends, Request, Header
@@ -1182,6 +1206,7 @@ async def add_user_to_active_session(user_id: int):
 
 @app.post("/api/v1/register", status_code=status.HTTP_201_CREATED)
 async def register_user(user_credentials: UserCredentials, request: Request):
+    global current_phase
     try:
         if UserRepository.get_user_by_name(user_credentials.first_name, user_credentials.last_name):
             raise HTTPException(
@@ -1209,6 +1234,33 @@ async def register_user(user_credentials: UserCredentials, request: Request):
                 detail="A critical error occurred while creating the user."
             )
         
+
+
+        if not get_active_session_id():
+            # Auto-generated name and description
+            auto_name = f"Session {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            auto_description = f"Automatically created session on {datetime.now().strftime('%B %d, %Y at %H:%M')}"
+
+            new_session_id = QuizSessionRepository.create_session(
+                session_date=datetime.now(),
+                name="Auto Session",
+                description="Automatically created session",
+                session_status_id=2,  # Must be provided
+                theme_id=None,          # Must be provided (default theme)
+                host_user_id=user_id,  # Must be provided
+                start_time=datetime.now()
+            )
+            current_phase = 'voting'
+        ChatLogRepository.create_chat_message(
+            session_id=get_active_session_id(),
+            message_text=f'User {user_credentials.first_name} has logged in',  # Comma was missing here
+            user_id=1,
+            message_type='system',
+            reply_to_id=1
+        )
+
+
+
         log_user_ip_address(user_id, get_client_ip(request))
         await add_user_to_active_session(user_id)
         
@@ -1226,6 +1278,7 @@ async def register_user(user_credentials: UserCredentials, request: Request):
 
 @app.post("/api/v1/login")
 async def login_user(user_credentials: UserCredentials, request: Request):
+    global current_phase
     try:
         user_id = UserRepository.authenticate_user(
             user_credentials.first_name,
@@ -1238,9 +1291,32 @@ async def login_user(user_credentials: UserCredentials, request: Request):
                 detail="Invalid first name, last name, or password."
             )
         
+        if not get_active_session_id():
+            # Auto-generated name and description
+            auto_name = f"Session {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            auto_description = f"Automatically created session on {datetime.now().strftime('%B %d, %Y at %H:%M')}"
+
+            new_session_id = QuizSessionRepository.create_session(
+                session_date=datetime.now(),
+                name="Auto Session",
+                description="Automatically created session",
+                session_status_id=2,  # Must be provided
+                theme_id=None,          # Must be provided (default theme)
+                host_user_id=user_id,  # Must be provided
+                start_time=datetime.now()
+            )
+            current_phase = 'voting'
+        ChatLogRepository.create_chat_message(
+            session_id=get_active_session_id(),
+            message_text=f'User {user_credentials.first_name} has logged in',  # Comma was missing here
+            user_id=1,
+            message_type='system',
+            reply_to_id=1
+        )
+
+
         log_user_ip_address(user_id, get_client_ip(request))
         await add_user_to_active_session(user_id)
-        
         logger.info(f"User ID {user_id} logged in successfully.")
         return {"message": "Login successful", "user_id": user_id}
 
@@ -1254,16 +1330,163 @@ async def login_user(user_credentials: UserCredentials, request: Request):
         )
 
 def calculate_player_score(session_id: int, user_id: int) -> int:
-    try:
-        all_answers = PlayerAnswerRepository.get_all_player_answers_for_user_in_session(session_id, user_id)
+    """
+    Calculate the total score for a player in a session.
+    
+    Args:
+        session_id (int): The ID of the session
+        user_id (int): The ID of the user/player
         
-        user_score = sum(answer.get('points_earned', 0) for answer in all_answers if answer.get('points_earned'))
+    Returns:
+        int: Total points earned by the player in the session
+    """
+    try:
+        logger.debug(f"Calculating score for user {user_id} in session {session_id}")
+        
+        # Use the repository method we created earlier for better performance
+        user_score = PlayerAnswerRepository.get_player_score_for_session(session_id, user_id)
+        
+        logger.debug(f"Score calculated for user {user_id}: {user_score}")
         return user_score
     
     except Exception as e:
         logger.error(f"Could not calculate score for user {user_id} in session {session_id}: {e}")
         return 0
 
+
+def calculate_player_score_detailed(session_id: int, user_id: int) -> dict:
+    """
+    Calculate detailed score information for debugging purposes.
+    
+    Args:
+        session_id (int): The ID of the session
+        user_id (int): The ID of the user/player
+        
+    Returns:
+        dict: Detailed score information including breakdown
+    """
+    try:
+        logger.debug(f"Calculating detailed score for user {user_id} in session {session_id}")
+        
+        # Get all answers for the user in this session
+        all_answers = PlayerAnswerRepository.get_all_player_answers_for_user_in_session(session_id, user_id)
+        
+        if not all_answers:
+            logger.warning(f"No answers found for user {user_id} in session {session_id}")
+            return {
+                'total_score': 0,
+                'total_answers': 0,
+                'correct_answers': 0,
+                'answers_breakdown': []
+            }
+        
+        logger.debug(f"Found {len(all_answers)} answers for user {user_id}")
+        
+        total_score = 0
+        correct_count = 0
+        answers_breakdown = []
+        
+        for answer in all_answers:
+            logger.debug(f"Processing answer: {answer}")
+            
+            # Handle different possible key names for points
+            points = 0
+            if 'points_earned' in answer and answer['points_earned'] is not None:
+                points = int(answer['points_earned'])
+            elif 'score' in answer and answer['score'] is not None:
+                points = int(answer['score'])
+            
+            is_correct = answer.get('is_correct', 0)
+            if isinstance(is_correct, str):
+                is_correct = is_correct.lower() in ('1', 'true', 'yes')
+            else:
+                is_correct = bool(is_correct)
+            
+            if is_correct:
+                correct_count += 1
+            
+            total_score += points
+            
+            answers_breakdown.append({
+                'question_id': answer.get('questionId'),
+                'answer_id': answer.get('answerId'),
+                'points': points,
+                'is_correct': is_correct,
+                'answered_at': answer.get('answered_at')
+            })
+        
+        result = {
+            'total_score': total_score,
+            'total_answers': len(all_answers),
+            'correct_answers': correct_count,
+            'answers_breakdown': answers_breakdown
+        }
+        
+        logger.info(f"Detailed score for user {user_id} in session {session_id}: {result}")
+        return result
+    
+    except Exception as e:
+        logger.error(f"Could not calculate detailed score for user {user_id} in session {session_id}: {e}")
+        return {
+            'total_score': 0,
+            'total_answers': 0,
+            'correct_answers': 0,
+            'answers_breakdown': [],
+            'error': str(e)
+        }
+
+
+def debug_player_score_calculation(session_id: int, user_id: int) -> None:
+    """
+    Debug function to help identify why scores might be 0.
+    """
+    try:
+        logger.info(f"=== DEBUGGING SCORE CALCULATION ===")
+        logger.info(f"Session ID: {session_id}, User ID: {user_id}")
+        
+        # Check if user exists
+        user = UserRepository.get_user_by_id(user_id)
+        logger.info(f"User exists: {user is not None}")
+        if user:
+            logger.info(f"User details: {user.get('first_name')} {user.get('last_name')}")
+        
+        # Check if session exists
+        session = QuizSessionRepository.get_session_by_id(session_id)
+        logger.info(f"Session exists: {session is not None}")
+        if session:
+            logger.info(f"Session name: {session.get('name')}")
+        
+        # Check if user is in session
+        session_players = SessionPlayerRepository.get_session_players(session_id)
+        user_in_session = any(p.get('userId') == user_id for p in session_players)
+        logger.info(f"User in session: {user_in_session}")
+        
+        # Get raw answers data
+        raw_answers = PlayerAnswerRepository.get_all_player_answers_for_user_in_session(session_id, user_id)
+        logger.info(f"Raw answers count: {len(raw_answers) if raw_answers else 0}")
+        
+        if raw_answers:
+            for i, answer in enumerate(raw_answers):
+                logger.info(f"Answer {i+1}: {answer}")
+        
+        # Get detailed calculation
+        detailed_score = calculate_player_score_detailed(session_id, user_id)
+        logger.info(f"Detailed score calculation: {detailed_score}")
+        
+        # Try direct repository method
+        repo_score = PlayerAnswerRepository.get_player_score_for_session(session_id, user_id)
+        logger.info(f"Repository method score: {repo_score}")
+        
+        logger.info(f"=== END DEBUG ===")
+        
+    except Exception as e:
+        logger.error(f"Error in debug function: {e}", exc_info=True)
+
+
+# Updated handler function with better debugging
+from decimal import Decimal  # Add this import at the top of your file
+
+# ... [rest of your imports] ...
 
 @sio.on('request_user_data')
 async def handle_user_data_request(sid, data):
@@ -1313,9 +1536,9 @@ async def handle_user_data_request(sid, data):
         logger.debug(f"Processing {len(player_records)} players")
         
         for player in player_records:
-            user_id = player.get('userId')  # Changed from 'user_id' to 'id'
+            user_id = player.get('userId')
             if not user_id:
-                logger.warning(f"Player record missing id: {player}")
+                logger.warning(f"Player record missing userId: {player}")
                 continue
 
             logger.debug(f"Fetching details for user {user_id}")
@@ -1326,23 +1549,31 @@ async def handle_user_data_request(sid, data):
                 continue
 
             logger.debug(f"Calculating score for user {user_id}")
+            
+            # Debug the score calculation for the requesting user
+            if user_id == requesting_user_id:
+                debug_player_score_calculation(active_session_id, user_id)
+            
             session_score = calculate_player_score(active_session_id, user_id)
-            questions_answered = get_user_questions_answered_count(user_id, active_session_id)
-
+            questions_answered = PlayerAnswerRepository.get_player_answers_count_for_user_in_session(active_session_id, user_id)
+            
             player_data = {
                 'user_id': user_id,
                 'username': f"{user_details.get('first_name', '')} {user_details.get('last_name', '')}".strip(),
                 'first_name': user_details.get('first_name', ''),
                 'last_name': user_details.get('last_name', ''),
-                'soul_points': user_details.get('soul_points', 0),
-                'limb_points': user_details.get('limb_points', 0),
-                'session_score': session_score,
+                'soul_points': float(user_details.get('soul_points', 0)),
+                'limb_points': float(user_details.get('limb_points', 0)),
+                'session_score': int(session_score),
                 'total_questions_answered': questions_answered,
                 'is_requesting_user': user_id == requesting_user_id
             }
             
             logger.debug(f"Processed player data: {player_data}")
             all_players_data.append(player_data)
+
+        # Sort players by session score (highest first)
+        all_players_data.sort(key=lambda x: x['session_score'], reverse=True)
 
         # Final response
         active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
@@ -1357,6 +1588,19 @@ async def handle_user_data_request(sid, data):
         }
 
         logger.debug(f"Final response data: {response}")
+        
+        # Convert Decimal values to float (now that Decimal is imported)
+        def convert_decimals(obj):
+            if isinstance(obj, Decimal):
+                return float(obj)
+            elif isinstance(obj, dict):
+                return {k: convert_decimals(v) for k, v in obj.items()}
+            elif isinstance(obj, (list, tuple)):
+                return [convert_decimals(x) for x in obj]
+            return obj
+        
+        response = convert_decimals(response)
+        
         await sio.emit('all_users_data_updated', response, room=sid)
         logger.info(f"Sent user data for session {active_session_id} to user {requesting_user_id}")
 
@@ -1366,102 +1610,6 @@ async def handle_user_data_request(sid, data):
             'message': 'Failed to process user data request',
             'details': str(e)
         }, room=sid)
-
-
-
-
-
-
-
-
-async def get_complete_user_data(user_id: int):
-    try:
-        user_details = UserRepository.get_user_by_id(user_id)
-        if not user_details:
-            logger.warning(f"User not found: {user_id}")
-            return None
-        
-        active_session_id = get_active_session_id()
-        session_score = 0
-        
-        if active_session_id:
-            session_score = calculate_player_score(active_session_id, user_id)
-        
-        user_data = {
-            'user_id': user_id,
-            'username': f"{user_details.get('first_name', '')} {user_details.get('last_name', '')}".strip(),
-            'first_name': user_details.get('first_name', ''),
-            'last_name': user_details.get('last_name', ''),
-            'soul_points': user_details.get('soul_points', 0),
-            'limb_points': user_details.get('limb_points', 0),
-            'session_score': session_score,
-            'total_questions_answered': get_user_questions_answered_count(user_id, active_session_id),
-        }
-        
-        return user_data
-        
-    except Exception as e:
-        logger.error(f"Error retrieving complete user data for user {user_id}: {e}", exc_info=True)
-        return None
-
-async def process_answer_submission(user_id: int, question_id: int, answer_index: int):
-    try:
-        return {
-            'success': True,
-            'is_correct': True,
-            'points_earned': 10,
-            'feedback': "Answer submitted successfully!"
-        }
-        
-    except Exception as e:
-        logger.error(f"Error processing answer submission: {e}", exc_info=True)
-        return {'success': False, 'error': 'Failed to process answer'}
-
-async def process_theme_selection(user_id: int, theme_id: int, theme_name: str):
-    try:
-        active_session_id = get_active_session_id()
-        if not active_session_id:
-            return {'success': False, 'error': 'No active session'}
-        
-        return {
-            'success': True,
-            'feedback': f"Selected theme: {theme_name}"
-        }
-        
-    except Exception as e:
-        logger.error(f"Error processing theme selection: {e}", exc_info=True)
-        return {'success': False, 'error': 'Failed to process theme selection'}
-
-def get_user_questions_answered_count(user_id: int, session_id: int):
-    try:
-        if not session_id:
-            return 0
-        
-        answers = PlayerAnswerRepository.get_all_player_answers_for_user_in_session(session_id, user_id)
-        return len(answers) if answers else 0
-        
-    except Exception as e:
-        logger.error(f"Error getting questions answered count for user {user_id}: {e}")
-        return 0
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -2445,7 +2593,7 @@ import logging # Import the logging module
 # Configure basic logging. This will show INFO messages and above.
 # The 'logger.exception()' calls will print a full traceback.
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
 
 # Assume ChatMessageCreate, QuizSessionRepository, ChatLogRepository, and sio are imported and defined
@@ -2952,8 +3100,8 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
 
             # --- Step 3: Handle Quiz Session Specific Logic ---
             try:
-                active_sessions = QuizSessionRepository.get_sessions_by_status(2)
-                if active_sessions:
+                active_sessions = get_active_session_id()
+                if get_active_session_id():
                     # Logic specific to an active quiz can be placed here
                     # For example, logging sensor data to the quiz session
                     if should_update_quiz_session(current_time):
@@ -3005,76 +3153,60 @@ def emit_sensor_data(sensor_data, sio, loop):
         print(f"Error emitting sensor_data from thread: {e}")
 
 servo_lock = Lock()
-last_servo_command_time = 0.0 # Stores the Unix timestamp (seconds since epoch) of the last command
-SERVO_COOLDOWN_SECONDS = 3.0 # The duration of the cooldown
-servo_cooldown_lock = Lock() # A dedicated lock to protect access to last_servo_command_time
+last_servo_command_time = 0.0  # Stores the Unix timestamp of the last command
+SERVO_COOLDOWN_SECONDS = 1.0    # Cooldown duration
+servo_cooldown_lock = Lock()    # Lock to protect last_servo_command_time
+servo = None  # Global servo object (initialize this elsewhere in your code)
 
 @app.post("/api/v1/trigger-servo")
-async def trigger_servo(cmd: ServoCommand):
-    import json
-    global last_servo_command_time
+async def trigger_servo():
+    global last_servo_command_time, servo
     
-    # 1. FIRST - Check for active quiz sessions before doing ANYTHING else
+    # 1. Check for active quiz sessions first
     try:
         active_session_id = get_active_session_id()
-        print(f"DEBUG: active_session_id = {active_session_id}")
-        
         if active_session_id:
-            # Get the full session details using the ID
             active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
-            print(f"DEBUG: active_session_info = {active_session_info}")
+            session_name = active_session_info.get('name', f'Session ID {active_session_id}') if active_session_info else None
             
-            if active_session_info:
-                session_name = active_session_info.get('name', f'Session ID {active_session_id}')
-                print(f"DEBUG: session_name = {session_name}")
-                
-                # Return a normal 200 response with the message
-                return {
-                    "message": f"Servo test is currently unavailable. The system is busy with an active quiz session (ID: {active_session_id}) named '{session_name}'. Please wait until the quiz session ends before testing the servo."
-                }
-            else:
-                # Session ID exists but we couldn't fetch details
-                print(f"DEBUG: Could not fetch session details for ID {active_session_id}")
-                
-                return {
-                    "message": f"Servo test is currently unavailable. The system is busy with an active quiz session (ID: {active_session_id}). Please wait until the quiz session ends before testing the servo."
-                }
-        else:
-            print("DEBUG: No active session found")
-    except HTTPException:
-        raise
+            return {
+                "message": f"Servo control unavailable. System busy with quiz session (ID: {active_session_id})" + 
+                          (f" named '{session_name}'" if session_name else "") + 
+                          ". Please wait until the quiz ends."
+            }
     except Exception as e:
-        print(f"Error checking active quiz sessions during servo trigger: {e}")
+        print(f"Error checking active quiz sessions: {e}")
         raise HTTPException(status_code=500, detail="Internal server error checking quiz status.")
     
-    # 2. Only check command validity if no active quiz session
-    if cmd.command != "SWEEP_SERVO":
-        raise HTTPException(status_code=400, detail="Invalid servo command.")
-    
-    # --- NEW LOGIC: Cooldown Check ---
+    # 2. Check cooldown
     with servo_cooldown_lock:
         current_time = time.time()
         if current_time - last_servo_command_time < SERVO_COOLDOWN_SECONDS:
-            remaining_cooldown = SERVO_COOLDOWN_SECONDS - (current_time - last_servo_command_time)
+            remaining = SERVO_COOLDOWN_SECONDS - (current_time - last_servo_command_time)
             raise HTTPException(
                 status_code=429,
-                detail=f"Servo is on cooldown. Please wait {remaining_cooldown:.1f} seconds before trying again."
+                detail=f"Servo on cooldown. Wait {remaining:.1f} seconds."
             )
         last_servo_command_time = current_time
-    # --- END NEW LOGIC ---
     
-    # 3. Acquire the existing lock for queue access
-    if not servo_lock.acquire(blocking=False):
-        raise HTTPException(status_code=429, detail="Servo command queue is temporarily locked by another request.")
-    
+    # 3. Get current angle and calculate target
     try:
-        # 4. Attempt to put the command into the queue
-        servo_command_queue.put_nowait("SWEEP_SERVO")
-        return {"message": "Servo sweep command sent to Raspberry Pi."}
-    except queue.Full:
-        raise HTTPException(status_code=503, detail="Raspberry Pi command queue is full, try again soon.")
-    finally:
-        servo_lock.release()
+        current_angle = servo.read_degrees()
+        target_angle = 180 if current_angle < 90 else 0  # Flip to opposite extreme
+        
+        with servo_lock:
+            servo.set_angle(target_angle)
+            return {
+                "message": f"Servo moved from {current_angle}° to {target_angle}°",
+                "previous_angle": current_angle,
+                "new_angle": target_angle
+            }
+    except Exception as e:
+        print(f"Error controlling servo: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to control servo: {str(e)}"
+        )
 
 
 
@@ -3165,6 +3297,7 @@ def should_update_quiz_session(current_time):
 
 def read_sensor_data(temp_sensor, light_sensor, servo):
     """Read all sensor values with proper temperature validation."""
+    global virtualTemperature
     try:
         # Read temperature and validate/clamp the value
         raw_temp = temp_sensor.read_temperature()
@@ -3179,7 +3312,7 @@ def read_sensor_data(temp_sensor, light_sensor, servo):
             temperature = round(temperature, 2)
         
         return {
-            'temperature': temperature,
+            'temperature': temperature + virtualTemperature,
             'illuminance': light_sensor(),
             'servo_angle': servo.read_degrees()
         }
@@ -3216,16 +3349,70 @@ def emit_sensor_data(sensor_data, sio, loop):
         print(f"Error emitting sensor_data: {e}")
 
 
-#item functions
-def activateAdvertFlood():
-    """Call this function to trigger the 60-second ad flood on all clients"""
-    sio.emit('B2F_addItem', {}, broadcast=True)
+
 
 
 
 # sio emits for quiz data
 
 import asyncio
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3274,7 +3461,7 @@ timer_lock = Lock()
 session_lock = Lock()
 quiz_state_lock = Lock()
 active_timers = {}
-
+progress = None
 # Global servo variable (assumed to be initialized elsewhere)
 # servo = ServoController()  # This should be initialized in your main application
 
@@ -3285,9 +3472,15 @@ def is_timer_active(session_id):
 
 
 def select_question_based_on_sensors(available_questions, temp_sensor, light_sensor):
+    global virtualTemperature
     sensor_data = check_sensor_data(temp_sensor, light_sensor)
-    temp = sensor_data['temperature']
+    temp = sensor_data['temperature'] + virtualTemperature
     light = sensor_data['illuminance']
+    
+    if virtualTemperature > 0:
+        virtualTemperature -= 1
+    elif virtualTemperature < 0:
+        virtualTemperature += 1
 
     def get_bound(q, key, default):
         value = q.get(key)
@@ -3295,8 +3488,8 @@ def select_question_based_on_sensors(available_questions, temp_sensor, light_sen
 
     filtered = [
         q for q in available_questions
-        if (get_bound(q, 'TempMin', 0) <= temp <= get_bound(q, 'TempMax', 30))
-        and (get_bound(q, 'LightMin', 0) <= light <= get_bound(q, 'LightMax', 30))
+        if (get_bound(q, 'TempMin', 20) <= temp <= get_bound(q, 'TempMax', 25))
+        and (get_bound(q, 'LightMin', 10) <= light <= get_bound(q, 'LightMax', 20))
     ]
 
     return random.choice(filtered or available_questions) if available_questions else None
@@ -3395,6 +3588,7 @@ def emit_timer_update(sio, loop, session_id, time_remaining, phase, total_time, 
     Emit both timer_update and quiz_timer events for frontend compatibility
     Also handle servo movement during timer
     """
+    global progress
     try:
         # Calculate servo position (0 degrees at start, 180 degrees at end)
         if total_time > 0:
@@ -3522,8 +3716,11 @@ def handle_voting_phase(sio, loop, session_id, voting_time):
     if 'servo' in globals():
         servo.set_angle(0)
     
-    # Voting countdown with servo movement
+    # Voting countdown with servo movement and continuous theme emission
     for current_time in range(voting_time, -1, -1):
+        # Emit theme selection data every second during voting
+        emit_combined_theme_selection(sio, loop)
+        
         emit_timer_update(sio, loop, session_id, current_time, 'voting', voting_time)
         
         if current_time <= 0:
@@ -3611,6 +3808,13 @@ def handle_theme_display_phase(sio, loop, session_id, display_time):
     )
     future.result(timeout=1)
     
+    future = asyncio.run_coroutine_threadsafe(
+        sio.emit('theme_display', {
+            'session_id': session_id,
+            'theme_data': theme_data
+        }),
+        loop
+    )
     # Reset servo to start position
     if 'servo' in globals():
         servo.set_angle(0)
@@ -3629,13 +3833,6 @@ def handle_theme_display_phase(sio, loop, session_id, display_time):
     # Theme display finished - move to quiz phase
     set_session_phase(session_id, 'quiz')
     
-    future = asyncio.run_coroutine_threadsafe(
-        sio.emit('theme_display_finished', {
-            'session_id': session_id,
-            'theme_data': theme_data
-        }),
-        loop
-    )
     future.result(timeout=1)
     
     print(f"Theme display finished for session {session_id}, ready for quiz")
@@ -3659,10 +3856,16 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
 
     # Initialize quiz state
     quiz_state = get_quiz_state(session_id)
-    available_questions = [q for q in all_questions if q['id'] not in quiz_state['asked_questions']]
+    # Get all player answer rows for the session
+    rows = PlayerAnswerRepository.get_player_answers_for_session(session_id)
+
+    # Extract just the IDs into a list
+    ids = [row['questionId'] for row in rows]
+    print(f"unavailable answerid's are {ids}")
+    available_questions = [q for q in all_questions if q['id'] not in ids]
     
-    question_time = timer_config.get('question_time', 10)
-    explanation_time = timer_config.get('explanation_time', 5)
+    question_time = timer_config.get('question_time', 15)  # Updated to 15 seconds
+    explanation_time = timer_config.get('explanation_time', 15)  # Updated to 15 seconds
 
     while available_questions:
         print(f"\n--- Selecting Question {quiz_state['question_count'] + 1} ---")
@@ -3746,7 +3949,14 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
         if current_state['question_count'] >= 5:
             player_count = max(1, current_state['player_count'])  # Avoid division by zero
             required_score = 10 * player_count * current_state['question_count']
-            
+            current_phase['total_score'] = PlayerAnswerRepository.getget_total_score_for_session(session_id)
+            ChatLogRepository.create_chat_message(
+            session_id=get_active_session_id(),
+            message_text=f"The new required score is {required_score}, don't fall below it now, you're current score is {current_phase['total_score']}" ,
+            user_id=1,
+            message_type='system',
+            reply_to_id=1
+            )
             if current_state['total_score'] < required_score:
                 print(f"Quiz ending early: Score {current_state['total_score']} < required {required_score}")
                 break
@@ -3908,12 +4118,10 @@ def emit_theme_selection_if_needed(sio, loop):
     """
     global light_sensor
     global temp_sensor
-    
+    global current_phase
+
     try:
         active_session_id = get_active_session_id()
-        
-        if not active_session_id:
-            return
         
         # Get the full session details using the ID
         active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
@@ -3922,6 +4130,7 @@ def emit_theme_selection_if_needed(sio, loop):
         
         if not active_session_info.get('themeId'):
             # No theme set - handle voting phase
+            current_phase = 'voting'
             if current_phase == 'voting' and not is_timer_running:
                 # Voting phase but no timer running - emit theme selection to allow voting
                 emit_combined_theme_selection(sio, loop)
@@ -3937,8 +4146,8 @@ def emit_theme_selection_if_needed(sio, loop):
                 timer_config = {
                     'voting_time': 60,
                     'theme_display_time': 10,
-                    'question_time': 10,
-                    'explanation_time': 5
+                    'question_time': 15,  # Updated to 15 seconds
+                    'explanation_time': 15  # Updated to 15 seconds
                 }
                 start_generic_timer(sio, loop, active_session_id, timer_config)
             elif current_phase == 'theme_display' and not is_timer_running:
@@ -3947,8 +4156,8 @@ def emit_theme_selection_if_needed(sio, loop):
                 timer_config = {
                     'voting_time': 60,
                     'theme_display_time': 10,
-                    'question_time': 10,
-                    'explanation_time': 5
+                    'question_time': 15,  # Updated to 15 seconds
+                    'explanation_time': 15  # Updated to 15 seconds
                 }
                 start_generic_timer(sio, loop, active_session_id, timer_config)
             elif current_phase == 'quiz' and not is_timer_running:
@@ -3970,8 +4179,8 @@ def emit_theme_selection_if_needed(sio, loop):
                         timer_config = {
                             'voting_time': 60,
                             'theme_display_time': 10,
-                            'question_time': 10,
-                            'explanation_time': 5
+                            'question_time': 15,  # Updated to 15 seconds
+                            'explanation_time': 15  # Updated to 15 seconds
                         }
                         start_generic_timer(sio, loop, active_session_id, timer_config)
                     else:
@@ -3994,6 +4203,150 @@ def emit_theme_selection_if_needed(sio, loop):
         traceback.print_exc()
 
 # ---------- Socket Handler ----------
+# Updated socket handler to use new timer config
+@sio.on('submit_answer')
+async def handle_answer_submission(sid, data):
+    global current_phase, progress
+    try:
+        logger.debug(f"Starting answer submission with data: {data}")
+        
+        # Validate input data
+        user_id = data.get('userId')
+        question_id = data.get('questionId')
+        answer_index = data.get('answerIndex')
+        
+        if not all([user_id, question_id is not None, answer_index is not None]):
+            error_msg = 'Missing required data for answer submission'
+            logger.error(error_msg)
+            await sio.emit('answer_response', {'success': False, 'error': error_msg}, room=sid)
+            return
+        
+        logger.debug(f"Valid submission from user {user_id} for question {question_id}")
+
+        # Get active session
+        active_session_id = get_active_session_id()
+        if not active_session_id:
+            error_msg = 'No active session found'
+            logger.error(error_msg)
+            await sio.emit('answer_response', {'success': False, 'error': error_msg}, room=sid)
+            return
+        
+        logger.debug(f"Active session ID: {active_session_id}")
+
+        # Check if we're in quiz phase
+        current_phase = get_session_phase(active_session_id)
+        if current_phase != 'quiz':
+            error_msg = 'Not accepting answers at this time'
+            logger.error(error_msg)
+            await sio.emit('answer_response', {'success': False, 'error': error_msg}, room=sid)
+            return
+        
+        logger.debug("Current phase is quiz - proceeding")
+
+        # Get question with its point value
+        question = QuestionRepository.get_question_by_id(question_id)
+        if not question:
+            error_msg = f'Question {question_id} not found'
+            logger.error(error_msg)
+            await sio.emit('answer_response', {'success': False, 'error': error_msg}, room=sid)
+            return
+        
+        max_points = question.get('points', 10)
+        logger.debug(f"Question found with max points: {max_points}")
+
+        answers = AnswerRepository.get_all_answers_for_question(question_id)
+        if not answers:
+            error_msg = f'No answers found for question {question_id}'
+            logger.error(error_msg)
+            await sio.emit('answer_response', {'success': False, 'error': error_msg}, room=sid)
+            return
+        
+        logger.debug(f"Found {len(answers)} answers for question")
+
+        # Validate answer index
+        if answer_index < 0 or answer_index >= len(answers):
+            error_msg = f'Invalid answer index {answer_index} (max {len(answers)-1})'
+            logger.error(error_msg)
+            await sio.emit('answer_response', {'success': False, 'error': error_msg}, room=sid)
+            return
+            
+        submitted_answer = answers[answer_index]
+        answer_id = submitted_answer.get('id')
+        logger.debug(f"Submitted answer ID: {answer_id}")
+
+        # Determine if answer is correct
+        is_correct_value = submitted_answer.get('is_correct', False)
+        is_correct = str(is_correct_value).lower() in ['1', 'true', 'yes'] or is_correct_value is True
+        logger.debug(f"Answer correctness: {is_correct}")
+
+        # Calculate points using global progress (should be 0-1 for 0%-100%)
+        points_earned = 0
+        if is_correct:
+            get_random_item(user_id=user_id,luck=float(progress))
+            # Convert progress to proper decimal (if it's coming as percentage)
+            progress_decimal = float(progress)
+            progress_decimal = max(0.0, min(1.0, progress_decimal))  # Clamp between 0 and 1
+            points_earned = int(max_points * progress_decimal)
+            points_earned = max(1, points_earned)  # Minimum 1 point for correct answer
+        logger.debug(f"Points calculated: {points_earned} (progress: {progress}, treated as: {progress_decimal})")
+
+        # Store answer submission with debug logging
+        try:
+            logger.debug("Attempting to create player answer record with params: "
+                       f"session_id={active_session_id}, user_id={user_id}, "
+                       f"question_id={question_id}, answer_id={answer_id}, "
+                       f"is_correct={is_correct}, points_earned={points_earned}, time_taken=15")
+            
+            result = PlayerAnswerRepository.create_player_answer(
+                session_id=active_session_id,
+                user_id=user_id,
+                question_id=question_id,
+                answer_id=answer_id,
+                is_correct=is_correct,
+                points_earned=points_earned,
+                time_taken=15
+            )
+            
+            if result is None or result == 0:
+                logger.error("Failed to create player answer - no rows affected")
+                raise Exception("Database insert failed")
+                
+            logger.info(f"Successfully created player answer record for user {user_id}")
+            
+        except Exception as db_error:
+            logger.error(f"Database error creating player answer: {str(db_error)}", exc_info=True)
+            await sio.emit('answer_response', {
+                'success': False,
+                'error': 'Failed to save your answer'
+            }, room=sid)
+            return
+
+        # Get correct answer for response
+        correct_answer = next((a for a in answers if a.get('is_correct')), None)
+        
+        response_data = {
+            'success': True,
+            'is_correct': is_correct,
+            'points_earned': points_earned,
+            'max_points': max_points,
+            'correct_answer_index': answers.index(correct_answer) if correct_answer else -1,
+            'correct_answer_text': correct_answer.get('answer_text', '') if correct_answer else '',
+            'explanation': question.get('explanation', 'Explanation not available')
+        }
+        
+        await sio.emit('answer_response', response_data, room=sid)
+        logger.info(f"Answer processed - User: {user_id}, Q: {question_id}, "
+                   f"Correct: {is_correct}, Points: {points_earned}/{max_points}, "
+                   f"Progress: {progress}")
+        
+    except Exception as e:
+        logger.error(f"Unexpected error handling answer submission: {str(e)}", exc_info=True)
+        await sio.emit('answer_response', {
+            'success': False,
+            'error': 'An unexpected error occurred'
+        }, room=sid)
+
+
 @sio.on('theme_selected')
 async def handle_theme_selection(sid, data):
     """
@@ -4077,8 +4430,8 @@ async def handle_theme_selection(sid, data):
             timer_config = {
                 'voting_time': 60,
                 'theme_display_time': 10,
-                'question_time': 10,
-                'explanation_time': 5
+                'question_time': 15,  # Updated to 15 seconds
+                'explanation_time': 15  # Updated to 15 seconds
             }
             set_session_phase(session_id, 'voting')
             start_generic_timer(sio, asyncio.get_event_loop(), session_id, timer_config)
@@ -4093,138 +4446,245 @@ async def handle_theme_selection(sid, data):
             'error': 'Vote failed: ' + str(e)
         })
 
-# ---------- Answer Submission Handler ----------
-@sio.on('submit_answer')  # Changed from 'answer_submitted' to match frontend
-async def handle_answer_submission(sid, data):
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# --------------
+# items
+# --------------
+
+
+
+# Global variable for temperature effects
+virtualTemperature = 0
+
+# Item effect functions
+def activateAdvertFlood():
+    """Call this function to trigger the 60-second ad flood on all clients"""
+    sio.emit('B2F_addItem', {}, broadcast=True)
+
+def tempDown():
+    """Lower the virtual temperature by 20 degrees"""
+    global virtualTemperature
+    virtualTemperature -= 20
+    # Emit temperature change to all clients
+    sio.emit('B2F_temperatureChange', {'temperature': virtualTemperature}, broadcast=True)
+
+def tempUp():
+    """Raise the virtual temperature by 20 degrees"""
+    global virtualTemperature
+    virtualTemperature += 20
+    # Emit temperature change to all clients
+    sio.emit('B2F_temperatureChange', {'temperature': virtualTemperature}, broadcast=True)
+
+# Item management functions
+
+
+def get_random_item_by_luck(luck_value: float) -> Optional[Dict[str, Any]]:
+    """
+    Get a random item based on luck value (0-1, lower = better items)
+    Rarity distribution based on how many items exist in each rarity tier
+    """
     try:
-        user_id = data.get('userId')
-        question_id = data.get('questionId')
-        answer_index = data.get('answerIndex')
-        time_remaining = data.get('timeRemaining', 0)
+        # Get all active items grouped by rarity
+        all_items = ItemRepository.get_all_items()
         
-        if not all([user_id, question_id is not None, answer_index is not None]):
-            await sio.emit('answer_response', {
-                'success': False,
-                'error': 'Missing required data for answer submission'
-            }, room=sid)
-            return
+        if not all_items:
+            return None
         
-        # Get active session
-        active_session_id = get_active_session_id()
-        if not active_session_id:
-            await sio.emit('answer_response', {
-                'success': False,
-                'error': 'No active session found'
-            }, room=sid)
-            return
+        # Group items by rarity and count them
+        rarity_groups = {}
+        for item in all_items:
+            rarity = item['rarity']
+            if rarity not in rarity_groups:
+                rarity_groups[rarity] = []
+            rarity_groups[rarity].append(item)
         
-        # Check if we're in quiz phase and waiting for answers
-        current_phase = get_session_phase(active_session_id)
-        quiz_state = get_quiz_state(active_session_id)
+        # Calculate rarity weights (fewer items = rarer = lower weight threshold)
+        rarity_counts = {rarity: len(items) for rarity, items in rarity_groups.items()}
+        total_items = len(all_items)
         
-        if current_phase != 'quiz' or not quiz_state.get('waiting_for_answers', False):
-            await sio.emit('answer_response', {
-                'success': False,
-                'error': 'Not accepting answers at this time'
-            }, room=sid)
-            return
+        # Create probability thresholds (rarer items get lower thresholds)
+        # Sort rarities by count (ascending = rarest first)
+        sorted_rarities = sorted(rarity_counts.items(), key=lambda x: x[1])
         
-        # Get question and answers
-        question = QuestionRepository.get_question_by_id(question_id)
-        answers = AnswerRepository.get_all_answers_for_question(question_id)
+        # Assign probability ranges
+        cumulative_prob = 0
+        rarity_thresholds = []
         
-        if not question or not answers:
-            await sio.emit('answer_response', {
-                'success': False,
-                'error': 'Question or answers not found'
-            }, room=sid)
-            return
+        for rarity, count in sorted_rarities:
+            # Rarer items (fewer count) get smaller probability windows but at lower luck values
+            prob_weight = 1.0 / count  # Inverse relationship
+            prob_range = prob_weight / sum(1.0 / c for _, c in sorted_rarities)
+            
+            rarity_thresholds.append({
+                'rarity': rarity,
+                'min_threshold': cumulative_prob,
+                'max_threshold': cumulative_prob + prob_range,
+                'items': rarity_groups[rarity]
+            })
+            cumulative_prob += prob_range
         
-        # Find the correct answer
-        correct_answer = None
-        for answer in answers:
-            if answer.get('is_correct', False):
-                correct_answer = answer
+        # Select rarity based on luck value
+        selected_rarity_group = None
+        for threshold_info in rarity_thresholds:
+            if luck_value >= threshold_info['min_threshold'] and luck_value < threshold_info['max_threshold']:
+                selected_rarity_group = threshold_info
                 break
         
-        if not correct_answer:
-            await sio.emit('answer_response', {
-                'success': False,
-                'error': 'No correct answer found for this question'
-            }, room=sid)
-            return
+        # Fallback to last group if no match
+        if not selected_rarity_group:
+            selected_rarity_group = rarity_thresholds[-1]
         
-        # Get the submitted answer and check if it's correct
-        submitted_answer = answers[answer_index] if 0 <= answer_index < len(answers) else None
-        if not submitted_answer:
-            await sio.emit('answer_response', {
-                'success': False,
-                'error': 'Invalid answer selection'
-            }, room=sid)
-            return
-        
-        # Get the full answer details from database to check correctness
-        answer_id = submitted_answer.get('id')
-        answer_details = AnswerRepository.get_answer_by_id(answer_id) if answer_id else None
-        
-        if not answer_details:
-            await sio.emit('answer_response', {
-                'success': False,
-                'error': 'Answer details not found'
-            }, room=sid)
-            return
-        
-        # Check if answer is correct (handle both string and boolean values)
-        is_correct_value = answer_details.get('is_correct', '0')
-        is_correct = str(is_correct_value).lower() in ['1', 'true', 'yes'] or is_correct_value is True
-        
-        # Calculate points based on time remaining
-        points_earned = 0
-        if is_correct:
-            question_time = 10  # Default question time
-            time_percentage = max(0, time_remaining / question_time)
-            points_earned = int(10 * time_percentage)  # Base 10 points multiplied by time percentage
-        
-        # Update quiz state with new score and player count
-        current_quiz_state = get_quiz_state(active_session_id)
-        new_total_score = current_quiz_state['total_score'] + points_earned
-        new_player_count = max(current_quiz_state['player_count'], 1)  # Ensure at least 1 player
-        
-        update_quiz_state(active_session_id, 
-                         total_score=new_total_score,
-                         player_count=new_player_count)
-        
-        sessionid = get_active_session_id()
-        # Store answer submission
-        PlayerAnswerRepository.create_player_answer(
-            session_id=sessionid,
-            user_id=user_id,
-            question_id=question_id,
-            answer_id=answer_id,
-            is_correct=is_correct,
-            points_earned=points_earned,
-            time_taken=(10 - time_remaining)  # Assuming 10 second question time
-        )
-        
-        response_data = {
-            'success': True,
-            'is_correct': is_correct,
-            'points_earned': points_earned,
-            'correct_answer_text': correct_answer['answer_text'],
-            'explanation': question.get('explanation', 'Explanation not available')
-        }
-        
-        await sio.emit('answer_response', response_data, room=sid)
-        
-        print(f"Answer processed for user {user_id}: {'Correct' if is_correct else 'Incorrect'}, Points: {points_earned}")
+        # Randomly select an item from the chosen rarity group
+        import random
+        selected_item = random.choice(selected_rarity_group['items'])
+        return selected_item
         
     except Exception as e:
-        print(f"Error handling answer submission: {e}")
-        traceback.print_exc()
-        await sio.emit('answer_response', {
-            'success': False,
-            'error': 'An error occurred while processing your answer'
-        }, room=sid)
+        print(f"Error getting random item: {e}")
+        return None
+
+# FastAPI endpoints
+@app.get("/api/player/{user_id}/items")
+async def get_player_items(user_id: int):
+    """Get all items owned by a player"""
+    try:
+        items = PlayerItemRepository.get_player_items(user_id)
+        return {"success": True, "items": items}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+def clear_player_items(user_id: int):
+    """Delete all items from a player's inventory"""
+    try:
+        success = PlayerItemRepository.delete_all_player_items(user_id)
+        return {"success": success}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+def get_random_item(user_id: int, luck: float = 0.5):
+    """Get a random item based on luck value and add it to player inventory"""
+    try:
+        # Validate luck value
+        if luck < 0 or luck > 1:
+            return {"success": False, "error": "Luck value must be between 0 and 1"}
+        
+        # Get random item
+        item = get_random_item_by_luck(luck)
+        if not item:
+            return {"success": False, "error": "No items available"}
+        
+        # Add item to player inventory
+        result = PlayerItemRepository.add_item_to_player(user_id, item['id'], 1)
+        if result:
+            return {"success": True, "item": item}
+        else:
+            return {"success": False, "error": "Failed to add item to inventory"}
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/player/{user_id}/items/{item_id}/use")
+async def use_item(user_id: int, item_id: int):
+    """Use an item (activate its effect and remove from inventory)"""
+    try:
+        # Get item details first
+        item = PlayerItemRepository.get_player_item(user_id, item_id)
+        if not item:
+            return {"success": False, "error": "Item not found in player inventory"}
+        
+        # Use the item (removes from inventory)
+        success = PlayerItemRepository.use_item(user_id, item_id, 1)
+        if not success:
+            return {"success": False, "error": "Failed to use item"}
+        
+        # Activate item effect based on the effect string
+        effect = item.get('effect', '')
+        try:
+            if effect == 'activateAdvertFlood()':
+                activateAdvertFlood()
+            elif effect == 'tempDown()':
+                tempDown()
+            elif effect == 'tempUp()':
+                tempUp()
+            else:
+                # For other effects, try to execute as function call
+                if effect and effect.endswith('()'):
+                    function_name = effect[:-2]
+                    if function_name in globals():
+                        globals()[function_name]()
+        except Exception as effect_error:
+            print(f"Error executing item effect: {effect_error}")
+        
+        return {"success": True, "item_used": item}
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.delete("/api/player/{user_id}/items/{item_id}")
+async def delete_item(user_id: int, item_id: int, quantity: int = 1):
+    """Delete/discard an item from player inventory without using it"""
+    try:
+        success = PlayerItemRepository.use_item(user_id, item_id, quantity)
+        if success:
+            return {"success": True, "message": f"Deleted {quantity} of item {item_id}"}
+        else:
+            return {"success": False, "error": "Item not found or insufficient quantity"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+def get_all_items():
+    """Get all available items"""
+    try:
+        items = ItemRepository.get_all_items()
+        return {"success": True, "items": items}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+def get_items_by_rarity(rarity: str):
+    """Get items by rarity level"""
+    try:
+        items = ItemRepository.get_items_by_rarity(rarity)
+        return {"success": True, "items": items}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+def reset_temperature():
+    """Reset virtual temperature to 0"""
+    global virtualTemperature
+    virtualTemperature = 0
+    sio.emit('B2F_temperatureChange', {'temperature': virtualTemperature}, broadcast=True)
+    return {"success": True, "temperature": virtualTemperature}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4234,6 +4694,7 @@ async def handle_answer_submission(sid, data):
 # ----------------------------------------------------
 # Run the app
 # ----------------------------------------------------
+# Right before starting your main application
 if __name__ == "__main__":
     uvicorn.run(
         "app:app",
@@ -4242,3 +4703,8 @@ if __name__ == "__main__":
         reload=True,
         reload_dirs=["backend"]
     )
+
+
+
+
+

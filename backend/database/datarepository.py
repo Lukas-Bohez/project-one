@@ -999,29 +999,32 @@ class QuizSessionRepository:
         session_date: datetime,
         name: str,
         description: Optional[str],
-        session_status_id: int,
-        theme_id: int,
-        host_user_id: int,
-        start_time: Optional[datetime] = None
+        session_status_id: int,  # Using snake_case for Python consistency
+        theme_id: int,           # Using snake_case
+        host_user_id: int,       # Using snake_case
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None
     ) -> Optional[int]:
         """
         Creates a new quiz session in the database.
         Returns the ID of the newly created session, or None if creation fails.
         """
         sql = """
-            INSERT INTO quizSessions (session_date, name, description, sessionStatusId, themeId, hostUserId, start_time)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO quizSessions 
+                (session_date, name, description, sessionStatusId, themeId, hostUserId, start_time, end_time)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """
         params = [
             session_date,
             name,
             description,
-            session_status_id,
-            theme_id,
-            host_user_id,
-            start_time if start_time is not None else datetime.now()
+            session_status_id,  # Python snake_case
+            theme_id,          # Python snake_case
+            host_user_id,      # Python snake_case
+            start_time if start_time is not None else session_date,
+            end_time
         ]
-        return Database.execute_and_get_last_id(sql, params)
+        return Database.execute_sql(sql, params)
 
     @staticmethod
     def get_session_by_id(session_id: int) -> Optional[Dict[str, Any]]:
@@ -1299,6 +1302,9 @@ class SensorDataRepository:
     
 
 
+
+
+
 class ItemRepository:
     @staticmethod
     def get_all_items() -> List[Dict[str, Any]]:
@@ -1331,6 +1337,10 @@ class ItemRepository:
             sql = "SELECT * FROM items WHERE cost >= %s AND cost <= %s AND is_active = TRUE ORDER BY cost ASC"
             params = [min_cost, max_cost]
         return Database.execute_sql(sql, params)
+
+
+
+
 
 class PlayerItemRepository:
     @staticmethod
@@ -1413,6 +1423,24 @@ class PlayerItemRepository:
         """Get the quantity of a specific item a player owns."""
         item = PlayerItemRepository.get_player_item(user_id, item_id)
         return item['quantity'] if item else 0
+    
+    @staticmethod
+    def delete_all_player_items(user_id: int) -> bool:
+        """Delete all items from a player's inventory"""
+        try:
+            sql = "DELETE FROM playerItems WHERE userId = %s"
+            params = [user_id]
+            Database.execute_sql(sql, params)
+            return True
+        except Exception as e:
+            print(f"Error deleting player items: {e}")
+            return False
+
+
+
+
+
+
 
 # Enhanced Repository Method with Debug Logging
 import logging
@@ -1959,6 +1987,11 @@ class PlayerAnswerRepository:
             INSERT INTO playerAnswers 
             (sessionId, userId, questionId, answerId, is_correct, points_earned, time_taken) 
             VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+            answerId = VALUES(answerId),
+            is_correct = VALUES(is_correct),
+            points_earned = VALUES(points_earned),
+            time_taken = VALUES(time_taken)
         """
         params = [session_id, user_id, question_id, answer_id, is_correct, points_earned, time_taken]
         return Database.execute_sql(sql, params)
@@ -1981,12 +2014,12 @@ class PlayerAnswerRepository:
         sql = "SELECT * FROM playerAnswers WHERE sessionId = %s AND userId = %s ORDER BY answered_at ASC"
         params = [session_id, user_id]
         return Database.get_rows(sql, params)
-    
+
     @staticmethod
-    def get_player_answer_for_question(session_id, user_id, question_id):
-        sql = "SELECT * FROM playerAnswers WHERE sessionId = %s AND userId = %s AND questionId = %s"
-        params = [session_id, user_id, question_id]
-        return Database.get_one_row(sql, params)
+    def get_player_answers_for_session(session_id):
+        sql = "SELECT questionId FROM playerAnswers WHERE sessionId = %s ORDER BY answered_at ASC"
+        params = [session_id]
+        return Database.get_rows(sql, params)
 
     @staticmethod
     def get_player_answers_count_for_question(question_id):
@@ -2196,3 +2229,160 @@ class PlayerAnswerRepository:
         params = [session_id, user_id]
         return Database.get_rows(sql, params)
 
+# SCORE operations
+    @staticmethod
+    def get_total_score_for_session(session_id):
+        """
+        Calculates the total possible points for a session by summing up all points earned by all players.
+        
+        Args:
+            session_id (int): The ID of the session.
+            
+        Returns:
+            int: Total points earned across all players in the session.
+        """
+        sql = "SELECT SUM(points_earned) as total_score FROM playerAnswers WHERE sessionId = %s"
+        params = [session_id]
+        result = Database.get_one_row(sql, params)
+        return result['total_score'] if result and result['total_score'] is not None else 0
+
+    @staticmethod
+    def get_player_score_for_session(session_id, user_id):
+        """
+        Calculates the total points earned by a specific player in a session.
+        
+        Args:
+            session_id (int): The ID of the session.
+            user_id (int): The ID of the user/player.
+            
+        Returns:
+            int: Total points earned by the player in the session.
+        """
+        sql = "SELECT SUM(points_earned) as player_score FROM playerAnswers WHERE sessionId = %s AND userId = %s"
+        params = [session_id, user_id]
+        result = Database.get_one_row(sql, params)
+        return result['player_score'] if result and result['player_score'] is not None else 0
+
+    @staticmethod
+    def get_all_player_scores_for_session(session_id):
+        """
+        Gets the scores for all players in a session, including player details.
+        
+        Args:
+            session_id (int): The ID of the session.
+            
+        Returns:
+            List[Dict]: List of dictionaries containing user_id, first_name, last_name, and total_score.
+        """
+        sql = """
+            SELECT 
+                pa.userId,
+                u.first_name,
+                u.last_name,
+                SUM(pa.points_earned) as total_score,
+                COUNT(pa.id) as total_answers,
+                SUM(CASE WHEN pa.is_correct = 1 THEN 1 ELSE 0 END) as correct_answers
+            FROM playerAnswers pa
+            JOIN users u ON pa.userId = u.id
+            WHERE pa.sessionId = %s
+            GROUP BY pa.userId, u.first_name, u.last_name
+            ORDER BY total_score DESC
+        """
+        params = [session_id]
+        return Database.get_rows(sql, params)
+
+    @staticmethod
+    def get_session_leaderboard(session_id):
+        """
+        Gets a ranked leaderboard for a session with player rankings.
+        
+        Args:
+            session_id (int): The ID of the session.
+            
+        Returns:
+            List[Dict]: Ranked list of players with their scores and statistics.
+        """
+        sql = """
+            SELECT 
+                ROW_NUMBER() OVER (ORDER BY SUM(pa.points_earned) DESC) as rank,
+                pa.userId,
+                u.first_name,
+                u.last_name,
+                SUM(pa.points_earned) as total_score,
+                COUNT(pa.id) as total_answers,
+                SUM(CASE WHEN pa.is_correct = 1 THEN 1 ELSE 0 END) as correct_answers,
+                ROUND((SUM(CASE WHEN pa.is_correct = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(pa.id)), 1) as accuracy_percentage
+            FROM playerAnswers pa
+            JOIN users u ON pa.userId = u.id
+            WHERE pa.sessionId = %s
+            GROUP BY pa.userId, u.first_name, u.last_name
+            ORDER BY total_score DESC, correct_answers DESC
+        """
+        params = [session_id]
+        return Database.get_rows(sql, params)
+
+    @staticmethod
+    def get_session_statistics(session_id):
+        """
+        Gets comprehensive statistics for a session.
+        
+        Args:
+            session_id (int): The ID of the session.
+            
+        Returns:
+            Dict: Dictionary containing session statistics including total score, player count, etc.
+        """
+        sql = """
+            SELECT 
+                COUNT(DISTINCT pa.userId) as total_players,
+                COUNT(pa.id) as total_answers,
+                SUM(pa.points_earned) as total_points_awarded,
+                SUM(CASE WHEN pa.is_correct = 1 THEN 1 ELSE 0 END) as total_correct_answers,
+                AVG(pa.points_earned) as avg_points_per_answer,
+                MAX(pa.points_earned) as highest_single_answer_points,
+                ROUND((SUM(CASE WHEN pa.is_correct = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(pa.id)), 1) as overall_accuracy_percentage
+            FROM playerAnswers pa
+            WHERE pa.sessionId = %s
+        """
+        params = [session_id]
+        result = Database.get_one_row(sql, params)
+        
+        if result:
+            # Convert None values to 0 for cleaner results
+            for key, value in result.items():
+                if value is None:
+                    result[key] = 0
+                    
+        return result if result else {
+            'total_players': 0,
+            'total_answers': 0,
+            'total_points_awarded': 0,
+            'total_correct_answers': 0,
+            'avg_points_per_answer': 0,
+            'highest_single_answer_points': 0,
+            'overall_accuracy_percentage': 0
+        }
+    
+    @staticmethod
+    def check_answer_exists(session_id, user_id, question_id):
+        sql = "SELECT 1 FROM playerAnswers WHERE sessionId = %s AND userId = %s AND questionId = %s LIMIT 1"
+        params = [session_id, user_id, question_id]
+        return bool(Database.get_one_row(sql, params))
+    
+    @staticmethod
+    def get_player_answer_for_question(session_id, user_id, question_id):
+        sql = """
+            SELECT * FROM playerAnswers 
+            WHERE sessionId = %s AND userId = %s AND questionId = %s
+            ORDER BY id DESC
+            LIMIT 1
+        """
+        params = [session_id, user_id, question_id]
+        return Database.get_one_row(sql, params)
+
+    @staticmethod
+    def get_player_answers_count_for_user_in_session(session_id, user_id):
+        sql = "SELECT COUNT(*) as count FROM playerAnswers WHERE sessionId = %s AND userId = %s"
+        params = [session_id, user_id]
+        result = Database.get_one_row(sql, params)
+        return result['count'] if result else 0

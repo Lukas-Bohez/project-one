@@ -1,5 +1,5 @@
 // #region *** DOM references ***********
-const lanIP = `http://${window.location.hostname}:8000`;
+const lanIP = `http://${window.location.hostname}`;
 // domGraphs will now be populated dynamically
 let domGraphs = {};
 // #endregion
