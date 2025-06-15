@@ -115,7 +115,7 @@ class SystemGamepadController:
                 print("Starting Python application...")
             
             venv_python = "/home/student/Project/.venv/bin/python"
-            script_path = "/home/student/Project/project-one/backend/app.py"
+            script_path = "/home/student/Project/project-one/backend/raspberryPi5/appMonitor.py"
             
             if os.path.exists(venv_python) and os.path.exists(script_path):
                 with open(self.python_app_log_path, 'w') as log_file:
