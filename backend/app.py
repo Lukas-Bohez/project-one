@@ -4448,8 +4448,8 @@ async def get_player_items(user_id: int):
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-@app.post("/api/player/{user_id}/items/clear")
-async def clear_player_items(user_id: int):
+
+def clear_player_items(user_id: int):
     """Delete all items from a player's inventory"""
     try:
         success = PlayerItemRepository.delete_all_player_items(user_id)
