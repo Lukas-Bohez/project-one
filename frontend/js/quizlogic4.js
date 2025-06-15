@@ -408,7 +408,146 @@ class QuizQuestionHandler {
             detail: { explanationText, modalMode: true }
         }));
     }
+    showThemeDisplay(themeData) {
+    console.log("Showing theme display", themeData);
+    this.displayTheme(themeData);
+}
 
+displayTheme(themeData) {
+    console.log("Displaying theme in existing question area", themeData);
+    
+    // Extract data from the theme object
+    const themeName = themeData?.name || 'Unknown Theme';
+    const themeDescription = themeData?.description || 'No description provided';
+    
+    // Try to find existing containers first (same as explanation display)
+    let questionTextEl = document.getElementById('questionText');
+    let answerContainer = document.getElementById('answerContainer');
+    
+    // If core containers don't exist, try to find or create them
+    if (!questionTextEl || !answerContainer) {
+        console.warn("Core containers missing, attempting to find or create them");
+        
+        const quizContainer = document.querySelector('.quiz-container') || 
+                             document.querySelector('#quizContainer') ||
+                             document.querySelector('.c-quiz-area') ||
+                             document.querySelector('main') ||
+                             document.body;
+        
+        if (!quizContainer) {
+            console.error("No suitable container found for theme display");
+            // Fallback: create a modal-style overlay
+            this.createThemeModal(themeName, themeDescription);
+            return;
+        }
+        
+        // Create the missing elements if they don't exist
+        if (!questionTextEl) {
+            questionTextEl = document.createElement('div');
+            questionTextEl.id = 'questionText';
+            questionTextEl.className = 'question-text';
+            quizContainer.appendChild(questionTextEl);
+        }
+        
+        if (!answerContainer) {
+            answerContainer = document.createElement('div');
+            answerContainer.id = 'answerContainer';
+            answerContainer.className = 'answer-container';
+            quizContainer.appendChild(answerContainer);
+        }
+    }
+    
+    // Now display the theme
+    questionTextEl.innerHTML = `
+        <div class="theme-content">
+            <h3>Theme: ${themeName}</h3>
+            <p style="white-space: pre-line;">${themeDescription}</p>
+        </div>
+    `;
+    
+    // Clear answers
+    answerContainer.innerHTML = '';
+    answerContainer.style.display = 'none';
+    
+    // Emit custom event for other parts of the app
+    document.dispatchEvent(new CustomEvent('themeDisplayed', {
+        detail: { themeName, themeDescription }
+    }));
+}
+
+// Fallback method to create a modal-style theme display
+createThemeModal(themeName, themeDescription) {
+    console.log("Creating theme modal as fallback");
+    
+    // Remove any existing theme modal
+    const existingModal = document.getElementById('themeModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.id = 'themeModal';
+    modal.className = 'theme-modal-overlay';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1002;
+        animation: fadeIn 0.3s ease;
+    `;
+    
+    // Create modal content
+    modal.innerHTML = `
+        <div class="theme-modal-content" style="
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            margin: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        ">
+            <div class="theme-content">
+                <h3 style="color: #333; margin-bottom: 20px;">Theme: ${themeName}</h3>
+                <p style="color: #666; line-height: 1.6; margin-bottom: 30px; white-space: pre-line;">
+                    ${themeDescription}
+                </p>
+            </div>
+        </div>
+    `;
+    
+    // Add fade-in animation if not already present
+    if (!document.getElementById('fadeInAnimationStyle')) {
+        const style = document.createElement('style');
+        style.id = 'fadeInAnimationStyle';
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Add to page
+    document.body.appendChild(modal);
+    
+    // Store reference to modal for cleanup when next question loads
+    this.currentThemeModal = modal;
+    
+    // Emit custom event
+    document.dispatchEvent(new CustomEvent('themeDisplayed', {
+        detail: { themeName, themeDescription, modalMode: true }
+    }));
+}
     // Method to handle the end of the quiz
     showQuizEnd(data) {
         console.log("Handling quiz end:", data);

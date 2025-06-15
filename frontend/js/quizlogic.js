@@ -284,6 +284,11 @@ class QuizSocketHandler {
     handleThemeDisplay(data) {
         console.log("Theme display phase:", data);
         
+        if (data.theme_data) {
+            // Send the theme data to quizLogic for display
+            this.quizLogic.showThemeDisplay(data.theme_data);
+        }
+        
         if (data.selected_theme) {
             this.quizLogic.showFeedback(`Selected theme: ${data.selected_theme.name}`);
         }
