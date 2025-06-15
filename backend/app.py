@@ -3297,6 +3297,7 @@ def should_update_quiz_session(current_time):
 
 def read_sensor_data(temp_sensor, light_sensor, servo):
     """Read all sensor values with proper temperature validation."""
+    global virtualTemperature
     try:
         # Read temperature and validate/clamp the value
         raw_temp = temp_sensor.read_temperature()
@@ -3311,7 +3312,7 @@ def read_sensor_data(temp_sensor, light_sensor, servo):
             temperature = round(temperature, 2)
         
         return {
-            'temperature': temperature,
+            'temperature': temperature + virtualTemperature,
             'illuminance': light_sensor(),
             'servo_angle': servo.read_degrees()
         }
@@ -3471,9 +3472,15 @@ def is_timer_active(session_id):
 
 
 def select_question_based_on_sensors(available_questions, temp_sensor, light_sensor):
+    global virtualTemperature
     sensor_data = check_sensor_data(temp_sensor, light_sensor)
-    temp = sensor_data['temperature']
+    temp = sensor_data['temperature'] + virtualTemperature
     light = sensor_data['illuminance']
+    
+    if virtualTemperature > 0:
+        virtualTemperature -= 1
+    elif virtualTemperature < 0:
+        virtualTemperature += 1
 
     def get_bound(q, key, default):
         value = q.get(key)
@@ -4269,8 +4276,9 @@ async def handle_answer_submission(sid, data):
         # Calculate points using global progress (should be 0-1 for 0%-100%)
         points_earned = 0
         if is_correct:
+            get_random_item(user_id=user_id,luck=float(progress))
             # Convert progress to proper decimal (if it's coming as percentage)
-            progress_decimal = float(progress) / 100.0 if float(progress) > 1.0 else float(progress)
+            progress_decimal = float(progress)
             progress_decimal = max(0.0, min(1.0, progress_decimal))  # Clamp between 0 and 1
             points_earned = int(max_points * progress_decimal)
             points_earned = max(1, points_earned)  # Minimum 1 point for correct answer
