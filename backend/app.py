@@ -3663,7 +3663,7 @@ def start_generic_timer(sio, loop, session_id, timer_config):
     """
     Generic timer function that handles different phases
     timer_config: {
-        'voting_time': 60,
+        'voting_time': 33,
         'theme_display_time': 10,
         'question_time': 10,
         'explanation_time': 5
@@ -3679,7 +3679,7 @@ def start_generic_timer(sio, loop, session_id, timer_config):
                 print(f"Starting timer for session {session_id}, phase: {current_phase}")
                 
                 if current_phase == 'voting':
-                    handle_voting_phase(sio, loop, session_id, timer_config.get('voting_time', 60))
+                    handle_voting_phase(sio, loop, session_id, timer_config.get('voting_time', 33))
                 elif current_phase == 'theme_display':
                     handle_theme_display_phase(sio, loop, session_id, timer_config.get('theme_display_time', 10))
                 elif current_phase == 'quiz':
@@ -4145,7 +4145,7 @@ def emit_theme_selection_if_needed(sio, loop):
                 # Theme exists but we're stuck in voting phase - move to theme display
                 set_session_phase(active_session_id, 'theme_display')
                 timer_config = {
-                    'voting_time': 60,
+                    'voting_time': 33,
                     'theme_display_time': 10,
                     'question_time': 15,  # Updated to 15 seconds
                     'explanation_time': 15  # Updated to 15 seconds
@@ -4155,7 +4155,7 @@ def emit_theme_selection_if_needed(sio, loop):
                 # Theme display finished but stuck - move to quiz
                 set_session_phase(active_session_id, 'quiz')
                 timer_config = {
-                    'voting_time': 60,
+                    'voting_time': 33,
                     'theme_display_time': 10,
                     'question_time': 15,  # Updated to 15 seconds
                     'explanation_time': 15  # Updated to 15 seconds
@@ -4178,7 +4178,7 @@ def emit_theme_selection_if_needed(sio, loop):
                     if available_questions:
                         # Start the quiz timer if conditions are met
                         timer_config = {
-                            'voting_time': 60,
+                            'voting_time': 33,
                             'theme_display_time': 10,
                             'question_time': 15,  # Updated to 15 seconds
                             'explanation_time': 15  # Updated to 15 seconds
@@ -4209,31 +4209,18 @@ def emit_theme_selection_if_needed(sio, loop):
 
 
 def calculate_player_score_percentage(session_id, user_id):
-    """
-    Calculates a player's score as a percentage of the total session score.
-    
-    Args:
-        session_id (int): The ID of the session.
-        user_id (int): The ID of the user/player.
-        
-    Returns:
-        float: Percentage of the total session score earned by the player (0-100).
-                Returns 0 if no scores exist for the session.
-    """
-    # Get the player's score
     player_score = PlayerAnswerRepository.get_player_score_for_session(session_id, user_id)
+    if player_score is None:
+        player_score = 0
     
-    # Get all players' scores for the session
     all_scores = PlayerAnswerRepository.get_all_player_scores_for_session(session_id)
     
-    # Calculate total session score
-    total_session_score = sum(score['total_score'] for score in all_scores)
-    print(f"The player earned {(player_score / total_session_score)*100}% of the total session score")
-    # Calculate percentage if there are scores, otherwise return 0
+    total_session_score = sum(score.get('total_score', 0) for score in all_scores)
+    
     if total_session_score > 0:
-        return (player_score / total_session_score)
+        percentage = player_score / total_session_score
+        return percentage
     return 0.0
-
 
 
 @sio.on('submit_answer')
@@ -4242,7 +4229,6 @@ async def handle_answer_submission(sid, data):
     try:
         logger.debug(f"Starting answer submission with data: {data}")
         
-        # Validate input data
         user_id = data.get('userId')
         question_id = data.get('questionId')
         answer_index = data.get('answerIndex')
@@ -4259,11 +4245,8 @@ async def handle_answer_submission(sid, data):
             await sio.emit('answer_response', {'success': False, 'error': error_msg}, room=sid)
             return
 
-
-
         logger.debug(f"Valid submission from user {user_id} for question {question_id}")
 
-        # Get active session
         active_session_id = get_active_session_id()
         if not active_session_id:
             error_msg = 'No active session found'
@@ -4273,7 +4256,6 @@ async def handle_answer_submission(sid, data):
         
         logger.debug(f"Active session ID: {active_session_id}")
 
-        # Check if we're in quiz phase
         current_phase = get_session_phase(active_session_id)
         if current_phase != 'quiz':
             error_msg = 'Not accepting answers at this time'
@@ -4283,7 +4265,6 @@ async def handle_answer_submission(sid, data):
         
         logger.debug("Current phase is quiz - proceeding")
 
-        # Get question with its point value
         question = QuestionRepository.get_question_by_id(question_id)
         if not question:
             error_msg = f'Question {question_id} not found'
@@ -4303,7 +4284,6 @@ async def handle_answer_submission(sid, data):
         
         logger.debug(f"Found {len(answers)} answers for question")
 
-        # Validate answer index
         if answer_index < 0 or answer_index >= len(answers):
             error_msg = f'Invalid answer index {answer_index} (max {len(answers)-1})'
             logger.error(error_msg)
@@ -4314,24 +4294,21 @@ async def handle_answer_submission(sid, data):
         answer_id = submitted_answer.get('id')
         logger.debug(f"Submitted answer ID: {answer_id}")
 
-        # Determine if answer is correct
         is_correct_value = submitted_answer.get('is_correct', False)
         is_correct = str(is_correct_value).lower() in ['1', 'true', 'yes'] or is_correct_value is True
         logger.debug(f"Answer correctness: {is_correct}")
 
-        # Calculate points using global progress (should be 0-1 for 0%-100%)
         points_earned = 0
         if is_correct:
             luck = calculate_player_score_percentage(get_active_session_id(), user_id)
-            get_random_item(user_id=user_id,luck=float(luck))
-            # Convert progress to proper decimal (if it's coming as percentage)
+            print(f"player luck is calculated to be {luck}")
+            get_random_item(user_id=user_id,luck=luck)
             progress_decimal = float(1-progress)
-            progress_decimal = max(0.0, min(1.0, progress_decimal))  # Clamp between 0 and 1
+            progress_decimal = max(0.0, min(1.0, progress_decimal))
             points_earned = int(max_points * progress_decimal)
-            points_earned = max(1, points_earned)  # Minimum 1 point for correct answer
+            points_earned = max(1, points_earned)
         logger.debug(f"Points calculated: {points_earned} (progress: {progress}, treated as: {progress_decimal})")
 
-        # Store answer submission with debug logging
         try:
             logger.debug("Attempting to create player answer record with params: "
                        f"session_id={active_session_id}, user_id={user_id}, "
@@ -4362,7 +4339,6 @@ async def handle_answer_submission(sid, data):
             }, room=sid)
             return
 
-        # Get correct answer for response
         correct_answer = next((a for a in answers if a.get('is_correct')), None)
         
         response_data = {
@@ -4469,7 +4445,7 @@ async def handle_theme_selection(sid, data):
         if total_votes == 1:
             print(f"Starting voting timer for session {session_id}")
             timer_config = {
-                'voting_time': 60,
+                'voting_time': 33,
                 'theme_display_time': 10,
                 'question_time': 15,  # Updated to 15 seconds
                 'explanation_time': 15  # Updated to 15 seconds
@@ -4512,7 +4488,7 @@ async def handle_theme_selection(sid, data):
 
 # Item effect functions
 def activateAdvertFlood():
-    """Call this function to trigger the 60-second ad flood on all clients"""
+    """Call this function to trigger the 10-second ad flood on all clients"""
     print("sending advert flood emit")
     sio.emit('B2F_addItem', {}, broadcast=True)
 
