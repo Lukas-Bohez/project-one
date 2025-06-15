@@ -100,7 +100,7 @@ class SystemGamepadController:
     def start_services(self):
         """Start background services in a separate thread"""
         try:
-            #self.start_python_app()
+            self.start_python_app()
             time.sleep(2)  # Give the Python app time to start
             self.start_default_browser()
             self.services_ready.set()  # Signal that services are ready
