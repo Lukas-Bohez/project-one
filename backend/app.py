@@ -3856,7 +3856,13 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
 
     # Initialize quiz state
     quiz_state = get_quiz_state(session_id)
-    available_questions = [q for q in all_questions if q['id'] not in quiz_state['asked_questions']]
+    # Get all player answer rows for the session
+    rows = PlayerAnswerRepository.get_player_answers_for_session(session_id)
+
+    # Extract just the IDs into a list
+    ids = [row['questionId'] for row in rows]
+    print(f"unavailable answerid's are {ids}")
+    available_questions = [q for q in all_questions if q['id'] not in ids]
     
     question_time = timer_config.get('question_time', 15)  # Updated to 15 seconds
     explanation_time = timer_config.get('explanation_time', 15)  # Updated to 15 seconds

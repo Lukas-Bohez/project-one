@@ -2014,7 +2014,12 @@ class PlayerAnswerRepository:
         sql = "SELECT * FROM playerAnswers WHERE sessionId = %s AND userId = %s ORDER BY answered_at ASC"
         params = [session_id, user_id]
         return Database.get_rows(sql, params)
-    
+
+    @staticmethod
+    def get_player_answers_for_session(session_id):
+        sql = "SELECT questionId FROM playerAnswers WHERE sessionId = %s ORDER BY answered_at ASC"
+        params = [session_id]
+        return Database.get_rows(sql, params)
 
     @staticmethod
     def get_player_answers_count_for_question(question_id):
