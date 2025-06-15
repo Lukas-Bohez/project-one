@@ -312,16 +312,39 @@ class PlayersListManager {
 
 // Enhanced CSS styles for the players list
 const playersListStyles = `
-.c-player-item {
+/* Enhanced Players List Styles */
+.c-players-container {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.c-players-container h3 {
+    margin: 0 0 16px 0;
+    color: #495057;
+    font-size: 18px;
+    font-weight: 600;
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    padding: 12px;
+}
+
+.c-player-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    padding: 12px 16px;
     margin-bottom: 8px;
     border-radius: 8px;
     background: #f8f9fa;
     border-left: 4px solid #e9ecef;
     transition: all 0.3s ease;
     position: relative;
+    gap: 12px;
 }
 
 .c-player-item.current-user {
@@ -339,7 +362,6 @@ const playersListStyles = `
     font-weight: bold;
     font-size: 18px;
     color: #6c757d;
-    margin-right: 12px;
     min-width: 35px;
     text-align: center;
 }
@@ -349,7 +371,9 @@ const playersListStyles = `
 }
 
 .player-info {
-    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .player-name {
@@ -357,6 +381,9 @@ const playersListStyles = `
     color: #495057;
     margin-bottom: 4px;
     font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .c-player-item.current-user .player-name {
@@ -368,6 +395,7 @@ const playersListStyles = `
     gap: 16px;
     font-size: 13px;
     color: #6c757d;
+    align-items: center;
 }
 
 .session-score {
@@ -376,10 +404,12 @@ const playersListStyles = `
     padding: 2px 6px;
     background: rgba(40, 167, 69, 0.1);
     border-radius: 4px;
+    white-space: nowrap;
 }
 
 .questions-answered {
     color: #6c757d;
+    white-space: nowrap;
 }
 
 .you-indicator {
@@ -391,24 +421,7 @@ const playersListStyles = `
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-}
-
-.c-players-container {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    margin-bottom: 20px;
-}
-
-.c-players-container h3 {
-    margin: 0 0 16px 0;
-    color: #495057;
-    font-size: 18px;
-    font-weight: 600;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    white-space: nowrap;
 }
 
 .no-data-message, .no-players-message {
@@ -442,26 +455,6 @@ const playersListStyles = `
     background: #0056b3;
 }
 
-@media (max-width: 768px) {
-    .player-stats {
-        flex-direction: column;
-        gap: 4px;
-    }
-    
-    .c-player-item {
-        padding: 10px;
-    }
-    
-    .player-rank {
-        font-size: 16px;
-        min-width: 30px;
-    }
-    
-    .player-name {
-        font-size: 15px;
-    }
-}
-
 /* Loading animation */
 .players-loading {
     display: flex;
@@ -484,6 +477,66 @@ const playersListStyles = `
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .c-players-container {
+        padding: 16px;
+    }
+    
+    .c-player-item {
+        grid-template-columns: auto 1fr;
+        padding: 12px;
+        gap: 8px;
+    }
+    
+    .player-stats {
+        grid-column: span 2;
+        justify-content: space-between;
+        width: 100%;
+        padding-top: 8px;
+        margin-top: 8px;
+        border-top: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .player-rank {
+        font-size: 16px;
+        min-width: 30px;
+    }
+    
+    .player-name {
+        font-size: 15px;
+    }
+    
+    .session-score, .questions-answered {
+        font-size: 12px;
+    }
+    
+    .you-indicator {
+        font-size: 9px;
+        padding: 3px 6px;
+    }
+}
+
+@media (max-width: 480px) {
+    .c-player-item {
+        grid-template-columns: auto 1fr;
+    }
+    
+    .player-stats {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .session-score, .questions-answered {
+        flex: 1 0 auto;
+    }
+    
+    .c-players-container h3 {
+        font-size: 16px;
+    }
 }
 `;
 
