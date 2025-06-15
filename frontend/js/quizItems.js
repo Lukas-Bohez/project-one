@@ -258,14 +258,12 @@ const populateItemSlot = (slotElement, item, slotNumber) => {
     const itemId = item.itemId || item.id;
     const itemName = item.name || 'Unknown Item';
     const itemQuantity = item.quantity || 1;
-    const itemDescription = item.description || `${itemName}: No description available`;
     
     console.log(`📝 Setting up slot ${slotNumber} with:`, {
         id: itemId,
         name: itemName,
         quantity: itemQuantity,
-        rarity: item.rarity,
-        description: itemDescription
+        rarity: item.rarity
     });
     
     try {
@@ -277,6 +275,11 @@ const populateItemSlot = (slotElement, item, slotNumber) => {
         // Add visual indicator that slot has an item
         slotElement.classList.add('has-item');
         
+        // Make the slot clickable with better mobile support
+        slotElement.style.cursor = 'pointer';
+        slotElement.style.userSelect = 'none';
+        slotElement.style.webkitTapHighlightColor = 'transparent';
+        
         // Set rarity class for styling
         if (item.rarity) {
             slotElement.setAttribute('data-rarity', item.rarity);
@@ -285,60 +288,16 @@ const populateItemSlot = (slotElement, item, slotNumber) => {
             slotElement.classList.add(`rarity-${item.rarity}`);
         }
         
-        // Find or create the hover controls
-        let hoverControls = slotElement.querySelector('.c-item-hover-controls');
-        if (!hoverControls) {
-            // Create the hover controls structure if it doesn't exist
-            hoverControls = document.createElement('div');
-            hoverControls.className = 'c-item-hover-controls';
-            slotElement.appendChild(hoverControls);
-        }
-        
-        // Update the description
-        let descriptionDiv = hoverControls.querySelector('.c-item-description');
-        if (!descriptionDiv) {
-            descriptionDiv = document.createElement('div');
-            descriptionDiv.className = 'c-item-description';
-            hoverControls.appendChild(descriptionDiv);
-        }
-        descriptionDiv.textContent = itemDescription;
-        
-        // Find or create the actions div
-        let actionsDiv = hoverControls.querySelector('.c-item-actions');
-        if (!actionsDiv) {
-            actionsDiv = document.createElement('div');
-            actionsDiv.className = 'c-item-actions';
-            hoverControls.appendChild(actionsDiv);
-        }
-        
-        // Find or create the buttons
-        let useBtn = actionsDiv.querySelector('.c-item-use-btn');
-        let deleteBtn = actionsDiv.querySelector('.c-item-delete-btn');
-        
-        if (!useBtn) {
-            useBtn = document.createElement('button');
-            useBtn.className = 'c-item-action-btn c-item-use-btn';
-            useBtn.textContent = 'Use';
-            actionsDiv.appendChild(useBtn);
-        }
-        
-        if (!deleteBtn) {
-            deleteBtn = document.createElement('button');
-            deleteBtn.className = 'c-item-action-btn c-item-delete-btn';
-            deleteBtn.textContent = 'Delete';
-            actionsDiv.appendChild(deleteBtn);
-        }
-        
-        // Setup or update the icon
+        // Setup the icon
         setupItemIcon(slotElement, item, slotNumber);
         
-        // Setup or update the quantity display
+        // Setup the quantity display
         setupItemQuantityDisplay(slotElement, itemQuantity);
         
-        // Setup button event listeners
-        setupItemButtons(slotElement, item);
+        // Setup click event listener
+        setupItemClickHandler(slotElement, item);
         
-        console.log(`✅ Successfully populated slot ${slotNumber} with hover controls`);
+        console.log(`✅ Successfully populated slot ${slotNumber} with click handler`);
         
     } catch (error) {
         console.error(`💥 Error in populateItemSlot for slot ${slotNumber}:`, error);
@@ -358,8 +317,8 @@ const setupItemIcon = (slotElement, item, slotNumber) => {
         iconElement.style.cssText = `
             width: 100%;
             height: 100%;
-            max-width: 64px;
-            max-height: 64px;
+            max-width: 48px;
+            max-height: 48px;
             object-fit: contain;
             object-position: center;
             display: block;
@@ -367,14 +326,9 @@ const setupItemIcon = (slotElement, item, slotNumber) => {
             position: relative;
             z-index: 1;
             border-radius: 4px;
+            pointer-events: none;
         `;
-        // Insert the icon before the hover controls
-        const hoverControls = slotElement.querySelector('.c-item-hover-controls');
-        if (hoverControls) {
-            slotElement.insertBefore(iconElement, hoverControls);
-        } else {
-            slotElement.appendChild(iconElement);
-        }
+        slotElement.appendChild(iconElement);
     }
     
     // Set default state
@@ -416,19 +370,20 @@ const setupItemQuantityDisplay = (slotElement, quantity) => {
         quantityElement.textContent = quantity.toString();
         quantityElement.style.cssText = `
             position: absolute;
-            bottom: 4px;
-            right: 4px;
+            bottom: 2px;
+            right: 2px;
             background: rgba(0, 0, 0, 0.8);
             color: white;
-            font-size: 12px;
+            font-size: 10px;
             font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 10px;
-            min-width: 18px;
+            padding: 1px 4px;
+            border-radius: 8px;
+            min-width: 14px;
             text-align: center;
             z-index: 10;
             border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
         `;
         
         slotElement.appendChild(quantityElement);
@@ -541,41 +496,42 @@ const findMatchingSVG = (itemName, availableSVGs) => {
     return matchingSVG;
 };
 
-// Function to setup button event listeners for an item slot
-const setupItemButtons = (slotElement, item) => {
-    console.log("🔘 Setting up buttons for item:", item.name);
+// Function to setup click event listener for an item slot
+const setupItemClickHandler = (slotElement, item) => {
+    console.log("🖱️ Setting up click handler for item:", item.name);
     
-    // Find the buttons
-    const useBtn = slotElement.querySelector('.c-item-use-btn');
-    const deleteBtn = slotElement.querySelector('.c-item-delete-btn');
+    // Remove any existing event listeners by cloning the element
+    const newSlotElement = slotElement.cloneNode(true);
+    slotElement.parentNode.replaceChild(newSlotElement, slotElement);
     
-    if (useBtn) {
-        // Remove existing listeners by cloning the button
-        const newUseBtn = useBtn.cloneNode(true);
-        useBtn.parentNode.replaceChild(newUseBtn, useBtn);
+    // Add click event listener
+    newSlotElement.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         
-        newUseBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const itemId = item.itemId || item.id;
-            const itemName = item.name || 'Unknown Item';
-            console.log(`🎯 Use button clicked for item: ${itemName} (${itemId})`);
-            useItem(itemId, itemName);
-        });
-    }
-    
-    if (deleteBtn) {
-        // Remove existing listeners by cloning the button
-        const newDeleteBtn = deleteBtn.cloneNode(true);
-        deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+        const itemId = item.itemId || item.id;
+        const itemName = item.name || 'Unknown Item';
+        console.log(`🎯 Item clicked: ${itemName} (${itemId})`);
         
-        newDeleteBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const itemId = item.itemId || item.id;
-            const itemName = item.name || 'Unknown Item';
-            console.log(`🗑️ Delete button clicked for item: ${itemName} (${itemId})`);
-            deleteItem(itemId, itemName);
-        });
-    }
+        // Add visual feedback for click
+        newSlotElement.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            newSlotElement.style.transform = 'scale(1)';
+        }, 100);
+        
+        useItem(itemId, itemName);
+    });
+    
+    // Add touch support for mobile
+    newSlotElement.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        newSlotElement.style.transform = 'scale(0.95)';
+    });
+    
+    newSlotElement.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        newSlotElement.style.transform = 'scale(1)';
+    });
 };
 
 // Function to use an item
@@ -617,51 +573,6 @@ const useItem = async (itemId, itemName) => {
     }
 };
 
-// Function to delete an item
-const deleteItem = async (itemId, itemName) => {
-    if (!currentUser || !currentUser.id) {
-        console.log("❌ No user authenticated for item deletion");
-        return;
-    }
-    
-    // Ask for confirmation
-    if (!confirm(`Are you sure you want to delete ${itemName}?`)) {
-        console.log("🚫 Item deletion cancelled by user");
-        return;
-    }
-    
-    console.log(`🗑️ Deleting item: ${itemName} (${itemId})`);
-    
-    try {
-        const response = await fetch(`/api/player/${currentUser.id}/items/${itemId}?quantity=1`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            console.log(`✅ Successfully deleted item: ${itemName}`);
-            showItemFeedback(`Deleted ${itemName}`, 'success');
-            
-            // Reload items to update display
-            setTimeout(() => loadPlayerItems(), 100);
-        } else {
-            console.error("❌ Failed to delete item:", data.error);
-            showItemFeedback(`Failed to delete ${itemName}: ${data.error}`, 'error');
-        }
-    } catch (error) {
-        console.error("💥 Error deleting item:", error);
-        showItemFeedback(`Error deleting ${itemName}: ${error.message}`, 'error');
-    }
-};
-
 // Function to clear all item slots
 const clearAllItemSlots = () => {
     console.log("🧹 Clearing all item slots");
@@ -692,7 +603,11 @@ const clearItemSlot = (slotElement) => {
     slotElement.classList.remove('has-item');
     slotElement.className = slotElement.className.replace(/rarity-\w+/g, '');
     
-    // Remove the icon but keep the hover controls structure
+    // Reset styles
+    slotElement.style.cursor = 'default';
+    slotElement.style.transform = 'scale(1)';
+    
+    // Remove the icon
     const existingIcon = slotElement.querySelector('.c-item-icon');
     if (existingIcon) {
         existingIcon.remove();
@@ -704,25 +619,9 @@ const clearItemSlot = (slotElement) => {
         existingQuantity.remove();
     }
     
-    // Clear the description but keep the structure
-    const descriptionDiv = slotElement.querySelector('.c-item-description');
-    if (descriptionDiv) {
-        descriptionDiv.textContent = '';
-    }
-    
-    // Remove event listeners from buttons by cloning them
-    const useBtn = slotElement.querySelector('.c-item-use-btn');
-    const deleteBtn = slotElement.querySelector('.c-item-delete-btn');
-    
-    if (useBtn) {
-        const newUseBtn = useBtn.cloneNode(true);
-        useBtn.parentNode.replaceChild(newUseBtn, useBtn);
-    }
-    
-    if (deleteBtn) {
-        const newDeleteBtn = deleteBtn.cloneNode(true);
-        deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
-    }
+    // Remove event listeners by cloning the element
+    const newSlotElement = slotElement.cloneNode(true);
+    slotElement.parentNode.replaceChild(newSlotElement, slotElement);
 };
 
 // Function to show feedback messages
@@ -734,19 +633,23 @@ const showItemFeedback = (message, type = 'info') => {
     toast.className = `item-feedback-toast ${type}`;
     toast.textContent = message;
     
-    // Style the toast
+    // Style the toast for mobile-friendly display
     toast.style.cssText = `
         position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 12px 20px;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 8px 16px;
         border-radius: 4px;
         color: white;
         font-weight: bold;
+        font-size: 14px;
         z-index: 10000;
         transition: opacity 0.3s ease;
-        max-width: 300px;
+        max-width: 280px;
+        text-align: center;
         word-wrap: break-word;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     `;
     
     // Set background color based on type
@@ -760,7 +663,7 @@ const showItemFeedback = (message, type = 'info') => {
     
     document.body.appendChild(toast);
     
-    // Remove after 3 seconds
+    // Remove after 2 seconds (shorter for better UX)
     setTimeout(() => {
         toast.style.opacity = '0';
         setTimeout(() => {
@@ -768,7 +671,7 @@ const showItemFeedback = (message, type = 'info') => {
                 document.body.removeChild(toast);
             }
         }, 300);
-    }, 3000);
+    }, 2000);
 };
 
 // Function to manually refresh items (you can call this from anywhere)
@@ -789,21 +692,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Small delay to ensure other scripts have loaded
         setTimeout(() => {
             console.log("⏰ Checking for existing authenticated user");
-            if (currentUser && currentUser.id) {
-                console.log("👤 Found existing user, loading items");
-                loadPlayerItems();
-                startItemAutoRefresh();
-            } else {
-                console.log("👤 No existing user found, waiting for authentication");
-            }
-        }, 500);
-    }).catch(error => {
-        console.warn('⚠️ Could not initialize SVG cache:', error);
-        availableSVGs = [];
-        
-        // Still proceed with item loading even if SVG scanning fails
-        setTimeout(() => {
-            console.log("⏰ Checking for existing authenticated user (no SVG cache)");
             if (currentUser && currentUser.id) {
                 console.log("👤 Found existing user, loading items");
                 loadPlayerItems();
