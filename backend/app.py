@@ -43,6 +43,18 @@ except ImportError as e:
     RPI_COMPONENTS_AVAILABLE = False
 
 
+
+
+# At the top of app.py
+from raspberryPi5.appMonitor import start_monitor
+
+# When starting your application
+monitor = start_monitor("/home/student/Project/project-one/backend/app.log", 
+                       "/home/student/Project/project-one/backend/app.py")
+
+
+
+
 current_phase = None
 # ----------------------------------------------------
 # App setup
@@ -4685,3 +4697,8 @@ if __name__ == "__main__":
         reload=True,
         reload_dirs=["backend"]
     )
+
+
+
+
+
