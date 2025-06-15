@@ -94,38 +94,38 @@ document.addEventListener('userAuthenticated', (event) => {
     console.log("🔄 Loading items for authenticated user");
     loadPlayerItems();
     
-    // Start auto-refresh interval (every second)
+    // Start auto-refresh interval (every 2 seconds to reduce flashing)
     startItemAutoRefresh();
 });
 
 // Function to start auto-refresh of items
-function startItemAutoRefresh() {
+const startItemAutoRefresh = () => {
     // Clear any existing interval
     if (itemUpdateInterval) {
         clearInterval(itemUpdateInterval);
     }
     
-    console.log("⏰ Starting item auto-refresh (1 second interval)");
+    console.log("⏰ Starting item auto-refresh (2 second interval)");
     
-    // Set up new interval to refresh every second
+    // Set up new interval to refresh every 2 seconds
     itemUpdateInterval = setInterval(() => {
         if (currentUser && currentUser.id && !isLoadingItems) {
             loadPlayerItems();
         }
-    }, 1000);
-}
+    }, 2000);
+};
 
 // Function to stop auto-refresh
-function stopItemAutoRefresh() {
+const stopItemAutoRefresh = () => {
     if (itemUpdateInterval) {
         clearInterval(itemUpdateInterval);
         itemUpdateInterval = null;
         console.log("⏹️ Stopped item auto-refresh");
     }
-}
+};
 
 // Function to load and display player items
-async function loadPlayerItems() {
+const loadPlayerItems = async () => {
     if (!currentUser || !currentUser.id) {
         console.log("❌ No user authenticated - clearing slots");
         clearAllItemSlots();
@@ -171,10 +171,10 @@ async function loadPlayerItems() {
     } finally {
         isLoadingItems = false;
     }
-}
+};
 
 // Function to display items in the 3 slots
-function displayPlayerItems(items) {
+const displayPlayerItems = (items) => {
     console.log("🎮 Displaying items:", items);
     
     // Validate input
@@ -238,10 +238,10 @@ function displayPlayerItems(items) {
     }
     
     console.log("🏁 Finished displaying all items");
-}
+};
 
 // Function to populate an individual item slot
-function populateItemSlot(slotElement, item, slotNumber) {
+const populateItemSlot = (slotElement, item, slotNumber) => {
     console.log(`🔧 populateItemSlot called for slot ${slotNumber}:`, item);
     
     // Validate inputs
@@ -258,18 +258,17 @@ function populateItemSlot(slotElement, item, slotNumber) {
     const itemId = item.itemId || item.id;
     const itemName = item.name || 'Unknown Item';
     const itemQuantity = item.quantity || 1;
+    const itemDescription = item.description || `${itemName}: No description available`;
     
     console.log(`📝 Setting up slot ${slotNumber} with:`, {
         id: itemId,
         name: itemName,
         quantity: itemQuantity,
-        rarity: item.rarity
+        rarity: item.rarity,
+        description: itemDescription
     });
     
     try {
-        // Clear all existing content first
-        slotElement.innerHTML = '';
-        
         // Add item data attributes
         slotElement.setAttribute('data-item-id', itemId);
         slotElement.setAttribute('data-item-name', itemName);
@@ -281,38 +280,102 @@ function populateItemSlot(slotElement, item, slotNumber) {
         // Set rarity class for styling
         if (item.rarity) {
             slotElement.setAttribute('data-rarity', item.rarity);
+            // Remove existing rarity classes
+            slotElement.className = slotElement.className.replace(/rarity-\w+/g, '');
             slotElement.classList.add(`rarity-${item.rarity}`);
         }
         
-        // Only add the icon - no text elements
+        // Find or create the hover controls
+        let hoverControls = slotElement.querySelector('.c-item-hover-controls');
+        if (!hoverControls) {
+            // Create the hover controls structure if it doesn't exist
+            hoverControls = document.createElement('div');
+            hoverControls.className = 'c-item-hover-controls';
+            slotElement.appendChild(hoverControls);
+        }
+        
+        // Update the description
+        let descriptionDiv = hoverControls.querySelector('.c-item-description');
+        if (!descriptionDiv) {
+            descriptionDiv = document.createElement('div');
+            descriptionDiv.className = 'c-item-description';
+            hoverControls.appendChild(descriptionDiv);
+        }
+        descriptionDiv.textContent = itemDescription;
+        
+        // Find or create the actions div
+        let actionsDiv = hoverControls.querySelector('.c-item-actions');
+        if (!actionsDiv) {
+            actionsDiv = document.createElement('div');
+            actionsDiv.className = 'c-item-actions';
+            hoverControls.appendChild(actionsDiv);
+        }
+        
+        // Find or create the buttons
+        let useBtn = actionsDiv.querySelector('.c-item-use-btn');
+        let deleteBtn = actionsDiv.querySelector('.c-item-delete-btn');
+        
+        if (!useBtn) {
+            useBtn = document.createElement('button');
+            useBtn.className = 'c-item-action-btn c-item-use-btn';
+            useBtn.textContent = 'Use';
+            actionsDiv.appendChild(useBtn);
+        }
+        
+        if (!deleteBtn) {
+            deleteBtn = document.createElement('button');
+            deleteBtn.className = 'c-item-action-btn c-item-delete-btn';
+            deleteBtn.textContent = 'Delete';
+            actionsDiv.appendChild(deleteBtn);
+        }
+        
+        // Setup or update the icon
         setupItemIcon(slotElement, item, slotNumber);
         
-        // Setup button event listeners (hidden buttons for functionality)
+        // Setup or update the quantity display
+        setupItemQuantityDisplay(slotElement, itemQuantity);
+        
+        // Setup button event listeners
         setupItemButtons(slotElement, item);
         
-        console.log(`✅ Successfully populated slot ${slotNumber} with icon only`);
+        console.log(`✅ Successfully populated slot ${slotNumber} with hover controls`);
         
     } catch (error) {
         console.error(`💥 Error in populateItemSlot for slot ${slotNumber}:`, error);
         throw error; // Re-throw to be caught by caller
     }
-}
+};
 
-// Separate function to handle icon setup
-function setupItemIcon(slotElement, item, slotNumber) {
+// Separate function to handle icon setup with improved scaling
+const setupItemIcon = (slotElement, item, slotNumber) => {
     const itemName = item.name || 'Unknown Item';
     
-    // Create icon element (since we cleared innerHTML)
-    const iconElement = document.createElement('img');
-    iconElement.className = 'c-item-icon';
-    iconElement.style.cssText = `
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        display: block;
-        margin: 0;
-        padding: 0;
-    `;
+    // Look for existing icon or create one
+    let iconElement = slotElement.querySelector('.c-item-icon');
+    if (!iconElement) {
+        iconElement = document.createElement('img');
+        iconElement.className = 'c-item-icon';
+        iconElement.style.cssText = `
+            width: 100%;
+            height: 100%;
+            max-width: 64px;
+            max-height: 64px;
+            object-fit: contain;
+            object-position: center;
+            display: block;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            border-radius: 4px;
+        `;
+        // Insert the icon before the hover controls
+        const hoverControls = slotElement.querySelector('.c-item-hover-controls');
+        if (hoverControls) {
+            slotElement.insertBefore(iconElement, hoverControls);
+        } else {
+            slotElement.appendChild(iconElement);
+        }
+    }
     
     // Set default state
     iconElement.alt = itemName;
@@ -336,13 +399,45 @@ function setupItemIcon(slotElement, item, slotNumber) {
         // Try to find matching SVG
         trySetSVGIcon(iconElement, itemName, slotNumber);
     }
+};
+
+// New function to setup quantity display
+const setupItemQuantityDisplay = (slotElement, quantity) => {
+    // Remove existing quantity display
+    const existingQuantity = slotElement.querySelector('.c-item-quantity');
+    if (existingQuantity) {
+        existingQuantity.remove();
+    }
     
-    // Add icon to slot
-    slotElement.appendChild(iconElement);
-}
+    // Only show quantity if it's greater than 1
+    if (quantity > 1) {
+        const quantityElement = document.createElement('div');
+        quantityElement.className = 'c-item-quantity';
+        quantityElement.textContent = quantity.toString();
+        quantityElement.style.cssText = `
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 18px;
+            text-align: center;
+            z-index: 10;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        `;
+        
+        slotElement.appendChild(quantityElement);
+        console.log(`📊 Added quantity display: ${quantity}`);
+    }
+};
 
 // Helper function to try setting SVG icon
-function trySetSVGIcon(iconElement, itemName, slotNumber) {
+const trySetSVGIcon = (iconElement, itemName, slotNumber) => {
     if (itemName && availableSVGs.length > 0) {
         console.log(`🔍 Looking for SVG for item: "${itemName}"`);
         
@@ -351,6 +446,7 @@ function trySetSVGIcon(iconElement, itemName, slotNumber) {
         if (matchingSVG) {
             console.log(`✅ Found matching SVG for "${itemName}": ${matchingSVG}`);
             iconElement.src = `/svg/${matchingSVG}`;
+            iconElement.style.display = 'block';
             
             iconElement.onerror = () => {
                 console.warn(`❌ SVG failed to load for ${itemName}:`, matchingSVG);
@@ -370,10 +466,10 @@ function trySetSVGIcon(iconElement, itemName, slotNumber) {
         console.log(`ℹ️ No SVG search possible for slot ${slotNumber} (no name or no SVGs available)`);
         iconElement.style.display = 'none';
     }
-}
+};
 
 // Separate function to find matching SVG with improved logic
-function findMatchingSVG(itemName, availableSVGs) {
+const findMatchingSVG = (itemName, availableSVGs) => {
     const itemNameLower = itemName.toLowerCase().trim();
     let matchingSVG = null;
     
@@ -443,48 +539,18 @@ function findMatchingSVG(itemName, availableSVGs) {
     }
     
     return matchingSVG;
-}
+};
 
 // Function to setup button event listeners for an item slot
-function setupItemButtons(slotElement, item) {
+const setupItemButtons = (slotElement, item) => {
     console.log("🔘 Setting up buttons for item:", item.name);
     
-    // Look for existing buttons in the slot
+    // Find the buttons
     const useBtn = slotElement.querySelector('.c-item-use-btn');
     const deleteBtn = slotElement.querySelector('.c-item-delete-btn');
     
-    // If buttons don't exist, create invisible click handlers on the slot itself
-    if (!useBtn && !deleteBtn) {
-        // Make the entire slot clickable for use (left click)
-        slotElement.style.cursor = 'pointer';
-        
-        const clickHandler = (e) => {
-            e.stopPropagation();
-            const itemId = item.itemId || item.id;
-            const itemName = item.name || 'Unknown Item';
-            
-            if (e.button === 0) { // Left click - use item
-                console.log(`🎯 Left click to use item: ${itemName} (${itemId})`);
-                useItem(itemId, itemName);
-            } else if (e.button === 2) { // Right click - delete item
-                console.log(`🗑️ Right click to delete item: ${itemName} (${itemId})`);
-                deleteItem(itemId, itemName);
-            }
-        };
-        
-        // Add both click and contextmenu handlers
-        slotElement.addEventListener('click', clickHandler);
-        slotElement.addEventListener('contextmenu', (e) => {
-            e.preventDefault(); // Prevent context menu
-            e.button = 2; // Set as right click
-            clickHandler(e);
-        });
-        
-        return;
-    }
-    
-    // Handle existing buttons
     if (useBtn) {
+        // Remove existing listeners by cloning the button
         const newUseBtn = useBtn.cloneNode(true);
         useBtn.parentNode.replaceChild(newUseBtn, useBtn);
         
@@ -498,6 +564,7 @@ function setupItemButtons(slotElement, item) {
     }
     
     if (deleteBtn) {
+        // Remove existing listeners by cloning the button
         const newDeleteBtn = deleteBtn.cloneNode(true);
         deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
         
@@ -509,10 +576,10 @@ function setupItemButtons(slotElement, item) {
             deleteItem(itemId, itemName);
         });
     }
-}
+};
 
 // Function to use an item
-async function useItem(itemId, itemName) {
+const useItem = async (itemId, itemName) => {
     if (!currentUser || !currentUser.id) {
         console.log("❌ No user authenticated for item use");
         return;
@@ -548,10 +615,10 @@ async function useItem(itemId, itemName) {
         console.error("💥 Error using item:", error);
         showItemFeedback(`Error using ${itemName}: ${error.message}`, 'error');
     }
-}
+};
 
 // Function to delete an item
-async function deleteItem(itemId, itemName) {
+const deleteItem = async (itemId, itemName) => {
     if (!currentUser || !currentUser.id) {
         console.log("❌ No user authenticated for item deletion");
         return;
@@ -566,7 +633,7 @@ async function deleteItem(itemId, itemName) {
     console.log(`🗑️ Deleting item: ${itemName} (${itemId})`);
     
     try {
-        const response = await fetch(`/api/player/${currentUser.id}/items/${itemId}`, {
+        const response = await fetch(`/api/player/${currentUser.id}/items/${itemId}?quantity=1`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
@@ -593,10 +660,10 @@ async function deleteItem(itemId, itemName) {
         console.error("💥 Error deleting item:", error);
         showItemFeedback(`Error deleting ${itemName}: ${error.message}`, 'error');
     }
-}
+};
 
 // Function to clear all item slots
-function clearAllItemSlots() {
+const clearAllItemSlots = () => {
     console.log("🧹 Clearing all item slots");
     for (let i = 1; i <= 3; i++) {
         const slotElement = document.getElementById(`item${i}`);
@@ -606,10 +673,10 @@ function clearAllItemSlots() {
             console.warn(`⚠️ Slot element #item${i} not found when clearing`);
         }
     }
-}
+};
 
 // Function to clear an individual item slot
-function clearItemSlot(slotElement) {
+const clearItemSlot = (slotElement) => {
     if (!slotElement) {
         console.warn("⚠️ clearItemSlot called with null element");
         return;
@@ -625,19 +692,41 @@ function clearItemSlot(slotElement) {
     slotElement.classList.remove('has-item');
     slotElement.className = slotElement.className.replace(/rarity-\w+/g, '');
     
-    // Clear all content
-    slotElement.innerHTML = '';
+    // Remove the icon but keep the hover controls structure
+    const existingIcon = slotElement.querySelector('.c-item-icon');
+    if (existingIcon) {
+        existingIcon.remove();
+    }
     
-    // Reset cursor
-    slotElement.style.cursor = 'default';
+    // Remove the quantity display
+    const existingQuantity = slotElement.querySelector('.c-item-quantity');
+    if (existingQuantity) {
+        existingQuantity.remove();
+    }
     
-    // Remove all event listeners by cloning the element
-    const newSlotElement = slotElement.cloneNode(false);
-    slotElement.parentNode.replaceChild(newSlotElement, slotElement);
-}
+    // Clear the description but keep the structure
+    const descriptionDiv = slotElement.querySelector('.c-item-description');
+    if (descriptionDiv) {
+        descriptionDiv.textContent = '';
+    }
+    
+    // Remove event listeners from buttons by cloning them
+    const useBtn = slotElement.querySelector('.c-item-use-btn');
+    const deleteBtn = slotElement.querySelector('.c-item-delete-btn');
+    
+    if (useBtn) {
+        const newUseBtn = useBtn.cloneNode(true);
+        useBtn.parentNode.replaceChild(newUseBtn, useBtn);
+    }
+    
+    if (deleteBtn) {
+        const newDeleteBtn = deleteBtn.cloneNode(true);
+        deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+    }
+};
 
 // Function to show feedback messages
-function showItemFeedback(message, type = 'info') {
+const showItemFeedback = (message, type = 'info') => {
     console.log(`💬 Showing feedback: ${message} (${type})`);
     
     // Create a simple toast notification
@@ -680,13 +769,13 @@ function showItemFeedback(message, type = 'info') {
             }
         }, 300);
     }, 3000);
-}
+};
 
 // Function to manually refresh items (you can call this from anywhere)
-function refreshPlayerItems() {
+const refreshPlayerItems = () => {
     console.log("🔄 Manual refresh requested");
     loadPlayerItems();
-}
+};
 
 // Initialize items when page loads (in case user is already authenticated)
 document.addEventListener('DOMContentLoaded', () => {
@@ -700,6 +789,21 @@ document.addEventListener('DOMContentLoaded', () => {
         // Small delay to ensure other scripts have loaded
         setTimeout(() => {
             console.log("⏰ Checking for existing authenticated user");
+            if (currentUser && currentUser.id) {
+                console.log("👤 Found existing user, loading items");
+                loadPlayerItems();
+                startItemAutoRefresh();
+            } else {
+                console.log("👤 No existing user found, waiting for authentication");
+            }
+        }, 500);
+    }).catch(error => {
+        console.warn('⚠️ Could not initialize SVG cache:', error);
+        availableSVGs = [];
+        
+        // Still proceed with item loading even if SVG scanning fails
+        setTimeout(() => {
+            console.log("⏰ Checking for existing authenticated user (no SVG cache)");
             if (currentUser && currentUser.id) {
                 console.log("👤 Found existing user, loading items");
                 loadPlayerItems();
