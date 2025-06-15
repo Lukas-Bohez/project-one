@@ -4205,6 +4205,37 @@ def emit_theme_selection_if_needed(sio, loop):
 
 # ---------- Socket Handler ----------
 # Updated socket handler to use new timer config
+
+
+
+def calculate_player_score_percentage(session_id, user_id):
+    """
+    Calculates a player's score as a percentage of the total session score.
+    
+    Args:
+        session_id (int): The ID of the session.
+        user_id (int): The ID of the user/player.
+        
+    Returns:
+        float: Percentage of the total session score earned by the player (0-100).
+                Returns 0 if no scores exist for the session.
+    """
+    # Get the player's score
+    player_score = PlayerAnswerRepository.get_player_score_for_session(session_id, user_id)
+    
+    # Get all players' scores for the session
+    all_scores = PlayerAnswerRepository.get_all_player_scores_for_session(session_id)
+    
+    # Calculate total session score
+    total_session_score = sum(score['total_score'] for score in all_scores)
+    print(f"The player earned {(player_score / total_session_score)*100}% of the total session score")
+    # Calculate percentage if there are scores, otherwise return 0
+    if total_session_score > 0:
+        return (player_score / total_session_score)
+    return 0.0
+
+
+
 @sio.on('submit_answer')
 async def handle_answer_submission(sid, data):
     global current_phase, progress
@@ -4291,7 +4322,8 @@ async def handle_answer_submission(sid, data):
         # Calculate points using global progress (should be 0-1 for 0%-100%)
         points_earned = 0
         if is_correct:
-            get_random_item(user_id=user_id,luck=float(progress))
+            luck = calculate_player_score_percentage(get_active_session_id(), user_id)
+            get_random_item(user_id=user_id,luck=float(luck))
             # Convert progress to proper decimal (if it's coming as percentage)
             progress_decimal = float(1-progress)
             progress_decimal = max(0.0, min(1.0, progress_decimal))  # Clamp between 0 and 1
