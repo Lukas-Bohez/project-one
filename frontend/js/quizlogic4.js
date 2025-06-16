@@ -106,41 +106,59 @@ class QuizQuestionHandler {
         }
     }
 
-    setupAnswerOptions(questionData) {
-        const answerButtons = document.querySelectorAll('.c-answer-btn');
-        const options = questionData.type === 'theme_selection'
-            ? questionData.themes
-            : questionData.answers;
+setupAnswerOptions(questionData) {
+    const options = questionData.type === 'theme_selection'
+        ? questionData.themes
+        : questionData.answers;
 
-        if (!options || options.length === 0) {
-            this.handleErrorDisplay('No options available for this round.');
-            return;
-        }
-
-        answerButtons.forEach((button, index) => {
-            if (options[index]) {
-                const option = options[index];
-
-                // FIX: Use answer_text for multiple_choice answers
-                button.textContent = questionData.type === 'theme_selection'
-                    ? (option.name || option.title || `Theme ${index + 1}`)
-                    : (option.answer_text || option.text || option);
-
-                button.style.display = 'block';
-                button.disabled = false;
-                button.classList.add('gamepad');
-
-                if (questionData.type === 'theme_selection') {
-                    button.dataset.themeId = option.id;
-                    button.dataset.themeName = option.name || option.title;
-                }
-            } else {
-                button.style.display = 'none';
-                button.disabled = true;
-            }
-        });
+    if (!options || options.length === 0) {
+        this.handleErrorDisplay('No options available for this round.');
+        return;
     }
 
+    // Get the answers container
+    const answersContainer = document.querySelector('.c-answers-container');
+    if (!answersContainer) {
+        console.error('Answers container not found');
+        return;
+    }
+
+    // Get all existing answer buttons
+    let answerButtons = Array.from(answersContainer.querySelectorAll('.c-answer-btn'));
+
+    // If we need more buttons than currently exist, create them
+    while (answerButtons.length < options.length) {
+        const newButton = document.createElement('button');
+        newButton.className = 'c-answer-btn gamepad';
+        newButton.id = `answer${answerButtons.length + 1}`;
+        answersContainer.appendChild(newButton);
+        answerButtons.push(newButton);
+    }
+
+    // Now set up all the options
+    answerButtons.forEach((button, index) => {
+        if (options[index]) {
+            const option = options[index];
+
+            button.textContent = questionData.type === 'theme_selection'
+                ? (option.name || option.title || `Theme ${index + 1}`)
+                : (option.answer_text || option.text || option);
+
+            button.style.display = 'block';
+            button.disabled = false;
+            button.classList.add('gamepad');
+
+            if (questionData.type === 'theme_selection') {
+                button.dataset.themeId = option.id;
+                button.dataset.themeName = option.name || option.title;
+            }
+        } else {
+            // Hide extra buttons if we have more than needed
+            button.style.display = 'none';
+            button.disabled = true;
+        }
+    });
+}
     bindAnswerEvents() {
         const answerButtons = document.querySelectorAll('.c-answer-btn');
         if (answerButtons.length === 0) {

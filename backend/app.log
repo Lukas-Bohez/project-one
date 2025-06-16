@@ -75,3 +75,15 @@
 2025-06-16 14:20:57,249 - CRASH - Process started - PID: 19438 - Attempt: 11
 2025-06-16 14:21:48,028 - CRASH - TARGET ERROR DETECTED: Query error: weakly-referenced object no longer exists
 2025-06-16 14:21:51,343 - CRASH - Process started - PID: 19729 - Attempt: 12
+2025-06-16 14:30:14,808 - CRASH - Process started - PID: 20317 - Attempt: 1
+2025-06-16 14:30:44,250 - CRASH - TARGET ERROR DETECTED: Query error: weakly-referenced object no longer exists
+2025-06-16 14:30:47,614 - CRASH - Process started - PID: 20495 - Attempt: 2
+2025-06-16 14:35:27,741 - CRASH - Process started - PID: 20811 - Attempt: 1
+2025-06-16 14:39:07,535 - CRASH - Process started - PID: 21218 - Attempt: 1
+2025-06-16 14:43:46,158 - CRASH - TARGET ERROR DETECTED: Query error: weakly-referenced object no longer exists
+2025-06-16 14:43:49,473 - CRASH - Process started - PID: 22200 - Attempt: 2
+2025-06-16 14:44:24,566 - CRASH - Process started - PID: 22400 - Attempt: 1
+2025-06-16 14:52:17,214 - CRASH - Process started - PID: 23733 - Attempt: 1
+2025-06-16 14:54:51,607 - CRASH - Process started - PID: 23969 - Attempt: 1
+2025-06-16 14:56:07,404 - CRASH - Process started - PID: 24138 - Attempt: 1
+2025-06-16 14:59:20,358 - CRASH - Process started - PID: 24341 - Attempt: 1
