@@ -4260,7 +4260,7 @@ async def handle_answer_submission(sid, data):
             await sio.emit('answer_response', {'success': False, 'error': error_msg}, room=sid)
             return
         
-        if PlayerAnswerRepository.get_player_answers_for_user_in_session_by_question(get_active_session_id(),user_id,question_id):
+        if PlayerAnswerRepository.get_player_answers_for_user_in_session_by_question(get_active_session_id(), user_id, question_id):
             error_msg = 'Answer already submitted before'
             logger.error(error_msg)
             await sio.emit('answer_response', {'success': False, 'error': error_msg}, room=sid)
@@ -4323,18 +4323,15 @@ async def handle_answer_submission(sid, data):
         if is_correct:
             luck = calculate_player_score_percentage(get_active_session_id(), user_id)
             print(f"player luck is calculated to be {luck}")
-            get_random_item(user_id=user_id,luck=luck)
-            progress_decimal = float(1-progress)
+            get_random_item(user_id=user_id, luck=luck)
+            progress_decimal = float(1 - progress)
             progress_decimal = max(0.0, min(1.0, progress_decimal))
             points_earned = int(max_points * progress_decimal)
             points_earned = max(1, points_earned)
-        logger.debug(f"Points calculated: {points_earned} (progress: {progress}, treated as: {progress_decimal})")
+        logger.debug(f"Points calculated: {points_earned}")
 
         try:
-            logger.debug("Attempting to create player answer record with params: "
-                       f"session_id={active_session_id}, user_id={user_id}, "
-                       f"question_id={question_id}, answer_id={answer_id}, "
-                       f"is_correct={is_correct}, points_earned={points_earned}, time_taken=15")
+            logger.debug("Attempting to create player answer record")
             
             result = PlayerAnswerRepository.create_player_answer(
                 session_id=active_session_id,
@@ -4374,8 +4371,7 @@ async def handle_answer_submission(sid, data):
         
         await sio.emit('answer_response', response_data, room=sid)
         logger.info(f"Answer processed - User: {user_id}, Q: {question_id}, "
-                   f"Correct: {is_correct}, Points: {points_earned}/{max_points}, "
-                   f"Progress: {progress}")
+                   f"Correct: {is_correct}, Points: {points_earned}/{max_points}")
         
     except Exception as e:
         logger.error(f"Unexpected error handling answer submission: {str(e)}", exc_info=True)
