@@ -625,23 +625,243 @@ createThemeModal(themeName, themeDescription) {
         }
     }
 
-    // Display final screen
-    displayFinalScreen(title, message) {
-        const finalContainer = document.getElementById('finalScreenContainer') || this.createFinalScreenContainer();
-        
-        finalContainer.innerHTML = `
-            <div class="final-screen-content">
-                <h2>${title}</h2>
-                <p>${message}</p>
-                <div id="finalScoresContainer"></div>
-                <button class="c-btn c-btn-primary" onclick="location.reload()">
+displayFinalScreen(title, message) {
+    const finalContainer = document.getElementById('finalScreenContainer') || this.createFinalScreenContainer();
+    
+    // Get user details
+    const firstName = localStorage.getItem('user_first_name') || '';
+    const lastName = localStorage.getItem('user_last_name') || '';
+    const userName = `${firstName} ${lastName}`.trim();
+    
+    // Inject CSS directly
+    const style = document.createElement('style');
+    style.textContent = `
+        #finalScreenContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.5s ease-out;
+            overflow: hidden;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .final-screen-content {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .final-screen-content .card {
+            position: relative;
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+            transform: scale(0.95);
+            animation: cardEnter 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            overflow: visible;
+            z-index: 2;
+        }
+        @keyframes cardEnter {
+            to { transform: scale(1); }
+        }
+        .final-screen-content .card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                rgba(255,255,255,0.3) 0%,
+                rgba(255,255,255,0) 60%
+            );
+            transform: rotate(30deg);
+            pointer-events: none;
+        }
+        .final-screen-content .title {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #4a4a4a;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 700;
+        }
+        .final-screen-content .message {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+        .user-greeting {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 1.5rem 0;
+            color: #4a4a4a;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .restart-btn {
+            position: relative;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            z-index: 1;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-top: 1.5rem;
+        }
+        .restart-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6);
+        }
+        .restart-btn:active {
+            transform: translateY(1px);
+        }
+        .hover-effect {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            opacity: 0;
+            transition: width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
+            z-index: -1;
+        }
+        .restart-btn:hover .hover-effect {
+            width: 200px;
+            height: 200px;
+            opacity: 1;
+        }
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            opacity: 0;
+            animation: confettiFall linear infinite;
+            pointer-events: none;
+            z-index: 1;
+        }
+        @keyframes confettiFall {
+            0% {
+                transform: translate3d(var(--start-x), -100px, 0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translate3d(var(--end-x), calc(100vh + 100px), 0) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        .scores-container {
+            margin: 1rem 0;
+            padding: 1.5rem;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+            animation: fadeInUp 0.5s ease-out;
+            position: relative;
+            z-index: 2;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Create HTML content
+    finalContainer.innerHTML = `
+        <div class="final-screen-content">
+            <div class="card">
+                <h2 class="title">${title}</h2>
+                <p class="message">${message}</p>
+                ${userName ? `<div class="user-greeting">Congratulations, ${userName}!</div>` : ''}
+                <button class="restart-btn" onclick="location.reload()">
                     Start New Quiz
+                    <span class="hover-effect"></span>
                 </button>
             </div>
+        </div>
+    `;
+    
+    // Generate INSANE full-screen confetti
+    const colors = ['#f00', '#0f0', '#00f', '#ff0', '#f0f', '#0ff', '#ff6b6b', '#4ecdc4', '#ffe66d', '#ff9ff3'];
+    const shapes = ['50%', '0', '25%', '75%', '100%'];
+    const confettiCount = 1000; // Increase this number for even more madness
+    
+    for (let i = 0; i < confettiCount; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        
+        // Random properties for full-screen coverage
+        const size = Math.random() * 12 + 3;
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const startX = Math.random() * window.innerWidth;
+        const endX = (Math.random() * 200) - 100; // -100 to 100px horizontal movement
+        const animationDuration = Math.random() * 4 + 3;
+        const animationDelay = Math.random() * 8;
+        const shape = shapes[Math.floor(Math.random() * shapes.length)];
+        
+        confetti.style.cssText = `
+            --start-x: ${startX}px;
+            --end-x: ${startX + endX}px;
+            width: ${size}px;
+            height: ${size}px;
+            background: ${color};
+            animation-duration: ${animationDuration}s;
+            animation-delay: ${animationDelay}s;
+            border-radius: ${shape};
+            left: 0;
+            top: 0;
         `;
         
-        finalContainer.style.display = 'flex';
+        document.body.appendChild(confetti);
     }
+    
+    finalContainer.style.display = 'flex';
+    
+    // Clean up confetti when screen is closed
+    finalContainer.addEventListener('click', function() {
+        const allConfetti = document.querySelectorAll('.confetti');
+        allConfetti.forEach(c => c.remove());
+    });
+}
 
     // Create final screen container
     createFinalScreenContainer() {
