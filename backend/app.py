@@ -118,6 +118,8 @@ async def disconnect(sid): # <--- You need a disconnect handler!
         'timestamp': datetime.now().isoformat()
     })
     print(f"Server emitted 'client_disconnected' for client {sid}. Total clients: {len(connected_clients)}")
+    if len(connected_clients) <= 0:
+        QuizSessionRepository.update_session_status(get_active_session_id(), 3)
 
 
 
@@ -294,27 +296,6 @@ async def get_question_with_answers(question_id: int):
         )
     return question
 
-
-
-# ----------------------------------------------------
-# Socket.IO Handlers (Existing, unchanged)
-# ----------------------------------------------------
-
-@sio.event
-async def connect(sid, environ):
-    print(f"Client connected: {sid}")
-
-@sio.event
-async def disconnect(sid):
-    print(f"Client disconnected: {sid}")
-
-@sio.event
-async def request_random_question(sid, data):
-    theme_id = data.get('themeId')
-    difficulty_id = data.get('difficultyLevelId')
-    question = QuestionRepository.get_random_question(theme_id, difficulty_id)
-    if question:
-        await sio.emit('new_question', question, room=sid)
 
 # ----------------------------------------------------
 # FastAPI Endpoints - Answers (Existing, unchanged)
@@ -2772,12 +2753,6 @@ async def user_left_quiz(sid, data):
         print(f"Error in user_left_quiz: {e}")
         return False
 
-@sio.event
-async def disconnect(sid):
-    """
-    Handle client disconnection.
-    """
-    print(f"Client {sid} disconnected")
 
 # Additional endpoint to broadcast system messages
 @app.post("/api/v1/chat/system-message")

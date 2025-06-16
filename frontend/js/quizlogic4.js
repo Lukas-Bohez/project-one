@@ -634,7 +634,7 @@ createThemeModal(themeName, themeDescription) {
                 <h2>${title}</h2>
                 <p>${message}</p>
                 <div id="finalScoresContainer"></div>
-                <button class="btn btn-primary" onclick="location.reload()">
+                <button class="c-btn c-btn-primary" onclick="location.reload()">
                     Start New Quiz
                 </button>
             </div>
