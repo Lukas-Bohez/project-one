@@ -161,12 +161,7 @@ async def leave_room(sid, data):
 # ----------------------------------------------------
 
 
-# Start background task when the app starts
-@app.on_event("startup")
-async def startup_event():
-    # Uncomment the next line to enable periodic updates
-    # asyncio.create_task(background_task())
-    print("Server started - Socket.IO backend is ready!")
+
 
 
 
