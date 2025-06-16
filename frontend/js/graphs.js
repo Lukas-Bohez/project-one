@@ -1,10 +1,9 @@
 // #region *** DOM references ***********
 const lanIP = `http://${window.location.hostname}`;
-// domGraphs will now be populated dynamically
 let domGraphs = {};
 // #endregion
 
-// #region *** Callback-Visualisation - show___ ***********
+// #region *** Chart Creation Functions ***********
 const createNonInteractiveChart = (element, data, seriesName, color) => {
   const options = {
     chart: {
@@ -99,17 +98,25 @@ const createNonInteractiveChart = (element, data, seriesName, color) => {
 };
 
 const showTemperatureChart = (element, data) => {
-  return createNonInteractiveChart(element, data, 'Temperature', '#d32f2f');
+  const chart = createNonInteractiveChart(element, data, 'Temperature', '#d32f2f');
+  element.chart = chart; // Attach chart reference to DOM element
+  return chart;
 };
 
 const showLightChart = (element, data) => {
-  return createNonInteractiveChart(element, data, 'Light', '#0d9edb');
+  const chart = createNonInteractiveChart(element, data, 'Light', '#0d9edb');
+  element.chart = chart; // Attach chart reference to DOM element
+  return chart;
 };
 
 const showSoundChart = (element, data) => {
-  return createNonInteractiveChart(element, data, 'Servo degrees', '#e65100');
+  const chart = createNonInteractiveChart(element, data, 'Servo degrees', '#e65100');
+  element.chart = chart; // Attach chart reference to DOM element
+  return chart;
 };
+// #endregion
 
+// #region *** UI Components ***********
 const createChatDisplay = (chatMessages) => {
   if (!chatMessages || chatMessages.length === 0) {
     return '<p style="color: #0e1827; opacity: 0.6; font-style: italic;">No chat messages</p>';
@@ -185,38 +192,6 @@ const createPlayerAnswersDisplay = (playerAnswers) => {
     </div>
   `;
 };
-// #endregion
-
-const listenToInfoModal = (domElements) => {
-  const { infoBtn, infoModal, closeModal } = domElements;
-
-  if (!infoBtn || !infoModal || !closeModal) {
-    console.warn('Missing required DOM elements for info modal');
-    return;
-  }
-
-  infoBtn.addEventListener('click', () => {
-    infoModal.style.display = 'block';
-  });
-
-  closeModal.addEventListener('click', () => {
-    infoModal.style.display = 'none';
-  });
-
-  window.addEventListener('click', (event) => {
-    if (event.target === infoModal) {
-      infoModal.style.display = 'none';
-    }
-  });
-};
-
-// #region *** Data Access - get___ ***********
-const transformSensorData = (sensorData) => {
-  return sensorData.map(item => ({
-    x: new Date(item.timestamp).getTime(),
-    y: parseFloat(item.value)
-  }));
-};
 
 const createTabSystem = (sessionId, chatMessages, playerAnswers) => {
   const tabsId = `tabs${sessionId}`;
@@ -228,19 +203,21 @@ const createTabSystem = (sessionId, chatMessages, playerAnswers) => {
   const tabsHTML = `
     <div style="margin-top: 20px;">
       <div style="border-bottom: 2px solid #f4f8fc; margin-bottom: 16px;">
-        <button id="${chatTabId}" class="tab-button" data-target="${chatContentId} gamepad" 
+        <button id="${chatTabId}" class="gamepad tab-button" 
+                tabindex="0" role="tab" aria-selected="true" aria-controls="${chatContentId}"
                 style="padding: 8px 16px; margin-right: 8px; border: none; background: #0d9edb; color: white; border-radius: 4px 4px 0 0; cursor: pointer; font-size: 14px; font-weight: 600;">
           Chat Messages (${chatMessages.length})
         </button>
-        <button id="${answersTabId}" class="tab-button" data-target="${answersContentId} gamepad"
+        <button id="${answersTabId}" class="gamepad tab-button" 
+                tabindex="0" role="tab" aria-selected="false" aria-controls="${answersContentId}"
                 style="padding: 8px 16px; border: none; background: #f4f8fc; color: #2c4c7c; border-radius: 4px 4px 0 0; cursor: pointer; font-size: 14px; font-weight: 600;">
           Player Answers (${playerAnswers.length})
         </button>
       </div>
-      <div id="${chatContentId}" class="tab-content" style="display: block;">
+      <div id="${chatContentId}" class="tab-content" role="tabpanel" aria-labelledby="${chatTabId}" style="display: block;">
         ${createChatDisplay(chatMessages)}
       </div>
-      <div id="${answersContentId}" class="tab-content" style="display: none;">
+      <div id="${answersContentId}" class="tab-content" role="tabpanel" aria-labelledby="${answersTabId}" style="display: none;">
         ${createPlayerAnswersDisplay(playerAnswers)}
       </div>
     </div>
@@ -261,22 +238,44 @@ const initTabListeners = (sessionId) => {
   const answersContent = document.getElementById(answersContentId);
   
   if (chatTab && answersTab && chatContent && answersContent) {
+    const switchToTab = (selectedTab, otherTab, selectedContent, otherContent) => {
+      selectedTab.style.background = '#0d9edb';
+      selectedTab.style.color = 'white';
+      selectedTab.setAttribute('aria-selected', 'true');
+      
+      otherTab.style.background = '#f4f8fc';
+      otherTab.style.color = '#2c4c7c';
+      otherTab.setAttribute('aria-selected', 'false');
+      
+      selectedContent.style.display = 'block';
+      otherContent.style.display = 'none';
+      
+      // Update gamepad navigation elements
+      if (window.gamepadNavigator) {
+        window.gamepadNavigator.updateNavigableElements();
+      }
+    };
+    
     chatTab.addEventListener('click', () => {
-      chatTab.style.background = '#0d9edb';
-      chatTab.style.color = 'white';
-      answersTab.style.background = '#f4f8fc';
-      answersTab.style.color = '#2c4c7c';
-      chatContent.style.display = 'block';
-      answersContent.style.display = 'none';
+      switchToTab(chatTab, answersTab, chatContent, answersContent);
     });
     
     answersTab.addEventListener('click', () => {
-      answersTab.style.background = '#0d9edb';
-      answersTab.style.color = 'white';
-      chatTab.style.background = '#f4f8fc';
-      chatTab.style.color = '#2c4c7c';
-      answersContent.style.display = 'block';
-      chatContent.style.display = 'none';
+      switchToTab(answersTab, chatTab, answersContent, chatContent);
+    });
+    
+    // Add keyboard/gamepad navigation
+    [chatTab, answersTab].forEach(tab => {
+      tab.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          if (tab === chatTab) {
+            switchToTab(chatTab, answersTab, chatContent, answersContent);
+          } else {
+            switchToTab(answersTab, chatTab, answersContent, chatContent);
+          }
+        }
+      });
     });
   }
 };
@@ -291,8 +290,6 @@ const initGraphs = async () => {
     quizSessionsContainer: document.querySelector('.c-quiz-sessions-container')
   };
 
-  listenToInfoModal(dom);
-
   if (!dom.quizSessionsContainer) {
     console.error('Quiz sessions container not found.');
     return;
@@ -304,7 +301,7 @@ const initGraphs = async () => {
         throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    console.log(data)
+    
     dom.quizSessionsContainer.innerHTML = '';
     domGraphs = {};
 
@@ -315,7 +312,7 @@ const initGraphs = async () => {
       const playerAnswers = session.player_answers || [];
 
       const sessionEl = document.createElement('div');
-      sessionEl.classList.add('c-quiz-session');
+      sessionEl.classList.add('c-quiz-session', 'gamepad-section');
       sessionEl.style.marginBottom = '32px';
       sessionEl.style.padding = '20px';
       sessionEl.style.backgroundColor = 'white';
@@ -327,15 +324,15 @@ const initGraphs = async () => {
           ${sessionName}
         </h2>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px;">
-          <div style="background: #f4f8fc; padding: 16px; border-radius: 6px; border: 1px solid rgba(13, 158, 219, 0.2);">
+          <div class="gamepad-chart-container" tabindex="0" style="background: #f4f8fc; padding: 16px; border-radius: 6px; border: 1px solid rgba(13, 158, 219, 0.2);">
             <h3 style="color: #2c4c7c; margin-bottom: 12px; font-size: 16px; font-weight: 600;">Temperature (°C)</h3>
             <div id="tempChart${sessionId}" style="height: 200px;"></div>
           </div>
-          <div style="background: #f4f8fc; padding: 16px; border-radius: 6px; border: 1px solid rgba(13, 158, 219, 0.2);">
+          <div class="gamepad-chart-container" tabindex="0" style="background: #f4f8fc; padding: 16px; border-radius: 6px; border: 1px solid rgba(13, 158, 219, 0.2);">
             <h3 style="color: #2c4c7c; margin-bottom: 12px; font-size: 16px; font-weight: 600;">Light Intensity (lux)</h3>
             <div id="lightChart${sessionId}" style="height: 200px;"></div>
           </div>
-          <div style="background: #f4f8fc; padding: 16px; border-radius: 6px; border: 1px solid rgba(13, 158, 219, 0.2);">
+          <div class="gamepad-chart-container" tabindex="0" style="background: #f4f8fc; padding: 16px; border-radius: 6px; border: 1px solid rgba(13, 158, 219, 0.2);">
             <h3 style="color: #2c4c7c; margin-bottom: 12px; font-size: 16px; font-weight: 600;">Servo Position (°)</h3>
             <div id="servoChart${sessionId}" style="height: 200px;"></div>
           </div>
@@ -347,20 +344,39 @@ const initGraphs = async () => {
       // Initialize tab listeners after DOM is created
       initTabListeners(sessionId);
 
-      domGraphs[`session${sessionId}`] = {
-        tempChartEl: document.getElementById(`tempChart${sessionId}`),
-        lightChartEl: document.getElementById(`lightChart${sessionId}`),
-        servoChartEl: document.getElementById(`servoChart${sessionId}`),
-      };
+      // Store chart elements
+      const tempChartEl = document.getElementById(`tempChart${sessionId}`);
+      const lightChartEl = document.getElementById(`lightChart${sessionId}`);
+      const servoChartEl = document.getElementById(`servoChart${sessionId}`);
 
+      // Create charts and attach to containers
       const tempData = transformSensorData(session.temperatures);
       const lightData = transformSensorData(session.light_intensities);
       const servoData = transformSensorData(session.servo_positions);
 
-      showTemperatureChart(domGraphs[`session${sessionId}`].tempChartEl, tempData);
-      showLightChart(domGraphs[`session${sessionId}`].lightChartEl, lightData);
-      showSoundChart(domGraphs[`session${sessionId}`].servoChartEl, servoData);
+      showTemperatureChart(tempChartEl, tempData);
+      showLightChart(lightChartEl, lightData);
+      showSoundChart(servoChartEl, servoData);
+
+      // Add gamepad class to chart containers
+      const chartContainers = sessionEl.querySelectorAll('.gamepad-chart-container');
+      chartContainers.forEach(container => {
+        container.classList.add('gamepad');
+      });
+
+      // Store references
+      domGraphs[`session${sessionId}`] = {
+        tempChartEl,
+        lightChartEl,
+        servoChartEl,
+        sessionEl
+      };
     });
+
+    // Update gamepad navigation after all elements are created
+    if (window.gamepadNavigator) {
+      window.gamepadNavigator.updateNavigableElements();
+    }
   } catch (error) {
     console.error('Error fetching or processing sensor data:', error);
   }
@@ -372,3 +388,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 // #endregion
+
+// Helper function to transform sensor data
+const transformSensorData = (sensorData) => {
+  return sensorData.map(item => ({
+    x: new Date(item.timestamp).getTime(),
+    y: parseFloat(item.value)
+  }));
+};
