@@ -4211,7 +4211,7 @@ def calculate_player_score_percentage(session_id, user_id):
     if total_session_score > 0:
         percentage = player_score / total_session_score
         return percentage
-    return 0.0
+    return 0.01
 
 
 @sio.on('submit_answer')
@@ -4517,6 +4517,70 @@ def tempUp():
 # Item management functions
 
 
+
+
+# FastAPI endpoints
+@app.get("/api/player/{user_id}/items")
+async def get_player_items(user_id: int):
+    """Get all items owned by a player"""
+    try:
+        items = PlayerItemRepository.get_player_items(user_id)
+        return {"success": True, "items": items}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+def clear_player_items(user_id: int):
+    """Delete all items from a player's inventory"""
+    try:
+        success = PlayerItemRepository.delete_all_player_items(user_id)
+        return {"success": success}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+
+@app.post("/api/player/{user_id}/items/{item_id}/use")
+async def use_item(user_id: int, item_id: int):
+    """Use an item (activate its effect and remove from inventory)"""
+    try:
+        # Get item details first
+        item = PlayerItemRepository.get_player_item(user_id, item_id)
+        if not item:
+            return {"success": False, "error": "Item not found in player inventory"}
+        
+        # Use the item (removes from inventory)
+        success = PlayerItemRepository.use_item(user_id, item_id, 1)
+        if not success:
+            return {"success": False, "error": "Failed to use item"}
+        # Activate item effect based on the effect string
+        effect = item.get('effect', '')
+        print(f"Player {user_id} activated {item_id} with effect {effect}")
+        try:
+            if effect == 'activateAdvertFlood()':
+                activateAdvertFlood()
+            elif effect == 'tempDown()':
+                tempDown()
+            elif effect == 'tempUp()':
+                tempUp()
+            else:
+                # For other effects, try to execute as function call
+                if effect and effect.endswith('()'):
+                    function_name = effect[:-2]
+                    if function_name in globals():
+                        globals()[function_name]()
+        except Exception as effect_error:
+            print(f"Error executing item effect: {effect_error}")
+        
+        return {"success": True, "item_used": item}
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+
+
+
 def get_random_item_by_luck(luck_value: float) -> Optional[Dict[str, Any]]:
     """
     Get a random item based on luck value (0-1, lower = better items)
@@ -4592,83 +4656,68 @@ def get_random_item_by_luck(luck_value: float) -> Optional[Dict[str, Any]]:
         print(f"Error getting random item: {e}")
         return None
 
-# FastAPI endpoints
-@app.get("/api/player/{user_id}/items")
-async def get_player_items(user_id: int):
-    """Get all items owned by a player"""
+def get_random_item(user_id: int, luck: float = 0.5) -> Dict[str, Any]:
+    """
+    Get a random item based on luck value (0-1) and add it to player inventory.
+    - Always gives an item if player has < 3 items
+    - Luck can be 1 (will give lowest rarity item)
+    - Returns success=False only if inventory is full (≥3 items) or DB error occurs
+    """
     try:
-        items = PlayerItemRepository.get_player_items(user_id)
-        return {"success": True, "items": items}
-    except Exception as e:
-        return {"success": False, "error": str(e)}
-
-
-def clear_player_items(user_id: int):
-    """Delete all items from a player's inventory"""
-    try:
-        success = PlayerItemRepository.delete_all_player_items(user_id)
-        return {"success": success}
-    except Exception as e:
-        return {"success": False, "error": str(e)}
-
-def get_random_item(user_id: int, luck: float = 0.5):
-    """Get a random item based on luck value and add it to player inventory"""
-    try:
-        # Validate luck value
-        if luck < 0 or luck > 1:
-            return {"success": False, "error": "Luck value must be between 0 and 1"}
+        # Validate luck value (now allows 0 and 1 as valid values)
+        if not (0 <= luck <= 1):
+            return {"success": False, "error": "Luck value must be between 0 and 1 (inclusive)"}
         
-        # Get random item
-        item = get_random_item_by_luck(luck)
+        # Check current inventory
+        current_items = PlayerItemRepository.get_player_items(user_id)
+        total_items = sum(item['quantity'] for item in current_items)
+        
+        if total_items >= 3:
+            return {
+                "success": False, 
+                "error": "Inventory full (max 3 items). Use or discard items first.",
+                "current_items": current_items
+            }
+        
+        # Keep trying until we get an item (should rarely need more than 1 attempt)
+        max_attempts = 3
+        for attempt in range(max_attempts):
+            item = get_random_item_by_luck(luck)
+            if item:
+                break
+            if attempt == max_attempts - 1:
+                # Fallback: get the most common item if all attempts failed
+                all_items = ItemRepository.get_all_items()
+                if not all_items:
+                    return {"success": False, "error": "No items exist in the game"}
+                item = all_items[0]  # Default to first available item
+        
         if not item:
-            return {"success": False, "error": "No items available"}
+            return {"success": False, "error": "Failed to generate item after retries"}
         
-        # Add item to player inventory
-        result = PlayerItemRepository.add_item_to_player(user_id, item['id'], 1)
-        if result:
-            return {"success": True, "item": item}
+        # Add to inventory
+        existing_item = next((i for i in current_items if i['itemId'] == item['id']), None)
+        
+        if existing_item:
+            new_quantity = existing_item['quantity'] + 1
+            result = PlayerItemRepository.update_item_quantity(user_id, item['id'], new_quantity)
         else:
-            return {"success": False, "error": "Failed to add item to inventory"}
+            result = PlayerItemRepository.add_item_to_player(user_id, item['id'], 1)
+        
+        return {
+            "success": bool(result),
+            "item": item,
+            "message": "Item added successfully" if result else "Failed to update inventory"
+        } if result else {
+            "success": False,
+            "error": "Database error: failed to update inventory",
+            "item": item  # Still return the item we tried to add
+        }
             
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": f"System error: {str(e)}"}
 
-@app.post("/api/player/{user_id}/items/{item_id}/use")
-async def use_item(user_id: int, item_id: int):
-    """Use an item (activate its effect and remove from inventory)"""
-    try:
-        # Get item details first
-        item = PlayerItemRepository.get_player_item(user_id, item_id)
-        if not item:
-            return {"success": False, "error": "Item not found in player inventory"}
-        
-        # Use the item (removes from inventory)
-        success = PlayerItemRepository.use_item(user_id, item_id, 1)
-        if not success:
-            return {"success": False, "error": "Failed to use item"}
-        # Activate item effect based on the effect string
-        effect = item.get('effect', '')
-        print(f"Player {user_id} activated {item_id} with effect {effect}")
-        try:
-            if effect == 'activateAdvertFlood()':
-                activateAdvertFlood()
-            elif effect == 'tempDown()':
-                tempDown()
-            elif effect == 'tempUp()':
-                tempUp()
-            else:
-                # For other effects, try to execute as function call
-                if effect and effect.endswith('()'):
-                    function_name = effect[:-2]
-                    if function_name in globals():
-                        globals()[function_name]()
-        except Exception as effect_error:
-            print(f"Error executing item effect: {effect_error}")
-        
-        return {"success": True, "item_used": item}
-        
-    except Exception as e:
-        return {"success": False, "error": str(e)}
+
 
 
 

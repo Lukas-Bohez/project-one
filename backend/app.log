@@ -117,3 +117,6 @@
 2025-06-16 16:36:31,123 - CRASH - Process started - PID: 34447 - Attempt: 2
 2025-06-16 16:42:16,997 - CRASH - Process started - PID: 35737 - Attempt: 1
 2025-06-16 18:22:48,178 - CRASH - Process started - PID: 2915 - Attempt: 1
+2025-06-16 20:11:46,762 - CRASH - Process started - PID: 18454 - Attempt: 1
+2025-06-16 20:16:12,171 - CRASH - TARGET ERROR DETECTED: Query error: weakly-referenced object no longer exists
+2025-06-16 20:16:15,936 - CRASH - Process started - PID: 18802 - Attempt: 2
