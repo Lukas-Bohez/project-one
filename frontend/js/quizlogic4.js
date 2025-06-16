@@ -52,20 +52,40 @@ class QuizQuestionHandler {
         }));
     }
 
-    // Method to clear any explanation displays when new question loads
-    clearExplanations() {
-        // Remove explanation modal if it exists
-        const explanationModal = document.getElementById('explanationModal');
-        if (explanationModal) {
-            explanationModal.remove();
+// Method to clear any explanation displays when new question loads
+clearExplanations() {
+    // Remove explanation modal if it exists
+    const explanationModal = document.getElementById('explanationModal');
+    if (explanationModal) {
+        explanationModal.remove();
+    }
+    
+    // Clear any explanation content from the main question area
+    const questionText = document.getElementById('questionText');
+    if (questionText && questionText.querySelector('.explanation-content')) {
+        questionText.innerHTML = '';
+    }
+
+    // Reset all answer buttons to default state
+    const answerButtons = document.querySelectorAll('.c-answer-btn');
+    answerButtons.forEach(button => {
+        // Remove any highlighting styles
+        button.style.opacity = '1';
+        button.style.backgroundColor = '';
+        button.style.color = '';
+        
+        // Remove any correctness-related dataset attributes
+        if (button.dataset.isCorrect !== undefined) {
+            delete button.dataset.isCorrect;
+        }
+        if (button.dataset.answerId !== undefined) {
+            delete button.dataset.answerId;
         }
         
-        // Clear any explanation content from the main question area
-        const questionText = document.getElementById('questionText');
-        if (questionText && questionText.querySelector('.explanation-content')) {
-            questionText.innerHTML = '';
-        }
-    }
+        // Reset disabled state (will be properly set when new question loads)
+        button.disabled = false;
+    });
+}
 
     clearQuestion() {
         const questionText = document.getElementById('questionText');
@@ -148,9 +168,14 @@ setupAnswerOptions(questionData) {
             button.disabled = false;
             button.classList.add('gamepad');
 
+            // Store additional data as dataset attributes
             if (questionData.type === 'theme_selection') {
                 button.dataset.themeId = option.id;
                 button.dataset.themeName = option.name || option.title;
+            } else {
+                // For regular answers, store whether it's correct
+                button.dataset.isCorrect = option.is_correct || 0;
+                button.dataset.answerId = option.id;
             }
         } else {
             // Hide extra buttons if we have more than needed
@@ -285,76 +310,99 @@ setupAnswerOptions(questionData) {
         }, 1500);
     }
 
-    showExplanation(data) {
-        console.log("Showing explanation for question", data.question_id || 'unknown', data);
-        
-        // Pass the entire data object to displayExplanation
-        this.displayExplanation(data);
-    }
+showExplanation(data) {
+    console.log("Showing explanation for question", data.question_id || 'unknown', data);
+    
+    // Highlight correct answers before showing explanation
+    this.highlightCorrectAnswer(data);
+    
+    // Pass the entire data object to displayExplanation
+    this.displayExplanation(data);
+}
 
-    displayExplanation(explanationData) {
-        console.log("Displaying explanation in existing question area", explanationData);
-        
-        // Extract data from the explanation object
-        const explanationText = explanationData?.explanation_text || 'No explanation provided';
-        const duration = explanationData?.duration || 5;
-        const questionId = explanationData?.question_id;
-        
-        // Try to find existing containers first
-        let questionTextEl = document.getElementById('questionText');
-        let answerContainer = document.getElementById('answerContainer');
-        
-        // If core containers don't exist, try to find or create them
-        if (!questionTextEl || !answerContainer) {
-            console.warn("Core containers missing, attempting to find or create them");
-            
-            // Try to find alternative containers that might exist
-            const quizContainer = document.querySelector('.quiz-container') || 
-                                 document.querySelector('#quizContainer') ||
-                                 document.querySelector('.c-quiz-area') ||
-                                 document.querySelector('main') ||
-                                 document.body;
-            
-            if (!quizContainer) {
-                console.error("No suitable container found for explanation display");
-                // Fallback: create a modal-style overlay
-                this.createExplanationModal(explanationText);
-                return;
+highlightCorrectAnswer() {
+    const answerButtons = document.querySelectorAll('.c-answer-btn');
+    
+    answerButtons.forEach(button => {
+        if (button.dataset.isCorrect !== undefined) {
+            if (button.dataset.isCorrect === '1') {
+                // Highlight correct answer (full opacity)
+                button.style.opacity = '1';
+                button.style.backgroundColor = '#4CAF50'; // Green for correct
+                button.style.color = 'white';
+            } else {
+                // Dim incorrect answers
+                button.style.opacity = '0.5';
+                button.style.backgroundColor = ''; // Reset to default
+                button.style.color = '';
             }
-            
-            // Create the missing elements if they don't exist
-            if (!questionTextEl) {
-                questionTextEl = document.createElement('div');
-                questionTextEl.id = 'questionText';
-                questionTextEl.className = 'question-text';
-                quizContainer.appendChild(questionTextEl);
-            }
-            
-            if (!answerContainer) {
-                answerContainer = document.createElement('div');
-                answerContainer.id = 'answerContainer';
-                answerContainer.className = 'answer-container';
-                quizContainer.appendChild(answerContainer);
-            }
+            button.disabled = true; // Keep buttons disabled during explanation
+        }
+    });
+}
+
+displayExplanation(explanationData) {
+    console.log("Displaying explanation in existing question area", explanationData);
+    
+    // Extract data from the explanation object
+    const explanationText = explanationData?.explanation_text || 'No explanation provided';
+    const duration = explanationData?.duration || 5;
+    const questionId = explanationData?.question_id;
+    
+    // Try to find existing containers first
+    let questionTextEl = document.getElementById('questionText');
+    let answerContainer = document.getElementById('answerContainer');
+    
+    // If core containers don't exist, try to find or create them
+    if (!questionTextEl || !answerContainer) {
+        console.warn("Core containers missing, attempting to find or create them");
+        
+        // Try to find alternative containers that might exist
+        const quizContainer = document.querySelector('.quiz-container') || 
+                             document.querySelector('#quizContainer') ||
+                             document.querySelector('.c-quiz-area') ||
+                             document.querySelector('main') ||
+                             document.body;
+        
+        if (!quizContainer) {
+            console.error("No suitable container found for explanation display");
+            // Fallback: create a modal-style overlay
+            this.createExplanationModal(explanationText);
+            return;
         }
         
-        // Now display the explanation
-        questionTextEl.innerHTML = `
-            <div class="explanation-content">
-                <h3>Explanation</h3>
-                <p style="white-space: pre-line;">${explanationText}</p>
-            </div>
-        `;
+        // Create the missing elements if they don't exist
+        if (!questionTextEl) {
+            questionTextEl = document.createElement('div');
+            questionTextEl.id = 'questionText';
+            questionTextEl.className = 'question-text';
+            quizContainer.appendChild(questionTextEl);
+        }
         
-        // Clear answers - no continue button needed, server will send next question
-        answerContainer.innerHTML = '';
-        answerContainer.style.display = 'none';
-        
-        // Emit custom event for other parts of the app
-        document.dispatchEvent(new CustomEvent('explanationDisplayed', {
-            detail: { explanationText, duration, questionId }
-        }));
+        if (!answerContainer) {
+            answerContainer = document.createElement('div');
+            answerContainer.id = 'answerContainer';
+            answerContainer.className = 'answer-container';
+            quizContainer.appendChild(answerContainer);
+        }
     }
+    
+    // Now display the explanation
+    questionTextEl.innerHTML = `
+        <div class="explanation-content">
+            <h3>Explanation</h3>
+            <p style="white-space: pre-line;">${explanationText}</p>
+        </div>
+    `;
+    
+    // We keep the answer buttons visible but disabled with correct ones highlighted
+    answerContainer.style.display = 'block';
+    
+    // Emit custom event for other parts of the app
+    document.dispatchEvent(new CustomEvent('explanationDisplayed', {
+        detail: { explanationText, duration, questionId }
+    }));
+}
 
     // Fallback method to create a modal-style explanation display
     createExplanationModal(explanationText) {
