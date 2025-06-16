@@ -1,3 +1,59 @@
 2025-06-16 13:31:24,820 - CRASH - Process started - PID: 13820 - Attempt: 1
 2025-06-16 13:31:39,238 - CRASH - TARGET ERROR DETECTED: Query error: weakly-referenced object no longer exists
 2025-06-16 13:31:42,553 - CRASH - Process started - PID: 13928 - Attempt: 2
+2025-06-16 13:37:56,223 - CRASH - TARGET ERROR DETECTED: Query error: weakly-referenced object no longer exists
+2025-06-16 13:37:59,487 - CRASH - Process started - PID: 14373 - Attempt: 3
+2025-06-16 13:38:04,296 - CRASH - TARGET ERROR DETECTED: Query error: weakly-referenced object no longer exists
+2025-06-16 13:38:07,662 - CRASH - Process started - PID: 14425 - Attempt: 4
+2025-06-16 13:39:05,016 - CRASH - Process started - PID: 14558 - Attempt: 1
+2025-06-16 13:39:05,918 - CRASH - App crashed with exit code 1 - Attempt #1
+2025-06-16 13:39:10,918 - CRASH - Process started - PID: 14631 - Attempt: 2
+2025-06-16 13:39:11,721 - CRASH - App crashed with exit code 1 - Attempt #2
+2025-06-16 13:39:16,722 - CRASH - Process started - PID: 14666 - Attempt: 3
+2025-06-16 13:39:17,533 - CRASH - App crashed with exit code 1 - Attempt #3
+2025-06-16 13:39:22,534 - CRASH - Process started - PID: 14697 - Attempt: 4
+2025-06-16 13:39:23,437 - CRASH - App crashed with exit code 1 - Attempt #4
+2025-06-16 13:39:28,438 - CRASH - Process started - PID: 14728 - Attempt: 5
+2025-06-16 13:39:29,340 - CRASH - App crashed with exit code 1 - Attempt #5
+2025-06-16 13:39:34,341 - CRASH - Process started - PID: 14759 - Attempt: 6
+2025-06-16 13:39:35,243 - CRASH - App crashed with exit code 1 - Attempt #6
+2025-06-16 13:39:40,244 - CRASH - Process started - PID: 14807 - Attempt: 7
+2025-06-16 13:39:41,146 - CRASH - App crashed with exit code 1 - Attempt #7
+2025-06-16 13:39:46,147 - CRASH - Process started - PID: 14851 - Attempt: 8
+2025-06-16 13:39:47,049 - CRASH - App crashed with exit code 1 - Attempt #8
+2025-06-16 13:39:52,050 - CRASH - Process started - PID: 14886 - Attempt: 9
+2025-06-16 13:39:52,855 - CRASH - App crashed with exit code 1 - Attempt #9
+2025-06-16 13:39:57,856 - CRASH - Process started - PID: 14921 - Attempt: 10
+2025-06-16 13:39:58,757 - CRASH - App crashed with exit code 1 - Attempt #10
+2025-06-16 13:40:03,758 - CRASH - Process started - PID: 14956 - Attempt: 11
+2025-06-16 13:40:04,661 - CRASH - App crashed with exit code 1 - Attempt #11
+2025-06-16 13:40:09,662 - CRASH - Process started - PID: 15009 - Attempt: 12
+2025-06-16 13:40:10,564 - CRASH - App crashed with exit code 1 - Attempt #12
+2025-06-16 13:40:15,565 - CRASH - Process started - PID: 15057 - Attempt: 13
+2025-06-16 13:40:16,467 - CRASH - App crashed with exit code 1 - Attempt #13
+2025-06-16 13:40:21,468 - CRASH - Process started - PID: 15092 - Attempt: 14
+2025-06-16 13:40:22,370 - CRASH - App crashed with exit code 1 - Attempt #14
+2025-06-16 13:40:27,371 - CRASH - Process started - PID: 15127 - Attempt: 15
+2025-06-16 13:40:28,273 - CRASH - App crashed with exit code 1 - Attempt #15
+2025-06-16 13:40:33,274 - CRASH - Process started - PID: 15158 - Attempt: 16
+2025-06-16 13:40:34,077 - CRASH - App crashed with exit code 1 - Attempt #16
+2025-06-16 13:40:39,078 - CRASH - Process started - PID: 15193 - Attempt: 17
+2025-06-16 13:40:39,884 - CRASH - App crashed with exit code 1 - Attempt #17
+2025-06-16 13:40:44,884 - CRASH - Process started - PID: 15242 - Attempt: 18
+2025-06-16 13:40:45,690 - CRASH - App crashed with exit code 1 - Attempt #18
+2025-06-16 13:40:50,690 - CRASH - Process started - PID: 15293 - Attempt: 19
+2025-06-16 13:40:51,494 - CRASH - App crashed with exit code 1 - Attempt #19
+2025-06-16 13:40:56,495 - CRASH - Process started - PID: 15328 - Attempt: 20
+2025-06-16 13:40:57,297 - CRASH - App crashed with exit code 1 - Attempt #20
+2025-06-16 13:41:02,298 - CRASH - Process started - PID: 15363 - Attempt: 21
+2025-06-16 13:41:03,100 - CRASH - App crashed with exit code 1 - Attempt #21
+2025-06-16 13:41:08,101 - CRASH - Process started - PID: 15399 - Attempt: 22
+2025-06-16 13:41:09,005 - CRASH - App crashed with exit code 1 - Attempt #22
+2025-06-16 13:41:14,040 - CRASH - Process started - PID: 15437 - Attempt: 1
+2025-06-16 13:41:14,942 - CRASH - App crashed with exit code 1 - Attempt #1
+2025-06-16 13:41:19,565 - CRASH - Process started - PID: 15511 - Attempt: 1
+2025-06-16 13:42:55,244 - CRASH - Process started - PID: 15628 - Attempt: 1
+2025-06-16 13:43:29,208 - CRASH - TARGET ERROR DETECTED: Query error: weakly-referenced object no longer exists
+2025-06-16 13:43:34,437 - CRASH - Process started - PID: 15812 - Attempt: 2
+2025-06-16 13:44:02,898 - CRASH - TARGET ERROR DETECTED: Query error: weakly-referenced object no longer exists
+2025-06-16 13:44:07,778 - CRASH - Process started - PID: 15922 - Attempt: 3
