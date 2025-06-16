@@ -69,9 +69,9 @@ Dit is de feedback op mijn vragen.
 - feedback 1: Nee, dit is niet binnen de scope van project one.
 
 
-## Gesprek 4 (Datum: xx/xx/2025)
+## Gesprek 4 (Datum: 16/06/2025)
 
-Lector:
+Lector: Dieter Robrouck
 
 Vragen voor dit gesprek:
 

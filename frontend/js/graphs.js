@@ -193,91 +193,78 @@ const createPlayerAnswersDisplay = (playerAnswers) => {
   `;
 };
 
-const createTabSystem = (sessionId, chatMessages, playerAnswers) => {
-  const tabsId = `tabs${sessionId}`;
-  const chatTabId = `chatTab${sessionId}`;
-  const answersTabId = `answersTab${sessionId}`;
-  const chatContentId = `chatContent${sessionId}`;
-  const answersContentId = `answersContent${sessionId}`;
+const createToggleContainer = (sessionId, chatMessages, playerAnswers) => {
+  const containerId = `toggleContainer${sessionId}`;
+  const headerId = `toggleHeader${sessionId}`;
+  const contentId = `toggleContent${sessionId}`;
   
-  const tabsHTML = `
-    <div style="margin-top: 20px;">
-      <div style="border-bottom: 2px solid #f4f8fc; margin-bottom: 16px;">
-        <button id="${chatTabId}" class="gamepad tab-button" 
-                tabindex="0" role="tab" aria-selected="true" aria-controls="${chatContentId}"
-                style="padding: 8px 16px; margin-right: 8px; border: none; background: #0d9edb; color: white; border-radius: 4px 4px 0 0; cursor: pointer; font-size: 14px; font-weight: 600;">
-          Chat Messages (${chatMessages.length})
-        </button>
-        <button id="${answersTabId}" class="gamepad tab-button" 
-                tabindex="0" role="tab" aria-selected="false" aria-controls="${answersContentId}"
-                style="padding: 8px 16px; border: none; background: #f4f8fc; color: #2c4c7c; border-radius: 4px 4px 0 0; cursor: pointer; font-size: 14px; font-weight: 600;">
-          Player Answers (${playerAnswers.length})
-        </button>
+  // Determine initial state (show chat if it has messages, otherwise show answers)
+  const initialShowChat = chatMessages.length > 0;
+  
+  return `
+    <div id="${containerId}" tabindex="0" 
+         style="margin-top: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(14, 24, 39, 0.1);">
+      <div id="${headerId}" class="gamepad"
+           style="padding: 12px 16px; background: #0d9edb; color: white; border-radius: 8px 8px 0 0; 
+                  cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600;">
+          ${initialShowChat ? 'Chat Messages' : 'Player Answers'}
+        </h3>
+        <span style="font-size: 14px;">
+          ${initialShowChat ? `(${chatMessages.length})` : `(${playerAnswers.length})`}
+        </span>
       </div>
-      <div id="${chatContentId}" class="tab-content" role="tabpanel" aria-labelledby="${chatTabId}" style="display: block;">
-        ${createChatDisplay(chatMessages)}
-      </div>
-      <div id="${answersContentId}" class="tab-content" role="tabpanel" aria-labelledby="${answersTabId}" style="display: none;">
-        ${createPlayerAnswersDisplay(playerAnswers)}
+      <div id="${contentId}" style="padding: 16px; border-radius: 0 0 8px 8px;">
+        ${initialShowChat ? createChatDisplay(chatMessages) : createPlayerAnswersDisplay(playerAnswers)}
       </div>
     </div>
   `;
-  
-  return tabsHTML;
 };
 
-const initTabListeners = (sessionId) => {
-  const chatTabId = `chatTab${sessionId}`;
-  const answersTabId = `answersTab${sessionId}`;
-  const chatContentId = `chatContent${sessionId}`;
-  const answersContentId = `answersContent${sessionId}`;
+const initToggleContainer = (sessionId, chatMessages, playerAnswers) => {
+  const container = document.getElementById(`toggleContainer${sessionId}`);
+  const header = document.getElementById(`toggleHeader${sessionId}`);
+  const content = document.getElementById(`toggleContent${sessionId}`);
   
-  const chatTab = document.getElementById(chatTabId);
-  const answersTab = document.getElementById(answersTabId);
-  const chatContent = document.getElementById(chatContentId);
-  const answersContent = document.getElementById(answersContentId);
+  if (!container || !header || !content) return;
   
-  if (chatTab && answersTab && chatContent && answersContent) {
-    const switchToTab = (selectedTab, otherTab, selectedContent, otherContent) => {
-      selectedTab.style.background = '#0d9edb';
-      selectedTab.style.color = 'white';
-      selectedTab.setAttribute('aria-selected', 'true');
-      
-      otherTab.style.background = '#f4f8fc';
-      otherTab.style.color = '#2c4c7c';
-      otherTab.setAttribute('aria-selected', 'false');
-      
-      selectedContent.style.display = 'block';
-      otherContent.style.display = 'none';
-      
-      // Update gamepad navigation elements
-      if (window.gamepadNavigator) {
-        window.gamepadNavigator.updateNavigableElements();
-      }
-    };
+  let showChat = chatMessages.length > 0; // Initial state
+  
+  const toggleContent = () => {
+    showChat = !showChat;
     
-    chatTab.addEventListener('click', () => {
-      switchToTab(chatTab, answersTab, chatContent, answersContent);
-    });
+    if (showChat) {
+      header.innerHTML = `
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600;">Chat Messages</h3>
+        <span style="font-size: 14px;">(${chatMessages.length})</span>
+      `;
+      content.innerHTML = createChatDisplay(chatMessages);
+      header.style.background = '#0d9edb';
+    } else {
+      header.innerHTML = `
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600;">Player Answers</h3>
+        <span style="font-size: 14px;">(${playerAnswers.length})</span>
+      `;
+      content.innerHTML = createPlayerAnswersDisplay(playerAnswers);
+      header.style.background = '#2c4c7c';
+    }
     
-    answersTab.addEventListener('click', () => {
-      switchToTab(answersTab, chatTab, answersContent, chatContent);
-    });
-    
-    // Add keyboard/gamepad navigation
-    [chatTab, answersTab].forEach(tab => {
-      tab.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          if (tab === chatTab) {
-            switchToTab(chatTab, answersTab, chatContent, answersContent);
-          } else {
-            switchToTab(answersTab, chatTab, answersContent, chatContent);
-          }
-        }
-      });
-    });
-  }
+    // Update gamepad navigation after content change
+    if (window.gamepadNavigator) {
+      window.gamepadNavigator.updateNavigableElements();
+    }
+  };
+  
+  // Click handler
+  header.addEventListener('click', toggleContent);
+  
+  // Keyboard/gamepad handler
+  container.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggleContent();
+    }
+  });
 };
 // #endregion
 
@@ -337,12 +324,12 @@ const initGraphs = async () => {
             <div id="servoChart${sessionId}" style="height: 200px;"></div>
           </div>
         </div>
-        ${createTabSystem(sessionId, chatMessages, playerAnswers)}
+        ${createToggleContainer(sessionId, chatMessages, playerAnswers)}
       `;
       dom.quizSessionsContainer.appendChild(sessionEl);
 
-      // Initialize tab listeners after DOM is created
-      initTabListeners(sessionId);
+      // Initialize toggle container
+      initToggleContainer(sessionId, chatMessages, playerAnswers);
 
       // Store chart elements
       const tempChartEl = document.getElementById(`tempChart${sessionId}`);
