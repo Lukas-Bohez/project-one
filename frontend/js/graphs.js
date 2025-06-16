@@ -228,11 +228,11 @@ const createTabSystem = (sessionId, chatMessages, playerAnswers) => {
   const tabsHTML = `
     <div style="margin-top: 20px;">
       <div style="border-bottom: 2px solid #f4f8fc; margin-bottom: 16px;">
-        <button id="${chatTabId}" class="tab-button" data-target="${chatContentId}" 
+        <button id="${chatTabId}" class="tab-button" data-target="${chatContentId} gamepad" 
                 style="padding: 8px 16px; margin-right: 8px; border: none; background: #0d9edb; color: white; border-radius: 4px 4px 0 0; cursor: pointer; font-size: 14px; font-weight: 600;">
           Chat Messages (${chatMessages.length})
         </button>
-        <button id="${answersTabId}" class="tab-button" data-target="${answersContentId}"
+        <button id="${answersTabId}" class="tab-button" data-target="${answersContentId} gamepad"
                 style="padding: 8px 16px; border: none; background: #f4f8fc; color: #2c4c7c; border-radius: 4px 4px 0 0; cursor: pointer; font-size: 14px; font-weight: 600;">
           Player Answers (${playerAnswers.length})
         </button>
