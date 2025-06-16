@@ -2102,6 +2102,7 @@ class PlayerAnswerRepository:
         params = [session_id, user_id, question_id]
         return Database.get_rows(sql, params)
 
+
     @staticmethod
     def get_player_answers_for_session(session_id):
         sql = "SELECT questionId FROM playerAnswers WHERE sessionId = %s ORDER BY answered_at ASC"

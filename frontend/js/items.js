@@ -1,32 +1,54 @@
-let adInterval;
-let adDurationTimeout;
-const AD_SPAWN_FREQUENCY_MS = 1500; // How often a new "ad" box pops up (1.5 seconds)
+class AdvertFlood {
+    constructor() {
+        this.adInterval = null;
+        this.adDurationTimeout = null;
+        this.AD_SPAWN_FREQUENCY_MS = 1500; // How often a new "ad" box pops up (1.5 seconds)
+        
+        // Initialize socket listener in constructor
+        this.initializeSocketListener();
+    }
 
-// We no longer need AD_SLOT_ID and AD_CLIENT_ID for the "scream box" version.
-// const AD_SLOT_ID = '7822007431';
-// const AD_CLIENT_ID = 'ca-pub-8418485814964449';
+    initializeSocketListener() {
+        
+    }
 
-// Determine the local IP for the socket connection
-const lanIP = `http://${window.location.hostname}`;
-const socket = window.sharedSocket;
+    /**
+     * Activates a flood of custom "scream boxes" that urge users to turn off ad blockers.
+     * @param {number} durationSeconds - The duration in seconds for which the scream flood will last.
+     */
+    activate(durationSeconds) {
+        // Clear any existing intervals or timeouts to prevent overlaps
+        this.clearExisting();
 
-// Listen for the B2F_addItem event and automatically activate the flood
-socket.on('B2F_addItem', () => {
-    console.log('📢📢📢 Initiating the Anti-Adblocker Scream Flood! 📢📢📢');
-    activateAdvertFlood(10); // Fixed 10-second duration for the scream flood
-});
+        // Start spawning scream boxes at the defined frequency
+        this.adInterval = setInterval(() => this.createScreamBox(), this.AD_SPAWN_FREQUENCY_MS);
+        console.log(`🚀 Scream flood initiated for ${durationSeconds} seconds!`);
 
-/**
- * Activates a flood of custom "scream boxes" that urge users to turn off ad blockers.
- * @param {number} durationSeconds - The duration in seconds for which the scream flood will last.
- */
-const activateAdvertFlood = (durationSeconds) => {
-    // Clear any existing intervals or timeouts to prevent overlaps
-    if (adInterval) clearInterval(adInterval);
-    if (adDurationTimeout) clearTimeout(adDurationTimeout);
+        // Set a timeout to stop the scream flood and remove all spawned boxes after the duration
+        this.adDurationTimeout = setTimeout(() => {
+            this.stop();
+            console.log('🌊 The scream flood has subsided. Silence... for now.');
+        }, durationSeconds * 1000); // Convert seconds to milliseconds
 
-    // Function to create and append a single scream box
-    const createScreamBox = () => {
+        // Add the styles if not already present
+        this.addStyles();
+    }
+
+    stop() {
+        this.clearExisting();
+        // Remove all dynamically created scream boxes
+        document.querySelectorAll('.scream-box').forEach(box => {
+            box.remove();
+            console.log('🚫 Scream Box removed.');
+        });
+    }
+
+    clearExisting() {
+        if (this.adInterval) clearInterval(this.adInterval);
+        if (this.adDurationTimeout) clearTimeout(this.adDurationTimeout);
+    }
+
+    createScreamBox() {
         const screamBox = document.createElement('div');
         screamBox.className = 'scream-box'; // Class for easy selection later
         screamBox.style.position = 'fixed'; // Position it absolutely relative to the viewport
@@ -62,38 +84,31 @@ const activateAdvertFlood = (durationSeconds) => {
 
         document.body.appendChild(screamBox);
         console.log('💥 Anti-Adblocker Scream Box spawned!');
-    };
+    }
 
-    // Add a pulsing keyframe animation to the document if not already present
-    const styleSheet = document.head.querySelector('#scream-box-styles') || document.createElement('style');
-    styleSheet.id = 'scream-box-styles';
-    styleSheet.innerHTML = `
-        @keyframes screamPulse {
-            from {
-                transform: scale(1);
-                opacity: 1;
-            }
-            to {
-                transform: scale(1.05);
-                opacity: 0.9;
-            }
+    addStyles() {
+        // Add a pulsing keyframe animation to the document if not already present
+        if (!document.head.querySelector('#scream-box-styles')) {
+            const styleSheet = document.createElement('style');
+            styleSheet.id = 'scream-box-styles';
+            styleSheet.innerHTML = `
+                @keyframes screamPulse {
+                    from {
+                        transform: scale(1);
+                        opacity: 1;
+                    }
+                    to {
+                        transform: scale(1.05);
+                        opacity: 0.9;
+                    }
+                }
+            `;
+            document.head.appendChild(styleSheet);
         }
-    `;
-    document.head.appendChild(styleSheet);
+    }
+}
 
-
-    // Start spawning scream boxes at the defined frequency
-    adInterval = setInterval(createScreamBox, AD_SPAWN_FREQUENCY_MS);
-    console.log(`🚀 Scream flood initiated for ${durationSeconds} seconds!`);
-
-    // Set a timeout to stop the scream flood and remove all spawned boxes after the duration
-    adDurationTimeout = setTimeout(() => {
-        clearInterval(adInterval); // Stop spawning new boxes
-        // Remove all dynamically created scream boxes
-        document.querySelectorAll('.scream-box').forEach(box => {
-            box.remove();
-            console.log('🚫 Scream Box removed.');
-        });
-        console.log('🌊 The scream flood has subsided. Silence... for now.');
-    }, durationSeconds * 1000); // Convert seconds to milliseconds
-};
+// Usage:
+// const advertFlood = new AdvertFlood();
+// advertFlood.activate(10); // To manually activate for 10 seconds
+// advertFlood.stop(); // To manually stop
