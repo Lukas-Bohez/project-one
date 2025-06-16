@@ -218,10 +218,10 @@ class PlayersListManager {
                                  0;
         
         return `
-            <div class="c-player-item ${isCurrentUser ? 'current-user' : ''}" data-user-id="${player.user_id || player.id}">
+            <div class=" gamepad c-player-item ${isCurrentUser ? 'current-user' : ''}" data-user-id="${player.user_id || player.id}">
                 <div class="player-rank">#${index + 1}</div>
                 <div class="player-info">
-                    <div class="player-name gamepad">${playerName}</div>
+                    <div class="player-name">${playerName}</div>
                     <div class="player-stats">
                         <span class="session-score">${sessionScore} pts</span>
                         <span class="questions-answered">${questionsAnswered} answered</span>
