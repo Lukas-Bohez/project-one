@@ -75,8 +75,29 @@ Lector:
 
 Vragen voor dit gesprek:
 
-- [x] vraag 1: V
+- [x] vraag 1: Mijn server crasht.
 
 Dit is de feedback op mijn vragen.
 
-- feedback 1: G
+- feedback 1: Socket io emits limiteren tot enkel als de data verandert.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

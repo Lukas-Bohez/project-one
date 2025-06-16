@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# appMonitor.py - Monitor that runs your app.py directly with activity detection
+# appMonitor.py - Monitor that runs your app.py directly with activity detection and error logging
 import subprocess
 import sys
 import re
@@ -7,6 +7,32 @@ import time
 import os
 import threading
 import queue
+import logging
+from datetime import datetime
+
+def setup_logging():
+    """Set up logging to app.log file - only for crashes and errors"""
+    log_path = "/home/student/Project/project-one/backend/app.log"
+    
+    # Create a logger for the monitor
+    logger = logging.getLogger('appMonitor')
+    logger.setLevel(logging.ERROR)  # Only log errors and above
+    
+    # Remove any existing handlers
+    logger.handlers.clear()
+    
+    # Create file handler - only for crashes
+    file_handler = logging.FileHandler(log_path, mode='a')
+    file_handler.setLevel(logging.ERROR)
+    
+    # Create formatter
+    formatter = logging.Formatter('%(asctime)s - CRASH - %(message)s')
+    file_handler.setFormatter(formatter)
+    
+    # Add only file handler to logger (no console spam)
+    logger.addHandler(file_handler)
+    
+    return logger
 
 def test_error_detection():
     """Test if our regex works"""
@@ -18,7 +44,7 @@ def test_error_detection():
     else:
         print("❌ Regex pattern failed!")
 
-def read_stream(stream, stream_name, output_queue, activity_tracker):
+def read_stream(stream, stream_name, output_queue, activity_tracker, logger):
     """Read from a stream and put lines in queue"""
     try:
         for line in iter(stream.readline, ''):
@@ -27,12 +53,16 @@ def read_stream(stream, stream_name, output_queue, activity_tracker):
                 output_queue.put((stream_name, line.strip()))
         stream.close()
     except Exception as e:
-        output_queue.put(('error', f"Stream reader error ({stream_name}): {e}"))
+        error_msg = f"Stream reader error ({stream_name}): {e}"
+        logger.error(error_msg)
+        output_queue.put(('error', error_msg))
 
 def monitor_app():
+    # Set up logging
+    logger = setup_logging()
+    
     error_pattern = r"Query error: weakly-referenced object no longer exists"
     app_path = "/home/student/Project/project-one/backend/app.py"
-    activity_timeout = 1.0  # 1 second timeout for activity detection
     
     print("🧪 Testing error detection...")
     test_error_detection()
@@ -41,6 +71,7 @@ def monitor_app():
     max_restarts = 100  # Allow more restarts for production use
     
     while restart_count < max_restarts:
+        start_time = time.time()
         print(f"\n🚀 Starting your app.py (attempt {restart_count + 1})...")
         print(f"📁 Running: {app_path}")
         
@@ -54,8 +85,9 @@ def monitor_app():
             cwd="/home/student/Project/project-one/backend"  # Set working directory
         )
         
+        logger.error(f"Process started - PID: {process.pid} - Attempt: {restart_count + 1}")
         print(f"📋 Process PID: {process.pid}")
-        print("👀 Monitoring output for errors and activity...")
+        print("👀 Monitoring output for specific error only...")
         
         # Set up activity tracking
         activity_tracker = {'last_activity': time.time()}
@@ -64,12 +96,12 @@ def monitor_app():
         # Start threads to read stdout and stderr
         stdout_thread = threading.Thread(
             target=read_stream, 
-            args=(process.stdout, 'OUT', output_queue, activity_tracker),
+            args=(process.stdout, 'OUT', output_queue, activity_tracker, logger),
             daemon=True
         )
         stderr_thread = threading.Thread(
             target=read_stream, 
-            args=(process.stderr, 'ERR', output_queue, activity_tracker),
+            args=(process.stderr, 'ERR', output_queue, activity_tracker, logger),
             daemon=True
         )
         
@@ -91,6 +123,7 @@ def monitor_app():
                         try:
                             stream_name, line = output_queue.get_nowait()
                             if stream_name == 'error':
+                                logger.error(line)
                                 print(f"⚠️ {line}")
                                 continue
                                 
@@ -99,9 +132,11 @@ def monitor_app():
                             
                             # Check for the specific error pattern
                             if re.search(error_pattern, line):
+                                error_msg = f"TARGET ERROR DETECTED: {line}"
+                                logger.error(error_msg)
                                 print("🎯 TARGET ERROR FOUND! RESTARTING...")
                                 restart_needed = True
-                                restart_reason = "specific error detected"
+                                restart_reason = f"specific error detected: {line}"
                                 break
                                 
                         except queue.Empty:
@@ -113,20 +148,7 @@ def monitor_app():
                 except Exception as e:
                     print(f"💥 Queue processing error: {e}")
                 
-                # Check for activity timeout (only after initial startup period)
-                if current_time - activity_tracker['last_activity'] > activity_timeout:
-                    # Give the app some time to start up initially
-                    startup_grace_period = 10.0  # 10 seconds grace period on startup
-                    if current_time - activity_tracker['last_activity'] < startup_grace_period:
-                        time.sleep(0.1)
-                        continue
-                    
-                    print(f"⏰ No activity detected for {activity_timeout} seconds!")
-                    print("🔄 Assuming server has stopped - restarting...")
-                    restart_needed = True
-                    restart_reason = "no activity timeout"
-                    break
-                
+                # Don't restart on activity timeout - just let it run
                 time.sleep(0.1)
                 
         except KeyboardInterrupt:
@@ -145,7 +167,9 @@ def monitor_app():
                     print("💀 Force killing process...")
                     process.kill()
                     process.wait()
-            print(f"📊 Process ended with code: {process.returncode}")
+            
+            exit_code = process.returncode
+            print(f"📊 Process ended with code: {exit_code}")
         
         if restart_needed:
             restart_count += 1
@@ -154,6 +178,8 @@ def monitor_app():
             time.sleep(3)
         else:
             if process.returncode != 0:
+                crash_msg = f"App crashed with exit code {process.returncode} - Attempt #{restart_count + 1}"
+                logger.error(crash_msg)
                 print(f"⚠️ App crashed with code {process.returncode}")
                 restart_count += 1
                 print(f"🔄 Restarting due to crash in 5 seconds... (restart #{restart_count})")
@@ -166,10 +192,11 @@ def monitor_app():
         print(f"⚠️ Max restarts ({max_restarts}) reached - stopping monitor")
 
 if __name__ == "__main__":
-    print("🔍 ENHANCED APP MONITOR - Running your FastAPI app with error and activity monitoring")
+    print("🔍 ENHANCED APP MONITOR - Running your FastAPI app with crash detection only")
     print("📂 Target: /home/student/Project/project-one/backend/app.py")
-    print("🎯 Watching for: 'Query error: weakly-referenced object no longer exists'")
-    print("⏰ Activity timeout: 1 second (will restart if no logs for 1 second)")
+    print("📝 Crash logging to: /home/student/Project/project-one/backend/app.log")
+    print("🎯 Only watching for: 'Query error: weakly-referenced object no longer exists'")
+    print("🚫 No activity timeout - will run until crash or manual stop")
     print("⌨️  Press Ctrl+C to stop both monitor and app\n")
     
     try:

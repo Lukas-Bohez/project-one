@@ -3863,7 +3863,8 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
     rows = PlayerAnswerRepository.get_player_answers_for_session(session_id)
     # Extract just the IDs into a list
     ids = [row['questionId'] for row in rows]
-    quiz_state['question_count'] = len(ids)
+    if not quiz_state['question_count']:
+        quiz_state['question_count'] = len(ids)
     print(f"unavailable answerid's are {ids}")
     available_questions = [q for q in all_questions if q['id'] not in ids]
     print(f'available questions are: {available_questions}')
@@ -3958,16 +3959,24 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
         if current_state['question_count'] >= 5:
             player_count = max(1, current_state['player_count'])  # Avoid division by zero
             required_score = 10 * player_count * current_state['question_count']
-            current_phase['total_score'] = PlayerAnswerRepository.getget_total_score_for_session(session_id)
+            
+            # Fixed: Get current total score and update the state properly
+            current_total_score = PlayerAnswerRepository.get_total_score_for_session(session_id)
+            
+            # Update the quiz state with the current total score
+            update_quiz_state(session_id, total_score=current_total_score)
+            
             ChatLogRepository.create_chat_message(
-            session_id=get_active_session_id(),
-            message_text=f"The new required score is {required_score}, don't fall below it now, you're current score is {current_phase['total_score']}" ,
-            user_id=1,
-            message_type='system',
-            reply_to_id=1
+                session_id=get_active_session_id(),
+                message_text=f"The new required score is {required_score}, don't fall below it now, you're current score is {current_total_score}",
+                user_id=1,
+                message_type='system',
+                reply_to_id=1
             )
-            if current_state['total_score'] < required_score:
-                print(f"Quiz ending early: Score {current_state['total_score']} < required {required_score}")
+            
+            # Fixed: Use the correctly retrieved score for comparison
+            if current_total_score < required_score:
+                print(f"Quiz ending early: Score {current_total_score} < required {required_score}")
                 break
 
         # Refresh available questions for next iteration
@@ -3977,11 +3986,12 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
     # Quiz finished
     print(f"\n--- Quiz finished for session {session_id} ---")
     QuizSessionRepository.update_session_status(session_id, 3)
+    final_state = get_quiz_state(session_id)
     asyncio.run_coroutine_threadsafe(
         sio.emit('quiz_finished', {
             'session_id': session_id,
-            'final_score': get_quiz_state(session_id)['total_score'],
-            'questions_asked': get_quiz_state(session_id)['question_count']
+            'final_score': final_state['total_score'],
+            'questions_asked': final_state['question_count']
         }), loop
     ).result(timeout=1)
 
@@ -4541,15 +4551,15 @@ def tempUp():
 def get_random_item_by_luck(luck_value: float) -> Optional[Dict[str, Any]]:
     """
     Get a random item based on luck value (0-1, lower = better items)
-    Rarity distribution based on how many items exist in each rarity tier
+    90% chance for most common rarity, then moves up rarity tiers
     """
     try:
         # Get all active items grouped by rarity
         all_items = ItemRepository.get_all_items()
-        
+       
         if not all_items:
             return None
-        
+       
         # Group items by rarity and count them
         rarity_groups = {}
         for item in all_items:
@@ -4557,48 +4567,58 @@ def get_random_item_by_luck(luck_value: float) -> Optional[Dict[str, Any]]:
             if rarity not in rarity_groups:
                 rarity_groups[rarity] = []
             rarity_groups[rarity].append(item)
-        
-        # Calculate rarity weights (fewer items = rarer = lower weight threshold)
+       
+        # Sort rarities by count (descending = most common first)
         rarity_counts = {rarity: len(items) for rarity, items in rarity_groups.items()}
-        total_items = len(all_items)
+        sorted_rarities = sorted(rarity_counts.items(), key=lambda x: x[1], reverse=True)
         
-        # Create probability thresholds (rarer items get lower thresholds)
-        # Sort rarities by count (ascending = rarest first)
-        sorted_rarities = sorted(rarity_counts.items(), key=lambda x: x[1])
+        if not sorted_rarities:
+            return None
         
-        # Assign probability ranges
-        cumulative_prob = 0
+        # Calculate inverted luck (so 0 luck = 1.0, 1 luck = 0.0)
+        inverted_luck = 1.0 - luck_value
+        
+        # Create cumulative probability thresholds
+        # Most common rarity gets 90% of the probability space
+        cumulative_prob = 0.0
         rarity_thresholds = []
         
-        for rarity, count in sorted_rarities:
-            # Rarer items (fewer count) get smaller probability windows but at lower luck values
-            prob_weight = 1.0 / count  # Inverse relationship
-            prob_range = prob_weight / sum(1.0 / c for _, c in sorted_rarities)
+        for i, (rarity, count) in enumerate(sorted_rarities):
+            if i == 0:  # Most common rarity
+                prob_range = 0.9
+            else:
+                # Remaining 10% split among other rarities
+                remaining_rarities = len(sorted_rarities) - 1
+                if remaining_rarities > 0:
+                    prob_range = 0.1 / remaining_rarities
+                else:
+                    prob_range = 0.0
             
             rarity_thresholds.append({
                 'rarity': rarity,
                 'min_threshold': cumulative_prob,
                 'max_threshold': cumulative_prob + prob_range,
-                'items': rarity_groups[rarity]
+                'items': rarity_groups[rarity],
+                'count': count
             })
             cumulative_prob += prob_range
         
-        # Select rarity based on luck value
+        # Select rarity based on inverted luck value
         selected_rarity_group = None
         for threshold_info in rarity_thresholds:
-            if luck_value >= threshold_info['min_threshold'] and luck_value < threshold_info['max_threshold']:
+            if inverted_luck >= threshold_info['min_threshold'] and inverted_luck < threshold_info['max_threshold']:
                 selected_rarity_group = threshold_info
                 break
         
-        # Fallback to last group if no match
+        # Fallback to most common rarity if no match
         if not selected_rarity_group:
-            selected_rarity_group = rarity_thresholds[-1]
+            selected_rarity_group = rarity_thresholds[0]
         
         # Randomly select an item from the chosen rarity group
         import random
         selected_item = random.choice(selected_rarity_group['items'])
         return selected_item
-        
+       
     except Exception as e:
         print(f"Error getting random item: {e}")
         return None
