@@ -184,11 +184,20 @@ const displayPlayerItems = (items) => {
         return;
     }
     
+    // Flatten items array (convert quantities into individual items)
+    const flattenedItems = [];
+    items.forEach(item => {
+        const quantity = item.quantity || 1;
+        for (let i = 0; i < quantity; i++) {
+            flattenedItems.push({...item, quantity: 1});
+        }
+    });
+    
     // Display up to 3 items, checking for changes to prevent flashing
     const maxSlots = 3;
-    const itemsToShow = items.slice(0, maxSlots);
+    const itemsToShow = flattenedItems.slice(0, maxSlots);
     
-    console.log(`📋 Items to show (${itemsToShow.length}/${items.length}):`, itemsToShow);
+    console.log(`📋 Items to show (${itemsToShow.length}/${flattenedItems.length}):`, itemsToShow);
     
     // Process each slot
     for (let slotIndex = 0; slotIndex < maxSlots; slotIndex++) {
@@ -203,20 +212,17 @@ const displayPlayerItems = (items) => {
         
         // Get current slot data
         const currentItemId = slotElement.getAttribute('data-item-id');
-        const currentQuantity = slotElement.getAttribute('data-quantity');
         
         // Determine new slot data
         const newItemId = newItem ? (newItem.itemId || newItem.id) : null;
-        const newQuantity = newItem ? (newItem.quantity || 1).toString() : null;
         
         // Check if slot needs updating
-        const needsUpdate = currentItemId !== (newItemId || '') || 
-                           currentQuantity !== (newQuantity || '');
+        const needsUpdate = currentItemId !== (newItemId || '');
         
         if (needsUpdate) {
             console.log(`🔄 Slot ${slotNumber} needs update:`, {
-                from: { id: currentItemId, qty: currentQuantity },
-                to: { id: newItemId, qty: newQuantity }
+                from: { id: currentItemId },
+                to: { id: newItemId }
             });
             
             if (newItem && newItemId) {
@@ -257,12 +263,10 @@ const populateItemSlot = (slotElement, item, slotNumber) => {
     
     const itemId = item.itemId || item.id;
     const itemName = item.name || 'Unknown Item';
-    const itemQuantity = item.quantity || 1;
     
     console.log(`📝 Setting up slot ${slotNumber} with:`, {
         id: itemId,
         name: itemName,
-        quantity: itemQuantity,
         rarity: item.rarity
     });
     
@@ -270,7 +274,7 @@ const populateItemSlot = (slotElement, item, slotNumber) => {
         // Add item data attributes
         slotElement.setAttribute('data-item-id', itemId);
         slotElement.setAttribute('data-item-name', itemName);
-        slotElement.setAttribute('data-quantity', itemQuantity);
+        slotElement.setAttribute('data-quantity', '1'); // Always 1 now
         
         // Add visual indicator that slot has an item
         slotElement.classList.add('has-item');
@@ -291,9 +295,6 @@ const populateItemSlot = (slotElement, item, slotNumber) => {
         // Setup the icon
         setupItemIcon(slotElement, item, slotNumber);
         
-        // Setup the quantity display
-        setupItemQuantityDisplay(slotElement, itemQuantity);
-        
         // Setup click event listener
         setupItemClickHandler(slotElement, item);
         
@@ -303,6 +304,40 @@ const populateItemSlot = (slotElement, item, slotNumber) => {
         console.error(`💥 Error in populateItemSlot for slot ${slotNumber}:`, error);
         throw error; // Re-throw to be caught by caller
     }
+};
+
+// Remove the setupItemQuantityDisplay function entirely since we don't need it anymore
+
+// Function to clear an individual item slot
+const clearItemSlot = (slotElement) => {
+    if (!slotElement) {
+        console.warn("⚠️ clearItemSlot called with null element");
+        return;
+    }
+    
+    // Remove data attributes
+    slotElement.removeAttribute('data-item-id');
+    slotElement.removeAttribute('data-item-name');
+    slotElement.removeAttribute('data-quantity');
+    slotElement.removeAttribute('data-rarity');
+    
+    // Remove classes
+    slotElement.classList.remove('has-item');
+    slotElement.className = slotElement.className.replace(/rarity-\w+/g, '');
+    
+    // Reset styles
+    slotElement.style.cursor = 'default';
+    slotElement.style.transform = 'scale(1)';
+    
+    // Remove the icon
+    const existingIcon = slotElement.querySelector('.c-item-icon');
+    if (existingIcon) {
+        existingIcon.remove();
+    }
+    
+    // Remove event listeners by cloning the element
+    const newSlotElement = slotElement.cloneNode(true);
+    slotElement.parentNode.replaceChild(newSlotElement, slotElement);
 };
 
 // Separate function to handle icon setup with improved scaling
@@ -586,43 +621,6 @@ const clearAllItemSlots = () => {
     }
 };
 
-// Function to clear an individual item slot
-const clearItemSlot = (slotElement) => {
-    if (!slotElement) {
-        console.warn("⚠️ clearItemSlot called with null element");
-        return;
-    }
-    
-    // Remove data attributes
-    slotElement.removeAttribute('data-item-id');
-    slotElement.removeAttribute('data-item-name');
-    slotElement.removeAttribute('data-quantity');
-    slotElement.removeAttribute('data-rarity');
-    
-    // Remove classes
-    slotElement.classList.remove('has-item');
-    slotElement.className = slotElement.className.replace(/rarity-\w+/g, '');
-    
-    // Reset styles
-    slotElement.style.cursor = 'default';
-    slotElement.style.transform = 'scale(1)';
-    
-    // Remove the icon
-    const existingIcon = slotElement.querySelector('.c-item-icon');
-    if (existingIcon) {
-        existingIcon.remove();
-    }
-    
-    // Remove the quantity display
-    const existingQuantity = slotElement.querySelector('.c-item-quantity');
-    if (existingQuantity) {
-        existingQuantity.remove();
-    }
-    
-    // Remove event listeners by cloning the element
-    const newSlotElement = slotElement.cloneNode(true);
-    slotElement.parentNode.replaceChild(newSlotElement, slotElement);
-};
 
 // Function to show feedback messages
 const showItemFeedback = (message, type = 'info') => {
