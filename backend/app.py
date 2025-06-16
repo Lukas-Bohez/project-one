@@ -3310,10 +3310,10 @@ def read_sensor_data(temp_sensor, light_sensor, servo):
         else:
             temperature = max(-50.0, min(100.0, float(raw_temp)))
             # Round to 2 decimal places to avoid precision issues
-            temperature = round(temperature, 2)
-        
+            temperature = round(temperature, 2) + virtualTemperature
+            print(temperature)
         return {
-            'temperature': temperature + virtualTemperature,
+            'temperature': temperature,
             'illuminance': light_sensor(),
             'servo_angle': servo.read_degrees()
         }
@@ -3478,10 +3478,13 @@ def select_question_based_on_sensors(available_questions, temp_sensor, light_sen
     temp = sensor_data['temperature'] + virtualTemperature
     light = sensor_data['illuminance']
    
-    if virtualTemperature > 0:
-        virtualTemperature -= 1
-    elif virtualTemperature < 0:
-        virtualTemperature += 1
+    ChatLogRepository.create_chat_message(
+    session_id=get_active_session_id(),
+    message_text=f"virtual temperature is {virtualTemperature}" ,
+    user_id=1,
+    message_type='system',
+    reply_to_id=1
+    )
         
     def get_bound(q, key, default):
         value = q.get(key)
