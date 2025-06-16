@@ -3477,23 +3477,25 @@ def select_question_based_on_sensors(available_questions, temp_sensor, light_sen
     sensor_data = check_sensor_data(temp_sensor, light_sensor)
     temp = sensor_data['temperature'] + virtualTemperature
     light = sensor_data['illuminance']
-    
+   
     if virtualTemperature > 0:
         virtualTemperature -= 1
     elif virtualTemperature < 0:
         virtualTemperature += 1
-
+        
     def get_bound(q, key, default):
         value = q.get(key)
         return default if value is None else value
-
+        
     filtered = [
         q for q in available_questions
         if (get_bound(q, 'TempMin', 20) <= temp <= get_bound(q, 'TempMax', 25))
         and (get_bound(q, 'LightMin', 10) <= light <= get_bound(q, 'LightMax', 20))
     ]
-
-    return random.choice(filtered or available_questions) if available_questions else None
+    print(f"Current temp: {temp}, light: {light}")
+    print(f"Filtered questions: {len(filtered)} out of {len(available_questions)}")
+    # DON'T fall back to all available_questions!
+    return random.choice(filtered) if filtered else None
 
 
 
@@ -3859,15 +3861,21 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
     quiz_state = get_quiz_state(session_id)
     # Get all player answer rows for the session
     rows = PlayerAnswerRepository.get_player_answers_for_session(session_id)
-
     # Extract just the IDs into a list
     ids = [row['questionId'] for row in rows]
+    quiz_state['question_count'] = len(ids)
     print(f"unavailable answerid's are {ids}")
     available_questions = [q for q in all_questions if q['id'] not in ids]
-    
+    print(f'available questions are: {available_questions}')
     question_time = timer_config.get('question_time', 15)  # Updated to 15 seconds
     explanation_time = timer_config.get('explanation_time', 15)  # Updated to 15 seconds
-
+    ChatLogRepository.create_chat_message(
+    session_id=get_active_session_id(),
+    message_text=f"Preparing question {quiz_state['question_count']}" ,
+    user_id=1,
+    message_type='system',
+    reply_to_id=1
+    )
     while available_questions:
         print(f"\n--- Selecting Question {quiz_state['question_count'] + 1} ---")
         
@@ -4491,11 +4499,25 @@ def activateAdvertFlood():
     """Call this function to trigger the 10-second ad flood on all clients"""
     print("sending advert flood emit")
     sio.emit('B2F_addItem', {}, broadcast=True)
+    ChatLogRepository.create_chat_message(
+    session_id=get_active_session_id(),
+    message_text=f"Activating add flood effect" ,
+    user_id=1,
+    message_type='system',
+    reply_to_id=1
+    )
 
 def tempDown():
     """Lower the virtual temperature by 20 degrees"""
     global virtualTemperature
     virtualTemperature -= 20
+    ChatLogRepository.create_chat_message(
+    session_id=get_active_session_id(),
+    message_text=f"The temperature is getting colder {virtualTemperature}" ,
+    user_id=1,
+    message_type='system',
+    reply_to_id=1
+    )
     # Emit temperature change to all clients
     sio.emit('B2F_temperatureChange', {'temperature': virtualTemperature}, broadcast=True)
 
@@ -4503,6 +4525,13 @@ def tempUp():
     """Raise the virtual temperature by 20 degrees"""
     global virtualTemperature
     virtualTemperature += 20
+    ChatLogRepository.create_chat_message(
+    session_id=get_active_session_id(),
+    message_text=f"The temperature is getting hotter {virtualTemperature}" ,
+    user_id=1,
+    message_type='system',
+    reply_to_id=1
+    )
     # Emit temperature change to all clients
     sio.emit('B2F_temperatureChange', {'temperature': virtualTemperature}, broadcast=True)
 
