@@ -1,12 +1,14 @@
-// Chat System with Socket.IO support and message flagging
+// Chat System with Socket.IO support, message flagging, and auto-retry with sessionId updates
 class ChatSystem {
     constructor() {
         this.currentUser = null;
         this.lanIP = `http://${window.location.hostname}`;
         this.sessionId = null;
         this.lastMessageCount = 0; // Track message count for smart scrolling
-
-
+        this.sessionUpdateInterval = null; // Store interval ID
+        this.pendingMessage = null; // Store message being retried
+        this.retryAttempts = 0;
+        this.maxRetryAttempts = 10; // Maximum retry attempts
 
         console.log('ChatSystem: Constructor called. Fetching active session ID...');
         this.fetchActiveSessionId().then(() => {
@@ -27,6 +29,7 @@ class ChatSystem {
                 this.socket = null;
             }
             this.init();
+            this.startSessionIdUpdater(); // Start periodic session ID updates
         });
     }
 
@@ -36,6 +39,50 @@ class ChatSystem {
         this.listenForUserEvents();
         this.loadChatMessages();
         console.log('ChatSystem: init() completed.');
+    }
+
+    // Start periodic sessionId updates
+    startSessionIdUpdater() {
+        console.log('ChatSystem: Starting periodic sessionId updater...');
+        this.sessionUpdateInterval = setInterval(() => {
+            this.fetchActiveSessionId();
+        }, 1000); // Update every second
+    }
+
+    // Stop periodic sessionId updates
+    stopSessionIdUpdater() {
+        if (this.sessionUpdateInterval) {
+            clearInterval(this.sessionUpdateInterval);
+            this.sessionUpdateInterval = null;
+            console.log('ChatSystem: Stopped periodic sessionId updater');
+        }
+    }
+
+    // Generate random greeting synonyms
+    getRandomGreeting() {
+        const greetings = [
+            "Hello there!",
+            "Hi everyone!",
+            "Greetings!",
+            "Hey all!",
+            "Good day!",
+            "Salutations!",
+            "Howdy!",
+            "What's up!",
+            "Hola!",
+            "Bonjour!",
+            "Guten Tag!",
+            "Ciao!",
+            "Aloha!",
+            "Yo!",
+            "Sup!",
+            "Heya!",
+            "G'day!",
+            "Shalom!",
+            "Namaste!",
+            "Konnichiwa!"
+        ];
+        return greetings[Math.floor(Math.random() * greetings.length)];
     }
 
     initializeSocketListeners() {
@@ -95,16 +142,40 @@ class ChatSystem {
             const activeSessionIdsList = data.active_session_ids;
 
             if (activeSessionIdsList && activeSessionIdsList.length > 0) {
-                this.sessionId = activeSessionIdsList[0];
-                console.log(`ChatSystem: Active session ID set to: ${this.sessionId}`);
+                const newSessionId = activeSessionIdsList[0];
+                
+                // Only update if the session ID has changed
+                if (this.sessionId !== newSessionId) {
+                    const oldSessionId = this.sessionId;
+                    this.sessionId = newSessionId;
+                    console.log(`ChatSystem: Session ID updated from ${oldSessionId} to ${newSessionId}`);
+                    
+                    // Update socket room if connected
+                    if (this.socket && this.socket.connected) {
+                        if (oldSessionId) {
+                            this.socket.emit('leave', `quiz_session_${oldSessionId}`);
+                        }
+                        this.socket.emit('join', `quiz_session_${this.sessionId}`);
+                    }
+                    
+                    // Retry pending message if we have one
+                    if (this.pendingMessage) {
+                        console.log('ChatSystem: Retrying pending message with new sessionId');
+                        this.retryPendingMessage();
+                    }
+                }
             } else {
                 console.warn('ChatSystem: No active sessions found. Defaulting to 2.');
-                this.sessionId = 2;
+                if (this.sessionId !== 2) {
+                    this.sessionId = 2;
+                }
             }
         } catch (error) {
             console.error('ChatSystem: Error fetching active session ID:', error);
-            console.warn('ChatSystem: Could not fetch active session. Defaulting to 2.');
-            this.sessionId = 2;
+            if (this.sessionId === null) {
+                console.warn('ChatSystem: Could not fetch active session. Defaulting to 2.');
+                this.sessionId = 2;
+            }
         }
     }
 
@@ -256,16 +327,73 @@ class ChatSystem {
         }
     }
 
+    async retryPendingMessage() {
+        if (!this.pendingMessage) return;
+
+        console.log(`ChatSystem: Retrying pending message (attempt ${this.retryAttempts + 1}/${this.maxRetryAttempts})`);
+        
+        try {
+            const response = await fetch(`${this.lanIP}/api/v1/chat/messages`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ...this.pendingMessage,
+                    session_id: this.sessionId // Use current sessionId
+                })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('ChatSystem: Pending message sent successfully:', result);
+                
+                // Clear pending message and reset retry counter
+                this.pendingMessage = null;
+                this.retryAttempts = 0;
+                
+                // Stop the session updater since message went through
+                this.stopSessionIdUpdater();
+                
+                // Show success message
+                this.showChatSuccess('Message sent successfully!');
+
+                if (!this.socket) {
+                    document.dispatchEvent(new CustomEvent('messageSent', {
+                        detail: {
+                            sender: this.pendingMessage.fullName,
+                            message: this.pendingMessage.message_text,
+                            userId: this.pendingMessage.user_id
+                        }
+                    }));
+                }
+            } else {
+                throw new Error('Server returned error status');
+            }
+        } catch (error) {
+            this.retryAttempts++;
+            console.error(`ChatSystem: Retry attempt ${this.retryAttempts} failed:`, error);
+            
+            if (this.retryAttempts >= this.maxRetryAttempts) {
+                console.error('ChatSystem: Max retry attempts reached, giving up');
+                this.showChatError('Failed to send message after multiple attempts. Please try again manually.');
+                this.pendingMessage = null;
+                this.retryAttempts = 0;
+                this.stopSessionIdUpdater();
+            }
+        }
+    }
+
     async sendChatMessage() {
         console.log('chatdebugconsolelog: sendChatMessage called');
         
         const chatInput = document.getElementById('chatInput');
-        const message = chatInput.value.trim();
+        let message = chatInput.value.trim();
 
+        // If no message provided, use a random greeting
         if (!message) {
-            console.log('chatdebugconsolelog: Empty message, showing error');
-            this.showChatError('Please enter a message to chat.');
-            return;
+            message = this.getRandomGreeting();
+            console.log('chatdebugconsolelog: No message provided, using random greeting:', message);
         }
 
         console.log('chatdebugconsolelog: Message to send:', message);
@@ -313,6 +441,30 @@ class ChatSystem {
             if (!response.ok) {
                 const errorData = await response.json();
                 console.log('chatdebugconsolelog: Server error response:', errorData);
+                
+                // If it's a session-related error, set up for retry
+                if (errorData.detail && (
+                    errorData.detail.includes('session') || 
+                    errorData.detail.includes('Session') ||
+                    errorData.detail.includes('not found') ||
+                    response.status === 404
+                )) {
+                    console.log('ChatSystem: Session-related error detected, setting up retry mechanism');
+                    this.pendingMessage = {
+                        ...payload,
+                        fullName: user.fullName
+                    };
+                    this.retryAttempts = 0;
+                    
+                    // Start session updater if not already running
+                    if (!this.sessionUpdateInterval) {
+                        this.startSessionIdUpdater();
+                    }
+                    
+                    this.showChatInfo('Updating session, retrying message...');
+                    return;
+                }
+                
                 throw new Error(errorData.detail || 'Failed to send message');
             }
 
@@ -405,22 +557,34 @@ class ChatSystem {
     }
 
     showChatError(message) {
+        this.showChatMessage('Error', message, 'c-chat-error');
+    }
+
+    showChatSuccess(message) {
+        this.showChatMessage('Success', message, 'c-chat-success');
+    }
+
+    showChatInfo(message) {
+        this.showChatMessage('Info', message, 'c-chat-info');
+    }
+
+    showChatMessage(type, message, className) {
         const chatMessages = document.getElementById('chatMessages');
         if (!chatMessages) return;
 
-        const errorElement = document.createElement('div');
-        errorElement.className = 'c-chat-message c-chat-error';
-        errorElement.innerHTML = `
-            <span class="c-chat-sender">Error:</span>
+        const messageElement = document.createElement('div');
+        messageElement.className = `c-chat-message ${className}`;
+        messageElement.innerHTML = `
+            <span class="c-chat-sender">${type}:</span>
             <span class="c-chat-text">${message}</span>
         `;
 
-        chatMessages.appendChild(errorElement);
+        chatMessages.appendChild(messageElement);
         this.scrollChatToBottom();
 
         setTimeout(() => {
-            if (errorElement.parentNode) {
-                errorElement.parentNode.removeChild(errorElement);
+            if (messageElement.parentNode) {
+                messageElement.parentNode.removeChild(messageElement);
             }
         }, 5000);
     }
@@ -467,6 +631,14 @@ class ChatSystem {
         console.log('chatdebugconsolelog: getCurrentUser() called, returning:', user);
         return user;
     }
+
+    // Cleanup method to stop intervals when needed
+    destroy() {
+        this.stopSessionIdUpdater();
+        if (this.socket) {
+            this.socket.disconnect();
+        }
+    }
 }
 
 document.addEventListener('userAuthenticated', (event) => {
@@ -478,7 +650,7 @@ document.addEventListener('userAuthenticated', (event) => {
         console.log("chatdebugconsolelog: Setting chatSystemInstance.currentUser");
         window.chatSystemInstance.currentUser = user;
         console.log("chatdebugconsolelog: chatSystemInstance.currentUser set to:", window.chatSystemInstance.currentUser);
-        ChatSystem.fetchActiveSessionId() 
+        window.chatSystemInstance.fetchActiveSessionId();
     } else {
         console.log("chatdebugconsolelog: window.chatSystemInstance not found");
     }
