@@ -1337,7 +1337,7 @@ async def register_user(user_credentials: UserCredentials, request: Request):
             current_phase = 'voting'
         ChatLogRepository.create_chat_message(
             session_id=get_active_session_id(),
-            message_text=f'User {user_credentials.first_name} has logged in',  # Comma was missing here
+            message_text=generate_kawaii_string(user_credentials),  # Comma was missing here
             user_id=1,
             message_type='system',
             reply_to_id=1
@@ -1393,7 +1393,7 @@ async def login_user(user_credentials: UserCredentials, request: Request):
             current_phase = 'voting'
         ChatLogRepository.create_chat_message(
             session_id=get_active_session_id(),
-            message_text=f'User {user_credentials.first_name} has logged in',  # Comma was missing here
+            message_text=generate_kawaii_string(user_credentials),  # Comma was missing here
             user_id=1,
             message_type='system',
             reply_to_id=1
@@ -1413,6 +1413,48 @@ async def login_user(user_credentials: UserCredentials, request: Request):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected server error occurred."
         )
+
+
+def generate_kawaii_string(user_credentials):
+    # Mixed emotion phrases with emojis (kawaii, kowai, excited, etc.)
+    emotion_strings = [
+        # Kawaii/happy themes
+        f"✨ {user_credentials.first_name}-chan! Ready for adventure? (´｡• ω •｡`)",
+        f"★~(◠‿◕✿) Greetings {user_credentials.first_name}-san! Let's go!",
+        f"ヾ(●ω●)ノ {user_credentials.first_name}-tan appears! What's the plan?",
+        f"ヽ(>∀<☆)ノ {user_credentials.first_name}-sama brings good vibes!",
+        f"(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ {user_credentials.first_name}-kun spotted! Hello~",
+        
+        # Kowai/scary themes
+        f"⋋| ◉ ͟ʖ ◉ |⋌ {user_credentials.first_name}-san... the shadows watch...",
+        f"(×_×;）{user_credentials.first_name}-chan... did you hear that?",
+        f"ヽ(ﾟДﾟ)ﾉ {user_credentials.first_name}-dono! Beware the full moon!",
+        f"┗|｀O′|┛ {user_credentials.first_name}-sama... the ritual begins...",
+        f"(◣_◢) {user_credentials.first_name}-kun... something approaches...",
+        
+        # Excited/hyper themes
+        f"✧ﾟ･: *ヽ(◕ヮ◕ヽ) {user_credentials.first_name}-chan! Let's party! *:･ﾟ✧",
+        f"ᕙ(^▿^-ᕙ) {user_credentials.first_name}-senpai! Power up!",
+        f"ヽ(★ω★)ノ {user_credentials.first_name}-nyan! Maximum energy!",
+        f"ᕕ( ᐛ )ᕗ {user_credentials.first_name}-dash! Zoom zoom!",
+        
+        # Chill/relaxed themes
+        f"(￣ω￣) {user_credentials.first_name}-san... so peaceful...",
+        f"(´-ω-`) {user_credentials.first_name}-tan... just vibing...",
+        f"〜(꒪꒳꒪)〜 {user_credentials.first_name}-kun... floating along...",
+        
+        # Confused themes
+        f"(・_・ヾ {user_credentials.first_name}-chan... what just happened?",
+        f"(◎_◎;) {user_credentials.first_name}-dono... I'm so lost...",
+        f"ლ(ಠ_ಠ ლ) {user_credentials.first_name}-sama... why though..."
+    ]
+
+    return random.choice(emotion_strings)
+
+
+
+
+
 
 def calculate_player_score(session_id: int, user_id: int) -> int:
     """
@@ -4237,7 +4279,7 @@ def emit_theme_selection_if_needed(sio, loop):
             current_phase = 'voting'
             if current_phase == 'voting' and not is_timer_running:
                 # Voting phase but no timer running - emit theme selection to allow voting
-                emit_combined_theme_selection(sio, loop)
+                pass
             elif current_phase not in ['voting', 'theme_display', 'quiz']:
                 # No phase set - initialize voting phase and emit theme selection
                 set_session_phase(active_session_id, 'voting')

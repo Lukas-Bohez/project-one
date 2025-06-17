@@ -126,64 +126,216 @@ clearExplanations() {
         }
     }
 
+// Add these missing helper methods first
+getRandomItem(array) {
+    return array[Math.floor(Math.random() * array.length)];
+}
+
+getRandomItems(array, count) {
+    const shuffled = [...array].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, Math.min(count, array.length));
+}
+
+shuffleArray(array) {
+    return [...array].sort(() => 0.5 - Math.random());
+}
+
+getOptionText(option, questionType) {
+    return questionType === 'theme_selection' 
+        ? (option.name || option.title || 'Unnamed Theme')
+        : (option.answer_text || option.text || option);
+}
+
+// Then your existing setupAnswerOptions function
 setupAnswerOptions(questionData) {
-    const options = questionData.type === 'theme_selection'
-        ? questionData.themes
+    // 1. Style Injection (only once)
+    this.injectAnswerBoxStyles();
+    
+    // 2. Get Options
+    const options = questionData.type === 'theme_selection' 
+        ? questionData.themes 
         : questionData.answers;
-
-    if (!options || options.length === 0) {
-        this.handleErrorDisplay('No options available for this round.');
+    
+    if (!options?.length) {
+        this.handleErrorDisplay('No options available');
         return;
     }
 
-    // Get the answers container
-    const answersContainer = document.querySelector('.c-answers-container');
-    if (!answersContainer) {
-        console.error('Answers container not found');
-        return;
+    // 3. Prepare Container - DON'T replace the class, ADD to it
+    const container = document.querySelector('.c-answers-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    container.classList.add('answer-grid-container'); // Add instead of replace
+
+    // 4. Process Answers
+    const filteredOptions = this.selectOptimalAnswers(options, questionData.type);
+    this.renderAnswerBoxes(filteredOptions, container, questionData.type);
+}
+
+// ========================
+// CORE LOGIC
+// ========================
+
+selectOptimalAnswers(options, questionType) {
+    if (questionType === 'theme_selection') {
+        return this.getRandomItems(options, 4);
     }
 
-    // Get all existing answer buttons
-    let answerButtons = Array.from(answersContainer.querySelectorAll('.c-answer-btn'));
-
-    // If we need more buttons than currently exist, create them
-    while (answerButtons.length < options.length) {
-        const newButton = document.createElement('button');
-        newButton.className = 'c-answer-btn gamepad';
-        newButton.id = `answer${answerButtons.length + 1}`;
-        answersContainer.appendChild(newButton);
-        answerButtons.push(newButton);
+    const correct = options.filter(o => o.is_correct == 1);
+    const incorrect = options.filter(o => o.is_correct != 1);
+    
+    let selected = [];
+    
+    // Priority 1: 1 correct + 3 incorrect
+    if (correct.length > 0 && incorrect.length >= 3) {
+        selected.push(this.getRandomItem(correct));
+        selected.push(...this.getRandomItems(incorrect, 3));
+    } 
+    // Priority 2: 1 correct + fill remaining
+    else if (correct.length > 0) {
+        selected.push(this.getRandomItem(correct));
+        const remaining = options.filter(o => !selected.includes(o));
+        selected.push(...this.getRandomItems(remaining, 3));
+    }
+    // Fallback: Random selection
+    else {
+        selected = this.getRandomItems(options, 4);
     }
 
-    // Now set up all the options
-    answerButtons.forEach((button, index) => {
-        if (options[index]) {
-            const option = options[index];
+    return this.shuffleArray(selected).slice(0, 4);
+}
 
-            button.textContent = questionData.type === 'theme_selection'
-                ? (option.name || option.title || `Theme ${index + 1}`)
-                : (option.answer_text || option.text || option);
+// ========================
+// RENDERING
+// ========================
 
-            button.style.display = 'block';
-            button.disabled = false;
-            button.classList.add('gamepad');
-
-            // Store additional data as dataset attributes
-            if (questionData.type === 'theme_selection') {
-                button.dataset.themeId = option.id;
-                button.dataset.themeName = option.name || option.title;
-            } else {
-                // For regular answers, store whether it's correct
-                button.dataset.isCorrect = option.is_correct || 0;
-                button.dataset.answerId = option.id;
-            }
-        } else {
-            // Hide extra buttons if we have more than needed
-            button.style.display = 'none';
-            button.disabled = true;
+renderAnswerBoxes(options, container, questionType) {
+    const buttonConfigs = [
+        { color: '#FF5A5A', key: 'right', label: 'A' },
+        { color: '#FFD166', key: 'bottom', label: 'B' },
+        { color: '#06D6A0', key: 'left', label: 'X' },
+        { color: '#118AB2', key: 'top', label: 'Y' }
+    ];
+    options.forEach((option, i) => {
+        const config = buttonConfigs[i];
+        const box = document.createElement('div');
+        box.className = 'answer-box';
+       
+        box.innerHTML = `
+            <div class="snes-button" style="background: ${config.color}">
+                <span class="button-label">${config.label}</span>
+                <div class="answer-content">${this.getOptionText(option, questionType)}</div>
+            </div>
+            <div class="box-decoration ${config.key}"></div>
+        `;
+       
+        // Store answer metadata
+        if (questionType !== 'theme_selection') {
+            box.dataset.isCorrect = option.is_correct || 0;
+            box.dataset.answerId = option.id;
         }
+       
+        container.appendChild(box);
     });
 }
+
+// ========================
+// STYLES & UTILITIES
+// ========================
+injectAnswerBoxStyles() {
+    if (document.getElementById('answer-box-styles')) return;
+   
+    const style = document.createElement('style');
+    style.id = 'answer-box-styles';
+    style.textContent = `
+        .answer-grid-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+       
+        .answer-box {
+            position: relative;
+            perspective: 1000px;
+            height: 80px; /* Reduced from 120px */
+        }
+       
+        .snes-button {
+            height: 100%;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            padding: 8px; /* Added padding to prevent content touching edges */
+        }
+       
+        .snes-button:hover {
+            transform: translateY(-3px); /* Reduced from -5px */
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2); /* Reduced shadow */
+        }
+       
+        .button-label {
+            position: absolute;
+            font-size: 12px; /* Reduced from 14px */
+            font-weight: bold;
+            opacity: 0.9;
+            z-index: 2;
+            background: rgba(0,0,0,0.2); /* Added subtle background */
+            padding: 2px 6px;
+            border-radius: 4px;
+            min-width: 16px;
+            text-align: center;
+        }
+       
+        .answer-content {
+            padding: 4px 8px; /* Reduced padding */
+            text-align: center;
+            font-size: 14px; /* Reduced from 16px */
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            line-height: 1.2;
+            z-index: 1;
+            position: relative;
+        }
+       
+        /* Position labels in corners, away from content */
+        .answer-box:nth-child(1) .button-label { top: 4px; right: 4px; }
+        .answer-box:nth-child(2) .button-label { bottom: 4px; right: 4px; }
+        .answer-box:nth-child(3) .button-label { bottom: 4px; left: 4px; }
+        .answer-box:nth-child(4) .button-label { top: 4px; left: 4px; }
+       
+        /* Decorative corners - smaller and more subtle */
+        .box-decoration {
+            position: absolute;
+            width: 20px; /* Reduced from 30px */
+            height: 20px;
+            background: white;
+            opacity: 0.1; /* Reduced from 0.2 */
+            border-radius: 3px;
+        }
+        
+        .answer-box:nth-child(1) .box-decoration { top: 0; left: 0; }
+        .answer-box:nth-child(2) .box-decoration { top: 0; right: 0; }
+        .answer-box:nth-child(3) .box-decoration { bottom: 0; left: 0; }
+        .answer-box:nth-child(4) .box-decoration { bottom: 0; right: 0; }
+    `;
+    document.head.appendChild(style);
+}
+
+
+
     bindAnswerEvents() {
         const answerButtons = document.querySelectorAll('.c-answer-btn');
         if (answerButtons.length === 0) {
