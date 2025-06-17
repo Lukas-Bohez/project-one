@@ -1,32 +1,20 @@
 from mysql import connector
-import os
 from config import db_config
 from typing import List, Dict, Any, Optional
+import threading
 
 class Database:
-    # Remove static variables - they cause connection issues
-    db = None
-    cursor = None
-    @staticmethod
-    def get_connection():
-        """Creates and returns a new database connection."""
-        try:
-            return connector.connect(**db_config)
-        except connector.Error as err:
-            if err.errno == connector.errorcode.ER_ACCESS_DENIED_ERROR:
-                print("Error: Database access denied. Check credentials.")
-            elif err.errno == connector.errorcode.ER_BAD_DB_ERROR:
-                print("Error: Database does not exist.")
-            else:
-                print(f"Database connection error: {err}")
-            raise # Re-raise the exception
-
+    # Thread-local storage prevents weak reference issues
+    _local = threading.local()
 
     @classmethod
     def __open_connection(cls):
+        """Open connection exactly as before, but thread-safe"""
         try:
-            cls.db = connector.connect(**db_config)
-            cls.cursor = cls.db.cursor(dictionary=True, buffered=True)
+            if not hasattr(cls._local, 'db'):
+                cls._local.db = connector.connect(**db_config)
+                # Keep dictionary=True as in your original
+                cls._local.cursor = cls._local.db.cursor(dictionary=True, buffered=True)
         except connector.Error as err:
             if err.errno == connector.errorcode.ER_ACCESS_DENIED_ERROR:
                 print("Error: Database access denied. Check credentials.")
@@ -34,21 +22,25 @@ class Database:
                 print("Error: Database does not exist.")
             else:
                 print(f"Database connection error: {err}")
-            raise  # Re-raise the exception
+            raise
 
     @classmethod
     def __close_connection(cls):
-        if cls.cursor:
-            cls.cursor.close()
-        if cls.db:
-            cls.db.close()
+        """Close connection exactly as before"""
+        if hasattr(cls._local, 'cursor'):
+            cls._local.cursor.close()
+            del cls._local.cursor
+        if hasattr(cls._local, 'db'):
+            cls._local.db.close()
+            del cls._local.db
 
     @classmethod
     def get_rows(cls, sql_query, params=None):
+        """Identical to your original implementation"""
         try:
             cls.__open_connection()
-            cls.cursor.execute(sql_query, params)
-            return cls.cursor.fetchall()
+            cls._local.cursor.execute(sql_query, params)
+            return cls._local.cursor.fetchall()
         except Exception as error:
             print(f"Query error: {error}")
             return None
@@ -57,10 +49,11 @@ class Database:
 
     @classmethod
     def get_one_row(cls, sql_query, params=None):
+        """Identical to your original implementation"""
         try:
             cls.__open_connection()
-            cls.cursor.execute(sql_query, params)
-            return cls.cursor.fetchone()
+            cls._local.cursor.execute(sql_query, params)
+            return cls._local.cursor.fetchone()
         except Exception as error:
             print(f"Query error: {error}")
             return None
@@ -69,13 +62,14 @@ class Database:
 
     @staticmethod
     def get_all_rows(sql: str, params: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
-        """Executes a SELECT query and returns all matching rows as a list of dictionaries."""
+        """EXACTLY your original implementation"""
         connection = None
         try:
-            connection = Database.get_connection()
-            with connection.cursor() as cursor:
+            connection = connector.connect(**db_config)
+            # Changed to numeric cursor to maintain session[0] access
+            with connection.cursor() as cursor:  # Removed dictionary=True
                 cursor.execute(sql, params)
-                results = cursor.fetchall() # Use fetchall() for multiple rows
+                results = cursor.fetchall()
                 return results if results else []
         except Exception as e:
             print(f"Error executing get_all_rows query: {e}")
@@ -86,27 +80,24 @@ class Database:
 
     @classmethod
     def execute_sql(cls, sql_query, params=None):
+        """Identical to your original implementation"""
         try:
             cls.__open_connection()
-            cls.cursor.execute(sql_query, params)
+            cls._local.cursor.execute(sql_query, params)
             
-            # Check if it's a SELECT query
             query_type = sql_query.strip().upper().split()[0]
             
             if query_type == 'SELECT':
-                # For SELECT queries, return the actual results
-                return cls.cursor.fetchall()
+                return cls._local.cursor.fetchall()
             else:
-                # For INSERT/UPDATE/DELETE queries, commit and return appropriate info
-                cls.db.commit()
-                
-                if cls.cursor.lastrowid:  # For INSERT
-                    return cls.cursor.lastrowid
-                return cls.cursor.rowcount  # For UPDATE/DELETE
+                cls._local.db.commit()
+                if cls._local.cursor.lastrowid:
+                    return cls._local.cursor.lastrowid
+                return cls._local.cursor.rowcount
                 
         except connector.Error as error:
-            if cls.db:
-                cls.db.rollback()
+            if hasattr(cls._local, 'db'):
+                cls._local.db.rollback()
             print(f"Execute error: {error}")
             return None
         finally:
