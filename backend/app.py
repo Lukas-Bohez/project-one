@@ -209,16 +209,8 @@ async def disconnect(sid):
     print(f"Server emitted 'client_disconnected' for client {sid}. Total clients: {len(connected_clients)}")
     
     if len(connected_clients) <= 0:
-        # Schedule status update only if no clients reconnect within 10 seconds
-        async def delayed_status_update():
-            await asyncio.sleep(10)
-            # Check again if still no clients are connected
-            if len(connected_clients) <= 0:
-                QuizSessionRepository.update_session_status(get_active_session_id(), 3)
-                print(f"Updated session status to 'ended' after 10 seconds of inactivity")
-        
-        # Create and run the task
-        asyncio.create_task(delayed_status_update())
+        QuizSessionRepository.update_session_status(get_active_session_id(), 3)
+        print(f"Updated session status to 'ended' after 1 second of inactivity")
 
 
 
@@ -4704,83 +4696,50 @@ async def use_item(user_id: int, item_id: int):
 
 
 
-def get_random_item_by_luck(luck_value: float) -> Optional[Dict[str, Any]]:
+def get_random_item_by_luck(luck: float) -> Optional[Dict[str, Any]]:
     """
-    Get a random item based on luck value (0-1, lower = better items)
-    90% chance for most common rarity, then moves up rarity tiers
-    Now properly randomizes selection within rarity groups
+    Get a random item where drop chance is inversely proportional to cost.
+    Properly handles both float and Decimal cost values.
+    Higher luck (0-1) makes expensive items even rarer.
     """
     try:
-        # Get all active items grouped by rarity
         all_items = ItemRepository.get_all_items()
-       
         if not all_items:
             return None
-       
-        # Group items by rarity
-        rarity_groups = {}
+
+        # Convert all costs to Decimal for consistent math
+        def get_cost(item):
+            cost = item['cost']
+            return Decimal(str(cost)) if not isinstance(cost, Decimal) else cost
+
+        # Calculate weights using Decimal for precision
+        cost_exponent = Decimal(1) + Decimal(str(luck))
+        weights = []
         for item in all_items:
-            rarity = item['rarity']
-            if rarity not in rarity_groups:
-                rarity_groups[rarity] = []
-            rarity_groups[rarity].append(item)
-       
-        # Sort rarities by count (descending = most common first)
-        rarity_counts = {rarity: len(items) for rarity, items in rarity_groups.items()}
-        sorted_rarities = sorted(rarity_counts.items(), key=lambda x: x[1], reverse=True)
+            cost = get_cost(item)
+            try:
+                weight = Decimal(1) / (cost ** cost_exponent)
+                weights.append(float(weight))  # Convert to float for random.choices
+            except:
+                # Fallback if there's any math error
+                weights.append(1.0)
+
+        # Normalize weights to avoid any potential float precision issues
+        total_weight = sum(weights)
+        if total_weight <= 0:
+            weights = [1.0/len(all_items) for _ in all_items]  # Equal weights fallback
+        else:
+            weights = [w/total_weight for w in weights]
+
+        return random.choices(all_items, weights=weights, k=1)[0]
         
-        if not sorted_rarities:
-            return None
-        
-        # Calculate inverted luck (so 0 luck = 1.0, 1 luck = 0.0)
-        inverted_luck = 1.0 - luck_value
-        
-        # Create cumulative probability thresholds
-        # Most common rarity gets 90% of the probability space
-        cumulative_prob = 0.0
-        rarity_thresholds = []
-        
-        for i, (rarity, count) in enumerate(sorted_rarities):
-            if i == 0:  # Most common rarity
-                prob_range = 0.9
-            else:
-                # Remaining 10% split among other rarities
-                remaining_rarities = len(sorted_rarities) - 1
-                if remaining_rarities > 0:
-                    prob_range = 0.1 / remaining_rarities
-                else:
-                    prob_range = 0.0
-            
-            rarity_thresholds.append({
-                'rarity': rarity,
-                'min_threshold': cumulative_prob,
-                'max_threshold': cumulative_prob + prob_range,
-                'items': rarity_groups[rarity],
-                'count': count
-            })
-            cumulative_prob += prob_range
-        
-        # Select rarity based on inverted luck value
-        selected_rarity_group = None
-        for threshold_info in rarity_thresholds:
-            if inverted_luck >= threshold_info['min_threshold'] and inverted_luck < threshold_info['max_threshold']:
-                selected_rarity_group = threshold_info
-                break
-        
-        # Fallback to most common rarity if no match
-        if not selected_rarity_group:
-            selected_rarity_group = rarity_thresholds[0]
-        
-        # Now PROPERLY randomize selection within the rarity group
-        # First shuffle the items to ensure random order
-        random.shuffle(selected_rarity_group['items'])
-        # Then select one with equal probability
-        selected_item = random.choice(selected_rarity_group['items'])
-        return selected_item
-       
     except Exception as e:
         print(f"Error getting random item: {e}")
-        return None
+        # Fallback to simple random choice if weighting fails
+        return random.choice(all_items) if all_items else None
+
+
+
 
 def get_random_item(user_id: int, luck: float = 0.5) -> Dict[str, Any]:
     """
@@ -4842,8 +4801,6 @@ def get_random_item(user_id: int, luck: float = 0.5) -> Dict[str, Any]:
             
     except Exception as e:
         return {"success": False, "error": f"System error: {str(e)}"}
-
-
 
 
 
