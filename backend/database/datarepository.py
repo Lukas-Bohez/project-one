@@ -1200,7 +1200,7 @@ class SensorDataRepository:
         sql = "SELECT * FROM sensorData WHERE sessionId = %s ORDER BY id DESC LIMIT %s"
         
         # This correctly calculates the number of records to fetch.
-        params = [session_id, 17725 if limit is None or not isinstance(limit, int) or limit <= 0 else min(limit, 17725)]
+        params = [session_id, 1000 if limit is None or not isinstance(limit, int) or limit <= 0 else min(limit, 17725)]
         
         # This calls your database utility to execute the query.
         # The problem lies in what data is actually stored in 'sensorData' for 'sessionId'.
