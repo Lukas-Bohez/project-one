@@ -4708,6 +4708,7 @@ def get_random_item_by_luck(luck_value: float) -> Optional[Dict[str, Any]]:
     """
     Get a random item based on luck value (0-1, lower = better items)
     90% chance for most common rarity, then moves up rarity tiers
+    Now properly randomizes selection within rarity groups
     """
     try:
         # Get all active items grouped by rarity
@@ -4716,7 +4717,7 @@ def get_random_item_by_luck(luck_value: float) -> Optional[Dict[str, Any]]:
         if not all_items:
             return None
        
-        # Group items by rarity and count them
+        # Group items by rarity
         rarity_groups = {}
         for item in all_items:
             rarity = item['rarity']
@@ -4770,8 +4771,10 @@ def get_random_item_by_luck(luck_value: float) -> Optional[Dict[str, Any]]:
         if not selected_rarity_group:
             selected_rarity_group = rarity_thresholds[0]
         
-        # Randomly select an item from the chosen rarity group
-        import random
+        # Now PROPERLY randomize selection within the rarity group
+        # First shuffle the items to ensure random order
+        random.shuffle(selected_rarity_group['items'])
+        # Then select one with equal probability
         selected_item = random.choice(selected_rarity_group['items'])
         return selected_item
        
