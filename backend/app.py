@@ -3380,7 +3380,6 @@ def read_sensor_data(temp_sensor, light_sensor, servo):
             temperature = max(-50.0, min(100.0, float(raw_temp)))
             # Round to 2 decimal places to avoid precision issues
             temperature = round(temperature, 2) + virtualTemperature
-            print(temperature)
         return {
             'temperature': temperature,
             'illuminance': light_sensor(),
