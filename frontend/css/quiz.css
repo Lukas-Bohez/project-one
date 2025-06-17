@@ -126,7 +126,12 @@
 .c-answers-container {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    gap: 20px;
+}
+
+.snes-button:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 20px rgba(0,0,0,0.2);
 }
 
 .c-answer-btn {
