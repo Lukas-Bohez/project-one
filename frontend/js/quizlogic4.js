@@ -9,20 +9,387 @@ class QuizQuestionHandler {
         this.timeRemaining = 0;
     }
 
-    setCurrentUser(user) {
-        console.log("QuizQuestionHandler: Setting current user:", user);
-        this.currentUser = user;
-        
-        // Ensure both id and user_id are available for compatibility
-        if (this.currentUser && !this.currentUser.user_id && this.currentUser.id) {
-            this.currentUser.user_id = this.currentUser.id;
+        // Inject responsive CSS styles for all screen sizes
+    injectResponsiveStyles() {
+        const existingStyle = document.getElementById('quiz-responsive-styles');
+        if (existingStyle) {
+            existingStyle.remove();
         }
-        if (this.currentUser && !this.currentUser.id && this.currentUser.user_id) {
-            this.currentUser.id = this.currentUser.user_id;
-        }
+
+        const style = document.createElement('style');
+        style.id = 'quiz-responsive-styles';
+        style.textContent = `
+            /* Base quiz container styling */
+            .quiz-container, #quizContainer, .c-quiz-area {
+                height: 100vh;
+                max-height: 100vh;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                padding: 0.5rem;
+                box-sizing: border-box;
+            }
+
+            /* Question text responsive styling */
+            #questionText, .question-text {
+                flex: 1 1 auto;
+                min-height: 15vh;
+                max-height: 40vh;
+                overflow-y: auto;
+                padding: 1rem;
+                margin-bottom: 1rem;
+                font-size: clamp(1rem, 4vw, 2rem);
+                line-height: 1.3;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                background: rgba(255, 255, 255, 0.9);
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                word-wrap: break-word;
+                hyphens: auto;
+            }
+
+            /* Question image responsive styling */
+            #questionImage {
+                max-height: 20vh;
+                margin-bottom: 1rem;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            #questionImage img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+                border-radius: 8px;
+            }
+
+            /* Answers container - flexible grid */
+            .c-answers-container {
+                flex: 1 1 auto;
+                display: grid;
+                gap: 0.5rem;
+                padding: 0.5rem 0;
+                min-height: 40vh;
+                max-height: 60vh;
+            }
+
+            /* Answer buttons responsive styling */
+            .c-answer-btn {
+                min-height: 8vh;
+                max-height: 12vh;
+                padding: 0.5rem;
+                font-size: clamp(0.8rem, 3vw, 1.2rem);
+                line-height: 1.2;
+                border: 2px solid #ddd;
+                border-radius: 8px;
+                background: white;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                word-wrap: break-word;
+                hyphens: auto;
+                overflow-wrap: break-word;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            }
+
+            .c-answer-btn:hover:not(:disabled) {
+                background: #f0f0f0;
+                border-color: #007bff;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            }
+
+            .c-answer-btn:active {
+                transform: translateY(0);
+            }
+
+            .c-answer-btn.selected {
+                background: #007bff;
+                color: white;
+                border-color: #007bff;
+            }
+
+            .c-answer-btn:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+
+            /* Grid layouts for different screen sizes */
+            @media (min-height: 800px) {
+                .c-answers-container {
+                    grid-template-columns: 1fr 1fr;
+                    grid-template-rows: 1fr 1fr;
+                }
+            }
+
+            @media (max-height: 799px) and (min-height: 600px) {
+                .c-answers-container {
+                    grid-template-columns: 1fr 1fr;
+                    grid-template-rows: 1fr 1fr;
+                }
+                
+                #questionText, .question-text {
+                    max-height: 25vh;
+                    font-size: clamp(0.9rem, 3.5vw, 1.5rem);
+                }
+                
+                .c-answer-btn {
+                    min-height: 6vh;
+                    max-height: 10vh;
+                    font-size: clamp(0.7rem, 2.5vw, 1rem);
+                }
+            }
+
+            @media (max-height: 599px) {
+                .c-answers-container {
+                    grid-template-columns: 1fr 1fr;
+                    grid-template-rows: 1fr 1fr;
+                }
+                
+                #questionText, .question-text {
+                    max-height: 20vh;
+                    min-height: 10vh;
+                    font-size: clamp(0.8rem, 3vw, 1.2rem);
+                    padding: 0.5rem;
+                }
+                
+                .c-answer-btn {
+                    min-height: 5vh;
+                    max-height: 8vh;
+                    font-size: clamp(0.6rem, 2vw, 0.9rem);
+                    padding: 0.3rem;
+                }
+                
+                #questionImage {
+                    max-height: 15vh;
+                }
+            }
+
+            /* Very small screens (phones in landscape) */
+            @media (max-height: 450px) {
+                .quiz-container, #quizContainer, .c-quiz-area {
+                    padding: 0.25rem;
+                }
+                
+                #questionText, .question-text {
+                    max-height: 15vh;
+                    min-height: 8vh;
+                    font-size: clamp(0.7rem, 2.5vw, 1rem);
+                    padding: 0.25rem;
+                    margin-bottom: 0.5rem;
+                }
+                
+                .c-answers-container {
+                    gap: 0.25rem;
+                    min-height: 30vh;
+                }
+                
+                .c-answer-btn {
+                    min-height: 4vh;
+                    max-height: 6vh;
+                    font-size: clamp(0.5rem, 1.8vw, 0.8rem);
+                    padding: 0.2rem;
+                }
+                
+                #questionImage {
+                    max-height: 10vh;
+                    margin-bottom: 0.5rem;
+                }
+            }
+
+            /* Portrait orientation specific adjustments */
+            @media (orientation: portrait) {
+                @media (max-width: 480px) {
+                    .c-answers-container {
+                        grid-template-columns: 1fr;
+                        grid-template-rows: repeat(4, 1fr);
+                    }
+                    
+                    .c-answer-btn {
+                        min-height: 6vh;
+                        max-height: 8vh;
+                    }
+                }
+            }
+
+            /* Landscape orientation specific adjustments */
+            @media (orientation: landscape) {
+                @media (max-height: 500px) {
+                    .c-answers-container {
+                        grid-template-columns: 1fr 1fr;
+                        grid-template-rows: 1fr 1fr;
+                    }
+                }
+            }
+
+            /* Explanation and theme content responsive styling */
+            .explanation-content, .theme-content {
+                padding: 1rem;
+                background: rgba(255, 255, 255, 0.95);
+                border-radius: 10px;
+                margin-bottom: 1rem;
+                max-height: 70vh;
+                overflow-y: auto;
+            }
+
+            .explanation-content h3, .theme-content h3 {
+                font-size: clamp(1.2rem, 4vw, 2rem);
+                margin-bottom: 1rem;
+                color: #333;
+            }
+
+            .explanation-content p, .theme-content p {
+                font-size: clamp(0.9rem, 3vw, 1.2rem);
+                line-height: 1.5;
+                color: #666;
+            }
+
+            /* Modal responsive styling */
+            .explanation-modal-overlay, .theme-modal-overlay {
+                padding: 1rem;
+            }
+
+            .explanation-modal-content, .theme-modal-content {
+                max-width: 90vw;
+                max-height: 80vh;
+                overflow-y: auto;
+                margin: 1rem;
+            }
+
+            /* Timer and feedback responsive styling */
+            #timerDisplay {
+                position: fixed;
+                top: 1rem;
+                right: 1rem;
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 0.5rem 1rem;
+                border-radius: 20px;
+                font-size: clamp(0.8rem, 2.5vw, 1.2rem);
+                font-weight: bold;
+                z-index: 100;
+                backdrop-filter: blur(5px);
+            }
+
+            .timer-warning {
+                background: rgba(220, 53, 69, 0.9) !important;
+                animation: pulse 1s infinite;
+            }
+
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+                100% { transform: scale(1); }
+            }
+
+            #feedbackDisplay {
+                max-width: 80vw;
+                font-size: clamp(0.8rem, 2.5vw, 1rem);
+                padding: 0.75rem 1rem;
+            }
+
+            /* Final screen responsive styling */
+            #finalScreenContainer {
+                padding: 1rem;
+            }
+
+            .final-screen-content .card {
+                max-width: 90vw;
+                width: 100%;
+                padding: 2rem 1rem;
+            }
+
+            .final-screen-content .title {
+                font-size: clamp(1.5rem, 6vw, 2.5rem);
+            }
+
+            .final-screen-content .message {
+                font-size: clamp(1rem, 3vw, 1.2rem);
+            }
+
+            .user-greeting {
+                font-size: clamp(1.2rem, 4vw, 1.5rem);
+            }
+
+            .restart-btn {
+                padding: 0.75rem 1.5rem;
+                font-size: clamp(0.9rem, 3vw, 1.1rem);
+            }
+
+            /* Utility classes for dynamic adjustments */
+            .fit-screen {
+                height: 100vh !important;
+                max-height: 100vh !important;
+                overflow: hidden !important;
+            }
+
+            .text-fit {
+                font-size: clamp(0.6rem, 2vw, 2rem) !important;
+                line-height: 1.2 !important;
+            }
+
+            .button-fit {
+                min-height: 4vh !important;
+                max-height: 12vh !important;
+                font-size: clamp(0.5rem, 2vw, 1.2rem) !important;
+            }
+        `;
         
-        console.log("QuizQuestionHandler: Current user after processing:", this.currentUser);
+        document.head.appendChild(style);
     }
+
+    // Enhanced method to ensure content fits on screen
+    ensureScreenFit() {
+        const container = document.querySelector('.quiz-container') || 
+                         document.querySelector('#quizContainer') || 
+                         document.querySelector('.c-quiz-area');
+        
+        if (container) {
+            container.classList.add('fit-screen');
+        }
+
+        // Dynamically adjust if content is overflowing
+        const questionText = document.getElementById('questionText');
+        const answersContainer = document.querySelector('.c-answers-container');
+        
+        if (questionText && answersContainer) {
+            const totalHeight = window.innerHeight;
+            const questionHeight = questionText.offsetHeight;
+            const answersHeight = answersContainer.offsetHeight;
+            
+            // If content doesn't fit, apply more aggressive sizing
+            if (questionHeight + answersHeight > totalHeight * 0.9) {
+                questionText.classList.add('text-fit');
+                
+                const answerButtons = document.querySelectorAll('.c-answer-btn');
+                answerButtons.forEach(btn => {
+                    btn.classList.add('button-fit');
+                });
+            }
+        }
+    }
+setCurrentUser(user) {
+    console.log("QuizQuestionHandler: Setting current user:", user);
+    this.currentUser = user;
+    
+    // Ensure both id and user_id are available for compatibility
+    if (this.currentUser && !this.currentUser.user_id && this.currentUser.id) {
+        this.currentUser.user_id = this.currentUser.id;
+    }
+    if (this.currentUser && !this.currentUser.id && this.currentUser.user_id) {
+        this.currentUser.id = this.currentUser.user_id;
+    }
+    
+    console.log("QuizQuestionHandler: Current user after processing:", this.currentUser);
+    this.ensureScreenFit();
+}
 
     loadQuestion(questionData) {
         console.log("Loading question:", questionData);
@@ -45,6 +412,9 @@ class QuizQuestionHandler {
 
         // Bind events
         this.bindAnswerEvents();
+
+        // Ensure responsive design is applied
+        this.ensureScreenFit();
 
         // Emit custom event
         document.dispatchEvent(new CustomEvent('questionLoaded', {
@@ -105,26 +475,30 @@ clearExplanations() {
         });
     }
 
-    setQuestionText(questionData) {
-        const questionText = document.getElementById('questionText');
-        if (questionText) {
-            // Use custom question text if provided, otherwise use default
-            let questionType;
-            if (questionData.type === 'theme_selection') {
-                questionType = questionData.question || 'Select a theme for the next round:';
-            } else {
-                questionType = questionData.question || 'No question text provided.';
-            }
-            questionText.textContent = questionType;
+setQuestionText(questionData) {
+    const questionText = document.getElementById('questionText');
+    if (questionText) {
+        // Use custom question text if provided, otherwise use default
+        let questionType;
+        if (questionData.type === 'theme_selection') {
+            questionType = questionData.question || 'Select a theme for the next round:';
+        } else {
+            questionType = questionData.question || 'No question text provided.';
         }
+        questionText.textContent = questionType;
     }
+    this.ensureScreenFit();
+}
 
-    setQuestionImage(questionData) {
-        const questionImage = document.getElementById('questionImage');
-        if (questionImage && questionData.image) {
-            questionImage.innerHTML = `<img src="${questionData.image}" alt="Question image" class="c-question-image">`;
-        }
+
+setQuestionImage(questionData) {
+    const questionImage = document.getElementById('questionImage');
+    if (questionImage && questionData.image) {
+        questionImage.innerHTML = `<img src="${questionData.image}" alt="Question image" class="c-question-image">`;
     }
+    this.ensureScreenFit();
+}
+
 
 setupAnswerOptions(questionData) {
     const options = questionData.type === 'theme_selection'
@@ -183,7 +557,10 @@ setupAnswerOptions(questionData) {
             button.disabled = true;
         }
     });
+    
+    this.ensureScreenFit();
 }
+
     bindAnswerEvents() {
         const answerButtons = document.querySelectorAll('.c-answer-btn');
         if (answerButtons.length === 0) {
@@ -402,7 +779,10 @@ displayExplanation(explanationData) {
     document.dispatchEvent(new CustomEvent('explanationDisplayed', {
         detail: { explanationText, duration, questionId }
     }));
+    
+    this.ensureScreenFit();
 }
+
 
     // Fallback method to create a modal-style explanation display
     createExplanationModal(explanationText) {
@@ -436,17 +816,17 @@ displayExplanation(explanationData) {
         modal.innerHTML = `
             <div class="explanation-modal-content" style="
                 background: white;
-                padding: 30px;
+                padding: clamp(15px, 4vw, 30px);
                 border-radius: 10px;
-                max-width: 600px;
+                max-width: min(600px, 90vw);
                 max-height: 80vh;
                 overflow-y: auto;
                 margin: 20px;
                 box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             ">
                 <div class="explanation-content">
-                    <h3 style="color: #333; margin-bottom: 20px;">Explanation</h3>
-                    <p style="color: #666; line-height: 1.6; margin-bottom: 30px; white-space: pre-line;">
+                    <h3 style="color: #333; margin-bottom: 20px; font-size: clamp(1.2rem, 4vw, 2rem);">Explanation</h3>
+                    <p style="color: #666; line-height: 1.6; margin-bottom: 30px; white-space: pre-line; font-size: clamp(0.9rem, 3vw, 1.2rem);">
                         ${explanationText}
                     </p>
                 </div>
@@ -539,7 +919,10 @@ displayTheme(themeData) {
     document.dispatchEvent(new CustomEvent('themeDisplayed', {
         detail: { themeName, themeDescription }
     }));
+    
+    this.ensureScreenFit();
 }
+
 
 // Fallback method to create a modal-style theme display
 createThemeModal(themeName, themeDescription) {
@@ -573,17 +956,17 @@ createThemeModal(themeName, themeDescription) {
     modal.innerHTML = `
         <div class="theme-modal-content" style="
             background: white;
-            padding: 30px;
+            padding: clamp(15px, 4vw, 30px);
             border-radius: 10px;
-            max-width: 600px;
+            max-width: min(600px, 90vw);
             max-height: 80vh;
             overflow-y: auto;
             margin: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         ">
             <div class="theme-content">
-                <h3 style="color: #333; margin-bottom: 20px;">Theme: ${themeName}</h3>
-                <p style="color: #666; line-height: 1.6; margin-bottom: 30px; white-space: pre-line;">
+                <h3 style="color: #333; margin-bottom: 20px; font-size: clamp(1.2rem, 4vw, 2rem);">Theme: ${themeName}</h3>
+                <p style="color: #666; line-height: 1.6; margin-bottom: 30px; white-space: pre-line; font-size: clamp(0.9rem, 3vw, 1.2rem);">
                     ${themeDescription}
                 </p>
             </div>
@@ -633,7 +1016,7 @@ displayFinalScreen(title, message) {
     const lastName = localStorage.getItem('user_last_name') || '';
     const userName = `${firstName} ${lastName}`.trim();
     
-    // Inject CSS directly
+    // Inject CSS directly with responsive design
     const style = document.createElement('style');
     style.textContent = `
         #finalScreenContainer {
@@ -649,6 +1032,8 @@ displayFinalScreen(title, message) {
             z-index: 1000;
             animation: fadeIn 0.5s ease-out;
             overflow: hidden;
+            padding: 1rem;
+            box-sizing: border-box;
         }
         @keyframes fadeIn {
             from { opacity: 0; }
@@ -665,12 +1050,14 @@ displayFinalScreen(title, message) {
         .final-screen-content .card {
             position: relative;
             background: white;
-            padding: 3rem;
+            padding: clamp(1.5rem, 5vw, 3rem);
             border-radius: 20px;
             box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
             text-align: center;
-            max-width: 600px;
-            width: 90%;
+            max-width: min(600px, 90vw);
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
             transform: scale(0.95);
             animation: cardEnter 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
             overflow: visible;
@@ -695,7 +1082,7 @@ displayFinalScreen(title, message) {
             pointer-events: none;
         }
         .final-screen-content .title {
-            font-size: 2.5rem;
+            font-size: clamp(1.5rem, 6vw, 2.5rem);
             margin-bottom: 1rem;
             color: #4a4a4a;
             background: linear-gradient(to right, #667eea, #764ba2);
@@ -705,13 +1092,13 @@ displayFinalScreen(title, message) {
             font-weight: 700;
         }
         .final-screen-content .message {
-            font-size: 1.2rem;
+            font-size: clamp(1rem, 3vw, 1.2rem);
             color: #666;
             margin-bottom: 1rem;
             line-height: 1.6;
         }
         .user-greeting {
-            font-size: 1.5rem;
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
             font-weight: bold;
             margin: 1.5rem 0;
             color: #4a4a4a;
@@ -727,8 +1114,8 @@ displayFinalScreen(title, message) {
             background: linear-gradient(to right, #667eea, #764ba2);
             color: white;
             border: none;
-            padding: 1rem 2rem;
-            font-size: 1.1rem;
+            padding: clamp(0.75rem, 3vw, 1rem) clamp(1.5rem, 4vw, 2rem);
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
             border-radius: 50px;
             cursor: pointer;
             overflow: hidden;
@@ -785,12 +1172,14 @@ displayFinalScreen(title, message) {
         }
         .scores-container {
             margin: 1rem 0;
-            padding: 1.5rem;
+            padding: clamp(1rem, 3vw, 1.5rem);
             background: rgba(102, 126, 234, 0.1);
             border-radius: 10px;
             animation: fadeInUp 0.5s ease-out;
             position: relative;
             z-index: 2;
+            max-height: 30vh;
+            overflow-y: auto;
         }
         @keyframes fadeInUp {
             from {
@@ -800,6 +1189,26 @@ displayFinalScreen(title, message) {
             to {
                 opacity: 1;
                 transform: translateY(0);
+            }
+        }
+
+        /* Mobile specific adjustments */
+        @media (max-height: 600px) {
+            .final-screen-content .card {
+                max-height: 90vh;
+                padding: clamp(1rem, 3vw, 2rem);
+            }
+            .final-screen-content .title {
+                font-size: clamp(1.2rem, 5vw, 2rem);
+                margin-bottom: 0.5rem;
+            }
+            .user-greeting {
+                margin: 1rem 0;
+                font-size: clamp(1rem, 3.5vw, 1.3rem);
+            }
+            .scores-container {
+                max-height: 25vh;
+                margin: 0.5rem 0;
             }
         }
     `;
@@ -823,7 +1232,7 @@ displayFinalScreen(title, message) {
     // Generate INSANE full-screen confetti
     const colors = ['#f00', '#0f0', '#00f', '#ff0', '#f0f', '#0ff', '#ff6b6b', '#4ecdc4', '#ffe66d', '#ff9ff3'];
     const shapes = ['50%', '0', '25%', '75%', '100%'];
-    const confettiCount = 1000; // Increase this number for even more madness
+    const confettiCount = 1000
     
     for (let i = 0; i < confettiCount; i++) {
         const confetti = document.createElement('div');
@@ -1042,46 +1451,49 @@ displayFinalScreen(title, message) {
         `;
     }
 
-    // Method to handle error display
-    handleErrorDisplay(message) {
-        console.error("Question error:", message);
+handleErrorDisplay(message) {
+    console.error("Question error:", message);
 
-        const questionText = document.getElementById('questionText');
-        const questionImage = document.getElementById('questionImage');
-        const answerButtons = document.querySelectorAll('.c-answer-btn');
+    const questionText = document.getElementById('questionText');
+    const questionImage = document.getElementById('questionImage');
+    const answerButtons = document.querySelectorAll('.c-answer-btn');
 
-        if (questionText) questionText.textContent = `ERROR: ${message}`;
-        if (questionImage) questionImage.innerHTML = '';
+    if (questionText) questionText.textContent = `ERROR: ${message}`;
+    if (questionImage) questionImage.innerHTML = '';
 
-        answerButtons.forEach(button => {
-            button.style.display = 'none';
-            button.disabled = true;
-            button.textContent = '';
-            button.classList.remove('selected');
-        });
+    answerButtons.forEach(button => {
+        button.style.display = 'none';
+        button.disabled = true;
+        button.textContent = '';
+        button.classList.remove('selected');
+    });
 
-        this.showFeedback(message, true);
+    this.showFeedback(message, true);
 
-        document.dispatchEvent(new CustomEvent('quizError', {
-            detail: { message }
-        }));
-    }
+    document.dispatchEvent(new CustomEvent('quizError', {
+        detail: { message }
+    }));
+    
+    this.ensureScreenFit();
+}
 
-    // Method to reset the quiz state
-    reset() {
-        this.currentQuestion = null;
-        this.timeRemaining = 0;
-        this.clearQuestion();
-        
-        // Hide overlays
-        const explanationContainer = document.getElementById('explanationContainer');
-        const finalContainer = document.getElementById('finalScreenContainer');
-        
-        if (explanationContainer) explanationContainer.style.display = 'none';
-        if (finalContainer) finalContainer.style.display = 'none';
-        
-        console.log("Quiz handler reset");
-    }
+
+reset() {
+    this.currentQuestion = null;
+    this.timeRemaining = 0;
+    this.clearQuestion();
+    
+    // Hide overlays
+    const explanationContainer = document.getElementById('explanationContainer');
+    const finalContainer = document.getElementById('finalScreenContainer');
+    
+    if (explanationContainer) explanationContainer.style.display = 'none';
+    if (finalContainer) finalContainer.style.display = 'none';
+    
+    console.log("Quiz handler reset");
+    this.ensureScreenFit();
+}
+
 }
 
 window.QuizQuestionHandler = QuizQuestionHandler;

@@ -47,7 +47,11 @@ except ImportError as e:
 virtualTemperature = 0
 
 
-current_phase = None
+# Global variables
+previous_temperature = None
+previous_illuminance = None
+newClient = None  # This should be set elsewhere in your code
+current_phase = None    
 # ----------------------------------------------------
 # App setup
 # ----------------------------------------------------
@@ -78,35 +82,120 @@ connected_clients = set()
 # Mount Socket.IO on the same app
 app.mount("/socket.io", socketio.ASGIApp(sio, app))
 
-
+newClient = None
 # ----------------------------------------------------
 # Socket.IO event handlers
 # ----------------------------------------------------
 # Socket.IO event handlers
 @sio.event
 async def connect(sid, environ):
+    global newClient
     print(f"Client {sid} connected")
     connected_clients.add(sid)
 
-    # Send welcome message to the newly connected client
-    await sio.emit('welcome', {
-        'message': 'Successfully connected to the server',
-        'client_id': sid,
-        'timestamp': datetime.now().isoformat()
-    }, room=sid)
+    try:
+        # Send welcome message to the newly connected client
+        await sio.emit('welcome', {
+            'message': 'Successfully connected to the server',
+            'client_id': sid,
+            'timestamp': datetime.now().isoformat()
+        }, room=sid)
 
-    # Notify all other clients about new connection
-    await sio.emit('client_connected', {
-        'client_id': sid,
-        'total_clients': len(connected_clients),
-        'timestamp': datetime.now().isoformat()
-    }, skip_sid=sid) # <--- This is the key line for 'client_connected'
-    print(f"Server emitted 'client_connected' for new client {sid}. Total clients: {len(connected_clients)}")
+        # Notify all other clients about new connection
+        await sio.emit('client_connected', {
+            'client_id': sid,
+            'total_clients': len(connected_clients),
+            'timestamp': datetime.now().isoformat()
+        }, skip_sid=sid)
+        newClient = sid
+        print(f"Server emitted 'client_connected' for new client {sid}. Total clients: {len(connected_clients)}")
 
+        # Sync client with current phase
+        active_session_id = get_active_session_id()
+        if not active_session_id:
+            print(f"No active session for client {sid}")
+            return
+
+        current_phase = get_session_phase(active_session_id)
+        if not current_phase:
+            print(f"No current phase for session {active_session_id}")
+            return
+
+        session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+        if not session_info:
+            print(f"No session info found for {active_session_id}")
+            return
+
+        quiz_state = get_quiz_state(active_session_id)
+        print(f"Syncing client {sid} with phase {current_phase}")
+
+        if current_phase == 'voting':
+            try:
+                # Ensure we have a valid event loop
+                loop = asyncio.get_event_loop()
+                emit_combined_theme_selection(sio, loop, sid)
+                print(f"Sent theme selection to client {sid}")
+            except Exception as e:
+                print(f"Error sending theme selection: {e}")
+
+        elif current_phase == 'theme_display':
+            theme_id = session_info.get('themeId')
+            if theme_id:
+                try:
+                    theme_data = ThemeRepository.get_theme_by_id(theme_id)
+                    if theme_data:
+                        await sio.emit('theme_selected', {
+                            'session_id': active_session_id,  # Use parameter instead of function call
+                            'theme_data': theme_data,
+                            'timestamp': datetime.now().isoformat()
+                        }, room=sid)
+                        print(f"Sent theme display to client {sid}")
+                except Exception as e:
+                    print(f"Error sending theme display: {e}")
+
+        elif current_phase == 'quiz':
+            current_question = quiz_state.get('current_question')
+            if current_question:
+                try:
+                    # Send current question
+                    emit_combined_question_and_answers(
+                        current_question['id'], 
+                        sio, 
+                        asyncio.get_event_loop()
+                    )
+                    
+                    # Send question number
+                    await sio.emit('question_number', {
+                        'session_id': active_session_id,
+                        'question_number': quiz_state.get('question_count', 1),
+                        'timestamp': datetime.now().isoformat()
+                    }, room=sid)
+                    
+                    if quiz_state.get('waiting_for_answers', False):
+                        await sio.emit('waiting_for_answers', {
+                            'session_id': active_session_id,
+                            'timestamp': datetime.now().isoformat()
+                        }, room=sid)
+                        print(f"Sent waiting_for_answers to client {sid}")
+                    else:
+                        explanation = current_question.get('explanation', 'No explanation available')
+                        await sio.emit('explanation', {
+                            'session_id': active_session_id,
+                            'question_id': current_question['id'],
+                            'explanation_text': explanation,
+                            'timestamp': datetime.now().isoformat()
+                        }, room=sid)
+                        print(f"Sent explanation to client {sid}")
+                except Exception as e:
+                    print(f"Error syncing quiz state: {e}")
+
+    except Exception as e:
+        print(f"Critical error in connect handler: {e}")
+        traceback.print_exc()
 
 
 @sio.event
-async def disconnect(sid): # <--- You need a disconnect handler!
+async def disconnect(sid):
     print(f"Client {sid} disconnected")
     if sid in connected_clients:
         connected_clients.remove(sid)
@@ -118,8 +207,18 @@ async def disconnect(sid): # <--- You need a disconnect handler!
         'timestamp': datetime.now().isoformat()
     })
     print(f"Server emitted 'client_disconnected' for client {sid}. Total clients: {len(connected_clients)}")
+    
     if len(connected_clients) <= 0:
-        QuizSessionRepository.update_session_status(get_active_session_id(), 3)
+        # Schedule status update only if no clients reconnect within 10 seconds
+        async def delayed_status_update():
+            await asyncio.sleep(10)
+            # Check again if still no clients are connected
+            if len(connected_clients) <= 0:
+                QuizSessionRepository.update_session_status(get_active_session_id(), 3)
+                print(f"Updated session status to 'ended' after 10 seconds of inactivity")
+        
+        # Create and run the task
+        asyncio.create_task(delayed_status_update())
 
 
 
@@ -161,7 +260,23 @@ async def leave_room(sid, data):
 # ----------------------------------------------------
 
 
+import asyncio
 
+def threadsafe_emit_message_sent(sio, session_id, loop):
+    """
+    Thread-safe emission of 'message_sent' event
+    
+    Args:
+        sio: Socket.IO client instance
+        session_id: The session ID to include in the message
+        loop: The event loop to run the coroutine in
+    """
+    asyncio.run_coroutine_threadsafe(
+        sio.emit('message_sent', {
+            'session_id': session_id
+        }), 
+        loop
+    )
 
 
 
@@ -1236,6 +1351,7 @@ async def register_user(user_credentials: UserCredentials, request: Request):
             reply_to_id=1
         )
 
+        threadsafe_emit_message_sent(sio,get_active_session_id(),main_asyncio_loop)
 
 
         log_user_ip_address(user_id, get_client_ip(request))
@@ -2616,7 +2732,7 @@ async def create_chat_message(request: ChatMessageCreate):
             message_type=request.message_type,
             reply_to_id=request.reply_to_id
         )
-        
+        threadsafe_emit_message_sent(sio,get_active_session_id(),main_asyncio_loop)
         if message_id is None:
             logger.error("Message ID is None after create_chat_message. Database insertion might have failed.")
             raise Exception("Failed to create message: message_id is None")
@@ -2741,7 +2857,7 @@ async def user_left_quiz(sid, data):
             user_id=user_id,
             message_type="system"
         )
-        
+        threadsafe_emit_message_sent(sio,get_active_session_id(),main_asyncio_loop)
         return True
         
     except Exception as e:
@@ -2773,7 +2889,7 @@ async def send_system_message(session_id: int, message: str, message_type: str =
             user_id=0,  # System user ID
             message_type=message_type
         )
-
+        threadsafe_emit_message_sent(sio,get_active_session_id(),main_asyncio_loop)
         # Broadcast the system message
         await sio.emit('new_chat_message', {
             'messageId': message_id,
@@ -3071,7 +3187,6 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
 
             # --- Step 3: Handle Quiz Session Specific Logic ---
             try:
-                active_sessions = get_active_session_id()
                 if get_active_session_id():
                     # Logic specific to an active quiz can be placed here
                     # For example, logging sensor data to the quiz session
@@ -3113,15 +3228,7 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
         except Exception as e:
             print(f"Pi thread cleanup error: {e}")
 
-# Helper functions to be defined elsewhere
-def emit_sensor_data(sensor_data, sio, loop):
-    try:
-        asyncio.run_coroutine_threadsafe(
-            sio.emit('sensor_data', sensor_data),
-            loop
-        )
-    except Exception as e:
-        print(f"Error emitting sensor_data from thread: {e}")
+
 
 servo_lock = Lock()
 last_servo_command_time = 0.0  # Stores the Unix timestamp of the last command
@@ -3309,18 +3416,41 @@ def log_quiz_sensor_data(session_id, sensor_data):
     except Exception as e:
         print(f"Error logging sensor data: {e}")
 
+
+
+def should_emit(current_temp, current_lux):
+    global previous_temperature, previous_illuminance, newClient
+    
+    # If it's the first reading or newClient has a new value, always emit
+    if (previous_temperature is None or 
+        previous_illuminance is None or 
+        newClient is not None):
+        previous_temperature = current_temp
+        previous_illuminance = current_lux
+        newClient = None  # Reset after checking
+        return True
+    
+    # Check if changes exceed thresholds
+    temp_changed = abs(current_temp - previous_temperature) > 1
+    lux_changed = abs(current_lux - previous_illuminance) > 1
+    
+    if temp_changed or lux_changed:
+        previous_temperature = current_temp
+        previous_illuminance = current_lux
+        return True
+    
+    return False
+
 def emit_sensor_data(sensor_data, sio, loop):
-    """Emit sensor data via socket.io."""
+    global newClient
     try:
-        asyncio.run_coroutine_threadsafe(
-            sio.emit('sensor_data', sensor_data),
-            loop
-        )
+        if should_emit(sensor_data['temperature'], sensor_data['illuminance']):
+            asyncio.run_coroutine_threadsafe(
+                sio.emit('sensor_data', sensor_data),
+                loop
+            )
     except Exception as e:
-        print(f"Error emitting sensor_data: {e}")
-
-
-
+        print(f"Error emitting sensor_data from thread: {e}")
 
 
 
@@ -3448,14 +3578,6 @@ def select_question_based_on_sensors(available_questions, temp_sensor, light_sen
     temp = sensor_data['temperature'] + virtualTemperature
     light = sensor_data['illuminance']
    
-    ChatLogRepository.create_chat_message(
-    session_id=get_active_session_id(),
-    message_text=f"virtual temperature is {virtualTemperature}" ,
-    user_id=1,
-    message_type='system',
-    reply_to_id=1
-    )
-        
     def get_bound(q, key, default):
         value = q.get(key)
         return default if value is None else value
@@ -3694,8 +3816,6 @@ def handle_voting_phase(sio, loop, session_id, voting_time):
     
     # Voting countdown with servo movement and continuous theme emission
     for current_time in range(voting_time, -1, -1):
-        # Emit theme selection data every second during voting
-        emit_combined_theme_selection(sio, loop)
         
         emit_timer_update(sio, loop, session_id, current_time, 'voting', voting_time)
         
@@ -3850,6 +3970,7 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
     message_type='system',
     reply_to_id=1
     )
+    threadsafe_emit_message_sent(sio,get_active_session_id(),main_asyncio_loop)
     while available_questions:
         print(f"\n--- Selecting Question {quiz_state['question_count'] + 1} ---")
         
@@ -3946,7 +4067,7 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
                 message_type='system',
                 reply_to_id=1
             )
-            
+            threadsafe_emit_message_sent(sio,get_active_session_id(),main_asyncio_loop)
             # Fixed: Use the correctly retrieved score for comparison
             if current_total_score < required_score:
                 print(f"Quiz ending early: Score {current_total_score} < required {required_score}")
@@ -4485,7 +4606,7 @@ def activateAdvertFlood():
     message_type='system',
     reply_to_id=1
     )
-
+    threadsafe_emit_message_sent(sio,get_active_session_id(),main_asyncio_loop)
 def tempDown():
     """Lower the virtual temperature by 20 degrees"""
     global virtualTemperature
@@ -4497,6 +4618,7 @@ def tempDown():
     message_type='system',
     reply_to_id=1
     )
+    threadsafe_emit_message_sent(sio,get_active_session_id(),main_asyncio_loop)
     # Emit temperature change to all clients
     sio.emit('B2F_temperatureChange', {'temperature': virtualTemperature}, broadcast=True)
 
@@ -4511,6 +4633,7 @@ def tempUp():
     message_type='system',
     reply_to_id=1
     )
+    threadsafe_emit_message_sent(sio,get_active_session_id(),main_asyncio_loop)
     # Emit temperature change to all clients
     sio.emit('B2F_temperatureChange', {'temperature': virtualTemperature}, broadcast=True)
 

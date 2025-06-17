@@ -71,7 +71,7 @@ Dit is de feedback op mijn vragen.
 
 ## Gesprek 4 (Datum: 16/06/2025)
 
-Lector: Dieter Robrouck
+Lector: Dieter Robroouck
 
 Vragen voor dit gesprek:
 

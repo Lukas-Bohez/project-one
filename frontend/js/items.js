@@ -112,3 +112,5 @@ class AdvertFlood {
 // const advertFlood = new AdvertFlood();
 // advertFlood.activate(10); // To manually activate for 10 seconds
 // advertFlood.stop(); // To manually stop
+
+window.AdvertFlood = AdvertFlood
