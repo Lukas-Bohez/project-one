@@ -73,10 +73,10 @@ class QuizSocketHandler {
 
     // ---- TIMER LISTENERS ----
             
-    // Timer events
-    this.socket.on('quiz_timer', (data) => {
-        this.quizLogic.updateTimer(data); // Pass the entire data object
-    });
+this.socket.on('quiz_timer', (data) => {
+    console.log("RAW TIMER DATA FROM SERVER:", data);  // <-- Check keys here!
+    this.quizLogic.updateTimer(data);
+});
 
     this.socket.on('quiz_timer_finished', () => {
         this.quizLogic.handleTimerFinished();

@@ -52,6 +52,7 @@ previous_temperature = None
 previous_illuminance = None
 newClient = None  # This should be set elsewhere in your code
 current_phase = None    
+sensorData = None
 # ----------------------------------------------------
 # App setup
 # ----------------------------------------------------
@@ -3410,6 +3411,7 @@ def should_update_quiz_session(current_time):
 def read_sensor_data(temp_sensor, light_sensor, servo):
     """Read all sensor values with proper temperature validation."""
     global virtualTemperature
+    global sensorData
     try:
         # Read temperature and validate/clamp the value
         raw_temp = temp_sensor.read_temperature()
@@ -3422,6 +3424,7 @@ def read_sensor_data(temp_sensor, light_sensor, servo):
             temperature = max(-50.0, min(100.0, float(raw_temp)))
             # Round to 2 decimal places to avoid precision issues
             temperature = round(temperature, 2) + virtualTemperature
+            sensorData = {'temperature': temperature, 'illuminance': light_sensor()}
         return {
             'temperature': temperature,
             'illuminance': light_sensor(),
@@ -3719,6 +3722,7 @@ def emit_timer_update(sio, loop, session_id, time_remaining, phase, total_time, 
     Emit both timer_update and quiz_timer events for frontend compatibility
     Also handle servo movement during timer
     """
+    global sensorData
     global progress
     try:
         # Calculate servo position (0 degrees at start, 180 degrees at end)
@@ -3732,11 +3736,11 @@ def emit_timer_update(sio, loop, session_id, time_remaining, phase, total_time, 
         
         # Prepare timer data
         timer_data = {
-            'session_id': session_id,
-            'time_remaining': time_remaining,
-            'phase': phase,
-            'total_time': total_time,
-            **extra_data
+            'timeRemaining': str(int(time_remaining)),  # camelCase for JS
+            'speedMultiplier': None,#extra_data.get('speed_multiplier'),  # Map snake_case → camelCase
+            'temperature': sensorData['temperature'],
+            'illuminance': sensorData['illuminance'],
+            'totalTime': total_time  # camelCase for JS
         }
         
         # Emit both events for compatibility
@@ -3829,7 +3833,7 @@ def start_generic_timer(sio, loop, session_id, timer_config):
         return True
 
 def handle_voting_phase(sio, loop, session_id, voting_time):
-    """Handle the voting countdown phase"""
+    """Handle the voting countdown phase with dynamic speed based on votes"""
     print(f"Starting voting phase for session {session_id}")
     
     # Emit voting phase start
@@ -3847,15 +3851,54 @@ def handle_voting_phase(sio, loop, session_id, voting_time):
     if 'servo' in globals():
         servo.set_angle(0)
     
-    # Voting countdown with servo movement and continuous theme emission
-    for current_time in range(voting_time, -1, -1):
-        
+    # Get total number of players in the session
+    players = SessionPlayerRepository.get_session_players(session_id)
+    total_players = len(players) if players else 0
+    print(f"Total players in session: {total_players}")
+    
+    # Voting countdown with dynamic speed based on votes
+    current_time = voting_time
+    last_vote_count = 0
+    start_time = time.time()
+    early_completion = False
+    initial_5s_passed = False
+    
+    while current_time > 0:
         emit_timer_update(sio, loop, session_id, current_time, 'voting', voting_time)
         
-        if current_time <= 0:
+        # Get current vote count
+        with theme_votes_lock:
+            current_vote_count = len(theme_votes.get(session_id, {}))
+        
+        # Check if 5 seconds have passed
+        elapsed_time = time.time() - start_time
+        if not initial_5s_passed and elapsed_time >= 5:
+            initial_5s_passed = True
+            print("Initial 5 seconds have passed - now checking for full participation")
+        
+        # After 5 seconds, check if all players have voted
+        if initial_5s_passed and current_vote_count >= total_players and total_players > 0:
+            print("All players have voted after initial 5 seconds - ending voting phase immediately")
+            current_time = 0
+            early_completion = True
             break
-        time.sleep(1)
+        
+        # Calculate time adjustment based on vote count increase
+        if current_vote_count > last_vote_count:
+            # Reduce time based on the number of new votes (e.g., 0.5s per vote)
+            time_reduction = (current_vote_count - last_vote_count) * 0.5
+            current_time = max(0, current_time - time_reduction)
+            last_vote_count = current_vote_count
+        
+        # Wait for a shorter interval when there are more votes
+        sleep_time = max(0.1, 1.0 - (current_vote_count * 0.05))  # Minimum 0.1s sleep
+        time.sleep(sleep_time)
+        current_time = max(0, current_time - sleep_time)
     
+    # If we broke out early due to all players voting, emit remaining timer updates
+    if early_completion:
+        emit_timer_update(sio, loop, session_id, 0, 'voting', voting_time)
+
     # Emit timer finished
     emit_timer_finished(sio, loop, session_id, 'voting')
     
@@ -3889,16 +3932,17 @@ def handle_voting_phase(sio, loop, session_id, voting_time):
                     'is_active': winning_theme_data.get('is_active', 1)
                 }],
                 'count': 1,
-                'active_only': True,  # Assuming we want only active themes
+                'active_only': True,
                 'timestamp': time.time(),
-                'winning_theme': winning_theme,  # Additional voting-specific field
-                'session_id': session_id  # Additional voting-specific field
+                'winning_theme': winning_theme,
+                'session_id': session_id,
+                'early_completion': early_completion  # Add flag for early completion
             }
 
             future = asyncio.run_coroutine_threadsafe(
                 sio.emit('questionData', combined_data),
                 loop
-        )
+            )
             future.result(timeout=1)
             
             # Continue to theme display phase immediately
@@ -3954,7 +3998,7 @@ def handle_theme_display_phase(sio, loop, session_id, display_time):
         
         if current_time <= 0:
             break
-        time.sleep(1)
+        time.sleep(0.5)
     
     # Emit timer finished
     emit_timer_finished(sio, loop, session_id, 'theme_display', theme_data=theme_data)
@@ -3967,7 +4011,7 @@ def handle_theme_display_phase(sio, loop, session_id, display_time):
     print(f"Theme display finished for session {session_id}, ready for quiz")
 
 def handle_quiz_phase(sio, loop, session_id, timer_config):
-    """Handle the quiz questions phase with sensor-based question selection."""
+    """Handle the quiz questions phase with dynamic timer based on player answers."""
     print(f"Starting quiz phase for session {session_id}")
 
     # Get session and theme info
@@ -3985,40 +4029,32 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
 
     # Initialize quiz state
     quiz_state = get_quiz_state(session_id)
-    # Get all player answer rows for the session
     rows = PlayerAnswerRepository.get_player_answers_for_session(session_id)
-    # Extract just the IDs into a list
     ids = [row['questionId'] for row in rows]
     if not quiz_state['question_count']:
         quiz_state['question_count'] = len(ids)
-    print(f"unavailable answerid's are {ids}")
     available_questions = [q for q in all_questions if q['id'] not in ids]
-    print(f'available questions are: {available_questions}')
-    question_time = timer_config.get('question_time', 15)  # Updated to 15 seconds
-    explanation_time = timer_config.get('explanation_time', 15)  # Updated to 15 seconds
+
+    # Get total players in session
+    players = SessionPlayerRepository.get_session_players(session_id)
+    total_players = len(players) if players else 0
+
     ChatLogRepository.create_chat_message(
-    session_id=get_active_session_id(),
-    message_text=f"Preparing question {quiz_state['question_count']}" ,
-    user_id=1,
-    message_type='system',
-    reply_to_id=1
+        session_id=get_active_session_id(),
+        message_text=f"Preparing question {quiz_state['question_count']}",
+        user_id=1,
+        message_type='system',
+        reply_to_id=1
     )
-    threadsafe_emit_message_sent(sio,get_active_session_id(),main_asyncio_loop)
+    threadsafe_emit_message_sent(sio, get_active_session_id(), main_asyncio_loop)
+
     while available_questions:
-        print(f"\n--- Selecting Question {quiz_state['question_count'] + 1} ---")
-        
-        # Use the new function to select the next question
-        question = select_question_based_on_sensors(available_questions, temp_sensor, light_sensor)
-        
-        if not question:
-            print("No suitable question found based on sensors, trying any available question")
-            question = random.choice(available_questions) if available_questions else None
+        question = select_question_based_on_sensors(available_questions, temp_sensor, light_sensor) or \
+                  random.choice(available_questions) if available_questions else None
             
         if not question:
-            print("No questions available, ending quiz")
             break
 
-        # Remove the selected question from the available pool and add to asked
         available_questions.remove(question)
         update_quiz_state(session_id, 
                          asked_questions=quiz_state['asked_questions'] + [question['id']],
@@ -4026,7 +4062,11 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
                          current_question=question,
                          waiting_for_answers=True)
 
-        # Show question and emit it
+        # Get time limits - explanation time is capped at 6 seconds
+        question_time = question.get('time_limit', 15)
+        explanation_time = min(question_time, 6)  # Never more than 6 seconds
+
+        # Show question
         emit_combined_question_and_answers(question['id'], sio, loop)
         answers = AnswerRepository.get_correct_answers_for_question(question['id'])
         asyncio.run_coroutine_threadsafe(
@@ -4040,38 +4080,44 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
             }), loop
         ).result(timeout=1)
         
-        # Reset servo to start position
-        if 'servo' in globals():
-            servo.set_angle(0)
-
-        # Question countdown with servo movement
-        for current_time in range(question_time, -1, -1):
+        # Question countdown with dynamic speed
+        current_time = question_time
+        all_answered = False
+        
+        while current_time > 0:
             emit_timer_update(sio, loop, session_id, current_time, 'question', question_time, 
                             question_id=question['id'], question_number=quiz_state['question_count'])
-            if current_time <= 0: 
+            
+            answer_count = PlayerAnswerRepository.get_answer_count_for_question(session_id, question['id'])
+            
+            if answer_count >= total_players and total_players > 0:
+                print(f"All players answered - ending question early")
+                all_answered = True
+                current_time = 0
                 break
-            time.sleep(1)
+            
+            sleep_time = max(0.5, 1.0 - (answer_count/total_players * 0.5)) if total_players > 0 else 1.0
+            time.sleep(sleep_time)
+            current_time = max(0, current_time - sleep_time)
         
-        # Mark no longer waiting for answers
+        if all_answered:
+            emit_timer_update(sio, loop, session_id, 0, 'question', question_time, 
+                            question_id=question['id'], question_number=quiz_state['question_count'])
+        
         update_quiz_state(session_id, waiting_for_answers=False)
-        
         emit_timer_finished(sio, loop, session_id, 'question', question_id=question['id'])
 
-        # Show explanation
+        # Show explanation with capped time
         asyncio.run_coroutine_threadsafe(
             sio.emit('explanation_started', {
                 'session_id': session_id,
                 'question_id': question['id'],
                 'explanation_text': question.get('explanation', 'No explanation available'),
-                'duration': explanation_time
+                'duration': explanation_time  # This is now capped at 6 seconds
             }), loop
         ).result(timeout=1)
 
-        # Reset servo for explanation
-        if 'servo' in globals():
-            servo.set_angle(0)
-
-        # Explanation countdown
+        # Explanation countdown (fixed timing)
         for current_time in range(explanation_time, -1, -1):
             emit_timer_update(sio, loop, session_id, current_time, 'explanation', explanation_time, 
                             question_id=question['id'])
@@ -4081,46 +4127,33 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
 
         emit_timer_finished(sio, loop, session_id, 'explanation', question_id=question['id'])
 
-        # Check if we should stop the quiz early (from 5th question onwards)
+        # Early quiz end check
         current_state = get_quiz_state(session_id)
         if current_state['question_count'] >= 5:
-            player_count = max(1, current_state['player_count'])  # Avoid division by zero
+            player_count = max(1, current_state['player_count'])
             required_score = 10 * player_count * current_state['question_count']
-            
-            # Fixed: Get current total score and update the state properly
             current_total_score = PlayerAnswerRepository.get_total_score_for_session(session_id)
             
-            # Update the quiz state with the current total score
-            update_quiz_state(session_id, total_score=current_total_score)
-            
-            ChatLogRepository.create_chat_message(
-                session_id=get_active_session_id(),
-                message_text=f"The new required score is {required_score}, don't fall below it now, you're current score is {current_total_score}",
-                user_id=1,
-                message_type='system',
-                reply_to_id=1
-            )
-            threadsafe_emit_message_sent(sio,get_active_session_id(),main_asyncio_loop)
-            # Fixed: Use the correctly retrieved score for comparison
             if current_total_score < required_score:
-                print(f"Quiz ending early: Score {current_total_score} < required {required_score}")
                 break
 
-        # Refresh available questions for next iteration
+        # Refresh questions
         quiz_state = get_quiz_state(session_id)
         available_questions = [q for q in all_questions if q['id'] not in quiz_state['asked_questions']]
 
     # Quiz finished
-    print(f"\n--- Quiz finished for session {session_id} ---")
     QuizSessionRepository.update_session_status(session_id, 3)
     final_state = get_quiz_state(session_id)
     asyncio.run_coroutine_threadsafe(
         sio.emit('quiz_finished', {
             'session_id': session_id,
             'final_score': final_state['total_score'],
-            'questions_asked': final_state['question_count']
+            'questions_asked': final_state['question_count'],
+            'all_questions_answered': all_answered if 'all_answered' in locals() else False
         }), loop
     ).result(timeout=1)
+
+
 
 def emit_error(sio, loop, session_id, error_message):
     """Emit error message to clients"""
@@ -4626,22 +4659,39 @@ async def handle_theme_selection(sid, data):
 # --------------
 
 
-
-
-
-# Item effect functions
-def activateAdvertFlood():
-    """Call this function to trigger the 10-second ad flood on all clients"""
-    print("sending advert flood emit")
-    sio.emit('B2F_addItem', {}, broadcast=True)
-    ChatLogRepository.create_chat_message(
-    session_id=get_active_session_id(),
-    message_text=f"Activating add flood effect" ,
-    user_id=1,
-    message_type='system',
-    reply_to_id=1
+def threadsafe_emit_item_effect(sio, loop):
+    """
+    Thread-safe emission of 'B2F_addItem' event
+    (Same exact logic as threadsafe_emit_message_sent, but for items)
+    
+    Args:
+        sio: Socket.IO client instance
+        loop: The event loop to run the coroutine in
+    """
+    asyncio.run_coroutine_threadsafe(
+        sio.emit('B2F_addItem', {}),  # No session_id needed for this event
+        loop
     )
-    threadsafe_emit_message_sent(sio,get_active_session_id(),main_asyncio_loop)
+
+
+def activateAdvertFlood():
+    """Triggers 10-second ad flood on all clients (thread-safe)"""
+    print("sending advert flood emit")
+    
+    # Use the new threadsafe emit (same pattern as before)
+    threadsafe_emit_item_effect(sio, main_asyncio_loop)
+    
+    # Log the system message (unchanged)
+    ChatLogRepository.create_chat_message(
+        session_id=get_active_session_id(),
+        message_text=f"The temperature is getting colder {virtualTemperature}",
+        user_id=1,
+        message_type='system',
+        reply_to_id=1
+    )
+    # Emit message_sent (unchanged)
+    threadsafe_emit_message_sent(sio, get_active_session_id(), main_asyncio_loop)
+
 def tempDown():
     """Lower the virtual temperature by 20 degrees"""
     global virtualTemperature

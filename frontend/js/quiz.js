@@ -82,14 +82,14 @@ class QuizLogic {
 
 // Delegate methods to appropriate handlers
 updateTimer(timerData) {
+    console.log("DATA IN QUIZLOGIC UPDATETIMER:", timerData);
     if (this.timerHandler) {
-        // Pass all relevant data to the timer handler
         this.timerHandler.updateTimer(
-            timerData.time_remaining,
-            timerData.speed_multiplier,
+            timerData.timeRemaining,
+            timerData.speedMultiplier,
             timerData.temperature,
             timerData.illuminance,
-            timerData.total_time
+            timerData.totalTime
         );
     }
 }
