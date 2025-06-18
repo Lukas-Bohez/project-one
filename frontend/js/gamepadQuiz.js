@@ -22,19 +22,7 @@ class QuizGamepadNavigator {
         
         // Double press detection for down button
         this.lastDownPress = 0;
-        this.doublePressThreshold = 500; // half 1 second
-
-        // Store referrer for select button
-        this.referrer = document.referrer || '../index.html';
-
-        // Storage keys configuration
-        this.STORAGE_KEYS = {
-            USER: {
-                FIRST_NAME: 'firstName',
-                LAST_NAME: 'lastName',
-                PASSWORD: 'password'
-            }
-        };
+        this.doublePressThreshold = 250; // half 1 second
 
         this.init();
     }
@@ -141,64 +129,64 @@ class QuizGamepadNavigator {
         requestAnimationFrame(() => this.gamepadLoop());
     }
 
-    handleGamepadInput(gamepad) {
-        const buttonA = gamepad.buttons[1]?.pressed || false;
-        const buttonB = gamepad.buttons[2]?.pressed || false;
-        const buttonX = gamepad.buttons[3]?.pressed || false;
-        const buttonY = gamepad.buttons[0]?.pressed || false;
-        const buttonSelect = gamepad.buttons[8]?.pressed || false;
-        const buttonStart = gamepad.buttons[9]?.pressed || false;
+handleGamepadInput(gamepad) {
+    const buttonA = gamepad.buttons[1]?.pressed || false;  // Right button (Confirm)
+    const buttonB = gamepad.buttons[2]?.pressed || false;  // Bottom button (Cancel)
+    const buttonX = gamepad.buttons[0]?.pressed || false;  // Left button
+    const buttonY = gamepad.buttons[3]?.pressed || false;  // Top button
+    const buttonSelect = gamepad.buttons[8]?.pressed || false;
+    const buttonStart = gamepad.buttons[9]?.pressed || false;
 
-        const axis0 = gamepad.axes[0];
-        const axis1 = gamepad.axes[1];
-        const axisThreshold = 0.5;
+    const axis0 = gamepad.axes[0];
+    const axis1 = gamepad.axes[1];
+    const axisThreshold = 0.5;
 
-        const dpadUp = axis1 < -axisThreshold;
-        const dpadDown = axis1 > axisThreshold;
-        const dpadLeft = axis0 < -axisThreshold;
-        const dpadRight = axis0 > axisThreshold;
+    const dpadUp = axis1 < -axisThreshold;
+    const dpadDown = axis1 > axisThreshold;
+    const dpadLeft = axis0 < -axisThreshold;
+    const dpadRight = axis0 > axisThreshold;
 
-        // Handle input changes (only on press, not hold)
-        if (dpadUp && !this.buttonStates.dpadUp) {
-            this.handleUp();
-        }
-        if (dpadDown && !this.buttonStates.dpadDown) {
-            this.handleDown();
-        }
-        if (dpadLeft && !this.buttonStates.dpadLeft) {
-            this.handleLeft();
-        }
-        if (dpadRight && !this.buttonStates.dpadRight) {
-            this.handleRight();
-        }
-
-        if (buttonA && !this.buttonStates.buttonA) {
-            this.handleAnswerButton('A');
-        }
-        if (buttonB && !this.buttonStates.buttonB) {
-            this.handleAnswerButton('B');
-        }
-        if (buttonX && !this.buttonStates.buttonX) {
-            this.handleAnswerButton('X');
-        }
-        if (buttonY && !this.buttonStates.buttonY) {
-            this.handleAnswerButton('Y');
-        }
-
-        if (buttonSelect && !this.buttonStates.buttonSelect) {
-            this.handleSelect();
-        }
-        if (buttonStart && !this.buttonStates.buttonStart) {
-            this.handleStart();
-        }
-
-        // Update button states
-        this.buttonStates = {
-            dpadUp, dpadDown, dpadLeft, dpadRight,
-            buttonA, buttonB, buttonX, buttonY,
-            buttonSelect, buttonStart
-        };
+    // Handle input changes (only on press, not hold)
+    if (dpadUp && !this.buttonStates.dpadUp) {
+        this.handleUp();
     }
+    if (dpadDown && !this.buttonStates.dpadDown) {
+        this.handleDown();
+    }
+    if (dpadLeft && !this.buttonStates.dpadLeft) {
+        this.handleLeft();
+    }
+    if (dpadRight && !this.buttonStates.dpadRight) {
+        this.handleRight();
+    }
+
+    if (buttonA && !this.buttonStates.buttonA) {
+        this.handleAnswerButton('A');  // A button (right) is A
+    }
+    if (buttonB && !this.buttonStates.buttonB) {
+        this.handleAnswerButton('B');  // B button (bottom) is B
+    }
+    if (buttonX && !this.buttonStates.buttonX) {
+        this.handleAnswerButton('X');  // X button (left) is X
+    }
+    if (buttonY && !this.buttonStates.buttonY) {
+        this.handleAnswerButton('Y');  // Y button (top) is Y
+    }
+
+    if (buttonSelect && !this.buttonStates.buttonSelect) {
+        this.handleSelect();
+    }
+    if (buttonStart && !this.buttonStates.buttonStart) {
+        this.handleStart();
+    }
+
+    // Update button states
+    this.buttonStates = {
+        dpadUp, dpadDown, dpadLeft, dpadRight,
+        buttonA, buttonB, buttonX, buttonY,
+        buttonSelect, buttonStart
+    };
+}
 
     handleUp() {
         const context = this.contexts[this.currentContext];
@@ -301,9 +289,9 @@ class QuizGamepadNavigator {
     }
 
     handleSelect() {
-        // Go back to referrer page
-        console.log('Select button pressed - navigating back to:', this.referrer);
-        window.location.href = this.referrer;
+        // Emergency exit - always go back to index.html
+        console.log('Select button pressed - emergency exit to index.html');
+        window.location.href = '/index.html';
     }
 
     handleStart() {

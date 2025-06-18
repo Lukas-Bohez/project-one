@@ -214,8 +214,8 @@ renderAnswerBoxes(options, container, questionType) {
     const buttonConfigs = [
         { color: '#FF5A5A', key: 'right', label: 'A' },
         { color: '#FFD166', key: 'bottom', label: 'B' },
-        { color: '#06D6A0', key: 'left', label: 'X' },
-        { color: '#118AB2', key: 'top', label: 'Y' }
+        { color: '#06D6A0', key: 'left', label: 'Y' },
+        { color: '#118AB2', key: 'top', label: 'X' }
     ];
     options.forEach((option, i) => {
         const config = buttonConfigs[i];
@@ -336,131 +336,134 @@ injectAnswerBoxStyles() {
 
 
 
-    bindAnswerEvents() {
-        const answerButtons = document.querySelectorAll('.c-answer-btn');
-        if (answerButtons.length === 0) {
-            console.warn("No answer buttons found");
-            return;
-        }
-
-        answerButtons.forEach((button, index) => {
-            // Remove old listener
-            const oldClickListener = button.__quizAnswerListener;
-            if (oldClickListener) {
-                button.removeEventListener('click', oldClickListener);
-            }
-
-            // Add new listener
-            const newClickListener = () => {
-                this.handleAnswerClick(index, button);
-            };
-            button.addEventListener('click', newClickListener);
-            button.__quizAnswerListener = newClickListener;
-        });
-
-        console.log("Bound events to", answerButtons.length, "answer buttons");
+bindAnswerEvents() {
+    const answerBoxes = document.querySelectorAll('.answer-box');
+    if (answerBoxes.length === 0) {
+        console.warn("No answer boxes found");
+        return;
     }
 
-    handleAnswerClick(answerIndex, buttonElement) {
-        console.log("Answer clicked:", answerIndex);
-        console.log("Current user at time of click:", this.currentUser);
-
-        if (!this.currentQuestion || !this.currentQuestion.type) {
-            console.error("Invalid question state");
-            return;
+    answerBoxes.forEach((box, index) => {
+        // Remove old listener if it exists
+        const oldClickListener = box.__quizAnswerListener;
+        if (oldClickListener) {
+            box.removeEventListener('click', oldClickListener);
         }
 
-        const answerButtons = document.querySelectorAll('.c-answer-btn');
-        const questionType = this.currentQuestion.type;
-        answerButtons.forEach(btn => btn.disabled = true);
+        // Add new listener
+        const newClickListener = () => {
+            this.handleAnswerClick(index, box);
+        };
+        box.addEventListener('click', newClickListener);
+        box.__quizAnswerListener = newClickListener;
+    });
 
-        // FIXED: Better user validation
-        if (!this.currentUser) {
-            console.error("No current user set in handler");
-            this.handleErrorDisplay("Please log in again - no user data");
-            answerButtons.forEach(btn => btn.disabled = false);
-            return;
-        }
+    console.log("Bound events to", answerBoxes.length, "answer boxes");
+}
 
-        // Check for both possible user ID fields
-        const userId = this.currentUser.user_id || this.currentUser.id;
-        if (!userId) {
-            console.error("User object missing ID field:", this.currentUser);
-            this.handleErrorDisplay("Please log in again - missing user ID");
-            answerButtons.forEach(btn => btn.disabled = false);
-            return;
-        }
-
-        console.log("Using user ID:", userId);
-
-        const options = questionType === 'theme_selection'
-            ? this.currentQuestion.themes
-            : this.currentQuestion.answers;
-
-        if (!options || !Array.isArray(options)) {
-            console.error("Invalid options array:", options);
-            this.handleErrorDisplay("No valid choices available");
-            answerButtons.forEach(btn => btn.disabled = false);
-            return;
-        }
-
-        if (answerIndex < 0 || answerIndex >= options.length) {
-            console.error("Invalid answer index:", answerIndex);
-            this.handleErrorDisplay("Invalid selection");
-            answerButtons.forEach(btn => btn.disabled = false);
-            return;
-        }
-
-        const selectedOption = options[answerIndex];
-
-        if (questionType === 'theme_selection') {
-            if (!selectedOption || typeof selectedOption !== 'object') {
-                console.error("Invalid theme option structure:", selectedOption);
-                this.handleErrorDisplay("Invalid theme format");
-                answerButtons.forEach(btn => btn.disabled = false);
-                return;
-            }
-
-            // Ensure the themeId is a valid number
-            const themeId = Number(selectedOption.id);
-            if (!selectedOption.id || isNaN(themeId)) {
-                console.error("Non-numeric or missing theme ID:", selectedOption.id);
-                this.handleErrorDisplay("Theme ID format error");
-                answerButtons.forEach(btn => btn.disabled = false);
-                return;
-            }
-
-            const emissionData = {
-                userId: Number(userId), // Use the validated userId
-                themeId: themeId,
-                themeName: String(selectedOption.name || selectedOption.title || ""),
-                request_user_data: true
-            };
-
-            console.log("Emitting theme_selected with verified data:", emissionData);
-            this.socket.emit('theme_selected', emissionData);
-
-        } else {
-            // Handle regular answer submission
-            const emissionData = {
-                userId: Number(userId), // Use the validated userId
-                questionId: this.currentQuestion.id,
-                answerIndex: answerIndex,
-                answerText: selectedOption.answer_text || selectedOption.text || selectedOption,
-                request_user_data: true
-            };
-
-            console.log("Emitting answer with verified data:", emissionData);
-            this.socket.emit('submit_answer', emissionData);
-        }
-
-        // Visual feedback
-        buttonElement.classList.add('selected');
-        setTimeout(() => {
-            buttonElement.classList.remove('selected');
-            answerButtons.forEach(btn => btn.disabled = false);
-        }, 1500);
+handleAnswerClick(answerIndex, boxElement) {
+    console.log("Answer clicked:", answerIndex);
+    
+    if (!this.currentQuestion || !this.currentQuestion.type) {
+        console.error("Invalid question state");
+        return;
     }
+
+    // Disable all answer boxes temporarily
+    const answerBoxes = document.querySelectorAll('.answer-box');
+    answerBoxes.forEach(box => {
+        box.style.pointerEvents = 'none';
+        box.querySelector('.snes-button').style.opacity = '0.7';
+    });
+
+    const questionType = this.currentQuestion.type;
+    const options = questionType === 'theme_selection' 
+        ? this.currentQuestion.themes 
+        : this.currentQuestion.answers;
+
+    if (!options || !Array.isArray(options)) {
+        console.error("Invalid options array:", options);
+        this.handleErrorDisplay("No valid choices available");
+        this.enableAnswerBoxes();
+        return;
+    }
+
+    if (answerIndex < 0 || answerIndex >= options.length) {
+        console.error("Invalid answer index:", answerIndex);
+        this.handleErrorDisplay("Invalid selection");
+        this.enableAnswerBoxes();
+        return;
+    }
+
+    const selectedOption = options[answerIndex];
+    const userId = this.getCurrentUserId(); // Helper method to get user ID
+
+    if (!userId) {
+        console.error("No current user ID available");
+        this.handleErrorDisplay("Please log in again");
+        this.enableAnswerBoxes();
+        return;
+    }
+
+    // Visual feedback
+    boxElement.querySelector('.snes-button').style.transform = 'scale(0.95)';
+    boxElement.classList.add('selected');
+
+    if (questionType === 'theme_selection') {
+        const themeId = Number(selectedOption.id);
+        if (isNaN(themeId)) {
+            console.error("Invalid theme ID:", selectedOption.id);
+            this.handleErrorDisplay("Theme ID format error");
+            this.enableAnswerBoxes();
+            return;
+        }
+
+        const emissionData = {
+            userId: userId,
+            themeId: themeId,
+            themeName: String(selectedOption.name || selectedOption.title || ""),
+            request_user_data: true
+        };
+
+        console.log("Emitting theme_selected:", emissionData);
+        this.socket.emit('theme_selected', emissionData);
+    } else {
+        const emissionData = {
+            userId: userId,
+            questionId: this.currentQuestion.id,
+            answerIndex: answerIndex,
+            answerText: selectedOption.answer_text || selectedOption.text || selectedOption,
+            isCorrect: boxElement.dataset.isCorrect === "1",
+            answerId: boxElement.dataset.answerId || null,
+            request_user_data: true
+        };
+
+        console.log("Emitting submit_answer:", emissionData);
+        this.socket.emit('submit_answer', emissionData);
+    }
+
+    // Reset visual state after delay
+    setTimeout(() => {
+        boxElement.querySelector('.snes-button').style.transform = '';
+        boxElement.classList.remove('selected');
+        this.enableAnswerBoxes();
+    }, 1000);
+}
+
+// Helper method to enable answer boxes
+enableAnswerBoxes() {
+    const answerBoxes = document.querySelectorAll('.answer-box');
+    answerBoxes.forEach(box => {
+        box.style.pointerEvents = '';
+        box.querySelector('.snes-button').style.opacity = '';
+    });
+}
+
+// Helper method to get current user ID
+getCurrentUserId() {
+    if (!this.currentUser) return null;
+    return Number(this.currentUser.user_id || this.currentUser.id);
+}
 
 showExplanation(data) {
     console.log("Showing explanation for question", data.question_id || 'unknown', data);
