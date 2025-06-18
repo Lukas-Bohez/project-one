@@ -80,13 +80,19 @@ class QuizLogic {
         return this.currentUser;
     }
 
-    // Delegate methods to appropriate handlers
-    updateTimer(timeRemaining) {
-        if (this.timerHandler) {
-            this.timerHandler.updateTimer(timeRemaining);
-        }
+// Delegate methods to appropriate handlers
+updateTimer(timerData) {
+    if (this.timerHandler) {
+        // Pass all relevant data to the timer handler
+        this.timerHandler.updateTimer(
+            timerData.time_remaining,
+            timerData.speed_multiplier,
+            timerData.temperature,
+            timerData.illuminance,
+            timerData.total_time
+        );
     }
-
+}
     handleTimerFinished() {
         if (this.timerHandler) {
             this.timerHandler.handleTimerFinished();

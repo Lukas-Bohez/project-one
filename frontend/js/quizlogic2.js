@@ -3,9 +3,13 @@ class QuizTimerHandler {
     constructor() {
         this.maxTime = 60; // Default will be overridden by server
         this.currentTime = 0;
+        this.speedMultiplier = 1.0;
+        this.temperature = 0;
+        this.illuminance = 0;
         this.socket = window.sharedSocket;
         this.bindSocketEvents();
         this.initializeTimer();
+        this.createStatsDisplay();
     }
 
     initializeTimer() {
@@ -56,8 +60,90 @@ class QuizTimerHandler {
                     min-width: 30px;
                     text-align: center;
                 }
+                .c-quiz-controls {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                    margin-top: 8px;
+                }
+                .c-stats-display {
+                    display: flex;
+                    gap: 12px;
+                    justify-content: space-between;
+                }
+                .c-stat-item {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    padding: 8px 12px;
+                    background: rgba(255, 255, 255, 0.8);
+                    border-radius: 8px;
+                    min-width: 60px;
+                    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+                }
+                .c-stat-item span:first-child {
+                    font-size: 12px;
+                    font-weight: bold;
+                    color: #666;
+                    margin-bottom: 4px;
+                }
+                .c-stat-item span:last-child {
+                    font-size: 14px;
+                    font-weight: bold;
+                }
+                .c-speed-display {
+                    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                }
+                .c-temp-display {
+                    background: linear-gradient(135deg, #fff1eb 0%, #ace0f9 100%);
+                }
+                .c-light-display {
+                    background: linear-gradient(135deg, #ffffb5 0%, #247ba0 100%);
+                }
+                .c-speed-value {
+                    color: #4a6baf;
+                }
+                .c-temp-value {
+                    color: #e67e22;
+                }
+                .c-light-value {
+                    color: #f1c40f;
+                }
             `;
             document.head.appendChild(style);
+        }
+    }
+
+    createStatsDisplay() {
+        const quizControls = document.querySelector('.c-quiz-controls') || document.createElement('div');
+        quizControls.className = 'c-quiz-controls';
+        
+        const statsDisplay = document.createElement('div');
+        statsDisplay.className = 'c-stats-display';
+        
+        // Speed Multiplier Display
+        statsDisplay.innerHTML = `
+            <div class="c-stat-item c-speed-display">
+                <span>SPEED</span>
+                <span class="c-speed-value js-speed">1.0x</span>
+            </div>
+            <div class="c-stat-item c-temp-display">
+                <span>TEMP</span>
+                <span class="c-temp-value js-temp">0°C</span>
+            </div>
+            <div class="c-stat-item c-light-display">
+                <span>LIGHT</span>
+                <span class="c-light-value js-light">0 lx</span>
+            </div>
+        `;
+        
+        // Only add if not already present
+        if (!document.querySelector('.c-quiz-controls')) {
+            quizControls.appendChild(statsDisplay);
+            const timerContainer = document.querySelector('.c-timer-container');
+            if (timerContainer) {
+                timerContainer.parentNode.insertBefore(quizControls, timerContainer.nextSibling);
+            }
         }
     }
 
@@ -70,7 +156,12 @@ class QuizTimerHandler {
         // Listen for timer updates
         this.socket.on('quiz_timer', (data) => {
             this.maxTime = data.total_time || this.maxTime;
+            this.speedMultiplier = data.speed_multiplier || 1.0;
+            this.temperature = data.temperature || 0;
+            this.illuminance = data.illuminance || 0;
+            
             this.updateTimer(data.time_remaining);
+            this.updateStatsDisplay();
         });
 
         // Listen for timer completion
@@ -79,12 +170,73 @@ class QuizTimerHandler {
         });
     }
 
-    updateTimer(timeRemaining) {
-        console.log("Updating timer:", timeRemaining);
+    updateStatsDisplay() {
+        // Update speed multiplier
+        const speedElement = document.querySelector('.js-speed');
+        if (speedElement) {
+            speedElement.textContent = `${this.speedMultiplier.toFixed(1)}x`;
+            
+            // Add visual feedback for speed changes
+            if (this.speedMultiplier > 1.0) {
+                speedElement.style.transform = 'scale(1.1)';
+                speedElement.style.color = '#e74c3c';
+                setTimeout(() => {
+                    speedElement.style.transform = 'scale(1)';
+                    speedElement.style.color = '';
+                }, 300);
+            }
+        }
+        
+        // Update temperature
+        const tempElement = document.querySelector('.js-temp');
+        if (tempElement) {
+            tempElement.textContent = `${Math.round(this.temperature)}°C`;
+            
+            // Color based on temperature
+            if (this.temperature > 30) {
+                tempElement.style.color = '#e74c3c';
+            } else if (this.temperature < 10) {
+                tempElement.style.color = '#3498db';
+            } else {
+                tempElement.style.color = '#e67e22';
+            }
+        }
+        
+        // Update illuminance
+        const lightElement = document.querySelector('.js-light');
+        if (lightElement) {
+            lightElement.textContent = `${Math.round(this.illuminance)} lx`;
+            
+            // Visual feedback for light changes
+            if (this.illuminance > 500) {
+                lightElement.style.color = '#f39c12';
+                lightElement.style.textShadow = '0 0 5px rgba(243, 156, 18, 0.5)';
+            } else {
+                lightElement.style.textShadow = 'none';
+            }
+        }
+    }
+
+    updateTimer(timeRemaining, speedMultiplier, temperature, illuminance, totalTime) {
+        console.log("Updating timer with full data:", { 
+            timeRemaining, 
+            speedMultiplier, 
+            temperature, 
+            illuminance,
+            totalTime
+        });
+        
+        // Update all properties
+        if (totalTime !== undefined) this.maxTime = totalTime;
+        if (speedMultiplier !== undefined) this.speedMultiplier = speedMultiplier;
+        if (temperature !== undefined) this.temperature = temperature;
+        if (illuminance !== undefined) this.illuminance = illuminance;
+        
         this.currentTime = timeRemaining;
         
         this.updateTimeDisplay(timeRemaining);
         this.updateVisualBar(timeRemaining);
+        this.updateStatsDisplay();
     }
 
     updateTimeDisplay(timeRemaining) {
@@ -170,11 +322,27 @@ class QuizTimerHandler {
                 timeElement.style.textShadow = '';
             }, 3000);
         }
+        
+        // Flash all stats for visual feedback
+        const stats = document.querySelectorAll('.c-stat-item');
+        stats.forEach(stat => {
+            stat.style.transform = 'scale(1.05)';
+            stat.style.boxShadow = '0 0 15px rgba(255, 0, 0, 0.3)';
+            setTimeout(() => {
+                stat.style.transform = '';
+                stat.style.boxShadow = '';
+            }, 1000);
+        });
     }
 
     resetTimer() {
         this.currentTime = this.maxTime;
+        this.speedMultiplier = 1.0;
+        this.temperature = 0;
+        this.illuminance = 0;
+        
         this.updateTimer(this.maxTime);
+        this.updateStatsDisplay();
         
         // Reset animations
         const servoElement = document.querySelector('.c-servo-bar');
@@ -185,16 +353,16 @@ class QuizTimerHandler {
 
     hideTimer() {
         const timerContainer = document.querySelector('.c-timer-container');
-        if (timerContainer) {
-            timerContainer.style.display = 'none';
-        }
+        const quizControls = document.querySelector('.c-quiz-controls');
+        if (timerContainer) timerContainer.style.display = 'none';
+        if (quizControls) quizControls.style.display = 'none';
     }
 
     showTimer() {
         const timerContainer = document.querySelector('.c-timer-container');
-        if (timerContainer) {
-            timerContainer.style.display = 'flex';
-        }
+        const quizControls = document.querySelector('.c-quiz-controls');
+        if (timerContainer) timerContainer.style.display = 'flex';
+        if (quizControls) quizControls.style.display = 'flex';
     }
 }
 
