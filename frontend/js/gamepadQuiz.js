@@ -15,14 +15,14 @@ class QuizGamepadNavigator {
         };
 
         // Navigation contexts
-        this.contexts = ['items', 'question', 'answers', 'playerlist'];
+        this.contexts = ['items', 'answers', 'playerlist'];
         this.currentContext = 0;
         this.currentItemIndex = 0; // For items (0-2)
         this.currentPlayerIndex = 0; // For player list
         
         // Double press detection for down button
         this.lastDownPress = 0;
-        this.doublePressThreshold = 250; // half 1 second
+        this.doublePressThreshold = 250; // 250ms
 
         this.init();
     }
@@ -192,13 +192,13 @@ handleGamepadInput(gamepad) {
         const context = this.contexts[this.currentContext];
         
         if (context === 'items') {
-            // Activate item slot 1 (index 0)
-            this.activateItemSlot(0);
+            // Click item slot 1 (index 0)
+            this.clickItemSlot(0);
         } else if (context === 'playerlist') {
-            // Navigate up through players
+            // Navigate up through players, cycling back to bottom
             const playerElements = document.querySelectorAll('.c-player-item');
             if (playerElements.length > 0) {
-                this.currentPlayerIndex = Math.max(0, this.currentPlayerIndex - 1);
+                this.currentPlayerIndex = (this.currentPlayerIndex - 1 + playerElements.length) % playerElements.length;
                 this.updateSelection();
             }
         }
@@ -210,9 +210,17 @@ handleGamepadInput(gamepad) {
         
         // Check for double press
         if (now - this.lastDownPress < this.doublePressThreshold) {
-            // Double press - go back to top (items)
-            this.currentContext = 0;
-            this.currentItemIndex = 0;
+            // Double press behavior depends on current context
+            if (context === 'items' || context === 'answers') {
+                // Go to players
+                this.currentContext = 2; // playerlist
+                this.currentPlayerIndex = 0;
+            } else if (context === 'playerlist') {
+                // Go back to items
+                this.currentContext = 0; // items
+                this.currentItemIndex = 0;
+            }
+            
             this.updateSelection();
             this.lastDownPress = 0; // Reset to prevent triple press
             return;
@@ -221,20 +229,16 @@ handleGamepadInput(gamepad) {
         this.lastDownPress = now;
 
         if (context === 'items') {
-            // Move to question
+            // Cycle to answers
             this.currentContext = 1;
-        } else if (context === 'question') {
-            // Move to answers
-            this.currentContext = 2;
         } else if (context === 'answers') {
-            // Move to player list
-            this.currentContext = 3;
-            this.currentPlayerIndex = 0;
+            // Cycle back to items
+            this.currentContext = 0;
         } else if (context === 'playerlist') {
-            // Navigate down through players
+            // Navigate down through players, cycling back to top
             const playerElements = document.querySelectorAll('.c-player-item');
             if (playerElements.length > 0) {
-                this.currentPlayerIndex = Math.min(playerElements.length - 1, this.currentPlayerIndex + 1);
+                this.currentPlayerIndex = (this.currentPlayerIndex + 1) % playerElements.length;
             }
         }
         
@@ -245,8 +249,8 @@ handleGamepadInput(gamepad) {
         const context = this.contexts[this.currentContext];
         
         if (context === 'items') {
-            // Activate item slot 2 (index 1)
-            this.activateItemSlot(1);
+            // Click item slot 2 (index 1)
+            this.clickItemSlot(1);
         }
     }
 
@@ -254,20 +258,17 @@ handleGamepadInput(gamepad) {
         const context = this.contexts[this.currentContext];
         
         if (context === 'items') {
-            // Activate item slot 3 (index 2)
-            this.activateItemSlot(2);
+            // Click item slot 3 (index 2)
+            this.clickItemSlot(2);
         }
     }
 
-    activateItemSlot(index) {
+    clickItemSlot(index) {
         const itemSlots = document.querySelectorAll('.c-item-slot');
         if (itemSlots[index]) {
-            // Find and click the button inside the item slot
-            const button = itemSlots[index].querySelector('button');
-            if (button) {
-                button.click();
-                console.log(`Activated item slot ${index + 1}`);
-            }
+            // Direct click on the item slot element
+            itemSlots[index].click();
+            console.log(`Clicked item slot ${index + 1}`);
         }
     }
 
@@ -314,21 +315,23 @@ handleGamepadInput(gamepad) {
                 const itemsContainer = document.querySelector('.c-items-container');
                 if (itemsContainer) {
                     itemsContainer.classList.add('quiz-gamepad-context-highlight');
+                    targetElement = itemsContainer;
                 }
                 break;
 
-            case 'question':
-                targetElement = document.querySelector('.c-question-container');
-                break;
-
             case 'answers':
-                targetElement = document.querySelector('.c-answers-container');
+                const answersContainer = document.querySelector('.c-answers-container');
+                if (answersContainer) {
+                    answersContainer.classList.add('quiz-gamepad-context-highlight');
+                    targetElement = answersContainer;
+                }
                 break;
 
             case 'playerlist':
                 const playerElements = document.querySelectorAll('.c-player-item');
                 if (playerElements[this.currentPlayerIndex]) {
                     targetElement = playerElements[this.currentPlayerIndex];
+                    targetElement.classList.add('quiz-gamepad-context-highlight');
                     // Also highlight the entire players container
                     const playersContainer = document.querySelector('.c-players-container');
                     if (playersContainer) {
