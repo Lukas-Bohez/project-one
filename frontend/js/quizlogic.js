@@ -4,6 +4,7 @@ class QuizSocketHandler {
         this.socket = socket;
         this.quizLogic = quizLogic;
         this.initializeListeners();
+        this.QuizTimerHandler = new QuizTimerHandler(); // Initialize first!
     }
 
     initializeListeners() {
@@ -73,9 +74,23 @@ class QuizSocketHandler {
 
     // ---- TIMER LISTENERS ----
             
+// In your socket listener (where you receive the data)
+// 1. Create a global fallback object
+window.globalTimerData = {
+  timeRemaining: '0',
+  speedMultiplier: null,
+  temperature: null,
+  illuminance: null,
+  totalTime: 0
+};
+
+// 2. Socket listener with arrow function
 this.socket.on('quiz_timer', (data) => {
-    console.log("RAW TIMER DATA FROM SERVER:", data);  // <-- Check keys here!
-    this.quizLogic.updateTimer(data);
+  // Update global storage
+  Object.assign(window.globalTimerData, data);
+  
+  // Directly call the display function
+    this.QuizTimerHandler.updateTimerDisplay (); // Now safe
 });
 
     this.socket.on('quiz_timer_finished', () => {

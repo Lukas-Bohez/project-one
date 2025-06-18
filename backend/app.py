@@ -4107,12 +4107,12 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
 
     ChatLogRepository.create_chat_message(
         session_id=get_active_session_id(),
-        message_text=f"Preparing question {quiz_state['question_count']}",
+        message_text=f"Preparing question {quiz_state['question_count'] + 1}",
         user_id=1,
         message_type='system',
         reply_to_id=1
     )
-    threadsafe_emit_message_sent(sio, get_active_session_id(), main_asyncio_loop)
+    threadsafe_emit_message_sent(sio, get_active_session_id(), loop)
 
     while available_questions:
         question = select_question_based_on_sensors(available_questions, temp_sensor, light_sensor) or \
@@ -4201,8 +4201,27 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
             # Calculate required score - adjust this formula as needed
             required_score = 10 * total_players * (quiz_state['question_count'] / 2)
             
+            # Notify players about the score status
+            ChatLogRepository.create_chat_message(
+                session_id=session_id,
+                message_text=f"Current team score: {total_score}. Need {required_score} points to continue!",
+                user_id=1,
+                message_type='system',
+                reply_to_id=1
+            )
+            threadsafe_emit_message_sent(sio, session_id, loop)
+            
             if total_score < required_score:
                 print(f"Ending quiz early - total score {total_score} below required {required_score}")
+                # Notify players about quiz ending
+                ChatLogRepository.create_chat_message(
+                    session_id=session_id,
+                    message_text=f"Quiz ending early! Team didn't reach the required score of {required_score} points.",
+                    user_id=1,
+                    message_type='system',
+                    reply_to_id=1
+                )
+                threadsafe_emit_message_sent(sio, session_id, loop)
                 break
 
         # Refresh questions
@@ -4215,6 +4234,16 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
     player_scores = PlayerAnswerRepository.get_all_player_scores_for_session(session_id)
     total_score = sum(score['score'] for score in player_scores)
     
+    # Send final score notification
+    ChatLogRepository.create_chat_message(
+        session_id=session_id,
+        message_text=f"Quiz finished! Final team score: {total_score} points!",
+        user_id=1,
+        message_type='system',
+        reply_to_id=1
+    )
+    threadsafe_emit_message_sent(sio, session_id, loop)
+    
     asyncio.run_coroutine_threadsafe(
         sio.emit('quiz_finished', {
             'session_id': session_id,
@@ -4223,7 +4252,6 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
             'all_questions_answered': all_answered if 'all_answered' in locals() else False
         }), loop
     ).result(timeout=1)
-
 
 
 

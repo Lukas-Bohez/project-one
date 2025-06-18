@@ -6,6 +6,7 @@ class AdvertFlood {
         this.adBlockDetected = false;
         this.adsLoaded = 0;
         this.adBoxes = [];
+        this.adScriptLoaded = false;
         
         this.initializeSocketListener();
     }
@@ -18,9 +19,11 @@ class AdvertFlood {
         this.clearExisting();
         this.adBlockDetected = false;
         this.adsLoaded = 0;
+        this.adScriptLoaded = false;
 
         // First try to load the ad script
         this.loadAdScript().then(success => {
+            this.adScriptLoaded = success;
             if (!success) {
                 this.adBlockDetected = true;
                 durationSeconds *= 2;
@@ -44,6 +47,12 @@ class AdvertFlood {
 
     loadAdScript() {
         return new Promise((resolve) => {
+            // Check if script is already loaded
+            if (window.adsbygoogle && Array.isArray(window.adsbygoogle)) {
+                console.log('Ad script already loaded');
+                return resolve(true);
+            }
+
             const script = document.createElement('script');
             script.async = true;
             script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449';
@@ -77,7 +86,7 @@ class AdvertFlood {
         box.style.borderRadius = '5px';
         box.style.overflow = 'hidden';
         
-        if (this.adBlockDetected) {
+        if (this.adBlockDetected || !this.adScriptLoaded) {
             this.createAntiAdblockBox(box);
         } else {
             this.createRealAdBox(box);
@@ -100,8 +109,35 @@ class AdvertFlood {
         adIns.dataset.fullWidthResponsive = 'true';
         container.appendChild(adIns);
 
-        // Push the ad
-        (adsbygoogle = window.adsbygoogle || []).push({});
+        try {
+            // Only push if adsbygoogle is loaded
+            if (window.adsbygoogle && Array.isArray(window.adsbygoogle)) {
+                // Create a new request object for each ad
+                const request = {
+                    adClient: adIns.dataset.adClient,
+                    adSlot: adIns.dataset.adSlot,
+                    adFormat: adIns.dataset.adFormat,
+                    fullWidthResponsive: adIns.dataset.fullWidthResponsive,
+                    element: adIns
+                };
+                
+                window.adsbygoogle.push(request);
+            } else {
+                throw new Error('adsbygoogle not loaded');
+            }
+        } catch (e) {
+            console.log('Ad push failed:', e.message);
+            container.innerHTML = '';
+            this.createAntiAdblockBox(container);
+            this.adsLoaded--;
+            
+            // If most ads are failing, switch to anti-adblock mode
+            if (this.adsLoaded < 0 && !this.adBlockDetected) {
+                this.adBlockDetected = true;
+                console.log('Multiple ad failures detected - switching to anti-adblock mode');
+            }
+            return;
+        }
 
         // Check if ad loaded after a delay
         setTimeout(() => {

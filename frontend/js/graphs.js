@@ -552,17 +552,21 @@ const injectCSS = () => {
         style.textContent = `
             /* --- General & Layout --- */
             :root {
-                --primary-color: #0d9edb;
-                --secondary-color: #2c4c7c;
-                --text-color: #0e1827;
+                --primary-color: var(--quiz-primary, #4a6fa5);
+                --secondary-color: var(--quiz-secondary, #166088);
+                --tertiary-color: var(--quiz-tertiary, #4fc3f7);
+                --dark-color: var(--quiz-dark, #1a2639);
+                --light-color: var(--quiz-light, #dbe4ee);
+                
+                --text-color: var(--quiz-dark, #1a2639);
                 --light-text-color: #666;
                 --bg-color: #f4f8fc;
                 --card-bg-color: white;
-                --border-color: rgba(14, 24, 39, 0.1);
+                --border-color: rgba(26, 38, 57, 0.1);
                 --success-color: #2e8b34;
                 --error-color: #d32f2f;
                 --border-radius: 8px;
-                --shadow: 0 2px 8px rgba(14, 24, 39, 0.08);
+                --shadow: 0 2px 8px rgba(26, 38, 57, 0.08);
             }
 
             .c-graphs-container {
@@ -626,7 +630,7 @@ const injectCSS = () => {
             .session-selector:focus {
                 outline: none;
                 border-color: var(--primary-color);
-                box-shadow: 0 0 0 2px rgba(13, 158, 219, 0.2);
+                box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
             }
 
             /* --- Charts Grid --- */
@@ -715,10 +719,10 @@ const injectCSS = () => {
                 border-bottom: 1px solid var(--border-color);
             }
             .toggle-header:hover {
-                background: rgba(13, 158, 219, 0.05);
+                background: rgba(74, 111, 165, 0.05);
             }
             .toggle-header.chat {
-                background: rgba(13, 158, 219, 0.1);
+                background: rgba(74, 111, 165, 0.1);
             }
             .toggle-header.answers {
                 background: rgba(230, 81, 0, 0.1);
@@ -760,7 +764,7 @@ const injectCSS = () => {
             }
             .chat-message {
                 padding: 1rem;
-                background: rgba(13, 158, 219, 0.05);
+                background: rgba(74, 111, 165, 0.05);
                 border-radius: 8px;
                 border-left: 4px solid var(--primary-color);
             }
