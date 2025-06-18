@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, Literal
 from datetime import datetime
+from pydantic import field_validator
 
 # Existing Question Models (unchanged)
 class QuestionBase(BaseModel):
@@ -426,9 +427,43 @@ class SessionSensorData(BaseModel):
     chat_messages: list[ChatMessage] = []  # New field with default empty list
     player_answers: list[QuestionWithAnswers] = []  # New field with default empty list
 
+
+# Add this new model for available sessions
+class AvailableSession(BaseModel):
+    id: int
+    name: str
+
+
+class SessionInfo(BaseModel):
+    id: int
+    name: str
+    
+    @field_validator('name', mode='before')
+    @classmethod
+    def convert_datetime_to_string(cls, v: Any) -> str:
+        if isinstance(v, datetime):
+            # Convert datetime to a readable string format
+            return v.strftime("%Y-%m-%d %H:%M:%S")
+        elif v is None:
+            return "Unknown Session"
+        return str(v)
+
+class SensorDataResponse(BaseModel):
+    available_sessions: list[SessionInfo]
+    current_session_id: Optional[int] = None
+    total_sessions: int = 0
+    sessions: Optional[list[dict]] = None  # Your existing session data structure
+    
+    class Config:
+        # Allow arbitrary types for compatibility
+        arbitrary_types_allowed = True
+    
+# Update your MultiSessionSensorResponse model
 class MultiSessionSensorResponse(BaseModel):
     sessions: list[SessionSensorData]
-
+    available_sessions: list[AvailableSession]  # New field
+    current_session_id: Optional[int]  # New field
+    total_sessions: int
 
 class ChatMessageCreate(BaseModel):
     session_id: int
@@ -437,6 +472,15 @@ class ChatMessageCreate(BaseModel):
     # Ensure message_type is restricted to your ENUM values
     message_type: Literal['chat', 'system', 'announcement', 'warning'] = 'chat'
     reply_to_id: Optional[int] = None
+
+# Reintroducing PaginationInfo
+class PaginationInfo(BaseModel):
+    current_page: int
+    page_size: int # Will effectively be 1
+    total_sessions: int
+    total_pages: int
+    has_next: bool
+    has_previous: bool
 
 
 
