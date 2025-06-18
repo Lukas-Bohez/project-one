@@ -217,27 +217,27 @@ class QuizTimerHandler {
         }
     }
 
-    updateTimer(timeRemaining, speedMultiplier, temperature, illuminance, totalTime) {
-        console.log("Updating timer with full data:", { 
-            timeRemaining, 
-            speedMultiplier, 
-            temperature, 
-            illuminance,
-            totalTime
-        });
-        
-        // Update all properties
-        if (totalTime !== undefined) this.maxTime = totalTime;
-        if (speedMultiplier !== undefined) this.speedMultiplier = speedMultiplier;
-        if (temperature !== undefined) this.temperature = temperature;
-        if (illuminance !== undefined) this.illuminance = illuminance;
-        
-        this.currentTime = timeRemaining;
-        
-        this.updateTimeDisplay(timeRemaining);
-        this.updateVisualBar(timeRemaining);
-        this.updateStatsDisplay();
-    }
+updateTimer(timeRemaining, speedMultiplier, temperature, illuminance, totalTime) {
+    console.log("Updating timer with full data:", { 
+        timeRemaining, 
+        speedMultiplier, 
+        temperature, 
+        illuminance,
+        totalTime
+    });
+    
+    // Update all properties
+    if (totalTime !== undefined) this.maxTime = totalTime;
+    if (speedMultiplier !== undefined) this.speedMultiplier = speedMultiplier;
+    if (temperature !== undefined) this.temperature = temperature;
+    if (illuminance !== undefined) this.illuminance = illuminance;
+    
+    this.currentTime = timeRemaining;
+    
+    this.updateTimeDisplay(timeRemaining);
+    this.updateVisualBar(timeRemaining);
+    this.updateStatsDisplay();
+}
 
     updateTimeDisplay(timeRemaining) {
         const timeElement = document.getElementById('timeRemaining');
