@@ -71,16 +71,16 @@ class QuizSocketHandler {
             this.handleQuestionResult(data);
         });
 
-        // ---- TIMER LISTENERS ----
-        
-        // Timer events
-        this.socket.on('quiz_timer', (data) => {
-            this.quizLogic.updateTimer(data.time_remaining);
-        });
+    // ---- TIMER LISTENERS ----
+            
+    // Timer events
+    this.socket.on('quiz_timer', (data) => {
+        this.quizLogic.updateTimer(data); // Pass the entire data object
+    });
 
-        this.socket.on('quiz_timer_finished', () => {
-            this.quizLogic.handleTimerFinished();
-        });
+    this.socket.on('quiz_timer_finished', () => {
+        this.quizLogic.handleTimerFinished();
+    });
 
         // ---- QUESTION DATA LISTENERS ----
         
