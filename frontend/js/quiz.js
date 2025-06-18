@@ -81,17 +81,26 @@ class QuizLogic {
     }
 
 // Delegate methods to appropriate handlers
-updateTimer(timerData) {
-    console.log("DATA IN QUIZLOGIC UPDATETIMER:", timerData);
-    if (this.timerHandler) {
-        this.timerHandler.updateTimer(
-            timerData.timeRemaining,
-            timerData.speedMultiplier,
-            timerData.temperature,
-            timerData.illuminance,
-            timerData.totalTime
-        );
-    }
+// In quizLogic.js
+// 3. In quizLogic.js
+updateTimer = (timerData) => {  // Arrow function maintains 'this'
+  console.log("DATA IN QUIZLOGIC:", timerData);
+  
+  // Fallback to global data if needed
+  const finalData = window.timerData || timerData;
+  
+  if (!this.timerHandler) {
+    console.error("Timer handler missing!");
+    return;
+  }
+  
+  this.timerHandler.updateTimer(
+    finalData.timeRemaining,
+    finalData.speedMultiplier,
+    finalData.temperature,
+    finalData.illuminance,
+    finalData.totalTime
+  );
 }
     handleTimerFinished() {
         if (this.timerHandler) {
