@@ -510,41 +510,49 @@ showExplanation(data) {
     this.displayExplanation(data);
 }
 
-highlightCorrectAnswer(data) {
+highlightCorrectAnswer() {
     // Get all answer boxes
     const answerBoxes = document.querySelectorAll('.answer-box');
-    this.currentQuestion = questionData
-    // If we don't have question data or answers, do nothing
-    if (!questionData || !questionData.answers) return;
     
-    // Create a map of answer texts to their correctness
-    const answerCorrectness = {};
-    questionData.answers.forEach(answer => {
-        answerCorrectness[answer.answer_text] = answer.is_correct;
-    });
+    // If we don't have current question data, do nothing
+    if (!this.currentQuestion) return;
     
-    // Process each answer box
-    answerBoxes.forEach(box => {
-        // Find the answer content element
-        const answerContent = box.querySelector('.answer-content');
-        if (!answerContent) return;
+    // For theme selection questions, don't hide any answers (all are valid choices)
+    if (this.currentQuestion.type === 'theme_selection') {
+        return; // Exit early - no highlighting needed for theme selection
+    }
+    
+    // For regular questions, process correctness
+    if (this.currentQuestion.answers) {
+        // Create a map of answer texts to their correctness
+        const answerCorrectness = {};
+        this.currentQuestion.answers.forEach(answer => {
+            answerCorrectness[answer.answer_text] = answer.is_correct;
+        });
         
-        const answerText = answerContent.textContent.trim();
-        
-        // Check if this answer is correct
-        if (answerCorrectness[answerText] === 1) {
-            // Highlight correct answer
-            const snesButton = box.querySelector('.snes-button');
-            if (snesButton) {
-                snesButton.style.backgroundColor = '#4CAF50'; // Green for correct
-                const label = snesButton.querySelector('.button-label');
-                if (label) label.style.color = 'white';
+        // Process each answer box
+        answerBoxes.forEach(box => {
+            // Find the answer content element
+            const answerContent = box.querySelector('.answer-content');
+            if (!answerContent) return;
+            
+            const answerText = answerContent.textContent.trim();
+            
+            // Check if this answer is correct
+            if (answerCorrectness[answerText] === 1) {
+                // Highlight correct answer
+                const snesButton = box.querySelector('.snes-button');
+                if (snesButton) {
+                    snesButton.style.backgroundColor = '#4CAF50'; // Green for correct
+                    const label = snesButton.querySelector('.button-label');
+                    if (label) label.style.color = 'white';
+                }
+            } else {
+                // Hide incorrect answers
+                box.style.display = 'none';
             }
-        } else {
-            // Hide incorrect answers
-            box.style.display = 'none';
-        }
-    });
+        });
+    }
 }
 
 displayExplanation(explanationData) {
