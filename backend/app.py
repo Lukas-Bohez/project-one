@@ -4371,6 +4371,7 @@ def calculate_player_score_percentage(session_id, user_id):
 @sio.on('submit_answer')
 async def handle_answer_submission(sid, data):
     global current_phase, progress
+    print(f"data received is answer submission is {data}")
     try:
         logger.debug(f"Starting answer submission with data: {data}")
         
@@ -4510,6 +4511,7 @@ async def handle_theme_selection(sid, data):
     """
     Handle theme selection votes and start voting timer when first vote is cast
     """
+    print(f"data received is for theme selection {data}")
     try:
         # Get active session and check phase
         active_session_id = get_active_session_id()

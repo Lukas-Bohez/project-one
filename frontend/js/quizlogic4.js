@@ -343,16 +343,16 @@ bindAnswerEvents() {
         return;
     }
 
-    answerBoxes.forEach((box, index) => {
+    answerBoxes.forEach((box) => {
         // Remove old listener if it exists
         const oldClickListener = box.__quizAnswerListener;
         if (oldClickListener) {
             box.removeEventListener('click', oldClickListener);
         }
 
-        // Add new listener
+        // Add new listener - pass the box element, we'll get ID from it
         const newClickListener = () => {
-            this.handleAnswerClick(index, box);
+            this.handleAnswerClick(box);
         };
         box.addEventListener('click', newClickListener);
         box.__quizAnswerListener = newClickListener;
@@ -361,8 +361,8 @@ bindAnswerEvents() {
     console.log("Bound events to", answerBoxes.length, "answer boxes");
 }
 
-handleAnswerClick(answerIndex, boxElement) {
-    console.log("Answer clicked:", answerIndex);
+handleAnswerClick(boxElement) {
+    console.log("Answer clicked on box:", boxElement);
     
     if (!this.currentQuestion || !this.currentQuestion.type) {
         console.error("Invalid question state");
@@ -388,15 +388,44 @@ handleAnswerClick(answerIndex, boxElement) {
         return;
     }
 
-    if (answerIndex < 0 || answerIndex >= options.length) {
-        console.error("Invalid answer index:", answerIndex);
-        this.handleErrorDisplay("Invalid selection");
+    // Get the answer text from the clicked element
+    const answerContentElement = boxElement.querySelector('.answer-content');
+    if (!answerContentElement) {
+        console.error("No answer content found in clicked element");
+        this.handleErrorDisplay("Invalid selection - no content");
+        this.enableAnswerBoxes();
+        return;
+    }
+    
+    const selectedText = answerContentElement.textContent.trim();
+    
+    if (!selectedText) {
+        console.error("No text content found in answer element");
+        this.handleErrorDisplay("Invalid selection - empty content");
         this.enableAnswerBoxes();
         return;
     }
 
-    const selectedOption = options[answerIndex];
-    const userId = this.getCurrentUserId(); // Helper method to get user ID
+    // Find the correct option by matching the text content
+    const selectedOption = options.find(option => {
+        const optionText = option.name || option.answer_text || option.text || option.title || String(option);
+        return optionText.trim() === selectedText;
+    });
+
+    if (!selectedOption) {
+        console.error("Could not find option with text:", selectedText, "in options:", options);
+        this.handleErrorDisplay("Selection not found");
+        this.enableAnswerBoxes();
+        return;
+    }
+
+    // Find the index for backwards compatibility (if needed elsewhere)
+    const answerIndex = options.findIndex(option => {
+        const optionText = option.name || option.answer_text || option.text || option.title || String(option);
+        return optionText.trim() === selectedText;
+    });
+
+    const userId = this.getCurrentUserId();
 
     if (!userId) {
         console.error("No current user ID available");
@@ -408,6 +437,12 @@ handleAnswerClick(answerIndex, boxElement) {
     // Visual feedback
     boxElement.querySelector('.snes-button').style.transform = 'scale(0.95)';
     boxElement.classList.add('selected');
+
+    // Debug logging
+    console.log("=== SELECTION DEBUG ===");
+    console.log("Selected text:", selectedText);
+    console.log("Found option:", selectedOption);
+    console.log("Answer index:", answerIndex);
 
     if (questionType === 'theme_selection') {
         const themeId = Number(selectedOption.id);
@@ -431,10 +466,10 @@ handleAnswerClick(answerIndex, boxElement) {
         const emissionData = {
             userId: userId,
             questionId: this.currentQuestion.id,
-            answerIndex: answerIndex,
-            answerText: selectedOption.answer_text || selectedOption.text || selectedOption,
+            answerIndex: answerIndex, // Keep this if your backend expects it
+            answerText: selectedOption.answer_text || selectedOption.text || selectedOption.name || selectedOption,
             isCorrect: boxElement.dataset.isCorrect === "1",
-            answerId: boxElement.dataset.answerId || null,
+            answerId: selectedOption.id, // Use the actual option ID
             request_user_data: true
         };
 
@@ -475,23 +510,39 @@ showExplanation(data) {
     this.displayExplanation(data);
 }
 
-highlightCorrectAnswer() {
-    const answerButtons = document.querySelectorAll('.c-answer-btn');
+highlightCorrectAnswer(data) {
+    // Get all answer boxes
+    const answerBoxes = document.querySelectorAll('.answer-box');
+    this.currentQuestion = questionData
+    // If we don't have question data or answers, do nothing
+    if (!questionData || !questionData.answers) return;
     
-    answerButtons.forEach(button => {
-        if (button.dataset.isCorrect !== undefined) {
-            if (button.dataset.isCorrect === '1') {
-                // Highlight correct answer (full opacity)
-                button.style.opacity = '1';
-                button.style.backgroundColor = '#4CAF50'; // Green for correct
-                button.style.color = 'white';
-            } else {
-                // Dim incorrect answers
-                button.style.opacity = '0.5';
-                button.style.backgroundColor = ''; // Reset to default
-                button.style.color = '';
+    // Create a map of answer texts to their correctness
+    const answerCorrectness = {};
+    questionData.answers.forEach(answer => {
+        answerCorrectness[answer.answer_text] = answer.is_correct;
+    });
+    
+    // Process each answer box
+    answerBoxes.forEach(box => {
+        // Find the answer content element
+        const answerContent = box.querySelector('.answer-content');
+        if (!answerContent) return;
+        
+        const answerText = answerContent.textContent.trim();
+        
+        // Check if this answer is correct
+        if (answerCorrectness[answerText] === 1) {
+            // Highlight correct answer
+            const snesButton = box.querySelector('.snes-button');
+            if (snesButton) {
+                snesButton.style.backgroundColor = '#4CAF50'; // Green for correct
+                const label = snesButton.querySelector('.button-label');
+                if (label) label.style.color = 'white';
             }
-            button.disabled = true; // Keep buttons disabled during explanation
+        } else {
+            // Hide incorrect answers
+            box.style.display = 'none';
         }
     });
 }
