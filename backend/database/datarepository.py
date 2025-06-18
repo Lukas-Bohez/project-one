@@ -2108,6 +2108,33 @@ class PlayerAnswerRepository:
         sql = "SELECT questionId FROM playerAnswers WHERE sessionId = %s ORDER BY answered_at ASC"
         params = [session_id]
         return Database.get_rows(sql, params)
+    
+    @staticmethod
+    def get_player_answers_for_session_for_question(session_id, question_id):
+        sql = "SELECT questionId FROM playerAnswers WHERE sessionId = %s AND questionId = %s ORDER BY answered_at ASC"
+        params = [session_id,question_id]
+        return Database.get_rows(sql, params)
+
+    @staticmethod
+    def get_answer_count_for_question(session_id: int, question_id: int) -> int:
+        """
+        Get the count of answers for a specific question in a session.
+        
+        Args:
+            session_id: ID of the session
+            question_id: ID of the question
+            
+        Returns:
+            int: Count of answers (0 if no answers or error occurs)
+        """
+        try:
+            sql = "SELECT COUNT(*) as answer_count FROM playerAnswers WHERE sessionId = %s AND questionId = %s"
+            params = [session_id, question_id]
+            result = Database.get_rows(sql, params)
+            return result[0]['answer_count'] if result else 0
+        except Exception as e:
+            logger.error(f"Error getting answer count for session {session_id}, question {question_id}: {e}")
+            return 0
 
     @staticmethod
     def get_player_answers_count_for_question(question_id):
@@ -2196,12 +2223,18 @@ class PlayerAnswerRepository:
         params = [question_id]
         return Database.execute_sql(sql, params)
 
-    # SPECIAL operations
     @staticmethod
-    def get_question_with_player_answers(question_id: int) -> Optional[Dict[str, Any]]:
+    def get_question_with_player_answers(question_id: int, sessionId: int) -> Optional[Dict[str, Any]]:
         """
-        Retrieves a question along with all player answers for that question,
+        Retrieves a question along with all player answers for that question in a specific session,
         including player's first name, last name, and the text of the answer they selected.
+        
+        Args:
+            question_id: ID of the question
+            sessionId: ID of the session to filter by
+            
+        Returns:
+            Dictionary containing question data and player answers, or None if question not found
         """
         question = Database.get_one_row("SELECT * FROM questions WHERE id = %s", [question_id])
         if not question:
@@ -2229,10 +2262,11 @@ class PlayerAnswerRepository:
                 answers a ON pa.answerId = a.id
             WHERE
                 pa.questionId = %s
+                AND pa.sessionId = %s
             ORDER BY
                 pa.answered_at ASC;
         """
-        player_answers = Database.get_rows(sql, [question_id])
+        player_answers = Database.get_rows(sql, [question_id, sessionId])
 
         question['player_answers'] = player_answers
         return question
