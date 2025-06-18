@@ -21,7 +21,7 @@ from models.models import (
     QuestionActivationNotification,
     AnswerBase, AnswerCreate, AnswerListResponse, AnswerResponse, 
     AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand,BroadcastMessage,DirectMessage, ClientActivity,SessionSensorData,MultiSessionSensorResponse,UserUpdateNames,UserCredentials,AnswerInput,QuestionInput, ThemeInput,
-    UserPublic,UserPublicWithIp,UserIpAddress,BanIpRequest,AuditLogResponse,ChatMessage,ChatMessageCreate,ShutdownRequest
+    UserPublic,UserPublicWithIp,UserIpAddress,BanIpRequest,AuditLogResponse,ChatMessage,ChatMessageCreate,ShutdownRequest,PaginationInfo
 )
 from typing import Dict, Any, Optional, List
 from fastapi import Request
@@ -978,150 +978,209 @@ async def appeal_ban(payload: AppealPayload, request: Request):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @app.get("/api/v1/sensor-data", response_model=MultiSessionSensorResponse)
-async def get_multi_session_sensor_data(session_ids: str = None, limit: int = 1000, include_chat: bool = True, include_answers: bool = True):
-    # If session_ids is provided, use those; otherwise get all sessions
-    if session_ids:
-        # Convert and sort session IDs in descending order (newest first)
-        requested_session_ids = sorted(
-            [int(sid.strip()) for sid in session_ids.split(',')],
+async def get_multi_session_sensor_data(
+    session_id: Optional[int] = Query(None, description="Specific session ID to retrieve. If not provided, returns the newest session."),
+    include_chat: bool = Query(True, description="Include chat messages in the response."),
+    include_answers: bool = Query(True, description="Include player answers in the response."),
+):
+    """
+    Retrieves sensor data, chat messages, and player answers for a specific quiz session.
+    Also returns a list of all available session IDs for navigation.
+    """
+    try:
+        # Get ALL sessions' IDs for the session list
+        all_sessions_raw = QuizSessionRepository.get_all_sessions()
+        # Sort sessions by ID descending (newest first)
+        all_sessions_sorted = sorted(
+            all_sessions_raw,
+            key=lambda x: x[0],  # Assuming first element is the session ID
             reverse=True
         )
-    else:
-        # Get all sessions from the database
-        all_sessions = QuizSessionRepository.get_all_sessions()
-        # Extract session IDs - assuming tuples with id as first element
-        # Based on SQL: SELECT id, session_date, name, description, sessionStatusId, themeId, hostUserId, start_time, end_time
-        requested_session_ids = [session[0] for session in all_sessions]
-   
-    response_sessions_data = []
-   
-    for session_id in requested_session_ids:
-        session_data = QuizSessionRepository.get_session_by_id(session_id)
-        if not session_data:
-            continue
-           
-        current_session_id = session_data['id']
-        current_session_name = session_data['name']
-       
-        # Get sensor data and sort by timestamp descending
-        sensor_readings = SensorDataRepository.get_all_data_for_session(current_session_id)
-        # Assuming sensor_readings is a list of dictionaries with 'timestamp' key
-        sensor_readings_sorted = sorted(
-            sensor_readings,
-            key=lambda x: x.get('timestamp') or datetime.min,
-            reverse=True
-        )
-       
-        temperatures = []
-        light_intensities = []
-        servo_positions = []
-       
-        for reading in sensor_readings_sorted:  # Process sorted readings
-            timestamp = reading.get('timestamp')
-            timestamp_iso = timestamp.isoformat() if timestamp else None
-           
-            # Convert values to float if they are strings
-            try:
-                temp_value = float(reading.get('temperature (°C)'))
-            except (ValueError, TypeError):
-                temp_value = None
-           
-            try:
-                light_value = float(reading.get('lightIntensity (lux)'))
-            except (ValueError, TypeError):
-                light_value = None
-           
-            try:
-                servo_value = float(reading.get('servoPosition (°)'))
-            except (ValueError, TypeError):
-                servo_value = None
-                
-            temperatures.append({
-                "timestamp": timestamp_iso,
-                "value": temp_value
-            })
-            light_intensities.append({
-                "timestamp": timestamp_iso,
-                "value": light_value
-            })
-            servo_positions.append({
-                "timestamp": timestamp_iso,
-                "value": servo_value
-            })
         
-        # Get chat data if requested - sort by created_at descending
-        chat_messages = []
-        if include_chat:
-            chat_data = ChatLogRepository.get_chat_messages_by_session(current_session_id, limit)
-            if chat_data:  # Check if chat_data is not None
-                chat_data_sorted = sorted(
-                    chat_data,
-                    key=lambda x: x.get('created_at') or datetime.min,
-                    reverse=True
+        # Create list of available sessions with ID and name
+        available_sessions = [
+            {
+                "id": session[0],
+                "name": (
+                    session[1].strftime("%Y-%m-%d %H:%M:%S")  # Format datetime nicely
+                    if isinstance(session[1], datetime)
+                    else session[1] if len(session) > 1 and session[1] is not None
+                    else f"Session {session[0]}"
                 )
-                chat_messages = [
-                    {
-                        "id": msg.get('id'),
-                        "userId": msg.get('userId'),
-                        "username": msg.get('username'),
-                        "message": msg.get('message'),
-                        "created_at": msg.get('created_at').isoformat() if msg.get('created_at') else None
-                    }
-                    for msg in chat_data_sorted
-                ]
+            }
+            for session in all_sessions_sorted
+        ]
         
-        # Get player answers if requested - sort by answered_at descending
-        player_answers_data = []
-        if include_answers:
-            session_questions = QuestionRepository.get_questions_by_session(current_session_id)
+        total_sessions = len(available_sessions)
+        
+        # Determine which session to fetch
+        if session_id is not None:
+            # Fetch specific session
+            requested_session_id = session_id
+        else:
+            # Fetch newest session (first in sorted list)
+            if available_sessions:
+                requested_session_id = available_sessions[0]["id"]
+            else:
+                # No sessions available
+                return MultiSessionSensorResponse(
+                    sessions=[],
+                    available_sessions=available_sessions,
+                    current_session_id=None,
+                    total_sessions=0
+                )
+        
+        # Fetch the requested session data
+        session_data = QuizSessionRepository.get_session_by_id(requested_session_id)
+        response_sessions_data = []
+        
+        if session_data:
+            current_session_id = session_data['id']
+            current_session_name = session_data['name']
             
-            if session_questions:  # Check if session_questions is not None
-                for question in session_questions:
-                    question_id = question.get('id')
-                    question_with_answers = PlayerAnswerRepository.get_question_with_player_answers(question_id)
-                    
-                    if question_with_answers and question_with_answers.get('player_answers'):
-                        # Sort player answers by answered_at descending
-                        sorted_answers = sorted(
-                            question_with_answers['player_answers'],
-                            key=lambda x: x.get('answered_at') or datetime.min,
-                            reverse=True
-                        )
-                        formatted_answers = []
-                        for answer in sorted_answers:
-                            formatted_answers.append({
-                                "player_answer_id": answer.get('player_answer_id'),
-                                "sessionId": answer.get('sessionId'),
-                                "userId": answer.get('userId'),
-                                "first_name": answer.get('first_name'),
-                                "last_name": answer.get('last_name'),
-                                "questionId": answer.get('questionId'),
-                                "answerId": answer.get('answerId'),
-                                "answer_text": answer.get('answer_text'),
-                                "is_correct": answer.get('is_correct'),
-                                "points_earned": answer.get('points_earned'),
-                                "time_taken": answer.get('time_taken'),
-                                "answered_at": answer.get('answered_at').isoformat() if answer.get('answered_at') else None
-                            })
+            # Get sensor data and sort by timestamp ascending for ApexCharts
+            sensor_readings = SensorDataRepository.get_all_data_for_session(current_session_id)
+            sensor_readings_sorted = sorted(
+                sensor_readings,
+                key=lambda x: x.get('timestamp') or datetime.min,
+                reverse=False  # Ascending order for charts
+            )
+            
+            temperatures = []
+            light_intensities = []
+            servo_positions = []
+            
+            for reading in sensor_readings_sorted:
+                timestamp = reading.get('timestamp')
+                timestamp_iso = timestamp.isoformat() if isinstance(timestamp, datetime) else str(timestamp) if timestamp else None
+                
+                temp_value = float(reading.get('temperature (°C)', 0)) if reading.get('temperature (°C)') is not None else None
+                light_value = float(reading.get('lightIntensity (lux)', 0)) if reading.get('lightIntensity (lux)') is not None else None
+                servo_value = float(reading.get('servoPosition (°)', 0)) if reading.get('servoPosition (°)') is not None else None
+                
+                if timestamp_iso:
+                    temperatures.append({"timestamp": timestamp_iso, "value": temp_value})
+                    light_intensities.append({"timestamp": timestamp_iso, "value": light_value})
+                    servo_positions.append({"timestamp": timestamp_iso, "value": servo_value})
+            
+            # Get chat data if requested
+            chat_messages = []
+            if include_chat:
+                chat_data = ChatLogRepository.get_chat_messages_by_session(current_session_id)
+                if chat_data:
+                    chat_data_sorted = sorted(
+                        chat_data,
+                        key=lambda x: x.get('created_at') or datetime.min,
+                        reverse=False
+                    )
+                    chat_messages = [
+                        {
+                            "id": msg.get('id'),
+                            "userId": msg.get('userId'),
+                            "username": msg.get('username'),
+                            "message": msg.get('message'),
+                            "created_at": msg.get('created_at').isoformat() if isinstance(msg.get('created_at'), datetime) else str(msg.get('created_at')) if msg.get('created_at') else None
+                        }
+                        for msg in chat_data_sorted
+                    ]
+            
+            # Get player answers if requested
+            player_answers_data = []
+            if include_answers:
+                session_questions = QuestionRepository.get_questions_by_session(current_session_id)
+                
+                if session_questions:
+                    for question in session_questions:
+                        question_id = question.get('id')
+                        question_with_answers = PlayerAnswerRepository.get_question_with_player_answers(question_id, current_session_id)
                         
-                        player_answers_data.append({
-                            "question_id": question_id,
-                            "question_text": question_with_answers.get('question_text'),
-                            "player_answers": formatted_answers
-                        })
-       
-        response_sessions_data.append(SessionSensorData(
-            session_id=current_session_id,
-            session_name=current_session_name,
-            temperatures=temperatures,
-            light_intensities=light_intensities,
-            servo_positions=servo_positions,
-            chat_messages=chat_messages,
-            player_answers=player_answers_data
-        ))
-   
-    return MultiSessionSensorResponse(sessions=response_sessions_data)
+                        if question_with_answers and question_with_answers.get('player_answers'):
+                            sorted_answers = sorted(
+                                question_with_answers['player_answers'],
+                                key=lambda x: x.get('answered_at') or datetime.min,
+                                reverse=False
+                            )
+                            formatted_answers = []
+                            for answer in sorted_answers:
+                                formatted_answers.append({
+                                    "player_answer_id": answer.get('player_answer_id'),
+                                    "sessionId": answer.get('sessionId'),
+                                    "userId": answer.get('userId'),
+                                    "first_name": answer.get('first_name'),
+                                    "last_name": answer.get('last_name'),
+                                    "questionId": answer.get('questionId'),
+                                    "answerId": answer.get('answerId'),
+                                    "answer_text": answer.get('answer_text'),
+                                    "is_correct": answer.get('is_correct'),
+                                    "points_earned": answer.get('points_earned'),
+                                    "time_taken": answer.get('time_taken'),
+                                    "answered_at": answer.get('answered_at').isoformat() if isinstance(answer.get('answered_at'), datetime) else str(answer.get('answered_at')) if answer.get('answered_at') else None
+                                })
+                            
+                            player_answers_data.append({
+                                "question_id": question_id,
+                                "question_text": question_with_answers.get('question_text'),
+                                "player_answers": formatted_answers
+                            })
+        
+            response_sessions_data.append(SessionSensorData(
+                session_id=current_session_id,
+                session_name=current_session_name,
+                temperatures=temperatures,
+                light_intensities=light_intensities,
+                servo_positions=servo_positions,
+                chat_messages=chat_messages,
+                player_answers=player_answers_data
+            ))
+
+        # Use the Pydantic model to structure the response
+        response = MultiSessionSensorResponse(
+            sessions=response_sessions_data,
+            available_sessions=available_sessions,
+            current_session_id=requested_session_id if response_sessions_data else None,
+            total_sessions=total_sessions
+        )
+        
+        return response
+        
+    except Exception as e:
+        print(f"Error in get_multi_session_sensor_data: {e}")
+        return {"error": str(e)}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4010,6 +4069,13 @@ def handle_theme_display_phase(sio, loop, session_id, display_time):
     
     print(f"Theme display finished for session {session_id}, ready for quiz")
 
+
+
+
+
+
+
+
 def handle_quiz_phase(sio, loop, session_id, timer_config):
     """Handle the quiz questions phase with dynamic timer based on player answers."""
     print(f"Starting quiz phase for session {session_id}")
@@ -4062,9 +4128,9 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
                          current_question=question,
                          waiting_for_answers=True)
 
-        # Get time limits - explanation time is capped at 6 seconds
-        question_time = question.get('time_limit', 15)
-        explanation_time = min(question_time, 6)  # Never more than 6 seconds
+        # Set time limits - minimum 9 seconds for both question and explanation
+        question_time = max(question.get('time_limit', 15), 9)  # At least 9 seconds
+        explanation_time = max(9, question_time)  # Also at least 9 seconds
 
         # Show question
         emit_combined_question_and_answers(question['id'], sio, loop)
@@ -4107,13 +4173,13 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
         update_quiz_state(session_id, waiting_for_answers=False)
         emit_timer_finished(sio, loop, session_id, 'question', question_id=question['id'])
 
-        # Show explanation with capped time
+        # Show explanation with minimum 9 seconds
         asyncio.run_coroutine_threadsafe(
             sio.emit('explanation_started', {
                 'session_id': session_id,
                 'question_id': question['id'],
                 'explanation_text': question.get('explanation', 'No explanation available'),
-                'duration': explanation_time  # This is now capped at 6 seconds
+                'duration': explanation_time  # Now minimum 9 seconds
             }), loop
         ).result(timeout=1)
 
@@ -4127,14 +4193,16 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
 
         emit_timer_finished(sio, loop, session_id, 'explanation', question_id=question['id'])
 
-        # Early quiz end check
-        current_state = get_quiz_state(session_id)
-        if current_state['question_count'] >= 5:
-            player_count = max(1, current_state['player_count'])
-            required_score = 10 * player_count * current_state['question_count']
-            current_total_score = PlayerAnswerRepository.get_total_score_for_session(session_id)
+        # Check if we should end the quiz based on scores
+        if quiz_state['question_count'] >= 5:  # Only check after at least 5 questions
+            player_scores = PlayerAnswerRepository.get_all_player_scores_for_session(session_id)
+            total_score = sum(score['score'] for score in player_scores)
             
-            if current_total_score < required_score:
+            # Calculate required score - adjust this formula as needed
+            required_score = 10 * total_players * (quiz_state['question_count'] / 2)
+            
+            if total_score < required_score:
+                print(f"Ending quiz early - total score {total_score} below required {required_score}")
                 break
 
         # Refresh questions
@@ -4144,14 +4212,27 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
     # Quiz finished
     QuizSessionRepository.update_session_status(session_id, 3)
     final_state = get_quiz_state(session_id)
+    player_scores = PlayerAnswerRepository.get_all_player_scores_for_session(session_id)
+    total_score = sum(score['score'] for score in player_scores)
+    
     asyncio.run_coroutine_threadsafe(
         sio.emit('quiz_finished', {
             'session_id': session_id,
-            'final_score': final_state['total_score'],
+            'final_score': total_score,
             'questions_asked': final_state['question_count'],
             'all_questions_answered': all_answered if 'all_answered' in locals() else False
         }), loop
     ).result(timeout=1)
+
+
+
+
+
+
+
+
+
+
 
 
 
