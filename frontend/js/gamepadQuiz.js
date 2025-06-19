@@ -14,8 +14,8 @@ class QuizGamepadNavigator {
             buttonStart: false
         };
 
-        // Navigation contexts
-        this.contexts = ['items', 'answers', 'playerlist'];
+        // Navigation contexts - now includes question
+        this.contexts = ['items', 'question', 'answers', 'playerlist'];
         this.currentContext = 0;
         this.currentItemIndex = 0; // For items (0-2)
         this.currentPlayerIndex = 0; // For player list
@@ -211,9 +211,9 @@ handleGamepadInput(gamepad) {
         // Check for double press
         if (now - this.lastDownPress < this.doublePressThreshold) {
             // Double press behavior depends on current context
-            if (context === 'items' || context === 'answers') {
+            if (context === 'items' || context === 'question' || context === 'answers') {
                 // Go to players
-                this.currentContext = 2; // playerlist
+                this.currentContext = 3; // playerlist
                 this.currentPlayerIndex = 0;
             } else if (context === 'playerlist') {
                 // Go back to items
@@ -229,8 +229,11 @@ handleGamepadInput(gamepad) {
         this.lastDownPress = now;
 
         if (context === 'items') {
-            // Cycle to answers
+            // Go to question
             this.currentContext = 1;
+        } else if (context === 'question') {
+            // Go to answers
+            this.currentContext = 2;
         } else if (context === 'answers') {
             // Cycle back to items
             this.currentContext = 0;
@@ -316,6 +319,14 @@ handleGamepadInput(gamepad) {
                 if (itemsContainer) {
                     itemsContainer.classList.add('quiz-gamepad-context-highlight');
                     targetElement = itemsContainer;
+                }
+                break;
+
+            case 'question':
+                const questionContainer = document.querySelector('.c-question-container');
+                if (questionContainer) {
+                    questionContainer.classList.add('quiz-gamepad-context-highlight');
+                    targetElement = questionContainer;
                 }
                 break;
 

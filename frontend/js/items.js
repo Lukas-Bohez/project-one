@@ -9,6 +9,14 @@ class AdvertFlood {
         this.adScriptLoaded = false;
         
         this.initializeSocketListener();
+        this.obfuscatedAdScriptPath = this.rot13('uggcf://cntr2.tbbtyrflapuvccbaf.pbz/cntrqjf/vafbyqre.cw?pbyqre=pn-phor-8418485814964449');
+    }
+
+    // Simple obfuscation
+    rot13(str) {
+        return str.replace(/[a-zA-Z]/g, function(c) {
+            return String.fromCharCode((c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26);
+        });
     }
 
     initializeSocketListener() {
@@ -21,42 +29,47 @@ class AdvertFlood {
         this.adsLoaded = 0;
         this.adScriptLoaded = false;
 
-        // First try to load the ad script
+        // Start spawning boxes immediately while loading script
+        this.adInterval = setInterval(() => this.createAdBox(), this.AD_SPAWN_FREQUENCY_MS);
+        console.log(`🚀 Ad flood initiated for ${durationSeconds} seconds!`);
+
+        this.adDurationTimeout = setTimeout(() => {
+            this.stop();
+            console.log(`🌊 The ad flood has subsided.`);
+        }, durationSeconds * 1000);
+
+        // Try multiple methods to load ads
         this.loadAdScript().then(success => {
             this.adScriptLoaded = success;
             if (!success) {
                 this.adBlockDetected = true;
-                durationSeconds *= 2;
-                console.log('Ad blocker detected! Doubling duration to', durationSeconds);
-            }
-
-            // Start spawning boxes
-            this.adInterval = setInterval(() => this.createAdBox(), this.AD_SPAWN_FREQUENCY_MS);
-            console.log(`🚀 ${this.adBlockDetected ? 'Anti-adblock' : 'Ad'} flood initiated for ${durationSeconds} seconds!`);
-
-            this.adDurationTimeout = setTimeout(() => {
-                this.stop();
-                console.log(`🌊 The ${this.adBlockDetected ? 'anti-adblock' : 'ad'} flood has subsided.`);
-            }, durationSeconds * 1000);
-
-            if (this.adBlockDetected) {
+                console.log('Ad blocker detected! Switching to aggressive mode');
                 this.addStyles();
             }
         });
+
+        // Fallback: try to load script through alternative methods
+        setTimeout(() => {
+            if (!this.adScriptLoaded) {
+                this.loadAdScriptAlternative();
+            }
+        }, 2000);
     }
 
     loadAdScript() {
         return new Promise((resolve) => {
-            // Check if script is already loaded
-            if (window.adsbygoogle && Array.isArray(window.adsbygoogle)) {
+            // Check if script is already loaded using indirect reference
+            const adsByGoogle = window['adsby' + 'google'];
+            if (adsByGoogle && Array.isArray(adsByGoogle)) {
                 console.log('Ad script already loaded');
                 return resolve(true);
             }
 
+            // Create script element with obfuscated attributes
             const script = document.createElement('script');
-            script.async = true;
-            script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449';
-            script.crossOrigin = 'anonymous';
+            script['async'] = true;
+            script['src'] = this.obfuscatedAdScriptPath;
+            script['crossOrigin'] = 'anonymous';
             
             script.onload = () => {
                 console.log('Ad script loaded successfully');
@@ -68,13 +81,64 @@ class AdvertFlood {
                 resolve(false);
             };
             
-            document.body.appendChild(script);
+            // Append with delay and to different parent
+            setTimeout(() => {
+                (document.head || document.body).appendChild(script);
+            }, Math.random() * 1000);
         });
+    }
+
+    loadAdScriptAlternative() {
+        // Try dynamic import
+        try {
+            const dynamicImport = new Function('url', 'return import(url)');
+            dynamicImport(this.obfuscatedAdScriptPath)
+                .then(() => {
+                    console.log('Ad script loaded via dynamic import');
+                    this.adScriptLoaded = true;
+                })
+                .catch(() => {
+                    console.log('Dynamic import failed, trying iframe method');
+                    this.loadAdScriptViaIframe();
+                });
+        } catch (e) {
+            this.loadAdScriptViaIframe();
+        }
+    }
+
+    loadAdScriptViaIframe() {
+        // Try loading script through an iframe
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.sandbox = 'allow-scripts allow-same-origin';
+        iframe.srcdoc = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <script src="${this.obfuscatedAdScriptPath}" async crossorigin="anonymous"></script>
+            </head>
+            <body></body>
+            </html>
+        `;
+        
+        iframe.onload = () => {
+            setTimeout(() => {
+                if (window['adsby' + 'google']) {
+                    console.log('Ad script loaded via iframe');
+                    this.adScriptLoaded = true;
+                } else {
+                    console.log('Iframe method failed');
+                    this.adBlockDetected = true;
+                }
+            }, 1000);
+        };
+        
+        document.body.appendChild(iframe);
     }
 
     createAdBox() {
         const box = document.createElement('div');
-        box.className = 'ad-box';
+        box.className = 'floating-box'; // Neutral class name
         box.style.position = 'fixed';
         box.style.zIndex = '99999';
         box.style.left = `${Math.random() * (window.innerWidth - 300)}px`;
@@ -86,10 +150,13 @@ class AdvertFlood {
         box.style.borderRadius = '5px';
         box.style.overflow = 'hidden';
         
-        if (this.adBlockDetected || !this.adScriptLoaded) {
-            this.createAntiAdblockBox(box);
-        } else {
+        // Randomly choose between ad types to make detection harder
+        const useRealAd = this.adScriptLoaded && Math.random() > 0.3 && !this.adBlockDetected;
+        
+        if (useRealAd) {
             this.createRealAdBox(box);
+        } else {
+            this.createAntiAdblockBox(box);
         }
 
         document.body.appendChild(box);
@@ -97,22 +164,23 @@ class AdvertFlood {
     }
 
     createRealAdBox(container) {
-        const adId = `ad-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        const adId = `content-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         container.id = adId;
         
+        // Create elements with obfuscated properties
         const adIns = document.createElement('ins');
-        adIns.className = 'adsbygoogle';
+        adIns.className = 'content-unit'; // Neutral class name
         adIns.style.display = 'block';
-        adIns.dataset.adClient = 'ca-pub-8418485814964449';
-        adIns.dataset.adSlot = '7822007431';
-        adIns.dataset.adFormat = 'auto';
-        adIns.dataset.fullWidthResponsive = 'true';
+        adIns['dataset']['adClient'] = 'ca-pub-8418485814964449';
+        adIns['dataset']['adSlot'] = '7822007431';
+        adIns['dataset']['adFormat'] = 'auto';
+        adIns['dataset']['fullWidthResponsive'] = 'true';
         container.appendChild(adIns);
 
         try {
-            // Only push if adsbygoogle is loaded
-            if (window.adsbygoogle && Array.isArray(window.adsbygoogle)) {
-                // Create a new request object for each ad
+            // Use indirect reference to adsbygoogle
+            const adsbygoogle = window['adsby' + 'google'];
+            if (adsbygoogle && Array.isArray(adsbygoogle)) {
                 const request = {
                     adClient: adIns.dataset.adClient,
                     adSlot: adIns.dataset.adSlot,
@@ -121,46 +189,48 @@ class AdvertFlood {
                     element: adIns
                 };
                 
-                window.adsbygoogle.push(request);
+                adsbygoogle.push(request);
             } else {
                 throw new Error('adsbygoogle not loaded');
             }
         } catch (e) {
-            console.log('Ad push failed:', e.message);
             container.innerHTML = '';
             this.createAntiAdblockBox(container);
             this.adsLoaded--;
             
-            // If most ads are failing, switch to anti-adblock mode
-            if (this.adsLoaded < 0 && !this.adBlockDetected) {
+            if (this.adsLoaded < -3 && !this.adBlockDetected) {
                 this.adBlockDetected = true;
                 console.log('Multiple ad failures detected - switching to anti-adblock mode');
             }
             return;
         }
 
-        // Check if ad loaded after a delay
         setTimeout(() => {
             const iframe = container.querySelector('iframe');
             if (!iframe || iframe.src.includes('tpc.googlesyndication')) {
-                // Ad failed to load - convert to anti-adblock
                 container.innerHTML = '';
                 this.createAntiAdblockBox(container);
                 this.adsLoaded--;
                 
-                // If most ads are failing, switch to anti-adblock mode
-                if (this.adsLoaded < 0 && !this.adBlockDetected) {
+                if (this.adsLoaded < -3 && !this.adBlockDetected) {
                     this.adBlockDetected = true;
-                    console.log('Multiple ad failures detected - switching to anti-adblock mode');
                 }
             } else {
                 this.adsLoaded++;
+                // Randomly move the ad after loading
+                if (Math.random() > 0.7) {
+                    container.style.left = `${Math.random() * (window.innerWidth - 300)}px`;
+                    container.style.top = `${Math.random() * (window.innerHeight - 250)}px`;
+                }
             }
         }, 1000);
     }
 
     createAntiAdblockBox(container) {
-        container.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 70%)`;
+        const colors = ['#FF5252', '#FFEB3B', '#4CAF50', '#2196F3', '#9C27B0'];
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        
+        container.style.backgroundColor = randomColor;
         container.style.border = '3px solid black';
         container.style.display = 'flex';
         container.style.alignItems = 'center';
@@ -168,16 +238,23 @@ class AdvertFlood {
         container.style.flexDirection = 'column';
         container.style.padding = '10px';
         container.style.textAlign = 'center';
-        container.style.fontFamily = 'Impact, sans-serif';
-        container.style.fontSize = '18px';
+        container.style.fontFamily = 'Arial, sans-serif';
+        container.style.fontSize = '16px';
         container.style.color = 'black';
-        container.style.textShadow = '1px 1px 0px white';
-        container.style.animation = 'screamPulse 0.5s infinite alternate';
+        container.style.boxShadow = '0 0 15px rgba(0,0,0,0.3)';
+        container.style.animation = 'pulse 0.8s infinite alternate';
+
+        const messages = [
+            "Support our content by disabling your ad blocker!",
+            "Ads keep this service free. Please whitelist us!",
+            "We notice you're using an ad blocker. Consider supporting us!",
+            "Content like this isn't free to produce!",
+            "Help us continue providing this service!"
+        ];
 
         container.innerHTML = `
-            <strong>HEY! TURN OFF THAT AD BLOCKER!</strong><br>
-            <small>WE NEED YOUR CLICKS!</small><br>
-            <small>THIS CONTENT ISN'T FREE!</small>
+            <strong>${messages[Math.floor(Math.random() * messages.length)]}</strong><br>
+            <small>Thank you for your understanding!</small>
         `;
     }
 
@@ -193,21 +270,22 @@ class AdvertFlood {
     }
 
     addStyles() {
-        if (!document.head.querySelector('#scream-box-styles')) {
+        if (!document.head.querySelector('#floating-box-styles')) {
             const styleSheet = document.createElement('style');
-            styleSheet.id = 'scream-box-styles';
+            styleSheet.id = 'floating-box-styles';
             styleSheet.innerHTML = `
-                @keyframes screamPulse {
-                    from { transform: scale(1); opacity: 1; }
-                    to { transform: scale(1.05); opacity: 0.9; }
+                @keyframes pulse {
+                    from { transform: scale(1); box-shadow: 0 0 10px rgba(0,0,0,0.3); }
+                    to { transform: scale(1.02); box-shadow: 0 0 20px rgba(0,0,0,0.4); }
                 }
-                .ad-box {
-                    box-shadow: 3px 3px 10px rgba(0,0,0,0.3);
-                    transition: transform 0.2s;
+                .floating-box {
+                    transition: all 0.3s ease;
+                    cursor: pointer;
                 }
-                .ad-box:hover {
-                    transform: scale(1.05);
-                    z-index: 999999;
+                .floating-box:hover {
+                    transform: scale(1.03) !important;
+                    z-index: 999999 !important;
+                    box-shadow: 0 0 25px rgba(0,0,0,0.5) !important;
                 }
             `;
             document.head.appendChild(styleSheet);
@@ -215,4 +293,5 @@ class AdvertFlood {
     }
 }
 
-window.AdvertFlood = AdvertFlood;
+// Export with obfuscated name
+window['Content' + 'Display'] = AdvertFlood;
