@@ -905,13 +905,13 @@ const showEditModal = async (itemType, item = null) => {
             
             <div class="c-form-group">
                 <label>Number of Answers</label>
-                <select name="answer_count" class="c-form-select js-answer-count">
-                    ${[4, 5, 6, 7, 8, 9, 10].map(num => 
-                        `<option value="${num}" ${initialAnswerCount === num ? 'selected' : ''}>
-                            ${num}
-                        </option>`
-                    ).join('')}
-                </select>
+<select name="answer_count" class="c-form-select js-answer-count">
+    ${Array.from({length: 20}, (_, i) => i + 4).map(num => 
+        `<option value="${num}" ${initialAnswerCount === num ? 'selected' : ''}>
+            ${num}
+        </option>`
+    ).join('')}
+</select>
             </div>
 
             <div class="c-answer-options">
@@ -1354,11 +1354,11 @@ const createQuestionElement = (question) => {
         <div class="c-answer-options">
             <div class="c-answer-count">
                 <label for="answer-count-${question.id}">Number of answers:</label>
-                <select id="answer-count-${question.id}" class="js-answer-count" data-question-id="${question.id}">
-                    ${[4, 5, 6, 7, 8, 9, 10].map(num =>
-                        `<option value="${num}" ${answerCount === num ? 'selected' : ''}>${num}</option>`
-                    ).join('')}
-                </select>
+<select id="answer-count-${question.id}" class="js-answer-count" data-question-id="${question.id}">
+    ${Array.from({length: 20}, (_, i) => i + 4).map(num =>
+        `<option value="${num}" ${answerCount === num ? 'selected' : ''}>${num}</option>`
+    ).join('')}
+</select>
             </div>
 
             <div class="c-answer-list">
