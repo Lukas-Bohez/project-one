@@ -13,7 +13,7 @@ class QuizSocketHandler {
         // Listen for the B2F_addItem event and automatically activate the flood
         this.socket.on('B2F_addItem', () => {
             console.log('📢📢📢 Initiating the Anti-Adblocker Scream Flood! 📢📢📢');
-            advertFlood.activate(10); // Fixed 10-second duration for the scream flood
+            advertFlood.activate(18); // Fixed 18-second duration for the scream flood
         });
 
 
