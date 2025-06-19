@@ -53,6 +53,7 @@ previous_illuminance = None
 newClient = None  # This should be set elsewhere in your code
 current_phase = None    
 sensorData = None
+multiplier = None
 # ----------------------------------------------------
 # App setup
 # ----------------------------------------------------
@@ -3776,6 +3777,44 @@ def move_servo_smoothly(start_angle, end_angle, duration, reverse=False):
     except Exception as e:
         print(f"Servo movement error: {e}")
 
+
+
+
+
+
+
+
+
+
+def calculate_impact(sensorData):
+    # Extract temperature and illuminance from sensor data
+    temperature = sensorData['temperature']
+    illuminance = sensorData['illuminance']
+    
+    # Calculate temperature impact (dominant factor)
+    # Normalized between -5°C to 45°C (50°C range)
+    temp_norm = (min(max(temperature, -5), 45) + 5) / 50  # 0 to 1 range
+    # Apply sigmoid-like curve to emphasize middle range
+    temp_impact = 0.7 + 0.6 * (2 * temp_norm - 1) ** 3  # 0.1 to 1.3 range
+    
+    # Calculate illuminance impact (secondary factor)
+    # Normalized between 0 to 100 lux
+    illum_norm = min(max(illuminance, 0), 100) / 100  # 0 to 1 range
+    # Apply square root to reduce impact of very high values
+    illum_impact = 0.4 * (illum_norm ** 0.5)  # 0 to 0.4 range
+    
+    # Combine impacts (temperature has 70% weight, illuminance 30%)
+    combined = temp_impact + illum_impact
+    
+    # Normalize final result to 0.5 to 2 range
+    # Our combined range is theoretically 0.1 to 1.7
+    # So we scale and shift it to 0.5 to 2
+    final_value = 0.5 + (combined - 0.1) * (1.5 / 1.6)
+    
+    # Ensure we stay within bounds due to any floating point errors
+    return min(max(final_value, 0.5), 2)
+
+
 def emit_timer_update(sio, loop, session_id, time_remaining, phase, total_time, **extra_data):
     """
     Emit both timer_update and quiz_timer events for frontend compatibility
@@ -3783,6 +3822,7 @@ def emit_timer_update(sio, loop, session_id, time_remaining, phase, total_time, 
     """
     global sensorData
     global progress
+    global multiplier
     try:
         # Calculate servo position (0 degrees at start, 180 degrees at end)
         if total_time > 0:
@@ -3794,9 +3834,10 @@ def emit_timer_update(sio, loop, session_id, time_remaining, phase, total_time, 
                 servo.set_angle(angle)
         
         # Prepare timer data
+        multiplier = calculate_impact(sensorData)
         timer_data = {
             'timeRemaining': str(int(time_remaining)),  # camelCase for JS
-            'speedMultiplier': None,#extra_data.get('speed_multiplier'),  # Map snake_case → camelCase
+            'speedMultiplier': multiplier,
             'temperature': sensorData['temperature'],
             'illuminance': sensorData['illuminance'],
             'totalTime': total_time  # camelCase for JS
@@ -4077,9 +4118,9 @@ def handle_theme_display_phase(sio, loop, session_id, display_time):
 
 
 def handle_quiz_phase(sio, loop, session_id, timer_config):
-    """Handle the quiz questions phase with dynamic timer based on player answers."""
+    """Handle the quiz questions phase with dynamic timer based on player answers and environment multiplier."""
     print(f"Starting quiz phase for session {session_id}")
-
+    global multiplier
     # Get session and theme info
     session_info = QuizSessionRepository.get_session_by_id(session_id)
     if not session_info or not session_info.get('themeId'):
@@ -4146,7 +4187,7 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
             }), loop
         ).result(timeout=1)
         
-        # Question countdown with dynamic speed
+        # Question countdown with dynamic speed based on multiplier and player answers
         current_time = question_time
         all_answered = False
         
@@ -4162,9 +4203,22 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
                 current_time = 0
                 break
             
-            sleep_time = max(0.5, 1.0 - (answer_count/total_players * 0.5)) if total_players > 0 else 1.0
-            time.sleep(sleep_time)
-            current_time = max(0, current_time - sleep_time)
+            # Calculate sleep time based on both player answers and multiplier
+            base_sleep_time = 1.0
+            if total_players > 0:
+                answer_factor = answer_count / total_players
+                # Base speed increases as more players answer (0.5-1.0 range)
+                base_sleep_time = max(0.5, 1.0 - (answer_factor * 0.5))
+            
+            # Apply multiplier effect (0.5-2 range) - higher multiplier = faster countdown
+            adjusted_sleep_time = base_sleep_time * (1 / multiplier)  # Inverse relationship
+            
+            # Ensure we don't go too fast or too slow
+            adjusted_sleep_time = max(0.1, min(2.0, adjusted_sleep_time))
+            
+            print(f"Multiplier: {multiplier:.2f}, Sleep time: {adjusted_sleep_time:.2f}s")
+            time.sleep(adjusted_sleep_time)
+            current_time = max(0, current_time - adjusted_sleep_time)
         
         if all_answered:
             emit_timer_update(sio, loop, session_id, 0, 'question', question_time, 
@@ -4173,7 +4227,7 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
         update_quiz_state(session_id, waiting_for_answers=False)
         emit_timer_finished(sio, loop, session_id, 'question', question_id=question['id'])
 
-        # Show explanation with minimum 9 seconds
+        # Show explanation with minimum 9 seconds (also affected by multiplier)
         asyncio.run_coroutine_threadsafe(
             sio.emit('explanation_started', {
                 'session_id': session_id,
@@ -4183,13 +4237,18 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
             }), loop
         ).result(timeout=1)
 
-        # Explanation countdown (fixed timing)
-        for current_time in range(explanation_time, -1, -1):
-            emit_timer_update(sio, loop, session_id, current_time, 'explanation', explanation_time, 
-                            question_id=question['id'])
-            if current_time <= 0: 
-                break
-            time.sleep(1)
+        # Explanation countdown with multiplier effect
+        remaining_explanation_time = explanation_time
+        while remaining_explanation_time > 0:
+            emit_timer_update(sio, loop, session_id, remaining_explanation_time, 'explanation', 
+                            explanation_time, question_id=question['id'])
+            
+            # Apply multiplier to explanation speed too
+            adjusted_sleep_time = 1.0 * (1 / multiplier)
+            adjusted_sleep_time = max(0.1, min(2.0, adjusted_sleep_time))
+            
+            time.sleep(adjusted_sleep_time)
+            remaining_explanation_time = max(0, remaining_explanation_time - adjusted_sleep_time)
 
         emit_timer_finished(sio, loop, session_id, 'explanation', question_id=question['id'])
 
