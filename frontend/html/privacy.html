@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Quiz The Spire</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="../js/gamepad.js"></script>
+    </head>
+<body>
+    <header class="c-header">
+        <a href="index.html" class="c-header__link">
+            <h1 class="c-header__title">Quiz The Spire</h1>
+        </a>
+    </header>
+
+    <main class="o-container c-welcome-message">
+        <h2>Privacy Policy</h2>
+        <p>
+            Welcome to Quiz The Spire! We value your privacy and transparency regarding how we collect, use, and share data. This Privacy Policy explains what information we collect when you use our quiz game, why we collect it, and how we protect it.
+        </p>
+
+        <div class="c-info-section">
+            <h3 class="c-info-section__title">What information do we collect?</h3>
+            <p>
+                We collect various types of information to enhance your gaming experience and optimize the functionality of Quiz The Spire:
+            </p>
+            <ul class="c-items-list">
+                <li class="c-items-list__item">
+                    <strong>Environmental Sensor Data:</strong> To adjust the dynamic difficulty of the quiz, we collect anonymized data from environmental sensors, such as temperature and light levels, from your gaming environment. This data is used to influence the timer speed and question difficulty. This data is not directly linked to your identity.
+                </li>
+                <li class="c-items-list__item">
+                    <strong>Game Data:</strong> Information about your quiz performance, points scored, items used, and game progress is collected to improve the game and display your results.
+                </li>
+                <li class="c-items-list__item">
+                    <strong>Technical Data:</strong> Data such as your IP address, browser type, operating system, and device type may be automatically collected for diagnostic purposes and to ensure the stability of our service.
+                </li>
+            </ul>
+        </div>
+
+        <div class="c-info-section">
+            <h3 class="c-info-section__title">How do we use your information?</h3>
+            <p>
+                The collected information is used for the following purposes:
+            </p>
+            <ul class="c-items-list">
+                <li class="c-items-list__item">
+                    To **personalize and improve gameplay**, such as adjusting difficulty based on environmental sensor data.
+                </li>
+                <li class="c-items-list__item">
+                    For **internal analysis** to understand game performance and develop new features.
+                </li>
+                <li class="c-items-list__item">
+                    To ensure the **stability and security** of our service.
+                </li>
+            </ul>
+        </div>
+
+        <div class="c-info-section">
+            <h3 class="c-info-section__title">Sharing information with third parties</h3>
+            <p>
+                We do not share your information with third parties, except as described below:
+            </p>
+            <ul class="c-items-list">
+                <li class="c-items-list__item">
+                    <strong>Google Products:</strong> We may use Google ad code to generate revenue. In this case, Google, as a third party, may place and read cookies in your browser, and use web beacons or IP addresses to collect information through the display of ads on our website. You can find more information about how Google uses data when you use our partners' sites or apps via this link: <a href="https://policies.google.com/technologies/partner-sites" target="_blank">How Google uses data</a>.
+                </li>
+                <li class="c-items-list__item">
+                    <strong>Legal Obligations:</strong> We may disclose information if legally required, or if we believe in good faith that such action is necessary to comply with a legal obligation, protect our rights or property, or protect the safety of our users or the public.
+                </li>
+            </ul>
+        </div>
+
+        <div class="c-info-section">
+            <h3 class="c-info-section__title">Your Choices and Rights</h3>
+            <p>
+                You have the right to request access to the personal information we hold about you, to correct it, or to delete it. Please contact us at lukasbohez@gmail.com to exercise your rights.
+            </p>
+        </div>
+
+        <div class="c-info-section">
+            <h3 class="c-info-section__title">Data Security</h3>
+            <p>
+                We take reasonable measures to protect your information from unauthorized access, use, or disclosure. However, no method of transmission over the internet or electronic storage is 100% secure.
+            </p>
+        </div>
+
+        <div class="c-info-section">
+            <h3 class="c-info-section__title">Changes to this Privacy Policy</h3>
+            <p>
+                We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page. Changes are effective when they are posted on this page.
+            </p>
+        </div>
+
+        <div class="c-info-section">
+            <h3 class="c-info-section__title">Contact Us</h3>
+            <p>
+                If you have any questions about this Privacy Policy, please contact us at lukasbohez@gmail.com .
+            </p>
+        </div>
+
+        ---
+
+        <h3 style="text-align: center; margin-bottom: 1.5rem;">Consent for Data Usage</h3>
+        <p style="text-align: center; margin-bottom: 1.5rem;">
+            To fully enjoy "Quiz The Spire," we ask for your consent to use cookies and anonymized environmental data as described in this policy.
+        </p>
+
+        <div class="o-button-group u-flex u-gap-1" style="justify-content: center;">
+            <button id="acceptPrivacy" class="c-btn c-btn--primary gamepad" style="min-width: 200px;">I Agree</button>
+            <button id="declinePrivacy" class="c-btn c-btn--secondary gamepad" style="min-width: 200px;">Do Not Agree</button>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const acceptBtn = document.getElementById('acceptPrivacy');
+            const declineBtn = document.getElementById('declinePrivacy');
+
+            if (acceptBtn) {
+                acceptBtn.addEventListener('click', () => {
+                    const consentData = {
+                        accepted: true,
+                        timestamp: new Date().getTime()
+                    };
+                    localStorage.setItem('privacyConsent', JSON.stringify(consentData));
+                    // Redirect the user back to index.html
+                    window.location.href = '../index.html'; // Relative path to index.html
+                });
+            }
+
+            if (declineBtn) {
+                declineBtn.addEventListener('click', () => {
+                    const consentData = {
+                        accepted: false,
+                        timestamp: new Date().getTime()
+                    };
+                    localStorage.setItem('privacyConsent', JSON.stringify(consentData));
+                    // Close the page
+                    window.close();
+                    // Fallback for browsers that block window.close() if the page was not opened by script
+                    document.body.innerHTML = '<div style="text-align: center; padding: 50px;"><h2>Thank you for your visit!</h2><p>You have chosen not to accept our data processing. This page will now close.</p></div>';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

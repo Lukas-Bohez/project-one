@@ -1,0 +1,390 @@
+/*---------------------------------------/*
+ # SETTINGS
+/*---------------------------------------*/
+:root {
+    --primary-color: #2c4c7c;
+    /* Darkened for better contrast */
+    --secondary-color: #0c4061;
+    /* Darkened for better contrast */
+    --tertiary-color: #0d9edb;
+    /* Slightly darkened for better contrast */
+    --dark-color: #0e1827;
+    /* Darker for better contrast against light backgrounds */
+    --light-color: #f4f8fc;
+    /* Lightened background color */
+    --success-color: #2e8b34;
+    /* Darkened for better contrast */
+    --danger-color: #d32f2f;
+    /* Adjusted for better contrast */
+    --warning-color: #e65100;
+    /* Darkened for better contrast */
+    --info-color: #0d61aa;
+    /* Darkened for better contrast */
+}
+
+/*---------------------------------------/*
+ # GENERIC
+/*---------------------------------------*/
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/*---------------------------------------/*
+ # ELEMENTS
+/*---------------------------------------*/
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--light-color);
+    color: var(--dark-color);
+    line-height: 1.6;
+    font-size: 16px;
+    /* Base font size for mobile */
+}
+
+/*---------------------------------------/*
+ # OBJECTS
+/*---------------------------------------*/
+.o-container {
+    width: 100%;
+    padding: 0 1rem;
+    margin: 1rem auto;
+    /* Smaller margin on mobile */
+}
+
+.o-button-group {
+    display: grid;
+    grid-template-columns: 1fr;
+    /* Single column by default */
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.o-status-display {
+    display: flex;
+    flex-direction: column;
+    /* Stack items vertically on mobile */
+    gap: 1rem;
+    background-color: white;
+    /* Changed to white for better contrast */
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    /* Subtle shadow for depth */
+}
+
+/*---------------------------------------/*
+ # COMPONENTS
+/*---------------------------------------*/
+.c-header {
+    background-color: #2c4c7c;
+    color: white;
+    padding: 0.75rem 1rem;
+    /* Smaller padding on mobile */
+    text-align: center;
+    position: relative;
+}
+
+.c-header__link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.c-header__link:hover .c-header__title {
+    text-decoration: underline;
+}
+
+.c-header__title {
+    margin: 0;
+    display: inline-block;
+    font-size: 1.25rem;
+    /* Smaller heading on mobile */
+}
+
+.c-welcome-message {
+    background-color: white;
+    /* Changed to white for better contrast */
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    /* Subtle shadow for depth */
+}
+
+.c-btn {
+    padding: 0.75rem;
+    /* Smaller buttons on mobile */
+    border: none;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    /* Smaller text on mobile buttons */
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.c-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.c-btn--primary {
+    background-color: var(--primary-color);
+    color: white;
+    /* Changed to white for better contrast */
+}
+
+.c-btn--secondary {
+    background-color: var(--secondary-color);
+    color: white;
+    /* Changed to white for better contrast */
+}
+
+.c-btn--delete {
+    background-color: var(--danger-color);
+    color: white;
+    /* Changed to white for better contrast */
+    margin-left: 10%;
+}
+
+.c-btn--tertiary {
+    background-color: var(--tertiary-color);
+    color: white;
+    /* Changed to white for better contrast */
+}
+
+.c-btn--admin {
+    background-color: var(--dark-color);
+    color: white;
+    /* Changed to white for better contrast */
+}
+
+.c-info-btn {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid white;
+    /* Changed to white for better contrast */
+    background-color: transparent;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.c-modal {
+    display: none; /* Initially hidden */
+    position: fixed;
+    z-index: 1000; /* High z-index to ensure it's on top */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.6); /* Darkened for better visibility of modal */
+    backdrop-filter: blur(5px); /* Subtle blur for modern effect */
+    -webkit-backdrop-filter: blur(5px); /* Safari support */
+}
+
+.c-modal__content {
+    background-color: white; /* Changed to white for better contrast */
+    margin: 10% auto; /* Adjusted margin for better vertical centering */
+    padding: 2rem;
+    border-radius: 8px;
+    width: 90%; /* Wider on small screens */
+    max-width: 600px; /* Max width for larger screens */
+    box-shadow: 0 8px 20px 0 rgba(0, 0, 0, 0.3); /* Enhanced shadow */
+    position: relative;
+    animation: fadeInScale 0.3s ease-out; /* Add animation */
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+
+.c-modal__close {
+    color: #666; /* Darkened for better visibility */
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.c-modal__close:hover,
+.c-modal__close:focus {
+    color: var(--danger-color);
+    text-decoration: none;
+}
+
+.c-info-section {
+    margin-bottom: 1.5rem;
+}
+
+.c-info-section__title {
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+}
+
+.c-items-list {
+    list-style-type: none;
+    margin-left: 1rem;
+}
+
+.c-items-list__item {
+    margin-bottom: 0.5rem;
+    padding-left: 1.5rem;
+    position: relative;
+}
+
+.c-items-list__item::before {
+    content: "•";
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    position: absolute;
+    left: 0;
+    top: -0.3rem;
+}
+
+.c-servo-test {
+    margin-top: 1rem;
+}
+
+.c-login-form {
+    background-color: white;
+    /* Changed to white for better contrast */
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    /* Subtle shadow for depth */
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.c-login-input {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ccc;
+    /* Changed to more visible border */
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.c-error-message {
+    color: var(--danger-color);
+    background-color: rgba(211, 47, 47, 0.1);
+    /* Adjusted to match new danger color */
+    padding: 0.75rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    display: none;
+}
+
+.c-error-message.is-visible {
+    display: block;
+}
+
+.c-loading-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 0.5rem;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/*---------------------------------------/*
+ # UTILITIES
+/*---------------------------------------*/
+.u-flex {
+    display: flex;
+}
+
+.u-gap-1 {
+    gap: 1rem;
+}
+
+.u-mb-2 {
+    margin-bottom: 2rem;
+}
+
+@media screen and (min-width: 768px) {
+    body {
+        font-size: 18px;
+        /* Slightly larger base font */
+    }
+
+    .o-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        /* Larger margins on desktop */
+    }
+
+    .o-button-group {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        /* Multi-column on desktop */
+        margin-bottom: 2rem;
+    }
+
+    .o-status-display {
+        flex-direction: row;
+        /* Horizontal layout on desktop */
+        justify-content: space-between;
+    }
+
+    .c-header {
+        padding: 1rem;
+        /* Larger padding on desktop */
+    }
+
+    .c-header__title {
+        font-size: 1.5rem;
+        /* Larger heading on desktop */
+    }
+
+    .c-btn {
+        padding: 1rem;
+        /* Larger buttons on desktop */
+        font-size: 1rem;
+        /* Regular text size */
+    }
+
+    .c-login-form {
+        padding: 2rem;
+    }
+
+    .c-login-input {
+        padding: 1rem;
+    }
+
+    .c-modal__content {
+        margin: 5% auto; /* Revert to original desktop margin */
+    }
+}
