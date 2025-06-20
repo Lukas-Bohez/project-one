@@ -4121,6 +4121,7 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
     """Handle the quiz questions phase with dynamic timer based on player answers and environment multiplier."""
     print(f"Starting quiz phase for session {session_id}")
     global multiplier
+    global virtualTemperature
     # Get session and theme info
     session_info = QuizSessionRepository.get_session_by_id(session_id)
     if not session_info or not session_info.get('themeId'):
@@ -4216,7 +4217,17 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
             # Ensure we don't go too fast or too slow
             adjusted_sleep_time = max(0.1, min(2.0, adjusted_sleep_time))
             
-            print(f"Multiplier: {multiplier:.2f}, Sleep time: {adjusted_sleep_time:.2f}s")
+            # Adjust virtual temperature based on player responses
+            if answer_count > 0:
+                # More answers = cooling effect (temperature moves toward 0)
+                temp_change = -0.1 * answer_factor
+                virtualTemperature = max(-20, min(20, virtualTemperature + temp_change))
+            else:
+                # No answers = slight heating (temperature moves away from 0)
+                temp_change = 0.5 * (1 if virtualTemperature >= 0 else -1)
+                virtualTemperature = max(-20, min(20, virtualTemperature + temp_change))
+            
+            print(f"Multiplier: {multiplier:.2f}, Sleep time: {adjusted_sleep_time:.2f}s, Temp: {virtualTemperature:.2f}")
             time.sleep(adjusted_sleep_time)
             current_time = max(0, current_time - adjusted_sleep_time)
         
@@ -4247,6 +4258,11 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
             adjusted_sleep_time = 1.0 * (1 / multiplier)
             adjusted_sleep_time = max(0.1, min(2.0, adjusted_sleep_time))
             
+            # During explanation, temperature gradually moves toward 0 (neutral)
+            temp_change = -0.5 * (1 if virtualTemperature >= 0 else -1)
+            virtualTemperature = max(-20, min(20, virtualTemperature + temp_change))
+            
+            print(f"Explanation - Temp: {virtualTemperature:.2f}")
             time.sleep(adjusted_sleep_time)
             remaining_explanation_time = max(0, remaining_explanation_time - adjusted_sleep_time)
 
