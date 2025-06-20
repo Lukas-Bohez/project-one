@@ -4269,9 +4269,10 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
         emit_timer_finished(sio, loop, session_id, 'explanation', question_id=question['id'])
 
         # Check if we should end the quiz based on scores
-        if quiz_state['question_count'] >= 5:  # Only check after at least 5 questions
-            player_scores = PlayerAnswerRepository.get_all_player_scores_for_session(session_id)
-            total_score = sum(score['score'] for score in player_scores)
+        if quiz_state['question_count'] >= 2:  # Only check after at least 2 questions
+            print(f"quiz state question count is {quiz_state['question_count']}")
+            all_scores = PlayerAnswerRepository.get_all_player_scores_for_session(session_id)
+            total_score = sum(score.get('total_score', 0) for score in all_scores)
             
             # Calculate required score - adjust this formula as needed
             required_score = 10 * total_players * (quiz_state['question_count'] / 2)
@@ -4297,6 +4298,9 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
                     reply_to_id=1
                 )
                 threadsafe_emit_message_sent(sio, session_id, loop)
+                
+                # Add this break statement to actually exit the quiz loop
+                update_quiz_state(session_id, waiting_for_answers=False)
                 break
 
         # Refresh questions
