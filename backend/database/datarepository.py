@@ -464,12 +464,24 @@ class ThemeRepository:
         params = [status, theme_id]
         return Database.execute_sql(sql, params)
 
-    # DELETE operations
     @staticmethod
     def delete_theme(theme_id: int):
-        sql = "DELETE FROM themes WHERE id = %s"
-        params = [theme_id]
-        return Database.execute_sql(sql, params)
+        # First set all references to NULL
+        update_sql = "UPDATE quizSessions SET themeId = NULL WHERE themeId = %s"
+        
+        # Then delete the theme
+        delete_sql = "DELETE FROM themes WHERE id = %s"
+        
+        # Execute both in a transaction
+        try:
+            Database.execute_sql("START TRANSACTION", [])
+            Database.execute_sql(update_sql, [theme_id])
+            result = Database.execute_sql(delete_sql, [theme_id])
+            Database.execute_sql("COMMIT", [])
+            return result
+        except Exception as e:
+            Database.execute_sql("ROLLBACK", [])
+            raise e
     
 
 class UserRepository:
