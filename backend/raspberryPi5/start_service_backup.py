@@ -24,10 +24,10 @@ class SystemGamepadController:
         # --- Pygame-specific attributes ---
         self.joystick = None
         self.button_states = {
-            'L': {'pressed': False, 'time': 0},
-            'R': {'pressed': False, 'time': 0},
-            'SELECT': {'pressed': False, 'time': 0}, # For future potential combos
-            'START': {'pressed': False, 'time': 0}   # For future potential combos
+            'L': {'pressed': False, 'time': 0, 'last_action_time': 0},
+            'R': {'pressed': False, 'time': 0, 'last_action_time': 0},
+            'SELECT': {'pressed': False, 'time': 0},
+            'START': {'pressed': False, 'time': 0}
         }
         self.button_lock = Lock()
         
@@ -177,12 +177,6 @@ class SystemGamepadController:
                 user_display = os.environ.get("DISPLAY", ":0")
                 user_runtime_dir = os.environ.get("XDG_RUNTIME_DIR")
                 
-                # --- MODIFICATION START ---
-                # To launch in fullscreen, we need to explicitly call a browser
-                # and pass its fullscreen flag. This is a common approach for Wayland.
-                # We'll try to launch Chromium-browser with --kiosk.
-                # If 'chromium-browser' isn't found, xdg-open will act as a fallback,
-                # but might not respect the kiosk flag directly.
                 browser_cmd = ["chromium-browser", "--kiosk", target_url]
                 
                 launch_cmd = [
@@ -193,9 +187,7 @@ class SystemGamepadController:
                 if user_runtime_dir:
                     launch_cmd.append(f"XDG_RUNTIME_DIR={user_runtime_dir}")
                 
-                # Append the browser command to run within the user's environment
                 launch_cmd.extend(browser_cmd)
-                # --- MODIFICATION END ---
 
                 with open(self.browser_log_path, 'w') as log_file:
                     self.browser_process = subprocess.Popen(
@@ -230,21 +222,65 @@ class SystemGamepadController:
 
     def get_button_name(self, button_index):
         """Map button indices to SNES button names (L/R specifically)"""
-        # This mapping is based on your provided SNESGamepadController's map
-        # You might need to adjust it if your joystick reports L/R differently
-        # For L/R buttons specifically:
         button_map = {
             4: 'L', 
             5: 'R'
         }
-        return button_map.get(button_index, f'BTN{button_index}') # Return generic if not L/R
+        return button_map.get(button_index, f'BTN{button_index}')
+
+    def restart_snes_service(self):
+        """Restart the snes-wakeup.service"""
+        try:
+            if self.debug:
+                print("Restarting snes-wakeup.service...")
+            
+            result = subprocess.run(
+                ["systemctl", "restart", "snes-wakeup.service"],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            
+            if self.debug:
+                print("✓ snes-wakeup.service restarted successfully")
+                
+        except subprocess.CalledProcessError as e:
+            if self.debug:
+                print(f"✗ Failed to restart snes-wakeup.service: {e}")
+                print(f"Error output: {e.stderr}")
+        except subprocess.TimeoutExpired:
+            if self.debug:
+                print("✗ Timeout while restarting snes-wakeup.service")
+        except Exception as e:
+            if self.debug:
+                print(f"✗ Unexpected error restarting snes-wakeup.service: {e}")
 
     def update_button_state(self, button, pressed):
         """Update button state with timestamp for combo checking"""
         with self.button_lock:
             if button in self.button_states:
+                current_time = time.time()
                 self.button_states[button]['pressed'] = pressed
-                self.button_states[button]['time'] = time.time()
+                self.button_states[button]['time'] = current_time
+                
+                # Handle individual button presses (not part of combo)
+                if pressed and button in ['L', 'R']:
+                    # Check if this is a single button press (not part of L+R combo)
+                    other_button = 'R' if button == 'L' else 'L'
+                    other_pressed = self.button_states[other_button]['pressed']
+                    other_time = self.button_states[other_button]['time']
+                    
+                    # If other button is not pressed or was pressed too long ago, this is a single press
+                    if not other_pressed or abs(current_time - other_time) > 0.3:
+                        # Prevent rapid repeated service restarts
+                        last_action = self.button_states[button]['last_action_time']
+                        if current_time - last_action > 1.0:  # 1 second cooldown
+                            if self.debug:
+                                print(f"Single {button} button press detected - restarting service")
+                            self.restart_snes_service()
+                            self.button_states[button]['last_action_time'] = current_time
+                
                 if self.debug:
                     state = "pressed" if pressed else "released"
                     print(f"Button {button} {state}")
@@ -252,7 +288,7 @@ class SystemGamepadController:
     def check_lr_combo(self):
         """Dedicated background thread to check for L+R button combination"""
         while self.running:
-            time.sleep(0.1) # Check every 100ms
+            time.sleep(0.1)  # Check every 100ms
             
             with self.button_lock:
                 l_pressed = self.button_states['L']['pressed']
@@ -267,8 +303,8 @@ class SystemGamepadController:
                     # Reset button states and exit the loop as system is shutting down
                     self.button_states['L']['pressed'] = False
                     self.button_states['R']['pressed'] = False
-                    self.running = False # Signal main loop to exit
-                    sys.exit(0) # Exit the thread immediately
+                    self.running = False
+                    sys.exit(0)
 
     def terminate_process_group(self, process, name):
         """Terminate a process and its entire process group"""
@@ -315,6 +351,8 @@ class SystemGamepadController:
         print("\n--- System Gamepad Controller ---")
         print("---------------------------------")
         print("Controls:")
+        print("   L button: Restart snes-wakeup.service")
+        print("   R button: Restart snes-wakeup.service") 
         print("   L+R buttons: Shutdown system")
         print(f"\nUsing device: {self.joystick.get_name()}")
         print("Starting services...")
@@ -324,7 +362,7 @@ class SystemGamepadController:
         else:
             print("⚠ Services startup timeout, continuing anyway...")
         
-        print("Listening for L+R combo...\n")
+        print("Listening for button presses...\n")
 
         # Start the combo checking thread
         self.combo_checker = Thread(target=self.check_lr_combo)
@@ -359,7 +397,7 @@ class SystemGamepadController:
 
     def cleanup(self):
         """Clean up resources before exiting."""
-        if self.running: # Only print if not already shutting down via combo
+        if self.running:
             print("Performing cleanup...")
         self.running = False
         self.terminate_process_group(self.python_app_process, "Python app")
@@ -367,7 +405,7 @@ class SystemGamepadController:
         
         # Ensure combo checker thread is joined
         if hasattr(self, 'combo_checker') and self.combo_checker.is_alive():
-            self.combo_checker.join(timeout=1) # Give it a moment to finish
+            self.combo_checker.join(timeout=1)
             if self.combo_checker.is_alive():
                 print("Warning: Combo checker thread did not terminate.")
 
