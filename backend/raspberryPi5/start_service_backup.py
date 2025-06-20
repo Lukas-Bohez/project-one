@@ -390,3 +390,6 @@ if __name__ == "__main__":
         if 'controller' in locals():
             controller.cleanup()
         sys.exit(1)
+
+
+# sudo systemctl restart snes-wakeup.service in case it crashes

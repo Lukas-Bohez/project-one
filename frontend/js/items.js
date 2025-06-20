@@ -1,96 +1,82 @@
-class AdvertFlood {
+class CompliantAdSystem {
     constructor() {
+        this.adContainers = [];
         this.adInterval = null;
         this.adDurationTimeout = null;
-        this.AD_SPAWN_FREQUENCY_MS = 3000; // Slower frequency
-        this.adBoxes = [];
-        this.adScriptLoaded = false;
+        this.isActive = false;
+        this.adIndex = 0;
         
-        // Acceptable Ads compliant parameters
+        // Compliant ad configuration
         this.adConfig = {
-            format: 'auto',
-            responsive: true,
-            textOnly: false,
-            label: 'Advertisement',
-            borderColor: '#eeeeee',
-            backgroundColor: '#ffffff',
-            textColor: '#000000',
-            titleColor: '#0066cc',
-            maxWidth: '300px'
+            refreshRate: 30000, // 30 seconds between rotations
+            displayDuration: 60000, // 1 minute total display
+            maxAdsPerPage: 3,
+            adClientId: 'ca-pub-8418485814964449',
+            adSlot: '7822007431'
         };
+        
+        this.adPlacements = [
+            {
+                id: 'ad-between-header-question',
+                insertAfter: '.c-quiz-header',
+                insertBefore: '.c-question-container'
+            },
+            {
+                id: 'ad-between-question-answers',
+                insertAfter: '.c-question-container',
+                insertBefore: '.c-answers-container'
+            },
+            {
+                id: 'ad-between-answers-sidebar',
+                insertAfter: '.c-answers-container',
+                insertBefore: '.c-game-sidebar'
+            }
+        ];
     }
 
-    activate(durationSeconds) {
-        this.clearExisting();
-        this.adScriptLoaded = false;
-
-        // Start with a polite message first
-        this.showInitialMessage();
-
-        // Check for ad blocker before loading ads
-        setTimeout(() => {
-            this.checkAdBlocker().then(blockerDetected => {
-                if (!blockerDetected) {
-                    this.loadAdScript();
-                    this.adInterval = setInterval(() => this.createAdBox(), this.AD_SPAWN_FREQUENCY_MS);
-                } else {
-                    this.showAcceptableAdsMessage();
-                }
-            });
-        }, 1000);
-
-        console.log(`✅ Ethical ad display initiated for ${durationSeconds} seconds`);
-
+    async activate() {
+        if (this.isActive) return;
+        
+        console.log('Initializing compliant ad system...');
+        this.isActive = true;
+        
+        // Load Google AdSense script if not already loaded
+        await this.loadAdScript();
+        
+        // Create ad containers in designated positions
+        this.createAdContainers();
+        
+        // Start ad rotation
+        this.startAdRotation();
+        
+        // Set duration timeout
         this.adDurationTimeout = setTimeout(() => {
-            this.stop();
-            console.log(`⏹ Ad display completed`);
-        }, durationSeconds * 1000);
+            this.deactivate();
+        }, this.adConfig.displayDuration);
+        
+        console.log(`Ad system activated for ${this.adConfig.displayDuration/1000} seconds`);
     }
 
-    showInitialMessage() {
-        const messageBox = document.createElement('div');
-        messageBox.className = 'ethical-ad-message';
-        messageBox.innerHTML = `
-            <div style="position: fixed; bottom: 20px; right: 20px; background: #f8f9fa; 
-                        padding: 15px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                        max-width: 300px; z-index: 9999; border-left: 4px solid #4CAF50;">
-                <p style="margin: 0;">We use ethical advertising to support our content. 
-                These ads comply with Acceptable Ads standards.</p>
-            </div>
-        `;
-        document.body.appendChild(messageBox);
-        setTimeout(() => messageBox.remove(), 5000);
-    }
-
-    async checkAdBlocker() {
-        try {
-            const testAdURL = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
-            const response = await fetch(testAdURL, { method: 'HEAD', mode: 'no-cors' });
-            return false;
-        } catch (e) {
-            return true;
-        }
-    }
-
-    loadAdScript() {
+    async loadAdScript() {
         return new Promise((resolve) => {
+            // Check if already loaded
             if (window.adsbygoogle && Array.isArray(window.adsbygoogle)) {
-                return resolve(true);
+                resolve(true);
+                return;
             }
 
             const script = document.createElement('script');
             script.async = true;
-            script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449';
+            script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${this.adConfig.adClientId}`;
             script.crossOrigin = 'anonymous';
             
             script.onload = () => {
-                console.log('Ad script loaded successfully');
-                this.adScriptLoaded = true;
+                console.log('Google AdSense script loaded successfully');
                 resolve(true);
             };
             
             script.onerror = () => {
-                console.log('Ad script failed to load');
+                console.warn('AdSense script failed to load, using fallback ads');
                 resolve(false);
             };
             
@@ -98,160 +84,270 @@ class AdvertFlood {
         });
     }
 
-    createAdBox() {
-        if (!this.adScriptLoaded) return;
+    createAdContainers() {
+        this.adPlacements.forEach((placement, index) => {
+            const targetElement = document.querySelector(placement.insertAfter);
+            if (!targetElement) return;
 
-        const box = document.createElement('div');
-        box.className = 'ethical-ad-container';
-        Object.assign(box.style, {
-            position: 'fixed',
-            zIndex: '9999',
-            left: `${10 + Math.random() * (window.innerWidth - 320)}px`,
-            top: `${10 + Math.random() * (window.innerHeight - 270)}px`,
-            width: '300px',
-            minHeight: '50px',
-            backgroundColor: this.adConfig.backgroundColor,
-            border: `1px solid ${this.adConfig.borderColor}`,
-            borderRadius: '4px',
-            overflow: 'hidden',
-            boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-            transition: 'all 0.3s ease'
+            const adContainer = document.createElement('div');
+            adContainer.id = placement.id;
+            adContainer.className = 'integrated-ad-container';
+            adContainer.style.cssText = `
+                margin: 20px 0;
+                padding: 15px;
+                background: #f8f9fa;
+                border: 1px solid #e9ecef;
+                border-radius: 8px;
+                text-align: center;
+                min-height: 100px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                transition: all 0.3s ease;
+                position: relative;
+            `;
+
+            // Add ad label for transparency
+            const label = document.createElement('div');
+            label.textContent = 'Advertisement';
+            label.style.cssText = `
+                position: absolute;
+                top: 5px;
+                left: 10px;
+                font-size: 10px;
+                color: #6c757d;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            `;
+            adContainer.appendChild(label);
+
+            // Insert after target element
+            targetElement.parentNode.insertBefore(adContainer, targetElement.nextSibling);
+            this.adContainers.push({
+                element: adContainer,
+                id: placement.id,
+                loaded: false
+            });
         });
-
-        // Ad label
-        const label = document.createElement('div');
-        label.textContent = this.adConfig.label;
-        Object.assign(label.style, {
-            padding: '4px 8px',
-            fontSize: '11px',
-            color: '#666666',
-            backgroundColor: '#f5f5f5',
-            borderBottom: `1px solid ${this.adConfig.borderColor}`
-        });
-        box.appendChild(label);
-
-        // Ad content container
-        const adContent = document.createElement('div');
-        adContent.style.padding = '8px';
-        box.appendChild(adContent);
-
-        // Create the actual ad
-        this.createAcceptableAd(adContent);
-
-        // Close button
-        const closeBtn = document.createElement('button');
-        closeBtn.textContent = '×';
-        Object.assign(closeBtn.style, {
-            position: 'absolute',
-            top: '2px',
-            right: '5px',
-            background: 'transparent',
-            border: 'none',
-            fontSize: '16px',
-            cursor: 'pointer',
-            color: '#999'
-        });
-        closeBtn.onclick = () => box.remove();
-        box.appendChild(closeBtn);
-
-        document.body.appendChild(box);
-        this.adBoxes.push(box);
     }
 
-    createAcceptableAd(container) {
-        const adId = `ad-${Date.now()}`;
+    startAdRotation() {
+        // Load initial ads
+        this.loadAdsInContainers();
         
-        const adIns = document.createElement('ins');
-        adIns.className = 'adsbygoogle';
-        Object.assign(adIns.style, {
-            display: 'block',
-            width: '100%',
-            height: 'auto'
+        // Set up rotation interval
+        this.adInterval = setInterval(() => {
+            this.rotateAds();
+        }, this.adConfig.refreshRate);
+    }
+
+    loadAdsInContainers() {
+        this.adContainers.forEach((container, index) => {
+            if (container.loaded) return;
+            
+            this.loadAdInContainer(container, index);
         });
-        
-        adIns.dataset.adClient = 'ca-pub-8418485814964449';
-        adIns.dataset.adSlot = '7822007431';
-        adIns.dataset.adFormat = this.adConfig.format;
-        adIns.dataset.fullWidthResponsive = this.adConfig.responsive.toString();
-        
-        container.appendChild(adIns);
+    }
+
+    loadAdInContainer(container, index) {
+        const adContent = document.createElement('div');
+        adContent.className = 'ad-content';
+        adContent.style.cssText = `
+            width: 100%;
+            min-height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        `;
 
         try {
+            // Create Google AdSense ad
+            const adIns = document.createElement('ins');
+            adIns.className = 'adsbygoogle';
+            adIns.style.cssText = `
+                display: block;
+                width: 100%;
+                height: 90px;
+            `;
+            adIns.setAttribute('data-ad-client', this.adConfig.adClientId);
+            adIns.setAttribute('data-ad-slot', this.adConfig.adSlot);
+            adIns.setAttribute('data-ad-format', 'horizontal');
+            adIns.setAttribute('data-full-width-responsive', 'false');
+
+            adContent.appendChild(adIns);
+            
+            // Clear container and add new content
+            const existingContent = container.element.querySelector('.ad-content');
+            if (existingContent) {
+                existingContent.remove();
+            }
+            
+            container.element.appendChild(adContent);
+
+            // Push to AdSense
             if (window.adsbygoogle && Array.isArray(window.adsbygoogle)) {
                 window.adsbygoogle.push({});
+                container.loaded = true;
             } else {
-                this.showTextAd(container);
+                this.showFallbackAd(adContent, index);
             }
-        } catch (e) {
-            this.showTextAd(container);
+
+        } catch (error) {
+            console.warn('Error loading ad:', error);
+            this.showFallbackAd(adContent, index);
         }
     }
 
-    showTextAd(container) {
+    showFallbackAd(container, index) {
+        const fallbackAds = [
+            {
+                title: "Support Our Quiz Platform",
+                description: "Help us keep this quiz platform free and ad-supported!",
+                cta: "Learn More",
+                link: "#support"
+            },
+            {
+                title: "Premium Quiz Features",
+                description: "Unlock advanced quiz creation tools and analytics.",
+                cta: "Upgrade Now",
+                link: "#premium"
+            },
+            {
+                title: "Create Your Own Quiz",
+                description: "Build engaging quizzes for your audience in minutes.",
+                cta: "Get Started",
+                link: "#create"
+            }
+        ];
+
+        const ad = fallbackAds[index % fallbackAds.length];
+        
         container.innerHTML = `
             <div style="text-align: center; padding: 10px;">
-                <h4 style="color: ${this.adConfig.titleColor}; margin: 0 0 8px 0; font-size: 14px;">
-                    Support Our Content
+                <h4 style="color: #007bff; margin: 0 0 8px 0; font-size: 16px; font-weight: 600;">
+                    ${ad.title}
                 </h4>
-                <p style="color: ${this.adConfig.textColor}; margin: 0 0 8px 0; font-size: 12px;">
-                    This space helps fund our free content. Thank you for your support!
+                <p style="color: #6c757d; margin: 0 0 12px 0; font-size: 14px; line-height: 1.4;">
+                    ${ad.description}
                 </p>
-                <a href="/support" style="color: ${this.adConfig.titleColor}; font-size: 12px;">
-                    Learn more about our funding
+                <a href="${ad.link}" style="
+                    display: inline-block;
+                    padding: 8px 16px;
+                    background: #007bff;
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 4px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    transition: background 0.2s;
+                " onmouseover="this.style.background='#0056b3'" 
+                   onmouseout="this.style.background='#007bff'">
+                    ${ad.cta}
                 </a>
             </div>
         `;
     }
 
-    showAcceptableAdsMessage() {
-        const box = document.createElement('div');
-        Object.assign(box.style, {
-            position: 'fixed',
-            bottom: '20px',
-            right: '20px',
-            backgroundColor: '#f8f9fa',
-            padding: '15px',
-            borderRadius: '5px',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-            maxWidth: '300px',
-            zIndex: '9999',
-            borderLeft: '4px solid #FFC107'
+    rotateAds() {
+        // Rotate ads by refreshing content
+        this.adContainers.forEach((container, index) => {
+            if (Math.random() > 0.5) { // 50% chance to refresh each ad
+                container.loaded = false;
+                this.loadAdInContainer(container, (index + this.adIndex) % this.adContainers.length);
+            }
+        });
+        this.adIndex++;
+    }
+
+    deactivate() {
+        if (!this.isActive) return;
+        
+        this.isActive = false;
+        
+        // Clear intervals and timeouts
+        if (this.adInterval) {
+            clearInterval(this.adInterval);
+            this.adInterval = null;
+        }
+        
+        if (this.adDurationTimeout) {
+            clearTimeout(this.adDurationTimeout);
+            this.adDurationTimeout = null;
+        }
+        
+        // Remove ad containers
+        this.adContainers.forEach(container => {
+            if (container.element && container.element.parentNode) {
+                container.element.parentNode.removeChild(container.element);
+            }
         });
         
-        box.innerHTML = `
-            <h4 style="margin-top: 0;">We Value Your Privacy</h4>
-            <p>We use Acceptable Ads to support our content. These are:</p>
-            <ul style="padding-left: 20px; margin-bottom: 10px;">
-                <li>Non-animated</li>
-                <li>Clearly labeled</li>
-                <li>Limited in number</li>
-            </ul>
-            <p>Would you consider whitelisting us?</p>
-            <div style="display: flex; gap: 10px;">
-                <button style="padding: 5px 10px; background: #4CAF50; color: white; border: none; border-radius: 3px; cursor: pointer;">
-                    Whitelist Us
-                </button>
-                <button style="padding: 5px 10px; background: #f1f1f1; border: none; border-radius: 3px; cursor: pointer;">
-                    No Thanks
-                </button>
-            </div>
-        `;
+        this.adContainers = [];
+        this.adIndex = 0;
         
-        document.body.appendChild(box);
-        this.adBoxes.push(box);
+        console.log('Ad system deactivated');
     }
 
-    stop() {
-        this.clearExisting();
-        this.adBoxes.forEach(box => box.remove());
-        this.adBoxes = [];
+    // Public method to manually refresh ads
+    refreshAds() {
+        if (!this.isActive) return;
+        
+        this.adContainers.forEach(container => {
+            container.loaded = false;
+        });
+        
+        this.loadAdsInContainers();
     }
 
-    clearExisting() {
-        if (this.adInterval) clearInterval(this.adInterval);
-        if (this.adDurationTimeout) clearTimeout(this.adDurationTimeout);
+    // Check if ad blocker is present
+    async checkAdBlocker() {
+        try {
+            const testElement = document.createElement('div');
+            testElement.innerHTML = '&nbsp;';
+            testElement.className = 'adsbox';
+            testElement.style.cssText = 'position: absolute; left: -9999px;';
+            document.body.appendChild(testElement);
+            
+            setTimeout(() => {
+                const isBlocked = testElement.offsetHeight === 0;
+                document.body.removeChild(testElement);
+                return isBlocked;
+            }, 100);
+            
+            return false;
+        } catch (e) {
+            return true;
+        }
     }
 }
 
-// Initialize
-window['Content' + 'Display'] = AdvertFlood;
+// Initialize the system
+window.CompliantAdSystem = CompliantAdSystem;
+
+// Auto-initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.adSystem = new CompliantAdSystem();
+    });
+} else {
+    window.adSystem = new CompliantAdSystem();
+}
+
+// Expose activation method globally
+window.activateAds = function() {
+    if (window.adSystem) {
+        window.adSystem.activate();
+    } else {
+        console.warn('Ad system not initialized');
+    }
+};
+
+// Optional: Auto-activate after page load (remove if you want manual control)
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        if (window.adSystem && !window.adSystem.isActive) {
+            // Uncomment the next line to auto-activate
+            // window.adSystem.activate();
+        }
+    }, 2000);
+});
