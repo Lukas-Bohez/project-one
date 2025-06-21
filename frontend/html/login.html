@@ -19,7 +19,7 @@
     </header>
 
     <main class="c-login-container">
-        <form id="adminLoginForm" class="c-login-form js-login-form" method="POST" action="/api/admin-login">
+        <form id="adminLoginForm" class="c-login-form js-login-form">
             <div class="c-error-message js-error-message" role="alert" aria-live="assertive"></div>
 
             <h2 class="c-login-title">Manage Quiz</h2>
@@ -43,7 +43,7 @@
             <input type="hidden" id="csrfToken" name="_csrf" value="">
 
             <div class="c-login-buttons">
-                <button type="submit" class="c-btn c-btn--primary js-login-admin" aria-label="Login as administrator">
+                <button type="button" class="c-btn c-btn--primary js-login-admin" aria-label="Login as administrator">
                     Login
                 </button>
             </div>
