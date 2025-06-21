@@ -1983,13 +1983,108 @@ const listenToTabs = () => {
 
 const listenToLogout = () => {
     if (domAdmin.logoutBtn) {
-        domAdmin.logoutBtn.addEventListener('click', () => {
-            // Clear ALL session storage data
-            sessionStorage.clear();
-            console.log('Cleared all sessionStorage and logging out');
-            window.location.href = 'login.html';
+        domAdmin.logoutBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            
+            // Show loading state
+            if (domAdmin.logoutBtn) {
+                domAdmin.logoutBtn.disabled = true;
+                domAdmin.logoutBtn.textContent = 'Logging out...';
+            }
+            
+            try {
+                // Optional: Notify server about logout (if you have this endpoint)
+                const sessionToken = sessionStorage.getItem(STORAGE_KEYS.ADMIN.SESSION_TOKEN);
+                if (sessionToken) {
+                    try {
+                        await fetch(`${API_BASE}/admin-logout`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-Token': await SecurityUtils.getCSRFToken()
+                            },
+                            body: JSON.stringify({ session_token: sessionToken }),
+                            credentials: 'include'
+                        });
+                    } catch (error) {
+                        // Ignore server logout errors, continue with client-side cleanup
+                        console.warn('Server logout failed, continuing with client-side cleanup:', error);
+                    }
+                }
+                
+                // Clear admin session data specifically (instead of sessionStorage.clear())
+                AdminSession.clear();
+                
+                console.log('Admin session cleared, redirecting to login');
+                
+                // Use a small delay before redirect to avoid triggering security heuristics
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 100);
+                
+            } catch (error) {
+                console.error('Logout error:', error);
+                // Even if there's an error, still clear local data and redirect
+                AdminSession.clear();
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 100);
+            }
         });
     }
+};
+
+// Alternative logout function that mimics your working auth system pattern
+const handleAdminLogout = async () => {
+    try {
+        // Clear stored credentials similar to your working auth system
+        AdminSession.clear();
+        
+        // Dispatch logout event for other modules to listen to
+        document.dispatchEvent(new CustomEvent('adminLoggedOut'));
+        
+        // Show a brief logout message (similar to welcome message pattern)
+        const logoutMsg = document.createElement('div');
+        logoutMsg.className = 'c-logout-message';
+        logoutMsg.style.position = 'fixed';
+        logoutMsg.style.top = '20px';
+        logoutMsg.style.right = '20px';
+        logoutMsg.style.zIndex = '1000';
+        logoutMsg.style.maxWidth = '300px';
+        logoutMsg.innerHTML = `
+            <strong>Logged out successfully</strong>
+            <p>Redirecting to login...</p>
+        `;
+
+        document.body.appendChild(logoutMsg);
+
+        // Clean redirect after message
+        setTimeout(() => {
+            if (logoutMsg.parentNode) {
+                logoutMsg.parentNode.removeChild(logoutMsg);
+            }
+            window.location.href = 'login.html';
+        }, 1500);
+        
+    } catch (error) {
+        console.error('Logout process error:', error);
+        // Fallback - still redirect even if there's an error
+        window.location.href = 'login.html';
+    }
+};
+
+// Updated AdminSession.clear method to be more specific
+AdminSession.clear = () => {
+    // Clear only admin-specific keys instead of all sessionStorage
+    Object.values(STORAGE_KEYS.ADMIN).forEach(key => {
+        try {
+            sessionStorage.removeItem(key);
+        } catch (error) {
+            console.warn(`Failed to remove ${key}:`, error);
+        }
+    });
+    
+    console.log('Admin session data cleared');
 };
 
 const listenToModal = () => {
