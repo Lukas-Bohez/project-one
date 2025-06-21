@@ -9,32 +9,51 @@ const domLogin = {
 };
 // #endregion
 
-// #region *** In-Memory Session Storage ***********
-let adminSession = null;
-
+// #region *** Session Storage ***********
 const AdminSession = {
   store: (userData) => {
-    adminSession = {
-      user_id: userData.user_id,
-      first_name: userData.first_name,
-      last_name: userData.last_name,
-      rfid_code: userData.rfid_code,
-      login_timestamp: Date.now()
+    sessionStorage.setItem('admin_user_id', userData.user_id.toString());
+    sessionStorage.setItem('admin_first_name', userData.first_name);
+    sessionStorage.setItem('admin_last_name', userData.last_name);
+    sessionStorage.setItem('admin_rfid_code', userData.rfid_code);
+    sessionStorage.setItem('admin_login_timestamp', Date.now().toString());
+  },
+
+  get: () => {
+    const userId = sessionStorage.getItem('admin_user_id');
+    const firstName = sessionStorage.getItem('admin_first_name');
+    const lastName = sessionStorage.getItem('admin_last_name');
+    const rfidCode = sessionStorage.getItem('admin_rfid_code');
+    const timestamp = sessionStorage.getItem('admin_login_timestamp');
+
+    if (!userId || !firstName || !lastName || !rfidCode || !timestamp) {
+      return null;
+    }
+
+    return {
+      user_id: parseInt(userId),
+      first_name: firstName,
+      last_name: lastName,
+      rfid_code: rfidCode,
+      login_timestamp: parseInt(timestamp)
     };
   },
 
-  get: () => adminSession,
-
   clear: () => {
-    adminSession = null;
+    sessionStorage.removeItem('admin_user_id');
+    sessionStorage.removeItem('admin_first_name');
+    sessionStorage.removeItem('admin_last_name');
+    sessionStorage.removeItem('admin_rfid_code');
+    sessionStorage.removeItem('admin_login_timestamp');
   },
 
   isValid: () => {
-    if (!adminSession) return false;
+    const session = AdminSession.get();
+    if (!session) return false;
     
     // Check if session is expired (24 hours)
     const now = Date.now();
-    const sessionAge = now - adminSession.login_timestamp;
+    const sessionAge = now - session.login_timestamp;
     const maxAge = 24 * 60 * 60 * 1000; // 24 hours
 
     if (sessionAge > maxAge) {
