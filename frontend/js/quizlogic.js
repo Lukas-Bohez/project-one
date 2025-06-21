@@ -1,8 +1,8 @@
 // quiz-socket-handler.js
 class QuizSocketHandler {
-    constructor(socket, quizLogic) {
+    constructor(socket, questionHandler) {
         this.socket = socket;
-        this.quizLogic = quizLogic;
+        this.questionHandler = questionHandler;
         this.initializeListeners();
         this.QuizTimerHandler = new QuizTimerHandler(); // Initialize first!
     }
@@ -40,14 +40,14 @@ class QuizSocketHandler {
         // Listen for the start of any major phase
         this.socket.on('phase_started', (data) => {
             console.log(`✅ Phase Started: ${data.phase}`, data);
-            this.quizLogic.handlePhaseChange(data);
+            this.questionHandler.handlePhaseChange(data);
         });
 
         // In quiz-socket-handler.js - explanation listener
         this.socket.on('explanation_started', (data) => {
             console.log("✅ Explanation Started:", data);
-            if (typeof this.quizLogic.showExplanation === 'function') {
-                this.quizLogic.showExplanation(data);
+            if (typeof this.questionHandler.showExplanation === 'function') {
+                this.questionHandler.showExplanation(data);
             } else {
                 console.error("Explanation handler broken, data:", data);
             }
@@ -57,7 +57,7 @@ class QuizSocketHandler {
         // Listen for the end of the entire quiz
         this.socket.on('quiz_finished', (data) => {
             console.log("✅ Quiz Finished:", data);
-            this.quizLogic.showQuizEnd(data);
+            this.questionHandler.showQuizEnd(data);
         });
 
         // Listen for quiz results
@@ -94,7 +94,7 @@ this.socket.on('quiz_timer', (data) => {
 });
 
     this.socket.on('quiz_timer_finished', () => {
-        this.quizLogic.handleTimerFinished();
+        this.questionHandler.handleTimerFinished();
     });
 
         // ---- QUESTION DATA LISTENERS ----
@@ -102,13 +102,13 @@ this.socket.on('quiz_timer', (data) => {
         // Question data
         this.socket.on('questionData', (data) => {
             console.log("✅ Received 'questionData':", data);
-            this.quizLogic.loadQuestion(data);
+            this.questionHandler.loadQuestion(data);
         });
 
         // New question event
         this.socket.on('new_question', (data) => {
             console.log("✅ Received 'new_question':", data);
-            this.quizLogic.loadQuestion(data);
+            this.questionHandler.loadQuestion(data);
         });
 
         // ---- THEME SELECTION LISTENERS ----
@@ -130,25 +130,25 @@ this.socket.on('quiz_timer', (data) => {
         // Connection errors
         this.socket.on('connect_error', (error) => {
             console.error("❌ Connection error:", error);
-            this.quizLogic.showFeedback("Connection error. Retrying...", true);
+            this.questionHandler.showFeedback("Connection error. Retrying...", true);
         });
 
         // Disconnect handling
         this.socket.on('disconnect', (reason) => {
             console.warn("⚠️ Disconnected:", reason);
-            this.quizLogic.showFeedback("Disconnected from server", true);
+            this.questionHandler.showFeedback("Disconnected from server", true);
         });
 
         // Reconnection
         this.socket.on('reconnect', (attemptNumber) => {
             console.log("✅ Reconnected after", attemptNumber, "attempts");
-            this.quizLogic.showFeedback("Reconnected successfully!");
+            this.questionHandler.showFeedback("Reconnected successfully!");
         });
 
         // Server errors
         this.socket.on('error', (error) => {
             console.error("❌ Server error:", error);
-            this.quizLogic.showFeedback(error.message || "Server error occurred", true);
+            this.questionHandler.showFeedback(error.message || "Server error occurred", true);
         });
 
         // ---- PLAYER UPDATES ----
@@ -162,13 +162,13 @@ this.socket.on('quiz_timer', (data) => {
         // Player joined
         this.socket.on('player_joined', (data) => {
             console.log("✅ Player Joined:", data);
-            this.quizLogic.showFeedback(`${data.name || data.username} joined the game!`);
+            this.questionHandler.showFeedback(`${data.name || data.username} joined the game!`);
         });
 
         // Player left
         this.socket.on('player_left', (data) => {
             console.log("✅ Player Left:", data);
-            this.quizLogic.showFeedback(`${data.name || data.username} left the game`);
+            this.questionHandler.showFeedback(`${data.name || data.username} left the game`);
         });
 
         // ---- GAME STATE LISTENERS ----
@@ -182,19 +182,19 @@ this.socket.on('quiz_timer', (data) => {
         // Quiz started
         this.socket.on('quiz_started', (data) => {
             console.log("✅ Quiz Started:", data);
-            this.quizLogic.showFeedback("Quiz is starting!");
+            this.questionHandler.showFeedback("Quiz is starting!");
         });
 
         // Quiz paused
         this.socket.on('quiz_paused', (data) => {
             console.log("✅ Quiz Paused:", data);
-            this.quizLogic.showFeedback("Quiz paused");
+            this.questionHandler.showFeedback("Quiz paused");
         });
 
         // Quiz resumed
         this.socket.on('quiz_resumed', (data) => {
             console.log("✅ Quiz Resumed:", data);
-            this.quizLogic.showFeedback("Quiz resumed");
+            this.questionHandler.showFeedback("Quiz resumed");
         });
 
         this.socket._quizLogicListenersInitialized = true;
@@ -210,24 +210,24 @@ this.socket.on('quiz_timer', (data) => {
         const allPlayers = data.players;
         const currentUserId = localStorage.getItem('user_user_id');
 
-        this.quizLogic.players = allPlayers;
+        this.questionHandler.players = allPlayers;
 
         if (currentUserId) {
             const currentUserData = allPlayers.find(p => String(p.user_id) === String(currentUserId));
             if (currentUserData) {
-                this.quizLogic.currentUser = { ...this.quizLogic.currentUser, ...currentUserData };
-                console.log("Updated current user:", this.quizLogic.currentUser);
+                this.questionHandler.currentUser = { ...this.questionHandler.currentUser, ...currentUserData };
+                console.log("Updated current user:", this.questionHandler.currentUser);
                 
                 document.dispatchEvent(new CustomEvent('currentUserUpdated', {
-                    detail: this.quizLogic.currentUser
+                    detail: this.questionHandler.currentUser
                 }));
             } else {
                 console.warn(`Current user ${currentUserId} not found in player list`);
-                this.quizLogic.currentUser = null;
+                this.questionHandler.currentUser = null;
             }
         }
         
-        this.quizLogic.updatePlayersDisplay();
+        this.questionHandler.updatePlayersDisplay();
     }
 
     handleAnswerResponse(responseData) {
@@ -237,51 +237,51 @@ this.socket.on('quiz_timer', (data) => {
             console.log("Submission successful");
             
             if (responseData.feedback) {
-                this.quizLogic.showFeedback(responseData.feedback);
+                this.questionHandler.showFeedback(responseData.feedback);
             }
             
             // Check if this was a theme selection
             if (responseData.theme_name) {
                 console.log("Theme selected:", responseData.theme_name);
-                this.quizLogic.showFeedback(`Theme selected: ${responseData.theme_name}`);
+                this.questionHandler.showFeedback(`Theme selected: ${responseData.theme_name}`);
             }
             
             // Check if this was a regular answer
             if (responseData.correct !== undefined) {
                 const message = responseData.correct ? "Correct!" : "Incorrect";
-                this.quizLogic.showFeedback(message, !responseData.correct);
+                this.questionHandler.showFeedback(message, !responseData.correct);
             }
             
         } else {
             console.error("Submission failed:", responseData.error);
-            this.quizLogic.showFeedback(responseData.error, true);
+            this.questionHandler.showFeedback(responseData.error, true);
         }
     }
 
     handlePlayerUpdate(playerData) {
         if (!playerData || !playerData.user_id) return;
         
-        const playerIndex = this.quizLogic.players.findIndex(p => p.user_id === playerData.user_id);
+        const playerIndex = this.questionHandler.players.findIndex(p => p.user_id === playerData.user_id);
 
         if (playerIndex !== -1) {
-            this.quizLogic.players[playerIndex] = { ...this.quizLogic.players[playerIndex], ...playerData };
+            this.questionHandler.players[playerIndex] = { ...this.questionHandler.players[playerIndex], ...playerData };
         } else {
-            this.quizLogic.players.push(playerData);
+            this.questionHandler.players.push(playerData);
         }
 
-        this.quizLogic.players.sort((a, b) => (b.session_score || 0) - (a.session_score || 0));
-        this.quizLogic.updatePlayersDisplay();
+        this.questionHandler.players.sort((a, b) => (b.session_score || 0) - (a.session_score || 0));
+        this.questionHandler.updatePlayersDisplay();
     }
 
     handleQuizResults(data) {
         console.log("Handling quiz results:", data);
         
         if (data.final_scores) {
-            this.quizLogic.displayFinalScores(data.final_scores);
+            this.questionHandler.displayFinalScores(data.final_scores);
         }
         
         if (data.summary) {
-            this.quizLogic.showFeedback(data.summary);
+            this.questionHandler.showFeedback(data.summary);
         }
     }
 
@@ -289,36 +289,36 @@ this.socket.on('quiz_timer', (data) => {
         console.log("Handling question result:", data);
         
         if (data.correct_answer) {
-            this.quizLogic.showFeedback(`Correct answer: ${data.correct_answer}`);
+            this.questionHandler.showFeedback(`Correct answer: ${data.correct_answer}`);
         }
         
         if (data.explanation) {
             this.showExplanation({
                 explanation: data.explanation,
-                question: data.question || this.quizLogic.currentQuestion
+                question: data.question || this.questionHandler.currentQuestion
             });
         }
     }
 
     handleThemeSelectedConfirmation(data) {
         console.log("Theme selection confirmed:", data);
-        this.quizLogic.showFeedback(`Theme "${data.theme_name}" selected successfully!`);
+        this.questionHandler.showFeedback(`Theme "${data.theme_name}" selected successfully!`);
     }
 
     handleThemeDisplay(data) {
         console.log("Theme display phase:", data);
         
         if (data.theme_data) {
-            // Send the theme data to quizLogic for display
-            this.quizLogic.showThemeDisplay(data.theme_data);
+            // Send the theme data to questionHandler for display
+            this.questionHandler.showThemeDisplay(data.theme_data);
         }
         
         if (data.selected_theme) {
-            this.quizLogic.showFeedback(`Selected theme: ${data.selected_theme.name}`);
+            this.questionHandler.showFeedback(`Selected theme: ${data.selected_theme.name}`);
         }
         
         if (data.message) {
-            this.quizLogic.showFeedback(data.message);
+            this.questionHandler.showFeedback(data.message);
         }
     }
 
@@ -326,15 +326,15 @@ this.socket.on('quiz_timer', (data) => {
         console.log("Game state update:", data);
         
         if (data.phase) {
-            this.quizLogic.handlePhaseChange(data);
+            this.questionHandler.handlePhaseChange(data);
         }
         
         if (data.current_question) {
-            this.quizLogic.loadQuestion(data.current_question);
+            this.questionHandler.loadQuestion(data.current_question);
         }
         
         if (data.time_remaining !== undefined) {
-            this.quizLogic.updateTimer(data.time_remaining);
+            this.questionHandler.updateTimer(data.time_remaining);
         }
     }
 
