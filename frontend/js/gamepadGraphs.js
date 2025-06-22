@@ -62,6 +62,24 @@ class GamepadNavigator {
             body.gamepad-active .c-chat-container {
                 display: none !important;
             }
+            .gamepad-scroll-indicator {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background: rgba(13, 97, 170, 0.8);
+                color: white;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: bold;
+                z-index: 1000;
+                pointer-events: none;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+            .gamepad-selected .gamepad-scroll-indicator {
+                opacity: 1;
+            }
         `;
         document.head.appendChild(style);
     }
@@ -111,7 +129,8 @@ class GamepadNavigator {
     }
 
     updateNavigableElements() {
-        const gamepadElements = document.querySelectorAll('.gamepad, .gamepad-chart-container');
+        // Include toggle containers in the selectable elements
+        const gamepadElements = document.querySelectorAll('.gamepad, .gamepad-chart-container, .toggle-container');
 
         this.navigableElements = Array.from(gamepadElements).filter(el => {
             const rect = el.getBoundingClientRect();
@@ -132,6 +151,15 @@ class GamepadNavigator {
 
         this.navigableElements.forEach(el => {
             el.classList.add('gamepad-navigable');
+            
+            // Add scroll indicator for toggle containers
+            if (el.classList.contains('toggle-container') && !el.querySelector('.gamepad-scroll-indicator')) {
+                const indicator = document.createElement('div');
+                indicator.className = 'gamepad-scroll-indicator';
+                indicator.textContent = '← → Scroll';
+                el.style.position = 'relative';
+                el.appendChild(indicator);
+            }
         });
 
         if (this.currentSelectedIndex >= this.navigableElements.length) {
@@ -232,6 +260,77 @@ class GamepadNavigator {
         };
     }
 
+    // Check if the current element is a select element
+    isSelectElement(element) {
+        return element && element.tagName && element.tagName.toLowerCase() === 'select';
+    }
+
+    // Check if the current element is a toggle container
+    isToggleContainer(element) {
+        return element && element.classList && element.classList.contains('toggle-container');
+    }
+
+    // Navigate through select options
+    navigateSelectOption(direction) {
+        const selectedElement = this.navigableElements[this.currentSelectedIndex];
+        if (!this.isSelectElement(selectedElement)) return false;
+
+        const currentIndex = selectedElement.selectedIndex;
+        const options = selectedElement.options;
+        
+        if (direction === 'left' && currentIndex > 0) {
+            selectedElement.selectedIndex = currentIndex - 1;
+            // Trigger change event
+            const changeEvent = new Event('change', { bubbles: true });
+            selectedElement.dispatchEvent(changeEvent);
+            console.log('Select option changed to:', selectedElement.options[selectedElement.selectedIndex].text);
+            return true;
+        } else if (direction === 'right' && currentIndex < options.length - 1) {
+            selectedElement.selectedIndex = currentIndex + 1;
+            // Trigger change event
+            const changeEvent = new Event('change', { bubbles: true });
+            selectedElement.dispatchEvent(changeEvent);
+            console.log('Select option changed to:', selectedElement.options[selectedElement.selectedIndex].text);
+            return true;
+        }
+        
+        return false;
+    }
+
+    // Scroll toggle container
+    scrollToggleContainer(direction) {
+        const selectedElement = this.navigableElements[this.currentSelectedIndex];
+        if (!this.isToggleContainer(selectedElement)) return false;
+
+        // Find the scrollable content within the toggle container
+        const scrollableContent = selectedElement.querySelector('.toggle-content');
+        if (!scrollableContent) return false;
+
+        const scrollAmount = 50; // pixels to scroll
+        const currentScrollTop = scrollableContent.scrollTop;
+        const maxScrollTop = scrollableContent.scrollHeight - scrollableContent.clientHeight;
+
+        if (direction === 'left') { // Scroll up
+            const newScrollTop = Math.max(0, currentScrollTop - scrollAmount);
+            scrollableContent.scrollTo({
+                top: newScrollTop,
+                behavior: 'smooth'
+            });
+            console.log('Toggle container scrolled up');
+            return true;
+        } else if (direction === 'right') { // Scroll down
+            const newScrollTop = Math.min(maxScrollTop, currentScrollTop + scrollAmount);
+            scrollableContent.scrollTo({
+                top: newScrollTop,
+                behavior: 'smooth'
+            });
+            console.log('Toggle container scrolled down');
+            return true;
+        }
+        
+        return false;
+    }
+
     calculateDistance(rect1, rect2, direction) {
         let distance = 0;
         switch (direction) {
@@ -328,6 +427,17 @@ class GamepadNavigator {
     navigateLeft() {
         if (this.navigableElements.length === 0) return;
 
+        // Check if current element is a select and handle option navigation
+        if (this.navigateSelectOption('left')) {
+            return; // Option was changed, don't navigate to another element
+        }
+
+        // Check if current element is a toggle container and handle scrolling
+        if (this.scrollToggleContainer('left')) {
+            return; // Container was scrolled, don't navigate to another element
+        }
+
+        // Normal left navigation between elements
         const currentElement = this.navigableElements[this.currentSelectedIndex];
         const currentRect = currentElement.getBoundingClientRect();
 
@@ -357,6 +467,17 @@ class GamepadNavigator {
     navigateRight() {
         if (this.navigableElements.length === 0) return;
 
+        // Check if current element is a select and handle option navigation
+        if (this.navigateSelectOption('right')) {
+            return; // Option was changed, don't navigate to another element
+        }
+
+        // Check if current element is a toggle container and handle scrolling
+        if (this.scrollToggleContainer('right')) {
+            return; // Container was scrolled, don't navigate to another element
+        }
+
+        // Normal right navigation between elements
         const currentElement = this.navigableElements[this.currentSelectedIndex];
         const currentRect = currentElement.getBoundingClientRect();
 
@@ -392,6 +513,18 @@ class GamepadNavigator {
         if (selectedElement.classList.contains('gamepad-chart-container')) {
             // Just focus the chart container, don't zoom
             if (selectedElement.focus) {
+                selectedElement.focus();
+            }
+            return;
+        }
+
+        // Special handling for toggle containers
+        if (selectedElement.classList.contains('toggle-container')) {
+            // Trigger the toggle functionality by clicking the header
+            const header = selectedElement.querySelector('.toggle-header');
+            if (header && header.click) {
+                header.click();
+            } else if (selectedElement.focus) {
                 selectedElement.focus();
             }
             return;

@@ -258,7 +258,7 @@ const createToggleContainer = (sessionId, chatMessages, playerAnswers) => {
 
     return `
         <div id="${containerId}" class="toggle-container" tabindex="0">
-            <div id="${headerId}" class="toggle-header gamepad ${initialShowChat ? 'chat' : 'answers'}">
+            <div id="${headerId}" class="toggle-header ${initialShowChat ? 'chat' : 'answers'}">
                 <h3 class="toggle-title">${initialShowChat ? 'Chat Messages' : 'Player Answers'}</h3>
                 <div class="toggle-meta">
                     ${hasChat ? `<span class="badge">${chatMessages.length}</span>` : ''}
