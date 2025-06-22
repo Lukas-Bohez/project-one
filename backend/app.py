@@ -4156,7 +4156,9 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
     )
     threadsafe_emit_message_sent(sio, get_active_session_id(), loop)
 
-    while available_questions:
+    quiz_ended_early = False
+    
+    while available_questions and not quiz_ended_early:
         question = select_question_based_on_sensors(available_questions, temp_sensor, light_sensor) or \
                   random.choice(available_questions) if available_questions else None
             
@@ -4191,6 +4193,8 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
         # Question countdown with dynamic speed based on multiplier and player answers
         current_time = question_time
         all_answered = False
+        cooldown_started = False
+        cooldown_time = 2.0  # 2 second cooldown
         
         while current_time > 0:
             emit_timer_update(sio, loop, session_id, current_time, 'question', question_time, 
@@ -4198,8 +4202,21 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
             
             answer_count = PlayerAnswerRepository.get_answer_count_for_question(session_id, question['id'])
             
-            if answer_count >= total_players and total_players > 0:
-                print(f"All players answered - ending question early")
+            # Check if all players have answered
+            if answer_count >= total_players and total_players > 0 and not cooldown_started:
+                print(f"All players answered - starting 2 second cooldown")
+                cooldown_started = True
+                cooldown_remaining = cooldown_time
+                
+                # Cooldown period
+                while cooldown_remaining > 0:
+                    emit_timer_update(sio, loop, session_id, current_time, 'question', question_time, 
+                                    question_id=question['id'], question_number=quiz_state['question_count'])
+                    
+                    time.sleep(0.1)  # Small sleep for smooth countdown
+                    cooldown_remaining -= 0.1
+                    current_time = max(0, current_time - 0.1)
+                
                 all_answered = True
                 current_time = 0
                 break
@@ -4220,7 +4237,7 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
             # Adjust virtual temperature based on player responses
             if answer_count > 0:
                 # More answers = cooling effect (temperature moves toward 0)
-                temp_change = -0.1 * answer_factor
+                temp_change = -0.1 * (answer_count / total_players if total_players > 0 else 0)
                 virtualTemperature = max(-20, min(20, virtualTemperature + temp_change))
             else:
                 # No answers = slight heating (temperature moves away from 0)
@@ -4231,9 +4248,9 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
             time.sleep(adjusted_sleep_time)
             current_time = max(0, current_time - adjusted_sleep_time)
         
-        if all_answered:
-            emit_timer_update(sio, loop, session_id, 0, 'question', question_time, 
-                            question_id=question['id'], question_number=quiz_state['question_count'])
+        # Ensure timer shows 0 when finished
+        emit_timer_update(sio, loop, session_id, 0, 'question', question_time, 
+                        question_id=question['id'], question_number=quiz_state['question_count'])
         
         update_quiz_state(session_id, waiting_for_answers=False)
         emit_timer_finished(sio, loop, session_id, 'question', question_id=question['id'])
@@ -4302,21 +4319,36 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
                 )
                 threadsafe_emit_message_sent(sio, session_id, loop)
                 
-                # Add this break statement to actually exit the quiz loop
+                # Set the flag to end the quiz loop
+                quiz_ended_early = True
                 update_quiz_state(session_id, waiting_for_answers=False)
                 break
 
-        # Refresh questions
+        # Refresh questions for next iteration
         quiz_state = get_quiz_state(session_id)
         available_questions = [q for q in all_questions if q['id'] not in quiz_state['asked_questions']]
 
-    # Quiz finished
+    # Quiz finished - Update session status
     QuizSessionRepository.update_session_status(session_id, 3)
+    
+    # Get final data for quiz_finished event
     final_state = get_quiz_state(session_id)
     player_scores = PlayerAnswerRepository.get_all_player_scores_for_session(session_id)
-    total_score = sum(score['score'] for score in player_scores)
     
-    # Send final score notification
+    # Calculate final scores properly
+    total_score = sum(float(score.get('total_score', 0)) for score in player_scores)
+    
+    # Prepare final scores data for frontend
+    final_scores = []
+    for score in player_scores:
+        player_data = {
+            'name': score.get('player_name', 'Unknown Player'),
+            'username': score.get('username', ''),
+            'score': float(score.get('total_score', 0))
+        }
+        final_scores.append(player_data)
+    
+    # Send final score notification to chat
     ChatLogRepository.create_chat_message(
         session_id=session_id,
         message_text=f"Quiz finished! Final team score: {total_score} points!",
@@ -4326,13 +4358,21 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
     )
     threadsafe_emit_message_sent(sio, session_id, loop)
     
+    # Emit the quiz_finished event with proper data structure
+    quiz_finished_data = {
+        'session_id': session_id,
+        'final_score': total_score,
+        'questions_asked': final_state['question_count'],
+        'all_questions_answered': len(available_questions) == 0 and not quiz_ended_early,
+        'ended_early': quiz_ended_early,
+        'final_scores': final_scores,
+        'message': f"Quiz completed! Final team score: {total_score} points across {final_state['question_count']} questions."
+    }
+    
+    print(f"Emitting quiz_finished event with data: {quiz_finished_data}")
+    
     asyncio.run_coroutine_threadsafe(
-        sio.emit('quiz_finished', {
-            'session_id': session_id,
-            'final_score': total_score,
-            'questions_asked': final_state['question_count'],
-            'all_questions_answered': all_answered if 'all_answered' in locals() else False
-        }), loop
+        sio.emit('quiz_finished', quiz_finished_data), loop
     ).result(timeout=1)
 
 
