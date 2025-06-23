@@ -6,7 +6,6 @@ const dom = {
     viewGraphsBtn: document.getElementById('viewGraphsBtn'),
     manageQuizBtn: document.getElementById('manageQuizBtn'),
     infoBtn: document.getElementById('infoBtn'),
-    infoModal: document.getElementById('infoModal'),
     closeModal: document.querySelector('.c-modal__close'),
     tempValue: document.getElementById('tempValue'),
     lightValue: document.getElementById('lightValue'),
@@ -39,23 +38,6 @@ const getInitialPlaceholderData = () => {
 };
 
 const listenToButtons = () => {
-    if (dom.infoBtn && dom.infoModal) {
-        dom.infoBtn.addEventListener('click', () => {
-            dom.infoModal.style.display = 'block';
-        });
-    }
-
-    if (dom.closeModal) {
-        dom.closeModal.addEventListener('click', () => {
-            if (dom.infoModal) dom.infoModal.style.display = 'none';
-        });
-    }
-
-    window.addEventListener('click', (event) => {
-        if (dom.infoModal && event.target === dom.infoModal) {
-            dom.infoModal.style.display = 'none';
-        }
-    });
 
     if (dom.startQuizBtn) {
         dom.startQuizBtn.addEventListener('click', (e) => {
@@ -462,27 +444,10 @@ window.socketFunctions = {
 // --- Modal and Button Event Listeners ---
 document.addEventListener('DOMContentLoaded', () => {
     const infoBtn = document.getElementById('infoBtn');
-    const infoModal = document.getElementById('infoModal');
     const closeModal = document.querySelector('.c-modal__close');
     const servoTestBtn = document.getElementById('servoTestBtn');
 
-    if (infoBtn) {
-        infoBtn.addEventListener('click', () => {
-            if (infoModal) infoModal.style.display = 'block';
-        });
-    }
 
-    if (closeModal) {
-        closeModal.addEventListener('click', () => {
-            if (infoModal) infoModal.style.display = 'none';
-        });
-    }
-
-    window.addEventListener('click', (event) => {
-        if (event.target === infoModal) {
-            infoModal.style.display = 'none';
-        }
-    });
 
     if (servoTestBtn) {
         servoTestBtn.addEventListener('click', () => {
