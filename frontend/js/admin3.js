@@ -7,7 +7,7 @@
 class AuditLogsManager {
   constructor(options = {}) {
     // Configuration
-    this.baseUrl = options.baseUrl || `http://${window.location.hostname}`;
+    this.baseUrl = options.baseUrl || `https://${window.location.hostname}`;
     this.apiEndpoint = options.apiEndpoint || '/api/v1/audit-logs/';
     this.containerSelector = options.containerSelector || '.js-auditlog';
     this.updateInterval = options.updateInterval || 30000; // 30 seconds

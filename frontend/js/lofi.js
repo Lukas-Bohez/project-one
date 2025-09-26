@@ -2,7 +2,7 @@
 // Configuration
 const config = {
     folder: '../lofi/', // Path from js/ to lofi/
-    volume: 0.2,
+    volume: 0.01,
     fadeDuration: 500, // Reduced from 1000ms to 500ms for faster transitions
     shuffle: true, // Default shuffle mode (true = random, false = sequential)
     repeat: false, // Repeat mode: false, 'one', or 'all'
