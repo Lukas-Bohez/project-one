@@ -1,64 +1,48 @@
-// Enhanced solar sonar effect with balanced theme cycling
+// Enhanced solar sonar effect - now integrated with theme system
 document.addEventListener('DOMContentLoaded', function() {
     const servoBtn = document.getElementById('servoTestBtn');
     const body = document.body;
-    const themes = [
-        'theme-blue', 
-        'theme-orange', 
-        'theme-green', 
-        'theme-purple',
-        'theme-red',
-        'theme-cyan',
-        'theme-banana-yellow',
-        'theme-blueberry-blue',
-        'theme-orange-orange',
-        'theme-strawberry-red',
-        'theme-kiwi-green',
-        'theme-grape-purple'
+    
+    // Available pulse color themes (for visual variety)
+    const pulseThemes = [
+        { name: 'blue', color: '#4a86e8', glow: 'rgba(74, 134, 232, 0.7)' },
+        { name: 'orange', color: '#ff8c00', glow: 'rgba(255, 140, 0, 0.7)' },
+        { name: 'green', color: '#4caf50', glow: 'rgba(76, 175, 80, 0.7)' },
+        { name: 'purple', color: '#9c27b0', glow: 'rgba(156, 39, 176, 0.7)' },
+        { name: 'red', color: '#f44336', glow: 'rgba(244, 67, 54, 0.7)' },
+        { name: 'cyan', color: '#00bcd4', glow: 'rgba(0, 188, 212, 0.7)' }
     ];
     
-    let availableThemes = [...themes]; // Clone of themes array
-    let currentTheme = null;
+    let currentPulseTheme = pulseThemes[0];
     let isAnimating = false;
     
-    // Initialize with a random theme
-    const initialThemeIndex = Math.floor(Math.random() * themes.length);
-    currentTheme = themes[initialThemeIndex];
-    body.classList.add(currentTheme);
-    // Remove the initial theme from available themes
-    availableThemes = availableThemes.filter(theme => theme !== currentTheme);
+    // Initialize with a random pulse theme
+    const initialIndex = Math.floor(Math.random() * pulseThemes.length);
+    currentPulseTheme = pulseThemes[initialIndex];
+    updatePulseColors();
     
-    servoBtn.addEventListener('click', function() {
-        if (isAnimating) return;
-        isAnimating = true;
-        
-        // Create sonar sweep effect
-        createSonarSweep();
-        
-        // Cycle through themes after a short delay
-        setTimeout(() => {
-            // Remove current theme
-            if (currentTheme) {
-                body.classList.remove(currentTheme);
-            }
-            
-            // If no themes left, reset the available themes
-            if (availableThemes.length === 0) {
-                availableThemes = [...themes];
-            }
-            
-            // Select a random theme from available ones
-            const randomIndex = Math.floor(Math.random() * availableThemes.length);
-            currentTheme = availableThemes[randomIndex];
-            
-            // Remove the selected theme from available themes
-            availableThemes = availableThemes.filter(theme => theme !== currentTheme);
-            
-            // Apply the new theme
-            body.classList.add(currentTheme);
-            isAnimating = false;
-        }, 1800);
+    // Listen for theme manager events
+    window.addEventListener('themeChanged', function() {
+        // Create sonar effect when theme changes
+        if (servoBtn) {
+            createSonarSweep();
+            cyclePulseTheme();
+        }
     });
+    
+    function cyclePulseTheme() {
+        // Cycle to next pulse theme for visual variety
+        const currentIndex = pulseThemes.findIndex(theme => theme.name === currentPulseTheme.name);
+        const nextIndex = (currentIndex + 1) % pulseThemes.length;
+        currentPulseTheme = pulseThemes[nextIndex];
+        updatePulseColors();
+    }
+    
+    function updatePulseColors() {
+        const root = document.documentElement;
+        root.style.setProperty('--pulse-color', currentPulseTheme.color);
+        root.style.setProperty('--pulse-glow', currentPulseTheme.glow);
+    }
     
     function createSonarSweep() {
         // Create the sonar element

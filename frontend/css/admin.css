@@ -24,6 +24,131 @@
     /* Yellow */
     --admin-text: #333333;
     /* Dark text */
+    --admin-text-light: #64748B;
+    --admin-rgb: 230, 126, 34;
+}
+
+/* Dark Mode Variables */
+[data-theme="dark"] {
+    --admin-primary: #FF8C42;
+    /* Brighter orange for dark mode */
+    --admin-secondary: #FF6B1A;
+    /* Brighter secondary */
+    --admin-accent: #FFB347;
+    /* Brighter accent */
+    --admin-dark: #E2E8F0;
+    /* Light text for dark mode */
+    --admin-light: #2D3748;
+    /* Dark warm background */
+    --admin-bg: #1A202C;
+    /* Dark background */
+    --admin-card: #2D3748;
+    /* Dark card background */
+    --admin-success: #48BB78;
+    /* Brighter green */
+    --admin-danger: #F56565;
+    /* Brighter red */
+    --admin-warning: #F6E05E;
+    /* Brighter yellow */
+    --admin-text: #E2E8F0;
+    /* Light text */
+    --admin-text-light: #A0AEC0;
+    --admin-rgb: 255, 140, 66;
+}
+
+/* COMPREHENSIVE DARK MODE OVERRIDES */
+[data-theme="dark"] body,
+[data-theme="dark"] html {
+    background-color: var(--admin-bg) !important;
+    color: var(--admin-text) !important;
+}
+
+/* Main containers */
+[data-theme="dark"] .c-admin-container,
+[data-theme="dark"] .c-admin-content,
+[data-theme="dark"] .c-admin-sidebar,
+[data-theme="dark"] .c-admin-nav,
+[data-theme="dark"] .c-admin-sidebar__stats,
+[data-theme="dark"] .c-admin-card,
+[data-theme="dark"] .c-stats-card {
+    background-color: var(--admin-card) !important;
+    color: var(--admin-text) !important;
+    border-color: var(--admin-text-light) !important;
+}
+
+/* Stats and metrics */
+[data-theme="dark"] .c-stat-item,
+[data-theme="dark"] .c-stats-list__item,
+[data-theme="dark"] .c-activity-item {
+    background-color: var(--admin-light) !important;
+    color: var(--admin-text) !important;
+}
+
+/* Tables */
+[data-theme="dark"] .c-user-table,
+[data-theme="dark"] .c-user-table th,
+[data-theme="dark"] .c-user-table td,
+[data-theme="dark"] .c-user-table tbody tr {
+    background-color: var(--admin-card) !important;
+    color: var(--admin-text) !important;
+    border-color: var(--admin-text-light) !important;
+}
+
+/* Navigation and menu items */
+[data-theme="dark"] .c-admin-menu__link,
+[data-theme="dark"] .c-admin-menu__item {
+    background-color: transparent !important;
+    color: var(--admin-text) !important;
+}
+
+[data-theme="dark"] .c-admin-menu__link:hover,
+[data-theme="dark"] .c-admin-menu__link.active {
+    background-color: var(--admin-primary) !important;
+    color: white !important;
+}
+
+/* Search and controls */
+[data-theme="dark"] .c-search-bar,
+[data-theme="dark"] .c-search-input-wrapper,
+[data-theme="dark"] .c-filter-controls {
+    background-color: var(--admin-card) !important;
+}
+
+[data-theme="dark"] .c-search-input,
+[data-theme="dark"] .c-select,
+[data-theme="dark"] .c-filter-select {
+    background-color: var(--admin-light) !important;
+    color: var(--admin-text) !important;
+    border-color: var(--admin-text-light) !important;
+}
+
+/* Pagination */
+[data-theme="dark"] .c-pagination,
+[data-theme="dark"] .c-pagination__btn {
+    background-color: var(--admin-card) !important;
+    color: var(--admin-text) !important;
+    border-color: var(--admin-text-light) !important;
+}
+
+/* Theme management */
+[data-theme="dark"] .c-theme-management,
+[data-theme="dark"] .c-theme-list,
+[data-theme="dark"] .c-theme-item {
+    background-color: var(--admin-card) !important;
+    color: var(--admin-text) !important;
+}
+
+/* Header dark mode - ensure it uses the dark theme colors */
+[data-theme="dark"] .c-header,
+[data-theme="dark"] .c-header--admin {
+    background-color: var(--admin-primary) !important;
+    border-bottom-color: var(--admin-accent) !important;
+    color: white !important;
+}
+
+[data-theme="dark"] .c-header__title,
+[data-theme="dark"] .c-header__link {
+    color: white !important;
 }
 
 /*---------------------------------------/*
@@ -318,7 +443,7 @@ body {
 }
 
 .c-btn--logout:hover {
-    background-color: #1A252F;
+    background-color: var(--admin-dark);
     transform: scale(1.02);
 }
 
@@ -346,7 +471,8 @@ body {
 }
 
 .c-btn--delete:hover {
-    background-color: #C0392B;
+    background-color: var(--admin-danger);
+    opacity: 0.9;
     transform: translateY(-1px);
 }
 
@@ -357,7 +483,7 @@ body {
 }
 
 .c-btn--cancel {
-    background-color: #ECF0F1;
+    background-color: var(--admin-light);
     color: var(--admin-dark);
     border: none;
     padding: 0.6rem 1.5rem;
@@ -366,7 +492,54 @@ body {
 }
 
 .c-btn--cancel:hover {
-    background-color: #D5DBDB;
+    background-color: var(--admin-bg);
+}
+
+/* Theme Toggle Button Styles */
+.c-theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 1.2rem;
+    background-color: var(--admin-card);
+    color: var(--admin-text);
+    border: 1px solid rgba(230, 126, 34, 0.2);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    position: relative;
+    min-width: 120px;
+    white-space: nowrap;
+}
+
+.c-theme-toggle:hover {
+    background-color: var(--admin-light);
+    border-color: var(--admin-primary);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(var(--admin-rgb), 0.15);
+}
+
+.c-theme-toggle::before {
+    content: "☀️";
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+    width: 1.2rem;
+    height: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+[data-theme="dark"] .c-theme-toggle::before {
+    content: "🌙";
+}
+
+.c-theme-toggle:active {
+    transform: scale(0.98);
 }
 
 /*---------------------------------------/*
@@ -404,7 +577,7 @@ body {
     left: 1rem;
     top: 50%;
     transform: translateY(-50%);
-    color: #95A5A6;
+    color: var(--admin-text-light);
 }
 
 .c-search-input {
@@ -414,11 +587,13 @@ body {
     border-radius: 4px;
     font-size: 1rem;
     transition: all 0.2s ease;
+    background-color: var(--admin-card);
+    color: var(--admin-text);
 }
 
 .c-search-input:focus {
     border-color: var(--admin-primary);
-    box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.2);
+    box-shadow: 0 0 0 3px rgba(var(--admin-rgb), 0.2);
     outline: none;
 }
 
@@ -432,7 +607,8 @@ body {
     padding: 0.75rem 1rem;
     border: 1px solid #ddd;
     border-radius: 4px;
-    background-color: white;
+    background-color: var(--admin-card);
+    color: var(--admin-text);
     font-size: 0.95rem;
     min-width: 160px;
 }
@@ -452,9 +628,9 @@ body {
 .c-answer-text {
     padding: 0.75rem 1rem;
     border-radius: 6px;
-    border: 1px solid #E0E5E9;
+    border: 1px solid var(--admin-light);
     font-size: 0.9rem;
-    background-color: #FAFBFC;
+    background-color: var(--admin-card);
     color: var(--admin-text);
     transition: all 0.2s ease;
     width: 100%;
@@ -465,8 +641,8 @@ body {
 .c-question-info select:focus,
 .c-answer-text:focus {
     outline: none;
-    border-color: var(--admin-light);
-    background-color: #fff;
+    border-color: var(--admin-primary);
+    background-color: var(--admin-bg);
     box-shadow: 0 0 0 3px rgba(var(--admin-rgb), 0.1);
 }
 
@@ -623,11 +799,11 @@ body {
     width: 100%;
     min-height: 120px;
     padding: 1rem;
-    border: 1px solid #E0E5E9;
+    border: 1px solid var(--admin-light);
     border-radius: 6px;
     font-size: 0.95rem;
     line-height: 1.5;
-    background-color: #FAFBFC;
+    background-color: var(--admin-card);
     color: var(--admin-text);
     transition: all 0.2s ease;
     resize: vertical;
@@ -637,12 +813,12 @@ body {
 .c-explanation-textarea:focus {
     outline: none;
     border-color: var(--admin-primary);
-    background-color: #fff;
-    box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.1);
+    background-color: var(--admin-bg);
+    box-shadow: 0 0 0 3px rgba(var(--admin-rgb), 0.1);
 }
 
 .c-explanation-textarea::placeholder {
-    color: #95A5A6;
+    color: var(--admin-text-light);
     font-style: italic;
 }
 
@@ -652,7 +828,7 @@ body {
     bottom: 0.5rem;
     right: 0.75rem;
     font-size: 0.8rem;
-    color: #95A5A6;
+    color: var(--admin-text-light);
     pointer-events: none;
 }
 
@@ -682,7 +858,8 @@ body {
     align-items: center;
     padding: 1.25rem;
     margin-bottom: 1rem;
-    background-color: #fff;
+    background-color: var(--admin-card);
+    color: var(--admin-text);
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     border-left: 4px solid var(--admin-primary, #e67e22);
@@ -704,7 +881,7 @@ body {
 .c-theme-name {
     font-size: 1.1rem;
     font-weight: 600;
-    color: #2c3e50;
+    color: var(--admin-text);
 }
 
 .c-theme-meta {
@@ -723,8 +900,8 @@ body {
 }
 
 .c-tag--count {
-    background-color: #f5f7fa;
-    color: #7f8c8d;
+    background-color: var(--admin-light);
+    color: var(--admin-text-light);
 }
 
 .c-theme-actions {
@@ -751,7 +928,8 @@ body {
 }
 
 .c-modal__content {
-    background-color: #fff;
+    background-color: var(--admin-card);
+    color: var(--admin-text);
     padding: 2rem;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -762,7 +940,7 @@ body {
 .c-modal-title {
     font-size: 1.5rem;
     margin-bottom: 1.5rem;
-    color: #333;
+    color: var(--admin-text);
 }
 
 /* Form Styling */
@@ -774,7 +952,7 @@ body {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 600;
-    color: #555;
+    color: var(--admin-text);
 }
 
 .c-form-input,
@@ -785,13 +963,15 @@ body {
     border-radius: 4px;
     font-size: 1rem;
     transition: border-color 0.3s ease;
+    background-color: var(--admin-card);
+    color: var(--admin-text);
 }
 
 .c-form-input:focus,
 .c-form-select:focus {
     outline: none;
-    border-color: #4a90e2;
-    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+    border-color: var(--admin-primary);
+    box-shadow: 0 0 0 2px rgba(var(--admin-rgb), 0.2);
 }
 
 /* Button Styling */
@@ -807,13 +987,13 @@ body {
     top: 1rem;
     right: 1rem;
     font-size: 1.5rem;
-    color: #999;
+    color: var(--admin-text-light);
     cursor: pointer;
     transition: color 0.3s ease;
 }
 
 .c-modal__close:hover {
-    color: #333;
+    color: var(--admin-text);
 }
 
 /*---------------------------------------/*
@@ -830,8 +1010,9 @@ body {
     display: inline-flex;
     align-items: center;
     padding: 0.6rem 1.25rem;
-    background-color: white;
-    border: 1px solid #ddd;
+    background-color: var(--admin-card);
+    color: var(--admin-text);
+    border: 1px solid var(--admin-light);
     border-radius: 4px;
     cursor: pointer;
     font-weight: 500;
@@ -882,7 +1063,8 @@ body {
 .c-stat-item {
     text-align: center;
     padding: 1.5rem;
-    background-color: white;
+    background-color: var(--admin-card);
+    color: var(--admin-text);
     border-radius: 8px;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
@@ -961,7 +1143,7 @@ body {
 
 .c-activity-time {
     font-size: 0.85rem;
-    color: #7f8c8d;
+    color: var(--admin-text-light);
 }
 
 /*---------------------------------------/*
@@ -997,7 +1179,8 @@ body {
 }
 
 .c-user-table tbody tr {
-    background-color: white;
+    background-color: var(--admin-card);
+    color: var(--admin-text);
     transition: all 0.2s ease;
 }
 
@@ -1037,7 +1220,8 @@ body {
 }
 
 .c-modal__content {
-    background-color: white;
+    background-color: var(--admin-card);
+    color: var(--admin-text);
     margin: 10% auto;
     border-radius: 8px;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
@@ -1057,7 +1241,7 @@ body {
     right: 1.25rem;
     top: 1.25rem;
     font-size: 1.5rem;
-    color: #95A5A6;
+    color: var(--admin-text-light);
     cursor: pointer;
     transition: color 0.2s ease;
 }
@@ -1124,7 +1308,8 @@ body {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background-color: white;
+    background-color: var(--admin-card);
+    color: var(--admin-text);
     border-radius: 6px;
     box-shadow: 0 3px 15px rgba(0, 0, 0, 0.2);
     padding: 1rem 1.5rem;
@@ -1143,7 +1328,7 @@ body {
 .c-notification__close {
     background: none;
     border: none;
-    color: #95A5A6;
+    color: var(--admin-text-light);
     cursor: pointer;
     font-size: 1rem;
     transition: color 0.2s ease;
@@ -1352,6 +1537,248 @@ body {
     /* OR */
     align-items: baseline;
     /* Aligns based on content */
+}
+
+/*---------------------------------------/*
+ # DARK MODE - DYNAMIC CONTENT
+/*---------------------------------------*/
+
+/* Dark mode styles for dynamically generated content */
+[data-theme="dark"] .c-question-item,
+[data-theme="dark"] .c-question-info,
+[data-theme="dark"] .c-question-edit,
+[data-theme="dark"] .c-question-meta,
+[data-theme="dark"] .c-question-theme,
+[data-theme="dark"] .c-question-difficulty,
+[data-theme="dark"] .c-question-time,
+[data-theme="dark"] .c-question-points,
+[data-theme="dark"] .c-question-url,
+[data-theme="dark"] .c-question-env,
+[data-theme="dark"] .c-question-env-item,
+[data-theme="dark"] .c-answer-options,
+[data-theme="dark"] .c-answer-count,
+[data-theme="dark"] .c-answer-list,
+[data-theme="dark"] .c-answer-item,
+[data-theme="dark"] .c-explanation-container,
+[data-theme="dark"] .c-explanation-wrapper,
+[data-theme="dark"] .c-question-actions,
+[data-theme="dark"] .c-question-correct-special {
+    background-color: var(--admin-card) !important;
+    color: var(--admin-text) !important;
+    border-color: var(--admin-light) !important;
+}
+
+/* Form elements in dark mode */
+[data-theme="dark"] .c-form-group,
+[data-theme="dark"] .c-form-input,
+[data-theme="dark"] .c-form-select,
+[data-theme="dark"] .c-form-textarea,
+[data-theme="dark"] .c-question-text-edit,
+[data-theme="dark"] .c-answer-text,
+[data-theme="dark"] .js-theme-select,
+[data-theme="dark"] .js-difficulty-select,
+[data-theme="dark"] .js-answer-count,
+[data-theme="dark"] .c-explanation-textarea {
+    background-color: var(--admin-light) !important;
+    color: var(--admin-text) !important;
+    border-color: var(--admin-text-light) !important;
+}
+
+/* Input focus states in dark mode */
+[data-theme="dark"] .c-form-input:focus,
+[data-theme="dark"] .c-form-select:focus,
+[data-theme="dark"] .c-form-textarea:focus,
+[data-theme="dark"] .c-question-text-edit:focus,
+[data-theme="dark"] .c-answer-text:focus,
+[data-theme="dark"] .c-explanation-textarea:focus {
+    background-color: var(--admin-card) !important;
+    color: var(--admin-text) !important;
+    border-color: var(--admin-primary) !important;
+    box-shadow: 0 0 0 2px rgba(var(--admin-rgb), 0.2) !important;
+}
+
+/* Labels and text in dark mode */
+[data-theme="dark"] .c-question-meta label,
+[data-theme="dark"] .c-question-env-item label,
+[data-theme="dark"] .c-answer-count label,
+[data-theme="dark"] .c-explanation-heading,
+[data-theme="dark"] .c-answer-correct span,
+[data-theme="dark"] .c-form-group label {
+    color: var(--admin-text) !important;
+}
+
+/* Buttons in dark mode */
+[data-theme="dark"] .c-btn,
+[data-theme="dark"] .js-delete-question,
+[data-theme="dark"] .c-btn--delete,
+[data-theme="dark"] .c-btn--primary,
+[data-theme="dark"] .c-btn--cancel {
+    background-color: var(--admin-primary) !important;
+    color: white !important;
+    border-color: var(--admin-primary) !important;
+}
+
+[data-theme="dark"] .c-btn:hover,
+[data-theme="dark"] .js-delete-question:hover,
+[data-theme="dark"] .c-btn--delete:hover {
+    background-color: var(--admin-secondary) !important;
+}
+
+/* Checkboxes and form controls in dark mode */
+[data-theme="dark"] input[type="checkbox"] {
+    background-color: var(--admin-light) !important;
+    border-color: var(--admin-text-light) !important;
+}
+
+[data-theme="dark"] input[type="checkbox"]:checked {
+    background-color: var(--admin-primary) !important;
+    border-color: var(--admin-primary) !important;
+}
+
+/* Modal content in dark mode */
+[data-theme="dark"] .c-modal,
+[data-theme="dark"] .c-modal__content,
+[data-theme="dark"] .c-modal-title {
+    background-color: var(--admin-card) !important;
+    color: var(--admin-text) !important;
+}
+
+/* Loading and empty states in dark mode */
+[data-theme="dark"] .c-loading,
+[data-theme="dark"] .c-empty-state,
+[data-theme="dark"] .c-error-state {
+    color: var(--admin-text) !important;
+    background-color: var(--admin-card) !important;
+}
+
+/* Notifications in dark mode */
+[data-theme="dark"] .c-notification {
+    background-color: var(--admin-card) !important;
+    color: var(--admin-text) !important;
+    border-color: var(--admin-text-light) !important;
+}
+
+[data-theme="dark"] .c-notification--success {
+    background-color: var(--admin-success) !important;
+    color: white !important;
+}
+
+[data-theme="dark"] .c-notification--error {
+    background-color: var(--admin-danger) !important;
+    color: white !important;
+}
+
+/* Specific question item styling */
+[data-theme="dark"] .c-question-item {
+    border: 1px solid var(--admin-text-light) !important;
+    border-radius: 8px !important;
+    margin-bottom: 1rem !important;
+    padding: 1rem !important;
+}
+
+/* Theme and user items */
+[data-theme="dark"] .c-theme-item,
+[data-theme="dark"] .c-user-table,
+[data-theme="dark"] .c-user-table th,
+[data-theme="dark"] .c-user-table td {
+    background-color: var(--admin-card) !important;
+    color: var(--admin-text) !important;
+    border-color: var(--admin-text-light) !important;
+}
+
+/*---------------------------------------/*
+ # ULTIMATE DARK MODE OVERRIDE
+/*---------------------------------------*/
+
+/* NUCLEAR OPTION: Force all elements to use dark theme colors */
+[data-theme="dark"] * {
+    border-color: var(--admin-text-light) !important;
+}
+
+/* Main page structure */
+[data-theme="dark"] body,
+[data-theme="dark"] html,
+[data-theme="dark"] main {
+    background-color: var(--admin-bg) !important;
+    color: var(--admin-text) !important;
+}
+
+/* All container elements */
+[data-theme="dark"] div,
+[data-theme="dark"] section,
+[data-theme="dark"] article,
+[data-theme="dark"] aside,
+[data-theme="dark"] nav {
+    background-color: inherit !important;
+    color: inherit !important;
+}
+
+/* Override specific containers that should have card background */
+[data-theme="dark"] .c-admin-content,
+[data-theme="dark"] .c-admin-sidebar,
+[data-theme="dark"] .c-admin-nav,
+[data-theme="dark"] .c-admin-sidebar__stats,
+[data-theme="dark"] .c-admin-card,
+[data-theme="dark"] .c-stats-card,
+[data-theme="dark"] .c-modal__content,
+[data-theme="dark"] .c-question-item,
+[data-theme="dark"] .c-theme-item {
+    background-color: var(--admin-card) !important;
+    color: var(--admin-text) !important;
+}
+
+/* All form elements */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea,
+[data-theme="dark"] button:not(.c-btn) {
+    background-color: var(--admin-light) !important;
+    color: var(--admin-text) !important;
+    border-color: var(--admin-text-light) !important;
+}
+
+/* All text elements */
+[data-theme="dark"] p,
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6,
+[data-theme="dark"] span,
+[data-theme="dark"] label,
+[data-theme="dark"] li {
+    color: var(--admin-text) !important;
+}
+
+/* Ensure proper button colors */
+[data-theme="dark"] .c-btn:not(.c-btn--cancel) {
+    background-color: var(--admin-primary) !important;
+    color: white !important;
+    border-color: var(--admin-primary) !important;
+}
+
+[data-theme="dark"] .c-btn--cancel {
+    background-color: var(--admin-text-light) !important;
+    color: var(--admin-text) !important;
+}
+
+/* Table elements */
+[data-theme="dark"] table,
+[data-theme="dark"] thead,
+[data-theme="dark"] tbody,
+[data-theme="dark"] tr,
+[data-theme="dark"] th,
+[data-theme="dark"] td {
+    background-color: var(--admin-card) !important;
+    color: var(--admin-text) !important;
+    border-color: var(--admin-text-light) !important;
+}
+
+/* Lists */
+[data-theme="dark"] ul,
+[data-theme="dark"] ol {
+    color: var(--admin-text) !important;
 }
 
 

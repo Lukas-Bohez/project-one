@@ -10,7 +10,8 @@ let questionsRetryCount = 0;
 let averageScoreRetryCount = 0;
 const MAX_RETRIES = 3;
 const BASE_RETRY_DELAY = 1000; // 1 second
-let lanIP = `https://${window.location.hostname}`;
+// lanIP is defined in admin.js
+// let lanIP = `https://${window.location.hostname}`;
 
 // Cache DOM elements for better performance
 let usersCountElements = null;

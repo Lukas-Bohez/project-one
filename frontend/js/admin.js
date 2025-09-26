@@ -30,105 +30,88 @@ let currentTab = 'questions';
 const fetchQuestions = async (activeOnly = false) => {
     const questionsEndpoint = `${lanIP}/api/v1/questions/`;
     const answersBaseEndpoint = `${lanIP}/api/v1/questions/`;
-    const themesBaseEndpoint = `${lanIP}/api/v1/themes/`;
+    const themesEndpoint = `${lanIP}/api/v1/themes/`;
 
-    // A more specific and unique key for your application's cache
     const CACHE_KEY = `myApp_questionsCache_${activeOnly ? 'active' : 'all'}`;
-    const CACHE_DURATION = 60 * 1000; // 1 minute in milliseconds
+    const CACHE_DURATION = 60 * 1000; // 1 minute
 
     try {
         // --- ATTEMPT TO RETURN FROM CACHE FIRST ---
         const cachedDataString = localStorage.getItem(CACHE_KEY);
-
         if (cachedDataString) {
             const { timestamp, data } = JSON.parse(cachedDataString);
             const now = new Date().getTime();
-
             if (now - timestamp < CACHE_DURATION) {
                 console.log(`[Cache Hit] Returning data from local cache for key: ${CACHE_KEY}`);
-                return data; // IMMEDIATELY RETURN CACHED DATA
+                return data;
             } else {
                 console.log(`[Cache Expired] Cache for key: ${CACHE_KEY} is older than 1 minute. Fetching new data...`);
-                // Proceed to fetch new data
             }
         } else {
             console.log(`[Cache Miss] No data found in local cache for key: ${CACHE_KEY}. Fetching new data...`);
-            // Proceed to fetch new data
         }
 
-        // --- IF WE REACH THIS POINT, IT MEANS CACHE IS INVALID OR NON-EXISTENT.
-        // --- PROCEED WITH API CALLS.
+        // --- IF WE REACH THIS POINT, IT MEANS CACHE IS INVALID OR NON-EXISTENT. ---
+        // --- PROCEED WITH API CALLS. ---
 
         // Step 1: Fetch all questions
         const questionsUrl = activeOnly ? `${questionsEndpoint}?active_only=true` : questionsEndpoint;
-        const questionsResponse = await fetch(questionsUrl);
+        const [questionsResponse, themesResponse] = await Promise.all([
+            fetch(questionsUrl),
+            fetch(themesEndpoint)
+        ]);
         if (!questionsResponse.ok) {
             console.error(`HTTP error fetching questions! Status: ${questionsResponse.status}`);
             return [];
         }
+        if (!themesResponse.ok) {
+            console.error(`HTTP error fetching themes! Status: ${themesResponse.status}`);
+            return [];
+        }
         const questions = await questionsResponse.json();
+        const themes = await themesResponse.json();
 
-        // Step 2: Get unique theme IDs to minimize API calls
-        const uniqueThemeIds = [...new Set(questions.map(q => q.themeId).filter(id => id))];
-
-        // Step 3: Fetch all themes in parallel
-        const themePromises = uniqueThemeIds.map(async (themeId) => {
-            try {
-                const themeResponse = await fetch(`${themesBaseEndpoint}${themeId}/`);
-                if (!themeResponse.ok) {
-                    console.warn(`HTTP error fetching theme ID ${themeId}! Status: ${themeResponse.status}`);
-                    return { id: themeId, name: 'Unknown Theme', error: true };
-                }
-                const theme = await themeResponse.json();
-                return theme;
-            } catch (error) {
-                console.warn(`Failed to fetch theme ID ${themeId}:`, error);
-                return { id: themeId, name: 'Unknown Theme', error: true };
-            }
-        });
-
-        const themes = await Promise.all(themePromises);
-
-        // Step 4: Create a theme lookup map for quick access
+        // Step 2: Create a theme lookup map for quick access
         const themeMap = themes.reduce((map, theme) => {
             map[theme.id] = theme;
             return map;
         }, {});
 
-        const questionsWithAnswersAndThemes = [];
-
-        // Step 5: For each question, fetch its answers and attach theme data
-        for (const question of questions) {
-            // Fetch answers for this question
-            const answersUrl = `${answersBaseEndpoint}${question.id}/answers`;
-            const answersResponse = await fetch(answersUrl);
-            let answers = [];
-
-            if (!answersResponse.ok) {
-                console.warn(`HTTP error fetching answers for question ID ${question.id}! Status: ${answersResponse.status}`);
-            } else {
+        // Step 3: Fetch all answers in parallel (batch if possible)
+        // If backend supports batch, use it. Otherwise, parallelize per-question
+        const answerPromises = questions.map(async (question) => {
+            try {
+                const answersResponse = await fetch(`${answersBaseEndpoint}${question.id}/answers`);
+                if (!answersResponse.ok) {
+                    console.warn(`HTTP error fetching answers for question ID ${question.id}! Status: ${answersResponse.status}`);
+                    return [];
+                }
                 const answersData = await answersResponse.json();
-                answers = answersData.answers || [];
+                return answersData.answers || [];
+            } catch (error) {
+                console.warn(`Failed to fetch answers for question ID ${question.id}:`, error);
+                return [];
             }
+        });
+        const answersList = await Promise.all(answerPromises);
 
-            // Get theme data for this question
+        // Step 4: Assemble questions with answers and themes
+        const questionsWithAnswersAndThemes = questions.map((question, idx) => {
             const theme = themeMap[question.themeId] || {
                 id: question.themeId,
                 name: 'Unknown Theme',
                 error: true
             };
-
-            questionsWithAnswersAndThemes.push({
-                ...question, // Spread all properties of the original question
-                answers: answers, // Add the fetched answers
-                theme: theme // Add the theme object - accessible as question.theme
-            });
-        }
+            return {
+                ...question,
+                answers: answersList[idx],
+                theme: theme
+            };
+        });
 
         console.log('[API Fetch] Successfully fetched new data from API.');
-        // console.log(questionsWithAnswersAndThemes); // Uncomment if you want to see the full data on every fetch
 
-        // Step 6: Save the newly fetched data to local cache with a timestamp
+        // Step 5: Save the newly fetched data to local cache with a timestamp
         const dataToCache = {
             timestamp: new Date().getTime(),
             data: questionsWithAnswersAndThemes
@@ -192,7 +175,7 @@ const fetchThemes = async () => {
 };
 
 // Make sure 'lanIP' is correctly defined in your JavaScript, e.g.:
-// const lanIP = "http://localhost:8000"; // Or your actual server IP/domain
+const lanIP = `https://${window.location.hostname}`; // Or your actual server IP/domain
 
 const fetchUsers = async () => {
     // Use the new endpoint with IP information
@@ -1120,6 +1103,11 @@ const showEditModal = async (itemType, item = null) => {
         });
     }
     
+    // Apply theme to the modal content
+    if (window.themeManager) {
+        window.themeManager.applyThemeToNewElements(modal);
+    }
+    
     // Show modal
     modal.style.display = 'block';
 };
@@ -1145,6 +1133,11 @@ const showNotification = (message, type = 'success') => {
     notification.textContent = message;
     
     document.body.appendChild(notification);
+    
+    // Apply theme to notification
+    if (window.themeManager) {
+        window.themeManager.applyThemeToNewElements(notification);
+    }
     
     setTimeout(() => {
         notification.classList.add('show');
@@ -1238,6 +1231,11 @@ const loadQuestions = async () => {
         // Clear and append all at once
         questionList.innerHTML = '';
         questionList.appendChild(fragment);
+        
+        // Apply theme to newly created elements
+        if (window.themeManager) {
+            window.themeManager.applyThemeToNewElements(questionList);
+        }
         
         // Add event delegation for better performance
         questionList.addEventListener('click', handleQuestionActions);
@@ -1382,6 +1380,11 @@ const createQuestionElement = (question) => {
     </div>
     `;
 
+    // Apply theme to this newly created element
+    if (window.themeManager) {
+        window.themeManager.applyThemeToNewElements(element);
+    }
+
     return element;
 };
 
@@ -1502,10 +1505,13 @@ const handleQuestionFieldChanges = (event) => {
             };
         });
         
-        // Update the answer list with new count while preserving existing answers
+                // Update the answer list with new count while preserving existing answers
         answerList.innerHTML = generateAnswersHTML(currentAnswers, answerCount);
         
-        // Update question data
+        // Apply theme to newly generated answer elements
+        if (window.themeManager) {
+            window.themeManager.applyThemeToNewElements(answerList);
+        }        // Update question data
         question.answerCount = answerCount;
         if (!question.answers) {
             question.answers = [];
