@@ -3,23 +3,18 @@
 /*---------------------------------------*/
 :root {
     --primary-color: #2c4c7c;
-    /* Darkened for better contrast */
     --secondary-color: #0c4061;
-    /* Darkened for better contrast */
     --tertiary-color: #0d9edb;
-    /* Slightly darkened for better contrast */
     --dark-color: #0e1827;
-    /* Darker for better contrast against light backgrounds */
     --light-color: #f4f8fc;
-    /* Lightened background color */
     --success-color: #2e8b34;
-    /* Darkened for better contrast */
     --danger-color: #d32f2f;
-    /* Adjusted for better contrast */
     --warning-color: #e65100;
-    /* Darkened for better contrast */
     --info-color: #0d61aa;
-    /* Darkened for better contrast */
+    
+    /* Solar pulse colors - will be updated by JavaScript */
+    --pulse-color: #ff8c00;
+    --pulse-glow: rgba(255, 140, 0, 0.7);
 }
 
 /*---------------------------------------/*
@@ -40,7 +35,7 @@ body {
     color: var(--dark-color);
     line-height: 1.6;
     font-size: 16px;
-    /* Base font size for mobile */
+    transition: background-color 0.8s ease, color 0.8s ease;
 }
 
 /*---------------------------------------/*
@@ -50,13 +45,13 @@ body {
     width: 100%;
     padding: 0 1rem;
     margin: 1rem auto;
-    /* Smaller margin on mobile */
+    position: relative;
+    z-index: 1; /* Ensure content stays above pulse effects */
 }
 
 .o-button-group {
     display: grid;
     grid-template-columns: 1fr;
-    /* Single column by default */
     gap: 1rem;
     margin-bottom: 1rem;
 }
@@ -64,26 +59,31 @@ body {
 .o-status-display {
     display: flex;
     flex-direction: column;
-    /* Stack items vertically on mobile */
     gap: 1rem;
     background-color: white;
-    /* Changed to white for better contrast */
     padding: 1rem;
     border-radius: 8px;
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-    /* Subtle shadow for depth */
+    transition: background-color 0.8s ease, box-shadow 0.8s ease;
+}
+
+.o-servo-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1rem;
 }
 
 /*---------------------------------------/*
  # COMPONENTS
 /*---------------------------------------*/
 .c-header {
-    background-color: #2c4c7c;
+    background-color: var(--primary-color);
     color: white;
     padding: 0.75rem 1rem;
-    /* Smaller padding on mobile */
     text-align: center;
     position: relative;
+    transition: background-color 0.8s ease;
 }
 
 .c-header__link {
@@ -99,30 +99,28 @@ body {
     margin: 0;
     display: inline-block;
     font-size: 1.25rem;
-    /* Smaller heading on mobile */
 }
 
 .c-welcome-message {
     background-color: white;
-    /* Changed to white for better contrast */
     padding: 1.5rem;
     border-radius: 8px;
     margin-bottom: 2rem;
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-    /* Subtle shadow for depth */
+    transition: background-color 0.8s ease, box-shadow 0.8s ease;
 }
 
 .c-btn {
     padding: 0.75rem;
-    /* Smaller buttons on mobile */
     border: none;
     border-radius: 5px;
     font-size: 0.9rem;
-    /* Smaller text on mobile buttons */
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s ease;
     text-align: center;
+    position: relative;
+    overflow: hidden;
 }
 
 .c-btn:hover {
@@ -133,32 +131,51 @@ body {
 .c-btn--primary {
     background-color: var(--primary-color);
     color: white;
-    /* Changed to white for better contrast */
 }
 
 .c-btn--secondary {
     background-color: var(--secondary-color);
     color: white;
-    /* Changed to white for better contrast */
 }
 
 .c-btn--delete {
     background-color: var(--danger-color);
     color: white;
-    /* Changed to white for better contrast */
     margin-left: 10%;
 }
 
 .c-btn--tertiary {
     background-color: var(--tertiary-color);
     color: white;
-    /* Changed to white for better contrast */
 }
 
 .c-btn--admin {
     background-color: var(--dark-color);
     color: white;
-    /* Changed to white for better contrast */
+}
+
+/* Enhanced servo button styling */
+#servoTestBtn {
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+#servoTestBtn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color), var(--primary-color));
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.3s ease;
+}
+
+#servoTestBtn:hover::before {
+    opacity: 0.2;
 }
 
 .c-info-btn {
@@ -170,7 +187,6 @@ body {
     height: 30px;
     border-radius: 50%;
     border: 2px solid white;
-    /* Changed to white for better contrast */
     background-color: transparent;
     color: white;
     font-weight: bold;
@@ -183,32 +199,28 @@ body {
 .c-modal {
     display: none;
     position: fixed;
-    z-index: 1;
+    z-index: 10000; /* Higher than pulse effects */
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
     overflow: auto;
     background-color: rgba(0, 0, 0, 0.6);
-    /* Darkened for better visibility of modal */
 }
 
 .c-modal__content {
     background-color: white;
-    /* Changed to white for better contrast */
     margin: 5% auto;
     padding: 2rem;
     border-radius: 8px;
     width: 80%;
     max-width: 800px;
     box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.2);
-    /* Enhanced shadow */
     position: relative;
 }
 
 .c-modal__close {
     color: #666;
-    /* Darkened for better visibility */
     position: absolute;
     top: 1rem;
     right: 1rem;
@@ -248,15 +260,19 @@ body {
 
 .c-servo-test {
     margin-top: 1rem;
-}
-
-.c-login-form {
     background-color: white;
-    /* Changed to white for better contrast */
     padding: 1.5rem;
     border-radius: 8px;
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-    /* Subtle shadow for depth */
+    transition: background-color 0.8s ease, box-shadow 0.8s ease;
+}
+
+
+.c-login-form {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
     max-width: 400px;
     margin: 0 auto;
 }
@@ -266,7 +282,6 @@ body {
     padding: 0.75rem;
     margin-bottom: 1rem;
     border: 1px solid #ccc;
-    /* Changed to more visible border */
     border-radius: 4px;
     font-size: 1rem;
 }
@@ -274,7 +289,6 @@ body {
 .c-error-message {
     color: var(--danger-color);
     background-color: rgba(211, 47, 47, 0.1);
-    /* Adjusted to match new danger color */
     padding: 0.75rem;
     border-radius: 4px;
     margin-bottom: 1rem;
@@ -302,8 +316,79 @@ body {
     }
 }
 
+/* Solar sonar animation */
+@keyframes solarSonar {
+    0% {
+        transform: rotate(0deg);
+        opacity: 0.8;
+        width: 50px;
+    }
+    50% {
+        opacity: 0.4;
+    }
+    100% {
+        transform: rotate(360deg);
+        opacity: 0;
+        width: 1500px;
+    }
+}
 
+.sonar-sweep {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform-origin: 0 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--pulse-color), transparent);
+    z-index: 9998;
+    pointer-events: none;
+    border-radius: 50%;
+    filter: blur(1px);
+    box-shadow: 0 0 15px 5px var(--pulse-glow);
+}
 
+/* Theme classes for color cycling */
+.theme-blue {
+    --primary-color: #2c4c7c;
+    --secondary-color: #0c4061;
+    --pulse-color: #4a86e8;
+    --pulse-glow: rgba(74, 134, 232, 0.7);
+}
+
+.theme-orange {
+    --primary-color: #e65100;
+    --secondary-color: #bf360c;
+    --pulse-color: #ff8c00;
+    --pulse-glow: rgba(255, 140, 0, 0.7);
+}
+
+.theme-green {
+    --primary-color: #2e8b34;
+    --secondary-color: #1b5e20;
+    --pulse-color: #4caf50;
+    --pulse-glow: rgba(76, 175, 80, 0.7);
+}
+
+.theme-purple {
+    --primary-color: #6a1b9a;
+    --secondary-color: #4a148c;
+    --pulse-color: #9c27b0;
+    --pulse-glow: rgba(156, 39, 176, 0.7);
+}
+
+.theme-red {
+    --primary-color: #c62828;
+    --secondary-color: #8e0000;
+    --pulse-color: #f44336;
+    --pulse-glow: rgba(244, 67, 54, 0.7);
+}
+
+.theme-cyan {
+    --primary-color: #00838f;
+    --secondary-color: #005662;
+    --pulse-color: #00bcd4;
+    --pulse-glow: rgba(0, 188, 212, 0.7);
+}
 
 /*---------------------------------------/*
  # UTILITIES
@@ -320,45 +405,65 @@ body {
     margin-bottom: 2rem;
 }
 
+/* Connection status styles */
+.status-initial {
+    color: #666;
+    background-color: #f0f0f0;
+    padding: 0.5rem;
+    text-align: center;
+}
+
+.status-connected {
+    color: var(--success-color);
+    background-color: rgba(46, 139, 52, 0.1);
+    padding: 0.5rem;
+    text-align: center;
+}
+
+.status-disconnected {
+    color: var(--danger-color);
+    background-color: rgba(211, 47, 47, 0.1);
+    padding: 0.5rem;
+    text-align: center;
+}
+
 @media screen and (min-width: 768px) {
     body {
         font-size: 18px;
-        /* Slightly larger base font */
     }
 
     .o-container {
         max-width: 1200px;
         margin: 2rem auto;
-        /* Larger margins on desktop */
     }
 
     .o-button-group {
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        /* Multi-column on desktop */
         margin-bottom: 2rem;
     }
 
     .o-status-display {
         flex-direction: row;
-        /* Horizontal layout on desktop */
         justify-content: space-between;
+    }
+
+    .o-servo-buttons {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .c-header {
         padding: 1rem;
-        /* Larger padding on desktop */
     }
 
     .c-header__title {
         font-size: 1.5rem;
-        /* Larger heading on desktop */
     }
 
     .c-btn {
         padding: 1rem;
-        /* Larger buttons on desktop */
         font-size: 1rem;
-        /* Regular text size */
     }
 
     .c-login-form {

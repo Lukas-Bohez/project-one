@@ -11,7 +11,7 @@ const STORAGE_KEYS = {
 class AuthSystem {
     constructor() {
         this.currentUser = null;
-        this.lanIP = `http://${window.location.hostname}`;
+        this.lanIP = `https://${window.location.hostname}`;
         this.init();
     }
 

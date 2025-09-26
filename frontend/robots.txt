@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Allow: /ads.txt
+Allow: /html/storyCreator.html
+Allow: /html/content.html
+Allow: /html/study.html
+Allow: /html/graphs.html
+Sitemap: https://quizthespire.duckdns.org/sitemap.xml

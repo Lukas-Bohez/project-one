@@ -52,50 +52,78 @@ class HardcoreRFID:
     MAX_LEN = 16
  
     def __init__(self, dev='/dev/spidev0.0', spd=1000000):
-        GPIO.setwarnings(False)
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(22, GPIO.OUT)
-        GPIO.output(22, 1)
+        self.spi = None
+        try:
+            GPIO.setwarnings(False)
+            GPIO.setmode(GPIO.BCM)
+            GPIO.setup(22, GPIO.OUT)
+            GPIO.output(22, 1)
  
-        # Setup SPI
-        self.spi = SpiDev()
-        bus, device_id = map(int, dev.replace('/dev/spidev', '').split('.'))
-        self.spi.open(bus, device_id)
-        self.spi.max_speed_hz = spd
+            # Setup SPI
+            self.spi = SpiDev()
+            bus, device_id = map(int, dev.replace('/dev/spidev', '').split('.'))
+            self.spi.open(bus, device_id)
+            self.spi.max_speed_hz = spd
  
-        self.RC_522_Reset()
-        self.Write_RC_522(self.TModeReg, 0x8D)
-        self.Write_RC_522(self.TPrescalerReg, 0x3E)
-        self.Write_RC_522(self.TReloadRegL, 30)
-        self.Write_RC_522(self.TReloadRegH, 0)
-        self.Write_RC_522(self.TxAutoReg, 0x40)
-        self.Write_RC_522(self.ModeReg, 0x3D)
-        self.AntennaOn()
+            self.RC_522_Reset()
+            self.Write_RC_522(self.TModeReg, 0x8D)
+            self.Write_RC_522(self.TPrescalerReg, 0x3E)
+            self.Write_RC_522(self.TReloadRegL, 30)
+            self.Write_RC_522(self.TReloadRegH, 0)
+            self.Write_RC_522(self.TxAutoReg, 0x40)
+            self.Write_RC_522(self.ModeReg, 0x3D)
+            self.AntennaOn()
+        except:
+            pass
  
     def RC_522_Reset(self):
-        self.Write_RC_522(self.CommandReg, self.PCD_RESETPHASE)
+        try:
+            self.Write_RC_522(self.CommandReg, self.PCD_RESETPHASE)
+        except:
+            pass
  
     def Write_RC_522(self, addr, val):
-        self.spi.xfer2([(addr << 1) & 0x7E, val])
+        try:
+            if self.spi:
+                self.spi.xfer2([(addr << 1) & 0x7E, val])
+        except:
+            pass
  
     def Read_RC_522(self, addr):
-        val = self.spi.xfer2([((addr << 1) & 0x7E) | 0x80, 0])
-        return val[1]
+        try:
+            if self.spi:
+                val = self.spi.xfer2([((addr << 1) & 0x7E) | 0x80, 0])
+                return val[1]
+            return 0
+        except:
+            return 0
  
     def SetBitMask(self, reg, mask):
-        tmp = self.Read_RC_522(reg)
-        self.Write_RC_522(reg, tmp | mask)
+        try:
+            tmp = self.Read_RC_522(reg)
+            self.Write_RC_522(reg, tmp | mask)
+        except:
+            pass
  
     def ClearBitMask(self, reg, mask):
-        tmp = self.Read_RC_522(reg)
-        self.Write_RC_522(reg, tmp & (~mask))
+        try:
+            tmp = self.Read_RC_522(reg)
+            self.Write_RC_522(reg, tmp & (~mask))
+        except:
+            pass
  
     def AntennaOn(self):
-        if not (self.Read_RC_522(self.TxControlReg) & 0x03):
-            self.SetBitMask(self.TxControlReg, 0x03)
+        try:
+            if not (self.Read_RC_522(self.TxControlReg) & 0x03):
+                self.SetBitMask(self.TxControlReg, 0x03)
+        except:
+            pass
  
     def AntennaOff(self):
-        self.ClearBitMask(self.TxControlReg, 0x03)
+        try:
+            self.ClearBitMask(self.TxControlReg, 0x03)
+        except:
+            pass
  
     def ToCard(self, command, sendData):
         backData = []
@@ -103,137 +131,156 @@ class HardcoreRFID:
         status = None
         irqEn = 0x00
         waitIRq = 0x00
+        
+        try:
+            if command == self.PCD_AUTHENT:
+                irqEn = 0x12
+                waitIRq = 0x10
+            elif command == self.PCD_TRANSCEIVE:
+                irqEn = 0x77
+                waitIRq = 0x30
  
-        if command == self.PCD_AUTHENT:
-            irqEn = 0x12
-            waitIRq = 0x10
-        elif command == self.PCD_TRANSCEIVE:
-            irqEn = 0x77
-            waitIRq = 0x30
+            self.Write_RC_522(self.CommIEnReg, irqEn | 0x80)
+            self.ClearBitMask(self.CommIrqReg, 0x80)
+            self.SetBitMask(self.FIFOLevelReg, 0x80)
  
-        self.Write_RC_522(self.CommIEnReg, irqEn | 0x80)
-        self.ClearBitMask(self.CommIrqReg, 0x80)
-        self.SetBitMask(self.FIFOLevelReg, 0x80)
+            self.Write_RC_522(self.CommandReg, self.PCD_IDLE)
  
-        self.Write_RC_522(self.CommandReg, self.PCD_IDLE)
+            for c in sendData:
+                self.Write_RC_522(self.FIFODataReg, c)
  
-        for c in sendData:
-            self.Write_RC_522(self.FIFODataReg, c)
+            self.Write_RC_522(self.CommandReg, command)
+            if command == self.PCD_TRANSCEIVE:
+                self.SetBitMask(self.BitFramingReg, 0x80)
  
-        self.Write_RC_522(self.CommandReg, command)
-        if command == self.PCD_TRANSCEIVE:
-            self.SetBitMask(self.BitFramingReg, 0x80)
+            i = 2000
+            while True:
+                n = self.Read_RC_522(self.CommIrqReg)
+                if n & waitIRq:
+                    break
+                if n & 0x01 or i == 0:
+                    break
+                i -= 1
  
-        i = 2000
-        while True:
-            n = self.Read_RC_522(self.CommIrqReg)
-            if n & waitIRq:
-                break
-            if n & 0x01 or i == 0:
-                break
-            i -= 1
+            self.ClearBitMask(self.BitFramingReg, 0x80)
  
-        self.ClearBitMask(self.BitFramingReg, 0x80)
+            if i != 0:
+                if (self.Read_RC_522(self.ErrorReg) & 0x1B) == 0x00:
+                    status = "MI_OK"
  
-        if i != 0:
-            if (self.Read_RC_522(self.ErrorReg) & 0x1B) == 0x00:
-                status = "MI_OK"
+                    if n & irqEn & 0x01:
+                        status = "NOTAGERR"
  
-                if n & irqEn & 0x01:
-                    status = "NOTAGERR"
+                    if command == self.PCD_TRANSCEIVE:
+                        n = self.Read_RC_522(self.FIFOLevelReg)
+                        lastBits = self.Read_RC_522(self.ControlReg) & 0x07
+                        backLen = (n - 1) * 8 + lastBits if lastBits != 0 else n * 8
  
-                if command == self.PCD_TRANSCEIVE:
-                    n = self.Read_RC_522(self.FIFOLevelReg)
-                    lastBits = self.Read_RC_522(self.ControlReg) & 0x07
-                    backLen = (n - 1) * 8 + lastBits if lastBits != 0 else n * 8
- 
-                    for _ in range(n):
-                        backData.append(self.Read_RC_522(self.FIFODataReg))
-            else:
-                status = "ERR"
+                        for _ in range(n):
+                            backData.append(self.Read_RC_522(self.FIFODataReg))
+                else:
+                    status = "ERR"
+        except:
+            status = "ERR"
+            
         return status, backData, backLen
  
     def RC_522_Request(self, reqMode):
-        self.Write_RC_522(self.BitFramingReg, 0x07)
-        status, backData, backBits = self.ToCard(self.PCD_TRANSCEIVE, [reqMode])
-        if status != "MI_OK" or backBits != 0x10:
-            status = "ERR"
-        return status, backBits
+        try:
+            self.Write_RC_522(self.BitFramingReg, 0x07)
+            status, backData, backBits = self.ToCard(self.PCD_TRANSCEIVE, [reqMode])
+            if status != "MI_OK" or backBits != 0x10:
+                status = "ERR"
+            return status, backBits
+        except:
+            return "ERR", 0
  
     def RC_522_Anticoll(self):
         serNum = []
-        self.Write_RC_522(self.BitFramingReg, 0x00)
-        serNumCheck = 0
-        serNum.append(self.PICC_ANTICOLL)
-        serNum.append(0x20)
-        status, backData, _ = self.ToCard(self.PCD_TRANSCEIVE, serNum)
-        if (status == "MI_OK") and (len(backData) == 5):
-            for i in range(4):
-                serNumCheck ^= backData[i]
-            if serNumCheck != backData[4]:
-                status = "ERR"
-        return status, backData
+        try:
+            self.Write_RC_522(self.BitFramingReg, 0x00)
+            serNumCheck = 0
+            serNum.append(self.PICC_ANTICOLL)
+            serNum.append(0x20)
+            status, backData, _ = self.ToCard(self.PCD_TRANSCEIVE, serNum)
+            if (status == "MI_OK") and (len(backData) == 5):
+                for i in range(4):
+                    serNumCheck ^= backData[i]
+                if serNumCheck != backData[4]:
+                    status = "ERR"
+            return status, backData
+        except:
+            return "ERR", []
  
     def RC_522_SelectTag(self, serNum):
-        buf = [self.PICC_SElECTTAG, 0x70] + serNum[:5]
-        pOut = self.CalulateCRC(buf)
-        buf += pOut
-        status, backData, backLen = self.ToCard(self.PCD_TRANSCEIVE, buf)
-        if status == "MI_OK" and backLen == 0x18:
-            return 1
-        return 0
+        try:
+            buf = [self.PICC_SElECTTAG, 0x70] + serNum[:5]
+            pOut = self.CalulateCRC(buf)
+            buf += pOut
+            status, backData, backLen = self.ToCard(self.PCD_TRANSCEIVE, buf)
+            if status == "MI_OK" and backLen == 0x18:
+                return 1
+            return 0
+        except:
+            return 0
  
     def RC_522_Auth(self, authMode, BlockAddr, Sectorkey, serNum):
-        buff = [authMode, BlockAddr] + Sectorkey[:6] + serNum[:4]
-        status, _, _ = self.ToCard(self.PCD_AUTHENT, buff)
-        if status != "MI_OK":
-            print("AUTH ERROR")
-        elif (self.Read_RC_522(self.Status2Reg) & 0x08) == 0:
-            print("AUTH ERROR(status2reg & 0x08) == 0")
-        return status
+        try:
+            buff = [authMode, BlockAddr] + Sectorkey[:6] + serNum[:4]
+            status, _, _ = self.ToCard(self.PCD_AUTHENT, buff)
+            return status
+        except:
+            return "ERR"
  
     def RC_522_Read(self, blockAddr):
-        recvData = [self.PICC_READ, blockAddr]
-        crc = self.CalulateCRC(recvData)
-        recvData += crc
-        status, backData, _ = self.ToCard(self.PCD_TRANSCEIVE, recvData)
-        if status == "MI_OK":
-            print(f"Sector {blockAddr} {backData}")
-        return backData
+        try:
+            recvData = [self.PICC_READ, blockAddr]
+            crc = self.CalulateCRC(recvData)
+            recvData += crc
+            status, backData, _ = self.ToCard(self.PCD_TRANSCEIVE, recvData)
+            return backData
+        except:
+            return []
  
     def CalulateCRC(self, pIndata):
-        self.ClearBitMask(self.DivIrqReg, 0x04)
-        self.SetBitMask(self.FIFOLevelReg, 0x80)
-        for c in pIndata:
-            self.Write_RC_522(self.FIFODataReg, c)
-        self.Write_RC_522(self.CommandReg, self.PCD_CALCCRC)
+        try:
+            self.ClearBitMask(self.DivIrqReg, 0x04)
+            self.SetBitMask(self.FIFOLevelReg, 0x80)
+            for c in pIndata:
+                self.Write_RC_522(self.FIFODataReg, c)
+            self.Write_RC_522(self.CommandReg, self.PCD_CALCCRC)
  
-        i = 0xFF
-        while i > 0:
-            n = self.Read_RC_522(self.DivIrqReg)
-            if n & 0x04:
-                break
-            i -= 1
-        retData = [
-            self.Read_RC_522(0x22),
-            self.Read_RC_522(0x21)
-        ]
-        return retData
+            i = 0xFF
+            while i > 0:
+                n = self.Read_RC_522(self.DivIrqReg)
+                if n & 0x04:
+                    break
+                i -= 1
+            retData = [
+                self.Read_RC_522(0x22),
+                self.Read_RC_522(0x21)
+            ]
+            return retData
+        except:
+            return [0, 0]
     
     def uid_to_number(self, uid):
         """Convert UID list to a single decimal number"""
-        if not uid or len(uid) < 4:
+        try:
+            if not uid or len(uid) < 4:
+                return None
+            
+            # Take only the first 4 bytes for the UID (ignore checksum)
+            uid_bytes = uid[:4]
+            
+            # Convert to decimal number by treating as big-endian
+            number = 0
+            for byte in uid_bytes:
+                number = (number << 8) + byte
+            
+            return number
+        except:
             return None
-        
-        # Take only the first 4 bytes for the UID (ignore checksum)
-        uid_bytes = uid[:4]
-        
-        # Convert to decimal number by treating as big-endian
-        number = 0
-        for byte in uid_bytes:
-            number = (number << 8) + byte
-        
-        return number
     
     def read_card(self):
         """
@@ -251,18 +298,21 @@ class HardcoreRFID:
                     uid_number = self.uid_to_number(uid)
                     return uid_number
             return None
-        except Exception as e:
-            print(f"RFID read error: {e}")
+        except:
             return None
  
     def cleanup(self):
-        self.spi.close()
-        GPIO.cleanup()
+        try:
+            if self.spi:
+                self.spi.close()
+            GPIO.cleanup()
+        except:
+            pass
 
 # Example usage with numeric UID output using the new read_card method
 if __name__ == "__main__":
     reader = HardcoreRFID()
-        
+    reader.setup()
     print("Plaats een kaart tegen de lezer (druk Ctrl+C om te stoppen).")
         
     try:

@@ -2,7 +2,7 @@
 class ChatSystem {
     constructor() {
         this.currentUser = null;
-        this.lanIP = `http://${window.location.hostname}`;
+        this.lanIP = `https://${window.location.hostname}`;
         this.sessionId = null;
         this.lastMessageCount = 0; // Track message count for smart scrolling
         this.sessionUpdateInterval = null; // Store interval ID

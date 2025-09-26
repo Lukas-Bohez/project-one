@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story Weaver - Create Your Adventure</title>
+    <link rel="stylesheet" href="../css/story.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <a href="../index.html" class="c-header__link gamepad">
+                <div class="logo">Story Weaver</div>    
+            </a>
+                <div class="header-actions">
+                <button id="playBtn" class="btn btn-success">
+                    <span>▶️</span> Play Story
+                </button>
+                <button id="editBtn" class="btn btn-secondary hidden">
+                    <span>✏️</span> Edit Mode
+                </button>
+                <button id="exportBtn" class="btn btn-secondary">
+                    <span>💾</span> Export
+                </button>
+                <label class="btn btn-secondary">
+                    <span>📥</span> Import
+                    <input type="file" id="importFile" accept=".json" style="display: none;">
+                </label>
+            </div>
+        </div>
+    </header>
+
+    <!-- Editor Mode -->
+    <div id="editorMode">
+        <div class="main-container">
+            <!-- Left Sidebar -->
+            <aside class="sidebar-left">
+                <!-- Story Settings -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <span>⚙️</span>
+                            Story Settings
+                        </h3>
+                    </div>
+                    <div class="card-body-sm">
+                        <div class="form-group">
+                            <label class="form-label">Story Title</label>
+                            <input type="text" id="storyTitle" class="form-input" placeholder="My Amazing Adventure" value="The Enchanted Forest">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Starting Scene</label>
+                            <select id="startingScene" class="form-select">
+                                <option value="start">The Beginning</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scenes -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <span>📄</span>
+                            Scenes
+                        </h3>
+                        <button id="addSceneBtn" class="btn btn-primary btn-sm">
+                            <span>➕</span>
+                        </button>
+                    </div>
+                    <div class="card-body-sm">
+                        <div class="form-group">
+                            <input type="text" id="sceneSearch" class="form-input" placeholder="🔍 Search scenes...">
+                        </div>
+                        <div class="scene-list" id="sceneList">
+                            <!-- Scenes will be dynamically added here -->
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="content-area" id="contentArea">
+                <div class="card-body">
+                    <div id="welcomeMessage" class="text-center animate-fade-in" style="padding: 60px 20px;">
+                        <h2 style="font-size: 28px; margin-bottom: 16px; color: var(--text-primary);">
+                            <span>✨</span> Welcome to Story Weaver! <span>✨</span>
+                        </h2>
+                        <p style="font-size: 18px; color: var(--text-secondary); margin-bottom: 32px;">
+                            Create amazing interactive stories with branching paths and dynamic choices.
+                        </p>
+                        <button id="createFirstScene" class="btn btn-primary" style="font-size: 16px; padding: 16px 32px;">
+                            <span>🎬</span> Create Your First Scene
+                        </button>
+                    </div>
+
+                    <div id="sceneEditor" class="hidden animate-slide-up">
+                        <div style="margin-bottom: 32px;">
+                            <h2 id="currentSceneTitle" style="font-size: 24px; font-weight: 800; margin-bottom: 8px; color: var(--text-primary);">Scene Editor</h2>
+                            <p id="currentSceneId" style="color: var(--text-light); font-family: 'Courier New', monospace; font-size: 14px;">scene_id</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Scene Title</label>
+                            <input type="text" id="sceneTitleInput" class="form-input" placeholder="Enter an engaging scene title...">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Scene Description</label>
+                            <textarea id="sceneTextInput" class="form-textarea" rows="6" placeholder="Describe what happens in this scene... Paint a vivid picture for your readers!"></textarea>
+                        </div>
+
+                        <div style="margin-top: 32px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                                <h3 style="font-size: 20px; font-weight: 700; color: var(--text-primary);">
+                                    <span>🔀</span> Story Choices
+                                </h3>
+                                <button id="addChoiceBtn" class="btn btn-primary btn-sm">
+                                    <span>➕</span> Add Choice
+                                </button>
+                            </div>
+                            <div id="choicesContainer" class="choices-container">
+                                <!-- Choices will be dynamically added here -->
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 32px; display: flex; gap: 12px;">
+                            <button id="deleteSceneBtn" class="btn btn-danger btn-sm">
+                                <span>🗑️</span> Delete Scene
+                            </button>
+                            <button id="duplicateSceneBtn" class="btn btn-secondary btn-sm">
+                                <span>📋</span> Duplicate Scene
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Right Sidebar -->
+            <aside class="sidebar-right">
+                <!-- Variables -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <span>🎯</span>
+                            Story Variables
+                        </h3>
+                        <button id="addVariableBtn" class="btn btn-primary btn-sm">
+                            <span>➕</span>
+                        </button>
+                    </div>
+                    <div class="card-body-sm">
+                        <div id="variablesList">
+                            <!-- Variables will be dynamically added here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <span>⚡</span>
+                            Quick Actions
+                        </h3>
+                    </div>
+                    <div class="card-body-sm" style="display: flex; flex-direction: column; gap: 12px;">
+                        <button id="previewBtn" class="btn btn-secondary">
+                            <span>👁️</span> Preview Story
+                        </button>
+                        <button id="validateBtn" class="btn btn-secondary">
+                            <span>✅</span> Validate Story
+                        </button>
+                        <button id="statsBtn" class="btn btn-secondary">
+                            <span>📊</span> Story Stats
+                        </button>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Play Mode -->
+    <div id="playMode" class="hidden">
+        <div class="play-container animate-fade-in">
+            <!-- Game Stats -->
+            <div id="gameStats" class="game-stats">
+                <h3 style="text-align: center; margin-bottom: 20px; font-size: 18px; font-weight: 700; color: var(--text-primary);">
+                    <span>📊</span> Story Progress
+                </h3>
+                <div class="stats-grid" id="statsGrid">
+                    <!-- Stats will be dynamically added here -->
+                </div>
+            </div>
+
+            <!-- Story Display -->
+            <div class="story-card animate-slide-up">
+                <div class="story-header">
+                    <h1 id="playStoryTitle" class="story-title">The Enchanted Forest</h1>
+                    <p id="playSceneId" class="story-scene-id">start</p>
+                </div>
+                <div class="story-content">
+                    <div id="playSceneText" class="story-text">
+                        You stand at the edge of a mysterious forest. Ancient trees tower above you, their branches intertwined to form a canopy so thick that only scattered beams of sunlight reach the forest floor.
+                    </div>
+                    <div id="playChoices" class="story-choices">
+                        <!-- Choices will be dynamically added here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Play Controls -->
+            <div style="text-align: center; margin-top: 32px;">
+                <div style="display: inline-flex; gap: 16px;">
+                    <button id="restartBtn" class="btn btn-danger">
+                        <span>🔄</span> Restart Story
+                    </button>
+                    <button id="saveProgressBtn" class="btn btn-secondary">
+                        <span>💾</span> Save Progress
+                    </button>
+                    <button id="loadProgressBtn" class="btn btn-secondary">
+                        <span>📥</span> Load Progress
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Container -->
+    <div id="modalContainer"></div>
+
+<script src="../js/lofi.js"></script>
+<script src="../js/story.js"></script>
+<script src="../js/infomodal.js"></script>
+</body>
+</html>

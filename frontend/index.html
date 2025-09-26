@@ -1,22 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Quiz The Spire</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/radar.css">
     <link rel="stylesheet" href="css/sio.css">
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449"
-     crossorigin="anonymous"></script>
+    <meta name="google-site-verification" content="i-fm4jHv_Tzy9zhCDiAArKCN0CTisNhAbAm3rmEwpfM" />
+    <script src="js/privacy.js"></script>
+    
 </head>
-
-<body>
+<body class="theme-blue">
     <header class="c-header">
         <h1>Quiz The Spire</h1>
     </header>
-
     <div id="connection-status" class="status-initial">Connecting...</div>
     <div id="error-message" class="error-message" style="display: none;"></div>
     <main class="o-container">
@@ -24,32 +23,33 @@
             <p>Welcome to Quiz The Spire! An interactive quiz game with dynamic difficulty based on your environment.
             </p>
         </div>
-
         <div class="o-button-group">
             <button id="viewGraphsBtn" class="c-btn c-btn--tertiary gamepad">View Graphs</button>
             <button id="startQuizBtn" class="c-btn c-btn--tertiary gamepad">Start or join Quiz</button>
             <button id="manageQuizBtn" class="c-btn c-btn--tertiary">Manage Quiz</button>
         </div>
-
         <div class="o-status-display">
             <div class="u-flex u-gap-1">
                 <span>Temperature: <span id="tempValue">--</span>°C</span>
                 <span>Light: <span id="lightValue">--</span> lux</span>
             </div>
         </div>
-
         <div class="c-servo-test">
-            <button id="servoTestBtn" class="c-btn c-btn--tertiary gamepad">Test Servo</button>
+            <div class="o-servo-buttons">
+                <button id="servoTestBtn" class="c-btn c-btn--tertiary gamepad">Change colour</button>
+                <button id="storyCreatorBtn" class="c-btn c-btn--tertiary" onclick="window.location.href='html/study.html'">Study quiz questions</button>
+                <button id="articleTheSpireBtn" class="c-btn c-btn--tertiary" onclick="window.location.href='html/content.html'">Article the spire</button>
+                <button id="storyCreatorBtn" class="c-btn c-btn--tertiary" onclick="window.location.href='html/storyCreator.html'">Story Creator</button>
+            </div>
             <div class="c-servo-visual" id="servoVisual"></div>
         </div>
     </main>
-
 
     <script src="js/main.js"></script>
     <script src="js/lofi.js"></script>
     <script src="js/gamepad.js"></script>
     <script src="js/ip.js"></script>
-    <script src="js/privacy.js"></script>
+    <script src="js/radar.js"></script>
+    <script src="js/infomodal.js"></script>
 </body>
-
 </html>

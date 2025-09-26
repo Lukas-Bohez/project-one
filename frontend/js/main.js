@@ -1,4 +1,4 @@
-const lanIP = `http://${window.location.hostname}`;
+const lanIP = `https://${window.location.hostname}`;
 
 const dom = {
     startQuizBtn: document.getElementById('startQuizBtn'),

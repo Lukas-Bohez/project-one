@@ -1,5 +1,5 @@
 // #region *** DOM references ***********
-const lanIP = `http://${window.location.hostname}`;
+const lanIP = `https://${window.location.hostname}`;
 // domGraphs will now store direct chart instances, indexed by an arbitrary key (e.g., 'temp', 'light', 'servo')
 // to allow proper destruction.
 let domGraphs = {

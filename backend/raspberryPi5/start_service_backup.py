@@ -5,14 +5,18 @@ import os
 import time
 import threading
 import signal
-from threading import Lock, Thread
+from threading import Lock
+import keyboard
 
-# --- Use Pygame for joystick input ---
+# CRITICAL: Disable pygame audio BEFORE importing pygame
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
+os.environ['SDL_AUDIODRIVER'] = 'dummy'  # Disable audio completely
+
+# Check pygame availability
 try:
     import pygame
 except ImportError:
-    print("Error: The 'pygame' library is not installed.")
-    print("Please install it using: pip install pygame")
+    print("Error: pygame not installed. Run: pip install pygame")
     sys.exit(1)
 
 
@@ -21,356 +25,599 @@ class SystemGamepadController:
         self.debug = debug
         self.running = True
         
-        # --- Pygame-specific attributes ---
-        self.joystick = None
-        self.button_states = {
-            'L': {'pressed': False, 'time': 0, 'last_action_time': 0},
-            'R': {'pressed': False, 'time': 0, 'last_action_time': 0},
-            'SELECT': {'pressed': False, 'time': 0},
-            'START': {'pressed': False, 'time': 0}
-        }
+        # Mode and state control - START IN MOUSE MODE
+        self.browser_mode = False
+        self.paused = False
+        self.gamepad_paused = False  # Pauses ALL gamepad input for SNES games
+        
+        # Settings
+        self.mouse_sensitivity = 20
+        self.min_sensitivity = 5
+        self.max_sensitivity = 50
+        self.sensitivity_step = 5
+        self.screen_width = 1920
+        self.screen_height = 1080
+        
+        # Button state tracking
+        self.button_states = {}
         self.button_lock = Lock()
         
-        # Store subprocesses
+        # Movement state
+        self.movement_active = False
+        self.current_movement = {'x': 0, 'y': 0}
+        self.movement_thread = None
+        
+        # Processes
         self.python_app_process = None
         self.browser_process = None
         
-        # Define log file paths for easier debugging
-        self.python_app_log_path = "/tmp/python_app.log"
-        self.browser_log_path = "/tmp/browser.log"
+        # Paths
+        self.python_app_log = "/tmp/python_app.log"
+        self.browser_log = "/tmp/browser.log"
+        
+        # Initialize
+        self._init_pygame()
+        self._init_gamepad()
+        self._check_ydotool()
+        
+        # Start continuous movement thread
+        self.movement_thread = threading.Thread(target=self._continuous_movement, daemon=True)
+        self.movement_thread.start()
+        
+        # Setup signal handlers
+        signal.signal(signal.SIGINT, self._signal_handler)
+        signal.signal(signal.SIGTERM, self._signal_handler)
 
-        # Event to signal when services are ready
-        self.services_ready = threading.Event()
-        
-        # Initialize components
-        self.initialize_pygame()
-        self.find_gamepad()
-        
-        # Start services in background thread
-        self.service_thread = threading.Thread(target=self.start_services, daemon=True)
-        self.service_thread.start()
-        
-        # Setup signal handlers for graceful shutdown
-        signal.signal(signal.SIGINT, self.signal_handler)
-        signal.signal(signal.SIGTERM, self.signal_handler)
-
-    def signal_handler(self, signum, frame):
-        """Handle system signals for graceful shutdown"""
-        print(f"\nReceived signal {signum}, shutting down gracefully...")
+    def _signal_handler(self, signum, frame):
+        """Handle shutdown signals"""
+        print(f"\nReceived signal {signum}, shutting down...")
         self.running = False
 
-    def initialize_pygame(self):
-        """Initialize pygame for joystick input"""
+    def _init_pygame(self):
+        """Initialize pygame without audio to prevent audio device locking"""
         try:
             pygame.init()
+            # CRITICAL: Quit mixer immediately to release audio devices
+            pygame.mixer.quit()
             pygame.joystick.init()
             if self.debug:
-                print("Pygame initialized successfully")
+                print("✓ Pygame initialized (audio disabled to prevent device locking)")
         except Exception as e:
             print(f"Failed to initialize pygame: {e}")
-            print("Install pygame with: pip install pygame")
             sys.exit(1)
 
-    def find_gamepad(self):
-        """Find and initialize the gamepad device using pygame"""
+    def _init_gamepad(self):
+        """Initialize gamepad"""
         joystick_count = pygame.joystick.get_count()
-        
         if joystick_count == 0:
-            print("No joysticks/gamepads found!")
-            print("Make sure your gamepad is connected and recognized by the system.")
+            print("No gamepad found! Connect a gamepad and try again.")
             sys.exit(1)
         
-        if self.debug:
-            print(f"Found {joystick_count} joystick(s):")
-            for i in range(joystick_count):
-                joystick = pygame.joystick.Joystick(i)
-                joystick.init()
-                print(f"  {i}: {joystick.get_name()}")
-                print(f"    Buttons: {joystick.get_numbuttons()}")
-                print(f"    Axes: {joystick.get_numaxes()}")
-                print(f"    Hats: {joystick.get_numhats()}")
-        
-        # Use the first joystick
         self.joystick = pygame.joystick.Joystick(0)
         self.joystick.init()
         
         if self.debug:
-            print(f"\nUsing gamepad: {self.joystick.get_name()}")
+            print(f"✓ Using gamepad: {self.joystick.get_name()}")
 
-    def start_services(self):
-        """Start background services in a separate thread"""
+    def _check_ydotool(self):
+        """Verify ydotool is available"""
         try:
-            self.start_python_app()
-            time.sleep(2)  # Give the Python app time to start
-            self.start_default_browser()
-            self.services_ready.set()  # Signal that services are ready
-        except Exception as e:
+            subprocess.run(['ydotool', 'mousemove', '0', '0'], 
+                          capture_output=True, timeout=2, check=True)
             if self.debug:
-                print(f"Error in service startup thread: {e}")
+                print("✓ ydotool working")
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            print("ERROR: ydotool not available or daemon not running")
+            sys.exit(1)
 
-    def start_python_app(self):
-        """Start the Python app in the background."""
-        try:
-            if self.debug:
-                print("Starting Python application...")
-            
-            venv_python = "/home/student/Project/.venv/bin/python"
-            script_path = "/home/student/Project/project-one/backend/app.py"
-            
-            if os.path.exists(venv_python) and os.path.exists(script_path):
-                with open(self.python_app_log_path, 'w') as log_file:
-                    self.python_app_process = subprocess.Popen(
-                        [venv_python, script_path],
-                        stdout=subprocess.DEVNULL,
-                        stderr=log_file,
-                        preexec_fn=os.setsid
-                    )
-                
-                if self.debug:
-                    print(f"✓ Python app started (PID: {self.python_app_process.pid})")
-                
-                time.sleep(1)
-                if self.python_app_process.poll() is None:
-                    if self.debug:
-                        print("✓ Python app is running successfully")
-                else:
-                    if self.debug:
-                        print(f"✗ Python app exited immediately. Check log for errors: {self.python_app_log_path}")
-            else:
-                if self.debug:
-                    print("✗ Python app paths not found, skipping app startup.")
-                    print(f"Checked: {venv_python}")
-                    print(f"Checked: {script_path}")
-                self.python_app_process = None
-                
-        except Exception as e:
-            if self.debug:
-                print(f"Error starting Python app: {e}")
-            self.python_app_process = None
-
-    def start_default_browser(self):
-        """Launch the default web browser to a specific URL using xdg-open in fullscreen."""
-        max_retries = 5
-        retry_delay = 2
-        target_url = "http://localhost"
-
-        for attempt in range(max_retries):
+    def _wait_for_service(self, url="http://localhost", timeout=30):
+        """Wait for service to be ready with better error handling"""
+        print(f"⏳ Waiting for service at {url} (timeout: {timeout}s)")
+        
+        for attempt in range(timeout):
             try:
-                if self.debug:
-                    print(f"Attempting to launch default browser (attempt {attempt + 1}/{max_retries})...")
-                
-                # Check if the target URL is accessible before launching the browser
-                try:
-                    import urllib.request
-                    urllib.request.urlopen(target_url, timeout=3)
-                    if self.debug:
-                        print(f"✓ Target URL {target_url} is accessible")
-                except Exception as url_error:
-                    if self.debug:
-                        print(f"⚠ Target URL not yet accessible: {url_error}")
-                    if attempt < max_retries - 1:
-                        print(f"Retrying in {retry_delay} seconds...")
-                        time.sleep(retry_delay)
-                        continue
-                
-                user_name = "student" 
-                user_display = os.environ.get("DISPLAY", ":0")
-                user_runtime_dir = os.environ.get("XDG_RUNTIME_DIR")
-                
-                browser_cmd = ["chromium-browser", "--kiosk", target_url]
-                
-                launch_cmd = [
-                    "sudo", "-u", user_name, 
-                    "env",
-                    f"DISPLAY={user_display}",
-                ]
-                if user_runtime_dir:
-                    launch_cmd.append(f"XDG_RUNTIME_DIR={user_runtime_dir}")
-                
-                launch_cmd.extend(browser_cmd)
-
-                with open(self.browser_log_path, 'w') as log_file:
-                    self.browser_process = subprocess.Popen(
-                        launch_cmd,
-                        stdout=subprocess.DEVNULL,
-                        stderr=log_file,
-                        preexec_fn=os.setsid
-                    )
-                
-                if self.debug:
-                    print(f"✓ Fullscreen browser launch command sent (PID: {self.browser_process.pid})")
-                
-                time.sleep(2) 
-                if self.browser_process.poll() is None:
-                    if self.debug:
-                        print("✓ Browser process is still running (potentially in kiosk mode)")
-                else:
-                    if self.debug:
-                        print(f"⚠ Browser process exited with code {self.browser_process.returncode}. Check log: {self.browser_log_path}")
-                        print("This might happen if the browser isn't installed or a Wayland issue.")
-                return 
-
+                import urllib.request
+                with urllib.request.urlopen(url, timeout=3) as response:
+                    if response.getcode() == 200:
+                        print(f"✓ Service is ready at {url}")
+                        return True
             except Exception as e:
-                if self.debug:
-                    print(f"Error launching default browser (attempt {attempt + 1}): {e}")
-                
-                if attempt < max_retries - 1:
-                    print(f"Retrying in {retry_delay} seconds...")
-                    time.sleep(retry_delay)
-                else:
-                    self.browser_process = None
+                if self.debug and attempt % 5 == 0:  # Log every 5 seconds
+                    print(f"⏳ Still waiting... ({attempt}s) - {str(e)[:50]}...")
+                time.sleep(1)
+        
+        print(f"✗ Service at {url} not ready after {timeout}s")
+        return False
 
-    def get_button_name(self, button_index):
-        """Map button indices to SNES button names (L/R specifically)"""
+    def _start_python_app(self):
+        """Start Python application with better error handling"""
+        venv_python = "/home/student/Project/.venv/bin/python"
+        script_path = "/home/student/Project/project-one/backend/app.py"
+        
+        if not os.path.exists(venv_python):
+            print(f"⚠ Python virtual environment not found: {venv_python}")
+            return False
+        
+        if not os.path.exists(script_path):
+            print(f"⚠ Python app script not found: {script_path}")
+            return False
+        
+        # Kill any existing Python app first
+        if self.python_app_process and self.python_app_process.poll() is None:
+            print("🔄 Stopping existing Python app...")
+            self._terminate_process(self.python_app_process)
+            time.sleep(2)
+        
+        # Also kill any existing Python processes running the backend
+        try:
+            print("🔄 Killing any existing backend processes...")
+            
+            # Aggressive killing loop - keep killing until port 8000 is free
+            max_attempts = 10
+            for attempt in range(max_attempts):
+                # Check what's currently running on port 8000
+                port_check = subprocess.run(['lsof', '-ti:8000'], capture_output=True, text=True, timeout=5)
+                if not port_check.stdout.strip():
+                    print("✅ Port 8000 is now free")
+                    break
+                    
+                pids_on_port = port_check.stdout.strip().split('\n')
+                print(f"🎯 Attempt {attempt + 1}: Killing PIDs using port 8000: {pids_on_port}")
+                
+                # Kill everything using port 8000 - HARD
+                subprocess.run(['fuser', '-k', '-9', '8000/tcp'], capture_output=True, timeout=5)
+                
+                # Kill specific PIDs
+                for pid in pids_on_port:
+                    if pid.strip():
+                        try:
+                            subprocess.run(['kill', '-9', pid.strip()], capture_output=True, timeout=2)
+                        except:
+                            pass
+                
+                # Kill all Python backend processes
+                result = subprocess.run(['pgrep', '-f', '/home/student/Project/.venv/bin/python app.py'], 
+                                      capture_output=True, text=True, timeout=5)
+                if result.stdout.strip():
+                    backend_pids = result.stdout.strip().split('\n')
+                    for pid in backend_pids:
+                        if pid.strip():
+                            try:
+                                # Kill process group
+                                subprocess.run(['kill', '-9', f'-{pid.strip()}'], capture_output=True, timeout=2)
+                            except:
+                                subprocess.run(['kill', '-9', pid.strip()], capture_output=True, timeout=2)
+                
+                # Kill multiprocessing children and related processes
+                subprocess.run(['pkill', '-9', '-f', 'multiprocessing'], capture_output=True, timeout=2)
+                subprocess.run(['pkill', '-9', '-f', 'app.py'], capture_output=True, timeout=2)
+                subprocess.run(['pkill', '-9', '-f', 'uvicorn'], capture_output=True, timeout=2)
+                subprocess.run(['pkill', '-9', '-f', 'fastapi'], capture_output=True, timeout=2)
+                
+                time.sleep(1)  # Short wait between attempts
+            
+            # Final check
+            final_check = subprocess.run(['lsof', '-ti:8000'], capture_output=True, text=True, timeout=5)
+            if final_check.stdout.strip():
+                print(f"⚠️ CRITICAL: Port 8000 STILL in use after {max_attempts} attempts!")
+                print(f"Remaining PIDs: {final_check.stdout.strip()}")
+                return False
+            else:
+                print("🎉 Port 8000 successfully freed!")
+                
+        except Exception as e:
+            if self.debug:
+                print(f"Note: Error killing existing processes: {e}")
+            return False
+        
+        try:
+            print("🚀 Starting Python backend...")
+            with open(self.python_app_log, 'w') as log:
+                self.python_app_process = subprocess.Popen(
+                    [venv_python, script_path],
+                    stdout=log,
+                    stderr=subprocess.STDOUT,
+                    preexec_fn=os.setsid,
+                    cwd="/home/student/Project/project-one/backend"
+                )
+            
+            # Give it more time to start
+            time.sleep(4)
+            
+            if self.python_app_process.poll() is None:
+                print(f"✓ Python app started (PID: {self.python_app_process.pid})")
+                # Give it extra time to fully initialize
+                time.sleep(2)
+                return True
+            else:
+                print("✗ Python app failed to start")
+                # Show log contents for debugging
+                try:
+                    with open(self.python_app_log, 'r') as log:
+                        log_content = log.read().strip()
+                        if log_content:
+                            print(f"Error log: {log_content}")
+                except:
+                    pass
+                return False
+                
+        except Exception as e:
+            print(f"✗ Python app startup failed: {e}")
+            return False
+
+    def _start_browser(self):
+        """Start browser in kiosk mode with better error handling"""
+        target_url = "http://localhost"
+        
+        # Kill any existing browser first
+        if self.browser_process and self.browser_process.poll() is None:
+            print("🔄 Stopping existing browser...")
+            self._terminate_process(self.browser_process)
+            time.sleep(2)
+        
+        # Also kill any existing chromium processes
+        try:
+            subprocess.run(['pkill', '-f', 'chromium-browser'], 
+                          capture_output=True, timeout=5)
+            time.sleep(1)
+        except:
+            pass
+        
+        try:
+            print("🌐 Starting browser in kiosk mode...")
+            cmd = [
+                "sudo", "-u", "student",
+                "env", f"DISPLAY={os.environ.get('DISPLAY', ':0')}",
+                "chromium-browser", 
+                "--kiosk", 
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--disable-software-rasterizer",
+                target_url
+            ]
+            
+            with open(self.browser_log, 'w') as log:
+                self.browser_process = subprocess.Popen(
+                    cmd,
+                    stdout=log,
+                    stderr=subprocess.STDOUT,
+                    preexec_fn=os.setsid
+                )
+            
+            # Give it a moment to start
+            time.sleep(3)
+            
+            if self.browser_process.poll() is None:
+                print(f"✓ Browser started (PID: {self.browser_process.pid})")
+                return True
+            else:
+                print("✗ Browser failed to start")
+                # Show log contents for debugging
+                try:
+                    with open(self.browser_log, 'r') as log:
+                        log_content = log.read().strip()
+                        if log_content:
+                            print(f"Browser error log: {log_content}")
+                except:
+                    pass
+                return False
+                
+        except Exception as e:
+            print(f"✗ Browser startup failed: {e}")
+            return False
+
+    def _start_services(self):
+        """Start browser pointing to existing backend service"""
+        print("\n🚀 STARTING BROWSER MODE")
+        print("=" * 30)
+        
+        # The backend is already running, just check if it's responding
+        print("🔍 Checking if backend is responding...")
+        if not self._wait_for_service("http://localhost:8000", timeout=5):
+            print("❌ Backend not responding at http://localhost:8000")
+            return False
+        
+        print("✅ Backend is running and responding!")
+        
+        # Just start the browser pointing to the existing backend
+        if not self._start_browser():
+            print("❌ Failed to start browser")
+            return False
+        
+        print("✅ Browser mode activated!")
+        return True
+
+    def _get_button_name(self, button_index):
+        """Map button indices to names - corrected mapping"""
         button_map = {
-            4: 'L', 
-            5: 'R'
+            0: 'Y',      # Button 0 = Y
+            1: 'A',      # Button 1 = A
+            2: 'B',      # Button 2 = B
+            3: 'X',      # Button 3 = X
+            4: 'L',      # Button 4 = L
+            5: 'R',      # Button 5 = R
+            8: 'SELECT', # Button 8 = SELECT (was 6!)
+            9: 'START'   # Button 9 = START (correct)
         }
         return button_map.get(button_index, f'BTN{button_index}')
 
-    def restart_snes_service(self):
-        """Restart the snes-wakeup.service"""
-        try:
-            if self.debug:
-                print("Restarting snes-wakeup.service...")
-            
-            result = subprocess.run(
-                ["systemctl", "restart", "snes-wakeup.service"],
-                check=True,
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
-            
-            if self.debug:
-                print("✓ snes-wakeup.service restarted successfully")
+    def _adjust_mouse_sensitivity(self, increase=True):
+        """Adjust mouse sensitivity/DPI"""
+        if increase:
+            if self.mouse_sensitivity < self.max_sensitivity:
+                self.mouse_sensitivity += self.sensitivity_step
+                print(f"🖱️ Mouse DPI increased to {self.mouse_sensitivity}")
+            else:
+                print(f"🖱️ Mouse DPI at maximum ({self.max_sensitivity})")
+        else:
+            if self.mouse_sensitivity > self.min_sensitivity:
+                self.mouse_sensitivity -= self.sensitivity_step
+                print(f"🖱️ Mouse DPI decreased to {self.mouse_sensitivity}")
+            else:
+                print(f"🖱️ Mouse DPI at minimum ({self.min_sensitivity})")
+        
+        time.sleep(0.3)  # Prevent rapid adjustments
+
+    def _continuous_movement(self):
+        """Handle continuous movement in separate thread"""
+        while self.running:
+            # Only move in mouse mode, not paused, and gamepad not paused
+            if (not self.browser_mode and not self.paused and not self.gamepad_paused and 
+                self.movement_active and (self.current_movement['x'] != 0 or self.current_movement['y'] != 0)):
                 
-        except subprocess.CalledProcessError as e:
+                try:
+                    dx = int(self.current_movement['x'] * self.mouse_sensitivity)
+                    dy = int(self.current_movement['y'] * self.mouse_sensitivity)
+                    
+                    if dx != 0 or dy != 0:
+                        subprocess.run(['ydotool', 'mousemove', '--', str(dx), str(dy)], 
+                                      capture_output=True, timeout=0.1)
+                        
+                        if self.debug:
+                            print(f"Continuous move: ({dx}, {dy})")
+                except:
+                    pass
+            
+            time.sleep(0.05)  # 20 FPS movement updates
+
+    def _update_movement(self, x, y):
+        """Update movement state"""
+        # Apply deadzone
+        if abs(x) < 0.2:
+            x = 0
+        if abs(y) < 0.2:
+            y = 0
+            
+        self.current_movement['x'] = x
+        self.current_movement['y'] = y
+        self.movement_active = (x != 0 or y != 0)
+
+    def _mouse_action(self, action, button='left'):
+        """Perform mouse actions"""
+        if self.browser_mode or self.paused or self.gamepad_paused:
+            return
+        
+        try:
+            btn_codes = {
+                'left': {'click': '0xC0', 'down': '0x40', 'up': '0x80'},
+                'right': {'click': '0xC2', 'down': '0x42', 'up': '0x82'}
+            }
+            
+            code = btn_codes[button][action]
+            subprocess.run(['ydotool', 'click', code], 
+                          capture_output=True, timeout=0.1)
+            
             if self.debug:
-                print(f"✗ Failed to restart snes-wakeup.service: {e}")
-                print(f"Error output: {e.stderr}")
-        except subprocess.TimeoutExpired:
-            if self.debug:
-                print("✗ Timeout while restarting snes-wakeup.service")
+                print(f"Mouse {action} {button}")
         except Exception as e:
             if self.debug:
-                print(f"✗ Unexpected error restarting snes-wakeup.service: {e}")
+                print(f"Mouse action failed: {e}")
 
-    def update_button_state(self, button, pressed):
-        """Update button state with timestamp for combo checking"""
-        with self.button_lock:
-            if button in self.button_states:
-                current_time = time.time()
-                self.button_states[button]['pressed'] = pressed
-                self.button_states[button]['time'] = current_time
-                
-                # Handle individual button presses (not part of combo)
-                if pressed and button in ['L', 'R']:
-                    # Check if this is a single button press (not part of L+R combo)
-                    other_button = 'R' if button == 'L' else 'L'
-                    other_pressed = self.button_states[other_button]['pressed']
-                    other_time = self.button_states[other_button]['time']
-                    
-                    # If other button is not pressed or was pressed too long ago, this is a single press
-                    if not other_pressed or abs(current_time - other_time) > 0.3:
-                        # Prevent rapid repeated service restarts
-                        last_action = self.button_states[button]['last_action_time']
-                        if current_time - last_action > 1.0:  # 1 second cooldown
-                            if self.debug:
-                                print(f"Single {button} button press detected - restarting service")
-                            self.restart_snes_service()
-                            self.button_states[button]['last_action_time'] = current_time
-                
-                if self.debug:
-                    state = "pressed" if pressed else "released"
-                    print(f"Button {button} {state}")
+    def _restart_service(self):
+        """Restart the snes-wakeup service"""
+        try:
+            print("\n🔄 RESTARTING SCRIPT VIA SYSTEMCTL")
+            subprocess.run(['systemctl', 'restart', 'snes-wakeup.service'], 
+                          timeout=10, check=True)
+            if self.debug:
+                print("✓ Service restarted")
+        except Exception as e:
+            if self.debug:
+                print(f"✗ Service restart failed: {e}")
 
-    def check_lr_combo(self):
-        """Dedicated background thread to check for L+R button combination"""
-        while self.running:
-            time.sleep(0.1)  # Check every 100ms
+    def _close_browser(self):
+        """Close browser process"""
+        if self.browser_process:
+            print("🔄 Stopping browser...")
+            self._terminate_process(self.browser_process)
+            self.browser_process = None
+
+    def _close_python_app(self):
+        """Close Python app process"""
+        if self.python_app_process:
+            print("🔄 Stopping Python backend...")
+            self._terminate_process(self.python_app_process)
+            self.python_app_process = None
+        
+        # Also kill any lingering backend processes
+        try:
+            # Kill specific Python backend process and its children
+            result = subprocess.run(['pgrep', '-f', '/home/student/Project/.venv/bin/python app.py'], 
+                                  capture_output=True, text=True, timeout=5)
+            if result.stdout.strip():
+                pids = result.stdout.strip().split('\n')
+                for pid in pids:
+                    if pid.strip():
+                        try:
+                            subprocess.run(['kill', '-9', f'-{pid.strip()}'], capture_output=True, timeout=5)
+                        except:
+                            subprocess.run(['kill', '-9', pid.strip()], capture_output=True, timeout=5)
             
-            with self.button_lock:
-                l_pressed = self.button_states['L']['pressed']
-                r_pressed = self.button_states['R']['pressed']
-                l_time = self.button_states['L']['time']
-                r_time = self.button_states['R']['time']
+            # Kill multiprocessing children
+            subprocess.run(['pkill', '-9', '-f', 'multiprocessing.spawn'], capture_output=True, timeout=5)
+            subprocess.run(['pkill', '-9', '-f', 'multiprocessing.resource_tracker'], capture_output=True, timeout=5)
+            
+            subprocess.run(['pkill', '-9', '-f', 'app.py'], capture_output=True, timeout=5)
+            subprocess.run(['pkill', '-9', '-f', 'uvicorn'], capture_output=True, timeout=5)
+            subprocess.run(['pkill', '-9', '-f', 'fastapi'], capture_output=True, timeout=5)
+            # Free up port
+            subprocess.run(['fuser', '-k', '8000/tcp'], capture_output=True, timeout=5)
+        except:
+            pass
 
-                # Check if both L and R are pressed and within a short time window
-                if l_pressed and r_pressed and abs(l_time - r_time) < 0.3:
-                    print("\nL+R combo detected - initiating system shutdown!")
-                    self.shutdown_system()
-                    # Reset button states and exit the loop as system is shutting down
-                    self.button_states['L']['pressed'] = False
-                    self.button_states['R']['pressed'] = False
-                    self.running = False
-                    sys.exit(0)
-
-    def terminate_process_group(self, process, name):
-        """Terminate a process and its entire process group"""
+    def _terminate_process(self, process):
+        """Terminate a process and its group"""
         if process and process.poll() is None:
             try:
-                if self.debug:
-                    print(f"Terminating {name} (PID: {process.pid})...")
                 pgid = os.getpgid(process.pid)
                 os.killpg(pgid, signal.SIGTERM)
+                process.wait(timeout=5)
+            except:
                 try:
-                    process.wait(timeout=5)
-                    if self.debug:
-                        print(f"✓ {name} terminated gracefully.")
-                except subprocess.TimeoutExpired:
-                    if self.debug:
-                        print(f"⚠ {name} did not terminate gracefully, killing...")
                     os.killpg(pgid, signal.SIGKILL)
-            except (ProcessLookupError, PermissionError):
-                if self.debug:
-                    print(f"✓ {name} already terminated or no permission.")
-            except Exception as e:
-                if self.debug:
-                    print(f"Error terminating {name}: {e}")
+                except:
+                    pass
 
-    def shutdown_system(self):
-        """Shutdown the system and terminate launched processes."""
+    def _shutdown(self):
+        """Shutdown system"""
+        self.running = False
+        
+        if self.python_app_process:
+            self._terminate_process(self.python_app_process)
+        if self.browser_process:
+            self._terminate_process(self.browser_process)
+        
         try:
-            print("Initiating system shutdown...")
-            self.running = False 
-            self.terminate_process_group(self.python_app_process, "Python application")
-            self.terminate_process_group(self.browser_process, "Default browser via xdg-open")
-            
-            # Execute system poweroff command
-            subprocess.run(["poweroff"], check=True, timeout=10)
-            print("Shutdown command sent successfully.")
+            subprocess.run(['poweroff'], timeout=10)
+        except:
+            pass
+        
+        sys.exit(0)
 
-        except Exception as e:
-            print(f"An unexpected error occurred during shutdown: {e}")
-        finally:
-            self.running = False
+    def _check_button_combinations(self):
+        """Check for button combinations"""
+        current_time = time.time()
+        
+        # Get current button states
+        buttons_pressed = {btn: state for btn, state in self.button_states.items() if state.get('pressed', False)}
+        
+        # Script restart: X + Y held for 3 seconds
+        if 'X' in buttons_pressed and 'Y' in buttons_pressed:
+            x_time = current_time - buttons_pressed['X']['press_start']
+            y_time = current_time - buttons_pressed['Y']['press_start']
+            if x_time >= 3.0 and y_time >= 3.0:
+                self._restart_service()
+                
+                # Clear states
+                self.button_states['X']['pressed'] = False
+                self.button_states['Y']['pressed'] = False
+                time.sleep(0.5)
+                return
+        
+        # Gamepad pause toggle: SELECT + START held for 1 second (works in any mode)
+        if 'SELECT' in buttons_pressed and 'START' in buttons_pressed:
+            select_time = current_time - buttons_pressed['SELECT']['press_start']
+            start_time = current_time - buttons_pressed['START']['press_start']
+            if select_time >= 1.0 and start_time >= 1.0:
+                self.gamepad_paused = not self.gamepad_paused
+                mode = "GAMEPAD PAUSED (SNES MODE)" if self.gamepad_paused else "GAMEPAD ACTIVE"
+                print(f"\n🎮 {mode}")
+                
+                # Clear states
+                self.button_states['SELECT']['pressed'] = False
+                self.button_states['START']['pressed'] = False
+                time.sleep(0.5)
+                return
+        
+        # Website startup: L + R held for 1 second (works in any mode)
+        if 'L' in buttons_pressed and 'R' in buttons_pressed:
+            l_time = current_time - buttons_pressed['L']['press_start']
+            r_time = current_time - buttons_pressed['R']['press_start']
+            if l_time >= 1.0 and r_time >= 1.0:
+                new_mode = not self.browser_mode
+                mode_name = "BROWSER" if new_mode else "MOUSE"
+                print(f"\n🔄 SWITCHING TO {mode_name} MODE")
+                
+                if new_mode:
+                    # Switching to browser mode - start services
+                    if self._start_services():
+                        self.browser_mode = True
+                        print(f"✅ {mode_name} MODE ACTIVATED")
+                    else:
+                        print(f"❌ Failed to start {mode_name} mode - staying in current mode")
+                else:
+                    # Switching to mouse mode - just close browser
+                    print("🛑 Closing browser...")
+                    self._close_browser()
+                    self.browser_mode = False
+                    print(f"✅ {mode_name} MODE ACTIVATED")
+                
+                # Clear states
+                self.button_states['L']['pressed'] = False
+                self.button_states['R']['pressed'] = False
+                time.sleep(0.5)
+                return
+        
+        # R + X = F5 (Refresh) - works in any mode
+        if 'R' in buttons_pressed and 'X' in buttons_pressed:
+            r_time = current_time - buttons_pressed['R']['press_start']
+            x_time = current_time - buttons_pressed['X']['press_start']
+            # Check if both buttons were pressed within a short time of each other
+            if abs(r_time - x_time) < 0.3:
+                print("\n🔄 F5 (Refresh) pressed")
+                keyboard.press_and_release('f5')
+                
+                # Clear states
+                self.button_states['R']['pressed'] = False
+                self.button_states['X']['pressed'] = False
+                time.sleep(0.2)
+                return
+        
+        # R + Y = F7 (DevTools) - works in any mode
+        if 'R' in buttons_pressed and 'Y' in buttons_pressed:
+            r_time = current_time - buttons_pressed['R']['press_start']
+            y_time = current_time - buttons_pressed['Y']['press_start']
+            # Check if both buttons were pressed within a short time of each other
+            if abs(r_time - y_time) < 0.3:
+                print("\n🔧 F7 (DevTools) pressed")
+                keyboard.press_and_release('f7')
+                
+                # Clear states
+                self.button_states['R']['pressed'] = False
+                self.button_states['Y']['pressed'] = False
+                time.sleep(0.2)
+                return
+        
+        # Only check these combinations in mouse mode and gamepad not paused
+        if not self.browser_mode and not self.gamepad_paused:
+            # Pause toggle: A + B
+            if 'A' in buttons_pressed and 'B' in buttons_pressed:
+                a_time = buttons_pressed['A']['press_start']
+                b_time = buttons_pressed['B']['press_start']
+                if abs(a_time - b_time) < 0.3:  # Pressed almost simultaneously
+                    self.paused = not self.paused
+                    print(f"\n{'⏸️ PAUSED' if self.paused else '▶️ RESUMED'}")
+                    
+                    self.button_states['A']['pressed'] = False
+                    self.button_states['B']['pressed'] = False
+                    time.sleep(0.5)
+                    return
 
     def run(self):
-        """Main execution loop for the controller."""
-        print("\n--- System Gamepad Controller ---")
-        print("---------------------------------")
-        print("Controls:")
-        print("   L button: Restart snes-wakeup.service")
-        print("   R button: Restart snes-wakeup.service") 
-        print("   L+R buttons: Shutdown system")
-        print(f"\nUsing device: {self.joystick.get_name()}")
-        print("Starting services...")
+        """Main execution loop"""
+        print("\n🎮 System Gamepad Controller (Audio-Free Version)")
+        print("=" * 50)
+        print("Global: L+R(1s)=Toggle browser/mouse mode, X+Y(3s)=Restart script")
+        print("       SELECT+START(1s)=Toggle gamepad pause (SNES mode)")
+        print("Mouse Mode: D-pad/stick=Move, A=Click, B=Right click, A+B=Pause")
+        print("           L=Decrease DPI, R=Increase DPI")
+        print("Browser Mode: Browser in kiosk mode (services auto-start)")
         
-        if self.services_ready.wait(timeout=30):
-            print("✓ Services started successfully")
-        else:
-            print("⚠ Services startup timeout, continuing anyway...")
+        mode = "🖱️ MOUSE" if not self.browser_mode else "🌐 BROWSER"
+        print(f"\nStarting in {mode} MODE (Audio devices free for other apps)\n")
         
-        print("Listening for button presses...\n")
-
-        # Start the combo checking thread
-        self.combo_checker = Thread(target=self.check_lr_combo)
-        self.combo_checker.daemon = True
-        self.combo_checker.start()
-
         try:
-            # Main pygame event loop
             while self.running:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
@@ -378,56 +625,97 @@ class SystemGamepadController:
                         break
                     
                     elif event.type == pygame.JOYBUTTONDOWN:
-                        button_name = self.get_button_name(event.button)
-                        self.update_button_state(button_name, True)
+                        button = self._get_button_name(event.button)
+                        
+                        # Update button state (always track for combinations)
+                        if button not in self.button_states:
+                            self.button_states[button] = {}
+                        self.button_states[button]['pressed'] = True
+                        self.button_states[button]['press_start'] = time.time()
+                        
+                        # Handle immediate actions only if gamepad not paused
+                        if not self.gamepad_paused:
+                            if not self.browser_mode and not self.paused:
+                                if button == 'A':
+                                    self._mouse_action('click', 'left')
+                                elif button == 'B':
+                                    self._mouse_action('down', 'right')
+                                elif button == 'L':
+                                    self._adjust_mouse_sensitivity(increase=False)
+                                elif button == 'R':
+                                    self._adjust_mouse_sensitivity(increase=True)
                     
                     elif event.type == pygame.JOYBUTTONUP:
-                        button_name = self.get_button_name(event.button)
-                        self.update_button_state(button_name, False)
+                        button = self._get_button_name(event.button)
+                        
+                        # Update button state
+                        if button in self.button_states:
+                            self.button_states[button]['pressed'] = False
+                        
+                        # Handle mouse button release (only if gamepad not paused)
+                        if not self.gamepad_paused:
+                            if not self.browser_mode and not self.paused and button == 'B':
+                                self._mouse_action('up', 'right')
+                    
+                    elif event.type == pygame.JOYHATMOTION:
+                        # D-pad movement (only if gamepad not paused)
+                        if not self.gamepad_paused:
+                            hat_x, hat_y = event.value
+                            self._update_movement(hat_x, -hat_y)  # Invert Y for natural movement
+                    
+                    elif event.type == pygame.JOYAXISMOTION:
+                        # Analog stick movement (only if gamepad not paused)
+                        if not self.gamepad_paused and event.axis in [0, 1]:
+                            axis_x = self.joystick.get_axis(0)
+                            axis_y = self.joystick.get_axis(1)
+                            self._update_movement(axis_x, axis_y)
                 
-                # Small delay to prevent busy-waiting
-                time.sleep(0.01) 
-            
+                # Always check for button combinations (some work even when gamepad paused)
+                self._check_button_combinations()
+                
+                pygame.time.wait(10)  # Prevent CPU spinning
+                
         except KeyboardInterrupt:
-            print("\nUser interrupted (Ctrl+C). Exiting...")
+            print("\nKeyboard interrupt received")
         except Exception as e:
-            print(f"\nError in main loop: {e}")
+            print(f"Error: {e}")
         finally:
-            self.cleanup()
+            self._cleanup()
 
-    def cleanup(self):
-        """Clean up resources before exiting."""
-        if self.running:
-            print("Performing cleanup...")
+    def _cleanup(self):
+        """Clean up resources and ensure audio devices are released"""
+        print("Cleaning up...")
         self.running = False
-        self.terminate_process_group(self.python_app_process, "Python app")
-        self.terminate_process_group(self.browser_process, "Default browser via xdg-open")
         
-        # Ensure combo checker thread is joined
-        if hasattr(self, 'combo_checker') and self.combo_checker.is_alive():
-            self.combo_checker.join(timeout=1)
-            if self.combo_checker.is_alive():
-                print("Warning: Combo checker thread did not terminate.")
+        # Only close browser, leave backend running
+        if self.browser_process:
+            self._terminate_process(self.browser_process)
+        
+        try:
+            # Explicitly quit pygame components that might hold audio
+            pygame.mixer.quit()
+            pygame.joystick.quit()
+            pygame.quit()
+            if self.debug:
+                print("✓ Pygame fully shut down (audio devices released)")
+        except:
+            pass
+        
+        print("✓ Cleanup complete - backend left running, audio devices free")
 
-        if self.joystick:
-            self.joystick.quit()
-        pygame.quit()
-        print("System Gamepad Controller stopped.")
 
-
-if __name__ == "__main__":
-    if os.geteuid() != 0:
-        print("This script needs to be run as root. Please use sudo.")
-        sys.exit(1)
-
+def main():
+    """Main entry point"""
     try:
         controller = SystemGamepadController(debug=True)
         controller.run()
     except Exception as e:
-        print(f"Critical Error: {e}")
-        if 'controller' in locals():
-            controller.cleanup()
+        print(f"Fatal error: {e}")
         sys.exit(1)
 
 
-# sudo systemctl restart snes-wakeup.service in case it crashes
+if __name__ == "__main__":
+    main()
+
+
+# This script is designed to run on a Raspberry Pi 5 with a gamepad connected.  sudo systemctl restart snes-wakeup.service
