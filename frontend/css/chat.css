@@ -1,3 +1,13 @@
+.theme-dark .c-chat-container, [data-theme="dark"] .c-chat-container {
+    background: linear-gradient(145deg,
+        rgba(30, 41, 59, 0.98) 0%,
+        rgba(17, 24, 39, 0.95) 100%);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.3),
+    0 8px 32px rgba(74, 111, 165, 0.2);
+}
 :root {
     /* Enhanced color palette with modern gradients and shadows */
     --quiz-primary: #4a6fa5;

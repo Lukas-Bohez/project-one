@@ -335,8 +335,10 @@
       "list": [
         "The apartment feels larger without their parents, yet emptier, too.",
         "The curtains still hold back the jaundiced haze, but the air inside tastes thin, metallic.",
-        "Lila asks when Mama and Papa are coming back, but Jacob cannot answer.",
-        "For the first time, he looks at his sister not as a playmate, but as someone he must keep alive."
+        "'When are they coming back?' Lila whispers, clutching her patchwork cat. Her voice is so small it barely disturbs the stale air.",
+        "Jacob's throat tightens. 'I... I don't know, Lil.' He reaches for her hand, surprised by how cold her fingers feel.",
+        "'Promise me they're okay?' she pleads, and Jacob nods even though the lie burns in his chest.",
+        "For the first time, he looks at his sister not as a playmate, but as someone whose life depends on his choices—and the weight of it nearly breaks him. In that moment, Jacob stops being a child and becomes something harder, more desperate: a guardian in a world that devours the innocent."
       ]
     }
   ]
@@ -956,7 +958,7 @@
     },
     {
       "title": "The Leadership of Kael Hoff",
-      "content": "Jack trains harder than any, his scars a reminder of what infection can do. He is both mentor and executioner, demanding his men survive the glamour or die trying."
+      "content": "Kael trains harder than any, his scars a reminder of what infection can do. He is both mentor and executioner, demanding his men survive the glamour or die trying."
     }
   ],
   "sections": [
@@ -972,12 +974,12 @@
     },
     {
       "title": "The Ritual of Training",
-      "content": "Jack’s methods are brutal, but necessary:",
+      "content": "Kael’s methods are brutal, but necessary:",
       "list": [
         "Each dawn begins with breath control drills—holding air until lungs burn, simulating the suffocation a Ash-Blood’s glamour brings.",
         "Recruits are forced to stare at painted masks while being struck, learning to fight past distraction and false beauty.",
         "Combat drills end only when one fighter collapses; weakness is punished, survival rewarded.",
-        "Jack watches every sparring match, calling out mistakes with a voice like stone breaking."
+        "Kael watches every sparring match, calling out mistakes with a voice like stone breaking."
       ]
     },
     {
@@ -1178,7 +1180,7 @@
         "No Ash-Blood feeds alone unless sanctioned; solitary hunting risks exposure.",
         "Victims taken by one pack are never shared with another unless tribute is demanded.",
         "Any Ash-Blood who falls in love with a victim is executed—the infection must always serve hunger, not weakness.",
-        "Matrons whisper of an even older order, a Queen who rules all packs, though no one has seen her in generations."
+        "Matrons whisper of an even older order, a Queen who rules all packs—though no one has seen her in generations, her presence haunts every lair. They say she sleeps in the deep places, dreaming of the day when all men kneel and all women hunt, when the world itself becomes her feeding ground."
       ]
     }
   ]
@@ -1194,11 +1196,11 @@
     },
     {
       "title": "The Breaking of Glamour",
-      "content": "Ash-Bloods shimmered with false faces, but Jack’s fighters struck at their clothes, their painted lips, and their mirrors—stripping illusions away until monsters stood revealed."
+      "content": "Ash-Bloods shimmered with false faces, but Kael’s fighters struck at their clothes, their painted lips, and their mirrors—stripping illusions away until monsters stood revealed."
     },
     {
       "title": "The Clash of Ritual and Fist",
-      "content": "As Ash-Bloods circled in chant, Jack and his men disrupted the rhythm with their own blows, turning ceremony into chaos."
+      "content": "As Ash-Bloods circled in chant, Kael and his men disrupted the rhythm with their own blows, turning ceremony into chaos."
     },
     {
       "title": "The First Victory",
@@ -1211,9 +1213,11 @@
       "content": "The raid began in silence, every step rehearsed:",
       "list": [
         "The village tavern stood abandoned, its roof sagging, its walls damp with mildew. A trapdoor hid beneath a broken table, concealed only by a layer of soot and ash.",
-        "Jack knelt, fingers brushing the edge. His men tightened their grips on crude weapons—clubs, spears tipped with scavenged metal, knuckles wrapped in iron.",
+        "Kael knelt, fingers brushing the edge, feeling the warmth rising from below. 'Remember,' he whispered to his fighters, 'trust nothing you see until you break it first.'",
+        "His men tightened their grips on crude weapons—clubs, spears tipped with scavenged metal, knuckles wrapped in iron. One younger fighter, Marcus, crossed himself with shaking hands.",
+        "'First time?' Kael asked quietly. Marcus nodded, sweat beading despite the cool air. 'Good. Fear keeps you alive. Just don't let it freeze you.'",
         "They lit torches coated in resin and descended into the cellar, where the air thickened with the sweet, metallic rot of Ash-Blood lairs.",
-        "The earth trembled faintly. Below them, a low hum of voices rose and fell, a ritual in progress."
+        "The earth trembled faintly. Below them, a low hum of voices rose and fell—a ritual in progress. Kael's scarred hands clenched. He remembered that sound too well."
       ]
     },
     {
@@ -1231,7 +1235,8 @@
       "content": "The first Ash-Bloods appeared, illusions intact:",
       "list": [
         "They looked like young women at first—faces painted, smiles gentle, voices coaxing as they called out the fighters’ names.",
-        "One man faltered, lowering his club, but Jack barked his name, snapping him back to discipline.",
+        "Marcus faltered, lowering his club, his eyes glazing. The creature's voice was honey and silk, promising rest, warmth, love...",
+        "'MARCUS!' Kael's roar shattered the spell. The young fighter blinked, stumbled backward as Kael's fist smashed through a mirror.",
         "With practiced precision, fighters swung not at flesh, but at clothes and makeup—ripping fabric, smearing paint, breaking mirrors to shatter the illusions.",
         "The air rippled as glamours collapsed, revealing twisted forms—skin pale as wax, eyes wide and hungry, fingers tipped with claws."
       ]
@@ -1241,7 +1246,7 @@
       "content": "The battle erupted within the ritual circle:",
       "list": [
         "At the lair’s heart, Ash-Bloods surrounded a bound man, chanting as the glow of ash symbols pulsed beneath him.",
-        "Jack’s fighters stormed the circle, disrupting the rhythm with shouts and fists.",
+        "Kael’s fighters stormed the circle, disrupting the rhythm with shouts and fists.",
         "Clubs cracked against skulls, spears jabbed through ribs, iron-knuckled fists struck through illusions that flickered and died.",
         "The Ash-Bloods retaliated with shrieks and lunges, their claws raking skin, their voices whispering temptations even as they bled."
       ]
@@ -1250,7 +1255,7 @@
       "title": "The First Victory",
       "content": "The pack broke under the assault, but not without loss:",
       "list": [
-        "Jack struck down a Matron, her body shattering a cracked mirror as she fell, her blood black and steaming.",
+        "Kael struck down a Matron, her body shattering a cracked mirror as she fell, her blood black and steaming.",
         "Two fighters lay dead, their throats torn open, and one more dragged away screaming into the shadows.",
         "The bound man was freed, though his eyes were glassy—he whispered in a woman’s voice before collapsing.",
         "As the survivors set fire to the lair, the walls trembled, and a distant sound—like a deeper, older voice—echoed in the dark tunnels."
@@ -1260,10 +1265,20 @@
       "title": "The Aftermath",
       "content": "The resistance left the lair scarred but alive:",
       "list": [
-        "Smoke poured from the tavern cellar as the lair burned, ash symbols curling into nothingness.",
-        "Villagers gathered at a distance, too fearful to approach, whispering that Kael Hoff had done what none had dared.",
-        "Among the resistance, silence fell. They had won—but the whispers in the dark promised that the war had only begun.",
-        "Jack looked to the mountains. This was one nest, one victory. But the Queen, if she truly lived, had yet to stir."
+        "Smoke poured from the tavern cellar like black prayer, carrying the stench of burnt illusion and steaming blood. The ash symbols painted on stone walls curled and blackened, their power finally broken.",
+        "Villagers gathered at a distance, children peeking from behind their mothers' skirts, all too fearful to approach but unable to look away. They whispered Kael Hoff's name like an incantation—half hope, half terror.",
+        "Among the resistance, silence fell heavy as lead. They had tasted victory, but Marcus clutched his wounded arm and trembled. 'Did you hear it?' he whispered. 'That voice in the tunnels... it sounded like my sister.'",
+        "Kael looked toward the mountains, his scarred face grim in the firelight. This was one nest, one small victory. But somewhere in the darkness, if the legends spoke truth, an ancient Queen was beginning to stir—and her hunger would dwarf anything they had faced."
+      ]
+    },
+    {
+      "title": "The Weight of Victory",
+      "content": "Not all wounds from the raid were visible:",
+      "list": [
+        "Marcus sat apart from the others, staring at his hands. 'I heard my sister's voice,' he whispered to Kael. 'When that thing spoke... it sounded exactly like her. What if she's already...?' He couldn't finish the sentence.",
+        "Old Henrik, a veteran of three raids, worked methodically to clean Ash-Blood blood from his knuckles. 'You never get used to how they scream,' he muttered. 'Like they remember being human, just for a moment.'",
+        "The youngest fighter, barely sixteen, had not spoken since they climbed out of the tunnels. He kept touching his throat, where an Ash-Blood's claws had nearly found their mark.",
+        "Kael moved among his men, checking wounds, offering quiet words. But inside, he carried his own burden—the memory of that voice in the deep tunnels, ancient and patient, whispering his name."
       ]
     }
   ]
@@ -1271,7 +1286,7 @@
 
 {
   "title": "Ashes in the Village",
-  "intro": "When the tavern cellar burned, its smoke rose like a beacon. The villagers gathered in awe and fear, whispering Kael Hoff’s name as if it were a spell. But fire spreads in more ways than one: the raid awakened hope among men, suspicion among women, and fury among the Ash-Bloods. In the days that followed, ash fell on roofs like black snow, and Jack’s fighters prepared for a retaliation that would test everything they had built.",
+  "intro": "When the tavern cellar burned, its smoke rose like a beacon. The villagers gathered in awe and fear, whispering Kael Hoff’s name as if it were a spell. But fire spreads in more ways than one: the raid awakened hope among men, suspicion among women, and fury among the Ash-Bloods. In the days that followed, ash fell on roofs like black snow, and Kael’s fighters prepared for a retaliation that would test everything they had built.",
   "highlights": [
     {
       "title": "The Village Divided",
@@ -1283,7 +1298,7 @@
     },
     {
       "title": "The Seeds of Strategy",
-      "content": "Jack gathered his fighters, charting maps in dirt and ash, speaking of tunnels and lairs deeper still."
+      "content": "Kael gathered his fighters, charting maps in dirt and ash, speaking of tunnels and lairs deeper still."
     },
     {
       "title": "The First Whispers of the Queen",
@@ -1297,7 +1312,7 @@
       "list": [
         "Men whispered Kael Hoff’s name as if it carried protection, carving it into doors and fences, a new kind of talisman.",
         "Some women approached with baskets of food, offering bread or dried meat, their smiles warm but their eyes darting, testing.",
-        "Others turned away, silent, their voices low in corners—warning that Jack had doomed them all.",
+        "Others turned away, silent, their voices low in corners—warning that Kael had doomed them all.",
         "Children followed the fighters like shadows, wide-eyed, carving toy clubs from sticks and striking at the air with nervous pride."
       ]
     },
@@ -1313,10 +1328,10 @@
     },
     {
       "title": "The Seeds of Strategy",
-      "content": "Jack called his fighters to the mountain edge:",
+      "content": "Kael called his fighters to the mountain edge:",
       "list": [
         "They gathered around a fire, smoke curling into the night, the tavern’s ruin still smoldering in the valley below.",
-        "Jack drew maps in the dirt with a charred stick—circles for lairs, lines for tunnels, arrows for raids.",
+        "Kael drew maps in the dirt with a charred stick—circles for lairs, lines for tunnels, arrows for raids.",
         "He spoke of patterns: how Ash-Bloods always returned to certain wells, certain crossroads, certain ruined churches.",
         "They would not fight passively. They would strike again, harder, deeper—until even the Matrons whispered Kael Hoff’s name with fear."
       ]
@@ -1336,7 +1351,7 @@
       "content": "The raid left scars beyond blood:",
       "list": [
         "Fighters who had killed their first Ash-Bloods sat in silence, staring at their fists as if expecting them to change.",
-        "Jack walked the village edge alone, his knuckles bruised, his chest heavy with the names of the men lost.",
+        "Kael walked the village edge alone, his knuckles bruised, his chest heavy with the names of the men lost.",
         "In the distance, dogs barked at nothing, their howls sharp against the quiet night.",
         "Hope had been lit, yes—but so too had the wrath of the enemy, and the smoke of both lingered in every breath."
       ]
@@ -1382,18 +1397,18 @@
       "list": [
         "Symbols glowed faintly—crowns with too many points, eyes drawn within eyes, thrones carved from shapes that might have been teeth.",
         "Every torch flicker made the symbols shift, as if the walls themselves breathed.",
-        "The fighters avoided looking too long, but Jack forced himself to study them, memorizing every curve and line.",
+        "The fighters avoided looking too long, but Kael forced himself to study them, memorizing every curve and line.",
         "He felt a rhythm in the symbols—like a heartbeat, steady and slow, echoing from below."
       ]
     },
     {
       "title": "The Lurking Packs",
-      "content": "The first Ash-Bloods they met here were different:",
+      "content": "The first Ash-Bloods they met here were different—and far worse:",
       "list": [
-        "No glamour softened their faces; no makeup disguised their hunger.",
-        "Their limbs were longer, their eyes wider, their movements jerky—as if humanity had rotted out of them entirely.",
-        "They moved on all fours at times, claws clattering against stone, their shrieks sharp enough to crack echoes.",
-        "Jack’s men struck with discipline, tearing away remnants of cloth before smashing bone and claw, but these things died harder than those above."
+        "No glamour softened their faces; no makeup could mask the raw, gnawing hunger that had carved hollow canyons in their cheeks and stretched their mouths into permanent grins.",
+        "Their limbs had grown unnaturally long, joints bending in directions that made men's eyes water to watch. Their movements were a sickening dance of predator and puppet, as if humanity had rotted out of them like meat from bone.",
+        "They moved on all fours at times, claws scraping stone in rhythmic patterns, their shrieks sharp enough to crack echoes and send fragments of ancient mortar raining down like bone dust.",
+        "Kael’s men struck with discipline, tearing away remnants of cloth before smashing bone and claw, but these things died harder than those above."
       ]
     },
     {
@@ -1403,7 +1418,7 @@
         "The fighters stopped, their torches quivering in unseen drafts.",
         "A low hum vibrated through the stone—not wind, not echo, but a voice so deep it made their teeth ache.",
         "Some men pressed their hands to the walls and swore they felt it pulsing like a vein beneath skin.",
-        "Jack raised his fist to halt them, listening. The hum grew into words, not spoken but understood: *‘You descend into My mouth.’*"
+        "Kael raised his fist to halt them, listening. The hum grew into words, not spoken but understood: *‘You descend into My mouth.’*"
       ]
     },
     {
@@ -1412,7 +1427,7 @@
       "list": [
         "A shadow moved far below, larger than any pack, its shape too vast to comprehend.",
         "Symbols flared on the walls, their glow burning brighter as if marking prey.",
-        "Jack ordered the retreat, pulling his men back before panic could break them.",
+        "Kael ordered the retreat, pulling his men back before panic could break them.",
         "When they emerged from the chapel ruins, dawn was breaking—and yet every man knew the sun had lost some of its strength against the dark below."
       ]
     },
@@ -1423,7 +1438,7 @@
         "He told of old stories—legends whispered by grandfathers of a Queen who lay beneath the world, dreaming in stone.",
         "The Ash-Bloods above were only her daughters, her shadows, her breath upon the surface.",
         "When her hunger stirred, villages fell. When she rose, empires crumbled.",
-        "Jack listened, his fists clenched. He had not yet seen her, but he knew now: their war was not against packs or Matrons. It was against the Queen herself."
+        "Kael listened, his fists clenched. He had not yet seen her, but he knew now: their war was not against packs or Matrons. It was against the Queen herself."
       ]
     }
   ]
@@ -1458,17 +1473,17 @@
         "An old shepherd sang by the fire, his voice cracked, the tune more moan than melody.",
         "The lyrics told of a Queen who sleeps beneath stone, her breath shaking the roots of the mountains.",
         "Children once learned the song as a warning—never to wander caves, never to follow voices in the dark.",
-        "Men in Jack’s camp listened, and though they laughed nervously, none could shake the way the refrain clung to them: *‘When she wakes, the earth forgets your name.’*"
+        "Men in Kael’s camp listened, and though they laughed nervously, none could shake the way the refrain clung to them: *‘When she wakes, the earth forgets your name.’*"
       ]
     },
     {
       "title": "The Carvings in Stone",
       "content": "Clues lay etched into ruins across the valley:",
       "list": [
-        "On a chapel wall, beneath layers of soot, Jack found a carving of a woman crowned with eyes, her arms spread wide, her ribs opening like gates.",
+        "On a chapel wall, beneath layers of soot, Kael found a carving of a woman crowned with eyes, her arms spread wide, her ribs opening like gates.",
         "On cliff faces near rivers, thrones carved in spirals stretched downward into the rock, as if descending endlessly.",
         "Villagers claimed that sometimes, at night, the carvings shifted—eyes opening, mouths whispering when no wind stirred.",
-        "Jack traced one carving with his hand and felt the stone pulse faintly, as though a heart beat deep inside."
+        "Kael traced one carving with his hand and felt the stone pulse faintly, as though a heart beat deep inside."
       ]
     },
     {
@@ -1493,11 +1508,11 @@
     },
     {
       "title": "The Resistance Reacts",
-      "content": "Jack’s fighters heard the stories with unease:",
+      "content": "Kael’s fighters heard the stories with unease:",
       "list": [
         "Some dismissed them as superstition, yet their hands trembled when the wind carried echoes from caves.",
         "Others grew restless, asking if fists could break hunger itself, or if they were doomed to be swallowed in the end.",
-        "Jack sat apart, silent, his knuckles pressed into the dirt until blood welled. He did not believe in surrender, even to myths.",
+        "Kael sat apart, silent, his knuckles pressed into the dirt until blood welled. He did not believe in surrender, even to myths.",
         "But when he closed his eyes that night, he heard the hum again—the voice in the stone, waiting."
       ]
     }
@@ -1522,7 +1537,7 @@
     },
     {
       "title": "The First Round: Words",
-      "content": "Before fists, there is banter—Jack’s cocky charm against the Queen’s centuries of sultry menace."
+      "content": "Before fists, there is banter—Kael’s cocky charm against the Queen’s centuries of sultry menace."
     },
     {
       "title": "The Second Round: Fists",
@@ -1532,7 +1547,7 @@
   "sections": [
     {
       "title": "The Romantic Strategy",
-      "content": "Jack explained it to his bewildered fighters:",
+      "content": "Kael explained it to his bewildered fighters:",
       "list": [
         "‘You can’t beat hunger with more hunger,’ he said, tying his hand wraps. ‘But you can choke it with affection.’",
         "His men thought him mad, but none could argue—their fists had broken Ash-Bloods, but not the Queen herself.",
@@ -1541,7 +1556,7 @@
     },
     {
       "title": "The Descent with Flowers",
-      "content": "This time, Jack carried strange supplies:",
+      "content": "This time, Kael carried strange supplies:",
       "list": [
         "Roses scavenged from a collapsed greenhouse, petals wilted but still red.",
         "A cracked bottle of perfume that smelled like dust and lilies.",
@@ -1555,7 +1570,7 @@
       "list": [
         "Columns of bone spiraled into ceilings unseen.",
         "Her throne was not a seat but a ribcage the size of a house.",
-        "As Jack entered, the floor reshaped itself into a perfect circle of stone—ropes of sinew tightening into an arena.",
+        "As Kael entered, the floor reshaped itself into a perfect circle of stone—ropes of sinew tightening into an arena.",
         "She descended from shadows, her crown of eyes watching, her lips curling. ‘A challenger? Or a lover?’ she asked."
       ]
     },
@@ -1563,9 +1578,9 @@
       "title": "The First Round: Words",
       "content": "Before fists, there was banter:",
       "list": [
-        "Jack bowed slightly, presenting the wilted roses. ‘For you, Queen. Don’t eat them all at once.’",
+        "Kael bowed slightly, presenting the wilted roses. ‘For you, Queen. Don’t eat them all at once.’",
         "She laughed—a sound like caves collapsing. ‘You think me a woman to be charmed?’",
-        "‘Nah,’ Jack said, wrapping his fists tighter. ‘I think you’re a woman who’s bored.’",
+        "‘Nah,’ Kael said, wrapping his fists tighter. ‘I think you’re a woman who’s bored.’",
         "Her smile sharpened. ‘Then entertain me.’"
       ]
     },
@@ -1573,7 +1588,7 @@
       "title": "The Second Round: Fists",
       "content": "Their duel was unlike any the world had seen:",
       "list": [
-        "Jack ducked her claws, countered with a left hook that cracked like thunder.",
+        "Kael ducked her claws, countered with a left hook that cracked like thunder.",
         "She swept him with a leg made of shadows, then giggled as he tumbled, sweat mixing with dust.",
         "Every strike carried innuendo—her claws grazing, his fists landing with declarations hidden in the rhythm.",
         "It was courtship by combat, passion in the form of bruises.",
@@ -1585,7 +1600,7 @@
 
 {
   "title": "No Goon: The Final Round",
-  "intro": "The ring of stone was slick with sweat, dust, and shadows. Kael Hoff stood bloodied but unbroken, while the Queen loomed above him, her crown of eyes dimming, her laughter softer. Blow after blow had carried something stranger than violence—it carried affection. And at last, against all odds, the Queen had fallen in love. But Jack’s fists had one last word to say.",
+  "intro": "The ring of stone was slick with sweat, dust, and shadows. Kael Hoff stood bloodied but unbroken, while the Queen loomed above him, her crown of eyes dimming, her laughter softer. Blow after blow had carried something stranger than violence—it carried affection. And at last, against all odds, the Queen had fallen in love. But Kael’s fists had one last word to say.",
   "highlights": [
     {
       "title": "The Dance of Violence and Love",
@@ -1593,11 +1608,11 @@
     },
     {
       "title": "Her Confession",
-      "content": "In the middle of the fight, the Queen whispered the unthinkable: that she desired Jack, not his ruin but his embrace."
+      "content": "In the middle of the fight, the Queen whispered the unthinkable: that she desired Kael, not his ruin but his embrace."
     },
     {
-      "title": "Jack’s Last Words",
-      "content": "With roses crushed underfoot and torches dying, Jack leaned close, smiled, and said: ‘No goon.’"
+      "title": "Kael’s Last Words",
+      "content": "With roses crushed underfoot and torches dying, Kael leaned close, smiled, and said: ‘No goon.’"
     },
     {
       "title": "The Knockout",
@@ -1613,7 +1628,7 @@
       "title": "The Dance of Violence and Love",
       "content": "The fight dragged into its final moments:",
       "list": [
-        "Jack’s ribs ached, his fists bruised, but his grin never faltered.",
+        "Kael’s ribs ached, his fists bruised, but his grin never faltered.",
         "The Queen, once an unstoppable hunger, hesitated when her eyes met his.",
         "Every punch landed with rhythm—jab, hook, uppercut—each strike a question, each dodge an answer.",
         "She laughed at first, then sighed, then finally smiled with something almost human."
@@ -1623,15 +1638,15 @@
       "title": "Her Confession",
       "content": "For the first time in her long reign, the Queen spoke softly:",
       "list": [
-        "‘You… amuse me,’ she said, clutching her side where Jack’s fist had left a bruise.",
+        "‘You… amuse me,’ she said, clutching her side where Kael’s fist had left a bruise.",
         "‘No one has ever struck me so, nor courted me with such… fire.’",
         "Her claws retracted, her breath slowed, and she stepped closer, eyes narrowing into longing.",
         "‘Stay,’ she whispered. ‘Rule beside me. Be mine.’"
       ]
     },
     {
-      "title": "Jack’s Last Words",
-      "content": "Jack saw it then—the chance, the weakness:",
+      "title": "Kael’s Last Words",
+      "content": "Kael saw it then—the chance, the weakness:",
       "list": [
         "He stepped close, close enough to smell the dust of centuries in her hair.",
         "He smiled, cocky even as blood ran down his lip.",
@@ -1641,7 +1656,7 @@
     },
     {
       "title": "The Knockout",
-      "content": "Jack struck with all the weight of the resistance behind him:",
+      "content": "Kael struck with all the weight of the resistance behind him:",
       "list": [
         "His fist drove upward in a brutal uppercut, cracking the air like thunder.",
         "The Queen’s head snapped back, her body convulsed, and the arena shook.",
@@ -2449,7 +2464,7 @@
   "highlights": [
     {
       "title": "The Temptation",
-      "content": "Jack offers Erik and Calis the chance to inherit his throne within the Clock, wielding its power."
+      "content": "Kael offers Erik and Calis the chance to inherit his throne within the Clock, wielding its power."
     },
     {
       "title": "The Refusal",
@@ -2471,7 +2486,7 @@
   "sections": [
     {
       "title": "The Temptation",
-      "content": "Jack’s voice rolled like thunder through the chamber:",
+      "content": "Kael’s voice rolled like thunder through the chamber:",
       "list": [
         "‘You think you’ve fought me. But you’ve only proven yourselves worthy.’",
         "His chest glowed, chains pulsing like veins, pumping blue light into the gears around him.",
@@ -2494,8 +2509,8 @@
       "content": "The tower shuddered as they struck:",
       "list": [
         "Erik’s veins blazed with one last surge, channeling the laugh into a violent roar.",
-        "The chains cracked, glowing blue fire spilling as Calis drove her blade into Jack’s chest.",
-        "Jack screamed, not in pain but in fury, his voice splitting into a thousand bells ringing at once.",
+        "The chains cracked, glowing blue fire spilling as Calis drove her blade into Kael’s chest.",
+        "Kael screamed, not in pain but in fury, his voice splitting into a thousand bells ringing at once.",
         "The light in his veins flared, then guttered out. The chains sagged, and the Clock’s beating heart stilled."
       ]
     },
@@ -2841,7 +2856,7 @@
 
 {
   "title": "The Children of Ash",
-  "intro": "Among the countless families struggling in the Age of Bargains, one stood at the edge of the Old Clock Plaza, clinging to a life stitched together with hope and hunger. A mother who sang to keep silence away, a father who worked broken tools until his hands bled, a brother and sister who dreamed of rivers and sunlight. Their story would not remain a quiet one for long. It would begin in blood and fire—the night a demon came to claim their home.",
+  "intro": "In the shadow of the Old Clock Plaza, where desperation echoed off cracked stone and hope cost more than bread, the Ashworth family clung to fragments of a life that was already ending. Garron's calloused hands still shaped wood into meaning. Lira's voice still carried lullabies through rooms that leaked cold and fear. Daren still believed the poisoned river might run clean again. Selene still drew suns in her secret journal, though she'd never seen the sky without smoke. They were ordinary people in an extraordinary darkness—until the night their ordinariness shattered, and blood awakened something in their children that should have stayed sleeping forever.",
   "highlights": [
     {
       "title": "The Family",
@@ -2879,10 +2894,11 @@
       "title": "The Attack",
       "content": "The night came with a sound like stone splitting:",
       "list": [
-        "The walls of the house shuddered, cracks racing along plaster yellowed with smoke.",
-        "Through the door burst a demon of fire-veins and charred wings, its jaw unhinged like a furnace.",
-        "Its breath turned the air thick and choking; its claws raked across wood and stone, leaving molten scars.",
-        "Selene screamed. Daren grabbed her arm. Garron and Lira stood in the doorway, shielding their children with nothing but their bodies."
+        "At first, just trembling—the walls shuddering like a held breath. Then the sound: stone ripping open, reality tearing at the seams.",
+        "The door exploded inward in a shower of splinters and smoke. Through the wreckage came something that had never been human—fire-veins pulsing under charred flesh, wings like burnt leather unfurling in impossible space.",
+        "The demon's jaw unhinged with a wet snap, revealing a furnace throat that turned the air thick and poisonous. Its claws—curved like sickles, glowing like molten metal—raked across walls, leaving deep scars that wept orange light.",
+        "Time fractured. Selene's scream pierced the air. Daren's hand found her wrist, pulling her backward as their world collapsed. And in the doorway—small, fragile, utterly human—their parents stepped forward to face the impossible.",
+        "'Behind us,' Garron whispered, and in that moment Daren understood: this was how love looked when it chose to die."
       ]
     },
     {

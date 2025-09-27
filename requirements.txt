@@ -27,3 +27,8 @@ starlette==0.41.3
 typing_extensions==4.12.2
 uvicorn==0.34.0
 wsproto==1.2.0
+
+# File conversion libraries
+Pillow==10.4.0
+reportlab==4.2.5
+python-multipart==0.0.19

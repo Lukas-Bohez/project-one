@@ -193,6 +193,12 @@ body * {
     display: inline-block;
     font-size: var(--font-size-xl);
     font-weight: 600;
+    color: white !important;
+}
+
+.c-header h1 {
+    color: white !important;
+    margin: 0;
 }
 
 .c-welcome-message {
@@ -668,6 +674,7 @@ body * {
 
     .c-header__title {
         font-size: var(--font-size-2xl);
+        color: white !important;
     }
 
     .c-btn {

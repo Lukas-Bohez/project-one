@@ -100,6 +100,12 @@ body {
     display: inline-block;
     font-size: 1.25rem;
     /* Smaller heading on mobile */
+    color: white !important;
+}
+
+.c-header h1 {
+    color: white !important;
+    margin: 0;
 }
 
 .c-welcome-message {
@@ -367,6 +373,7 @@ body {
     .c-header__title {
         font-size: 1.5rem;
         /* Larger heading on desktop */
+        color: white !important;
     }
 
     .c-btn {

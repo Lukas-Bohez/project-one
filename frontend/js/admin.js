@@ -24,6 +24,8 @@ let currentForm = null;
 let currentEditItem = null;
 let currentTab = 'questions';
 
+// Make sure 'lanIP' is correctly defined in your JavaScript, e.g.:
+const lanIP = `https://${window.location.hostname}`; // Or your actual server IP/domain
 
 // #endregion
 
@@ -174,28 +176,45 @@ const fetchThemes = async () => {
     }
 };
 
-// Make sure 'lanIP' is correctly defined in your JavaScript, e.g.:
-const lanIP = `https://${window.location.hostname}`; // Or your actual server IP/domain
-
 const fetchUsers = async () => {
     // Use the new endpoint with IP information
     const url = `${lanIP}/api/v1/users/`; // or `/api/v1/users/with-ip/` if you want the separate endpoint
     console.log("Attempting to fetch users from:", url);
     
     try {
+        // Get authentication headers like other functions
+        const userId = sessionStorage.getItem('admin_user_id');
+        const rfidCode = sessionStorage.getItem('admin_rfid_code');
+        
+        const headers = {
+            'Accept': 'application/json',
+        };
+        
+        // Add auth headers if available
+        if (userId && rfidCode) {
+            headers['X-User-ID'] = userId;
+            headers['X-RFID'] = rfidCode;
+        }
+        
         const response = await fetch(url, {
             method: 'GET',
             mode: 'cors',
             credentials: 'omit',
-            headers: {
-                'Accept': 'application/json',
-            },
+            headers: headers,
         });
         
         console.log("Response status for users:", response.status);
         console.log("Response headers for users:", Array.from(response.headers.entries()));
         
         if (!response.ok) {
+            // Handle authentication errors specifically
+            if (response.status === 401 || response.status === 403) {
+                console.warn('Authentication failed for users endpoint. Redirecting to login...');
+                sessionStorage.clear();
+                window.location.href = '../html/login.html';
+                return [];
+            }
+            
             let errorDetail = `HTTP error! Status: ${response.status}`;
             try {
                 const errorBody = await response.json();
@@ -1003,18 +1022,18 @@ const showEditModal = async (itemType, item = null) => {
 
             // Validate form data
             if (!ipSelect.value) {
-                alert('Please select an IP address to ban');
+                showNotification('Please select an IP address to ban', 'error');
                 return;
             }
 
             if (!banReasonTextarea.value.trim()) {
-                alert('Please enter a ban reason');
+                showNotification('Please enter a ban reason', 'error');
                 return;
             }
 
             const banDurationValue = parseInt(banDurationValueInput.value);
             if (banDurationValue < 1) {
-                alert('Ban duration must be at least 1');
+                showNotification('Ban duration must be at least 1', 'error');
                 return;
             }
 
@@ -1031,7 +1050,7 @@ const showEditModal = async (itemType, item = null) => {
             const rfidCode = sessionStorage.getItem('admin_rfid_code');
 
             if (!userId || !rfidCode) {
-                alert('Admin credentials not found. Please log in again.');
+                showNotification('Admin credentials not found. Please log in again.', 'error');
                 return;
             }
 
@@ -1061,7 +1080,7 @@ const showEditModal = async (itemType, item = null) => {
                 const result = await response.json();
                 
                 // Success
-                alert(`IP address ${banData.ip_address} has been banned successfully!`);
+                showNotification(`IP address ${banData.ip_address} has been banned successfully!`, 'success');
                 console.log('Ban result:', result);
                 
                 // Optionally refresh the user data or close the form
@@ -1069,7 +1088,7 @@ const showEditModal = async (itemType, item = null) => {
                 
             } catch (error) {
                 console.error('Error banning IP address:', error);
-                alert(`Failed to ban IP address: ${error.message}`);
+                showNotification(`Failed to ban IP address: ${error.message}`, 'error');
             } finally {
                 // Re-enable button
                 const banButton = document.querySelector('.c-btn--primary');
@@ -1122,9 +1141,44 @@ const showLoading = (element) => {
 };
 
 const showConfirmDialog = (message, onConfirm) => {
-    if (confirm(message)) {
+    // Create a custom modal instead of using browser confirm()
+    const modal = document.createElement('div');
+    modal.className = 'c-modal';
+    modal.style.display = 'flex';
+    
+    modal.innerHTML = `
+        <div class="c-modal__content c-modal__content--confirm">
+            <h3 class="c-modal-title">Confirm Action</h3>
+            <p class="c-confirm-message">${message}</p>
+            <div class="c-form-actions">
+                <button class="c-btn c-btn--cancel c-confirm-cancel">Cancel</button>
+                <button class="c-btn c-btn--delete c-confirm-ok">Confirm</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Handle button clicks
+    const cancelBtn = modal.querySelector('.c-confirm-cancel');
+    const okBtn = modal.querySelector('.c-confirm-ok');
+    
+    const cleanup = () => {
+        document.body.removeChild(modal);
+    };
+    
+    cancelBtn.addEventListener('click', cleanup);
+    okBtn.addEventListener('click', () => {
+        cleanup();
         onConfirm();
-    }
+    });
+    
+    // Close on backdrop click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            cleanup();
+        }
+    });
 };
 
 const showNotification = (message, type = 'success') => {
@@ -1761,6 +1815,7 @@ const loadUsers = async () => {
 
     } catch (error) {
         console.error('Error loading users:', error);
+        showNotification('Failed to load users. Please check your connection.', 'error');
         userTableBody.innerHTML = `
             <tr>
                 <td colspan="5" class="c-error-state">Failed to load users. Please try again.</td>
@@ -1841,10 +1896,10 @@ try {
 
     const result = await response.json();
     console.log("Question saved:", result);
-    alert("Success!");
+    showNotification("Question created successfully!", 'success');
 } catch (error) {
     console.error("Submission failed:", error);
-    alert(`Error: ${error.message}`);
+    showNotification(`Error: ${error.message}`, 'error');
 }
 
 }else if (itemType === 'themes') {
@@ -1992,7 +2047,11 @@ const listenToLogout = () => {
         domAdmin.logoutBtn.addEventListener('click', () => {
             // Clear ALL session storage data
             sessionStorage.clear();
-            console.log('Cleared all sessionStorage and logging out');
+            localStorage.clear(); // Also clear localStorage to remove cache
+            console.log('Cleared all sessionStorage and localStorage, logging out');
+            
+            // Redirect to login page
+            window.location.href = '../html/login.html';
         });
     }
 };
@@ -2052,6 +2111,16 @@ const listenToAddButtons = () => {
 
 // Enhanced initAdmin function
 const initAdmin = async () => {
+    // Check authentication first
+    const userId = sessionStorage.getItem('admin_user_id');
+    const rfidCode = sessionStorage.getItem('admin_rfid_code');
+    
+    if (!userId || !rfidCode) {
+        console.warn('No admin credentials found. Redirecting to login...');
+        window.location.href = '../html/login.html';
+        return;
+    }
+    
     listenToTabs();
     listenToLogout();
     listenToModal();
@@ -2065,6 +2134,7 @@ const initAdmin = async () => {
         console.log('Themes preloaded:', state.themes.length);
     } catch (error) {
         console.error('Failed to preload themes:', error);
+        showNotification('Failed to load themes. Some features may not work correctly.', 'error');
         state.themes = [];
     }
     
@@ -2075,11 +2145,29 @@ const initAdmin = async () => {
     }
 };
 
+// Add global error handler to catch unhandled errors
+window.addEventListener('error', (event) => {
+    console.error('Unhandled error:', event.error);
+    showNotification('An unexpected error occurred. Please refresh the page.', 'error');
+});
+
+// Add unhandled promise rejection handler
+window.addEventListener('unhandledrejection', (event) => {
+    console.error('Unhandled promise rejection:', event.reason);
+    showNotification('An unexpected error occurred. Please refresh the page.', 'error');
+    event.preventDefault(); // Prevent the default action (logging to console)
+});
+
 // Update the DOMContentLoaded listener to handle async initialization
 document.addEventListener('DOMContentLoaded', async () => {
     if (window.location.pathname.includes('admin.html')) {
         console.log('Initial state:', state);
-        await initAdmin(); // Make sure to await the async initialization
+        try {
+            await initAdmin(); // Make sure to await the async initialization
+        } catch (error) {
+            console.error('Failed to initialize admin:', error);
+            showNotification('Failed to initialize admin panel. Please refresh the page.', 'error');
+        }
     }
 });
 

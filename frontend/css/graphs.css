@@ -1,6 +1,19 @@
 /*---------------------------------------/*
  # COMPONENTS
 /*---------------------------------------*/
+
+/* Ensure the entire page background respects theme */
+body {
+    background-color: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+    min-height: 100vh;
+}
+
+main {
+    background-color: var(--bg-primary) !important;
+    min-height: 100vh;
+}
+
 .c-graphs-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -8,6 +21,8 @@
     padding: 2rem;
     max-width: 1400px;
     margin: 0 auto;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
 }
 
 .c-graph {
@@ -19,12 +34,14 @@
 }
 
 .c-graph-card {
-    background-color: white;
+    background-color: var(--bg-secondary);
     padding: 1.5rem;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 10px var(--shadow-light);
     overflow: visible;
     /* Allows chart to render properly */
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
 }
 
 .c-graph-title {
@@ -36,9 +53,11 @@
 .c-quiz-session {
     margin-bottom: 2rem;
     padding: 1.5rem;
-    background-color: white;
+    background-color: var(--bg-secondary) !important;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(14, 24, 39, 0.1);
+    box-shadow: 0 2px 8px var(--shadow-light);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
 }
 
 /* Mobile-specific styles */
@@ -96,6 +115,465 @@
         font-size: 0.8rem !important;
         padding: 6px 12px !important;
     }
+}
+
+/* Dark mode support for all graph components */
+.session-title {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.gamepad-chart-container {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.chart-title {
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+}
+
+.chart-placeholder {
+    background-color: var(--bg-primary);
+    border-radius: 4px;
+    min-height: 250px;
+}
+
+/* Loading states */
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.loading-state p {
+    color: var(--text-secondary);
+    margin-top: 1rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-color);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Session selector */
+.session-selector-container {
+    background-color: var(--bg-secondary) !important;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    border: 1px solid var(--border-color);
+}
+
+.session-selector-label {
+    display: block;
+    color: var(--text-primary);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.session-selector {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.session-selector:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(74, 134, 232, 0.1);
+}
+
+/* Dark mode specific select styling */
+[data-theme="dark"] .session-selector {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .session-selector option {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+/* Toggle containers for chat/answers */
+.toggle-container {
+    background-color: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+/* Force dark mode toggle container styling */
+[data-theme="dark"] .toggle-container {
+    background-color: var(--bg-secondary) !important;
+}
+
+.toggle-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background-color: var(--bg-secondary) !important;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.toggle-header:hover {
+    background-color: var(--hover-bg) !important;
+}
+
+.toggle-title {
+    color: var(--text-primary) !important;
+    font-size: 1rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+/* Force dark mode toggle header styling */
+[data-theme="dark"] .toggle-header {
+    background-color: var(--bg-secondary) !important;
+}
+
+[data-theme="dark"] .toggle-title {
+    color: var(--text-primary) !important;
+}
+
+.toggle-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.badge {
+    background-color: var(--primary-color);
+    color: var(--text-inverse);
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.toggle-icon {
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+.toggle-content {
+    padding: 0;
+    background-color: var(--bg-secondary);
+    overflow: hidden;
+}
+
+/* Chat display */
+.chat-display {
+    background-color: var(--bg-primary) !important;
+    border-radius: 0;
+    padding: 1rem;
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.chat-message {
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+    background-color: var(--bg-secondary) !important;
+    border-radius: 6px;
+    border-left: 3px solid var(--primary-color);
+    border: 1px solid var(--border-color);
+}
+
+.chat-message-user {
+    color: var(--primary-color) !important;
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.chat-message-content {
+    color: var(--text-primary) !important;
+    line-height: 1.4;
+    font-weight: 500;
+}
+
+.chat-message-timestamp {
+    color: var(--text-secondary) !important;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+/* High contrast dark mode chat styling */
+[data-theme="dark"] .chat-message {
+    background-color: #374151 !important; /* Darker gray for better contrast */
+    color: #e2e8f0 !important; /* Light text */
+    border: 1px solid #4b5563 !important;
+}
+
+[data-theme="dark"] .chat-message-user {
+    color: #60a5fa !important; /* Bright blue for username */
+}
+
+[data-theme="dark"] .chat-message-content {
+    color: #f8fafc !important; /* Very bright whitish-blueish gray text */
+}
+
+[data-theme="dark"] .chat-message-timestamp {
+    color: #cbd5e1 !important; /* Medium gray for timestamps */
+}
+
+/* Extra aggressive targeting for chat message text */
+[data-theme="dark"] .chat-message * {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .chat-display .chat-message p,
+[data-theme="dark"] .chat-display .chat-message div,
+[data-theme="dark"] .chat-display .chat-message span {
+    color: #f8fafc !important;
+}
+
+/* Override any potential inline styles */
+[data-theme="dark"] .chat-message [style*="color"] {
+    color: #f8fafc !important;
+}
+
+/* Player answers display */
+.player-answers-display {
+    background-color: var(--bg-primary);
+    border-radius: 0;
+    padding: 1rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Question groups containing multiple player answers */
+.question-group {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background-color: var(--bg-secondary);
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.question-title {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+/* Individual player answer containers */
+.player-answer {
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+    background-color: var(--bg-primary);
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--border-color);
+}
+
+.player-answer.correct {
+    border-left-color: var(--success-color);
+}
+
+.player-answer.incorrect {
+    border-left-color: var(--danger-color);
+}
+
+/* Answer header with player name and points */
+.answer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.player-name {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.points {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* The actual answer text */
+.answer-text {
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    background-color: var(--bg-secondary);
+    border-radius: 3px;
+    font-weight: 500;
+    border: 1px solid var(--border-color);
+}
+
+/* Answer footer with timing info */
+.answer-footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+/* Legacy styles for old answer format */
+.answer-item {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background-color: var(--bg-secondary);
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.answer-question {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.answer-response {
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.answer-correct {
+    color: var(--success-color);
+}
+
+.answer-incorrect {
+    color: var(--danger-color);
+}
+
+.answer-timestamp {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+/* Error states */
+.error-state {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--danger-color);
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    color: var(--danger-color);
+}
+
+.no-data-state {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+/* Ensure containers have proper background */
+.c-quiz-sessions-container {
+    background-color: var(--bg-primary);
+    min-height: 50vh;
+    width: 100%;
+}
+
+/* Fix any remaining white backgrounds */
+* {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Force override any white backgrounds in dark mode */
+[data-theme="dark"] .c-quiz-session,
+[data-theme="dark"] .session-selector-container,
+[data-theme="dark"] .c-graph-card,
+[data-theme="dark"] .gamepad-chart-container {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .c-graphs-container,
+[data-theme="dark"] .c-quiz-sessions-container {
+    background-color: var(--bg-primary) !important;
+}
+
+/* Override any potential inline styles */
+[data-theme="dark"] div[style*="background"],
+[data-theme="dark"] div[style*="background-color"] {
+    background-color: var(--bg-secondary) !important;
+}
+
+/* Dark mode player answers styling */
+[data-theme="dark"] .question-group {
+    background-color: var(--bg-secondary) !important;
+}
+
+[data-theme="dark"] .question-title {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .player-answer {
+    background-color: #374151 !important;
+    border-color: #4b5563 !important;
+}
+
+[data-theme="dark"] .player-name {
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .points {
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .answer-text {
+    background-color: var(--bg-primary) !important;
+    color: #f8fafc !important;
+    border-color: #4b5563 !important;
+}
+
+[data-theme="dark"] .answer-footer {
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .answer-footer span {
+    color: #cbd5e1 !important;
 }
 
 /* Very small devices (phones, 400px and down) */

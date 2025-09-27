@@ -17,6 +17,27 @@
     --content-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     
     --content-hover: rgba(59, 130, 246, 0.08);
+
+    /* Panel/Ad backgrounds (light) */
+    --panel-bg: #ffffff;
+    --panel-bg-2: #eef2f7;
+    --panel-border: #d8e0ea;
+    --ad-bg: #f1f5f9;      /* subtle light */
+    --ad-bg-2: #e5edf6;    /* tint to match theme */
+    --ad-label: #64748b;
+
+    /* Aliases and supplemental tokens used below (light mode) */
+    --dark-color: #1e293b;                /* used by footer gradient */
+    --primary-color: var(--content-primary);
+    --secondary-color: var(--content-secondary);
+    --accent-color: var(--content-tertiary);
+    --surface-color: var(--content-surface);
+    --border-color: var(--content-border);
+    --text-primary: var(--content-text);
+    --light-color: #ffffff;
+    --success-color: #22c55e;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 /* Dark theme content overrides */
@@ -38,6 +59,27 @@
     --content-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
     
     --content-hover: rgba(96, 165, 250, 0.12);
+
+    /* Panel/Ad backgrounds (dark) */
+    --panel-bg: #162131;   /* darker than surface */
+    --panel-bg-2: #0f172a; /* blend to site bg */
+    --panel-border: #2a3a52;
+    --ad-bg: #0f1a2a;      /* cool dark */
+    --ad-bg-2: #1a2740;    /* slight gradient */
+    --ad-label: #94a3b8;
+
+    /* Aliases and supplemental tokens used below (dark mode) */
+    --dark-color: #0b1220;               /* slightly darker than bg for gradient depth */
+    --primary-color: var(--content-primary);
+    --secondary-color: var(--content-secondary);
+    --accent-color: #60a5fa;
+    --surface-color: var(--content-surface);
+    --border-color: var(--content-border);
+    --text-primary: var(--content-text);
+    --light-color: #ffffff;
+    --success-color: #22c55e;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
 }
 
 * {
@@ -86,6 +128,7 @@ body {
     letter-spacing: -0.025em;
     position: relative;
     z-index: 1;
+    color: white !important;
 }
 
 .header .tagline {
@@ -422,12 +465,12 @@ body {
 
 /* Info Sections */
 .info-section {
-    background: linear-gradient(135deg, var(--surface-color) 0%, rgba(248, 250, 252, 0.8) 100%);
+    background: linear-gradient(135deg, var(--panel-bg) 0%, var(--panel-bg-2) 100%);
     border-radius: 16px;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--content-shadow-lg);
     margin: 3rem 0;
     padding: 3.5rem;
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    border: 1px solid var(--panel-border);
     position: relative;
 }
 
@@ -486,7 +529,7 @@ body {
 
 /* Footer */
 .footer {
-    background: linear-gradient(135deg, var(--dark-color) 0%, #0f172a 100%);
+    background: linear-gradient(135deg, var(--dark-color, #1e293b) 0%, #0f172a 100%);
     color: white;
     text-align: center;
     padding: 4rem 0;
@@ -524,11 +567,21 @@ body {
     }
     
     .header {
-        padding: 3rem 0 2rem;
+        padding: 5rem 0 2rem;
+        position: relative;
     }
     
     .header h1 {
         font-size: 2.25rem;
+        color: white !important;
+    }
+    
+    .c-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 1rem;
+        margin: 0;
+        z-index: 10;
     }
     
     .nav-container {
@@ -595,21 +648,22 @@ body {
 .ad-container {
     margin: 2rem 0 !important;
     text-align: center;
-    border: 1px solid var(--border-color) !important;
+    border: 1px solid var(--panel-border) !important;
     border-radius: 12px !important;
     padding: 1.5rem !important;
-    background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(226, 232, 240, 0.3) 100%) !important;
-    box-shadow: var(--shadow-sm);
+    background: linear-gradient(135deg, var(--ad-bg) 0%, var(--ad-bg-2) 100%) !important;
+    box-shadow: var(--content-shadow);
+    color: var(--content-text);
 }
 
 .ad-label {
     display: block;
     font-size: 0.75rem !important;
-    color: var(--text-light) !important;
+    color: var(--ad-label) !important;
     margin-bottom: 1rem !important;
     text-transform: uppercase;
     letter-spacing: 1px;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .ad-unit {
@@ -730,4 +784,31 @@ body {
 
 .onclickthingy:hover {
     color: #f59e0b;
+}
+
+/* External navigation links styling */
+.external-nav-link {
+    color: var(--content-primary) !important;
+    transition: color 0.3s ease;
+    font-weight: 500;
+}
+
+.external-nav-link:hover {
+    color: var(--content-tertiary) !important;
+    text-decoration: underline;
+}
+
+/* Ensure proper contrast in both themes */
+:root .external-nav-link {
+    color: #1e40af !important; /* Dark blue for light mode */
+}
+
+[data-theme="dark"] .external-nav-link, 
+.theme-dark .external-nav-link {
+    color: #60a5fa !important; /* Light blue for dark mode */
+}
+
+[data-theme="dark"] .external-nav-link:hover, 
+.theme-dark .external-nav-link:hover {
+    color: #93c5fd !important;
 }

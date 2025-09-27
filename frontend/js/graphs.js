@@ -53,6 +53,12 @@ const sanitizeSessionData = (sessions) => {
 
 // #region *** Chart Creation Functions ***********
 const createNonInteractiveChart = (element, data, seriesName, color) => {
+    // Get current theme colors from CSS custom properties
+    const computedStyle = getComputedStyle(document.documentElement);
+    const textColor = computedStyle.getPropertyValue('--text-primary').trim() || '#0e1827';
+    const backgroundColor = computedStyle.getPropertyValue('--bg-secondary').trim() || '#ffffff';
+    const borderColor = computedStyle.getPropertyValue('--border-color').trim() || '#e2e8f0';
+    
     const options = {
         chart: {
             type: 'line',
@@ -66,7 +72,8 @@ const createNonInteractiveChart = (element, data, seriesName, color) => {
                 speed: 800
             },
             fontFamily: 'inherit',
-            foreColor: '#0e1827',
+            foreColor: textColor,
+            background: backgroundColor,
             sparkline: { enabled: false },
             redrawOnParentResize: true
         },
@@ -91,7 +98,7 @@ const createNonInteractiveChart = (element, data, seriesName, color) => {
             labels: {
                 style: {
                     fontSize: '11px',
-                    colors: '#0e1827'
+                    colors: textColor
                 }
             },
             axisBorder: {
@@ -106,7 +113,7 @@ const createNonInteractiveChart = (element, data, seriesName, color) => {
             labels: {
                 style: {
                     fontSize: '11px',
-                    colors: '#0e1827'
+                    colors: textColor
                 },
                 offsetX: -5
             },
@@ -138,7 +145,7 @@ const createNonInteractiveChart = (element, data, seriesName, color) => {
             strokeWidth: 0
         },
         grid: {
-            borderColor: 'rgba(14, 24, 39, 0.1)',
+            borderColor: borderColor,
             strokeDashArray: 0,
             position: 'back',
             padding: {
@@ -210,7 +217,7 @@ const createPlayerAnswersDisplay = (playerAnswers) => {
 
         const answersListHTML = answers.map(answer => {
             const playerName = `${answer.first_name || ''} ${answer.last_name || ''}`.trim() || 'Unknown Player';
-            const answerText = answer.answer_text || 'No answer';
+            const answerText = answer.answer_text || 'No specific answer recorded';
             const isCorrect = answer.is_correct;
             const points = answer.points_earned || 0;
             const timeFormatted = answer.time_taken ? `${answer.time_taken}s` : 'N/A';
@@ -544,9 +551,24 @@ const transformSensorData = (sensorData) => {
 
 // #endregion
 
+// #region *** Theme Integration ***********
+const updateChartsTheme = () => {
+    // Recreate all charts with new theme colors when theme changes
+    if (currentSessionData) {
+        renderSession(currentSessionData);
+    }
+};
+
+// Listen for theme changes and update charts accordingly
+window.addEventListener('themeChanged', updateChartsTheme);
+
+// #endregion
+
 // #region *** Initialization ***********
 const injectCSS = () => {
     if (!document.head.querySelector('style[data-injected-css]')) {
+        // The CSS is now handled by graphs.css with proper theme support
+        // This function is kept for compatibility but no longer injects hardcoded styles
         const style = document.createElement('style');
         style.setAttribute('data-injected-css', 'true');
         style.textContent = `
@@ -925,6 +947,11 @@ const injectCSS = () => {
 const initializeDashboard = () => {
     // Inject CSS first
     injectCSS();
+    
+    // Apply current theme to ensure proper styling
+    if (window.themeManager) {
+        window.themeManager.applyThemeToNewElements(document.body);
+    }
 
     // Create session selector container if it doesn't exist
     let sessionSelectorContainer = document.getElementById('sessionSelectorContainer');

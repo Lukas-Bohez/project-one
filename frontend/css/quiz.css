@@ -1,3 +1,25 @@
+.theme-dark .c-player-item, [data-theme="dark"] .c-player-item {
+    background-color: var(--bg-primary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+.theme-dark .c-player-item:hover, [data-theme="dark"] .c-player-item:hover {
+    border-left-color: var(--quiz-accent);
+    background-color: var(--bg-secondary);
+}
+
+.theme-dark .c-players-container, [data-theme="dark"] .c-players-container {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+    box-shadow: 0 4px 6px var(--shadow-light);
+}
+.theme-dark .c-players-container, [data-theme="dark"] .c-players-container {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+    box-shadow: 0 4px 6px var(--shadow-light);
+}
 /*---------------------------------------/*
  # SETTINGS
 /*---------------------------------------*/
@@ -204,13 +226,7 @@
     gap: var(--spacing-md);
 }
 
-.c-game-sidebar {
-    position: fixed;
-    right: var(--spacing-md);
-    top: 100px;
-    width: 280px;
-    z-index: 100;
-}
+
 
 .c-players-container {
     background-color: var(--bg-secondary);
@@ -321,21 +337,7 @@
 /*---------------------------------------/*
  # UTILITIES & RESPONSIVE
 /*---------------------------------------*/
-@media (max-width: 1200px) {
-    .c-game-sidebar {
-        position: static;
-        width: 100%;
-        margin-top: var(--spacing-lg);
-    }
-    
-    .c-quiz-container {
-        grid-template-rows: auto 1fr auto;
-        grid-template-areas: 
-            "header"
-            "main"
-            "sidebar";
-    }
-}
+
 
 @media (max-width: 768px) {
     .c-quiz-container {
@@ -385,11 +387,7 @@
     }
 }
 
-.c-scroll-extension {
-    height: 640px;
-    width: 100%;
-    pointer-events: none;
-}
+
 
 
 
