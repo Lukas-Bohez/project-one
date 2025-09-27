@@ -54,28 +54,26 @@
             <button class="c-answer-btn gamepad" id="answer3"></button>
             <button class="c-answer-btn gamepad" id="answer4"></button>
         </div>
-        <div class="c-game-sidebar">
-            <div class="c-players-container">
-                <h3>Players</h3>
-                <div class="c-players-list" id="playersList">
-                    <!-- Player items will be added here dynamically -->
-                </div>
+        <!-- Place Players and Chat below answers -->
+        <div class="c-players-container">
+            <h3>Players</h3>
+            <div class="c-players-list" id="playersList">
+                <!-- Player items will be added here dynamically -->
             </div>
-
-            <div class="c-chat-container">
-                <div class="c-chat-header">
-                    <h3>Quiz Chat</h3>
-                    <button id="chatToggle" class="c-chat-toggle">−</button>
+        </div>
+        <div class="c-chat-container">
+            <div class="c-chat-header">
+                <h3>Quiz Chat</h3>
+                <button id="chatToggle" class="c-chat-toggle">−</button>
+            </div>
+            <div class="c-chat-content" id="chatContent">
+                <div class="c-chat-messages" id="chatMessages">
+                    <!-- Chat messages will be added here dynamically -->
                 </div>
-                <div class="c-chat-content" id="chatContent">
-                    <div class="c-chat-messages" id="chatMessages">
-                        <!-- Chat messages will be added here dynamically -->
-                    </div>
-                    <div class="c-chat-input-container">
-                        <input type="text" id="chatInput" class="c-chat-input" placeholder="Type a message..."
-                            maxlength="1000">
-                        <button id="chatSend" class="c-chat-send-btn">Send</button>
-                    </div>
+                <div class="c-chat-input-container">
+                    <input type="text" id="chatInput" class="c-chat-input" placeholder="Type a message..."
+                        maxlength="1000">
+                    <button id="chatSend" class="c-chat-send-btn">Send</button>
                 </div>
             </div>
         </div>

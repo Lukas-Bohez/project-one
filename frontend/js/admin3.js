@@ -658,13 +658,25 @@ class AuditLogsManager {
         }
       }, this.requestTimeout);
       
+      // Get authentication headers
+      const userId = sessionStorage.getItem('admin_user_id');
+      const rfidCode = sessionStorage.getItem('admin_rfid_code');
+      
+      const headers = {
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      };
+      
+      // Add auth headers if available
+      if (userId && rfidCode) {
+        headers['X-User-ID'] = userId;
+        headers['X-RFID'] = rfidCode;
+      }
+      
       const response = await fetch(url, {
         method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        },
+        headers: headers,
         signal: this.abortController.signal
       });
 
@@ -674,6 +686,13 @@ class AuditLogsManager {
       console.log('Audit Logs Manager: Response status:', response.status);
 
       if (!response.ok) {
+        // Handle authentication errors specifically to prevent browser dialogs
+        if (response.status === 401 || response.status === 403) {
+          console.warn('Audit Logs Manager: Authentication failed. Skipping update...');
+          this.renderError('Authentication required for audit logs');
+          return; // Don't retry auth errors
+        }
+        
         let errorDetail = '';
         try {
           const errorText = await response.text();

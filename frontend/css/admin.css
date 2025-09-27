@@ -197,6 +197,12 @@ body {
     margin: 0;
     font-size: 1.5rem;
     font-weight: 600;
+    color: white !important;
+}
+
+.c-header h1 {
+    color: white !important;
+    margin: 0;
 }
 
 .c-header__actions {
@@ -1151,6 +1157,7 @@ body {
 /*---------------------------------------*/
 .c-user-management {
     overflow-x: auto;
+    width: 100%;
 }
 
 .c-user-table {
@@ -1158,6 +1165,8 @@ body {
     border-collapse: separate;
     border-spacing: 0;
     margin: 0.5rem 0;
+    min-width: 600px; /* Ensure minimum width for proper display */
+    table-layout: fixed; /* Fixed layout for better control */
 }
 
 .c-user-table thead th {
@@ -1169,6 +1178,13 @@ body {
     position: sticky;
     top: 0;
 }
+
+/* Column width distribution */
+.c-user-table thead th:nth-child(1) { width: 30%; } /* Username */
+.c-user-table thead th:nth-child(2) { width: 20%; } /* Role */
+.c-user-table thead th:nth-child(3) { width: 25%; } /* Last Active */
+.c-user-table thead th:nth-child(4) { width: 12.5%; } /* Admin/Edit */
+.c-user-table thead th:nth-child(5) { width: 12.5%; } /* only/Delete */
 
 .c-user-table thead th:first-child {
     border-top-left-radius: 6px;
@@ -1200,8 +1216,20 @@ body {
 /* Button cells */
 .c-user-table td:last-child,
 .c-user-table td:nth-last-child(2) {
-    padding: 0.75rem;
-    width: 80px;
+    padding: 0.5rem;
+    width: 100px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* User table button styling */
+.c-user-table .c-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    min-width: 70px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /*---------------------------------------/*
@@ -1256,6 +1284,21 @@ body {
     font-size: 1.5rem;
     border-bottom: 2px solid #ECF0F1;
     padding-bottom: 0.75rem;
+}
+
+/* Confirm Dialog Specific Styles */
+.c-modal__content--confirm {
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    border-top: 4px solid var(--admin-warning);
+}
+
+.c-confirm-message {
+    margin: 1rem 0;
+    color: var(--admin-text);
+    font-size: 1rem;
+    line-height: 1.5;
 }
 
 /*---------------------------------------/*
@@ -1464,7 +1507,17 @@ body {
 
     .c-user-table .c-btn {
         min-width: auto;
-        padding: 0.5rem 0.75rem;
+        padding: 0.4rem 0.6rem;
+        font-size: 0.8rem;
+        margin: 0 0.2rem;
+    }
+
+    /* Button actions container for mobile */
+    .c-user-table td:last-child,
+    .c-user-table td:nth-last-child(2) {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
     }
 
     .c-form-actions {

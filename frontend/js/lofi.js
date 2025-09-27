@@ -38,13 +38,14 @@ let lastPlayedSongs = []; // Track recently played songs
 let currentSongIndex = -1; // Current position in playlist
 let currentPlaylistIndex = -1; // Current position in shuffled playlist (for shuffle mode)
 let normalizationCache = new Map(); // Cache for normalization data
+let isTransitioning = false; // Prevent overlapping fades/loads
 
 // --- Persistence Variables ---
 let savedPlaybackState = null; // To hold state loaded from localStorage
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Lofi player ready - starting automatically...');
+    console.log('Lofi player ready - initializing...');
 
     // Load persisted state if persistence is enabled
     if (config.persistence.enabled) {
@@ -56,76 +57,164 @@ document.addEventListener('DOMContentLoaded', () => {
     createFloatingIcon();
     createLofiModal();
 
-    // Try to start immediately without waiting for user interaction
-    tryAutoStart();
+    // Setup user interaction listeners for auto-start
+    setupAutoStartListeners();
 
     // Save state before leaving the page
     window.addEventListener('beforeunload', savePlayerState);
+    
+    // Periodic state saving for better persistence
+    setInterval(() => {
+        if (isPlaying && !audioPlayer.paused) {
+            savePlayerState();
+        }
+    }, 10000); // Save every 10 seconds during playback
 });
 
-const tryAutoStart = () => {
-    // Try to start playback immediately
-    const playPromise = audioPlayer.play();
+// Setup listeners for user interaction to enable autoplay
+const setupAutoStartListeners = () => {
+    const startOnInteraction = () => {
+        console.log('User interaction detected - starting playback');
+        startPlayback();
+        // Remove listeners after first interaction
+        document.removeEventListener('click', startOnInteraction);
+        document.removeEventListener('keydown', startOnInteraction);
+        document.removeEventListener('touchstart', startOnInteraction);
+    };
 
-    if (playPromise !== undefined) {
-        playPromise.then(() => {
-            // Automatic playback started!
-            console.log('Auto-start successful!');
-        }).catch(error => {
-            // Auto-start failed, likely due to user interaction requirement
-            if (error.name === "NotAllowedError" || error.name === "AbortError") {
-                console.log('Auto-start failed: User interaction required. Click anywhere or press a key to start playback.');
-                // Set up click/keydown listeners to start playback
-                document.addEventListener('click', startPlayback, { once: true });
-                document.addEventListener('keydown', startPlayback, { once: true });
-            } else {
-                console.error('An unexpected error occurred during auto-start:', error);
+    // Add listeners for various interaction types
+    document.addEventListener('click', startOnInteraction, { once: true });
+    document.addEventListener('keydown', startOnInteraction, { once: true });
+    document.addEventListener('touchstart', startOnInteraction, { once: true });
+    
+    console.log('Waiting for user interaction to start playback...');
+    
+    // Also try to initialize song list immediately for UI display
+    initializeSongList();
+};
+
+// Initialize song list without starting playbook (for UI population)
+const initializeSongList = async () => {
+    try {
+        console.log('🔄 Initializing song list...');
+        const files = await scanFolderForMP3s();
+        if (files && files.length > 0) {
+            songList = files;
+            console.log('📁 Song list loaded:', songList.length, 'songs');
+            
+            // Initialize playlist based on shuffle mode
+            if (config.shuffle) {
+                createShuffledPlaylist();
             }
-        });
-    } else {
-        // Fallback for older browsers that might not return a Promise from play()
-        console.warn('`play()` did not return a Promise. Auto-start might not be handled gracefully.');
-        // You might still want to add fallback error listener here,
-        // although it's less reliable for autoplay issues.
-        audioPlayer.addEventListener('error', () => {
-            console.log('Playback error detected, attempting to prompt for user interaction.');
-            document.addEventListener('click', startPlayback, { once: true });
-            document.addEventListener('keydown', startPlayback, { once: true });
-        }, { once: true });
+            
+            console.log('✅ Songs ready for playback');
+            return songList;
+        } else if (manualSongList.length > 0) {
+            songList = [...manualSongList];
+            console.log('📝 Using manual song list:', songList.length, 'songs');
+            
+            if (config.shuffle) {
+                createShuffledPlaylist();
+            }
+            
+            console.log('✅ Manual songs ready for playback');
+            return songList;
+        } else {
+            console.log('❌ No songs found in folder or manual list');
+            throw new Error('No songs available');
+        }
+    } catch (error) {
+        console.error('Failed to initialize song list:', error);
+        if (manualSongList.length > 0) {
+            songList = [...manualSongList];
+            console.log('📝 Fallback to manual song list');
+            return songList;
+        }
+        throw error;
     }
 };
 
-// Initial resume attempt, triggered by first user gesture
-const initialResumeAttempt = () => {
-    if (savedPlaybackState && savedPlaybackState.isPlaying) {
-        // This will trigger the full resume flow
-        startPlayback();
-    } else {
-        // If no active saved state, proceed with normal start
-        startPlayback();
+// Enhanced clear all caches function
+const clearAllCaches = async () => {
+    try {
+        // Clear all storage
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Clear IndexedDB
+        if ('indexedDB' in window) {
+            const databases = await indexedDB.databases?.() || [];
+            await Promise.all(
+                databases.map(db => {
+                    return new Promise((resolve, reject) => {
+                        const deleteReq = indexedDB.deleteDatabase(db.name);
+                        deleteReq.onerror = () => reject(deleteReq.error);
+                        deleteReq.onsuccess = () => resolve();
+                    });
+                })
+            );
+        }
+
+        // Clear Service Worker caches
+        if ('serviceWorker' in navigator && 'caches' in window) {
+            const cacheNames = await caches.keys();
+            await Promise.all(
+                cacheNames.map(name => caches.delete(name))
+            );
+        }
+
+        // Clear cookies for current domain
+        document.cookie.split(";").forEach(cookie => {
+            const eqPos = cookie.indexOf("=");
+            const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.${window.location.hostname}`;
+        });
+
+        console.log('All caches and storage cleared successfully');
+        return true;
+    } catch (error) {
+        console.error('Error clearing caches:', error);
+        return false;
     }
 };
 
 // Initialize Web Audio API
 const initializeAudioContext = () => {
-    if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    if (!audioContext || audioContext.state === 'closed') {
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-        // Create audio nodes
-        source = audioContext.createMediaElementSource(audioPlayer);
-        gainNode = audioContext.createGain();
-        analyser = audioContext.createAnalyser();
+            // Create audio nodes
+            source = audioContext.createMediaElementSource(audioPlayer);
+            gainNode = audioContext.createGain();
+            analyser = audioContext.createAnalyser();
 
-        // Connect the audio graph
-        source.connect(gainNode);
-        gainNode.connect(analyser);
-        analyser.connect(audioContext.destination);
+            // Connect the audio graph
+            source.connect(gainNode);
+            gainNode.connect(analyser);
+            analyser.connect(audioContext.destination);
 
-        // Configure analyser
-        analyser.fftSize = 2048;
-        analyser.smoothingTimeConstant = 0.8;
+            // Configure analyser
+            analyser.fftSize = 2048;
+            analyser.smoothingTimeConstant = 0.8;
 
-        console.log('🎛️ Audio normalization initialized');
+            console.log('🎛️ Audio normalization initialized');
+            
+            // Resume audio context if suspended (required for user interaction policy)
+            if (audioContext.state === 'suspended') {
+                audioContext.resume().then(() => {
+                    console.log('Audio context resumed');
+                }).catch(err => {
+                    console.warn('Failed to resume audio context:', err);
+                });
+            }
+        } catch (error) {
+            console.error('Failed to initialize audio context:', error);
+            // Disable normalization if Web Audio API fails
+            config.normalization.enabled = false;
+        }
     }
 };
 
@@ -214,6 +303,24 @@ const createShuffledPlaylist = () => {
     console.log('🔀 Created shuffled playlist:', shuffledPlaylist);
 };
 
+// Create a shuffled playlist where the provided currentSong stays at position 0,
+// and the pointer (currentPlaylistIndex) points to the next song to be played.
+const createShuffledPlaylistAnchored = (currentSong) => {
+    if (!currentSong || !songList.includes(currentSong)) {
+        return createShuffledPlaylist();
+    }
+    const others = songList.filter(s => s !== currentSong);
+    // Fisher-Yates shuffle for the remaining songs
+    for (let i = others.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [others[i], others[j]] = [others[j], others[i]];
+    }
+    shuffledPlaylist = [currentSong, ...others];
+    // Since currentSong (index 0) is already playing, the next to return is index 1
+    currentPlaylistIndex = 1;
+    console.log('🔀 Created anchored shuffled playlist:', shuffledPlaylist);
+};
+
 // Get next song based on current mode
 const getNextSong = () => {
     if (songList.length === 0) return null;
@@ -266,17 +373,23 @@ const getPreviousSong = () => {
     if (songList.length === 0) return null;
 
     if (config.shuffle) {
-        // In shuffle mode, go back in shuffled playlist
+        // Pointer semantics: getNextSong returns shuffledPlaylist[currentPlaylistIndex] then increments.
+        // The currently playing item is at index currentPlaylistIndex - 1.
+        if (shuffledPlaylist.length === 0) return null;
         if (currentPlaylistIndex > 1) {
-            currentPlaylistIndex -= 2; // Go back 2 because getNextSong will increment
+            // Move pointer back two so next call returns previous item
+            currentPlaylistIndex -= 2;
             return getNextSong();
         } else {
-            // At beginning of shuffled playlist
             if (config.repeat === 'all') {
+                // Wrap to the last item
                 currentPlaylistIndex = shuffledPlaylist.length - 1;
-                return shuffledPlaylist[currentPlaylistIndex - 1] || shuffledPlaylist[shuffledPlaylist.length - 1];
+                return getNextSong();
+            } else {
+                // Stay at the first item
+                currentPlaylistIndex = Math.max(1, currentPlaylistIndex);
+                return shuffledPlaylist[0];
             }
-            return shuffledPlaylist[0];
         }
     } else {
         // Sequential mode
@@ -301,7 +414,21 @@ const startPlayback = () => {
     // Initialize audio context on user interaction
     initializeAudioContext();
 
-    // Try folder scanning first
+    // Check if songs are already loaded
+    if (songList.length > 0) {
+        console.log('📁 Songs already loaded, starting playback with', songList.length, 'songs');
+        
+        // Ensure playlist is initialized
+        if (config.shuffle && shuffledPlaylist.length === 0) {
+            createShuffledPlaylist();
+        }
+        
+        handleInitialSongLoad();
+        isPlaying = true;
+        return;
+    }
+
+    // Try folder scanning if songs not loaded yet
     scanFolderForMP3s()
         .then((files) => {
             if (files && files.length > 0) {
@@ -361,22 +488,29 @@ const startPlayback = () => {
 const handleInitialSongLoad = () => {
     if (config.persistence.enabled && savedPlaybackState && savedPlaybackState.currentSong) {
         const savedSongName = savedPlaybackState.currentSong.split('/').pop().split('?')[0];
-        const fullSavedPath = config.folder + savedSongName; // Reconstruct full path
-        console.log(`Attempting to load saved song: ${savedSongName} at ${savedPlaybackState.currentTime.toFixed(1)}s`);
         
-        // Set current indices based on saved song
-        const savedIndex = songList.indexOf(savedSongName);
-        if (savedIndex !== -1) {
+        // Validate that saved song still exists in current song list
+        if (songList.includes(savedSongName)) {
+            const fullSavedPath = config.folder + savedSongName;
+            console.log(`Attempting to load saved song: ${savedSongName} at ${savedPlaybackState.currentTime.toFixed(1)}s`);
+            
+            // Set current indices based on saved song
+            const savedIndex = songList.indexOf(savedSongName);
             currentSongIndex = savedIndex;
+            
             if (config.shuffle && shuffledPlaylist.length > 0) {
                 const shuffledIndex = shuffledPlaylist.indexOf(savedSongName);
                 if (shuffledIndex !== -1) {
                     currentPlaylistIndex = shuffledIndex + 1; // +1 because it will be used for next song
                 }
             }
+            
+            loadAndPlay(fullSavedPath, savedSongName, savedPlaybackState.currentTime, savedPlaybackState.volume, savedPlaybackState.isPlaying);
+        } else {
+            console.log('Saved song no longer available, starting fresh playlist');
+            playNextSong();
         }
         
-        loadAndPlay(fullSavedPath, savedSongName, savedPlaybackState.currentTime, savedPlaybackState.volume, savedPlaybackState.isPlaying);
         // Clear saved state after attempting to load it
         savedPlaybackState = null;
     } else {
@@ -468,19 +602,44 @@ const scanFolderForMP3s = async () => {
 };
 
 // Play next song with mode awareness
-const playNextSong = () => {
+const playNextSong = (initiator = 'user') => {
     if (songList.length === 0) {
         console.log('No songs available');
         return;
     }
 
     // Handle repeat one mode
-    if (config.repeat === 'one' && !audioPlayer.paused && audioPlayer.src) {
-        // Repeat current song
-        audioPlayer.currentTime = 0;
-        console.log('🔂 Repeating current song');
+    if (initiator === 'auto' && config.repeat === 'one' && audioPlayer.src) {
+        // Repeat current song only for auto-advance
+        const currentSong = audioPlayer.src.split('/').pop().split('?')[0];
+        try {
+            audioPlayer.currentTime = 0;
+            // Ensure ended handler is attached again (the previous one was once-only)
+            audioPlayer.addEventListener('ended', handleSongEnded, { once: true });
+            audioPlayer.play().then(() => {
+                isPlaying = true;
+                updateUIForPlaying(decodeURIComponent(currentSong));
+                console.log('🔂 Repeating current song (auto)');
+            }).catch(err => {
+                console.warn('Repeat-one auto play() failed, reloading track:', err);
+                // Fallback: reload the same track via loadAndPlay
+                const songPath = `${config.folder}${currentSong}`;
+                loadAndPlay(songPath, currentSong);
+            });
+        } catch (e) {
+            console.warn('Repeat-one auto failed; trying reload:', e);
+            const currentSong = audioPlayer.src.split('/').pop().split('?')[0];
+            const songPath = `${config.folder}${currentSong}`;
+            loadAndPlay(songPath, currentSong);
+        }
         return;
     }
+
+    if (isTransitioning) {
+        console.log('⏳ Transition in progress, ignoring next');
+        return;
+    }
+    isTransitioning = true;
 
     const nextSong = getNextSong();
     
@@ -519,10 +678,17 @@ const playPreviousSong = () => {
         return;
     }
 
+    if (isTransitioning) {
+        console.log('⏳ Transition in progress, ignoring previous');
+        return;
+    }
+    isTransitioning = true;
+
     const previousSong = getPreviousSong();
     
     if (!previousSong) {
         console.log('📻 At beginning of playlist');
+        isTransitioning = false;
         return;
     }
 
@@ -547,6 +713,9 @@ const playRandomSong = () => {
 
 // Load and play new song with fade in and normalization
 const loadAndPlay = (songPath, songName, startTime = 0, initialVolume = 0, shouldPlay = true) => {
+    // Clean up any existing event listeners
+    audioPlayer.removeEventListener('ended', handleSongEnded);
+    
     audioPlayer.src = songPath;
     audioPlayer.volume = initialVolume; // Start at 0 or the saved initialVolume for fade in
 
@@ -559,9 +728,6 @@ const loadAndPlay = (songPath, songName, startTime = 0, initialVolume = 0, shoul
         console.log('📦 Using cached normalization for:', songName, `(${cachedGain.toFixed(2)}x)`);
     }
 
-    // Set a flag to indicate if we're resuming or just starting normally
-    let isResuming = startTime > 0 && shouldPlay;
-
     audioPlayer.currentTime = startTime; // Set playback position
     isPlaying = shouldPlay; // Update global state
 
@@ -572,29 +738,26 @@ const loadAndPlay = (songPath, songName, startTime = 0, initialVolume = 0, shoul
                 console.log('🎵 Now playing:', songName);
 
                 // Update UI immediately (moved here from event listener for quicker response)
-                const nowPlayingDiv = document.getElementById('now-playing');
-                if (nowPlayingDiv) {
-                    nowPlayingDiv.textContent = `Now Playing: ${decodeURIComponent(songName)}`;
-                }
-                const playPauseBtn = document.getElementById('play-pause-btn');
-                if (playPauseBtn) {
-                    playPauseBtn.textContent = '⏸ Pause';
-                    playPauseBtn.style.backgroundColor = 'var(--tertiary-color, #0d9edb)';
-                    playPauseBtn.onmouseover = () => playPauseBtn.style.backgroundColor = 'var(--info-color, #0d61aa)';
-                    playPauseBtn.onmouseout = () => playPauseBtn.style.backgroundColor = 'var(--tertiary-color, #0d9edb)';
+                updateUIForPlaying(songName);
+
+                // Initialize Web Audio API if needed (only when actually playing)
+                if (config.normalization.enabled && !audioContext) {
+                    initializeAudioContext();
                 }
 
-                if (cachedGain !== null) {
+                if (cachedGain !== null && gainNode) {
                     // Use cached gain immediately
                     gainNode.gain.setValueAtTime(cachedGain, audioContext.currentTime);
                     fadeIn(audioPlayer);
                 } else {
                     // Start with default gain and analyze
-                    gainNode.gain.setValueAtTime(1.0, audioContext.currentTime);
+                    if (gainNode) {
+                        gainNode.gain.setValueAtTime(1.0, audioContext.currentTime);
+                    }
                     fadeIn(audioPlayer);
 
                     // Analyze and adjust gain
-                    if (config.normalization.enabled) {
+                    if (config.normalization.enabled && analyser) {
                         analyzeAudioLoudness(audioPlayer)
                             .then((normalizedGain) => {
                                 // Cache the result
@@ -604,10 +767,12 @@ const loadAndPlay = (songPath, songName, startTime = 0, initialVolume = 0, shoul
                                 }
 
                                 // Apply the gain gradually to avoid sudden volume changes
-                                gainNode.gain.exponentialRampToValueAtTime(
-                                    normalizedGain,
-                                    audioContext.currentTime + 0.5
-                                );
+                                if (gainNode) {
+                                    gainNode.gain.exponentialRampToValueAtTime(
+                                        normalizedGain,
+                                        audioContext.currentTime + 0.5
+                                    );
+                                }
                             })
                             .catch(error => {
                                 console.warn('Normalization analysis failed:', error);
@@ -616,58 +781,29 @@ const loadAndPlay = (songPath, songName, startTime = 0, initialVolume = 0, shoul
                 }
 
                 // Setup next song when current ends
-                audioPlayer.removeEventListener('ended', handleSongEnded); // Remove previous listener
                 audioPlayer.addEventListener('ended', handleSongEnded, { once: true });
+
+                // Clear transition guard now that playback started
+                isTransitioning = false;
 
             })
             .catch((error) => {
-                console.error('❌ Playback failed for:', songName, error);
-
-                // Update UI to reflect error
-                const nowPlayingDiv = document.getElementById('now-playing');
-                if (nowPlayingDiv) nowPlayingDiv.textContent = `Error playing: ${songName}`;
-
-                // Remove failed song and try another
-                songList = songList.filter(song => song !== songName);
-                
-                // Also remove from shuffled playlist
-                if (config.shuffle) {
-                    shuffledPlaylist = shuffledPlaylist.filter(song => song !== songName);
-                    // Adjust current index if needed
-                    if (currentPlaylistIndex > 0) currentPlaylistIndex--;
-                }
-                
-                // Remove from normalization cache
-                normalizationCache.delete(cacheKey);
-                console.log('Removed failed song, remaining:', songList.length);
-
-                if (songList.length > 0) {
-                    setTimeout(playNextSong, 200); // Use mode-aware function
-                } else {
-                    console.error('No more songs to play!');
-                    isPlaying = false;
-                    // Update UI
-                    const playPauseBtn = document.getElementById('play-pause-btn');
-                    if (playPauseBtn) {
-                        playPauseBtn.textContent = '▶ Play';
-                        playPauseBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
-                        playPauseBtn.onmouseover = () => playPauseBtn.style.backgroundColor = 'var(--secondary-color, #0c4061)';
-                        playPauseBtn.onmouseout = () => playPauseBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
-                    }
-                }
+                console.error('❌ Playback promise failed for:', songName, error);
+                handleFailedSong(songName);
+                isTransitioning = false;
             });
+            
+        // Also add a general error listener for the audio element
+        audioPlayer.addEventListener('error', (e) => {
+            console.error('❌ Audio element error for:', songName, e);
+            handleFailedSong(songName);
+            isTransitioning = false;
+        }, { once: true });
     } else {
         // If not supposed to play (e.g., loaded a paused state)
         audioPlayer.pause();
-        const nowPlayingDiv = document.getElementById('now-playing');
-        if (nowPlayingDiv) nowPlayingDiv.textContent = `Paused: ${decodeURIComponent(songName)}`;
-        const playPauseBtn = document.getElementById('play-pause-btn');
-        if (playPauseBtn) {
-            playPauseBtn.textContent = '▶ Play';
-            playPauseBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
-            playPauseBtn.onmouseover = () => playPauseBtn.style.backgroundColor = 'var(--secondary-color, #0c4061)';
-            playPauseBtn.onmouseout = () => playPauseBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
-        }
+        updateUIForPaused(songName);
+        isTransitioning = false;
     }
 };
 
@@ -675,7 +811,102 @@ const loadAndPlay = (songPath, songName, startTime = 0, initialVolume = 0, shoul
 const handleSongEnded = () => {
     console.log('Song ended, playing next...');
     // Reduced delay from 500ms to 100ms for much faster transitions
-    setTimeout(playNextSong, 100);
+    setTimeout(() => playNextSong('auto'), 100);
+};
+
+// Helper function to handle failed songs
+const handleFailedSong = (songName) => {
+    // Update UI to reflect error
+    const nowPlayingDiv = document.getElementById('now-playing');
+    if (nowPlayingDiv) nowPlayingDiv.textContent = `Error playing: ${songName}`;
+
+    // Remove failed song and update indices properly
+    const originalIndex = songList.indexOf(songName);
+    songList = songList.filter(song => song !== songName);
+    
+    // Update current song index if the failed song was before current position
+    if (originalIndex !== -1 && originalIndex <= currentSongIndex) {
+        currentSongIndex = Math.max(0, currentSongIndex - 1);
+    }
+    
+    // Also remove from shuffled playlist
+    if (config.shuffle) {
+        const shuffledIndex = shuffledPlaylist.indexOf(songName);
+        shuffledPlaylist = shuffledPlaylist.filter(song => song !== songName);
+        
+        // Update playlist index if the failed song was before current position
+        if (shuffledIndex !== -1 && shuffledIndex < currentPlaylistIndex) {
+            currentPlaylistIndex = Math.max(0, currentPlaylistIndex - 1);
+        }
+    }
+    
+    // Remove from normalization cache
+    const cacheKey = songName;
+    normalizationCache.delete(cacheKey);
+    console.log('Removed failed song, remaining:', songList.length);
+
+    if (songList.length > 0) {
+        setTimeout(playNextSong, 200);
+    } else {
+        console.error('No more songs to play!');
+        isPlaying = false;
+        updateUIForStopped();
+    }
+};
+
+// Helper function to update UI for playing state
+const updateUIForPlaying = (songName) => {
+    const nowPlayingDiv = document.getElementById('now-playing');
+    if (nowPlayingDiv) {
+        nowPlayingDiv.textContent = `Now Playing: ${decodeURIComponent(songName)}`;
+    }
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    if (playPauseBtn) {
+        playPauseBtn.textContent = '⏸ Pause';
+        playPauseBtn.style.backgroundColor = 'var(--tertiary-color, #0d9edb)';
+        playPauseBtn.onmouseover = () => playPauseBtn.style.backgroundColor = 'var(--info-color, #0d61aa)';
+        playPauseBtn.onmouseout = () => playPauseBtn.style.backgroundColor = 'var(--tertiary-color, #0d9edb)';
+    }
+    
+    // Update song selector - make sure it's populated first
+    const songSelector = document.getElementById('song-selector');
+    if (songSelector) {
+        // First ensure the song is in the selector options
+        const songOption = Array.from(songSelector.options).find(option => option.value === songName);
+        if (!songOption && songList.includes(songName)) {
+            // Repopulate the selector if the song isn't found
+            populateSongSelector();
+        }
+        // Now set the value
+        songSelector.value = songName;
+        console.log('🎵 Updated song selector to:', songName);
+    }
+};
+
+// Helper function to update UI for paused state
+const updateUIForPaused = (songName) => {
+    const nowPlayingDiv = document.getElementById('now-playing');
+    if (nowPlayingDiv) nowPlayingDiv.textContent = `Paused: ${decodeURIComponent(songName)}`;
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    if (playPauseBtn) {
+        playPauseBtn.textContent = '▶ Play';
+        playPauseBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
+        playPauseBtn.onmouseover = () => playPauseBtn.style.backgroundColor = 'var(--secondary-color, #0c4061)';
+        playPauseBtn.onmouseout = () => playPauseBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
+    }
+};
+
+// Helper function to update UI for stopped state
+const updateUIForStopped = () => {
+    const nowPlayingDiv = document.getElementById('now-playing');
+    if (nowPlayingDiv) nowPlayingDiv.textContent = 'Stopped.';
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    if (playPauseBtn) {
+        playPauseBtn.textContent = '▶ Play';
+        playPauseBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
+        playPauseBtn.onmouseover = () => playPauseBtn.style.backgroundColor = 'var(--secondary-color, #0c4061)';
+        playPauseBtn.onmouseout = () => playPauseBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
+    }
 };
 
 // Fade effects
@@ -775,12 +1006,32 @@ const loadPlayerState = () => {
 const saveNormalizationCache = () => {
     if (!config.persistence.enabled || !config.normalization.cache) return;
     try {
+        // Limit cache size to prevent excessive localStorage usage
+        const maxCacheSize = 100; // Limit to 100 songs
+        if (normalizationCache.size > maxCacheSize) {
+            // Remove oldest entries
+            const entries = Array.from(normalizationCache.entries());
+            const keptEntries = entries.slice(-maxCacheSize);
+            normalizationCache = new Map(keptEntries);
+            console.log(`📦 Trimmed normalization cache to ${maxCacheSize} entries`);
+        }
+        
         // Convert Map to array of [key, value] pairs for JSON stringification
         const cacheArray = Array.from(normalizationCache.entries());
         localStorage.setItem(config.persistence.normalizationCacheKey, JSON.stringify(cacheArray));
-        console.log('💾 Normalization cache saved.');
+        console.log('💾 Normalization cache saved with', normalizationCache.size, 'entries.');
     } catch (e) {
         console.error('Error saving normalization cache to localStorage:', e);
+        // If localStorage is full, clear some old data
+        if (e.name === 'QuotaExceededError') {
+            try {
+                normalizationCache.clear();
+                localStorage.setItem(config.persistence.normalizationCacheKey, JSON.stringify([]));
+                console.log('🗑️ Cleared normalization cache due to storage quota exceeded');
+            } catch (e2) {
+                console.error('Could not clear normalization cache:', e2);
+            }
+        }
     }
 };
 
@@ -790,12 +1041,29 @@ const loadNormalizationCache = () => {
         const cachedData = localStorage.getItem(config.persistence.normalizationCacheKey);
         if (cachedData) {
             const cacheArray = JSON.parse(cachedData);
-            normalizationCache = new Map(cacheArray); // Reconstruct Map
-            console.log('✅ Normalization cache loaded with', normalizationCache.size, 'entries.');
+            // Validate cache entries
+            const validEntries = cacheArray.filter(([key, value]) => 
+                typeof key === 'string' && 
+                typeof value === 'number' && 
+                value > 0 && value <= 10 // Reasonable gain range
+            );
+            normalizationCache = new Map(validEntries);
+            console.log('✅ Normalization cache loaded with', normalizationCache.size, 'valid entries.');
+            
+            // Save cleaned cache if we filtered out invalid entries
+            if (validEntries.length !== cacheArray.length) {
+                saveNormalizationCache();
+            }
         }
     } catch (e) {
         console.error('Error loading normalization cache from localStorage:', e);
         normalizationCache = new Map(); // Clear corrupted cache
+        // Clear the corrupted data
+        try {
+            localStorage.removeItem(config.persistence.normalizationCacheKey);
+        } catch (e2) {
+            console.error('Could not clear corrupted cache:', e2);
+        }
     }
 };
 
@@ -804,9 +1072,20 @@ window.lofi = {
     skip: playNextSong,
     next: playNextSong,
     previous: playPreviousSong,
+    // Debug function to manually initialize songs
+    initSongs: initializeSongList,
+    // Debug function to get current state
+    debug: () => {
+        console.log('🔍 Debug Info:');
+        console.log('Songs loaded:', songList.length);
+        console.log('Songs:', songList);
+        console.log('Is playing:', isPlaying);
+        console.log('Audio source:', audioPlayer.src);
+        console.log('Audio paused:', audioPlayer.paused);
+    },
     stop: () => {
         audioPlayer.pause();
-        isPlaying = false; // Player is intentionally pa
+        isPlaying = false; // Player is intentionally paused
         console.log('⏹ Stopped');
         // Update UI
         const nowPlayingDiv = document.getElementById('now-playing');
@@ -1001,22 +1280,40 @@ const handleProgressBarClick = (e) => {
 // Populate song selector dropdown
 const populateSongSelector = () => {
     const songSelector = document.getElementById('song-selector');
-    if (songSelector && songList) {
-        songSelector.innerHTML = '<option value="">Select a song...</option>';
-        
-        songList.forEach((song, index) => {
-            const option = document.createElement('option');
-            option.value = song;
-            option.textContent = decodeURIComponent(song);
-            songSelector.appendChild(option);
-        });
+    if (songSelector) {
+        if (songList && songList.length > 0) {
+            songSelector.innerHTML = '<option value="">Select a song...</option>';
+            
+            songList.forEach((song, index) => {
+                const option = document.createElement('option');
+                option.value = song;
+                option.textContent = decodeURIComponent(song);
+                songSelector.appendChild(option);
+            });
+            console.log('📋 Song selector populated with', songList.length, 'songs');
+        } else {
+            songSelector.innerHTML = '<option value="">Loading songs...</option>';
+            console.log('📋 Song selector shows loading state');
+        }
     }
 };
 
 // Handle song selection from dropdown
 const handleSongSelection = (selectedSong) => {
+    if (isTransitioning) {
+        console.log('⏳ Transition in progress, ignoring selection');
+        return;
+    }
     if (selectedSong && songList.includes(selectedSong)) {
+        // Update indices
+        currentSongIndex = songList.indexOf(selectedSong);
+        if (config.shuffle) {
+            createShuffledPlaylistAnchored(selectedSong);
+        } else {
+            currentPlaylistIndex = -1;
+        }
         const songPath = `${config.folder}${selectedSong}`;
+        isTransitioning = true;
         loadAndPlay(songPath, selectedSong, 0, 0, true);
     }
 };
@@ -1028,6 +1325,23 @@ const toggleShuffle = () => {
     if (shuffleBtn) {
         shuffleBtn.textContent = config.shuffle ? '🔀 Shuffle: On' : '🔀 Shuffle: Off';
         shuffleBtn.style.backgroundColor = config.shuffle ? 'var(--success-color, #2e8b34)' : 'var(--primary-color, #2c4c7c)';
+    }
+    // Rebuild playlist state anchored to current song
+    const currentSong = audioPlayer.src ? audioPlayer.src.split('/').pop().split('?')[0] : null;
+    if (config.shuffle) {
+        if (currentSong && songList.includes(currentSong)) {
+            createShuffledPlaylistAnchored(currentSong);
+        } else if (songList.length) {
+            createShuffledPlaylist();
+        }
+    } else {
+        // Switching to sequential: align index to current song
+        if (currentSong && songList.includes(currentSong)) {
+            currentSongIndex = songList.indexOf(currentSong);
+        } else {
+            currentSongIndex = -1;
+        }
+        currentPlaylistIndex = -1;
     }
 };
 
@@ -1187,7 +1501,7 @@ const createLofiModal = () => {
 
     // Play/Pause Button
     const playPauseBtn = createButton('▶ Play', () => {
-        if (audioPlayer.paused) {
+        if (audioPlayer.paused || audioPlayer.ended || !audioPlayer.src) {
             lofi.start();
         } else {
             lofi.stop();
@@ -1197,7 +1511,7 @@ const createLofiModal = () => {
     controlsContainer.appendChild(playPauseBtn);
 
     // Skip Button
-    const skipBtn = createButton('⏭ Skip', lofi.skip, 'var(--primary-color, #2c4c7c)');
+    const skipBtn = createButton('⏭ Skip', () => playNextSong('user'), 'var(--primary-color, #2c4c7c)');
     controlsContainer.appendChild(skipBtn);
 
     // Additional Controls
@@ -1294,11 +1608,64 @@ const createLofiModal = () => {
     });
 
     // Logout and Clear Local Cache Button
-    const logoutClearCacheBtn = createButton('Log out of quiz user account', () => {
-        if (confirm('Are you sure you want to log out? This will log you out.')) {
-            localStorage.clear();
-            alert('Local cache cleared. Please refresh the page.');
-            window.location.reload();
+    const logoutClearCacheBtn = createButton('Log out of quiz user account', async () => {
+        if (confirm('Are you sure you want to log out? This will clear ALL cached data and force a complete reload. This may take a moment.')) {
+            try {
+                // Show loading state
+                const originalText = logoutClearCacheBtn.textContent;
+                logoutClearCacheBtn.textContent = 'Clearing cache...';
+                logoutClearCacheBtn.disabled = true;
+
+                // Clear all caches
+                const cacheCleared = await clearAllCaches();
+                
+                // Show success message briefly
+                logoutClearCacheBtn.textContent = 'Cache cleared! Reloading...';
+                
+                // Always attempt to reload the page, regardless of cache clearing success
+                setTimeout(() => {
+                    // Force hard reload with cache busting - multiple methods for maximum compatibility
+                    const currentUrl = window.location.href.split('?')[0].split('#')[0]; // Remove existing params
+                    const cacheBuster = `?_cb=${Date.now()}&_t=${Math.random()}&_reload=1`;
+                    const newUrl = currentUrl + cacheBuster;
+                    
+                    // Method 1: Replace current history entry (no back button)
+                    try {
+                        window.location.replace(newUrl);
+                    } catch (e1) {
+                        console.warn('location.replace failed:', e1);
+                        
+                        // Method 2: Force reload with cache bypass
+                        try {
+                            window.location.reload(true); // Force from server
+                        } catch (e2) {
+                            console.warn('location.reload(true) failed:', e2);
+                            
+                            // Method 3: Standard href change
+                            try {
+                                window.location.href = newUrl;
+                            } catch (e3) {
+                                console.warn('location.href failed:', e3);
+                                
+                                // Method 4: Last resort - meta refresh
+                                const meta = document.createElement('meta');
+                                meta.httpEquiv = 'refresh';
+                                meta.content = `0; url=${newUrl}`;
+                                document.head.appendChild(meta);
+                            }
+                        }
+                    }
+                }, 1000); // Give user 1 second to see the success message
+                
+            } catch (error) {
+                console.error('Error during logout:', error);
+                alert('An error occurred while clearing caches, but the page will still reload to ensure fresh content.');
+                
+                // Even if cache clearing failed, still try to reload
+                setTimeout(() => {
+                    window.location.reload(true);
+                }, 500);
+            }
         }
     }, 'var(--danger-color, #d32f2f)');
     normalizationSection.appendChild(logoutClearCacheBtn);
@@ -1312,55 +1679,85 @@ const createLofiModal = () => {
         populateSongSelector();
     });
 
-    // Update UI based on audio player events
-    audioPlayer.addEventListener('playing', () => {
+    // Update UI based on audio player events - use proper cleanup
+    const handlePlayingEvent = () => {
         const currentSong = audioPlayer.src.split('/').pop().split('?')[0];
-        nowPlayingDiv.textContent = `Now Playing: ${decodeURIComponent(currentSong)}`;
-        playPauseBtn.textContent = '⏸ Pause';
-        playPauseBtn.style.backgroundColor = 'var(--tertiary-color, #0d9edb)';
-        playPauseBtn.onmouseover = () => playPauseBtn.style.backgroundColor = 'var(--info-color, #0d61aa)';
-        playPauseBtn.onmouseout = () => playPauseBtn.style.backgroundColor = 'var(--tertiary-color, #0d9edb)';
-        
-        // Update song selector
-        const songSelector = document.getElementById('song-selector');
-        if (songSelector) {
-            songSelector.value = decodeURIComponent(currentSong);
+        updateUIForPlaying(decodeURIComponent(currentSong));
+        isPlaying = true;
+    };
+
+    const handlePauseEvent = () => {
+        if (audioPlayer.src) {
+            const currentSong = audioPlayer.src.split('/').pop().split('?')[0];
+            updateUIForPaused(decodeURIComponent(currentSong));
+        } else {
+            updateUIForStopped();
         }
-    });
+        isPlaying = false;
+    };
 
-    audioPlayer.addEventListener('pause', () => {
-        nowPlayingDiv.textContent = 'Paused.';
-        playPauseBtn.textContent = '▶ Play';
-        playPauseBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
-        playPauseBtn.onmouseover = () => playPauseBtn.style.backgroundColor = 'var(--secondary-color, #0c4061)';
-        playPauseBtn.onmouseout = () => playPauseBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
-    });
-
-    audioPlayer.addEventListener('ended', () => {
+    const handleEndedEvent = () => {
         nowPlayingDiv.textContent = 'Loading next...';
-    });
+    };
 
-    // Initialize UI based on saved state
+    // Remove any existing listeners to prevent duplicates
+    audioPlayer.removeEventListener('playing', handlePlayingEvent);
+    audioPlayer.removeEventListener('pause', handlePauseEvent);
+    audioPlayer.removeEventListener('ended', handleEndedEvent);
+    
+    // Add fresh event listeners
+    audioPlayer.addEventListener('playing', handlePlayingEvent);
+    audioPlayer.addEventListener('pause', handlePauseEvent);
+    audioPlayer.addEventListener('ended', handleEndedEvent);
+
+    // Initialize UI based on saved state and config
     if (savedPlaybackState) {
         if (savedPlaybackState.currentSong) {
             const savedSongName = savedPlaybackState.currentSong.split('/').pop().split('?')[0];
-            nowPlayingDiv.textContent = savedPlaybackState.isPlaying ? `Now Playing: ${decodeURIComponent(savedSongName)}` : `Paused: ${decodeURIComponent(savedSongName)}`;
-        }
-        if (savedPlaybackState.isPlaying) {
-            playPauseBtn.textContent = '⏸ Pause';
-            playPauseBtn.style.backgroundColor = 'var(--tertiary-color, #0d9edb)';
-            playPauseBtn.onmouseover = () => playPauseBtn.style.backgroundColor = 'var(--info-color, #0d61aa)';
-            playPauseBtn.onmouseout = () => playPauseBtn.style.backgroundColor = 'var(--tertiary-color, #0d9edb)';
-        } else {
-            playPauseBtn.textContent = '▶ Play';
-            playPauseBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
-            playPauseBtn.onmouseover = () => playPauseBtn.style.backgroundColor = 'var(--secondary-color, #0c4061)';
-            playPauseBtn.onmouseout = () => playPauseBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
+            if (savedPlaybackState.isPlaying) {
+                updateUIForPlaying(decodeURIComponent(savedSongName));
+            } else {
+                updateUIForPaused(decodeURIComponent(savedSongName));
+            }
         }
     }
+    
+    // Update UI elements based on loaded config
+    shuffleBtn.textContent = config.shuffle ? '🔀 Shuffle: On' : '🔀 Shuffle: Off';
+    shuffleBtn.style.backgroundColor = config.shuffle ? 'var(--success-color, #2e8b34)' : 'var(--primary-color, #2c4c7c)';
+    
+    if (config.repeat === 'one') {
+        repeatBtn.textContent = '🔂 Repeat: One';
+        repeatBtn.style.backgroundColor = 'var(--info-color, #0d61aa)';
+    } else if (config.repeat === 'all') {
+        repeatBtn.textContent = '🔁 Repeat: All';
+        repeatBtn.style.backgroundColor = 'var(--success-color, #2e8b34)';
+    } else {
+        repeatBtn.textContent = '🔁 Repeat: Off';
+        repeatBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
+    }
+    
+    volumeSlider.value = config.volume;
+    volumeDisplay.textContent = `${Math.round(config.volume * 100)}%`;
+    normToggle.checked = config.normalization.enabled;
+    normStatus.textContent = `(${config.normalization.enabled ? 'On' : 'Off'})`;
+    normStatus.style.color = config.normalization.enabled ? 'var(--success-color, #2e8b34)' : 'var(--warning-color, #e65100)';
+    targetLufsInput.value = config.normalization.targetLoudness;
 
-    // Populate song selector initially
+    // Populate song selector initially (may be empty until songs load)
     populateSongSelector();
+    
+    // If songs aren't loaded yet, try to initialize them
+    if (songList.length === 0) {
+        console.log('🔄 Songs not loaded, initializing...');
+        initializeSongList().then(() => {
+            console.log('🎵 Songs loaded, updating UI...');
+            // Repopulate selector once songs are loaded
+            populateSongSelector();
+        }).catch(error => {
+            console.error('❌ Failed to initialize songs:', error);
+        });
+    }
 };
 
 // Helper to create buttons

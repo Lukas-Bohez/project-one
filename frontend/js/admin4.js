@@ -31,14 +31,29 @@ function addShutdownButton() {
 }
 
 async function handleShutdown() {
-    const confirmed = confirm('Are you sure you want to shutdown the Raspberry Pi?');
-    if (!confirmed) return;
+    // Use the custom confirm dialog from admin.js instead of browser confirm
+    if (typeof showConfirmDialog === 'function') {
+        showConfirmDialog('Are you sure you want to shutdown the Raspberry Pi?', async () => {
+            await performShutdown();
+        });
+    } else {
+        // Fallback if function not available
+        if (confirm('Are you sure you want to shutdown the Raspberry Pi?')) {
+            await performShutdown();
+        }
+    }
+}
 
+async function performShutdown() {
     const userId = sessionStorage.getItem('admin_user_id');
     const rfidCode = sessionStorage.getItem('admin_rfid_code');
     
     if (!userId || !rfidCode) {
-        alert('Authentication required');
+        if (typeof showNotification === 'function') {
+            showNotification('Authentication required', 'error');
+        } else {
+            alert('Authentication required');
+        }
         return;
     }
 
@@ -61,10 +76,18 @@ async function handleShutdown() {
         }
 
         const result = await response.json();
-        alert(result.message || 'Shutdown initiated');
+        if (typeof showNotification === 'function') {
+            showNotification(result.message || 'Shutdown initiated', 'success');
+        } else {
+            alert(result.message || 'Shutdown initiated');
+        }
     } catch (error) {
         console.error('Shutdown error:', error);
-        alert(error.message || 'Failed to send shutdown command');
+        if (typeof showNotification === 'function') {
+            showNotification(error.message || 'Failed to send shutdown command', 'error');
+        } else {
+            alert(error.message || 'Failed to send shutdown command');
+        }
     } finally {
         const shutdownBtn = document.getElementById('shutdownBtn');
         if (shutdownBtn) {

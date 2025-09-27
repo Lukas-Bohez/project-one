@@ -37,12 +37,24 @@ async function updateActiveUsersCount() {
   isUsersUpdateRunning = true;
   
   try {
+    // Get authentication headers
+    const userId = sessionStorage.getItem('admin_user_id');
+    const rfidCode = sessionStorage.getItem('admin_rfid_code');
+    
+    const headers = {
+      'Accept': 'application/json',
+      'Cache-Control': 'no-cache'
+    };
+    
+    // Add auth headers if available
+    if (userId && rfidCode) {
+      headers['X-User-ID'] = userId;
+      headers['X-RFID'] = rfidCode;
+    }
+    
     const response = await fetch(`${lanIP}/api/users/active/count?t=${Date.now()}`, {
       method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Cache-Control': 'no-cache'
-      },
+      headers: headers,
       signal: AbortSignal.timeout(10000) // 10 second timeout
     });
     
@@ -125,16 +137,39 @@ async function updateActiveQuestionsCount() {
   isQuestionsUpdateRunning = true;
   
   try {
+    // Get authentication headers
+    const userId = sessionStorage.getItem('admin_user_id');
+    const rfidCode = sessionStorage.getItem('admin_rfid_code');
+    
+    const headers = {
+      'Accept': 'application/json',
+      'Cache-Control': 'no-cache'
+    };
+    
+    // Add auth headers if available
+    if (userId && rfidCode) {
+      headers['X-User-ID'] = userId;
+      headers['X-RFID'] = rfidCode;
+    }
+    
     const response = await fetch(`${lanIP}/api/questions/active/count?t=${Date.now()}`, {
       method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Cache-Control': 'no-cache'
-      },
+      headers: headers,
       signal: AbortSignal.timeout(10000) // 10 second timeout
     });
     
     if (!response.ok) {
+      // Handle authentication errors specifically to prevent browser dialogs
+      if (response.status === 401 || response.status === 403) {
+        console.warn('Authentication failed for questions count endpoint. Skipping update...');
+        if (questionsCountElements && questionsCountElements.length > 0) {
+          questionsCountElements.forEach(el => {
+            el.textContent = '?';
+            el.setAttribute('data-error', 'Authentication required');
+          });
+        }
+        return; // Don't retry auth errors
+      }
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
     
@@ -213,16 +248,39 @@ async function updateAverageScore() {
   isAverageScoreUpdateRunning = true;
   
   try {
+    // Get authentication headers
+    const userId = sessionStorage.getItem('admin_user_id');
+    const rfidCode = sessionStorage.getItem('admin_rfid_code');
+    
+    const headers = {
+      'Accept': 'application/json',
+      'Cache-Control': 'no-cache'
+    };
+    
+    // Add auth headers if available
+    if (userId && rfidCode) {
+      headers['X-User-ID'] = userId;
+      headers['X-RFID'] = rfidCode;
+    }
+    
     const response = await fetch(`${lanIP}/api/v1/answers/percentage?t=${Date.now()}`, {
       method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Cache-Control': 'no-cache'
-      },
+      headers: headers,
       signal: AbortSignal.timeout(10000) // 10 second timeout
     });
     
     if (!response.ok) {
+      // Handle authentication errors specifically to prevent browser dialogs
+      if (response.status === 401 || response.status === 403) {
+        console.warn('Authentication failed for average score endpoint. Skipping update...');
+        if (averageScoreElements && averageScoreElements.length > 0) {
+          averageScoreElements.forEach(el => {
+            el.textContent = '?';
+            el.setAttribute('data-error', 'Authentication required');
+          });
+        }
+        return; // Don't retry auth errors
+      }
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
     
