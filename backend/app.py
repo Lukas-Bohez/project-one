@@ -2384,6 +2384,126 @@ async def delete_theme_endpoint(
         raise HTTPException(status_code=500, detail=f"Failed to delete theme: {str(e)}")
 
 
+# Mass migration endpoint for moving questions between themes
+@app.post("/api/v1/themes/{source_theme_id}/migrate-to/{target_theme_id}")
+async def migrate_questions_between_themes(
+    source_theme_id: int,
+    target_theme_id: int,
+    current_user_info: dict = Depends(get_current_user_info),
+    request: Request = None
+):
+    """
+    Move all questions from source theme to target theme.
+    Only admins can perform this operation.
+    """
+    user_id = current_user_info["id"]
+    role = current_user_info["role"]
+    client_ip = get_client_ip(request) if request else "unknown"
+    
+    # Only admins can migrate questions
+    if role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins can migrate questions between themes"
+        )
+    
+    try:
+        # Validate that both themes exist
+        source_theme = ThemeRepository.get_theme_by_id(source_theme_id)
+        target_theme = ThemeRepository.get_theme_by_id(target_theme_id)
+        
+        if not source_theme:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Source theme with ID {source_theme_id} not found"
+            )
+        
+        if not target_theme:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Target theme with ID {target_theme_id} not found"
+            )
+        
+        # Prevent migration to the same theme
+        if source_theme_id == target_theme_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot migrate questions to the same theme"
+            )
+        
+        # Get questions in source theme before migration
+        source_questions = QuestionRepository.get_questions_by_theme(source_theme_id)
+        question_count = len(source_questions)
+        
+        if question_count == 0:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Source theme '{source_theme['name']}' has no questions to migrate"
+            )
+        
+        # Perform the migration - update all questions in source theme to target theme
+        try:
+            migration_success = QuestionRepository.migrate_questions_to_theme(source_theme_id, target_theme_id)
+            if not migration_success:
+                raise Exception("Database migration operation failed")
+        except Exception as migration_error:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to migrate questions: {str(migration_error)}"
+            )
+        
+        # Log the migration in audit log
+        audit_data = {
+            "migrated_by": user_id,
+            "source_theme_id": source_theme_id,
+            "source_theme_name": source_theme["name"],
+            "target_theme_id": target_theme_id,
+            "target_theme_name": target_theme["name"],
+            "question_count": question_count,
+            "action": "MIGRATE_QUESTIONS",
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        try:
+            AuditLogRepository.create_audit_log(
+                table_name="questions",
+                record_id=source_theme_id,
+                action="MIGRATE_TO_THEME",
+                old_values=json.dumps({"theme_id": source_theme_id}),
+                new_values=json.dumps(audit_data),
+                changed_by=user_id,
+                ip_address=client_ip
+            )
+        except Exception as audit_error:
+            print(f"Migration audit log creation failed: {audit_error}")
+        
+        # Return migration summary
+        return {
+            "status": "success",
+            "message": f"Successfully migrated {question_count} questions",
+            "source_theme": {
+                "id": source_theme_id,
+                "name": source_theme["name"]
+            },
+            "target_theme": {
+                "id": target_theme_id,
+                "name": target_theme["name"]
+            },
+            "migrated_count": question_count,
+            "migration_timestamp": datetime.now().isoformat(),
+            "migrated_by": user_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error migrating questions from theme {source_theme_id} to {target_theme_id}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error during question migration: {str(e)}"
+        )
+
+
 # Fixed delete user endpoint
 @app.delete("/api/v1/users/{user_id}")
 async def delete_user_endpoint(
@@ -5192,13 +5312,15 @@ import zipfile
 # Create uploads directory if it doesn't exist
 UPLOAD_DIR = "temp_uploads"
 CONVERTED_DIR = "temp_converted"
+VIDEO_DOWNLOAD_DIR = "temp_video_downloads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(CONVERTED_DIR, exist_ok=True)
+os.makedirs(VIDEO_DOWNLOAD_DIR, exist_ok=True)
 
 def cleanup_temp_files():
     """Clean up old temporary files"""
     try:
-        for directory in [UPLOAD_DIR, CONVERTED_DIR]:
+        for directory in [UPLOAD_DIR, CONVERTED_DIR, VIDEO_DOWNLOAD_DIR]:
             for filename in os.listdir(directory):
                 file_path = os.path.join(directory, filename)
                 if os.path.isfile(file_path):
@@ -5207,6 +5329,121 @@ def cleanup_temp_files():
                         os.remove(file_path)
     except Exception as e:
         print(f"Error cleaning up temp files: {e}")
+
+# ----------------------------------------------------
+# Video Converter Setup (YouTube, TikTok, etc.)
+# ----------------------------------------------------
+import yt_dlp
+import uuid
+import threading
+import time
+import re
+from urllib.parse import urlparse
+from typing import Dict, Any, Optional
+from pydantic import BaseModel
+
+# Pydantic models for video converter
+class VideoUrlValidation(BaseModel):
+    url: str
+
+class VideoConversionRequest(BaseModel):
+    url: str
+    format: int = 1  # 1 = MP3, 0 = MP4
+    quality: int = 128
+
+class VideoConversionResponse(BaseModel):
+    success: bool
+    download_id: str
+    message: str
+
+class ConversionStatus(BaseModel):
+    status: str
+    progress: float
+    platform: str
+    format: str
+    quality: int
+    title: Optional[str] = None
+    error: Optional[str] = None
+
+# URL patterns for platform validation
+URL_PATTERNS = {
+    'youtube': r'(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|embed|watch|shorts)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})',
+    'tiktok': r'(?:tiktok\.com\/@[\w.-]+\/video\/|vm\.tiktok\.com\/|vt\.tiktok\.com\/)[\w.-]+',
+    'instagram': r'(?:instagram\.com\/(?:p|reel|tv)\/[\w-]+)',
+    'reddit': r'(?:reddit\.com\/r\/[\w]+\/comments\/[\w]+\/|v\.redd\.it\/[\w]+)',
+    'facebook': r'(?:facebook\.com\/(?:[\w.-]+\/videos\/|watch\/?\?v=)|fb\.watch\/)[\w.-]+',
+    'twitch': r'(?:twitch\.tv\/[\w]+\/clip\/[\w-]+|clips\.twitch\.tv\/[\w-]+)',
+    'twitter': r'(?:twitter\.com\/[\w]+\/status\/\d+|x\.com\/[\w]+\/status\/\d+)'
+}
+
+# Active downloads tracking
+active_video_downloads: Dict[str, Dict[str, Any]] = {}
+download_lock = threading.Lock()
+
+def detect_platform(url: str) -> Optional[str]:
+    """Detect platform from URL"""
+    for platform, pattern in URL_PATTERNS.items():
+        if re.search(pattern, url, re.IGNORECASE):
+            return platform
+    return None
+
+def get_ydl_opts(format_type: str, quality: int, output_path: str) -> Dict[str, Any]:
+    """Get yt-dlp options based on format and quality"""
+    base_opts = {
+        'outtmpl': output_path,
+        'no_warnings': False,
+        'extractaudio': format_type == 'audio',
+        'ignoreerrors': True,
+        'no_check_certificates': True,
+    }
+    
+    if format_type == 'audio':
+        base_opts.update({
+            'format': 'bestaudio/best',
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': str(quality),
+            }]
+        })
+    else:  # video
+        quality_map = {
+            144: 'worst[height<=144]',
+            360: 'best[height<=360]',
+            480: 'best[height<=480]',
+            720: 'best[height<=720]', 
+            1080: 'best[height<=1080]'
+        }
+        base_opts['format'] = quality_map.get(quality, 'best[height<=720]')
+    
+    return base_opts
+
+def cleanup_old_video_files():
+    """Remove old downloaded video files"""
+    try:
+        now = datetime.now()
+        for filename in os.listdir(VIDEO_DOWNLOAD_DIR):
+            filepath = os.path.join(VIDEO_DOWNLOAD_DIR, filename)
+            if os.path.isfile(filepath):
+                file_age = now - datetime.fromtimestamp(os.path.getctime(filepath))
+                if file_age > timedelta(hours=2):
+                    os.remove(filepath)
+                    print(f"Cleaned up old video file: {filename}")
+    except Exception as e:
+        print(f"Error during video cleanup: {e}")
+
+# Start cleanup thread for video files
+def start_video_cleanup():
+    def cleanup_worker():
+        while True:
+            cleanup_old_video_files()
+            time.sleep(3600)  # Run every hour
+    
+    cleanup_thread = threading.Thread(target=cleanup_worker, daemon=True)
+    cleanup_thread.start()
+
+# Start the cleanup when the module loads
+start_video_cleanup()
 
 @app.post("/api/v1/convert/upload")
 async def upload_and_convert_file(
@@ -5509,6 +5746,243 @@ async def cleanup_conversion_files():
         raise HTTPException(status_code=500, detail=f"Cleanup failed: {str(e)}")
 
 # ----------------------------------------------------
+# Video Converter Endpoints
+# ----------------------------------------------------
+
+@app.post("/api/v1/video/validate", response_model=Dict[str, Any])
+async def validate_video_url(request: VideoUrlValidation):
+    """Validate if URL is supported and return platform info"""
+    try:
+        platform = detect_platform(request.url)
+        if not platform:
+            return {"valid": False, "error": "Unsupported platform or invalid URL"}
+        
+        # Test if yt-dlp can extract info
+        ydl_opts = {'quiet': True, 'no_warnings': True}
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            try:
+                info = ydl.extract_info(request.url, download=False)
+                title = info.get('title', 'Unknown')
+                duration = info.get('duration', 0)
+                
+                return {
+                    "valid": True,
+                    "platform": platform,
+                    "title": title,
+                    "duration": duration,
+                    "formats_available": True
+                }
+            except Exception as e:
+                return {"valid": False, "error": f"Cannot extract video info: {str(e)}"}
+                
+    except Exception as e:
+        return {"valid": False, "error": str(e)}
+
+@app.post("/api/v1/video/convert", response_model=VideoConversionResponse)
+async def convert_video(request: VideoConversionRequest):
+    """Start video conversion process"""
+    try:
+        # Validate URL first
+        platform = detect_platform(request.url)
+        if not platform:
+            raise HTTPException(status_code=400, detail="Unsupported platform or invalid URL")
+        
+        # Generate unique download ID
+        download_id = str(uuid.uuid4())
+        
+        # Determine format and quality
+        format_type = 'audio' if request.format == 1 else 'video'
+        
+        # Set up output filename
+        timestamp = int(time.time())
+        if format_type == 'audio':
+            output_filename = f"{download_id}_{timestamp}.%(ext)s"
+        else:
+            output_filename = f"{download_id}_{timestamp}.%(ext)s"
+        
+        output_path = os.path.join(VIDEO_DOWNLOAD_DIR, output_filename)
+        
+        # Store download info
+        with download_lock:
+            active_video_downloads[download_id] = {
+                'status': 'starting',
+                'progress': 0.0,
+                'platform': platform,
+                'format': 'MP3' if format_type == 'audio' else 'MP4',
+                'quality': request.quality,
+                'url': request.url,
+                'output_path': output_path,
+                'created_at': time.time(),
+                'title': None,
+                'error': None,
+                'finished': False,
+                'file_path': None
+            }
+        
+        # Start download in background thread
+        threading.Thread(
+            target=download_video_background, 
+            args=(download_id, request.url, format_type, request.quality, output_path),
+            daemon=True
+        ).start()
+        
+        return VideoConversionResponse(
+            success=True,
+            download_id=download_id,
+            message=f"Started {format_type} conversion from {platform}"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/video/status/{download_id}", response_model=ConversionStatus)
+async def get_conversion_status(download_id: str):
+    """Get status of video conversion"""
+    with download_lock:
+        if download_id not in active_video_downloads:
+            raise HTTPException(status_code=404, detail="Download ID not found")
+        
+        download_info = active_video_downloads[download_id].copy()
+    
+    return ConversionStatus(
+        status=download_info['status'],
+        progress=download_info['progress'],
+        platform=download_info['platform'],
+        format=download_info['format'],
+        quality=download_info['quality'],
+        title=download_info.get('title'),
+        error=download_info.get('error')
+    )
+
+@app.get("/api/v1/video/download/{download_id}")
+async def download_converted_file(download_id: str):
+    """Download the converted file"""
+    with download_lock:
+        if download_id not in active_video_downloads:
+            raise HTTPException(status_code=404, detail="Download ID not found")
+        
+        download_info = active_video_downloads[download_id]
+        
+        if download_info['status'] != 'completed':
+            raise HTTPException(status_code=400, detail="Conversion not completed yet")
+        
+        if not download_info.get('file_path') or not os.path.exists(download_info['file_path']):
+            raise HTTPException(status_code=404, detail="Converted file not found")
+        
+        file_path = download_info['file_path']
+        filename = os.path.basename(file_path)
+        
+        # Clean filename for download
+        if download_info['title']:
+            safe_title = re.sub(r'[^\w\s-]', '', download_info['title']).strip()[:50]
+            ext = os.path.splitext(filename)[1]
+            filename = f"{safe_title}{ext}"
+        
+        def cleanup_after_download():
+            time.sleep(5)  # Wait a bit before cleanup
+            try:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                with download_lock:
+                    if download_id in active_video_downloads:
+                        del active_video_downloads[download_id]
+            except Exception as e:
+                print(f"Cleanup error: {e}")
+        
+        # Schedule cleanup
+        threading.Thread(target=cleanup_after_download, daemon=True).start()
+        
+        return FileResponse(
+            file_path,
+            filename=filename,
+            media_type='application/octet-stream'
+        )
+
+def download_video_background(download_id: str, url: str, format_type: str, quality: int, output_path: str):
+    """Background function to download and convert video"""
+    def progress_hook(d):
+        if d['status'] == 'downloading':
+            try:
+                progress = 0.0
+                if d.get('total_bytes'):
+                    progress = (d['downloaded_bytes'] / d['total_bytes']) * 100
+                elif d.get('total_bytes_estimate'):
+                    progress = (d['downloaded_bytes'] / d['total_bytes_estimate']) * 100
+                
+                with download_lock:
+                    if download_id in active_video_downloads:
+                        active_video_downloads[download_id]['progress'] = min(progress, 90.0)
+                        active_video_downloads[download_id]['status'] = 'downloading'
+            except:
+                pass
+        elif d['status'] == 'finished':
+            with download_lock:
+                if download_id in active_video_downloads:
+                    active_video_downloads[download_id]['progress'] = 95.0
+                    active_video_downloads[download_id]['status'] = 'processing'
+    
+    try:
+        # Update status
+        with download_lock:
+            if download_id in active_video_downloads:
+                active_video_downloads[download_id]['status'] = 'downloading'
+        
+        # Get yt-dlp options
+        ydl_opts = get_ydl_opts(format_type, quality, output_path)
+        ydl_opts['progress_hooks'] = [progress_hook]
+        
+        # Download the video
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # Extract info first
+            info = ydl.extract_info(url, download=False)
+            title = info.get('title', 'Unknown')
+            
+            # Update title
+            with download_lock:
+                if download_id in active_video_downloads:
+                    active_video_downloads[download_id]['title'] = title
+            
+            # Download
+            ydl.download([url])
+        
+        # Find the downloaded file
+        downloaded_file = None
+        base_pattern = output_path.replace('.%(ext)s', '')
+        
+        for filename in os.listdir(VIDEO_DOWNLOAD_DIR):
+            if filename.startswith(os.path.basename(base_pattern)):
+                downloaded_file = os.path.join(VIDEO_DOWNLOAD_DIR, filename)
+                break
+        
+        if downloaded_file and os.path.exists(downloaded_file):
+            # Success
+            with download_lock:
+                if download_id in active_video_downloads:
+                    active_video_downloads[download_id].update({
+                        'status': 'completed',
+                        'progress': 100.0,
+                        'file_path': downloaded_file,
+                        'finished': True
+                    })
+        else:
+            raise Exception("Downloaded file not found")
+            
+    except Exception as e:
+        # Error occurred
+        error_msg = str(e)
+        print(f"Video download error for {download_id}: {error_msg}")
+        
+        with download_lock:
+            if download_id in active_video_downloads:
+                active_video_downloads[download_id].update({
+                    'status': 'error',
+                    'error': error_msg,
+                    'finished': True
+                })
+
+# ----------------------------------------------------
 # Run the app
 # ----------------------------------------------------
 # Right before starting your main application
@@ -5516,7 +5990,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "app:app",
         host="0.0.0.0",
-        port=8000,
+        port=8001,
         reload=True,
         reload_dirs=["backend"]
     )

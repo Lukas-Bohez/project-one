@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convert The Spire - Free YouTube to MP3 Converter | Download Videos from Social Media</title>
+    <meta name="description" content="Free YouTube to MP3/MP4 converter. Download videos from YouTube, TikTok, Instagram, Reddit, Facebook, Twitch & Twitter. No ads, no registration. High quality 320kbps MP3 & 1080p MP4 downloads.">
+    <meta name="keywords" content="youtube to mp3, youtube downloader, convert youtube to mp4, free video converter, tiktok downloader, instagram video download, social media converter, mp3 converter, video to audio">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="Convert The Spire">
+    <meta name="language" content="en">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Convert The Spire - Free YouTube to MP3 Converter">
+    <meta property="og:description" content="Free YouTube to MP3/MP4 converter. Download videos from YouTube, TikTok, Instagram & more. No ads, high quality downloads.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="/html/converter.html">
+    <meta property="og:image" content="/img/converter-preview.jpg">
+    <meta property="og:site_name" content="Convert The Spire">
+    <meta property="og:locale" content="en_US">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Convert The Spire - Free YouTube to MP3 Converter">
+    <meta name="twitter:description" content="Free YouTube to MP3/MP4 converter. Download videos from social media platforms. No ads, high quality.">
+    <meta name="twitter:image" content="/img/converter-preview.jpg">
+    
+    <!-- Additional SEO Meta Tags -->
+    <meta name="theme-color" content="#2c4c7c">
+    <meta name="msapplication-TileColor" content="#2c4c7c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Convert The Spire">
+    
+    <link rel="canonical" href="/html/converter.html">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/converter.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" href="../favicon.ico" sizes="192x192">
+    <link rel="apple-touch-icon" href="../favicon.ico" sizes="192x192">
+    
+    <!-- Structured Data for SEO -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Convert The Spire",
+        "description": "Free YouTube to MP3/MP4 converter supporting multiple social media platforms",
+        "url": "/html/converter.html",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Any",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "featureList": [
+            "YouTube to MP3 converter",
+            "YouTube to MP4 downloader", 
+            "TikTok video downloader",
+            "Instagram Reel downloader",
+            "Reddit video downloader",
+            "Facebook video downloader",
+            "Twitch clip downloader",
+            "Twitter video downloader",
+            "High quality audio up to 320kbps",
+            "High quality video up to 1080p",
+            "No registration required",
+            "Ad-free experience"
+        ]
+    }
+    </script>
+</head>
+<body>
+    <header class="c-header">
+        <button class="c-info-btn" onclick="openModal()">?</button>
+        <a href="../index.html" class="c-header__link">
+            <h1 class="c-header__title">Convert The Spire</h1>
+        </a>
+        <div class="c-theme-toggle" id="servoTestBtn">
+            Toggle Theme
+        </div>
+    </header>
+
+    <main class="o-container">
+        <!-- Welcome Message -->
+        <section class="c-welcome-message">
+            <h1>Free YouTube to MP3 Converter & Social Media Video Downloader</h1>
+            <p>Convert and download videos from <strong>YouTube, TikTok, Instagram, Reddit, Facebook, Twitch, and Twitter</strong> to high-quality MP3 (up to 320kbps) or MP4 (up to 1080p) format. Completely free, no registration required, and 100% ad-free experience!</p>
+            <div class="c-note">
+                <span>🎵 <strong>Convert The Spire</strong> - The fastest and safest way to download your favorite videos and music. <a href="#how-to-use" target="_self"><strong>Learn how to use</strong></a></span>
+            </div>
+        </section>
+
+        <!-- Converter Section -->
+        <section class="converter-section" id="converter-section">
+            <div id="form-container" class="converter-box">
+                <div id="converter-form" class="converter-input-box">
+                    <div class="converter-input">
+                        <div class="input-text">
+                            <span class="social-input-youtube" style="display: block;">Enter YouTube Video or Shorts URL</span>
+                            <span class="social-input-tiktok" style="display: none;">Enter TikTok URL</span>
+                            <span class="social-input-reddit" style="display: none;">Enter Reddit Video URL</span>
+                            <span class="social-input-instagram" style="display: none;">Enter Instagram Reel URL</span>
+                            <span class="social-input-facebook" style="display: none;">Enter Facebook Video URL</span>
+                            <span class="social-input-twitch" style="display: none;">Enter Twitch Clip URL</span>
+                            <span class="social-input-twitter" style="display: none;">Enter Twitter/X Video URL</span>
+                        </div>
+                        <input type="text" id="video-url" class="input-field-url" placeholder="https://www.youtube.com/watch?v=example" required>
+                    </div>
+                    
+                    <div class="converter-format-button">
+                        <!-- Video Quality Select -->
+                        <div class="quality-video-select-box" style="display: none;">
+                            <div class="input-text" id="quality-video-input-text" style="display: none;">
+                                <span>Video Quality</span>
+                            </div>
+                            <div id="quality-video-select-display" class="select-display">
+                                <span id="quality-video-select-display-value">720p</span>
+                                <i class="fas fa-chevron-down dropdown-icon"></i>
+                            </div>
+                            <div id="quality-video-select-list" class="select-list" style="display:none;">
+                                <div class="quality-video-select-options" data-quality="144">144p</div>
+                                <div class="quality-video-select-options" data-quality="360">360p</div>
+                                <div class="quality-video-select-options" data-quality="480">480p</div>
+                                <div class="quality-video-select-options active" data-quality="720">720p</div>
+                                <div class="quality-video-select-options" data-quality="1080">1080p</div>
+                            </div>
+                        </div>
+
+                        <!-- Audio Quality Select -->
+                        <div class="quality-audio-select-box" style="display: block;">
+                            <div class="input-text" id="quality-audio-input-text" style="display: block;">
+                                <span>Audio Bitrate</span>
+                            </div>
+                            <div id="quality-audio-select-display" class="select-display">
+                                <span id="quality-audio-select-display-value">128kb/s</span>
+                                <i class="fas fa-chevron-down dropdown-icon"></i>
+                            </div>
+                            <div id="quality-audio-select-list" class="select-list" style="display:none;">
+                                <div class="quality-audio-select-options" data-quality="96">96kb/s</div>
+                                <div class="quality-audio-select-options active" data-quality="128">128kb/s</div>
+                                <div class="quality-audio-select-options" data-quality="256">256kb/s</div>
+                                <div class="quality-audio-select-options" data-quality="320">320kb/s</div>
+                            </div>
+                        </div>
+
+                        <!-- Format Select -->
+                        <div class="format-select-box">
+                            <div class="input-text">
+                                <span>Output Format</span>
+                            </div>
+                            <div id="format-select-display" class="select-display">
+                                <span id="format-select-display-value">MP3</span>
+                                <i class="fas fa-chevron-down dropdown-icon"></i>
+                            </div>
+                            <div id="format-select-list" class="select-list" style="display:none;">
+                                <div class="format-select-options active" data-format="1">MP3 (Audio)</div>
+                                <div class="format-select-options" data-format="0">MP4 (Video)</div>
+                            </div>
+                        </div>
+
+                        <!-- Convert Button -->
+                        <button class="converter-button-container c-btn c-btn--primary" id="convert-button">
+                            <i class="fas fa-exchange-alt"></i>
+                            <span>Convert & Download</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="spinner" class="spinner-container" style="display:none;">
+                <div class="animation-box">
+                    <div class="c-loading-spinner"></div>
+                    <span id="spinner-text">Processing...</span>
+                </div>
+            </div>
+
+            <!-- Video Info/Results -->
+            <div class="video-info" id="video-info" style="display: none;">
+                <h2 id="video-title">Your download is ready!</h2>
+                <p id="secondary-message" style="display: none;">Note: Videos longer than 3 hours may have limited availability.</p>
+                <div class="button-row">
+                    <button class="c-btn c-btn--tertiary" id="download-btn">
+                        <i class="fas fa-download"></i>
+                        Download File
+                    </button>
+                    <button class="c-btn c-btn--secondary" id="convert-again-btn" onclick="window.location.reload()">
+                        <i class="fas fa-exchange-alt"></i>
+                        Convert Another
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Social Platforms -->
+        <section class="social-platforms">
+            <h2>Supported Social Media Platforms for Video Download</h2>
+            <div class="social-buttons-grid">
+                <button class="social-button-container youtube active" data-platform="youtube">
+                    <i class="fab fa-youtube"></i>
+                    <span>YouTube Videos & Shorts</span>
+                </button>
+                <button class="social-button-container tiktok" data-platform="tiktok">
+                    <i class="fab fa-tiktok"></i>
+                    <span>TikTok Videos</span>
+                </button>
+                <button class="social-button-container reddit" data-platform="reddit">
+                    <i class="fab fa-reddit-alien"></i>
+                    <span>Reddit Videos & GIFs</span>
+                </button>
+                <button class="social-button-container instagram" data-platform="instagram">
+                    <i class="fab fa-instagram"></i>
+                    <span>Instagram Reels</span>
+                </button>
+                <button class="social-button-container facebook" data-platform="facebook">
+                    <i class="fab fa-facebook"></i>
+                    <span>Facebook Videos</span>
+                </button>
+                <button class="social-button-container twitch" data-platform="twitch">
+                    <i class="fab fa-twitch"></i>
+                    <span>Twitch Clips</span>
+                </button>
+                <button class="social-button-container twitter" data-platform="twitter">
+                    <i class="fab fa-twitter"></i>
+                    <span>Twitter/X Videos</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Information Sections -->
+        <div class="content-sections">
+            <!-- YouTube Section -->
+            <section class="content-second content-second-youtube" style="display: block;" id="how-to-use">
+                <h2>Best Free YouTube to MP3 Converter Online</h2>
+                <p><strong>Convert YouTube videos to MP3 or MP4</strong> and download them with Convert The Spire. Our YouTube converter is the <em>fastest, safest, and completely ad-free</em> solution that supports high-quality audio up to <strong>320kbps</strong> and video up to <strong>1080p HD</strong>.</p>
+                <p>Convert The Spire is the ultimate <strong>YouTube to MP3 converter</strong> that allows you to download YouTube videos and convert them into audio or video format. Perfect for listening to music, podcasts, and educational content offline on any device. Our YouTube downloader works with regular videos, YouTube Shorts, and live streams.</p>
+
+                <h3>How to Convert YouTube Videos to MP3/MP4 - Step by Step</h3>
+                <ol>
+                    <li>Go to YouTube and find the video you want to convert and download.</li>
+                    <li>Copy the video URL from the browser bar or YouTube's share button.</li>
+                    <li>Paste the URL into our converter and choose your preferred format (MP3 or MP4).</li>
+                    <li>Select your desired quality settings for the best experience.</li>
+                    <li>Click "Convert & Download" to start the conversion process.</li>
+                    <li>Download the converted file when the process is complete.</li>
+                </ol>
+
+                <h3>Why Convert The Spire is the Best YouTube to MP3 Converter</h3>
+                <ul>
+                    <li>🚫 <strong>100% Ad-Free Experience:</strong> No annoying advertisements, pop-ups, or redirects</li>
+                    <li>⚡ <strong>Lightning Fast Conversion:</strong> Convert YouTube to MP3 in seconds</li>
+                    <li>🔒 <strong>Safe & Secure:</strong> No malware, viruses, or data collection</li>
+                    <li>🎵 <strong>High Quality Downloads:</strong> Up to 320kbps MP3 audio and 1080p MP4 video</li>
+                    <li>📱 <strong>Mobile & Desktop Compatible:</strong> Works on iPhone, Android, PC, Mac</li>
+                    <li>🆓 <strong>Completely Free Forever:</strong> No registration, limits, or hidden fees</li>
+                    <li>� <strong>Multiple Formats:</strong> Download as MP3, MP4, or other formats</li>
+                    <li>⏱️ <strong>No Time Limits:</strong> Convert videos up to 3 hours long</li>
+                </ul>
+                
+                <h3>Frequently Asked Questions about YouTube to MP3 Conversion</h3>
+                <div class="faq-section">
+                    <h4>Is it legal to convert YouTube videos to MP3?</h4>
+                    <p>Converting YouTube videos for personal use is generally acceptable, but always respect copyright laws and content creator rights.</p>
+                    
+                    <h4>What's the maximum quality for YouTube to MP3 conversion?</h4>
+                    <p>Our converter supports up to 320kbps MP3 quality, which is the highest standard for MP3 audio files.</p>
+                    
+                    <h4>Do I need to install software to convert YouTube to MP3?</h4>
+                    <p>No! Convert The Spire is a web-based converter that works directly in your browser without any downloads or installations.</p>
+                    
+                    <h4>Can I convert YouTube Shorts to MP3?</h4>
+                    <p>Yes! Our converter supports regular YouTube videos, YouTube Shorts, and YouTube Music.</p>
+                </div>
+            </section>
+
+            <!-- TikTok Section -->
+            <section class="content-second content-second-tiktok" style="display: none;">
+                <h2>Free TikTok Video Downloader - Download TikTok Videos Without Watermark</h2>
+                <p><strong>Download TikTok videos</strong> easily with Convert The Spire, the best free TikTok downloader. Simply copy any TikTok video URL, paste it into our converter, and download high-quality MP4 videos instantly. Our TikTok downloader removes watermarks and works with all TikTok content including trending videos and music clips.</p>
+                <p>Perfect for content creators, social media managers, and anyone who wants to save TikTok videos for offline viewing or repurposing.</p>
+            </section>
+
+            <!-- Reddit Section -->
+            <section class="content-second content-second-reddit" style="display: none;">
+                <h2>Reddit Video Downloader - Save Reddit Videos and GIFs</h2>
+                <p><strong>Download Reddit videos and GIFs</strong> with Convert The Spire's free Reddit downloader. Save funny memes, educational content, and viral videos from any Reddit post. Our tool works with v.redd.it links and supports all Reddit video formats.</p>
+                <p>Great for archiving favorite Reddit content, creating compilations, or sharing Reddit videos outside the platform.</p>
+            </section>
+
+            <!-- Instagram Section -->
+            <section class="content-second content-second-instagram" style="display: none;">
+                <h2>Instagram Reel Downloader - Download Instagram Videos and Reels</h2>
+                <p><strong>Download Instagram Reels and videos</strong> with Convert The Spire's Instagram downloader. Save your favorite Reels, IGTV videos, and Instagram stories to watch offline. Our Instagram video downloader maintains original quality and works with both public and private content you have access to.</p>
+                <p>Ideal for content creators looking to repurpose content or users who want to save memorable Instagram videos.</p>
+            </section>
+
+            <!-- Facebook Section -->
+            <section class="content-second content-second-facebook" style="display: none;">
+                <h2>Facebook Video Downloader - Save Facebook Videos in HD</h2>
+                <p><strong>Download Facebook videos</strong> in HD quality with Convert The Spire's free Facebook downloader. Save videos from Facebook posts, pages, and groups. Our tool supports both public Facebook videos and Facebook Watch content.</p>
+                <p>Perfect for saving educational content, tutorials, entertainment videos, and memorable moments shared on Facebook.</p>
+            </section>
+
+            <!-- Twitch Section -->
+            <section class="content-second content-second-twitch" style="display: none;">
+                <h2>Twitch Clip Downloader - Download Twitch Clips and Highlights</h2>
+                <p><strong>Download Twitch clips</strong> and gaming highlights with Convert The Spire's Twitch downloader. Save epic gaming moments, funny fails, and amazing plays from your favorite streamers. Our Twitch clip downloader works with all Twitch content including clips and VOD highlights.</p>
+                <p>Essential for gamers, content creators, and esports fans who want to create montages or save memorable gaming moments.</p>
+            </section>
+
+            <!-- Twitter Section -->
+            <section class="content-second content-second-twitter" style="display: none;">
+                <h2>Twitter Video Downloader - Download Twitter/X Videos and GIFs</h2>
+                <p><strong>Download Twitter videos</strong> and GIFs with Convert The Spire's free Twitter downloader. Save viral videos, news clips, memes, and trending content from Twitter (now X). Our tool works with native Twitter videos and supports all video formats shared on the platform.</p>
+                <p>Great for journalists, social media managers, and users who want to archive important Twitter video content.</p>
+            </section>
+        </div>
+    </main>
+
+    <!-- Info Modal -->
+    <div id="infoModal" class="c-modal">
+        <div class="c-modal__content">
+            <span class="c-modal__close" onclick="closeModal()">&times;</span>
+            <h2>Convert The Spire - Media Converter</h2>
+            
+            <div class="c-info-section">
+                <h3 class="c-info-section__title">Features</h3>
+                <ul class="c-items-list">
+                    <li class="c-items-list__item">Convert videos from multiple social media platforms</li>
+                    <li class="c-items-list__item">Download as MP3 (audio) or MP4 (video)</li>
+                    <li class="c-items-list__item">Multiple quality options available</li>
+                    <li class="c-items-list__item">Completely ad-free experience</li>
+                    <li class="c-items-list__item">No registration required</li>
+                </ul>
+            </div>
+
+            <div class="c-info-section">
+                <h3 class="c-info-section__title">Supported Platforms</h3>
+                <ul class="c-items-list">
+                    <li class="c-items-list__item">YouTube (Videos & Shorts)</li>
+                    <li class="c-items-list__item">TikTok</li>
+                    <li class="c-items-list__item">Instagram Reels</li>
+                    <li class="c-items-list__item">Reddit Videos</li>
+                    <li class="c-items-list__item">Facebook Videos</li>
+                    <li class="c-items-list__item">Twitch Clips</li>
+                    <li class="c-items-list__item">Twitter/X Videos</li>
+                </ul>
+            </div>
+
+            <div class="c-info-section">
+                <h3 class="c-info-section__title">How to Use</h3>
+                <ul class="c-items-list">
+                    <li class="c-items-list__item">Select your desired platform</li>
+                    <li class="c-items-list__item">Paste the video URL</li>
+                    <li class="c-items-list__item">Choose format and quality</li>
+                    <li class="c-items-list__item">Click Convert & Download</li>
+                    <li class="c-items-list__item">Enjoy your downloaded content!</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/converter.js"></script>
+</body>
+</html>

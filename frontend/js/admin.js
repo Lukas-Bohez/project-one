@@ -15,6 +15,10 @@ const domAdmin = {
     userTable: document.querySelector('.c-user-table tbody'),
     themeFilter: document.querySelector('.js-theme-filter'), // Add this
     difficultyFilter: document.querySelector('.js-difficulty-filter'), // Add this
+    // Migration elements
+    sourceThemeSelect: document.querySelector('.js-source-theme-select'),
+    targetThemeSelect: document.querySelector('.js-target-theme-select'),
+    migrateButton: document.querySelector('.js-migrate-questions')
 };
 
 let currentForm = null;
@@ -722,6 +726,16 @@ const showTab = (tabId) => {
     // If switching to questions tab, populate theme filter
     if (tabId === 'questions') {
         populateThemeFilter();
+    }
+    
+    // If switching to themes tab, set up migration listeners
+    if (tabId === 'themes') {
+        // Use a small delay to ensure DOM is ready
+        setTimeout(() => {
+            listenToMigration();
+            populateMigrationDropdowns();
+            updateMigrationButtonState();
+        }, 100);
     }
     
     // Load data for the selected tab
@@ -1733,6 +1747,12 @@ const loadThemes = async () => {
                 });
             });
         });
+        
+        // Update state and populate migration dropdowns
+        state.themes = themes;
+        populateMigrationDropdowns();
+        updateMigrationButtonState();
+        
     } catch (error) {
         console.error('Error loading themes:', error);
         themeList.innerHTML = '<div class="c-error-state">Failed to load themes. Please try again.</div>';
@@ -2104,6 +2124,40 @@ const listenToAddButtons = () => {
         });
     }
 };
+
+const listenToMigration = () => {
+    // Migration dropdown change listeners
+    const sourceSelect = document.querySelector('.js-source-theme-select');
+    const targetSelect = document.querySelector('.js-target-theme-select');
+    const migrateButton = document.querySelector('.js-migrate-questions');
+    
+    console.log('Setting up migration listeners:', {
+        sourceSelect: !!sourceSelect,
+        targetSelect: !!targetSelect,
+        migrateButton: !!migrateButton
+    });
+    
+    if (sourceSelect) {
+        sourceSelect.addEventListener('change', () => {
+            console.log('Source theme changed:', sourceSelect.value);
+            updateMigrationButtonState();
+        });
+    }
+    
+    if (targetSelect) {
+        targetSelect.addEventListener('change', () => {
+            console.log('Target theme changed:', targetSelect.value);
+            updateMigrationButtonState();
+        });
+    }
+    
+    if (migrateButton) {
+        migrateButton.addEventListener('click', handleMigrationClick);
+    } else {
+        console.warn('Migration button not found during listener setup');
+    }
+};
+
 // #endregion
 
 // #region ***  Init / DOMContentLoaded                  ***********
@@ -2219,4 +2273,228 @@ const getCurrentFilterState = () => {
         searchTerm: domAdmin.searchInput?.value || '',
         selectedTheme: domAdmin.themeFilter?.value || '',
         selectedDifficulty: domAdmin.difficultyFilter?.value || '',
-    };}
+    };
+};
+
+// #region ***  Migration Functions                      ***********
+
+/**
+ * Populate the migration theme dropdowns
+ */
+const populateMigrationDropdowns = () => {
+    const sourceSelect = document.querySelector('.js-source-theme-select');
+    const targetSelect = document.querySelector('.js-target-theme-select');
+    
+    console.log('Populating migration dropdowns:', {
+        sourceSelect: !!sourceSelect,
+        targetSelect: !!targetSelect,
+        themes: state.themes?.length || 0
+    });
+    
+    if (!sourceSelect || !targetSelect || !state.themes) {
+        console.warn('Cannot populate dropdowns:', {
+            sourceSelect: !!sourceSelect,
+            targetSelect: !!targetSelect,
+            themes: !!state.themes
+        });
+        return;
+    }
+    
+    // Clear existing options (except the first placeholder)
+    sourceSelect.innerHTML = '<option value="">Select source theme...</option>';
+    targetSelect.innerHTML = '<option value="">Select target theme...</option>';
+    
+    // Add themes to both dropdowns
+    state.themes.forEach(theme => {
+        const sourceOption = new Option(`${theme.name} (${theme.questionCount || 0} questions)`, theme.id);
+        const targetOption = new Option(theme.name, theme.id);
+        
+        sourceSelect.appendChild(sourceOption);
+        targetSelect.appendChild(targetOption);
+    });
+    
+    console.log('Migration dropdowns populated with', state.themes.length, 'themes');
+};
+
+/**
+ * Update migration button state based on dropdown selections
+ */
+const updateMigrationButtonState = () => {
+    const sourceSelect = document.querySelector('.js-source-theme-select');
+    const targetSelect = document.querySelector('.js-target-theme-select');
+    const migrateButton = document.querySelector('.js-migrate-questions');
+    const migrationInfo = document.querySelector('.js-migration-info');
+    
+    // Debug logging
+    console.log('Migration Debug:', {
+        sourceSelect: !!sourceSelect,
+        targetSelect: !!targetSelect,
+        migrateButton: !!migrateButton,
+        migrationInfo: !!migrationInfo,
+        sourceValue: sourceSelect?.value,
+        targetValue: targetSelect?.value,
+        themes: state.themes?.length || 0
+    });
+    
+    if (!sourceSelect || !targetSelect || !migrateButton) {
+        console.warn('Essential migration elements not found:', {
+            sourceSelect: !!sourceSelect,
+            targetSelect: !!targetSelect, 
+            migrateButton: !!migrateButton,
+            migrationInfo: !!migrationInfo
+        });
+        return;
+    }
+    
+    const sourceValue = sourceSelect.value;
+    const targetValue = targetSelect.value;
+    
+    // Check if both are selected and different
+    const canMigrate = sourceValue && targetValue && sourceValue !== targetValue;
+    
+    migrateButton.disabled = !canMigrate;
+    
+    // Update migration info if element exists
+    if (migrationInfo) {
+        if (!sourceValue || !targetValue) {
+            migrationInfo.textContent = 'Select both source and target themes to enable migration';
+            migrationInfo.className = 'c-migration-info';
+        } else if (sourceValue === targetValue) {
+            migrationInfo.textContent = 'Source and target themes must be different';
+            migrationInfo.className = 'c-migration-info c-migration-info--error';
+        } else {
+            const sourceTheme = state.themes.find(t => t.id == sourceValue);
+            const targetTheme = state.themes.find(t => t.id == targetValue);
+            const questionCount = sourceTheme?.questionCount || 0;
+            
+            if (questionCount === 0) {
+                migrationInfo.textContent = `Source theme "${sourceTheme?.name}" has no questions to migrate`;
+                migrationInfo.className = 'c-migration-info c-migration-info--warning';
+                migrateButton.disabled = true;
+            } else {
+                migrationInfo.textContent = `Ready to migrate ${questionCount} question${questionCount !== 1 ? 's' : ''} from "${sourceTheme?.name}" to "${targetTheme?.name}"`;
+                migrationInfo.className = 'c-migration-info c-migration-info--ready';
+            }
+        }
+    }
+};
+
+/**
+ * Perform the migration API call
+ */
+const migrateQuestionsToTheme = async (sourceThemeId, targetThemeId) => {
+    try {
+        const userId = sessionStorage.getItem('admin_user_id');
+        const rfidCode = sessionStorage.getItem('admin_rfid_code');
+        
+        if (!userId || !rfidCode) {
+            throw new Error('Authentication required. Please log in again.');
+        }
+        
+        const response = await fetch(`${lanIP}/api/v1/themes/${sourceThemeId}/migrate-to/${targetThemeId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-User-ID': userId,
+                'X-RFID': rfidCode
+            }
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            let errorData = {};
+            try {
+                errorData = JSON.parse(errorText);
+            } catch (e) {
+                console.error('Could not parse error response:', errorText);
+            }
+            
+            const errorMessage = errorData.detail || errorData.message || `HTTP error! status: ${response.status}`;
+            throw new Error(errorMessage);
+        }
+        
+        const result = await response.json();
+        console.log('Migration successful:', result);
+        
+        // Show success notification
+        showNotification(`Successfully migrated ${result.migrated_count} questions from "${result.source_theme.name}" to "${result.target_theme.name}"`, 'success');
+        
+        return result;
+        
+    } catch (error) {
+        console.error('Migration failed:', error);
+        
+        // Handle specific error cases
+        if (error.message.includes('403')) {
+            showNotification('Access denied. Only admins can migrate questions.', 'error');
+        } else if (error.message.includes('404')) {
+            showNotification('Theme not found. Please refresh and try again.', 'error');
+        } else if (error.message.includes('400')) {
+            showNotification(error.message, 'error');
+        } else {
+            showNotification(`Failed to migrate questions: ${error.message}`, 'error');
+        }
+        
+        throw error;
+    }
+};
+
+/**
+ * Handle migration button click with confirmation
+ */
+const handleMigrationClick = async () => {
+    const sourceSelect = document.querySelector('.js-source-theme-select');
+    const targetSelect = document.querySelector('.js-target-theme-select');
+    
+    if (!sourceSelect || !targetSelect) return;
+    
+    const sourceThemeId = parseInt(sourceSelect.value);
+    const targetThemeId = parseInt(targetSelect.value);
+    
+    const sourceTheme = state.themes.find(t => t.id === sourceThemeId);
+    const targetTheme = state.themes.find(t => t.id === targetThemeId);
+    
+    if (!sourceTheme || !targetTheme) {
+        showNotification('Invalid theme selection. Please try again.', 'error');
+        return;
+    }
+    
+    // Confirmation dialog
+    const questionCount = sourceTheme.questionCount || 0;
+    const confirmMessage = `Are you sure you want to migrate ${questionCount} question${questionCount !== 1 ? 's' : ''} from "${sourceTheme.name}" to "${targetTheme.name}"?\n\nThis action cannot be undone.`;
+    
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+    
+    // Disable button during migration
+    const migrateButton = document.querySelector('.js-migrate-questions');
+    if (migrateButton) {
+        migrateButton.disabled = true;
+        migrateButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Migrating...';
+    }
+    
+    try {
+        await migrateQuestionsToTheme(sourceThemeId, targetThemeId);
+        
+        // Refresh data after successful migration
+        await loadTabData('themes');
+        await loadTabData('questions');
+        
+        // Reset form
+        sourceSelect.value = '';
+        targetSelect.value = '';
+        updateMigrationButtonState();
+        
+    } catch (error) {
+        // Error already handled in migrateQuestionsToTheme
+    } finally {
+        // Re-enable button
+        if (migrateButton) {
+            migrateButton.disabled = false;
+            migrateButton.innerHTML = '<i class="fas fa-arrows-alt-h"></i> Migrate All Questions';
+        }
+    }
+};
+
+// #endregion

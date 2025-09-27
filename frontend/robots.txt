@@ -5,4 +5,5 @@ Allow: /html/storyCreator.html
 Allow: /html/content.html
 Allow: /html/study.html
 Allow: /html/graphs.html
+Allow: /html/converter.html
 Sitemap: https://quizthespire.duckdns.org/sitemap.xml

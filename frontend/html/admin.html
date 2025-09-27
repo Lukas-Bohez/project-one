@@ -129,6 +129,35 @@
                 </div>
 
                 <div class="c-theme-management">
+                    <!-- Mass Migration Controls -->
+                    <div class="c-migration-panel">
+                        <h3 class="c-section-title">
+                            <i class="fas fa-exchange-alt"></i> Mass Question Migration
+                        </h3>
+                        <div class="c-migration-form">
+                            <div class="c-form-group">
+                                <label for="sourceThemeSelect">Source Theme (move questions from):</label>
+                                <select id="sourceThemeSelect" class="c-select js-source-theme-select">
+                                    <option value="">Select source theme...</option>
+                                </select>
+                            </div>
+                            <div class="c-form-group">
+                                <label for="targetThemeSelect">Target Theme (move questions to):</label>
+                                <select id="targetThemeSelect" class="c-select js-target-theme-select">
+                                    <option value="">Select target theme...</option>
+                                </select>
+                            </div>
+                            <div class="c-migration-actions">
+                                <button class="c-btn c-btn--warning js-migrate-questions" disabled>
+                                    <i class="fas fa-arrows-alt-h"></i> Migrate All Questions
+                                </button>
+                                <span class="c-migration-info js-migration-info">
+                                    Select both source and target themes to enable migration
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="c-theme-list">
                         <!-- Themes will be loaded here dynamically -->
                         <div class="c-loading">Loading themes...</div>
