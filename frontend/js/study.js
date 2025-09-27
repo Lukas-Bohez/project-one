@@ -58,20 +58,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (typeof Storage !== "undefined" && localStorage) {
                     const item = localStorage.getItem(key);
                     if (item) {
-                        return JSON.parse(item);
+                        const parsed = JSON.parse(item);
+                        console.log(`[Cache] Retrieved from localStorage for key: ${key}, timestamp: ${new Date(parsed.timestamp).toISOString()}`);
+                        return parsed;
                     }
                 }
             } catch (e) {
                 console.warn(`[Cache] localStorage failed, using memory cache: ${e.message}`);
+                // Clear corrupted data
+                try {
+                    localStorage.removeItem(key);
+                } catch (clearError) {
+                    console.warn(`[Cache] Could not clear corrupted localStorage item: ${clearError.message}`);
+                }
             }
             
             // Fallback to memory cache
-            return memoryCache.get(key) || null;
+            const memoryResult = memoryCache.get(key) || null;
+            if (memoryResult) {
+                console.log(`[Cache] Retrieved from memory for key: ${key}, timestamp: ${new Date(memoryResult.timestamp).toISOString()}`);
+            }
+            return memoryResult;
         },
         
         set: function(key, data) {
             const cacheData = {
-                timestamp: new Date().getTime(),
+                timestamp: Date.now(), // Use Date.now() for consistency
                 data: data
             };
             
@@ -79,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Try localStorage first
                 if (typeof Storage !== "undefined" && localStorage) {
                     localStorage.setItem(key, JSON.stringify(cacheData));
-                    console.log(`[Cache] Data saved to localStorage for key: ${key}`);
+                    console.log(`[Cache] Data saved to localStorage for key: ${key}, timestamp: ${new Date(cacheData.timestamp).toISOString()}`);
                     return;
                 }
             } catch (e) {
@@ -88,36 +100,97 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Fallback to memory cache
             memoryCache.set(key, cacheData);
-            console.log(`[Cache] Data saved to memory cache for key: ${key}`);
+            console.log(`[Cache] Data saved to memory cache for key: ${key}, timestamp: ${new Date(cacheData.timestamp).toISOString()}`);
         },
         
         isValid: function(cachedItem, duration = 60000) {
-            if (!cachedItem || !cachedItem.timestamp) return false;
-            return (new Date().getTime() - cachedItem.timestamp) < duration;
+            if (!cachedItem || typeof cachedItem.timestamp !== 'number') {
+                console.log(`[Cache] Invalid cache item - missing or invalid timestamp`);
+                return false;
+            }
+            
+            const now = Date.now();
+            const age = now - cachedItem.timestamp;
+            const isValid = age < duration;
+            
+            console.log(`[Cache] Validation - Age: ${age}ms, Duration: ${duration}ms, Valid: ${isValid}`);
+            return isValid;
+        },
+        
+        clear: function(key) {
+            if (key) {
+                // Clear specific key
+                try {
+                    if (typeof Storage !== "undefined" && localStorage) {
+                        localStorage.removeItem(key);
+                        console.log(`[Cache] Cleared localStorage for key: ${key}`);
+                    }
+                } catch (e) {
+                    console.warn(`[Cache] Failed to clear localStorage for key ${key}: ${e.message}`);
+                }
+                memoryCache.delete(key);
+                console.log(`[Cache] Cleared memory cache for key: ${key}`);
+            } else {
+                // Clear all cache
+                try {
+                    if (typeof Storage !== "undefined" && localStorage) {
+                        // Clear all our app's cache keys
+                        const keysToRemove = [];
+                        for (let i = 0; i < localStorage.length; i++) {
+                            const storageKey = localStorage.key(i);
+                            if (storageKey && storageKey.startsWith('myApp_')) {
+                                keysToRemove.push(storageKey);
+                            }
+                        }
+                        keysToRemove.forEach(k => localStorage.removeItem(k));
+                        console.log(`[Cache] Cleared all app localStorage keys: ${keysToRemove.join(', ')}`);
+                    }
+                } catch (e) {
+                    console.warn(`[Cache] Failed to clear all localStorage: ${e.message}`);
+                }
+                memoryCache.clear();
+                console.log(`[Cache] Cleared all memory cache`);
+            }
         }
     };
     // #endregion
 
     // #region --- Data Fetching (from your backend) ---
-    const fetchQuestions = async (activeOnly = false) => {
+    const fetchQuestions = async (activeOnly = false, forceRefresh = false) => {
         const questionsEndpoint = `${lanIP}/api/v1/questions/`;
         const answersBaseEndpoint = `${lanIP}/api/v1/questions/`;
         const themesBaseEndpoint = `${lanIP}/api/v1/themes/`;
         const CACHE_KEY = `myApp_questionsCache_${activeOnly ? 'active' : 'all'}`;
-        const CACHE_DURATION = 60 * 1000; // 1 minute
+        const CACHE_DURATION = 30 * 1000; // 30 seconds for better development experience
+        
+        // Check for cache bypass via URL parameter or force refresh flag
+        const urlParams = new URLSearchParams(window.location.search);
+        const bypassCache = forceRefresh || urlParams.has('nocache') || urlParams.has('refresh');
 
         try {
-            // Check cache first
-            const cachedData = cache.get(CACHE_KEY);
-            if (cachedData && cache.isValid(cachedData, CACHE_DURATION)) {
-                console.log(`[Cache Hit] Returning data from cache for key: ${CACHE_KEY}`);
-                return cachedData.data;
-            }
+            // DEVELOPMENT MODE: Always bypass cache for now
+            console.log(`[DEVELOPMENT] Cache completely disabled - always fetching fresh data`);
+            
+            // Clear any existing cache
+            cache.clear(CACHE_KEY);
 
-            console.log(`[Cache Miss/Expired] Fetching new data for key: ${CACHE_KEY}`);
+            console.log(`[Fresh Fetch] Fetching new data for key: ${CACHE_KEY}`);
 
-            const questionsUrl = activeOnly ? `${questionsEndpoint}?active_only=true` : questionsEndpoint;
-            const questionsResponse = await fetch(questionsUrl);
+            // Add cache-busting timestamp to prevent browser caching
+            const cacheBuster = `_t=${Date.now()}&_r=${Math.random()}`;
+            const questionsUrl = activeOnly ? 
+                `${questionsEndpoint}?active_only=true&${cacheBuster}` : 
+                `${questionsEndpoint}?${cacheBuster}`;
+            
+            console.log(`[API Request] Fetching questions from: ${questionsUrl}`);
+            const questionsResponse = await fetch(questionsUrl, {
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            });
             if (!questionsResponse.ok) {
                 throw new Error(`HTTP error fetching questions! Status: ${questionsResponse.status}`);
             }
@@ -127,7 +200,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const uniqueThemeIds = [...new Set(questions.map(q => q.themeId).filter(id => id))];
             const themePromises = uniqueThemeIds.map(async id => {
                 try {
-                    const response = await fetch(`${themesBaseEndpoint}${id}/`);
+                    const themeUrl = `${themesBaseEndpoint}${id}/?_t=${Date.now()}&_r=${Math.random()}`;
+                    const response = await fetch(themeUrl, {
+                        cache: 'no-cache',
+                        headers: {
+                            'Cache-Control': 'no-cache, no-store, must-revalidate',
+                            'Pragma': 'no-cache',
+                            'Expires': '0'
+                        }
+                    });
                     return response.ok ? await response.json() : { id, name: 'Unknown Theme' };
                 } catch (error) {
                     console.warn(`Failed to fetch theme ${id}:`, error);
@@ -143,8 +224,15 @@ document.addEventListener('DOMContentLoaded', function() {
             // Fetch answers for each question
             const questionsWithDetails = await Promise.all(questions.map(async (question) => {
                 try {
-                    const answersUrl = `${answersBaseEndpoint}${question.id}/answers`;
-                    const answersResponse = await fetch(answersUrl);
+                    const answersUrl = `${answersBaseEndpoint}${question.id}/answers?_t=${Date.now()}&_r=${Math.random()}`;
+                    const answersResponse = await fetch(answersUrl, {
+                        cache: 'no-cache',
+                        headers: {
+                            'Cache-Control': 'no-cache, no-store, must-revalidate',
+                            'Pragma': 'no-cache',
+                            'Expires': '0'
+                        }
+                    });
                     const answersData = answersResponse.ok ? await answersResponse.json() : { answers: [] };
                     
                     return {
@@ -183,7 +271,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const fetchThemes = async () => {
         try {
-            const response = await fetch(`${lanIP}/api/v1/themes/`);
+            const cacheBuster = `_t=${Date.now()}&_r=${Math.random()}`;
+            const themesUrl = `${lanIP}/api/v1/themes/?${cacheBuster}`;
+            console.log(`[API Request] Fetching themes from: ${themesUrl}`);
+            
+            const response = await fetch(themesUrl, {
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            });
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const themes = await response.json();
             
@@ -537,6 +636,32 @@ document.addEventListener('DOMContentLoaded', function() {
     const setupEventListeners = () => {
         setupQuestionEventListeners();
         
+        // Add keyboard shortcut for cache refresh (Ctrl+Shift+R or Cmd+Shift+R)
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'R') {
+                e.preventDefault();
+                console.log('[Manual Cache Clear] Triggered via keyboard shortcut');
+                cache.clear();
+                location.reload();
+            }
+        });
+        
+        // Add double-click on logo/header to clear cache (if you have one)
+        const header = document.querySelector('h1, .logo, .app-title');
+        if (header) {
+            let clickCount = 0;
+            header.addEventListener('click', () => {
+                clickCount++;
+                if (clickCount === 2) {
+                    console.log('[Manual Cache Clear] Triggered via double-click');
+                    cache.clear();
+                    alert('Cache cleared! The page will reload to fetch fresh data.');
+                    location.reload();
+                }
+                setTimeout(() => clickCount = 0, 500);
+            });
+        }
+        
         if (dom.toggleSelector) {
             dom.toggleSelector.addEventListener('click', () => {
                 if (dom.questionSelector) {
@@ -598,15 +723,35 @@ document.addEventListener('DOMContentLoaded', function() {
     const main = async () => {
         console.log('Starting main initialization...');
         
+        // FORCE CLEAR ALL CACHE ON STARTUP
+        console.log('[STARTUP] Clearing all cache to ensure fresh data...');
+        cache.clear(); // Clear all cache
+        
+        // Clear browser cache for this domain
+        if ('caches' in window) {
+            try {
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+                console.log('[STARTUP] Cleared service worker caches');
+            } catch (e) {
+                console.log('[STARTUP] No service worker caches to clear');
+            }
+        }
+        
         if (dom.questionDisplay) {
             dom.questionDisplay.style.display = 'none';
         }
         
         try {
+            console.log('%c[FRESH DATA MODE] Always fetching latest data from server...', 'color: #ff6b6b; font-weight: bold; background: #fff3cd; padding: 4px;');
             console.log('Initializing practice hub...');
             
+            // Check if we should force refresh on startup
+            const urlParams = new URLSearchParams(window.location.search);
+            const forceRefresh = urlParams.has('nocache') || urlParams.has('refresh');
+            
             // First fetch questions
-            const questions = await fetchQuestions(true);
+            const questions = await fetchQuestions(true, forceRefresh);
             allQuestions = questions;
             console.log(`Loaded ${allQuestions.length} questions`);
             
@@ -620,7 +765,18 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Then fetch themes and calculate counts from the questions we already have
-            const themesResponse = await fetch(`${lanIP}/api/v1/themes/`);
+            const themesCacheBuster = `_t=${Date.now()}&_r=${Math.random()}`;
+            const themesUrl = `${lanIP}/api/v1/themes/?${themesCacheBuster}`;
+            console.log(`[API Request] Fetching themes in main from: ${themesUrl}`);
+            
+            const themesResponse = await fetch(themesUrl, {
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            });
             if (!themesResponse.ok) throw new Error(`HTTP error! status: ${themesResponse.status}`);
             const themes = await themesResponse.json();
             
@@ -667,5 +823,13 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     main();
+    
+    // Development helper - log cache clearing options
+    console.log('%c[Cache Helper] Available cache clearing options:', 'color: #4CAF50; font-weight: bold;');
+    console.log('• Add ?nocache or ?refresh to URL to bypass cache on page load');
+    console.log('• Press Ctrl+Shift+R (or Cmd+Shift+R on Mac) to clear cache and reload');
+    console.log('• Double-click the page header/title to clear cache');
+    console.log('• Cache duration is now 30 seconds for development');
+    
     // #endregion
 });

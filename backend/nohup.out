@@ -1,0 +1,46 @@
+Starting Convert The Spire Backend API...
+Download directory: /tmp/convert_the_spire
+ * Serving Flask app 'video_converter_api'
+ * Debug mode: on
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://192.168.123.248:5001
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 782-453-247
+INFO:werkzeug:127.0.0.1 - - [27/Sep/2025 18:07:47] "GET /api/health HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [27/Sep/2025 18:08:00] "GET /api/health HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [27/Sep/2025 18:08:13] "POST /api/validate-url HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [27/Sep/2025 18:08:40] "POST /api/validate-url HTTP/1.1" 200 -
+INFO:werkzeug: * Detected change in '/home/student/Project/project-one/backend/app.py', reloading
+Starting Convert The Spire Backend API...
+Download directory: /tmp/convert_the_spire
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 782-453-247
+INFO:werkzeug: * Detected change in '/home/student/Project/project-one/backend/app.py', reloading
+Starting Convert The Spire Backend API...
+Download directory: /tmp/convert_the_spire
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 782-453-247
+INFO:werkzeug: * Detected change in '/home/student/Project/project-one/backend/app.py', reloading
+Starting Convert The Spire Backend API...
+Download directory: /tmp/convert_the_spire
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 782-453-247
+INFO:werkzeug: * Detected change in '/home/student/Project/.venv/lib/python3.11/site-packages/yt_dlp/aes.py', reloading
+Starting Convert The Spire Backend API...
+Download directory: /tmp/convert_the_spire
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 782-453-247
+INFO:werkzeug: * Detected change in '/home/student/Project/project-one/backend/app.py', reloading
+Starting Convert The Spire Backend API...
+Download directory: /tmp/convert_the_spire
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 782-453-247

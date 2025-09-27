@@ -1,0 +1,19 @@
+# Convert The Spire - Video Converter Backend Requirements
+
+# Core Flask application
+Flask==3.0.0
+Flask-CORS==4.0.0
+
+# Video downloading and processing
+yt-dlp==2023.12.30
+
+# Additional utilities
+requests==2.31.0
+python-dateutil==2.8.2
+
+# Optional: For better performance and additional formats
+ffmpeg-python==0.2.0
+
+# Development and testing
+pytest==7.4.3
+pytest-flask==1.3.0

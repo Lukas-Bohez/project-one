@@ -215,6 +215,22 @@ class QuestionRepository:
         
         return Database.execute_sql(sql, params)
     
+    # MIGRATION operations
+    @staticmethod
+    def migrate_questions_to_theme(source_theme_id, target_theme_id):
+        """
+        Migrate all questions from source theme to target theme.
+        Returns True if successful, False otherwise.
+        """
+        try:
+            sql = "UPDATE questions SET themeId = %s WHERE themeId = %s"
+            params = [target_theme_id, source_theme_id]
+            result = Database.execute_sql(sql, params)
+            return result is not None
+        except Exception as e:
+            print(f"Error migrating questions: {e}")
+            return False
+    
     # DELETE operations
     @staticmethod
     def delete_question(question_id):
