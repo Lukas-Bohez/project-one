@@ -53,7 +53,8 @@ class AuthSystem {
                     return false;
                 }
             } catch (error) {
-                console.error('Auto-login error:', error);
+                console.error('Auto-login error:', error.message || error);
+                // Don't show error message for auto-login failures, just clear and show modal
                 this.clearStoredCredentials();
                 return false;
             }
@@ -138,14 +139,27 @@ class AuthSystem {
     }
 
     showError(message) {
-        const errorEl = document.getElementById('authError');
-        if (errorEl) {
-            errorEl.textContent = message;
-            errorEl.classList.add('is-visible');
+        const errorContainer = document.getElementById('errorContainer');
+        if (errorContainer) {
+            errorContainer.textContent = message;
+            errorContainer.style.display = 'block';
+            errorContainer.classList.add('error-shake');
+            
+            // Remove shake animation after it completes
             setTimeout(() => {
-                errorEl.classList.remove('is-visible');
-                errorEl.textContent = '';
-            }, 5000);
+                errorContainer.classList.remove('error-shake');
+            }, 300);
+            
+            // Auto-hide after 6 seconds (longer for better UX)
+            setTimeout(() => {
+                if (errorContainer.textContent === message) {
+                    errorContainer.style.display = 'none';
+                }
+            }, 6000);
+        } else {
+            // Fallback: create error message if container doesn't exist
+            console.error('Error container not found, message:', message);
+            alert(message);
         }
     }
 
@@ -174,23 +188,69 @@ class AuthSystem {
         const lastName = lastNameInput ? lastNameInput.value.trim() : '';
         const password = passwordInput ? passwordInput.value : '';
 
-        // Store credentials for auto-login
+        // Clear any existing error styling
+        [firstNameInput, lastNameInput, passwordInput].forEach(input => {
+            if (input) input.classList.remove('error');
+        });
+
+        // Validate first name
+        if (!firstName) {
+            this.showError('First name is required');
+            if (firstNameInput) firstNameInput.classList.add('error');
+            return null;
+        }
+        if (firstName.length < 1) {
+            this.showError('First name must be at least 1 character long');
+            if (firstNameInput) firstNameInput.classList.add('error');
+            return null;
+        }
+        if (firstName.length > 50) {
+            this.showError('First name must be 50 characters or less');
+            if (firstNameInput) firstNameInput.classList.add('error');
+            return null;
+        }
+
+        // Validate last name
+        if (!lastName) {
+            this.showError('Last name is required');
+            if (lastNameInput) lastNameInput.classList.add('error');
+            return null;
+        }
+        if (lastName.length < 1) {
+            this.showError('Last name must be at least 1 character long');
+            if (lastNameInput) lastNameInput.classList.add('error');
+            return null;
+        }
+        if (lastName.length > 50) {
+            this.showError('Last name must be 50 characters or less');
+            if (lastNameInput) lastNameInput.classList.add('error');
+            return null;
+        }
+
+        // Validate password
+        if (!password) {
+            this.showError('Password is required');
+            if (passwordInput) passwordInput.classList.add('error');
+            return null;
+        }
+        if (password.length < 8) {
+            this.showError('Password must be at least 8 characters long');
+            if (passwordInput) passwordInput.classList.add('error');
+            return null;
+        }
+        
+        // Additional password strength checks
+        if (!/[a-zA-Z]/.test(password)) {
+            this.showError('Password must contain at least one letter');
+            if (passwordInput) passwordInput.classList.add('error');
+            return null;
+        }
+        
+        // Store credentials for auto-login only after validation
         localStorage.setItem(STORAGE_KEYS.USER.FIRST_NAME, firstName);
         localStorage.setItem(STORAGE_KEYS.USER.LAST_NAME, lastName);
         localStorage.setItem(STORAGE_KEYS.USER.PASSWORD, password);
 
-        if (!firstName) {
-            this.showError('First name is required');
-            return null;
-        }
-        if (!lastName) {
-            this.showError('Last name is required');
-            return null;
-        }
-        if (!password) {
-            this.showError('Password is required');
-            return null;
-        }
         return { firstName, lastName, password };
     }
 
@@ -215,7 +275,7 @@ class AuthSystem {
             }
         } catch (error) {
             console.error('Login error:', error);
-            const errorMessage = error.detail || 'Login failed. Please check your credentials.';
+            const errorMessage = error.message || 'Login failed. Please check your credentials.';
             this.showError(errorMessage);
         } finally {
             this.hideLoading(loginBtn, 'Login');
@@ -244,7 +304,7 @@ class AuthSystem {
             }
         } catch (error) {
             console.error('Registration error:', error);
-            const errorMessage = error.detail || 'Registration failed. User may already exist or password is too weak.';
+            const errorMessage = error.message || 'Registration failed. User may already exist or password is too weak.';
             this.showError(errorMessage);
         } finally {
             this.hideLoading(registerBtn, 'Register');
@@ -267,13 +327,53 @@ class AuthSystem {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw errorData;
+                let errorData;
+                try {
+                    errorData = await response.json();
+                } catch (parseError) {
+                    // If JSON parsing fails, create a generic error
+                    throw new Error(`Server error (${response.status}): ${response.statusText}`);
+                }
+                
+                // Handle different error response formats
+                let errorMessage = 'Unknown server error';
+                
+                if (typeof errorData === 'string') {
+                    errorMessage = errorData;
+                } else if (errorData && typeof errorData === 'object') {
+                    // Try different possible error message fields
+                    errorMessage = errorData.detail || 
+                                 errorData.message || 
+                                 errorData.error || 
+                                 errorData.msg ||
+                                 (errorData.detail && errorData.detail[0] && errorData.detail[0].msg) || // FastAPI validation errors
+                                 JSON.stringify(errorData);
+                    
+                    // Handle FastAPI validation errors (422 status)
+                    if (response.status === 422 && errorData.detail && Array.isArray(errorData.detail)) {
+                        const validationErrors = errorData.detail.map(err => {
+                            const field = err.loc && err.loc.length > 1 ? err.loc[err.loc.length - 1] : 'field';
+                            return `${field}: ${err.msg}`;
+                        }).join(', ');
+                        errorMessage = `Validation error: ${validationErrors}`;
+                    }
+                }
+                
+                throw new Error(errorMessage);
             }
 
             return await response.json();
         } catch (error) {
-            throw error;
+            // Re-throw with proper error message handling
+            if (error instanceof Error) {
+                throw error;
+            } else if (typeof error === 'object' && error !== null) {
+                // Handle cases where error is an object but not an Error instance
+                const errorMessage = error.detail || error.message || error.error || 'Network or server error';
+                throw new Error(errorMessage);
+            } else {
+                throw new Error('Network or server error');
+            }
         }
     }
 
@@ -294,6 +394,9 @@ class AuthSystem {
         this.hideAuthModal();
         this.notifyUserAuthenticated(this.currentUser);
         this.showWelcomeMessage(this.currentUser);
+        
+        // Only reload if quiz session isn't properly loaded
+        this.checkAndReloadIfNeeded();
     }
 
     registerUser(userData, userId) {
@@ -319,6 +422,100 @@ class AuthSystem {
         document.dispatchEvent(new CustomEvent('userRegistered', {
             detail: { user: newUser }
         }));
+        
+        // Only reload if quiz session isn't properly loaded
+        this.checkAndReloadIfNeeded();
+    }
+
+    checkAndReloadIfNeeded() {
+        // Check if we've already done a reload for this session to prevent multiple reloads
+        const reloadKey = 'quiz_reload_attempted';
+        const lastReloadTime = sessionStorage.getItem(reloadKey);
+        const now = Date.now();
+        
+        // If we reloaded less than 30 seconds ago, skip any reload attempts
+        if (lastReloadTime && (now - parseInt(lastReloadTime)) < 30000) {
+            console.log('Recent reload detected, skipping reload check to prevent reload loop');
+            return;
+        }
+        
+        // Single check after giving systems time to initialize
+        setTimeout(() => {
+            console.log('Performing single quiz state check...');
+            
+            // Only check for the most critical issue: stuck on session 2
+            const sessionSelector = document.querySelector('select');
+            if (sessionSelector && sessionSelector.value === '2') {
+                console.log('Detected stuck on session 2, performing ONE reload...');
+                
+                // Mark that we're about to reload
+                sessionStorage.setItem(reloadKey, now.toString());
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                console.log('Quiz session appears to be working correctly, no reload needed.');
+            }
+        }, 2000); // Give more time for systems to initialize
+    }
+
+    shouldReloadPage() {
+        // Check various conditions that indicate the quiz isn't properly loaded
+        
+        // 1. Check if chat system has a session ID
+        if (window.chatSystemInstance) {
+            const chatSessionId = window.chatSystemInstance.getSessionId();
+            console.log('Chat session ID:', chatSessionId);
+            if (!chatSessionId || chatSessionId === 2) {
+                console.log('Chat system has no valid session ID, needs reload');
+                return true;
+            }
+        }
+        
+        // 2. Check if we're stuck on session 2 (common issue) 
+        const sessionSelector = document.querySelector('select');
+        if (sessionSelector && sessionSelector.value === '2') {
+            console.log('Detected stuck on session 2, needs reload');
+            return true;
+        }
+        
+        // 3. Check if QuizApp is properly initialized
+        if (!window.quizApp) {
+            console.log('QuizApp not found, needs reload');
+            return true;
+        }
+        
+        // 4. Check if current user is properly set in QuizApp
+        const quizAppUser = window.quizApp.getCurrentUser();
+        if (!quizAppUser || !quizAppUser.id) {
+            console.log('QuizApp has no current user, needs reload');
+            return true;
+        }
+        
+        // 5. Check if socket connection exists and is connected
+        if (window.socket && !window.socket.connected) {
+            console.log('Socket not connected, needs reload');
+            return true;
+        }
+        
+        // 6. Check for critical quiz elements (but be less strict)
+        const quizContainer = document.querySelector('.c-quiz-container, #quiz-container, [data-quiz-container]');
+        if (!quizContainer) {
+            console.log('No quiz container found, needs reload');
+            return true;
+        }
+        
+        // 7. Check for active session in chat system
+        if (window.chatSystemInstance && typeof window.chatSystemInstance.canChat === 'function') {
+            if (!window.chatSystemInstance.canChat()) {
+                console.log('Chat system cannot chat (user not properly set), needs reload');
+                return true;
+            }
+        }
+        
+        // If all checks pass, no reload needed
+        return false;
     }
 
     notifyUserAuthenticated(user) {

@@ -7,6 +7,27 @@ class QuizQuestionHandler {
         this.currentUser = null;
         this.players = [];
         this.timeRemaining = 0;
+        
+        // Listen for answer responses from server
+        if (this.socket) {
+            this.socket.on('answer_response', (responseData) => {
+                console.log("=== ANSWER RESPONSE FROM SERVER ===");
+                console.log("Response data:", JSON.stringify(responseData, null, 2));
+                
+                if (responseData.success) {
+                    console.log("✅ Answer submitted successfully!");
+                    console.log("Is correct:", responseData.is_correct);
+                    console.log("Points earned:", responseData.points_earned);
+                } else {
+                    console.error("❌ Answer submission failed:", responseData.error);
+                    if (this.handleErrorDisplay) {
+                        this.handleErrorDisplay(responseData.error);
+                    }
+                }
+            });
+            
+            console.log("Socket event listeners set up for answer responses");
+        }
     }
 
     setCurrentUser(user) {
@@ -60,6 +81,12 @@ clearExplanations() {
         explanationModal.remove();
     }
     
+    // Clear any error messages
+    const errorContainer = document.getElementById('errorDisplay');
+    if (errorContainer) {
+        errorContainer.style.display = 'none';
+    }
+    
     // Clear any explanation content from the main question area
     const questionText = document.getElementById('questionText');
     if (questionText && questionText.querySelector('.explanation-content')) {
@@ -107,6 +134,13 @@ clearExplanations() {
 
     setQuestionText(questionData) {
         const questionText = document.getElementById('questionText');
+        const errorContainer = document.getElementById('errorDisplay');
+        
+        // Clear any error messages when displaying new content
+        if (errorContainer) {
+            errorContainer.style.display = 'none';
+        }
+        
         if (questionText) {
             // Use custom question text if provided, otherwise use default
             let questionType;
@@ -344,28 +378,51 @@ bindAnswerEvents() {
     }
 
     answerBoxes.forEach((box) => {
-        // Remove old listener if it exists
-        const oldClickListener = box.__quizAnswerListener;
-        if (oldClickListener) {
-            box.removeEventListener('click', oldClickListener);
+        // Remove ALL existing listeners to prevent conflicts
+        const oldListeners = box.getEventListeners ? box.getEventListeners('click') : [];
+        if (box.__quizAnswerListener) {
+            box.removeEventListener('click', box.__quizAnswerListener);
+            box.__quizAnswerListener = null;
         }
 
-        // Add new listener - pass the box element, we'll get ID from it
-        const newClickListener = () => {
-            this.handleAnswerClick(box);
-        };
-        box.addEventListener('click', newClickListener);
-        box.__quizAnswerListener = newClickListener;
+        // Mark this handler as the active one
+        if (!window.activeQuizHandler) {
+            window.activeQuizHandler = this;
+        }
+
+        // Only bind if this is the active handler
+        if (window.activeQuizHandler === this) {
+            const newClickListener = (event) => {
+                // Prevent other handlers from processing this click
+                event.stopImmediatePropagation();
+                console.log("Answer clicked by active handler:", this);
+                this.handleAnswerClick(box);
+            };
+            box.addEventListener('click', newClickListener, { capture: true });
+            box.__quizAnswerListener = newClickListener;
+        }
     });
 
-    console.log("Bound events to", answerBoxes.length, "answer boxes");
+    console.log("Bound events to", answerBoxes.length, "answer boxes (active handler:", window.activeQuizHandler === this, ")");
 }
 
 handleAnswerClick(boxElement) {
-    console.log("Answer clicked on box:", boxElement);
+    console.log("=== ANSWER CLICK DEBUG ===");
+    console.log("Handler instance:", this);
+    console.log("Active handler:", window.activeQuizHandler);
+    console.log("Is active:", window.activeQuizHandler === this);
+    console.log("Box element:", boxElement);
+    console.log("Current question:", this.currentQuestion);
+    console.log("Current user:", this.currentUser);
+    console.log("Socket connected:", this.socket && this.socket.connected);
     
     if (!this.currentQuestion || !this.currentQuestion.type) {
-        console.error("Invalid question state");
+        console.error("Invalid question state - no current question");
+        return;
+    }
+
+    if (!this.socket || !this.socket.connected) {
+        console.error("Socket not connected");
         return;
     }
 
@@ -427,8 +484,13 @@ handleAnswerClick(boxElement) {
 
     const userId = this.getCurrentUserId();
 
+    console.log("=== USER ID DEBUG ===");
+    console.log("Current user object:", this.currentUser);
+    console.log("Extracted user ID:", userId);
+
     if (!userId) {
         console.error("No current user ID available");
+        console.error("Current user object:", this.currentUser);
         this.handleErrorDisplay("Please log in again");
         this.enableAnswerBoxes();
         return;
@@ -473,8 +535,23 @@ handleAnswerClick(boxElement) {
             request_user_data: true
         };
 
-        console.log("Emitting submit_answer:", emissionData);
-        this.socket.emit('submit_answer', emissionData);
+        console.log("=== EMITTING ANSWER ===");
+        console.log("Full emission data:", JSON.stringify(emissionData, null, 2));
+        console.log("Required backend fields:");
+        console.log("- userId:", emissionData.userId, "(type:", typeof emissionData.userId, ")");
+        console.log("- questionId:", emissionData.questionId, "(type:", typeof emissionData.questionId, ")");
+        console.log("- answerIndex:", emissionData.answerIndex, "(type:", typeof emissionData.answerIndex, ")");
+        console.log("Socket state:", this.socket.connected ? 'connected' : 'disconnected');
+        console.log("Socket ID:", this.socket.id);
+        
+        try {
+            this.socket.emit('submit_answer', emissionData);
+            console.log("✅ Answer successfully emitted to server");
+            console.log("Waiting for answer_response event from server...");
+        } catch (error) {
+            console.error("❌ Failed to emit answer:", error);
+            this.handleErrorDisplay("Failed to submit answer");
+        }
     }
 
     // Reset visual state after delay
@@ -1260,17 +1337,29 @@ displayFinalScreen(title, message) {
     handleErrorDisplay(message) {
         console.error("Question error:", message);
 
-        const questionText = document.getElementById('questionText');
-        const questionImage = document.getElementById('questionImage');
+        const errorContainer = document.getElementById('errorDisplay');
+        
+        if (errorContainer) {
+            errorContainer.textContent = message;
+            errorContainer.style.display = 'block';
+            
+            // Auto-hide error after 5 seconds unless it's a critical error
+            if (!message.includes('login') && !message.includes('connection')) {
+                setTimeout(() => {
+                    errorContainer.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        // Don't hide answer buttons for explanation phase errors - just show the error
+        if (message.includes('explanation phase')) {
+            return;
+        }
+        
+        // Only disable buttons for critical errors
         const answerButtons = document.querySelectorAll('.c-answer-btn');
-
-        if (questionText) questionText.textContent = `ERROR: ${message}`;
-        if (questionImage) questionImage.innerHTML = '';
-
         answerButtons.forEach(button => {
-            button.style.display = 'none';
             button.disabled = true;
-            button.textContent = '';
             button.classList.remove('selected');
         });
 

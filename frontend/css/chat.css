@@ -1,3 +1,4 @@
+/* Dark mode chat container */
 .theme-dark .c-chat-container, [data-theme="dark"] .c-chat-container {
     background: linear-gradient(145deg,
         rgba(30, 41, 59, 0.98) 0%,
@@ -5,8 +6,69 @@
     border: 1px solid var(--border-color);
     color: var(--text-primary);
     box-shadow:
-    0 20px 40px rgba(0, 0, 0, 0.3),
-    0 8px 32px rgba(74, 111, 165, 0.2);
+        0 20px 40px rgba(0, 0, 0, 0.3),
+        0 8px 32px rgba(74, 111, 165, 0.2);
+}
+
+/* Dark mode chat content */
+.theme-dark .c-chat-content, [data-theme="dark"] .c-chat-content {
+    background: linear-gradient(to bottom,
+        rgba(30, 41, 59, 0.8) 0%,
+        rgba(15, 23, 42, 0.6) 100%);
+}
+
+/* Dark mode chat messages */
+.theme-dark .c-chat-message, [data-theme="dark"] .c-chat-message {
+    background: rgba(30, 41, 59, 0.9);
+    border-left: 3px solid var(--primary-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    color: var(--text-primary);
+}
+
+.theme-dark .c-chat-message:hover, [data-theme="dark"] .c-chat-message:hover {
+    background: rgba(30, 41, 59, 1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Dark mode chat text and sender */
+.theme-dark .c-chat-sender, [data-theme="dark"] .c-chat-sender {
+    color: var(--primary-color);
+}
+
+.theme-dark .c-chat-text, [data-theme="dark"] .c-chat-text {
+    color: var(--text-primary);
+}
+
+/* Dark mode input container */
+.theme-dark .c-chat-input-container, [data-theme="dark"] .c-chat-input-container {
+    background: rgba(30, 41, 59, 0.95);
+    border-top: 1px solid var(--border-color);
+}
+
+/* Dark mode input */
+.theme-dark .c-chat-input, [data-theme="dark"] .c-chat-input {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+}
+
+.theme-dark .c-chat-input:focus, [data-theme="dark"] .c-chat-input:focus {
+    background: var(--bg-secondary);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.theme-dark .c-chat-input::placeholder, [data-theme="dark"] .c-chat-input::placeholder {
+    color: var(--text-muted);
+}
+
+/* Dark mode scrollbar */
+.theme-dark .c-chat-messages::-webkit-scrollbar-thumb, [data-theme="dark"] .c-chat-messages::-webkit-scrollbar-thumb {
+    background: rgba(96, 165, 250, 0.4);
+}
+
+.theme-dark .c-chat-messages::-webkit-scrollbar-thumb:hover, [data-theme="dark"] .c-chat-messages::-webkit-scrollbar-thumb:hover {
+    background: rgba(96, 165, 250, 0.6);
 }
 :root {
     /* Enhanced color palette with modern gradients and shadows */

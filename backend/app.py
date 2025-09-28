@@ -3184,6 +3184,165 @@ async def get_correct_answers_percentage():
         )
     
 
+# Player Rankings Endpoints - Simplified version that works with your existing data structure
+@app.get("/api/v1/rankings/session/{session_id}/")
+async def get_session_rankings(session_id: int):
+    """Get player rankings for a specific quiz session ordered by score."""
+    try:
+        # Use the same approach as your working sensor-data endpoint
+        # Get players who participated in this session
+        players = SessionPlayerRepository.get_session_players(session_id)
+        
+        if not players:
+            return []
+        
+        rankings = []
+        user_repo = UserRepository()
+        
+        for player in players:
+            user_id = player.get('userId') if isinstance(player, dict) else player
+            if not user_id:
+                continue
+            
+            try:
+                # Get user details
+                user = user_repo.get_user_by_id(user_id)
+                if not user:
+                    continue
+                
+                # Handle both dict and object formats
+                # Users table has first_name and last_name instead of username
+                if isinstance(user, dict):
+                    first_name = user.get('first_name', '')
+                    last_name = user.get('last_name', '')
+                    username = f"{first_name} {last_name}".strip() or f"User {user_id}"
+                    display_name = username
+                else:
+                    first_name = getattr(user, 'first_name', '')
+                    last_name = getattr(user, 'last_name', '')
+                    username = f"{first_name} {last_name}".strip() or f"User {user_id}"
+                    display_name = username
+                
+                # Calculate score using your existing function
+                score_details = calculate_player_score_detailed(session_id, user_id)
+                
+                # Calculate accuracy from the returned data
+                total_answers = score_details.get("total_answers", 0)
+                correct_answers = score_details.get("correct_answers", 0)
+                accuracy = (correct_answers / total_answers * 100) if total_answers > 0 else 0
+                
+                rankings.append({
+                    "rank": 0,  # Will be set after sorting
+                    "user_id": user_id,
+                    "username": username,
+                    "display_name": display_name or username,
+                    "total_score": score_details.get("total_score", 0),
+                    "correct_answers": correct_answers,
+                    "total_answers": total_answers,
+                    "accuracy": round(accuracy, 1),
+                    "session_id": session_id
+                })
+            except Exception as e:
+                print(f"Error processing user {user_id}: {e}")
+                continue
+        
+        # Sort by score and assign ranks
+        rankings.sort(key=lambda x: x["total_score"], reverse=True)
+        for i, ranking in enumerate(rankings):
+            ranking["rank"] = i + 1
+            
+        return rankings
+        
+    except Exception as e:
+        print(f"Error in get_session_rankings: {e}")
+        return []
+
+@app.get("/api/v1/rankings/global/")
+async def get_global_rankings(limit: int = 50):
+    """Get global player rankings - simplified version."""
+    try:
+        # Get all users
+        user_repo = UserRepository()
+        all_users = user_repo.get_all_users()
+        
+        if not all_users:
+            return []
+        
+        global_rankings = []
+        
+        for user in all_users:
+            try:
+                # Handle both dict and object formats
+                user_id = user.get('id') if isinstance(user, dict) else user.id
+                # Users table has first_name and last_name instead of username
+                if isinstance(user, dict):
+                    first_name = user.get('first_name', '')
+                    last_name = user.get('last_name', '')
+                    username = f"{first_name} {last_name}".strip() or f"User {user_id}"
+                    display_name = username
+                else:
+                    first_name = getattr(user, 'first_name', '')
+                    last_name = getattr(user, 'last_name', '')
+                    username = f"{first_name} {last_name}".strip() or f"User {user_id}"
+                    display_name = username
+                
+                # Get sessions for this user using available methods
+                user_sessions = SessionPlayerRepository.get_player_sessions(user_id)
+                
+                if not user_sessions:
+                    continue
+                    
+                total_score = 0
+                total_correct = 0
+                total_answers = 0
+                
+                # Calculate totals across all sessions
+                for session in user_sessions:
+                    session_id = session.get('sessionId') if isinstance(session, dict) else getattr(session, 'sessionId', None)
+                    if not session_id:
+                        continue
+                        
+                    try:
+                        score_details = calculate_player_score_detailed(session_id, user_id)
+                        total_score += score_details.get("total_score", 0)
+                        total_correct += score_details.get("correct_answers", 0) 
+                        total_answers += score_details.get("total_answers", 0)
+                    except Exception as e:
+                        print(f"Error calculating score for user {user_id}, session {session_id}: {e}")
+                        continue
+                
+                # Only include users with actual quiz activity
+                if total_answers > 0:
+                    accuracy = (total_correct / total_answers * 100) if total_answers > 0 else 0
+                    sessions_count = len(user_sessions)
+                    
+                    global_rankings.append({
+                        "user_id": user_id,
+                        "username": username,
+                        "display_name": display_name or username,
+                        "total_score": total_score,
+                        "sessions_played": sessions_count,
+                        "total_correct_answers": total_correct,
+                        "total_answers": total_answers,
+                        "overall_accuracy": round(accuracy, 1),
+                        "average_score_per_session": round(total_score / sessions_count, 1) if sessions_count > 0 else 0
+                    })
+                    
+            except Exception as e:
+                print(f"Error processing user {username if 'username' in locals() else 'unknown'}: {e}")
+                continue
+        
+        # Sort and rank
+        global_rankings.sort(key=lambda x: x["total_score"], reverse=True)
+        for i, ranking in enumerate(global_rankings[:limit]):
+            ranking["rank"] = i + 1
+            
+        return global_rankings[:limit]
+        
+    except Exception as e:
+        print(f"Error in get_global_rankings: {e}")
+        return []
+
 # FastAPI Endpoint
 @app.get("/api/v1/items")
 async def get_all_items():
@@ -4640,15 +4799,19 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
             break
 
         available_questions.remove(question)
+        
+        # Reset explanation flag for new question - players can now submit answers
+        explanationNow = False
+        
         update_quiz_state(session_id, 
                          asked_questions=quiz_state['asked_questions'] + [question['id']],
                          question_count=quiz_state['question_count'] + 1,
                          current_question=question,
                          waiting_for_answers=True)
 
-        # Set time limits - minimum 9 seconds for both question and explanation
+        # Set time limits - minimum 9 seconds for question, 5-10 seconds for explanation
         question_time = max(question.get('time_limit', 15), 9)  # At least 9 seconds
-        explanation_time = max(9, question_time)  # Also at least 9 seconds
+        explanation_time = max(5, min(10, question_time))  # Between 5-10 seconds
 
         # Show question
         emit_combined_question_and_answers(question['id'], sio, loop)
@@ -4736,7 +4899,7 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
                 'session_id': session_id,
                 'question_id': question['id'],
                 'explanation_text': question.get('explanation', 'No explanation available'),
-                'duration': explanation_time  # Now minimum 9 seconds
+                'duration': explanation_time  # Now 5-10 seconds
             }), loop
         ).result(timeout=1)
         global remaining_explanation_time
@@ -5111,7 +5274,15 @@ def calculate_player_score_percentage(session_id, user_id):
 async def handle_answer_submission(sid, data):
     global current_phase, progress, explanationNow, remaining_explanation_time
     print(f"data received is answer submission is {data}")
-    if explanationNow == True and remaining_explanation_time <= 0:
+    
+    # Get active session and check if we're in quiz phase
+    active_session_id = get_active_session_id()
+    if active_session_id:
+        current_phase = get_session_phase(active_session_id)
+        print(f"Current phase: {current_phase}, explanationNow: {explanationNow}")
+    
+    # Only accept answers during quiz phase, NOT during explanation phase
+    if current_phase == 'quiz' and not explanationNow:
         try:
             logger.debug(f"Starting answer submission with data: {data}")
             
@@ -5244,6 +5415,24 @@ async def handle_answer_submission(sid, data):
                 'success': False,
                 'error': 'An unexpected error occurred'
             }, room=sid)
+    else:
+        # Not accepting answers at this time - send specific error response
+        print(f"Answer rejected - Phase: {current_phase if 'current_phase' in locals() else 'unknown'}, explanationNow: {explanationNow}")
+        
+        # Provide specific error messages based on the phase
+        if explanationNow:
+            error_msg = "You cannot submit answers during the explanation phase. Please wait for the next question."
+        elif current_phase == 'voting':
+            error_msg = "Quiz is in voting phase. Please vote for a theme first."
+        elif current_phase == 'theme_display':
+            error_msg = "Quiz is displaying the selected theme. Please wait for questions to start."
+        else:
+            error_msg = f"Not accepting answers at this time (current phase: {current_phase if 'current_phase' in locals() else 'unknown'})"
+        
+        await sio.emit('answer_response', {
+            'success': False,
+            'error': error_msg
+        }, room=sid)
 
 
 @sio.on('theme_selected')
