@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
         acceptButton.textContent = 'Accept All';
         acceptButton.style.cssText = `
             padding: 12px 30px;
-            background-color: #4CAF50;
+            background-color: #2e7d32; /* darker green for AA contrast */
             color: white;
             border: none;
             border-radius: 6px;
@@ -171,8 +171,8 @@ document.addEventListener('DOMContentLoaded', () => {
             font-size: 1.1rem;
             transition: background-color 0.2s;
         `;
-        acceptButton.onmouseover = () => acceptButton.style.backgroundColor = '#45a049';
-        acceptButton.onmouseout = () => acceptButton.style.backgroundColor = '#4CAF50';
+        acceptButton.onmouseover = () => acceptButton.style.backgroundColor = '#1b5e20';
+        acceptButton.onmouseout = () => acceptButton.style.backgroundColor = '#2e7d32';
         acceptButton.onclick = () => {
             // Save consent
             const consentData = {

@@ -1,4 +1,5 @@
-// Chat System with Socket.IO support, message flagging, and auto-retry with sessionId updates
+// Chat System with Socket.IO support and auto-retry with sessionId updates
+// Note: Frontend chat filtering/flagging display has been removed; moderation is handled by the backend.
 class ChatSystem {
     constructor() {
         this.currentUser = null;
@@ -489,6 +490,7 @@ class ChatSystem {
         }
     }
 
+    // Display a chat message. Flag parameters are ignored (filtering handled by backend).
     addChatMessage(sender, message, isFlagged = false, flaggedBy = null, flaggedReason = null) {
         const chatMessages = document.getElementById('chatMessages');
         if (!chatMessages) return;
@@ -500,35 +502,12 @@ class ChatSystem {
             messageElement.classList.add('c-chat-message-system');
         }
 
-        if (isFlagged) {
-            messageElement.classList.add('c-chat-message-flagged');
-        }
-
         const sanitizedSender = this.sanitizeHTML(sender);
-        let messageContent;
-
-        if (isFlagged) {
-            let flaggedText = '[Message Flagged]';
-
-            if (flaggedBy && flaggedReason) {
-                flaggedText = `[Flagged by ${this.sanitizeHTML(flaggedBy)}: ${this.sanitizeHTML(flaggedReason)}]`;
-            } else if (flaggedBy) {
-                flaggedText = `[Flagged by ${this.sanitizeHTML(flaggedBy)}]`;
-            } else if (flaggedReason) {
-                flaggedText = `[Flagged: ${this.sanitizeHTML(flaggedReason)}]`;
-            }
-
-            messageContent = `
-                <span class="c-chat-sender">${sanitizedSender}:</span>
-                <span class="c-chat-text c-chat-flagged-text">${flaggedText}</span>
-            `;
-        } else {
-            const sanitizedMessage = this.sanitizeHTML(message);
-            messageContent = `
-                <span class="c-chat-sender">${sanitizedSender}:</span>
-                <span class="c-chat-text">${sanitizedMessage}</span>
-            `;
-        }
+        const sanitizedMessage = this.sanitizeHTML(message);
+        const messageContent = `
+            <span class="c-chat-sender">${sanitizedSender}:</span>
+            <span class="c-chat-text">${sanitizedMessage}</span>
+        `;
 
         messageElement.innerHTML = messageContent;
         chatMessages.appendChild(messageElement);

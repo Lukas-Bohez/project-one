@@ -620,7 +620,7 @@ highlightCorrectAnswer() {
                 // Highlight correct answer
                 const snesButton = box.querySelector('.snes-button');
                 if (snesButton) {
-                    snesButton.style.backgroundColor = '#4CAF50'; // Green for correct
+                    snesButton.style.backgroundColor = '#2e7d32'; // Accessible green for correct
                     const label = snesButton.querySelector('.button-label');
                     if (label) label.style.color = 'white';
                 }
