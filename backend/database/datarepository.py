@@ -2536,3 +2536,281 @@ class PlayerAnswerRepository:
         params = [session_id, user_id]
         result = Database.get_one_row(sql, params)
         return result['count'] if result else 0
+
+
+class ArticlesRepository:
+    """Repository class for managing articles in the database"""
+    
+    # CREATE operations
+    @staticmethod
+    def create_article(title: str, author: str, date_written: str, story: str = None,
+                      content: str = "", excerpt: str = None, category: str = "general",
+                      tags: str = None, word_count: int = 0, reading_time_minutes: int = 0,
+                      is_active: bool = True, is_featured: bool = False,
+                      story_id: Optional[int] = None, story_order: int = 0) -> Optional[int]:
+        """Create a new article"""
+        sql = """
+        INSERT INTO articles (title, author, date_written, story, story_id, story_order, content, excerpt,
+                            category, tags, word_count, reading_time_minutes, is_active, is_featured)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        params = [title, author, date_written, story, story_id, story_order, content, excerpt,
+                 category, tags, word_count, reading_time_minutes, is_active, is_featured]
+        return Database.execute_sql(sql, params)
+    
+    # READ operations
+    @staticmethod
+    def get_all_articles(active_only: bool = False) -> List[Dict[str, Any]]:
+        """Get all articles from the database"""
+        sql = "SELECT * FROM articles"
+        if active_only:
+            sql += " WHERE is_active = TRUE"
+        sql += " ORDER BY created_at DESC"
+        return Database.get_rows(sql)
+    
+    @staticmethod
+    def get_article_by_id(article_id: int) -> Optional[Dict[str, Any]]:
+        """Get a single article by ID"""
+        sql = "SELECT * FROM articles WHERE id = %s"
+        params = [article_id]
+        return Database.get_one_row(sql, params)
+    
+    @staticmethod
+    def get_articles_by_author(author: str, active_only: bool = False) -> List[Dict[str, Any]]:
+        """Get all articles by a specific author"""
+        sql = "SELECT * FROM articles WHERE author = %s"
+        params = [author]
+        if active_only:
+            sql += " AND is_active = TRUE"
+        sql += " ORDER BY date_written DESC"
+        return Database.get_rows(sql, params)
+    
+    @staticmethod
+    def get_articles_by_category(category: str, active_only: bool = False) -> List[Dict[str, Any]]:
+        """Get all articles in a specific category"""
+        sql = "SELECT * FROM articles WHERE category = %s"
+        params = [category]
+        if active_only:
+            sql += " AND is_active = TRUE"
+        sql += " ORDER BY date_written DESC"
+        return Database.get_rows(sql, params)
+
+    @staticmethod
+    def get_articles_by_story_id(story_id: int, active_only: bool = True) -> List[Dict[str, Any]]:
+        """Get all articles within a story, ordered by story_order"""
+        sql = "SELECT * FROM articles WHERE story_id = %s"
+        params = [story_id]
+        if active_only:
+            sql += " AND is_active = TRUE"
+        sql += " ORDER BY story_order ASC, date_written ASC, id ASC"
+        return Database.get_rows(sql, params)
+    
+    @staticmethod
+    def search_articles(search_term: str, active_only: bool = False) -> List[Dict[str, Any]]:
+        """Search articles using LIKE search"""
+        sql = """
+        SELECT * FROM articles 
+        WHERE (title LIKE %s OR content LIKE %s OR author LIKE %s OR story LIKE %s)
+        """
+        params = [f"%{search_term}%", f"%{search_term}%", f"%{search_term}%", f"%{search_term}%"]
+        if active_only:
+            sql += " AND is_active = TRUE"
+        sql += " ORDER BY created_at DESC"
+        return Database.get_rows(sql, params)
+    
+    @staticmethod
+    def get_featured_articles(limit: int = 5) -> List[Dict[str, Any]]:
+        """Get featured articles"""
+        sql = """
+        SELECT * FROM articles 
+        WHERE is_featured = TRUE AND is_active = TRUE 
+        ORDER BY date_written DESC 
+        LIMIT %s
+        """
+        params = [limit]
+        return Database.get_rows(sql, params)
+    
+    @staticmethod
+    def get_recent_articles(limit: int = 10, active_only: bool = True) -> List[Dict[str, Any]]:
+        """Get most recent articles"""
+        sql = "SELECT * FROM articles"
+        params = [limit]
+        if active_only:
+            sql += " WHERE is_active = TRUE"
+        sql += " ORDER BY created_at DESC LIMIT %s"
+        return Database.get_rows(sql, params)
+    
+    @staticmethod
+    def check_article_exists_by_title(title: str, exclude_id: int = None) -> bool:
+        """Check if an article with the same title already exists"""
+        sql = "SELECT COUNT(*) as count FROM articles WHERE title = %s"
+        params = [title]
+        
+        if exclude_id:
+            sql += " AND id != %s"
+            params.append(exclude_id)
+            
+        result = Database.get_one_row(sql, params)
+        return result['count'] > 0 if result else False
+    
+    # UPDATE operations
+    @staticmethod
+    def update_article(article_id: int, **kwargs) -> bool:
+        """Update an article with provided fields"""
+        allowed_fields = ['title', 'author', 'date_written', 'story', 'story_id', 'story_order', 'content',
+                          'excerpt', 'category', 'tags', 'word_count',
+                          'reading_time_minutes', 'is_active', 'is_featured']
+
+        updates = []
+        params = []
+
+        for field, value in kwargs.items():
+            if field in allowed_fields:
+                updates.append(f"{field} = %s")
+                params.append(value)
+
+        if not updates:
+            return False
+
+        # Add updated_at timestamp
+        updates.append("updated_at = CURRENT_TIMESTAMP")
+        params.append(article_id)
+
+        sql = f"UPDATE articles SET {', '.join(updates)} WHERE id = %s"
+        result = Database.execute_sql(sql, params)
+        return result is not None and result > 0
+
+    @staticmethod
+    def get_next_story_order(story_id: int) -> int:
+        """Return the next story_order index for given story_id (0-based)."""
+        sql = "SELECT COALESCE(MAX(story_order), -1) + 1 AS next_order FROM articles WHERE story_id = %s"
+        params = [story_id]
+        row = Database.get_one_row(sql, params)
+        try:
+            return int(row.get('next_order', 0)) if row else 0
+        except Exception:
+            return 0
+
+
+class StoriesRepository:
+    """Repository for stories table"""
+
+    @staticmethod
+    def create_story(name: str, slug: Optional[str] = None, description: Optional[str] = None) -> Optional[int]:
+        sql = """
+        INSERT INTO stories (name, slug, description)
+        VALUES (%s, %s, %s)
+        """
+        params = [name, slug, description]
+        return Database.execute_sql(sql, params)
+
+    @staticmethod
+    def get_story_by_id(story_id: int) -> Optional[Dict[str, Any]]:
+        sql = "SELECT * FROM stories WHERE id = %s"
+        params = [story_id]
+        return Database.get_one_row(sql, params)
+
+    @staticmethod
+    def get_story_by_name(name: str) -> Optional[Dict[str, Any]]:
+        sql = "SELECT * FROM stories WHERE name = %s"
+        params = [name]
+        return Database.get_one_row(sql, params)
+
+    @staticmethod
+    def list_stories() -> List[Dict[str, Any]]:
+        sql = "SELECT * FROM stories ORDER BY name ASC"
+        return Database.get_rows(sql)
+
+    @staticmethod
+    def delete_story(story_id: int) -> bool:
+        sql = "DELETE FROM stories WHERE id = %s"
+        params = [story_id]
+        result = Database.execute_sql(sql, params)
+        return result is not None and result > 0
+    
+    @staticmethod
+    def set_article_active_status(article_id: int, is_active: bool) -> bool:
+        """Set article active/inactive status"""
+        sql = "UPDATE articles SET is_active = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
+        params = [is_active, article_id]
+        result = Database.execute_sql(sql, params)
+        return result is not None and result > 0
+    
+    @staticmethod
+    def set_article_featured_status(article_id: int, is_featured: bool) -> bool:
+        """Set article featured status"""
+        sql = "UPDATE articles SET is_featured = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
+        params = [is_featured, article_id]
+        result = Database.execute_sql(sql, params)
+        return result is not None and result > 0
+    
+    @staticmethod
+    def increment_view_count(article_id: int) -> bool:
+        """Increment the view count for an article"""
+        sql = "UPDATE articles SET view_count = view_count + 1 WHERE id = %s"
+        params = [article_id]
+        result = Database.execute_sql(sql, params)
+        return result is not None and result > 0
+    
+    # DELETE operations
+    @staticmethod
+    def delete_article(article_id: int) -> bool:
+        """Delete an article from the database"""
+        sql = "DELETE FROM articles WHERE id = %s"
+        params = [article_id]
+        result = Database.execute_sql(sql, params)
+        return result is not None and result > 0
+    
+    # STATISTICS operations
+    @staticmethod
+    def get_articles_stats() -> Dict[str, Any]:
+        """Get articles statistics"""
+        stats = {}
+        
+        # Total articles
+        sql = "SELECT COUNT(*) as total FROM articles"
+        result = Database.get_one_row(sql)
+        stats['total_articles'] = result['total'] if result else 0
+        
+        # Active articles
+        sql = "SELECT COUNT(*) as active FROM articles WHERE is_active = TRUE"
+        result = Database.get_one_row(sql)
+        stats['active_articles'] = result['active'] if result else 0
+        
+        # Featured articles
+        sql = "SELECT COUNT(*) as featured FROM articles WHERE is_featured = TRUE"
+        result = Database.get_one_row(sql)
+        stats['featured_articles'] = result['featured'] if result else 0
+        
+        # Articles by category
+        sql = """
+        SELECT category, COUNT(*) as count 
+        FROM articles 
+        WHERE is_active = TRUE 
+        GROUP BY category 
+        ORDER BY count DESC
+        """
+        stats['by_category'] = Database.get_rows(sql)
+        
+        # Top authors
+        sql = """
+        SELECT author, COUNT(*) as count 
+        FROM articles 
+        WHERE is_active = TRUE 
+        GROUP BY author 
+        ORDER BY count DESC 
+        LIMIT 5
+        """
+        stats['top_authors'] = Database.get_rows(sql)
+        
+        # Most viewed articles
+        sql = """
+        SELECT id, title, view_count 
+        FROM articles 
+        WHERE is_active = TRUE 
+        ORDER BY view_count DESC 
+        LIMIT 5
+        """
+        stats['most_viewed'] = Database.get_rows(sql)
+        
+        return stats

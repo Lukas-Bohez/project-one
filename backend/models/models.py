@@ -486,3 +486,103 @@ class PaginationInfo(BaseModel):
 
 class ShutdownRequest(BaseModel):
     action: str = "shutdown"
+
+
+# Article Models
+class ArticleBase(BaseModel):
+    title: str = Field(..., max_length=500, description="Article title")
+    author: str = Field(..., max_length=200, description="Article author")
+    date_written: str = Field(..., description="Date when the article was written (YYYY-MM-DD format)")
+    # Deprecated string story label (kept for backward compatibility with older data)
+    story: Optional[str] = None
+    # New relational story reference and ordering within a story
+    story_id: Optional[int] = Field(default=None, description="FK to stories.id")
+    story_order: Optional[int] = Field(default=0, ge=0, description="Display order within the story")
+    content: str = Field(..., description="Article content (JSON format)")
+    excerpt: Optional[str] = None
+    category: str = Field(default="general", max_length=100, description="Article category")
+    tags: Optional[str] = Field(default=None, max_length=500, description="Comma-separated tags")
+    word_count: int = Field(default=0, ge=0, description="Word count of the article")
+    reading_time_minutes: int = Field(default=0, ge=0, description="Estimated reading time in minutes")
+    is_active: bool = Field(default=True, description="Whether the article is active")
+    is_featured: bool = Field(default=False, description="Whether the article is featured")
+
+class ArticleCreate(ArticleBase):
+    pass
+
+class ArticleUpdate(BaseModel):
+    title: Optional[str] = Field(None, max_length=500, description="Article title")
+    author: Optional[str] = Field(None, max_length=200, description="Article author")
+    date_written: Optional[str] = Field(None, description="Date when the article was written (YYYY-MM-DD format)")
+    story: Optional[str] = None
+    story_id: Optional[int] = Field(default=None, description="FK to stories.id")
+    story_order: Optional[int] = Field(default=None, ge=0, description="Display order within the story")
+    content: Optional[str] = Field(None, description="Article content (JSON format)")
+    excerpt: Optional[str] = None
+    category: Optional[str] = Field(None, max_length=100, description="Article category")
+    tags: Optional[str] = Field(None, max_length=500, description="Comma-separated tags")
+    word_count: Optional[int] = Field(None, ge=0, description="Word count of the article")
+    reading_time_minutes: Optional[int] = Field(None, ge=0, description="Estimated reading time in minutes")
+    is_active: Optional[bool] = Field(None, description="Whether the article is active")
+    is_featured: Optional[bool] = Field(None, description="Whether the article is featured")
+
+class ArticleResponse(ArticleBase):
+    id: int
+    view_count: int = Field(default=0, description="Number of times the article has been viewed")
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+    
+    @field_validator('date_written', mode='before')
+    @classmethod
+    def validate_date_written(cls, v):
+        if hasattr(v, 'strftime'):  # It's a date/datetime object
+            return v.strftime('%Y-%m-%d')
+        return str(v)  # Convert to string if it's not already
+
+class ArticleListResponse(BaseModel):
+    articles: list[ArticleResponse]
+    total_count: int
+    active_count: int
+    featured_count: int
+
+class ArticleSearchResult(BaseModel):
+    id: int
+    title: str
+    author: str
+    excerpt: Optional[str] = None
+    category: str
+    date_written: str
+    view_count: int
+    is_featured: bool
+    
+class ArticleStatsResponse(BaseModel):
+    total_articles: int
+    active_articles: int
+    featured_articles: int
+    by_category: list[Dict[str, Any]]
+    top_authors: list[Dict[str, Any]]
+    most_viewed: list[Dict[str, Any]]
+
+class ArticleStatusUpdate(BaseModel):
+    is_active: Optional[bool] = None
+    is_featured: Optional[bool] = None
+
+# Stories models
+class StoryBase(BaseModel):
+    name: str = Field(..., max_length=255, description="Story name/label")
+    slug: Optional[str] = Field(default=None, max_length=255, description="URL-friendly unique slug")
+    description: Optional[str] = None
+
+class StoryCreate(StoryBase):
+    pass
+
+class StoryResponse(StoryBase):
+    id: int
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True

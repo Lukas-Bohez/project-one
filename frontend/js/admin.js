@@ -1218,6 +1218,16 @@ const showNotification = (message, type = 'success') => {
         }, 300);
     }, 3000);
 };
+
+// Expose shared helpers/globals for other scripts (e.g., articles.js)
+try {
+    window.hideEditModal = hideEditModal;
+    window.showNotification = showNotification;
+    window.showConfirmDialog = showConfirmDialog;
+    window.domAdmin = domAdmin;
+} catch (e) {
+    // no-op if window is not available
+}
 // #endregion
 
 // #region ***  Data manipulation functions             ***********
@@ -1228,6 +1238,16 @@ const loadTabData = async (tabId) => {
             break;
         case 'themes':
             await loadThemes();
+            break;
+        case 'stories':
+            if (typeof loadStoriesTab === 'function') {
+                await loadStoriesTab();
+            }
+            break;
+        case 'articles':
+            if (typeof loadArticles === 'function') {
+                await loadArticles();
+            }
             break;
         case 'users':
             await loadUsers();
@@ -2123,6 +2143,9 @@ const listenToAddButtons = () => {
             showEditModal('users');
         });
     }
+
+    // Articles functionality is handled in articles.js
+    // The articles tab will be initialized when that script loads
 };
 
 const listenToMigration = () => {
@@ -2180,6 +2203,12 @@ const initAdmin = async () => {
     listenToModal();
     listenToFilters(); // Updated to use the new function name
     listenToAddButtons();
+    
+    // Initialize articles functionality if available
+    if (typeof listenToArticles === 'function') {
+        listenToArticles();
+        console.log('Articles functionality initialized');
+    }
     
     // Preload themes at initialization
     try {
@@ -2497,4 +2526,98 @@ const handleMigrationClick = async () => {
     }
 };
 
+// #endregion
+
+// #region ***  Stories Initialization                   ***********
+// Initialize story filter dropdown when DOM is ready
+window.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const storyFilter = document.querySelector('.js-story-filter');
+    if (storyFilter && typeof fetchStories === 'function') {
+      const stories = await fetchStories();
+      storyFilter.innerHTML = '<option value="">All Stories</option>' +
+        stories.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+      storyFilter.addEventListener('change', async (e) => {
+        if (window.articlesState) {
+          window.articlesState.filters.storyId = e.target.value;
+        }
+        if (typeof loadArticles === 'function') {
+          await loadArticles();
+        }
+      });
+    }
+  } catch (e) {
+    console.warn('Failed to initialize story filter:', e);
+  }
+});
+
+// Basic Stories tab loader: lists stories and, when clicked, shows their ordered articles
+async function loadStoriesTab() {
+  const container = document.querySelector('.c-story-list');
+  if (!container) return;
+  container.innerHTML = '<div class="c-loading">Loading stories...</div>';
+  try {
+    const stories = (typeof fetchStories === 'function') ? await fetchStories() : [];
+    if (!stories || stories.length === 0) {
+      container.innerHTML = '<div class="c-empty-state"><i class="fas fa-book-open"></i><h3>No stories yet</h3><p>Create articles with a story to get started.</p></div>';
+      return;
+    }
+    container.innerHTML = `
+      <div class="c-stories-grid">
+        ${stories.map(s => `
+          <div class="c-story-card" data-story-id="${s.id}">
+            <div class="c-story-card__header">
+              <h3 class="c-story-card__title">${s.name}</h3>
+            </div>
+            <div class="c-story-card__body">
+              <div class="c-story-card__desc">${s.description || ''}</div>
+              <button class="c-btn c-btn--primary js-view-story" data-id="${s.id}">
+                <i class="fas fa-list-ol"></i> View Articles
+              </button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="c-story-articles js-story-articles" style="margin-top:16px;"></div>
+    `;
+
+    container.querySelectorAll('.js-view-story').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const storyId = e.currentTarget.getAttribute('data-id');
+        const target = container.querySelector('.js-story-articles');
+        if (!storyId || !target) return;
+        target.innerHTML = '<div class="c-loading">Loading articles in story...</div>';
+        try {
+          const res = await fetch(`${lanIP}/api/v1/articles/by-story/${encodeURIComponent(storyId)}/`);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const list = await res.json();
+          // Ensure ordered by story_order ascending
+          list.sort((a, b) => (a.story_order ?? 0) - (b.story_order ?? 0));
+          target.innerHTML = list.map(a => `
+            <div class="c-article-item" data-id="${a.id}">
+              <div class="c-article-header">
+                <h3 class="c-article-title">${a.title}</h3>
+                <span class="c-article-status c-article-status--${a.is_active ? 'published' : 'draft'}">
+                  ${a.is_active ? 'published' : 'draft'}
+                </span>
+              </div>
+              <div class="c-article-meta">
+                <span><i class="fas fa-hashtag"></i> Order: ${a.story_order ?? 0}</span>
+                <span><i class="fas fa-user"></i> ${a.author}</span>
+                <span><i class="fas fa-calendar-alt"></i> ${a.date_written || ''}</span>
+              </div>
+              <div class="c-article-intro">${(function(){ try{ const c = typeof a.content==='string'?JSON.parse(a.content):a.content||{}; return c.intro || a.excerpt || ''; }catch(e){ return a.excerpt || ''; } })()}</div>
+            </div>
+          `).join('');
+        } catch (err) {
+          console.error('Failed to load story articles:', err);
+          target.innerHTML = '<div class="c-error-state">Failed to load articles for this story.</div>';
+        }
+      });
+    });
+  } catch (err) {
+    console.error('Failed to load stories:', err);
+    container.innerHTML = '<div class="c-error-state">Failed to load stories.</div>';
+  }
+}
 // #endregion
