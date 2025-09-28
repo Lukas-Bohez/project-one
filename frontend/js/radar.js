@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const pulseThemes = [
         { name: 'blue', color: '#4a86e8', glow: 'rgba(74, 134, 232, 0.7)' },
         { name: 'orange', color: '#ff8c00', glow: 'rgba(255, 140, 0, 0.7)' },
-        { name: 'green', color: '#4caf50', glow: 'rgba(76, 175, 80, 0.7)' },
+    { name: 'green', color: '#2e7d32', glow: 'rgba(46, 125, 50, 0.7)' },
         { name: 'purple', color: '#9c27b0', glow: 'rgba(156, 39, 176, 0.7)' },
         { name: 'red', color: '#f44336', glow: 'rgba(244, 67, 54, 0.7)' },
         { name: 'cyan', color: '#00bcd4', glow: 'rgba(0, 188, 212, 0.7)' }

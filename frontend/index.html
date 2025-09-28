@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Quiz The Spire</title>
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/radar.css">
-    <link rel="stylesheet" href="css/sio.css">
+    <link rel="preload" href="css/radar.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="css/radar.css"></noscript>
+    <link rel="preload" href="css/sio.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="css/sio.css"></noscript>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <meta name="google-site-verification" content="i-fm4jHv_Tzy9zhCDiAArKCN0CTisNhAbAm3rmEwpfM" />
     <script src="js/privacy.js"></script>
@@ -48,11 +50,11 @@
     </main>
 
     <script src="js/themeManager.js"></script>
-    <script src="js/main.js"></script>
+    <script src="js/main.js" defer></script>
     <script src="js/lofi.js"></script>
     <script src="js/gamepad.js"></script>
     <script src="js/ip.js"></script>
-    <script src="js/radar.js"></script>
+    <script src="js/radar.js" defer></script>
     <script src="js/infomodal.js"></script>
 </body>
 </html>

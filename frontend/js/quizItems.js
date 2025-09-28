@@ -652,7 +652,7 @@ const showItemFeedback = (message, type = 'info') => {
     
     // Set background color based on type
     if (type === 'success') {
-        toast.style.backgroundColor = '#4CAF50';
+    toast.style.backgroundColor = '#2e7d32';
     } else if (type === 'error') {
         toast.style.backgroundColor = '#f44336';
     } else {

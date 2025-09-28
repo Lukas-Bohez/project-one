@@ -1327,7 +1327,7 @@ class DrumGame {
             #drumButton {
                 padding: 15px 30px;
                 font-size: 20px;
-                background: #4CAF50;
+                background: #2e7d32;
                 color: white;
                 border: none;
                 border-radius: 5px;
@@ -1352,7 +1352,7 @@ class DrumGame {
             #beatProgress {
                 height: 100%;
                 width: 0%;
-                background: #4CAF50;
+                background: #2e7d32;
                 transition: width 0.1s;
             }
             
@@ -1467,7 +1467,7 @@ class DrumGame {
         // Allow some leeway in timing (20% of beat duration)
         if (timingAccuracy < this.beatDuration * 0.2) {
             this.score++;
-            this.drumButton.style.backgroundColor = '#4CAF50';
+            this.drumButton.style.backgroundColor = '#2e7d32';
             
             if (this.score >= this.requiredScore) {
                 this.endGame(true);
@@ -1477,7 +1477,7 @@ class DrumGame {
         }
         
         setTimeout(() => {
-            this.drumButton.style.backgroundColor = '#4CAF50';
+            this.drumButton.style.backgroundColor = '#2e7d32';
         }, 200);
         
         this.lastPressTime = now;

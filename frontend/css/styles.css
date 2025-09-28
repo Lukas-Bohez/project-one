@@ -5,7 +5,8 @@
     /* Light theme colors (default) */
     --primary-color: #2c4c7c;
     --secondary-color: #0c4061;
-    --tertiary-color: #0d9edb;
+    /* Updated for WCAG AA contrast on buttons */
+    --tertiary-color: #0b6aa6; /* darker blue for ≥4.5:1 on white */
     --accent-color: #4a86e8;
     
     /* Background colors */
@@ -89,8 +90,9 @@
     /* Adjusted colors for dark theme */
     --primary-color: #3b82f6;
     --secondary-color: #1d4ed8;
-    --tertiary-color: #60a5fa;
-    --accent-color: #60a5fa;
+    /* Dark theme: keep adequate contrast on dark backgrounds */
+    --tertiary-color: #3b82f6;
+    --accent-color: #2563eb;
     --pulse-color: #60a5fa;
     --pulse-glow: rgba(96, 165, 250, 0.7);
     
@@ -270,6 +272,7 @@ body * {
 
 .c-btn--tertiary:hover {
     background-color: var(--accent-color);
+    color: var(--text-inverse);
 }
 
 .c-btn--admin {
