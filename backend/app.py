@@ -3,7 +3,7 @@ import asyncio
 import uvicorn
 from datetime import datetime,timedelta
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, status, Body
+from fastapi import FastAPI, HTTPException, status, Body, Header
 from fastapi.middleware.cors import CORSMiddleware
 import time
 import traceback
@@ -11,11 +11,14 @@ from threading import Thread, Event, Lock
 import socket
 # Import the new ThemeRepository
 from fastapi.responses import HTMLResponse,JSONResponse
-from database.datarepository import QuestionRepository, AnswerRepository, ThemeRepository,UserRepository, IpAddressRepository, UserIpAddressRepository,QuizSessionRepository,SensorDataRepository,AuditLogRepository,PlayerItemRepository,ItemRepository,ChatLogRepository,SessionPlayerRepository,PlayerAnswerRepository
+from database.datarepository import QuestionRepository, AnswerRepository, ThemeRepository,UserRepository, IpAddressRepository, UserIpAddressRepository,QuizSessionRepository,SensorDataRepository,AuditLogRepository,PlayerItemRepository,ItemRepository,ChatLogRepository,SessionPlayerRepository,PlayerAnswerRepository,ArticlesRepository,StoriesRepository
 from models.models import (
     QuestionBase, QuestionCreate, QuestionResponse, QuestionUpdate,
     QuestionStatusUpdate, ErrorNotFound, QuestionWithAnswers,
     ThemeBase, ThemeCreate, ThemeUpdate, ThemeResponse, # Import new Theme models
+    ArticleBase, ArticleCreate, ArticleUpdate, ArticleResponse, ArticleListResponse, 
+    ArticleSearchResult, ArticleStatsResponse, ArticleStatusUpdate, # Import new Article models
+    StoryResponse,
     DifficultyLevelResponse, QuestionSearchResult,
     RandomQuestionRequest, QuestionMetadataUpdate,
     QuestionActivationNotification,
@@ -77,6 +80,81 @@ sio = socketio.AsyncServer(
 )
 
 ENDPOINT = "/api/v1"  # API base endpoint
+
+# ----------------------------------------------------
+# Authentication and Helper Functions
+# ----------------------------------------------------
+
+def get_client_ip(request: Request) -> str:
+    """Extract client IP address from request headers."""
+    # Check for forwarded IP first (in case of proxy/load balancer)
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        # Take the first IP if there are multiple
+        return forwarded_for.split(",")[0].strip()
+    
+    # Check for real IP header
+    real_ip = request.headers.get("X-Real-IP")
+    if real_ip:
+        return real_ip
+    
+    # Fall back to direct client IP
+    return request.client.host if request.client else "unknown"
+
+def log_user_ip_address(user_id: int, ip_address: str):
+    """Log the IP address for a user."""
+    try:
+        # Log IP address for user
+        UserIpAddressRepository.create_user_ip_address({
+            'user_id': user_id,
+            'ip_address': ip_address,
+            'access_time': datetime.now()
+        })
+    except Exception as e:
+        print(f"Error logging user IP address: {e}")
+
+def verify_user(user_id: int, rfid_code: str) -> str:
+    user = UserRepository.get_user_by_id(user_id)
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user['rfid_code'] != rfid_code:
+        raise HTTPException(status_code=403, detail="Invalid RFID code")
+    
+    role = user['userRoleId']
+    
+    if role == 1:
+        return "admin"
+    elif role == 2:
+        return "user"
+    elif role == 3:
+        return "admin"
+    else:
+        raise HTTPException(status_code=403, detail="Unknown role")
+
+async def get_current_user_info(
+    request: Request,
+    x_user_id: str = Header(None, alias="X-User-ID"),
+    x_rfid: str = Header(None, alias="X-RFID")
+):
+    """Dependency function to get current user info from headers"""
+    if not x_user_id or not x_rfid:
+        raise HTTPException(status_code=401, detail="Missing user credentials")
+    
+    try:
+        user_id = int(x_user_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid user ID format")
+    
+    # Log IP address for authenticated requests
+    client_ip = get_client_ip(request)
+    log_user_ip_address(user_id, client_ip)
+    
+    return {
+        "id": user_id,
+        "role": verify_user(user_id, x_rfid)
+    }
 
 # Store connected clients
 connected_clients = set()
@@ -533,6 +611,369 @@ async def get_theme_by_id(theme_id: int):
 async def get_theme_question_count(theme_id: int):
     count = QuestionRepository.get_questions_count_by_theme(theme_id)
     return count
+
+# ----------------------------------------------------
+# FastAPI Endpoints - Articles
+# ----------------------------------------------------
+
+@app.get(
+    ENDPOINT + "/articles/",
+    summary="Get all articles",
+    response_model=ArticleListResponse,
+    responses={404: {"model": ErrorNotFound}},
+    tags=["Articles"]
+)
+async def get_all_articles(active_only: bool = False):
+    """Get all articles with statistics"""
+    try:
+        articles = ArticlesRepository.get_all_articles(active_only=active_only)
+        stats = ArticlesRepository.get_articles_stats()
+        
+        return ArticleListResponse(
+            articles=[ArticleResponse(**article) for article in articles],
+            total_count=stats.get('total_articles', 0),
+            active_count=stats.get('active_articles', 0),
+            featured_count=stats.get('featured_articles', 0)
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving articles: {str(e)}")
+
+@app.get(
+    ENDPOINT + "/articles/search/",
+    summary="Search articles",
+    response_model=List[ArticleSearchResult],
+    tags=["Articles"]
+)
+async def search_articles(q: str, active_only: bool = True):
+    """Search articles by title, content, author, or story"""
+    if not q or len(q.strip()) < 2:
+        raise HTTPException(status_code=400, detail="Search query must be at least 2 characters long")
+    
+    articles = ArticlesRepository.search_articles(q.strip(), active_only=active_only)
+    return [ArticleSearchResult(**article) for article in articles]
+
+@app.get(
+    ENDPOINT + "/articles/featured/",
+    summary="Get featured articles",
+    response_model=List[ArticleResponse],
+    tags=["Articles"]
+)
+async def get_featured_articles(limit: int = 5):
+    """Get featured articles"""
+    articles = ArticlesRepository.get_featured_articles(limit=limit)
+    return [ArticleResponse(**article) for article in articles]
+
+@app.get(
+    ENDPOINT + "/articles/recent/",
+    summary="Get recent articles",
+    response_model=List[ArticleResponse],
+    tags=["Articles"]
+)
+async def get_recent_articles(limit: int = 10, active_only: bool = True):
+    """Get most recent articles"""
+    articles = ArticlesRepository.get_recent_articles(limit=limit, active_only=active_only)
+    return [ArticleResponse(**article) for article in articles]
+
+@app.get(
+    ENDPOINT + "/articles/stats/",
+    summary="Get article statistics",
+    response_model=ArticleStatsResponse,
+    tags=["Articles"]
+)
+async def get_article_statistics():
+    """Get comprehensive article statistics"""
+    stats = ArticlesRepository.get_articles_stats()
+    return ArticleStatsResponse(**stats)
+
+@app.get(
+    ENDPOINT + "/articles/{article_id}/",
+    summary="Get article by ID",
+    response_model=ArticleResponse,
+    responses={404: {"model": ErrorNotFound}},
+    tags=["Articles"]
+)
+async def get_article_by_id(article_id: int):
+    """Get a single article by ID and increment view count"""
+    article = ArticlesRepository.get_article_by_id(article_id)
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+    
+    # Increment view count
+    ArticlesRepository.increment_view_count(article_id)
+    
+    return ArticleResponse(**article)
+
+@app.get(
+    ENDPOINT + "/articles/by-author/{author}/",
+    summary="Get articles by author",
+    response_model=List[ArticleResponse],
+    tags=["Articles"]
+)
+async def get_articles_by_author(author: str, active_only: bool = True):
+    """Get all articles by a specific author"""
+    articles = ArticlesRepository.get_articles_by_author(author, active_only=active_only)
+    return [ArticleResponse(**article) for article in articles]
+
+@app.get(
+    ENDPOINT + "/articles/by-category/{category}/",
+    summary="Get articles by category",
+    response_model=List[ArticleResponse],
+    tags=["Articles"]
+)
+async def get_articles_by_category(category: str, active_only: bool = True):
+    """Get all articles in a specific category"""
+    articles = ArticlesRepository.get_articles_by_category(category, active_only=active_only)
+    return [ArticleResponse(**article) for article in articles]
+
+# Protected Article Operations (require authentication)
+@app.post(
+    ENDPOINT + "/articles/",
+    summary="Create new article",
+    response_model=ArticleResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Articles"]
+)
+async def create_article(
+    article: ArticleCreate,
+    user_info: dict = Depends(get_current_user_info)
+):
+    """Create a new article with duplicate title checking"""
+    try:
+        user_id = user_info["id"]
+        user_role = user_info["role"]
+        
+        # Check if article with same title already exists
+        if ArticlesRepository.check_article_exists_by_title(article.title):
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Article with title '{article.title}' already exists"
+            )
+        
+        # Log the action first
+        AuditLogRepository.create_audit_log(
+            table_name="articles",
+            record_id=0,  # Will be updated after creation
+            action="CREATE",
+            new_values=article.dict(),
+            changed_by=user_id,
+            ip_address=None  # You could get this from request if needed
+        )
+        
+        # Create the article
+        article_id = ArticlesRepository.create_article(**article.dict())
+        
+        if article_id:
+            # Update audit log with actual article ID
+            AuditLogRepository.create_audit_log(
+                table_name="articles",
+                record_id=article_id,
+                action="CREATE",
+                new_values=article.dict(),
+                changed_by=user_id,
+                ip_address=None
+            )
+            
+            # Retrieve the created article
+            created_article = ArticlesRepository.get_article_by_id(article_id)
+            return ArticleResponse(**created_article)
+        else:
+            raise HTTPException(status_code=500, detail="Failed to create article")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating article: {str(e)}")
+
+@app.patch(
+    ENDPOINT + "/articles/{article_id}/",
+    summary="Update article",
+    response_model=ArticleResponse,
+    tags=["Articles"]
+)
+async def update_article(
+    article_id: int,
+    article_update: ArticleUpdate,
+    user_info: dict = Depends(get_current_user_info)
+):
+    """Update an existing article with duplicate title checking"""
+    try:
+        user_id = user_info["id"]
+        user_role = user_info["role"]
+        
+        # Check if article exists
+        existing_article = ArticlesRepository.get_article_by_id(article_id)
+        if not existing_article:
+            raise HTTPException(status_code=404, detail="Article not found")
+        
+        # Check for duplicate title if title is being updated
+        if article_update.title and article_update.title != existing_article.get('title'):
+            if ArticlesRepository.check_article_exists_by_title(article_update.title, exclude_id=article_id):
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Article with title '{article_update.title}' already exists"
+                )
+        
+        # Prepare update data (only include non-None fields)
+        update_data = {k: v for k, v in article_update.dict().items() if v is not None}
+        
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No fields provided for update")
+        
+        # Log the action first
+        AuditLogRepository.create_audit_log(
+            table_name="articles",
+            record_id=article_id,
+            action="UPDATE",
+            old_values=existing_article,
+            new_values=update_data,
+            changed_by=user_id,
+            ip_address=None
+        )
+        
+        # Update the article
+        success = ArticlesRepository.update_article(article_id, **update_data)
+        
+        if success:
+            # Retrieve the updated article
+            updated_article = ArticlesRepository.get_article_by_id(article_id)
+            return ArticleResponse(**updated_article)
+        else:
+            raise HTTPException(status_code=500, detail="Failed to update article")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating article: {str(e)}")
+
+@app.patch(
+    ENDPOINT + "/articles/{article_id}/status/",
+    summary="Update article status",
+    response_model=ArticleResponse,
+    tags=["Articles"]
+)
+async def update_article_status(
+    article_id: int,
+    status_update: ArticleStatusUpdate,
+    user_info: dict = Depends(get_current_user_info)
+):
+    """Update article active/featured status"""
+    try:
+        user_id = user_info["id"]
+        user_role = user_info["role"]
+        
+        # Check if article exists
+        existing_article = ArticlesRepository.get_article_by_id(article_id)
+        if not existing_article:
+            raise HTTPException(status_code=404, detail="Article not found")
+        
+        # Update status fields
+        update_data = {}
+        if status_update.is_active is not None:
+            update_data['is_active'] = status_update.is_active
+        if status_update.is_featured is not None:
+            update_data['is_featured'] = status_update.is_featured
+        
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No status fields provided for update")
+        
+        # Log the action
+        AuditLogRepository.create_audit_log(
+            table_name="articles",
+            record_id=article_id,
+            action="STATUS_UPDATE",
+            old_values=existing_article,
+            new_values=update_data,
+            changed_by=user_id,
+            ip_address=None
+        )
+        
+        # Update the article
+        success = ArticlesRepository.update_article(article_id, **update_data)
+        
+        if success:
+            # Retrieve the updated article
+            updated_article = ArticlesRepository.get_article_by_id(article_id)
+            return ArticleResponse(**updated_article)
+        else:
+            raise HTTPException(status_code=500, detail="Failed to update article status")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating article status: {str(e)}")
+
+@app.delete(
+    ENDPOINT + "/articles/{article_id}/",
+    summary="Delete article",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["Articles"]
+)
+async def delete_article(
+    article_id: int,
+    user_info: dict = Depends(get_current_user_info)
+):
+    """Delete an article"""
+    try:
+        user_id = user_info["id"]
+        user_role = user_info["role"]
+        
+        # Check if article exists
+        existing_article = ArticlesRepository.get_article_by_id(article_id)
+        if not existing_article:
+            raise HTTPException(status_code=404, detail="Article not found")
+        
+        # Log the action first
+        AuditLogRepository.create_audit_log(
+            table_name="articles",
+            record_id=article_id,
+            action="DELETE",
+            old_values=existing_article,
+            changed_by=user_id,
+            ip_address=None
+        )
+        
+        # Delete the article
+        success = ArticlesRepository.delete_article(article_id)
+        
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to delete article")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting article: {str(e)}")
+
+# ----------------------------------------------------
+# FastAPI Endpoints - Stories
+# ----------------------------------------------------
+
+@app.get(
+    ENDPOINT + "/stories/",
+    summary="List all stories",
+    response_model=List[StoryResponse],
+    tags=["Stories"]
+)
+async def list_stories():
+    """Return all stories for filtering and admin UI."""
+    try:
+        stories = StoriesRepository.list_stories()
+        return [StoryResponse(**story) for story in stories]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving stories: {str(e)}")
+
+@app.get(
+    ENDPOINT + "/articles/by-story/{story_id}/",
+    summary="Get articles by story (ordered)",
+    response_model=List[ArticleResponse],
+    tags=["Articles"]
+)
+async def get_articles_by_story(story_id: int, active_only: bool = True):
+    """Get all articles within a story, ordered by story_order."""
+    try:
+        articles = ArticlesRepository.get_articles_by_story_id(story_id, active_only=active_only)
+        return [ArticleResponse(**article) for article in articles]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving articles for story {story_id}: {str(e)}")
 
 # ----------------------------------------------------
 # FastAPI Endpoints - Users
@@ -1201,40 +1642,7 @@ from datetime import datetime
 # Add this import for the IP address repository
 # from your_repositories import IpAddressRepository  # Adjust import path as needed
 
-def get_client_ip(request: Request) -> str:
-    """Extract client IP address from request headers."""
-    # Check for forwarded IP first (in case of proxy/load balancer)
-    forwarded_for = request.headers.get("X-Forwarded-For")
-    if forwarded_for:
-        # X-Forwarded-For can contain multiple IPs, take the first one
-        return forwarded_for.split(",")[0].strip()
-    
-    # Check for real IP header
-    real_ip = request.headers.get("X-Real-IP")
-    if real_ip:
-        return real_ip
-    
-    # Fall back to direct client IP
-    return request.client.host if request.client else "unknown"
-
-def log_user_ip_address(user_id: int, ip_address: str):
-    """Log the IP address for a user."""
-    try:
-        # Get or create IP address record
-        ip_record = IpAddressRepository.get_ip_address_by_string(ip_address)
-        if not ip_record:
-            # If IP doesn't exist, you'll need to create it
-            # This assumes you have a method to create IP addresses
-            # You may need to add this method to your IpAddressRepository
-            ip_id = IpAddressRepository.create_ip_address(ip_address)
-        else:
-            ip_id = ip_record['id']
-        
-        # Create/update the user-IP link
-        UserIpAddressRepository.create_user_ip_address_link(user_id, ip_id)
-    except Exception as e:
-        # Log the error but don't fail the main operation
-        print(f"Failed to log IP address for user {user_id}: {e}")
+# Authentication functions are defined at the top of the file
 
 @app.patch("/api/v1/users/{rfid_code}")
 async def update_user_names(rfid_code: str, user_update: UserUpdateNames, request: Request):
@@ -1847,63 +2255,7 @@ def calculate_ban_expiry(duration_value: int, duration_unit: str) -> Optional[da
     else:
         raise ValueError(f"Invalid duration unit: {duration_unit}")
 
-# Helper function to get client IP (assuming this exists)
-def get_client_ip(request: Request) -> str:
-    """Extract client IP from request"""
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.client.host if request.client else "unknown"
-
-# Helper function to log user IP (assuming this exists)
-def log_user_ip_address(user_id: int, ip_address: str):
-    """Log user IP address"""
-    # Implementation depends on your logging system
-    pass
-
-# The verify_user function as provided
-def verify_user(user_id: int, rfid_code: str) -> str:
-    user = UserRepository.get_user_by_id(user_id)
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    if user['rfid_code'] != rfid_code:
-        raise HTTPException(status_code=403, detail="Invalid credentials")
-    
-    role = user['userRoleId']
-    
-    if role == 1:
-        return "user"
-    elif role == 2:
-        return "moderator"
-    elif role == 3:
-        return "admin"
-    else:
-        raise HTTPException(status_code=403, detail="Unknown role")
-
-# Fixed dependency function
-async def get_current_user_info(
-    request: Request,
-    x_user_id: str = Header(None, alias="X-User-ID"),
-    x_rfid: str = Header(None, alias="X-RFID")
-):
-    if not x_user_id or not x_rfid:
-        raise HTTPException(status_code=401, detail="Missing user credentials")
-    
-    try:
-        user_id = int(x_user_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid user ID format")
-    
-    # Log IP address for authenticated requests
-    client_ip = get_client_ip(request)
-    log_user_ip_address(user_id, client_ip)
-    
-    return {
-        "id": user_id,
-        "role": verify_user(user_id, x_rfid)
-    }
+# Authentication functions are now defined at the top of the file
 
 def convert_difficulty_to_id(difficulty_string: str) -> int:
     difficulty_mapping = {

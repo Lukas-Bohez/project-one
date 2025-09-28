@@ -41,6 +41,18 @@
                         </button>
                     </li>
                     <li class="c-admin-menu__item">
+                        <button class="c-admin-menu__link js-tab-btn" data-tab="stories">
+                            <i class="fas fa-book-open"></i>
+                            <span>Stories</span>
+                        </button>
+                    </li>
+                    <li class="c-admin-menu__item">
+                        <button class="c-admin-menu__link js-tab-btn" data-tab="articles">
+                            <i class="fas fa-newspaper"></i>
+                            <span>Articles</span>
+                        </button>
+                    </li>
+                    <li class="c-admin-menu__item">
                         <button class="c-admin-menu__link js-tab-btn" data-tab="users">
                             <i class="fas fa-users"></i>
                             <span>Users</span>
@@ -165,6 +177,83 @@
                 </div>
             </div>
 
+            <div class="c-tab-content js-tab-content" data-tab="stories">
+                <div class="c-admin-header">
+                    <h2 class="c-admin-title">Manage Stories</h2>
+                    <div class="c-inline-help">Select a story to view its articles in order</div>
+                </div>
+
+                <div class="c-story-management">
+                    <div class="c-story-list">
+                        <div class="c-loading">Loading stories...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="c-tab-content js-tab-content" data-tab="articles">
+                <div class="c-admin-header">
+                    <h2 class="c-admin-title">Manage Articles</h2>
+                    <button class="c-btn c-btn--primary js-add-article">
+                        <i class="fas fa-plus"></i> Add Article
+                    </button>
+                </div>
+
+                <div class="c-search-bar">
+                    <div class="c-search-input-wrapper">
+                        <i class="fas fa-search c-search-icon"></i>
+                        <input type="text" class="c-search-input js-article-search" placeholder="Search articles...">
+                    </div>
+
+                    <div class="c-filter-controls">
+                        <select class="c-select c-filter-select js-story-filter">
+                            <option value="">All Stories</option>
+                        </select>
+                        <select class="c-select c-filter-select js-status-filter">
+                            <option value="">All Status</option>
+                            <option value="published">Published</option>
+                            <option value="draft">Draft</option>
+                            <option value="archived">Archived</option>
+                        </select>
+
+                        <select class="c-select c-filter-select js-sort-filter">
+                            <option value="created_at">Newest First</option>
+                            <option value="updated_at">Recently Updated</option>
+                            <option value="title">Title A-Z</option>
+                            <option value="author">Author</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="c-articles-stats">
+                    <div class="c-stat-item">
+                        <span class="c-stat-value js-total-articles">0</span>
+                        <span class="c-stat-label">Total Articles</span>
+                    </div>
+                    <div class="c-stat-item">
+                        <span class="c-stat-value js-published-articles">0</span>
+                        <span class="c-stat-label">Published</span>
+                    </div>
+                    <div class="c-stat-item">
+                        <span class="c-stat-value js-draft-articles">0</span>
+                        <span class="c-stat-label">Drafts</span>
+                    </div>
+                </div>
+
+                <div class="c-article-list">
+                    <div class="c-loading">Loading articles...</div>
+                </div>
+
+                <div class="c-pagination">
+                    <button class="c-pagination__btn c-pagination__btn--prev" disabled>
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </button>
+                    <span class="c-pagination__info">Page 1 of 1</span>
+                    <button class="c-pagination__btn c-pagination__btn--next" disabled>
+                        Next <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
             <div class="c-tab-content js-tab-content" data-tab="users">
                 <div class="c-admin-header">
                     <h2 class="c-admin-title">Manage Users</h2>
@@ -269,6 +358,7 @@
 
     <script src="../js/themeManager.js"></script>
     <script src="../js/admin.js"></script>
+    <script src="../js/articles.js"></script>
     <script src="../js/admin2.js"></script>
     <script src="../js/admin3.js"></script>
     <script src="../js/admin4.js"></script>

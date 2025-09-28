@@ -81,10 +81,15 @@ function initializeEventListeners() {
         downloadBtn.addEventListener('click', handleDownload);
     }
     
-    // Theme toggle
+    // Theme toggle - handle both desktop and mobile buttons
     const themeToggle = document.getElementById('servoTestBtn');
+    const themeToggleMobile = document.getElementById('servoTestBtn-mobile');
+    
     if (themeToggle) {
         themeToggle.addEventListener('click', toggleTheme);
+    }
+    if (themeToggleMobile) {
+        themeToggleMobile.addEventListener('click', toggleTheme);
     }
     
     // Modal controls
@@ -118,10 +123,16 @@ function toggleTheme() {
 // Update theme toggle button text
 function updateThemeButton() {
     const themeButton = document.getElementById('servoTestBtn');
+    const themeButtonMobile = document.getElementById('servoTestBtn-mobile');
     const currentTheme = document.body.getAttribute('data-theme');
     
+    const buttonText = currentTheme === 'dark' ? 'Light Theme' : 'Dark Theme';
+    
     if (themeButton) {
-        themeButton.textContent = currentTheme === 'dark' ? 'Light Theme' : 'Dark Theme';
+        themeButton.textContent = buttonText;
+    }
+    if (themeButtonMobile) {
+        themeButtonMobile.textContent = buttonText;
     }
 }
 
