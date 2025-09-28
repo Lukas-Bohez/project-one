@@ -171,6 +171,18 @@
     background-color: var(--bg-tertiary);
 }
 
+.c-error-container {
+    background-color: var(--accent-red, #ff4757);
+    color: white;
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius);
+    margin: var(--spacing-md) 0;
+    font-weight: 500;
+    text-align: center;
+    border-left: 4px solid #ff3742;
+    box-shadow: 0 2px 4px rgba(255, 71, 87, 0.2);
+}
+
 .c-answers-container {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -387,7 +399,99 @@
     }
 }
 
+/*---------------------------------------/*
+ # AUTH FORM STYLES
+/*---------------------------------------*/
+.c-login-form input,
+.c-register-form input,
+input[type="text"],
+input[type="password"] {
+    width: 100%;
+    padding: var(--spacing-md);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: var(--font-size-base);
+    transition: all 0.3s ease;
+    margin-bottom: var(--spacing-sm);
+}
 
+.c-login-form input:focus,
+.c-register-form input:focus,
+input[type="text"]:focus,
+input[type="password"]:focus {
+    outline: none;
+    border-color: var(--quiz-accent);
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+    background-color: var(--bg-primary);
+}
 
+/* Error state for inputs */
+.c-login-form input.error,
+.c-register-form input.error,
+input[type="text"].error,
+input[type="password"].error {
+    border-color: var(--danger-color);
+    background-color: rgba(239, 68, 68, 0.05);
+    animation: shake 0.3s ease-in-out;
+}
 
+.c-login-form input.error:focus,
+.c-register-form input.error:focus,
+input[type="text"].error:focus,
+input[type="password"].error:focus {
+    border-color: var(--danger-color);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
 
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* Error message container */
+#errorContainer {
+    background-color: var(--danger-color);
+    color: white;
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius);
+    margin-bottom: var(--spacing-md);
+    font-weight: 500;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.error-shake {
+    animation: errorShake 0.3s ease-in-out;
+}
+
+@keyframes errorShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-10px); }
+    40% { transform: translateX(10px); }
+    60% { transform: translateX(-8px); }
+    80% { transform: translateX(8px); }
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .c-login-form input.error,
+[data-theme="dark"] .c-register-form input.error,
+[data-theme="dark"] input[type="text"].error,
+[data-theme="dark"] input[type="password"].error,
+.theme-dark .c-login-form input.error,
+.theme-dark .c-register-form input.error,
+.theme-dark input[type="text"].error,
+.theme-dark input[type="password"].error {
+    background-color: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+}
+
+[data-theme="dark"] #errorContainer,
+.theme-dark #errorContainer {
+    background-color: #dc2626;
+    border-color: rgba(220, 38, 38, 0.5);
+    box-shadow: 0 4px 6px rgba(220, 38, 38, 0.3);
+}

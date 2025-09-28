@@ -1940,7 +1940,7 @@ class SessionPlayerRepository:
     def get_player_sessions(user_id: int) -> List[Dict[str, Any]]:
         """Get all sessions a player has participated in."""
         sql = """
-            SELECT sp.*, qs.quiz_name, qs.status, qs.created_at as session_created
+            SELECT sp.*, qs.name as session_name, qs.sessionStatusId, qs.start_time as session_created
             FROM sessionPlayers sp
             JOIN quizSessions qs ON sp.sessionId = qs.id
             WHERE sp.userId = %s AND sp.is_active = TRUE

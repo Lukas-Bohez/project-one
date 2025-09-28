@@ -1,4 +1,4 @@
-// #region *** DOM references ***********
+// #region *** Global variables ***********
 const lanIP = `https://${window.location.hostname}`;
 // domGraphs will now store direct chart instances, indexed by an arbitrary key (e.g., 'temp', 'light', 'servo')
 // to allow proper destruction.
@@ -12,6 +12,11 @@ let availableSessions = []; // Will hold the list of all available sessions
 let currentSessionId = null; // Current session ID being displayed
 let totalSessions = 0; // Total sessions available
 let isLoading = false;
+let rankingsData = {
+    session: [],
+    global: []
+};
+let currentRankingsTab = 'session';
 // #endregion
 
 // #region *** Utility Functions ***********
@@ -48,6 +53,13 @@ const sanitizeSessionData = (sessions) => {
         ...session,
         name: formatSessionName(session)
     }));
+};
+
+const escapeHTML = (text) => {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 };
 // #endregion
 
@@ -339,6 +351,11 @@ const createSessionSelector = (availableSessions, currentSessionId) => {
     ).join('');
 
     return `
+        <div class="session-controls" id="sessionControls">
+            <button id="btnPrevSession" class="btn session-nav" title="Previous session" aria-label="Previous session">⟨ Prev</button>
+            <button id="btnToggleTheme" class="btn theme-toggle" title="Toggle dark/light" aria-label="Toggle dark/light">🌓 Theme</button>
+            <button id="btnNextSession" class="btn session-nav" title="Next session" aria-label="Next session">Next ⟩</button>
+        </div>
         <div class="session-selector-container">
             <label for="sessionSelect" class="session-selector-label">
                 Choose Session (${sanitizedSessions.length} available):
@@ -402,6 +419,7 @@ const fetchSessionData = async (sessionId = null) => {
             availableSessions = sanitizeSessionData(data.available_sessions || []);
             currentSessionId = data.current_session_id;
             totalSessions = data.total_sessions || 0;
+            console.log(`fetchSessionData: currentSessionId set to ${currentSessionId}`);
 
             // Update session selector
             if (sessionSelectorContainer) {
@@ -412,6 +430,9 @@ const fetchSessionData = async (sessionId = null) => {
             if (data.sessions && data.sessions.length > 0) {
                 currentSessionData = data.sessions[0];
                 renderSession(currentSessionData);
+                
+                // Update rankings if the session tab is active
+                refreshRankingsAfterDataLoad();
             } else {
                 currentSessionData = null;
                 quizSessionsContainer.innerHTML = '<div class="empty-state">No session data found.</div>';
@@ -445,6 +466,12 @@ const fetchSessionData = async (sessionId = null) => {
             window.gamepadNavigator.updateNavigableElements();
         }
     }
+    // After load, ensure button states reflect current index
+    const btnPrev = document.getElementById('btnPrevSession');
+    const btnNext = document.getElementById('btnNextSession');
+    const idx = availableSessions.findIndex(s => s.id === currentSessionId);
+    if (btnPrev) btnPrev.disabled = idx <= 0;
+    if (btnNext) btnNext.disabled = idx === -1 || idx >= availableSessions.length - 1;
 };
 
 const initSessionSelector = () => {
@@ -468,6 +495,54 @@ const initSessionSelector = () => {
             }
         }
     });
+
+    // Controls
+    const btnPrev = document.getElementById('btnPrevSession');
+    const btnNext = document.getElementById('btnNextSession');
+    const btnTheme = document.getElementById('btnToggleTheme');
+
+    const getCurrentIndex = () => availableSessions.findIndex(s => s.id === currentSessionId);
+    const updateButtonsState = () => {
+        const idx = getCurrentIndex();
+        if (btnPrev) btnPrev.disabled = idx <= 0;
+        if (btnNext) btnNext.disabled = idx === -1 || idx >= availableSessions.length - 1;
+    };
+
+    if (btnPrev) {
+        btnPrev.addEventListener('click', () => {
+            const idx = getCurrentIndex();
+            if (idx > 0) {
+                const prevId = availableSessions[idx - 1].id;
+                fetchSessionData(prevId);
+            }
+        });
+    }
+
+    if (btnNext) {
+        btnNext.addEventListener('click', () => {
+            const idx = getCurrentIndex();
+            if (idx !== -1 && idx < availableSessions.length - 1) {
+                const nextId = availableSessions[idx + 1].id;
+                fetchSessionData(nextId);
+            }
+        });
+    }
+
+    if (btnTheme) {
+        btnTheme.addEventListener('click', () => {
+            if (window.themeManager && typeof window.themeManager.toggleTheme === 'function') {
+                window.themeManager.toggleTheme();
+            } else {
+                const root = document.documentElement;
+                const current = root.getAttribute('data-theme') || 'dark';
+                root.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+                window.dispatchEvent(new Event('themeChanged'));
+            }
+            updateChartsTheme();
+        });
+    }
+
+    updateButtonsState();
 };
 
 // #endregion
@@ -561,6 +636,380 @@ const updateChartsTheme = () => {
 
 // Listen for theme changes and update charts accordingly
 window.addEventListener('themeChanged', updateChartsTheme);
+
+// #endregion
+
+// #region *** Player Rankings Functions ***********
+const fetchSessionRankings = async (sessionId) => {
+    try {
+        const url = `${lanIP}/api/v1/rankings/session/${sessionId}/`;
+        console.log(`Fetching session rankings: ${url}`);
+        console.log(`Session ID value: ${sessionId}, type: ${typeof sessionId}`);
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            console.error(`HTTP error! status: ${response.status}, url: ${url}`);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log(`Session rankings data received:`, data);
+        return data || [];
+    } catch (error) {
+        console.error('Failed to fetch session rankings:', error);
+        return [];
+    }
+};
+
+const fetchGlobalRankings = async (limit = 50) => {
+    try {
+        const url = `${lanIP}/api/v1/rankings/global/?limit=${limit}`;
+        console.log(`Fetching global rankings: ${url}`);
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            console.error(`HTTP error! status: ${response.status}, url: ${url}`);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log(`Global rankings data received:`, data);
+        return data || [];
+    } catch (error) {
+        console.error('Failed to fetch global rankings:', error);
+        return [];
+    }
+};
+
+const createRankingsContainer = () => {
+    return `
+        <div class="rankings-container">
+            <div class="rankings-tabs">
+                <button class="rankings-tab active" data-tab="session">Session Rankings</button>
+                <button class="rankings-tab" data-tab="global">Global Rankings</button>
+            </div>
+            <div class="rankings-content">
+                <div id="sessionRankings" class="rankings-tab-content active">
+                    <div class="rankings-loading">
+                        <div class="spinner"></div>
+                        <p>Loading session rankings...</p>
+                    </div>
+                </div>
+                <div id="globalRankings" class="rankings-tab-content">
+                    <div class="rankings-loading">
+                        <div class="spinner"></div>
+                        <p>Loading global rankings...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+const createPodium = (rankings, isGlobal = false) => {
+    if (!rankings || rankings.length === 0) return '';
+    
+    const top3 = rankings.slice(0, 3);
+    const positions = ['first', 'second', 'third'];
+    
+    return `
+        <div class="rankings-podium">
+            ${top3.map((player, index) => {
+                const position = positions[index] || 'third';
+                const crown = index === 0 ? '👑' : '';
+                const scoreLabel = isGlobal ? 'Total Score' : 'Session Score';
+                
+                return `
+                    <div class="podium-position ${position}">
+                        ${crown ? `<div class="podium-crown">${crown}</div>` : ''}
+                        <div class="podium-rank">#${player.rank}</div>
+                        <div class="podium-name">${escapeHTML(player.display_name)}</div>
+                        <div class="podium-score">${player.total_score || 0} pts</div>
+                        <div class="podium-accuracy">${player.accuracy || player.overall_accuracy || 0}% accuracy</div>
+                        ${isGlobal ? `<div class="podium-accuracy">${player.sessions_played || 0} sessions</div>` : ''}
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+};
+
+const createRankingsTable = (rankings, isGlobal = false) => {
+    if (!rankings || rankings.length === 0) {
+        return `
+            <div class="rankings-empty">
+                <div class="rankings-empty-icon">🏆</div>
+                <h3>No Rankings Available</h3>
+                <p>Play some quiz sessions to see rankings appear here!</p>
+            </div>
+        `;
+    }
+    
+    const headers = isGlobal 
+        ? ['Rank', 'Player', 'Total Score', 'Sessions', 'Avg Score', 'Accuracy', 'Total Answers']
+        : ['Rank', 'Player', 'Score', 'Correct', 'Total', 'Accuracy'];
+    
+    return `
+        <div class="rankings-table-container">
+            <table class="rankings-table">
+                <thead>
+                    <tr>
+                        ${headers.map(header => `<th>${header}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rankings.map(player => {
+                        const rankClass = player.rank <= 3 ? `rank-${player.rank}` : '';
+                        const accuracyClass = getAccuracyClass(player.accuracy || player.overall_accuracy || 0);
+                        
+                        if (isGlobal) {
+                            return `
+                                <tr>
+                                    <td class="rank-cell ${rankClass}">#${player.rank}</td>
+                                    <td class="player-name-cell">
+                                        <div>${escapeHTML(player.display_name)}</div>
+                                    </td>
+                                    <td class="score-cell">${player.total_score || 0}</td>
+                                    <td>${player.sessions_played || 0}</td>
+                                    <td>${player.average_score_per_session || 0}</td>
+                                    <td><span class="accuracy-badge ${accuracyClass}">${player.overall_accuracy || 0}%</span></td>
+                                    <td>${player.total_answers || 0}</td>
+                                </tr>
+                            `;
+                        } else {
+                            return `
+                                <tr>
+                                    <td class="rank-cell ${rankClass}">#${player.rank}</td>
+                                    <td class="player-name-cell">
+                                        <div>${escapeHTML(player.display_name)}</div>
+                                    </td>
+                                    <td class="score-cell">${player.total_score || 0}</td>
+                                    <td>${player.correct_answers || 0}</td>
+                                    <td>${player.total_answers || 0}</td>
+                                    <td><span class="accuracy-badge ${accuracyClass}">${player.accuracy || 0}%</span></td>
+                                </tr>
+                            `;
+                        }
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+};
+
+const getAccuracyClass = (accuracy) => {
+    if (accuracy >= 80) return 'accuracy-excellent';
+    if (accuracy >= 60) return 'accuracy-good';
+    return 'accuracy-average';
+};
+
+const createGlobalStats = (rankings) => {
+    if (!rankings || rankings.length === 0) return '';
+    
+    const totalPlayers = rankings.length;
+    const totalSessions = rankings.reduce((sum, player) => sum + (player.sessions_played || 0), 0);
+    const avgAccuracy = rankings.reduce((sum, player) => sum + (player.overall_accuracy || 0), 0) / totalPlayers;
+    const topScore = rankings[0]?.total_score || 0;
+    
+    return `
+        <div class="rankings-stats">
+            <div class="stat-card">
+                <div class="stat-value">${totalPlayers}</div>
+                <div class="stat-label">Total Players</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${totalSessions}</div>
+                <div class="stat-label">Sessions Played</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${Math.round(avgAccuracy)}%</div>
+                <div class="stat-label">Avg Accuracy</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${topScore}</div>
+                <div class="stat-label">Highest Score</div>
+            </div>
+        </div>
+    `;
+};
+
+const renderSessionRankings = async (sessionId) => {
+    console.log(`renderSessionRankings called with sessionId: ${sessionId}`);
+    const container = document.getElementById('sessionRankings');
+    if (!container) {
+        console.error('sessionRankings container not found!');
+        return;
+    }
+    
+    container.innerHTML = `
+        <div class="rankings-loading">
+            <div class="spinner"></div>
+            <p>Loading session rankings...</p>
+        </div>
+    `;
+    
+    try {
+        console.log('About to fetch session rankings...');
+        const rankings = await fetchSessionRankings(sessionId);
+        console.log(`Rankings received in renderSessionRankings:`, rankings);
+        rankingsData.session = rankings;
+        
+        if (rankings.length === 0) {
+            container.innerHTML = `
+                <div class="rankings-empty">
+                    <div class="rankings-empty-icon">🎯</div>
+                    <h3>No Players in This Session</h3>
+                    <p>This session doesn't have any player data yet.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = `
+            <h3>Session ${sessionId} Rankings</h3>
+            ${createPodium(rankings, false)}
+            ${createRankingsTable(rankings, false)}
+        `;
+        
+    } catch (error) {
+        container.innerHTML = `
+            <div class="rankings-empty">
+                <div class="rankings-empty-icon">⚠️</div>
+                <h3>Failed to Load Rankings</h3>
+                <p>Error: ${escapeHTML(error.message)}</p>
+            </div>
+        `;
+    }
+};
+
+const renderGlobalRankings = async () => {
+    console.log('renderGlobalRankings called');
+    const container = document.getElementById('globalRankings');
+    if (!container) {
+        console.error('globalRankings container not found!');
+        return;
+    }
+    
+    container.innerHTML = `
+        <div class="rankings-loading">
+            <div class="spinner"></div>
+            <p>Loading global rankings...</p>
+        </div>
+    `;
+    
+    try {
+        console.log('About to fetch global rankings...');
+        const rankings = await fetchGlobalRankings(50);
+        console.log(`Global rankings received in renderGlobalRankings:`, rankings);
+        rankingsData.global = rankings;
+        
+        if (rankings.length === 0) {
+            container.innerHTML = `
+                <div class="rankings-empty">
+                    <div class="rankings-empty-icon">🌟</div>
+                    <h3>No Global Rankings Yet</h3>
+                    <p>Play some quiz sessions to appear in the global leaderboard!</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = `
+            <h3>Global Player Rankings</h3>
+            ${createGlobalStats(rankings)}
+            ${createPodium(rankings, true)}
+            ${createRankingsTable(rankings, true)}
+        `;
+        
+    } catch (error) {
+        container.innerHTML = `
+            <div class="rankings-empty">
+                <div class="rankings-empty-icon">⚠️</div>
+                <h3>Failed to Load Rankings</h3>
+                <p>Error: ${escapeHTML(error.message)}</p>
+            </div>
+        `;
+    }
+};
+
+const initRankingsTabs = () => {
+    const tabs = document.querySelectorAll('.rankings-tab');
+    const tabContents = document.querySelectorAll('.rankings-tab-content');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabName = tab.dataset.tab;
+            console.log(`Rankings tab clicked: ${tabName}`);
+            
+            // Update tab states
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            // Update content states
+            tabContents.forEach(content => content.classList.remove('active'));
+            document.getElementById(`${tabName}Rankings`).classList.add('active');
+            
+            currentRankingsTab = tabName;
+            console.log(`Current rankings tab set to: ${currentRankingsTab}`);
+            
+            // Load data if needed
+            if (tabName === 'session' && currentSessionId) {
+                console.log(`Loading session rankings for session ${currentSessionId}`);
+                renderSessionRankings(currentSessionId);
+            } else if (tabName === 'global') {
+                console.log('Loading global rankings');
+                renderGlobalRankings();
+            }
+        });
+    });
+};
+
+const refreshRankingsAfterDataLoad = () => {
+    console.log('refreshRankingsAfterDataLoad called');
+    console.log(`Current rankings tab: ${currentRankingsTab}, currentSessionId: ${currentSessionId}`);
+    
+    // Refresh the currently active tab
+    if (currentRankingsTab === 'session' && currentSessionId) {
+        console.log('Refreshing session rankings after data load');
+        renderSessionRankings(currentSessionId);
+    } else if (currentRankingsTab === 'global') {
+        console.log('Refreshing global rankings after data load');
+        renderGlobalRankings();
+    }
+};
+
+const insertRankingsContainer = () => {
+    console.log('insertRankingsContainer called');
+    const quizSessionsContainer = document.querySelector('.c-quiz-sessions-container');
+    if (!quizSessionsContainer) {
+        console.log('No quiz sessions container found');
+        return;
+    }
+    
+    // Check if rankings container already exists
+    if (document.querySelector('.rankings-container')) {
+        console.log('Rankings container already exists');
+        return;
+    }
+    
+    // Insert rankings before the sessions
+    const rankingsHTML = createRankingsContainer();
+    quizSessionsContainer.insertAdjacentHTML('beforebegin', rankingsHTML);
+    console.log('Rankings container HTML inserted');
+    
+    // Initialize tab functionality
+    initRankingsTabs();
+    console.log('Rankings tabs initialized');
+    
+    // Load initial data
+    console.log(`Current session ID at insert time: ${currentSessionId}`);
+    if (currentSessionId) {
+        console.log('Loading session rankings immediately');
+        renderSessionRankings(currentSessionId);
+    } else {
+        console.log('No current session ID, skipping session rankings');
+    }
+    console.log('Loading global rankings immediately');
+    renderGlobalRankings();
+};
 
 // #endregion
 
@@ -914,6 +1363,14 @@ const injectCSS = () => {
                 .toggle-title {
                     font-size: 1rem;
                 }
+                .session-controls {
+                    flex-direction: column;
+                    gap: 0.5rem;
+                    align-items: stretch;
+                }
+                .session-controls .btn {
+                    width: 100%;
+                }
                 .charts-grid {
                     grid-template-columns: 1fr;
                     gap: 1rem;
@@ -938,6 +1395,38 @@ const injectCSS = () => {
             .gamepad-section:focus {
                 outline: 2px solid var(--primary-color);
                 outline-offset: 2px;
+            }
+
+            /* --- Session Controls Bar --- */
+            .session-controls {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.75rem;
+                margin: 0 0 1rem 0;
+            }
+            .session-controls .btn {
+                background: var(--bg-secondary);
+                color: var(--text-primary);
+                border: 1px solid var(--border-color);
+                border-radius: 6px;
+                padding: 0.5rem 0.75rem;
+                cursor: pointer;
+                transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.05s ease;
+                font-weight: 600;
+            }
+            .session-controls .btn:hover:not(:disabled) {
+                background: var(--hover-bg);
+            }
+            .session-controls .btn:active:not(:disabled) {
+                transform: translateY(1px);
+            }
+            .session-controls .btn:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+            .session-controls .theme-toggle {
+                margin: 0 auto;
             }
         `;
         document.head.appendChild(style);
@@ -968,6 +1457,9 @@ const initializeDashboard = () => {
             document.body.appendChild(sessionSelectorContainer);
         }
     }
+
+    // Insert rankings container
+    insertRankingsContainer();
 
     // Load initial data (newest session by default)
     fetchSessionData();
@@ -1032,7 +1524,16 @@ window.quizDashboard = {
     getCurrentSessionId: () => currentSessionId,
     getCurrentSessionData: () => currentSessionData,
     getAvailableSessions: () => availableSessions,
-    isLoading: () => isLoading
+    isLoading: () => isLoading,
+    // Rankings functions
+    refreshRankings: () => {
+        if (currentRankingsTab === 'session' && currentSessionId) {
+            renderSessionRankings(currentSessionId);
+        } else if (currentRankingsTab === 'global') {
+            renderGlobalRankings();
+        }
+    },
+    getRankingsData: () => rankingsData
 };
 
 // #endregion

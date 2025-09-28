@@ -314,23 +314,38 @@ class PlayersListManager {
 const playersListStyles = `
 /* Enhanced Players List Styles */
 .c-players-container {
-    background: white;
+    background: var(--bg-secondary);
     border-radius: 12px;
     padding: 20px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 12px var(--shadow-light);
     margin-bottom: 20px;
     width: 100%;
     box-sizing: border-box;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+/* Dark mode players container */
+.theme-dark .c-players-container, [data-theme="dark"] .c-players-container {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    box-shadow: 0 4px 6px var(--shadow-light);
 }
 
 .c-players-container h3 {
     margin: 0 0 16px 0;
-    color: #495057;
+    color: var(--text-primary);
     font-size: 18px;
     font-weight: 600;
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+/* Dark mode header */
+.theme-dark .c-players-container h3, [data-theme="dark"] .c-players-container h3 {
+    color: var(--text-primary);
 }
 
 .c-player-item {
@@ -340,34 +355,62 @@ const playersListStyles = `
     padding: 12px 16px;
     margin-bottom: 8px;
     border-radius: 8px;
-    background: #f8f9fa;
-    border-left: 4px solid #e9ecef;
+    background: var(--bg-primary);
+    border-left: 4px solid var(--border-color);
     transition: all 0.3s ease;
     position: relative;
     gap: 12px;
+    border: 1px solid var(--border-color);
 }
 
 .c-player-item.current-user {
-    background: #e3f2fd;
-    border-left-color: #2196f3;
-    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.15);
+    background: rgba(59, 130, 246, 0.1);
+    border-left-color: var(--primary-color);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
 }
 
 .c-player-item:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px var(--shadow-medium);
+    background: var(--hover-bg);
+}
+
+/* Dark mode player items */
+.theme-dark .c-player-item, [data-theme="dark"] .c-player-item {
+    background: var(--bg-primary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.theme-dark .c-player-item:hover, [data-theme="dark"] .c-player-item:hover {
+    border-left-color: var(--primary-color);
+    background: var(--bg-secondary);
+}
+
+.theme-dark .c-player-item.current-user, [data-theme="dark"] .c-player-item.current-user {
+    background: rgba(59, 130, 246, 0.1);
+    border-left-color: var(--primary-color);
 }
 
 .player-rank {
     font-weight: bold;
     font-size: 18px;
-    color: #6c757d;
+    color: var(--text-secondary);
     min-width: 35px;
     text-align: center;
 }
 
 .c-player-item.current-user .player-rank {
-    color: #2196f3;
+    color: var(--primary-color);
+}
+
+/* Dark mode player rank */
+.theme-dark .player-rank, [data-theme="dark"] .player-rank {
+    color: var(--text-secondary);
+}
+
+.theme-dark .c-player-item.current-user .player-rank, [data-theme="dark"] .c-player-item.current-user .player-rank {
+    color: var(--primary-color);
 }
 
 .player-info {
@@ -378,7 +421,7 @@ const playersListStyles = `
 
 .player-name {
     font-weight: 600;
-    color: #495057;
+    color: var(--text-primary);
     margin-bottom: 4px;
     font-size: 16px;
     white-space: nowrap;
@@ -387,15 +430,28 @@ const playersListStyles = `
 }
 
 .c-player-item.current-user .player-name {
-    color: #1976d2;
+    color: var(--primary-color);
 }
 
 .player-stats {
     display: flex;
     gap: 16px;
     font-size: 13px;
-    color: #6c757d;
+    color: var(--text-secondary);
     align-items: center;
+}
+
+/* Dark mode player name and stats */
+.theme-dark .player-name, [data-theme="dark"] .player-name {
+    color: var(--text-primary);
+}
+
+.theme-dark .c-player-item.current-user .player-name, [data-theme="dark"] .c-player-item.current-user .player-name {
+    color: var(--primary-color);
+}
+
+.theme-dark .player-stats, [data-theme="dark"] .player-stats {
+    color: var(--text-secondary);
 }
 
 .session-score {
@@ -408,13 +464,13 @@ const playersListStyles = `
 }
 
 .questions-answered {
-    color: #6c757d;
+    color: var(--text-secondary);
     white-space: nowrap;
 }
 
 .you-indicator {
-    background: #2196f3;
-    color: white;
+    background: var(--primary-color);
+    color: var(--text-inverse);
     padding: 4px 8px;
     border-radius: 12px;
     font-size: 10px;
@@ -427,7 +483,22 @@ const playersListStyles = `
 .no-data-message, .no-players-message {
     text-align: center;
     padding: 40px 20px;
-    color: #6c757d;
+    color: var(--text-secondary);
+}
+
+/* Dark mode additional elements */
+.theme-dark .questions-answered, [data-theme="dark"] .questions-answered {
+    color: var(--text-secondary);
+}
+
+.theme-dark .you-indicator, [data-theme="dark"] .you-indicator {
+    background: var(--primary-color);
+    color: var(--text-inverse);
+}
+
+.theme-dark .no-data-message, .theme-dark .no-players-message, 
+[data-theme="dark"] .no-data-message, [data-theme="dark"] .no-players-message {
+    color: var(--text-secondary);
 }
 
 .no-data-message p, .no-players-message p {
@@ -437,22 +508,37 @@ const playersListStyles = `
 
 .sub-text {
     font-size: 14px !important;
-    color: #adb5bd !important;
+    color: var(--text-muted) !important;
 }
 
 .retry-btn {
-    background: #007bff;
-    color: white;
+    background: var(--primary-color);
+    color: var(--text-inverse);
     border: none;
     padding: 8px 16px;
     border-radius: 6px;
     cursor: pointer;
     font-size: 14px;
     margin-top: 10px;
+    transition: background-color 0.2s ease;
 }
 
 .retry-btn:hover {
-    background: #0056b3;
+    background: var(--secondary-color);
+}
+
+/* Dark mode sub-text and buttons */
+.theme-dark .sub-text, [data-theme="dark"] .sub-text {
+    color: var(--text-muted) !important;
+}
+
+.theme-dark .retry-btn, [data-theme="dark"] .retry-btn {
+    background: var(--primary-color);
+    color: var(--text-inverse);
+}
+
+.theme-dark .retry-btn:hover, [data-theme="dark"] .retry-btn:hover {
+    background: var(--secondary-color);
 }
 
 /* Loading animation */

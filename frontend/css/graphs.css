@@ -192,6 +192,34 @@ main {
     border: 1px solid var(--border-color);
 }
 
+/* Session controls bar */
+.session-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin: 0 0 0.75rem 0;
+}
+.session-controls .btn {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.05s ease;
+    font-weight: 600;
+}
+.session-controls .btn:hover:not(:disabled) { background: var(--hover-bg); }
+.session-controls .btn:active:not(:disabled) { transform: translateY(1px); }
+.session-controls .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.session-controls .theme-toggle { margin: 0 auto; }
+
+@media only screen and (max-width: 768px) {
+    .session-controls { flex-direction: column; align-items: stretch; }
+    .session-controls .btn { width: 100%; }
+}
+
 .session-selector-label {
     display: block;
     color: var(--text-primary);
@@ -294,7 +322,10 @@ main {
 .toggle-content {
     padding: 0;
     background-color: var(--bg-secondary);
-    overflow: hidden;
+    /* Single scroll container for chat/answers to avoid nested scrollbars */
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 /* Chat display */
@@ -302,9 +333,9 @@ main {
     background-color: var(--bg-primary) !important;
     border-radius: 0;
     padding: 1rem;
-    max-height: 300px;
-    overflow-y: auto;
-    overflow-x: hidden;
+    /* Let the parent .toggle-content handle scrolling */
+    max-height: none;
+    overflow: visible;
     width: 100%;
     box-sizing: border-box;
 }
@@ -374,86 +405,134 @@ main {
 
 /* Player answers display */
 .player-answers-display {
-    background-color: var(--bg-primary);
-    border-radius: 0;
-    padding: 1rem;
-    max-height: 400px;
-    overflow-y: auto;
+    background-color: var(--bg-primary) !important;
+    border-radius: 0 !important;
+    padding: 1rem !important;
+    /* Let the parent .toggle-content handle scrolling */
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
 }
+
+/* Override any conflicting styles that might collapse player answers */
+.player-answers-display * {
+    box-sizing: border-box !important;
+}
+
+/* Remove overly aggressive display overrides to let layout behave naturally */
 
 /* Question groups containing multiple player answers */
 .question-group {
-    margin-bottom: 1.5rem;
-    padding: 1rem;
-    background-color: var(--bg-secondary);
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
+    margin-bottom: 1.5rem !important;
+    background-color: var(--bg-secondary) !important;
+    border-radius: 8px !important;
+    border: 1px solid var(--border-color) !important;
+    overflow: visible !important;
+    display: block !important;
+    width: 100% !important;
+    padding: 0 !important;
 }
 
 .question-title {
-    color: var(--text-primary);
-    font-weight: 600;
-    margin-bottom: 1rem;
-    font-size: 1rem;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 0.5rem;
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+    margin: 0 !important;
+    padding: 1rem !important;
+    font-size: 1rem !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    background-color: var(--bg-secondary) !important;
+    display: block !important;
+    line-height: 1.4 !important;
+    min-height: auto !important;
 }
 
-/* Individual player answer containers */
+/* Individual player answer container */
 .player-answer {
-    margin-bottom: 0.75rem;
-    padding: 0.75rem;
-    background-color: var(--bg-primary);
-    border-radius: 4px;
-    border: 1px solid var(--border-color);
-    border-left: 3px solid var(--border-color);
-}
-
-.player-answer.correct {
-    border-left-color: var(--success-color);
-}
-
-.player-answer.incorrect {
-    border-left-color: var(--danger-color);
+    background-color: var(--bg-primary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px !important;
+    padding: 1rem !important;
+    margin: 0.875rem 1rem !important;
+    transition: all 0.2s ease !important;
+    position: relative !important;
+    min-height: 140px !important;
+    height: auto !important;
+    display: block !important;
+    width: calc(100% - 2rem) !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
 }
 
 /* Answer header with player name and points */
-.answer-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.5rem;
+.player-answer .answer-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 0.75rem !important;
+    width: 100% !important;
+    min-height: 30px !important;
+    height: auto !important;
+    padding: 0 !important;
 }
 
-.player-name {
-    color: var(--text-primary);
-    font-weight: 600;
-    font-size: 0.875rem;
+.player-answer .player-name {
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    display: inline-block !important;
+    white-space: nowrap !important;
+    line-height: 1.4 !important;
+    margin: 0 !important;
 }
 
-.points {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    font-weight: 500;
+.player-answer .points {
+    color: var(--text-secondary) !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    display: inline-block !important;
+    white-space: nowrap !important;
+    line-height: 1.4 !important;
+    margin: 0 !important;
 }
 
 /* The actual answer text */
-.answer-text {
-    color: var(--text-primary);
-    margin-bottom: 0.5rem;
-    padding: 0.5rem;
-    background-color: var(--bg-secondary);
-    border-radius: 3px;
-    font-weight: 500;
-    border: 1px solid var(--border-color);
+.player-answer .answer-text {
+    color: var(--text-primary) !important;
+    margin-bottom: 0.75rem !important;
+    padding: 0.75rem !important;
+    background-color: var(--bg-secondary) !important;
+    border-radius: 4px !important;
+    font-weight: 500 !important;
+    border: 1px solid var(--border-color) !important;
+    line-height: 1.4 !important;
+    display: block !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    min-height: 3em !important;
+    height: auto !important;
+    word-wrap: break-word !important;
+    overflow: visible !important;
 }
 
 /* Answer footer with timing info */
-.answer-footer {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.75rem;
-    color: var(--text-secondary);
+.player-answer .answer-footer {
+    display: flex !important;
+    justify-content: space-between !important;
+    font-size: 0.8rem !important;
+    color: var(--text-secondary) !important;
+    margin-top: auto !important;
+    width: 100% !important;
+    min-height: 25px !important;
+    height: auto !important;
+    padding: 0 !important;
+}
+
+.player-answer .answer-footer span {
+    display: inline-block !important;
+    line-height: 1.4 !important;
+    color: var(--text-secondary) !important;
 }
 
 /* Legacy styles for old answer format */
@@ -543,10 +622,13 @@ main {
 /* Dark mode player answers styling */
 [data-theme="dark"] .question-group {
     background-color: var(--bg-secondary) !important;
+    border-color: #4b5563 !important;
 }
 
 [data-theme="dark"] .question-title {
     color: var(--text-primary) !important;
+    background-color: var(--bg-secondary) !important;
+    border-color: #4b5563 !important;
 }
 
 [data-theme="dark"] .player-answer {
@@ -563,7 +645,7 @@ main {
 }
 
 [data-theme="dark"] .answer-text {
-    background-color: var(--bg-primary) !important;
+    background-color: var(--bg-secondary) !important;
     color: #f8fafc !important;
     border-color: #4b5563 !important;
 }
@@ -574,6 +656,338 @@ main {
 
 [data-theme="dark"] .answer-footer span {
     color: #cbd5e1 !important;
+}
+
+/* Player Rankings Styles */
+.rankings-container {
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.rankings-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.rankings-tab {
+    padding: 0.75rem 1.5rem;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-weight: 500;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.rankings-tab.active {
+    background-color: var(--primary-color);
+    color: var(--text-inverse);
+}
+
+.rankings-tab:hover:not(.active) {
+    background-color: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+.rankings-content {
+    min-height: 400px;
+}
+
+.rankings-tab-content {
+    display: none;
+}
+
+.rankings-tab-content.active {
+    display: block;
+}
+
+/* Podium Styles for Top 3 */
+.rankings-podium {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    align-items: end;
+}
+
+.podium-position {
+    text-align: center;
+    position: relative;
+    padding: 1.5rem 1rem;
+    border-radius: 12px;
+    border: 2px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.podium-position:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.podium-position.first {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #8b5a00;
+    border-color: #ffd700;
+    order: 2;
+    min-height: 120px;
+}
+
+.podium-position.second {
+    background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
+    color: #4a4a4a;
+    border-color: #c0c0c0;
+    order: 1;
+    min-height: 100px;
+}
+
+.podium-position.third {
+    background: linear-gradient(135deg, #cd7f32 0%, #daa560 100%);
+    color: #5d3a1a;
+    border-color: #cd7f32;
+    order: 3;
+    min-height: 80px;
+}
+
+.podium-rank {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.podium-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.podium-score {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.podium-accuracy {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.podium-crown {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* Rankings Table */
+.rankings-table-container {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.rankings-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--bg-primary);
+}
+
+.rankings-table th {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.rankings-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.rankings-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.rankings-table tbody tr:hover {
+    background-color: var(--hover-bg);
+}
+
+.rankings-table tbody tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="dark"] .rankings-table tbody tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Rank styling */
+.rank-cell {
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.rank-cell.rank-1 { color: #ffd700; }
+.rank-cell.rank-2 { color: #c0c0c0; }
+.rank-cell.rank-3 { color: #cd7f32; }
+
+/* Player name styling */
+.player-name-cell {
+    font-weight: 600;
+}
+
+.player-username {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 400;
+}
+
+/* Score styling */
+.score-cell {
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* Accuracy badges */
+.accuracy-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.accuracy-excellent { 
+    background-color: #d4edda; 
+    color: #155724; 
+}
+
+.accuracy-good { 
+    background-color: #fff3cd; 
+    color: #856404; 
+}
+
+.accuracy-average { 
+    background-color: #f8d7da; 
+    color: #721c24; 
+}
+
+[data-theme="dark"] .accuracy-excellent {
+    background-color: #1e4d2b;
+    color: #b8e6c1;
+}
+
+[data-theme="dark"] .accuracy-good {
+    background-color: #4d3d00;
+    color: #f5e97d;
+}
+
+[data-theme="dark"] .accuracy-average {
+    background-color: #4d1e24;
+    color: #f7b2ba;
+}
+
+/* Empty state for rankings */
+.rankings-empty {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-secondary);
+}
+
+.rankings-empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.rankings-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: var(--text-secondary);
+}
+
+.rankings-loading .spinner {
+    margin-bottom: 1rem;
+}
+
+/* Stats cards for global rankings */
+.rankings-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background-color: var(--bg-primary);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Responsive design for rankings */
+@media only screen and (max-width: 768px) {
+    .rankings-container {
+        padding: 1rem;
+    }
+    
+    .rankings-podium {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .podium-position.first,
+    .podium-position.second,
+    .podium-position.third {
+        order: unset;
+        min-height: 80px;
+    }
+    
+    .rankings-table {
+        font-size: 0.875rem;
+    }
+    
+    .rankings-table th,
+    .rankings-table td {
+        padding: 0.5rem;
+    }
+    
+    .rankings-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
 }
 
 /* Very small devices (phones, 400px and down) */
@@ -592,5 +1006,18 @@ main {
     
     .c-quiz-session h3 {
         font-size: 0.85rem;
+    }
+    
+    .rankings-tabs {
+        flex-direction: column;
+    }
+    
+    .rankings-tab {
+        border-radius: 8px;
+        margin-bottom: 0.25rem;
+    }
+    
+    .rankings-stats {
+        grid-template-columns: 1fr;
     }
 }
