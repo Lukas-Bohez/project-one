@@ -78,16 +78,22 @@
             
             console.log('Applying theme:', { theme, effectiveTheme });
             
-            // Remove existing theme classes and attributes
-            html.removeAttribute('data-theme');
-            body.removeAttribute('data-theme');
-            body.classList.remove('theme-light', 'theme-dark');
+            // Safely remove existing theme classes and attributes
+            if (html) {
+                html.removeAttribute('data-theme');
+            }
+            if (body) {
+                body.removeAttribute('data-theme');
+                body.classList.remove('theme-light', 'theme-dark');
+            }
             
             // Apply new theme with maximum coverage
             if (effectiveTheme === THEMES.DARK) {
-                html.setAttribute('data-theme', 'dark');
-                body.setAttribute('data-theme', 'dark');
-                body.classList.add('theme-dark');
+                if (html) html.setAttribute('data-theme', 'dark');
+                if (body) {
+                    body.setAttribute('data-theme', 'dark');
+                    body.classList.add('theme-dark');
+                }
                 console.log('Applied dark theme to html and body');
                 
                 // Also apply to main content areas for admin
@@ -97,9 +103,11 @@
                 if (adminContent) adminContent.setAttribute('data-theme', 'dark');
                 
             } else {
-                html.setAttribute('data-theme', 'light');
-                body.setAttribute('data-theme', 'light');
-                body.classList.add('theme-light');
+                if (html) html.setAttribute('data-theme', 'light');
+                if (body) {
+                    body.setAttribute('data-theme', 'light');
+                    body.classList.add('theme-light');
+                }
                 console.log('Applied light theme to html and body');
                 
                 // Also apply to main content areas for admin
@@ -110,7 +118,7 @@
             }
             
             // Force a style recalculation
-            document.body.offsetHeight;
+            if (document.body) document.body.offsetHeight;
             
             // Update button text if it exists
             this.updateToggleButton();
@@ -159,27 +167,26 @@
             // Find the theme toggle button (support multiple IDs)
             const toggleBtn = document.getElementById('servoTestBtn') || 
                              document.getElementById('theme-toggle');
-            if (!toggleBtn) return;
+            if (!toggleBtn) {
+                console.log('No theme toggle button found');
+                return;
+            }
+            
+            console.log('Found theme toggle button:', toggleBtn.id);
             
             // Update button text and functionality
             this.updateToggleButton();
             
-            // Check if button already has onclick attribute - if so, don't replace it
-            if (toggleBtn.hasAttribute('onclick')) {
-                console.log('Button has onclick attribute, preserving it');
-                return;
-            }
-            
-            // Only add event listener if no onclick attribute exists
-            // Remove existing event listeners to avoid conflicts
-            const newBtn = toggleBtn.cloneNode(true);
-            toggleBtn.parentNode.replaceChild(newBtn, toggleBtn);
-            
-            // Add new event listener
-            newBtn.addEventListener('click', (e) => {
+            // Always add our event listener, but don't replace onclick if it exists
+            // This ensures our themeManager works alongside any existing onclick
+            toggleBtn.addEventListener('click', (e) => {
+                console.log('Theme toggle button clicked');
                 e.preventDefault();
+                e.stopPropagation();
                 this.toggleTheme();
             });
+            
+            console.log('Theme toggle button initialized successfully');
         }
         
         updateToggleButton() {
@@ -188,18 +195,25 @@
             if (!toggleBtn) return;
             
             const effectiveTheme = this.getEffectiveTheme();
-            let text, title;
+            let text, title, emoji;
             
             if (effectiveTheme === THEMES.DARK) {
                 text = 'Dark Mode';
+                emoji = '🌙';
                 title = 'Dark mode active. Click to switch to light mode.';
             } else {
                 text = 'Light Mode';
+                emoji = '🌓';
                 title = 'Light mode active. Click to switch to dark mode.';
             }
             
-            // Update button text only (icons are handled by CSS)
-            toggleBtn.textContent = text;
+            // Update button - if it contains only emoji, keep emoji, otherwise use text
+            if (toggleBtn.textContent === '🌓' || toggleBtn.textContent === '🌙' || toggleBtn.textContent.length <= 2) {
+                toggleBtn.textContent = emoji;
+            } else {
+                toggleBtn.textContent = text;
+            }
+            
             toggleBtn.title = title;
             
             // Add accessibility attributes

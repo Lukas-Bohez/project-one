@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Articles • Quiz The Spire</title>
+  <script>
+    (function(){
+      try{
+        var stored = localStorage.getItem('quiz-theme-preference');
+        var theme = (stored === 'dark') ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+        document.body.setAttribute('data-theme', theme);
+        document.body.classList.add('theme-' + theme);
+        console.log('Early theme applied:', theme);
+      }catch(err){
+        console.log('Early theme application failed:', err);
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="../css/styles.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="../js/themeManager.js"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/marked/marked.min.js"></script>
+  <style>
+    /* Minimal page chrome to integrate with site theme */
+    body{min-height:100vh;display:flex;flex-direction:column}
+    header.a-header .back {position:absolute;right:1rem;top:50%;transform:translateY(-50%);}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  </style>
+</head>
+<body>
+  <header class="a-header">
+    <div class="a-container a-topbar" style="justify-content: space-between;">
+      <a class="c-btn c-btn--tertiary" href="../index.html">← Back</a>
+      <h1 class="a-topbar__title" style="flex: 1; text-align: center;">Latest Artikels by Oroka Conner</h1>
+      <button class="c-btn c-btn--tertiary" id="servoTestBtn">Toggle Theme</button>
+    </div>
+  </header>  <main class="a-container" id="root">
+    <noscript>
+      Please enable JavaScript to view the articles.
+    </noscript>
+  </main>
+
+  <footer class="a-footer a-container"></footer>
+
+  <script src="articles-react/components.js"></script>
+  <script>
+    (async function(){
+      try{
+        const res = await fetch('articles.json', {cache:'no-store'});
+        const articles = await res.json();
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(Articles.App, { articles }));
+      }catch(err){
+        const root = document.getElementById('root');
+        root.innerHTML = '<div class="c-error-message is-visible">Failed to load articles manifest. '+(err?.message||'')+'</div>';
+      }
+    })();
+  </script>
+</body>
+</html>
