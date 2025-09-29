@@ -1,4 +1,7 @@
 // Simple Random Lofi Player - Enhanced with Shuffle and Repeat Modes
+// API Configuration  
+const API_BASE_URL = `https://${window.location.hostname}`;
+
 // Configuration
 const config = {
     folder: '../lofi/', // Path from js/ to lofi/
@@ -6,16 +9,27 @@ const config = {
     fadeDuration: 500, // Reduced from 1000ms to 500ms for faster transitions
     shuffle: true, // Default shuffle mode (true = random, false = sequential)
     repeat: false, // Repeat mode: false, 'one', or 'all'
+    enableLofi: false, // Disable lofi player by default to prevent 404 errors
+    youtube: {
+        enabled: true,
+        apiKey: '', // Optional: YouTube API key for better metadata
+        defaultPlaylist: 'PLrAOxtLmTaTeiV0MD-Y0x6fgz5CH-YNGQ', // Default lofi playlist
+        embedDomain: 'https://www.youtube-nocookie.com'
+    },
     normalization: {
         enabled: true,
         targetLoudness: -23, // LUFS (Loudness Units relative to Full Scale)
         analysisTime: 3000, // How long to analyze each track (ms)
         cache: true // Cache normalization data
     },
-    persistence: { // New persistence configuration
+    persistence: { // Enhanced persistence configuration
         enabled: true,
         localStorageKey: 'lofiPlayerState',
-        normalizationCacheKey: 'lofiNormalizationCache'
+        normalizationCacheKey: 'lofiNormalizationCache',
+        playerEnabledKey: 'lofiPlayerEnabled',
+        youtubePlaylistKey: 'lofiYouTubePlaylist',
+        volumeKey: 'lofiVolume',
+        currentPlaylistKey: 'lofiCurrentPlaylist'
     }
 };
 
@@ -40,13 +54,234 @@ let currentPlaylistIndex = -1; // Current position in shuffled playlist (for shu
 let normalizationCache = new Map(); // Cache for normalization data
 let isTransitioning = false; // Prevent overlapping fades/loads
 
+// YouTube player variables
+let youtubePlayer = null;
+let youtubePlayerReady = false;
+let isYouTubeMode = false;
+let youtubePlaylist = [];
+let lofiActivated = false; // Track if user has activated the lofi player
+let youtubeProgressTimer = null; // Polling timer for YT progress updates
+
 // --- Persistence Variables ---
 let savedPlaybackState = null; // To hold state loaded from localStorage
+let cachedYouTubePlaylist = []; // Cached YouTube songs
+let cachedVolume = config.volume; // Cached volume setting
+let isPlayerEnabled = false; // Cached player enabled state
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('Lofi player ready - initializing...');
+// IndexedDB for audio blob caching
+let lofiDB = null;
 
+const openLofiDB = async () => {
+    if (lofiDB) return lofiDB;
+    
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open('lofi-cache', 1);
+        
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+            lofiDB = request.result;
+            resolve(lofiDB);
+        };
+        
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains('audioBlobs')) {
+                const store = db.createObjectStore('audioBlobs', { keyPath: 'id' });
+                store.createIndex('videoId', 'videoId', { unique: false });
+                store.createIndex('status', 'status', { unique: false });
+            }
+        };
+    });
+};
+
+const getCachedAudioBlob = async (videoId) => {
+    try {
+        const db = await openLofiDB();
+        const transaction = db.transaction(['audioBlobs'], 'readonly');
+        const store = transaction.objectStore('audioBlobs');
+        
+        return new Promise((resolve, reject) => {
+            const request = store.get(videoId);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    } catch (error) {
+        console.error('Error getting cached audio blob:', error);
+        return null;
+    }
+};
+
+const saveCachedAudioBlob = async (videoId, blob, metadata = {}) => {
+    try {
+        const db = await openLofiDB();
+        const transaction = db.transaction(['audioBlobs'], 'readwrite');
+        const store = transaction.objectStore('audioBlobs');
+        
+        const record = {
+            id: videoId,
+            videoId: videoId,
+            blob: blob,
+            status: 'ready',
+            title: metadata.title || videoId,
+            fileExt: 'mp3',
+            cachedAt: new Date().toISOString(),
+            ...metadata
+        };
+        
+        return new Promise((resolve, reject) => {
+            const request = store.put(record);
+            request.onsuccess = () => resolve(record);
+            request.onerror = () => reject(request.error);
+        });
+    } catch (error) {
+        console.error('Error saving cached audio blob:', error);
+        throw error;
+    }
+};
+
+const hasCachedAudio = async (videoId) => {
+    const cached = await getCachedAudioBlob(videoId);
+    return cached && cached.status === 'ready' && cached.blob;
+};
+
+const listCachedAudioKeys = async () => {
+    try {
+        const db = await openLofiDB();
+        const transaction = db.transaction(['audioBlobs'], 'readonly');
+        const store = transaction.objectStore('audioBlobs');
+        
+        return new Promise((resolve, reject) => {
+            const request = store.getAllKeys();
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    } catch (error) {
+        console.error('Error listing cached audio keys:', error);
+        return [];
+    }
+};
+
+const updateCachedAudioStatus = async (videoId, updates) => {
+    try {
+        const db = await openLofiDB();
+        const transaction = db.transaction(['audioBlobs'], 'readwrite');
+        const store = transaction.objectStore('audioBlobs');
+        
+        return new Promise(async (resolve, reject) => {
+            // Get existing record
+            const getRequest = store.get(videoId);
+            getRequest.onsuccess = () => {
+                const existing = getRequest.result || { 
+                    id: videoId, 
+                    videoId: videoId, 
+                    status: 'pending',
+                    title: videoId,
+                    fileExt: 'mp3'
+                };
+                
+                // Update with new data
+                const updated = { ...existing, ...updates };
+                
+                const putRequest = store.put(updated);
+                putRequest.onsuccess = () => resolve(updated);
+                putRequest.onerror = () => reject(putRequest.error);
+            };
+            getRequest.onerror = () => reject(getRequest.error);
+        });
+    } catch (error) {
+        console.error('Error updating cached audio status:', error);
+        throw error;
+    }
+};
+
+// Load persisted simple settings early (enable flag, volume, YouTube list)
+const loadPersistentSettings = () => {
+    try {
+        if (!config.persistence?.enabled) return;
+        const enabledRaw = localStorage.getItem(config.persistence.playerEnabledKey);
+        isPlayerEnabled = enabledRaw ? JSON.parse(enabledRaw) : false;
+
+        const volRaw = localStorage.getItem(config.persistence.volumeKey);
+        if (volRaw !== null) {
+            const v = parseFloat(volRaw);
+            if (Number.isFinite(v)) {
+                cachedVolume = Math.max(0, Math.min(1, v));
+                config.volume = cachedVolume; // sync config default for UI
+            }
+        }
+
+        const ytRaw = localStorage.getItem(config.persistence.youtubePlaylistKey);
+        if (ytRaw) {
+            const list = JSON.parse(ytRaw);
+            if (Array.isArray(list)) {
+                cachedYouTubePlaylist = list;
+                console.log('Loaded YouTube playlist from cache:', cachedYouTubePlaylist.length, 'items');
+                // Migrate old schema items
+                migrateYouTubeCacheSchema();
+            }
+        } else {
+            console.log('No cached YouTube playlist found');
+        }
+    } catch (err) {
+        console.warn('Failed to load persistent settings:', err);
+        isPlayerEnabled = false;
+        cachedYouTubePlaylist = [];
+        cachedVolume = config.volume;
+    }
+};
+
+// Create activation button
+const createActivationButton = () => {
+    const activateBtn = document.createElement('button');
+    activateBtn.id = 'lofi-activate-btn';
+    activateBtn.innerHTML = '🎵 Activate Music Player';
+    activateBtn.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        z-index: 9999;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 12px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    `;
+    
+    activateBtn.addEventListener('mouseenter', () => {
+        activateBtn.style.transform = 'translateY(-2px)';
+        activateBtn.style.boxShadow = '0 6px 20px rgba(99, 102, 241, 0.4)';
+    });
+    
+    activateBtn.addEventListener('mouseleave', () => {
+        activateBtn.style.transform = 'translateY(0)';
+        activateBtn.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.3)';
+    });
+    
+    activateBtn.addEventListener('click', () => {
+        activateLofiPlayer();
+        activateBtn.remove();
+    });
+    
+    document.body.appendChild(activateBtn);
+};
+
+// Activate the lofi player
+const activateLofiPlayer = () => {
+    lofiActivated = true;
+    console.log('Lofi player activated by user');
+    try {
+        if (config.persistence?.enabled) {
+            localStorage.setItem(config.persistence.playerEnabledKey, 'true');
+            isPlayerEnabled = true;
+        }
+    } catch (e) { console.warn('Could not persist activation:', e); }
+    
     // Load persisted state if persistence is enabled
     if (config.persistence.enabled) {
         loadPlayerState();
@@ -56,6 +291,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize UI elements
     createFloatingIcon();
     createLofiModal();
+
+    // Apply cached volume now that DOM/UI exists
+    try {
+        audioPlayer.volume = Math.max(0, Math.min(1, cachedVolume));
+        const slider = document.getElementById('volume-slider');
+        const display = document.getElementById('volume-display');
+        if (slider) slider.value = cachedVolume;
+        if (display) display.textContent = `${Math.round(cachedVolume * 100)}%`;
+    } catch(_) {}
 
     // Setup user interaction listeners for auto-start
     setupAutoStartListeners();
@@ -68,8 +312,751 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isPlaying && !audioPlayer.paused) {
             savePlayerState();
         }
-    }, 10000); // Save every 10 seconds during playback
+    }, 10000);
+};
+
+// Load YouTube API
+const loadYouTubeAPI = () => {
+    if (window.YT) {
+        console.log('YouTube API already loaded');
+        return;
+    }
+    
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    
+    // YouTube API callback
+    window.onYouTubeIframeAPIReady = () => {
+        console.log('YouTube API ready');
+        youtubePlayerReady = true;
+    };
+};
+
+// Extract video ID from YouTube URL
+const extractYouTubeId = (url) => {
+    const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+        /youtube\.com\/playlist\?list=([^&\n?#]+)/
+    ];
+    
+    for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match) return match[1];
+    }
+    return null;
+};
+
+// Create YouTube player
+const createYouTubePlayer = (containerId, videoId, isPlaylist = false) => {
+    if (!youtubePlayerReady) {
+        console.warn('YouTube API not ready');
+        return null;
+    }
+    
+    const playerVars = {
+        autoplay: 1,
+        controls: 1,
+        rel: 0,
+        showinfo: 0,
+        modestbranding: 1
+    };
+    
+    if (isPlaylist) {
+        playerVars.listType = 'playlist';
+        playerVars.list = videoId;
+    }
+    
+    return new YT.Player(containerId, {
+        height: '0',
+        width: '0',
+        videoId: isPlaylist ? undefined : videoId,
+        playerVars: playerVars,
+        events: {
+            onReady: onYouTubePlayerReady,
+            onStateChange: onYouTubePlayerStateChange
+        }
+    });
+};
+
+// YouTube player ready callback
+const onYouTubePlayerReady = (event) => {
+    console.log('YouTube player ready');
+    youtubePlayer = event.target;
+    // Apply saved or current volume (0-100 scale)
+    try {
+        let v = config.volume;
+        if (config.persistence?.enabled) {
+            const raw = localStorage.getItem(config.persistence.volumeKey);
+            if (raw != null) {
+                const parsed = parseFloat(raw);
+                if (Number.isFinite(parsed)) v = Math.max(0, Math.min(1, parsed));
+            }
+        }
+        youtubePlayer.setVolume(Math.round(v * 100));
+    } catch(_) {}
+};
+
+// YouTube player state change callback
+const onYouTubePlayerStateChange = (event) => {
+    switch(event.data) {
+        case YT.PlayerState.PLAYING:
+            isPlaying = true;
+            console.log('YouTube video playing');
+            startYouTubeProgressPolling();
+            break;
+        case YT.PlayerState.PAUSED:
+            isPlaying = false;
+            console.log('YouTube video paused');
+            stopYouTubeProgressPolling();
+            break;
+        case YT.PlayerState.ENDED:
+            console.log('YouTube video ended');
+            stopYouTubeProgressPolling();
+            if (config.repeat === 'all') {
+                playNextYouTube();
+            }
+            break;
+    }
+};
+
+function startYouTubeProgressPolling() {
+    stopYouTubeProgressPolling();
+    youtubeProgressTimer = setInterval(() => {
+        updateProgressBar();
+    }, 250);
+}
+
+function stopYouTubeProgressPolling() {
+    if (youtubeProgressTimer) {
+        clearInterval(youtubeProgressTimer);
+        youtubeProgressTimer = null;
+    }
+}
+
+// Play next YouTube video
+const playNextYouTube = () => {
+    if (youtubePlayer && youtubePlaylist.length > 1) {
+        youtubePlayer.nextVideo();
+    }
+};
+
+// Switch to YouTube mode
+const switchToYouTube = (url) => {
+    // Strict mode separation: only play YouTube content in YouTube mode
+    if (!isYouTubeMode) {
+        console.log('MODE: In Local mode - YouTube playback blocked. Switch to YouTube mode first.');
+        return false;
+    }
+    
+    const videoId = extractYouTubeId(url);
+    if (!videoId) {
+        console.error('Invalid YouTube URL');
+        return false;
+    }
+    
+    // Stop local audio if playing (but we'll keep YouTube mode)
+    if (!audioPlayer.paused) {
+        audioPlayer.pause();
+    }
+    
+    // Create hidden container for YouTube player
+    let container = document.getElementById('youtube-player-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'youtube-player-container';
+        container.style.cssText = 'position: absolute; left: -9999px; width: 1px; height: 1px;';
+        document.body.appendChild(container);
+    }
+    
+    // Determine if it's a playlist
+    const isPlaylist = url.includes('playlist?list=');
+    
+    // Create YouTube player
+    if (youtubePlayerReady) {
+        youtubePlayer = createYouTubePlayer('youtube-player-container', videoId, isPlaylist);
+        isYouTubeMode = true;
+        return true;
+    } else {
+        console.warn('YouTube API not ready yet');
+        return false;
+    }
+};
+
+// --- YouTube persistence helpers ---
+const parseYouTubeInput = (input) => {
+    const normalizeVideoId = (id) => id && id.trim();
+    const normalizePlaylistId = (id) => id && id.trim();
+    try {
+        const u = new URL(input);
+        const host = u.hostname.replace('www.', '');
+        const list = u.searchParams.get('list');
+        const v = u.searchParams.get('v');
+        // Short URLs: youtu.be/<id>
+        if (host === 'youtu.be') {
+            const id = u.pathname.split('/').filter(Boolean)[0];
+            if (id) return { type: 'video', id: normalizeVideoId(id), url: `https://www.youtube.com/watch?v=${id}` };
+        }
+        // Shorts or embed
+        if (host.endsWith('youtube.com')) {
+            const path = u.pathname;
+            if (path.startsWith('/shorts/')) {
+                const id = path.split('/').filter(Boolean)[1];
+                if (id) return { type: 'video', id: normalizeVideoId(id), url: `https://www.youtube.com/watch?v=${id}` };
+            }
+            if (path.startsWith('/embed/')) {
+                const id = path.split('/').filter(Boolean)[1];
+                if (id) return { type: 'video', id: normalizeVideoId(id), url: `https://www.youtube.com/watch?v=${id}` };
+            }
+        }
+        if (list) return { type: 'playlist', id: normalizePlaylistId(list), url: `https://www.youtube.com/playlist?list=${list}` };
+        if (v) return { type: 'video', id: normalizeVideoId(v), url: `https://www.youtube.com/watch?v=${v}` };
+    } catch {
+        // Allow raw IDs (likely video)
+        if (/^[a-zA-Z0-9_-]{10,}$/.test(input)) return { type: 'video', id: input, url: `https://www.youtube.com/watch?v=${input}` };
+    }
+    return null;
+};
+
+const migrateYouTubeCacheSchema = () => {
+    // Migrate old schema items to new schema with status tracking
+    cachedYouTubePlaylist = cachedYouTubePlaylist.map(item => {
+        if (!item.status) {
+            // Add new fields to existing items
+            return {
+                ...item,
+                title: item.title || (item.type === 'video' ? `Video ${item.id}` : `Playlist ${item.id}`),
+                status: 'stream', // Default to streaming mode
+                hasBlob: false,
+                fileExt: 'mp3',
+                downloadId: null,
+                progress: 0,
+                addedAt: item.addedAt || new Date().toISOString()
+            };
+        }
+        return item;
+    });
+    
+    // Save migrated data
+    try {
+        localStorage.setItem(config.persistence.youtubePlaylistKey, JSON.stringify(cachedYouTubePlaylist));
+        console.log('YOUTUBE: Cache schema migrated successfully');
+    } catch (e) {
+        console.error('YOUTUBE: Migration save failed:', e);
+    }
+};
+
+const addYouTubeToCachedList = (input) => {
+    if (!config.persistence?.enabled) {
+        console.warn('Persistence not enabled, cannot cache YouTube item');
+        return false;
+    }
+    const parsedItem = parseYouTubeInput(input);
+    if (!parsedItem) {
+        console.warn('Could not parse YouTube input:', input);
+        return false;
+    }
+    console.log('Parsed YouTube item:', parsedItem);
+    
+    const exists = cachedYouTubePlaylist.some(x => x.id === parsedItem.id && x.type === parsedItem.type);
+    if (!exists) {
+        // Create full item with new schema
+        const item = {
+            ...parsedItem,
+            title: parsedItem.title || (parsedItem.type === 'video' ? `Video ${parsedItem.id}` : `Playlist ${parsedItem.id}`),
+            status: 'stream', // Start as streaming, will be updated when conversion starts
+            hasBlob: false,
+            fileExt: 'mp3',
+            downloadId: null,
+            progress: 0,
+            addedAt: new Date().toISOString()
+        };
+        
+        cachedYouTubePlaylist.push(item);
+        console.log('Added to cache, new list length:', cachedYouTubePlaylist.length);
+        try { 
+            localStorage.setItem(config.persistence.youtubePlaylistKey, JSON.stringify(cachedYouTubePlaylist)); 
+            console.log('Saved to localStorage successfully');
+        } catch (e) {
+            console.error('Failed to save to localStorage:', e);
+        }
+        refreshCachedYouTubeListUI();
+        
+        // Schedule download in background
+        scheduleYouTubeDownload(item);
+        return true;
+    } else {
+        console.log('Item already exists in cache');
+        // Still refresh UI in case status has changed
+        refreshCachedYouTubeListUI();
+    }
+    return false;
+};
+
+// Schedule YouTube video download and conversion
+const scheduleYouTubeDownload = async (item) => {
+    if (!item || item.status === 'converting' || item.status === 'ready') {
+        return; // Skip if already in progress or ready
+    }
+    
+    try {
+        console.log('DOWNLOAD: Scheduling conversion for', item.id);
+        
+        // Update status to converting
+        item.status = 'converting';
+        item.progress = 0;
+        updateYouTubeItemInCache(item);
+        
+        // Start conversion via backend
+        const convertResponse = await fetch(`${API_BASE_URL}/api/v1/video/convert`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                url: item.url,
+                format: 1, // MP3
+                quality: 128
+            })
+        });
+        
+        const convertResult = await convertResponse.json();
+        
+        if (!convertResponse.ok) {
+            throw new Error(convertResult.error || 'Conversion request failed');
+        }
+        
+        item.downloadId = convertResult.download_id;
+        updateYouTubeItemInCache(item);
+        console.log('DOWNLOAD: Conversion started with ID:', item.downloadId);
+        
+        // Start polling for completion
+        pollYouTubeConversion(item);
+        
+    } catch (error) {
+        console.error('DOWNLOAD: Failed to start conversion:', error);
+        item.status = 'error';
+        item.error = error.message;
+        updateYouTubeItemInCache(item);
+    }
+};
+
+// Poll conversion status and download when ready
+const pollYouTubeConversion = async (item) => {
+    if (!item.downloadId) {
+        console.error('DOWNLOAD: No download ID for polling');
+        return;
+    }
+    
+    const pollInterval = setInterval(async () => {
+        try {
+            const statusResponse = await fetch(`${API_BASE_URL}/api/v1/video/status/${item.downloadId}`);
+            const status = await statusResponse.json();
+            
+            if (!statusResponse.ok) {
+                throw new Error(status.error || 'Status check failed');
+            }
+            
+            // Update progress
+            item.progress = Math.round(status.progress || 0);
+            
+            if (status.status === 'completed') {
+                clearInterval(pollInterval);
+                console.log('DOWNLOAD: Conversion completed, downloading blob...');
+                
+                // Download the converted file
+                const downloadResponse = await fetch(`${API_BASE_URL}/api/v1/video/download/${item.downloadId}`);
+                
+                if (!downloadResponse.ok) {
+                    throw new Error('Download failed');
+                }
+                
+                const blob = await downloadResponse.blob();
+                
+                // Extract title from response headers if available
+                const contentDisposition = downloadResponse.headers.get('content-disposition');
+                const titleMatch = contentDisposition?.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                const extractedTitle = titleMatch ? titleMatch[1].replace(/['"]/g, '') : null;
+                
+                if (extractedTitle) {
+                    item.title = extractedTitle.replace(/\.(mp3|mp4)$/i, '');
+                }
+                
+                // Save blob to IndexedDB
+                await saveCachedAudioBlob(item.id, blob, {
+                    title: item.title,
+                    url: item.url,
+                    downloadId: item.downloadId
+                });
+                
+                // Update item status
+                item.status = 'ready';
+                item.hasBlob = true;
+                item.progress = 100;
+                updateYouTubeItemInCache(item);
+                
+                console.log('DOWNLOAD: Successfully cached audio for', item.title);
+                refreshCachedYouTubeListUI();
+                
+            } else if (status.status === 'error') {
+                clearInterval(pollInterval);
+                throw new Error(status.error || 'Conversion failed');
+            } else {
+                // Still processing, update UI
+                updateYouTubeItemInCache(item);
+            }
+            
+        } catch (error) {
+            clearInterval(pollInterval);
+            console.error('DOWNLOAD: Polling failed:', error);
+            item.status = 'error';
+            item.error = error.message;
+            updateYouTubeItemInCache(item);
+            refreshCachedYouTubeListUI();
+        }
+    }, 2000); // Poll every 2 seconds
+};
+
+// Update a YouTube item in the cache and persist
+const updateYouTubeItemInCache = (updatedItem) => {
+    const index = cachedYouTubePlaylist.findIndex(item => item.id === updatedItem.id);
+    if (index !== -1) {
+        cachedYouTubePlaylist[index] = { ...cachedYouTubePlaylist[index], ...updatedItem };
+        try {
+            localStorage.setItem(config.persistence.youtubePlaylistKey, JSON.stringify(cachedYouTubePlaylist));
+        } catch (e) {
+            console.error('Failed to update cache in localStorage:', e);
+        }
+    }
+};
+
+// Resume pending downloads on app start
+const resumePendingDownloads = async () => {
+    const pendingItems = cachedYouTubePlaylist.filter(item => 
+        item.status === 'converting' || item.status === 'stream'
+    );
+    
+    console.log('DOWNLOAD: Resuming', pendingItems.length, 'pending downloads');
+    
+    for (const item of pendingItems) {
+        if (item.status === 'converting' && item.downloadId) {
+            // Resume polling existing conversion
+            pollYouTubeConversion(item);
+        } else if (item.status === 'stream') {
+            // Schedule new conversion
+            setTimeout(() => scheduleYouTubeDownload(item), Math.random() * 2000); // Stagger requests
+        }
+    }
+};
+
+const removeYouTubeCachedItem = (idx) => {
+    if (!Array.isArray(cachedYouTubePlaylist)) return false;
+    if (idx < 0 || idx >= cachedYouTubePlaylist.length) return false;
+    cachedYouTubePlaylist.splice(idx, 1);
+    try { localStorage.setItem(config.persistence.youtubePlaylistKey, JSON.stringify(cachedYouTubePlaylist)); } catch {}
+    refreshCachedYouTubeListUI();
+    return true;
+};
+
+const refreshCachedYouTubeListUI = () => {
+    const container = document.getElementById('youtube-playlist');
+    if (!container) {
+        console.log('YouTube playlist container not found, skipping UI refresh');
+        return;
+    }
+    container.innerHTML = '';
+    console.log('Refreshing YouTube list UI with', cachedYouTubePlaylist.length, 'items');
+    if (!Array.isArray(cachedYouTubePlaylist) || cachedYouTubePlaylist.length === 0) {
+        const empty = document.createElement('div');
+        empty.textContent = 'No saved items yet.';
+        empty.style.color = 'var(--light-color, #f4f8fc)';
+        empty.style.opacity = '0.8';
+        container.appendChild(empty);
+        return;
+    }
+    cachedYouTubePlaylist.forEach((item, idx) => {
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.justifyContent = 'space-between';
+        row.style.gap = '10px';
+        row.style.fontSize = '1rem';
+        row.style.flexWrap = 'wrap';
+        row.style.padding = '8px 0';
+        row.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
+        
+        // Title/URL container
+        const titleContainer = document.createElement('div');
+        titleContainer.style.flex = '1 1 auto';
+        titleContainer.style.minWidth = '200px';
+        
+        const title = document.createElement('div');
+        title.textContent = item.title || `${item.type === 'playlist' ? 'Playlist' : 'Video'} · ${item.id}`;
+        title.style.color = 'var(--light-color, #f4f8fc)';
+        title.style.fontWeight = '500';
+        title.style.wordBreak = 'break-word';
+        title.style.marginBottom = '4px';
+        
+        // Status badge
+        const statusBadge = document.createElement('span');
+        let badgeColor, badgeText;
+        
+        switch (item.status) {
+            case 'ready':
+                badgeColor = 'var(--success-color, #2e8b34)';
+                badgeText = '🎵 Cached';
+                break;
+            case 'converting':
+                badgeColor = 'var(--warning-color, #e65100)';
+                badgeText = `🔄 Converting ${item.progress || 0}%`;
+                break;
+            case 'error':
+                badgeColor = 'var(--danger-color, #d32f2f)';
+                badgeText = '❌ Error';
+                break;
+            default:
+                badgeColor = 'var(--info-color, #0d61aa)';
+                badgeText = '🌐 Stream';
+        }
+        
+        statusBadge.textContent = badgeText;
+        statusBadge.style.backgroundColor = badgeColor;
+        statusBadge.style.color = 'white';
+        statusBadge.style.padding = '2px 6px';
+        statusBadge.style.borderRadius = '12px';
+        statusBadge.style.fontSize = '0.75rem';
+        statusBadge.style.display = 'inline-block';
+        
+        titleContainer.appendChild(title);
+        titleContainer.appendChild(statusBadge);
+        
+        // Action buttons container
+        const actions = document.createElement('div');
+        actions.style.display = 'flex';
+        actions.style.gap = '6px';
+        actions.style.flexShrink = '0';
+        
+        // Play button (cached or stream)
+        const playBtn = document.createElement('button');
+        if (item.status === 'ready') {
+            playBtn.textContent = 'Play (Cached)';
+            playBtn.style.backgroundColor = 'var(--success-color, #2e8b34)';
+            playBtn.addEventListener('click', () => playCachedYouTubeItem(item));
+        } else {
+            playBtn.textContent = 'Play (Stream)';
+            playBtn.style.backgroundColor = 'var(--info-color, #0d61aa)';
+            playBtn.addEventListener('click', () => switchToYouTube(item.url));
+        }
+        playBtn.style.color = 'var(--light-color, #f4f8fc)';
+        playBtn.style.border = 'none';
+        playBtn.style.padding = '4px 8px';
+        playBtn.style.borderRadius = '4px';
+        playBtn.style.cursor = 'pointer';
+        playBtn.style.fontSize = '0.85rem';
+        
+        // Download/Retry button
+        const downloadBtn = document.createElement('button');
+        if (item.status === 'error') {
+            downloadBtn.textContent = 'Retry';
+            downloadBtn.style.backgroundColor = 'var(--warning-color, #e65100)';
+            downloadBtn.addEventListener('click', () => {
+                item.status = 'stream';
+                item.error = null;
+                updateYouTubeItemInCache(item);
+                scheduleYouTubeDownload(item);
+                refreshCachedYouTubeListUI();
+            });
+        } else if (item.status === 'ready') {
+            downloadBtn.textContent = 'Re-cache';
+            downloadBtn.style.backgroundColor = 'var(--secondary-color, #0c4061)';
+            downloadBtn.addEventListener('click', () => {
+                item.status = 'stream';
+                updateYouTubeItemInCache(item);
+                scheduleYouTubeDownload(item);
+                refreshCachedYouTubeListUI();
+            });
+        } else {
+            downloadBtn.textContent = item.status === 'converting' ? 'Converting...' : 'Cache';
+            downloadBtn.style.backgroundColor = 'var(--secondary-color, #0c4061)';
+            downloadBtn.disabled = item.status === 'converting';
+            downloadBtn.addEventListener('click', () => {
+                if (item.status === 'stream') {
+                    scheduleYouTubeDownload(item);
+                    refreshCachedYouTubeListUI();
+                }
+            });
+        }
+        downloadBtn.style.color = 'var(--light-color, #f4f8fc)';
+        downloadBtn.style.border = 'none';
+        downloadBtn.style.padding = '4px 8px';
+        downloadBtn.style.borderRadius = '4px';
+        downloadBtn.style.cursor = downloadBtn.disabled ? 'not-allowed' : 'pointer';
+        downloadBtn.style.fontSize = '0.85rem';
+        downloadBtn.style.opacity = downloadBtn.disabled ? '0.6' : '1';
+        
+        // Remove button
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = '✕';
+        removeBtn.style.backgroundColor = 'var(--danger-color, #d32f2f)';
+        removeBtn.style.color = 'var(--light-color, #f4f8fc)';
+        removeBtn.style.border = 'none';
+        removeBtn.style.padding = '4px 8px';
+        removeBtn.style.borderRadius = '4px';
+        removeBtn.style.cursor = 'pointer';
+        removeBtn.style.fontSize = '0.85rem';
+        removeBtn.addEventListener('click', () => removeYouTubeCachedItem(idx));
+        
+        actions.appendChild(playBtn);
+        actions.appendChild(downloadBtn);
+        actions.appendChild(removeBtn);
+        
+        row.appendChild(titleContainer);
+        row.appendChild(actions);
+        container.appendChild(row);
+    });
+};
+
+// Play cached YouTube item (stays in YouTube mode)
+const playCachedYouTubeItem = async (item) => {
+    // Strict mode separation: only play YouTube content in YouTube mode
+    if (!isYouTubeMode) {
+        console.log('MODE: In Local mode - cached YouTube playback blocked. Switch to YouTube mode first.');
+        return;
+    }
+    
+    if (item.status !== 'ready') {
+        console.warn('Item not ready for cached playback:', item);
+        return;
+    }
+    
+    try {
+        console.log('CACHED PLAY: Loading cached audio for', item.title);
+        
+        // Get cached blob from IndexedDB
+        const cachedData = await getCachedAudioBlob(item.id);
+        if (!cachedData || !cachedData.blob) {
+            console.error('CACHED PLAY: No blob found for', item.id);
+            return;
+        }
+        
+        // Create object URL from blob
+        const objectUrl = URL.createObjectURL(cachedData.blob);
+        
+        // STAY in YouTube mode - don't switch to local mode
+        isYouTubeMode = true;
+        updateModeButtons();
+        
+        // Stop YouTube player if playing
+        if (youtubePlayer) {
+            try {
+                youtubePlayer.pauseVideo();
+            } catch (e) {
+                console.log('YouTube player not available for pause');
+            }
+        }
+        
+        // Stop YouTube progress polling
+        stopYouTubeProgressPolling();
+        
+        // Stop local audio if playing (but we'll use it for cached YouTube)
+        if (!audioPlayer.paused) {
+            audioPlayer.pause();
+        }
+        
+        // Load cached audio into the main audio player but stay in YouTube mode
+        audioPlayer.src = objectUrl;
+        audioPlayer.currentTime = 0;
+        audioPlayer.volume = config.volume;
+        
+        // Update now playing for YouTube mode
+        updateNowPlaying(`🎵 ${item.title} (Cached)`);
+        
+        // Play the cached audio
+        const playPromise = audioPlayer.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                console.log('CACHED PLAY: Successfully started playback of', item.title);
+                isPlaying = true;
+                
+                // Update play/pause button
+                const playPauseBtn = document.getElementById('play-pause-btn');
+                if (playPauseBtn) {
+                    playPauseBtn.innerHTML = '⏸️ Pause';
+                    playPauseBtn.setAttribute('aria-label', 'Pause');
+                }
+                
+                // Set up ended listener for this cached track
+                audioPlayer.addEventListener('ended', () => {
+                    URL.revokeObjectURL(objectUrl);
+                    isPlaying = false;
+                    updateUIForStopped();
+                    console.log('Cached YouTube track ended');
+                }, { once: true });
+                
+            }).catch(error => {
+                console.error('CACHED PLAY: Failed to start playback:', error);
+                URL.revokeObjectURL(objectUrl);
+            });
+        }
+        
+        // Clean up object URL on error
+        audioPlayer.addEventListener('error', () => {
+            URL.revokeObjectURL(objectUrl);
+            isPlaying = false;
+            updateUIForStopped();
+        }, { once: true });
+        
+    } catch (error) {
+        console.error('CACHED PLAY: Failed to play cached item:', error);
+    }
+};
+
+// Initialize when DOM is ready (respect persisted activation)
+document.addEventListener('DOMContentLoaded', () => {
+    loadPersistentSettings();
+    console.log('Lofi player boot. Enabled in cache:', isPlayerEnabled);
+
+    if (config.youtube.enabled) {
+        loadYouTubeAPI();
+        // Resume any pending downloads after a short delay
+        setTimeout(() => {
+            if (cachedYouTubePlaylist.length > 0) {
+                resumePendingDownloads();
+            }
+        }, 2000);
+    }
+
+    if (isPlayerEnabled || config.enableLofi) {
+        // Auto-activate UI and logic; playback still waits for interaction
+        activateLofiPlayer();
+    } else {
+        // Show activation CTA only when disabled
+        createActivationButton();
+    }
 });
+
+// Update now playing display
+const updateNowPlaying = (text) => {
+    const nowPlaying = document.getElementById('now-playing');
+    if (nowPlaying) {
+        nowPlaying.textContent = text;
+    }
+};
+
+// Update mode buttons (will be called from modal)
+const updateModeButtons = () => {
+    const localBtn = document.getElementById('local-mode-btn');
+    const youtubeBtn = document.getElementById('youtube-mode-btn');
+    
+    if (localBtn && youtubeBtn) {
+        if (isYouTubeMode) {
+            localBtn.style.background = 'var(--secondary-color, #0c4061)';
+            youtubeBtn.style.background = 'var(--primary-color, #2c4c7c)';
+        } else {
+            localBtn.style.background = 'var(--primary-color, #2c4c7c)';
+            youtubeBtn.style.background = 'var(--secondary-color, #0c4061)';
+        }
+    }
+};
 
 // Setup listeners for user interaction to enable autoplay
 const setupAutoStartListeners = () => {
@@ -409,7 +1396,13 @@ const getPreviousSong = () => {
 const startPlayback = () => {
     if (isPlaying && !savedPlaybackState) return; // Prevent multiple starts if already playing and not resuming
 
-    console.log('Starting playback...');
+    // Strict mode separation: only play local files in local mode
+    if (isYouTubeMode) {
+        console.log('MODE: In YouTube mode - local file playback blocked. Switch to Local mode first.');
+        return;
+    }
+
+    console.log('Starting local playback...');
 
     // Initialize audio context on user interaction
     initializeAudioContext();
@@ -603,8 +1596,14 @@ const scanFolderForMP3s = async () => {
 
 // Play next song with mode awareness
 const playNextSong = (initiator = 'user') => {
+    // Strict mode separation: only play local files in local mode
+    if (isYouTubeMode) {
+        console.log('MODE: In YouTube mode - local files blocked. Switch to Local mode first.');
+        return;
+    }
+    
     if (songList.length === 0) {
-        console.log('No songs available');
+        console.log('No local songs available');
         return;
     }
 
@@ -673,8 +1672,14 @@ const playNextSong = (initiator = 'user') => {
 
 // Play previous song
 const playPreviousSong = () => {
+    // Strict mode separation: only play local files in local mode
+    if (isYouTubeMode) {
+        console.log('MODE: In YouTube mode - local files blocked. Switch to Local mode first.');
+        return;
+    }
+    
     if (songList.length === 0) {
-        console.log('No songs available');
+        console.log('No local songs available');
         return;
     }
 
@@ -1133,6 +2138,16 @@ window.lofi = {
     volume: (v) => {
         config.volume = Math.max(0, Math.min(1, v));
         audioPlayer.volume = config.volume;
+        try {
+            if (youtubePlayer && typeof youtubePlayer.setVolume === 'function') {
+                youtubePlayer.setVolume(Math.round(config.volume * 100));
+            }
+        } catch(_) {}
+        try {
+            if (config.persistence?.enabled) {
+                localStorage.setItem(config.persistence.volumeKey, String(config.volume));
+            }
+        } catch(_) {}
         console.log('🔊 Volume set to:', Math.round(config.volume * 100) + '%');
         // Update UI
         const volumeSlider = document.getElementById('volume-slider');
@@ -1200,7 +2215,45 @@ console.log('🎧 Lofi Player with Normalization and Persistence loaded');
 console.log('Manual controls: lofi.skip(), lofi.stop(), lofi.volume(0.5), lofi.list(), lofi.clearHistory()');
 console.log('Normalization: lofi.toggleNormalization(), lofi.clearNormalizationCache(), lofi.setTargetLoudness(-23)');
 console.log('Persistence: lofi.togglePersistence()');
+console.log('YouTube Debug: lofi.debugYouTube()');
 console.log('📊 Current normalization target:', config.normalization.targetLoudness, 'LUFS');
+
+// Add debug helper
+window.lofi.debugYouTube = async () => {
+    console.log('=== YouTube Cache Debug ===');
+    console.log('Persistence enabled:', config.persistence?.enabled);
+    console.log('Cached playlist length:', cachedYouTubePlaylist.length);
+    console.log('Cached playlist:', cachedYouTubePlaylist);
+    console.log('LocalStorage key:', config.persistence.youtubePlaylistKey);
+    console.log('LocalStorage raw:', localStorage.getItem(config.persistence.youtubePlaylistKey));
+    console.log('UI container exists:', !!document.getElementById('youtube-playlist'));
+    
+    // IndexedDB debug info
+    try {
+        const dbKeys = await listCachedAudioKeys();
+        console.log('IndexedDB cached audio keys:', dbKeys);
+        
+        // Show detailed info for each cached item
+        for (const key of dbKeys) {
+            const cached = await getCachedAudioBlob(key);
+            console.log(`IndexedDB item ${key}:`, {
+                title: cached?.title,
+                status: cached?.status,
+                blobSize: cached?.blob?.size,
+                cachedAt: cached?.cachedAt
+            });
+        }
+    } catch (error) {
+        console.error('IndexedDB debug error:', error);
+    }
+    
+    // Status summary
+    const statusCount = cachedYouTubePlaylist.reduce((acc, item) => {
+        acc[item.status || 'unknown'] = (acc[item.status || 'unknown'] || 0) + 1;
+        return acc;
+    }, {});
+    console.log('Status summary:', statusCount);
+};
 
 
 
@@ -1243,9 +2296,18 @@ const updateProgressBar = () => {
     const currentTimeSpan = document.getElementById('current-time');
     const durationSpan = document.getElementById('duration');
     
-    if (progressBar && currentTimeSpan && durationSpan && audioPlayer) {
-        const currentTime = audioPlayer.currentTime || 0;
-        const duration = audioPlayer.duration || 0;
+    if (progressBar && currentTimeSpan && durationSpan) {
+        let currentTime = 0;
+        let duration = 0;
+        if (isYouTubeMode && youtubePlayer && typeof youtubePlayer.getDuration === 'function') {
+            try {
+                duration = youtubePlayer.getDuration() || 0;
+                currentTime = youtubePlayer.getCurrentTime() || 0;
+            } catch(_) {}
+        } else if (audioPlayer) {
+            currentTime = audioPlayer.currentTime || 0;
+            duration = audioPlayer.duration || 0;
+        }
         
         if (duration > 0) {
             const progress = (currentTime / duration) * 100;
@@ -1270,7 +2332,14 @@ const handleProgressBarClick = (e) => {
     const clickX = e.clientX - rect.left;
     const percentage = (clickX / rect.width) * 100;
     
-    if (audioPlayer && audioPlayer.duration) {
+    if (isYouTubeMode && youtubePlayer && typeof youtubePlayer.getDuration === 'function') {
+        const dur = youtubePlayer.getDuration();
+        if (dur && dur > 0) {
+            const newTime = (percentage / 100) * dur;
+            try { youtubePlayer.seekTo(newTime, true); } catch(_) {}
+            progressBar.value = percentage;
+        }
+    } else if (audioPlayer && audioPlayer.duration) {
         const newTime = (percentage / 100) * audioPlayer.duration;
         audioPlayer.currentTime = newTime;
         progressBar.value = percentage;
@@ -1305,6 +2374,15 @@ const handleSongSelection = (selectedSong) => {
         return;
     }
     if (selectedSong && songList.includes(selectedSong)) {
+        // Switch to local mode if in YouTube mode
+        if (isYouTubeMode) {
+            if (youtubePlayer) {
+                youtubePlayer.pauseVideo();
+            }
+            isYouTubeMode = false;
+            updateModeButtons();
+        }
+        
         // Update indices
         currentSongIndex = songList.indexOf(selectedSong);
         if (config.shuffle) {
@@ -1316,6 +2394,81 @@ const handleSongSelection = (selectedSong) => {
         isTransitioning = true;
         loadAndPlay(songPath, selectedSong, 0, 0, true);
     }
+};
+
+// Toggle play/pause with strict mode separation
+const togglePlayPause = () => {
+    if (isYouTubeMode) {
+        // YouTube mode: only control YouTube content
+        if (youtubePlayer) {
+            try {
+                const playerState = youtubePlayer.getPlayerState();
+                if (playerState === YT.PlayerState.PLAYING) {
+                    youtubePlayer.pauseVideo();
+                    isPlaying = false;
+                } else {
+                    youtubePlayer.playVideo();
+                    isPlaying = true;
+                }
+            } catch (e) {
+                console.log('YouTube player not ready, checking audio player for cached content');
+                // Handle cached YouTube content playing through audioPlayer
+                if (audioPlayer.paused) {
+                    if (audioPlayer.src) {
+                        audioPlayer.play().catch(err => console.error('Cached YouTube play failed:', err));
+                        isPlaying = true;
+                    } else {
+                        console.log('No YouTube content loaded - add a YouTube URL first');
+                    }
+                } else {
+                    audioPlayer.pause();
+                    isPlaying = false;
+                }
+            }
+        } else {
+            // Handle cached YouTube content playing through audioPlayer
+            if (audioPlayer.paused) {
+                if (audioPlayer.src) {
+                    audioPlayer.play().catch(err => console.error('Cached YouTube play failed:', err));
+                    isPlaying = true;
+                } else {
+                    console.log('No YouTube content loaded - add a YouTube URL first');
+                }
+            } else {
+                audioPlayer.pause();
+                isPlaying = false;
+            }
+        }
+    } else {
+        // Local mode: only control local audio files
+        if (audioPlayer.paused) {
+            if (audioPlayer.src && !audioPlayer.src.startsWith('blob:')) {
+                // Only play if it's a local file, not a blob (cached YouTube)
+                audioPlayer.play().catch(err => console.error('Local play failed:', err));
+                isPlaying = true;
+            } else if (!audioPlayer.src) {
+                // No song loaded, start local playback
+                startPlayback();
+            } else {
+                console.log('Cached YouTube content detected in Local mode - switch to YouTube mode to play');
+            }
+        } else {
+            audioPlayer.pause();
+            isPlaying = false;
+        }
+    }
+};
+
+// Stop playback for both modes
+const stopPlayback = () => {
+    if (isYouTubeMode && youtubePlayer) {
+        youtubePlayer.stopVideo();
+    } else {
+        audioPlayer.pause();
+        audioPlayer.currentTime = 0;
+    }
+    isPlaying = false;
+    updateNowPlaying('Stopped');
 };
 
 // Toggle shuffle mode
@@ -1379,8 +2532,8 @@ const createLofiModal = () => {
     modal.style.left = '20px';
     modal.style.width = 'auto';
     modal.style.height = 'auto';
-    modal.style.minWidth = '320px';
-    modal.style.maxWidth = '90vw';
+    modal.style.minWidth = '380px';
+    modal.style.maxWidth = '96vw';
     modal.style.maxHeight = '80vh';
     modal.style.overflowY = 'auto';
     modal.style.overflowX = 'hidden';
@@ -1458,6 +2611,185 @@ const createLofiModal = () => {
     const songSelector = songSelectorDiv.querySelector('#song-selector');
     songSelector.addEventListener('change', (e) => handleSongSelection(e.target.value));
 
+    // YouTube URL Input (only in YouTube mode)
+    const youtubeDiv = document.createElement('div');
+    youtubeDiv.id = 'youtube-controls';
+    youtubeDiv.style.marginBottom = '10px';
+    youtubeDiv.style.display = 'none'; // Hidden by default (local mode)
+    youtubeDiv.innerHTML = `
+        <label style="display: block; margin-bottom: 5px; color: var(--light-color, #f4f8fc);">YouTube URL:</label>
+        <div style="display: flex; gap: 8px;">
+            <input type="text" id="youtube-url-input" placeholder="Paste YouTube video or playlist URL..." 
+                   style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid var(--primary-color, #2c4c7c); 
+                          background-color: var(--secondary-color, #0c4061); color: var(--light-color, #f4f8fc);">
+            <button id="youtube-play-btn" style="padding: 8px 12px; border: none; border-radius: 4px; 
+                                                 background: var(--tertiary-color, #0d9edb); color: white; cursor: pointer; font-weight: bold;">
+                Play
+            </button>
+        </div>
+    `;
+    modal.appendChild(youtubeDiv);
+
+    // YouTube controls
+    const youtubeInput = youtubeDiv.querySelector('#youtube-url-input');
+    const youtubePlayBtn = youtubeDiv.querySelector('#youtube-play-btn');
+    
+    youtubePlayBtn.addEventListener('click', () => {
+        const url = youtubeInput.value.trim();
+        console.log('YOUTUBE: Play button clicked with URL:', url);
+        if (url) {
+            console.log('YOUTUBE: Adding to cache...');
+            try { 
+                const added = addYouTubeToCachedList(url);
+                console.log('YOUTUBE: Cache add result:', added);
+            } catch(e) { 
+                console.error('YOUTUBE: Cache add failed:', e);
+            }
+            if (switchToYouTube(url)) {
+                youtubeInput.value = '';
+                updateNowPlaying('YouTube: Loading...');
+                console.log('YOUTUBE: Successfully switched to YouTube');
+            } else {
+                console.error('YOUTUBE: Failed to switch to YouTube');
+                alert('Invalid YouTube URL or YouTube player not ready');
+            }
+        } else {
+            console.warn('YOUTUBE: No URL provided');
+            alert('Please enter a YouTube URL');
+        }
+    });
+
+    youtubeInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            youtubePlayBtn.click();
+        }
+    });
+
+    // Cached YouTube list UI (only in YouTube mode)
+    const ytListHeader = document.createElement('div');
+    ytListHeader.id = 'youtube-list-header';
+    ytListHeader.style.margin = '8px 0 4px';
+    ytListHeader.style.fontSize = '0.9em';
+    ytListHeader.style.color = 'var(--light-color, #f4f8fc)';
+    ytListHeader.style.display = 'none'; // Hidden by default
+    ytListHeader.textContent = 'Saved YouTube items:';
+    modal.appendChild(ytListHeader);
+
+    const ytListContainer = document.createElement('div');
+    ytListContainer.id = 'youtube-playlist';
+    ytListContainer.style.display = 'none'; // Hidden by default
+    ytListContainer.style.flexDirection = 'column';
+    ytListContainer.style.gap = '12px';
+    ytListContainer.style.overflowY = 'auto';
+    ytListContainer.style.padding = '12px 8px';
+    ytListContainer.style.border = '1px solid var(--primary-color, #2c4c7c)';
+    ytListContainer.style.borderRadius = '8px';
+    ytListContainer.style.maxHeight = 'min(48vh, 420px)';
+    ytListContainer.style.minHeight = '100px';
+    ytListContainer.style.fontSize = '0.95rem';
+    ytListContainer.style.lineHeight = '1.35';
+    modal.appendChild(ytListContainer);
+
+    // Ensure we render any cached items when modal is created
+    console.log('Modal created, rendering cached YouTube items:', cachedYouTubePlaylist.length);
+    refreshCachedYouTubeListUI();
+
+    // Mode Toggle (Local Files vs YouTube)
+    const modeToggleDiv = document.createElement('div');
+    modeToggleDiv.style.marginBottom = '10px';
+    modeToggleDiv.innerHTML = `
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <span style="color: var(--light-color, #f4f8fc); font-size: 0.9em;">Mode:</span>
+            <button id="local-mode-btn" style="padding: 6px 12px; border: none; border-radius: 4px; 
+                                             background: var(--primary-color, #2c4c7c); color: white; cursor: pointer; font-size: 0.8em;">
+                Local Files
+            </button>
+            <button id="youtube-mode-btn" style="padding: 6px 12px; border: none; border-radius: 4px; 
+                                               background: var(--secondary-color, #0c4061); color: white; cursor: pointer; font-size: 0.8em;">
+                YouTube
+            </button>
+        </div>
+    `;
+    modal.appendChild(modeToggleDiv);
+
+    // Mode toggle functionality
+    const localModeBtn = modeToggleDiv.querySelector('#local-mode-btn');
+    const youtubeModeBtn = modeToggleDiv.querySelector('#youtube-mode-btn');
+    
+    const updateModeButtons = () => {
+        if (isYouTubeMode) {
+            localModeBtn.style.background = 'var(--secondary-color, #0c4061)';
+            youtubeModeBtn.style.background = 'var(--primary-color, #2c4c7c)';
+        } else {
+            localModeBtn.style.background = 'var(--primary-color, #2c4c7c)';
+            youtubeModeBtn.style.background = 'var(--secondary-color, #0c4061)';
+        }
+    };
+    
+    localModeBtn.addEventListener('click', () => {
+        console.log('MODE: Switching to local files mode');
+        
+        // Stop all YouTube playback (both streaming and cached)
+        if (youtubePlayer) {
+            try {
+                youtubePlayer.pauseVideo();
+            } catch (e) {
+                console.log('YouTube player not available');
+            }
+        }
+        
+        // Stop audio player if it was playing YouTube content
+        if (!audioPlayer.paused && isYouTubeMode) {
+            audioPlayer.pause();
+            audioPlayer.src = ''; // Clear source to prevent confusion
+        }
+        
+        // Stop YouTube progress polling
+        stopYouTubeProgressPolling();
+        
+        isYouTubeMode = false;
+        isPlaying = false;
+        updateModeButtons();
+        updateUIForStopped();
+        updateNowPlaying('Local mode - select a local song');
+        
+        // Hide YouTube controls
+        document.getElementById('youtube-controls').style.display = 'none';
+        document.getElementById('youtube-list-header').style.display = 'none';
+        document.getElementById('youtube-playlist').style.display = 'none';
+        
+        console.log('MODE: Now in local files mode - only local MP3s will play');
+    });
+    
+    youtubeModeBtn.addEventListener('click', () => {
+        console.log('MODE: Switching to YouTube mode');
+        
+        // Stop local audio playback 
+        if (!audioPlayer.paused && !isYouTubeMode) {
+            audioPlayer.pause();
+            audioPlayer.src = ''; // Clear source to prevent confusion
+        }
+        
+        isYouTubeMode = true;
+        isPlaying = false;
+        updateModeButtons();
+        updateUIForStopped();
+        updateNowPlaying('YouTube mode - play YouTube content');
+        
+        // Show YouTube controls
+        document.getElementById('youtube-controls').style.display = 'block';
+        document.getElementById('youtube-list-header').style.display = 'block';
+        document.getElementById('youtube-playlist').style.display = 'flex';
+        
+        // Refresh the list when switching to YouTube mode
+        console.log('YOUTUBE: Refreshing UI on mode switch');
+        refreshCachedYouTubeListUI();
+        
+        console.log('MODE: Now in YouTube mode - only YouTube content will play');
+    });
+    
+    updateModeButtons();
+
     // Now Playing display
     const nowPlayingDiv = document.createElement('div');
     nowPlayingDiv.id = 'now-playing';
@@ -1465,6 +2797,7 @@ const createLofiModal = () => {
     nowPlayingDiv.style.marginBottom = '10px';
     nowPlayingDiv.style.color = 'rgba(var(--light-color-r, 244), var(--light-color-g, 248), var(--light-color-b, 252), 0.8)';
     nowPlayingDiv.style.wordBreak = 'break-word';
+    nowPlayingDiv.style.fontSize = '0.95rem';
     nowPlayingDiv.textContent = 'Not playing...';
     modal.appendChild(nowPlayingDiv);
 
@@ -1552,8 +2885,14 @@ const createLofiModal = () => {
     volumeDisplay.style.color = 'var(--light-color, #f4f8fc)';
 
     volumeSlider.addEventListener('input', (e) => {
-        lofi.volume(parseFloat(e.target.value));
-        volumeDisplay.textContent = `${Math.round(e.target.value * 100)}%`;
+        const v = parseFloat(e.target.value);
+        lofi.volume(v);
+        volumeDisplay.textContent = `${Math.round(v * 100)}%`;
+        try {
+            if (config.persistence?.enabled) {
+                localStorage.setItem(config.persistence.volumeKey, String(Math.max(0, Math.min(1, v))));
+            }
+        } catch(_){}
     });
 
     // Normalization Section

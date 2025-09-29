@@ -280,6 +280,12 @@ body * {
     color: white;
 }
 
+/* Small button variant */
+.c-btn--sm {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-sm);
+}
+
 /* Theme toggle button (formerly servo button) */
 #servoTestBtn {
     position: relative;
@@ -496,6 +502,36 @@ body * {
     }
 }
 
+/* Floating dark mode modal (bottom-right) */
+.dm-fab {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 10000;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--text-inverse);
+    box-shadow: 0 6px 16px var(--shadow-medium);
+    cursor: pointer;
+}
+.dm-popover {
+    position: fixed;
+    right: 18px; bottom: 72px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    box-shadow: 0 10px 24px var(--shadow-heavy);
+    padding: .75rem;
+    display: none;
+    z-index: 10000;
+}
+.dm-popover.is-open { display: block; }
+.dm-popover__row { font-weight: 600; margin-bottom: .5rem }
+.dm-popover__actions { display: flex; gap: .5rem }
+
 /* Solar sonar animation */
 @keyframes solarSonar {
     0% {
@@ -621,6 +657,11 @@ body * {
 
 .u-mb-2 {
     margin-bottom: 2rem;
+}
+
+/* New utility: top margin */
+.u-mt-2 {
+    margin-top: 2rem;
 }
 
 /* Connection status styles */
