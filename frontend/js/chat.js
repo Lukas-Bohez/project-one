@@ -14,13 +14,29 @@ class ChatSystem {
         console.log('ChatSystem: Constructor called. Fetching active session ID...');
         this.fetchActiveSessionId().then(() => {
             if (typeof io !== 'undefined') {
-                this.socket = io(this.lanIP, {
-                    transports: ["websocket", "polling"],
-                    timeout: 20000,
-                    reconnection: true,
-                    reconnectionAttempts: 5,
-                    reconnectionDelay: 1000
-                });
+                this.socket = window.createCompatibleSocket ? 
+                    window.createCompatibleSocket(this.lanIP, {
+                        // Enhanced configuration for better reliability
+                        timeout: 30000,             // 30 second timeout
+                        reconnectionAttempts: 10,   // More retry attempts
+                        reconnectionDelay: 2000,    // Start with 2 second delay
+                        reconnectionDelayMax: 10000, // Max 10 second delay
+                        autoConnect: true,          // Auto connect on creation
+                        forceNew: false            // Allow connection reuse
+                    }) : 
+                    io(this.lanIP, {
+                        // Enhanced fallback configuration
+                        transports: ["polling", "websocket"],  // Try polling first for compatibility
+                        timeout: 30000,
+                        reconnection: true,
+                        reconnectionAttempts: 10,
+                        reconnectionDelay: 2000,
+                        reconnectionDelayMax: 10000,
+                        forceNew: false,
+                        upgrade: true,              // Allow upgrade to websocket
+                        rememberUpgrade: false      // Don't remember across sessions
+                    });
+                
                 this.initializeSocketListeners();
                 // IMPORTANT: Make the socket instance available globally for other classes
                 window.sharedSocket = this.socket;
