@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Industrial Empire - Advanced Idle Game | Free Monetized Idle Game</title>
+    <meta name="description" content="Play Industrial Empire, the ultimate free idle game with monetization features. Mine resources, build factories, and earn rewards through strategic gameplay and ad interactions.">
+    <meta name="keywords" content="idle game, industrial game, resource management, free game, monetized game, mining game, factory game">
+    
+    <!-- AdSense Script -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449" crossorigin="anonymous"></script>
+    
+    <link rel="stylesheet" href="css/style.css">
+    
+    <style>
+        /* Advertisement Styles */
+        .ad-container {
+            margin: 15px 0;
+            text-align: center;
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+        }
+        
+        .ad-label {
+            display: block;
+            font-size: 0.7rem;
+            color: #64ffda;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+        
+        .ad-unit {
+            margin: 0 auto;
+            min-height: 90px;
+        }
+        
+        .monetization-panel {
+            background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
+            color: #1a1a2e;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid #ffd700;
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+        }
+        
+        .monetization-panel h3 {
+            margin: 0 0 15px 0;
+            color: #1a1a2e;
+            font-size: 1.2rem;
+        }
+        
+        .ad-reward-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s ease;
+            min-width: 200px;
+        }
+        
+        .ad-reward-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+        
+        .ad-reward-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .ad-cooldown {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .ad-container {
+                margin: 10px 0;
+                padding: 8px;
+            }
+            
+            .monetization-panel {
+                padding: 15px;
+                margin: 15px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Header Section -->
+        <header class="game-header">
+            <h1 onclick="window.location.href='../index.html';">🏭 Industrial Empire</h1>
+            <div class="resource-display">
+                <div class="resource-item stone">
+                    <span class="resource-icon">🪨</span>
+                    <span class="resource-label">Stone:</span>
+                    <span id="stone-amount" class="resource-value">0</span>
+                </div>
+                <div class="resource-item coal">
+                    <span class="resource-icon">⚫</span>
+                    <span class="resource-label">Coal:</span>
+                    <span id="coal-amount" class="resource-value">0</span>
+                </div>
+                <div class="resource-item iron">
+                    <span class="resource-icon">⚙️</span>
+                    <span class="resource-label">Iron:</span>
+                    <span id="iron-amount" class="resource-value">0</span>
+                </div>
+                <div class="resource-item silver">
+                    <span class="resource-icon">🥈</span>
+                    <span class="resource-label">Silver:</span>
+                    <span id="silver-amount" class="resource-value">0</span>
+                </div>
+                <div class="resource-item gold">
+                    <span class="resource-icon">🥇</span>
+                    <span class="resource-label">Gold:</span>
+                    <span id="gold-amount" class="resource-value">0</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Tab Navigation -->
+        <nav class="tab-navigation">
+            <button class="tab-btn active" data-tab="mining">⛏️ Mining</button>
+            <button class="tab-btn" data-tab="processing">🏗️ Processing</button>
+            <button class="tab-btn" data-tab="market">🏪 Market</button>
+            <button class="tab-btn" data-tab="transport">🚛 Transport</button>
+            <button class="tab-btn" data-tab="city">🏙️ City</button>
+            <button class="tab-btn" data-tab="research">🔬 Research</button>
+            <button class="tab-btn" data-tab="prestige" id="prestige-tab" style="display: none;">👑 Prestige</button>
+        </nav>
+
+        <!-- Main Game Area -->
+        <main class="game-main">
+            <!-- Mining Tab -->
+            <section id="mining-tab" class="tab-content active">
+                <div class="panel-grid">
+                    <div class="panel">
+                        <h2>⛏️ Mining Operations</h2>
+                        <div class="action-buttons">
+                            <button id="mine-stone-btn" class="action-btn mine-btn" data-action="mineStone">
+                                <div class="btn-title">🪨 Mine Stone</div>
+                                <div class="btn-cost">Manual Collection</div>
+                                <div class="btn-description">+1 stone per click</div>
+                            </button>
+                            
+                            <button id="hire-stone-miner-btn" class="action-btn worker-btn" data-action="hireWorker" data-worker="stoneMiner">
+                                <div class="btn-title">Hire Stone Miner</div>
+                                <div class="btn-cost">Cost: <span id="stone-miner-cost">5</span> gold</div>
+                                <div class="btn-description">+1 stone/sec</div>
+                            </button>
+                            
+                            <button id="hire-coal-miner-btn" class="action-btn worker-btn" data-action="hireWorker" data-worker="coalMiner">
+                                <div class="btn-title">Hire Coal Miner</div>
+                                <div class="btn-cost">Cost: <span id="coal-miner-cost">25</span> gold</div>
+                                <div class="btn-description">+1 coal/sec</div>
+                            </button>
+                            
+                            <button id="hire-iron-miner-btn" class="action-btn worker-btn" data-action="hireWorker" data-worker="ironMiner">
+                                <div class="btn-title">Hire Iron Miner</div>
+                                <div class="btn-cost">Cost: <span id="iron-miner-cost">100</span> gold</div>
+                                <div class="btn-description">+1 iron/sec</div>
+                            </button>
+                            
+                            <button id="hire-silver-miner-btn" class="action-btn worker-btn" data-action="hireWorker" data-worker="silverMiner">
+                                <div class="btn-title">Hire Silver Miner</div>
+                                <div class="btn-cost">Cost: <span id="silver-miner-cost">500</span> gold</div>
+                                <div class="btn-description">+1 silver/sec</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h2>� Workforce Status</h2>
+                        <div class="resource-grid">
+                            <div class="resource-row">
+                                <span class="resource-type">Stone Miners:</span>
+                                <span id="stone-miners-count" class="resource-count">0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Coal Miners:</span>
+                                <span id="coal-miners-count" class="resource-count">0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Iron Miners:</span>
+                                <span id="iron-miners-count" class="resource-count">0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Silver Miners:</span>
+                                <span id="silver-miners-count" class="resource-count">0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Efficiency:</span>
+                                <span id="mining-efficiency" class="resource-count">100%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Monetization Panel -->
+                    <div class="panel monetization-panel">
+                        <h3>💰 Premium Mining Boosts</h3>
+                        <div class="ad-reward-buttons">
+                            <button id="ad-double-resources-btn" class="ad-reward-btn">
+                                🎥 Watch Ad: Double All Resources (5min)
+                                <div id="ad-double-cooldown" class="ad-cooldown"></div>
+                            </button>
+                            
+                            <button id="ad-convert-resources-btn" class="ad-reward-btn">
+                                🎥 Watch Ad: Convert All Resources to Gold
+                                <div id="ad-convert-cooldown" class="ad-cooldown"></div>
+                            </button>
+                            
+                            <button id="ad-gold-bonus-btn" class="ad-reward-btn">
+                                🎥 Watch Ad: +1000 Gold Bonus
+                                <div id="ad-gold-cooldown" class="ad-cooldown"></div>
+                            </button>
+                            
+                            <button id="ad-efficiency-boost-btn" class="ad-reward-btn">
+                                🎥 Watch Ad: +50% Mining Efficiency (10min)
+                                <div id="ad-efficiency-cooldown" class="ad-cooldown"></div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Advertisement -->
+                <div class="ad-container">
+                    <span class="ad-label">Advertisement</span>
+                    <div class="ad-unit">
+                        <ins class="adsbygoogle"
+                             style="display:block"
+                             data-ad-client="ca-pub-8418485814964449"
+                             data-ad-slot="7822007431"
+                             data-ad-format="auto"
+                             data-full-width-responsive="true"></ins>
+                        <script>
+                             (adsbygoogle = window.adsbygoogle || []).push({});
+                        </script>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Processing Tab -->
+            <section id="processing-tab" class="tab-content">
+                <div class="panel-grid">
+                    <div class="panel">
+                        <h2>🏗️ Processing Plants</h2>
+                        <div class="action-buttons">
+                            <button id="build-smelter-btn" class="action-btn processing-btn" data-action="buildProcessor" data-processor="smelter">
+                                <div class="btn-title">Build Coal Smelter</div>
+                                <div class="btn-cost">Cost: <span id="smelter-cost">20</span> gold</div>
+                                <div class="btn-description">2 stone → 1 coal/sec</div>
+                            </button>
+                            
+                            <button id="build-forge-btn" class="action-btn processing-btn" data-action="buildProcessor" data-processor="forge">
+                                <div class="btn-title">Build Iron Forge</div>
+                                <div class="btn-cost">Cost: <span id="forge-cost">100</span> gold</div>
+                                <div class="btn-description">3 coal → 1 iron/sec</div>
+                            </button>
+                            
+                            <button id="build-refinery-btn" class="action-btn processing-btn" data-action="buildProcessor" data-processor="refinery">
+                                <div class="btn-title">Build Silver Refinery</div>
+                                <div class="btn-cost">Cost: <span id="refinery-cost">500</span> gold</div>
+                                <div class="btn-description">4 iron → 1 silver/sec</div>
+                            </button>
+                            
+                            <button id="build-mint-btn" class="action-btn processing-btn" data-action="buildProcessor" data-processor="mint">
+                                <div class="btn-title">Build Gold Mint</div>
+                                <div class="btn-cost">Cost: <span id="mint-cost">2000</span> gold</div>
+                                <div class="btn-description">5 silver → 1 gold/sec</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h2>⚙️ Processing Status</h2>
+                        <div class="resource-grid">
+                            <div class="resource-row">
+                                <span class="resource-type">Coal Smelters:</span>
+                                <span id="smelters-count" class="resource-count">0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Iron Forges:</span>
+                                <span id="forges-count" class="resource-count">0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Silver Refineries:</span>
+                                <span id="refineries-count" class="resource-count">0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Gold Mints:</span>
+                                <span id="mints-count" class="resource-count">0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Processing Rate:</span>
+                                <span id="processing-efficiency" class="resource-count">100%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Market Tab -->
+            <section id="market-tab" class="tab-content">
+                <div class="panel-grid">
+                    <div class="panel">
+                        <h2>🏪 Trading Posts</h2>
+                        <div class="action-buttons">
+                            <button id="sell-stone-btn" class="action-btn sell-btn" data-action="sellResource" data-resource="stone">
+                                <div class="btn-title">Sell Stone</div>
+                                <div class="btn-cost">Rate: <span id="stone-sell-rate">0.1</span> gold/stone</div>
+                                <div class="btn-description">Convert stone to gold</div>
+                            </button>
+                            
+                            <button id="sell-coal-btn" class="action-btn sell-btn" data-action="sellResource" data-resource="coal">
+                                <div class="btn-title">Sell Coal</div>
+                                <div class="btn-cost">Rate: <span id="coal-sell-rate">0.5</span> gold/coal</div>
+                                <div class="btn-description">Convert coal to gold</div>
+                            </button>
+                            
+                            <button id="sell-iron-btn" class="action-btn sell-btn" data-action="sellResource" data-resource="iron">
+                                <div class="btn-title">Sell Iron</div>
+                                <div class="btn-cost">Rate: <span id="iron-sell-rate">2.0</span> gold/iron</div>
+                                <div class="btn-description">Convert iron to gold</div>
+                            </button>
+                            
+                            <button id="sell-silver-btn" class="action-btn sell-btn" data-action="sellResource" data-resource="silver">
+                                <div class="btn-title">Sell Silver</div>
+                                <div class="btn-cost">Rate: <span id="silver-sell-rate">8.0</span> gold/silver</div>
+                                <div class="btn-description">Convert silver to gold</div>
+                            </button>
+                            
+                            <button id="hire-stone-trader-btn" class="action-btn trader-btn" data-action="hireTrader" data-trader="stoneTrader">
+                                <div class="btn-title">Hire Stone Trader</div>
+                                <div class="btn-cost">Cost: <span id="stone-trader-cost">15</span> gold</div>
+                                <div class="btn-description">Auto-sell stone</div>
+                            </button>
+                            
+                            <button id="hire-coal-trader-btn" class="action-btn trader-btn" data-action="hireTrader" data-trader="coalTrader">
+                                <div class="btn-title">Hire Coal Trader</div>
+                                <div class="btn-cost">Cost: <span id="coal-trader-cost">75</span> gold</div>
+                                <div class="btn-description">Auto-sell coal</div>
+                            </button>
+                            
+                            <button id="hire-metal-trader-btn" class="action-btn trader-btn" data-action="hireTrader" data-trader="metalTrader">
+                                <div class="btn-title">Hire Metal Trader</div>
+                                <div class="btn-cost">Cost: <span id="metal-trader-cost">300</span> gold</div>
+                                <div class="btn-description">Auto-sell iron & silver</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h2>📊 Market Status</h2>
+                        <div class="resource-grid">
+                            <div class="resource-row">
+                                <span class="resource-type">Stone Traders:</span>
+                                <span id="stone-traders-count" class="resource-count">0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Coal Traders:</span>
+                                <span id="coal-traders-count" class="resource-count">0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Metal Traders:</span>
+                                <span id="metal-traders-count" class="resource-count">0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Market Efficiency:</span>
+                                <span id="market-efficiency" class="resource-count">100%</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Corruption Level:</span>
+                                <span id="corruption-level" class="resource-count">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Advertisement -->
+                <div class="ad-container">
+                    <span class="ad-label">Advertisement</span>
+                    <div class="ad-unit">
+                        <ins class="adsbygoogle"
+                             style="display:block"
+                             data-ad-client="ca-pub-8418485814964449"
+                             data-ad-slot="7822007431"
+                             data-ad-format="auto"
+                             data-full-width-responsive="true"></ins>
+                        <script>
+                             (adsbygoogle = window.adsbygoogle || []).push({});
+                        </script>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Transport Tab -->
+            <section id="transport-tab" class="tab-content">
+                <div class="panel-grid">
+                    <div class="panel">
+                        <h2>🚛 Transport Fleet</h2>
+                        <div class="action-buttons">
+                            <button id="buy-cart-btn" class="action-btn transport-btn" data-action="buyTransport" data-transport="cart">
+                                <div class="btn-title">Buy Ox Cart</div>
+                                <div class="btn-cost">Cost: <span id="cart-cost">30</span> gold</div>
+                                <div class="btn-description">+10 transport capacity</div>
+                            </button>
+                            
+                            <button id="buy-wagon-btn" class="action-btn transport-btn" data-action="buyTransport" data-transport="wagon">
+                                <div class="btn-title">Buy Steam Wagon</div>
+                                <div class="btn-cost">Cost: <span id="wagon-cost">150</span> gold</div>
+                                <div class="btn-description">+50 transport capacity</div>
+                            </button>
+                            
+                            <button id="buy-train-btn" class="action-btn transport-btn" data-action="buyTransport" data-transport="train">
+                                <div class="btn-title">Build Railway</div>
+                                <div class="btn-cost">Cost: <span id="train-cost">800</span> gold</div>
+                                <div class="btn-description">+200 transport capacity</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h2>🚚 Fleet Status</h2>
+                        <div class="resource-grid">
+                            <div class="resource-row">
+                                <span class="resource-type">Ox Carts:</span>
+                                <span id="carts-count" class="resource-count">0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Steam Wagons:</span>
+                                <span id="wagons-count" class="resource-count">0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Railways:</span>
+                                <span id="trains-count" class="resource-count">0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Transport Capacity:</span>
+                                <span id="transport-capacity" class="resource-count">0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Usage:</span>
+                                <span id="transport-usage" class="resource-count">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- City Tab -->
+            <section id="city-tab" class="tab-content">
+                <div class="panel-grid">
+                    <div class="panel">
+                        <h2>🏙️ City Services</h2>
+                        <div class="action-buttons">
+                            <button id="hire-police-btn" class="action-btn city-btn" data-action="hireService" data-service="police">
+                                <div class="btn-title">Hire Police</div>
+                                <div class="btn-cost">Cost: <span id="police-cost">50</span> gold/sec</div>
+                                <div class="btn-description">Reduces corruption by 5%</div>
+                            </button>
+                            
+                            <button id="build-bank-btn" class="action-btn city-btn" data-action="buildCity" data-building="bank">
+                                <div class="btn-title">Build Bank</div>
+                                <div class="btn-cost">Cost: <span id="bank-cost">500</span> gold</div>
+                                <div class="btn-description">+20% gold from sales</div>
+                            </button>
+                            
+                            <button id="build-market-btn" class="action-btn city-btn" data-action="buildCity" data-building="market">
+                                <div class="btn-title">Expand Marketplace</div>
+                                <div class="btn-cost">Cost: <span id="market-cost">1000</span> gold</div>
+                                <div class="btn-description">Unlock better traders</div>
+                            </button>
+                            
+                            <button id="build-university-btn" class="action-btn city-btn" data-action="buildCity" data-building="university">
+                                <div class="btn-title">Build University</div>
+                                <div class="btn-cost">Cost: <span id="university-cost">2500</span> gold</div>
+                                <div class="btn-description">Unlock advanced research</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h2>🏛️ City Status</h2>
+                        <div class="resource-grid">
+                            <div class="resource-row">
+                                <span class="resource-type">Police Force:</span>
+                                <span id="police-count" class="resource-count">0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Banks:</span>
+                                <span id="banks-count" class="resource-count">0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Markets:</span>
+                                <span id="markets-count" class="resource-count">0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Universities:</span>
+                                <span id="universities-count" class="resource-count">0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">City Development:</span>
+                                <span id="city-development" class="resource-count">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Research Tab -->
+            <section id="research-tab" class="tab-content">
+                <div class="panel-grid">
+                    <div class="panel">
+                        <h2>� Research Projects</h2>
+                        <div class="research-tree">
+                            <div class="research-tier">
+                                <h3>Basic Research</h3>
+                                <button id="research-mining-btn" class="research-btn" data-research="mining">
+                                    <div class="research-title">Mining Techniques</div>
+                                    <div class="research-cost">Cost: 50 gold</div>
+                                    <div class="research-effect">+25% mining efficiency</div>
+                                </button>
+                                
+                                <button id="research-processing-btn" class="research-btn" data-research="processing">
+                                    <div class="research-title">Processing Methods</div>
+                                    <div class="research-cost">Cost: 100 gold</div>
+                                    <div class="research-effect">+25% processing efficiency</div>
+                                </button>
+                            </div>
+
+                            <div class="research-tier">
+                                <h3>Advanced Research</h3>
+                                <button id="research-automation-btn" class="research-btn" data-research="automation">
+                                    <div class="research-title">Industrial Automation</div>
+                                    <div class="research-cost">Cost: 500 gold</div>
+                                    <div class="research-effect">Unlock auto-systems</div>
+                                </button>
+                                
+                                <button id="research-logistics-btn" class="research-btn" data-research="logistics">
+                                    <div class="research-title">Advanced Logistics</div>
+                                    <div class="research-cost">Cost: 1000 gold</div>
+                                    <div class="research-effect">+50% transport efficiency</div>
+                                </button>
+                            </div>
+
+                            <div class="research-tier">
+                                <h3>Elite Research</h3>
+                                <button id="research-quantum-btn" class="research-btn" data-research="quantum">
+                                    <div class="research-title">Quantum Mining</div>
+                                    <div class="research-cost">Cost: 5000 gold</div>
+                                    <div class="research-effect">+100% all efficiency</div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h2>📚 Research Status</h2>
+                        <div class="resource-grid">
+                            <div class="resource-row">
+                                <span class="resource-type">Completed Projects:</span>
+                                <span id="completed-research" class="resource-count">0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Research Bonus:</span>
+                                <span id="research-bonus" class="resource-count">0%</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Next Unlock:</span>
+                                <span id="next-research" class="resource-count">Mining Techniques</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Prestige Tab -->
+            <section id="prestige-tab" class="tab-content">
+                <div class="panel-grid">
+                    <div class="panel">
+                        <h2>👑 Prestige System</h2>
+                        <div class="prestige-info">
+                            <p>Reset your empire to gain powerful permanent bonuses!</p>
+                            
+                            <div class="prestige-requirements">
+                                <h3>Prestige Requirements:</h3>
+                                <div class="requirement">
+                                    <span>Total Gold Earned:</span>
+                                    <span><span id="prestige-gold-current">0</span> / <span id="prestige-gold-required">10000</span></span>
+                                </div>
+                            </div>
+
+                            <div class="prestige-rewards">
+                                <h3>Next Prestige Rewards:</h3>
+                                <div class="reward">
+                                    <span>Prestige Points:</span>
+                                    <span id="prestige-points-gain">+1</span>
+                                </div>
+                                <div class="reward">
+                                    <span>Global Efficiency:</span>
+                                    <span>+10% per point</span>
+                                </div>
+                            </div>
+
+                            <button id="prestige-btn" class="prestige-button" data-action="prestige">
+                                <div class="btn-title">Prestige Reset</div>
+                                <div class="btn-cost">Requires: 10,000 total gold</div>
+                                <div class="btn-description">Gain permanent bonuses</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h2>⭐ Prestige Status</h2>
+                        <div class="resource-grid">
+                            <div class="resource-row">
+                                <span class="resource-type">Prestige Points:</span>
+                                <span id="prestige-points" class="resource-count">0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Global Efficiency:</span>
+                                <span id="prestige-efficiency" class="resource-count">100%</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Prestige Resets:</span>
+                                <span id="prestige-resets" class="resource-count">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Bottom Advertisement -->
+                <div class="ad-container">
+                    <span class="ad-label">Advertisement</span>
+                    <div class="ad-unit">
+                        <ins class="adsbygoogle"
+                             style="display:block"
+                             data-ad-client="ca-pub-8418485814964449"
+                             data-ad-slot="7822007431"
+                             data-ad-format="auto"
+                             data-full-width-responsive="true"></ins>
+                        <script>
+                             (adsbygoogle = window.adsbygoogle || []).push({});
+                        </script>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Game Controls -->
+        <footer class="game-footer">
+            <div class="control-buttons">
+                <button id="login-toggle-btn" class="control-btn">👤 Login</button>
+                <button id="save-btn" class="control-btn" disabled>💾 Save Game</button>
+                <button id="load-btn" class="control-btn" disabled>📂 Load Game</button>
+                <button id="reset-btn" class="control-btn danger">🗑️ Reset Game</button>
+            </div>
+            <div class="save-indicator">
+                <span id="save-status">Not logged in</span>
+                <span id="user-status" style="display: none;"></span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="auth-title">Login</h3>
+                <span class="close-modal" id="close-auth">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="auth-form">
+                    <div class="form-group">
+                        <label for="username">Username:</label>
+                        <input type="text" id="username" placeholder="Enter username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" placeholder="Enter password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email" id="email-label" style="display: none;">Email:</label>
+                        <input type="email" id="email" placeholder="Enter email" style="display: none;">
+                    </div>
+                    <div class="form-buttons">
+                        <button type="button" id="login-btn" class="primary-btn">Login</button>
+                        <button type="button" id="register-btn" class="secondary-btn">Register</button>
+                    </div>
+                    <div class="auth-toggle">
+                        <p>Don't have an account? <span id="toggle-register" class="link">Register here</span></p>
+                        <p id="toggle-login-text" style="display: none;">Already have an account? <span id="toggle-login" class="link">Login here</span></p>
+                    </div>
+                </div>
+                <div id="auth-status" class="status-message" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Modules -->
+    <script src="js/game/ResourceManager.js"></script>
+    <script src="js/game/UpgradeSystem.js"></script>
+    <script src="js/game/MarketSystem.js"></script>
+    <script src="js/save/SaveManager.js"></script>
+    <script src="js/ui/UIManager.js"></script>
+    <script src="js/game/GameEngine.js"></script>
+    <script src="js/api/ApiClient.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/debug.js"></script>
+    <script src="../js/lofi.js" defer></script>
+</body>
+</html>
