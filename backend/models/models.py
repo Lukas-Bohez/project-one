@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any, Literal
+from typing import Optional, Dict, Any, Literal, List
 from datetime import datetime
 from pydantic import field_validator
 
@@ -586,3 +586,190 @@ class StoryResponse(StoryBase):
 
     class Config:
         from_attributes = True
+
+
+# =============================================================================
+# KINGDOM QUARRY GAME MODELS
+# =============================================================================
+
+# Game Character and Position Models
+class GamePosition(BaseModel):
+    x: int = Field(..., ge=0, description="X coordinate in pixels")
+    y: int = Field(..., ge=0, description="Y coordinate in pixels")
+
+class GameCharacter(BaseModel):
+    id: int = Field(..., description="Unique character ID")
+    type: str = Field(..., description="Character type (miner, knight, wizard)")
+    level: int = Field(1, ge=1, description="Character level")
+    position: GamePosition = Field(..., description="Character position")
+    is_active: bool = Field(True, description="Whether character is actively working")
+    efficiency: float = Field(1.0, ge=0, description="Character efficiency multiplier")
+
+class GameBuilding(BaseModel):
+    type: str = Field(..., description="Building type (quarry, market, castle)")
+    level: int = Field(1, ge=1, description="Building level")
+    workers: int = Field(0, ge=0, description="Number of workers assigned")
+    efficiency: float = Field(1.0, ge=0, description="Building efficiency multiplier")
+
+class GameUpgrades(BaseModel):
+    mining_speed: int = Field(1, ge=1, description="Mining speed upgrade level")
+    transport_speed: int = Field(1, ge=1, description="Transport speed upgrade level")
+    market_efficiency: int = Field(1, ge=1, description="Market efficiency upgrade level")
+    storage_capacity: int = Field(1, ge=1, description="Storage capacity upgrade level")
+
+class GameSettings(BaseModel):
+    sound_enabled: bool = Field(True, description="Whether sound is enabled")
+    auto_save: bool = Field(True, description="Whether auto-save is enabled")
+    notifications: bool = Field(True, description="Whether notifications are enabled")
+    graphics_quality: str = Field("high", description="Graphics quality setting")
+
+# Core Game Save Data Model
+class GameSaveData(BaseModel):
+    game_version: str = Field("1.0.0", description="Game version")
+    play_time: int = Field(0, ge=0, description="Total play time in seconds")
+    last_save: datetime = Field(default_factory=datetime.now, description="Last save timestamp")
+    
+    # Resources
+    resources: Dict[str, int] = Field(
+        default_factory=lambda: {"stone": 0, "crystals": 0, "gold": 0, "royal_favor": 0},
+        description="Player resource amounts"
+    )
+    
+    # Characters and buildings
+    characters: List[GameCharacter] = Field(default_factory=list, description="Player characters")
+    buildings: Dict[str, GameBuilding] = Field(default_factory=dict, description="Player buildings")
+    
+    # Progress and upgrades
+    upgrades: GameUpgrades = Field(default_factory=GameUpgrades, description="Player upgrades")
+    unlocked_vehicles: List[str] = Field(
+        default_factory=lambda: ["hand_cart"], 
+        description="Unlocked transport vehicles"
+    )
+    achievements: List[str] = Field(default_factory=list, description="Unlocked achievements")
+    
+    # Game state
+    prestige_level: int = Field(0, ge=0, description="Current prestige level")
+    offline_time: int = Field(0, ge=0, description="Accumulated offline time")
+    settings: GameSettings = Field(default_factory=GameSettings, description="Game settings")
+
+# API Request/Response Models
+class GameSaveRequest(BaseModel):
+    save_data: GameSaveData = Field(..., description="Complete game save data")
+    backup: bool = Field(False, description="Whether to create a backup")
+
+class GameSaveResponse(BaseModel):
+    success: bool = Field(..., description="Whether save was successful")
+    timestamp: datetime = Field(..., description="Save timestamp")
+    save_id: int = Field(..., description="Database save ID")
+    backup_id: Optional[int] = Field(None, description="Backup ID if created")
+
+class GameLoadResponse(BaseModel):
+    save_data: Optional[GameSaveData] = Field(None, description="Loaded save data")
+    last_updated: Optional[datetime] = Field(None, description="Last update timestamp")
+    total_play_time: Optional[int] = Field(None, description="Total recorded play time")
+    has_save: bool = Field(False, description="Whether a save exists")
+
+class GameResourcesResponse(BaseModel):
+    user_id: int = Field(..., description="User ID")
+    stone_count: int = Field(0, ge=0, description="Stone resource count")
+    gold_count: int = Field(0, ge=0, description="Gold resource count")
+    magical_crystals: int = Field(0, ge=0, description="Magical crystals count")
+    prestige_level: int = Field(0, ge=0, description="Current prestige level")
+
+class GameUpgradesResponse(BaseModel):
+    user_id: int = Field(..., description="User ID")
+    miner_level: int = Field(1, ge=1, description="Miner upgrade level")
+    transport_level: int = Field(1, ge=1, description="Transport upgrade level")
+    market_level: int = Field(1, ge=1, description="Market upgrade level")
+    unlocked_vehicles: List[str] = Field(default_factory=list, description="Unlocked vehicles")
+
+class GameResourceUpdate(BaseModel):
+    stone_count: Optional[int] = Field(None, ge=0, description="New stone count")
+    gold_count: Optional[int] = Field(None, ge=0, description="New gold count")
+    magical_crystals: Optional[int] = Field(None, ge=0, description="New crystal count")
+    prestige_level: Optional[int] = Field(None, ge=0, description="New prestige level")
+
+class GameUpgradeRequest(BaseModel):
+    upgrade_type: str = Field(..., description="Type of upgrade (miner_level, transport_level, market_level)")
+    new_level: int = Field(..., ge=1, description="New upgrade level")
+
+class GameVehicleUnlockRequest(BaseModel):
+    vehicle_type: str = Field(..., description="Vehicle type to unlock")
+
+class GameLeaderboardEntry(BaseModel):
+    user_id: int = Field(..., description="User ID")
+    username: str = Field(..., description="Player username")
+    stone_count: int = Field(0, ge=0, description="Stone count")
+    gold_count: int = Field(0, ge=0, description="Gold count")
+    magical_crystals: int = Field(0, ge=0, description="Crystal count")
+    prestige_level: int = Field(0, ge=0, description="Prestige level")
+    total_score: int = Field(0, ge=0, description="Calculated total score")
+    rank: int = Field(..., ge=1, description="Leaderboard rank")
+
+class GameLeaderboardResponse(BaseModel):
+    entries: List[GameLeaderboardEntry] = Field(..., description="Leaderboard entries")
+    user_rank: Optional[int] = Field(None, description="Current user's rank")
+    total_players: int = Field(0, ge=0, description="Total number of players")
+
+class GameStatsResponse(BaseModel):
+    total_players: int = Field(0, ge=0, description="Total registered players")
+    active_players_24h: int = Field(0, ge=0, description="Active players in last 24 hours")
+    total_stones_collected: int = Field(0, ge=0, description="Total stones collected by all players")
+    total_crystals_found: int = Field(0, ge=0, description="Total crystals found by all players")
+    highest_prestige_level: int = Field(0, ge=0, description="Highest prestige level achieved")
+    upgrade_averages: Dict[str, float] = Field(default_factory=dict, description="Average upgrade levels")
+    popular_vehicles: List[Dict[str, Any]] = Field(default_factory=list, description="Most popular vehicles")
+
+# Save Conflict Resolution Models
+class SaveConflictData(BaseModel):
+    local_save: GameSaveData = Field(..., description="Local save data")
+    cloud_save: GameSaveData = Field(..., description="Cloud save data")
+    local_timestamp: datetime = Field(..., description="Local save timestamp")
+    cloud_timestamp: datetime = Field(..., description="Cloud save timestamp")
+
+class SaveConflictResolution(BaseModel):
+    use_local: bool = Field(..., description="Whether to use local save")
+    create_backup: bool = Field(True, description="Whether to backup the other save")
+
+# JWT Token Models for Game Authentication
+class GameTokenData(BaseModel):
+    user_id: int = Field(..., description="User ID")
+    username: str = Field(..., description="Username")
+    exp: int = Field(..., description="Token expiration timestamp")
+
+class GameAuthResponse(BaseModel):
+    access_token: str = Field(..., description="JWT access token")
+    token_type: str = Field("bearer", description="Token type")
+    expires_in: int = Field(..., description="Token expiration time in seconds")
+    user_id: int = Field(..., description="User ID")
+
+class GameLoginRequest(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50, description="Username")
+    password: str = Field(..., min_length=8, description="Password")
+
+class GameRegisterRequest(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50, description="Desired username")
+    email: str = Field(..., description="Email address")
+    password: str = Field(..., min_length=8, description="Password")
+
+# Market and Economy Models
+class MarketPrice(BaseModel):
+    resource_type: str = Field(..., description="Resource type")
+    current_price: float = Field(..., ge=0, description="Current market price")
+    price_trend: str = Field(..., description="Price trend (rising, falling, stable)")
+    demand_level: str = Field(..., description="Demand level (low, medium, high)")
+
+class MarketData(BaseModel):
+    prices: List[MarketPrice] = Field(..., description="Current market prices")
+    last_updated: datetime = Field(..., description="Last price update")
+    special_orders: List[Dict[str, Any]] = Field(default_factory=list, description="Active special orders")
+
+# Achievement Models
+class Achievement(BaseModel):
+    id: str = Field(..., description="Achievement ID")
+    name: str = Field(..., description="Achievement name")
+    description: str = Field(..., description="Achievement description")
+    icon: str = Field(..., description="Achievement icon")
+    unlocked: bool = Field(False, description="Whether achievement is unlocked")
+    progress: float = Field(0.0, ge=0, le=1.0, description="Achievement progress (0-1)")
+    reward: Dict[str, Any] = Field(default_factory=dict, description="Achievement reward")

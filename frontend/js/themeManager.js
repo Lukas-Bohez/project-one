@@ -129,8 +129,8 @@
             }));
             
             console.log('Theme application complete. Current data-theme attributes:', {
-                html: html.getAttribute('data-theme'),
-                body: body.getAttribute('data-theme')
+                html: html ? html.getAttribute('data-theme') : null,
+                body: body ? body.getAttribute('data-theme') : null
             });
         }
         

@@ -11,7 +11,7 @@ from threading import Thread, Event, Lock
 import socket
 # Import the new ThemeRepository
 from fastapi.responses import HTMLResponse,JSONResponse
-from database.datarepository import QuestionRepository, AnswerRepository, ThemeRepository,UserRepository, IpAddressRepository, UserIpAddressRepository,QuizSessionRepository,SensorDataRepository,AuditLogRepository,PlayerItemRepository,ItemRepository,ChatLogRepository,SessionPlayerRepository,PlayerAnswerRepository,ArticlesRepository,StoriesRepository
+from database.datarepository import QuestionRepository, AnswerRepository, ThemeRepository,UserRepository, IpAddressRepository, UserIpAddressRepository,QuizSessionRepository,SensorDataRepository,AuditLogRepository,PlayerItemRepository,ItemRepository,ChatLogRepository,SessionPlayerRepository,PlayerAnswerRepository,ArticlesRepository,StoriesRepository,GameSaveRepository,GameResourcesRepository,GameUpgradesRepository
 from models.models import (
     QuestionBase, QuestionCreate, QuestionResponse, QuestionUpdate,
     QuestionStatusUpdate, ErrorNotFound, QuestionWithAnswers,
@@ -24,7 +24,12 @@ from models.models import (
     QuestionActivationNotification,
     AnswerBase, AnswerCreate, AnswerListResponse, AnswerResponse, 
     AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand,BroadcastMessage,DirectMessage, ClientActivity,SessionSensorData,MultiSessionSensorResponse,UserUpdateNames,UserCredentials,AnswerInput,QuestionInput, ThemeInput,
-    UserPublic,UserPublicWithIp,UserIpAddress,BanIpRequest,AuditLogResponse,ChatMessage,ChatMessageCreate,ShutdownRequest,PaginationInfo
+    UserPublic,UserPublicWithIp,UserIpAddress,BanIpRequest,AuditLogResponse,ChatMessage,ChatMessageCreate,ShutdownRequest,PaginationInfo,
+    # Kingdom Quarry Game Models
+    GameSaveData, GameSaveRequest, GameSaveResponse, GameLoadResponse, GameResourcesResponse,
+    GameUpgradesResponse, GameResourceUpdate, GameUpgradeRequest, GameVehicleUnlockRequest,
+    GameLeaderboardResponse, GameLeaderboardEntry, GameStatsResponse, SaveConflictData,
+    SaveConflictResolution, GameAuthResponse, GameLoginRequest, GameRegisterRequest
 )
 from typing import Dict, Any, Optional, List
 from fastapi import Request
@@ -80,6 +85,67 @@ sio = socketio.AsyncServer(
 )
 
 ENDPOINT = "/api/v1"  # API base endpoint
+
+# ----------------------------------------------------
+# JWT Authentication for Kingdom Quarry Game (Optional)
+# ----------------------------------------------------
+
+try:
+    import jwt
+    from datetime import timedelta
+    import secrets
+    
+    # JWT Configuration
+    JWT_SECRET_KEY = secrets.token_urlsafe(32)  # In production, use environment variable
+    JWT_ALGORITHM = "HS256"
+    JWT_EXPIRATION_TIME = timedelta(hours=24)
+    JWT_AVAILABLE = True
+    
+    def create_access_token(user_id: int, username: str) -> str:
+        """Create JWT access token for game authentication"""
+        expire = datetime.now() + JWT_EXPIRATION_TIME
+        payload = {
+            "user_id": user_id,
+            "username": username,
+            "exp": expire.timestamp()
+        }
+        return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+
+    def verify_token(token: str) -> Optional[Dict[str, Any]]:
+        """Verify JWT token and return payload"""
+        try:
+            payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+            if datetime.fromtimestamp(payload["exp"]) > datetime.now():
+                return payload
+        except jwt.InvalidTokenError:
+            pass
+        return None
+
+    def get_current_game_user(authorization: str = Header(None)) -> Dict[str, Any]:
+        """Get current user from JWT token for game endpoints"""
+        if not authorization or not authorization.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
+        
+        token = authorization.split(" ")[1]
+        payload = verify_token(token)
+        if not payload:
+            raise HTTPException(status_code=401, detail="Invalid or expired token")
+        
+        return payload
+
+except ImportError:
+    JWT_AVAILABLE = False
+    print("JWT library not available - Kingdom Quarry game authentication disabled")
+    
+    # Fallback functions that raise helpful errors
+    def create_access_token(user_id: int, username: str) -> str:
+        raise HTTPException(status_code=500, detail="JWT library not installed. Install PyJWT to use game authentication.")
+    
+    def verify_token(token: str) -> Optional[Dict[str, Any]]:
+        return None
+    
+    def get_current_game_user(authorization: str = Header(None)) -> Dict[str, Any]:
+        raise HTTPException(status_code=500, detail="JWT library not installed. Install PyJWT to use game authentication.")
 
 # ----------------------------------------------------
 # Authentication and Helper Functions
@@ -6527,6 +6593,208 @@ def download_video_background(download_id: str, url: str, format_type: str, qual
 # Run the app
 # ----------------------------------------------------
 # Right before starting your main application
+# =============================================================================
+# KINGDOM QUARRY GAME API ENDPOINTS (Optional - requires PyJWT)
+# =============================================================================
+
+# Add a simple endpoint to check if game features are available
+@app.get(ENDPOINT + "/game/status", tags=["Kingdom Quarry"])
+async def get_game_status():
+    """Check if Kingdom Quarry game features are available"""
+    return {
+        "game_available": JWT_AVAILABLE,
+        "message": "Kingdom Quarry game endpoints available" if JWT_AVAILABLE else "Install PyJWT to enable Kingdom Quarry game features"
+    }
+
+# Game endpoints are only available if JWT is installed
+if JWT_AVAILABLE:
+    # Game Authentication Endpoints
+    @app.post(ENDPOINT + "/game/auth/register", response_model=GameAuthResponse, tags=["Kingdom Quarry"])
+    async def game_register(register_data: GameRegisterRequest):
+        """Register a new game user account"""
+        try:
+            # Check if user already exists
+            existing_user = UserRepository.get_user_by_name(register_data.username.split()[0] if ' ' in register_data.username else register_data.username, "")
+            if existing_user:
+                raise HTTPException(status_code=400, detail="Username already exists")
+            
+            # Create new user
+            hashed_info = UserRepository.hash_password(register_data.password)
+            user_data = {
+                'first_name': register_data.username,
+                'last_name': 'Player',
+                'password_hash': hashed_info['password_hash'],
+                'salt': hashed_info['salt'],
+                'rfid_code': f"game_{register_data.username}_{datetime.now().timestamp()}",
+                'userRoleId': 2  # Regular user role
+            }
+            
+            user_id = UserRepository.create_user_with_password(user_data)
+            if not user_id:
+                raise HTTPException(status_code=500, detail="Failed to create user")
+            
+            # Initialize game data
+            GameResourcesRepository.create_user_resources(user_id)
+            GameUpgradesRepository.create_user_upgrades(user_id)
+            
+            # Create access token
+            access_token = create_access_token(user_id, register_data.username)
+            
+            return GameAuthResponse(
+                access_token=access_token,
+                token_type="bearer",
+                expires_in=int(JWT_EXPIRATION_TIME.total_seconds()),
+                user_id=user_id
+            )
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
+
+    @app.post(ENDPOINT + "/game/auth/login", response_model=GameAuthResponse, tags=["Kingdom Quarry"])
+    async def game_login(login_data: GameLoginRequest):
+        """Login to game account"""
+        try:
+            # Authenticate user
+            user_id = UserRepository.authenticate_user(login_data.username, "Player", login_data.password)
+            if not user_id:
+                raise HTTPException(status_code=401, detail="Invalid username or password")
+            
+            # Create access token
+            access_token = create_access_token(user_id, login_data.username)
+            
+            return GameAuthResponse(
+                access_token=access_token,
+                token_type="bearer", 
+                expires_in=int(JWT_EXPIRATION_TIME.total_seconds()),
+                user_id=user_id
+            )
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Login failed: {str(e)}")
+
+    # Game Save Endpoints
+    @app.get(ENDPOINT + "/game/save", response_model=GameLoadResponse, tags=["Kingdom Quarry"])
+    async def get_game_save(current_user: dict = Depends(get_current_game_user)):
+        """Load game save data for authenticated user"""
+        try:
+            user_id = current_user['user_id']
+            save_data = GameSaveRepository.get_save_by_user(user_id)
+            
+            if save_data:
+                return GameLoadResponse(
+                    save_data=save_data['save_data'],
+                    last_updated=save_data['last_updated'],
+                    total_play_time=save_data.get('total_play_time'),
+                    has_save=True
+                )
+            else:
+                return GameLoadResponse(has_save=False)
+                
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to load save: {str(e)}")
+
+    @app.post(ENDPOINT + "/game/save", response_model=GameSaveResponse, tags=["Kingdom Quarry"])
+    async def save_game_data(save_request: GameSaveRequest, current_user: dict = Depends(get_current_game_user)):
+        """Save game data for authenticated user"""
+        try:
+            user_id = current_user['user_id']
+            
+            # Create backup if requested
+            backup_id = None
+            if save_request.backup:
+                existing_save = GameSaveRepository.get_save_by_user(user_id)
+                if existing_save:
+                    backup_id = GameSaveRepository.create_backup(user_id, existing_save['save_data'])
+            
+            # Save game data
+            save_id = GameSaveRepository.create_save(
+                user_id, 
+                save_request.save_data.dict(),
+                save_request.save_data.game_version
+            )
+            
+            if not save_id:
+                raise HTTPException(status_code=500, detail="Failed to save game data")
+            
+            # Update resources table with current values
+            resources = save_request.save_data.resources
+            GameResourcesRepository.update_resources(
+                user_id,
+                stone_count=resources.get('stone', 0),
+                gold_count=resources.get('gold', 0), 
+                magical_crystals=resources.get('crystals', 0),
+                prestige_level=save_request.save_data.prestige_level
+            )
+            
+            return GameSaveResponse(
+                success=True,
+                timestamp=datetime.now(),
+                save_id=save_id,
+                backup_id=backup_id
+            )
+            
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to save game: {str(e)}")
+
+    @app.get(ENDPOINT + "/game/leaderboard", response_model=GameLeaderboardResponse, tags=["Kingdom Quarry"])
+    async def get_game_leaderboard(
+        limit: int = 100,
+        current_user: dict = Depends(get_current_game_user)
+    ):
+        """Get game leaderboard"""
+        try:
+            leaderboard_data = GameResourcesRepository.get_leaderboard(limit)
+            
+            entries = []
+            user_rank = None
+            
+            for idx, entry in enumerate(leaderboard_data):
+                rank = idx + 1
+                leaderboard_entry = GameLeaderboardEntry(
+                    user_id=entry['user_id'],
+                    username=f"{entry['first_name']} {entry['last_name']}",
+                    stone_count=entry['stone_count'],
+                    gold_count=entry['gold_count'],
+                    magical_crystals=entry['magical_crystals'],
+                    prestige_level=entry['prestige_level'],
+                    total_score=entry['total_score'],
+                    rank=rank
+                )
+                entries.append(leaderboard_entry)
+                
+                # Check if this is the current user
+                if entry['user_id'] == current_user['user_id']:
+                    user_rank = rank
+            
+            return GameLeaderboardResponse(
+                entries=entries,
+                user_rank=user_rank,
+                total_players=len(entries)
+            )
+            
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to get leaderboard: {str(e)}")
+
+else:
+    # JWT not available - add placeholder endpoints that return helpful messages
+    @app.post(ENDPOINT + "/game/auth/register", tags=["Kingdom Quarry"])
+    async def game_register_placeholder():
+        """Game registration requires PyJWT"""
+        raise HTTPException(status_code=503, detail="Game features require PyJWT library. Install with: pip install PyJWT")
+
+    @app.post(ENDPOINT + "/game/auth/login", tags=["Kingdom Quarry"])
+    async def game_login_placeholder():
+        """Game login requires PyJWT"""
+        raise HTTPException(status_code=503, detail="Game features require PyJWT library. Install with: pip install PyJWT")
+
+# =============================================================================
+# END KINGDOM QUARRY GAME API ENDPOINTS
+# =============================================================================
+
 if __name__ == "__main__":
     uvicorn.run(
         "app:app",

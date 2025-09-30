@@ -1,1 +1,57 @@
-
+{
+  "articles": [
+    {
+      "id": "stock-market-steals-from-workers",
+      "title": "How Wall Street Steals From Every Worker in America",
+      "subtitle": "The Stock Market's Greatest Scam: Your Labor, Their Profit",
+      "author": "Oroka Conner",
+      "date": "2025-09-30",
+      "description": "Meet Maria, who cleans corporate offices for $12 an hour while shareholders extract millions from her labor. This is how the stock market has become a sophisticated wealth extraction machine that turns worker productivity into shareholder profits.",
+      "tags": ["opinion", "economics", "stock-market", "workers-rights", "inequality"],
+      "category": "opinion",
+      "imageQuery": "cleaning lady office building, low wage worker, corporate headquarters janitor, economic inequality workplace, photojournalism",
+      "readTime": "7 min read",
+      "featured": true,
+      "htmlFile": "posts/stock-market-steals-from-workers.html"
+    },
+    {
+      "id": "why-youre-poorer-despite-more-money",
+      "title": "Why You've Got More Money Than Ever Yet Are Poorer Than Ever",
+      "subtitle": "How Rich People Are Suffocating Our Nation",
+      "author": "Oroka Conner",
+      "date": "2025-09-29",
+      "description": "An in-depth analysis of how wealth inequality has reached critical levels, examining the paradox of increased nominal wealth alongside decreased purchasing power and quality of life for the average person.",
+      "tags": ["opinion", "economics", "wealth-inequality", "politics", "society"],
+      "category": "opinion",
+      "image": "images/wealth-inequality-hero.svg",
+      "imageQuery": "economic inequality protest, rich vs poor contrast, social justice rally, wealth disparity, photojournalism, editorial photography",
+      "readTime": "8 min read",
+      "featured": true,
+      "htmlFile": "posts/why-youre-poorer-despite-more-money.html"
+    }
+  ],
+  "categories": {
+    "opinion": {
+      "name": "Opinion Pieces",
+      "description": "Thought-provoking commentary and analysis on current events"
+    },
+    "tech": {
+      "name": "Technology",
+      "description": "Articles about technology, programming, and digital innovation"
+    },
+    "society": {
+      "name": "Society",
+      "description": "Social commentary and cultural analysis"
+    }
+  },
+  "tags": {
+    "economics": "Economic analysis and financial topics",
+    "wealth-inequality": "Articles about income disparity and class issues",
+    "stock-market": "Wall Street and financial market analysis",
+    "workers-rights": "Labor rights and workplace issues",
+    "politics": "Political commentary and analysis",
+    "society": "Social issues and cultural topics",
+    "opinion": "Editorial and opinion pieces",
+    "tech": "Technology and programming topics"
+  }
+}

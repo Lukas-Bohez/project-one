@@ -71,6 +71,16 @@ let isPlayerEnabled = false; // Cached player enabled state
 // IndexedDB for audio blob caching
 let lofiDB = null;
 
+// --- Unicode/URL helpers ---
+// Detect if a string already contains percent-encoded bytes
+const isPercentEncoded = (s) => /%[0-9A-Fa-f]{2}/.test(s);
+// Safely decode URI components; if not encoded, return original
+const safeDecode = (s) => { try { return decodeURIComponent(s); } catch { return s; } };
+// Encode a filename for use in a URL path segment without double-encoding
+const toUrlFilename = (name) => isPercentEncoded(name) ? name : encodeURIComponent(name);
+// Build a playable song URL from folder + filename, handling Unicode universally
+const buildSongPath = (name) => `${config.folder}${toUrlFilename(name)}`;
+
 const openLofiDB = async () => {
     if (lofiDB) return lofiDB;
     
@@ -92,6 +102,20 @@ const openLofiDB = async () => {
             }
         };
     });
+};
+
+// Clean up titles that may contain percent-encoding or odd prefixes
+const prettyTitle = (s) => {
+    if (!s || typeof s !== 'string') return s;
+    let t = s.trim();
+    // Remove common stray charset prefixes
+    t = t.replace(/^utf[-_]?8/i, '');
+    // Replace plus (form-encoding) with spaces, then percent-decode safely
+    t = t.replace(/\+/g, ' ');
+    t = safeDecode(t);
+    // Collapse repeated whitespace
+    t = t.replace(/\s{2,}/g, ' ').trim();
+    return t;
 };
 
 const getCachedAudioBlob = async (videoId) => {
@@ -789,8 +813,8 @@ const refreshCachedYouTubeListUI = () => {
         titleContainer.style.flex = '1 1 auto';
         titleContainer.style.minWidth = '200px';
         
-        const title = document.createElement('div');
-        title.textContent = item.title || `${item.type === 'playlist' ? 'Playlist' : 'Video'} · ${item.id}`;
+    const title = document.createElement('div');
+    title.textContent = prettyTitle(item.title) || `${item.type === 'playlist' ? 'Playlist' : 'Video'} · ${item.id}`;
         title.style.color = 'var(--light-color, #f4f8fc)';
         title.style.fontWeight = '500';
         title.style.wordBreak = 'break-word';
@@ -968,7 +992,7 @@ const playCachedYouTubeItem = async (item) => {
         audioPlayer.volume = config.volume;
         
         // Update now playing for YouTube mode
-        updateNowPlaying(`🎵 ${item.title} (Cached)`);
+    updateNowPlaying(`🎵 ${prettyTitle(item.title)} (Cached)`);
         
         // Play the cached audio
         const playPromise = audioPlayer.play();
@@ -1480,11 +1504,11 @@ const startPlayback = () => {
 // Handles loading the first song, either from persistence or based on mode
 const handleInitialSongLoad = () => {
     if (config.persistence.enabled && savedPlaybackState && savedPlaybackState.currentSong) {
-        const savedSongName = savedPlaybackState.currentSong.split('/').pop().split('?')[0];
+    const savedSongName = safeDecode(savedPlaybackState.currentSong.split('/').pop().split('?')[0]);
         
         // Validate that saved song still exists in current song list
         if (songList.includes(savedSongName)) {
-            const fullSavedPath = config.folder + savedSongName;
+            const fullSavedPath = buildSongPath(savedSongName);
             console.log(`Attempting to load saved song: ${savedSongName} at ${savedPlaybackState.currentTime.toFixed(1)}s`);
             
             // Set current indices based on saved song
@@ -1516,7 +1540,7 @@ const scanFolderForMP3s = async () => {
     try {
         console.log('🔍 Scanning folder for audio files:', config.folder);
 
-        const response = await fetch(config.folder);
+    const response = await fetch(config.folder);
 
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: Cannot access folder`);
@@ -1557,7 +1581,7 @@ const scanFolderForMP3s = async () => {
             }
 
             // Get just the filename
-            const filename = href.split('/').pop().split('?')[0];
+            const filename = safeDecode(href.split('/').pop().split('?')[0]);
 
             return filename;
         }).filter(filename => {
@@ -1610,7 +1634,7 @@ const playNextSong = (initiator = 'user') => {
     // Handle repeat one mode
     if (initiator === 'auto' && config.repeat === 'one' && audioPlayer.src) {
         // Repeat current song only for auto-advance
-        const currentSong = audioPlayer.src.split('/').pop().split('?')[0];
+    const currentSong = safeDecode(audioPlayer.src.split('/').pop().split('?')[0]);
         try {
             audioPlayer.currentTime = 0;
             // Ensure ended handler is attached again (the previous one was once-only)
@@ -1622,13 +1646,13 @@ const playNextSong = (initiator = 'user') => {
             }).catch(err => {
                 console.warn('Repeat-one auto play() failed, reloading track:', err);
                 // Fallback: reload the same track via loadAndPlay
-                const songPath = `${config.folder}${currentSong}`;
+                const songPath = buildSongPath(currentSong);
                 loadAndPlay(songPath, currentSong);
             });
         } catch (e) {
             console.warn('Repeat-one auto failed; trying reload:', e);
-            const currentSong = audioPlayer.src.split('/').pop().split('?')[0];
-            const songPath = `${config.folder}${currentSong}`;
+            const currentSong = safeDecode(audioPlayer.src.split('/').pop().split('?')[0]);
+            const songPath = buildSongPath(currentSong);
             loadAndPlay(songPath, currentSong);
         }
         return;
@@ -1656,7 +1680,7 @@ const playNextSong = (initiator = 'user') => {
         return;
     }
 
-    const songPath = config.folder + nextSong;
+    const songPath = buildSongPath(nextSong);
 
     console.log('▶ Playing:', nextSong, `(${config.shuffle ? 'shuffle' : 'sequential'} mode)`);
 
@@ -1697,7 +1721,7 @@ const playPreviousSong = () => {
         return;
     }
 
-    const songPath = config.folder + previousSong;
+    const songPath = buildSongPath(previousSong);
 
     console.log('⏮ Previous:', previousSong, `(${config.shuffle ? 'shuffle' : 'sequential'} mode)`);
 
@@ -1863,7 +1887,7 @@ const handleFailedSong = (songName) => {
 const updateUIForPlaying = (songName) => {
     const nowPlayingDiv = document.getElementById('now-playing');
     if (nowPlayingDiv) {
-        nowPlayingDiv.textContent = `Now Playing: ${decodeURIComponent(songName)}`;
+        nowPlayingDiv.textContent = `Now Playing: ${safeDecode(songName)}`;
     }
     const playPauseBtn = document.getElementById('play-pause-btn');
     if (playPauseBtn) {
@@ -1891,7 +1915,7 @@ const updateUIForPlaying = (songName) => {
 // Helper function to update UI for paused state
 const updateUIForPaused = (songName) => {
     const nowPlayingDiv = document.getElementById('now-playing');
-    if (nowPlayingDiv) nowPlayingDiv.textContent = `Paused: ${decodeURIComponent(songName)}`;
+    if (nowPlayingDiv) nowPlayingDiv.textContent = `Paused: ${safeDecode(songName)}`;
     const playPauseBtn = document.getElementById('play-pause-btn');
     if (playPauseBtn) {
         playPauseBtn.textContent = '▶ Play';
@@ -2113,8 +2137,8 @@ window.lofi = {
                     // Update UI
                     const nowPlayingDiv = document.getElementById('now-playing');
                     if (nowPlayingDiv) {
-                        const currentSong = audioPlayer.src.split('/').pop();
-                        nowPlayingDiv.textContent = `Now Playing: ${decodeURIComponent(currentSong)}`;
+                        const currentSong = safeDecode(audioPlayer.src.split('/').pop());
+                        nowPlayingDiv.textContent = `Now Playing: ${safeDecode(currentSong)}`;
                     }
                     const playPauseBtn = document.getElementById('play-pause-btn');
                     if (playPauseBtn) {
@@ -2223,7 +2247,7 @@ window.lofi.debugYouTube = async () => {
     console.log('=== YouTube Cache Debug ===');
     console.log('Persistence enabled:', config.persistence?.enabled);
     console.log('Cached playlist length:', cachedYouTubePlaylist.length);
-    console.log('Cached playlist:', cachedYouTubePlaylist);
+    console.log('Cached playlist:', cachedYouTubePlaylist.map(x => ({...x, title: prettyTitle(x.title)})));
     console.log('LocalStorage key:', config.persistence.youtubePlaylistKey);
     console.log('LocalStorage raw:', localStorage.getItem(config.persistence.youtubePlaylistKey));
     console.log('UI container exists:', !!document.getElementById('youtube-playlist'));
@@ -2237,7 +2261,7 @@ window.lofi.debugYouTube = async () => {
         for (const key of dbKeys) {
             const cached = await getCachedAudioBlob(key);
             console.log(`IndexedDB item ${key}:`, {
-                title: cached?.title,
+                title: prettyTitle(cached?.title),
                 status: cached?.status,
                 blobSize: cached?.blob?.size,
                 cachedAt: cached?.cachedAt
@@ -2356,7 +2380,7 @@ const populateSongSelector = () => {
             songList.forEach((song, index) => {
                 const option = document.createElement('option');
                 option.value = song;
-                option.textContent = decodeURIComponent(song);
+                option.textContent = safeDecode(song);
                 songSelector.appendChild(option);
             });
             console.log('📋 Song selector populated with', songList.length, 'songs');
@@ -2390,7 +2414,7 @@ const handleSongSelection = (selectedSong) => {
         } else {
             currentPlaylistIndex = -1;
         }
-        const songPath = `${config.folder}${selectedSong}`;
+    const songPath = buildSongPath(selectedSong);
         isTransitioning = true;
         loadAndPlay(songPath, selectedSong, 0, 0, true);
     }
@@ -2597,10 +2621,13 @@ const createLofiModal = () => {
 
     modalHeader.querySelector('#close-modal').addEventListener('click', toggleModal);
 
-    // Song Selector
+    // Song Search + Selector
     const songSelectorDiv = document.createElement('div');
     songSelectorDiv.style.marginBottom = '10px';
     songSelectorDiv.innerHTML = `
+        <label for="song-search" style="display: block; margin-bottom: 5px; color: var(--light-color, #f4f8fc);">Search Songs (any language):</label>
+        <input type="text" id="song-search" placeholder="Type to filter, e.g., らくらく安楽死" 
+               style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid var(--primary-color, #2c4c7c); background-color: var(--secondary-color, #0c4061); color: var(--light-color, #f4f8fc); margin-bottom: 8px;" />
         <label for="song-selector" style="display: block; margin-bottom: 5px; color: var(--light-color, #f4f8fc);">Select Song:</label>
         <select id="song-selector" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid var(--primary-color, #2c4c7c); background-color: var(--secondary-color, #0c4061); color: var(--light-color, #f4f8fc);">
             <option value="">Select a song...</option>
@@ -2609,7 +2636,22 @@ const createLofiModal = () => {
     modal.appendChild(songSelectorDiv);
 
     const songSelector = songSelectorDiv.querySelector('#song-selector');
+    const songSearch = songSelectorDiv.querySelector('#song-search');
     songSelector.addEventListener('change', (e) => handleSongSelection(e.target.value));
+    songSearch.addEventListener('input', () => {
+        const q = songSearch.value.toLowerCase();
+        // Rebuild options filtered by search query on decoded strings
+        if (!songList || songList.length === 0) return;
+        songSelector.innerHTML = '<option value="">Select a song...</option>';
+        songList
+          .filter(s => safeDecode(s).toLowerCase().includes(q))
+          .forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s;
+            opt.textContent = safeDecode(s);
+            songSelector.appendChild(opt);
+          });
+    });
 
     // YouTube URL Input (only in YouTube mode)
     const youtubeDiv = document.createElement('div');

@@ -2814,3 +2814,305 @@ class StoriesRepository:
         stats['most_viewed'] = Database.get_rows(sql)
         
         return stats
+
+
+# =============================================================================
+# KINGDOM QUARRY GAME REPOSITORIES
+# =============================================================================
+
+class GameSaveRepository:
+    """Repository for managing Kingdom Quarry game saves"""
+    
+    @staticmethod
+    def create_save(user_id: int, save_data: Dict[str, Any], game_version: str = "1.0.0") -> Optional[int]:
+        """Create or update a game save"""
+        sql = """
+        INSERT INTO game_saves (user_id, save_data, game_version, last_updated)
+        VALUES (%s, %s, %s, CURRENT_TIMESTAMP)
+        ON DUPLICATE KEY UPDATE
+        save_data = VALUES(save_data),
+        game_version = VALUES(game_version),
+        last_updated = CURRENT_TIMESTAMP
+        """
+        params = [user_id, json.dumps(save_data), game_version]
+        return Database.execute_sql(sql, params)
+    
+    @staticmethod
+    def get_save_by_user(user_id: int) -> Optional[Dict[str, Any]]:
+        """Get the latest save for a user"""
+        sql = """
+        SELECT id, user_id, save_data, last_updated, game_version, total_play_time
+        FROM game_saves 
+        WHERE user_id = %s 
+        ORDER BY last_updated DESC 
+        LIMIT 1
+        """
+        params = [user_id]
+        result = Database.get_one_row(sql, params)
+        if result and result['save_data']:
+            result['save_data'] = json.loads(result['save_data'])
+        return result
+    
+    @staticmethod
+    def update_save_data(user_id: int, save_data: Dict[str, Any], total_play_time: int = None) -> bool:
+        """Update existing save data"""
+        if total_play_time is not None:
+            sql = """
+            UPDATE game_saves 
+            SET save_data = %s, last_updated = CURRENT_TIMESTAMP, total_play_time = %s
+            WHERE user_id = %s
+            """
+            params = [json.dumps(save_data), total_play_time, user_id]
+        else:
+            sql = """
+            UPDATE game_saves 
+            SET save_data = %s, last_updated = CURRENT_TIMESTAMP
+            WHERE user_id = %s
+            """
+            params = [json.dumps(save_data), user_id]
+        
+        result = Database.execute_sql(sql, params)
+        return result is not None and result > 0
+    
+    @staticmethod
+    def create_backup(user_id: int, save_data: Dict[str, Any], version: str = "1.0.0") -> Optional[int]:
+        """Create a backup of current save"""
+        sql = """
+        INSERT INTO save_backups (user_id, save_data, backup_timestamp, version)
+        VALUES (%s, %s, CURRENT_TIMESTAMP, %s)
+        """
+        params = [user_id, json.dumps(save_data), version]
+        return Database.execute_sql(sql, params)
+    
+    @staticmethod
+    def get_backups(user_id: int, limit: int = 10) -> List[Dict[str, Any]]:
+        """Get recent save backups for a user"""
+        sql = """
+        SELECT id, user_id, save_data, backup_timestamp, version
+        FROM save_backups 
+        WHERE user_id = %s 
+        ORDER BY backup_timestamp DESC 
+        LIMIT %s
+        """
+        params = [user_id, limit]
+        results = Database.get_rows(sql, params)
+        for result in results:
+            if result['save_data']:
+                result['save_data'] = json.loads(result['save_data'])
+        return results
+    
+    @staticmethod
+    def cleanup_old_backups(user_id: int, keep_count: int = 10) -> bool:
+        """Clean up old backups, keeping only the most recent ones"""
+        sql = """
+        DELETE FROM save_backups 
+        WHERE user_id = %s 
+        AND id NOT IN (
+            SELECT id FROM (
+                SELECT id FROM save_backups 
+                WHERE user_id = %s 
+                ORDER BY backup_timestamp DESC 
+                LIMIT %s
+            ) AS recent_backups
+        )
+        """
+        params = [user_id, user_id, keep_count]
+        result = Database.execute_sql(sql, params)
+        return result is not None
+
+
+class GameResourcesRepository:
+    """Repository for managing Kingdom Quarry resources"""
+    
+    @staticmethod
+    def create_user_resources(user_id: int) -> Optional[int]:
+        """Initialize resources for a new user"""
+        sql = """
+        INSERT INTO user_resources (user_id, stone_count, gold_count, magical_crystals, prestige_level)
+        VALUES (%s, 0, 0, 0, 0)
+        ON DUPLICATE KEY UPDATE user_id = user_id
+        """
+        params = [user_id]
+        return Database.execute_sql(sql, params)
+    
+    @staticmethod
+    def get_user_resources(user_id: int) -> Optional[Dict[str, Any]]:
+        """Get all resources for a user"""
+        sql = """
+        SELECT id, user_id, stone_count, gold_count, magical_crystals, prestige_level
+        FROM user_resources 
+        WHERE user_id = %s
+        """
+        params = [user_id]
+        return Database.get_one_row(sql, params)
+    
+    @staticmethod
+    def update_resources(user_id: int, **kwargs) -> bool:
+        """Update specific resource amounts"""
+        allowed_fields = ['stone_count', 'gold_count', 'magical_crystals', 'prestige_level']
+        updates = []
+        params = []
+        
+        for field, value in kwargs.items():
+            if field in allowed_fields:
+                updates.append(f"{field} = %s")
+                params.append(value)
+        
+        if not updates:
+            return False
+        
+        sql = f"UPDATE user_resources SET {', '.join(updates)} WHERE user_id = %s"
+        params.append(user_id)
+        
+        result = Database.execute_sql(sql, params)
+        return result is not None and result > 0
+    
+    @staticmethod
+    def add_resources(user_id: int, stone: int = 0, gold: int = 0, crystals: int = 0) -> bool:
+        """Add resources to existing amounts"""
+        sql = """
+        UPDATE user_resources 
+        SET stone_count = stone_count + %s,
+            gold_count = gold_count + %s,
+            magical_crystals = magical_crystals + %s
+        WHERE user_id = %s
+        """
+        params = [stone, gold, crystals, user_id]
+        result = Database.execute_sql(sql, params)
+        return result is not None and result > 0
+    
+    @staticmethod
+    def spend_resources(user_id: int, stone: int = 0, gold: int = 0, crystals: int = 0) -> bool:
+        """Spend resources if user has enough"""
+        # First check if user has enough resources
+        current = GameResourcesRepository.get_user_resources(user_id)
+        if not current:
+            return False
+        
+        if (current['stone_count'] < stone or 
+            current['gold_count'] < gold or 
+            current['magical_crystals'] < crystals):
+            return False
+        
+        sql = """
+        UPDATE user_resources 
+        SET stone_count = stone_count - %s,
+            gold_count = gold_count - %s,
+            magical_crystals = magical_crystals - %s
+        WHERE user_id = %s
+        """
+        params = [stone, gold, crystals, user_id]
+        result = Database.execute_sql(sql, params)
+        return result is not None and result > 0
+    
+    @staticmethod
+    def get_leaderboard(limit: int = 100) -> List[Dict[str, Any]]:
+        """Get resource leaderboard"""
+        sql = """
+        SELECT ur.user_id, u.first_name, u.last_name,
+               ur.stone_count, ur.gold_count, ur.magical_crystals, ur.prestige_level,
+               (ur.stone_count + ur.gold_count * 10 + ur.magical_crystals * 100) as total_score
+        FROM user_resources ur
+        JOIN users u ON ur.user_id = u.id
+        ORDER BY total_score DESC, prestige_level DESC
+        LIMIT %s
+        """
+        params = [limit]
+        return Database.get_rows(sql, params)
+
+
+class GameUpgradesRepository:
+    """Repository for managing Kingdom Quarry upgrades"""
+    
+    @staticmethod
+    def create_user_upgrades(user_id: int) -> Optional[int]:
+        """Initialize upgrades for a new user"""
+        sql = """
+        INSERT INTO user_upgrades (user_id, miner_level, transport_level, market_level, unlocked_vehicles)
+        VALUES (%s, 1, 1, 1, %s)
+        ON DUPLICATE KEY UPDATE user_id = user_id
+        """
+        params = [user_id, json.dumps(["hand_cart"])]  # Default starting vehicle
+        return Database.execute_sql(sql, params)
+    
+    @staticmethod
+    def get_user_upgrades(user_id: int) -> Optional[Dict[str, Any]]:
+        """Get all upgrades for a user"""
+        sql = """
+        SELECT id, user_id, miner_level, transport_level, market_level, unlocked_vehicles
+        FROM user_upgrades 
+        WHERE user_id = %s
+        """
+        params = [user_id]
+        result = Database.get_one_row(sql, params)
+        if result and result['unlocked_vehicles']:
+            result['unlocked_vehicles'] = json.loads(result['unlocked_vehicles'])
+        return result
+    
+    @staticmethod
+    def update_upgrade_level(user_id: int, upgrade_type: str, new_level: int) -> bool:
+        """Update a specific upgrade level"""
+        allowed_upgrades = ['miner_level', 'transport_level', 'market_level']
+        if upgrade_type not in allowed_upgrades:
+            return False
+        
+        sql = f"UPDATE user_upgrades SET {upgrade_type} = %s WHERE user_id = %s"
+        params = [new_level, user_id]
+        result = Database.execute_sql(sql, params)
+        return result is not None and result > 0
+    
+    @staticmethod
+    def unlock_vehicle(user_id: int, vehicle_type: str) -> bool:
+        """Unlock a new vehicle type"""
+        current = GameUpgradesRepository.get_user_upgrades(user_id)
+        if not current:
+            return False
+        
+        unlocked = current.get('unlocked_vehicles', [])
+        if vehicle_type not in unlocked:
+            unlocked.append(vehicle_type)
+            
+            sql = "UPDATE user_upgrades SET unlocked_vehicles = %s WHERE user_id = %s"
+            params = [json.dumps(unlocked), user_id]
+            result = Database.execute_sql(sql, params)
+            return result is not None and result > 0
+        
+        return True  # Already unlocked
+    
+    @staticmethod
+    def get_upgrade_stats() -> Dict[str, Any]:
+        """Get upgrade statistics across all users"""
+        stats = {}
+        
+        # Average upgrade levels
+        sql = """
+        SELECT 
+            AVG(miner_level) as avg_miner_level,
+            AVG(transport_level) as avg_transport_level,
+            AVG(market_level) as avg_market_level,
+            MAX(miner_level) as max_miner_level,
+            MAX(transport_level) as max_transport_level,
+            MAX(market_level) as max_market_level
+        FROM user_upgrades
+        """
+        result = Database.get_one_row(sql)
+        stats['upgrade_averages'] = result if result else {}
+        
+        # Most common vehicles
+        sql = """
+        SELECT user_id, unlocked_vehicles 
+        FROM user_upgrades 
+        WHERE unlocked_vehicles IS NOT NULL
+        """
+        results = Database.get_rows(sql)
+        vehicle_counts = {}
+        
+        for result in results:
+            if result['unlocked_vehicles']:
+                vehicles = json.loads(result['unlocked_vehicles'])
+                for vehicle in vehicles:
+                    vehicle_counts[vehicle] = vehicle_counts.get(vehicle, 0) + 1
+        
+        stats['vehicle_popularity'] = sorted(vehicle_counts.items(), key=lambda x: x[1], reverse=True)
+        
+        return stats
