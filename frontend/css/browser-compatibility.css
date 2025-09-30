@@ -1,0 +1,319 @@
+/*---------------------------------------/*
+ # BROWSER COMPATIBILITY CSS
+ # This file contains vendor prefixes and fallbacks for cross-browser support
+/*---------------------------------------*/
+
+/* CSS Custom Properties Fallbacks for IE */
+:root {
+    /* Fallback colors for browsers that don't support CSS custom properties */
+    --primary-color: #2c4c7c;
+    --secondary-color: #0c4061;
+    --bg-primary: #f4f8fc;
+    --bg-secondary: #ffffff;
+    --text-primary: #0e1827;
+    --border-radius: 8px;
+}
+
+/* Flexbox compatibility */
+.o-button-group {
+    display: -webkit-box;      /* OLD - iOS 6-, Safari 3.1-6 */
+    display: -moz-box;         /* OLD - Firefox 19- (buggy but mostly works) */
+    display: -ms-flexbox;      /* TWEENER - IE 10 */
+    display: -webkit-flex;     /* NEW - Chrome */
+    display: flex;             /* NEW, Spec - Opera 12.1, Firefox 20+ */
+    
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    
+    -webkit-box-align: stretch;
+    -webkit-align-items: stretch;
+    -ms-flex-align: stretch;
+    align-items: stretch;
+}
+
+.o-status-display {
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+}
+
+.u-flex {
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+}
+
+/* CSS Grid compatibility */
+.o-button-group {
+    display: -ms-grid; /* IE 10-11 */
+    display: grid;
+    
+    -ms-grid-columns: 1fr; /* IE 10-11 */
+    grid-template-columns: 1fr;
+}
+
+/* Transform compatibility */
+.c-btn {
+    -webkit-transform: translateY(0);
+    -moz-transform: translateY(0);
+    -ms-transform: translateY(0);
+    -o-transform: translateY(0);
+    transform: translateY(0);
+}
+
+.c-btn:hover {
+    -webkit-transform: translateY(-2px);
+    -moz-transform: translateY(-2px);
+    -ms-transform: translateY(-2px);
+    -o-transform: translateY(-2px);
+    transform: translateY(-2px);
+}
+
+/* Transition compatibility */
+.c-btn {
+    -webkit-transition: all 0.2s ease;
+    -moz-transition: all 0.2s ease;
+    -ms-transition: all 0.2s ease;
+    -o-transition: all 0.2s ease;
+    transition: all 0.2s ease;
+}
+
+body * {
+    -webkit-transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    -moz-transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    -ms-transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    -o-transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Box-shadow compatibility */
+.c-header,
+.c-btn,
+.o-status-display {
+    -webkit-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    -moz-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Border-radius compatibility */
+.c-btn,
+.o-status-display,
+.c-servo-visual {
+    -webkit-border-radius: 8px;
+    -moz-border-radius: 8px;
+    border-radius: 8px;
+}
+
+/* Background gradient compatibility */
+.c-header {
+    background: #2c4c7c; /* Fallback for old browsers */
+    background: -moz-linear-gradient(135deg, #2c4c7c 0%, #0c4061 100%);
+    background: -webkit-linear-gradient(135deg, #2c4c7c 0%, #0c4061 100%);
+    background: linear-gradient(135deg, #2c4c7c 0%, #0c4061 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#2c4c7c', endColorstr='#0c4061', GradientType=1); /* IE6-9 */
+}
+
+/* User-select compatibility */
+.c-btn,
+.c-header h1 {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Appearance compatibility for form elements */
+input, button, select, textarea {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* Scrollbar styling for webkit browsers */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Firefox scrollbar */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+/* IE/Edge specific fixes */
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+    /* IE10+ specific styles */
+    .c-btn {
+        border: 1px solid #ddd; /* Fallback border for IE */
+    }
+    
+    .o-button-group {
+        display: block; /* Fallback to block for very old IE */
+    }
+    
+    .o-button-group .c-btn {
+        margin-bottom: 16px; /* Manual spacing for IE */
+    }
+}
+
+/* Safari specific fixes */
+@supports (-webkit-appearance: none) {
+    .c-btn {
+        -webkit-font-smoothing: antialiased;
+    }
+}
+
+/* Firefox specific fixes */
+@-moz-document url-prefix() {
+    .c-btn {
+        -moz-osx-font-smoothing: grayscale;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .c-btn {
+        border: 2px solid;
+    }
+    
+    .c-header {
+        background: #000 !important;
+        color: #fff !important;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        -webkit-animation-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        -webkit-animation-iteration-count: 1 !important;
+        animation-iteration-count: 1 !important;
+        -webkit-transition-duration: 0.01ms !important;
+        -o-transition-duration: 0.01ms !important;
+        -moz-transition-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Connection Status Styles */
+.status-connected {
+    background-color: #d4edda !important;
+    color: #155724 !important;
+    border: 1px solid #c3e6cb !important;
+}
+
+.status-connecting {
+    background-color: #fff3cd !important;
+    color: #856404 !important;
+    border: 1px solid #ffeaa7 !important;
+}
+
+.status-disconnected {
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+    border: 1px solid #f5c6cb !important;
+}
+
+.status-error {
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+    border: 1px solid #f5c6cb !important;
+}
+
+.status-offline {
+    background-color: #e2e3e5 !important;
+    color: #383d41 !important;
+    border: 1px solid #d6d8db !important;
+}
+
+.status-initial {
+    background-color: #d1ecf1 !important;
+    color: #0c5460 !important;
+    border: 1px solid #b8daff !important;
+}
+
+#connection-status {
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    margin: 10px 0;
+    text-align: center;
+    -webkit-transition: all 0.3s ease;
+    -moz-transition: all 0.3s ease;
+    -ms-transition: all 0.3s ease;
+    -o-transition: all 0.3s ease;
+    transition: all 0.3s ease;
+}
+
+#error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin: 10px 0;
+    display: none;
+}
+
+#error-message button {
+    margin-top: 10px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#error-message button:hover {
+    background-color: #c82333;
+}
+
+/* Print styles */
+@media print {
+    .c-btn,
+    .o-servo-buttons,
+    #connection-status,
+    #error-message {
+        display: none !important;
+    }
+    
+    body {
+        background: white !important;
+        color: black !important;
+    }
+}
