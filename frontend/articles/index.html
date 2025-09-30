@@ -4,20 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Articles • Quiz The Spire</title>
-  <script>
-    (function(){
-      try{
-        var stored = localStorage.getItem('quiz-theme-preference');
-        var theme = (stored === 'dark') ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', theme);
-        document.body.setAttribute('data-theme', theme);
-        document.body.classList.add('theme-' + theme);
-        console.log('Early theme applied:', theme);
-      }catch(err){
-        console.log('Early theme application failed:', err);
-      }
-    })();
-  </script>
   <link rel="stylesheet" href="../css/styles.css" />
   <link rel="stylesheet" href="styles.css" />
   <script src="../js/themeManager.js"></script>
@@ -34,31 +20,51 @@
 <body>
   <header class="a-header">
     <div class="a-container a-topbar" style="justify-content: space-between;">
-      <a class="c-btn c-btn--tertiary" href="../index.html">← Back</a>
+      <a class="c-btn c-btn--tertiary" href="../index.html">← Quiz The Spire</a>
       <h1 class="a-topbar__title" style="flex: 1; text-align: center;">Latest Artikels by Oroka Conner</h1>
-      <button class="c-btn c-btn--tertiary" id="servoTestBtn">Toggle Theme</button>
+      <button id="servoTestBtn" class="c-btn c-btn--tertiary gamepad">Toggle Theme</button>
     </div>
-  </header>  <main class="a-container" id="root">
+  </header>
+  
+  <main class="a-container">
+    <!-- Search and Filter Toolbar -->
+    <div class="a-toolbar">
+      <input 
+        type="text" 
+        id="search-input" 
+        class="a-input" 
+        placeholder="Search articles..." 
+        aria-label="Search articles"
+      />
+      <select id="category-filter" class="a-select" aria-label="Filter by category">
+        <option value="all">All Categories</option>
+      </select>
+      <select id="sort-select" class="a-select" aria-label="Sort articles">
+        <option value="date-desc">Newest First</option>
+        <option value="date-asc">Oldest First</option>
+        <option value="title">Alphabetical</option>
+      </select>
+    </div>
+
+    <!-- Articles Container -->
+    <div id="articles-container">
+      <div style="text-align: center; padding: 3rem; color: var(--ink-muted);">
+        <div class="loading-spinner" style="margin: 0 auto 1rem; width: 40px; height: 40px; border: 4px solid var(--border); border-top: 4px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        <p>Loading articles...</p>
+      </div>
+    </div>
+
     <noscript>
-      Please enable JavaScript to view the articles.
+      <div class="callout info">
+        <strong>JavaScript Required:</strong> Please enable JavaScript to view the articles. This page uses dynamic loading to provide the best experience.
+      </div>
     </noscript>
   </main>
 
   <footer class="a-footer a-container"></footer>
 
-  <script src="articles-react/components.js"></script>
-  <script>
-    (async function(){
-      try{
-        const res = await fetch('articles.json', {cache:'no-store'});
-        const articles = await res.json();
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(React.createElement(Articles.App, { articles }));
-      }catch(err){
-        const root = document.getElementById('root');
-        root.innerHTML = '<div class="c-error-message is-visible">Failed to load articles manifest. '+(err?.message||'')+'</div>';
-      }
-    })();
-  </script>
+  <script src="js/imageProvider.js"></script>
+  <script src="js/articles.js"></script>
+  <script src="../js/lofi.js"></script>
 </body>
 </html>

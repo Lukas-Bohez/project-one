@@ -80,7 +80,9 @@ html, body {
   transition: transform .2s ease, box-shadow .2s ease;
 }
 .a-card:hover {transform: translateY(-2px); box-shadow: 0 8px 18px rgba(0,0,0,.12)}
-.a-card__thumb {aspect-ratio: 16/9; background: #0f172a10; object-fit: cover;}
+.a-card__thumb {position: relative; aspect-ratio: 16/9; background: #0f172a10; display:flex; align-items:center; justify-content:center; overflow:hidden; transition: aspect-ratio 0.3s ease, max-height 0.3s ease}
+.a-card__thumb.no-img {color: white; font-weight: 700; font-size: 1.1rem}
+.a-card__thumb .a-card__img {width:100%; height:100%; object-fit:cover; display:block; transition: object-fit 0.3s ease, object-position 0.3s ease}
 .a-card__body {padding: 1rem 1rem 1.2rem}
 .a-card__title {font-size: 1.125rem; font-weight: 700; margin-bottom: .4rem}
 .a-card__meta {color: var(--ink-muted); font-size: .9rem; margin-bottom: .75rem}
@@ -127,6 +129,31 @@ html, body {
 .article th, .article td {border: 1px solid var(--border); padding: .5rem .6rem; text-align: left}
 
 .a-footer {text-align:center; color: var(--ink-muted); padding: 2rem 0;}
+
+/* Loading spinner animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+  border: 4px solid var(--border);
+  border-top: 4px solid var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Header background image class */
+.header-bg-image {
+  display: block !important;
+  width: 100% !important;
+  height: 400px !important;
+  object-fit: cover !important;
+  object-position: top !important;
+  filter: blur(4px) !important;
+  opacity: 0.8 !important;
+  margin: 0 !important;
+}
 
 /* NYT-like narrow measure and comfortable reading width */
 @media (min-width: 960px){
