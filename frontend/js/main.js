@@ -1,4 +1,5 @@
-const lanIP = `https://${window.location.hostname}`;
+// Use the current page's protocol and hostname for Socket.IO connection
+const lanIP = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 
 const dom = {
     startQuizBtn: document.getElementById('startQuizBtn'),
@@ -175,16 +176,63 @@ if (document.readyState !== 'loading') {
     document.addEventListener('DOMContentLoaded', initApp);
 }
 
-// Socket.IO client connection
-const socket = io(lanIP, {
-    transports: ["polling", "websocket"],
-    timeout: 20000,
-    reconnection: true,
-    reconnectionAttempts: 5,
-    reconnectionDelay: 1000,
-    forceNew: true,
-    upgrade: true,
-    rememberUpgrade: false
+// Enhanced Socket.IO client connection with cross-browser compatibility
+console.log(`🔌 Connecting to server at: ${lanIP}`);
+
+const socket = window.createCompatibleSocket ? 
+    window.createCompatibleSocket(lanIP, {
+        // Enhanced configuration for better reliability
+        timeout: 30000,             // 30 second timeout
+        reconnectionAttempts: 10,   // More retry attempts
+        reconnectionDelay: 2000,    // Start with 2 second delay
+        reconnectionDelayMax: 10000, // Max 10 second delay
+        autoConnect: true,          // Auto connect on creation
+        forceNew: false            // Allow connection reuse
+    }) : 
+    io(lanIP, {
+        // Enhanced fallback configuration
+        transports: ["polling", "websocket"],  // Try polling first for compatibility
+        timeout: 30000,
+        reconnection: true,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 2000,
+        reconnectionDelayMax: 10000,
+        forceNew: false,
+        upgrade: true,              // Allow upgrade to websocket
+        rememberUpgrade: false      // Don't remember across sessions
+    });
+
+// Enhanced connection logging
+socket.on('connect', () => {
+    console.log('✅ Successfully connected to server');
+    console.log('Transport:', socket.io.engine.transport.name);
+    
+    // Log any transport upgrades
+    socket.io.engine.on('upgrade', () => {
+        console.log('⬆️ Transport upgraded to:', socket.io.engine.transport.name);
+    });
+});
+
+socket.on('connect_error', (error) => {
+    console.error('❌ Connection error:', error.message);
+    console.error('Error details:', error);
+});
+
+socket.on('disconnect', (reason) => {
+    console.warn('⚠️ Disconnected:', reason);
+});
+
+socket.on('reconnect', (attemptNumber) => {
+    console.log('🔄 Reconnected after', attemptNumber, 'attempts');
+    console.log('New transport:', socket.io.engine.transport.name);
+});
+
+socket.on('reconnect_error', (error) => {
+    console.error('🔴 Reconnection failed:', error.message);
+});
+
+socket.on('reconnect_failed', () => {
+    console.error('💀 All reconnection attempts failed');
 });
 
 // Get DOM elements for updating

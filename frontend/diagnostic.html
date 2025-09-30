@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Connection Diagnostic - Quiz The Spire</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.success { background-color: #d4edda; color: #155724; }
+        .status.warning { background-color: #fff3cd; color: #856404; }
+        .status.error { background-color: #f8d7da; color: #721c24; }
+        .status.info { background-color: #d1ecf1; color: #0c5460; }
+        .test-item {
+            margin: 15px 0;
+            padding: 10px;
+            border-left: 4px solid #ddd;
+            background-color: #f8f9fa;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover { background: #0056b3; }
+        .log {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            height: 200px;
+            overflow-y: scroll;
+            margin: 20px 0;
+        }
+        pre { margin: 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Connection Diagnostic Tool</h1>
+        <p>This page helps diagnose connection issues across different browsers.</p>
+        
+        <div id="browser-info" class="status info">
+            <h3>Browser Information</h3>
+            <div id="browser-details"></div>
+        </div>
+        
+        <div id="server-info" class="status info">
+            <h3>Server Information</h3>
+            <div>
+                <strong>Current URL:</strong> <span id="current-url"></span><br>
+                <strong>Protocol:</strong> <span id="protocol"></span><br>
+                <strong>Hostname:</strong> <span id="hostname"></span><br>
+                <strong>Port:</strong> <span id="port"></span>
+            </div>
+        </div>
+        
+        <h3>Connection Tests</h3>
+        
+        <div class="test-item">
+            <h4>1. Basic HTTP Test</h4>
+            <button class="btn" onclick="testHTTP()">Test HTTP Connection</button>
+            <div id="http-result"></div>
+        </div>
+        
+        <div class="test-item">
+            <h4>2. Socket.IO Library Test</h4>
+            <button class="btn" onclick="testSocketIO()">Test Socket.IO Availability</button>
+            <div id="socketio-result"></div>
+        </div>
+        
+        <div class="test-item">
+            <h4>3. WebSocket Support Test</h4>
+            <button class="btn" onclick="testWebSocket()">Test WebSocket Support</button>
+            <div id="websocket-result"></div>
+        </div>
+        
+        <div class="test-item">
+            <h4>4. Complete Connection Test</h4>
+            <button class="btn" onclick="testFullConnection()">Test Full Socket.IO Connection</button>
+            <div id="connection-result"></div>
+        </div>
+        
+        <h3>Diagnostic Log</h3>
+        <div id="log" class="log">
+            <pre id="log-content">Diagnostic tool loaded. Click tests above to begin...</pre>
+        </div>
+        
+        <div style="margin-top: 30px;">
+            <button class="btn" onclick="clearLog()">Clear Log</button>
+            <button class="btn" onclick="window.location.href='index.html'">Back to Main Site</button>
+        </div>
+    </div>
+    
+    <!-- Load polyfills first -->
+    <script src="js/browser-polyfills.js"></script>
+    
+    <!-- Try to load Socket.IO -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" onerror="handleSocketIOLoadError()"></script>
+    
+    <!-- Load compatibility layer -->
+    <script src="js/websocket-compatibility.js"></script>
+    
+    <script>
+        let logElement = document.getElementById('log-content');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#f00' : type === 'success' ? '#0f0' : type === 'warning' ? '#ff0' : '#0ff';
+            logElement.innerHTML += `\n<span style="color: ${color}">[${timestamp}] ${message}</span>`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        function clearLog() {
+            logElement.innerHTML = 'Log cleared...';
+        }
+        
+        function displayBrowserInfo() {
+            const browser = window.browserCompat ? window.browserCompat.getBrowserInfo() : { name: 'unknown', version: 0 };
+            const ua = navigator.userAgent;
+            
+            document.getElementById('browser-details').innerHTML = `
+                <strong>Detected Browser:</strong> ${browser.name} ${browser.version}<br>
+                <strong>User Agent:</strong> ${ua}<br>
+                <strong>Screen:</strong> ${screen.width}x${screen.height}<br>
+                <strong>Viewport:</strong> ${window.innerWidth}x${window.innerHeight}
+            `;
+            
+            log(`Browser detected: ${browser.name} ${browser.version}`, 'info');
+        }
+        
+        function displayServerInfo() {
+            document.getElementById('current-url').textContent = window.location.href;
+            document.getElementById('protocol').textContent = window.location.protocol;
+            document.getElementById('hostname').textContent = window.location.hostname;
+            document.getElementById('port').textContent = window.location.port || 'default';
+        }
+        
+        function testHTTP() {
+            log('Testing basic HTTP connection...', 'info');
+            
+            fetch(window.location.origin + '/test', { method: 'GET', mode: 'no-cors' })
+                .then(() => {
+                    document.getElementById('http-result').innerHTML = '<div class="status success">✅ HTTP connection working</div>';
+                    log('HTTP test passed', 'success');
+                })
+                .catch(error => {
+                    document.getElementById('http-result').innerHTML = '<div class="status warning">⚠️ HTTP test inconclusive (CORS or 404 expected)</div>';
+                    log('HTTP test completed (CORS/404 expected)', 'warning');
+                });
+        }
+        
+        function testSocketIO() {
+            log('Testing Socket.IO library availability...', 'info');
+            
+            if (typeof io !== 'undefined') {
+                document.getElementById('socketio-result').innerHTML = '<div class="status success">✅ Socket.IO library loaded successfully</div>';
+                log('Socket.IO library available', 'success');
+            } else {
+                document.getElementById('socketio-result').innerHTML = '<div class="status error">❌ Socket.IO library not available</div>';
+                log('Socket.IO library missing', 'error');
+            }
+        }
+        
+        function testWebSocket() {
+            log('Testing WebSocket support...', 'info');
+            
+            if (typeof WebSocket !== 'undefined') {
+                document.getElementById('websocket-result').innerHTML = '<div class="status success">✅ WebSocket supported</div>';
+                log('WebSocket support confirmed', 'success');
+            } else {
+                document.getElementById('websocket-result').innerHTML = '<div class="status error">❌ WebSocket not supported</div>';
+                log('WebSocket not supported', 'error');
+            }
+        }
+        
+        function testFullConnection() {
+            log('Testing full Socket.IO connection with enhanced features...', 'info');
+            
+            if (typeof io === 'undefined') {
+                document.getElementById('connection-result').innerHTML = '<div class="status error">❌ Cannot test - Socket.IO not loaded</div>';
+                log('Connection test failed - Socket.IO not available', 'error');
+                return;
+            }
+            
+            const serverURL = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
+            log(`Attempting enhanced connection to: ${serverURL}`, 'info');
+            
+            const testSocket = window.createCompatibleSocket ? 
+                window.createCompatibleSocket(serverURL, { timeout: 15000 }) :
+                io(serverURL, { timeout: 15000, transports: ['polling', 'websocket'] });
+            
+            let connectionTimeout = setTimeout(() => {
+                document.getElementById('connection-result').innerHTML = '<div class="status error">❌ Connection timeout (15s)</div>';
+                log('Connection test timed out after 15 seconds', 'error');
+                testSocket.disconnect();
+            }, 18000);
+            
+            testSocket.on('connect', () => {
+                log(`Connected! Transport: ${testSocket.io.engine.transport.name}`, 'success');
+                
+                // Test enhanced features
+                let featuresTestedCount = 0;
+                const totalFeatures = 3;
+                
+                // Test 1: Welcome message
+                testSocket.on('welcome', (data) => {
+                    log(`Welcome received: ${JSON.stringify(data)}`, 'success');
+                    featuresTestedCount++;
+                    checkAllFeatures();
+                });
+                
+                // Test 2: Ping/Pong
+                testSocket.on('pong', (data) => {
+                    log(`Pong received: ${JSON.stringify(data)}`, 'success');
+                    featuresTestedCount++;
+                    checkAllFeatures();
+                });
+                
+                // Test 3: Connection test
+                testSocket.on('connection_test_response', (data) => {
+                    log(`Connection test response: ${JSON.stringify(data)}`, 'success');
+                    featuresTestedCount++;
+                    checkAllFeatures();
+                });
+                
+                // Send test messages
+                setTimeout(() => {
+                    testSocket.emit('ping');
+                    testSocket.emit('connection_test', { diagnostic: true });
+                }, 1000);
+                
+                function checkAllFeatures() {
+                    if (featuresTestedCount >= totalFeatures) {
+                        clearTimeout(connectionTimeout);
+                        document.getElementById('connection-result').innerHTML = '<div class="status success">✅ All enhanced features working!</div>';
+                        log(`All ${totalFeatures} enhanced features tested successfully`, 'success');
+                        setTimeout(() => testSocket.disconnect(), 2000);
+                    }
+                }
+                
+                // Fallback - if not all features tested in 10 seconds
+                setTimeout(() => {
+                    if (featuresTestedCount < totalFeatures) {
+                        clearTimeout(connectionTimeout);
+                        document.getElementById('connection-result').innerHTML = `<div class="status warning">⚠️ Basic connection works (${featuresTestedCount}/${totalFeatures} features)</div>`;
+                        log(`Basic connection works, but only ${featuresTestedCount}/${totalFeatures} enhanced features responded`, 'warning');
+                        testSocket.disconnect();
+                    }
+                }, 12000);
+            });
+            
+            testSocket.on('connect_error', (error) => {
+                clearTimeout(connectionTimeout);
+                document.getElementById('connection-result').innerHTML = `<div class="status error">❌ Connection failed: ${error.message}</div>`;
+                log(`Enhanced connection test FAILED: ${error.message}`, 'error');
+                log(`Error type: ${error.type || 'unknown'}`, 'error');
+            });
+            
+            testSocket.on('disconnect', (reason) => {
+                log(`Test connection disconnected: ${reason}`, 'info');
+            });
+            
+            // Monitor transport upgrades
+            testSocket.on('connect', () => {
+                testSocket.io.engine.on('upgrade', () => {
+                    log(`Transport upgraded to: ${testSocket.io.engine.transport.name}`, 'success');
+                });
+            });
+        }
+        
+        function handleSocketIOLoadError() {
+            log('Socket.IO library failed to load from CDN', 'error');
+        }
+        
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            displayBrowserInfo();
+            displayServerInfo();
+            log('Diagnostic tool initialized', 'success');
+        });
+    </script>
+</body>
+</html>
