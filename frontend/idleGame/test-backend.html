@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Industrial Empire - Backend Integration Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            color: #64ffda;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(100, 255, 218, 0.2);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success { background: rgba(76, 175, 80, 0.2); color: #4caf50; }
+        .error { background: rgba(244, 67, 54, 0.2); color: #f44336; }
+        .info { background: rgba(100, 255, 218, 0.2); color: #64ffda; }
+        button {
+            background: linear-gradient(45deg, #64ffda, #4fc3f7);
+            color: #1a1a2e;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+        }
+        button:hover {
+            background: linear-gradient(45deg, #4fc3f7, #64ffda);
+            transform: translateY(-2px);
+        }
+        #results {
+            margin-top: 20px;
+        }
+        .play-button {
+            display: block;
+            margin: 30px auto;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            background: linear-gradient(45deg, #64ffda, #4fc3f7);
+            color: #1a1a2e;
+            text-decoration: none;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .play-button:hover {
+            background: linear-gradient(45deg, #4fc3f7, #64ffda);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(100, 255, 218, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏭 Industrial Empire - Backend Integration Test</h1>
+        
+        <div class="test-section">
+            <h3>Backend Connection Test</h3>
+            <p>This page tests the connection to the Kingdom Quarry backend endpoints that will be used by Industrial Empire.</p>
+            <button onclick="testBackendConnection()">Test Backend Connection</button>
+            <button onclick="testRegisterLogin()">Test Registration & Login</button>
+            <button onclick="testSaveLoad()">Test Save & Load</button>
+            <div id="results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Game Instructions</h3>
+            <p><strong>How to use Industrial Empire with backend save system:</strong></p>
+            <ol>
+                <li>First, make sure the backend server is running on port 8000</li>
+                <li>Click "Login" in the game to create an account or sign in</li>
+                <li>Your game progress will be automatically saved every 30 seconds</li>
+                <li>Use "Save Game" to manually save your progress</li>
+                <li>Use "Load Game" to restore your saved progress</li>
+                <li>Your progress is tied to your account and will persist across sessions</li>
+            </ol>
+        </div>
+
+        <a href="index.html" class="play-button">🎮 Play Industrial Empire</a>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000/api/v1';
+        
+        function showResult(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+
+        async function testBackendConnection() {
+            showResult('Testing backend connection...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/game/status`);
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('✅ Backend connection successful!', 'success');
+                    showResult(`Backend says: ${data.message}`, 'info');
+                } else {
+                    showResult(`❌ Backend returned error: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Failed to connect to backend: ${error.message}`, 'error');
+                showResult('💡 Make sure the backend server is running on port 8000', 'info');
+            }
+        }
+
+        async function testRegisterLogin() {
+            showResult('Testing registration and login...', 'info');
+            
+            const testUser = {
+                username: `test_user_${Date.now()}`,
+                email: `test${Date.now()}@example.com`,
+                password: 'testpass123'
+            };
+
+            try {
+                // Test registration
+                const registerResponse = await fetch(`${API_BASE_URL}/game/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testUser)
+                });
+
+                if (registerResponse.ok) {
+                    showResult('✅ Registration successful!', 'success');
+                    
+                    // Test login
+                    const loginResponse = await fetch(`${API_BASE_URL}/game/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: testUser.username,
+                            password: testUser.password
+                        })
+                    });
+
+                    if (loginResponse.ok) {
+                        const loginData = await loginResponse.json();
+                        showResult('✅ Login successful!', 'success');
+                        showResult(`Token received: ${loginData.access_token ? 'Yes' : 'No'}`, 'info');
+                    } else {
+                        showResult('❌ Login failed', 'error');
+                    }
+                } else {
+                    const errorData = await registerResponse.json();
+                    showResult(`❌ Registration failed: ${errorData.detail || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Registration/Login test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testSaveLoad() {
+            showResult('Testing save and load functionality...', 'info');
+            
+            const testUser = {
+                username: `save_test_${Date.now()}`,
+                email: `savetest${Date.now()}@example.com`,
+                password: 'testpass123'
+            };
+
+            try {
+                // Register user
+                const registerResponse = await fetch(`${API_BASE_URL}/game/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testUser)
+                });
+
+                if (!registerResponse.ok) {
+                    showResult('❌ Could not create test user for save/load test', 'error');
+                    return;
+                }
+
+                // Login
+                const loginResponse = await fetch(`${API_BASE_URL}/game/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: testUser.username,
+                        password: testUser.password
+                    })
+                });
+
+                if (!loginResponse.ok) {
+                    showResult('❌ Could not login test user', 'error');
+                    return;
+                }
+
+                const loginData = await loginResponse.json();
+                const token = loginData.access_token;
+
+                // Test save
+                const testSaveData = {
+                    resources: { gold: 100, stone: 50, coal: 25 },
+                    workers: { miners: 2, smelters: 1 },
+                    upgrades: { mining_efficiency: 1 },
+                    statistics: { total_gold_earned: 150, playtime: 300 }
+                };
+
+                const saveResponse = await fetch(`${API_BASE_URL}/game/save`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(testSaveData)
+                });
+
+                if (saveResponse.ok) {
+                    showResult('✅ Save successful!', 'success');
+                    
+                    // Test load
+                    const loadResponse = await fetch(`${API_BASE_URL}/game/save`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (loadResponse.ok) {
+                        const loadData = await loadResponse.json();
+                        showResult('✅ Load successful!', 'success');
+                        showResult(`Loaded data contains: ${Object.keys(loadData.data).join(', ')}`, 'info');
+                    } else {
+                        showResult('❌ Load failed', 'error');
+                    }
+                } else {
+                    showResult('❌ Save failed', 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Save/Load test failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-test connection on page load
+        window.onload = () => {
+            setTimeout(testBackendConnection, 1000);
+        };
+    </script>
+</body>
+</html>
