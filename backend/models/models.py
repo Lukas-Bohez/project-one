@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, Dict, Any, Literal, List
 from datetime import datetime
 from pydantic import field_validator
@@ -625,9 +625,12 @@ class GameSettings(BaseModel):
 
 # Core Game Save Data Model
 class GameSaveData(BaseModel):
+    # Allow extra fields for game-specific custom data (e.g., Industrial Empire)
+    model_config = ConfigDict(extra='allow')
+    
     game_version: str = Field("1.0.0", description="Game version")
     play_time: int = Field(0, ge=0, description="Total play time in seconds")
-    last_save: datetime = Field(default_factory=datetime.now, description="Last save timestamp")
+    last_save: str = Field(default_factory=lambda: datetime.now().isoformat(), description="Last save timestamp (ISO format)")
     
     # Resources
     resources: Dict[str, int] = Field(
@@ -648,9 +651,13 @@ class GameSaveData(BaseModel):
     achievements: List[str] = Field(default_factory=list, description="Unlocked achievements")
     
     # Game state
-    prestige_level: int = Field(0, ge=0, description="Current prestige level")
+    prestige_level: int = Field(0, ge=0, description="Prestige level")
     offline_time: int = Field(0, ge=0, description="Accumulated offline time")
     settings: GameSettings = Field(default_factory=GameSettings, description="Game settings")
+    
+    # Optional: Industrial Empire custom data (factory, workers, transport, city, etc.)
+    # This field is optional to maintain backward compatibility with Kingdom Quarry saves
+    custom_data: Optional[Dict[str, Any]] = Field(None, description="Game-specific custom data")
 
 # API Request/Response Models
 class GameSaveRequest(BaseModel):
@@ -659,13 +666,13 @@ class GameSaveRequest(BaseModel):
 
 class GameSaveResponse(BaseModel):
     success: bool = Field(..., description="Whether save was successful")
-    timestamp: datetime = Field(..., description="Save timestamp")
+    timestamp: str = Field(..., description="Save timestamp (ISO format)")
     save_id: int = Field(..., description="Database save ID")
     backup_id: Optional[int] = Field(None, description="Backup ID if created")
 
 class GameLoadResponse(BaseModel):
     save_data: Optional[GameSaveData] = Field(None, description="Loaded save data")
-    last_updated: Optional[datetime] = Field(None, description="Last update timestamp")
+    last_updated: Optional[str] = Field(None, description="Last update timestamp (ISO format)")
     total_play_time: Optional[int] = Field(None, description="Total recorded play time")
     has_save: bool = Field(False, description="Whether a save exists")
 

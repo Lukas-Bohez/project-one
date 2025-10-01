@@ -46,6 +46,73 @@ body {
     line-height: 1.6;
 }
 
+/* Tooltips */
+[data-tooltip] {
+    position: relative;
+}
+
+[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.85);
+    color: #fff;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 1000;
+}
+
+[data-tooltip]:hover::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-2px);
+}
+
+[data-tooltip]::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 100%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(0,0,0,0.85);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+[data-tooltip]:hover::before {
+    opacity: 1;
+}
+
+/* Progress bars */
+.progress {
+    width: 100%;
+    height: 8px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 6px;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-green .progress-bar { background: linear-gradient(90deg, #4caf50, #8bc34a); }
+.progress-blue .progress-bar { background: linear-gradient(90deg, #2196f3, #00bcd4); }
+.progress-purple .progress-bar { background: linear-gradient(90deg, #7e57c2, #ab47bc); }
+.progress-orange .progress-bar { background: linear-gradient(90deg, #ff9800, #ffc107); }
+.progress-red .progress-bar { background: linear-gradient(90deg, #f44336, #ff5722); }
+
 /* Game Container */
 #game-container {
     max-width: 1200px;
@@ -288,9 +355,9 @@ body {
 }
 
 .action-btn:disabled, .upgrade-btn:disabled, .control-btn:disabled, .prestige-button:disabled {
-    background: #444;
+    background: #5c5c5c;
     cursor: not-allowed;
-    opacity: 0.6;
+    opacity: 0.8;
     transform: none;
     box-shadow: none;
 }
@@ -896,4 +963,8 @@ body {
     background: rgba(100, 255, 218, 0.2);
     color: #64ffda;
     border: 1px solid rgba(100, 255, 218, 0.3);
+}
+
+.emptyspace {
+    min-height: 10vh;
 }

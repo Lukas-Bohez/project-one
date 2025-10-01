@@ -95,6 +95,13 @@ class IndustrialEmpireApp {
         this.bindButton('build-forge-btn', () => this.gameEngine.buildProcessor('forge'));
         this.bindButton('build-refinery-btn', () => this.gameEngine.buildProcessor('refinery'));
         this.bindButton('build-mint-btn', () => this.gameEngine.buildProcessor('mint'));
+    this.bindButton('build-polisher-btn', () => this.gameEngine.buildProcessor('polisher'));
+    this.bindButton('build-coker-btn', () => this.gameEngine.buildProcessor('coker'));
+    this.bindButton('build-chemplant-btn', () => this.gameEngine.buildProcessor('chemPlant'));
+    this.bindButton('build-chipfab-btn', () => this.gameEngine.buildProcessor('chipFab'));
+    this.bindButton('build-jeweler-btn', () => this.gameEngine.buildProcessor('jeweler'));
+    this.bindButton('build-assembly-btn', () => this.gameEngine.buildProcessor('assembly'));
+    this.bindButton('build-autoplant-btn', () => this.gameEngine.buildProcessor('autoPlant'));
         
         // Market tab actions
         this.bindButton('sell-stone-btn', () => this.gameEngine.sellResource('stone'));
@@ -104,6 +111,27 @@ class IndustrialEmpireApp {
         this.bindButton('hire-stone-trader-btn', () => this.gameEngine.hireTrader('stoneTrader'));
         this.bindButton('hire-coal-trader-btn', () => this.gameEngine.hireTrader('coalTrader'));
         this.bindButton('hire-metal-trader-btn', () => this.gameEngine.hireTrader('metalTrader'));
+
+    // Transport tab actions
+    this.bindButton('transport-next-btn', () => this.gameEngine.transportNext());
+
+    // City tab actions
+    this.bindButton('sell-finished-btn', () => this.gameEngine.sellOneFinished());
+    const autoSell = document.getElementById('auto-sell-finished');
+    if (autoSell) {
+        autoSell.addEventListener('change', (e) => {
+            this.gameEngine.setAutoSellFinished(!!e.target.checked);
+        });
+    }
+
+        // Research unlocks
+        const unlockButtons = document.querySelectorAll('[data-unlock]');
+        unlockButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const key = btn.getAttribute('data-unlock');
+                this.gameEngine.unlockFeature(key);
+            });
+        });
         
         // Transport tab actions
         this.bindButton('buy-cart-btn', () => this.gameEngine.buyTransport('cart'));
@@ -112,9 +140,11 @@ class IndustrialEmpireApp {
         
         // City tab actions
         this.bindButton('hire-police-btn', () => this.gameEngine.hireService('police'));
+    this.bindButton('hire-politician-btn', () => this.gameEngine.hireService('politician'));
         this.bindButton('build-bank-btn', () => this.gameEngine.buildCity('bank'));
         this.bindButton('build-market-btn', () => this.gameEngine.buildCity('market'));
         this.bindButton('build-university-btn', () => this.gameEngine.buildCity('university'));
+    this.bindButton('rebirth-btn', () => this.gameEngine.rebirth());
         
         // Research tab actions
         this.bindButton('research-mining-btn', () => this.gameEngine.purchaseResearch('mining'));
@@ -156,6 +186,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     window.app = new IndustrialEmpireApp();
     await window.app.initialize();
+    // Initialize UI toggles from state
+    const autoSell = document.getElementById('auto-sell-finished');
+    if (autoSell && window.app && window.app.gameEngine) {
+        autoSell.checked = !!window.app.gameEngine.state.city.autoSellFinished;
+    }
 });
 
 // Handle page visibility changes

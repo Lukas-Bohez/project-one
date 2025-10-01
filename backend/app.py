@@ -6682,16 +6682,29 @@ if JWT_AVAILABLE:
         """Load game save data for authenticated user"""
         try:
             user_id = current_user['user_id']
+            print(f"🔍 BACKEND LOAD: user_id = {user_id}")
+            
             save_data = GameSaveRepository.get_save_by_user(user_id)
+            print(f"🔍 BACKEND LOAD: save_data exists = {save_data is not None}")
             
             if save_data:
+                print(f"🔍 BACKEND LOAD: save_data keys = {save_data.keys() if save_data else None}")
+                print(f"🔍 BACKEND LOAD: save_data['save_data'] type = {type(save_data.get('save_data'))}")
+                
+                # Convert datetime to ISO string if it's a datetime object
+                last_updated = save_data['last_updated']
+                if isinstance(last_updated, datetime):
+                    last_updated = last_updated.isoformat()
+                
+                print(f"🔍 BACKEND LOAD: Returning has_save=True")
                 return GameLoadResponse(
                     save_data=save_data['save_data'],
-                    last_updated=save_data['last_updated'],
-                    total_play_time=save_data.get('total_play_time'),
+                    last_updated=last_updated,
+                    total_play_time=None,  # Column doesn't exist yet
                     has_save=True
                 )
             else:
+                print(f"🔍 BACKEND LOAD: No save found, returning has_save=False")
                 return GameLoadResponse(has_save=False)
                 
         except Exception as e:
@@ -6702,6 +6715,9 @@ if JWT_AVAILABLE:
         """Save game data for authenticated user"""
         try:
             user_id = current_user['user_id']
+            print(f"💾 BACKEND SAVE: user_id = {user_id}")
+            print(f"💾 BACKEND SAVE: game_version = {save_request.save_data.game_version}")
+            print(f"💾 BACKEND SAVE: resources = {save_request.save_data.resources}")
             
             # Create backup if requested
             backup_id = None
@@ -6710,14 +6726,23 @@ if JWT_AVAILABLE:
                 if existing_save:
                     backup_id = GameSaveRepository.create_backup(user_id, existing_save['save_data'])
             
+            # Convert Pydantic model to dict (Pydantic v2 uses model_dump())
+            save_data_dict = save_request.save_data.model_dump() if hasattr(save_request.save_data, 'model_dump') else save_request.save_data.dict()
+            
+            print(f"💾 BACKEND SAVE: save_data_dict keys = {save_data_dict.keys()}")
+            print(f"💾 BACKEND SAVE: save_data_dict size = {len(str(save_data_dict))} chars")
+            
             # Save game data
             save_id = GameSaveRepository.create_save(
                 user_id, 
-                save_request.save_data.dict(),
+                save_data_dict,
                 save_request.save_data.game_version
             )
             
+            print(f"💾 BACKEND SAVE: save_id = {save_id}")
+            
             if not save_id:
+                raise HTTPException(status_code=500, detail="Failed to save game data")
                 raise HTTPException(status_code=500, detail="Failed to save game data")
             
             # Update resources table with current values
@@ -6732,7 +6757,7 @@ if JWT_AVAILABLE:
             
             return GameSaveResponse(
                 success=True,
-                timestamp=datetime.now(),
+                timestamp=datetime.now().isoformat(),
                 save_id=save_id,
                 backup_id=backup_id
             )
