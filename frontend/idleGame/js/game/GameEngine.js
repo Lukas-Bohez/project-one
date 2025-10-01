@@ -522,10 +522,40 @@ class GameEngine {
             }
         }
         
-        // City decay increases over time and with activity
-        const decayRate = 0.5 + (this.state.city.markets * 0.1) + (this.state.city.banks * 0.05);
-        this.state.city.decay = Math.min(this.state.city.maxDecay, 
-            this.state.city.decay + decayRate * deltaTime);
+        // City decay system - decay increases based on city growth without proper management
+        // Decay is NOT automatic - it's based on the imbalance between growth and maintenance
+        
+        // Calculate city "size" (economic activity that needs maintenance)
+        const citySize = 
+            (this.state.city.markets || 0) * 2 +      // Markets add decay pressure
+            (this.state.city.banks || 0) * 1.5 +      // Banks add decay pressure  
+            (this.state.city.universities || 0) * 1 +  // Universities add decay pressure
+            (this.state.workers.stoneMiners || 0) * 0.1 +  // Workers add small pressure
+            (this.state.workers.coalMiners || 0) * 0.1 +
+            (this.state.workers.ironMiners || 0) * 0.1 +
+            (this.state.workers.silverMiners || 0) * 0.1;
+        
+        // Calculate maintenance (things that PREVENT decay)
+        const maintenance = 
+            (this.state.city.police || 0) * 1.5 +     // Police maintain order
+            (this.state.city.politicians || 0) * 1.0;  // Politicians manage the city
+        
+        // Net decay rate = city pressure - maintenance
+        // Only increase decay if city is growing faster than it's being maintained
+        const netDecayRate = Math.max(0, (citySize * 0.1) - maintenance);
+        
+        // Scale decay requirement with rebirths (each rebirth increases the challenge)
+        const rebirthMultiplier = 1 + (this.state.city.rebirths * 0.5); // +50% per rebirth
+        const adjustedMaxDecay = this.state.city.maxDecay * rebirthMultiplier;
+        
+        // Apply decay (only increases if net rate is positive)
+        if (netDecayRate > 0) {
+            this.state.city.decay = Math.min(adjustedMaxDecay, 
+                this.state.city.decay + netDecayRate * deltaTime);
+        }
+        
+        // Store adjusted max for UI display
+        this.state.city.adjustedMaxDecay = adjustedMaxDecay;
         
         // Apply taxes on gold income (reduced by politicians)
         const taxReduction = this.state.city.politicians * 0.02; // 2% reduction per politician
@@ -655,9 +685,15 @@ class GameEngine {
         this.updateElement('politicians-count', this.state.city.politicians?.toString() || '0');
         this.updateElement('theft-risk', Math.round(this.state.city.theftRisk || 0) + '%');
         this.updateElement('theft-losses', this.formatNumber(this.state.city.theftLosses || 0));
-    const decayPct = Math.round(this.state.city.decay || 0);
-    this.updateElement('city-decay', decayPct + '%');
-    const cdb = document.getElementById('city-decay-bar'); if (cdb) cdb.style.width = Math.max(0, Math.min(100, decayPct)) + '%';
+        
+        // Update decay display with scaling info
+        const currentDecay = this.state.city.decay || 0;
+        const effectiveMaxDecay = this.state.city.adjustedMaxDecay || this.state.city.maxDecay;
+        const decayPct = Math.round((currentDecay / effectiveMaxDecay) * 100);
+        this.updateElement('city-decay', `${Math.round(currentDecay)}/${Math.round(effectiveMaxDecay)} (${decayPct}%)`);
+        const cdb = document.getElementById('city-decay-bar'); 
+        if (cdb) cdb.style.width = Math.max(0, Math.min(100, decayPct)) + '%';
+        
         this.updateElement('tax-rate', Math.round((this.state.city.taxRate || 0.1) * 100) + '%');
         this.updateElement('rebirths-count', (this.state.city.rebirths || 0).toString());
         
@@ -723,7 +759,8 @@ class GameEngine {
         this.updateButtonState('build-university-btn', this.state.resources.gold >= 2500);
         
         // Rebirth button (enable at 99.5%+ decay to handle floating point + rounding)
-        this.updateButtonState('rebirth-btn', this.state.city.decay >= (this.state.city.maxDecay - 0.5));
+        const effectiveMaxDecay = this.state.city.adjustedMaxDecay || this.state.city.maxDecay;
+        this.updateButtonState('rebirth-btn', this.state.city.decay >= (effectiveMaxDecay - 0.5));
         
         // Research buttons
         this.updateResearchButtonState('research-mining-btn', 'mining', 50);
@@ -1110,11 +1147,14 @@ class GameEngine {
     }
     
     rebirth() {
+        // Get the effective max decay (scaled by rebirth count)
+        const effectiveMaxDecay = this.state.city.adjustedMaxDecay || this.state.city.maxDecay;
+        
         // Allow rebirth when decay is at or very close to max (handles floating point issues)
         // Using 99.5% threshold since UI rounds decay for display
-        if (this.state.city.decay < (this.state.city.maxDecay - 0.5)) {
-            console.log(`Cannot rebirth: decay is ${this.state.city.decay.toFixed(1)}/${this.state.city.maxDecay}`);
-            this.showNotification(`City must reach 100% decay before rebirth!`);
+        if (this.state.city.decay < (effectiveMaxDecay - 0.5)) {
+            console.log(`Cannot rebirth: decay is ${this.state.city.decay.toFixed(1)}/${effectiveMaxDecay.toFixed(1)}`);
+            this.showNotification(`City must reach 100% decay before rebirth! (${Math.round(this.state.city.decay)}/${Math.round(effectiveMaxDecay)})`);
             return false;
         }
         
