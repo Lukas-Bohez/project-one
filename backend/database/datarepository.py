@@ -2826,6 +2826,10 @@ class GameSaveRepository:
     @staticmethod
     def create_save(user_id: int, save_data: Dict[str, Any], game_version: str = "1.0.0") -> Optional[int]:
         """Create or update a game save"""
+        print(f"💾 REPOSITORY: create_save called with user_id={user_id}, game_version={game_version}")
+        print(f"💾 REPOSITORY: save_data keys = {save_data.keys() if save_data else 'null'}")
+        print(f"💾 REPOSITORY: save_data JSON length = {len(json.dumps(save_data))} chars")
+        
         sql = """
         INSERT INTO game_saves (user_id, save_data, game_version, last_updated)
         VALUES (%s, %s, %s, CURRENT_TIMESTAMP)
@@ -2835,13 +2839,16 @@ class GameSaveRepository:
         last_updated = CURRENT_TIMESTAMP
         """
         params = [user_id, json.dumps(save_data), game_version]
-        return Database.execute_sql(sql, params)
+        result = Database.execute_sql(sql, params)
+        print(f"💾 REPOSITORY: Database.execute_sql returned = {result}")
+        return result
     
     @staticmethod
     def get_save_by_user(user_id: int) -> Optional[Dict[str, Any]]:
         """Get the latest save for a user"""
+        print(f"🔍 REPOSITORY: get_save_by_user called with user_id={user_id}")
         sql = """
-        SELECT id, user_id, save_data, last_updated, game_version, total_play_time
+        SELECT id, user_id, save_data, last_updated, game_version
         FROM game_saves 
         WHERE user_id = %s 
         ORDER BY last_updated DESC 
@@ -2849,8 +2856,12 @@ class GameSaveRepository:
         """
         params = [user_id]
         result = Database.get_one_row(sql, params)
+        print(f"🔍 REPOSITORY: Query result = {result is not None}")
+        if result:
+            print(f"🔍 REPOSITORY: save_data column = {result.get('save_data') is not None}")
         if result and result['save_data']:
             result['save_data'] = json.loads(result['save_data'])
+            print(f"🔍 REPOSITORY: Parsed save_data, keys = {result['save_data'].keys() if result['save_data'] else 'null'}")
         return result
     
     @staticmethod

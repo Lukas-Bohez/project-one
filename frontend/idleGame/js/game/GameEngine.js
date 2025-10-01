@@ -13,7 +13,8 @@ class GameEngine {
         this.gameStartTime = Date.now();
         
         // Initialize subsystems
-        this.resourceManager = null;
+    this.resourceManager = null;
+    this.newResourceManager = null;
         this.upgradeSystem = null;
         this.marketSystem = null;
         this.saveManager = null;
@@ -25,6 +26,8 @@ class GameEngine {
         // Auto-save
         this.lastAutoSave = 0;
         this.autoSaveInterval = 30000; // Auto-save every 30 seconds
+        // Auto systems timers
+        this.nextAutoSellFinishedAt = 0;
     }
     
     getInitialState() {
@@ -37,6 +40,9 @@ class GameEngine {
                 silver: 0,
                 gold: 10 // Starting gold to buy first worker
             },
+            // Advanced inventories
+            factory: { raw: {}, processed: {}, finished: {} },
+            cityInventory: { finished: {} },
             
             // Resource production per second
             production: {
@@ -57,10 +63,19 @@ class GameEngine {
             
             // Processing buildings
             processors: {
-                smelters: 0,    // Stone -> Coal
+                // Legacy
+                smelters: 0,    // Stone -> Coal / ore -> ingots
                 forges: 0,      // Coal -> Iron
-                refineries: 0,  // Iron -> Silver
-                mints: 0        // Silver -> Gold
+                refineries: 0,  // Oil -> fuel, ore -> ingots
+                mints: 0,       // Silver/Gold processing
+                // New buildings
+                polisher: 0,
+                coker: 0,
+                chemPlant: 0,
+                chipFab: 0,
+                jeweler: 0,
+                assembly: 0,
+                autoPlant: 0
             },
             
             // Market & Trade
@@ -76,7 +91,10 @@ class GameEngine {
                 wagons: 0,
                 trains: 0,
                 capacity: 0,
-                usage: 0
+                usage: 0,
+                // Temporary penalties applied per-tick based on bottlenecks
+                penaltyTrading: 1.0,
+                penaltyProcessing: 1.0
             },
             
             // City services
@@ -85,7 +103,20 @@ class GameEngine {
                 banks: 0,
                 markets: 0,
                 universities: 0,
-                corruption: 0
+                corruption: 0,
+                // Theft system
+                theftRisk: 0,
+                theftLosses: 0,
+                theftProtection: 0,
+                // Decay and rebirth system
+                decay: 0,
+                maxDecay: 100,
+                rebirths: 0,
+                // Tax system
+                taxRate: 0.1, // 10% base tax on gold income
+                politicians: 0,
+                // Auto systems
+                autoSellFinished: false
             },
             
             // Research
@@ -96,6 +127,18 @@ class GameEngine {
                 logistics: false,
                 quantum: false
             },
+            // New research unlock flags
+            unlock_stone: true,
+            unlock_coal: false,
+            unlock_iron: false,
+            unlock_silver: false,
+            unlock_gold: false,
+            unlock_oil: false,
+            unlock_rubber: false,
+            unlock_processing: false,
+            unlock_electronics: false,
+            unlock_jewelry: false,
+            unlock_automotive: false,
             
             // Statistics
             stats: {
@@ -106,7 +149,10 @@ class GameEngine {
                     silver: 0
                 },
                 totalGoldEarned: 0,
-                totalGoldSpent: 0
+                totalGoldSpent: 0,
+                // City stats
+                totalTheftLosses: 0,
+                totalTaxesPaid: 0
             },
             
             // Prestige
@@ -186,6 +232,8 @@ class GameEngine {
         }
         
         // Initialize UIManager
+        // Auto systems timers
+        this.nextAutoSellFinishedAt = 0; // Initialize nextAutoSellFinishedAt
         console.log('Checking for UIManager class:', typeof window.UIManager);
         if (window.UIManager) {
             console.log('Creating UIManager instance...');
@@ -195,6 +243,12 @@ class GameEngine {
             console.error('UIManager class not found! Make sure js/ui/UIManager.js is loaded.');
         }
         
+        // Initialize NewResourceManager
+        if (window.NewResourceManager) {
+            this.newResourceManager = new NewResourceManager(this.state);
+            console.log('NewResourceManager initialized');
+        }
+
         // Start the main game loop
         this.tickInterval = setInterval(() => {
             this.tick();
@@ -228,7 +282,8 @@ class GameEngine {
         this.updateMarkets(deltaTime);
         this.updateUpgrades(deltaTime);
         this.updateAdCooldowns();
-        this.checkPrestige();
+        this.updateAutoSellFinished(now);
+        this.checkPrestige(); // Check for prestige unlock
         
         // Update UI periodically (not every tick for performance)
         if (now - this.lastUIUpdate > this.uiUpdateRate) {
@@ -242,22 +297,46 @@ class GameEngine {
             this.lastAutoSave = now;
         }
     }
-    
+
+    setAutoSellFinished(enabled) {
+        this.state.city.autoSellFinished = !!enabled;
+        if (enabled) this.nextAutoSellFinishedAt = 0;
+    }
+
+    updateAutoSellFinished(now) {
+        if (!this.state?.city?.autoSellFinished) return;
+        if (!this.newResourceManager) return;
+        const markets = this.state.city.markets || 0;
+        const interval = Math.max(250, 1000 - markets * 150);
+        if (now < this.nextAutoSellFinishedAt) return;
+        const inv = this.state.cityInventory?.finished || {};
+        for (const k in inv) { if (inv[k] > 0) { this.sellOneFinished(); break; } }
+        this.nextAutoSellFinishedAt = now + interval;
+    }
+
     updateResources(deltaTime) {
         // Calculate base production from workers
         this.updateMiningProduction(deltaTime);
         
+        // Update transport capacity usage early so penalties apply this tick
+        this.updateTransport();
+        
         // Calculate processing chain production
         this.updateProcessingProduction(deltaTime);
+
+        // Advanced processing
+        if (this.newResourceManager) {
+            this.newResourceManager.update(deltaTime);
+        }
         
-        // Handle automatic trading
+        // Handle automatic trading (uses current transport penalties)
         this.updateAutomaticTrading(deltaTime);
         
         // Apply city services costs
         this.updateCityServices(deltaTime);
-        
-        // Update transport capacity usage
-        this.updateTransport();
+
+        // Handle city dynamics - theft, decay, taxes
+        this.updateCityDynamics(deltaTime);
     }
     
     updateMiningProduction(deltaTime) {
@@ -301,7 +380,9 @@ class GameEngine {
     }
     
     updateProcessingProduction(deltaTime) {
-        const efficiency = this.state.efficiency.processing * this.state.efficiency.global;
+        // Apply per-tick transport penalty to processing efficiency
+        const penaltyProcessing = (this.state.transport && this.state.transport.penaltyProcessing) ? this.state.transport.penaltyProcessing : 1.0;
+        const efficiency = this.state.efficiency.processing * penaltyProcessing * this.state.efficiency.global;
         
         // Coal smelting: 2 stone -> 1 coal
         const smelterProduction = Math.min(
@@ -347,7 +428,9 @@ class GameEngine {
     
     updateAutomaticTrading(deltaTime) {
         const corruption = Math.max(0, this.state.city.corruption - this.state.city.police * 5) / 100;
-        const efficiency = this.state.efficiency.trading * (1 - corruption) * this.state.efficiency.global;
+        // Apply transport penalty (from prior tick's usage calculation)
+        const penaltyTrading = (this.state.transport && typeof this.state.transport.penaltyTrading === 'number') ? this.state.transport.penaltyTrading : 1.0;
+        const efficiency = this.state.efficiency.trading * penaltyTrading * (1 - corruption) * this.state.efficiency.global;
         
         // Auto-sell stone
         const stoneToSell = Math.min(
@@ -399,7 +482,8 @@ class GameEngine {
     
     updateCityServices(deltaTime) {
         // Police cost gold per second but reduce corruption
-        const policeCost = this.state.city.police * 50 * deltaTime;
+        // Changed from 50 to 0.5 gold/sec (30 gold/min per police officer)
+        const policeCost = this.state.city.police * 0.5 * deltaTime;
         if (this.state.resources.gold >= policeCost) {
             this.state.resources.gold -= policeCost;
             this.state.stats.totalGoldSpent += policeCost;
@@ -408,6 +492,53 @@ class GameEngine {
             // Can't afford police, corruption increases
             this.state.city.corruption = Math.min(100, this.state.city.corruption + 2 * deltaTime);
         }
+    }
+    
+    updateCityDynamics(deltaTime) {
+        // Calculate city inventory value for theft risk
+        let cityInventoryValue = 0;
+        if (this.state.cityInventory && this.state.cityInventory.finished) {
+            Object.keys(this.state.cityInventory.finished).forEach(item => {
+                const amount = this.state.cityInventory.finished[item];
+                const itemValue = this.newResourceManager ? 
+                    (this.newResourceManager.catalog.finished[item]?.value || 0) : 0;
+                cityInventoryValue += amount * itemValue;
+            });
+        }
+        
+        // Update theft risk based on city value and corruption
+        const baseTheftRisk = Math.min(10, cityInventoryValue / 100) + (this.state.city.corruption / 10);
+        this.state.city.theftProtection = this.state.city.police * 2; // Each police reduces theft by 2%
+        this.state.city.theftRisk = Math.max(0, baseTheftRisk - this.state.city.theftProtection);
+        
+        // Apply theft losses
+        if (this.state.city.theftRisk > 0 && Math.random() * 100 < this.state.city.theftRisk * deltaTime * 10) {
+            const theftLoss = Math.min(this.state.resources.gold * 0.05, 50); // Max 5% or 50 gold
+            if (theftLoss > 0) {
+                this.state.resources.gold -= theftLoss;
+                this.state.city.theftLosses += theftLoss;
+                this.state.stats.totalTheftLosses += theftLoss;
+                this.showNotification(`Thieves stole ${theftLoss.toFixed(1)} gold!`, 'theft');
+            }
+        }
+        
+        // City decay increases over time and with activity
+        const decayRate = 0.5 + (this.state.city.markets * 0.1) + (this.state.city.banks * 0.05);
+        this.state.city.decay = Math.min(this.state.city.maxDecay, 
+            this.state.city.decay + decayRate * deltaTime);
+        
+        // Apply taxes on gold income (reduced by politicians)
+        const taxReduction = this.state.city.politicians * 0.02; // 2% reduction per politician
+        const effectiveTaxRate = Math.max(0, this.state.city.taxRate - taxReduction);
+        
+        // Track gold earned this tick for tax calculation
+        const goldEarnedThisTick = this.state.stats.totalGoldEarned - (this.lastGoldEarned || 0);
+        if (goldEarnedThisTick > 0) {
+            const taxAmount = goldEarnedThisTick * effectiveTaxRate;
+            this.state.resources.gold -= taxAmount;
+            this.state.stats.totalTaxesPaid += taxAmount;
+        }
+        this.lastGoldEarned = this.state.stats.totalGoldEarned;
     }
     
     updateTransport() {
@@ -419,17 +550,25 @@ class GameEngine {
             
         this.state.transport.capacity = capacity * this.state.efficiency.transport;
         
-        // Calculate current usage (based on resource production needs)
-        const usage = Math.min(100, 
-            (this.state.production.stone + this.state.resources.coal + this.state.resources.iron + this.state.resources.silver) / 
-            Math.max(1, this.state.transport.capacity) * 100
-        );
+        // Estimate throughput demand based on current per-second production rates rather than stored stockpiles
+        const totalProductionPerSec =
+            (this.state.production.stone || 0) +
+            (this.state.production.coal || 0) +
+            (this.state.production.iron || 0) +
+            (this.state.production.silver || 0);
+
+        const usage = Math.min(100, (totalProductionPerSec / Math.max(1, this.state.transport.capacity)) * 100);
         this.state.transport.usage = usage;
         
-        // Transport bottleneck reduces efficiency
+        // Transport bottleneck reduces effective efficiency via penalties (non-compounding across ticks)
+        // Reset to neutral each update
+        this.state.transport.penaltyTrading = 1.0;
+        this.state.transport.penaltyProcessing = 1.0;
         if (usage > 80) {
-            this.state.efficiency.trading *= 0.8;
-            this.state.efficiency.processing *= 0.9;
+            // Linearly scale penalties between 80% and 100% usage
+            const scale = Math.min(1, (usage - 80) / 20); // 0..1
+            this.state.transport.penaltyTrading = 1 - 0.2 * scale;     // down to 0.8x at 100% usage
+            this.state.transport.penaltyProcessing = 1 - 0.1 * scale;  // down to 0.9x at 100% usage
         }
     }
     
@@ -475,20 +614,26 @@ class GameEngine {
         this.updateElement('coal-miners-count', this.state.workers.coalMiners.toString());
         this.updateElement('iron-miners-count', this.state.workers.ironMiners.toString());
         this.updateElement('silver-miners-count', this.state.workers.silverMiners.toString());
-        this.updateElement('mining-efficiency', Math.round(this.state.efficiency.mining * 100) + '%');
+    const mineEff = Math.round(this.state.efficiency.mining * 100);
+    this.updateElement('mining-efficiency', mineEff + '%');
+    const mib = document.getElementById('mining-efficiency-bar'); if (mib) mib.style.width = Math.max(0, Math.min(100, mineEff)) + '%';
         
         // Update processing status
         this.updateElement('smelters-count', this.state.processors.smelters.toString());
         this.updateElement('forges-count', this.state.processors.forges.toString());
         this.updateElement('refineries-count', this.state.processors.refineries.toString());
         this.updateElement('mints-count', this.state.processors.mints.toString());
-        this.updateElement('processing-efficiency', Math.round(this.state.efficiency.processing * 100) + '%');
+    const procEff = Math.round(this.state.efficiency.processing * 100);
+    this.updateElement('processing-efficiency', procEff + '%');
+    const peb = document.getElementById('processing-efficiency-bar'); if (peb) peb.style.width = Math.max(0, Math.min(100, procEff)) + '%';
         
         // Update market status
         this.updateElement('stone-traders-count', this.state.traders.stoneTraders.toString());
         this.updateElement('coal-traders-count', this.state.traders.coalTraders.toString());
         this.updateElement('metal-traders-count', this.state.traders.metalTraders.toString());
-        this.updateElement('market-efficiency', Math.round(this.state.efficiency.trading * 100) + '%');
+    const marketEff = Math.round(this.state.efficiency.trading * 100);
+    this.updateElement('market-efficiency', marketEff + '%');
+    const meb = document.getElementById('market-efficiency-bar'); if (meb) meb.style.width = Math.max(0, Math.min(100, marketEff)) + '%';
         this.updateElement('corruption-level', Math.round(this.state.city.corruption) + '%');
         
         // Update transport status
@@ -496,13 +641,25 @@ class GameEngine {
         this.updateElement('wagons-count', this.state.transport.wagons.toString());
         this.updateElement('trains-count', this.state.transport.trains.toString());
         this.updateElement('transport-capacity', this.formatNumber(this.state.transport.capacity));
-        this.updateElement('transport-usage', Math.round(this.state.transport.usage) + '%');
+    const usagePct = Math.round(this.state.transport.usage);
+    this.updateElement('transport-usage', usagePct + '%');
+    const tub = document.getElementById('transport-usage-bar'); if (tub) tub.style.width = Math.max(0, Math.min(100, usagePct)) + '%';
         
         // Update city status
         this.updateElement('police-count', this.state.city.police.toString());
         this.updateElement('banks-count', this.state.city.banks.toString());
         this.updateElement('markets-count', this.state.city.markets.toString());
         this.updateElement('universities-count', this.state.city.universities.toString());
+        
+        // Update city dynamics
+        this.updateElement('politicians-count', this.state.city.politicians?.toString() || '0');
+        this.updateElement('theft-risk', Math.round(this.state.city.theftRisk || 0) + '%');
+        this.updateElement('theft-losses', this.formatNumber(this.state.city.theftLosses || 0));
+    const decayPct = Math.round(this.state.city.decay || 0);
+    this.updateElement('city-decay', decayPct + '%');
+    const cdb = document.getElementById('city-decay-bar'); if (cdb) cdb.style.width = Math.max(0, Math.min(100, decayPct)) + '%';
+        this.updateElement('tax-rate', Math.round((this.state.city.taxRate || 0.1) * 100) + '%');
+        this.updateElement('rebirths-count', (this.state.city.rebirths || 0).toString());
         
         // Update research status
         const completedResearch = Object.values(this.state.research).filter(r => r).length;
@@ -524,18 +681,25 @@ class GameEngine {
     }
     
     updateButtonStates() {
-        // Mining buttons
+        // Mining buttons (check both gold cost AND unlock status)
         this.updateButtonState('mine-stone-btn', true); // Always available
         this.updateButtonState('hire-stone-miner-btn', this.state.resources.gold >= 5);
-        this.updateButtonState('hire-coal-miner-btn', this.state.resources.gold >= 25);
-        this.updateButtonState('hire-iron-miner-btn', this.state.resources.gold >= 100);
-        this.updateButtonState('hire-silver-miner-btn', this.state.resources.gold >= 500);
+        this.updateButtonState('hire-coal-miner-btn', this.state.resources.gold >= 25 && this.state.unlock_coal);
+        this.updateButtonState('hire-iron-miner-btn', this.state.resources.gold >= 100 && this.state.unlock_iron);
+        this.updateButtonState('hire-silver-miner-btn', this.state.resources.gold >= 500 && this.state.unlock_silver);
         
-        // Processing buttons
-        this.updateButtonState('build-smelter-btn', this.state.resources.gold >= 20);
-        this.updateButtonState('build-forge-btn', this.state.resources.gold >= 100);
-        this.updateButtonState('build-refinery-btn', this.state.resources.gold >= 500);
-        this.updateButtonState('build-mint-btn', this.state.resources.gold >= 2000);
+    // Processing buttons (gated by unlocks)
+    this.updateButtonState('build-smelter-btn', this.state.resources.gold >= 20 && this.state.unlock_processing);
+    this.updateButtonState('build-forge-btn', this.state.resources.gold >= 100 && this.state.unlock_processing);
+    this.updateButtonState('build-refinery-btn', this.state.resources.gold >= 500 && this.state.unlock_processing);
+    this.updateButtonState('build-mint-btn', this.state.resources.gold >= 2000 && this.state.unlock_processing);
+    this.updateButtonState('build-polisher-btn', this.state.resources.gold >= 50 && this.state.unlock_processing);
+    this.updateButtonState('build-coker-btn', this.state.resources.gold >= 150 && this.state.unlock_processing);
+    this.updateButtonState('build-chemplant-btn', this.state.resources.gold >= 400 && this.state.unlock_oil);
+    this.updateButtonState('build-chipfab-btn', this.state.resources.gold >= 1200 && this.state.unlock_electronics);
+    this.updateButtonState('build-jeweler-btn', this.state.resources.gold >= 900 && this.state.unlock_jewelry);
+    this.updateButtonState('build-assembly-btn', this.state.resources.gold >= 1600 && this.state.unlock_electronics);
+    this.updateButtonState('build-autoplant-btn', this.state.resources.gold >= 5000 && this.state.unlock_automotive);
         
         // Market buttons
         this.updateButtonState('sell-stone-btn', this.state.resources.stone >= 1);
@@ -553,9 +717,13 @@ class GameEngine {
         
         // City buttons
         this.updateButtonState('hire-police-btn', this.state.resources.gold >= 100);
+        this.updateButtonState('hire-politician-btn', this.state.resources.gold >= 250);
         this.updateButtonState('build-bank-btn', this.state.resources.gold >= 500);
         this.updateButtonState('build-market-btn', this.state.resources.gold >= 1000);
         this.updateButtonState('build-university-btn', this.state.resources.gold >= 2500);
+        
+        // Rebirth button (enable at 99.5%+ decay to handle floating point + rounding)
+        this.updateButtonState('rebirth-btn', this.state.city.decay >= (this.state.city.maxDecay - 0.5));
         
         // Research buttons
         this.updateResearchButtonState('research-mining-btn', 'mining', 50);
@@ -580,6 +748,30 @@ class GameEngine {
         } else if (mineButton) {
             mineButton.classList.remove('pulse');
         }
+    }
+
+    unlockFeature(key) {
+        const costs = {
+            unlock_coal: 25,
+            unlock_iron: 60,
+            unlock_silver: 200,
+            unlock_oil: 150,
+            unlock_rubber: 120,
+            unlock_processing: 80,
+            unlock_electronics: 800,
+            unlock_jewelry: 500,
+            unlock_automotive: 2000
+        };
+        const cost = costs[key] || 0;
+        if (this.state[key]) return false; // already unlocked
+        if (this.state.resources.gold < cost) return false;
+        this.state.resources.gold -= cost;
+        this.state.stats.totalGoldSpent += cost;
+        this.state[key] = true;
+        this.playSound('research');
+        this.flashElement('gold-amount');
+        console.log(`Unlocked feature: ${key}`);
+        return true;
     }
     
     updateResearchButtonState(buttonId, researchType, cost) {
@@ -635,6 +827,21 @@ class GameEngine {
             silverMiner: 500
         };
         
+        // Check if resource is unlocked before allowing worker purchase
+        const unlockRequirements = {
+            stoneMiner: true, // Always available
+            coalMiner: this.state.unlock_coal,
+            ironMiner: this.state.unlock_iron,
+            silverMiner: this.state.unlock_silver
+        };
+        
+        // Check unlock requirement
+        if (!unlockRequirements[workerType]) {
+            console.log(`Cannot hire ${workerType}: resource not unlocked yet`);
+            this.showNotification(`Unlock the resource first!`);
+            return false;
+        }
+        
         const cost = costs[workerType];
         if (this.state.resources.gold >= cost) {
             this.state.resources.gold -= cost;
@@ -654,14 +861,23 @@ class GameEngine {
             smelter: 20,
             forge: 100,
             refinery: 500,
-            mint: 2000
+            mint: 2000,
+            polisher: 50,
+            coker: 150,
+            chemPlant: 400,
+            chipFab: 1200,
+            jeweler: 900,
+            assembly: 1600,
+            autoPlant: 5000
         };
         
         const cost = costs[processorType];
         if (this.state.resources.gold >= cost) {
             this.state.resources.gold -= cost;
             this.state.stats.totalGoldSpent += cost;
-            this.state.processors[processorType + 's']++;
+            const keyMap = { chemPlant: 'chemPlant', chipFab: 'chipFab', assembly: 'assembly', autoPlant: 'autoPlant', polisher: 'polisher', coker: 'coker', jeweler: 'jeweler' };
+            const key = keyMap[processorType] || (processorType + 's');
+            this.state.processors[key] = (this.state.processors[key] || 0) + 1;
             
             this.playSound('build');
             this.flashElement('gold-amount');
@@ -723,9 +939,59 @@ class GameEngine {
                 
                 this.playSound('hire');
                 this.flashElement('gold-amount');
-                console.log(`Hired police for ${cost} gold (also 10 gold/sec upkeep)`);
+                console.log(`Hired police for ${cost} gold (upkeep: 0.5 gold/sec or 30 gold/min)`);
                 return true;
             }
+        } else if (serviceType === 'politician') {
+            const cost = 250;
+            if (this.state.resources.gold >= cost) {
+                this.state.resources.gold -= cost;
+                this.state.stats.totalGoldSpent += cost;
+                this.state.city.politicians++;
+                this.playSound('hire');
+                this.flashElement('gold-amount');
+                console.log(`Hired politician for ${cost} gold (reduces tax rate by 2%)`);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Manual transport: move one best item based on value/weight
+    transportNext() {
+        if (!this.newResourceManager) return false;
+        // Use smallest capacity unit (1 weight) as click-based transport
+        const result = this.newResourceManager.transportOne(1);
+        if (result.moved) {
+            this.playSound('transport');
+            return true;
+        }
+        return false;
+    }
+
+    // Sell one finished good currently in city inventory (best value by default)
+    sellOneFinished(item = null) {
+        if (!this.newResourceManager) return false;
+        if (!item) {
+            // pick best valued item in city inventory
+            const inv = this.state.cityInventory?.finished || {};
+            let best = null, bestVal = -Infinity;
+            Object.keys(inv).forEach(k => {
+                const amount = inv[k];
+                if (amount > 0) {
+                    // approximate value from catalog if present
+                    const meta = (this.newResourceManager.catalog.finished[k] || {});
+                    const val = meta.value || 0;
+                    if (val > bestVal) { bestVal = val; best = k; }
+                }
+            });
+            item = best;
+        }
+        const res = this.newResourceManager.sellOne(item);
+        if (res.sold) {
+            this.playSound('sell');
+            this.flashElement('gold-amount');
+            return true;
         }
         return false;
     }
@@ -843,6 +1109,47 @@ class GameEngine {
         }
     }
     
+    rebirth() {
+        // Allow rebirth when decay is at or very close to max (handles floating point issues)
+        // Using 99.5% threshold since UI rounds decay for display
+        if (this.state.city.decay < (this.state.city.maxDecay - 0.5)) {
+            console.log(`Cannot rebirth: decay is ${this.state.city.decay.toFixed(1)}/${this.state.city.maxDecay}`);
+            this.showNotification(`City must reach 100% decay before rebirth!`);
+            return false;
+        }
+        
+        // Calculate rebirth bonuses based on achievements
+        const rebirthBonus = {
+            mining: 0.05, // 5% bonus per rebirth
+            processing: 0.05,
+            trading: 0.03,
+            transport: 0.03
+        };
+        
+        // Store current city data
+        const currentRebirths = this.state.city.rebirths + 1;
+        
+        // Reset city but keep some progress
+        const savedEfficiency = { ...this.state.efficiency };
+        this.state = this.getInitialState();
+        
+        // Restore enhanced efficiency
+        this.state.efficiency = savedEfficiency;
+        this.state.city.rebirths = currentRebirths;
+        
+        // Apply rebirth bonuses
+        this.state.efficiency.mining *= (1 + rebirthBonus.mining);
+        this.state.efficiency.processing *= (1 + rebirthBonus.processing);
+        this.state.efficiency.trading *= (1 + rebirthBonus.trading);
+        this.state.efficiency.transport *= (1 + rebirthBonus.transport);
+        
+        this.playSound('prestige');
+        this.showNotification(`City reborn! Efficiency bonuses applied. Rebirth #${currentRebirths}`);
+        console.log(`City rebirth completed! Total rebirths: ${currentRebirths}`);
+        
+        return true;
+    }
+    
     // Utility methods
     formatNumber(num) {
         if (num < 1000) return Math.floor(num).toString();
@@ -955,6 +1262,11 @@ class GameEngine {
         
         this.start();
         console.log('Game reset');
+    }
+
+    // Alias for UI compatibility
+    resetGame() {
+        return this.reset();
     }
 
     applyPrestigeBonus(target, cost) {
