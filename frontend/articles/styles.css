@@ -1,3 +1,13 @@
+/* Prevent horizontal overflow on mobile */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 /* Shared article styles (AA contrast, dark-mode aware) */
 :root {
   --bg: var(--bg-primary, #f5f7fb);

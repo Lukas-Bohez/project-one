@@ -2,6 +2,16 @@
  # COMPONENTS
 /*---------------------------------------*/
 
+/* Prevent horizontal overflow on mobile */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 /* Ensure the entire page background respects theme */
 body {
     background-color: var(--bg-primary) !important;

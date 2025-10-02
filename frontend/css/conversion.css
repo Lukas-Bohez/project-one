@@ -2,6 +2,16 @@
 /* CONVERSION THE SPIRE - SPECIFIC STYLES */
 /*---------------------------------------*/
 
+/* Prevent horizontal overflow on mobile */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 /* Additional CSS variables for conversion features */
 :root {
     --success-color: #10b981;

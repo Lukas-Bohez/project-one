@@ -3,6 +3,16 @@
  # This file contains vendor prefixes and fallbacks for cross-browser support
 /*---------------------------------------*/
 
+/* Prevent horizontal overflow on mobile */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 /* CSS Custom Properties Fallbacks for IE */
 :root {
     /* Fallback colors for browsers that don't support CSS custom properties */

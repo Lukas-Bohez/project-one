@@ -3,6 +3,16 @@
  * Styles for dynamically loaded content from database
  */
 
+/* Prevent horizontal overflow on mobile */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 /* Content Enhancement Variables - Light theme (default) */
 :root {
     --content-primary: #2c4c7c;

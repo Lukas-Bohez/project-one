@@ -1,6 +1,17 @@
 /*---------------------------------------/*
  # SETTINGS (Admin Theme)
 /*---------------------------------------*/
+
+/* Prevent horizontal overflow on mobile */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 :root {
     --admin-primary: #E67E22;
     /* Warm orange */

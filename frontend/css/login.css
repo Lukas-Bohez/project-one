@@ -1,6 +1,17 @@
 /*---------------------------------------/*
  # COMPONENTS
 /*---------------------------------------*/
+
+/* Prevent horizontal overflow on mobile */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 .c-login-container {
     display: flex;
     justify-content: center;
