@@ -115,7 +115,6 @@
     chap.id = 'chapter-select';
     chap.className = 'story-selector'; // reuse existing select styling
     chap.disabled = true;
-    chap.style.marginLeft = '0.75rem';
     chap.title = 'Select chapter';
     // Insert after the story select if present
     const storySel = el('article-select');

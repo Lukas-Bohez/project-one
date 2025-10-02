@@ -1,9 +1,30 @@
 User-agent: *
 Allow: /
+
+# Allow specific important pages
+Allow: /articles/
+Allow: /articles/posts/
+Allow: /articles/index.html
+Allow: /idleGame/
+Allow: /html/
 Allow: /ads.txt
-Allow: /html/storyCreator.html
-Allow: /html/content.html
-Allow: /html/study.html
-Allow: /html/graphs.html
-Allow: /html/converter.html
+Allow: /sitemap.xml
+
+# Allow important files
+Allow: /favicon.ico
+Allow: /google*.html
+
+# Block backend and temporary files
+Disallow: /backend/
+Disallow: /temp_*/
+Disallow: /.git/
+Disallow: /.vscode/
+Disallow: /backup/
+
+# SEO priority pages
+Allow: /articles/posts/2025-budget-cuts-health-impact.html
+Allow: /articles/posts/stock-market-steals-from-workers.html
+Allow: /articles/posts/why-youre-poorer-despite-more-money.html
+
+# Sitemap location
 Sitemap: https://quizthespire.duckdns.org/sitemap.xml

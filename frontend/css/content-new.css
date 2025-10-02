@@ -156,6 +156,28 @@ html, body {
     gap: 1rem;
     align-items: center;
     flex-wrap: wrap;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+/* Ensure select elements don't cause overflow */
+select.story-selector,
+#article-selector,
+#story-selector {
+    min-width: 0; /* Allow shrinking below content size */
+    flex-shrink: 1;
+}
+
+/* Chapter select spacing - only add margin on larger screens */
+#chapter-select {
+    margin-top: 0.5rem;
+}
+
+@media (min-width: 769px) {
+    #chapter-select {
+        margin-top: 0;
+        margin-left: 0.75rem;
+    }
 }
 
 .content-nav-row + .content-nav-row {
@@ -213,6 +235,41 @@ html, body {
     background-repeat: no-repeat;
     background-size: 1rem;
     padding-right: 3rem;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Mobile optimization for story selector */
+@media (max-width: 768px) {
+    .story-selector {
+        padding: 0.5rem 0.75rem;
+        padding-right: 2.5rem;
+        font-size: 0.85rem;
+        background-position: right 0.5rem center;
+        background-size: 0.875rem;
+    }
+    
+    .story-selector option {
+        padding: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .story-selector {
+        padding: 0.4rem 0.5rem;
+        padding-right: 2rem;
+        font-size: 0.8rem;
+        background-position: right 0.4rem center;
+        background-size: 0.75rem;
+    }
+    
+    .story-selector option {
+        /* Truncate very long option text on small screens */
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 }
 
 .story-selector:focus {
