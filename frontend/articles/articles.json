@@ -1,6 +1,20 @@
 {
   "articles": [
     {
+      "id": "2025-budget-cuts-health-impact",
+      "title": "2025 Budget Cuts: How Healthcare, Medicare, Medicaid, and Food Assistance Programs Are Affecting Millions of Americans",
+      "subtitle": "17 Million Americans Losing Coverage, 51,000+ Additional Deaths Projected Annually",
+      "author": "Oroka Conner",
+      "date": "2025-10-02",
+      "description": "The 2025 federal budget legislation and government shutdown have triggered unprecedented changes affecting 17 million Americans' health insurance coverage and over 51,000 additional deaths annually. Critical analysis of Medicare cuts, Medicaid work requirements, ACA subsidies elimination, and SNAP benefits reductions.",
+      "tags": ["politics", "healthcare", "medicare", "medicaid", "budget-cuts", "government-shutdown", "SNAP", "policy-analysis"],
+      "category": "politics",
+      "imageQuery": "government building healthcare crisis, medical protest budget cuts, hospital emergency, healthcare policy, Medicare Medicaid, photojournalism, editorial photography",
+      "readTime": "15 min read",
+      "featured": true,
+      "htmlFile": "posts/2025-budget-cuts-health-impact.html"
+    },
+    {
       "id": "stock-market-steals-from-workers",
       "title": "How Wall Street Steals From Every Worker in America",
       "subtitle": "The Stock Market's Greatest Scam: Your Labor, Their Profit",
@@ -31,6 +45,10 @@
     }
   ],
   "categories": {
+    "politics": {
+      "name": "Politics & Policy",
+      "description": "Political analysis, government policy, and healthcare legislation"
+    },
     "opinion": {
       "name": "Opinion Pieces",
       "description": "Thought-provoking commentary and analysis on current events"
@@ -45,11 +63,18 @@
     }
   },
   "tags": {
+    "politics": "Political commentary and policy analysis",
+    "healthcare": "Healthcare policy and medical system analysis",
+    "medicare": "Medicare program and senior healthcare",
+    "medicaid": "Medicaid program and low-income healthcare",
+    "budget-cuts": "Government budget cuts and fiscal policy",
+    "government-shutdown": "Federal government shutdown impacts",
+    "SNAP": "Food assistance and SNAP benefits",
+    "policy-analysis": "In-depth policy analysis and research",
     "economics": "Economic analysis and financial topics",
     "wealth-inequality": "Articles about income disparity and class issues",
     "stock-market": "Wall Street and financial market analysis",
     "workers-rights": "Labor rights and workplace issues",
-    "politics": "Political commentary and analysis",
     "society": "Social issues and cultural topics",
     "opinion": "Editorial and opinion pieces",
     "tech": "Technology and programming topics"

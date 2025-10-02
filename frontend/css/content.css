@@ -284,6 +284,8 @@ body {
 /* Article Selector */
 .article-selector {
     margin: 2.5rem 0;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .article-selector select {
@@ -303,6 +305,40 @@ body {
     background-size: 1.25rem;
     box-shadow: var(--content-shadow);
     font-weight: 500;
+    max-width: 100%;
+}
+
+/* Mobile optimization for article selector */
+@media (max-width: 768px) {
+    .article-selector select {
+        padding: 0.875rem 1rem;
+        padding-right: 2.5rem;
+        font-size: 1rem;
+        background-position: right 0.75rem center;
+        background-size: 1rem;
+    }
+    
+    .article-selector select option {
+        padding: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .article-selector select {
+        padding: 0.75rem 0.875rem;
+        padding-right: 2.25rem;
+        font-size: 0.9rem;
+        background-position: right 0.625rem center;
+        background-size: 0.875rem;
+    }
+    
+    .article-selector select option {
+        /* Truncate very long option text on small screens */
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 }
 
 .article-selector select:focus {
