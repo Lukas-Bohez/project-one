@@ -1,6 +1,17 @@
 /*---------------------------------------/*
  # SETTINGS
 /*---------------------------------------*/
+
+/* Prevent horizontal overflow on mobile */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 :root {
     --primary-color: #2c4c7c;
     /* Darkened for better contrast */

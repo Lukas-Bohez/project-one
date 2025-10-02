@@ -1,6 +1,18 @@
 /*---------------------------------------/*
  # SETTINGS
 /*---------------------------------------*/
+
+/* Prevent horizontal overflow on mobile */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+    padding-bottom: 35px;
+}
+
 :root {
     /* Light theme colors (default) */
     --primary-color: #2c4c7c;

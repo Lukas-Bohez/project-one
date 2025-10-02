@@ -1,3 +1,13 @@
+/* Prevent horizontal overflow on mobile */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 /* Dark mode chat container */
 .theme-dark .c-chat-container, [data-theme="dark"] .c-chat-container {
     background: linear-gradient(145deg,

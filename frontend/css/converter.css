@@ -2,6 +2,16 @@
  # CONVERTER STYLES
 /*---------------------------------------*/
 
+/* Prevent horizontal overflow on mobile */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 /* Theme Toggle Button - Compact size for converter page */
 .c-theme-toggle {
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
