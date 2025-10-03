@@ -267,6 +267,11 @@ class GameEngine {
             this.tick();
         }, 1000 / this.tickRate);
         
+        // Hide already purchased unlocks and research (with slight delay to ensure DOM is ready)
+        setTimeout(() => {
+            this.updatePurchasedItemsVisibility();
+        }, 100);
+        
         console.log('Game started');
     }
     
@@ -783,8 +788,30 @@ class GameEngine {
         // Research buttons
         this.updateResearchButtonState('research-mining-btn', 'mining', 50);
         this.updateResearchButtonState('research-processing-btn', 'processing', 100);
-        this.updateResearchButtonState('research-automation-btn', 'automation', 500);
+        this.updateResearchButtonState('research-automation-btn', 'automation', 50);
         this.updateResearchButtonState('research-logistics-btn', 'logistics', 1000);
+        
+        // Hide purchased unlock buttons
+        const unlockKeys = ['unlock_coal', 'unlock_iron', 'unlock_silver', 'unlock_oil', 'unlock_rubber', 'unlock_processing', 'unlock_electronics', 'unlock_jewelry', 'unlock_automotive'];
+        unlockKeys.forEach(key => {
+            if (this.state[key]) {
+                const button = document.querySelector(`[data-unlock="${key}"]`);
+                if (button) {
+                    button.style.setProperty('display', 'none', 'important');
+                }
+            }
+        });
+        
+        // Hide purchased research buttons
+        const researchTypes = ['mining', 'processing', 'automation', 'logistics', 'quantum'];
+        researchTypes.forEach(type => {
+            if (this.state.research[type]) {
+                const button = document.getElementById(`research-${type}-btn`);
+                if (button) {
+                    button.style.setProperty('display', 'none', 'important');
+                }
+            }
+        });
         
         // Prestige button
         this.updateButtonState('prestige-btn', this.state.stats.totalGoldEarned >= 10000);
@@ -825,8 +852,48 @@ class GameEngine {
         this.state[key] = true;
         this.playSound('research');
         this.flashElement('gold-amount');
+        
+        // Hide the unlock button after purchasing
+        const button = document.querySelector(`[data-unlock="${key}"]`);
+        if (button) {
+            button.style.setProperty('display', 'none', 'important');
+        }
+        
         console.log(`Unlocked feature: ${key}`);
+        this.showNotification(`✅ Feature unlocked!`);
         return true;
+    }
+    
+    updatePurchasedItemsVisibility() {
+        console.log('Checking purchased items visibility...');
+        
+        // Hide purchased unlocks
+        const unlockKeys = ['unlock_coal', 'unlock_iron', 'unlock_silver', 'unlock_oil', 'unlock_rubber', 'unlock_processing', 'unlock_electronics', 'unlock_jewelry', 'unlock_automotive'];
+        unlockKeys.forEach(key => {
+            if (this.state[key]) {
+                console.log(`Hiding unlock: ${key}`);
+                const button = document.querySelector(`[data-unlock="${key}"]`);
+                if (button) {
+                    button.style.setProperty('display', 'none', 'important');
+                } else {
+                    console.warn(`Button not found for unlock: ${key}`);
+                }
+            }
+        });
+        
+        // Hide purchased research
+        const researchTypes = ['mining', 'processing', 'automation', 'logistics', 'quantum'];
+        researchTypes.forEach(type => {
+            if (this.state.research[type]) {
+                console.log(`Hiding research: ${type}`);
+                const button = document.getElementById(`research-${type}-btn`);
+                if (button) {
+                    button.style.setProperty('display', 'none', 'important');
+                } else {
+                    console.warn(`Button not found for research: ${type}`);
+                }
+            }
+        });
     }
     
     updateResearchButtonState(buttonId, researchType, cost) {
@@ -1075,8 +1142,8 @@ class GameEngine {
     purchaseResearch(researchType) {
         const costs = {
             mining: 50,
+            automation: 50,
             processing: 100,
-            automation: 500,
             logistics: 1000,
             quantum: 5000
         };
@@ -1090,9 +1157,16 @@ class GameEngine {
             // Apply research bonuses
             this.applyResearchBonus(researchType);
             
+            // Hide the research button after purchasing
+            const button = document.getElementById(`research-${researchType}-btn`);
+            if (button) {
+                button.style.setProperty('display', 'none', 'important');
+            }
+            
             this.playSound('research');
             this.flashElement('gold-amount');
             console.log(`Completed research: ${researchType} for ${cost} gold`);
+            this.showNotification(`🔬 Research complete: ${researchType}!`);
             return true;
         }
         return false;

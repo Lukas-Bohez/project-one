@@ -613,6 +613,18 @@ class SaveManager {
         localStorage.removeItem('industrialEmpire_auth');
     }
 
+    // Get current player data (for UI state restoration)
+    getPlayerData() {
+        if (this.isAuthenticated && this.username) {
+            return {
+                username: this.username,
+                authToken: this.authToken,
+                isAuthenticated: this.isAuthenticated
+            };
+        }
+        return null;
+    }
+
     // ===================
     // Leaderboard
     // ===================

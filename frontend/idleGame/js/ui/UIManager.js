@@ -14,9 +14,30 @@ class UIManager {
 
     init() {
         console.log('UIManager init called');
+        this.checkLoginStatus(); // Check if user is already logged in
         this.bindEvents();
         this.updateAuthButtons();
         console.log('UIManager initialization complete');
+    }
+
+    checkLoginStatus() {
+        // Check if player data exists in localStorage
+        if (!this.gameEngine.saveManager) {
+            console.warn('SaveManager not initialized yet');
+            return;
+        }
+        
+        if (typeof this.gameEngine.saveManager.getPlayerData !== 'function') {
+            console.error('SaveManager.getPlayerData is not a function!');
+            return;
+        }
+        
+        const playerData = this.gameEngine.saveManager.getPlayerData();
+        if (playerData && playerData.username) {
+            this.isLoggedIn = true;
+            this.currentUser = playerData.username;
+            console.log('User already logged in:', this.currentUser);
+        }
     }
 
     bindEvents() {
@@ -224,8 +245,18 @@ class UIManager {
     }
 
     handleReset() {
-        if (confirm('Are you sure you want to reset your game? This will delete all progress!')) {
+        if (confirm('Are you sure you want to reset your game? This will delete all progress but keep you logged in!')) {
+            // Save login status before reset
+            const wasLoggedIn = this.isLoggedIn;
+            const currentUser = this.currentUser;
+            
             this.gameEngine.resetGame();
+            
+            // Restore login status after reset
+            this.isLoggedIn = wasLoggedIn;
+            this.currentUser = currentUser;
+            this.updateAuthButtons();
+            
             this.showNotification('Game reset successfully!', 'info');
             this.updateSaveStatus('Reset');
         }
