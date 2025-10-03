@@ -355,6 +355,14 @@ class GameEngine {
         const baseEfficiency = 1.0;
         const rdBonus = labs * 0.10; // 10% per lab
         
+        // Markets boost trading efficiency (+15% per market)
+        const markets = this.state.city.markets || 0;
+        const marketBonus = markets * 0.15; // 15% per market
+        
+        // Politicians boost trading efficiency (+5% per politician)
+        const politicians = this.state.city.politicians || 0;
+        const politicianBonus = politicians * 0.05; // 5% per politician
+        
         // Calculate total global efficiency from all sources
         let globalEff = baseEfficiency + rdBonus;
         
@@ -365,8 +373,8 @@ class GameEngine {
         
         this.state.efficiency.global = globalEff;
         
-        // R&D Labs also boost market/trading efficiency directly
-        this.state.efficiency.trading = baseEfficiency + rdBonus;
+        // R&D Labs, Markets, and Politicians all boost trading efficiency
+        this.state.efficiency.trading = baseEfficiency + rdBonus + marketBonus + politicianBonus;
         if (this.state.research?.quantum) {
             this.state.efficiency.trading *= 2.0;
         }
