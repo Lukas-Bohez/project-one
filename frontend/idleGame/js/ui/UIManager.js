@@ -21,22 +21,21 @@ class UIManager {
     }
 
     checkLoginStatus() {
-        // Check if player data exists in localStorage
+        // Check if player data exists in SaveManager
         if (!this.gameEngine.saveManager) {
             console.warn('SaveManager not initialized yet');
+            this.isLoggedIn = false;
             return;
         }
         
-        if (typeof this.gameEngine.saveManager.getPlayerData !== 'function') {
-            console.error('SaveManager.getPlayerData is not a function!');
-            return;
-        }
-        
-        const playerData = this.gameEngine.saveManager.getPlayerData();
-        if (playerData && playerData.username) {
+        // Check actual authentication status
+        if (this.gameEngine.saveManager.isAuthenticated) {
             this.isLoggedIn = true;
-            this.currentUser = playerData.username;
+            this.currentUser = this.gameEngine.saveManager.username;
             console.log('User already logged in:', this.currentUser);
+        } else {
+            this.isLoggedIn = false;
+            this.currentUser = null;
         }
     }
 

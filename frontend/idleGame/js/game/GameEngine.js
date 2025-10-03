@@ -1505,6 +1505,11 @@ class GameEngine {
     }
     
     autoSave() {
+        // Only save if user is logged in
+        if (!this.saveManager || !this.saveManager.isAuthenticated) {
+            return; // Don't save or update UI if not logged in
+        }
+        
         // This would typically save to localStorage or API
         this.state.lastSave = Date.now();
         
