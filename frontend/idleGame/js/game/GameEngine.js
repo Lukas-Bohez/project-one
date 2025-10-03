@@ -239,6 +239,11 @@ class GameEngine {
             this.rebirthThemes = new RebirthThemes();
             console.log('RebirthThemes initialized');
             
+            // Connect theme system to resource manager
+            if (this.newResourceManager) {
+                this.newResourceManager.setRebirthThemes(this.rebirthThemes);
+            }
+            
             if (window.UIThemeManager) {
                 this.themeManager = new UIThemeManager(this, this.rebirthThemes);
                 // Apply initial theme
@@ -1387,6 +1392,12 @@ class GameEngine {
         if (this.state.resources.gold < 0) {
             console.warn('⚠️ Rebirth resulted in negative gold, fixing to 10');
             this.state.resources.gold = 10;
+        }
+        
+        // Update resource manager with new theme recipes
+        if (this.newResourceManager) {
+            this.newResourceManager.state = this.state;
+            this.newResourceManager.updateThemeRecipes();
         }
         
         // Apply theme

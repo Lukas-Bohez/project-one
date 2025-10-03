@@ -570,6 +570,13 @@ class SaveManager {
             gameTime: state.gameTime
         });
         
+        // Update resource manager recipes for current theme
+        if (this.gameEngine.newResourceManager) {
+            this.gameEngine.newResourceManager.state = state;
+            this.gameEngine.newResourceManager.updateThemeRecipes();
+            console.log('Updated theme recipes after load');
+        }
+        
         // Trigger UI update
         if (this.gameEngine.updateUI) {
             console.log('Calling updateUI()');
