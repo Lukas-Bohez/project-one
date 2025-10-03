@@ -239,8 +239,10 @@ class UIThemeManager {
         this.updateButtonText('build-market-btn', `Build ${city.markets.name}`);
         this.updateButtonText('build-university-btn', `Build ${city.universities.name}`);
         
-        // Update button descriptions
+        // Update button descriptions with theme-specific names
         this.updateButtonDescription('build-university-btn', `+10% global efficiency per ${city.universities.name.toLowerCase()}`);
+        this.updateButtonDescription('hire-politician-btn', `+5% trading efficiency per ${city.politicians.name.toLowerCase()}`);
+        this.updateButtonDescription('build-market-btn', `+15% trading efficiency per ${city.markets.name.toLowerCase()}`);
         
         // Update status labels
         this.updateLabel('police-label', `${city.police.name}:`);
