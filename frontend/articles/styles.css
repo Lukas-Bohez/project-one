@@ -169,3 +169,88 @@ html, body {
 @media (min-width: 960px){
   .article {padding: 2.25rem 2.6rem}
 }
+
+/* Mobile optimizations - reduce excessive margins/padding */
+@media (max-width: 768px) {
+  .a-wrap {
+    padding: 0.75rem clamp(0.5rem, 2vw, 1rem);
+  }
+  
+  .a-topbar {
+    gap: 0.5rem;
+    padding-block: 0.15rem;
+  }
+  
+  .article {
+    padding: clamp(0.75rem, 2.5vw, 1.5rem);
+    margin-left: 0;
+    margin-right: 0;
+  }
+  
+  .article h1 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    margin-bottom: 0.5rem;
+  }
+  
+  .article h2 {
+    font-size: clamp(1.2rem, 2vw, 1.4rem);
+    margin: 1rem 0 0.4rem;
+  }
+  
+  .article p {
+    margin: 0.75rem 0;
+    font-size: 1rem;
+  }
+  
+  .article ul, .article ol {
+    padding-left: 1rem;
+    margin: 0.5rem 0 0.75rem;
+  }
+  
+  .article blockquote {
+    padding-left: 0.6rem;
+    margin: 0.8rem 0;
+  }
+  
+  .a-card__body {
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .a-wrap {
+    padding: 0.5rem;
+  }
+  
+  .article {
+    padding: 0.75rem;
+    border-radius: 8px;
+  }
+  
+  .article h1 {
+    font-size: 1.4rem;
+  }
+  
+  .article h2 {
+    font-size: 1.15rem;
+  }
+  
+  .article p {
+    font-size: 0.95rem;
+  }
+  
+  .a-card__body {
+    padding: 0.6rem;
+  }
+  
+  .a-toolbar {
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  
+  .a-input, .a-select {
+    padding: 0.5rem 0.6rem;
+    margin-left: 0;
+    margin-right: 0;
+  }
+}

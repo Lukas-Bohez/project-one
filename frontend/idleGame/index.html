@@ -3,101 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Industrial Empire - Advanced Idle Game | Free Monetized Idle Game</title>
-    <meta name="description" content="Play Industrial Empire, the ultimate free idle game with monetization features. Mine resources, build factories, and earn rewards through strategic gameplay and ad interactions.">
-    <meta name="keywords" content="idle game, industrial game, resource management, free game, monetized game, mining game, factory game">
-    
-    <!-- AdSense Script -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449" crossorigin="anonymous"></script>
+    <title>Industrial Empire - Dark Narrative Idle Game</title>
+    <meta name="description" content="Play Industrial Empire, a dark narrative idle game that takes you through the rise and fall of empires. Experience a deep story from tech giant to the final end.">
+    <meta name="keywords" content="idle game, industrial game, resource management, narrative game, dark story, prestige game">
     
     <link rel="stylesheet" href="css/style.css">
-    
-    <style>
-        /* Advertisement Styles */
-        .ad-container {
-            margin: 15px 0;
-            text-align: center;
-            border: 1px solid rgba(100, 255, 218, 0.3);
-            border-radius: 8px;
-            padding: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-        }
-        
-        .ad-label {
-            display: block;
-            font-size: 0.7rem;
-            color: #64ffda;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            opacity: 0.8;
-        }
-        
-        .ad-unit {
-            margin: 0 auto;
-            min-height: 90px;
-        }
-        
-        .monetization-panel {
-            background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
-            color: #1a1a2e;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
-            border: 2px solid #ffd700;
-            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
-        }
-        
-        .monetization-panel h3 {
-            margin: 0 0 15px 0;
-            color: #1a1a2e;
-            font-size: 1.2rem;
-        }
-        
-        .ad-reward-btn {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            margin: 5px;
-            transition: all 0.3s ease;
-            min-width: 200px;
-        }
-        
-        .ad-reward-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
-        }
-        
-        .ad-reward-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .ad-cooldown {
-            font-size: 0.8rem;
-            color: #666;
-            margin-top: 5px;
-        }
-        
-        @media (max-width: 768px) {
-            .ad-container {
-                margin: 10px 0;
-                padding: 8px;
-            }
-            
-            .monetization-panel {
-                padding: 15px;
-                margin: 15px 0;
-            }
-        }
-    </style>
 </head>
 <body>
     <div id="game-container">
@@ -107,27 +17,27 @@
             <div class="resource-display">
                 <div class="resource-item stone">
                     <span class="resource-icon">🪨</span>
-                    <span class="resource-label">Stone:</span>
+                    <span id="stone-label" class="resource-label">Stone:</span>
                     <span id="stone-amount" class="resource-value">0</span>
                 </div>
                 <div class="resource-item coal">
                     <span class="resource-icon">⚫</span>
-                    <span class="resource-label">Coal:</span>
+                    <span id="coal-label" class="resource-label">Coal:</span>
                     <span id="coal-amount" class="resource-value">0</span>
                 </div>
                 <div class="resource-item iron">
                     <span class="resource-icon">⚙️</span>
-                    <span class="resource-label">Iron:</span>
+                    <span id="iron-label" class="resource-label">Iron:</span>
                     <span id="iron-amount" class="resource-value">0</span>
                 </div>
                 <div class="resource-item silver">
                     <span class="resource-icon">🥈</span>
-                    <span class="resource-label">Silver:</span>
+                    <span id="silver-label" class="resource-label">Silver:</span>
                     <span id="silver-amount" class="resource-value">0</span>
                 </div>
                 <div class="resource-item gold">
                     <span class="resource-icon">🥇</span>
-                    <span class="resource-label">Gold:</span>
+                    <span id="gold-label" class="resource-label">Gold:</span>
                     <span id="gold-amount" class="resource-value">0</span>
                 </div>
             </div>
@@ -209,48 +119,6 @@
                             </div>
                             <div class="progress progress-green"><div id="mining-efficiency-bar" class="progress-bar" style="width: 100%"></div></div>
                         </div>
-                    </div>
-                    
-                    <!-- Monetization Panel -->
-                    <div class="panel monetization-panel">
-                        <h3>💰 Premium Mining Boosts</h3>
-                        <div class="ad-reward-buttons">
-                            <button id="ad-double-resources-btn" class="ad-reward-btn">
-                                🎥 Watch Ad: Double All Resources (5min)
-                                <div id="ad-double-cooldown" class="ad-cooldown"></div>
-                            </button>
-                            
-                            <button id="ad-convert-resources-btn" class="ad-reward-btn">
-                                🎥 Watch Ad: Convert All Resources to Gold
-                                <div id="ad-convert-cooldown" class="ad-cooldown"></div>
-                            </button>
-                            
-                            <button id="ad-gold-bonus-btn" class="ad-reward-btn">
-                                🎥 Watch Ad: +1000 Gold Bonus
-                                <div id="ad-gold-cooldown" class="ad-cooldown"></div>
-                            </button>
-                            
-                            <button id="ad-efficiency-boost-btn" class="ad-reward-btn">
-                                🎥 Watch Ad: +50% Mining Efficiency (10min)
-                                <div id="ad-efficiency-cooldown" class="ad-cooldown"></div>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Advertisement -->
-                <div class="ad-container">
-                    <span class="ad-label">Advertisement</span>
-                    <div class="ad-unit">
-                        <ins class="adsbygoogle"
-                             style="display:block"
-                             data-ad-client="ca-pub-8418485814964449"
-                             data-ad-slot="7822007431"
-                             data-ad-format="auto"
-                             data-full-width-responsive="true"></ins>
-                        <script>
-                             (adsbygoogle = window.adsbygoogle || []).push({});
-                        </script>
                     </div>
                 </div>
             </section>
@@ -460,22 +328,6 @@
                                 <span id="corruption-level" class="resource-count">0%</span>
                             </div>
                         </div>
-                    </div>
-                </div>
-                
-                <!-- Advertisement -->
-                <div class="ad-container">
-                    <span class="ad-label">Advertisement</span>
-                    <div class="ad-unit">
-                        <ins class="adsbygoogle"
-                             style="display:block"
-                             data-ad-client="ca-pub-8418485814964449"
-                             data-ad-slot="7822007431"
-                             data-ad-format="auto"
-                             data-full-width-responsive="true"></ins>
-                        <script>
-                             (adsbygoogle = window.adsbygoogle || []).push({});
-                        </script>
                     </div>
                 </div>
             </section>
@@ -983,22 +835,6 @@
                         </div>
                     </div>
                 </div>
-                
-                <!-- Bottom Advertisement -->
-                <div class="ad-container">
-                    <span class="ad-label">Advertisement</span>
-                    <div class="ad-unit">
-                        <ins class="adsbygoogle"
-                             style="display:block"
-                             data-ad-client="ca-pub-8418485814964449"
-                             data-ad-slot="7822007431"
-                             data-ad-format="auto"
-                             data-full-width-responsive="true"></ins>
-                        <script>
-                             (adsbygoogle = window.adsbygoogle || []).push({});
-                        </script>
-                    </div>
-                </div>
             </section>
         </main>
 
@@ -1051,15 +887,17 @@
             </div>
         </div>
     </div>
-    <div class="emptyspace"></div>
+        <div class="emptyspace"></div>
 
     <!-- JavaScript Modules -->
     <script src="js/game/ResourceManager.js"></script>
     <script src="js/game/UpgradeSystem.js"></script>
     <script src="js/game/MarketSystem.js"></script>
     <script src="js/game/NewResourceManager.js"></script>
+    <script src="js/game/RebirthThemes.js"></script>
     <script src="js/save/SaveManager.js"></script>
     <script src="js/ui/UIManager.js"></script>
+    <script src="js/ui/UIThemeManager.js"></script>
     <script src="js/game/GameEngine.js"></script>
     <script src="js/api/ApiClient.js"></script>
     <script src="js/app.js"></script>
@@ -1067,3 +905,4 @@
     <script src="../js/lofi.js" defer></script>
 </body>
 </html>
+```
