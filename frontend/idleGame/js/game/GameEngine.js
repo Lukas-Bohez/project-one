@@ -1353,8 +1353,25 @@ class GameEngine {
         const newRebirthCount = currentRebirths + 1;
         const savedEfficiency = { ...this.state.efficiency };
         
+        // Save unlocks before reset
+        const savedUnlocks = {
+            unlock_coal: this.state.unlock_coal,
+            unlock_iron: this.state.unlock_iron,
+            unlock_silver: this.state.unlock_silver,
+            unlock_oil: this.state.unlock_oil,
+            unlock_rubber: this.state.unlock_rubber,
+            unlock_processing: this.state.unlock_processing,
+            unlock_electronics: this.state.unlock_electronics,
+            unlock_jewelry: this.state.unlock_jewelry,
+            unlock_automotive: this.state.unlock_automotive,
+            unlock_gold: this.state.unlock_gold
+        };
+        
         // Reset game but keep some progress
         this.state = this.getInitialState();
+        
+        // Restore unlocks after reset
+        Object.assign(this.state, savedUnlocks);
         
         // Restore enhanced efficiency
         this.state.efficiency = savedEfficiency;
@@ -1365,6 +1382,12 @@ class GameEngine {
         this.state.efficiency.processing *= (1 + rebirthBonus.processing);
         this.state.efficiency.trading *= (1 + rebirthBonus.trading);
         this.state.efficiency.transport *= (1 + rebirthBonus.transport);
+        
+        // Safety check: Ensure gold is never negative after rebirth
+        if (this.state.resources.gold < 0) {
+            console.warn('⚠️ Rebirth resulted in negative gold, fixing to 10');
+            this.state.resources.gold = 10;
+        }
         
         // Apply theme
         if (this.themeManager) {
