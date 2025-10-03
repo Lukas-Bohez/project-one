@@ -51,7 +51,6 @@
             <button id="tab-btn-transport" class="tab-btn" data-tab="transport">🚛 Transport</button>
             <button id="tab-btn-city" class="tab-btn" data-tab="city">🏙️ City</button>
             <button id="tab-btn-research" class="tab-btn" data-tab="research">🔬 Research</button>
-            <button id="tab-btn-prestige" class="tab-btn" data-tab="prestige" id="prestige-tab" style="display: none;">👑 Prestige</button>
         </nav>
 
         <!-- Main Game Area -->
@@ -355,8 +354,14 @@
                             
                             <button id="build-university-btn" class="action-btn city-btn" data-action="buildCity" data-building="university">
                                 <div class="btn-title">Build R&D Labs</div>
-                                <div class="btn-cost">Cost: <span id="university-cost">2500</span> gold</div>
-                                <div class="btn-description">Unlock advanced research</div>
+                                <div class="btn-cost">Cost: <span id="university-cost">2500</span> venture capital</div>
+                                <div class="btn-description">+10% global efficiency per lab</div>
+                            </button>
+
+                            <button id="build-sales-dept-btn" class="action-btn city-btn" data-action="buildCity" data-building="salesDepartment">
+                                <div class="btn-title">Build Sales Bot</div>
+                                <div class="btn-cost">Cost: <span id="sales-dept-cost">300</span> venture capital</div>
+                                <div class="btn-description">Auto-sells products (upgradable AI)</div>
                             </button>
 
                             <button id="sell-finished-btn" class="action-btn sell-btn" data-action="sellOneFinished">
@@ -364,11 +369,6 @@
                                 <div class="btn-cost">Manual</div>
                                 <div class="btn-description">Sells best value item in city</div>
                             </button>
-
-                            <label class="toggle" style="display:block; margin-top:8px;">
-                                <input type="checkbox" id="auto-sell-finished">
-                                <span>Auto-sell finished goods</span>
-                            </label>
 
                             <button id="rebirth-btn" class="action-btn prestige-btn" data-action="rebirth">
                                 <div class="btn-title">🔄 Rebirth Empire</div>
@@ -400,6 +400,10 @@
                             <div class="resource-row">
                                 <span id="universities-label" class="resource-type">R&D Labs:</span>
                                 <span id="universities-count" class="resource-count">0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span id="sales-dept-label" class="resource-type">Sales Bot:</span>
+                                <span id="sales-dept-count" class="resource-count">Level 0</span>
                             </div>
                             <div class="resource-row">
                                 <span class="resource-type">Rebirths:</span>
@@ -646,62 +650,6 @@
                             <div class="resource-row">
                                 <span class="resource-type">Next Unlock:</span>
                                 <span id="next-research" class="resource-count">Mining Techniques</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Prestige Tab -->
-            <section id="prestige-tab" class="tab-content">
-                <div class="panel-grid">
-                    <div class="panel">
-                        <h2>👑 Prestige System</h2>
-                        <div class="prestige-info">
-                            <p>Reset your empire to gain powerful permanent bonuses!</p>
-                            
-                            <div class="prestige-requirements">
-                                <h3>Prestige Requirements:</h3>
-                                <div class="requirement">
-                                    <span>Total Gold Earned:</span>
-                                    <span><span id="prestige-gold-current">0</span> / <span id="prestige-gold-required">10000</span></span>
-                                </div>
-                            </div>
-
-                            <div class="prestige-rewards">
-                                <h3>Next Prestige Rewards:</h3>
-                                <div class="reward">
-                                    <span>Prestige Points:</span>
-                                    <span id="prestige-points-gain">+1</span>
-                                </div>
-                                <div class="reward">
-                                    <span>Global Efficiency:</span>
-                                    <span>+10% per point</span>
-                                </div>
-                            </div>
-
-                            <button id="prestige-btn" class="prestige-button" data-action="prestige">
-                                <div class="btn-title">Prestige Reset</div>
-                                <div class="btn-cost">Requires: 10,000 total gold</div>
-                                <div class="btn-description">Gain permanent bonuses</div>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="panel">
-                        <h2>⭐ Prestige Status</h2>
-                        <div class="resource-grid">
-                            <div class="resource-row">
-                                <span class="resource-type">Prestige Points:</span>
-                                <span id="prestige-points" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Global Efficiency:</span>
-                                <span id="prestige-efficiency" class="resource-count">100%</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Prestige Resets:</span>
-                                <span id="prestige-resets" class="resource-count">0</span>
                             </div>
                         </div>
                     </div>

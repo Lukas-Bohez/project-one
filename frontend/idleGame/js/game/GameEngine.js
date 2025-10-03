@@ -69,13 +69,13 @@ class GameEngine {
                 refineries: 0,  // Oil -> fuel, ore -> ingots
                 mints: 0,       // Silver/Gold processing
                 // New buildings
-                polisher: 0,
-                coker: 0,
-                chemPlant: 0,
-                chipFab: 0,
-                jeweler: 0,
-                assembly: 0,
-                autoPlant: 0
+                polishers: 0,
+                cokers: 0,
+                chemPlants: 0,
+                chipFabs: 0,
+                jewelers: 0,
+                assemblies: 0,
+                autoPlants: 0
             },
             
             // Market & Trade
@@ -103,6 +103,7 @@ class GameEngine {
                 banks: 0,
                 markets: 0,
                 universities: 0,
+                salesDepartment: 0,  // Auto-sells finished goods (upgradable)
                 corruption: 0,
                 // Theft system
                 theftRisk: 0,
@@ -114,9 +115,7 @@ class GameEngine {
                 rebirths: 0,
                 // Tax system
                 taxRate: 0.1, // 10% base tax on gold income
-                politicians: 0,
-                // Auto systems
-                autoSellFinished: false
+                politicians: 0
             },
             
             // Research
@@ -153,20 +152,6 @@ class GameEngine {
                 // City stats
                 totalTheftLosses: 0,
                 totalTaxesPaid: 0
-            },
-            
-            // Prestige
-            prestige: {
-                points: 0,
-                resets: 0,
-                unlocked: false,
-                bonuses: {
-                    mining: 0,
-                    processing: 0,
-                    trading: 0,
-                    transport: 0,
-                    city: 0
-                }
             },
             
             // Ad/Monetization system
@@ -301,7 +286,6 @@ class GameEngine {
         this.updateUpgrades(deltaTime);
         this.updateAdCooldowns();
         this.updateAutoSellFinished(now);
-        this.checkPrestige(); // Check for prestige unlock
         
         // Update UI periodically (not every tick for performance)
         if (now - this.lastUIUpdate > this.uiUpdateRate) {
@@ -321,23 +305,77 @@ class GameEngine {
         }
     }
 
-    setAutoSellFinished(enabled) {
-        this.state.city.autoSellFinished = !!enabled;
-        if (enabled) this.nextAutoSellFinishedAt = 0;
-    }
-
     updateAutoSellFinished(now) {
-        if (!this.state?.city?.autoSellFinished) return;
         if (!this.newResourceManager) return;
-        const markets = this.state.city.markets || 0;
-        const interval = Math.max(250, 1000 - markets * 150);
+        const salesDept = this.state.city?.salesDepartment || 0;
+        if (salesDept <= 0) return; // No sales department = no auto-sell
+        
+        // Each level of sales department increases speed
+        // Level 1: sell every 1000ms, Level 2: 800ms, Level 3: 600ms, etc.
+        const interval = Math.max(100, 1000 - (salesDept - 1) * 200);
+        
         if (now < this.nextAutoSellFinishedAt) return;
+        
         const inv = this.state.cityInventory?.finished || {};
-        for (const k in inv) { if (inv[k] > 0) { this.sellOneFinished(); break; } }
+        for (const k in inv) { 
+            if (inv[k] > 0) { 
+                this.sellOneFinished();
+                break;
+            }
+        }
         this.nextAutoSellFinishedAt = now + interval;
     }
 
+    updateAutoTransport(deltaTime) {
+        if (!this.newResourceManager) return;
+        
+        // Transport rate: based on transport capacity and efficiency
+        // Higher capacity = faster transport
+        const capacity = this.state.transport?.capacity || 0;
+        if (capacity <= 0) return;
+        
+        // Transport efficiency: 1 item per second per 100 capacity units
+        const transportRate = (capacity / 100) * deltaTime;
+        
+        // Accumulate fractional transports
+        this.transportAccumulator = (this.transportAccumulator || 0) + transportRate;
+        
+        // Transport whole units
+        while (this.transportAccumulator >= 1) {
+            const result = this.newResourceManager.transportOne(capacity);
+            if (!result || result.moved === 0) break; // Nothing left to transport
+            this.transportAccumulator -= 1;
+        }
+    }
+
+    updateRDLabsEfficiency() {
+        // R&D Labs provide efficiency boosts across the board
+        // Each lab adds +10% to global efficiency AND market efficiency
+        const labs = this.state.city.universities || 0;
+        const baseEfficiency = 1.0;
+        const rdBonus = labs * 0.10; // 10% per lab
+        
+        // Calculate total global efficiency from all sources
+        let globalEff = baseEfficiency + rdBonus;
+        
+        // Apply research bonuses if they exist
+        if (this.state.research?.quantum) {
+            globalEff *= 2.0; // Quantum research doubles everything
+        }
+        
+        this.state.efficiency.global = globalEff;
+        
+        // R&D Labs also boost market/trading efficiency directly
+        this.state.efficiency.trading = baseEfficiency + rdBonus;
+        if (this.state.research?.quantum) {
+            this.state.efficiency.trading *= 2.0;
+        }
+    }
+
     updateResources(deltaTime) {
+        // Update R&D Labs efficiency bonus
+        this.updateRDLabsEfficiency();
+        
         // Calculate base production from workers
         this.updateMiningProduction(deltaTime);
         
@@ -351,6 +389,9 @@ class GameEngine {
         if (this.newResourceManager) {
             this.newResourceManager.update(deltaTime);
         }
+        
+        // Automatic transport of goods from factory to city
+        this.updateAutoTransport(deltaTime);
         
         // Handle automatic trading (uses current transport penalties)
         this.updateAutomaticTrading(deltaTime);
@@ -608,21 +649,6 @@ class GameEngine {
         // This could be expanded for time-based upgrades
     }
     
-    checkPrestige() {
-        // Unlock prestige when total stone sold reaches 1M
-        if (this.state.totalStoneSold >= 1000000 && !this.state.prestigeUnlocked) {
-            this.state.prestigeUnlocked = true;
-            this.showPrestigePanel();
-        }
-    }
-    
-    showPrestigePanel() {
-        const prestigePanel = document.getElementById('prestige-panel');
-        if (prestigePanel) {
-            prestigePanel.style.display = 'block';
-        }
-    }
-    
     updateUI() {
         // Update resource display
         this.updateElement('stone-amount', this.formatNumber(this.state.resources.stone));
@@ -636,18 +662,12 @@ class GameEngine {
         this.updateElement('coal-miners-count', this.state.workers.coalMiners.toString());
         this.updateElement('iron-miners-count', this.state.workers.ironMiners.toString());
         this.updateElement('silver-miners-count', this.state.workers.silverMiners.toString());
-    const mineEff = Math.round(this.state.efficiency.mining * 100);
-    this.updateElement('mining-efficiency', mineEff + '%');
-    const mib = document.getElementById('mining-efficiency-bar'); if (mib) mib.style.width = Math.max(0, Math.min(100, mineEff)) + '%';
         
         // Update processing status
         this.updateElement('smelters-count', this.state.processors.smelters.toString());
         this.updateElement('forges-count', this.state.processors.forges.toString());
         this.updateElement('refineries-count', this.state.processors.refineries.toString());
         this.updateElement('mints-count', this.state.processors.mints.toString());
-    const procEff = Math.round(this.state.efficiency.processing * 100);
-    this.updateElement('processing-efficiency', procEff + '%');
-    const peb = document.getElementById('processing-efficiency-bar'); if (peb) peb.style.width = Math.max(0, Math.min(100, procEff)) + '%';
         
         // Update market status
         this.updateElement('stone-traders-count', this.state.traders.stoneTraders.toString());
@@ -671,6 +691,11 @@ class GameEngine {
         this.updateElement('markets-count', this.state.city.markets.toString());
         this.updateElement('universities-count', this.state.city.universities.toString());
         
+        // Update sales department with level and speed info
+        const salesDept = this.state.city.salesDepartment || 0;
+        const salesSpeed = salesDept > 0 ? `Level ${salesDept} (${(1000 / Math.max(100, 1000 - (salesDept - 1) * 200)).toFixed(1)}/sec)` : 'Level 0';
+        this.updateElement('sales-dept-count', salesSpeed);
+        
         // Update city dynamics
         this.updateElement('politicians-count', this.state.city.politicians?.toString() || '0');
         
@@ -684,23 +709,63 @@ class GameEngine {
         
         this.updateElement('rebirths-count', (this.state.city.rebirths || 0).toString());
         
+        // Update global efficiency display (for mining/processing tabs)
+        const globalEff = Math.round(this.state.efficiency.global * 100);
+        const mineEffTotal = Math.round(this.state.efficiency.mining * this.state.efficiency.global * 100);
+        const procEffTotal = Math.round(this.state.efficiency.processing * this.state.efficiency.global * 100);
+        
+        this.updateElement('mining-efficiency', `${mineEffTotal}%`);
+        const mib = document.getElementById('mining-efficiency-bar'); 
+        if (mib) mib.style.width = Math.max(0, Math.min(200, mineEffTotal)) + '%';
+        
+        this.updateElement('processing-efficiency', `${procEffTotal}%`);
+        const peb = document.getElementById('processing-efficiency-bar'); 
+        if (peb) peb.style.width = Math.max(0, Math.min(200, procEffTotal)) + '%';
+        
         // Update research status
         const completedResearch = Object.values(this.state.research).filter(r => r).length;
         this.updateElement('completed-research', completedResearch.toString());
         
-        // Update prestige info
-        this.updateElement('prestige-points', this.state.prestige.points.toString());
-        this.updateElement('prestige-efficiency', Math.round(this.state.efficiency.global * 100) + '%');
-        this.updateElement('prestige-resets', this.state.prestige.resets.toString());
-        
-        // Check prestige unlock
-        if (this.state.stats.totalGoldEarned >= 10000 && !this.state.prestige.unlocked) {
-            this.state.prestige.unlocked = true;
-            document.getElementById('prestige-tab').style.display = 'block';
-        }
+        // Update factory and city inventories
+        this.updateInventoryDisplays();
         
         // Update button states
         this.updateButtonStates();
+    }
+    
+    updateInventoryDisplays() {
+        // Update factory inventory - show BOTH processed AND finished goods
+        const factoryDiv = document.getElementById('factory-finished-inventory');
+        if (factoryDiv) {
+            const processedInv = this.state.factory?.processed || {};
+            const finishedInv = this.state.factory?.finished || {};
+            
+            const processedItems = Object.entries(processedInv).filter(([_, qty]) => qty > 0);
+            const finishedItems = Object.entries(finishedInv).filter(([_, qty]) => qty > 0);
+            const allItems = [...processedItems, ...finishedItems];
+            
+            if (allItems.length === 0) {
+                factoryDiv.textContent = '(empty)';
+            } else {
+                factoryDiv.innerHTML = allItems.map(([item, qty]) => 
+                    `<div class="inventory-item">${item}: ${Math.floor(qty)}</div>`
+                ).join('');
+            }
+        }
+        
+        // Update city finished goods inventory  
+        const cityInv = this.state.cityInventory?.finished || {};
+        const cityDiv = document.getElementById('city-finished-inventory');
+        if (cityDiv) {
+            const items = Object.entries(cityInv).filter(([_, qty]) => qty > 0);
+            if (items.length === 0) {
+                cityDiv.innerHTML = '<div class="empty-inventory">(empty)</div>';
+            } else {
+                cityDiv.innerHTML = items.map(([item, qty]) => 
+                    `<div class="inventory-item">${item}: ${Math.floor(qty)}</div>`
+                ).join('');
+            }
+        }
     }
     
     updateButtonStates() {
@@ -744,6 +809,21 @@ class GameEngine {
         this.updateButtonState('build-bank-btn', this.state.resources.gold >= 500);
         this.updateButtonState('build-market-btn', this.state.resources.gold >= 1000);
         this.updateButtonState('build-university-btn', this.state.resources.gold >= 2500);
+        
+        // Sales department button - dynamic cost based on level
+        const salesDeptLevel = this.state.city.salesDepartment || 0;
+        const salesDeptCost = 300 * Math.pow(1.5, salesDeptLevel);
+        this.updateElement('sales-dept-cost', Math.floor(salesDeptCost).toString());
+        this.updateButtonState('build-sales-dept-btn', this.state.resources.gold >= salesDeptCost);
+        
+        // Update button text based on level
+        const salesBtn = document.getElementById('build-sales-dept-btn');
+        if (salesBtn) {
+            const titleDiv = salesBtn.querySelector('.btn-title');
+            if (titleDiv) {
+                titleDiv.textContent = salesDeptLevel === 0 ? 'Build Sales Bot' : `Upgrade Sales Bot (Lv ${salesDeptLevel})`;
+            }
+        }
         
         // Rebirth button (enable at 99.5%+ decay to handle floating point + rounding)
         const effectiveMaxDecay = this.state.city.adjustedMaxDecay || this.state.city.maxDecay;
@@ -960,17 +1040,38 @@ class GameEngine {
             autoPlant: 5000
         };
         
+        // Map singular button names to plural state keys
+        const stateKeyMap = {
+            smelter: 'smelters',
+            forge: 'forges',
+            refinery: 'refineries',
+            mint: 'mints',
+            polisher: 'polishers',
+            coker: 'cokers',
+            chemPlant: 'chemPlants',
+            chipFab: 'chipFabs',
+            jeweler: 'jewelers',
+            assembly: 'assemblies',
+            autoPlant: 'autoPlants'
+        };
+        
         const cost = costs[processorType];
+        const stateKey = stateKeyMap[processorType];
+        
+        if (!stateKey) {
+            console.error(`Unknown processor type: ${processorType}`);
+            return false;
+        }
+        
         if (this.state.resources.gold >= cost) {
             this.state.resources.gold -= cost;
             this.state.stats.totalGoldSpent += cost;
-            const keyMap = { chemPlant: 'chemPlant', chipFab: 'chipFab', assembly: 'assembly', autoPlant: 'autoPlant', polisher: 'polisher', coker: 'coker', jeweler: 'jeweler' };
-            const key = keyMap[processorType] || (processorType + 's');
-            this.state.processors[key] = (this.state.processors[key] || 0) + 1;
+            // Use the plural state key
+            this.state.processors[stateKey] = (this.state.processors[stateKey] || 0) + 1;
             
             this.playSound('build');
             this.flashElement('gold-amount');
-            console.log(`Built ${processorType} for ${cost} gold`);
+            console.log(`Built ${processorType} (${stateKey}) for ${cost} gold`);
             return true;
         }
         return false;
@@ -1068,8 +1169,9 @@ class GameEngine {
             Object.keys(inv).forEach(k => {
                 const amount = inv[k];
                 if (amount > 0) {
-                    // approximate value from catalog if present
-                    const meta = (this.newResourceManager.catalog.finished[k] || {});
+                    // Check both processed and finished catalogs for value
+                    const meta = this.newResourceManager.catalog.processed[k] || 
+                                 this.newResourceManager.catalog.finished[k] || {};
                     const val = meta.value || 0;
                     if (val > bestVal) { bestVal = val; best = k; }
                 }
@@ -1086,21 +1188,49 @@ class GameEngine {
     }
     
     buildCity(buildingType) {
-        const costs = {
-            bank: 500,
-            market: 1000,
-            university: 2500
+        // Define costs and proper state keys
+        const buildingConfig = {
+            bank: { cost: 500, stateKey: 'banks' },
+            market: { cost: 1000, stateKey: 'markets' },
+            university: { cost: 2500, stateKey: 'universities' },
+            salesDepartment: { cost: 300, stateKey: 'salesDepartment' }
         };
         
-        const cost = costs[buildingType];
+        const config = buildingConfig[buildingType];
+        if (!config) return false;
+        
+        // Sales department has scaling costs for upgrades
+        if (buildingType === 'salesDepartment') {
+            const currentLevel = this.state.city.salesDepartment || 0;
+            const cost = Math.floor(config.cost * Math.pow(1.5, currentLevel)); // 300, 450, 675, 1012, etc.
+            
+            console.log(`Sales Bot: Current level ${currentLevel}, Cost: ${cost}, Gold: ${this.state.resources.gold}`);
+            
+            if (this.state.resources.gold >= cost) {
+                this.state.resources.gold -= cost;
+                this.state.stats.totalGoldSpent += cost;
+                this.state.city.salesDepartment++;
+                
+                this.playSound('build');
+                this.flashElement('gold-amount');
+                console.log(`✅ Sales Bot upgraded! New level: ${this.state.city.salesDepartment}`);
+                this.updateUI(); // Force UI update
+                return true;
+            }
+            console.log(`❌ Not enough gold for Sales Bot (need ${cost})`);
+            return false;
+        }
+        
+        // Regular buildings (bank, market, university)
+        const cost = config.cost;
         if (this.state.resources.gold >= cost) {
             this.state.resources.gold -= cost;
             this.state.stats.totalGoldSpent += cost;
-            this.state.city[buildingType + 's']++;
+            this.state.city[config.stateKey]++;
             
             this.playSound('build');
             this.flashElement('gold-amount');
-            console.log(`Built ${buildingType} for ${cost} gold`);
+            console.log(`Built ${buildingType} (${config.stateKey}) for ${cost} gold. Total: ${this.state.city[config.stateKey]}`);
             return true;
         }
         return false;
@@ -1176,32 +1306,6 @@ class GameEngine {
             this.playSound('sell');
             this.flashElement('gold-amount');
             console.log(`Sold 1 ${resourceType} for ${goldEarned.toFixed(1)} gold`);
-        }
-    }
-    
-    prestige() {
-        if (this.state.stats.totalGoldEarned >= 10000) {
-            const prestigeGain = Math.floor(this.state.stats.totalGoldEarned / 10000);
-            
-            // Store current prestige data
-            const currentPrestige = {
-                points: this.state.prestige.points + prestigeGain,
-                resets: this.state.prestige.resets + 1,
-                unlocked: true
-            };
-            
-            // Reset most things but keep prestige
-            this.state = this.getInitialState();
-            this.state.prestige = currentPrestige;
-            
-            // Apply prestige bonuses
-            this.state.efficiency.global = 1.0 + (currentPrestige.points * 0.1); // 10% bonus per point
-            
-            this.playSound('prestige');
-            console.log(`Prestiged! Gained ${prestigeGain} prestige points. Total: ${currentPrestige.points}`);
-            
-            // Show prestige tab
-            document.getElementById('prestige-tab').style.display = 'block';
         }
     }
     
@@ -1476,7 +1580,6 @@ class GameEngine {
         }
     }
 
-    // Advertisement Reward System
     watchAdForDoubleResources() {
         const now = Date.now();
         if (this.state.ads.doubleResources.cooldown > now) {

@@ -72,6 +72,12 @@ class RebirthThemes {
                     automation: { name: "CI/CD Pipeline", description: "Unlock automated systems" },
                     logistics: { name: "Cloud Infrastructure", description: "+50% infrastructure efficiency" }
                 },
+                unlocks: {
+                    unlock_coal: { title: "Unlock Cloud Servers", description: "Unlock 2nd resource tier" },
+                    unlock_iron: { title: "Unlock User Accounts", description: "Unlock 3rd resource tier" },
+                    unlock_silver: { title: "Unlock Premium Subs", description: "Unlock 4th resource tier" },
+                    unlock_processing: { title: "Unlock Deployment", description: "Unlock production buildings" }
+                },
                 rebirthButton: { text: "Rebirth Empire", emoji: "🔄" }
             },
             {
@@ -118,7 +124,7 @@ class RebirthThemes {
                     police: { name: "Security Guards" },
                     banks: { name: "Credit Unions" },
                     markets: { name: "Farmer's Markets" },
-                    universities: { name: "Culinary Schools" },
+                    universities: { name: "culinary school" },
                     politicians: { name: "Health Inspectors" }
                 },
                 tabs: {
@@ -134,6 +140,12 @@ class RebirthThemes {
                     processing: { name: "Kitchen Efficiency", description: "+25% food prep speed" },
                     automation: { name: "Self-Checkout Systems", description: "Unlock automated sales" },
                     logistics: { name: "Warehouse Management", description: "+50% logistics efficiency" }
+                },
+                unlocks: {
+                    unlock_coal: { title: "Unlock Canned Goods", description: "Unlock 2nd product line" },
+                    unlock_iron: { title: "Unlock Frozen Items", description: "Unlock 3rd product line" },
+                    unlock_silver: { title: "Unlock Premium Brands", description: "Unlock 4th product line" },
+                    unlock_processing: { title: "Unlock Food Prep", description: "Unlock kitchen facilities" }
                 },
                 rebirthButton: { text: "Close Chain", emoji: "🔄" }
             },
@@ -192,6 +204,12 @@ class RebirthThemes {
                     city: { name: "Company Town", emoji: "🏘️" },
                     research: { name: "Prospecting", emoji: "🔍" }
                 },
+                unlocks: {
+                    unlock_coal: { title: "Unlock Coal Seams", description: "Unlock 2nd resource tier" },
+                    unlock_iron: { title: "Unlock Iron Veins", description: "Unlock 3rd resource tier" },
+                    unlock_silver: { title: "Unlock Silver Deposits", description: "Unlock 4th resource tier" },
+                    unlock_processing: { title: "Unlock Smelting", description: "Unlock ore processing" }
+                },
                 rebirthButton: { text: "Abandon Mines", emoji: "🔄" }
             },
             {
@@ -248,6 +266,12 @@ class RebirthThemes {
                     transport: { name: "Shipping", emoji: "🚚" },
                     city: { name: "Industrial Park", emoji: "🏗️" },
                     research: { name: "Efficiency", emoji: "⚙️" }
+                },
+                unlocks: {
+                    unlock_coal: { title: "Unlock Rubber Parts", description: "Unlock 2nd material tier" },
+                    unlock_iron: { title: "Unlock Electronics", description: "Unlock 3rd material tier" },
+                    unlock_silver: { title: "Unlock Precision Tools", description: "Unlock 4th material tier" },
+                    unlock_processing: { title: "Unlock Assembly", description: "Unlock production line" }
                 },
                 rebirthButton: { text: "Close Factory", emoji: "🔄" }
             },
@@ -306,6 +330,12 @@ class RebirthThemes {
                     city: { name: "Village", emoji: "🏘️" },
                     research: { name: "Learning", emoji: "📚" }
                 },
+                unlocks: {
+                    unlock_coal: { title: "Unlock Charcoal", description: "Unlock 2nd resource tier" },
+                    unlock_iron: { title: "Unlock Bronze", description: "Unlock 3rd resource tier" },
+                    unlock_silver: { title: "Unlock Fine Metals", description: "Unlock 4th resource tier" },
+                    unlock_processing: { title: "Unlock Crafting", description: "Unlock workshops" }
+                },
                 rebirthButton: { text: "Abandon Workshop", emoji: "🔄" }
             },
             {
@@ -362,6 +392,12 @@ class RebirthThemes {
                     transport: { name: "Moving", emoji: "🚶" },
                     city: { name: "Streets", emoji: "🏙️" },
                     research: { name: "Hustling", emoji: "💡" }
+                },
+                unlocks: {
+                    unlock_coal: { title: "Unlock Snacks", description: "Unlock 2nd product tier" },
+                    unlock_iron: { title: "Unlock Electronics", description: "Unlock 3rd product tier" },
+                    unlock_silver: { title: "Unlock Jewelry", description: "Unlock 4th product tier" },
+                    unlock_processing: { title: "Unlock Storage Unit", description: "Unlock inventory space" }
                 },
                 rebirthButton: { text: "Lose Everything", emoji: "🔄" }
             },
@@ -420,6 +456,12 @@ class RebirthThemes {
                     city: { name: "Wasteland", emoji: "🏚️" },
                     research: { name: "Remembering", emoji: "📖" }
                 },
+                unlocks: {
+                    unlock_coal: { title: "Find Fuel", description: "Unlock 2nd resource tier" },
+                    unlock_iron: { title: "Find Tools", description: "Unlock 3rd resource tier" },
+                    unlock_silver: { title: "Find Medicine", description: "Unlock 4th resource tier" },
+                    unlock_processing: { title: "Build Shelter", description: "Unlock basic crafting" }
+                },
                 rebirthButton: { text: "Give Up Hope", emoji: "💔" }
             },
             {
@@ -476,6 +518,12 @@ class RebirthThemes {
                     transport: { name: "Crawling", emoji: "🐌" },
                     city: { name: "Solitude", emoji: "🌑" },
                     research: { name: "Reflecting", emoji: "🪞" }
+                },
+                unlocks: {
+                    unlock_coal: { title: "Find Warmth", description: "Remember fire" },
+                    unlock_iron: { title: "Find Strength", description: "Remember tools" },
+                    unlock_silver: { title: "Find Hope", description: "Remember beauty" },
+                    unlock_processing: { title: "Find Purpose", description: "Remember creation" }
                 },
                 rebirthButton: { text: "Collapse", emoji: "😞" }
             },
@@ -534,6 +582,12 @@ class RebirthThemes {
                     city: { name: "Ward", emoji: "🏥" },
                     research: { name: "Prognosis", emoji: "📋" }
                 },
+                unlocks: {
+                    unlock_coal: { title: "Try to Eat", description: "Struggle for nutrition" },
+                    unlock_iron: { title: "Try to Move", description: "Struggle for mobility" },
+                    unlock_silver: { title: "Try to Remember", description: "Struggle for memory" },
+                    unlock_processing: { title: "Try to Live", description: "Struggle for survival" }
+                },
                 rebirthButton: { text: "Let Go", emoji: "☮️" }
             },
             {
@@ -590,6 +644,12 @@ class RebirthThemes {
                     transport: { name: "Drifting", emoji: "☁️" },
                     city: { name: "Peace", emoji: "☮️" },
                     research: { name: "Release", emoji: "🕊️" }
+                },
+                unlocks: {
+                    unlock_coal: { title: "Accept", description: "Accept what comes" },
+                    unlock_iron: { title: "Forgive", description: "Forgive yourself" },
+                    unlock_silver: { title: "Love", description: "Love what was" },
+                    unlock_processing: { title: "Release", description: "Let everything go" }
                 },
                 rebirthButton: { text: "Euthanasia", emoji: "☠️" },
                 isEnding: true
