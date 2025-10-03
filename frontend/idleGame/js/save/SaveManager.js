@@ -115,8 +115,8 @@ class SaveManager {
 
     async saveGame() {
         if (!this.isAuthenticated) {
-            this.gameEngine.showNotification('⚠️ Please login to save your game!');
-            return { success: false, message: 'Not authenticated' };
+            this.gameEngine.showNotification('⚠️ You must be logged in to save your game! Click "Login" to create an account or sign in.');
+            return { success: false, message: 'Not authenticated - Please login to save your game' };
         }
 
         try {

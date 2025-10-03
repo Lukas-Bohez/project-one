@@ -206,7 +206,14 @@ class UIManager {
 
     async handleSave() {
         if (!this.isLoggedIn) {
-            this.showNotification('Please login to save your game', 'error');
+            this.showNotification('❌ Cannot save game - Please login or create an account first!', 'error');
+            // Optionally, show the login modal to make it easier for users
+            setTimeout(() => {
+                const loginToggle = document.getElementById('login-toggle-btn');
+                if (loginToggle) {
+                    loginToggle.click();
+                }
+            }, 1500);
             return;
         }
 
@@ -226,7 +233,14 @@ class UIManager {
 
     async handleLoad() {
         if (!this.isLoggedIn) {
-            this.showNotification('Please login to load your game', 'error');
+            this.showNotification('❌ Cannot load game - Please login first!', 'error');
+            // Optionally, show the login modal
+            setTimeout(() => {
+                const loginToggle = document.getElementById('login-toggle-btn');
+                if (loginToggle) {
+                    loginToggle.click();
+                }
+            }, 1500);
             return;
         }
 
@@ -297,7 +311,7 @@ class UIManager {
             saveBtn.disabled = true;
             loadBtn.disabled = true;
             saveStatus.style.display = 'block';
-            saveStatus.textContent = 'Not logged in';
+            saveStatus.textContent = '⚠️ Not logged in - Cannot save game';
             userStatus.style.display = 'none';
         }
     }

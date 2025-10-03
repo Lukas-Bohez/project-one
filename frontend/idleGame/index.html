@@ -253,14 +253,9 @@
                                 <span id="metal-traders-label" class="resource-type">VC Networkers:</span>
                                 <span id="metal-traders-count" class="resource-count">0</span>
                             </div>
-                            <div class="resource-row" data-tooltip="Trading efficiency including transport congestion and corruption">
+                            <div class="resource-row" data-tooltip="Trading efficiency including transport congestion">
                                 <span class="resource-type">Market Efficiency:</span>
                                 <span id="market-efficiency" class="resource-count">100%</span>
-                            </div>
-                            <div class="progress progress-blue"><div id="market-efficiency-bar" class="progress-bar" style="width: 100%"></div></div>
-                            <div class="resource-row">
-                                <span class="resource-type">Corruption Level:</span>
-                                <span id="corruption-level" class="resource-count">0%</span>
                             </div>
                         </div>
                     </div>
@@ -337,13 +332,13 @@
                             <button id="hire-police-btn" class="action-btn city-btn" data-action="hireService" data-service="police">
                                 <div class="btn-title">Hire Security Team</div>
                                 <div class="btn-cost">Cost: <span id="police-cost">100</span> gold</div>
-                                <div class="btn-description">Reduces theft risk & corruption</div>
+                                <div class="btn-description">Generates city decay progress</div>
                             </button>
                             
                             <button id="hire-politician-btn" class="action-btn city-btn" data-action="hireService" data-service="politician">
                                 <div class="btn-title">Hire Lobbyists</div>
                                 <div class="btn-cost">Cost: <span id="politician-cost">250</span> gold</div>
-                                <div class="btn-description">Reduces tax rate by 2%</div>
+                                <div class="btn-description">Improves market relations</div>
                             </button>
                             
                             <button id="build-bank-btn" class="action-btn city-btn" data-action="buildCity" data-building="bank">
@@ -416,23 +411,11 @@
                     <div class="panel">
                         <h2 id="city-dynamics-header">📈 City Dynamics</h2>
                         <div class="resource-grid">
-                            <div class="resource-row">
-                                <span class="resource-type">Theft Risk:</span>
-                                <span id="theft-risk" class="resource-count">0%</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Theft Losses:</span>
-                                <span id="theft-losses" class="resource-count">0</span>
-                            </div>
                             <div class="resource-row" data-tooltip="As decay reaches 100% your city can be reborn for permanent bonuses">
                                 <span class="resource-type">City Decay:</span>
                                 <span id="city-decay" class="resource-count">0%</span>
                             </div>
                             <div class="progress progress-red"><div id="city-decay-bar" class="progress-bar" style="width: 0%"></div></div>
-                            <div class="resource-row">
-                                <span class="resource-type">Tax Rate:</span>
-                                <span id="tax-rate" class="resource-count">10%</span>
-                            </div>
                         </div>
                     </div>
 
@@ -466,7 +449,7 @@
                             <button id="research-automation-btn" class="action-btn research-btn" data-action="purchaseResearch" data-research="automation">
                                 <div id="research-automation-title" class="btn-title">Automation</div>
                                 <div class="btn-cost">Cost: <span id="research-automation-cost">50</span> gold</div>
-                                <div id="research-automation-desc" class="btn-description">Unlock auto-systems</div>
+                                <div id="research-automation-desc" class="btn-description">Unlocks auto-miners & auto-traders</div>
                             </button>
                             
                             <button id="research-processing-btn" class="action-btn research-btn" data-action="purchaseResearch" data-research="processing">
@@ -489,18 +472,22 @@
                             <button class="action-btn unlock-btn" data-unlock="unlock_coal">
                                 <div class="btn-title">Unlock Cloud Servers</div>
                                 <div class="btn-cost">Cost: 25 gold</div>
+                                <div class="btn-description">Unlock 2nd resource tier</div>
                             </button>
                             <button class="action-btn unlock-btn" data-unlock="unlock_iron">
                                 <div class="btn-title">Unlock User Accounts</div>
                                 <div class="btn-cost">Cost: 60 gold</div>
+                                <div class="btn-description">Unlock 3rd resource tier</div>
                             </button>
                             <button class="action-btn unlock-btn" data-unlock="unlock_silver">
                                 <div class="btn-title">Unlock Premium Subs</div>
                                 <div class="btn-cost">Cost: 200 gold</div>
+                                <div class="btn-description">Unlock 4th resource tier</div>
                             </button>
                             <button class="action-btn unlock-btn" data-unlock="unlock_processing">
                                 <div class="btn-title">Unlock Deployment</div>
                                 <div class="btn-cost">Cost: 80 gold</div>
+                                <div class="btn-description">Unlock production buildings</div>
                             </button>
                         </div>
                     </div>
@@ -731,7 +718,7 @@
                 <button id="reset-btn" class="control-btn danger">🗑️ Reset Game</button>
             </div>
             <div class="save-indicator">
-                <span id="save-status">Not logged in</span>
+                <span id="save-status">⚠️ Not logged in - Cannot save game</span>
                 <span id="user-status" style="display: none;"></span>
             </div>
         </footer>

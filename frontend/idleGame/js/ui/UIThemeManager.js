@@ -32,6 +32,7 @@ class UIThemeManager {
         this.updateTransportNames(theme);
         this.updateCityNames(theme);
         this.updateResearchNames(theme);
+        this.updateCostCurrency(theme); // NEW: Update all "gold" references to themed currency
         this.updateRebirthButton(theme);
         this.updateAtmosphere(theme);
         
@@ -115,11 +116,14 @@ class UIThemeManager {
     updateWorkerNames(theme) {
         const workers = theme.workers;
         
+        console.log('updateWorkerNames called with:', workers);
+        
         // Update section headers
         this.updateTextContent('mining-operations-header', `${theme.tabs.mining.emoji} ${theme.tabs.mining.name} Operations`);
         this.updateTextContent('workforce-header', `👥 Workforce Status`);
         
         // Update hire buttons
+        console.log('Updating hire-stone-miner-btn to:', `Hire ${workers.stoneMiners.name}`);
         this.updateButtonText('hire-stone-miner-btn', `Hire ${workers.stoneMiners.name}`);
         this.updateButtonText('hire-coal-miner-btn', `Hire ${workers.coalMiners.name}`);
         this.updateButtonText('hire-iron-miner-btn', `Hire ${workers.ironMiners.name}`);
@@ -295,6 +299,56 @@ class UIThemeManager {
         } else {
             container.classList.remove('game-ending');
         }
+    }
+
+    updateCostCurrency(theme) {
+        const currencyName = theme.resources.gold.name.toLowerCase();
+        
+        // List of all possible currency names from all themes (lowercase)
+        const allCurrencies = [
+            'gold', 'venture capital', 'cash', 'company funds', 'savings', 
+            'coins', 'canned food', 'will to live', 'time', 'goodbye'
+        ];
+        
+        // Update all .btn-cost divs
+        const costDivs = document.querySelectorAll('.btn-cost');
+        costDivs.forEach(div => {
+            let text = div.innerHTML;
+            
+            // Replace any currency name with the current theme's currency
+            allCurrencies.forEach(oldCurrency => {
+                // Pattern 1: "</span> gold" (for buttons with span tags)
+                const spanPattern = new RegExp(`</span> ${oldCurrency}`, 'gi');
+                text = text.replace(spanPattern, `</span> ${currencyName}`);
+                
+                // Pattern 2: "25 gold" or "Cost: 25 gold" (for unlock buttons without span tags)
+                const directPattern = new RegExp(`(\\d+) ${oldCurrency}\\b`, 'gi');
+                text = text.replace(directPattern, `$1 ${currencyName}`);
+                
+                // Also handle "currency/resource" patterns
+                const slashPattern = new RegExp(`${oldCurrency}/`, 'gi');
+                text = text.replace(slashPattern, `${currencyName}/`);
+            });
+            
+            div.innerHTML = text;
+        });
+        
+        // Update all .btn-description divs
+        const descDivs = document.querySelectorAll('.btn-description');
+        descDivs.forEach(div => {
+            let text = div.textContent;
+            
+            // Replace "to [currency]" patterns
+            allCurrencies.forEach(oldCurrency => {
+                const toPattern = new RegExp(`to ${oldCurrency}`, 'gi');
+                text = text.replace(toPattern, `to ${currencyName}`);
+                
+                const convertPattern = new RegExp(`Convert resources to ${oldCurrency}`, 'gi');
+                text = text.replace(convertPattern, `Convert resources to ${currencyName}`);
+            });
+            
+            div.textContent = text;
+        });
     }
 
     // Helper methods
