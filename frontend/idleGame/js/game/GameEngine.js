@@ -248,6 +248,19 @@ class GameEngine {
             this.newResourceManager = new NewResourceManager(this.state);
             console.log('NewResourceManager initialized');
         }
+        
+        // Initialize Rebirth Theme System
+        if (window.RebirthThemes) {
+            this.rebirthThemes = new RebirthThemes();
+            console.log('RebirthThemes initialized');
+            
+            if (window.UIThemeManager) {
+                this.themeManager = new UIThemeManager(this, this.rebirthThemes);
+                // Apply initial theme
+                this.themeManager.updateTheme();
+                console.log('UIThemeManager initialized');
+            }
+        }
 
         // Start the main game loop
         this.tickInterval = setInterval(() => {
@@ -289,6 +302,11 @@ class GameEngine {
         if (now - this.lastUIUpdate > this.uiUpdateRate) {
             this.updateUI();
             this.lastUIUpdate = now;
+            
+            // Update theme if needed (checks internally if theme changed)
+            if (this.themeManager) {
+                this.themeManager.updateTheme();
+            }
         }
         
         // Auto-save periodically
@@ -1158,6 +1176,18 @@ class GameEngine {
             return false;
         }
         
+        // Check if this is the final ending
+        const currentRebirths = this.state.city.rebirths;
+        if (this.rebirthThemes) {
+            const currentTheme = this.rebirthThemes.getTheme(currentRebirths);
+            
+            if (currentTheme.isEnding) {
+                // Handle game ending
+                this.handleGameEnding();
+                return true;
+            }
+        }
+        
         // Calculate rebirth bonuses based on achievements
         const rebirthBonus = {
             mining: 0.05, // 5% bonus per rebirth
@@ -1166,16 +1196,16 @@ class GameEngine {
             transport: 0.03
         };
         
-        // Store current city data
-        const currentRebirths = this.state.city.rebirths + 1;
-        
-        // Reset city but keep some progress
+        // Store current data before reset
+        const newRebirthCount = currentRebirths + 1;
         const savedEfficiency = { ...this.state.efficiency };
+        
+        // Reset game but keep some progress
         this.state = this.getInitialState();
         
         // Restore enhanced efficiency
         this.state.efficiency = savedEfficiency;
-        this.state.city.rebirths = currentRebirths;
+        this.state.city.rebirths = newRebirthCount;
         
         // Apply rebirth bonuses
         this.state.efficiency.mining *= (1 + rebirthBonus.mining);
@@ -1183,11 +1213,71 @@ class GameEngine {
         this.state.efficiency.trading *= (1 + rebirthBonus.trading);
         this.state.efficiency.transport *= (1 + rebirthBonus.transport);
         
+        // Apply theme
+        if (this.themeManager) {
+            setTimeout(() => {
+                this.themeManager.updateTheme();
+            }, 100);
+        }
+        
         this.playSound('prestige');
-        this.showNotification(`City reborn! Efficiency bonuses applied. Rebirth #${currentRebirths}`);
-        console.log(`City rebirth completed! Total rebirths: ${currentRebirths}`);
+        this.showNotification(`🔄 Rebirth #${newRebirthCount} - A new chapter begins...`);
+        console.log(`City rebirth completed! Total rebirths: ${newRebirthCount}`);
         
         return true;
+    }
+    
+    handleGameEnding() {
+        // Game has reached its final conclusion
+        console.log('=== GAME ENDING ===');
+        
+        // Stop the game loop
+        this.stop();
+        
+        // Show ending message
+        const endingMessage = `
+╔════════════════════════════════════════╗
+║                                        ║
+║        THE END                         ║
+║                                        ║
+║    You've journeyed through           ║
+║    empires rising and falling,        ║
+║    prosperity and poverty,            ║
+║    hope and despair.                  ║
+║                                        ║
+║    In the end, you found peace.       ║
+║                                        ║
+║    Thank you for playing              ║
+║    Industrial Empire                  ║
+║                                        ║
+╚════════════════════════════════════════╝
+        `;
+        
+        console.log(endingMessage);
+        
+        // Visual ending
+        if (this.themeManager) {
+            this.themeManager.handleGameEnding();
+        }
+        
+        // Show ending modal if available
+        setTimeout(() => {
+            const message = "The journey ends here.\n\n" +
+                          "You've witnessed the rise and fall of empires,\n" +
+                          "from tech giants to mere survival,\n" +
+                          "and finally... to peace.\n\n" +
+                          "Thank you for playing Industrial Empire.\n\n" +
+                          "You may continue exploring, but there are no more rebirths.";
+            
+            alert(message);
+            
+            // Disable rebirth button
+            const rebirthBtn = document.getElementById('rebirth-btn');
+            if (rebirthBtn) {
+                rebirthBtn.disabled = true;
+                rebirthBtn.style.opacity = '0.5';
+            }
+        }, 1000);
     }
     
     // Utility methods
