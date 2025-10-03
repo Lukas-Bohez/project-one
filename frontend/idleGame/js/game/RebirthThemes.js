@@ -204,6 +204,12 @@ class RebirthThemes {
                     city: { name: "Company Town", emoji: "🏘️" },
                     research: { name: "Prospecting", emoji: "🔍" }
                 },
+                research: {
+                    mining: { name: "Advanced Prospecting", description: "+25% extraction efficiency" },
+                    processing: { name: "Blast Furnace Tech", description: "+25% smelting efficiency" },
+                    automation: { name: "Conveyor Systems", description: "Unlock automated mining" },
+                    logistics: { name: "Rail Networks", description: "+50% transport efficiency" }
+                },
                 unlocks: {
                     unlock_coal: { title: "Unlock Coal Seams", description: "Unlock 2nd resource tier" },
                     unlock_iron: { title: "Unlock Iron Veins", description: "Unlock 3rd resource tier" },
@@ -266,6 +272,12 @@ class RebirthThemes {
                     transport: { name: "Shipping", emoji: "🚚" },
                     city: { name: "Industrial Park", emoji: "🏗️" },
                     research: { name: "Efficiency", emoji: "⚙️" }
+                },
+                research: {
+                    mining: { name: "Improved Sorting", description: "+25% scrap collection" },
+                    processing: { name: "Assembly Optimization", description: "+25% production efficiency" },
+                    automation: { name: "Robotic Arms", description: "Unlock automated assembly" },
+                    logistics: { name: "Distribution Network", description: "+50% shipping efficiency" }
                 },
                 unlocks: {
                     unlock_coal: { title: "Unlock Rubber Parts", description: "Unlock 2nd material tier" },
@@ -330,6 +342,12 @@ class RebirthThemes {
                     city: { name: "Village", emoji: "🏘️" },
                     research: { name: "Learning", emoji: "📚" }
                 },
+                research: {
+                    mining: { name: "Better Tools", description: "+25% gathering efficiency" },
+                    processing: { name: "Master Crafting", description: "+25% crafting quality" },
+                    automation: { name: "Workshop Helpers", description: "Unlock apprentice system" },
+                    logistics: { name: "Trade Routes", description: "+50% delivery speed" }
+                },
                 unlocks: {
                     unlock_coal: { title: "Unlock Charcoal", description: "Unlock 2nd resource tier" },
                     unlock_iron: { title: "Unlock Bronze", description: "Unlock 3rd resource tier" },
@@ -392,6 +410,12 @@ class RebirthThemes {
                     transport: { name: "Moving", emoji: "🚶" },
                     city: { name: "Streets", emoji: "🏙️" },
                     research: { name: "Hustling", emoji: "💡" }
+                },
+                research: {
+                    mining: { name: "Better Pitch", description: "+25% sales success" },
+                    processing: { name: "Quick Repairs", description: "+25% item quality" },
+                    automation: { name: "Side Deals", description: "Unlock passive income" },
+                    logistics: { name: "Fast Routes", description: "+50% movement speed" }
                 },
                 unlocks: {
                     unlock_coal: { title: "Unlock Snacks", description: "Unlock 2nd product tier" },
@@ -456,6 +480,12 @@ class RebirthThemes {
                     city: { name: "Wasteland", emoji: "🏚️" },
                     research: { name: "Remembering", emoji: "📖" }
                 },
+                research: {
+                    mining: { name: "Resource Finding", description: "+25% scavenging success" },
+                    processing: { name: "Purification", description: "+25% salvage quality" },
+                    automation: { name: "Traps & Snares", description: "Unlock passive gathering" },
+                    logistics: { name: "Safe Routes", description: "+50% travel efficiency" }
+                },
                 unlocks: {
                     unlock_coal: { title: "Find Fuel", description: "Unlock 2nd resource tier" },
                     unlock_iron: { title: "Find Tools", description: "Unlock 3rd resource tier" },
@@ -518,6 +548,12 @@ class RebirthThemes {
                     transport: { name: "Crawling", emoji: "🐌" },
                     city: { name: "Solitude", emoji: "🌑" },
                     research: { name: "Reflecting", emoji: "🪞" }
+                },
+                research: {
+                    mining: { name: "Foraging Skills", description: "+25% survival chances" },
+                    processing: { name: "Fire Making", description: "+25% warmth retained" },
+                    automation: { name: "Shelter Building", description: "Unlock basic shelter" },
+                    logistics: { name: "Memory Mapping", description: "+50% navigation" }
                 },
                 unlocks: {
                     unlock_coal: { title: "Find Warmth", description: "Remember fire" },
@@ -582,6 +618,12 @@ class RebirthThemes {
                     city: { name: "Ward", emoji: "🏥" },
                     research: { name: "Prognosis", emoji: "📋" }
                 },
+                research: {
+                    mining: { name: "Breathing Exercises", description: "+25% oxygen retention" },
+                    processing: { name: "Medication Management", description: "+25% pain relief" },
+                    automation: { name: "Acceptance", description: "Unlock peace" },
+                    logistics: { name: "Final Wishes", description: "+50% comfort" }
+                },
                 unlocks: {
                     unlock_coal: { title: "Try to Eat", description: "Struggle for nutrition" },
                     unlock_iron: { title: "Try to Move", description: "Struggle for mobility" },
@@ -644,6 +686,12 @@ class RebirthThemes {
                     transport: { name: "Drifting", emoji: "☁️" },
                     city: { name: "Peace", emoji: "☮️" },
                     research: { name: "Release", emoji: "🕊️" }
+                },
+                research: {
+                    mining: { name: "Cherished Memories", description: "+25% remembrance" },
+                    processing: { name: "Forgiveness", description: "+25% inner peace" },
+                    automation: { name: "Gratitude", description: "Unlock appreciation" },
+                    logistics: { name: "Final Release", description: "+50% serenity" }
                 },
                 unlocks: {
                     unlock_coal: { title: "Accept", description: "Accept what comes" },
