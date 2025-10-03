@@ -6,70 +6,188 @@
 class NewResourceManager {
 	constructor(state) {
 		this.state = state;
+		this.rebirthThemes = null; // Will be set by GameEngine
+		this.currentThemeRecipes = null;
 
 		// Catalog definitions: value (gold), weight (unit weight), unlocked via research flags
 		this.catalog = {
-			// Raw resources (development inputs)
+			// Raw resources
 			raw: {
-				stone: { value: 0.1, weight: 1, research: 'unlock_stone' },      // code commits
-				coal: { value: 0.5, weight: 1, research: 'unlock_coal' },        // cloud servers
-				iron: { value: 1.2, weight: 2, research: 'unlock_iron' },        // user accounts
-				silver: { value: 6, weight: 2, research: 'unlock_silver' },      // premium subs
-				gold: { value: 15, weight: 2, research: 'unlock_gold' },         // venture capital
+				stone: { value: 0.1, weight: 1, research: 'unlock_stone' },
+				coal: { value: 0.5, weight: 1, research: 'unlock_coal' },
+				iron: { value: 1.2, weight: 2, research: 'unlock_iron' },
+				silver: { value: 6, weight: 2, research: 'unlock_silver' },
+				gold: { value: 15, weight: 2, research: 'unlock_gold' },
 				oil: { value: 3, weight: 1, research: 'unlock_oil' },
 				rubber: { value: 1, weight: 1, research: 'unlock_rubber' }
 			},
-			// Processed materials (deployed products)
-			processed: {
-				deployedApp: { value: 4, weight: 2, research: 'unlock_processing' },           // from Code Compiler
-				cloudInstance: { value: 18, weight: 2, research: 'unlock_processing' },        // from Data Center
-				premiumConversion: { value: 45, weight: 2, research: 'unlock_processing' },    // from Marketing Engine
-				ipoShares: { value: 120, weight: 2, research: 'unlock_processing' },           // from IPO Machine
-				polishedStone: { value: 0.6, weight: 1, research: 'unlock_processing' },
-				coke: { value: 1.5, weight: 1, research: 'unlock_processing' },
-				fuel: { value: 5, weight: 1, research: 'unlock_oil' },
-				plastic: { value: 6, weight: 1, research: 'unlock_oil' },
-				microconductors: { value: 25, weight: 1, research: 'unlock_electronics' },
-				jewelry: { value: 80, weight: 1, research: 'unlock_jewelry' }
+			// Processed and finished are now theme-dependent and created dynamically
+			processed: {},
+			finished: {}
+		};
+	}
+
+	// Set the theme system reference
+	setRebirthThemes(rebirthThemes) {
+		this.rebirthThemes = rebirthThemes;
+		this.updateThemeRecipes();
+	}
+
+	// Generate theme-specific recipes and catalog based on current rebirth
+	updateThemeRecipes() {
+		if (!this.rebirthThemes || !this.state) return;
+
+		const rebirths = this.state.city?.rebirths || 0;
+		const theme = this.rebirthThemes.getTheme(rebirths);
+
+		// Define theme-specific output items and their properties
+		const themeOutputs = {
+			// Rebirth 0: Tech Empire
+			0: {
+				smelters: { name: 'deployedApp', value: 4, weight: 2 },
+				forges: { name: 'cloudInstance', value: 18, weight: 2 },
+				refineries: { name: 'premiumConversion', value: 45, weight: 2 },
+				mints: { name: 'ipoShares', value: 120, weight: 2 }
 			},
-			// Finished goods
-			finished: {
-				motherboard: { value: 120, weight: 2, research: 'unlock_electronics' },
-				gpu: { value: 240, weight: 3, research: 'unlock_electronics' },
-				computer: { value: 600, weight: 6, research: 'unlock_electronics' },
-				car: { value: 1200, weight: 15, research: 'unlock_automotive' }
+			// Rebirth 1: Retail Chain
+			1: {
+				smelters: { name: 'preparedProduce', value: 4, weight: 2 },
+				forges: { name: 'bakedGoods', value: 18, weight: 2 },
+				refineries: { name: 'deliMeats', value: 45, weight: 2 },
+				mints: { name: 'franchiseDeals', value: 120, weight: 2 }
+			},
+			// Rebirth 2: Mining Corp
+			2: {
+				smelters: { name: 'crushedOre', value: 4, weight: 2 },
+				forges: { name: 'metalBars', value: 18, weight: 2 },
+				refineries: { name: 'purifiedMetal', value: 45, weight: 2 },
+				mints: { name: 'bulkContracts', value: 120, weight: 2 }
+			},
+			// Rebirth 3: Small Factory
+			3: {
+				smelters: { name: 'scrapParts', value: 4, weight: 2 },
+				forges: { name: 'assembledUnits', value: 18, weight: 2 },
+				refineries: { name: 'finishedGoods', value: 45, weight: 2 },
+				mints: { name: 'exportOrders', value: 120, weight: 2 }
+			},
+			// Rebirth 4: Artisan Workshop
+			4: {
+				smelters: { name: 'roughGoods', value: 4, weight: 2 },
+				forges: { name: 'craftedItems', value: 18, weight: 2 },
+				refineries: { name: 'refinedCrafts', value: 45, weight: 2 },
+				mints: { name: 'masterworks', value: 120, weight: 2 }
+			},
+			// Rebirth 5: Street Vendor
+			5: {
+				smelters: { name: 'streetFood', value: 4, weight: 2 },
+				forges: { name: 'repairedGoods', value: 18, weight: 2 },
+				refineries: { name: 'premiumItems', value: 45, weight: 2 },
+				mints: { name: 'rarefind', value: 120, weight: 2 }
+			},
+			// Rebirth 6: Scavenger
+			6: {
+				smelters: { name: 'scavengedFood', value: 4, weight: 2 },
+				forges: { name: 'purifiedWater', value: 18, weight: 2 },
+				refineries: { name: 'usableSupplies', value: 45, weight: 2 },
+				mints: { name: 'tradableGoods', value: 120, weight: 2 }
+			},
+			// Rebirth 7: Alone
+			7: {
+				smelters: { name: 'foragedFood', value: 4, weight: 2 },
+				forges: { name: 'warmth', value: 18, weight: 2 },
+				refineries: { name: 'shelter', value: 45, weight: 2 },
+				mints: { name: 'hope', value: 120, weight: 2 }
+			},
+			// Rebirth 8: Hospital
+			8: {
+				smelters: { name: 'breathingTreatment', value: 4, weight: 2 },
+				forges: { name: 'medication', value: 18, weight: 2 },
+				refineries: { name: 'comfort', value: 45, weight: 2 },
+				mints: { name: 'visitingHours', value: 120, weight: 2 }
+			},
+			// Rebirth 9: The End
+			9: {
+				smelters: { name: 'memories', value: 4, weight: 2 },
+				forges: { name: 'forgiveness', value: 18, weight: 2 },
+				refineries: { name: 'gratitude', value: 45, weight: 2 },
+				mints: { name: 'peace', value: 120, weight: 2 }
 			}
 		};
 
-		// Processing and crafting recipes
-		this.recipes = {
-			// THEMED TECH EMPIRE RECIPES
-			// Code Compiler: code commits + cloud servers -> deployed apps
-			deployedApp: { input: { stone: 2, coal: 2 }, output: { deployedApp: 1 }, building: 'smelters' },
-			
-			// Data Center: cloud servers + user accounts -> cloud instances
-			cloudInstance: { input: { coal: 2, iron: 2 }, output: { cloudInstance: 1 }, building: 'forges' },
-			
-			// Marketing Engine: premium subs + user accounts -> premium conversions
-			premiumConversion: { input: { silver: 3, iron: 2 }, output: { premiumConversion: 1 }, building: 'refineries' },
-			
-			// IPO Machine: premium subs + venture capital -> IPO shares
-			ipoShares: { input: { silver: 3, gold: 2 }, output: { ipoShares: 1 }, building: 'mints' },
-			
-			// OLD RECIPES (for other buildings not yet themed)
-			polishedStone: { input: { stone: 2 }, output: { polishedStone: 1 }, building: 'polishers' },
-			coke: { input: { coal: 3 }, output: { coke: 1 }, building: 'cokers' },
-			fuel: { input: { oil: 2 }, output: { fuel: 1 }, building: 'refineries' },
-			plastic: { input: { oil: 2 }, output: { plastic: 1 }, building: 'chemPlants' },
-			microconductors: { input: { plastic: 1, iron: 1, silver: 1 }, output: { microconductors: 1 }, building: 'chipFabs' },
-			jewelry: { input: { silver: 1, gold: 2 }, output: { jewelry: 1 }, building: 'jewelers' },
+		const outputs = themeOutputs[rebirths] || themeOutputs[0];
 
-			// finished
-			motherboard: { input: { polishedStone: 1, microconductors: 1, plastic: 1 }, output: { motherboard: 1 }, building: 'assemblies' },
-			gpu: { input: { motherboard: 1, microconductors: 2, plastic: 1 }, output: { gpu: 1 }, building: 'assemblies' },
-			computer: { input: { motherboard: 1, gpu: 1, plastic: 2 }, output: { computer: 1 }, building: 'assemblies' },
-			car: { input: { deployedApp: 10, plastic: 5, fuel: 2, rubber: 4 }, output: { car: 1 }, building: 'autoPlants' }
+		// Update catalog with theme-specific processed goods
+		this.catalog.processed = {};
+		Object.values(outputs).forEach(item => {
+			this.catalog.processed[item.name] = {
+				value: item.value,
+				weight: item.weight,
+				research: 'unlock_processing'
+			};
+		});
+
+		// Generate recipes
+		this.recipes = {
+			// First processor (smelter): stone + coal
+			[outputs.smelters.name]: {
+				input: { stone: 2, coal: 2 },
+				output: { [outputs.smelters.name]: 1 },
+				building: 'smelters'
+			},
+			// Second processor (forge): coal + iron
+			[outputs.forges.name]: {
+				input: { coal: 2, iron: 2 },
+				output: { [outputs.forges.name]: 1 },
+				building: 'forges'
+			},
+			// Third processor (refinery): silver + iron
+			[outputs.refineries.name]: {
+				input: { silver: 3, iron: 2 },
+				output: { [outputs.refineries.name]: 1 },
+				building: 'refineries'
+			},
+			// Fourth processor (mint): silver + gold
+			[outputs.mints.name]: {
+				input: { silver: 3, gold: 2 },
+				output: { [outputs.mints.name]: 1 },
+				building: 'mints'
+			}
 		};
+
+		console.log(`📦 Updated recipes for theme ${rebirths}:`, Object.keys(this.recipes));
+		
+		// Clean up old non-theme-appropriate items from inventory
+		this.cleanupInventory();
+	}
+
+	// Remove items that aren't part of current theme
+	cleanupInventory() {
+		if (!this.state || !this.recipes) return;
+
+		const validOutputs = new Set();
+		Object.values(this.recipes).forEach(recipe => {
+			Object.keys(recipe.output).forEach(item => validOutputs.add(item));
+		});
+
+		// Clean factory processed inventory
+		if (this.state.factory?.processed) {
+			Object.keys(this.state.factory.processed).forEach(item => {
+				if (!validOutputs.has(item) && !this.catalog.processed[item]) {
+					delete this.state.factory.processed[item];
+					console.log(`🧹 Removed old item from factory: ${item}`);
+				}
+			});
+		}
+
+		// Clean city finished inventory
+		if (this.state.cityInventory?.finished) {
+			Object.keys(this.state.cityInventory.finished).forEach(item => {
+				if (!validOutputs.has(item) && !this.catalog.processed[item]) {
+					delete this.state.cityInventory.finished[item];
+					console.log(`🧹 Removed old item from city: ${item}`);
+				}
+			});
+		}
 	}
 
 	// Utility: ensure nested inventory objects exist
