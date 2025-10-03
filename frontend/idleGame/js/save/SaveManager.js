@@ -265,6 +265,16 @@ class SaveManager {
     prepareSaveData() {
         const state = this.gameEngine.state;
         
+        console.log('💾 SAVING - Current gold:', state.resources.gold);
+        
+        // 🛡️ SAFETY: Ensure gold is never negative
+        if (state.resources.gold < 0) {
+            console.warn('⚠️ Gold was negative:', state.resources.gold, '- fixing to positive');
+            state.resources.gold = Math.abs(state.resources.gold);
+        }
+        
+        console.log('💾 SAVING - After floor:', Math.floor(state.resources.gold || 0));
+        
         // Match GameSaveData model from backend
         return {
             game_version: "1.0.0",
@@ -323,6 +333,7 @@ class SaveManager {
                     banks: state.city.banks || 0,
                     markets: state.city.markets || 0,
                     universities: state.city.universities || 0,
+                    salesDepartment: state.city.salesDepartment || 0,
                     corruption: state.city.corruption || 0,
                     theftRisk: state.city.theftRisk || 0,
                     theftLosses: state.city.theftLosses || 0,
@@ -331,8 +342,7 @@ class SaveManager {
                     maxDecay: state.city.maxDecay || 0,
                     rebirths: state.city.rebirths || 0,
                     taxRate: state.city.taxRate || 0,
-                    politicians: state.city.politicians || 0,
-                    autoSellFinished: state.city.autoSellFinished || false
+                    politicians: state.city.politicians || 0
                 },
                 
                 // Research and unlocks
@@ -406,12 +416,23 @@ class SaveManager {
         // Restore resources
         if (saveData.resources) {
             console.log('Restoring resources:', saveData.resources);
+            console.log('🔍 GOLD DEBUG - Before restore:', state.resources?.gold);
+            console.log('🔍 GOLD DEBUG - From save:', saveData.resources.gold);
+            
             state.resources = state.resources || {};
             state.resources.stone = saveData.resources.stone || 0;
             state.resources.coal = saveData.resources.coal || 0;
             state.resources.iron = saveData.resources.iron || 0;
             state.resources.silver = saveData.resources.silver || 0;
             state.resources.gold = saveData.resources.gold || 0;
+            
+            // 🛡️ SAFETY: Fix any negative gold from database
+            if (state.resources.gold < 0) {
+                console.warn('⚠️ Loaded negative gold:', state.resources.gold, '- converting to positive');
+                state.resources.gold = Math.abs(state.resources.gold);
+            }
+            
+            console.log('🔍 GOLD DEBUG - After restore:', state.resources.gold);
         }
         
         // Restore advanced inventories
@@ -438,6 +459,25 @@ class SaveManager {
         if (customData.processors) {
             console.log('Restoring processors:', customData.processors);
             state.processors = Object.assign({}, customData.processors);
+            
+            // MIGRATION: Fix old singular processor names to plural
+            const migrations = {
+                'polisher': 'polishers',
+                'coker': 'cokers',
+                'chipFab': 'chipFabs',
+                'jeweler': 'jewelers',
+                'assembly': 'assemblies',
+                'autoPlant': 'autoPlants'
+            };
+            
+            Object.keys(migrations).forEach(oldName => {
+                if (state.processors[oldName] !== undefined) {
+                    const newName = migrations[oldName];
+                    state.processors[newName] = (state.processors[newName] || 0) + state.processors[oldName];
+                    delete state.processors[oldName];
+                    console.log(`Migrated ${oldName} -> ${newName}: ${state.processors[newName]}`);
+                }
+            });
         }
         
         // Restore traders

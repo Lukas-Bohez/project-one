@@ -32,6 +32,7 @@ class UIThemeManager {
         this.updateTransportNames(theme);
         this.updateCityNames(theme);
         this.updateResearchNames(theme);
+        this.updateUnlockNames(theme); // NEW: Update unlock button text
         this.updateCostCurrency(theme); // NEW: Update all "gold" references to themed currency
         this.updateRebirthButton(theme);
         this.updateAtmosphere(theme);
@@ -115,6 +116,7 @@ class UIThemeManager {
 
     updateWorkerNames(theme) {
         const workers = theme.workers;
+        const resources = theme.resources;
         
         console.log('updateWorkerNames called with:', workers);
         
@@ -122,12 +124,22 @@ class UIThemeManager {
         this.updateTextContent('mining-operations-header', `${theme.tabs.mining.emoji} ${theme.tabs.mining.name} Operations`);
         this.updateTextContent('workforce-header', `👥 Workforce Status`);
         
-        // Update hire buttons
+        // Update manual mine button
+        this.updateButtonText('mine-stone-btn', `Gather ${resources.stone.name}`);
+        this.updateButtonDescription('mine-stone-btn', `+1 ${resources.stone.name.toLowerCase()} per click`);
+        
+        // Update hire buttons (titles and descriptions)
         console.log('Updating hire-stone-miner-btn to:', `Hire ${workers.stoneMiners.name}`);
         this.updateButtonText('hire-stone-miner-btn', `Hire ${workers.stoneMiners.name}`);
         this.updateButtonText('hire-coal-miner-btn', `Hire ${workers.coalMiners.name}`);
         this.updateButtonText('hire-iron-miner-btn', `Hire ${workers.ironMiners.name}`);
         this.updateButtonText('hire-silver-miner-btn', `Hire ${workers.silverMiners.name}`);
+        
+        // Update worker button descriptions with themed resource names
+        this.updateButtonDescription('hire-stone-miner-btn', `+1 ${resources.stone.name.toLowerCase()}/sec`);
+        this.updateButtonDescription('hire-coal-miner-btn', `+1 ${resources.coal.name.toLowerCase()}/sec`);
+        this.updateButtonDescription('hire-iron-miner-btn', `+1 ${resources.iron.name.toLowerCase()}/sec`);
+        this.updateButtonDescription('hire-silver-miner-btn', `+1 ${resources.silver.name.toLowerCase()}/sec`);
         
         // Update workforce status labels
         this.updateTextContent('stone-miners-label', `${workers.stoneMiners.name}:`);
@@ -227,6 +239,9 @@ class UIThemeManager {
         this.updateButtonText('build-market-btn', `Build ${city.markets.name}`);
         this.updateButtonText('build-university-btn', `Build ${city.universities.name}`);
         
+        // Update button descriptions
+        this.updateButtonDescription('build-university-btn', `+10% global efficiency per ${city.universities.name.toLowerCase()}`);
+        
         // Update status labels
         this.updateLabel('police-label', `${city.police.name}:`);
         this.updateLabel('politicians-label', `${city.politicians.name}:`);
@@ -257,6 +272,25 @@ class UIThemeManager {
             this.updateTextContent('research-logistics-title', research.logistics.name);
             this.updateTextContent('research-logistics-desc', research.logistics.description);
         }
+    }
+
+    updateUnlockNames(theme) {
+        if (!theme.unlocks) return;
+        
+        const unlocks = theme.unlocks;
+        
+        // Update each unlock button with themed text
+        const unlockButtons = document.querySelectorAll('.unlock-btn[data-unlock]');
+        unlockButtons.forEach(btn => {
+            const unlockType = btn.getAttribute('data-unlock');
+            if (unlocks[unlockType]) {
+                const titleDiv = btn.querySelector('.btn-title');
+                const descDiv = btn.querySelector('.btn-description');
+                
+                if (titleDiv) titleDiv.textContent = unlocks[unlockType].title;
+                if (descDiv) descDiv.textContent = unlocks[unlockType].description;
+            }
+        });
     }
 
     updateRebirthButton(theme) {
@@ -391,6 +425,16 @@ class UIThemeManager {
             
             if (titleDiv) titleDiv.textContent = text;
             if (descDiv) descDiv.textContent = description;
+        }
+    }
+
+    updateButtonDescription(buttonId, description) {
+        const button = document.getElementById(buttonId);
+        if (button) {
+            const descDiv = button.querySelector('.btn-description');
+            if (descDiv) {
+                descDiv.textContent = description;
+            }
         }
     }
 
