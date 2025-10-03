@@ -202,27 +202,25 @@ body {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 15px;
     margin: 0 20px;
-    overflow-x: auto;
+    flex-wrap: wrap;
     min-height: 50px;
-    max-height: 60px;
 }
 
 .tab-btn {
     background: transparent;
     border: none;
     color: rgba(255, 255, 255, 0.7);
-    padding: 12px 20px;
+    padding: 10px 16px;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 500;
     border-radius: 10px;
     white-space: nowrap;
     position: relative;
-    flex-shrink: 0;
+    flex-shrink: 1;
     height: auto;
     min-height: 40px;
-    max-height: 45px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1078,20 +1076,19 @@ body {
     
     /* Fix tab buttons */
     .tab-navigation {
-        padding: 8px 15px;
+        padding: 8px 10px;
         margin: 0 10px;
         min-height: 50px;
-        max-height: 60px;
+        flex-wrap: wrap;
+        gap: 3px;
     }
     
     .tab-btn {
         flex: 1 1 auto;
-        min-width: 90px;
-        max-width: 120px;
-        font-size: 0.85rem;
-        padding: 10px 8px;
-        min-height: 40px;
-        max-height: 45px;
+        min-width: 85px;
+        font-size: 0.8rem;
+        padding: 8px 6px;
+        min-height: 38px;
     }
 }
 
@@ -1153,19 +1150,18 @@ body {
     
     /* Make tabs stack in two rows */
     .tab-navigation {
-        padding: 6px 10px;
+        padding: 6px 8px;
         min-height: 45px;
-        max-height: 100px;
         flex-wrap: wrap;
+        gap: 3px;
     }
     
     .tab-btn {
-        flex: 1 1 calc(50% - 5px);
+        flex: 1 1 calc(50% - 4px);
         min-width: 0;
         font-size: 0.75rem;
         padding: 8px 4px;
         min-height: 35px;
-        max-height: 40px;
     }
     
     /* Reduce resource grid spacing */
