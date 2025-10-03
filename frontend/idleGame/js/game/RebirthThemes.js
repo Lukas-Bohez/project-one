@@ -18,9 +18,9 @@ class RebirthThemes {
                 description: "You're running a cutting-edge technology company",
                 atmosphere: "bright",
                 colorScheme: {
-                    primary: "#64ffda",
-                    secondary: "#4fc3f7",
-                    background: "linear-gradient(135deg, #1a1a2e, #16213e, #0f3460)"
+                    primary: "#00b4d8",
+                    secondary: "#0077b6",
+                    background: "linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 50%, #80deea 100%)"
                 },
                 resources: {
                     stone: { name: "Code Commits", emoji: "💻", description: "Lines of code written" },
@@ -57,6 +57,20 @@ class RebirthThemes {
                     markets: { name: "App Stores" },
                     universities: { name: "R&D Labs" },
                     politicians: { name: "Lobbyists" }
+                },
+                tabs: {
+                    mining: { name: "Development", emoji: "💻" },
+                    processing: { name: "Deployment", emoji: "🚀" },
+                    market: { name: "Marketplace", emoji: "🏪" },
+                    transport: { name: "Infrastructure", emoji: "🌐" },
+                    city: { name: "Corporate", emoji: "🏢" },
+                    research: { name: "R&D", emoji: "🔬" }
+                },
+                research: {
+                    mining: { name: "Advanced Development", description: "+25% development efficiency" },
+                    processing: { name: "Advanced Deployment", description: "+25% deployment efficiency" },
+                    automation: { name: "CI/CD Pipeline", description: "Unlock automated systems" },
+                    logistics: { name: "Cloud Infrastructure", description: "+50% infrastructure efficiency" }
                 },
                 rebirthButton: { text: "Rebirth Empire", emoji: "🔄" }
             },
@@ -107,6 +121,20 @@ class RebirthThemes {
                     universities: { name: "Culinary Schools" },
                     politicians: { name: "Health Inspectors" }
                 },
+                tabs: {
+                    mining: { name: "Sourcing", emoji: "📦" },
+                    processing: { name: "Food Prep", emoji: "🍽️" },
+                    market: { name: "Sales Floor", emoji: "🛒" },
+                    transport: { name: "Logistics", emoji: "🚚" },
+                    city: { name: "Corporate", emoji: "🏢" },
+                    research: { name: "R&D", emoji: "📊" }
+                },
+                research: {
+                    mining: { name: "Supply Chain Optimization", description: "+25% sourcing efficiency" },
+                    processing: { name: "Kitchen Efficiency", description: "+25% food prep speed" },
+                    automation: { name: "Self-Checkout Systems", description: "Unlock automated sales" },
+                    logistics: { name: "Warehouse Management", description: "+50% logistics efficiency" }
+                },
                 rebirthButton: { text: "Close Chain", emoji: "🔄" }
             },
             {
@@ -155,6 +183,14 @@ class RebirthThemes {
                     markets: { name: "Company Store" },
                     universities: { name: "Mining School" },
                     politicians: { name: "Union Bosses" }
+                },
+                tabs: {
+                    mining: { name: "Extraction", emoji: "⛏️" },
+                    processing: { name: "Smelting", emoji: "🔥" },
+                    market: { name: "Trading", emoji: "💰" },
+                    transport: { name: "Transport", emoji: "🚛" },
+                    city: { name: "Company Town", emoji: "🏘️" },
+                    research: { name: "Prospecting", emoji: "🔍" }
                 },
                 rebirthButton: { text: "Abandon Mines", emoji: "🔄" }
             },
@@ -205,6 +241,14 @@ class RebirthThemes {
                     universities: { name: "Trade School" },
                     politicians: { name: "Tax Collectors" }
                 },
+                tabs: {
+                    mining: { name: "Scavenging", emoji: "🔩" },
+                    processing: { name: "Assembly", emoji: "🏭" },
+                    market: { name: "Wholesale", emoji: "📦" },
+                    transport: { name: "Shipping", emoji: "🚚" },
+                    city: { name: "Industrial Park", emoji: "🏗️" },
+                    research: { name: "Efficiency", emoji: "⚙️" }
+                },
                 rebirthButton: { text: "Close Factory", emoji: "🔄" }
             },
             {
@@ -253,6 +297,14 @@ class RebirthThemes {
                     markets: { name: "Market Stalls" },
                     universities: { name: "Guild Halls" },
                     politicians: { name: "Town Council" }
+                },
+                tabs: {
+                    mining: { name: "Gathering", emoji: "🪨" },
+                    processing: { name: "Crafting", emoji: "🔨" },
+                    market: { name: "Market", emoji: "🏪" },
+                    transport: { name: "Delivery", emoji: "🛒" },
+                    city: { name: "Village", emoji: "🏘️" },
+                    research: { name: "Learning", emoji: "📚" }
                 },
                 rebirthButton: { text: "Abandon Workshop", emoji: "🔄" }
             },
@@ -303,6 +355,14 @@ class RebirthThemes {
                     universities: { name: "Soup Kitchen" },
                     politicians: { name: "Gang Leaders" }
                 },
+                tabs: {
+                    mining: { name: "Selling", emoji: "🛒" },
+                    processing: { name: "Stocking", emoji: "📦" },
+                    market: { name: "Hawking", emoji: "💵" },
+                    transport: { name: "Moving", emoji: "🚶" },
+                    city: { name: "Streets", emoji: "🏙️" },
+                    research: { name: "Hustling", emoji: "💡" }
+                },
                 rebirthButton: { text: "Lose Everything", emoji: "🔄" }
             },
             {
@@ -351,6 +411,14 @@ class RebirthThemes {
                     markets: { name: "Ruins" },
                     universities: { name: "Library Ruins" },
                     politicians: { name: "Warlords" }
+                },
+                tabs: {
+                    mining: { name: "Scavenging", emoji: "🔍" },
+                    processing: { name: "Surviving", emoji: "🔥" },
+                    market: { name: "Bartering", emoji: "🤝" },
+                    transport: { name: "Wandering", emoji: "🚶" },
+                    city: { name: "Wasteland", emoji: "🏚️" },
+                    research: { name: "Remembering", emoji: "📖" }
                 },
                 rebirthButton: { text: "Give Up Hope", emoji: "💔" }
             },
@@ -401,6 +469,14 @@ class RebirthThemes {
                     universities: { name: "Burned Books" },
                     politicians: { name: "Madness" }
                 },
+                tabs: {
+                    mining: { name: "Foraging", emoji: "🌾" },
+                    processing: { name: "Existing", emoji: "💭" },
+                    market: { name: "Nothing", emoji: "∅" },
+                    transport: { name: "Crawling", emoji: "🐌" },
+                    city: { name: "Solitude", emoji: "🌑" },
+                    research: { name: "Reflecting", emoji: "🪞" }
+                },
                 rebirthButton: { text: "Collapse", emoji: "😞" }
             },
             {
@@ -450,6 +526,14 @@ class RebirthThemes {
                     universities: { name: "Medical Library" },
                     politicians: { name: "Hospital Admin" }
                 },
+                tabs: {
+                    mining: { name: "Breathing", emoji: "💨" },
+                    processing: { name: "Medications", emoji: "💊" },
+                    market: { name: "Visitors", emoji: "👥" },
+                    transport: { name: "Rounds", emoji: "🚑" },
+                    city: { name: "Ward", emoji: "🏥" },
+                    research: { name: "Prognosis", emoji: "📋" }
+                },
                 rebirthButton: { text: "Let Go", emoji: "☮️" }
             },
             {
@@ -498,6 +582,14 @@ class RebirthThemes {
                     markets: { name: "Life" },
                     universities: { name: "Wisdom" },
                     politicians: { name: "Fate" }
+                },
+                tabs: {
+                    mining: { name: "Heartbeat", emoji: "💓" },
+                    processing: { name: "Fading", emoji: "🌫️" },
+                    market: { name: "Memories", emoji: "✨" },
+                    transport: { name: "Drifting", emoji: "☁️" },
+                    city: { name: "Peace", emoji: "☮️" },
+                    research: { name: "Release", emoji: "🕊️" }
                 },
                 rebirthButton: { text: "Euthanasia", emoji: "☠️" },
                 isEnding: true

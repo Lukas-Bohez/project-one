@@ -13,30 +13,30 @@
     <div id="game-container">
         <!-- Header Section -->
         <header class="game-header">
-            <h1 onclick="window.location.href='../index.html';">🏭 Industrial Empire</h1>
+            <h1 id="game-title" onclick="window.location.href='../index.html';">🏭 Industrial Empire</h1>
             <div class="resource-display">
                 <div class="resource-item stone">
-                    <span class="resource-icon">🪨</span>
+                    <span id="stone-icon" class="resource-icon">🪨</span>
                     <span id="stone-label" class="resource-label">Stone:</span>
                     <span id="stone-amount" class="resource-value">0</span>
                 </div>
                 <div class="resource-item coal">
-                    <span class="resource-icon">⚫</span>
+                    <span id="coal-icon" class="resource-icon">⚫</span>
                     <span id="coal-label" class="resource-label">Coal:</span>
                     <span id="coal-amount" class="resource-value">0</span>
                 </div>
                 <div class="resource-item iron">
-                    <span class="resource-icon">⚙️</span>
+                    <span id="iron-icon" class="resource-icon">⚙️</span>
                     <span id="iron-label" class="resource-label">Iron:</span>
                     <span id="iron-amount" class="resource-value">0</span>
                 </div>
                 <div class="resource-item silver">
-                    <span class="resource-icon">🥈</span>
+                    <span id="silver-icon" class="resource-icon">🥈</span>
                     <span id="silver-label" class="resource-label">Silver:</span>
                     <span id="silver-amount" class="resource-value">0</span>
                 </div>
                 <div class="resource-item gold">
-                    <span class="resource-icon">🥇</span>
+                    <span id="gold-icon" class="resource-icon">🥇</span>
                     <span id="gold-label" class="resource-label">Gold:</span>
                     <span id="gold-amount" class="resource-value">0</span>
                 </div>
@@ -45,13 +45,13 @@
 
         <!-- Tab Navigation -->
         <nav class="tab-navigation">
-            <button class="tab-btn active" data-tab="mining">⛏️ Mining</button>
-            <button class="tab-btn" data-tab="processing">🏗️ Processing</button>
-            <button class="tab-btn" data-tab="market">🏪 Market</button>
-            <button class="tab-btn" data-tab="transport">🚛 Transport</button>
-            <button class="tab-btn" data-tab="city">🏙️ City</button>
-            <button class="tab-btn" data-tab="research">🔬 Research</button>
-            <button class="tab-btn" data-tab="prestige" id="prestige-tab" style="display: none;">👑 Prestige</button>
+            <button id="tab-btn-mining" class="tab-btn active" data-tab="mining">⛏️ Mining</button>
+            <button id="tab-btn-processing" class="tab-btn" data-tab="processing">🏗️ Processing</button>
+            <button id="tab-btn-market" class="tab-btn" data-tab="market">🏪 Market</button>
+            <button id="tab-btn-transport" class="tab-btn" data-tab="transport">🚛 Transport</button>
+            <button id="tab-btn-city" class="tab-btn" data-tab="city">🏙️ City</button>
+            <button id="tab-btn-research" class="tab-btn" data-tab="research">🔬 Research</button>
+            <button id="tab-btn-prestige" class="tab-btn" data-tab="prestige" id="prestige-tab" style="display: none;">👑 Prestige</button>
         </nav>
 
         <!-- Main Game Area -->
@@ -60,34 +60,34 @@
             <section id="mining-tab" class="tab-content active">
                 <div class="panel-grid">
                     <div class="panel">
-                        <h2>⛏️ Mining Operations</h2>
+                        <h2 id="mining-operations-header">⛏️ Mining Operations</h2>
                         <div class="action-buttons">
                             <button id="mine-stone-btn" class="action-btn mine-btn" data-action="mineStone">
-                                <div class="btn-title">🪨 Mine Stone</div>
+                                <div class="btn-title">Gather Code Commits</div>
                                 <div class="btn-cost">Manual Collection</div>
                                 <div class="btn-description">+1 stone per click</div>
                             </button>
                             
                             <button id="hire-stone-miner-btn" class="action-btn worker-btn" data-action="hireWorker" data-worker="stoneMiner">
-                                <div class="btn-title">Hire Stone Miner</div>
+                                <div class="btn-title">Hire Junior Devs</div>
                                 <div class="btn-cost">Cost: <span id="stone-miner-cost">5</span> gold</div>
                                 <div class="btn-description">+1 stone/sec</div>
                             </button>
                             
                             <button id="hire-coal-miner-btn" class="action-btn worker-btn" data-action="hireWorker" data-worker="coalMiner">
-                                <div class="btn-title">Hire Coal Miner</div>
+                                <div class="btn-title">Hire DevOps Engineers</div>
                                 <div class="btn-cost">Cost: <span id="coal-miner-cost">25</span> gold</div>
                                 <div class="btn-description">+1 coal/sec</div>
                             </button>
                             
                             <button id="hire-iron-miner-btn" class="action-btn worker-btn" data-action="hireWorker" data-worker="ironMiner">
-                                <div class="btn-title">Hire Iron Miner</div>
+                                <div class="btn-title">Hire Growth Hackers</div>
                                 <div class="btn-cost">Cost: <span id="iron-miner-cost">100</span> gold</div>
                                 <div class="btn-description">+1 iron/sec</div>
                             </button>
                             
                             <button id="hire-silver-miner-btn" class="action-btn worker-btn" data-action="hireWorker" data-worker="silverMiner">
-                                <div class="btn-title">Hire Silver Miner</div>
+                                <div class="btn-title">Hire Sales Reps</div>
                                 <div class="btn-cost">Cost: <span id="silver-miner-cost">500</span> gold</div>
                                 <div class="btn-description">+1 silver/sec</div>
                             </button>
@@ -95,22 +95,22 @@
                     </div>
 
                     <div class="panel">
-                        <h2>� Workforce Status</h2>
+                        <h2 id="workforce-header">👥 Workforce Status</h2>
                         <div class="resource-grid">
                             <div class="resource-row">
-                                <span class="resource-type">Stone Miners:</span>
+                                <span id="stone-miners-label" class="resource-type">Junior Devs:</span>
                                 <span id="stone-miners-count" class="resource-count">0</span>
                             </div>
                             <div class="resource-row">
-                                <span class="resource-type">Coal Miners:</span>
+                                <span id="coal-miners-label" class="resource-type">DevOps Engineers:</span>
                                 <span id="coal-miners-count" class="resource-count">0</span>
                             </div>
                             <div class="resource-row">
-                                <span class="resource-type">Iron Miners:</span>
+                                <span id="iron-miners-label" class="resource-type">Growth Hackers:</span>
                                 <span id="iron-miners-count" class="resource-count">0</span>
                             </div>
                             <div class="resource-row">
-                                <span class="resource-type">Silver Miners:</span>
+                                <span id="silver-miners-label" class="resource-type">Sales Reps:</span>
                                 <span id="silver-miners-count" class="resource-count">0</span>
                             </div>
                             <div class="resource-row" data-tooltip="Overall mining efficiency after bonuses">
@@ -127,67 +127,30 @@
             <section id="processing-tab" class="tab-content">
                 <div class="panel-grid">
                     <div class="panel">
-                        <h2>🏗️ Processing Plants</h2>
+                        <h2 id="processing-header">🏗️ Deployment Systems</h2>
                         <div class="action-buttons">
                             <button id="build-smelter-btn" class="action-btn processing-btn" data-action="buildProcessor" data-processor="smelter">
-                                <div class="btn-title">Build Coal Smelter</div>
+                                <div class="btn-title">Build Code Compiler</div>
                                 <div class="btn-cost">Cost: <span id="smelter-cost">20</span> gold</div>
-                                <div class="btn-description">2 stone → 1 coal/sec</div>
+                                <div class="btn-description">Compiles code into deployable apps</div>
                             </button>
                             
                             <button id="build-forge-btn" class="action-btn processing-btn" data-action="buildProcessor" data-processor="forge">
-                                <div class="btn-title">Build Iron Forge</div>
+                                <div class="btn-title">Build Data Center</div>
                                 <div class="btn-cost">Cost: <span id="forge-cost">100</span> gold</div>
-                                <div class="btn-description">3 coal → 1 iron/sec</div>
+                                <div class="btn-description">Hosts cloud infrastructure</div>
                             </button>
                             
                             <button id="build-refinery-btn" class="action-btn processing-btn" data-action="buildProcessor" data-processor="refinery">
-                                <div class="btn-title">Build Silver Refinery</div>
+                                <div class="btn-title">Build Marketing Engine</div>
                                 <div class="btn-cost">Cost: <span id="refinery-cost">500</span> gold</div>
-                                <div class="btn-description">4 iron → 1 silver/sec</div>
+                                <div class="btn-description">Converts users to premium</div>
                             </button>
                             
                             <button id="build-mint-btn" class="action-btn processing-btn" data-action="buildProcessor" data-processor="mint">
-                                <div class="btn-title">Build Gold Mint</div>
+                                <div class="btn-title">Build IPO Machine</div>
                                 <div class="btn-cost">Cost: <span id="mint-cost">2000</span> gold</div>
-                                <div class="btn-description">5 silver → 1 gold/sec</div>
-                            </button>
-
-                            <!-- New advanced processors -->
-                            <button id="build-polisher-btn" class="action-btn processing-btn" data-action="buildProcessor" data-processor="polisher" data-tooltip="Polisher: 2 stone → 1 polished stone">
-                                <div class="btn-title">Build Stone Polisher</div>
-                                <div class="btn-cost">Cost: <span id="polisher-cost">50</span> gold</div>
-                                <div class="btn-description">2 stone → 1 polished stone/sec</div>
-                            </button>
-                            <button id="build-coker-btn" class="action-btn processing-btn" data-action="buildProcessor" data-processor="coker" data-tooltip="Coker: 3 coal → 1 coke">
-                                <div class="btn-title">Build Coker</div>
-                                <div class="btn-cost">Cost: <span id="coker-cost">150</span> gold</div>
-                                <div class="btn-description">3 coal → 1 coke/sec</div>
-                            </button>
-                            <button id="build-chemplant-btn" class="action-btn processing-btn" data-action="buildProcessor" data-processor="chemPlant" data-tooltip="Chem Plant: 2 oil → 1 plastic">
-                                <div class="btn-title">Build Chemical Plant</div>
-                                <div class="btn-cost">Cost: <span id="chemplant-cost">400</span> gold</div>
-                                <div class="btn-description">Oil → fuel/plastic</div>
-                            </button>
-                            <button id="build-chipfab-btn" class="action-btn processing-btn" data-action="buildProcessor" data-processor="chipFab" data-tooltip="Chip Fab: plastic + silver ingot + gold ingot → microconductors">
-                                <div class="btn-title">Build Chip Fab</div>
-                                <div class="btn-cost">Cost: <span id="chipfab-cost">1200</span> gold</div>
-                                <div class="btn-description">Makes microconductors</div>
-                            </button>
-                            <button id="build-jeweler-btn" class="action-btn processing-btn" data-action="buildProcessor" data-processor="jeweler" data-tooltip="Jeweler: 1 gold ingot + 2 silver ingots → jewelry">
-                                <div class="btn-title">Build Jeweler</div>
-                                <div class="btn-cost">Cost: <span id="jeweler-cost">900</span> gold</div>
-                                <div class="btn-description">Gold & silver → jewelry</div>
-                            </button>
-                            <button id="build-assembly-btn" class="action-btn processing-btn" data-action="buildProcessor" data-processor="assembly" data-tooltip="Assembly: crafts motherboards, GPUs, computers from processed parts">
-                                <div class="btn-title">Build Assembly Line</div>
-                                <div class="btn-cost">Cost: <span id="assembly-cost">1600</span> gold</div>
-                                <div class="btn-description">Assembles motherboards/GPUs/computers</div>
-                            </button>
-                            <button id="build-autoplant-btn" class="action-btn processing-btn" data-action="buildProcessor" data-processor="autoPlant" data-tooltip="Auto Plant: 10 iron ingots + 5 plastic + 2 fuel + 4 rubber → 1 car">
-                                <div class="btn-title">Build Auto Plant</div>
-                                <div class="btn-cost">Cost: <span id="autoplant-cost">5000</span> gold</div>
-                                <div class="btn-description">Produces cars</div>
+                                <div class="btn-description">Generates massive capital</div>
                             </button>
                         </div>
                     </div>
@@ -196,48 +159,20 @@
                         <h2>⚙️ Processing Status</h2>
                         <div class="resource-grid">
                             <div class="resource-row">
-                                <span class="resource-type">Coal Smelters:</span>
+                                <span id="smelters-label" class="resource-type">Code Compilers:</span>
                                 <span id="smelters-count" class="resource-count">0</span>
                             </div>
                             <div class="resource-row">
-                                <span class="resource-type">Iron Forges:</span>
+                                <span id="forges-label" class="resource-type">Data Centers:</span>
                                 <span id="forges-count" class="resource-count">0</span>
                             </div>
                             <div class="resource-row">
-                                <span class="resource-type">Silver Refineries:</span>
+                                <span id="refineries-label" class="resource-type">Marketing Engines:</span>
                                 <span id="refineries-count" class="resource-count">0</span>
                             </div>
                             <div class="resource-row">
-                                <span class="resource-type">Gold Mints:</span>
+                                <span id="mints-label" class="resource-type">IPO Machines:</span>
                                 <span id="mints-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Polishers:</span>
-                                <span id="polishers-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Cokers:</span>
-                                <span id="cokers-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Chem Plants:</span>
-                                <span id="chemplants-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Chip Fabs:</span>
-                                <span id="chipfabs-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Jewelers:</span>
-                                <span id="jewelers-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Assembly Lines:</span>
-                                <span id="assembly-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Auto Plants:</span>
-                                <span id="autoplant-count" class="resource-count">0</span>
                             </div>
                             <div class="resource-row" data-tooltip="Overall processing speed after penalties and boosts">
                                 <span class="resource-type">Processing Rate:</span>
@@ -257,48 +192,48 @@
             <section id="market-tab" class="tab-content">
                 <div class="panel-grid">
                     <div class="panel">
-                        <h2>🏪 Trading Posts</h2>
+                        <h2 id="market-header">🏪 Marketplace</h2>
                         <div class="action-buttons">
                             <button id="sell-stone-btn" class="action-btn sell-btn" data-action="sellResource" data-resource="stone">
-                                <div class="btn-title">Sell Stone</div>
-                                <div class="btn-cost">Rate: <span id="stone-sell-rate">0.1</span> gold/stone</div>
-                                <div class="btn-description">Convert stone to gold</div>
+                                <div class="btn-title">Sell Code Commits</div>
+                                <div class="btn-cost">Rate: <span id="stone-sell-rate">0.1</span> <span id="stone-sell-currency">gold/resource</span></div>
+                                <div id="sell-stone-desc" class="btn-description">Convert resources to gold</div>
                             </button>
                             
                             <button id="sell-coal-btn" class="action-btn sell-btn" data-action="sellResource" data-resource="coal">
-                                <div class="btn-title">Sell Coal</div>
-                                <div class="btn-cost">Rate: <span id="coal-sell-rate">0.5</span> gold/coal</div>
-                                <div class="btn-description">Convert coal to gold</div>
+                                <div class="btn-title">Sell Cloud Servers</div>
+                                <div class="btn-cost">Rate: <span id="coal-sell-rate">0.5</span> <span id="coal-sell-currency">gold/resource</span></div>
+                                <div id="sell-coal-desc" class="btn-description">Convert resources to gold</div>
                             </button>
                             
                             <button id="sell-iron-btn" class="action-btn sell-btn" data-action="sellResource" data-resource="iron">
-                                <div class="btn-title">Sell Iron</div>
-                                <div class="btn-cost">Rate: <span id="iron-sell-rate">2.0</span> gold/iron</div>
-                                <div class="btn-description">Convert iron to gold</div>
+                                <div class="btn-title">Sell User Accounts</div>
+                                <div class="btn-cost">Rate: <span id="iron-sell-rate">2.0</span> <span id="iron-sell-currency">gold/resource</span></div>
+                                <div id="sell-iron-desc" class="btn-description">Convert resources to gold</div>
                             </button>
                             
                             <button id="sell-silver-btn" class="action-btn sell-btn" data-action="sellResource" data-resource="silver">
-                                <div class="btn-title">Sell Silver</div>
-                                <div class="btn-cost">Rate: <span id="silver-sell-rate">8.0</span> gold/silver</div>
-                                <div class="btn-description">Convert silver to gold</div>
+                                <div class="btn-title">Sell Premium Subs</div>
+                                <div class="btn-cost">Rate: <span id="silver-sell-rate">8.0</span> <span id="silver-sell-currency">gold/resource</span></div>
+                                <div id="sell-silver-desc" class="btn-description">Convert resources to gold</div>
                             </button>
                             
                             <button id="hire-stone-trader-btn" class="action-btn trader-btn" data-action="hireTrader" data-trader="stoneTrader">
-                                <div class="btn-title">Hire Stone Trader</div>
+                                <div class="btn-title">Hire Tech Recruiters</div>
                                 <div class="btn-cost">Cost: <span id="stone-trader-cost">15</span> gold</div>
-                                <div class="btn-description">Auto-sell stone</div>
+                                <div id="hire-stone-trader-desc" class="btn-description">Auto-sell resources</div>
                             </button>
                             
                             <button id="hire-coal-trader-btn" class="action-btn trader-btn" data-action="hireTrader" data-trader="coalTrader">
-                                <div class="btn-title">Hire Coal Trader</div>
+                                <div class="btn-title">Hire Cloud Salespeople</div>
                                 <div class="btn-cost">Cost: <span id="coal-trader-cost">75</span> gold</div>
-                                <div class="btn-description">Auto-sell coal</div>
+                                <div id="hire-coal-trader-desc" class="btn-description">Auto-sell resources</div>
                             </button>
                             
                             <button id="hire-metal-trader-btn" class="action-btn trader-btn" data-action="hireTrader" data-trader="metalTrader">
-                                <div class="btn-title">Hire Metal Trader</div>
+                                <div class="btn-title">Hire VC Networkers</div>
                                 <div class="btn-cost">Cost: <span id="metal-trader-cost">300</span> gold</div>
-                                <div class="btn-description">Auto-sell iron & silver</div>
+                                <div id="hire-metal-trader-desc" class="btn-description">Auto-sell resources</div>
                             </button>
                         </div>
                     </div>
@@ -307,15 +242,15 @@
                         <h2>📊 Market Status</h2>
                         <div class="resource-grid">
                             <div class="resource-row">
-                                <span class="resource-type">Stone Traders:</span>
+                                <span id="stone-traders-label" class="resource-type">Tech Recruiters:</span>
                                 <span id="stone-traders-count" class="resource-count">0</span>
                             </div>
                             <div class="resource-row">
-                                <span class="resource-type">Coal Traders:</span>
+                                <span id="coal-traders-label" class="resource-type">Cloud Salespeople:</span>
                                 <span id="coal-traders-count" class="resource-count">0</span>
                             </div>
                             <div class="resource-row">
-                                <span class="resource-type">Metal Traders:</span>
+                                <span id="metal-traders-label" class="resource-type">VC Networkers:</span>
                                 <span id="metal-traders-count" class="resource-count">0</span>
                             </div>
                             <div class="resource-row" data-tooltip="Trading efficiency including transport congestion and corruption">
@@ -336,7 +271,7 @@
             <section id="transport-tab" class="tab-content">
                 <div class="panel-grid">
                     <div class="panel">
-                        <h2>🚛 Transport Fleet</h2>
+                        <h2 id="transport-header">🚛 Transport Fleet</h2>
                         <div class="action-buttons">
                             <button id="buy-cart-btn" class="action-btn transport-btn" data-action="buyTransport" data-transport="cart">
                                 <div class="btn-title">Buy Ox Cart</div>
@@ -365,18 +300,18 @@
                     </div>
 
                     <div class="panel">
-                        <h2>🚚 Fleet Status</h2>
+                        <h2 id="fleet-status-header">🚚 Fleet Status</h2>
                         <div class="resource-grid">
                             <div class="resource-row">
-                                <span class="resource-type">Ox Carts:</span>
+                                <span id="carts-label" class="resource-type">Fiber Lines:</span>
                                 <span id="carts-count" class="resource-count">0</span>
                             </div>
                             <div class="resource-row">
-                                <span class="resource-type">Steam Wagons:</span>
+                                <span id="wagons-label" class="resource-type">CDN Networks:</span>
                                 <span id="wagons-count" class="resource-count">0</span>
                             </div>
                             <div class="resource-row">
-                                <span class="resource-type">Railways:</span>
+                                <span id="trains-label" class="resource-type">Satellite Links:</span>
                                 <span id="trains-count" class="resource-count">0</span>
                             </div>
                             <div class="resource-row">
@@ -397,34 +332,34 @@
             <section id="city-tab" class="tab-content">
                 <div class="panel-grid">
                     <div class="panel">
-                        <h2>🏙️ City Services</h2>
+                        <h2 id="city-header">🏢 Corporate HQ</h2>
                         <div class="action-buttons">
                             <button id="hire-police-btn" class="action-btn city-btn" data-action="hireService" data-service="police">
-                                <div class="btn-title">Hire Police</div>
+                                <div class="btn-title">Hire Security Team</div>
                                 <div class="btn-cost">Cost: <span id="police-cost">100</span> gold</div>
                                 <div class="btn-description">Reduces theft risk & corruption</div>
                             </button>
                             
                             <button id="hire-politician-btn" class="action-btn city-btn" data-action="hireService" data-service="politician">
-                                <div class="btn-title">Hire Politician</div>
+                                <div class="btn-title">Hire Lobbyists</div>
                                 <div class="btn-cost">Cost: <span id="politician-cost">250</span> gold</div>
                                 <div class="btn-description">Reduces tax rate by 2%</div>
                             </button>
                             
                             <button id="build-bank-btn" class="action-btn city-btn" data-action="buildCity" data-building="bank">
-                                <div class="btn-title">Build Bank</div>
+                                <div class="btn-title">Build Accounting Dept</div>
                                 <div class="btn-cost">Cost: <span id="bank-cost">500</span> gold</div>
                                 <div class="btn-description">+20% gold from sales</div>
                             </button>
                             
                             <button id="build-market-btn" class="action-btn city-btn" data-action="buildCity" data-building="market">
-                                <div class="btn-title">Expand Marketplace</div>
+                                <div class="btn-title">Build App Stores</div>
                                 <div class="btn-cost">Cost: <span id="market-cost">1000</span> gold</div>
                                 <div class="btn-description">Unlock better traders</div>
                             </button>
                             
                             <button id="build-university-btn" class="action-btn city-btn" data-action="buildCity" data-building="university">
-                                <div class="btn-title">Build University</div>
+                                <div class="btn-title">Build R&D Labs</div>
                                 <div class="btn-cost">Cost: <span id="university-cost">2500</span> gold</div>
                                 <div class="btn-description">Unlock advanced research</div>
                             </button>
@@ -432,7 +367,7 @@
                             <button id="sell-finished-btn" class="action-btn sell-btn" data-action="sellOneFinished">
                                 <div class="btn-title">Sell 1 Finished Good</div>
                                 <div class="btn-cost">Manual</div>
-                                                                <div class="btn-description">Sells best value item in city</div>
+                                <div class="btn-description">Sells best value item in city</div>
                             </button>
 
                             <label class="toggle" style="display:block; margin-top:8px;">
@@ -441,7 +376,7 @@
                             </label>
 
                             <button id="rebirth-btn" class="action-btn prestige-btn" data-action="rebirth">
-                                <div class="btn-title">Rebirth City</div>
+                                <div class="btn-title">🔄 Rebirth Empire</div>
                                 <div class="btn-cost">Requires 100% decay</div>
                                 <div class="btn-description">Reset city for permanent bonuses</div>
                             </button>
@@ -449,26 +384,26 @@
                     </div>
 
                     <div class="panel">
-                        <h2>🏛️ City Status</h2>
+                        <h2 id="city-status-header">🏛️ Corporate Status</h2>
                         <div class="resource-grid">
                             <div class="resource-row">
-                                <span class="resource-type">Police Force:</span>
+                                <span id="police-label" class="resource-type">Security Team:</span>
                                 <span id="police-count" class="resource-count">0</span>
                             </div>
                             <div class="resource-row">
-                                <span class="resource-type">Politicians:</span>
+                                <span id="politicians-label" class="resource-type">Lobbyists:</span>
                                 <span id="politicians-count" class="resource-count">0</span>
                             </div>
                             <div class="resource-row">
-                                <span class="resource-type">Banks:</span>
+                                <span id="banks-label" class="resource-type">Accounting Dept:</span>
                                 <span id="banks-count" class="resource-count">0</span>
                             </div>
                             <div class="resource-row">
-                                <span class="resource-type">Marketplaces:</span>
+                                <span id="markets-label" class="resource-type">App Stores:</span>
                                 <span id="markets-count" class="resource-count">0</span>
                             </div>
                             <div class="resource-row">
-                                <span class="resource-type">Universities:</span>
+                                <span id="universities-label" class="resource-type">R&D Labs:</span>
                                 <span id="universities-count" class="resource-count">0</span>
                             </div>
                             <div class="resource-row">
@@ -479,7 +414,7 @@
                     </div>
                     
                     <div class="panel">
-                        <h2>📈 City Dynamics</h2>
+                        <h2 id="city-dynamics-header">📈 City Dynamics</h2>
                         <div class="resource-grid">
                             <div class="resource-row">
                                 <span class="resource-type">Theft Risk:</span>
@@ -502,7 +437,7 @@
                     </div>
 
                     <div class="panel">
-                        <h2>📦 City Finished Inventory</h2>
+                        <h2 id="city-inventory-header">📦 City Finished Inventory</h2>
                         <div id="city-finished-inventory" class="resource-grid">
                             <!-- Finished goods will be rendered here by JS -->
                         </div>
@@ -514,7 +449,7 @@
             <section id="research-tab" class="tab-content">
                 <div class="panel-grid">
                     <div class="panel">
-                        <h2>🔬 Research & Development</h2>
+                        <h2 id="research-header">🔬 Research & Development</h2>
                         <div class="resource-grid">
                             <div class="resource-row">
                                 <span class="resource-type">Completed Research:</span>
@@ -523,27 +458,27 @@
                         </div>
                         <div class="action-buttons">
                             <button id="research-mining-btn" class="action-btn research-btn" data-action="purchaseResearch" data-research="mining">
-                                <div class="btn-title">Advanced Mining</div>
+                                <div id="research-mining-title" class="btn-title">Advanced Development</div>
                                 <div class="btn-cost">Cost: <span id="research-mining-cost">50</span> gold</div>
-                                <div class="btn-description">+25% mining efficiency</div>
-                            </button>
-                            
-                            <button id="research-processing-btn" class="action-btn research-btn" data-action="purchaseResearch" data-research="processing">
-                                <div class="btn-title">Advanced Processing</div>
-                                <div class="btn-cost">Cost: <span id="research-processing-cost">100</span> gold</div>
-                                <div class="btn-description">+25% processing efficiency</div>
+                                <div id="research-mining-desc" class="btn-description">+25% development efficiency</div>
                             </button>
                             
                             <button id="research-automation-btn" class="action-btn research-btn" data-action="purchaseResearch" data-research="automation">
-                                <div class="btn-title">Automation</div>
-                                <div class="btn-cost">Cost: <span id="research-automation-cost">500</span> gold</div>
-                                <div class="btn-description">Unlock auto-systems</div>
+                                <div id="research-automation-title" class="btn-title">Automation</div>
+                                <div class="btn-cost">Cost: <span id="research-automation-cost">50</span> gold</div>
+                                <div id="research-automation-desc" class="btn-description">Unlock auto-systems</div>
+                            </button>
+                            
+                            <button id="research-processing-btn" class="action-btn research-btn" data-action="purchaseResearch" data-research="processing">
+                                <div id="research-processing-title" class="btn-title">Advanced Deployment</div>
+                                <div class="btn-cost">Cost: <span id="research-processing-cost">100</span> gold</div>
+                                <div id="research-processing-desc" class="btn-description">+25% deployment efficiency</div>
                             </button>
                             
                             <button id="research-logistics-btn" class="action-btn research-btn" data-action="purchaseResearch" data-research="logistics">
-                                <div class="btn-title">Logistics</div>
+                                <div id="research-logistics-title" class="btn-title">Logistics</div>
                                 <div class="btn-cost">Cost: <span id="research-logistics-cost">1000</span> gold</div>
-                                <div class="btn-description">+50% transport efficiency</div>
+                                <div id="research-logistics-desc" class="btn-description">+50% transport efficiency</div>
                             </button>
                         </div>
                     </div>
@@ -552,36 +487,20 @@
                         <h2>🔓 Unlocks</h2>
                         <div class="action-buttons" id="unlocks-section">
                             <button class="action-btn unlock-btn" data-unlock="unlock_coal">
-                                <div class="btn-title">Unlock Coal</div>
+                                <div class="btn-title">Unlock Cloud Servers</div>
                                 <div class="btn-cost">Cost: 25 gold</div>
                             </button>
                             <button class="action-btn unlock-btn" data-unlock="unlock_iron">
-                                <div class="btn-title">Unlock Iron</div>
+                                <div class="btn-title">Unlock User Accounts</div>
                                 <div class="btn-cost">Cost: 60 gold</div>
                             </button>
                             <button class="action-btn unlock-btn" data-unlock="unlock_silver">
-                                <div class="btn-title">Unlock Silver</div>
+                                <div class="btn-title">Unlock Premium Subs</div>
                                 <div class="btn-cost">Cost: 200 gold</div>
                             </button>
                             <button class="action-btn unlock-btn" data-unlock="unlock_processing">
-                                <div class="btn-title">Unlock Processing</div>
+                                <div class="btn-title">Unlock Deployment</div>
                                 <div class="btn-cost">Cost: 80 gold</div>
-                            </button>
-                            <button class="action-btn unlock-btn" data-unlock="unlock_oil">
-                                <div class="btn-title">Unlock Oil</div>
-                                <div class="btn-cost">Cost: 150 gold</div>
-                            </button>
-                            <button class="action-btn unlock-btn" data-unlock="unlock_jewelry">
-                                <div class="btn-title">Unlock Jewelry</div>
-                                <div class="btn-cost">Cost: 500 gold</div>
-                            </button>
-                            <button class="action-btn unlock-btn" data-unlock="unlock_electronics">
-                                <div class="btn-title">Unlock Electronics</div>
-                                <div class="btn-cost">Cost: 800 gold</div>
-                            </button>
-                            <button class="action-btn unlock-btn" data-unlock="unlock_automotive">
-                                <div class="btn-title">Unlock Automotive</div>
-                                <div class="btn-cost">Cost: 2000 gold</div>
                             </button>
                         </div>
                     </div>
@@ -630,41 +549,6 @@
             </section>
         </main>
     </div>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="panel">
-                        <h2>🏛️ City Status</h2>
-                        <div class="resource-grid">
-                            <div class="resource-row">
-                                <span class="resource-type">Police Force:</span>
-                                <span id="police-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Banks:</span>
-                                <span id="banks-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Markets:</span>
-                                <span id="markets-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Universities:</span>
-                                <span id="universities-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">City Development:</span>
-                                <span id="city-development" class="resource-count">0%</span>
-                            </div>
-                        </div>
-                        <div class="inventory-panel">
-                            <h3>🏙️ City Finished Inventory</h3>
-                            <div id="city-finished-inventory" class="resource-count">(empty)</div>
-                        </div>
-                    </div>
-                </div>
-            </section>
 
             <!-- Research Tab -->
             <section id="research-tab" class="tab-content">

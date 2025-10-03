@@ -24,12 +24,14 @@ class UIThemeManager {
         // Update all UI elements
         this.updatePageTitle(theme);
         this.updateColorScheme(theme);
+        this.updateTabNames(theme);
         this.updateResourceNames(theme);
         this.updateWorkerNames(theme);
         this.updateProcessorNames(theme);
         this.updateTraderNames(theme);
         this.updateTransportNames(theme);
         this.updateCityNames(theme);
+        this.updateResearchNames(theme);
         this.updateRebirthButton(theme);
         this.updateAtmosphere(theme);
         
@@ -40,12 +42,14 @@ class UIThemeManager {
     }
 
     updatePageTitle(theme) {
-        document.title = `Industrial Empire - ${theme.name}`;
+        document.title = `${theme.name}`;
         
-        // Update main header if exists
-        const header = document.querySelector('.game-header h1');
+        // Update main header
+        const header = document.getElementById('game-title');
         if (header) {
-            header.textContent = `Industrial Empire: ${theme.name}`;
+            header.textContent = theme.name;
+            // Keep click handler working
+            header.style.cursor = 'pointer';
         }
     }
 
@@ -62,15 +66,34 @@ class UIThemeManager {
         }
     }
 
+    updateTabNames(theme) {
+        // Update tab navigation buttons with theme-specific names
+        if (theme.tabs) {
+            this.updateButtonText('tab-btn-mining', `${theme.tabs.mining.emoji} ${theme.tabs.mining.name}`);
+            this.updateButtonText('tab-btn-processing', `${theme.tabs.processing.emoji} ${theme.tabs.processing.name}`);
+            this.updateButtonText('tab-btn-market', `${theme.tabs.market.emoji} ${theme.tabs.market.name}`);
+            this.updateButtonText('tab-btn-transport', `${theme.tabs.transport.emoji} ${theme.tabs.transport.name}`);
+            this.updateButtonText('tab-btn-city', `${theme.tabs.city.emoji} ${theme.tabs.city.name}`);
+            this.updateButtonText('tab-btn-research', `${theme.tabs.research.emoji} ${theme.tabs.research.name}`);
+        }
+    }
+
     updateResourceNames(theme) {
         const resources = theme.resources;
         
-        // Update resource display labels
-        this.updateTextContent('stone-label', resources.stone.emoji + ' ' + resources.stone.name);
-        this.updateTextContent('coal-label', resources.coal.emoji + ' ' + resources.coal.name);
-        this.updateTextContent('iron-label', resources.iron.emoji + ' ' + resources.iron.name);
-        this.updateTextContent('silver-label', resources.silver.emoji + ' ' + resources.silver.name);
-        this.updateTextContent('gold-label', resources.gold.emoji + ' ' + resources.gold.name);
+        // Update resource icons (emojis)
+        this.updateTextContent('stone-icon', resources.stone.emoji);
+        this.updateTextContent('coal-icon', resources.coal.emoji);
+        this.updateTextContent('iron-icon', resources.iron.emoji);
+        this.updateTextContent('silver-icon', resources.silver.emoji);
+        this.updateTextContent('gold-icon', resources.gold.emoji);
+        
+        // Update resource display labels (just name, no emoji)
+        this.updateTextContent('stone-label', resources.stone.name + ':');
+        this.updateTextContent('coal-label', resources.coal.name + ':');
+        this.updateTextContent('iron-label', resources.iron.name + ':');
+        this.updateTextContent('silver-label', resources.silver.name + ':');
+        this.updateTextContent('gold-label', resources.gold.name + ':');
         
         // Update tooltips
         this.updateTooltip('stone-label', resources.stone.description);
@@ -92,21 +115,28 @@ class UIThemeManager {
     updateWorkerNames(theme) {
         const workers = theme.workers;
         
+        // Update section headers
+        this.updateTextContent('mining-operations-header', `${theme.tabs.mining.emoji} ${theme.tabs.mining.name} Operations`);
+        this.updateTextContent('workforce-header', `👥 Workforce Status`);
+        
         // Update hire buttons
         this.updateButtonText('hire-stone-miner-btn', `Hire ${workers.stoneMiners.name}`);
         this.updateButtonText('hire-coal-miner-btn', `Hire ${workers.coalMiners.name}`);
         this.updateButtonText('hire-iron-miner-btn', `Hire ${workers.ironMiners.name}`);
         this.updateButtonText('hire-silver-miner-btn', `Hire ${workers.silverMiners.name}`);
         
-        // Update status display labels
-        this.updateLabel('stone-miners-label', `${workers.stoneMiners.emoji} ${workers.stoneMiners.name}:`);
-        this.updateLabel('coal-miners-label', `${workers.coalMiners.emoji} ${workers.coalMiners.name}:`);
-        this.updateLabel('iron-miners-label', `${workers.ironMiners.emoji} ${workers.ironMiners.name}:`);
-        this.updateLabel('silver-miners-label', `${workers.silverMiners.emoji} ${workers.silverMiners.name}:`);
+        // Update workforce status labels
+        this.updateTextContent('stone-miners-label', `${workers.stoneMiners.name}:`);
+        this.updateTextContent('coal-miners-label', `${workers.coalMiners.name}:`);
+        this.updateTextContent('iron-miners-label', `${workers.ironMiners.name}:`);
+        this.updateTextContent('silver-miners-label', `${workers.silverMiners.name}:`);
     }
 
     updateProcessorNames(theme) {
         const processors = theme.processors;
+        
+        // Update section header
+        this.updateTextContent('processing-header', `${theme.tabs.processing.emoji} ${theme.tabs.processing.name} Systems`);
         
         // Update build buttons
         this.updateButtonTextAndDesc('build-smelter-btn', `Build ${processors.smelters.name}`, processors.smelters.description);
@@ -115,28 +145,56 @@ class UIThemeManager {
         this.updateButtonTextAndDesc('build-mint-btn', `Build ${processors.mints.name}`, processors.mints.description);
         
         // Update status labels
-        this.updateLabel('smelters-label', `${processors.smelters.name}:`);
-        this.updateLabel('forges-label', `${processors.forges.name}:`);
-        this.updateLabel('refineries-label', `${processors.refineries.name}:`);
-        this.updateLabel('mints-label', `${processors.mints.name}:`);
+        this.updateTextContent('smelters-label', `${processors.smelters.name}:`);
+        this.updateTextContent('forges-label', `${processors.forges.name}:`);
+        this.updateTextContent('refineries-label', `${processors.refineries.name}:`);
+        this.updateTextContent('mints-label', `${processors.mints.name}:`);
     }
 
     updateTraderNames(theme) {
         const traders = theme.traders;
+        const resources = theme.resources;
+        
+        // Update section header
+        this.updateTextContent('market-header', `${theme.tabs.market.emoji} ${theme.tabs.market.name}`);
+        
+        // Update sell button descriptions with themed currency
+        const currencyName = resources.gold.name.toLowerCase();
+        
+        this.updateTextContent('stone-sell-currency', `${currencyName}/${resources.stone.name.toLowerCase()}`);
+        this.updateTextContent('sell-stone-desc', `Convert ${resources.stone.name.toLowerCase()} to ${currencyName}`);
+        
+        this.updateTextContent('coal-sell-currency', `${currencyName}/${resources.coal.name.toLowerCase()}`);
+        this.updateTextContent('sell-coal-desc', `Convert ${resources.coal.name.toLowerCase()} to ${currencyName}`);
+        
+        this.updateTextContent('iron-sell-currency', `${currencyName}/${resources.iron.name.toLowerCase()}`);
+        this.updateTextContent('sell-iron-desc', `Convert ${resources.iron.name.toLowerCase()} to ${currencyName}`);
+        
+        this.updateTextContent('silver-sell-currency', `${currencyName}/${resources.silver.name.toLowerCase()}`);
+        this.updateTextContent('sell-silver-desc', `Convert ${resources.silver.name.toLowerCase()} to ${currencyName}`);
         
         // Update hire buttons
         this.updateButtonText('hire-stone-trader-btn', `Hire ${traders.stoneTraders.name}`);
         this.updateButtonText('hire-coal-trader-btn', `Hire ${traders.coalTraders.name}`);
         this.updateButtonText('hire-metal-trader-btn', `Hire ${traders.metalTraders.name}`);
         
+        // Update trader button descriptions
+        this.updateTextContent('hire-stone-trader-desc', `Auto-sell ${resources.stone.name.toLowerCase()}`);
+        this.updateTextContent('hire-coal-trader-desc', `Auto-sell ${resources.coal.name.toLowerCase()}`);
+        this.updateTextContent('hire-metal-trader-desc', `Auto-sell ${resources.iron.name.toLowerCase()} & ${resources.silver.name.toLowerCase()}`);
+        
         // Update status labels
-        this.updateLabel('stone-traders-label', `${traders.stoneTraders.name}:`);
-        this.updateLabel('coal-traders-label', `${traders.coalTraders.name}:`);
-        this.updateLabel('metal-traders-label', `${traders.metalTraders.name}:`);
+        this.updateTextContent('stone-traders-label', `${traders.stoneTraders.name}:`);
+        this.updateTextContent('coal-traders-label', `${traders.coalTraders.name}:`);
+        this.updateTextContent('metal-traders-label', `${traders.metalTraders.name}:`);
     }
 
     updateTransportNames(theme) {
         const transport = theme.transport;
+        
+        // Update section headers
+        this.updateTextContent('transport-header', `${theme.tabs.transport.emoji} ${theme.tabs.transport.name} Fleet`);
+        this.updateTextContent('fleet-status-header', `🚚 ${theme.tabs.transport.name} Status`);
         
         // Update buy buttons
         this.updateButtonText('buy-cart-btn', `Buy ${transport.carts.name}`);
@@ -144,13 +202,19 @@ class UIThemeManager {
         this.updateButtonText('buy-train-btn', `Buy ${transport.trains.name}`);
         
         // Update status labels
-        this.updateLabel('carts-label', `${transport.carts.name}:`);
-        this.updateLabel('wagons-label', `${transport.wagons.name}:`);
-        this.updateLabel('trains-label', `${transport.trains.name}:`);
+        this.updateTextContent('carts-label', `${transport.carts.name}:`);
+        this.updateTextContent('wagons-label', `${transport.wagons.name}:`);
+        this.updateTextContent('trains-label', `${transport.trains.name}:`);
     }
 
     updateCityNames(theme) {
         const city = theme.city;
+        
+        // Update section headers
+        this.updateTextContent('city-header', `${theme.tabs.city.emoji} ${theme.tabs.city.name} HQ`);
+        this.updateTextContent('city-status-header', `🏛️ ${theme.tabs.city.name} Status`);
+        this.updateTextContent('city-dynamics-header', `📈 ${theme.tabs.city.name} Dynamics`);
+        this.updateTextContent('city-inventory-header', `📦 ${theme.tabs.city.name} Finished Inventory`);
         
         // Update hire/build buttons
         this.updateButtonText('hire-police-btn', `Hire ${city.police.name}`);
@@ -165,6 +229,30 @@ class UIThemeManager {
         this.updateLabel('banks-label', `${city.banks.name}:`);
         this.updateLabel('markets-label', `${city.markets.name}:`);
         this.updateLabel('universities-label', `${city.universities.name}:`);
+    }
+
+    updateResearchNames(theme) {
+        if (!theme.research) return;
+        
+        const research = theme.research;
+        
+        // Update research button titles and descriptions
+        if (research.mining) {
+            this.updateTextContent('research-mining-title', research.mining.name);
+            this.updateTextContent('research-mining-desc', research.mining.description);
+        }
+        if (research.processing) {
+            this.updateTextContent('research-processing-title', research.processing.name);
+            this.updateTextContent('research-processing-desc', research.processing.description);
+        }
+        if (research.automation) {
+            this.updateTextContent('research-automation-title', research.automation.name);
+            this.updateTextContent('research-automation-desc', research.automation.description);
+        }
+        if (research.logistics) {
+            this.updateTextContent('research-logistics-title', research.logistics.name);
+            this.updateTextContent('research-logistics-desc', research.logistics.description);
+        }
     }
 
     updateRebirthButton(theme) {

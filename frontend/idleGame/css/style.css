@@ -1211,8 +1211,71 @@ body {
 
 /* Bright - Tech Empire (Rebirth 0) */
 .atmosphere-bright body {
-    /* Default bright theme - no changes needed */
-    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    color: #1a1a2e !important;
+}
+
+.atmosphere-bright .panel {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #1a1a2e !important;
+}
+
+.atmosphere-bright h1,
+.atmosphere-bright h2,
+.atmosphere-bright h3,
+.atmosphere-bright h4,
+.atmosphere-bright .resource-label,
+.atmosphere-bright .resource-type,
+.atmosphere-bright .resource-value,
+.atmosphere-bright .resource-count,
+.atmosphere-bright .btn-title,
+.atmosphere-bright .btn-cost,
+.atmosphere-bright .btn-description,
+.atmosphere-bright .research-title,
+.atmosphere-bright .research-cost,
+.atmosphere-bright .research-effect,
+.atmosphere-bright .tooltip-text,
+.atmosphere-bright span,
+.atmosphere-bright p,
+.atmosphere-bright label {
+    color: #1a1a2e !important;
+}
+
+.atmosphere-bright .action-btn {
+    background: rgba(0, 180, 216, 0.2);
+    border: 2px solid #00b4d8;
+    color: #1a1a2e !important;
+}
+
+.atmosphere-bright .action-btn:hover {
+    background: rgba(0, 180, 216, 0.3);
+    transform: translateY(-2px);
+}
+
+.atmosphere-bright .tab-nav button {
+    color: #1a1a2e !important;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.atmosphere-bright .tab-nav button.active {
+    background: rgba(0, 180, 216, 0.3) !important;
+    color: #1a1a2e !important;
+    border-bottom: 3px solid #00b4d8;
+    font-weight: 600;
+}
+
+.atmosphere-bright .tab-nav button:hover {
+    background: rgba(0, 180, 216, 0.2);
+    color: #1a1a2e !important;
+}
+
+/* Force dark text on ALL elements in bright theme */
+.atmosphere-bright * {
+    color: #1a1a2e !important;
+}
+
+/* Except for specific accent elements that need to stay bright */
+.atmosphere-bright .progress-bar {
+    color: inherit !important;
 }
 
 /* Neutral - Retail Chain (Rebirth 1) */
