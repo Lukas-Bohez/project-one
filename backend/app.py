@@ -1,6 +1,7 @@
 import socketio
 import asyncio
 import uvicorn
+import os
 from datetime import datetime,timedelta
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, status, Body, Header
@@ -71,7 +72,15 @@ app = FastAPI(title="Socket.IO Messaging Backend", version="1.0.0")
 # CORS middleware for FastAPI
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+        "http://localhost:3000",
+        "https://quizthespire.duckdns.org",
+        "http://quizthespire.duckdns.org",
+        "",
+        "*"  # Temporary - allow all origins during development
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
@@ -96,7 +105,7 @@ try:
     import secrets
     
     # JWT Configuration
-    JWT_SECRET_KEY = secrets.token_urlsafe(32)  # In production, use environment variable
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY") or secrets.token_urlsafe(32)  # Use env var if available
     JWT_ALGORITHM = "HS256"
     JWT_EXPIRATION_TIME = timedelta(hours=24)
     JWT_AVAILABLE = True
@@ -5940,7 +5949,13 @@ def cleanup_temp_files():
 # ----------------------------------------------------
 # Video Converter Setup (YouTube, TikTok, etc.)
 # ----------------------------------------------------
-import yt_dlp
+try:
+    import yt_dlp
+    VIDEO_CONVERTER_AVAILABLE = True
+except ImportError:
+    VIDEO_CONVERTER_AVAILABLE = False
+    print("Warning: yt-dlp not installed. Video converter endpoints will be disabled.")
+
 import uuid
 import threading
 import time
@@ -5986,6 +6001,40 @@ URL_PATTERNS = {
 # Active downloads tracking
 active_video_downloads: Dict[str, Dict[str, Any]] = {}
 download_lock = threading.Lock()
+
+# Rate limiting for video downloads (prevent DDoS)
+video_download_rate_limit = {}  # {ip: {'count': int, 'reset_time': float}}
+MAX_CONCURRENT_DOWNLOADS_PER_IP = 3
+RATE_LIMIT_WINDOW = 60  # seconds
+
+def check_video_rate_limit(client_ip: str) -> bool:
+    """Check if IP has exceeded video download rate limit"""
+    current_time = time.time()
+    
+    if client_ip not in video_download_rate_limit:
+        video_download_rate_limit[client_ip] = {'count': 0, 'reset_time': current_time + RATE_LIMIT_WINDOW}
+        return True
+    
+    # Reset counter if window expired
+    if current_time > video_download_rate_limit[client_ip]['reset_time']:
+        video_download_rate_limit[client_ip] = {'count': 0, 'reset_time': current_time + RATE_LIMIT_WINDOW}
+        return True
+    
+    # Check if under limit
+    if video_download_rate_limit[client_ip]['count'] < MAX_CONCURRENT_DOWNLOADS_PER_IP:
+        return True
+    
+    return False
+
+def increment_video_rate_limit(client_ip: str):
+    """Increment video download counter for IP"""
+    if client_ip in video_download_rate_limit:
+        video_download_rate_limit[client_ip]['count'] += 1
+
+def decrement_video_rate_limit(client_ip: str):
+    """Decrement video download counter when download completes"""
+    if client_ip in video_download_rate_limit and video_download_rate_limit[client_ip]['count'] > 0:
+        video_download_rate_limit[client_ip]['count'] -= 1
 
 def detect_platform(url: str) -> Optional[str]:
     """Detect platform from URL"""
@@ -6054,19 +6103,29 @@ start_video_cleanup()
 
 @app.post("/api/v1/convert/upload")
 async def upload_and_convert_file(
-    file: UploadFile = File(...),
+    file: UploadFile = File(..., max_length=10_000_000),  # 10MB limit
     target_format: str = Form(...)
 ):
     """
     Upload a file and convert it to the target format
+    Max file size: 10MB
     """
     try:
+        # Validate file size
+        if hasattr(file, 'size') and file.size > 10_000_000:
+            raise HTTPException(status_code=413, detail="File too large. Maximum size is 10MB.")
+        
         # Clean up old files first
         cleanup_temp_files()
         
+        # Sanitize filename to prevent path traversal
+        safe_filename = os.path.basename(file.filename)
+        # Remove any remaining dangerous characters
+        safe_filename = "".join(c for c in safe_filename if c.isalnum() or c in "._- ")
+        
         # Save uploaded file temporarily
-        file_extension = os.path.splitext(file.filename)[1].lower()
-        temp_filename = f"{datetime.now().timestamp()}_{file.filename}"
+        file_extension = os.path.splitext(safe_filename)[1].lower()
+        temp_filename = f"{datetime.now().timestamp()}_{safe_filename}"
         temp_filepath = os.path.join(UPLOAD_DIR, temp_filename)
         
         # Save the uploaded file
@@ -6353,96 +6412,116 @@ async def cleanup_conversion_files():
         raise HTTPException(status_code=500, detail=f"Cleanup failed: {str(e)}")
 
 # ----------------------------------------------------
-# Video Converter Endpoints
+# Video Converter Endpoints (only if yt-dlp is available)
 # ----------------------------------------------------
 
-@app.post("/api/v1/video/validate", response_model=Dict[str, Any])
-async def validate_video_url(request: VideoUrlValidation):
-    """Validate if URL is supported and return platform info"""
-    try:
-        platform = detect_platform(request.url)
-        if not platform:
-            return {"valid": False, "error": "Unsupported platform or invalid URL"}
-        
-        # Test if yt-dlp can extract info
-        ydl_opts = {'quiet': True, 'no_warnings': True}
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            try:
-                info = ydl.extract_info(request.url, download=False)
-                title = info.get('title', 'Unknown')
-                duration = info.get('duration', 0)
-                
-                return {
-                    "valid": True,
-                    "platform": platform,
-                    "title": title,
-                    "duration": duration,
-                    "formats_available": True
-                }
-            except Exception as e:
-                return {"valid": False, "error": f"Cannot extract video info: {str(e)}"}
-                
-    except Exception as e:
-        return {"valid": False, "error": str(e)}
+if VIDEO_CONVERTER_AVAILABLE:
+    @app.post("/api/v1/video/validate", response_model=Dict[str, Any])
+    async def validate_video_url(request: VideoUrlValidation):
+        """Validate if URL is supported and return platform info"""
+        try:
+            platform = detect_platform(request.url)
+            if not platform:
+                return {"valid": False, "error": "Unsupported platform or invalid URL"}
+            
+            # Test if yt-dlp can extract info
+            ydl_opts = {'quiet': True, 'no_warnings': True}
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                try:
+                    info = ydl.extract_info(request.url, download=False)
+                    title = info.get('title', 'Unknown')
+                    duration = info.get('duration', 0)
+                    
+                    return {
+                        "valid": True,
+                        "platform": platform,
+                        "title": title,
+                        "duration": duration,
+                        "formats_available": True
+                    }
+                except Exception as e:
+                    return {"valid": False, "error": f"Cannot extract video info: {str(e)}"}
+                    
+        except Exception as e:
+            return {"valid": False, "error": str(e)}
 
-@app.post("/api/v1/video/convert", response_model=VideoConversionResponse)
-async def convert_video(request: VideoConversionRequest):
-    """Start video conversion process"""
-    try:
-        # Validate URL first
-        platform = detect_platform(request.url)
-        if not platform:
-            raise HTTPException(status_code=400, detail="Unsupported platform or invalid URL")
-        
-        # Generate unique download ID
-        download_id = str(uuid.uuid4())
-        
-        # Determine format and quality
-        format_type = 'audio' if request.format == 1 else 'video'
-        
-        # Set up output filename
-        timestamp = int(time.time())
-        if format_type == 'audio':
-            output_filename = f"{download_id}_{timestamp}.%(ext)s"
-        else:
-            output_filename = f"{download_id}_{timestamp}.%(ext)s"
-        
-        output_path = os.path.join(VIDEO_DOWNLOAD_DIR, output_filename)
-        
-        # Store download info
-        with download_lock:
-            active_video_downloads[download_id] = {
-                'status': 'starting',
-                'progress': 0.0,
-                'platform': platform,
-                'format': 'MP3' if format_type == 'audio' else 'MP4',
-                'quality': request.quality,
-                'url': request.url,
-                'output_path': output_path,
-                'created_at': time.time(),
-                'title': None,
-                'error': None,
-                'finished': False,
-                'file_path': None
-            }
-        
-        # Start download in background thread
-        threading.Thread(
-            target=download_video_background, 
-            args=(download_id, request.url, format_type, request.quality, output_path),
-            daemon=True
-        ).start()
-        
-        return VideoConversionResponse(
-            success=True,
-            download_id=download_id,
-            message=f"Started {format_type} conversion from {platform}"
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    @app.post("/api/v1/video/convert", response_model=VideoConversionResponse)
+    async def convert_video(request: VideoConversionRequest, req: Request):
+        """Start video conversion process with rate limiting"""
+        try:
+            # Get client IP for rate limiting
+            client_ip = get_client_ip(req)
+            
+            # Check rate limit
+            if not check_video_rate_limit(client_ip):
+                raise HTTPException(
+                    status_code=429,
+                    detail=f"Rate limit exceeded. Maximum {MAX_CONCURRENT_DOWNLOADS_PER_IP} concurrent downloads per IP. Please wait."
+                )
+            
+            # Validate URL first
+            platform = detect_platform(request.url)
+            if not platform:
+                raise HTTPException(status_code=400, detail="Unsupported platform or invalid URL")
+            
+            # Block internal/localhost URLs (SSRF protection)
+            from urllib.parse import urlparse
+            parsed = urlparse(request.url)
+            if parsed.hostname in ['localhost', '127.0.0.1', '0.0.0.0', '::1']:
+                raise HTTPException(status_code=400, detail="Invalid URL: localhost not allowed")
+            
+            # Increment rate limit counter
+            increment_video_rate_limit(client_ip)
+            
+            # Generate unique download ID
+            download_id = str(uuid.uuid4())
+            
+            # Determine format and quality
+            format_type = 'audio' if request.format == 1 else 'video'
+            
+            # Set up output filename
+            timestamp = int(time.time())
+            if format_type == 'audio':
+                output_filename = f"{download_id}_{timestamp}.%(ext)s"
+            else:
+                output_filename = f"{download_id}_{timestamp}.%(ext)s"
+            
+            output_path = os.path.join(VIDEO_DOWNLOAD_DIR, output_filename)
+            
+            # Store download info
+            with download_lock:
+                active_video_downloads[download_id] = {
+                    'status': 'starting',
+                    'progress': 0.0,
+                    'platform': platform,
+                    'format': 'MP3' if format_type == 'audio' else 'MP4',
+                    'quality': request.quality,
+                    'url': request.url,
+                    'output_path': output_path,
+                    'created_at': time.time(),
+                    'title': None,
+                    'error': None,
+                    'finished': False,
+                    'file_path': None
+                }
+            
+            # Start download in background thread
+            threading.Thread(
+                target=download_video_background, 
+                args=(download_id, request.url, format_type, request.quality, output_path, client_ip),
+                daemon=True
+            ).start()
+            
+            return VideoConversionResponse(
+                success=True,
+                download_id=download_id,
+                message=f"Started {format_type} conversion from {platform}"
+            )
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/v1/video/status/{download_id}", response_model=ConversionStatus)
 async def get_conversion_status(download_id: str):
@@ -6507,87 +6586,101 @@ async def download_converted_file(download_id: str):
             media_type='application/octet-stream'
         )
 
-def download_video_background(download_id: str, url: str, format_type: str, quality: int, output_path: str):
-    """Background function to download and convert video"""
-    def progress_hook(d):
-        if d['status'] == 'downloading':
-            try:
-                progress = 0.0
-                if d.get('total_bytes'):
-                    progress = (d['downloaded_bytes'] / d['total_bytes']) * 100
-                elif d.get('total_bytes_estimate'):
-                    progress = (d['downloaded_bytes'] / d['total_bytes_estimate']) * 100
-                
+    def download_video_background(download_id: str, url: str, format_type: str, quality: int, output_path: str, client_ip: str = None):
+        """Background function to download and convert video - includes rate limit cleanup"""
+        def progress_hook(d):
+            if d['status'] == 'downloading':
+                try:
+                    progress = 0.0
+                    if d.get('total_bytes'):
+                        progress = (d['downloaded_bytes'] / d['total_bytes']) * 100
+                    elif d.get('total_bytes_estimate'):
+                        progress = (d['downloaded_bytes'] / d['total_bytes_estimate']) * 100
+                    
+                    with download_lock:
+                        if download_id in active_video_downloads:
+                            active_video_downloads[download_id]['progress'] = min(progress, 90.0)
+                            active_video_downloads[download_id]['status'] = 'downloading'
+                except:
+                    pass
+            elif d['status'] == 'finished':
                 with download_lock:
                     if download_id in active_video_downloads:
-                        active_video_downloads[download_id]['progress'] = min(progress, 90.0)
-                        active_video_downloads[download_id]['status'] = 'downloading'
-            except:
-                pass
-        elif d['status'] == 'finished':
+                        active_video_downloads[download_id]['progress'] = 95.0
+                        active_video_downloads[download_id]['status'] = 'processing'
+        
+        try:
+            # Update status
             with download_lock:
                 if download_id in active_video_downloads:
-                    active_video_downloads[download_id]['progress'] = 95.0
-                    active_video_downloads[download_id]['status'] = 'processing'
-    
-    try:
-        # Update status
-        with download_lock:
-            if download_id in active_video_downloads:
-                active_video_downloads[download_id]['status'] = 'downloading'
-        
-        # Get yt-dlp options
-        ydl_opts = get_ydl_opts(format_type, quality, output_path)
-        ydl_opts['progress_hooks'] = [progress_hook]
-        
-        # Download the video
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # Extract info first
-            info = ydl.extract_info(url, download=False)
-            title = info.get('title', 'Unknown')
+                    active_video_downloads[download_id]['status'] = 'downloading'
             
-            # Update title
-            with download_lock:
-                if download_id in active_video_downloads:
-                    active_video_downloads[download_id]['title'] = title
+            # Get yt-dlp options
+            ydl_opts = get_ydl_opts(format_type, quality, output_path)
+            ydl_opts['progress_hooks'] = [progress_hook]
             
-            # Download
-            ydl.download([url])
-        
-        # Find the downloaded file
-        downloaded_file = None
-        base_pattern = output_path.replace('.%(ext)s', '')
-        
-        for filename in os.listdir(VIDEO_DOWNLOAD_DIR):
-            if filename.startswith(os.path.basename(base_pattern)):
-                downloaded_file = os.path.join(VIDEO_DOWNLOAD_DIR, filename)
-                break
-        
-        if downloaded_file and os.path.exists(downloaded_file):
-            # Success
+            # Download the video
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                # Extract info first
+                info = ydl.extract_info(url, download=False)
+                title = info.get('title', 'Unknown')
+                
+                # Update title
+                with download_lock:
+                    if download_id in active_video_downloads:
+                        active_video_downloads[download_id]['title'] = title
+                
+                # Download
+                ydl.download([url])
+            
+            # Find the downloaded file
+            downloaded_file = None
+            base_pattern = output_path.replace('.%(ext)s', '')
+            
+            for filename in os.listdir(VIDEO_DOWNLOAD_DIR):
+                if filename.startswith(os.path.basename(base_pattern)):
+                    downloaded_file = os.path.join(VIDEO_DOWNLOAD_DIR, filename)
+                    break
+            
+            if downloaded_file and os.path.exists(downloaded_file):
+                # Success
+                with download_lock:
+                    if download_id in active_video_downloads:
+                        active_video_downloads[download_id].update({
+                            'status': 'completed',
+                            'progress': 100.0,
+                            'file_path': downloaded_file,
+                            'finished': True
+                        })
+            else:
+                raise Exception("Downloaded file not found")
+                
+        except Exception as e:
+            # Error occurred
+            error_msg = str(e)
+            print(f"Video download error for {download_id}: {error_msg}")
+            
             with download_lock:
                 if download_id in active_video_downloads:
                     active_video_downloads[download_id].update({
-                        'status': 'completed',
-                        'progress': 100.0,
-                        'file_path': downloaded_file,
+                        'status': 'error',
+                        'error': error_msg,
                         'finished': True
                     })
-        else:
-            raise Exception("Downloaded file not found")
-            
-    except Exception as e:
-        # Error occurred
-        error_msg = str(e)
-        print(f"Video download error for {download_id}: {error_msg}")
-        
-        with download_lock:
-            if download_id in active_video_downloads:
-                active_video_downloads[download_id].update({
-                    'status': 'error',
-                    'error': error_msg,
-                    'finished': True
-                })
+        finally:
+            # Decrement rate limit counter when download finishes (success or error)
+            if client_ip:
+                decrement_video_rate_limit(client_ip)
+
+# Video converter placeholder endpoints (if yt-dlp not available)
+if not VIDEO_CONVERTER_AVAILABLE:
+    @app.post("/api/v1/video/validate", response_model=Dict[str, Any])
+    async def validate_video_url_unavailable(request: VideoUrlValidation):
+        raise HTTPException(status_code=503, detail="Video converter not available. Please install yt-dlp.")
+    
+    @app.post("/api/v1/video/convert", response_model=Dict[str, Any])
+    async def convert_video_unavailable(request: VideoConversionRequest):
+        raise HTTPException(status_code=503, detail="Video converter not available. Please install yt-dlp.")
 
 # ----------------------------------------------------
 # Run the app

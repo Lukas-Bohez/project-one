@@ -2825,23 +2825,37 @@ class GameSaveRepository:
     
     @staticmethod
     def create_save(user_id: int, save_data: Dict[str, Any], game_version: str = "1.0.0") -> Optional[int]:
-        """Create or update a game save"""
+        """Create or update a game save - ensures only ONE save per user"""
         print(f"💾 REPOSITORY: create_save called with user_id={user_id}, game_version={game_version}")
         print(f"💾 REPOSITORY: save_data keys = {save_data.keys() if save_data else 'null'}")
         print(f"💾 REPOSITORY: save_data JSON length = {len(json.dumps(save_data))} chars")
         
-        sql = """
-        INSERT INTO game_saves (user_id, save_data, game_version, last_updated)
-        VALUES (%s, %s, %s, CURRENT_TIMESTAMP)
-        ON DUPLICATE KEY UPDATE
-        save_data = VALUES(save_data),
-        game_version = VALUES(game_version),
-        last_updated = CURRENT_TIMESTAMP
-        """
-        params = [user_id, json.dumps(save_data), game_version]
-        result = Database.execute_sql(sql, params)
-        print(f"💾 REPOSITORY: Database.execute_sql returned = {result}")
-        return result
+        # Check if user already has a save
+        existing_save = GameSaveRepository.get_save_by_user(user_id)
+        
+        if existing_save:
+            # Update existing save
+            print(f"💾 REPOSITORY: Updating existing save for user_id={user_id}")
+            sql = """
+            UPDATE game_saves 
+            SET save_data = %s, game_version = %s, last_updated = CURRENT_TIMESTAMP
+            WHERE user_id = %s
+            """
+            params = [json.dumps(save_data), game_version, user_id]
+            result = Database.execute_sql(sql, params)
+            print(f"💾 REPOSITORY: Update returned = {result}")
+            return existing_save['id']  # Return existing save ID
+        else:
+            # Create new save (first time)
+            print(f"💾 REPOSITORY: Creating new save for user_id={user_id}")
+            sql = """
+            INSERT INTO game_saves (user_id, save_data, game_version, last_updated)
+            VALUES (%s, %s, %s, CURRENT_TIMESTAMP)
+            """
+            params = [user_id, json.dumps(save_data), game_version]
+            result = Database.execute_sql(sql, params)
+            print(f"💾 REPOSITORY: Insert returned = {result}")
+            return result
     
     @staticmethod
     def get_save_by_user(user_id: int) -> Optional[Dict[str, Any]]:
