@@ -292,6 +292,12 @@ class GameEngine {
         this.updateAdCooldowns();
         this.updateAutoSellFinished(now);
         
+        // 🛡️ SAFETY: Ensure gold never goes negative during gameplay
+        if (this.state.resources.gold < 0) {
+            console.warn('⚠️ Gold went negative during tick:', this.state.resources.gold, '- fixing to 0');
+            this.state.resources.gold = 0;
+        }
+        
         // Update UI periodically (not every tick for performance)
         if (now - this.lastUIUpdate > this.uiUpdateRate) {
             this.updateUI();
@@ -1552,6 +1558,14 @@ class GameEngine {
     }
     
     reset() {
+        console.log('🔄 RESET: Starting game reset...');
+        
+        // Set reset flag to prevent auto-save interference
+        if (this.saveManager) {
+            this.saveManager._isResetting = true;
+            console.log('🔒 RESET: Lock acquired, auto-save blocked');
+        }
+        
         this.stop();
         this.state = this.getInitialState();
         
@@ -1565,8 +1579,22 @@ class GameEngine {
             prestigePanel.style.display = 'none';
         }
         
+        console.log('💾 RESET: Immediately saving reset state to prevent auto-save corruption...');
+        // CRITICAL: Save immediately after reset to prevent auto-save from restoring old state
+        if (this.saveManager) {
+            this.saveManager.saveGame(this.state).then(() => {
+                // Release the lock after save completes
+                this.saveManager._isResetting = false;
+                console.log('🔓 RESET: Lock released after save');
+            }).catch((error) => {
+                console.error('❌ RESET: Save failed:', error);
+                this.saveManager._isResetting = false;
+                console.log('🔓 RESET: Lock released (error)');
+            });
+        }
+        
         this.start();
-        console.log('Game reset');
+        console.log('✅ RESET: Game reset complete and saved!');
     }
 
     // Alias for UI compatibility
