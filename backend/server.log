@@ -13,7 +13,6 @@ nohup: ignoring input
         [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
         
   @app.on_event("shutdown")
-Warning: yt-dlp not installed. Video converter endpoints will be disabled.
 WARNING:  Provided reload directories ['backend'] did not contain valid directories, watching current working directory.
 INFO:     Will watch for changes in these directories: ['/home/student/Project/project-one/backend']
 ERROR:    [Errno 98] Address already in use

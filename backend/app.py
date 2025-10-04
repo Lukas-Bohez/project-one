@@ -5989,7 +5989,8 @@ class ConversionStatus(BaseModel):
 
 # URL patterns for platform validation
 URL_PATTERNS = {
-    'youtube': r'(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|embed|watch|shorts)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})',
+    # YouTube: supports watch, shorts, embed, share links (youtu.be), and playlist URLs
+    'youtube': r'(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|embed|watch|shorts)\/|(?:watch)?\?(?:.*&)?v=|playlist\?(?:.*&)?list=)|youtu\.be\/)',
     'tiktok': r'(?:tiktok\.com\/@[\w.-]+\/video\/|vm\.tiktok\.com\/|vt\.tiktok\.com\/)[\w.-]+',
     'instagram': r'(?:instagram\.com\/(?:p|reel|tv)\/[\w-]+)',
     'reddit': r'(?:reddit\.com\/r\/[\w]+\/comments\/[\w]+\/|v\.redd\.it\/[\w]+)',
@@ -6103,17 +6104,17 @@ start_video_cleanup()
 
 @app.post("/api/v1/convert/upload")
 async def upload_and_convert_file(
-    file: UploadFile = File(..., max_length=10_000_000),  # 10MB limit
+    file: UploadFile = File(..., max_length=1_000_000_000),  # 1GB limit
     target_format: str = Form(...)
 ):
     """
     Upload a file and convert it to the target format
-    Max file size: 10MB
+    Max file size: 1GB
     """
     try:
         # Validate file size
-        if hasattr(file, 'size') and file.size > 10_000_000:
-            raise HTTPException(status_code=413, detail="File too large. Maximum size is 10MB.")
+        if hasattr(file, 'size') and file.size > 1_000_000_000:
+            raise HTTPException(status_code=413, detail="File too large. Maximum size is 1GB.")
         
         # Clean up old files first
         cleanup_temp_files()
@@ -6416,6 +6417,93 @@ async def cleanup_conversion_files():
 # ----------------------------------------------------
 
 if VIDEO_CONVERTER_AVAILABLE:
+    # Helper function for background video download
+    def download_video_background(download_id: str, url: str, format_type: str, quality: int, output_path: str, client_ip: str = None):
+        """Background function to download and convert video - includes rate limit cleanup"""
+        def progress_hook(d):
+            if d['status'] == 'downloading':
+                try:
+                    progress = 0.0
+                    if d.get('total_bytes'):
+                        progress = (d['downloaded_bytes'] / d['total_bytes']) * 100
+                    elif d.get('total_bytes_estimate'):
+                        progress = (d['downloaded_bytes'] / d['total_bytes_estimate']) * 100
+                    
+                    with download_lock:
+                        if download_id in active_video_downloads:
+                            active_video_downloads[download_id]['progress'] = min(progress, 90.0)
+                            active_video_downloads[download_id]['status'] = 'downloading'
+                except:
+                    pass
+            elif d['status'] == 'finished':
+                with download_lock:
+                    if download_id in active_video_downloads:
+                        active_video_downloads[download_id]['progress'] = 95.0
+                        active_video_downloads[download_id]['status'] = 'processing'
+        
+        try:
+            # Update status
+            with download_lock:
+                if download_id in active_video_downloads:
+                    active_video_downloads[download_id]['status'] = 'downloading'
+            
+            # Get yt-dlp options
+            ydl_opts = get_ydl_opts(format_type, quality, output_path)
+            ydl_opts['progress_hooks'] = [progress_hook]
+            
+            # Download the video
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                # Extract info first
+                info = ydl.extract_info(url, download=False)
+                title = info.get('title', 'Unknown')
+                
+                # Update title
+                with download_lock:
+                    if download_id in active_video_downloads:
+                        active_video_downloads[download_id]['title'] = title
+                
+                # Download
+                ydl.download([url])
+            
+            # Find the downloaded file
+            downloaded_file = None
+            base_pattern = output_path.replace('.%(ext)s', '')
+            
+            for filename in os.listdir(VIDEO_DOWNLOAD_DIR):
+                if filename.startswith(os.path.basename(base_pattern)):
+                    downloaded_file = os.path.join(VIDEO_DOWNLOAD_DIR, filename)
+                    break
+            
+            if downloaded_file and os.path.exists(downloaded_file):
+                # Success
+                with download_lock:
+                    if download_id in active_video_downloads:
+                        active_video_downloads[download_id].update({
+                            'status': 'completed',
+                            'progress': 100.0,
+                            'file_path': downloaded_file,
+                            'finished': True
+                        })
+            else:
+                raise Exception("Downloaded file not found")
+                
+        except Exception as e:
+            # Error occurred
+            error_msg = str(e)
+            print(f"Video download error for {download_id}: {error_msg}")
+            
+            with download_lock:
+                if download_id in active_video_downloads:
+                    active_video_downloads[download_id].update({
+                        'status': 'error',
+                        'error': error_msg,
+                        'finished': True
+                    })
+        finally:
+            # Decrement rate limit counter when download finishes (success or error)
+            if client_ip:
+                decrement_video_rate_limit(client_ip)
+
     @app.post("/api/v1/video/validate", response_model=Dict[str, Any])
     async def validate_video_url(request: VideoUrlValidation):
         """Validate if URL is supported and return platform info"""
@@ -6585,92 +6673,6 @@ async def download_converted_file(download_id: str):
             filename=filename,
             media_type='application/octet-stream'
         )
-
-    def download_video_background(download_id: str, url: str, format_type: str, quality: int, output_path: str, client_ip: str = None):
-        """Background function to download and convert video - includes rate limit cleanup"""
-        def progress_hook(d):
-            if d['status'] == 'downloading':
-                try:
-                    progress = 0.0
-                    if d.get('total_bytes'):
-                        progress = (d['downloaded_bytes'] / d['total_bytes']) * 100
-                    elif d.get('total_bytes_estimate'):
-                        progress = (d['downloaded_bytes'] / d['total_bytes_estimate']) * 100
-                    
-                    with download_lock:
-                        if download_id in active_video_downloads:
-                            active_video_downloads[download_id]['progress'] = min(progress, 90.0)
-                            active_video_downloads[download_id]['status'] = 'downloading'
-                except:
-                    pass
-            elif d['status'] == 'finished':
-                with download_lock:
-                    if download_id in active_video_downloads:
-                        active_video_downloads[download_id]['progress'] = 95.0
-                        active_video_downloads[download_id]['status'] = 'processing'
-        
-        try:
-            # Update status
-            with download_lock:
-                if download_id in active_video_downloads:
-                    active_video_downloads[download_id]['status'] = 'downloading'
-            
-            # Get yt-dlp options
-            ydl_opts = get_ydl_opts(format_type, quality, output_path)
-            ydl_opts['progress_hooks'] = [progress_hook]
-            
-            # Download the video
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                # Extract info first
-                info = ydl.extract_info(url, download=False)
-                title = info.get('title', 'Unknown')
-                
-                # Update title
-                with download_lock:
-                    if download_id in active_video_downloads:
-                        active_video_downloads[download_id]['title'] = title
-                
-                # Download
-                ydl.download([url])
-            
-            # Find the downloaded file
-            downloaded_file = None
-            base_pattern = output_path.replace('.%(ext)s', '')
-            
-            for filename in os.listdir(VIDEO_DOWNLOAD_DIR):
-                if filename.startswith(os.path.basename(base_pattern)):
-                    downloaded_file = os.path.join(VIDEO_DOWNLOAD_DIR, filename)
-                    break
-            
-            if downloaded_file and os.path.exists(downloaded_file):
-                # Success
-                with download_lock:
-                    if download_id in active_video_downloads:
-                        active_video_downloads[download_id].update({
-                            'status': 'completed',
-                            'progress': 100.0,
-                            'file_path': downloaded_file,
-                            'finished': True
-                        })
-            else:
-                raise Exception("Downloaded file not found")
-                
-        except Exception as e:
-            # Error occurred
-            error_msg = str(e)
-            print(f"Video download error for {download_id}: {error_msg}")
-            
-            with download_lock:
-                if download_id in active_video_downloads:
-                    active_video_downloads[download_id].update({
-                        'status': 'error',
-                        'error': error_msg,
-                        'finished': True
-                    })
-        finally:
-            # Decrement rate limit counter when download finishes (success or error)
-            if client_ip:
-                decrement_video_rate_limit(client_ip)
 
 # Video converter placeholder endpoints (if yt-dlp not available)
 if not VIDEO_CONVERTER_AVAILABLE:
