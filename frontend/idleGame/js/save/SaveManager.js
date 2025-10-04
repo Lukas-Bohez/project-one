@@ -16,6 +16,11 @@ class SaveManager {
         this.autoSaveInterval = 30000;
         this.autoSaveTimer = null;
         
+        // 🔒 Operation locks to prevent concurrent save/load
+        this._isSaving = false;
+        this._isLoading = false;
+        this._isResetting = false;
+        
         // Load saved credentials on startup
         this.loadCredentials();
     }
@@ -119,6 +124,23 @@ class SaveManager {
             return { success: false, message: 'Not authenticated - Please login to save your game' };
         }
 
+        // 🔒 Prevent concurrent save/load operations
+        if (this._isSaving) {
+            console.log('⏸️ SAVE: Already saving, skipping...');
+            return { success: false, message: 'Save already in progress' };
+        }
+        if (this._isLoading) {
+            console.log('⏸️ SAVE: Load in progress, skipping save...');
+            return { success: false, message: 'Load in progress' };
+        }
+        if (this._isResetting) {
+            console.log('⏸️ SAVE: Reset in progress, skipping save...');
+            return { success: false, message: 'Reset in progress' };
+        }
+
+        this._isSaving = true;
+        console.log('🔒 SAVE: Lock acquired');
+
         try {
             // Prepare save data matching GameSaveData model
             const saveData = this.prepareSaveData();
@@ -165,6 +187,9 @@ class SaveManager {
             console.error('Save error:', error);
             this.gameEngine.showNotification(`❌ Save failed: ${error.message}`);
             return { success: false, message: error.message };
+        } finally {
+            this._isSaving = false;
+            console.log('🔓 SAVE: Lock released');
         }
     }
 
