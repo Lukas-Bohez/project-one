@@ -817,7 +817,7 @@ class GameEngine {
         this.updateButtonState('buy-train-btn', this.state.resources.gold >= 800);
         
         // City buttons
-        this.updateButtonState('hire-police-btn', this.state.resources.gold >= 100);
+        this.updateButtonState('hire-police-btn', this.state.resources.gold >= 5000);
         this.updateButtonState('hire-politician-btn', this.state.resources.gold >= 250);
         this.updateButtonState('build-bank-btn', this.state.resources.gold >= 500);
         this.updateButtonState('build-market-btn', this.state.resources.gold >= 1000);
@@ -1134,7 +1134,7 @@ class GameEngine {
     
     hireService(serviceType) {
         if (serviceType === 'police') {
-            const cost = 100;
+            const cost = 5000;
             if (this.state.resources.gold >= cost) {
                 this.state.resources.gold -= cost;
                 this.state.stats.totalGoldSpent += cost;
