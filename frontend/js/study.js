@@ -161,36 +161,37 @@ document.addEventListener('DOMContentLoaded', function() {
         const answersBaseEndpoint = `${lanIP}/api/v1/questions/`;
         const themesBaseEndpoint = `${lanIP}/api/v1/themes/`;
         const CACHE_KEY = `myApp_questionsCache_${activeOnly ? 'active' : 'all'}`;
-        const CACHE_DURATION = 30 * 1000; // 30 seconds for better development experience
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes - good balance between freshness and performance
         
         // Check for cache bypass via URL parameter or force refresh flag
         const urlParams = new URLSearchParams(window.location.search);
         const bypassCache = forceRefresh || urlParams.has('nocache') || urlParams.has('refresh');
 
         try {
-            // DEVELOPMENT MODE: Always bypass cache for now
-            console.log(`[DEVELOPMENT] Cache completely disabled - always fetching fresh data`);
-            
-            // Clear any existing cache
-            cache.clear(CACHE_KEY);
-
-            console.log(`[Fresh Fetch] Fetching new data for key: ${CACHE_KEY}`);
-
-            // Add cache-busting timestamp to prevent browser caching
-            const cacheBuster = `_t=${Date.now()}&_r=${Math.random()}`;
-            const questionsUrl = activeOnly ? 
-                `${questionsEndpoint}?active_only=true&${cacheBuster}` : 
-                `${questionsEndpoint}?${cacheBuster}`;
-            
-            console.log(`[API Request] Fetching questions from: ${questionsUrl}`);
-            const questionsResponse = await fetch(questionsUrl, {
-                cache: 'no-cache',
-                headers: {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
+            // Check cache first (unless explicitly bypassed)
+            if (!bypassCache) {
+                const cachedData = cache.get(CACHE_KEY);
+                if (cachedData && cache.isValid(cachedData, CACHE_DURATION)) {
+                    console.log(`[Cache Hit] Using cached data for key: ${CACHE_KEY}`);
+                    console.log(`[Cache Info] Age: ${Math.floor((Date.now() - cachedData.timestamp) / 1000)}s, Max: ${CACHE_DURATION / 1000}s`);
+                    return cachedData.data;
+                } else if (cachedData) {
+                    console.log(`[Cache Expired] Cache is stale, fetching fresh data for key: ${CACHE_KEY}`);
+                } else {
+                    console.log(`[Cache Miss] No cache found, fetching fresh data for key: ${CACHE_KEY}`);
                 }
-            });
+            } else {
+                console.log(`[Cache Bypass] Force refresh requested for key: ${CACHE_KEY}`);
+                cache.clear(CACHE_KEY);
+            }
+
+            // Fetch fresh data
+            console.log(`[API Request] Fetching questions from: ${questionsEndpoint}`);
+            const questionsUrl = activeOnly ? 
+                `${questionsEndpoint}?active_only=true` : 
+                questionsEndpoint;
+            
+            const questionsResponse = await fetch(questionsUrl);
             if (!questionsResponse.ok) {
                 throw new Error(`HTTP error fetching questions! Status: ${questionsResponse.status}`);
             }
@@ -200,15 +201,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const uniqueThemeIds = [...new Set(questions.map(q => q.themeId).filter(id => id))];
             const themePromises = uniqueThemeIds.map(async id => {
                 try {
-                    const themeUrl = `${themesBaseEndpoint}${id}/?_t=${Date.now()}&_r=${Math.random()}`;
-                    const response = await fetch(themeUrl, {
-                        cache: 'no-cache',
-                        headers: {
-                            'Cache-Control': 'no-cache, no-store, must-revalidate',
-                            'Pragma': 'no-cache',
-                            'Expires': '0'
-                        }
-                    });
+                    const themeUrl = `${themesBaseEndpoint}${id}/`;
+                    const response = await fetch(themeUrl);
                     return response.ok ? await response.json() : { id, name: 'Unknown Theme' };
                 } catch (error) {
                     console.warn(`Failed to fetch theme ${id}:`, error);
@@ -224,15 +218,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Fetch answers for each question
             const questionsWithDetails = await Promise.all(questions.map(async (question) => {
                 try {
-                    const answersUrl = `${answersBaseEndpoint}${question.id}/answers?_t=${Date.now()}&_r=${Math.random()}`;
-                    const answersResponse = await fetch(answersUrl, {
-                        cache: 'no-cache',
-                        headers: {
-                            'Cache-Control': 'no-cache, no-store, must-revalidate',
-                            'Pragma': 'no-cache',
-                            'Expires': '0'
-                        }
-                    });
+                    const answersUrl = `${answersBaseEndpoint}${question.id}/answers`;
+                    const answersResponse = await fetch(answersUrl);
                     const answersData = answersResponse.ok ? await answersResponse.json() : { answers: [] };
                     
                     return {
@@ -252,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Cache the result
             cache.set(CACHE_KEY, questionsWithDetails);
-            console.log(`[Cache Update] New data saved to cache for key: ${CACHE_KEY}`);
+            console.log(`[Cache Update] Fresh data saved to cache for key: ${CACHE_KEY}`);
             
             return questionsWithDetails;
         } catch (error) {
@@ -271,18 +258,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const fetchThemes = async () => {
         try {
-            const cacheBuster = `_t=${Date.now()}&_r=${Math.random()}`;
-            const themesUrl = `${lanIP}/api/v1/themes/?${cacheBuster}`;
+            const themesUrl = `${lanIP}/api/v1/themes/`;
             console.log(`[API Request] Fetching themes from: ${themesUrl}`);
             
-            const response = await fetch(themesUrl, {
-                cache: 'no-cache',
-                headers: {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
-                }
-            });
+            const response = await fetch(themesUrl);
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const themes = await response.json();
             
@@ -723,34 +702,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const main = async () => {
         console.log('Starting main initialization...');
         
-        // FORCE CLEAR ALL CACHE ON STARTUP
-        console.log('[STARTUP] Clearing all cache to ensure fresh data...');
-        cache.clear(); // Clear all cache
-        
-        // Clear browser cache for this domain
-        if ('caches' in window) {
-            try {
-                const cacheNames = await caches.keys();
-                await Promise.all(cacheNames.map(name => caches.delete(name)));
-                console.log('[STARTUP] Cleared service worker caches');
-            } catch (e) {
-                console.log('[STARTUP] No service worker caches to clear');
-            }
-        }
-        
         if (dom.questionDisplay) {
             dom.questionDisplay.style.display = 'none';
         }
         
         try {
-            console.log('%c[FRESH DATA MODE] Always fetching latest data from server...', 'color: #ff6b6b; font-weight: bold; background: #fff3cd; padding: 4px;');
             console.log('Initializing practice hub...');
             
             // Check if we should force refresh on startup
             const urlParams = new URLSearchParams(window.location.search);
             const forceRefresh = urlParams.has('nocache') || urlParams.has('refresh');
             
-            // First fetch questions
+            if (forceRefresh) {
+                console.log('[Force Refresh] Cache bypass requested via URL parameter');
+            }
+            
+            // First fetch questions (will use cache if available and valid)
             const questions = await fetchQuestions(true, forceRefresh);
             allQuestions = questions;
             console.log(`Loaded ${allQuestions.length} questions`);
@@ -765,18 +732,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Then fetch themes and calculate counts from the questions we already have
-            const themesCacheBuster = `_t=${Date.now()}&_r=${Math.random()}`;
-            const themesUrl = `${lanIP}/api/v1/themes/?${themesCacheBuster}`;
+            const themesUrl = `${lanIP}/api/v1/themes/`;
             console.log(`[API Request] Fetching themes in main from: ${themesUrl}`);
             
-            const themesResponse = await fetch(themesUrl, {
-                cache: 'no-cache',
-                headers: {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
-                }
-            });
+            const themesResponse = await fetch(themesUrl);
             if (!themesResponse.ok) throw new Error(`HTTP error! status: ${themesResponse.status}`);
             const themes = await themesResponse.json();
             
@@ -824,12 +783,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     main();
     
-    // Development helper - log cache clearing options
-    console.log('%c[Cache Helper] Available cache clearing options:', 'color: #4CAF50; font-weight: bold;');
+    // Development helper - log cache info
+    console.log('%c[Cache Info] Cache system active with smart caching:', 'color: #4CAF50; font-weight: bold;');
+    console.log('• Cache duration: 5 minutes');
     console.log('• Add ?nocache or ?refresh to URL to bypass cache on page load');
     console.log('• Press Ctrl+Shift+R (or Cmd+Shift+R on Mac) to clear cache and reload');
-    console.log('• Double-click the page header/title to clear cache');
-    console.log('• Cache duration is now 30 seconds for development');
+    console.log('• Double-click the page header/title to clear cache manually');
+    console.log('• Normal page loads will use cached data if available and fresh');
     
     // #endregion
 });
