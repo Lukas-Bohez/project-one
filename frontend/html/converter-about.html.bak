@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Convert The Spire | Free Video Converter by the QuizTheSpire Team</title>
-    <meta name="description" content="Learn about Convert The Spire - Free YouTube to MP3/MP4 converter created by the QuizTheSpire Team. Our mission, story, and commitment to providing the best free video conversion service.">
+    <title>About Convert The Spire | Free Video Converter by Lukas Bohez</title>
+    <meta name="description" content="Learn about Convert The Spire - Free YouTube to MP3/MP4 converter created by Lukas Bohez. Our mission, story, and commitment to providing the best free video conversion service.">
     <meta name="keywords" content="about convert the spire, lukas bohez, video converter creator, free video converter, youtube to mp3 developer, open source converter">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
-    <meta name="author" content="QuizTheSpire Team">
+    <meta name="author" content="Lukas Bohez - Convert The Spire">
     <meta name="language" content="en">
     <meta name="copyright" content="© 2025 Convert The Spire. All rights reserved.">
-    <meta name="reply-to" content="our support chat">
+    <meta name="reply-to" content="lukasbohez@gmail.com">
     
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="About Convert The Spire | Free Video Converter">
-    <meta property="og:description" content="Learn about Convert The Spire and its QuizTheSpire Team. Our mission to provide the best free video conversion service for everyone.">
+    <meta property="og:description" content="Learn about Convert The Spire and its creator Lukas Bohez. Our mission to provide the best free video conversion service for everyone.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://quizthespire.duckdns.org/frontend/html/converter-about.html">
     <meta property="og:site_name" content="Convert The Spire">
@@ -24,7 +24,7 @@
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="About Convert The Spire | Free Video Converter">
-    <meta name="twitter:description" content="Learn about Convert The Spire and its QuizTheSpire Team. Our mission to provide the best free video conversion service.">
+    <meta name="twitter:description" content="Learn about Convert The Spire and its creator Lukas Bohez. Our mission to provide the best free video conversion service.">
     <meta name="twitter:creator" content="@LukasBohez">
     
     <link rel="canonical" href="https://quizthespire.duckdns.org/frontend/html/converter-about.html">
@@ -39,14 +39,14 @@
         "@context": "https://schema.org",
         "@type": "AboutPage",
         "name": "About Convert The Spire",
-        "description": "Learn about Convert The Spire video converter service and its QuizTheSpire Team",
+        "description": "Learn about Convert The Spire video converter service and its creator Lukas Bohez",
         "url": "https://quizthespire.duckdns.org/frontend/html/converter-about.html",
         "datePublished": "2025-09-27",
         "dateModified": "2025-09-27",
         "author": {
             "@type": "Person",
             "name": "Lukas Bohez",
-            "email": "our support chat",
+            "email": "lukasbohez@gmail.com",
             "url": "https://github.com/Lukas-Bohez"
         },
         "publisher": {
@@ -60,7 +60,7 @@
         "@type": "Person",
         "name": "Lukas Bohez",
         "jobTitle": "Software Developer",
-        "email": "our support chat",
+        "email": "lukasbohez@gmail.com",
         "url": "https://github.com/Lukas-Bohez",
         "knows": [
             {
@@ -441,8 +441,8 @@
                     </p>
                     
                     <div class="contact-methods">
-                        <a href="/html/support.html" class="contact-btn">
-                            <i class="fas fa-comments"></i> Chat with Support
+                        <a href="mailto:lukasbohez@gmail.com" class="contact-btn">
+                            <i class="fas fa-envelope"></i> Email Me
                         </a>
                         <a href="https://github.com/Lukas-Bohez" target="_blank" rel="noopener" class="contact-btn">
                             <i class="fab fa-github"></i> GitHub
@@ -491,7 +491,7 @@
         <div class="faq-item">
             <div class="faq-question">Can I suggest new features or platforms?</div>
             <div class="faq-answer">
-                <p>Yes! I love hearing from users. Send your suggestions, feature requests, or feedback to <a href="/html/support.html">our support chat</a>. User feedback drives the development roadmap.</p>
+                <p>Yes! I love hearing from users. Send your suggestions, feature requests, or feedback to <a href="mailto:lukasbohez@gmail.com">lukasbohez@gmail.com</a>. User feedback drives the development roadmap.</p>
             </div>
         </div>
 
@@ -511,8 +511,8 @@
             </p>
             
             <div style="text-align: center; margin-top: 2rem;">
-                <a href="/html/support.html" class="contact-btn" style="margin-right: 1rem;">
-                    <i class="fas fa-comments"></i> Start a Chat
+                <a href="mailto:lukasbohez@gmail.com" class="contact-btn" style="margin-right: 1rem;">
+                    <i class="fas fa-envelope"></i> Send Email
                 </a>
                 <a href="https://github.com/Lukas-Bohez" target="_blank" rel="noopener" class="contact-btn">
                     <i class="fab fa-github"></i> View Projects
@@ -542,11 +542,10 @@
     <footer class="c-footer">
         <div class="c-footer__container">
             <div style="text-align: center; padding: 1rem;">
-                <p>&copy; 2025 Convert The Spire. Created with ❤️ by the <a href="/html/support.html" class="c-footer__link--inline">QuizTheSpire Team</a> | 
+                <p>&copy; 2025 Convert The Spire. Created with ❤️ by <a href="mailto:lukasbohez@gmail.com" class="c-footer__link--inline">Lukas Bohez</a> | 
                 <a href="converter.html" class="c-footer__link--inline">Back to Converter</a> | 
                 <a href="converter-privacy.html" class="c-footer__link--inline">Privacy</a> | 
-                <a href="converter-terms.html" class="c-footer__link--inline">Terms</a> |
-                <a href="/html/support.html" class="c-footer__link--inline">💬 Support Chat</a></p>
+                <a href="converter-terms.html" class="c-footer__link--inline">Terms</a></p>
             </div>
         </div>
     </footer>

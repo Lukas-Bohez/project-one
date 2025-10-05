@@ -7,10 +7,10 @@
     <meta name="description" content="Terms of Service for Convert The Spire - Free YouTube to MP3/MP4 converter. Usage rights, limitations, and user responsibilities for our video conversion service.">
     <meta name="keywords" content="terms of service, terms of use, legal agreement, convert the spire, video converter terms, usage rights, user agreement">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
-    <meta name="author" content="QuizTheSpire Team">
+    <meta name="author" content="Lukas Bohez - Convert The Spire">
     <meta name="language" content="en">
     <meta name="copyright" content="© 2025 Convert The Spire. All rights reserved.">
-    <meta name="reply-to" content="our support chat">
+    <meta name="reply-to" content="lukasbohez@gmail.com">
     
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="Terms of Service | Convert The Spire">
@@ -44,7 +44,7 @@
         "author": {
             "@type": "Person",
             "name": "Lukas Bohez",
-            "email": "our support chat"
+            "email": "lukasbohez@gmail.com"
         },
         "publisher": {
             "@type": "Organization",
@@ -148,7 +148,7 @@
         <h3>4.2 DMCA Compliance</h3>
         <p>
             We comply with the Digital Millennium Copyright Act (DMCA). If you believe your copyrighted work is being infringed, 
-            please contact us at our support chat with:
+            please contact us at lukasbohez@gmail.com with:
         </p>
         <ul>
             <li>Description of the copyrighted work claimed to be infringed</li>
@@ -285,7 +285,7 @@
         <h3>12.2 Dispute Resolution</h3>
         <p>Before pursuing legal action, we encourage you to:</p>
         <ol>
-            <li><strong>Contact Us First:</strong> Email our support chat to discuss any issues</li>
+            <li><strong>Contact Us First:</strong> Email lukasbohez@gmail.com to discuss any issues</li>
             <li><strong>Good Faith Resolution:</strong> Work with us to resolve disputes amicably</li>
             <li><strong>Mediation:</strong> Consider mediation before litigation if direct resolution fails</li>
         </ol>
@@ -314,7 +314,7 @@
             <h2>15. Contact Information</h2>
             <p>Questions about these Terms of Service? We're here to help!</p>
             <ul>
-                <li><strong>📧 Email:</strong> <a href="/html/support.html">our support chat</a></li>
+                <li><strong>📧 Email:</strong> <a href="mailto:lukasbohez@gmail.com">lukasbohez@gmail.com</a></li>
                 <li><strong>🌐 Website:</strong> <a href="converter.html">Convert The Spire</a></li>
                 <li><strong>👨‍💻 Developer:</strong> Lukas Bohez</li>
                 <li><strong>📍 Location:</strong> Belgium, EU</li>

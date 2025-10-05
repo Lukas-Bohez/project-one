@@ -19,7 +19,7 @@
     <meta name="category" content="multimedia">
     <meta name="subject" content="Video conversion and downloading service">
     <meta name="copyright" content="© 2025 Convert The Spire by Oroka Conner. All rights reserved.">
-    <meta name="reply-to" content="our support chat">
+    <meta name="reply-to" content="lukasbohez@gmail.com">
     <meta name="designer" content="Oroka Conner">
     <meta name="target" content="all">
     <meta name="audience" content="all">
@@ -96,7 +96,7 @@
         "author": {
             "@type": "Person",
             "name": "Lukas Bohez",
-            "email": "our support chat",
+            "email": "lukasbohez@gmail.com",
             "url": "https://github.com/Lukas-Bohez"
         },
         "publisher": {
@@ -516,7 +516,7 @@
                     All rights reserved.
                 </p>
                 <div class="c-footer__social">
-                    <a href="/html/support.html" class="c-footer__social-link" title="Contact Us">
+                    <a href="mailto:lukasbohez@gmail.com" class="c-footer__social-link" title="Contact Us">
                         <i class="fas fa-envelope"></i>
                     </a>
                     <a href="https://github.com/Lukas-Bohez" class="c-footer__social-link" title="GitHub" target="_blank" rel="noopener">
@@ -555,7 +555,7 @@
                     <li><a href="converter-privacy.html" class="c-footer__link">Privacy Policy</a></li>
                     <li><a href="converter-terms.html" class="c-footer__link">Terms of Service</a></li>
                     <li><a href="converter-about.html" class="c-footer__link">About Us</a></li>
-                    <li><a href="/html/support.html" class="c-footer__link">Contact Support</a></li>
+                    <li><a href="mailto:lukasbohez@gmail.com" class="c-footer__link">Contact Support</a></li>
                     <li><a href="converter-about.html#faq" class="c-footer__link">FAQ</a></li>
                     <li><a href="../sitemap.xml" class="c-footer__link">Sitemap</a></li>
                 </ul>
@@ -566,7 +566,7 @@
             <div class="c-footer__container">
                 <div class="c-footer__copyright">
                     <p>&copy; 2025 Convert The Spire. All rights reserved. | 
-                    Created with ❤️ by the <a href="/html/support.html" class="c-footer__link--inline">QuizTheSpire Team</a></p>
+                    Created by <a href="mailto:lukasbohez@gmail.com" class="c-footer__link--inline">Lukas Bohez</a></p>
                 </div>
                 <div class="c-footer__disclaimer">
                     <p><small>

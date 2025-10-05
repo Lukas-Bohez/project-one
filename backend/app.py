@@ -1959,6 +1959,91 @@ async def login_user(user_credentials: UserCredentials, request: Request):
         )
 
 
+# Support chat login endpoint - does NOT create quiz sessions
+@app.post("/api/v1/support/login")
+async def support_login_user(user_credentials: UserCredentials, request: Request):
+    """
+    Login endpoint for support chat that does NOT create or join quiz sessions.
+    This is used when users only want to access support chat without joining a quiz.
+    """
+    try:
+        user_id = UserRepository.authenticate_user(
+            user_credentials.first_name,
+            user_credentials.last_name,
+            user_credentials.password
+        )
+        if user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid first name, last name, or password."
+            )
+        
+        # Just log the IP, don't create sessions or join them
+        log_user_ip_address(user_id, get_client_ip(request))
+        
+        logger.info(f"User ID {user_id} logged in for support chat (no quiz session created).")
+        return {"message": "Login successful", "user_id": user_id}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"An unexpected error occurred during support login for user '{user_credentials.first_name}': {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected server error occurred."
+        )
+
+
+# Support chat register endpoint - does NOT create quiz sessions
+@app.post("/api/v1/support/register", status_code=status.HTTP_201_CREATED)
+async def support_register_user(user_credentials: UserCredentials, request: Request):
+    """
+    Register endpoint for support chat that does NOT create or join quiz sessions.
+    This is used when new users register just to access support chat.
+    """
+    try:
+        if UserRepository.get_user_by_name(user_credentials.first_name, user_credentials.last_name):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="A user with this first and last name already exists. Please choose another name or login."
+            )
+
+        hashed_info = UserRepository.hash_password(user_credentials.password)
+        
+        user_data = {
+            'first_name': user_credentials.first_name,
+            'last_name': user_credentials.last_name,
+            'password_hash': hashed_info['password_hash'],
+            'salt': hashed_info['salt'],
+            'userRoleId': 1,
+            'soul_points': 4,
+            'limb_points': 4,
+            'updated_by': 1
+        }
+        
+        user_id = UserRepository.create_user_with_password(user_data)
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="A critical error occurred while creating the user."
+            )
+        
+        # Just log the IP, don't create sessions or send chat messages
+        log_user_ip_address(user_id, get_client_ip(request))
+        
+        logger.info(f"User '{user_credentials.first_name} {user_credentials.last_name}' registered for support chat with ID: {user_id}")
+        return {"message": "User registered successfully", "user_id": user_id}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"An unexpected error occurred during support registration: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected server error occurred."
+        )
+
+
 def generate_kawaii_string(user_credentials):
     # Mixed emotion phrases with emojis (kawaii, kowai, excited, etc.)
     emotion_strings = [
@@ -3451,7 +3536,7 @@ async def get_all_items():
 @app.get("/api/v1/sessions/active")
 async def get_active_sessions():
     """
-    Get all currently active quiz sessions.
+    Get all currently active quiz sessions (excluding support session 999999).
     """
     try:
         active_sessions = QuizSessionRepository.get_sessions_by_status(2)
@@ -3463,11 +3548,11 @@ async def get_active_sessions():
         
         # This assumes get_sessions_by_status returns at least one session if active sessions exist
         if active_sessions and isinstance(active_sessions[0], dict):
-            # If it's a list of dictionaries, access by key
-            active_session_ids = [session['sessionId'] for session in active_sessions]
+            # If it's a list of dictionaries, access by key and filter out support session
+            active_session_ids = [session['sessionId'] for session in active_sessions if session.get('sessionId') != 999999]
         else:
-            # If it's a list of tuples (or empty), access by index 0 (as previously assumed)
-            active_session_ids = [session[0] for session in active_sessions]
+            # If it's a list of tuples (or empty), access by index 0 and filter out support session
+            active_session_ids = [session[0] for session in active_sessions if session[0] != 999999]
         
         # Return as a dictionary with a clear key for JSON serialization
         return {"active_session_ids": active_session_ids}
@@ -3515,8 +3600,9 @@ async def create_chat_message(request: ChatMessageCreate):
         logger.info("Starting create_chat_message endpoint.")
         
         active_sessions = QuizSessionRepository.get_sessions_by_status(2)
-        active_session_ids = [session[0] for session in active_sessions]
-        logger.info(f"Active session IDs: {active_session_ids}")
+        # Filter out support session 999999 - it should use the support endpoint instead
+        active_session_ids = [session[0] for session in active_sessions if session[0] != 999999]
+        logger.info(f"Active session IDs (excluding support): {active_session_ids}")
         
         if request.session_id not in active_session_ids:
             logger.warning(f"Session {request.session_id} not found in active sessions.")
@@ -3561,6 +3647,74 @@ async def create_chat_message(request: ChatMessageCreate):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create chat message"
+        )
+
+
+# Support chat endpoint - bypasses active session check for session 999999
+@app.post("/api/v1/chat/support/messages")
+async def create_support_chat_message(request: ChatMessageCreate):
+    """
+    Create a new support chat message (session 999999).
+    This endpoint bypasses the active session check since support chat is always available.
+    """
+    try:
+        current_time = time.time()
+        user_id = request.user_id
+
+        # Rate limiting
+        if user_id in user_last_request_time:
+            if current_time - user_last_request_time[user_id] < RATE_LIMIT_SECONDS:
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail=f"Please wait {RATE_LIMIT_SECONDS} second(s) before sending another message."
+                )
+        user_last_request_time[user_id] = current_time
+
+        logger.info(f"Starting create_support_chat_message endpoint for session {request.session_id}")
+        
+        # Support chat should always use session 999999
+        if request.session_id != 999999:
+            logger.warning(f"Invalid session ID {request.session_id} for support chat, forcing to 999999")
+            request.session_id = 999999
+
+        logger.info("Attempting to create support chat message in DB.")
+        message_id = ChatLogRepository.create_chat_message(
+            session_id=request.session_id,
+            message_text=request.message_text,
+            user_id=request.user_id,
+            message_type=request.message_type,
+            reply_to_id=request.reply_to_id
+        )
+        
+        if message_id is None:
+            logger.error("Message ID is None after create_chat_message. Database insertion might have failed.")
+            raise Exception("Failed to create message: message_id is None")
+
+        logger.info(f"Support message created successfully with ID: {message_id}")
+
+        # Emit message_sent event for support session
+        logger.info("Emitting 'message_sent' for support chat via Socket.IO.")
+        await sio.emit('message_sent', {
+            'session_id': request.session_id
+        })
+        
+        logger.info("Support chat Socket.IO emit completed successfully.")
+
+        return {
+            "message_id": message_id,
+            "status": "sent",
+            "broadcast": True,
+            "session_id": request.session_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Unhandled exception in create_support_chat_message: {e}")
+        print(f"Error creating support chat message: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create support chat message"
         )
 
 
@@ -4399,9 +4553,11 @@ def select_question_based_on_sensors(available_questions, temp_sensor, light_sen
 
 
 def get_active_session_id():
-    """Get the ID of the first active session."""
+    """Get the ID of the first active session (excluding support session 999999)."""
     active_sessions = QuizSessionRepository.get_sessions_by_status(2)
-    return active_sessions[0][0] if active_sessions else None  # Access first column of first row
+    # Filter out support session 999999
+    quiz_sessions = [session for session in active_sessions if session[0] != 999999]
+    return quiz_sessions[0][0] if quiz_sessions else None  # Access first column of first row
 
 def get_winning_theme(session_id):
     """Returns random top theme in case of tie"""

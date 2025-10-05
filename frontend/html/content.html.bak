@@ -376,7 +376,7 @@
                 <p>We implement appropriate security measures to protect against unauthorized access to or unauthorized alteration, disclosure, or destruction of data.</p>
                 
                 <h3>Contact Information</h3>
-                <p>Email: <a href="/html/support.html">our support chat</a></p>
+                <p>Email: <a href="mailto:lukasbohez@gmail.com">lukasbohez@gmail.com</a></p>
                 <p>Response time: Within 48 business hours</p>
             </div>
             
@@ -401,7 +401,7 @@
     <!-- Footer -->
     <footer class="footer">
         <p>&copy; 2025 Article The Spire. All stories by Oroka Conner.</p>
-        <p>Contact: <a href="/html/support.html">our support chat</a></p>
+        <p>Contact: <a href="mailto:lukasbohez@gmail.com">lukasbohez@gmail.com</a></p>
     </footer>
 
 <script src="../js/themeManager.js" defer></script>
