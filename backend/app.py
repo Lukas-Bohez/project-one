@@ -10,6 +10,7 @@ import time
 import traceback
 from threading import Thread, Event, Lock
 import socket
+import logging
 # Import the new ThemeRepository
 from fastapi.responses import HTMLResponse,JSONResponse
 from database.datarepository import QuestionRepository, AnswerRepository, ThemeRepository,UserRepository, IpAddressRepository, UserIpAddressRepository,QuizSessionRepository,SensorDataRepository,AuditLogRepository,PlayerItemRepository,ItemRepository,ChatLogRepository,SessionPlayerRepository,PlayerAnswerRepository,ArticlesRepository,StoriesRepository,GameSaveRepository,GameResourcesRepository,GameUpgradesRepository
@@ -51,6 +52,28 @@ except ImportError as e:
     print("The Pi-related background thread will not start.")
     RPI_COMPONENTS_AVAILABLE = False
 
+# ----------------------------------------------------
+# Logging Setup
+# ----------------------------------------------------
+# Create a logger for quiz debugging
+quiz_logger = logging.getLogger('quiz_debug')
+quiz_logger.setLevel(logging.DEBUG)
+
+# Create file handler
+log_file = '/home/student/Project/project-one/backend/quiz_debug.log'
+file_handler = logging.FileHandler(log_file, mode='a')
+file_handler.setLevel(logging.DEBUG)
+
+# Create formatter
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+# Add handler to logger
+quiz_logger.addHandler(file_handler)
+
+quiz_logger.info("="*50)
+quiz_logger.info("Quiz Logger Initialized")
+quiz_logger.info("="*50)
 
 # Global variable for temperature effects
 virtualTemperature = 0
@@ -233,6 +256,31 @@ async def get_current_user_info(
 
 # Store connected clients
 connected_clients = set()
+
+# Helper function to check if a quiz session has any connected clients
+async def get_room_participants(room_name):
+    """Get the number of participants in a socket.io room"""
+    try:
+        room = sio.manager.rooms.get('/', {}).get(room_name, set())
+        return len(room)
+    except Exception as e:
+        print(f"Error getting room participants: {e}")
+        return 0
+
+def is_quiz_session_active(session_id):
+    """Check if a quiz session has any connected clients"""
+    try:
+        room_name = f'quiz_session_{session_id}'
+        # This is a synchronous check - we'll use the sio.manager directly
+        room = sio.manager.rooms.get('/', {}).get(room_name, set())
+        participant_count = len(room)
+        quiz_logger.info(f"Room check: {room_name} has {participant_count} participants")
+        print(f"Room {room_name} has {participant_count} participants")
+        return participant_count > 0
+    except Exception as e:
+        quiz_logger.error(f"Error checking quiz session activity: {e}")
+        print(f"Error checking quiz session activity: {e}")
+        return True  # Assume active if we can't check
 
 # Mount Socket.IO on the same app
 app.mount("/socket.io", socketio.ASGIApp(sio, app))
@@ -1878,6 +1926,7 @@ async def register_user(user_credentials: UserCredentials, request: Request):
                 host_user_id=user_id,  # Must be provided
                 start_time=datetime.now()
             )
+            quiz_logger.info(f"[REGISTER] Created new session {new_session_id} with status=2 (active)")
             current_phase = 'voting'
         ChatLogRepository.create_chat_message(
             session_id=get_active_session_id(),
@@ -1934,6 +1983,7 @@ async def login_user(user_credentials: UserCredentials, request: Request):
                 host_user_id=user_id,  # Must be provided
                 start_time=datetime.now()
             )
+            quiz_logger.info(f"[LOGIN] Created new session {new_session_id} with status=2 (active)")
             current_phase = 'voting'
         ChatLogRepository.create_chat_message(
             session_id=get_active_session_id(),
@@ -4525,7 +4575,9 @@ progress = None
 def is_timer_active(session_id):
     with timer_lock:
         timer_thread = active_timers.get(session_id)
-        return timer_thread.is_alive() if timer_thread else False
+        is_alive = timer_thread.is_alive() if timer_thread else False
+        quiz_logger.info(f"is_timer_active({session_id}): thread exists={timer_thread is not None}, is_alive={is_alive}")
+        return is_alive
 
 
 def select_question_based_on_sensors(available_questions, temp_sensor, light_sensor):
@@ -4767,11 +4819,13 @@ def start_generic_timer(sio, loop, session_id, timer_config):
     """
     with timer_lock:
         if session_id in active_timers:
+            quiz_logger.info(f"start_generic_timer: Timer already exists for session {session_id}, returning False")
             return False  # Timer already running
         
         def timer_task():
             try:
                 current_phase = get_session_phase(session_id)
+                quiz_logger.info(f"Timer thread started for session {session_id}, phase: {current_phase}")
                 print(f"Starting timer for session {session_id}, phase: {current_phase}")
                 
                 if current_phase == 'voting':
@@ -4782,15 +4836,18 @@ def start_generic_timer(sio, loop, session_id, timer_config):
                     handle_quiz_phase(sio, loop, session_id, timer_config)
                     
             except Exception as e:
+                quiz_logger.error(f"Timer error for session {session_id}: {e}")
                 print(f"Timer error for session {session_id}: {e}")
                 traceback.print_exc()
             finally:
                 with timer_lock:
+                    quiz_logger.info(f"Timer thread ending, removing from active_timers for session {session_id}")
                     active_timers.pop(session_id, None)
         
         # Start timer thread
         timer_thread = Thread(target=timer_task, daemon=True)
         active_timers[session_id] = timer_thread
+        quiz_logger.info(f"start_generic_timer: Created and starting timer thread for session {session_id}")
         timer_thread.start()
         return True
 
@@ -4981,7 +5038,9 @@ def handle_theme_display_phase(sio, loop, session_id, display_time):
 
 def handle_quiz_phase(sio, loop, session_id, timer_config):
     """Handle the quiz questions phase with dynamic timer based on player answers and environment multiplier."""
-    print(f"Starting quiz phase for session {session_id}")
+    import random  # Import at the top to avoid scoping issues
+    quiz_logger.info(f"========== HANDLE_QUIZ_PHASE CALLED for session {session_id} ==========")
+    print(f"========== HANDLE_QUIZ_PHASE CALLED for session {session_id} ==========")
     global multiplier
     global virtualTemperature
     # Get session and theme info
@@ -4989,13 +5048,19 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
     explanationNow = False  # Flag to indicate if we're not in explanation time
     session_info = QuizSessionRepository.get_session_by_id(session_id)
     if not session_info or not session_info.get('themeId'):
+        quiz_logger.error(f"No theme found for session {session_id}")
+        print(f"ERROR: No theme found for session {session_id}")
         emit_error(sio, loop, session_id, 'No theme found for quiz')
         return
 
     theme_id = session_info['themeId']
     all_questions = QuestionRepository.get_questions_by_theme(theme_id, active_only=True)
+    quiz_logger.info(f"Found {len(all_questions) if all_questions else 0} total questions for theme {theme_id}")
+    print(f"Found {len(all_questions) if all_questions else 0} total questions for theme {theme_id}")
 
     if not all_questions:
+        quiz_logger.error(f"No questions found for theme {theme_id}")
+        print(f"ERROR: No questions found for theme {theme_id}")
         emit_error(sio, loop, session_id, 'No questions found for this theme')
         return
 
@@ -5003,14 +5068,65 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
     quiz_state = get_quiz_state(session_id)
     rows = PlayerAnswerRepository.get_player_answers_for_session(session_id)
     ids = [row['questionId'] for row in rows]
+    quiz_logger.info(f"Already answered questions: {ids}")
+    print(f"Already answered questions: {ids}")
     if not quiz_state['question_count']:
         quiz_state['question_count'] = len(ids)
     available_questions = [q for q in all_questions if q['id'] not in ids]
+    quiz_logger.info(f"Available questions: {len(available_questions)}")
+    print(f"Available questions: {len(available_questions)}")
 
     # Get total players in session
     players = SessionPlayerRepository.get_session_players(session_id)
     total_players = len(players) if players else 0
+    quiz_logger.info(f"Total players: {total_players}")
+    print(f"Total players: {total_players}")
 
+    # Check if there are any connected clients in the quiz room
+    is_active = is_quiz_session_active(session_id)
+    quiz_logger.info(f"Is quiz session active (Socket.IO room check): {is_active}")
+    print(f"Is quiz session active: {is_active}")
+    if not is_active:
+        quiz_logger.warning(f"ENDING QUIZ: No connected clients in session {session_id}")
+        print(f"ENDING QUIZ: No connected clients in session {session_id}")
+        QuizSessionRepository.update_session_status(session_id, 3)
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('quiz_finished', {
+                'session_id': session_id,
+                'final_score': 0,
+                'questions_asked': quiz_state['question_count'],
+                'all_questions_answered': False,
+                'ended_early': True,
+                'final_scores': [],
+                'message': 'Quiz ended - no players remaining.'
+            }), loop
+        ).result(timeout=1)
+        return
+
+    # Check if there are any available questions left
+    if not available_questions:
+        quiz_logger.warning(f"ENDING QUIZ: No available questions for session {session_id}")
+        print(f"ENDING QUIZ: No available questions for session {session_id}")
+        QuizSessionRepository.update_session_status(session_id, 3)
+        final_state = get_quiz_state(session_id)
+        player_scores = PlayerAnswerRepository.get_all_player_scores_for_session(session_id)
+        total_score = sum(float(score.get('total_score', 0)) for score in player_scores)
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('quiz_finished', {
+                'session_id': session_id,
+                'final_score': total_score,
+                'questions_asked': final_state['question_count'],
+                'all_questions_answered': True,
+                'ended_early': False,
+                'final_scores': [],
+                'message': f'Quiz completed! All questions answered. Final score: {total_score}'
+            }), loop
+        ).result(timeout=1)
+        return
+
+    # Only send "Preparing question" message if we have questions to ask
+    quiz_logger.info(f"About to send 'Preparing question {quiz_state['question_count'] + 1}' message")
+    print(f"Sending 'Preparing question' message")
     ChatLogRepository.create_chat_message(
         session_id=get_active_session_id(),
         message_text=f"Preparing question {quiz_state['question_count'] + 1}",
@@ -5021,30 +5137,32 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
     threadsafe_emit_message_sent(sio, get_active_session_id(), loop)
 
     quiz_ended_early = False
+    consecutive_score_failures = 0  # Track consecutive failures to meet score requirement
     
+    quiz_logger.info(f"ENTERING WHILE LOOP: available_questions={len(available_questions)}, quiz_ended_early={quiz_ended_early}")
+    print(f"ENTERING WHILE LOOP: available_questions={len(available_questions)}, quiz_ended_early={quiz_ended_early}")
+
     while available_questions and not quiz_ended_early:
+        quiz_logger.info(f"INSIDE WHILE LOOP - selecting question")
+        print(f"INSIDE WHILE LOOP - selecting question")
         question = select_question_based_on_sensors(available_questions, temp_sensor, light_sensor) or \
                   random.choice(available_questions) if available_questions else None
-            
+        print(f"Selected question: {question['id'] if question else 'None'}")
         if not question:
+            print(f"ERROR: No question selected, breaking loop")
             break
 
         available_questions.remove(question)
-        
-        # Reset explanation flag for new question - players can now submit answers
         explanationNow = False
-        
         update_quiz_state(session_id, 
                          asked_questions=quiz_state['asked_questions'] + [question['id']],
                          question_count=quiz_state['question_count'] + 1,
                          current_question=question,
                          waiting_for_answers=True)
 
-        # Set time limits - minimum 9 seconds for question, 5-10 seconds for explanation
-        question_time = max(question.get('time_limit', 15), 9)  # At least 9 seconds
-        explanation_time = max(5, min(10, question_time))  # Between 5-10 seconds
+        question_time = max(question.get('time_limit', 15), 9)
+        explanation_time = max(5, min(10, question_time))
 
-        # Show question
         emit_combined_question_and_answers(question['id'], sio, loop)
         answers = AnswerRepository.get_correct_answers_for_question(question['id'])
         asyncio.run_coroutine_threadsafe(
@@ -5057,97 +5175,83 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
                 'question_number': quiz_state['question_count'] + 1
             }), loop
         ).result(timeout=1)
-        
-        # Question countdown with dynamic speed based on multiplier and player answers
+
         current_time = question_time
         all_answered = False
         cooldown_started = False
-        cooldown_time = 2.0  # 2 second cooldown
-        
+        cooldown_time = 2.0
+
         while current_time > 0:
             emit_timer_update(sio, loop, session_id, current_time, 'question', question_time, 
                             question_id=question['id'], question_number=quiz_state['question_count'])
-            
             answer_count = PlayerAnswerRepository.get_answer_count_for_question(session_id, question['id'])
-            
-            # Check if all players have answered
             if answer_count >= total_players and total_players > 0 and not cooldown_started:
                 print(f"All players answered - starting 2 second cooldown")
                 cooldown_started = True
                 cooldown_remaining = cooldown_time
-                
-                # Cooldown period
                 while cooldown_remaining > 0:
                     emit_timer_update(sio, loop, session_id, current_time, 'question', question_time, 
                                     question_id=question['id'], question_number=quiz_state['question_count'])
-                    
-                    time.sleep(0.1)  # Small sleep for smooth countdown
+                    time.sleep(0.1)
                     cooldown_remaining -= 0.1
                     current_time = max(0, current_time - 0.1)
-                
                 all_answered = True
                 current_time = 0
                 break
-            
-            # Calculate sleep time based on both player answers and multiplier
             base_sleep_time = 1.0
             if total_players > 0:
                 answer_factor = answer_count / total_players
-                # Base speed increases as more players answer (0.5-1.0 range)
                 base_sleep_time = max(0.5, 1.0 - (answer_factor * 0.5))
-            
-            # Apply multiplier effect (0.5-2 range) - higher multiplier = faster countdown
-            adjusted_sleep_time = base_sleep_time * (1 / multiplier)  # Inverse relationship
-            
-            # Ensure we don't go too fast or too slow
+            adjusted_sleep_time = base_sleep_time * (1 / multiplier)
             adjusted_sleep_time = max(0.1, min(2.0, adjusted_sleep_time))
-            
-            # Adjust virtual temperature based on player responses
             if answer_count > 0:
-                # More answers = cooling effect (temperature moves toward 0)
                 temp_change = -0.1 * (answer_count / total_players if total_players > 0 else 0)
                 virtualTemperature = max(-20, min(20, virtualTemperature + temp_change))
             else:
-                # No answers = slight heating (temperature moves away from 0)
                 temp_change = 0.5 * (1 if virtualTemperature >= 0 else -1)
                 virtualTemperature = max(-20, min(20, virtualTemperature + temp_change))
-            
             print(f"Multiplier: {multiplier:.2f}, Sleep time: {adjusted_sleep_time:.2f}s, Temp: {virtualTemperature:.2f}")
             time.sleep(adjusted_sleep_time)
             current_time = max(0, current_time - adjusted_sleep_time)
-        
-        # Ensure timer shows 0 when finished
+
+        # After the question timer, check if anyone answered
+        answer_count = PlayerAnswerRepository.get_answer_count_for_question(session_id, question['id'])
+        if answer_count == 0:
+            print(f"No answers received for question {question['id']} - ending quiz early.")
+            ChatLogRepository.create_chat_message(
+                session_id=session_id,
+                message_text="No answers received for the question. Ending quiz.",
+                user_id=1,
+                message_type='system',
+                reply_to_id=1
+            )
+            threadsafe_emit_message_sent(sio, session_id, loop)
+            quiz_ended_early = True
+            break
+
         emit_timer_update(sio, loop, session_id, 0, 'question', question_time, 
                         question_id=question['id'], question_number=quiz_state['question_count'])
-        
         update_quiz_state(session_id, waiting_for_answers=False)
         emit_timer_finished(sio, loop, session_id, 'question', question_id=question['id'])
 
-        # Show explanation with minimum 9 seconds (also affected by multiplier)
-        explanationNow = True # Flag to indicate if we're in explanation time
+        explanationNow = True
         asyncio.run_coroutine_threadsafe(
             sio.emit('explanation_started', {
                 'session_id': session_id,
                 'question_id': question['id'],
                 'explanation_text': question.get('explanation', 'No explanation available'),
-                'duration': explanation_time  # Now 5-10 seconds
+                'duration': explanation_time
             }), loop
         ).result(timeout=1)
         global remaining_explanation_time
-        # Explanation countdown with multiplier effect
         remaining_explanation_time = explanation_time
         while remaining_explanation_time > 0:
             emit_timer_update(sio, loop, session_id, remaining_explanation_time, 'explanation', 
                             explanation_time, question_id=question['id'])
-            
-            # Apply multiplier to explanation speed too
             adjusted_sleep_time = 1.0 * (1 / multiplier)
             adjusted_sleep_time = max(0.1, min(2.0, adjusted_sleep_time))
-            
-            # During explanation, temperature gradually moves toward 0 (neutral)
             temp_change = -0.5 * (1 if virtualTemperature >= 0 else -1)
             virtualTemperature = max(-20, min(20, virtualTemperature + temp_change))
-            
             print(f"Explanation - Temp: {virtualTemperature:.2f}")
             time.sleep(adjusted_sleep_time)
             remaining_explanation_time = max(0, remaining_explanation_time - adjusted_sleep_time)
@@ -5160,44 +5264,117 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
             all_scores = PlayerAnswerRepository.get_all_player_scores_for_session(session_id)
             total_score = float(sum(float(score.get('total_score', 0)) for score in all_scores))
             
-            # Calculate base required score
-            base_required_score = 10 * total_players * (quiz_state['question_count'] / 2)
+            # Calculate required score: 75% of current score + 5
+            # But only add the +5 if it doesn't make required_score >= total_score
+            base_required = total_score * 0.75
+            required_score_with_bonus = base_required + 5
             
-            # Ensure required score is never below 75% of current total score
-            required_score = max(base_required_score, total_score * 0.75)
+            # Only use the +5 bonus if it doesn't exceed or equal the current score
+            # This ensures the quiz doesn't end too early
+            if required_score_with_bonus < total_score:
+                required_score = required_score_with_bonus
+            else:
+                required_score = base_required
             
-            # Notify players about the score status
-            ChatLogRepository.create_chat_message(
-                session_id=session_id,
-                message_text=f"Current team score: {total_score}. Need {required_score:.1f} points to continue!",
-                user_id=1,
-                message_type='system',
-                reply_to_id=1
-            )
-            threadsafe_emit_message_sent(sio, session_id, loop)
+            print(f"Score check: total={total_score}, base_75%={base_required:.1f}, with_+5={required_score_with_bonus:.1f}, final_required={required_score:.1f}")
             
-            if total_score < required_score:
-                print(f"Ending quiz early - total score {total_score} below required {required_score}")
-                # Notify players about quiz ending
+            # Check if score is too low (score must be ABOVE required to continue)
+            if total_score <= required_score:
+                consecutive_score_failures += 1
+                print(f"Score failure #{consecutive_score_failures}: total={total_score} <= required={required_score}")
+                
+                if consecutive_score_failures == 1:
+                    # First failure - give a warning
+                    ChatLogRepository.create_chat_message(
+                        session_id=session_id,
+                        message_text=f"⚠️ WARNING! Team score: {total_score:.0f}/{required_score:.0f} points - TOO LOW! One more strike and it's GAME OVER! 🚨",
+                        user_id=1,
+                        message_type='system',
+                        reply_to_id=1
+                    )
+                    threadsafe_emit_message_sent(sio, session_id, loop)
+                else:
+                    # Second consecutive failure - end the quiz
+                    print(f"Ending quiz - two consecutive score failures")
+                    ChatLogRepository.create_chat_message(
+                        session_id=session_id,
+                        message_text=f"💀 GAME OVER! Team score: {total_score:.0f}/{required_score:.0f} points. Two strikes - you're out! Better luck next time! 😢",
+                        user_id=1,
+                        message_type='system',
+                        reply_to_id=1
+                    )
+                    threadsafe_emit_message_sent(sio, session_id, loop)
+                    
+                    # Set the flag to end the quiz loop
+                    quiz_ended_early = True
+                    update_quiz_state(session_id, waiting_for_answers=False)
+                    break
+            else:
+                # Score is good - reset failure counter
+                consecutive_score_failures = 0
+                
+                # Calculate how far ahead the team is (as percentage above required)
+                score_margin = ((total_score - required_score) / required_score) * 100 if required_score > 0 else 100
+                
+                # Choose fun message based on performance
+                if score_margin > 50:
+                    # Crushing it! (>50% ahead)
+                    messages = [
+                        f"🔥 CRUSHING IT! Team score: {total_score:.0f}/{required_score:.0f} points! Absolutely unstoppable! 🚀",
+                        f"⭐ LEGENDARY! Team score: {total_score:.0f}/{required_score:.0f} points! You're on fire! 🔥",
+                        f"💪 DOMINATING! Team score: {total_score:.0f}/{required_score:.0f} points! Keep this energy! ✨",
+                        f"🎯 PERFECT! Team score: {total_score:.0f}/{required_score:.0f} points! Mind = Blown! 🤯"
+                    ]
+                elif score_margin > 25:
+                    # Doing great! (25-50% ahead)
+                    messages = [
+                        f"🌟 Excellent work! Team score: {total_score:.0f}/{required_score:.0f} points! Looking good! 😊",
+                        f"✨ Great job! Team score: {total_score:.0f}/{required_score:.0f} points! Keep it up! 🎉",
+                        f"🎊 Fantastic! Team score: {total_score:.0f}/{required_score:.0f} points! You got this! 💫",
+                        f"🏆 Impressive! Team score: {total_score:.0f}/{required_score:.0f} points! Stay strong! 💪"
+                    ]
+                elif score_margin > 10:
+                    # Pretty good (10-25% ahead)
+                    messages = [
+                        f"👍 Nice! Team score: {total_score:.0f}/{required_score:.0f} points. Solid progress! 😄",
+                        f"✓ Good job! Team score: {total_score:.0f}/{required_score:.0f} points. Keep going! 🎯",
+                        f"👌 Well done! Team score: {total_score:.0f}/{required_score:.0f} points. Stay focused! 💡",
+                        f"😊 Looking good! Team score: {total_score:.0f}/{required_score:.0f} points. Nice work! ✨"
+                    ]
+                elif score_margin > 5:
+                    # Getting close (<10% ahead)
+                    messages = [
+                        f"😅 Close one! Team score: {total_score:.0f}/{required_score:.0f} points. Need to step it up! 📈",
+                        f"⚠️ Careful! Team score: {total_score:.0f}/{required_score:.0f} points. Focus up! 🎯",
+                        f"😬 Cutting it close! Team score: {total_score:.0f}/{required_score:.0f} points. Push harder! 💪",
+                        f"🤞 Hanging in there! Team score: {total_score:.0f}/{required_score:.0f} points. Don't slip! 🔥"
+                    ]
+                else:
+                    # Barely passing (<5% ahead)
+                    messages = [
+                        f"😰 BARELY MADE IT! Team score: {total_score:.0f}/{required_score:.0f} points. DANGER ZONE! ⚠️",
+                        f"🚨 TOO CLOSE! Team score: {total_score:.0f}/{required_score:.0f} points. Step up NOW! 💥",
+                        f"😱 BY THE SKIN OF YOUR TEETH! Team score: {total_score:.0f}/{required_score:.0f} points. FOCUS! 🎯",
+                        f"⚡ CRITICAL! Team score: {total_score:.0f}/{required_score:.0f} points. Do better! 💪"
+                    ]
+                
+                chosen_message = random.choice(messages)
+                
                 ChatLogRepository.create_chat_message(
                     session_id=session_id,
-                    message_text=f"Quiz ending early! Team didn't reach the required score of {required_score:.1f} points.",
+                    message_text=chosen_message,
                     user_id=1,
                     message_type='system',
                     reply_to_id=1
                 )
                 threadsafe_emit_message_sent(sio, session_id, loop)
-                
-                # Set the flag to end the quiz loop
-                quiz_ended_early = True
-                update_quiz_state(session_id, waiting_for_answers=False)
-                break
 
         # Refresh questions for next iteration
         quiz_state = get_quiz_state(session_id)
         available_questions = [q for q in all_questions if q['id'] not in quiz_state['asked_questions']]
 
     # Quiz finished - Update session status
+    quiz_logger.info(f"ENDING QUIZ: Normal completion for session {session_id}")
     QuizSessionRepository.update_session_status(session_id, 3)
     
     # Get final data for quiz_finished event
@@ -5442,10 +5619,31 @@ def emit_theme_selection_if_needed(sio, loop):
             elif current_phase == 'quiz' and not is_timer_running:
                 # Quiz phase - handle sensor-based question selection
                 quiz_state = get_quiz_state(active_session_id)
+                quiz_logger.info(f"Main loop check - quiz phase, no timer. Session {active_session_id}")
+                
+                # Check if there are any connected clients in the quiz room
+                if not is_quiz_session_active(active_session_id):
+                    # No connected clients - end the quiz session
+                    quiz_logger.warning(f"ENDING QUIZ from main loop: No connected clients in session {active_session_id}")
+                    print(f"No connected clients in session {active_session_id} - ending quiz")
+                    QuizSessionRepository.update_session_status(active_session_id, 3)
+                    asyncio.run_coroutine_threadsafe(
+                        sio.emit('quiz_finished', {
+                            'session_id': active_session_id,
+                            'final_score': 0,
+                            'questions_asked': quiz_state.get('question_count', 0),
+                            'all_questions_answered': False,
+                            'ended_early': True,
+                            'final_scores': [],
+                            'message': 'Quiz ended - no players remaining.'
+                        }), loop
+                    ).result(timeout=1)
+                    return  # Exit the function to prevent further processing
                 
                 # Only proceed if we're not waiting for answers and no timer is running
                 if not quiz_state.get('waiting_for_answers', False):
                     sensor_data = check_sensor_data(temp_sensor, light_sensor)
+                    quiz_logger.info(f"Main loop: About to check available questions and start timer")
                     print(f"Quiz phase sensor check: {sensor_data}")
                     
                     # Get theme and available questions
@@ -5461,7 +5659,9 @@ def emit_theme_selection_if_needed(sio, loop):
                             'question_time': 15,  # Updated to 15 seconds
                             'explanation_time': 15  # Updated to 15 seconds
                         }
-                        start_generic_timer(sio, loop, active_session_id, timer_config)
+                        quiz_logger.info(f"Main loop: Calling start_generic_timer for session {active_session_id}")
+                        timer_started = start_generic_timer(sio, loop, active_session_id, timer_config)
+                        quiz_logger.info(f"Main loop: start_generic_timer returned {timer_started}")
                     else:
                         # No more questions - end quiz
                         print("No more questions available, ending quiz")
