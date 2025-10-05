@@ -5138,6 +5138,7 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
 
     quiz_ended_early = False
     consecutive_score_failures = 0  # Track consecutive failures to meet score requirement
+    previous_required_score = 0  # Track the previous required score to ensure it always increases
     
     quiz_logger.info(f"ENTERING WHILE LOOP: available_questions={len(available_questions)}, quiz_ended_early={quiz_ended_early}")
     print(f"ENTERING WHILE LOOP: available_questions={len(available_questions)}, quiz_ended_early={quiz_ended_early}")
@@ -5264,19 +5265,21 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
             all_scores = PlayerAnswerRepository.get_all_player_scores_for_session(session_id)
             total_score = float(sum(float(score.get('total_score', 0)) for score in all_scores))
             
-            # Calculate required score: 75% of current score + 5
-            # But only add the +5 if it doesn't make required_score >= total_score
-            base_required = total_score * 0.75
-            required_score_with_bonus = base_required + 5
+            # Calculate minimum required score: 75% of current total score
+            min_required_by_percentage = total_score * 0.75
             
-            # Only use the +5 bonus if it doesn't exceed or equal the current score
-            # This ensures the quiz doesn't end too early
-            if required_score_with_bonus < total_score:
-                required_score = required_score_with_bonus
-            else:
-                required_score = base_required
+            # Calculate progressive required score: previous + 5
+            progressive_required = previous_required_score + 5
             
-            print(f"Score check: total={total_score}, base_75%={base_required:.1f}, with_+5={required_score_with_bonus:.1f}, final_required={required_score:.1f}")
+            # Required score is whichever is HIGHER:
+            # - 75% of current score (maintains pressure)
+            # - Previous requirement + 5 (ensures progression)
+            required_score = max(min_required_by_percentage, progressive_required)
+            
+            print(f"Score check: total={total_score:.1f}, min_75%={min_required_by_percentage:.1f}, progressive={progressive_required:.1f}, required={required_score:.1f}, previous_required={previous_required_score:.1f}")
+            
+            # Update previous_required_score for next iteration
+            previous_required_score = required_score
             
             # Check if score is too low (score must be ABOVE required to continue)
             if total_score <= required_score:
