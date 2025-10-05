@@ -138,7 +138,8 @@ class SupportChatSystem {
             if (messages.length === 0) {
                 chatBox.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary, #999);">No messages yet. Start the conversation!</div>';
             } else {
-                messages.forEach(msg => {
+                // Reverse messages so oldest appears first (top) and newest last (bottom)
+                messages.reverse().forEach(msg => {
                     this.displayMessage(msg);
                 });
             }
@@ -181,6 +182,9 @@ class SupportChatSystem {
         messageDiv.appendChild(timestampDiv);
 
         chatBox.appendChild(messageDiv);
+        
+        // Auto-scroll to bottom to show newest messages
+        chatBox.scrollTop = chatBox.scrollHeight;
     }
 
     async sendMessage(messageText) {

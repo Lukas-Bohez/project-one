@@ -27,7 +27,7 @@ class SupportAuthSystem {
                 this.showAuthModal();
             }
         }).catch(error => {
-            console.error('Support auto-login attempt failed:', error);
+            console.error('Auto-login attempt failed:', error);
             this.showAuthModal();
         });
     }
@@ -38,7 +38,7 @@ class SupportAuthSystem {
         const password = localStorage.getItem(STORAGE_KEYS.USER.PASSWORD);
 
         if (firstName && lastName && password) {
-            console.log('Attempting support auto-login for:', firstName, lastName);
+            console.log('Attempting auto-login for:', firstName, lastName);
             
             const formData = { firstName, lastName, password };
 
@@ -47,20 +47,21 @@ class SupportAuthSystem {
                 
                 if (result && result.user_id) {
                     this.loginUser(formData, result.user_id);
-                    console.log('Support auto-login successful');
+                    console.log('Auto-login successful');
                     return true;
                 } else {
-                    console.warn('Support auto-login failed: Invalid response from server');
+                    console.warn('Auto-login failed: Invalid response from server');
                     this.clearStoredCredentials();
                     return false;
                 }
             } catch (error) {
-                console.error('Support auto-login error:', error.message || error);
+                console.error('Auto-login error:', error.message || error);
+                // Don't show error message for auto-login failures, just clear and show modal
                 this.clearStoredCredentials();
                 return false;
             }
         } else {
-            console.log('No stored credentials found for support auto-login');
+            console.log('No stored credentials found for auto-login');
             return false;
         }
     }
@@ -74,9 +75,9 @@ class SupportAuthSystem {
 
     createAuthModal() {
         const modalHTML = `
-            <div id="authModal" class="c-modal" style="display: block;">
+            <div id="authModal" class="c-modal">
                 <div class="c-modal__content">
-                    <h2 id="authModalTitle">Login to <a href="../index.html" class="c-header__link gamepad">Quiz The Spire</a> Support Chat</h2>
+                    <h2 id="authModalTitle">Join <a href="../index.html" class="c-header__link gamepad">Quiz The Spire</a> Support Chat</h2>
                     <form id="authForm" class="c-login-form">
                         <div class="c-error-message" id="authError"></div>
                         
@@ -111,15 +112,17 @@ class SupportAuthSystem {
         const authForm = document.getElementById('authForm');
 
         if (!loginBtn || !registerBtn || !authForm) {
-            console.error("Support auth modal buttons or form not found.");
+            console.error("Auth modal buttons or form not found.");
             return;
         }
 
         loginBtn.addEventListener('click', (e) => this.handleLogin(e));
         registerBtn.addEventListener('click', (e) => this.handleRegister(e));
 
+        // Prevent default form submission
         authForm.addEventListener('submit', (e) => e.preventDefault());
 
+        // Allow Enter key to trigger login
         authForm.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 this.handleLogin(e);
@@ -134,7 +137,10 @@ class SupportAuthSystem {
 
     hideAuthModal() {
         const modal = document.getElementById('authModal');
-        if (modal) modal.style.display = 'none';
+        if (modal) {
+            // Remove from DOM completely, not just hide
+            modal.remove();
+        }
     }
 
     showError(message) {
@@ -144,16 +150,19 @@ class SupportAuthSystem {
             errorContainer.style.display = 'block';
             errorContainer.classList.add('error-shake');
             
+            // Remove shake animation after it completes
             setTimeout(() => {
                 errorContainer.classList.remove('error-shake');
             }, 300);
             
+            // Auto-hide after 6 seconds (longer for better UX)
             setTimeout(() => {
                 if (errorContainer.textContent === message) {
                     errorContainer.style.display = 'none';
                 }
             }, 6000);
         } else {
+            // Fallback: create error message if container doesn't exist
             console.error('Error container not found, message:', message);
             alert(message);
         }
