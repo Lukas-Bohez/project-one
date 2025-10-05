@@ -5,29 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Community Support Chat - Quiz The Spire</title>
     <meta name="author" content="Oroka Conner">
-    <meta name="owner" content="    <script>
-        // Support chat system instance
-        let supportChatSystem = null;
-        let authSystem = null;
-
-        // Initialize authentication and chat system
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Support page loaded, initializing systems...');
-            
-            // Initialize support auth system (NOT quiz auth)
-            authSystem = new SupportAuthSystem();
-            
-            // Initialize support chat system (it will wait for authentication)
-            supportChatSystem = new SupportChatSystem();
-            
-            // Set up UI event handlers
-            setupUIHandlers();
-        }); 
     <link rel="stylesheet" href="../css/styles.css">
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="../js/themeManager.js"></script>
     <script src="../js/supportLogin.js"></script>
     <script src="../js/supportChat.js"></script>
+    <script src="../js/lofi.js"></script>
+    
     <style>
         body {
             margin: 0;
@@ -322,8 +306,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Support page loaded, initializing systems...');
             
-            // Initialize auth system first
-            authSystem = new AuthSystem();
+            // Initialize support auth system (NOT quiz auth)
+            authSystem = new SupportAuthSystem();
             
             // Initialize support chat system (it will wait for authentication)
             supportChatSystem = new SupportChatSystem();
