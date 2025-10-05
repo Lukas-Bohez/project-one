@@ -6045,23 +6045,36 @@ def detect_platform(url: str) -> Optional[str]:
     return None
 
 def get_ydl_opts(format_type: str, quality: int, output_path: str) -> Dict[str, Any]:
-    """Get yt-dlp options based on format and quality"""
+    """Get yt-dlp options based on format and quality with metadata embedding"""
     base_opts = {
         'outtmpl': output_path,
         'no_warnings': False,
         'extractaudio': format_type == 'audio',
         'ignoreerrors': True,
         'no_check_certificates': True,
+        'writethumbnail': True,  # Download thumbnail for album art
+        'embedthumbnail': True,  # Embed thumbnail as album art
+        'addmetadata': True,     # Add metadata to file
     }
     
     if format_type == 'audio':
         base_opts.update({
             'format': 'bestaudio/best',
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': str(quality),
-            }]
+            'postprocessors': [
+                {
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': str(quality),
+                },
+                {
+                    'key': 'FFmpegMetadata',  # Add metadata
+                    'add_metadata': True,
+                },
+                {
+                    'key': 'EmbedThumbnail',  # Embed album art
+                    'already_have_thumbnail': False,
+                }
+            ]
         })
     else:  # video
         quality_map = {
@@ -6072,6 +6085,12 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str) -> Dict[str, 
             1080: 'best[height<=1080]'
         }
         base_opts['format'] = quality_map.get(quality, 'best[height<=720]')
+        base_opts.update({
+            'postprocessors': [{
+                'key': 'FFmpegMetadata',
+                'add_metadata': True,
+            }]
+        })
     
     return base_opts
 
