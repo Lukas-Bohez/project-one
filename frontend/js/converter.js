@@ -116,8 +116,19 @@ function toggleTheme() {
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     
     document.body.setAttribute('data-theme', newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
     updateThemeButton();
+    
+    // Dispatch events to sync with main site
+    try {
+        window.dispatchEvent(new StorageEvent('storage', {
+            key: 'theme',
+            newValue: newTheme,
+            url: window.location.href
+        }));
+        window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: newTheme } }));
+    } catch (e) {}
 }
 
 // Update theme toggle button text
