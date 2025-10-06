@@ -20,7 +20,7 @@ class RebirthThemes {
                 colorScheme: {
                     primary: "#00b4d8",
                     secondary: "#0077b6",
-                    background: "linear-gradient(135deg, #c6f6ffff 0%, #f3f3f3ff 50%, #292929ff 100%)"
+                    background: "linear-gradient(135deg, #88a1c0ff  0%, #a8b5c2ff 50%, #859cb8ff 100%)"
                 },
                 resources: {
                     stone: { name: "Code Commits", emoji: "💻", description: "Lines of code written" },
