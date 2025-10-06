@@ -157,7 +157,7 @@ body {
     height: 100%;
     object-fit: cover;
     object-position: center;
-    filter: brightness(0.9);
+    filter: brightness(0.7);
     opacity: 0;
     transition: opacity 0.6s ease-in-out;
     pointer-events: none;
@@ -168,14 +168,14 @@ body {
 .theme-light .spire-bg-light,
 body:not([data-theme]) .spire-bg-light {
     opacity: 0.85;
-    filter: brightness(1.1);
+    filter: brightness(0.85);
 }
 
 /* Dark mode: show dark spire - MUCH MORE VISIBLE */
 [data-theme="dark"] .spire-bg-dark,
 .theme-dark .spire-bg-dark {
     opacity: 0.75;
-    filter: brightness(0.85);
+    filter: brightness(0.65);
 }
 
 /* Reduced overlay to let the spire image shine through */
@@ -330,21 +330,21 @@ body * {
 }
 
 .c-btn--primary {
-    background-color: var(--primary-color);
-    color: var(--text-inverse);
+    background-color: #444;
+    color: #fff;
 }
 
 .c-btn--primary:hover {
-    background-color: var(--secondary-color);
+    background-color: #222;
 }
 
 .c-btn--secondary {
-    background-color: var(--secondary-color);
-    color: var(--text-inverse);
+    background-color: #666;
+    color: #fff;
 }
 
 .c-btn--secondary:hover {
-    background-color: var(--primary-color);
+    background-color: #444;
 }
 
 .c-btn--delete {
@@ -357,13 +357,30 @@ body * {
 }
 
 .c-btn--tertiary {
-    background-color: var(--tertiary-color);
-    color: var(--text-inverse);
+    background-color: #888;
+    color: #fff;
 }
 
 .c-btn--tertiary:hover {
-    background-color: var(--accent-color);
-    color: var(--text-inverse);
+    background-color: #555;
+    color: #fff;
+}
+
+/* Specific buttons that should remain blue */
+#startQuizBtn,
+#studyQuizBtn,
+#articleTheSpireBtn,
+button[onclick*="idleGame/idlegame.html"] {
+    background-color: var(--primary-color) !important;
+    color: var(--text-inverse) !important;
+    border: none;
+}
+
+#startQuizBtn:hover,
+#studyQuizBtn:hover,
+#articleTheSpireBtn:hover,
+button[onclick*="idleGame/idlegame.html"]:hover {
+    background-color: var(--secondary-color) !important;
 }
 
 .c-btn--admin {
