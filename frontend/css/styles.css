@@ -325,26 +325,39 @@ body * {
     box-shadow: 0 4px 12px var(--shadow-medium);
 }
 
+.c-btn:focus {
+    outline: none;
+}
+
+.c-btn:focus-visible {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+    transform: translateY(-1px);
+}
+
 .c-btn:active {
     transform: translateY(0);
 }
 
 .c-btn--primary {
-    background-color: #444;
+    background-color: #3b3b3b;
     color: #fff;
+    border: 1px solid rgba(0,0,0,0.08);
 }
 
 .c-btn--primary:hover {
-    background-color: #222;
+    background-color: #2b6cb0; /* subtle blue on hover to show interactivity */
+    box-shadow: 0 6px 16px rgba(43,108,176,0.18);
 }
 
 .c-btn--secondary {
-    background-color: #666;
+    background-color: #6b6b6b;
     color: #fff;
+    border: 1px solid rgba(0,0,0,0.06);
 }
 
 .c-btn--secondary:hover {
-    background-color: #444;
+    background-color: #505050;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.12);
 }
 
 .c-btn--delete {
@@ -357,13 +370,15 @@ body * {
 }
 
 .c-btn--tertiary {
-    background-color: #888;
+    background-color: #9a9a9a;
     color: #fff;
+    border: 1px solid rgba(0,0,0,0.04);
 }
 
 .c-btn--tertiary:hover {
-    background-color: #555;
+    background-color: #7a7a7a;
     color: #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 
 /* Specific buttons that should remain blue */
