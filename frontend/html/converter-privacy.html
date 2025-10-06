@@ -156,7 +156,7 @@
         <a href="converter.html" class="c-header__link">
             <h1 class="c-header__title">Convert The Spire</h1>
         </a>
-        <div class="c-theme-toggle" id="themeToggle">
+        <div class="c-theme-toggle" id="themeToggle" role="button" aria-pressed="false" tabindex="0">
             Toggle Theme
         </div>
     </header>
@@ -357,6 +357,42 @@
         </p>
     </main>
 
+    <script>
+        // Theme toggle and persistence for privacy page
+        (function(){
+            const root = document.documentElement;
+            const body = document.body;
+            const toggle = document.getElementById('themeToggle');
+
+            function applyTheme(theme){
+                if(theme === 'dark'){
+                    root.setAttribute('data-theme','dark');
+                    body.classList.add('theme-dark');
+                    toggle.setAttribute('aria-pressed','true');
+                } else {
+                    root.removeAttribute('data-theme');
+                    body.classList.remove('theme-dark');
+                    toggle.setAttribute('aria-pressed','false');
+                }
+            }
+
+            // Initialize (use unified 'theme' key)
+            const saved = localStorage.getItem('theme');
+            if(saved) applyTheme(saved);
+
+            // Toggle handler
+            const handler = () => {
+                const current = root.getAttribute('data-theme') === 'dark' || body.classList.contains('theme-dark') ? 'dark' : 'light';
+                const next = current === 'dark' ? 'light' : 'dark';
+                localStorage.setItem('theme', next);
+                applyTheme(next);
+            };
+
+            toggle.addEventListener('click', handler);
+            toggle.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); }});
+        })();
+    </script>
+
     <footer class="c-footer">
         <div class="c-footer__container">
             <div style="text-align: center; padding: 1rem;">
@@ -382,6 +418,21 @@
             
             document.documentElement.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
+        
+        // Listen for messages from parent (privacy modal) to apply theme
+        window.addEventListener('message', (e) => {
+            if (e.origin !== window.location.origin) return;
+            if (e.data && e.data.type === 'applyTheme') {
+                const t = e.data.theme;
+                if (t === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    document.body.classList.add('theme-dark');
+                } else {
+                    document.documentElement.removeAttribute('data-theme');
+                    document.body.classList.remove('theme-dark');
+                }
+            }
+        });
         });
     </script>
 </body>

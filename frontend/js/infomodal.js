@@ -14,7 +14,7 @@
         cleanup();
         
         // Inject styles
-        const css = `
+    const css = `
             #infoBtn {
                 position: absolute;
                 top: 16px;
@@ -63,6 +63,31 @@
                 position: relative;
                 box-shadow: 0 10px 30px rgba(0,0,0,0.3);
                 font-family: system-ui, -apple-system, sans-serif;
+            }
+
+            /* Dark mode support */
+            body[data-theme="dark"] .modal-content,
+            :root[data-theme="dark"] .modal-content,
+            .theme-dark .modal-content,
+            body.theme-dark .modal-content {
+                background: #0f1724;
+                color: #e6eef9;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            }
+
+            body[data-theme="dark"] #infoBtn,
+            :root[data-theme="dark"] #infoBtn,
+            .theme-dark #infoBtn,
+            body.theme-dark #infoBtn {
+                background: #1d4ed8;
+                box-shadow: 0 2px 10px rgba(29,78,216,0.28);
+            }
+
+            body[data-theme="dark"] #infoBtn:hover,
+            :root[data-theme="dark"] #infoBtn:hover,
+            .theme-dark #infoBtn:hover,
+            body.theme-dark #infoBtn:hover {
+                background: #2563eb;
             }
             
             .close-btn {
@@ -186,6 +211,28 @@
                     font-size: 15px;
                 }
             }
+
+            /* Explicit dark mode class for the modal (applied at runtime) */
+            .qts-dark .modal-content {
+                background: #0f1724;
+                color: #e6eef9;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            }
+
+            .qts-dark .close-btn {
+                background: #0b1220;
+                border: 1px solid rgba(255,255,255,0.06);
+                color: #cbd5e1;
+            }
+
+            .qts-dark .close-btn:hover {
+                background: #111827;
+                color: #fff;
+            }
+            
+            .qts-dark .modal-title { color: #e6eef9; }
+            .qts-dark .section-title { color: #93c5fd; border-bottom-color: rgba(255,255,255,0.04); }
+            .qts-dark .info-section p, .qts-dark .info-list li { color: #cbd5e1; }
         `;
         
         const style = document.createElement('style');
@@ -198,8 +245,19 @@
         btn.id = 'infoBtn';
         btn.innerHTML = 'ℹ';
         btn.type = 'button';
+
+        // If the site uses a dark theme (data-theme or body class), or localStorage, mark modal/button with dark class
+        try {
+            const current = (document.documentElement.getAttribute('data-theme') === 'dark' || document.body.classList.contains('theme-dark')) ? 'dark' : null;
+            const saved = current || localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            if (saved === 'dark') {
+                btn.classList.add('qts-dark');
+            }
+        } catch (e) {
+            // ignore
+        }
         
-        // Create modal
+    // Create modal
         const modal = document.createElement('div');
         modal.id = 'infoModal';
         
@@ -246,11 +304,38 @@
             </div>
         `;
         
+        // If saved theme is dark, apply inline dark styles to content and close button so it renders immediately
+        try {
+            const saved = localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            if (saved === 'dark') {
+                // inline dark styles for immediate effect
+                content.style.background = '#0f1724';
+                content.style.color = '#e6eef9';
+                content.style.boxShadow = '0 10px 30px rgba(0,0,0,0.6)';
+                const closeBtn = content.querySelector('.close-btn');
+                if (closeBtn) {
+                    closeBtn.style.background = '#0b1220';
+                    closeBtn.style.border = '1px solid rgba(255,255,255,0.06)';
+                    closeBtn.style.color = '#cbd5e1';
+                }
+                btn.style.background = '#1d4ed8';
+                btn.style.boxShadow = '0 2px 10px rgba(29,78,216,0.28)';
+            }
+        } catch (e) {}
+
         modal.appendChild(content);
         
         // Add to page
         document.body.appendChild(btn);
         document.body.appendChild(modal);
+
+        // Apply dark class to modal if needed (ensures inline-styled DOM shows dark)
+        try {
+            const saved = localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            if (saved === 'dark') {
+                modal.classList.add('qts-dark');
+            }
+        } catch (e) {}
         
         // Event handlers
         const openModal = () => {
