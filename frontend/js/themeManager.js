@@ -24,9 +24,28 @@
             
             // Initialize toggle button when DOM is ready
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', () => this.initToggleButton());
+                document.addEventListener('DOMContentLoaded', () => {
+                    this.initToggleButton();
+                    // Load spire backgrounds after DOM is ready
+                    if (window.imageProvider) {
+                        this.loadSpireBackgrounds();
+                    } else {
+                        // If imageProvider isn't loaded yet, wait for it
+                        window.addEventListener('load', () => {
+                            if (window.imageProvider) {
+                                this.loadSpireBackgrounds();
+                            }
+                        });
+                    }
+                });
             } else {
                 this.initToggleButton();
+                // Load backgrounds immediately if DOM is already ready
+                setTimeout(() => {
+                    if (window.imageProvider) {
+                        this.loadSpireBackgrounds();
+                    }
+                }, 100);
             }
             
             // Debug info
@@ -128,10 +147,35 @@
                 detail: { theme: effectiveTheme, preference: theme }
             }));
             
+            // Trigger spire background image loading if imageProvider is available
+            if (window.imageProvider) {
+                this.loadSpireBackgrounds();
+            }
+            
             console.log('Theme application complete. Current data-theme attributes:', {
                 html: html ? html.getAttribute('data-theme') : null,
                 body: body ? body.getAttribute('data-theme') : null
             });
+        }
+        
+        loadSpireBackgrounds() {
+            // Load AI-generated spire images for both light and dark mode
+            const lightImg = document.querySelector('.spire-bg-light');
+            const darkImg = document.querySelector('.spire-bg-dark');
+            
+            if (lightImg && !lightImg.src && window.imageProvider) {
+                const lightQuery = lightImg.getAttribute('data-ai-query');
+                if (lightQuery) {
+                    window.imageProvider.applyToInlineImage(lightImg, lightQuery);
+                }
+            }
+            
+            if (darkImg && !darkImg.src && window.imageProvider) {
+                const darkQuery = darkImg.getAttribute('data-ai-query');
+                if (darkQuery) {
+                    window.imageProvider.applyToInlineImage(darkImg, darkQuery);
+                }
+            }
         }
         
         toggleTheme() {

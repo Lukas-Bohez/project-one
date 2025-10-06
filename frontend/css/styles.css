@@ -137,6 +137,85 @@ body {
     position: relative;
 }
 
+/* Spire Background - Sharp spire imagery that adapts to theme, stays fixed in viewport */
+.spire-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.spire-background img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    filter: brightness(0.9);
+    opacity: 0;
+    transition: opacity 0.6s ease-in-out;
+    pointer-events: none;
+}
+
+/* Light mode: show light spire - MUCH MORE VISIBLE */
+[data-theme="light"] .spire-bg-light,
+.theme-light .spire-bg-light,
+body:not([data-theme]) .spire-bg-light {
+    opacity: 0.85;
+    filter: brightness(1.1);
+}
+
+/* Dark mode: show dark spire - MUCH MORE VISIBLE */
+[data-theme="dark"] .spire-bg-dark,
+.theme-dark .spire-bg-dark {
+    opacity: 0.75;
+    filter: brightness(0.85);
+}
+
+/* Reduced overlay to let the spire image shine through */
+.spire-background::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        transparent 40%,
+        var(--bg-primary) 100%
+    );
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Enhance content readability with subtle backdrop on containers */
+.o-container,
+.c-header {
+    position: relative;
+}
+
+.o-container::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    right: -20px;
+    bottom: -20px;
+    background: var(--bg-primary);
+    opacity: 0;
+    border-radius: var(--border-radius-lg);
+    z-index: -1;
+    pointer-events: none;
+}
+
 /* Smooth transitions for theme changes */
 body * {
     transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
@@ -190,6 +269,7 @@ body * {
     position: relative;
     border-bottom: 1px solid var(--border-color);
     box-shadow: 0 2px 8px var(--shadow-light);
+    z-index: 1;
 }
 
 .c-header__link {
