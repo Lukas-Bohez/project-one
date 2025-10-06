@@ -338,26 +338,44 @@ body * {
     transform: translateY(0);
 }
 
-.c-btn--primary {
-    background-color: #3b3b3b;
+.c-btn--primary,
+.c-btn--secondary,
+.c-btn--tertiary {
+    background-color: #fff;
+    color: #000;
+    border: 2px solid #000;
+}
+
+.c-btn--primary:hover,
+.c-btn--secondary:hover,
+.c-btn--tertiary:hover {
+    background-color: #fff;
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    box-shadow: 0 0 0 1px var(--primary-color), 0 4px 12px rgba(30, 58, 138, 0.15);
+}
+
+/* Dark mode button styles */
+[data-theme="dark"] .c-btn--primary,
+[data-theme="dark"] .c-btn--secondary,
+[data-theme="dark"] .c-btn--tertiary,
+.theme-dark .c-btn--primary,
+.theme-dark .c-btn--secondary,
+.theme-dark .c-btn--tertiary {
+    background-color: #000;
     color: #fff;
-    border: 1px solid rgba(0,0,0,0.08);
+    border: 2px solid #fff;
 }
 
-.c-btn--primary:hover {
-    background-color: #2b6cb0; /* subtle blue on hover to show interactivity */
-    box-shadow: 0 6px 16px rgba(43,108,176,0.18);
-}
-
-.c-btn--secondary {
-    background-color: #6b6b6b;
-    color: #fff;
-    border: 1px solid rgba(0,0,0,0.06);
-}
-
-.c-btn--secondary:hover {
-    background-color: #505050;
-    box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+[data-theme="dark"] .c-btn--primary:hover,
+[data-theme="dark"] .c-btn--secondary:hover,
+[data-theme="dark"] .c-btn--tertiary:hover,
+.theme-dark .c-btn--primary:hover,
+.theme-dark .c-btn--secondary:hover,
+.theme-dark .c-btn--tertiary:hover {
+    background-color: #000;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 1px var(--primary-color), 0 4px 12px rgba(96, 165, 250, 0.25);
 }
 
 .c-btn--delete {
@@ -370,15 +388,16 @@ body * {
 }
 
 .c-btn--tertiary {
-    background-color: #9a9a9a;
-    color: #fff;
-    border: 1px solid rgba(0,0,0,0.04);
+    background-color: #fff;
+    color: #000;
+    border: 2px solid #000;
 }
 
 .c-btn--tertiary:hover {
-    background-color: #7a7a7a;
-    color: #fff;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    background-color: #fff;
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    box-shadow: 0 0 0 1px var(--primary-color), 0 4px 12px rgba(30, 58, 138, 0.15);
 }
 
 /* Specific buttons that should remain blue */
