@@ -15,44 +15,43 @@ html, body {
 
 :root {
     /* Light theme colors (default) */
-    --primary-color: #2c4c7c;
+    --primary-color: #1e3a8a;          /* donkerder blauw voor hogere contrast */
     --secondary-color: #0c4061;
-    /* Updated for WCAG AA contrast on buttons */
-    --tertiary-color: #0b6aa6; /* darker blue for ≥4.5:1 on white */
-    --accent-color: #4a86e8;
+    --tertiary-color: #0a5790;         /* donkerder voor ≥4.5:1 op wit */
+    --accent-color: #1d4ed8;           /* intenser blauw voor betere leesbaarheid */
     
     /* Background colors */
     --bg-primary: #f4f8fc;
     --bg-secondary: #ffffff;
-    --bg-tertiary: #e8f2ff;
-    --bg-overlay: rgba(0, 0, 0, 0.1);
+    --bg-tertiary: #e6eef9;            /* iets donkerder voor beter contrast */
+    --bg-overlay: rgba(0, 0, 0, 0.15); /* iets sterker overlay */
     
     /* Text colors */
-    --text-primary: #0e1827;
-    --text-secondary: #4a5568;
-    --text-muted: #6b7280;
+    --text-primary: #0a0f1a;           /* iets donkerder voor contrast */
+    --text-secondary: #374151;         /* donkerder grijs */
+    --text-muted: #4b5563;             /* donkerder grijs */
     --text-inverse: #ffffff;
     
     /* Border and shadow colors */
-    --border-color: #e2e8f0;
-    --border-focus: #4a86e8;
+    --border-color: #cbd5e1;           /* donkerder grijs */
+    --border-focus: #1d4ed8;           /* accentkleur met goed contrast */
     --shadow-light: rgba(0, 0, 0, 0.1);
     --shadow-medium: rgba(0, 0, 0, 0.15);
     --shadow-heavy: rgba(0, 0, 0, 0.25);
     
     /* Status colors */
-    --success-color: #2e8b34;
-    --danger-color: #d32f2f;
-    --warning-color: #e65100;
-    --info-color: #0d61aa;
+    --success-color: #1c7a2e;          /* donkerder groen */
+    --danger-color: #b91c1c;           /* donkerder rood */
+    --warning-color: #b45309;          /* donkerder oranje */
+    --info-color: #0c4a6e;             /* donkerder blauwgroen */
     
     /* Interactive states */
-    --hover-bg: rgba(74, 134, 232, 0.08);
-    --active-bg: rgba(74, 134, 232, 0.12);
+    --hover-bg: rgba(29, 78, 216, 0.10);
+    --active-bg: rgba(29, 78, 216, 0.15);
     
-    /* Pulse/animation colors - will be updated by JavaScript */
-    --pulse-color: #4a86e8;
-    --pulse-glow: rgba(74, 134, 232, 0.7);
+    /* Pulse/animation colors */
+    --pulse-color: #1d4ed8;
+    --pulse-glow: rgba(29, 78, 216, 0.7);
     
     /* Spacing and sizing */
     --border-radius: 8px;
@@ -74,46 +73,46 @@ html, body {
 }
 
 /* Dark theme - activated by .theme-dark class */
-[data-theme="dark"], 
+[data-theme="dark"],
 .theme-dark {
     /* Background colors */
     --bg-primary: #0f172a;
     --bg-secondary: #1e293b;
-    --bg-tertiary: #334155;
-    --bg-overlay: rgba(255, 255, 255, 0.1);
+    --bg-tertiary: #2d3b50;                /* iets lichter voor beter onderscheid */
+    --bg-overlay: rgba(255, 255, 255, 0.12);
     
     /* Text colors */
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #94a3b8;
+    --text-primary: #f8fafc;               /* lichter wit */
+    --text-secondary: #e2e8f0;             /* lichter grijs */
+    --text-muted: #cbd5e1;                  /* lichter grijs */
     --text-inverse: #0f172a;
     
     /* Border and shadow colors */
-    --border-color: #374151;
+    --border-color: #475569;                /* iets lichter grijs voor contrast */
     --border-focus: #60a5fa;
     --shadow-light: rgba(0, 0, 0, 0.3);
     --shadow-medium: rgba(0, 0, 0, 0.4);
     --shadow-heavy: rgba(0, 0, 0, 0.6);
     
     /* Interactive states */
-    --hover-bg: rgba(96, 165, 250, 0.12);
-    --active-bg: rgba(96, 165, 250, 0.16);
+    --hover-bg: rgba(96, 165, 250, 0.18);
+    --active-bg: rgba(96, 165, 250, 0.25);
     
     /* Adjusted colors for dark theme */
-    --primary-color: #3b82f6;
-    --secondary-color: #1d4ed8;
-    /* Dark theme: keep adequate contrast on dark backgrounds */
-    --tertiary-color: #3b82f6;
-    --accent-color: #2563eb;
+    --primary-color: #60a5fa;
+    --secondary-color: #3b82f6;
+    --tertiary-color: #2563eb;
+    --accent-color: #3b82f6;
     --pulse-color: #60a5fa;
     --pulse-glow: rgba(96, 165, 250, 0.7);
     
-    /* Status colors - adjusted for dark theme */
-    --success-color: #10b981;
-    --danger-color: #ef4444;
-    --warning-color: #f59e0b;
-    --info-color: #3b82f6;
+    /* Status colors */
+    --success-color: #34d399;
+    --danger-color: #f87171;
+    --warning-color: #fbbf24;
+    --info-color: #38bdf8;
 }
+
 
 /*---------------------------------------/*
  # GENERIC
@@ -210,7 +209,7 @@ body * {
     color: white !important;
 }
 
-.c-header h1 {
+.c-header {
     color: white !important;
     margin: 0;
 }
@@ -632,7 +631,7 @@ body * {
 }
 
 .theme-blueberry-blue {
-    --pulse-color: #3b82f6;
+    --pulse-color: #2c4c7c;;
     --pulse-glow: rgba(59, 130, 246, 0.7);
 }
 
@@ -762,7 +761,7 @@ body * {
         --hover-bg: rgba(96, 165, 250, 0.12);
         --active-bg: rgba(96, 165, 250, 0.16);
         
-        --primary-color: #3b82f6;
+        --primary-color: #2c4c7c;
         --secondary-color: #1d4ed8;
         --tertiary-color: #60a5fa;
         --accent-color: #60a5fa;
@@ -772,6 +771,6 @@ body * {
         --success-color: #10b981;
         --danger-color: #ef4444;
         --warning-color: #f59e0b;
-        --info-color: #3b82f6;
+        --info-color: #2c4c7c;
     }
 }
