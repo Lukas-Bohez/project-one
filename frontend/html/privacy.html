@@ -282,10 +282,10 @@
             function applyTheme(t){
                 if(t === 'dark'){
                     root.setAttribute('data-theme','dark');
-                    body.classList.add('theme-dark');
+                    body.setAttribute('data-theme','dark');
                 } else {
-                    root.removeAttribute('data-theme');
-                    body.classList.remove('theme-dark');
+                    root.setAttribute('data-theme','light');
+                    body.setAttribute('data-theme','light');
                 }
             }
 
@@ -294,29 +294,22 @@
 
             if(btn){
                 btn.addEventListener('click', () => {
-                    const current = root.getAttribute('data-theme') === 'dark' || body.classList.contains('theme-dark') ? 'dark' : 'light';
+                    const current = root.getAttribute('data-theme');
                     const next = current === 'dark' ? 'light' : 'dark';
                     localStorage.setItem('theme', next);
                     applyTheme(next);
                 });
             }
-        })();
-    </script>
-    <script>
-        // Listen for parent messages to apply theme (when inside iframe)
-        window.addEventListener('message', (e) => {
-            if (e.origin !== window.location.origin) return;
-            if (e.data && e.data.type === 'applyTheme') {
-                const t = e.data.theme;
-                if (t === 'dark') {
-                    document.documentElement.setAttribute('data-theme', 'dark');
-                    document.body.classList.add('theme-dark');
-                } else {
-                    document.documentElement.removeAttribute('data-theme');
-                    document.body.classList.remove('theme-dark');
+
+            // Listen for parent messages to apply theme (when inside iframe)
+            window.addEventListener('message', (e) => {
+                if (e.origin !== window.location.origin) return;
+                if (e.data && e.data.type === 'applyTheme') {
+                    applyTheme(e.data.theme);
+                    localStorage.setItem('theme', e.data.theme);
                 }
-            }
-        });
+            });
+        })();
     </script>
     <script src="../js/infomodal.js" defer></script>
 </body>

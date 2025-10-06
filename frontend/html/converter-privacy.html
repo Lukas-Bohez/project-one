@@ -5,24 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy Policy | Convert The Spire - Free Video Converter</title>
     <meta name="description" content="Privacy Policy for Convert The Spire - Free YouTube to MP3/MP4 converter. Learn how we protect your privacy, data handling practices, and GDPR compliance.">
-        themeToggle.addEventListener('click', () => {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            
-            document.documentElement.setAttribute('data-theme', newTheme);
-            document.body.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            
-            // Dispatch events to sync with other pages
-            try {
-                window.dispatchEvent(new StorageEvent('storage', {
-                    key: 'theme',
-                    newValue: newTheme,
-                    url: window.location.href
-                }));
-                window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: newTheme } }));
-            } catch (e) {}
-        });ta name="keywords" content="privacy policy, data protection, GDPR, user privacy, convert the spire, video converter privacy, data handling">
+    <meta name="keywords" content="privacy policy, data protection, GDPR, user privacy, convert the spire, video converter privacy, data handling">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
     <meta name="author" content="QuizTheSpire Team">
     <meta name="language" content="en">
@@ -428,13 +411,26 @@
         // Load saved theme or default to light
         const savedTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
+        document.body.setAttribute('data-theme', savedTheme);
         
         themeToggle.addEventListener('click', () => {
             const currentTheme = document.documentElement.getAttribute('data-theme');
             const newTheme = currentTheme === 'light' ? 'dark' : 'light';
             
             document.documentElement.setAttribute('data-theme', newTheme);
+            document.body.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
+            
+            // Dispatch events to sync with other pages
+            try {
+                window.dispatchEvent(new StorageEvent('storage', {
+                    key: 'theme',
+                    newValue: newTheme,
+                    url: window.location.href
+                }));
+                window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: newTheme } }));
+            } catch (e) {}
+        });
         
         // Listen for messages from parent (privacy modal) to apply theme
         window.addEventListener('message', (e) => {
@@ -443,13 +439,13 @@
                 const t = e.data.theme;
                 if (t === 'dark') {
                     document.documentElement.setAttribute('data-theme', 'dark');
-                    document.body.classList.add('theme-dark');
+                    document.body.setAttribute('data-theme', 'dark');
                 } else {
-                    document.documentElement.removeAttribute('data-theme');
-                    document.body.classList.remove('theme-dark');
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    document.body.setAttribute('data-theme', 'light');
                 }
+                localStorage.setItem('theme', t);
             }
-        });
         });
     </script>
 </body>
