@@ -88,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Create modal header
         const modalHeader = document.createElement('div');
+        // Default header styles, will be overridden for dark mode if needed
         modalHeader.style.cssText = `
             padding: 20px;
             background: #f8f9fa;
@@ -135,6 +136,10 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 // Send a message to the iframe content to set up communication
                 iframe.contentWindow.postMessage('modalReady', window.location.origin);
+                // Also post current theme so iframe can apply it
+                // Determine current theme: prefer data-theme or body class, fallback to localStorage or system
+                const theme = (document.documentElement.getAttribute('data-theme') === 'dark' || document.body.classList.contains('theme-dark')) ? 'dark' : (localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+                iframe.contentWindow.postMessage({ type: 'applyTheme', theme }, window.location.origin);
             } catch (e) {
                 console.warn('Could not communicate with iframe:', e);
             }
@@ -288,6 +293,26 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         document.head.appendChild(style);
         modalOverlay._style = style;
+
+        // If current page/theme indicates dark mode, apply dark inline styles to modal elements
+        try {
+            const current = (document.documentElement.getAttribute('data-theme') === 'dark' || document.body.classList.contains('theme-dark')) ? 'dark' : null;
+            const saved = current || localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            if (saved === 'dark') {
+                modalContainer.style.backgroundColor = '#0b1220';
+                modalContainer.style.boxShadow = '0 10px 40px rgba(0,0,0,0.6)';
+                modalHeader.style.background = '#071029';
+                modalHeader.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+                modalTitle.style.color = '#e6eef9';
+                modalFooter.style.background = '#071029';
+                modalFooter.style.borderTop = '1px solid rgba(255,255,255,0.04)';
+                acceptButton.style.backgroundColor = '#2563eb';
+                acceptButton.onmouseover = () => acceptButton.style.backgroundColor = '#1e40af';
+                acceptButton.onmouseout = () => acceptButton.style.backgroundColor = '#2563eb';
+            }
+        } catch (e) {
+            // ignore
+        }
     }
 
     // Fallback function to show inline content if iframe fails
