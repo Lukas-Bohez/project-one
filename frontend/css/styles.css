@@ -69,7 +69,7 @@ html, body {
     --font-size-base: 1rem;
     --font-size-lg: 1.125rem;
     --font-size-xl: 1.25rem;
-    --font-size-2xl: 1.5rem;
+    --font-size-2xl: 2rem;
 }
 
 /* Dark theme - activated by .theme-dark class */
@@ -284,7 +284,7 @@ body * {
 .c-header__title {
     margin: 0;
     display: inline-block;
-    font-size: var(--font-size-xl);
+    font-size: var(--font-size-2xl) !important;
     font-weight: 600;
     color: white !important;
 }
@@ -858,10 +858,6 @@ button[onclick*="idleGame/idlegame.html"]:hover {
         padding: var(--spacing-xl);
     }
 
-    .c-header__title {
-        font-size: var(--font-size-2xl);
-        color: white !important;
-    }
 
     .c-btn {
         padding: var(--spacing-md) var(--spacing-xl);

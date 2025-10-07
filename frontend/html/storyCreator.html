@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Story Weaver - Create interactive branching narrative adventures with dynamic choices and story variables. Build engaging text-based games with our powerful story editor.">
     <title>Story Weaver - Create Your Adventure</title>
     <link rel="stylesheet" href="../css/story.css">
 </head>
@@ -23,10 +24,13 @@
                 <button id="exportBtn" class="btn btn-secondary">
                     <span>💾</span> Export
                 </button>
-                <label class="btn btn-secondary">
+                <label for="importFile" class="btn btn-secondary">
                     <span>📥</span> Import
-                    <input type="file" id="importFile" accept=".json" style="display: none;">
                 </label>
+                <input type="file" id="importFile" accept=".json" style="display: none;" aria-label="Import story file">
+                <button id="theme-toggle" class="btn btn-secondary" aria-label="Toggle dark mode">
+                    <span id="theme-icon">🌙</span>
+                </button>
             </div>
         </div>
     </header>
@@ -46,11 +50,11 @@
                     </div>
                     <div class="card-body-sm">
                         <div class="form-group">
-                            <label class="form-label">Story Title</label>
+                            <label class="form-label" for="storyTitle">Story Title</label>
                             <input type="text" id="storyTitle" class="form-input" placeholder="My Amazing Adventure" value="The Enchanted Forest">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Starting Scene</label>
+                            <label class="form-label" for="startingScene">Starting Scene</label>
                             <select id="startingScene" class="form-select">
                                 <option value="start">The Beginning</option>
                             </select>
@@ -71,6 +75,7 @@
                     </div>
                     <div class="card-body-sm">
                         <div class="form-group">
+                            <label class="form-label" for="sceneSearch">Search Scenes</label>
                             <input type="text" id="sceneSearch" class="form-input" placeholder="🔍 Search scenes...">
                         </div>
                         <div class="scene-list" id="sceneList">
@@ -231,8 +236,7 @@
     <div id="modalContainer"></div>
 
 <script src="../js/themeManager.js"></script>
-<script src="../js/lofi.js"></script>
-<script src="../js/story.js"></script>
-<script src="../js/infomodal.js"></script>
+<script src="../js/lofi.js" defer></script>
+<script src="../js/story.js" defer></script>
 </body>
 </html>
