@@ -35,6 +35,11 @@ main {
     color: var(--text-primary);
 }
 
+.c-quiz-sessions-container {
+    min-height: 800px; /* Reserve space to prevent CLS - matches loading state */
+    position: relative; /* For absolute positioning of content */
+}
+
 .c-graph {
     height: 300px;
     width: 100%;
@@ -52,12 +57,14 @@ main {
     /* Allows chart to render properly */
     border: 1px solid var(--border-color);
     transition: all 0.3s ease;
+    min-height: 350px; /* Reserve space to prevent CLS during chart loading */
 }
 
 .c-graph-title {
     margin-bottom: 1rem;
     color: var(--primary-color);
     text-align: center;
+    min-height: 1.5rem; /* Prevent shift when title loads */
 }
 
 .c-quiz-session {
@@ -68,6 +75,9 @@ main {
     box-shadow: 0 2px 8px var(--shadow-light);
     border: 1px solid var(--border-color);
     transition: all 0.3s ease;
+    min-height: 800px; /* Match loading state height to prevent CLS */
+    contain: layout; /* Optimize rendering performance */
+    content-visibility: auto; /* Optimize off-screen rendering */
 }
 
 /* Mobile-specific styles */
@@ -132,6 +142,7 @@ main {
     color: var(--text-primary);
     font-weight: 600;
     margin-bottom: 1rem;
+    min-height: 2rem; /* Prevent shift when title loads */
 }
 
 .charts-grid {
@@ -139,6 +150,7 @@ main {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
+    min-height: 350px; /* Reserve space for charts to prevent CLS */
 }
 
 .gamepad-chart-container {
@@ -147,6 +159,7 @@ main {
     border-radius: 8px;
     padding: 1rem;
     transition: all 0.3s ease;
+    min-height: 320px; /* Reserve space to prevent CLS when charts load */
 }
 
 .chart-title {
@@ -154,12 +167,23 @@ main {
     font-size: 0.9rem;
     margin-bottom: 0.75rem;
     font-weight: 500;
+    min-height: 1.35rem; /* Prevent shift */
 }
 
 .chart-placeholder {
     background-color: var(--bg-primary);
     border-radius: 4px;
     min-height: 250px;
+    height: 250px; /* Fixed height to prevent CLS */
+}
+
+.empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 250px;
+    color: var(--text-muted);
+    font-style: italic;
 }
 
 /* Loading states */
@@ -169,6 +193,7 @@ main {
     align-items: center;
     justify-content: center;
     padding: 3rem;
+    min-height: 800px; /* Match typical session content height to prevent CLS */
     background-color: var(--bg-secondary);
     border-radius: 8px;
     border: 1px solid var(--border-color);
@@ -186,6 +211,7 @@ main {
     border-top: 4px solid var(--primary-color);
     border-radius: 50%;
     animation: spin 1s linear infinite;
+    will-change: transform; /* Optimize animation performance */
 }
 
 @keyframes spin {
@@ -222,7 +248,11 @@ main {
 }
 .session-controls .btn:hover:not(:disabled) { background: var(--hover-bg); }
 .session-controls .btn:active:not(:disabled) { transform: translateY(1px); }
-.session-controls .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.session-controls .btn:disabled { 
+    opacity: 0.6; /* Increased from 0.5 for better contrast */
+    cursor: not-allowed; 
+    color: var(--text-muted); /* Ensure text is still readable */
+}
 .session-controls .theme-toggle { margin: 0 auto; }
 
 @media only screen and (max-width: 768px) {
@@ -272,6 +302,7 @@ main {
     border-radius: 8px;
     overflow: hidden;
     transition: all 0.3s ease;
+    min-height: 100px; /* Reserve space to prevent CLS */
 }
 
 /* Force dark mode toggle container styling */
@@ -376,6 +407,29 @@ main {
     color: var(--text-secondary) !important;
     font-size: 0.75rem;
     margin-top: 0.25rem;
+}
+
+/* Light mode chat styling - ensure good contrast */
+[data-theme="light"] .chat-message,
+body:not([data-theme="dark"]) .chat-message {
+    background-color: #f9fafb !important; /* Light gray background */
+    color: #111827 !important; /* Dark text */
+    border: 1px solid #d1d5db !important;
+}
+
+[data-theme="light"] .chat-message-user,
+body:not([data-theme="dark"]) .chat-message-user {
+    color: #1e3a8a !important; /* Dark blue for username */
+}
+
+[data-theme="light"] .chat-message-content,
+body:not([data-theme="dark"]) .chat-message-content {
+    color: #111827 !important; /* Very dark text */
+}
+
+[data-theme="light"] .chat-message-timestamp,
+body:not([data-theme="dark"]) .chat-message-timestamp {
+    color: #374151 !important; /* Dark gray for timestamps */
 }
 
 /* High contrast dark mode chat styling */
@@ -787,7 +841,8 @@ main {
 
 .podium-accuracy {
     font-size: 0.9rem;
-    opacity: 0.8;
+    opacity: 0.9; /* Increased from 0.8 for better contrast */
+    font-weight: 500; /* Added weight for better readability */
 }
 
 .podium-crown {
@@ -919,7 +974,8 @@ main {
 .rankings-empty-icon {
     font-size: 4rem;
     margin-bottom: 1rem;
-    opacity: 0.5;
+    opacity: 0.7; /* Increased from 0.5 for better visibility */
+    color: var(--text-muted); /* Ensure it uses muted color */
 }
 
 .rankings-loading {
@@ -1030,4 +1086,45 @@ main {
     .rankings-stats {
         grid-template-columns: 1fr;
     }
+}
+
+/* ===== CONTRAST IMPROVEMENTS ===== */
+/* Ensure WCAG AA compliance (4.5:1) for both light and dark modes */
+
+/* Light mode contrast improvements */
+[data-theme="light"] .player-answer .player-name,
+[data-theme="light"] .question-title,
+body:not([data-theme="dark"]) .player-answer .player-name,
+body:not([data-theme="dark"]) .question-title {
+    color: #111827 !important; /* Very dark for maximum contrast */
+}
+
+[data-theme="light"] .player-answer .points,
+[data-theme="light"] .player-answer .timestamp,
+body:not([data-theme="dark"]) .player-answer .points,
+body:not([data-theme="dark"]) .player-answer .timestamp {
+    color: #1f2937 !important; /* Dark gray for good contrast */
+}
+
+[data-theme="light"] .toggle-icon,
+[data-theme="light"] .empty-state,
+body:not([data-theme="dark"]) .toggle-icon,
+body:not([data-theme="dark"]) .empty-state {
+    color: #374151 !important; /* Ensure muted text is still readable */
+}
+
+/* Dark mode contrast improvements */
+[data-theme="dark"] .player-answer .player-name,
+[data-theme="dark"] .question-title {
+    color: #ffffff !important; /* Pure white for maximum contrast */
+}
+
+[data-theme="dark"] .player-answer .points,
+[data-theme="dark"] .player-answer .timestamp {
+    color: #f1f5f9 !important; /* Very light gray for good contrast */
+}
+
+[data-theme="dark"] .toggle-icon,
+[data-theme="dark"] .empty-state {
+    color: #e2e8f0 !important; /* Bright enough to be clearly visible */
 }
