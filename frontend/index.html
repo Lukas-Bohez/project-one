@@ -30,9 +30,6 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="preload" href="css/radar.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="css/radar.css"></noscript>
-    <link rel="preload" href="css/sio.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="css/sio.css"></noscript>
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" defer></script>
     <meta name="google-site-verification" content="i-fm4jHv_Tzy9zhCDiAArKCN0CTisNhAbAm3rmEwpfM" />
     <script src="js/privacy.js" defer></script>
     
@@ -48,11 +45,9 @@
         <h1 class="c-header__title">Quiz The Spire</h1>
         <p style="font-size: 1.5; opacity: 0.8; margin-top: 5px;">Created and owned by Oroka Conner</p>
     </header>
-    <div id="connection-status" class="status-initial">Connecting...</div>
-    <div id="error-message" class="error-message" style="display: none;"></div>
     <main class="o-container">
         <div class="c-welcome-message">
-            <p>Welcome to Quiz The Spire! An interactive quiz game with dynamic difficulty based on your environment.
+            <p>Welcome to Quiz The Spire! An interactive quiz game with dynamic difficulty.
             </p>
         </div>
 
@@ -61,12 +56,6 @@
             <button id="viewGraphsBtn" class="c-btn c-btn--tertiary gamepad">View Graphs</button>
             <button id="startQuizBtn" class="c-btn c-btn--tertiary gamepad">Start or join Quiz</button>
             <button id="manageQuizBtn" class="c-btn c-btn--tertiary">Manage Quiz</button>
-        </div>
-        <div class="o-status-display">
-            <div class="u-flex u-gap-1">
-                <span>Temperature: <span id="tempValue">--</span>°C</span>
-                <span>Light: <span id="lightValue">--</span> lux</span>
-            </div>
         </div>
         <div class="c-servo-test">
             <div class="o-servo-buttons">
