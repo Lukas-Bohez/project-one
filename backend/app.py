@@ -4,7 +4,7 @@ import uvicorn
 import os
 from datetime import datetime,timedelta
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, status, Body, Header
+from fastapi import FastAPI, HTTPException, status, Body, Header, File, Form, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 import time
 import traceback
@@ -99,15 +99,7 @@ app = FastAPI(title="Socket.IO Messaging Backend", version="1.0.0")
 # CORS middleware for FastAPI
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5500",
-        "http://127.0.0.1:5500",
-        "http://localhost:3000",
-        "https://quizthespire.duckdns.org",
-        "http://quizthespire.duckdns.org",
-        "",
-        "*"  # Temporary - allow all origins during development
-    ],
+    allow_origins=["*"],  # Allow all origins for development
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
@@ -6550,15 +6542,17 @@ def start_video_cleanup():
 # Start the cleanup when the module loads
 start_video_cleanup()
 
+print("Registering conversion endpoint...")
 @app.post("/api/v1/convert/upload")
 async def upload_and_convert_file(
-    file: UploadFile = File(..., max_length=1_000_000_000),  # 1GB limit
+    file: UploadFile,
     target_format: str = Form(...)
 ):
     """
     Upload a file and convert it to the target format
     Max file size: 1GB
     """
+    print(f"Starting conversion request: {file.filename} -> {target_format}")
     try:
         # Validate file size
         if hasattr(file, 'size') and file.size > 1_000_000_000:
@@ -6576,13 +6570,17 @@ async def upload_and_convert_file(
         file_extension = os.path.splitext(safe_filename)[1].lower()
         temp_filename = f"{datetime.now().timestamp()}_{safe_filename}"
         temp_filepath = os.path.join(UPLOAD_DIR, temp_filename)
+        print(f"Saving file to: {temp_filepath}")
         
         # Save the uploaded file
         with open(temp_filepath, "wb") as buffer:
             content = await file.read()
             buffer.write(content)
         
+        print(f"File saved successfully. Size: {len(content)} bytes")
+        
         # Determine conversion type and convert
+        print(f"Calling convert_file_backend with {temp_filepath} -> {target_format}")
         converted_filepath = await convert_file_backend(temp_filepath, target_format, file.filename)
         
         if not converted_filepath or not os.path.exists(converted_filepath):
@@ -6598,6 +6596,8 @@ async def upload_and_convert_file(
         
     except Exception as e:
         print(f"Conversion error: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Conversion failed: {str(e)}")
     finally:
         # Clean up the original uploaded file
@@ -6607,17 +6607,28 @@ async def upload_and_convert_file(
             except:
                 pass
 
+@app.post("/api/v1/test")
+async def test_endpoint():
+    return {"status": "test endpoint works"}
+
 async def convert_file_backend(input_path: str, target_format: str, original_filename: str) -> str:
     """
     Convert file using appropriate backend tools
     """
+    print(f"convert_file_backend called with: {input_path}, {target_format}, {original_filename}")
     file_extension = os.path.splitext(input_path)[1].lower()
     base_name = os.path.splitext(original_filename)[0]
     output_filename = f"{base_name}.{target_format}"
     output_path = os.path.join(CONVERTED_DIR, f"{datetime.now().timestamp()}_{output_filename}")
+    print(f"Output path will be: {output_path}")
     
     try:
-        if target_format.lower() in ['mp3', 'wav', 'ogg'] and file_extension in ['.mp4', '.avi', '.mov', '.mkv', '.wmv', '.webm']:
+        if target_format.lower() in ['mp3', 'wav', 'ogg'] and file_extension in ['.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a']:
+            # Audio format conversion
+            print(f"Calling convert_audio_format for audio conversion")
+            return await convert_audio_format(input_path, output_path, target_format)
+        
+        elif target_format.lower() in ['mp3', 'wav', 'ogg'] and file_extension in ['.mp4', '.avi', '.mov', '.mkv', '.wmv', '.webm']:
             # Video to Audio conversion
             return await convert_video_to_audio(input_path, output_path, target_format)
         
@@ -6680,6 +6691,83 @@ async def convert_video_to_audio(input_path: str, output_path: str, format: str)
         return output_path
     except Exception as e:
         print(f"FFmpeg conversion error: {e}")
+        raise
+
+async def convert_audio_format(input_path: str, output_path: str, format: str) -> str:
+    """Convert audio formats using ffmpeg"""
+    try:
+        print(f"Starting audio conversion: {input_path} -> {output_path} (format: {format})")
+        
+        # Check if input file exists
+        if not os.path.exists(input_path):
+            raise Exception(f"Input file does not exist: {input_path}")
+        
+        # Ensure output directory exists
+        output_dir = os.path.dirname(output_path)
+        os.makedirs(output_dir, exist_ok=True)
+        print(f"Ensured output directory exists: {output_dir}")
+        
+        # Audio codec mapping for audio-to-audio conversion
+        codec_map = {
+            'mp3': 'libmp3lame',
+            'wav': 'pcm_s16le', 
+            'ogg': 'libvorbis',
+            'flac': 'flac',
+            'aac': 'aac'
+        }
+        
+        codec = codec_map.get(format.lower(), 'libmp3lame')
+        print(f"Using codec: {codec}")
+        
+        # Build ffmpeg command for audio conversion
+        cmd = [
+            'ffmpeg', '-i', input_path,
+            '-acodec', codec,
+            '-y',  # Overwrite output
+            output_path
+        ]
+        
+        # Add format-specific options
+        if format.lower() == 'mp3':
+            cmd.insert(-1, '-b:a')  # Audio bitrate
+            cmd.insert(-1, '192k')
+        elif format.lower() == 'wav':
+            cmd.insert(-1, '-f')  # Force format
+            cmd.insert(-1, 'wav')
+        elif format.lower() == 'ogg':
+            cmd.insert(-1, '-f')  # Force format
+            cmd.insert(-1, 'ogg')
+            cmd.insert(-1, '-b:a')  # Audio bitrate
+            cmd.insert(-1, '128k')
+        
+        print(f"FFmpeg command: {' '.join(cmd)}")
+        
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        
+        print(f"FFmpeg return code: {result.returncode}")
+        if result.stdout:
+            print(f"FFmpeg stdout: {result.stdout}")
+        if result.stderr:
+            print(f"FFmpeg stderr: {result.stderr}")
+        
+        if result.returncode == 0 and os.path.exists(output_path):
+            print(f"Audio conversion successful: {output_path}")
+            return output_path
+        else:
+            error_msg = f"FFmpeg failed with return code {result.returncode}"
+            if result.stderr:
+                error_msg += f": {result.stderr.strip()}"
+            print(f"FFmpeg audio conversion error: {error_msg}")
+            raise Exception(f"Audio conversion failed: {error_msg}")
+            
+    except subprocess.TimeoutExpired:
+        print("Audio conversion timeout")
+        raise Exception("Audio conversion timeout - file may be too large or complex")
+    except FileNotFoundError:
+        print("FFmpeg not found")
+        raise Exception("FFmpeg not available for audio conversion - please install ffmpeg")
+    except Exception as e:
+        print(f"Audio conversion error: {e}")
         raise
 
 async def convert_image_format(input_path: str, output_path: str, format: str) -> str:

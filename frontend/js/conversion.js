@@ -76,8 +76,7 @@ class ConversionTheSpire {
         // Add conversion format info
         this.showConversionInfo();
         
-        // Setup theme toggle
-        this.setupThemeToggle();
+        // Setup theme toggle - REMOVED to avoid conflict with themeManager.js
     }
 
     showConversionInfo() {
@@ -729,7 +728,9 @@ class ConversionTheSpire {
             
             try {
                 // Send to backend conversion endpoint
-                const response = await fetch('https://quizthespire.duckdns.org/api/v1/convert/upload', {
+                const backendUrl = 'http://127.0.0.1:8002/api/v1/convert/upload';
+                console.log('🔗 Using backend URL:', backendUrl);
+                const response = await fetch(backendUrl, {
                     method: 'POST',
                     body: formData,
                     signal: controller.signal
