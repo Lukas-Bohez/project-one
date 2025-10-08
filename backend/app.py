@@ -7452,12 +7452,16 @@ else:
 # =============================================================================
 
 if __name__ == "__main__":
+    # Enable auto-reload only during development. Long-running conversions can trigger
+    # file writes and other activity that cause the StatReload reloader to restart
+    # the server unexpectedly. Make reload conditional on the DEV_RELOAD env var.
+    dev_reload = os.environ.get('DEV_RELOAD', '0') == '1'
     uvicorn.run(
         "app:app",
         host="0.0.0.0",
         port=8001,
-        reload=True,
-        reload_dirs=["backend"]
+        reload=dev_reload,
+        reload_dirs=["backend"] if dev_reload else None
     )
 
 
