@@ -23,6 +23,25 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app)
 
+# Simple API key protection for sensitive operations
+VIDEO_API_KEY = os.getenv('VIDEO_API_KEY') or None
+
+def require_video_api_key(req):
+    """Check for API key in header 'X-API-KEY' or 'api_key' in JSON body."""
+    if VIDEO_API_KEY is None:
+        # No key configured; deny by default to avoid accidental public exposure
+        return False
+    header_key = req.headers.get('X-API-KEY')
+    if header_key and header_key == VIDEO_API_KEY:
+        return True
+    try:
+        data = req.get_json(silent=True) or {}
+        if data.get('api_key') == VIDEO_API_KEY:
+            return True
+    except Exception:
+        pass
+    return False
+
 # Configuration
 DOWNLOAD_DIR = os.path.join(tempfile.gettempdir(), 'convert_the_spire')
 CLEANUP_INTERVAL = 3600  # 1 hour
@@ -184,6 +203,10 @@ def convert_video():
         output_filename = f"{download_id}.{extension}"
         output_path = os.path.join(DOWNLOAD_DIR, f"{download_id}.%(ext)s")
         
+        # Require API key for conversion
+        if not require_video_api_key(request):
+            return jsonify({'error': 'Unauthorized'}), 401
+
         # Track download
         active_downloads[download_id] = {
             'status': 'processing',
@@ -263,6 +286,10 @@ def get_download_status(download_id):
 @app.route('/api/download/<download_id>', methods=['GET'])
 def download_file(download_id):
     """Download the converted file"""
+    # Require API key for downloading files
+    if not require_video_api_key(request):
+        return jsonify({'error': 'Unauthorized'}), 401
+
     if download_id not in active_downloads:
         return jsonify({'error': 'Download not found'}), 404
     
