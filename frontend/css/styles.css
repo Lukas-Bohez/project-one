@@ -829,7 +829,7 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 }
 
 /* Responsive design */
-@media screen and (min-width: 768px) {
+@media screen and (min-width: 1024px) {
     .o-container {
         margin: var(--spacing-xl) auto;
         padding: 0 var(--spacing-xl);
