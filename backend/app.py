@@ -876,6 +876,10 @@ async def create_article(
         user_id = user_info["id"]
         user_role = user_info["role"]
         
+        # Only admins can create articles
+        if user_role != "admin":
+            raise HTTPException(status_code=403, detail="Only admins can create articles")
+        
         # Check if article with same title already exists
         if ArticlesRepository.check_article_exists_by_title(article.title):
             raise HTTPException(
@@ -933,6 +937,10 @@ async def update_article(
     try:
         user_id = user_info["id"]
         user_role = user_info["role"]
+        
+        # Only admins can update articles
+        if user_role != "admin":
+            raise HTTPException(status_code=403, detail="Only admins can update articles")
         
         # Check if article exists
         existing_article = ArticlesRepository.get_article_by_id(article_id)
@@ -995,6 +1003,10 @@ async def update_article_status(
         user_id = user_info["id"]
         user_role = user_info["role"]
         
+        # Only admins can update article status
+        if user_role != "admin":
+            raise HTTPException(status_code=403, detail="Only admins can update article status")
+        
         # Check if article exists
         existing_article = ArticlesRepository.get_article_by_id(article_id)
         if not existing_article:
@@ -1050,6 +1062,10 @@ async def delete_article(
     try:
         user_id = user_info["id"]
         user_role = user_info["role"]
+        
+        # Only admins can delete articles
+        if user_role != "admin":
+            raise HTTPException(status_code=403, detail="Only admins can delete articles")
         
         # Check if article exists
         existing_article = ArticlesRepository.get_article_by_id(article_id)
