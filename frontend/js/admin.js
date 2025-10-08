@@ -753,7 +753,7 @@ const deleteItem = async (itemType, itemId) => {
             if (itemType === 'questions') {
                 showNotification('Access denied. Only admins can delete questions.', 'error');
             } else if (itemType === 'themes') {
-                showNotification('Access denied. Only admins and moderators can delete themes.', 'error');
+                showNotification('Access denied. Only admins can delete themes.', 'error');
             } else if (itemType === 'users') {
                 showNotification('Access denied. Only admins can delete users.', 'error');
             }
