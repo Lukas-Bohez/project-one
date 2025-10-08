@@ -518,6 +518,7 @@ body {
 .c-theme-toggle {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.75rem;
     padding: 0.6rem 1.2rem;
     background-color: var(--admin-card);
@@ -1292,7 +1293,7 @@ body {
     border-collapse: separate;
     border-spacing: 0;
     margin: 0.5rem 0;
-    min-width: 600px; /* Ensure minimum width for proper display */
+    min-width: 900px; /* Increased for 6 columns */
     table-layout: fixed; /* Fixed layout for better control */
 }
 
@@ -1307,11 +1308,12 @@ body {
 }
 
 /* Column width distribution */
-.c-user-table thead th:nth-child(1) { width: 30%; } /* Username */
-.c-user-table thead th:nth-child(2) { width: 20%; } /* Role */
-.c-user-table thead th:nth-child(3) { width: 25%; } /* Last Active */
-.c-user-table thead th:nth-child(4) { width: 12.5%; } /* Admin/Edit */
-.c-user-table thead th:nth-child(5) { width: 12.5%; } /* only/Delete */
+.c-user-table thead th:nth-child(1) { width: 7.5%; } /* Delete */
+.c-user-table thead th:nth-child(2) { width: 25%; } /* Username */
+.c-user-table thead th:nth-child(3) { width: 25%; } /* IP Addresses */
+.c-user-table thead th:nth-child(4) { width: 15%; } /* Role */
+.c-user-table thead th:nth-child(5) { width: 20%; } /* Last Active */
+.c-user-table thead th:nth-child(6) { width: 7.5%; } /* Edit */
 
 .c-user-table thead th:first-child {
     border-top-left-radius: 6px;
@@ -1341,8 +1343,8 @@ body {
 }
 
 /* Button cells */
-.c-user-table td:last-child,
-.c-user-table td:nth-last-child(2) {
+.c-user-table td:first-child,
+.c-user-table td:last-child {
     padding: 0.5rem;
     width: 100px;
     text-align: center;
@@ -1642,8 +1644,8 @@ body {
         width: 120px;
     }
 
-    .c-user-table td:last-child,
-    .c-user-table td:nth-last-child(2) {
+    .c-user-table td:first-child,
+    .c-user-table td:last-child {
         width: auto;
         padding: 0.75rem 1rem;
         justify-content: flex-end;

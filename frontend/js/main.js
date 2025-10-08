@@ -88,12 +88,12 @@ const testServoMovement = async () => {
             body: JSON.stringify({ command: "SWEEP_SERVO" })
         });
         const data = await response.json();
-        
+
         // DEBUG: Log what we actually receive
         console.log("Response status:", response.status);
         console.log("Response data:", data);
         console.log("data.detail:", data.detail);
-        
+
         if (response.ok) {
             console.log(data.message);
         } else {
@@ -177,9 +177,13 @@ if (document.readyState !== 'loading') {
 }
 
 // Enhanced Socket.IO client connection with cross-browser compatibility
-console.log(`🔌 Connecting to server at: ${lanIP}`);
+console.log(`🔌 Socket.IO connection removed - no longer needed for this page`);
 
-const socket = window.createCompatibleSocket ? 
+// Socket.IO functionality has been removed as temperature/light readings are no longer relevant
+// Previous Socket.IO code has been commented out below for reference:
+
+/*
+const socket = window.createCompatibleSocket ?
     window.createCompatibleSocket(lanIP, {
         // Enhanced configuration for better reliability
         timeout: 30000,             // 30 second timeout
@@ -188,7 +192,7 @@ const socket = window.createCompatibleSocket ?
         reconnectionDelayMax: 10000, // Max 10 second delay
         autoConnect: true,          // Auto connect on creation
         forceNew: false            // Allow connection reuse
-    }) : 
+    }) :
     io(lanIP, {
         // Enhanced fallback configuration
         transports: ["polling", "websocket"],  // Try polling first for compatibility
@@ -206,7 +210,7 @@ const socket = window.createCompatibleSocket ?
 socket.on('connect', () => {
     console.log('✅ Successfully connected to server');
     console.log('Transport:', socket.io.engine.transport.name);
-    
+
     // Log any transport upgrades
     socket.io.engine.on('upgrade', () => {
         console.log('⬆️ Transport upgraded to:', socket.io.engine.transport.name);
@@ -234,18 +238,14 @@ socket.on('reconnect_error', (error) => {
 socket.on('reconnect_failed', () => {
     console.error('💀 All reconnection attempts failed');
 });
+*/
 
 // Get DOM elements for updating
-const connectionStatusElement = document.getElementById('connection-status');
-const errorMessageElement = document.getElementById('error-message');
-const tempValueElement = document.getElementById('tempValue');
-const lightValueElement = document.getElementById('lightValue');
-const soundValueElement = document.getElementById('soundValue');
-const playerCountElement = document.getElementById('playerCount');
-const servoVisualElement = document.getElementById('servoVisual');
-const welcomeMessageElement = document.querySelector('.c-welcome-message p');
+// Note: Connection status and sensor data elements have been removed from index.html
+// as Socket.IO functionality is no longer needed
 
-// Connection status helper function
+// Connection status helper function - no longer used
+/*
 const updateConnectionStatus = (status, message, className) => {
     if (connectionStatusElement) {
         connectionStatusElement.textContent = message || status;
@@ -260,9 +260,10 @@ const updateConnectionStatus = (status, message, className) => {
     
     console.log(`Connection status: ${status} - ${message || ''}`);
 };
+*/
 
-// --- Connection Event Listeners ---
-
+// --- Connection Event Listeners --- Removed as Socket.IO is no longer used
+/*
 // When socket is connecting
 socket.on('connecting', () => {
     updateConnectionStatus('Connecting', 'Connecting to server...', 'status-connecting');
@@ -441,8 +442,10 @@ socket.on('reconnect_failed', () => {
     console.error('Reconnection failed');
     updateConnectionStatus('Failed', 'Connection failed - all reconnection attempts exhausted', 'status-error');
 });
+*/
 
-// --- Helper Functions ---
+// --- Helper Functions --- Removed as Socket.IO is no longer used
+/*
 function updateClientCount(count) {
     if (playerCountElement) {
         playerCountElement.textContent = count;
@@ -478,8 +481,10 @@ function leaveRoom(roomName) {
         console.warn('Socket not connected, cannot leave room');
     }
 }
+*/
 
-// --- Export functions for global use ---
+// --- Export functions for global use --- Removed Socket.IO functions
+/*
 window.socketFunctions = {
     sendMessage,
     joinRoom,
@@ -488,19 +493,17 @@ window.socketFunctions = {
     getSocketId: () => socket.id,
     getConnectionStatus: () => connectionStatusElement?.textContent || 'Unknown'
 };
+*/
 
 // --- Modal and Button Event Listeners ---
+// Removed Socket.IO servo test functionality
 document.addEventListener('DOMContentLoaded', () => {
     const infoBtn = document.getElementById('infoBtn');
     const closeModal = document.querySelector('.c-modal__close');
-    const servoTestBtn = document.getElementById('servoTestBtn');
+    // Removed servoTestBtn as Socket.IO functionality is no longer needed
 
-
-
-    if (servoTestBtn) {
-        servoTestBtn.addEventListener('click', () => {
-            console.log('Test Servo button clicked');
-            socket.emit('test_servo', {});
-        });
+    // Info modal functionality remains if needed
+    if (infoBtn && closeModal) {
+        // Add modal functionality here if needed
     }
 });

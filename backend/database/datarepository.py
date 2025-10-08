@@ -2560,12 +2560,22 @@ class ArticlesRepository:
     
     # READ operations
     @staticmethod
-    def get_all_articles(active_only: bool = False) -> List[Dict[str, Any]]:
-        """Get all articles from the database"""
-        sql = "SELECT * FROM articles"
-        if active_only:
-            sql += " WHERE is_active = TRUE"
-        sql += " ORDER BY created_at DESC"
+    def get_all_articles(active_only: bool = False, include_story_info: bool = False) -> List[Dict[str, Any]]:
+        """Get all articles from the database, optionally with story information"""
+        if include_story_info:
+            sql = """
+            SELECT a.*, s.name as story_name, s.slug as story_slug
+            FROM articles a
+            LEFT JOIN stories s ON a.story_id = s.id
+            """
+            if active_only:
+                sql += " WHERE a.is_active = TRUE"
+            sql += " ORDER BY a.created_at DESC"
+        else:
+            sql = "SELECT * FROM articles"
+            if active_only:
+                sql += " WHERE is_active = TRUE"
+            sql += " ORDER BY created_at DESC"
         return Database.get_rows(sql)
     
     @staticmethod
@@ -2690,76 +2700,6 @@ class ArticlesRepository:
             return int(row.get('next_order', 0)) if row else 0
         except Exception:
             return 0
-
-
-class StoriesRepository:
-    """Repository for stories table"""
-
-    @staticmethod
-    def create_story(name: str, slug: Optional[str] = None, description: Optional[str] = None) -> Optional[int]:
-        sql = """
-        INSERT INTO stories (name, slug, description)
-        VALUES (%s, %s, %s)
-        """
-        params = [name, slug, description]
-        return Database.execute_sql(sql, params)
-
-    @staticmethod
-    def get_story_by_id(story_id: int) -> Optional[Dict[str, Any]]:
-        sql = "SELECT * FROM stories WHERE id = %s"
-        params = [story_id]
-        return Database.get_one_row(sql, params)
-
-    @staticmethod
-    def get_story_by_name(name: str) -> Optional[Dict[str, Any]]:
-        sql = "SELECT * FROM stories WHERE name = %s"
-        params = [name]
-        return Database.get_one_row(sql, params)
-
-    @staticmethod
-    def list_stories() -> List[Dict[str, Any]]:
-        sql = "SELECT * FROM stories ORDER BY name ASC"
-        return Database.get_rows(sql)
-
-    @staticmethod
-    def delete_story(story_id: int) -> bool:
-        sql = "DELETE FROM stories WHERE id = %s"
-        params = [story_id]
-        result = Database.execute_sql(sql, params)
-        return result is not None and result > 0
-    
-    @staticmethod
-    def set_article_active_status(article_id: int, is_active: bool) -> bool:
-        """Set article active/inactive status"""
-        sql = "UPDATE articles SET is_active = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
-        params = [is_active, article_id]
-        result = Database.execute_sql(sql, params)
-        return result is not None and result > 0
-    
-    @staticmethod
-    def set_article_featured_status(article_id: int, is_featured: bool) -> bool:
-        """Set article featured status"""
-        sql = "UPDATE articles SET is_featured = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
-        params = [is_featured, article_id]
-        result = Database.execute_sql(sql, params)
-        return result is not None and result > 0
-    
-    @staticmethod
-    def increment_view_count(article_id: int) -> bool:
-        """Increment the view count for an article"""
-        sql = "UPDATE articles SET view_count = view_count + 1 WHERE id = %s"
-        params = [article_id]
-        result = Database.execute_sql(sql, params)
-        return result is not None and result > 0
-    
-    # DELETE operations
-    @staticmethod
-    def delete_article(article_id: int) -> bool:
-        """Delete an article from the database"""
-        sql = "DELETE FROM articles WHERE id = %s"
-        params = [article_id]
-        result = Database.execute_sql(sql, params)
-        return result is not None and result > 0
     
     # STATISTICS operations
     @staticmethod
@@ -2814,6 +2754,76 @@ class StoriesRepository:
         stats['most_viewed'] = Database.get_rows(sql)
         
         return stats
+    
+    @staticmethod
+    def increment_view_count(article_id: int) -> bool:
+        """Increment the view count for an article"""
+        sql = "UPDATE articles SET view_count = view_count + 1 WHERE id = %s"
+        params = [article_id]
+        result = Database.execute_sql(sql, params)
+        return result is not None and result > 0
+
+
+class StoriesRepository:
+    """Repository for stories table"""
+
+    @staticmethod
+    def create_story(name: str, slug: Optional[str] = None, description: Optional[str] = None) -> Optional[int]:
+        sql = """
+        INSERT INTO stories (name, slug, description)
+        VALUES (%s, %s, %s)
+        """
+        params = [name, slug, description]
+        return Database.execute_sql(sql, params)
+
+    @staticmethod
+    def get_story_by_id(story_id: int) -> Optional[Dict[str, Any]]:
+        sql = "SELECT * FROM stories WHERE id = %s"
+        params = [story_id]
+        return Database.get_one_row(sql, params)
+
+    @staticmethod
+    def get_story_by_name(name: str) -> Optional[Dict[str, Any]]:
+        sql = "SELECT * FROM stories WHERE name = %s"
+        params = [name]
+        return Database.get_one_row(sql, params)
+
+    @staticmethod
+    def list_stories() -> List[Dict[str, Any]]:
+        sql = "SELECT * FROM stories ORDER BY name ASC"
+        return Database.get_rows(sql)
+
+    @staticmethod
+    def delete_story(story_id: int) -> bool:
+        sql = "DELETE FROM stories WHERE id = %s"
+        params = [story_id]
+        result = Database.execute_sql(sql, params)
+        return result is not None and result > 0
+    
+    @staticmethod
+    def set_article_active_status(article_id: int, is_active: bool) -> bool:
+        """Set article active/inactive status"""
+        sql = "UPDATE articles SET is_active = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
+        params = [is_active, article_id]
+        result = Database.execute_sql(sql, params)
+        return result is not None and result > 0
+    
+    @staticmethod
+    def set_article_featured_status(article_id: int, is_featured: bool) -> bool:
+        """Set article featured status"""
+        sql = "UPDATE articles SET is_featured = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
+        params = [is_featured, article_id]
+        result = Database.execute_sql(sql, params)
+        return result is not None and result > 0
+    
+    # DELETE operations
+    @staticmethod
+    def delete_article(article_id: int) -> bool:
+        """Delete an article from the database"""
+        sql = "DELETE FROM articles WHERE id = %s"
+        params = [article_id]
+        result = Database.execute_sql(sql, params)
+        return result is not None and result > 0
 
 
 # =============================================================================

@@ -17,7 +17,7 @@
             <h1 class="c-header__title">Admin</h1>
         </a>
         <div class="c-header__actions">
-            <button id="theme-toggle" class="c-theme-toggle" onclick="toggleTheme()">Light Mode</button>
+            <button id="theme-toggle" class="c-theme-toggle"></button>
             <button id="logoutBtn" class="c-btn c-btn--logout">
                 <i class="fas fa-sign-out-alt"></i> Logout
             </button>
@@ -266,16 +266,17 @@
                     <table class="c-user-table">
                         <thead>
                             <tr>
+                                <th>Delete</th>
                                 <th>Username</th>
+                                <th>IP Addresses</th>
                                 <th>Role</th>
                                 <th>Last Active</th>
                                 <th>Edit</th>
-                                <th>Delete</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td colspan="5" class="c-loading">Loading users...</td>
+                                <td colspan="6" class="c-loading">Loading users...</td>
                             </tr>
                         </tbody>
                     </table>

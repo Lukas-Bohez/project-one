@@ -8,7 +8,7 @@ const STORAGE_IP = {
 
 const getClientIP = async () => {
     try {
-        const response = await fetch('/api/get-client-ip');
+        const response = await fetch('/api/v1/client-ip');
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         return data.ip_address;
