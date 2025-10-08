@@ -2141,3 +2141,711 @@ INFO:quiz_debug:==================================================
 INFO:     Started server process [13678]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'app.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [13678]
+INFO:quiz_debug:==================================================
+INFO:quiz_debug:Quiz Logger Initialized
+INFO:quiz_debug:==================================================
+INFO:     Started server process [14618]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'app.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [14618]
+INFO:quiz_debug:==================================================
+INFO:quiz_debug:Quiz Logger Initialized
+INFO:quiz_debug:==================================================
+INFO:     Started server process [14673]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'app.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [14673]
+INFO:quiz_debug:==================================================
+INFO:quiz_debug:Quiz Logger Initialized
+INFO:quiz_debug:==================================================
+INFO:     Started server process [14741]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'app.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [14741]
+INFO:quiz_debug:==================================================
+INFO:quiz_debug:Quiz Logger Initialized
+INFO:quiz_debug:==================================================
+INFO:     Started server process [14768]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'app.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [14768]
+Process SpawnProcess-18:
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/base_events.py", line 653, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 936, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1074, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1004, in source_to_code
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/student/Project/project-one/backend/app.py", line 7266
+    filename = os.path.basename(file_path)
+IndentationError: unexpected indent
+WARNING:  StatReload detected changes in 'app.py'. Reloading...
+Process SpawnProcess-19:
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/base_events.py", line 653, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 936, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1074, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1004, in source_to_code
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/student/Project/project-one/backend/app.py", line 7266
+    filename = os.path.basename(file_path)
+IndentationError: unexpected indent
+WARNING:  StatReload detected changes in 'app.py'. Reloading...
+Process SpawnProcess-20:
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/base_events.py", line 653, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 936, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1074, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1004, in source_to_code
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/student/Project/project-one/backend/app.py", line 2734
+    points=safe_int_convert(question_data.points, 10),
+IndentationError: unexpected indent
+WARNING:  StatReload detected changes in 'app.py'. Reloading...
+Process SpawnProcess-21:
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/base_events.py", line 653, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 936, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1074, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1004, in source_to_code
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/student/Project/project-one/backend/app.py", line 7233
+    filename = os.path.basename(file_path)
+IndentationError: unexpected indent
+WARNING:  StatReload detected changes in 'app.py'. Reloading...
+Process SpawnProcess-22:
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/base_events.py", line 653, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 936, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1074, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1004, in source_to_code
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/student/Project/project-one/backend/app.py", line 7237
+    safe_title = re.sub(r'[^
+                        ^
+SyntaxError: unterminated string literal (detected at line 7237)
+WARNING:  StatReload detected changes in 'app.py'. Reloading...
+Process SpawnProcess-23:
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/base_events.py", line 653, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 936, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1074, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1004, in source_to_code
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/student/Project/project-one/backend/app.py", line 7236
+    \w\s-]', '', download_info['title']).strip()[:50]
+     ^
+SyntaxError: unexpected character after line continuation character
+WARNING:  StatReload detected changes in 'app.py'. Reloading...
+Process SpawnProcess-24:
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/base_events.py", line 653, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 936, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1074, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1004, in source_to_code
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/student/Project/project-one/backend/app.py", line 7236
+    \w\s-]', '', download_info['title']).strip()[:50]
+     ^
+SyntaxError: unexpected character after line continuation character
+WARNING:  StatReload detected changes in 'app.py'. Reloading...
+INFO:quiz_debug:==================================================
+INFO:quiz_debug:Quiz Logger Initialized
+INFO:quiz_debug:==================================================
+INFO:     Started server process [14997]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[42:61]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[63:157]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[159:171]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[173:183]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[187:125126]
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[42:61]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[63:151]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[153:165]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[167:177]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[181:125192]
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[42:61]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[63:151]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[153:165]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[167:177]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[181:125192]
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[42:61]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[63:146]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[148:160]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[162:172]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[176:125179]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:215193]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[215237:215256]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[215258:215289]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[215293:215296]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_end with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:229942]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[229986:230005]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[230007:230038]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[230042:230045]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_end with no data
+Warning: yt-dlp not installed. Video converter endpoints will be disabled.
+Registering conversion endpoint...
+FastAPI app starting up...
+Main asyncio loop obtained: <_UnixSelectorEventLoop running=True closed=False debug=False>
+Raspberry Pi script thread started.
+Server started - Socket.IO backend is ready!
+No sensor detected - switching to simulation mode
+RFID reader thread started.
+Starting conversion request: 629142__holizna__boom-bap-hiphop-kick-snare-loop-95-bpm.mp3 -> ogg
+Saving file to: /tmp/project-one/temp_uploads/1759959411.538796_629142__holizna__boom-bap-hiphop-kick-snare-loop-95-bpm.mp3
+File saved successfully. Size: 340132 bytes
+Calling convert_file_backend with /tmp/project-one/temp_uploads/1759959411.538796_629142__holizna__boom-bap-hiphop-kick-snare-loop-95-bpm.mp3 -> ogg
+convert_file_backend called with: /tmp/project-one/temp_uploads/1759959411.538796_629142__holizna__boom-bap-hiphop-kick-snare-loop-95-bpm.mp3, ogg, 629142__holizna__boom-bap-hiphop-kick-snare-loop-95-bpm.mp3
+Output path will be: /tmp/project-one/temp_converted/1759959411.539311_629142__holizna__boom-bap-hiphop-kick-snare-loop-95-bpm.ogg
+Calling convert_audio_format for audio conversion
+Starting audio conversion: /tmp/project-one/temp_uploads/1759959411.538796_629142__holizna__boom-bap-hiphop-kick-snare-loop-95-bpm.mp3 -> /tmp/project-one/temp_converted/1759959411.539311_629142__holizna__boom-bap-hiphop-kick-snare-loop-95-bpm.ogg (format: ogg)
+Ensured output directory exists: /tmp/project-one/temp_converted
+Using codec: libvorbis
+FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1759959411.538796_629142__holizna__boom-bap-hiphop-kick-snare-loop-95-bpm.mp3 -acodec libvorbis -y -f ogg -b:a 128k /tmp/project-one/temp_converted/1759959411.539311_629142__holizna__boom-bap-hiphop-kick-snare-loop-95-bpm.ogg
+FFmpeg return code: 0
+FFmpeg stderr: ffmpeg version 5.1.7-0+deb12u1+rpt1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 12 (Debian 12.2.0-14+deb12u1)
+  configuration: --prefix=/usr --extra-version=0+deb12u1+rpt1 --toolchain=hardened --incdir=/usr/include/aarch64-linux-gnu --enable-gpl --disable-stripping --disable-mmal --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libglslang --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librist --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzimg --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sand --enable-sdl2 --disable-sndio --enable-libjxl --enable-neon --enable-v4l2-request --enable-libudev --enable-epoxy --libdir=/usr/lib/aarch64-linux-gnu --arch=arm64 --enable-pocketsphinx --enable-librsvg --enable-libdc1394 --enable-libdrm --enable-vout-drm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-libplacebo --enable-librav1e --enable-shared
+  libavutil      57. 28.100 / 57. 28.100
+  libavcodec     59. 37.100 / 59. 37.100
+  libavformat    59. 27.100 / 59. 27.100
+  libavdevice    59.  7.100 / 59.  7.100
+  libavfilter     8. 44.100 /  8. 44.100
+  libswscale      6.  7.100 /  6.  7.100
+  libswresample   4.  7.100 /  4.  7.100
+  libpostproc    56.  6.100 / 56.  6.100
+Input #0, mp3, from '/tmp/project-one/temp_uploads/1759959411.538796_629142__holizna__boom-bap-hiphop-kick-snare-loop-95-bpm.mp3':
+  Metadata:
+    date            : 2022-03-14
+    time_reference  : 5266286
+    encoder         : Lavf61.7.100
+  Duration: 00:00:13.75, start: 0.023021, bitrate: 197 kb/s
+  Stream #0:0: Audio: mp3, 48000 Hz, stereo, fltp, 197 kb/s
+    Metadata:
+      encoder         : Lavc61.19
+Stream mapping:
+  Stream #0:0 -> #0:0 (mp3 (mp3float) -> vorbis (libvorbis))
+Press [q] to stop, [?] for help
+Output #0, ogg, to '/tmp/project-one/temp_converted/1759959411.539311_629142__holizna__boom-bap-hiphop-kick-snare-loop-95-bpm.ogg':
+  Metadata:
+    date            : 2022-03-14
+    time_reference  : 5266286
+    encoder         : Lavf59.27.100
+  Stream #0:0: Audio: vorbis, 48000 Hz, stereo, fltp, 128 kb/s
+    Metadata:
+      encoder         : Lavc59.37.100 libvorbis
+      date            : 2022-03-14
+      time_reference  : 5266286
+size=       4kB time=00:00:00.00 bitrate=N/A speed=   0x    
+size=     174kB time=00:00:13.69 bitrate= 104.1kbits/s speed=  28x    
+video:0kB audio:168kB subtitle:0kB other streams:0kB global headers:4kB muxing overhead: 3.477316%
+
+Audio conversion successful: /tmp/project-one/temp_converted/1759959411.539311_629142__holizna__boom-bap-hiphop-kick-snare-loop-95-bpm.ogg
+Prepared converted file for response: /tmp/project-one/temp_converted/1759959411.539311_629142__holizna__boom-bap-hiphop-kick-snare-loop-95-bpm.ogg (178160 bytes)
+Starting conversion request: 629138__holizna__dusty-lofi-drum-loop-95-bpm.mp3 -> ogg
+Saving file to: /tmp/project-one/temp_uploads/1759959412.439085_629138__holizna__dusty-lofi-drum-loop-95-bpm.mp3
+File saved successfully. Size: 354945 bytes
+Calling convert_file_backend with /tmp/project-one/temp_uploads/1759959412.439085_629138__holizna__dusty-lofi-drum-loop-95-bpm.mp3 -> ogg
+convert_file_backend called with: /tmp/project-one/temp_uploads/1759959412.439085_629138__holizna__dusty-lofi-drum-loop-95-bpm.mp3, ogg, 629138__holizna__dusty-lofi-drum-loop-95-bpm.mp3
+Output path will be: /tmp/project-one/temp_converted/1759959412.439519_629138__holizna__dusty-lofi-drum-loop-95-bpm.ogg
+Calling convert_audio_format for audio conversion
+Starting audio conversion: /tmp/project-one/temp_uploads/1759959412.439085_629138__holizna__dusty-lofi-drum-loop-95-bpm.mp3 -> /tmp/project-one/temp_converted/1759959412.439519_629138__holizna__dusty-lofi-drum-loop-95-bpm.ogg (format: ogg)
+Ensured output directory exists: /tmp/project-one/temp_converted
+Using codec: libvorbis
+FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1759959412.439085_629138__holizna__dusty-lofi-drum-loop-95-bpm.mp3 -acodec libvorbis -y -f ogg -b:a 128k /tmp/project-one/temp_converted/1759959412.439519_629138__holizna__dusty-lofi-drum-loop-95-bpm.ogg
+FFmpeg return code: 0
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+FFmpeg stderr: ffmpeg version 5.1.7-0+deb12u1+rpt1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 12 (Debian 12.2.0-14+deb12u1)
+  configuration: --prefix=/usr --extra-version=0+deb12u1+rpt1 --toolchain=hardened --incdir=/usr/include/aarch64-linux-gnu --enable-gpl --disable-stripping --disable-mmal --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libglslang --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librist --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzimg --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sand --enable-sdl2 --disable-sndio --enable-libjxl --enable-neon --enable-v4l2-request --enable-libudev --enable-epoxy --libdir=/usr/lib/aarch64-linux-gnu --arch=arm64 --enable-pocketsphinx --enable-librsvg --enable-libdc1394 --enable-libdrm --enable-vout-drm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-libplacebo --enable-librav1e --enable-shared
+  libavutil      57. 28.100 / 57. 28.100
+  libavcodec     59. 37.100 / 59. 37.100
+  libavformat    59. 27.100 / 59. 27.100
+  libavdevice    59.  7.100 / 59.  7.100
+  libavfilter     8. 44.100 /  8. 44.100
+  libswscale      6.  7.100 /  6.  7.100
+  libswresample   4.  7.100 /  4.  7.100
+  libpostproc    56.  6.100 / 56.  6.100
+Input #0, mp3, from '/tmp/project-one/temp_uploads/1759959412.439085_629138__holizna__dusty-lofi-drum-loop-95-bpm.mp3':
+  Metadata:
+    date            : 2022-04-21
+    time_reference  : 3342315
+    encoder         : Lavf61.7.100
+  Duration: 00:00:20.24, start: 0.025057, bitrate: 140 kb/s
+  Stream #0:0: Audio: mp3, 44100 Hz, stereo, fltp, 140 kb/s
+    Metadata:
+      encoder         : Lavc61.19
+Stream mapping:
+  Stream #0:0 -> #0:0 (mp3 (mp3float) -> vorbis (libvorbis))
+Press [q] to stop, [?] for help
+Output #0, ogg, to '/tmp/project-one/temp_converted/1759959412.439519_629138__holizna__dusty-lofi-drum-loop-95-bpm.ogg':
+  Metadata:
+    date            : 2022-04-21
+    time_reference  : 3342315
+    encoder         : Lavf59.27.100
+  Stream #0:0: Audio: vorbis, 44100 Hz, stereo, fltp, 128 kb/s
+    Metadata:
+      encoder         : Lavc59.37.100 libvorbis
+      date            : 2022-04-21
+      time_reference  : 3342315
+size=       4kB time=00:00:00.00 bitrate=N/A speed=N/A    
+size=     128kB time=00:00:14.84 bitrate=  70.9kbits/s speed=29.4x    
+size=     196kB time=00:00:20.20 bitrate=  79.7kbits/s speed=  31x    
+video:0kB audio:190kB subtitle:0kB other streams:0kB global headers:4kB muxing overhead: 3.446751%
+
+Audio conversion successful: /tmp/project-one/temp_converted/1759959412.439519_629138__holizna__dusty-lofi-drum-loop-95-bpm.ogg
+Prepared converted file for response: /tmp/project-one/temp_converted/1759959412.439519_629138__holizna__dusty-lofi-drum-loop-95-bpm.ogg (201176 bytes)
+INFO:     127.0.0.1:49100 - "POST /api/v1/convert/upload HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41962 - "POST /api/v1/convert/upload HTTP/1.1" 200 OK
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:200138]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[200182:200201]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[200203:200234]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[200238:200241]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_end with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:200138]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[200182:200201]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[200203:200234]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[200238:200241]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_end with no data
+Deleted temp file: /tmp/project-one/temp_converted/1759959411.539311_629142__holizna__boom-bap-hiphop-kick-snare-loop-95-bpm.ogg
+Deleted temp file: /tmp/project-one/temp_converted/1759959412.439519_629138__holizna__dusty-lofi-drum-loop-95-bpm.ogg
+Starting conversion request: 660390__seth_makes_sounds__cute-lofi-instrumental.mp3 -> ogg
+Saving file to: /tmp/project-one/temp_uploads/1759959413.538551_660390__seth_makes_sounds__cute-lofi-instrumental.mp3
+File saved successfully. Size: 2160157 bytes
+Calling convert_file_backend with /tmp/project-one/temp_uploads/1759959413.538551_660390__seth_makes_sounds__cute-lofi-instrumental.mp3 -> ogg
+convert_file_backend called with: /tmp/project-one/temp_uploads/1759959413.538551_660390__seth_makes_sounds__cute-lofi-instrumental.mp3, ogg, 660390__seth_makes_sounds__cute-lofi-instrumental.mp3
+Output path will be: /tmp/project-one/temp_converted/1759959413.541534_660390__seth_makes_sounds__cute-lofi-instrumental.ogg
+Calling convert_audio_format for audio conversion
+Starting audio conversion: /tmp/project-one/temp_uploads/1759959413.538551_660390__seth_makes_sounds__cute-lofi-instrumental.mp3 -> /tmp/project-one/temp_converted/1759959413.541534_660390__seth_makes_sounds__cute-lofi-instrumental.ogg (format: ogg)
+Ensured output directory exists: /tmp/project-one/temp_converted
+Using codec: libvorbis
+FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1759959413.538551_660390__seth_makes_sounds__cute-lofi-instrumental.mp3 -acodec libvorbis -y -f ogg -b:a 128k /tmp/project-one/temp_converted/1759959413.541534_660390__seth_makes_sounds__cute-lofi-instrumental.ogg
+FFmpeg return code: 0
+FFmpeg stderr: ffmpeg version 5.1.7-0+deb12u1+rpt1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 12 (Debian 12.2.0-14+deb12u1)
+  configuration: --prefix=/usr --extra-version=0+deb12u1+rpt1 --toolchain=hardened --incdir=/usr/include/aarch64-linux-gnu --enable-gpl --disable-stripping --disable-mmal --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libglslang --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librist --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzimg --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sand --enable-sdl2 --disable-sndio --enable-libjxl --enable-neon --enable-v4l2-request --enable-libudev --enable-epoxy --libdir=/usr/lib/aarch64-linux-gnu --arch=arm64 --enable-pocketsphinx --enable-librsvg --enable-libdc1394 --enable-libdrm --enable-vout-drm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-libplacebo --enable-librav1e --enable-shared
+  libavutil      57. 28.100 / 57. 28.100
+  libavcodec     59. 37.100 / 59. 37.100
+  libavformat    59. 27.100 / 59. 27.100
+  libavdevice    59.  7.100 / 59.  7.100
+  libavfilter     8. 44.100 /  8. 44.100
+  libswscale      6.  7.100 /  6.  7.100
+  libswresample   4.  7.100 /  4.  7.100
+  libpostproc    56.  6.100 / 56.  6.100
+Input #0, mp3, from '/tmp/project-one/temp_uploads/1759959413.538551_660390__seth_makes_sounds__cute-lofi-instrumental.mp3':
+  Metadata:
+    encoded_by      : REAPER
+    date            : 2022-11-20
+    time_reference  : 0
+    encoder         : Lavf61.7.100
+  Duration: 00:01:38.74, start: 0.025057, bitrate: 175 kb/s
+  Stream #0:0: Audio: mp3, 44100 Hz, stereo, fltp, 175 kb/s
+    Metadata:
+      encoder         : Lavc61.19
+Stream mapping:
+  Stream #0:0 -> #0:0 (mp3 (mp3float) -> vorbis (libvorbis))
+Press [q] to stop, [?] for help
+Output #0, ogg, to '/tmp/project-one/temp_converted/1759959413.541534_660390__seth_makes_sounds__cute-lofi-instrumental.ogg':
+  Metadata:
+    encoded_by      : REAPER
+    date            : 2022-11-20
+    time_reference  : 0
+    encoder         : Lavf59.27.100
+  Stream #0:0: Audio: vorbis, 44100 Hz, stereo, fltp, 128 kb/s
+    Metadata:
+      encoder         : Lavc59.37.100 libvorbis
+      encoded_by      : REAPER
+      date            : 2022-11-20
+      time_reference  : 0
+size=       4kB time=00:00:00.00 bitrate=N/A speed=N/A    
+size=     235kB time=00:00:18.43 bitrate= 104.3kbits/s speed=36.9x    
+size=     512kB time=00:00:44.48 bitrate=  94.3kbits/s speed=44.5x    
+size=     768kB time=00:01:11.14 bitrate=  88.4kbits/s speed=47.4x    
+size=    1280kB time=00:01:34.98 bitrate= 110.4kbits/s speed=47.5x    
+size=    1335kB time=00:01:38.70 bitrate= 110.8kbits/s speed=47.9x    
+video:0kB audio:1318kB subtitle:0kB other streams:0kB global headers:4kB muxing overhead: 1.282708%
+
+Audio conversion successful: /tmp/project-one/temp_converted/1759959413.541534_660390__seth_makes_sounds__cute-lofi-instrumental.ogg
+Prepared converted file for response: /tmp/project-one/temp_converted/1759959413.541534_660390__seth_makes_sounds__cute-lofi-instrumental.ogg (1366878 bytes)
+Starting conversion request: 660390__seth_makes_sounds__cute-lofi-instrumental.mp3 -> ogg
+Saving file to: /tmp/project-one/temp_uploads/1759959415.962817_660390__seth_makes_sounds__cute-lofi-instrumental.mp3
+File saved successfully. Size: 2160157 bytes
+Calling convert_file_backend with /tmp/project-one/temp_uploads/1759959415.962817_660390__seth_makes_sounds__cute-lofi-instrumental.mp3 -> ogg
+convert_file_backend called with: /tmp/project-one/temp_uploads/1759959415.962817_660390__seth_makes_sounds__cute-lofi-instrumental.mp3, ogg, 660390__seth_makes_sounds__cute-lofi-instrumental.mp3
+Output path will be: /tmp/project-one/temp_converted/1759959415.965324_660390__seth_makes_sounds__cute-lofi-instrumental.ogg
+Calling convert_audio_format for audio conversion
+Starting audio conversion: /tmp/project-one/temp_uploads/1759959415.962817_660390__seth_makes_sounds__cute-lofi-instrumental.mp3 -> /tmp/project-one/temp_converted/1759959415.965324_660390__seth_makes_sounds__cute-lofi-instrumental.ogg (format: ogg)
+Ensured output directory exists: /tmp/project-one/temp_converted
+Using codec: libvorbis
+FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1759959415.962817_660390__seth_makes_sounds__cute-lofi-instrumental.mp3 -acodec libvorbis -y -f ogg -b:a 128k /tmp/project-one/temp_converted/1759959415.965324_660390__seth_makes_sounds__cute-lofi-instrumental.ogg
+FFmpeg return code: 0
+FFmpeg stderr: ffmpeg version 5.1.7-0+deb12u1+rpt1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 12 (Debian 12.2.0-14+deb12u1)
+  configuration: --prefix=/usr --extra-version=0+deb12u1+rpt1 --toolchain=hardened --incdir=/usr/include/aarch64-linux-gnu --enable-gpl --disable-stripping --disable-mmal --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libglslang --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librist --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzimg --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sand --enable-sdl2 --disable-sndio --enable-libjxl --enable-neon --enable-v4l2-request --enable-libudev --enable-epoxy --libdir=/usr/lib/aarch64-linux-gnu --arch=arm64 --enable-pocketsphinx --enable-librsvg --enable-libdc1394 --enable-libdrm --enable-vout-drm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-libplacebo --enable-librav1e --enable-shared
+  libavutil      57. 28.100 / 57. 28.100
+  libavcodec     59. 37.100 / 59. 37.100
+  libavformat    59. 27.100 / 59. 27.100
+  libavdevice    59.  7.100 / 59.  7.100
+  libavfilter     8. 44.100 /  8. 44.100
+  libswscale      6.  7.100 /  6.  7.100
+  libswresample   4.  7.100 /  4.  7.100
+  libpostproc    56.  6.100 / 56.  6.100
+Input #0, mp3, from '/tmp/project-one/temp_uploads/1759959415.962817_660390__seth_makes_sounds__cute-lofi-instrumental.mp3':
+  Metadata:
+    encoded_by      : REAPER
+    date            : 2022-11-20
+    time_reference  : 0
+    encoder         : Lavf61.7.100
+  Duration: 00:01:38.74, start: 0.025057, bitrate: 175 kb/s
+  Stream #0:0: Audio: mp3, 44100 Hz, stereo, fltp, 175 kb/s
+    Metadata:
+      encoder         : Lavc61.19
+Stream mapping:
+  Stream #0:0 -> #0:0 (mp3 (mp3float) -> vorbis (libvorbis))
+Press [q] to stop, [?] for help
+Output #0, ogg, to '/tmp/project-one/temp_converted/1759959415.965324_660390__seth_makes_sounds__cute-lofi-instrumental.ogg':
+  Metadata:
+    encoded_by      : REAPER
+    date            : 2022-11-20
+    time_reference  : 0
+    encoder         : Lavf59.27.100
+  Stream #0:0: Audio: vorbis, 44100 Hz, stereo, fltp, 128 kb/s
+    Metadata:
+      encoder         : Lavc59.37.100 libvorbis
+      encoded_by      : REAPER
+      date            : 2022-11-20
+      time_reference  : 0
+size=       4kB time=00:00:00.00 bitrate=N/A speed=   0x    
+size=     235kB time=00:00:18.25 bitrate= 105.4kbits/s speed=36.5x    
+size=     256kB time=00:00:36.86 bitrate=  56.9kbits/s speed=36.8x    
+size=     512kB time=00:00:53.15 bitrate=  78.9kbits/s speed=35.4x    
+size=     768kB time=00:01:12.12 bitrate=  87.2kbits/s speed=  36x    
+size=    1024kB time=00:01:28.11 bitrate=  95.2kbits/s speed=35.2x    
+size=    1335kB time=00:01:38.70 bitrate= 110.8kbits/s speed=34.9x    
+video:0kB audio:1318kB subtitle:0kB other streams:0kB global headers:4kB muxing overhead: 1.282708%
+
+Audio conversion successful: /tmp/project-one/temp_converted/1759959415.965324_660390__seth_makes_sounds__cute-lofi-instrumental.ogg
+Prepared converted file for response: /tmp/project-one/temp_converted/1759959415.965324_660390__seth_makes_sounds__cute-lofi-instrumental.ogg (1366878 bytes)
+INFO:     127.0.0.1:59496 - "POST /api/v1/convert/upload HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47272 - "POST /api/v1/convert/upload HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'app.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [14997]
+INFO:quiz_debug:==================================================
+INFO:quiz_debug:Quiz Logger Initialized
+INFO:quiz_debug:==================================================
+INFO:     Started server process [15157]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
