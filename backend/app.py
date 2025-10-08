@@ -2533,11 +2533,11 @@ async def create_question_endpoint(
     role = current_user_info["role"]
     client_ip = get_client_ip(request) if request else "unknown"
     
-    # Only admins and moderators can create questions
-    if role not in ["admin", "moderator"]:
+    # Only admins can create questions - moderators should not be able to create new questions
+    if role != "admin":
         raise HTTPException(
             status_code=403,
-            detail="Only admins and moderators can create questions"
+            detail="Only admins can create questions"
         )
     
     # LOG THE ATTEMPT FIRST - NOTHING ELSE
@@ -2851,15 +2851,12 @@ async def create_theme_endpoint(
     role = current_user_info["role"]
     client_ip = get_client_ip(request) if request else "unknown"
    
-    if role not in ["admin", "moderator"]:
+    # Only admins can create themes. Moderators should not be creating themes via this endpoint.
+    if role != "admin":
         raise HTTPException(
             status_code=403,
-            detail="Only admins and moderators can create themes"
+            detail="Only admins can create themes"
         )
-   
-    # Moderators can't create active themes by default
-    if role == "moderator":
-        theme_data.is_active = False
    
     # LOG THE THEME CREATION ATTEMPT FIRST - NOTHING ELSE
     new_values = {
@@ -2931,11 +2928,11 @@ async def delete_theme_endpoint(
     role = current_user_info["role"]
     client_ip = get_client_ip(request) if request else "unknown"
     
-    # Only admins and moderators can delete themes
-    if role not in ["admin", "moderator"]:
+    # Only admins can delete themes
+    if role != "admin":
         raise HTTPException(
             status_code=403,
-            detail="Only admins and moderators can delete themes"
+            detail="Only admins can delete themes"
         )
     
     try:
@@ -3188,43 +3185,29 @@ async def ban_ip_address(
     user_id = current_user["id"]
     client_ip = get_client_ip(request) if request else "unknown"
     
-    # Check permissions
-    if user_role not in ["moderator", "admin"]:
+    # Only admins can ban IP addresses
+    if user_role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only moderators and admins can ban IP addresses"
+            detail="Only admins can ban IP addresses"
         )
     
-    # Validate ban duration based on role
-    if user_role == "moderator":
-        # Moderators can ban up to 1 minute
-        if ban_request.ban_duration_unit == "minutes" and ban_request.ban_duration_value > 1:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Moderators can only ban for up to 1 minute"
-            )
-        elif ban_request.ban_duration_unit in ["hours", "days", "permanent"]:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Moderators can only use minutes for ban duration"
-            )
-    elif user_role == "admin":
-        # Admins can ban up to a week (or permanent)
-        if ban_request.ban_duration_unit == "days" and ban_request.ban_duration_value > 7:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Admins can ban for up to 7 days maximum"
-            )
-        elif ban_request.ban_duration_unit == "hours" and ban_request.ban_duration_value > 168:  # 7 days in hours
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Ban duration exceeds 7 day limit"
-            )
-        elif ban_request.ban_duration_unit == "minutes" and ban_request.ban_duration_value > 10080:  # 7 days in minutes
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Ban duration exceeds 7 day limit"
-            )
+    # Admins can ban up to a week (or permanent)
+    if ban_request.ban_duration_unit == "days" and ban_request.ban_duration_value > 7:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admins can ban for up to 7 days maximum"
+        )
+    elif ban_request.ban_duration_unit == "hours" and ban_request.ban_duration_value > 168:  # 7 days in hours
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Ban duration exceeds 7 day limit"
+        )
+    elif ban_request.ban_duration_unit == "minutes" and ban_request.ban_duration_value > 10080:  # 7 days in minutes
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Ban duration exceeds 7 day limit"
+        )
     
     try:
         # Get IP address record
