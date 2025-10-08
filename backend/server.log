@@ -2849,3 +2849,537 @@ INFO:quiz_debug:==================================================
 INFO:     Started server process [15157]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[36:55]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[57:88]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[92:95]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[133:152]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[154:197]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[199:211]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[213:222]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[226:126821]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:205214]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_end with no data
+Warning: yt-dlp not installed. Video converter endpoints will be disabled.
+Registering conversion endpoint...
+FastAPI app starting up...
+Main asyncio loop obtained: <_UnixSelectorEventLoop running=True closed=False debug=False>
+Raspberry Pi script thread started.
+Server started - Socket.IO backend is ready!
+No sensor detected - switching to simulation mode
+RFID reader thread started.
+
+🌙 PHASE 1/4: PITCH BLACK night!
+   Complete darkness with only starlight.
+
+🌌 PHASE 1/2: INTENSE aurora display!
+   Brilliant northern lights filling the sky!
+
+💡 PHASE 1/2: COMPLETE power outage!
+   Total darkness with emergency failures!
+Starting conversion request: test.ogg -> ogg
+Saving file to: /tmp/project-one/temp_uploads/1759959728.877932_test.ogg
+File saved successfully. Size: 2691105 bytes
+Calling convert_file_backend with /tmp/project-one/temp_uploads/1759959728.877932_test.ogg -> ogg
+convert_file_backend called with: /tmp/project-one/temp_uploads/1759959728.877932_test.ogg, ogg, test.ogg
+Output path will be: /tmp/project-one/temp_converted/1759959728.880194_test.ogg
+Calling convert_audio_format for audio conversion
+Starting audio conversion: /tmp/project-one/temp_uploads/1759959728.877932_test.ogg -> /tmp/project-one/temp_converted/1759959728.880194_test.ogg (format: ogg)
+Ensured output directory exists: /tmp/project-one/temp_converted
+Using codec: libvorbis
+Input and output formats identical (ogg) - copied file to /tmp/project-one/temp_converted/1759959728.880194_test.ogg
+Prepared converted file for response: /tmp/project-one/temp_converted/1759959728.880194_test.ogg (2691105 bytes)
+INFO:     127.0.0.1:55508 - "POST /api/v1/convert/upload HTTP/1.1" 200 OK
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[36:55]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[57:88]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[92:95]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[133:152]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[154:197]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[199:211]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[213:222]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[226:126821]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:205214]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_end with no data
+Deleted temp file: /tmp/project-one/temp_converted/1759959728.880194_test.ogg
+Starting conversion request: test.ogg -> ogg
+Saving file to: /tmp/project-one/temp_uploads/1759959729.919248_test.ogg
+File saved successfully. Size: 2691105 bytes
+Calling convert_file_backend with /tmp/project-one/temp_uploads/1759959729.919248_test.ogg -> ogg
+convert_file_backend called with: /tmp/project-one/temp_uploads/1759959729.919248_test.ogg, ogg, test.ogg
+Output path will be: /tmp/project-one/temp_converted/1759959729.921714_test.ogg
+Calling convert_audio_format for audio conversion
+Starting audio conversion: /tmp/project-one/temp_uploads/1759959729.919248_test.ogg -> /tmp/project-one/temp_converted/1759959729.921714_test.ogg (format: ogg)
+Ensured output directory exists: /tmp/project-one/temp_converted
+Using codec: libvorbis
+Input and output formats identical (ogg) - copied file to /tmp/project-one/temp_converted/1759959729.921714_test.ogg
+Prepared converted file for response: /tmp/project-one/temp_converted/1759959729.921714_test.ogg (2691105 bytes)
+INFO:     127.0.0.1:55524 - "POST /api/v1/convert/upload HTTP/1.1" 200 OK
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[36:55]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[57:88]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[92:95]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[133:152]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[154:197]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[199:211]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[213:222]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[226:126821]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:205214]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_end with no data
+Deleted temp file: /tmp/project-one/temp_converted/1759959729.921714_test.ogg
+Starting conversion request: test.ogg -> ogg
+Saving file to: /tmp/project-one/temp_uploads/1759959730.961816_test.ogg
+File saved successfully. Size: 2691105 bytes
+Calling convert_file_backend with /tmp/project-one/temp_uploads/1759959730.961816_test.ogg -> ogg
+convert_file_backend called with: /tmp/project-one/temp_uploads/1759959730.961816_test.ogg, ogg, test.ogg
+Output path will be: /tmp/project-one/temp_converted/1759959730.96411_test.ogg
+Calling convert_audio_format for audio conversion
+Starting audio conversion: /tmp/project-one/temp_uploads/1759959730.961816_test.ogg -> /tmp/project-one/temp_converted/1759959730.96411_test.ogg (format: ogg)
+Ensured output directory exists: /tmp/project-one/temp_converted
+Using codec: libvorbis
+Input and output formats identical (ogg) - copied file to /tmp/project-one/temp_converted/1759959730.96411_test.ogg
+Prepared converted file for response: /tmp/project-one/temp_converted/1759959730.96411_test.ogg (2691105 bytes)
+INFO:     127.0.0.1:55538 - "POST /api/v1/convert/upload HTTP/1.1" 200 OK
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[42:61]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[63:147]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[149:161]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[163:173]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[177:15616]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:33709]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:31996]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16437]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:17950]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:14944]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:32885]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:18755]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:14139]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:32945]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:19454]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:13314]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16621]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:33138]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16095]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:17095]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16535]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:15840]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16447]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:32751]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:194]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16582]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:88]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16535]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16574]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16565]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:31084]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:17993]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16580]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:32134]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:17423]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:15767]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:713]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16625]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:13837]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:19076]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16554]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16554]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:65483]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:426]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:29363]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:3557]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:29211]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:20310]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:12623]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:3807]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16572]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16429]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:29264]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:20319]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:65536]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:65536]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:143250]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:253648]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:237472]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:142053]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:21757]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16595]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16173]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:28656]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:36880]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:12567]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:53178]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:29445]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:36045]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:13217]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:35772]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:32768]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:33332]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:13566]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:18638]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16652]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:49384]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:32268]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16576]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16685]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:32452]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16648]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:15943]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:33274]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:32499]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:32531]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16573]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16564]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:65414]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:65525]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:32887]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:1]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16461]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:49307]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:32180]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:714]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:32054]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:857]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:32494]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16772]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:65877]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:131019]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:213587]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:30914]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:3054]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:30244]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:2699]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:29863]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:3283]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:29161]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:3773]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:29586]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:3503]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:28886]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:3951]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:28605]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:4603]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:28646]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:32287]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:21494]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:44369]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:5239]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:27202]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:5678]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:59858]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:6049]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:59860]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:6075]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:26629]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:6393]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:26066]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:6867]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:26479]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:6571]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:25838]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16165]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:16497]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:7228]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:25427]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:33053]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:7169]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:91103]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:89287]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:34379]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[34423:34442]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[34444:34475]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[34479:34482]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_end with no data
+Deleted temp file: /tmp/project-one/temp_converted/1759959730.96411_test.ogg
+
+🌋 PHASE 1/2: MAJOR VOLCANIC EVENT!
+   Pyroclastic flow detected. Ash cloud affecting temperatures.
+Starting conversion request: 655615__seth_makes_sounds__happy-hip-hop-beat.mp3 -> ogg
+Saving file to: /tmp/project-one/temp_uploads/1759959742.150655_655615__seth_makes_sounds__happy-hip-hop-beat.mp3
+File saved successfully. Size: 4580190 bytes
+Calling convert_file_backend with /tmp/project-one/temp_uploads/1759959742.150655_655615__seth_makes_sounds__happy-hip-hop-beat.mp3 -> ogg
+convert_file_backend called with: /tmp/project-one/temp_uploads/1759959742.150655_655615__seth_makes_sounds__happy-hip-hop-beat.mp3, ogg, 655615__seth_makes_sounds__happy-hip-hop-beat.mp3
+Output path will be: /tmp/project-one/temp_converted/1759959742.157278_655615__seth_makes_sounds__happy-hip-hop-beat.ogg
+Calling convert_audio_format for audio conversion
+Starting audio conversion: /tmp/project-one/temp_uploads/1759959742.150655_655615__seth_makes_sounds__happy-hip-hop-beat.mp3 -> /tmp/project-one/temp_converted/1759959742.157278_655615__seth_makes_sounds__happy-hip-hop-beat.ogg (format: ogg)
+Ensured output directory exists: /tmp/project-one/temp_converted
+Using codec: libvorbis
+FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1759959742.150655_655615__seth_makes_sounds__happy-hip-hop-beat.mp3 -acodec libvorbis -y -f ogg -b:a 128k /tmp/project-one/temp_converted/1759959742.157278_655615__seth_makes_sounds__happy-hip-hop-beat.ogg
+FFmpeg return code: 0
+FFmpeg stderr: ffmpeg version 5.1.7-0+deb12u1+rpt1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 12 (Debian 12.2.0-14+deb12u1)
+  configuration: --prefix=/usr --extra-version=0+deb12u1+rpt1 --toolchain=hardened --incdir=/usr/include/aarch64-linux-gnu --enable-gpl --disable-stripping --disable-mmal --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libglslang --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librist --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzimg --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sand --enable-sdl2 --disable-sndio --enable-libjxl --enable-neon --enable-v4l2-request --enable-libudev --enable-epoxy --libdir=/usr/lib/aarch64-linux-gnu --arch=arm64 --enable-pocketsphinx --enable-librsvg --enable-libdc1394 --enable-libdrm --enable-vout-drm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-libplacebo --enable-librav1e --enable-shared
+  libavutil      57. 28.100 / 57. 28.100
+  libavcodec     59. 37.100 / 59. 37.100
+  libavformat    59. 27.100 / 59. 27.100
+  libavdevice    59.  7.100 / 59.  7.100
+  libavfilter     8. 44.100 /  8. 44.100
+  libswscale      6.  7.100 /  6.  7.100
+  libswresample   4.  7.100 /  4.  7.100
+  libpostproc    56.  6.100 / 56.  6.100
+Input #0, mp3, from '/tmp/project-one/temp_uploads/1759959742.150655_655615__seth_makes_sounds__happy-hip-hop-beat.mp3':
+  Metadata:
+    encoder         : Lavf61.7.100
+  Duration: 00:03:12.03, start: 0.025057, bitrate: 190 kb/s
+  Stream #0:0: Audio: mp3, 44100 Hz, stereo, fltp, 190 kb/s
+    Metadata:
+      encoder         : Lavc61.19
+Stream mapping:
+  Stream #0:0 -> #0:0 (mp3 (mp3float) -> vorbis (libvorbis))
+Press [q] to stop, [?] for help
+Output #0, ogg, to '/tmp/project-one/temp_converted/1759959742.157278_655615__seth_makes_sounds__happy-hip-hop-beat.ogg':
+  Metadata:
+    encoder         : Lavf59.27.100
+  Stream #0:0: Audio: vorbis, 44100 Hz, stereo, fltp, 128 kb/s
+    Metadata:
+      encoder         : Lavc59.37.100 libvorbis
+size=       4kB time=00:00:00.00 bitrate=N/A speed=   0x    
+size=     245kB time=00:00:19.54 bitrate= 102.6kbits/s speed=  39x    
+size=     512kB time=00:00:37.14 bitrate= 112.9kbits/s speed=37.1x    
+size=     768kB time=00:00:54.80 bitrate= 114.8kbits/s speed=36.5x    
+size=    1024kB time=00:01:14.75 bitrate= 112.2kbits/s speed=37.3x    
+size=    1280kB time=00:01:32.28 bitrate= 113.6kbits/s speed=36.9x    
+size=    1536kB time=00:01:49.79 bitrate= 114.6kbits/s speed=36.6x    
+size=    1792kB time=00:02:09.83 bitrate= 113.1kbits/s speed=37.1x    
+size=    2048kB time=00:02:29.44 bitrate= 112.3kbits/s speed=37.3x    
+size=    2304kB time=00:02:47.07 bitrate= 113.0kbits/s speed=37.1x    
+size=    2560kB time=00:03:06.04 bitrate= 112.7kbits/s speed=37.2x    
+size=    2763kB time=00:03:11.98 bitrate= 117.9kbits/s speed=37.4x    
+video:0kB audio:2732kB subtitle:0kB other streams:0kB global headers:4kB muxing overhead: 1.149962%
+
+Audio conversion successful: /tmp/project-one/temp_converted/1759959742.157278_655615__seth_makes_sounds__happy-hip-hop-beat.ogg
+Prepared converted file for response: /tmp/project-one/temp_converted/1759959742.157278_655615__seth_makes_sounds__happy-hip-hop-beat.ogg (2829566 bytes)
+INFO:     127.0.0.1:54594 - "POST /api/v1/convert/upload HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'app.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [15157]
+INFO:quiz_debug:==================================================
+INFO:quiz_debug:Quiz Logger Initialized
+INFO:quiz_debug:==================================================
+INFO:     Started server process [15972]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'app.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [15972]
+Process SpawnProcess-28:
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/base_events.py", line 653, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/student/.local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 936, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1074, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1004, in source_to_code
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/student/Project/project-one/backend/app.py", line 6605
+    print(f"[{request_id}] Calling convert_file_backend with {temp_filepath} -> {target_format}")
+    ^^^^^
+SyntaxError: expected 'except' or 'finally' block
+WARNING:  StatReload detected changes in 'app.py'. Reloading...
+INFO:quiz_debug:==================================================
+INFO:quiz_debug:Quiz Logger Initialized
+INFO:quiz_debug:==================================================
+INFO:     Started server process [16156]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[36:55]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[57:88]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[92:95]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[133:152]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[154:197]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[199:211]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[213:222]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[226:128613]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:167046]
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[42:61]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[63:145]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[147:159]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[161:171]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[175:85987]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:76849]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[76893:76912]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[76914:76945]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[76949:76952]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_end with no data
+Warning: yt-dlp not installed. Video converter endpoints will be disabled.
+Registering conversion endpoint...
+FastAPI app starting up...
+Main asyncio loop obtained: <_UnixSelectorEventLoop running=True closed=False debug=False>
+Raspberry Pi script thread started.
+Server started - Socket.IO backend is ready!
+No sensor detected - switching to simulation mode
+RFID reader thread started.
+Starting conversion request: 629136__holizna__funky-lofi-hat-loop-88-bpm.mp3 -> ogg
+Saving file to: /tmp/project-one/temp_uploads/1759959957.55836_629136__holizna__funky-lofi-hat-loop-88-bpm.mp3
+File saved successfully. Size: 424805 bytes
+Calling convert_file_backend with /tmp/project-one/temp_uploads/1759959957.55836_629136__holizna__funky-lofi-hat-loop-88-bpm.mp3 -> ogg
+convert_file_backend called with: /tmp/project-one/temp_uploads/1759959957.55836_629136__holizna__funky-lofi-hat-loop-88-bpm.mp3, ogg, 629136__holizna__funky-lofi-hat-loop-88-bpm.mp3
+Output path will be: /tmp/project-one/temp_converted/1759959957.584266_629136__holizna__funky-lofi-hat-loop-88-bpm.ogg
+Calling convert_audio_format for audio conversion
+Starting audio conversion: /tmp/project-one/temp_uploads/1759959957.55836_629136__holizna__funky-lofi-hat-loop-88-bpm.mp3 -> /tmp/project-one/temp_converted/1759959957.584266_629136__holizna__funky-lofi-hat-loop-88-bpm.ogg (format: ogg)
+Ensured output directory exists: /tmp/project-one/temp_converted
+Using codec: libvorbis
+FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1759959957.55836_629136__holizna__funky-lofi-hat-loop-88-bpm.mp3 -acodec libvorbis -y -f ogg -b:a 128k /tmp/project-one/temp_converted/1759959957.584266_629136__holizna__funky-lofi-hat-loop-88-bpm.ogg
+FFmpeg return code: 0
+FFmpeg stderr: ffmpeg version 5.1.7-0+deb12u1+rpt1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 12 (Debian 12.2.0-14+deb12u1)
+  configuration: --prefix=/usr --extra-version=0+deb12u1+rpt1 --toolchain=hardened --incdir=/usr/include/aarch64-linux-gnu --enable-gpl --disable-stripping --disable-mmal --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libglslang --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librist --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzimg --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sand --enable-sdl2 --disable-sndio --enable-libjxl --enable-neon --enable-v4l2-request --enable-libudev --enable-epoxy --libdir=/usr/lib/aarch64-linux-gnu --arch=arm64 --enable-pocketsphinx --enable-librsvg --enable-libdc1394 --enable-libdrm --enable-vout-drm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-libplacebo --enable-librav1e --enable-shared
+  libavutil      57. 28.100 / 57. 28.100
+  libavcodec     59. 37.100 / 59. 37.100
+  libavformat    59. 27.100 / 59. 27.100
+  libavdevice    59.  7.100 / 59.  7.100
+  libavfilter     8. 44.100 /  8. 44.100
+  libswscale      6.  7.100 /  6.  7.100
+  libswresample   4.  7.100 /  4.  7.100
+  libpostproc    56.  6.100 / 56.  6.100
+Input #0, mp3, from '/tmp/project-one/temp_uploads/1759959957.55836_629136__holizna__funky-lofi-hat-loop-88-bpm.mp3':
+  Metadata:
+    date            : 2022-04-21
+    time_reference  : 10472724
+    encoder         : Lavf61.7.100
+  Duration: 00:00:21.86, start: 0.023021, bitrate: 155 kb/s
+  Stream #0:0: Audio: mp3, 48000 Hz, stereo, fltp, 155 kb/s
+    Metadata:
+      encoder         : Lavc61.19
+Stream mapping:
+  Stream #0:0 -> #0:0 (mp3 (mp3float) -> vorbis (libvorbis))
+Press [q] to stop, [?] for help
+Output #0, ogg, to '/tmp/project-one/temp_converted/1759959957.584266_629136__holizna__funky-lofi-hat-loop-88-bpm.ogg':
+  Metadata:
+    date            : 2022-04-21
+    time_reference  : 10472724
+    encoder         : Lavf59.27.100
+  Stream #0:0: Audio: vorbis, 48000 Hz, stereo, fltp, 128 kb/s
+    Metadata:
+      encoder         : Lavc59.37.100 libvorbis
+      date            : 2022-04-21
+      time_reference  : 10472724
+size=       4kB time=00:00:00.00 bitrate=N/A speed=N/A    
+size=     212kB time=00:00:21.80 bitrate=  79.5kbits/s speed=54.7x    
+video:0kB audio:205kB subtitle:0kB other streams:0kB global headers:4kB muxing overhead: 3.046291%
+
+Audio conversion successful: /tmp/project-one/temp_converted/1759959957.584266_629136__holizna__funky-lofi-hat-loop-88-bpm.ogg
+Prepared converted file for response: /tmp/project-one/temp_converted/1759959957.584266_629136__holizna__funky-lofi-hat-loop-88-bpm.ogg (216796 bytes)
+INFO:     127.0.0.1:33782 - "POST /api/v1/convert/upload HTTP/1.1" 200 OK
