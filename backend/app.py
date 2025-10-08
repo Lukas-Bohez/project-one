@@ -6775,6 +6775,17 @@ async def convert_audio_format(input_path: str, output_path: str, format: str) -
         
         codec = codec_map.get(format.lower(), 'libmp3lame')
         print(f"Using codec: {codec}")
+
+        # If input and output formats are the same (e.g., wav -> wav), just copy the file.
+        input_ext = os.path.splitext(input_path)[1].lower().lstrip('.')
+        if input_ext == format.lower():
+            try:
+                shutil.copy2(input_path, output_path)
+                print(f"Input and output formats identical ({format}) - copied file to {output_path}")
+                return output_path
+            except Exception as e:
+                print(f"Failed to copy identical-format file: {e}")
+                # fallthrough to attempt conversion as a fallback
         
         # Build ffmpeg command for audio conversion
         cmd = [
@@ -6799,7 +6810,14 @@ async def convert_audio_format(input_path: str, output_path: str, format: str) -
         
         print(f"FFmpeg command: {' '.join(cmd)}")
         
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        except subprocess.TimeoutExpired:
+            print("FFmpeg timed out for file:", input_path)
+            raise Exception("Audio conversion timed out")
+        except Exception as e:
+            print(f"FFmpeg invocation error: {e}")
+            raise
         
         print(f"FFmpeg return code: {result.returncode}")
         if result.stdout:
