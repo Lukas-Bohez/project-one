@@ -11,6 +11,10 @@ import traceback
 from threading import Thread, Event, Lock
 import socket
 import logging
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 # Import the new ThemeRepository
 from fastapi.responses import HTMLResponse,JSONResponse
 from database.datarepository import QuestionRepository, AnswerRepository, ThemeRepository,UserRepository, IpAddressRepository, UserIpAddressRepository,QuizSessionRepository,SensorDataRepository,AuditLogRepository,PlayerItemRepository,ItemRepository,ChatLogRepository,SessionPlayerRepository,PlayerAnswerRepository,ArticlesRepository,StoriesRepository,GameSaveRepository,GameResourcesRepository,GameUpgradesRepository
@@ -108,6 +112,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
+
+# Rate limiting setup
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 # Socket.IO server setup
 sio = socketio.AsyncServer(
@@ -226,9 +236,11 @@ def verify_user(user_id: int, rfid_code: str) -> str:
     user = UserRepository.get_user_by_id(user_id)
     
     if not user:
+        quiz_logger.warning(f"Authentication failed: User {user_id} not found")
         raise HTTPException(status_code=404, detail="User not found")
     
     if user['rfid_code'] != rfid_code:
+        quiz_logger.warning(f"Authentication failed: Invalid RFID for user {user_id} from IP {get_client_ip_sync(None)}")
         raise HTTPException(status_code=403, detail="Invalid RFID code")
     
     role = user['userRoleId']
@@ -240,6 +252,7 @@ def verify_user(user_id: int, rfid_code: str) -> str:
     elif role == 3:
         return "admin"
     else:
+        quiz_logger.warning(f"Authentication failed: Unknown role {role} for user {user_id}")
         raise HTTPException(status_code=403, detail="Unknown role")
 
 async def get_current_user_info(
@@ -248,12 +261,15 @@ async def get_current_user_info(
     x_rfid: str = Header(None, alias="X-RFID")
 ):
     """Dependency function to get current user info from headers"""
+    client_ip = get_client_ip_sync(request)
     if not x_user_id or not x_rfid:
+        quiz_logger.warning(f"Authentication failed: Missing credentials from IP {client_ip}")
         raise HTTPException(status_code=401, detail="Missing user credentials")
     
     try:
         user_id = int(x_user_id)
     except ValueError:
+        quiz_logger.warning(f"Authentication failed: Invalid user ID format '{x_user_id}' from IP {client_ip}")
         raise HTTPException(status_code=400, detail="Invalid user ID format")
     
     # Log IP address for authenticated requests
