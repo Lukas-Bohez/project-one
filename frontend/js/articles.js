@@ -341,6 +341,9 @@ const renderArticlesGrouped = async () => {
             </div>
         `;
 
+        // Attach event listeners to the newly created buttons
+        attachArticleButtonListeners(articleList);
+
         if (window.themeManager) {
             window.themeManager.applyTheme();
         }
@@ -378,7 +381,7 @@ const showArticleDetails = (article) => {
             </div>
         </div>
     `;
-    modal.classList.add('show');
+    modal.style.display = 'block';
     const closeBtn = modal.querySelector('.js-close-modal');
     if (closeBtn) {
         closeBtn.addEventListener('click', hideEditModal, { once: true });
@@ -429,6 +432,9 @@ const renderArticles = () => {
         articleList.innerHTML = articlesState.articles.map(article => createArticleElement(article)).join('');
     }
     
+    // Attach event listeners to the newly created buttons
+    attachArticleButtonListeners(articleList);
+    
     // Apply theme to newly created elements
     if (window.themeManager) {
         window.themeManager.applyTheme();
@@ -478,6 +484,12 @@ const createArticleElement = (article) => {
             </div>
             
             <div class="c-article-meta">
+                ${article.story_name ? `
+                <span class="c-article-meta-item">
+                    <i class="fas fa-book"></i>
+                    ${escapeHTML(article.story_name)}
+                </span>
+                ` : ''}
                 ${article.story_order !== undefined && article.story_order !== null ? `
                 <span class="c-article-meta-item">
                     <i class="fas fa-hashtag"></i>
@@ -583,6 +595,19 @@ const showArticleModal = async (article = null) => {
     
     modalTitle.textContent = article ? 'Edit Article' : 'Create New Article';
     
+    // Ensure stories are loaded for the dropdown
+    if (!Array.isArray(articlesState.stories) || articlesState.stories.length === 0) {
+        try {
+            const stories = await fetchStories();
+            if (Array.isArray(stories)) {
+                articlesState.stories = stories;
+            }
+        } catch (e) {
+            console.warn('Could not load stories for form:', e);
+            articlesState.stories = [];
+        }
+    }
+    
     // Parse article content if editing
     let contentData = {};
     let currentStatus = 'draft';
@@ -640,6 +665,23 @@ const showArticleModal = async (article = null) => {
                         <input type="text" id="article-tags" class="c-form-input" 
                                value="${article ? escapeHTML(article.tags || '') : ''}" 
                                placeholder="Comma-separated tags">
+                    </div>
+                    <div class="c-form-group">
+                        <label for="article-story">Story</label>
+                        <select id="article-story" class="c-form-input">
+                            <option value="">No story (standalone article)</option>
+                            ${articlesState.stories.map(story => 
+                                `<option value="${story.id}" ${article && article.story_id == story.id ? 'selected' : ''}>
+                                    ${escapeHTML(story.name)}
+                                </option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                    <div class="c-form-group">
+                        <label for="article-story-order">Story Order</label>
+                        <input type="number" id="article-story-order" class="c-form-input" 
+                               value="${article ? (article.story_order || 0) : 0}" 
+                               placeholder="0" min="0">
                     </div>
                     <div class="c-form-group">
                         <label for="article-excerpt">Excerpt</label>
@@ -939,6 +981,12 @@ window.removeSection = (index) => {
 };
 
 const setupArticleFormListeners = () => {
+    // Cancel button listener
+    const cancelBtn = document.querySelector('.c-btn--cancel');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', hideEditModal);
+    }
+    
     // Status toggle listeners
     document.querySelectorAll('.c-status-toggle-option').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -963,6 +1011,8 @@ const collectArticleFormData = () => {
     const category = document.getElementById('article-category').value.trim();
     const tags = document.getElementById('article-tags').value.trim();
     const excerpt = document.getElementById('article-excerpt').value.trim();
+    const storyId = document.getElementById('article-story').value;
+    const storyOrder = parseInt(document.getElementById('article-story-order').value) || 0;
     
     // Collect highlights
     const highlights = [];
@@ -1019,6 +1069,8 @@ const collectArticleFormData = () => {
         author,
         date_written: dateWritten,
         story: intro, // Use intro as story field
+        story_id: storyId ? parseInt(storyId) : null,
+        story_order: storyOrder,
         category,
         tags,
         excerpt,
@@ -1067,9 +1119,88 @@ const handleArticleSave = async (event) => {
     }
 };
 
-// #endregion
-
-// #region ***  Event Listeners                          ***********
+const attachArticleButtonListeners = (container) => {
+    // Edit buttons
+    container.querySelectorAll('.js-edit-article').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const articleId = parseInt(btn.dataset.id);
+            let article = (articlesState.articles || []).find(a => a.id === articleId);
+            if (!article) {
+                try { article = await fetchArticleById(articleId); } catch {}
+            }
+            if (article) {
+                await showArticleModal(article);
+            }
+        });
+    });
+    
+    // View buttons
+    container.querySelectorAll('.js-view-article').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const articleId = parseInt(btn.dataset.id);
+            let article = (articlesState.articles || []).find(a => a.id === articleId);
+            if (!article) {
+                try { article = await fetchArticleById(articleId); } catch {}
+            }
+            if (article) {
+                showArticleDetails(article);
+            }
+        });
+    });
+    
+    // Publish buttons
+    container.querySelectorAll('.js-publish-article').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const articleId = parseInt(btn.dataset.id);
+            try {
+                await updateArticleStatus(articleId, 'published');
+                await loadArticles(articlesState.currentPage);
+            } catch (error) {
+                console.error('Error publishing article:', error);
+            }
+        });
+    });
+    
+    // Unpublish buttons
+    container.querySelectorAll('.js-unpublish-article').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const articleId = parseInt(btn.dataset.id);
+            try {
+                await updateArticleStatus(articleId, 'draft');
+                await loadArticles(articlesState.currentPage);
+            } catch (error) {
+                console.error('Error unpublishing article:', error);
+            }
+        });
+    });
+    
+    // Delete buttons
+    container.querySelectorAll('.js-delete-article').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const articleId = parseInt(btn.dataset.id);
+            const article = articlesState.articles.find(a => a.id === articleId);
+            
+            if (article) {
+                showConfirmDialog(
+                    `Are you sure you want to delete "${article.title}"? This action cannot be undone.`,
+                    async () => {
+                        try {
+                            await deleteArticle(articleId);
+                            await loadArticles(articlesState.currentPage);
+                        } catch (error) {
+                            console.error('Error deleting article:', error);
+                        }
+                    }
+                );
+            }
+        });
+    });
+};
 
 const listenToArticles = () => {
     // Add article button

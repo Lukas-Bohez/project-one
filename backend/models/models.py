@@ -531,6 +531,8 @@ class ArticleResponse(ArticleBase):
     view_count: int = Field(default=0, description="Number of times the article has been viewed")
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    story_name: Optional[str] = Field(default=None, description="Name of the associated story")
+    story_slug: Optional[str] = Field(default=None, description="Slug of the associated story")
 
     class Config:
         from_attributes = True

@@ -212,8 +212,90 @@ const fetchUsers = async () => {
         
         if (!response.ok) {
             // Handle authentication errors specifically
-            if (response.status === 401 || response.status === 403) {
+            if (response.status === 401) {
                 console.warn('Authentication failed for users endpoint. Redirecting to login...');
+                sessionStorage.clear();
+                window.location.href = '../html/login.html';
+                return [];
+            }
+            
+            if (response.status === 403) {
+                console.warn('Admin access required for IP information. Falling back to basic user info.');
+                // Fall back to basic user info without IP addresses
+                return await fetchUsersBasic();
+            }
+            
+            let errorDetail = `HTTP error! Status: ${response.status}`;
+            try {
+                const errorBody = await response.json();
+                errorDetail = errorBody.detail || errorDetail;
+            } catch (e) {
+                const errorText = await response.text();
+                errorDetail = `HTTP error! Status: ${response.status}, Response: ${errorText.substring(0, 150)}...`;
+            }
+            throw new Error(errorDetail);
+        }
+        
+        const users = await response.json();
+        console.log("Successfully fetched users with IP info:", users);
+        
+        // Check if users have IP addresses
+        users.forEach(user => {
+            console.log(`User ${user.first_name} ${user.last_name} (ID: ${user.id}, Role: ${user.userRoleId}):`);
+            if (user.ip_addresses) {
+                console.log(`  IP Addresses (${user.ip_addresses.length}):`);
+                user.ip_addresses.forEach(ip => {
+                    console.log(`    - ${ip.ip_address} (used ${ip.usage_count} times, last: ${ip.last_used})`);
+                    if (ip.is_banned) {
+                        console.log(`      BANNED: ${ip.ban_reason || 'No reason provided'}`);
+                    }
+                    if (ip.is_primary) {
+                        console.log(`      PRIMARY IP`);
+                    }
+                });
+            } else {
+                console.log(`  No IP addresses available`);
+            }
+        });
+        
+        return users;
+    } catch (error) {
+        console.error("Critical Error in fetchUsers:", error);
+        const finalError = new Error(`Failed to fetch users from ${url}. Original error: ${error.message}`);
+        throw finalError;
+    }
+};
+
+// Fallback function to fetch basic user info without IP addresses
+const fetchUsersBasic = async () => {
+    const url = `${lanIP}/api/v1/users/basic/`;
+    console.log("Fetching basic user info from:", url);
+    
+    try {
+        // Get authentication headers like other functions
+        const userId = sessionStorage.getItem('admin_user_id');
+        const rfidCode = sessionStorage.getItem('admin_rfid_code');
+        
+        const headers = {
+            'Accept': 'application/json',
+        };
+        
+        // Add auth headers if available
+        if (userId && rfidCode) {
+            headers['X-User-ID'] = userId;
+            headers['X-RFID'] = rfidCode;
+        }
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            mode: 'cors',
+            credentials: 'omit',
+            headers: headers,
+        });
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                console.warn('Authentication failed for basic users endpoint. Redirecting to login...');
                 sessionStorage.clear();
                 window.location.href = '../html/login.html';
                 return [];
@@ -231,34 +313,25 @@ const fetchUsers = async () => {
         }
         
         const users = await response.json();
-        console.log("Successfully fetched users with IP info:", users);
-        
-        // Now you can access IP information for each user
-        users.forEach(user => {
-            console.log(`User ${user.first_name} ${user.last_name}:`);
-            console.log(`  ID: ${user.id}`);
-            console.log(`  IP Addresses (${user.ip_addresses.length}):`);
-            user.ip_addresses.forEach(ip => {
-                console.log(`    - ${ip.ip_address} (used ${ip.usage_count} times, last: ${ip.last_used})`);
-                if (ip.is_banned) {
-                    console.log(`      BANNED: ${ip.ban_reason || 'No reason provided'}`);
-                }
-                if (ip.is_primary) {
-                    console.log(`      PRIMARY IP`);
-                }
-            });
-        });
+        console.log("Successfully fetched basic users:", users);
         
         return users;
     } catch (error) {
-        console.error("Critical Error in fetchUsers:", error);
-        const finalError = new Error(`Failed to fetch users from ${url}. Original error: ${error.message}`);
-        throw finalError;
+        console.error("Error fetching basic users:", error);
+        throw error;
     }
 };
 
 // Example function to display user IP information in your UI
 const displayUserIpInfo = (user) => {
+    console.log(`displayUserIpInfo called for user ${user.first_name} ${user.last_name} (ID: ${user.id})`);
+    console.log(`User has ip_addresses:`, user.ip_addresses);
+    
+    if (!user.ip_addresses || !Array.isArray(user.ip_addresses)) {
+        console.log(`No IP addresses available, returning 'Access restricted'`);
+        return 'Access restricted';
+    }
+
     const ipInfo = user.ip_addresses.map(ip => {
         let status = '';
         if (ip.is_banned) {
@@ -269,7 +342,8 @@ const displayUserIpInfo = (user) => {
         }
         return `${ip.ip_address}${status} (${ip.usage_count} uses)`;
     }).join(', ');
-    
+
+    console.log(`Returning IP info:`, ipInfo);
     return ipInfo || 'No IP addresses recorded';
 };
 
@@ -1790,7 +1864,7 @@ const loadUsers = async () => {
         if (!users || users.length === 0) { // Check if users is null/undefined or empty
             userTableBody.innerHTML = `
                 <tr>
-                    <td colspan="5" class="c-empty-state">No users found.</td>
+                    <td colspan="6" class="c-empty-state">No users found.</td>
                 </tr>
             `;
             return;
@@ -1798,18 +1872,23 @@ const loadUsers = async () => {
 
         userTableBody.innerHTML = users.map(user => {
             // Map userRoleId to a displayable role name
-            // You'll need a mapping for userRoleId to role names, e.g., from your backend or a static client-side map.
-            // For example, if userRoleId 1 = 'Admin', 2 = 'Manager', 3 = 'Standard User'
-            // For now, let's just display the ID or map it to a placeholder.
-            // A more robust solution involves fetching roles from the backend or having a global roles mapping.
-            const roleName = getRoleName(user.userRoleId); // You need to define getRoleName
+            const roleName = getRoleName(user.userRoleId);
             const lastActiveDisplay = user.last_active ? new Date(user.last_active).toLocaleString() : 'Never';
-            // Combine first_name and last_name for display username
             const displayName = `${user.first_name} ${user.last_name}`;
-
+            
+            // Check if user has IP addresses (admin access)
+            const hasIpInfo = user.ip_addresses && user.ip_addresses.length > 0;
+            const ipInfo = hasIpInfo ? displayUserIpInfo(user) : 'no ip';
+            
             return `
                 <tr data-id="${user.id}">
+                    <td>
+                        <button class="c-btn c-btn--delete js-delete-user">
+                            <span>Delete</span>
+                        </button>
+                    </td>
                     <td data-label="Username">${displayName}</td>
+                    <td data-label="IP Addresses">${ipInfo}</td>
                     <td data-label="Role">
                         <span class="c-tag c-tag--role c-tag--${roleName.toLowerCase()}">${roleName}</span>
                     </td>
@@ -1817,11 +1896,6 @@ const loadUsers = async () => {
                     <td>
                         <button class="c-btn c-btn--edit js-edit-user">
                             <span>Edit</span>
-                        </button>
-                    </td>
-                    <td>
-                        <button class="c-btn c-btn--delete js-delete-user">
-                            <span>Delete</span>
                         </button>
                     </td>
                 </tr>
@@ -1844,7 +1918,12 @@ const loadUsers = async () => {
                 const id = parseInt(btn.closest('tr').dataset.id);
                 const user = users.find(u => u.id === id);
                 
-                // Removed the admin check - now allows deletion of any user
+                // Prevent deletion of admin users (role 3)
+                if (user && user.userRoleId === 3) {
+                    showNotification('Cannot delete admin users for security reasons.', 'error');
+                    return;
+                }
+                
                 showConfirmDialog('Are you sure you want to delete this user?', async () => {
                     await deleteItem('users', id);
                     loadUsers(); // Reload users after deletion
@@ -1858,7 +1937,7 @@ const loadUsers = async () => {
         showNotification('Failed to load users. Please check your connection.', 'error');
         userTableBody.innerHTML = `
             <tr>
-                <td colspan="5" class="c-error-state">Failed to load users. Please try again.</td>
+                <td colspan="6" class="c-error-state">Failed to load users. Please try again.</td>
             </tr>
         `;
     }
@@ -1870,8 +1949,8 @@ const loadUsers = async () => {
 const getRoleName = (userRoleId) => {
     switch (userRoleId) {
         case 3: return 'Admin';
-        case 2: return 'Manager';
-        case 1: return 'Standard User';
+        case 2: return 'Moderator';
+        case 1: return 'User';
         // Add more cases as needed for your user roles
         default: return 'Unknown Role';
     }
@@ -2098,15 +2177,13 @@ const listenToLogout = () => {
 
 const listenToModal = () => {
     if (domAdmin.closeModal) {
-        // Create debounced version with 2-second delay
-        const debouncedFilter = debounce(filterQuestions, 500);
-        domAdmin.searchInput.addEventListener('input', debouncedFilter);
+        domAdmin.closeModal.addEventListener('click', hideEditModal);
     }
-    
+
     if (domAdmin.cancelBtn) {
         domAdmin.cancelBtn.addEventListener('click', hideEditModal);
     }
-    
+
     window.addEventListener('click', (event) => {
         if (event.target === domAdmin.editModal) {
             hideEditModal();

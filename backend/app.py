@@ -183,7 +183,7 @@ except ImportError:
 # Authentication and Helper Functions
 # ----------------------------------------------------
 
-def get_client_ip(request: Request) -> str:
+def get_client_ip_sync(request: Request) -> str:
     """Extract client IP address from request headers."""
     # Check for forwarded IP first (in case of proxy/load balancer)
     forwarded_for = request.headers.get("X-Forwarded-For")
@@ -202,12 +202,23 @@ def get_client_ip(request: Request) -> str:
 def log_user_ip_address(user_id: int, ip_address: str):
     """Log the IP address for a user."""
     try:
-        # Log IP address for user
-        UserIpAddressRepository.create_user_ip_address({
-            'user_id': user_id,
-            'ip_address': ip_address,
-            'access_time': datetime.now()
-        })
+        # First, get or create the IP address record
+        existing_ip = IpAddressRepository.get_ip_address_by_string(ip_address)
+        if existing_ip:
+            ip_address_id = existing_ip['id']
+        else:
+            # Create new IP address record
+            ip_address_id = IpAddressRepository.create_ip_address(ip_address)
+            if not ip_address_id:
+                print(f"Failed to create IP address record for {ip_address}")
+                return
+
+        # Now create the link between user and IP address
+        UserIpAddressRepository.create_user_ip_address_link(
+            user_id=user_id,
+            ip_address_id=ip_address_id,
+            is_primary=False  # Will be set to primary later if needed
+        )
     except Exception as e:
         print(f"Error logging user IP address: {e}")
 
@@ -223,9 +234,9 @@ def verify_user(user_id: int, rfid_code: str) -> str:
     role = user['userRoleId']
     
     if role == 1:
-        return "admin"
-    elif role == 2:
         return "user"
+    elif role == 2:
+        return "moderator"
     elif role == 3:
         return "admin"
     else:
@@ -246,7 +257,7 @@ async def get_current_user_info(
         raise HTTPException(status_code=400, detail="Invalid user ID format")
     
     # Log IP address for authenticated requests
-    client_ip = get_client_ip(request)
+    client_ip = get_client_ip_sync(request)
     log_user_ip_address(user_id, client_ip)
     
     return {
@@ -746,10 +757,10 @@ async def get_theme_question_count(theme_id: int):
     responses={404: {"model": ErrorNotFound}},
     tags=["Articles"]
 )
-async def get_all_articles(active_only: bool = False):
+async def get_all_articles(active_only: bool = False, include_story_info: bool = True):
     """Get all articles with statistics"""
     try:
-        articles = ArticlesRepository.get_all_articles(active_only=active_only)
+        articles = ArticlesRepository.get_all_articles(active_only=active_only, include_story_info=include_story_info)
         stats = ArticlesRepository.get_articles_stats()
         
         return ArticleListResponse(
@@ -1104,10 +1115,19 @@ async def get_articles_by_story(story_id: int, active_only: bool = True):
 @app.get(
     ENDPOINT + "/users/",
     response_model=List[UserPublicWithIp], # Updated response model
-    summary="Get all users with IP information",
+    summary="Get all users with IP information (Admin only)",
     tags=["Users"]
 )
-async def get_all_users():
+async def get_all_users(
+    request: Request,
+    x_user_id: str = Header(None, alias="X-User-ID"),
+    x_rfid: str = Header(None, alias="X-RFID")
+):
+    # Verify admin access
+    user_info = await get_current_user_info(request, x_user_id, x_rfid)
+    if user_info["role"] not in ["admin"]:
+        raise HTTPException(status_code=403, detail="Admin access required for IP information")
+
     users = UserRepository.get_all_users()
     users_with_ip = []
     
@@ -1143,10 +1163,19 @@ async def get_all_users():
 @app.get(
     ENDPOINT + "/users/with-ip/",
     response_model=List[UserPublicWithIp],
-    summary="Get all users with detailed IP information",
+    summary="Get all users with detailed IP information (Admin only)",
     tags=["Users"]
 )
-async def get_all_users_with_ip():
+async def get_all_users_with_ip(
+    request: Request,
+    x_user_id: str = Header(None, alias="X-User-ID"),
+    x_rfid: str = Header(None, alias="X-RFID")
+):
+    # Verify admin access
+    user_info = await get_current_user_info(request, x_user_id, x_rfid)
+    if user_info["role"] not in ["admin"]:
+        raise HTTPException(status_code=403, detail="Admin access required for IP information")
+
     users = UserRepository.get_all_users()
     users_with_ip = []
     
@@ -1770,10 +1799,11 @@ from datetime import datetime
 @app.patch("/api/v1/users/{rfid_code}")
 async def update_user_names(rfid_code: str, user_update: UserUpdateNames, request: Request):
     # Get client IP address
-    client_ip = get_client_ip(request)
+    client_ip = get_client_ip_sync(request)
     
     all_users = UserRepository.get_all_users()
     target_user_id = None
+    target_user_role = None
 
     for user in all_users:
         # Check if first and last name already exist for any user
@@ -1782,6 +1812,7 @@ async def update_user_names(rfid_code: str, user_update: UserUpdateNames, reques
             if user['rfid_code'] == rfid_code:
                 # Name and RFID match: This is the user attempting to log in
                 target_user_id = user['id']
+                target_user_role = user['userRoleId']
                 UserRepository.update_user_last_active(target_user_id, datetime.now())
                 
                 # Log IP address
@@ -1812,6 +1843,7 @@ async def update_user_names(rfid_code: str, user_update: UserUpdateNames, reques
                         detail="Failed to update 'Open' user account."
                     )
                 target_user_id = existing_user_by_rfid['id'] # Return the ID of the updated user
+                target_user_role = existing_user_by_rfid['userRoleId']
                 UserRepository.update_user_last_active(target_user_id, datetime.now())
                 
                 # Log IP address
@@ -1828,6 +1860,13 @@ async def update_user_names(rfid_code: str, user_update: UserUpdateNames, reques
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"User with RFID code '{rfid_code}' not found and no 'Open' account to update."
             )
+
+    # Check if user has admin role (role ID 3) for admin panel access
+    if target_user_role != 3:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required. Only administrators can access the admin panel."
+        )
 
     return {"user_id": target_user_id}
 
@@ -1939,7 +1978,7 @@ async def register_user(user_credentials: UserCredentials, request: Request):
         threadsafe_emit_message_sent(sio,get_active_session_id(),main_asyncio_loop)
 
 
-        log_user_ip_address(user_id, get_client_ip(request))
+        log_user_ip_address(user_id, get_client_ip_sync(request))
         await add_user_to_active_session(user_id)
         
         logger.info(f"User '{user_credentials.first_name} {user_credentials.last_name}' registered successfully with ID: {user_id}")
@@ -1994,7 +2033,7 @@ async def login_user(user_credentials: UserCredentials, request: Request):
         )
 
 
-        log_user_ip_address(user_id, get_client_ip(request))
+        log_user_ip_address(user_id, get_client_ip_sync(request))
         await add_user_to_active_session(user_id)
         logger.info(f"User ID {user_id} logged in successfully.")
         return {"message": "Login successful", "user_id": user_id}
@@ -2029,7 +2068,7 @@ async def support_login_user(user_credentials: UserCredentials, request: Request
             )
         
         # Just log the IP, don't create sessions or join them
-        log_user_ip_address(user_id, get_client_ip(request))
+        log_user_ip_address(user_id, get_client_ip_sync(request))
         
         logger.info(f"User ID {user_id} logged in for support chat (no quiz session created).")
         return {"message": "Login successful", "user_id": user_id}
@@ -2079,7 +2118,7 @@ async def support_register_user(user_credentials: UserCredentials, request: Requ
             )
         
         # Just log the IP, don't create sessions or send chat messages
-        log_user_ip_address(user_id, get_client_ip(request))
+        log_user_ip_address(user_id, get_client_ip_sync(request))
         
         logger.info(f"User '{user_credentials.first_name} {user_credentials.last_name}' registered for support chat with ID: {user_id}")
         return {"message": "User registered successfully", "user_id": user_id}
@@ -3085,11 +3124,16 @@ async def delete_user_endpoint(
     if current_user_id == user_id:
         raise HTTPException(status_code=400, detail="Cannot delete your own account")
     
+    # Check if target user exists and prevent deletion of other admins
+    existing_user = UserRepository.get_user_by_id(user_id)
+    if not existing_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Prevent deletion of admin users (role 3)
+    if existing_user['userRoleId'] == 3:
+        raise HTTPException(status_code=403, detail="Cannot delete admin users for security reasons")
+    
     try:
-        # Check if user exists
-        existing_user = UserRepository.get_user_by_id(user_id)
-        if not existing_user:
-            raise HTTPException(status_code=404, detail="User not found")
         
         # Delete the user
         delete_success = UserRepository.delete_user(user_id)

@@ -15,6 +15,7 @@
     class ThemeManager {
         constructor() {
             this.currentTheme = this.getStoredTheme();
+            this.lastAppliedTheme = null;
             this.init();
         }
         
@@ -92,6 +93,14 @@
         
         applyTheme(theme) {
             const effectiveTheme = this.getEffectiveTheme(theme);
+            
+            // Prevent unnecessary theme applications
+            if (this.lastAppliedTheme === effectiveTheme) {
+                console.log('Theme already applied, skipping:', effectiveTheme);
+                return;
+            }
+            this.lastAppliedTheme = effectiveTheme;
+            
             const html = document.documentElement;
             const body = document.body;
             
@@ -251,12 +260,8 @@
                 title = 'Light mode active. Click to switch to dark mode.';
             }
             
-            // Update button - if it contains only emoji, keep emoji, otherwise use text
-            if (toggleBtn.textContent === '🌓' || toggleBtn.textContent === '🌙' || toggleBtn.textContent.length <= 2) {
-                toggleBtn.textContent = emoji;
-            } else {
-                toggleBtn.textContent = text;
-            }
+            // Update button - don't set text content since CSS ::before handles the emoji
+            // toggleBtn.textContent = emoji;
             
             toggleBtn.title = title;
             
