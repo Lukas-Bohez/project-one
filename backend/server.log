@@ -1,18 +1,412 @@
 nohup: ignoring input
-/home/student/Project/project-one/backend/app.py:4094: DeprecationWarning: 
-        on_event is deprecated, use lifespan event handlers instead.
-
-        Read more about it in the
-        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
-        
-  @app.on_event("startup")
-/home/student/Project/project-one/backend/app.py:4120: DeprecationWarning: 
-        on_event is deprecated, use lifespan event handlers instead.
-
-        Read more about it in the
-        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
-        
-  @app.on_event("shutdown")
-WARNING:  Provided reload directories ['backend'] did not contain valid directories, watching current working directory.
 INFO:     Will watch for changes in these directories: ['/home/student/Project/project-one/backend']
-ERROR:    [Errno 98] Address already in use
+INFO:     Uvicorn running on http://127.0.0.1:8002 (Press CTRL+C to quit)
+INFO:     Started reloader process [9963] using StatReload
+INFO:quiz_debug:==================================================
+INFO:quiz_debug:Quiz Logger Initialized
+INFO:quiz_debug:==================================================
+INFO:     Started server process [9967]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[44:63]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[65:108]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[110:122]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[124:148]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[152:112704]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:94336]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:262144]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:124921]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[124967:124986]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[124988:125019]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[125023:125026]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_end with no data
+Warning: yt-dlp not installed. Video converter endpoints will be disabled.
+Registering conversion endpoint...
+FastAPI app starting up...
+Main asyncio loop obtained: <_UnixSelectorEventLoop running=True closed=False debug=False>
+Raspberry Pi script thread started.
+Server started - Socket.IO backend is ready!
+No sensor detected - switching to simulation mode
+RFID reader thread started.
+Starting conversion request: test.ogg -> ogg
+Saving file to: temp_uploads/1759955173.314197_test.ogg
+File saved successfully. Size: 2691105 bytes
+Calling convert_file_backend with temp_uploads/1759955173.314197_test.ogg -> ogg
+convert_file_backend called with: temp_uploads/1759955173.314197_test.ogg, ogg, test.ogg
+Output path will be: temp_converted/1759955173.379223_test.ogg
+Calling convert_audio_format for audio conversion
+Starting audio conversion: temp_uploads/1759955173.314197_test.ogg -> temp_converted/1759955173.379223_test.ogg (format: ogg)
+Ensured output directory exists: temp_converted
+Using codec: libvorbis
+FFmpeg command: ffmpeg -i temp_uploads/1759955173.314197_test.ogg -acodec libvorbis -y -f ogg -b:a 128k temp_converted/1759955173.379223_test.ogg
+FFmpeg return code: 0
+FFmpeg stderr: ffmpeg version 5.1.7-0+deb12u1+rpt1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 12 (Debian 12.2.0-14+deb12u1)
+  configuration: --prefix=/usr --extra-version=0+deb12u1+rpt1 --toolchain=hardened --incdir=/usr/include/aarch64-linux-gnu --enable-gpl --disable-stripping --disable-mmal --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libglslang --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librist --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzimg --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sand --enable-sdl2 --disable-sndio --enable-libjxl --enable-neon --enable-v4l2-request --enable-libudev --enable-epoxy --libdir=/usr/lib/aarch64-linux-gnu --arch=arm64 --enable-pocketsphinx --enable-librsvg --enable-libdc1394 --enable-libdrm --enable-vout-drm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-libplacebo --enable-librav1e --enable-shared
+  libavutil      57. 28.100 / 57. 28.100
+  libavcodec     59. 37.100 / 59. 37.100
+  libavformat    59. 27.100 / 59. 27.100
+  libavdevice    59.  7.100 / 59.  7.100
+  libavfilter     8. 44.100 /  8. 44.100
+  libswscale      6.  7.100 /  6.  7.100
+  libswresample   4.  7.100 /  4.  7.100
+  libpostproc    56.  6.100 / 56.  6.100
+Input #0, ogg, from 'temp_uploads/1759955173.314197_test.ogg':
+  Duration: 00:02:50.53, start: 0.000000, bitrate: 126 kb/s
+  Stream #0:0: Audio: vorbis, 44100 Hz, stereo, fltp, 128 kb/s
+    Metadata:
+      encoder         : Lavc59.37.100 libvorbis
+Stream mapping:
+  Stream #0:0 -> #0:0 (vorbis (native) -> vorbis (libvorbis))
+Press [q] to stop, [?] for help
+Output #0, ogg, to 'temp_converted/1759955173.379223_test.ogg':
+  Metadata:
+    encoder         : Lavf59.27.100
+  Stream #0:0: Audio: vorbis, 44100 Hz, stereo, fltp, 128 kb/s
+    Metadata:
+      encoder         : Lavc59.37.100 libvorbis
+size=       4kB time=00:00:00.00 bitrate=N/A speed=   0x    
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 10 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 181952, current: 181632; changing to 181952. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 181952, current: 181760; changing to 181952. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 181952, current: 181888; changing to 181952. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 7 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 316480, current: 316160; changing to 316480. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 316480, current: 316288; changing to 316480. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 316480, current: 316416; changing to 316480. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 1 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 323136, current: 322816; changing to 323136. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 323136, current: 322944; changing to 323136. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 323136, current: 323072; changing to 323136. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 14 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 581568, current: 581248; changing to 581568. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 581568, current: 581376; changing to 581568. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 581568, current: 581504; changing to 581568. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 12 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 722752, current: 722432; changing to 722752. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 722752, current: 722560; changing to 722752. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 722752, current: 722688; changing to 722752. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 7 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 810560, current: 810240; changing to 810560. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 810560, current: 810368; changing to 810560. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 810560, current: 810496; changing to 810560. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+size=     236kB time=00:00:19.03 bitrate= 101.6kbits/s speed=  38x    
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 9 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 917184, current: 916864; changing to 917184. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 917184, current: 916992; changing to 917184. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 4 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 951104, current: 950784; changing to 951104. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 951104, current: 950912; changing to 951104. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 951104, current: 951040; changing to 951104. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 958144, current: 957824; changing to 958144. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 958144, current: 957952; changing to 958144. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 958144, current: 958080; changing to 958144. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 4 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 998848, current: 998528; changing to 998848. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 998848, current: 998656; changing to 998848. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 998848, current: 998784; changing to 998848. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 4 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 1046080, current: 1045760; changing to 1046080. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 1046080, current: 1045888; changing to 1046080. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 1046080, current: 1046016; changing to 1046080. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 1 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 1058112, current: 1057792; changing to 1058112. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 1058112, current: 1057920; changing to 1058112. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 1058112, current: 1058048; changing to 1058112. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 9 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 1133760, current: 1133440; changing to 1133760. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 1133760, current: 1133568; changing to 1133760. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 1133760, current: 1133696; changing to 1133760. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 1 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 1146048, current: 1145728; changing to 1146048. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 1146048, current: 1145856; changing to 1146048. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 1146048, current: 1145984; changing to 1146048. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 6 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 1240384, current: 1240064; changing to 1240384. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 1240384, current: 1240192; changing to 1240384. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 1240384, current: 1240320; changing to 1240384. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 1 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 1257792, current: 1257472; changing to 1257792. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 1257792, current: 1257600; changing to 1257792. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 1257792, current: 1257728; changing to 1257792. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 30 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 1534400, current: 1534080; changing to 1534400. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 1534400, current: 1534208; changing to 1534400. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 1534400, current: 1534336; changing to 1534400. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 6 times
+size=     256kB time=00:00:37.45 bitrate=  56.0kbits/s speed=37.4x    
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 79 times
+size=     512kB time=00:00:56.71 bitrate=  74.0kbits/s speed=37.8x    
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 14 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 2669120, current: 2668800; changing to 2669120. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 2669120, current: 2668928; changing to 2669120. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 2669120, current: 2669056; changing to 2669120. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 2 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 2716352, current: 2716032; changing to 2716352. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 2716352, current: 2716160; changing to 2716352. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 29 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 3092160, current: 3091840; changing to 3092160. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 3092160, current: 3091968; changing to 3092160. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 3092160, current: 3092096; changing to 3092160. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 23 times
+size=    1024kB time=00:01:16.01 bitrate= 110.4kbits/s speed=  38x    
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 3367616, current: 3367296; changing to 3367616. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 3367616, current: 3367424; changing to 3367616. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 3367616, current: 3367552; changing to 3367616. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 5 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 3474624, current: 3474304; changing to 3474624. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 3474624, current: 3474432; changing to 3474624. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 3474624, current: 3474560; changing to 3474624. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 28 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 3850688, current: 3850368; changing to 3850688. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 3850688, current: 3850496; changing to 3850688. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 3850688, current: 3850624; changing to 3850688. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 4 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 3921344, current: 3921024; changing to 3921344. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 3921344, current: 3921152; changing to 3921344. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 3921344, current: 3921280; changing to 3921344. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 5 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 3978048, current: 3977728; changing to 3978048. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 3978048, current: 3977856; changing to 3978048. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 3978048, current: 3977984; changing to 3978048. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 3986240, current: 3985920; changing to 3986240. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 3986240, current: 3986048; changing to 3986240. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 13 times
+size=    1280kB time=00:01:34.84 bitrate= 110.6kbits/s speed=37.9x    
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 75 times
+size=    1536kB time=00:01:54.14 bitrate= 110.2kbits/s speed=  38x    
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 8 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 5160512, current: 5160192; changing to 5160512. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 5160512, current: 5160320; changing to 5160512. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 5160512, current: 5160448; changing to 5160512. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 21 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 5591360, current: 5591040; changing to 5591360. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 5591360, current: 5591168; changing to 5591360. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 5591360, current: 5591296; changing to 5591360. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 9 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 5756224, current: 5755904; changing to 5756224. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 5756224, current: 5756032; changing to 5756224. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 5756224, current: 5756160; changing to 5756224. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 7 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 5850048, current: 5849728; changing to 5850048. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 5850048, current: 5849856; changing to 5850048. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 5850048, current: 5849984; changing to 5850048. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 1 times
+size=    1792kB time=00:02:13.42 bitrate= 110.0kbits/s speed=38.1x    
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 4 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 5979072, current: 5978752; changing to 5979072. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 5979072, current: 5978880; changing to 5979072. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 5979072, current: 5979008; changing to 5979072. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 6 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 6056384, current: 6056064; changing to 6056384. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 6056384, current: 6056192; changing to 6056384. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 9 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 6150080, current: 6149760; changing to 6150080. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 6150080, current: 6149888; changing to 6150080. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 6150080, current: 6150016; changing to 6150080. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 7 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 6231104, current: 6230784; changing to 6231104. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 6231104, current: 6230912; changing to 6231104. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 6231104, current: 6231040; changing to 6231104. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 3 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 6262592, current: 6262272; changing to 6262592. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 6262592, current: 6262400; changing to 6262592. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 1 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 6273728, current: 6273408; changing to 6273728. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 6273728, current: 6273536; changing to 6273728. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 6273728, current: 6273664; changing to 6273728. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 10 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 6367936, current: 6367616; changing to 6367936. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 6367936, current: 6367744; changing to 6367936. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 3 times
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 6402112, current: 6401792; changing to 6402112. This may result in incorrect timestamps in the output file.
+[ogg @ 0x55562e77e680] Non-monotonous DTS in output stream 0:0; previous: 6402112, current: 6401920; changing to 6402112. This may result in incorrect timestamps in the output file.
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 40 times
+size=    2048kB time=00:02:32.27 bitrate= 110.2kbits/s speed=  38x    
+[libvorbis @ 0x55562e77d770] Queue input is backward in time
+    Last message repeated 42 times
+size=    2366kB time=00:02:50.51 bitrate= 113.6kbits/s speed=38.2x    
+video:0kB audio:2342kB subtitle:0kB other streams:0kB global headers:4kB muxing overhead: 1.010323%
+
+Audio conversion successful: temp_converted/1759955173.379223_test.ogg
+INFO:     127.0.0.1:43202 - "POST /api/v1/convert/upload HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'app.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [9967]
+INFO:quiz_debug:==================================================
+INFO:quiz_debug:Quiz Logger Initialized
+INFO:quiz_debug:==================================================
+INFO:     Started server process [10223]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[42:61]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[63:133]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[135:147]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[149:159]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[163:16210]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:12595]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[12639:12658]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[12660:12691]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[12695:12698]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_end with no data
+Warning: yt-dlp not installed. Video converter endpoints will be disabled.
+Registering conversion endpoint...
+FastAPI app starting up...
+Main asyncio loop obtained: <_UnixSelectorEventLoop running=True closed=False debug=False>
+Raspberry Pi script thread started.
+Server started - Socket.IO backend is ready!
+No sensor detected - switching to simulation mode
+RFID reader thread started.
+
+👽 PHASE 1/2: EXTRATERRESTRIAL INFLUENCE!
+   Unknown energy signatures. Advanced technology detected.
+
+☁️  PHASE 1/3: EXTREME cloud cover!
+   Dense storm clouds blocking all light!
+
+🌋 PHASE 1/2: GEOTHERMAL UPHEAVAL!
+Starting conversion request: 503787__reathance__lo-fi-perc-4.mp3 -> zip
+Saving file to: temp_uploads/1759955341.713154_503787__reathance__lo-fi-perc-4.mp3
+File saved successfully. Size: 28642 bytes
+Calling convert_file_backend with temp_uploads/1759955341.713154_503787__reathance__lo-fi-perc-4.mp3 -> zip
+convert_file_backend called with: temp_uploads/1759955341.713154_503787__reathance__lo-fi-perc-4.mp3, zip, 503787__reathance__lo-fi-perc-4.mp3
+Output path will be: temp_converted/1759955341.713482_503787__reathance__lo-fi-perc-4.zip
+INFO:     127.0.0.1:46352 - "POST /api/v1/convert/upload HTTP/1.1" 200 OK
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[42:61]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[63:133]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[135:147]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[149:159]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[163:16210]
+DEBUG:python_multipart.multipart:Calling on_part_data with data[0:12595]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_part_begin with no data
+DEBUG:python_multipart.multipart:Calling on_header_field with data[12639:12658]
+DEBUG:python_multipart.multipart:Calling on_header_value with data[12660:12691]
+DEBUG:python_multipart.multipart:Calling on_header_end with no data
+DEBUG:python_multipart.multipart:Calling on_headers_finished with no data
+DEBUG:python_multipart.multipart:Calling on_part_data with data[12695:12698]
+DEBUG:python_multipart.multipart:Calling on_part_end with no data
+DEBUG:python_multipart.multipart:Calling on_end with no data
+Starting conversion request: 503787__reathance__lo-fi-perc-4.mp3 -> ogg
+Saving file to: temp_uploads/1759955379.250813_503787__reathance__lo-fi-perc-4.mp3
+File saved successfully. Size: 28642 bytes
+Calling convert_file_backend with temp_uploads/1759955379.250813_503787__reathance__lo-fi-perc-4.mp3 -> ogg
+convert_file_backend called with: temp_uploads/1759955379.250813_503787__reathance__lo-fi-perc-4.mp3, ogg, 503787__reathance__lo-fi-perc-4.mp3
+Output path will be: temp_converted/1759955379.250944_503787__reathance__lo-fi-perc-4.ogg
+Calling convert_audio_format for audio conversion
+Starting audio conversion: temp_uploads/1759955379.250813_503787__reathance__lo-fi-perc-4.mp3 -> temp_converted/1759955379.250944_503787__reathance__lo-fi-perc-4.ogg (format: ogg)
+Ensured output directory exists: temp_converted
+Using codec: libvorbis
+FFmpeg command: ffmpeg -i temp_uploads/1759955379.250813_503787__reathance__lo-fi-perc-4.mp3 -acodec libvorbis -y -f ogg -b:a 128k temp_converted/1759955379.250944_503787__reathance__lo-fi-perc-4.ogg
+FFmpeg return code: 0
+FFmpeg stderr: ffmpeg version 5.1.7-0+deb12u1+rpt1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 12 (Debian 12.2.0-14+deb12u1)
+  configuration: --prefix=/usr --extra-version=0+deb12u1+rpt1 --toolchain=hardened --incdir=/usr/include/aarch64-linux-gnu --enable-gpl --disable-stripping --disable-mmal --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libglslang --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librist --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzimg --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sand --enable-sdl2 --disable-sndio --enable-libjxl --enable-neon --enable-v4l2-request --enable-libudev --enable-epoxy --libdir=/usr/lib/aarch64-linux-gnu --arch=arm64 --enable-pocketsphinx --enable-librsvg --enable-libdc1394 --enable-libdrm --enable-vout-drm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-libplacebo --enable-librav1e --enable-shared
+  libavutil      57. 28.100 / 57. 28.100
+  libavcodec     59. 37.100 / 59. 37.100
+  libavformat    59. 27.100 / 59. 27.100
+  libavdevice    59.  7.100 / 59.  7.100
+  libavfilter     8. 44.100 /  8. 44.100
+  libswscale      6.  7.100 /  6.  7.100
+  libswresample   4.  7.100 /  4.  7.100
+  libpostproc    56.  6.100 / 56.  6.100
+Input #0, mp3, from 'temp_uploads/1759955379.250813_503787__reathance__lo-fi-perc-4.mp3':
+  Metadata:
+    encoder         : Lavf61.7.100
+  Duration: 00:00:01.12, start: 0.025057, bitrate: 203 kb/s
+  Stream #0:0: Audio: mp3, 44100 Hz, stereo, fltp, 203 kb/s
+    Metadata:
+      encoder         : Lavc61.19
+Stream mapping:
+  Stream #0:0 -> #0:0 (mp3 (mp3float) -> vorbis (libvorbis))
+Press [q] to stop, [?] for help
+Output #0, ogg, to 'temp_converted/1759955379.250944_503787__reathance__lo-fi-perc-4.ogg':
+  Metadata:
+    encoder         : Lavf59.27.100
+  Stream #0:0: Audio: vorbis, 44100 Hz, stereo, fltp, 128 kb/s
+    Metadata:
+      encoder         : Lavc59.37.100 libvorbis
+size=       4kB time=00:00:00.00 bitrate=N/A speed=N/A    
+size=      18kB time=00:00:01.07 bitrate= 140.1kbits/s speed=43.9x    
+video:0kB audio:14kB subtitle:0kB other streams:0kB global headers:4kB muxing overhead: 31.238188%
+
+Audio conversion successful: temp_converted/1759955379.250944_503787__reathance__lo-fi-perc-4.ogg
+INFO:     127.0.0.1:46902 - "POST /api/v1/convert/upload HTTP/1.1" 200 OK
