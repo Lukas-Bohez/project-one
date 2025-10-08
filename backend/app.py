@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException, status, Body, Header, File, Form, Up
 from fastapi.middleware.cors import CORSMiddleware
 import time
 import traceback
+import threading
 from threading import Thread, Event, Lock
 import socket
 import logging
@@ -6341,31 +6342,77 @@ import tempfile
 import shutil
 from fastapi import UploadFile, File, Form
 from fastapi.responses import FileResponse
+from starlette.background import BackgroundTask
 import subprocess
 from PIL import Image
 import io
 import zipfile
 
 # Create uploads directory if it doesn't exist
-UPLOAD_DIR = "temp_uploads"
-CONVERTED_DIR = "temp_converted"
-VIDEO_DOWNLOAD_DIR = "temp_video_downloads"
+# Use a project-scoped tmp directory outside the repository to avoid
+# triggering file watchers and to avoid cluttering the repo.
+PROJECT_TMP_DIR = os.environ.get('PROJECT_TMP_DIR', '/tmp/project-one')
+UPLOAD_DIR = os.path.join(PROJECT_TMP_DIR, "temp_uploads")
+CONVERTED_DIR = os.path.join(PROJECT_TMP_DIR, "temp_converted")
+VIDEO_DOWNLOAD_DIR = os.path.join(PROJECT_TMP_DIR, "temp_video_downloads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(CONVERTED_DIR, exist_ok=True)
 os.makedirs(VIDEO_DOWNLOAD_DIR, exist_ok=True)
 
-def cleanup_temp_files():
-    """Clean up old temporary files"""
+# Retention (seconds)
+UPLOAD_RETENTION = 300        # 5 minutes for uploaded files
+CONVERTED_RETENTION = 600     # 10 minutes for converted files (backup safety)
+VIDEO_RETENTION = 3600        # 1 hour for downloaded videos
+
+def delete_file_safe(path: str):
     try:
-        for directory in [UPLOAD_DIR, CONVERTED_DIR, VIDEO_DOWNLOAD_DIR]:
+        if os.path.exists(path):
+            os.remove(path)
+            print(f"Deleted temp file: {path}")
+    except Exception:
+        pass
+
+def cleanup_temp_files():
+    """Clean up old temporary files using per-directory retention times"""
+    try:
+        now_ts = datetime.now().timestamp()
+        checks = [
+            (UPLOAD_DIR, UPLOAD_RETENTION),
+            (CONVERTED_DIR, CONVERTED_RETENTION),
+            (VIDEO_DOWNLOAD_DIR, VIDEO_RETENTION)
+        ]
+
+        for directory, retention in checks:
             for filename in os.listdir(directory):
                 file_path = os.path.join(directory, filename)
                 if os.path.isfile(file_path):
-                    # Delete files older than 1 hour
-                    if os.path.getmtime(file_path) < (datetime.now().timestamp() - 3600):
-                        os.remove(file_path)
+                    try:
+                        if os.path.getmtime(file_path) < (now_ts - retention):
+                            os.remove(file_path)
+                            print(f"Cleaned up old temp file: {file_path}")
+                    except Exception:
+                        pass
     except Exception as e:
         print(f"Error cleaning up temp files: {e}")
+
+def start_temp_cleanup(interval: int = 60):
+    """Start a background thread that cleans up temp files periodically.
+
+    interval: seconds between cleanup runs (default 60s)
+    """
+    def worker():
+        while True:
+            try:
+                cleanup_temp_files()
+            except Exception as e:
+                print(f"Temp cleanup worker error: {e}")
+            time.sleep(interval)
+
+    thread = threading.Thread(target=worker, daemon=True)
+    thread.start()
+
+# Start the periodic cleanup thread
+start_temp_cleanup(interval=60)
 
 # ----------------------------------------------------
 # Video Converter Setup (YouTube, TikTok, etc.)
@@ -6586,12 +6633,22 @@ async def upload_and_convert_file(
         if not converted_filepath or not os.path.exists(converted_filepath):
             raise HTTPException(status_code=500, detail="Conversion failed")
         
-        # Return the converted file
+        # Ensure converted file exists and log details before returning
         converted_filename = os.path.basename(converted_filepath)
+        if not os.path.exists(converted_filepath):
+            print(f"Converted file missing after conversion: {converted_filepath}")
+            raise HTTPException(status_code=500, detail="Converted file not found after conversion")
+
+        file_size = os.path.getsize(converted_filepath)
+        print(f"Prepared converted file for response: {converted_filepath} ({file_size} bytes)")
+
+        # Schedule deletion after response
+        bg = BackgroundTask(delete_file_safe, converted_filepath)
         return FileResponse(
             converted_filepath,
             filename=converted_filename,
-            media_type='application/octet-stream'
+            media_type='application/octet-stream',
+            background=bg
         )
         
     except Exception as e:
