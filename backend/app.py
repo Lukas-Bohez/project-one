@@ -3916,15 +3916,26 @@ async def user_left_quiz(sid, data):
 
 # Additional endpoint to broadcast system messages
 @app.post("/api/v1/chat/system-message")
-async def send_system_message(session_id: int, message: str, message_type: str = "system"):
+async def send_system_message(
+    session_id: int,
+    message: str,
+    message_type: str = "system",
+    current_user: dict = Depends(get_current_user_info),
+    request: Request = None
+):
     """
     Send a system message to all users in a quiz session.
     """
+    # Only admins are allowed to send system messages
+    role = current_user.get("role") if isinstance(current_user, dict) else None
+    if role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can send system messages")
+
     try:
         # Verify the session is active
         active_sessions = QuizSessionRepository.get_sessions_by_status(2)
         active_session_ids = [session['sessionId'] for session in active_sessions]
-        
+
         if session_id not in active_session_ids:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -3955,7 +3966,7 @@ async def send_system_message(session_id: int, message: str, message_type: str =
             "status": "sent",
             "broadcast": True
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -3972,13 +3983,13 @@ from fastapi import Body,Request
 
 @app.post("/api/shutdown")
 async def immediate_shutdown(
-    x_user_id: str = Header(..., alias="X-User-ID"),
-    x_rfid: str = Header(..., alias="X-RFID")
+    current_user: dict = Depends(get_current_user_info)
 ):
-    # Verify admin privileges
-    if not verify_user(x_user_id, x_rfid) == "admin":
+    # Only admins can trigger shutdown
+    role = current_user.get("role") if isinstance(current_user, dict) else None
+    if role != "admin":
         raise HTTPException(status_code=403, detail="Admin privileges required")
-    
+
     # Execute IMMEDIATE shutdown (no delay)
     try:
         subprocess.Popen(["sudo", "poweroff"], 

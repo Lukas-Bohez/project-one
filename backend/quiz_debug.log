@@ -1720,3 +1720,44 @@
 2025-10-08 19:24:17,003 - INFO - Quiz Logger Initialized
 2025-10-08 19:24:17,003 - INFO - ==================================================
 2025-10-08 19:24:17,003 - INFO - ==================================================
+2025-10-08 19:57:11,890 - INFO - ==================================================
+2025-10-08 19:57:11,890 - INFO - Quiz Logger Initialized
+2025-10-08 19:57:11,891 - INFO - ==================================================
+2025-10-08 19:58:00,960 - INFO - ==================================================
+2025-10-08 19:58:00,961 - INFO - Quiz Logger Initialized
+2025-10-08 19:58:00,961 - INFO - ==================================================
+2025-10-08 19:58:01,922 - INFO - ==================================================
+2025-10-08 19:58:01,922 - INFO - Quiz Logger Initialized
+2025-10-08 19:58:01,922 - INFO - ==================================================
+2025-10-08 19:58:02,191 - INFO - ==================================================
+2025-10-08 19:58:02,191 - INFO - ==================================================
+2025-10-08 19:58:02,191 - INFO - Quiz Logger Initialized
+2025-10-08 19:58:02,191 - INFO - Quiz Logger Initialized
+2025-10-08 19:58:02,191 - INFO - ==================================================
+2025-10-08 19:58:02,191 - INFO - ==================================================
+2025-10-08 19:58:14,704 - INFO - [LOGIN] Created new session 1000031 with status=2 (active)
+2025-10-08 19:58:14,704 - INFO - [LOGIN] Created new session 1000031 with status=2 (active)
+2025-10-08 19:58:14,720 - INFO - is_timer_active(1000031): thread exists=False, is_alive=False
+2025-10-08 19:58:14,720 - INFO - is_timer_active(1000031): thread exists=False, is_alive=False
+2025-10-08 19:58:15,763 - INFO - is_timer_active(1000031): thread exists=False, is_alive=False
+2025-10-08 19:58:15,763 - INFO - is_timer_active(1000031): thread exists=False, is_alive=False
+2025-10-08 19:58:16,814 - INFO - is_timer_active(1000031): thread exists=False, is_alive=False
+2025-10-08 19:58:16,814 - INFO - is_timer_active(1000031): thread exists=False, is_alive=False
+2025-10-08 19:58:17,859 - INFO - is_timer_active(1000031): thread exists=False, is_alive=False
+2025-10-08 19:58:17,859 - INFO - is_timer_active(1000031): thread exists=False, is_alive=False
+2025-10-08 19:58:18,909 - INFO - is_timer_active(1000031): thread exists=False, is_alive=False
+2025-10-08 19:58:18,909 - INFO - is_timer_active(1000031): thread exists=False, is_alive=False
+2025-10-08 19:58:19,351 - INFO - [LOGIN] Created new session 1000032 with status=2 (active)
+2025-10-08 19:58:19,351 - INFO - [LOGIN] Created new session 1000032 with status=2 (active)
+2025-10-08 19:58:19,953 - INFO - is_timer_active(1000032): thread exists=False, is_alive=False
+2025-10-08 19:58:19,953 - INFO - is_timer_active(1000032): thread exists=False, is_alive=False
+2025-10-08 19:58:21,001 - INFO - is_timer_active(1000032): thread exists=False, is_alive=False
+2025-10-08 19:58:21,001 - INFO - is_timer_active(1000032): thread exists=False, is_alive=False
+2025-10-08 19:58:22,046 - INFO - is_timer_active(1000032): thread exists=False, is_alive=False
+2025-10-08 19:58:22,046 - INFO - is_timer_active(1000032): thread exists=False, is_alive=False
+2025-10-08 19:58:23,087 - INFO - is_timer_active(1000032): thread exists=False, is_alive=False
+2025-10-08 19:58:23,087 - INFO - is_timer_active(1000032): thread exists=False, is_alive=False
+2025-10-08 19:58:24,123 - INFO - is_timer_active(1000032): thread exists=False, is_alive=False
+2025-10-08 19:58:24,123 - INFO - is_timer_active(1000032): thread exists=False, is_alive=False
+2025-10-08 19:58:25,160 - INFO - is_timer_active(1000032): thread exists=False, is_alive=False
+2025-10-08 19:58:25,160 - INFO - is_timer_active(1000032): thread exists=False, is_alive=False
