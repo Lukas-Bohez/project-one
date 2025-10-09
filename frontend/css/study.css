@@ -542,7 +542,7 @@ body {
 
 .question-meta {
     font-size: 0.75rem;
-    color: #666;
+    color: #475569;
     margin-left: 1rem;
     white-space: nowrap;
 }
@@ -593,7 +593,7 @@ body {
     display: block;
     text-align: center;
     font-size: 0.7rem;
-    color: #6c757d;
+    color: #374151;
     margin-bottom: 0.5rem;
     letter-spacing: 0.5px;
     text-transform: uppercase;
@@ -696,6 +696,10 @@ body {
 
 [data-theme="dark"] .content-card h3 {
     color: var(--primary-color) !important;
+}
+
+[data-theme="dark"] .quality-content h2 {
+    color: var(--study-text) !important;
 }
 
 .content-highlight {
@@ -846,7 +850,7 @@ body {
     display: block ;
     text-align: center ;
     font-size: 12px ;
-    color: #999 ;
+    color: #374151 ;
     margin-bottom: 5px ;
 }
 
@@ -899,4 +903,20 @@ ins.adsbygoogle[data-ad-format="auto"] {
 /* Optional: If you want the Start Practice button to be more prominent */
 .action-buttons .btn-primary {
     order: -1; /* This will make Start Practice appear first */
+}
+
+/* Loading state for lazy initialization */
+.loading-state {
+    text-align: center;
+    padding: 2rem;
+    background: var(--study-card);
+    border: 1px solid var(--study-border);
+    border-radius: 8px;
+    margin: 1rem 0;
+    color: var(--study-text-light);
+}
+
+.loading-state p {
+    margin: 0;
+    font-size: 1.1rem;
 }

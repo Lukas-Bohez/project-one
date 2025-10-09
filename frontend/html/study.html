@@ -26,7 +26,9 @@
     <meta name="twitter:image" content="https://quizthespire.com/images/twitter-quiz-practice.jpg">
     
     <!-- Canonical URL -->
-    <link rel="canonical" href="https://quizthespire.com/study">
+    <link rel="dns-prefetch" href="//pagead2.googlesyndication.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     
     <!-- Structured Data -->
     <script type="application/ld+json">
@@ -54,10 +56,21 @@
     }
     </script>
     
-    <link rel="stylesheet" href="../css/study.css">
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449"
-     crossorigin="anonymous"></script>
+    <link rel="preload" href="../css/study.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="../css/study.css"></noscript>
+    <!-- Google AdSense - Defer loading -->
+    <script>
+        // Defer AdSense loading to improve initial page load
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                const script = document.createElement('script');
+                script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449';
+                script.crossOrigin = 'anonymous';
+                script.async = true;
+                document.head.appendChild(script);
+            }, 2000); // Load ads 2 seconds after page load
+        });
+    </script>
 
 </head>
 <body>
@@ -100,7 +113,7 @@
         <!-- Question Selector -->
         <section id="questionSelector" class="question-selector" aria-labelledby="questionSelectorHeading">
             <div class="selector-header">
-                <h3 id="questionSelectorHeading">Select Questions for Practice</h3>
+                <h2 id="questionSelectorHeading">Select Questions for Practice</h2>
                 <div>
                     <span id="selectedCount">0</span> questions selected
                 </div>
@@ -180,10 +193,10 @@
             <aside class="sidebar" role="complementary">
                 <!-- Filter Panel -->
                 <section class="filter-panel" aria-labelledby="filterPanelHeading">
-                    <h3 id="filterPanelHeading">Filter Questions</h3>
+                    <h2 id="filterPanelHeading">Filter Questions</h2>
                     
                     <div class="filter-group">
-                        <h4 id="themeFilterHeading">Themes</h4>
+                        <h3 id="themeFilterHeading">Themes</h3>
                         <div class="checkbox-list" id="theme-filter-container" role="group" aria-labelledby="themeFilterHeading">
                             <div class="checkbox-item">
                                 <input type="checkbox" id="theme-japanese" checked aria-describedby="theme-japanese-count">
@@ -209,7 +222,7 @@
                     </div>
                     
                     <div class="filter-group">
-                        <h4 id="difficultyFilterHeading">Difficulty</h4>
+                        <h3 id="difficultyFilterHeading">Difficulty</h3>
                         <div class="checkbox-list" role="group" aria-labelledby="difficultyFilterHeading">
                             <div class="checkbox-item">
                                 <input type="checkbox" id="difficulty-easy" data-difficulty-id="1" checked aria-describedby="difficulty-easy-count">
@@ -276,7 +289,7 @@
             <h2 id="qualityContentHeading">Explore Our Quiz Categories</h2>
             
             <div class="content-highlight">
-                <h4>Learn Through Interactive Story Quizzes</h4>
+                <h3>Learn Through Interactive Story Quizzes</h3>
                 <p>Our unique approach combines language learning, cultural knowledge, and immersive storytelling. Practice Japanese vocabulary while exploring dark fantasy worlds from our original stories.</p>
             </div>
             
@@ -347,10 +360,9 @@
     
     
     <script src="../js/themeManager.js" defer></script>
-    <script src="../js/study.js"></script>
+    <script src="../js/study.js" defer></script>
     <script src="../js/lofi.js" defer></script>
     <script src="../js/infomodal.js" defer></script>
-    <script src="../js/content-new.js"></script>
     
     <!-- Initialize ads AFTER all other scripts load -->
     <script>

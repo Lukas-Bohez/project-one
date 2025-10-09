@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let allQuestions = [];
     let practiceQuestions = [];
     let currentQuestionIndex = 0;
-    
+
     // In-memory cache as fallback
     const memoryCache = new Map();
     // #endregion
@@ -241,7 +241,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         allQuestions = freshData;
                         updateQuestionSelectorBasedOnFilters();
                         populateIndividualQuestionSelector(allQuestions);
-                        populateFilters(allQuestions);
                     }).catch(err => console.error('Background fetch failed:', err));
                 }
                 
@@ -800,7 +799,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     main();
-    
+
     // Development helper - log cache info
     console.log('%c[Cache Info] Cache system active with smart caching:', 'color: #4CAF50; font-weight: bold;');
     console.log('• Cache duration: 5 minutes');
@@ -808,6 +807,6 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('• Press Ctrl+Shift+R (or Cmd+Shift+R on Mac) to clear cache and reload');
     console.log('• Double-click the page header/title to clear cache manually');
     console.log('• Normal page loads will use cached data if available and fresh');
-    
+
     // #endregion
 });
