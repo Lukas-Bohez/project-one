@@ -25,6 +25,28 @@ class QuizQuestionHandler {
                     }
                 }
             });
+
+            // Listen for theme selection data
+            this.socket.on('theme_selection', (data) => {
+                console.log("✅ Received 'theme_selection':", data);
+                this.loadQuestion(data);
+            });
+
+            // Listen for question data
+            this.socket.on('questionData', (data) => {
+                console.log("✅ Received 'questionData':", data);
+                this.loadQuestion(data);
+            });
+
+            // Listen for explanation started
+            this.socket.on('explanation_started', (data) => {
+                console.log("✅ Explanation Started:", data);
+                if (typeof this.showExplanation === 'function') {
+                    this.showExplanation(data);
+                } else {
+                    console.error("Explanation handler broken, data:", data);
+                }
+            });
             
             console.log("Socket event listeners set up for answer responses");
         }
@@ -43,11 +65,48 @@ class QuizQuestionHandler {
         }
         
         console.log("QuizQuestionHandler: Current user after processing:", this.currentUser);
+
+        // Start timeout for question loading - show reload button if no question loads within 2 seconds
+        this.startQuestionLoadTimeout();
+    }
+
+    startQuestionLoadTimeout() {
+        // Clear any existing timeout
+        if (this.questionLoadTimeout) {
+            clearTimeout(this.questionLoadTimeout);
+        }
+
+        // Only set timeout if we haven't already tried reloading
+        if (!sessionStorage.getItem('questionReloadAttempted')) {
+            // Set 2-second timeout - reload page if no question loads
+            this.questionLoadTimeout = setTimeout(() => {
+                // Check if we have a current question
+                if (!this.currentQuestion || document.getElementById('questionText').textContent === 'Loading question...') {
+                    console.log("No question loaded within 2 seconds, marking reload attempted and reloading page");
+                    sessionStorage.setItem('questionReloadAttempted', 'true');
+                    window.location.reload();
+                }
+            }, 2000);
+        }
+    }
+
+    showReloadButton() {
+        // This method is no longer used since we auto-reload
+        // Keeping it for potential future use
     }
 
     loadQuestion(questionData) {
         console.log("Loading question:", questionData);
         this.currentQuestion = questionData;
+
+        // Clear the question load timeout since we got a question
+        if (this.questionLoadTimeout) {
+            clearTimeout(this.questionLoadTimeout);
+            this.questionLoadTimeout = null;
+        }
+
+        // Clear reload attempted flag since we successfully loaded a question
+        sessionStorage.removeItem('questionReloadAttempted');
 
         // Clean up any existing explanation displays
         this.clearExplanations();
@@ -415,7 +474,15 @@ handleAnswerClick(boxElement) {
     console.log("Current question:", this.currentQuestion);
     console.log("Current user:", this.currentUser);
     console.log("Socket connected:", this.socket && this.socket.connected);
-    
+
+    // Check if question is still loading - if so, reload the page
+    const questionText = document.getElementById('questionText');
+    if (!this.currentQuestion || (questionText && questionText.textContent === 'Loading question...')) {
+        console.log("Question still loading, reloading page");
+        window.location.reload();
+        return;
+    }
+
     if (!this.currentQuestion || !this.currentQuestion.type) {
         console.error("Invalid question state - no current question");
         return;

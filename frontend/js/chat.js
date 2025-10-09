@@ -167,12 +167,20 @@ class ChatSystem {
                     this.sessionId = newSessionId;
                     console.log(`ChatSystem: Session ID updated from ${oldSessionId} to ${newSessionId}`);
                     
-                    // Update socket room if connected
-                    if (this.socket && this.socket.connected) {
+                    // Update socket room - socket.io will queue if not connected
+                    if (this.socket) {
                         if (oldSessionId) {
                             this.socket.emit('leave', `quiz_session_${oldSessionId}`);
+                            console.log(`ChatSystem: Emitted leave for room: quiz_session_${oldSessionId}`);
                         }
-                        this.socket.emit('join', `quiz_session_${this.sessionId}`);
+                        this.socket.emit('join', `quiz_session_${this.sessionId}`, (response) => {
+                            if (response && response.status === 'success') {
+                                console.log(`ChatSystem: Successfully joined room: quiz_session_${this.sessionId}`);
+                            } else {
+                                console.error(`ChatSystem: Failed to join room: quiz_session_${this.sessionId}`, response);
+                            }
+                        });
+                        console.log(`ChatSystem: Emitted join for room: quiz_session_${this.sessionId}`);
                     }
                     
                     // Retry pending message if we have one
