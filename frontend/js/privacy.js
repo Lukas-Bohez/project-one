@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show inline privacy content directly
         showInlinePrivacyContent(contentContainer);
         
-        // Create modal footer with only Accept button
+        // Create modal footer with no buttons (they're now in content)
         const modalFooter = document.createElement('div');
         modalFooter.style.cssText = `
             padding: 20px;
@@ -133,35 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
             justify-content: flex-end;
             flex-shrink: 0;
         `;
-        
-        const acceptButton = document.createElement('button');
-        acceptButton.textContent = 'Accept All';
-        acceptButton.style.cssText = `
-            padding: 12px 30px;
-            background-color: #2e7d32; /* darker green for AA contrast */
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1.1rem;
-            transition: background-color 0.2s;
-        `;
-        acceptButton.onmouseover = () => acceptButton.style.backgroundColor = '#1b5e20';
-        acceptButton.onmouseout = () => acceptButton.style.backgroundColor = '#2e7d32';
-        acceptButton.onclick = () => {
-            // Save consent
-            const consentData = {
-                accepted: true,
-                timestamp: new Date().getTime()
-            };
-            localStorage.setItem('privacyConsent', JSON.stringify(consentData));
-            
-            // Remove modal
-            removePrivacyModal();
-        };
-        
-        modalFooter.appendChild(acceptButton);
         
         // Add elements to DOM
         modalContainer.appendChild(contentContainer);
@@ -247,9 +218,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalTitle.style.color = '#e6eef9';
                 modalFooter.style.background = '#071029';
                 modalFooter.style.borderTop = '1px solid rgba(255,255,255,0.04)';
-                acceptButton.style.backgroundColor = '#2563eb';
-                acceptButton.onmouseover = () => acceptButton.style.backgroundColor = '#1e40af';
-                acceptButton.onmouseout = () => acceptButton.style.backgroundColor = '#2563eb';
             }
         } catch (e) {
             // ignore
@@ -370,16 +338,46 @@ document.addEventListener('DOMContentLoaded', () => {
                     </p>
                     
                     <div style="text-align: center;">
-                        <button id="reject-privacy-btn" style="padding: 12px 24px; background-color: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; margin-right: 10px;">Reject All</button>
+                        <button class="accept-privacy-btn" style="padding: 12px 24px; background-color: #2e7d32 !important; color: white !important; border: 1px solid #2e7d32 !important; border-radius: 6px; cursor: pointer; font-size: 1rem; margin-right: 10px; box-shadow: 0 2px 4px rgba(46, 139, 50, 0.3); font-weight: 600;">Accept All</button>
+                        <button class="reject-privacy-btn" style="padding: 12px 24px; background-color: #dc3545 !important; color: white !important; border: 1px solid #dc3545 !important; border-radius: 6px; cursor: pointer; font-size: 1rem; box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3); font-weight: 600;">Reject All</button>
                     </div>
                 </div>
             </div>
         `;
         
-        // Add event listener for the reject button
+        // Add event listeners for both buttons
         setTimeout(() => {
-            const rejectBtn = container.querySelector('#reject-privacy-btn');
+            const acceptBtn = container.querySelector('.accept-privacy-btn');
+            const rejectBtn = container.querySelector('.reject-privacy-btn');
+            
+            if (acceptBtn) {
+                // Force the green styling for accept button
+                acceptBtn.style.setProperty('background-color', '#2e7d32', 'important');
+                acceptBtn.style.setProperty('color', 'white', 'important');
+                acceptBtn.style.setProperty('border', '1px solid #2e7d32', 'important');
+                acceptBtn.style.setProperty('box-shadow', '0 2px 4px rgba(46, 139, 50, 0.3)', 'important');
+                acceptBtn.style.setProperty('font-weight', '600', 'important');
+                
+                acceptBtn.addEventListener('click', () => {
+                    const consentData = {
+                        accepted: true,
+                        timestamp: new Date().getTime()
+                    };
+                    localStorage.setItem('privacyConsent', JSON.stringify(consentData));
+                    
+                    // Remove modal
+                    removePrivacyModal();
+                });
+            }
+            
             if (rejectBtn) {
+                // Force the red styling for reject button
+                rejectBtn.style.setProperty('background-color', '#dc3545', 'important');
+                rejectBtn.style.setProperty('color', 'white', 'important');
+                rejectBtn.style.setProperty('border', '1px solid #dc3545', 'important');
+                rejectBtn.style.setProperty('box-shadow', '0 2px 4px rgba(220, 53, 69, 0.3)', 'important');
+                rejectBtn.style.setProperty('font-weight', '600', 'important');
+                
                 rejectBtn.addEventListener('click', () => {
                     const consentData = {
                         accepted: false,
