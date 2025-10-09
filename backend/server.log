@@ -3383,3 +3383,8 @@ video:0kB audio:205kB subtitle:0kB other streams:0kB global headers:4kB muxing o
 Audio conversion successful: /tmp/project-one/temp_converted/1759959957.584266_629136__holizna__funky-lofi-hat-loop-88-bpm.ogg
 Prepared converted file for response: /tmp/project-one/temp_converted/1759959957.584266_629136__holizna__funky-lofi-hat-loop-88-bpm.ogg (216796 bytes)
 INFO:     127.0.0.1:33782 - "POST /api/v1/convert/upload HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [16156]
+INFO:     Stopping reloader process [9963]
