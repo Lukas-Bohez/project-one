@@ -6693,6 +6693,33 @@ async def convert_file_backend(input_path: str, target_format: str, original_fil
 async def convert_video_to_audio(input_path: str, output_path: str, format: str) -> str:
     """Convert video to audio using ffmpeg"""
     try:
+        # Check if input file exists
+        if not os.path.exists(input_path):
+            quiz_logger.error(f"Input video file does not exist: {input_path}")
+            raise Exception(f"Input video file does not exist: {input_path}")
+        
+        # Check file size
+        file_size = os.path.getsize(input_path)
+        if file_size == 0:
+            quiz_logger.error(f"Input video file is empty: {input_path}")
+            raise Exception(f"Input video file is empty: {input_path}")
+        
+        quiz_logger.info(f"Converting video file: {input_path} ({file_size} bytes) to {format}")
+        
+        # Validate that this is actually a video file by checking with ffmpeg
+        probe_cmd = ['ffmpeg', '-i', input_path, '-f', 'null', '-']
+        probe_result = subprocess.run(probe_cmd, capture_output=True, text=True, timeout=30)
+        if probe_result.returncode != 0:
+            stderr_lower = probe_result.stderr.lower()
+            if 'video' not in stderr_lower and 'audio' not in stderr_lower:
+                quiz_logger.error(f"Input file does not appear to be a valid video file: {input_path}")
+                raise Exception(f"Input file does not appear to be a valid video file: {input_path}")
+        
+        # Check if the video file actually has audio streams
+        if 'audio' not in probe_result.stderr.lower():
+            quiz_logger.error(f"Video file has no audio streams: {input_path}")
+            raise Exception(f"Video file contains no audio tracks. Cannot convert to audio format.")
+        
         # Audio codec mapping
         codec_map = {
             'mp3': 'libmp3lame',
@@ -6707,25 +6734,35 @@ async def convert_video_to_audio(input_path: str, output_path: str, format: str)
             '-vn',  # No video
             '-acodec', codec,
             '-y',  # Overwrite output
-            output_path
         ]
         
+        # Add quality settings for MP3
+        if format.lower() == 'mp3':
+            cmd.extend(['-b:a', '192k'])
+        
+        cmd.append(output_path)
+        
+        quiz_logger.info(f"FFmpeg command: {' '.join(cmd)}")
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
         
         if result.returncode == 0 and os.path.exists(output_path):
+            output_size = os.path.getsize(output_path)
+            quiz_logger.info(f"Video to audio conversion successful: {output_path} ({output_size} bytes)")
             return output_path
         else:
-            print(f"FFmpeg error: {result.stderr}")
-            raise Exception("Video to audio conversion failed")
+            quiz_logger.error(f"FFmpeg failed with return code: {result.returncode}")
+            quiz_logger.error(f"FFmpeg stdout: {result.stdout}")
+            quiz_logger.error(f"FFmpeg stderr: {result.stderr}")
+            raise Exception(f"Video to audio conversion failed: ffmpeg returned {result.returncode}")
             
     except subprocess.TimeoutExpired:
-        raise Exception("Conversion timeout")
+        quiz_logger.error("Video to audio conversion timeout (5 minutes)")
+        raise Exception("Video to audio conversion timeout (5 minutes)")
     except FileNotFoundError:
-        # Fallback: just copy and rename (for demo purposes)
-        shutil.copy2(input_path, output_path)
-        return output_path
+        quiz_logger.error("FFmpeg not found - video conversion not available")
+        raise Exception("FFmpeg not found - video conversion not available")
     except Exception as e:
-        print(f"FFmpeg conversion error: {e}")
+        quiz_logger.error(f"Video to audio conversion error: {e}")
         raise
 
 async def convert_audio_format(input_path: str, output_path: str, format: str) -> str:

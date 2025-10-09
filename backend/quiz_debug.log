@@ -4419,3 +4419,90 @@
 2025-10-09 20:39:47,046 - INFO - is_timer_active(1000057): thread exists=False, is_alive=False
 2025-10-09 20:39:48,080 - INFO - is_timer_active(1000057): thread exists=False, is_alive=False
 2025-10-09 20:39:48,080 - INFO - is_timer_active(1000057): thread exists=False, is_alive=False
+2025-10-09 21:49:01,221 - INFO - ==================================================
+2025-10-09 21:49:01,222 - INFO - Quiz Logger Initialized
+2025-10-09 21:49:01,222 - INFO - ==================================================
+2025-10-09 21:49:46,440 - INFO - ==================================================
+2025-10-09 21:49:46,440 - INFO - Quiz Logger Initialized
+2025-10-09 21:49:46,440 - INFO - ==================================================
+2025-10-09 21:53:24,976 - INFO - ==================================================
+2025-10-09 21:53:24,976 - INFO - Quiz Logger Initialized
+2025-10-09 21:53:24,976 - INFO - ==================================================
+2025-10-09 21:53:25,095 - INFO - Converting video file: test_video.mp4 (3753 bytes) to mp3
+2025-10-09 21:53:25,303 - INFO - FFmpeg command: ffmpeg -i test_video.mp4 -vn -acodec libmp3lame -y -b:a 192k test_conversion.mp3
+2025-10-09 21:53:25,506 - INFO - Video to audio conversion successful: test_conversion.mp3 (27216 bytes)
+2025-10-09 22:00:39,563 - INFO - ==================================================
+2025-10-09 22:00:39,564 - INFO - Quiz Logger Initialized
+2025-10-09 22:00:39,564 - INFO - ==================================================
+2025-10-09 22:00:40,090 - INFO - ==================================================
+2025-10-09 22:00:40,090 - INFO - ==================================================
+2025-10-09 22:00:40,090 - INFO - Quiz Logger Initialized
+2025-10-09 22:00:40,090 - INFO - Quiz Logger Initialized
+2025-10-09 22:00:40,090 - INFO - ==================================================
+2025-10-09 22:00:40,090 - INFO - ==================================================
+2025-10-09 22:01:14,091 - INFO - Converting video file: /tmp/project-one/temp_uploads/1760040074.089133_rurus-shinsei-kamattechan.mp4 (1988678 bytes) to mp3
+2025-10-09 22:01:14,091 - INFO - Converting video file: /tmp/project-one/temp_uploads/1760040074.089133_rurus-shinsei-kamattechan.mp4 (1988678 bytes) to mp3
+2025-10-09 22:01:14,394 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1760040074.089133_rurus-shinsei-kamattechan.mp4 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1760040074.091279_rurus-shinsei-kamattechan.mp3
+2025-10-09 22:01:14,394 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1760040074.089133_rurus-shinsei-kamattechan.mp4 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1760040074.091279_rurus-shinsei-kamattechan.mp3
+2025-10-09 22:01:14,691 - ERROR - FFmpeg failed with return code: 1
+2025-10-09 22:01:14,691 - ERROR - FFmpeg failed with return code: 1
+2025-10-09 22:01:14,691 - ERROR - FFmpeg stdout: 
+2025-10-09 22:01:14,691 - ERROR - FFmpeg stdout: 
+2025-10-09 22:01:14,691 - ERROR - FFmpeg stderr: ffmpeg version 5.1.7-0+deb12u1+rpt1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 12 (Debian 12.2.0-14+deb12u1)
+  configuration: --prefix=/usr --extra-version=0+deb12u1+rpt1 --toolchain=hardened --incdir=/usr/include/aarch64-linux-gnu --enable-gpl --disable-stripping --disable-mmal --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libglslang --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librist --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzimg --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sand --enable-sdl2 --disable-sndio --enable-libjxl --enable-neon --enable-v4l2-request --enable-libudev --enable-epoxy --libdir=/usr/lib/aarch64-linux-gnu --arch=arm64 --enable-pocketsphinx --enable-librsvg --enable-libdc1394 --enable-libdrm --enable-vout-drm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-libplacebo --enable-librav1e --enable-shared
+  libavutil      57. 28.100 / 57. 28.100
+  libavcodec     59. 37.100 / 59. 37.100
+  libavformat    59. 27.100 / 59. 27.100
+  libavdevice    59.  7.100 / 59.  7.100
+  libavfilter     8. 44.100 /  8. 44.100
+  libswscale      6.  7.100 /  6.  7.100
+  libswresample   4.  7.100 /  4.  7.100
+  libpostproc    56.  6.100 / 56.  6.100
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from '/tmp/project-one/temp_uploads/1760040074.089133_rurus-shinsei-kamattechan.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+    encoder         : Lavf58.20.100
+  Duration: 00:00:15.00, start: 0.000000, bitrate: 1060 kb/s
+  Stream #0:0[0x1](und): Video: h264 (Constrained Baseline) (avc1 / 0x31637661), yuv420p(progressive), 640x266, 1059 kb/s, 15 fps, 15 tbr, 15360 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      vendor_id       : [0][0][0][0]
+Output #0, mp3, to '/tmp/project-one/temp_converted/1760040074.091279_rurus-shinsei-kamattechan.mp3':
+Output file #0 does not contain any stream
+
+2025-10-09 22:01:14,691 - ERROR - FFmpeg stderr: ffmpeg version 5.1.7-0+deb12u1+rpt1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 12 (Debian 12.2.0-14+deb12u1)
+  configuration: --prefix=/usr --extra-version=0+deb12u1+rpt1 --toolchain=hardened --incdir=/usr/include/aarch64-linux-gnu --enable-gpl --disable-stripping --disable-mmal --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libglslang --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librabbitmq --enable-librist --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzimg --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal --enable-opencl --enable-opengl --enable-sand --enable-sdl2 --disable-sndio --enable-libjxl --enable-neon --enable-v4l2-request --enable-libudev --enable-epoxy --libdir=/usr/lib/aarch64-linux-gnu --arch=arm64 --enable-pocketsphinx --enable-librsvg --enable-libdc1394 --enable-libdrm --enable-vout-drm --enable-libiec61883 --enable-chromaprint --enable-frei0r --enable-libx264 --enable-libplacebo --enable-librav1e --enable-shared
+  libavutil      57. 28.100 / 57. 28.100
+  libavcodec     59. 37.100 / 59. 37.100
+  libavformat    59. 27.100 / 59. 27.100
+  libavdevice    59.  7.100 / 59.  7.100
+  libavfilter     8. 44.100 /  8. 44.100
+  libswscale      6.  7.100 /  6.  7.100
+  libswresample   4.  7.100 /  4.  7.100
+  libpostproc    56.  6.100 / 56.  6.100
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from '/tmp/project-one/temp_uploads/1760040074.089133_rurus-shinsei-kamattechan.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+    encoder         : Lavf58.20.100
+  Duration: 00:00:15.00, start: 0.000000, bitrate: 1060 kb/s
+  Stream #0:0[0x1](und): Video: h264 (Constrained Baseline) (avc1 / 0x31637661), yuv420p(progressive), 640x266, 1059 kb/s, 15 fps, 15 tbr, 15360 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      vendor_id       : [0][0][0][0]
+Output #0, mp3, to '/tmp/project-one/temp_converted/1760040074.091279_rurus-shinsei-kamattechan.mp3':
+Output file #0 does not contain any stream
+
+2025-10-09 22:01:14,691 - ERROR - Video to audio conversion error: Video to audio conversion failed: ffmpeg returned 1
+2025-10-09 22:01:14,691 - ERROR - Video to audio conversion error: Video to audio conversion failed: ffmpeg returned 1
+2025-10-09 22:02:49,561 - INFO - Converting video file: /tmp/project-one/temp_uploads/1760040169.546799_failed to load meme.mp4 (16412256 bytes) to mp3
+2025-10-09 22:02:49,561 - INFO - Converting video file: /tmp/project-one/temp_uploads/1760040169.546799_failed to load meme.mp4 (16412256 bytes) to mp3
+2025-10-09 22:02:51,520 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1760040169.546799_failed to load meme.mp4 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1760040169.561348_failed to load meme.mp3
+2025-10-09 22:02:51,520 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1760040169.546799_failed to load meme.mp4 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1760040169.561348_failed to load meme.mp3
+2025-10-09 22:02:51,875 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1760040169.561348_failed to load meme.mp3 (156810 bytes)
+2025-10-09 22:02:51,875 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1760040169.561348_failed to load meme.mp3 (156810 bytes)

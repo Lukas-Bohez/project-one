@@ -738,6 +738,51 @@ class ConversionTheSpire {
         try {
             console.log(`🔄 Starting conversion: ${file.name} → ${targetFormat.toUpperCase()}`);
             
+            // Additional debugging for video files
+            if (file.type.startsWith('video/')) {
+                console.log('🎥 Video file details:', {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    lastModified: file.lastModified,
+                    extension: file.name.split('.').pop().toLowerCase()
+                });
+                
+                // Try to validate video file can be read
+                try {
+                    const video = document.createElement('video');
+                    video.preload = 'metadata';
+                    video.src = URL.createObjectURL(file);
+                    
+                    await new Promise((resolve, reject) => {
+                        video.onloadedmetadata = () => {
+                            console.log('✅ Video metadata loaded:', {
+                                duration: video.duration,
+                                videoWidth: video.videoWidth,
+                                videoHeight: video.videoHeight,
+                                audioTracks: video.audioTracks?.length || 'N/A'
+                            });
+                            URL.revokeObjectURL(video.src);
+                            resolve();
+                        };
+                        video.onerror = () => {
+                            console.warn('⚠️ Video metadata failed to load - file may be corrupted');
+                            URL.revokeObjectURL(video.src);
+                            reject(new Error('Video file may be corrupted'));
+                        };
+                        // Timeout after 5 seconds
+                        setTimeout(() => {
+                            console.warn('⚠️ Video metadata loading timed out');
+                            URL.revokeObjectURL(video.src);
+                            reject(new Error('Video metadata loading timed out'));
+                        }, 5000);
+                    });
+                } catch (videoError) {
+                    console.warn('🎥 Video validation warning:', videoError.message);
+                    // Continue with conversion anyway - backend will handle it
+                }
+            }
+            
             // Create FormData to send file to backend
             const formData = new FormData();
             formData.append('file', file);
@@ -746,7 +791,8 @@ class ConversionTheSpire {
             console.log('📤 Sending file to backend...', {
                 fileName: file.name,
                 fileSize: file.size,
-                targetFormat: targetFormat
+                targetFormat: targetFormat,
+                fileType: file.type
             });
 
             // Create AbortController for timeout
@@ -780,7 +826,19 @@ class ConversionTheSpire {
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('❌ Backend error response:', errorText);
-                    throw new Error(`Backend conversion failed (${response.status}): ${errorText}`);
+                    
+                    // Try to parse error details
+                    let errorDetail = errorText;
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        if (errorJson.detail) {
+                            errorDetail = errorJson.detail;
+                        }
+                    } catch (parseError) {
+                        // Not JSON, use as-is
+                    }
+                    
+                    throw new Error(`Backend conversion failed (${response.status}): ${errorDetail}`);
                 }
                 
                 // Get the converted file as blob
