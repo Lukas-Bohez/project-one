@@ -9,6 +9,7 @@ class ConversionTheSpire {
         this.conversions = [];
         this.convertedFiles = [];
         this.lastClickTime = 0; // For debouncing file dialog
+        this.lanIP = `https://${window.location.hostname}`;
         
         this.init();
     }
@@ -759,7 +760,7 @@ class ConversionTheSpire {
             
             try {
                 // Send to backend conversion endpoint
-                const backendUrl = 'http://127.0.0.1:8001/api/v1/convert/upload';
+                const backendUrl = `${this.lanIP}/api/v1/convert/upload`;
                 console.log('🔗 Using backend URL:', backendUrl);
                 const response = await fetch(backendUrl, {
                     method: 'POST',
