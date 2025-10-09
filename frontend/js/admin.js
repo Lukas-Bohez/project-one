@@ -33,11 +33,72 @@ const lanIP = `https://${window.location.hostname}`; // Or your actual server IP
 
 // #endregion
 
-const fetchQuestions = async (activeOnly = false) => {
+const fetchFreshQuestions = async (activeOnly = false) => {
     const questionsEndpoint = `${lanIP}/api/v1/questions/`;
     const answersBaseEndpoint = `${lanIP}/api/v1/questions/`;
     const themesEndpoint = `${lanIP}/api/v1/themes/`;
 
+    // Step 1: Fetch all questions
+    const questionsUrl = activeOnly ? `${questionsEndpoint}?active_only=true` : questionsEndpoint;
+    const [questionsResponse, themesResponse] = await Promise.all([
+        fetch(questionsUrl),
+        fetch(themesEndpoint)
+    ]);
+    if (!questionsResponse.ok) {
+        console.error(`HTTP error fetching questions! Status: ${questionsResponse.status}`);
+        return [];
+    }
+    if (!themesResponse.ok) {
+        console.error(`HTTP error fetching themes! Status: ${themesResponse.status}`);
+        return [];
+    }
+    const questions = await questionsResponse.json();
+    const themes = await themesResponse.json();
+
+    // Step 2: Create a theme lookup map for quick access
+    const themeMap = themes.reduce((map, theme) => {
+        map[theme.id] = theme;
+        return map;
+    }, {});
+
+    // Step 3: Fetch all answers in parallel (batch if possible)
+    // If backend supports batch, use it. Otherwise, parallelize per-question
+    const answerPromises = questions.map(async (question) => {
+        try {
+            const answersResponse = await fetch(`${answersBaseEndpoint}${question.id}/answers`);
+            if (!answersResponse.ok) {
+                console.warn(`HTTP error fetching answers for question ID ${question.id}! Status: ${answersResponse.status}`);
+                return [];
+            }
+            const answersData = await answersResponse.json();
+            return answersData.answers || [];
+        } catch (error) {
+            console.warn(`Failed to fetch answers for question ID ${question.id}:`, error);
+            return [];
+        }
+    });
+    const answersList = await Promise.all(answerPromises);
+
+    // Step 4: Assemble questions with answers and themes
+    const questionsWithAnswersAndThemes = questions.map((question, idx) => {
+        const theme = themeMap[question.themeId] || {
+            id: question.themeId,
+            name: 'Unknown Theme',
+            error: true
+        };
+        return {
+            ...question,
+            answers: answersList[idx],
+            theme: theme
+        };
+    });
+
+    console.log('[API Fetch] Successfully fetched new data from API.');
+
+    return questionsWithAnswersAndThemes;
+};
+
+const fetchQuestions = async (activeOnly = false) => {
     const CACHE_KEY = `myApp_questionsCache_${activeOnly ? 'active' : 'all'}`;
     const CACHE_DURATION = 60 * 1000; // 1 minute
 
@@ -47,85 +108,44 @@ const fetchQuestions = async (activeOnly = false) => {
         if (cachedDataString) {
             const { timestamp, data } = JSON.parse(cachedDataString);
             const now = new Date().getTime();
-            if (now - timestamp < CACHE_DURATION) {
-                console.log(`[Cache Hit] Returning data from local cache for key: ${CACHE_KEY}`);
-                return data;
-            } else {
-                console.log(`[Cache Expired] Cache for key: ${CACHE_KEY} is older than 1 minute. Fetching new data...`);
+            console.log(`[Cache Hit] Returning data from local cache for key: ${CACHE_KEY}`);
+            
+            // Schedule background update if cache is outdated
+            if (now - timestamp >= CACHE_DURATION) {
+                console.log(`[Cache Background Update] Cache is stale, fetching fresh data in background for key: ${CACHE_KEY}`);
+                fetchFreshQuestions(activeOnly).then(freshData => {
+                    const dataToCache = {
+                        timestamp: new Date().getTime(),
+                        data: freshData
+                    };
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(dataToCache));
+                    console.log(`[Cache Update] New data saved to local cache for key: ${CACHE_KEY}`);
+                    // Update state and refresh UI if on questions tab
+                    state.questions = freshData;
+                    if (currentTab === 'questions') {
+                        loadQuestions();
+                    }
+                }).catch(err => console.error('Background fetch failed:', err));
             }
+            
+            return data;
         } else {
             console.log(`[Cache Miss] No data found in local cache for key: ${CACHE_KEY}. Fetching new data...`);
         }
 
         // --- IF WE REACH THIS POINT, IT MEANS CACHE IS INVALID OR NON-EXISTENT. ---
         // --- PROCEED WITH API CALLS. ---
-
-        // Step 1: Fetch all questions
-        const questionsUrl = activeOnly ? `${questionsEndpoint}?active_only=true` : questionsEndpoint;
-        const [questionsResponse, themesResponse] = await Promise.all([
-            fetch(questionsUrl),
-            fetch(themesEndpoint)
-        ]);
-        if (!questionsResponse.ok) {
-            console.error(`HTTP error fetching questions! Status: ${questionsResponse.status}`);
-            return [];
-        }
-        if (!themesResponse.ok) {
-            console.error(`HTTP error fetching themes! Status: ${themesResponse.status}`);
-            return [];
-        }
-        const questions = await questionsResponse.json();
-        const themes = await themesResponse.json();
-
-        // Step 2: Create a theme lookup map for quick access
-        const themeMap = themes.reduce((map, theme) => {
-            map[theme.id] = theme;
-            return map;
-        }, {});
-
-        // Step 3: Fetch all answers in parallel (batch if possible)
-        // If backend supports batch, use it. Otherwise, parallelize per-question
-        const answerPromises = questions.map(async (question) => {
-            try {
-                const answersResponse = await fetch(`${answersBaseEndpoint}${question.id}/answers`);
-                if (!answersResponse.ok) {
-                    console.warn(`HTTP error fetching answers for question ID ${question.id}! Status: ${answersResponse.status}`);
-                    return [];
-                }
-                const answersData = await answersResponse.json();
-                return answersData.answers || [];
-            } catch (error) {
-                console.warn(`Failed to fetch answers for question ID ${question.id}:`, error);
-                return [];
-            }
-        });
-        const answersList = await Promise.all(answerPromises);
-
-        // Step 4: Assemble questions with answers and themes
-        const questionsWithAnswersAndThemes = questions.map((question, idx) => {
-            const theme = themeMap[question.themeId] || {
-                id: question.themeId,
-                name: 'Unknown Theme',
-                error: true
-            };
-            return {
-                ...question,
-                answers: answersList[idx],
-                theme: theme
-            };
-        });
-
-        console.log('[API Fetch] Successfully fetched new data from API.');
+        const freshData = await fetchFreshQuestions(activeOnly);
 
         // Step 5: Save the newly fetched data to local cache with a timestamp
         const dataToCache = {
             timestamp: new Date().getTime(),
-            data: questionsWithAnswersAndThemes
+            data: freshData
         };
         localStorage.setItem(CACHE_KEY, JSON.stringify(dataToCache));
         console.log(`[Cache Update] New data saved to local cache for key: ${CACHE_KEY}`);
 
-        return questionsWithAnswersAndThemes;
+        return freshData;
 
     } catch (error) {
         console.error('Failed to fetch questions, answers, or themes:', error);

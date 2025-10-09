@@ -156,10 +156,67 @@ document.addEventListener('DOMContentLoaded', function() {
     // #endregion
 
     // #region --- Data Fetching (from your backend) ---
-    const fetchQuestions = async (activeOnly = false, forceRefresh = false) => {
+    const fetchFreshQuestions = async (activeOnly = false) => {
         const questionsEndpoint = `${lanIP}/api/v1/questions/`;
         const answersBaseEndpoint = `${lanIP}/api/v1/questions/`;
         const themesBaseEndpoint = `${lanIP}/api/v1/themes/`;
+
+        // Fetch fresh data
+        console.log(`[API Request] Fetching questions from: ${questionsEndpoint}`);
+        const questionsUrl = activeOnly ? 
+            `${questionsEndpoint}?active_only=true` : 
+            questionsEndpoint;
+        
+        const questionsResponse = await fetch(questionsUrl);
+        if (!questionsResponse.ok) {
+            throw new Error(`HTTP error fetching questions! Status: ${questionsResponse.status}`);
+        }
+        const questions = await questionsResponse.json();
+
+        // Fetch themes
+        const uniqueThemeIds = [...new Set(questions.map(q => q.themeId).filter(id => id))];
+        const themePromises = uniqueThemeIds.map(async id => {
+            try {
+                const themeUrl = `${themesBaseEndpoint}${id}/`;
+                const response = await fetch(themeUrl);
+                return response.ok ? await response.json() : { id, name: 'Unknown Theme' };
+            } catch (error) {
+                console.warn(`Failed to fetch theme ${id}:`, error);
+                return { id, name: 'Unknown Theme' };
+            }
+        });
+        const themes = await Promise.all(themePromises);
+        const themeMap = themes.reduce((map, theme) => {
+            map[theme.id] = theme;
+            return map;
+        }, {});
+
+        // Fetch answers for each question
+        const questionsWithDetails = await Promise.all(questions.map(async (question) => {
+            try {
+                const answersUrl = `${answersBaseEndpoint}${question.id}/answers`;
+                const answersResponse = await fetch(answersUrl);
+                const answersData = answersResponse.ok ? await answersResponse.json() : { answers: [] };
+                
+                return {
+                    ...question,
+                    answers: answersData.answers || [],
+                    theme: themeMap[question.themeId] || { name: 'Unknown Theme' },
+                };
+            } catch (error) {
+                console.warn(`Failed to fetch answers for question ${question.id}:`, error);
+                return {
+                    ...question,
+                    answers: [],
+                    theme: themeMap[question.themeId] || { name: 'Unknown Theme' },
+                };
+            }
+        }));
+
+        return questionsWithDetails;
+    };
+
+    const fetchQuestions = async (activeOnly = false, forceRefresh = false) => {
         const CACHE_KEY = `myApp_questionsCache_${activeOnly ? 'active' : 'all'}`;
         const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes - good balance between freshness and performance
         
@@ -168,80 +225,41 @@ document.addEventListener('DOMContentLoaded', function() {
         const bypassCache = forceRefresh || urlParams.has('nocache') || urlParams.has('refresh');
 
         try {
-            // Check cache first (unless explicitly bypassed)
-            if (!bypassCache) {
-                const cachedData = cache.get(CACHE_KEY);
-                if (cachedData && cache.isValid(cachedData, CACHE_DURATION)) {
-                    console.log(`[Cache Hit] Using cached data for key: ${CACHE_KEY}`);
-                    console.log(`[Cache Info] Age: ${Math.floor((Date.now() - cachedData.timestamp) / 1000)}s, Max: ${CACHE_DURATION / 1000}s`);
-                    return cachedData.data;
-                } else if (cachedData) {
-                    console.log(`[Cache Expired] Cache is stale, fetching fresh data for key: ${CACHE_KEY}`);
-                } else {
+            const cachedData = cache.get(CACHE_KEY);
+            
+            if (cachedData && !bypassCache) {
+                console.log(`[Cache Hit] Using cached data for key: ${CACHE_KEY}`);
+                console.log(`[Cache Info] Age: ${Math.floor((Date.now() - cachedData.timestamp) / 1000)}s`);
+                
+                // Schedule background update if cache is outdated
+                if (!cache.isValid(cachedData, CACHE_DURATION)) {
+                    console.log(`[Cache Background Update] Cache is stale, fetching fresh data in background for key: ${CACHE_KEY}`);
+                    fetchFreshQuestions(activeOnly).then(freshData => {
+                        cache.set(CACHE_KEY, freshData);
+                        console.log(`[Cache Update] Fresh data saved to cache for key: ${CACHE_KEY}`);
+                        // Update global data and refresh UI
+                        allQuestions = freshData;
+                        updateQuestionSelectorBasedOnFilters();
+                        populateIndividualQuestionSelector(allQuestions);
+                        populateFilters(allQuestions);
+                    }).catch(err => console.error('Background fetch failed:', err));
+                }
+                
+                return cachedData.data;
+            } else {
+                if (cachedData && bypassCache) {
+                    console.log(`[Cache Bypass] Force refresh requested for key: ${CACHE_KEY}`);
+                    cache.clear(CACHE_KEY);
+                } else if (!cachedData) {
                     console.log(`[Cache Miss] No cache found, fetching fresh data for key: ${CACHE_KEY}`);
                 }
-            } else {
-                console.log(`[Cache Bypass] Force refresh requested for key: ${CACHE_KEY}`);
-                cache.clear(CACHE_KEY);
+                
+                // Fetch fresh data
+                const freshData = await fetchFreshQuestions(activeOnly);
+                cache.set(CACHE_KEY, freshData);
+                console.log(`[Cache Update] Fresh data saved to cache for key: ${CACHE_KEY}`);
+                return freshData;
             }
-
-            // Fetch fresh data
-            console.log(`[API Request] Fetching questions from: ${questionsEndpoint}`);
-            const questionsUrl = activeOnly ? 
-                `${questionsEndpoint}?active_only=true` : 
-                questionsEndpoint;
-            
-            const questionsResponse = await fetch(questionsUrl);
-            if (!questionsResponse.ok) {
-                throw new Error(`HTTP error fetching questions! Status: ${questionsResponse.status}`);
-            }
-            const questions = await questionsResponse.json();
-
-            // Fetch themes
-            const uniqueThemeIds = [...new Set(questions.map(q => q.themeId).filter(id => id))];
-            const themePromises = uniqueThemeIds.map(async id => {
-                try {
-                    const themeUrl = `${themesBaseEndpoint}${id}/`;
-                    const response = await fetch(themeUrl);
-                    return response.ok ? await response.json() : { id, name: 'Unknown Theme' };
-                } catch (error) {
-                    console.warn(`Failed to fetch theme ${id}:`, error);
-                    return { id, name: 'Unknown Theme' };
-                }
-            });
-            const themes = await Promise.all(themePromises);
-            const themeMap = themes.reduce((map, theme) => {
-                map[theme.id] = theme;
-                return map;
-            }, {});
-
-            // Fetch answers for each question
-            const questionsWithDetails = await Promise.all(questions.map(async (question) => {
-                try {
-                    const answersUrl = `${answersBaseEndpoint}${question.id}/answers`;
-                    const answersResponse = await fetch(answersUrl);
-                    const answersData = answersResponse.ok ? await answersResponse.json() : { answers: [] };
-                    
-                    return {
-                        ...question,
-                        answers: answersData.answers || [],
-                        theme: themeMap[question.themeId] || { name: 'Unknown Theme' },
-                    };
-                } catch (error) {
-                    console.warn(`Failed to fetch answers for question ${question.id}:`, error);
-                    return {
-                        ...question,
-                        answers: [],
-                        theme: themeMap[question.themeId] || { name: 'Unknown Theme' },
-                    };
-                }
-            }));
-
-            // Cache the result
-            cache.set(CACHE_KEY, questionsWithDetails);
-            console.log(`[Cache Update] Fresh data saved to cache for key: ${CACHE_KEY}`);
-            
-            return questionsWithDetails;
         } catch (error) {
             console.error('Failed to fetch questions:', error);
             

@@ -367,6 +367,21 @@ const createSessionSelector = (availableSessions, currentSessionId) => {
     `;
 };
 
+const fetchFreshSessionData = async (sessionId = null) => {
+    const url = sessionId 
+        ? `${lanIP}/api/v1/sensor-data?session_id=${sessionId}&include_chat=true&include_answers=true`
+        : `${lanIP}/api/v1/sensor-data?include_chat=true&include_answers=true`;
+    
+    console.log(`Fetching: ${url}`);
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data;
+};
+
 const fetchSessionData = async (sessionId = null) => {
     if (isLoading) {
         console.warn("Already loading, ignoring request for session", sessionId);
@@ -401,18 +416,58 @@ const fetchSessionData = async (sessionId = null) => {
         domGraphs.servo = null;
     }
 
+    const CACHE_KEY = `graphs_sessionData_${sessionId || 'latest'}`;
+    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
     try {
-        const url = sessionId 
-            ? `${lanIP}/api/v1/sensor-data?session_id=${sessionId}&include_chat=true&include_answers=true`
-            : `${lanIP}/api/v1/sensor-data?include_chat=true&include_answers=true`;
-        
-        console.log(`Fetching: ${url}`);
-        const response = await fetch(url);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        const cachedDataString = localStorage.getItem(CACHE_KEY);
+        let data;
+
+        if (cachedDataString) {
+            const { timestamp, data: cachedData } = JSON.parse(cachedDataString);
+            const now = Date.now();
+            console.log(`[Cache Hit] Using cached session data for key: ${CACHE_KEY}`);
+            
+            data = cachedData;
+            
+            // Schedule background update if cache is outdated
+            if (now - timestamp >= CACHE_DURATION) {
+                console.log(`[Cache Background Update] Cache is stale, fetching fresh data in background for key: ${CACHE_KEY}`);
+                fetchFreshSessionData(sessionId).then(freshData => {
+                    const dataToCache = {
+                        timestamp: Date.now(),
+                        data: freshData
+                    };
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(dataToCache));
+                    console.log(`[Cache Update] Fresh session data saved to cache for key: ${CACHE_KEY}`);
+                    // Update global data and refresh UI
+                    availableSessions = sanitizeSessionData(freshData.available_sessions || []);
+                    currentSessionId = freshData.current_session_id;
+                    totalSessions = freshData.total_sessions || 0;
+                    if (freshData.sessions && freshData.sessions.length > 0) {
+                        currentSessionData = freshData.sessions[0];
+                        renderSession(currentSessionData);
+                        refreshRankingsAfterDataLoad();
+                    }
+                    // Update session selector if needed
+                    if (sessionSelectorContainer) {
+                        sessionSelectorContainer.innerHTML = createSessionSelector(availableSessions, currentSessionId);
+                        initSessionSelector();
+                    }
+                }).catch(err => console.error('Background fetch failed:', err));
+            }
+        } else {
+            console.log(`[Cache Miss] No cached session data for key: ${CACHE_KEY}. Fetching fresh data...`);
+            data = await fetchFreshSessionData(sessionId);
+            
+            // Cache the data
+            const dataToCache = {
+                timestamp: Date.now(),
+                data: data
+            };
+            localStorage.setItem(CACHE_KEY, JSON.stringify(dataToCache));
+            console.log(`[Cache Update] Fresh session data saved to cache for key: ${CACHE_KEY}`);
         }
-        const data = await response.json();
 
         if (data) {
             // Update available sessions and current session info with sanitized data
