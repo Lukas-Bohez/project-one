@@ -46,23 +46,90 @@
     return res.json();
   }
 
-  async function fetchStories() {
+  // Cache utilities
+  const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+
+  function getCache(key) {
     try {
-      const data = await apiGet('/stories/');
-      return Array.isArray(data) ? data : [];
+      const cached = localStorage.getItem(key);
+      if (cached) {
+        const { timestamp, data } = JSON.parse(cached);
+        if (Date.now() - timestamp < CACHE_DURATION) {
+          return data;
+        }
+      }
     } catch (e) {
-      console.error('Failed to fetch stories', e);
-      return [];
+      console.warn('Cache read error:', e);
+    }
+    return null;
+  }
+
+  function setCache(key, data) {
+    try {
+      localStorage.setItem(key, JSON.stringify({
+        timestamp: Date.now(),
+        data: data
+      }));
+    } catch (e) {
+      console.warn('Cache write error:', e);
     }
   }
 
+  async function fetchFreshStories() {
+    const data = await apiGet('/stories/');
+    return Array.isArray(data) ? data : [];
+  }
+
+  async function fetchStories() {
+    const CACHE_KEY = 'contentPlus_stories';
+    const cached = getCache(CACHE_KEY);
+    if (cached) {
+      console.log('[ContentPlus Cache Hit] Using cached stories');
+      // Background update if needed
+      if (Date.now() - JSON.parse(localStorage.getItem(CACHE_KEY)).timestamp >= CACHE_DURATION) {
+        fetchFreshStories().then(freshData => {
+          setCache(CACHE_KEY, freshData);
+          console.log('[ContentPlus Cache Update] Stories updated in background');
+          // Update global stories
+          stories = freshData;
+        }).catch(err => console.error('Background stories fetch failed:', err));
+      }
+      return cached;
+    } else {
+      console.log('[ContentPlus Cache Miss] Fetching fresh stories');
+      const data = await fetchFreshStories();
+      setCache(CACHE_KEY, data);
+      return data;
+    }
+  }
+
+  async function fetchFreshArticlesByStory(storyId) {
+    const data = await apiGet(`/articles/by-story/${encodeURIComponent(storyId)}/`);
+    return Array.isArray(data) ? data : [];
+  }
+
   async function fetchArticlesByStory(storyId) {
-    try {
-      const data = await apiGet(`/articles/by-story/${encodeURIComponent(storyId)}/`);
-      return Array.isArray(data) ? data : [];
-    } catch (e) {
-      console.error('Failed to fetch articles for story', storyId, e);
-      return [];
+    const CACHE_KEY = `contentPlus_articles_${storyId}`;
+    const cached = getCache(CACHE_KEY);
+    if (cached) {
+      console.log(`[ContentPlus Cache Hit] Using cached articles for story ${storyId}`);
+      // Background update if needed
+      if (Date.now() - JSON.parse(localStorage.getItem(CACHE_KEY)).timestamp >= CACHE_DURATION) {
+        fetchFreshArticlesByStory(storyId).then(freshData => {
+          setCache(CACHE_KEY, freshData);
+          console.log(`[ContentPlus Cache Update] Articles updated in background for story ${storyId}`);
+          // Update if current story
+          if (currentStory && currentStory.id === storyId) {
+            articles = freshData.map(normalizeArticle);
+          }
+        }).catch(err => console.error('Background articles fetch failed:', err));
+      }
+      return cached;
+    } else {
+      console.log(`[ContentPlus Cache Miss] Fetching fresh articles for story ${storyId}`);
+      const data = await fetchFreshArticlesByStory(storyId);
+      setCache(CACHE_KEY, data);
+      return data;
     }
   }
 
