@@ -2619,3 +2619,163 @@
 2025-10-09 08:14:07,284 - INFO - Quiz Logger Initialized
 2025-10-09 08:14:07,284 - INFO - ==================================================
 2025-10-09 08:14:07,284 - INFO - ==================================================
+2025-10-09 19:29:52,391 - INFO - [LOGIN] Created new session 1000034 with status=2 (active)
+2025-10-09 19:29:52,391 - INFO - [LOGIN] Created new session 1000034 with status=2 (active)
+2025-10-09 19:29:52,437 - INFO - is_timer_active(1000034): thread exists=False, is_alive=False
+2025-10-09 19:29:52,437 - INFO - is_timer_active(1000034): thread exists=False, is_alive=False
+2025-10-09 19:29:53,476 - INFO - is_timer_active(1000034): thread exists=False, is_alive=False
+2025-10-09 19:29:53,476 - INFO - is_timer_active(1000034): thread exists=False, is_alive=False
+2025-10-09 19:29:54,521 - INFO - is_timer_active(1000034): thread exists=False, is_alive=False
+2025-10-09 19:29:54,521 - INFO - is_timer_active(1000034): thread exists=False, is_alive=False
+2025-10-09 19:29:55,568 - INFO - is_timer_active(1000034): thread exists=False, is_alive=False
+2025-10-09 19:29:55,568 - INFO - is_timer_active(1000034): thread exists=False, is_alive=False
+2025-10-09 19:29:56,608 - INFO - is_timer_active(1000034): thread exists=False, is_alive=False
+2025-10-09 19:29:56,608 - INFO - is_timer_active(1000034): thread exists=False, is_alive=False
+2025-10-09 19:29:57,648 - INFO - is_timer_active(1000034): thread exists=False, is_alive=False
+2025-10-09 19:29:57,648 - INFO - is_timer_active(1000034): thread exists=False, is_alive=False
+2025-10-09 19:29:58,478 - INFO - [LOGIN] Created new session 1000035 with status=2 (active)
+2025-10-09 19:29:58,478 - INFO - [LOGIN] Created new session 1000035 with status=2 (active)
+2025-10-09 19:29:58,701 - INFO - is_timer_active(1000035): thread exists=False, is_alive=False
+2025-10-09 19:29:58,701 - INFO - is_timer_active(1000035): thread exists=False, is_alive=False
+2025-10-09 19:29:59,736 - INFO - is_timer_active(1000035): thread exists=False, is_alive=False
+2025-10-09 19:29:59,736 - INFO - is_timer_active(1000035): thread exists=False, is_alive=False
+2025-10-09 19:30:00,771 - INFO - is_timer_active(1000035): thread exists=False, is_alive=False
+2025-10-09 19:30:00,771 - INFO - is_timer_active(1000035): thread exists=False, is_alive=False
+2025-10-09 19:30:01,807 - INFO - is_timer_active(1000035): thread exists=False, is_alive=False
+2025-10-09 19:30:01,807 - INFO - is_timer_active(1000035): thread exists=False, is_alive=False
+2025-10-09 19:30:02,841 - INFO - is_timer_active(1000035): thread exists=False, is_alive=False
+2025-10-09 19:30:02,841 - INFO - is_timer_active(1000035): thread exists=False, is_alive=False
+2025-10-09 19:30:03,878 - INFO - is_timer_active(1000035): thread exists=False, is_alive=False
+2025-10-09 19:30:03,878 - INFO - is_timer_active(1000035): thread exists=False, is_alive=False
+2025-10-09 19:30:04,920 - INFO - is_timer_active(1000035): thread exists=False, is_alive=False
+2025-10-09 19:30:04,920 - INFO - is_timer_active(1000035): thread exists=False, is_alive=False
+2025-10-09 19:30:05,924 - INFO - start_generic_timer: Created and starting timer thread for session 1000035
+2025-10-09 19:30:05,924 - INFO - start_generic_timer: Created and starting timer thread for session 1000035
+2025-10-09 19:30:05,924 - INFO - Timer thread started for session 1000035, phase: voting
+2025-10-09 19:30:05,924 - INFO - Timer thread started for session 1000035, phase: voting
+2025-10-09 19:30:05,958 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:05,958 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:06,969 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:06,969 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:07,825 - INFO - start_generic_timer: Timer already exists for session 1000035, returning False
+2025-10-09 19:30:07,825 - INFO - start_generic_timer: Timer already exists for session 1000035, returning False
+2025-10-09 19:30:07,999 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:07,999 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:08,985 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:08,985 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:09,767 - INFO - start_generic_timer: Timer already exists for session 1000035, returning False
+2025-10-09 19:30:09,767 - INFO - start_generic_timer: Timer already exists for session 1000035, returning False
+2025-10-09 19:30:10,025 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:10,025 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:11,066 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:11,066 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:12,110 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:12,110 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:13,153 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:13,153 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:14,189 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:14,189 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:15,225 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:15,225 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:16,262 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:16,262 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:17,297 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:17,297 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:18,335 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:18,335 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:19,374 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:19,374 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:20,413 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:20,413 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:20,555 - INFO - Timer thread ending, removing from active_timers for session 1000035
+2025-10-09 19:30:20,555 - INFO - Timer thread ending, removing from active_timers for session 1000035
+2025-10-09 19:30:21,450 - INFO - is_timer_active(1000035): thread exists=False, is_alive=False
+2025-10-09 19:30:21,450 - INFO - is_timer_active(1000035): thread exists=False, is_alive=False
+2025-10-09 19:30:21,450 - INFO - Main loop check - quiz phase, no timer. Session 1000035
+2025-10-09 19:30:21,450 - INFO - Main loop check - quiz phase, no timer. Session 1000035
+2025-10-09 19:30:21,450 - INFO - Room check: quiz_session_1000035 has 1 participants
+2025-10-09 19:30:21,450 - INFO - Room check: quiz_session_1000035 has 1 participants
+2025-10-09 19:30:21,451 - INFO - Main loop: About to check available questions and start timer
+2025-10-09 19:30:21,451 - INFO - Main loop: About to check available questions and start timer
+2025-10-09 19:30:21,452 - INFO - Main loop: Calling start_generic_timer for session 1000035
+2025-10-09 19:30:21,452 - INFO - Main loop: Calling start_generic_timer for session 1000035
+2025-10-09 19:30:21,452 - INFO - start_generic_timer: Created and starting timer thread for session 1000035
+2025-10-09 19:30:21,452 - INFO - start_generic_timer: Created and starting timer thread for session 1000035
+2025-10-09 19:30:21,453 - INFO - Timer thread started for session 1000035, phase: quiz
+2025-10-09 19:30:21,453 - INFO - Timer thread started for session 1000035, phase: quiz
+2025-10-09 19:30:21,453 - INFO - Main loop: start_generic_timer returned True
+2025-10-09 19:30:21,453 - INFO - Main loop: start_generic_timer returned True
+2025-10-09 19:30:21,453 - INFO - ========== HANDLE_QUIZ_PHASE CALLED for session 1000035 ==========
+2025-10-09 19:30:21,453 - INFO - ========== HANDLE_QUIZ_PHASE CALLED for session 1000035 ==========
+2025-10-09 19:30:21,455 - INFO - Found 29 total questions for theme 39
+2025-10-09 19:30:21,455 - INFO - Found 29 total questions for theme 39
+2025-10-09 19:30:21,457 - INFO - Already answered questions: []
+2025-10-09 19:30:21,457 - INFO - Already answered questions: []
+2025-10-09 19:30:21,457 - INFO - Available questions: 29
+2025-10-09 19:30:21,457 - INFO - Available questions: 29
+2025-10-09 19:30:21,458 - INFO - Total players: 1
+2025-10-09 19:30:21,458 - INFO - Total players: 1
+2025-10-09 19:30:21,458 - INFO - Room check: quiz_session_1000035 has 1 participants
+2025-10-09 19:30:21,458 - INFO - Room check: quiz_session_1000035 has 1 participants
+2025-10-09 19:30:21,458 - INFO - Is quiz session active (Socket.IO room check): True
+2025-10-09 19:30:21,458 - INFO - Is quiz session active (Socket.IO room check): True
+2025-10-09 19:30:21,458 - INFO - About to send 'Preparing question 1' message
+2025-10-09 19:30:21,458 - INFO - About to send 'Preparing question 1' message
+2025-10-09 19:30:21,463 - INFO - ENTERING WHILE LOOP: available_questions=29, quiz_ended_early=False
+2025-10-09 19:30:21,463 - INFO - ENTERING WHILE LOOP: available_questions=29, quiz_ended_early=False
+2025-10-09 19:30:21,463 - INFO - INSIDE WHILE LOOP - selecting question
+2025-10-09 19:30:21,463 - INFO - INSIDE WHILE LOOP - selecting question
+2025-10-09 19:30:22,488 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:22,488 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:23,524 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:23,524 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:24,566 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:24,566 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:25,606 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:25,606 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:26,639 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:26,639 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:27,673 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:27,673 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:28,706 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:28,706 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:29,743 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:29,743 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:30,777 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:30,777 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:31,809 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:31,809 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:32,843 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:32,843 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:33,880 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:33,880 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:34,916 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:34,916 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:35,961 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:35,961 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:36,992 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:36,992 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:38,026 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:38,026 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:39,061 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:39,061 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:40,099 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:40,099 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:41,141 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:41,141 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:42,179 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:42,179 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:43,220 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:43,220 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:44,256 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:44,256 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:45,286 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:45,286 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:46,321 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:46,321 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:47,358 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:47,358 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:48,394 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:48,394 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
+2025-10-09 19:30:57,859 - INFO - INSIDE WHILE LOOP - selecting question
+2025-10-09 19:30:57,859 - INFO - INSIDE WHILE LOOP - selecting question
