@@ -11,10 +11,6 @@ let isProcessing = false;
 let currentDownloadId = null;
 let statusCheckInterval = null;
 
-// API Configuration
-// Configuration - Match your other JS files' pattern
-const API_BASE_URL = `https://${window.location.hostname}`;
-
 // URL patterns for different platforms
 const urlPatterns = {
     youtube: /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|embed|watch|shorts)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
