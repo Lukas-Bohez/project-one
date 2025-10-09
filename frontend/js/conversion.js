@@ -8,6 +8,7 @@ class ConversionTheSpire {
         this.selectedFormat = '';
         this.conversions = [];
         this.convertedFiles = [];
+        this.lastClickTime = 0; // For debouncing file dialog
         
         this.init();
     }
@@ -25,19 +26,30 @@ class ConversionTheSpire {
         const uploadBtn = document.querySelector('.c-upload-btn');
 
         if (fileInput && uploadArea && uploadBtn) {
-            uploadBtn.addEventListener('click', () => {
-                fileInput.value = ''; // Reset file input to allow same file upload
-                fileInput.click();
+            // Set accept attribute to prevent unsupported files
+            fileInput.accept = "image/*,audio/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.zip,.rar,.7z,.tar,.gz,.json,.xml,.html,.css,.js,.md";
+            
+            const openFileDialog = () => {
+                const now = Date.now();
+                if (now - this.lastClickTime > 1000) { // 1 second debounce
+                    this.lastClickTime = now;
+                    fileInput.value = ''; // Reset file input to allow same file upload
+                    fileInput.click();
+                }
+            };
+            
+            uploadBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent triggering uploadArea click
+                openFileDialog();
             });
+            
             fileInput.addEventListener('change', (e) => {
                 if (e.target.files.length > 0) {
                     this.handleFiles(e.target.files);
                 }
             });
-            uploadArea.addEventListener('click', () => {
-                fileInput.value = ''; // Reset file input to allow same file upload
-                fileInput.click();
-            });
+            
+            uploadArea.addEventListener('click', openFileDialog);
         }
 
         // Format selection
@@ -207,6 +219,20 @@ class ConversionTheSpire {
         this.updateConvertButton();
         this.showFileList();
         this.updateAvailableFormats();
+        
+        // Show success notification
+        const addedCount = Array.from(fileList).filter(file => this.validateFile(file)).length;
+        if (addedCount > 0) {
+            this.showNotification(`${addedCount} file(s) added successfully`, 'success');
+            
+            // Scroll to file list to show the added files
+            const fileListElement = document.getElementById('fileList');
+            if (fileListElement) {
+                setTimeout(() => {
+                    fileListElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+        }
     }
 
     validateFile(file) {
@@ -759,6 +785,10 @@ class ConversionTheSpire {
                     blobType: convertedBlob.type
                 });
                 
+                // Stop progress simulation
+                clearTimeout(timeoutId);
+                controller.abort();
+                
                 return convertedBlob;
                 
             } catch (fetchError) {
@@ -784,6 +814,20 @@ class ConversionTheSpire {
                 throw new Error('Network error: Cannot reach conversion server at quizthespire.duckdns.org');
             }
             
+            // Check for FFmpeg audio conversion errors
+            if (error.message.includes('encoder setup failed') || error.message.includes('Error while opening encoder')) {
+                if (targetFormat.toLowerCase() === 'ogg') {
+                    throw new Error('Audio conversion failed: This audio file has an unsupported sample rate or format for OGG conversion. Try converting to MP3 or WAV instead, or use a different source file with standard audio parameters (44.1kHz or 48kHz sample rate).');
+                } else {
+                    throw new Error(`Audio conversion failed: The audio file format is not compatible with ${targetFormat.toUpperCase()} conversion. Try a different output format or check the source file.`);
+                }
+            }
+            
+            // Check for other FFmpeg errors
+            if (error.message.includes('FFmpeg failed')) {
+                throw new Error('Conversion failed: The file format or parameters are not supported. Please try a different file or output format.');
+            }
+            
             throw new Error(`Conversion failed: ${error.message}`);
         }
     }
@@ -792,6 +836,12 @@ class ConversionTheSpire {
     // The convertFileOnBackend method handles sending files to the server
 
     showResults() {
+        // Hide progress section
+        const progressSection = document.getElementById('conversionProgress');
+        if (progressSection) {
+            progressSection.style.display = 'none';
+        }
+
         const resultsSection = document.getElementById('conversionResults');
         const resultsList = document.getElementById('resultsList');
         
