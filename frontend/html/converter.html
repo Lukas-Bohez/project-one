@@ -210,14 +210,14 @@
             <h1 class="c-header__title">Convert The Spire</h1>
         </a>
         <p class="converter-byline" style="font-size: 0.9em; opacity: 0.9; margin: 6px 0 0 0;">by Oroka Conner</p>
-        <div class="c-theme-toggle" id="servoTestBtn">
+        <button class="c-theme-toggle" id="servoTestBtn" onclick="console.log('Theme button clicked'); toggleTheme()">
             Toggle Theme
-        </div>
+        </button>
         <div class="c-header__bottom-row">
             <button class="c-info-btn" onclick="openModal()">?</button>
-            <div class="c-theme-toggle" id="servoTestBtn-mobile">
+            <button class="c-theme-toggle" id="servoTestBtn-mobile" onclick="toggleTheme()">
                 Toggle Theme
-            </div>
+            </button>
         </div>
     </header>
 
@@ -459,18 +459,44 @@
     </main>
 
     <script>
-        // Ensure converter page uses persisted theme (sync with privacy and site)
+        // Theme synchronization for converter page modals only
         (function(){
-            const root = document.documentElement;
-            const body = document.body;
-            const saved = localStorage.getItem('theme');
-            if(saved === 'dark'){
-                root.setAttribute('data-theme','dark');
-                body.classList.add('theme-dark');
-            } else if(saved === 'light'){
-                root.removeAttribute('data-theme');
-                body.classList.remove('theme-dark');
+            'use strict';
+            
+            function updateModals(){
+                const theme = document.documentElement.getAttribute('data-theme') || 
+                             (document.body.classList.contains('theme-dark') ? 'dark' : 'light');
+                const isDark = theme === 'dark';
+                
+                // Update info modal if it exists
+                const infoModal = document.getElementById('infoModal');
+                if (infoModal) {
+                    const content = infoModal.querySelector('.c-modal__content');
+                    if (isDark) {
+                        infoModal.classList.add('qts-dark');
+                        if (content) {
+                            content.style.background = '#0f1724';
+                            content.style.color = '#e6eef9';
+                            content.style.boxShadow = '0 10px 30px rgba(0,0,0,0.6)';
+                        }
+                    } else {
+                        infoModal.classList.remove('qts-dark');
+                        if (content) {
+                            content.style.background = 'white';
+                            content.style.color = '#2c3e50';
+                            content.style.boxShadow = '0 10px 30px rgba(0,0,0,0.3)';
+                        }
+                    }
+                }
             }
+            
+            // Listen for theme changes from themeManager
+            window.addEventListener('themeChanged', function(e) {
+                setTimeout(updateModals, 50);
+            });
+            
+            // Initial modal update after themeManager has loaded
+            setTimeout(updateModals, 200);
         })();
     </script>
 
@@ -605,6 +631,7 @@
     </footer>
 
     <script src="../js/converter.js"></script>
+    <script src="../js/themeManager.js"></script>
     <script src="../js/lofi.js" defer></script>
 </body>
 </html>

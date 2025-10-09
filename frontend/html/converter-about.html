@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About Convert The Spire | Free Video Converter by the QuizTheSpire Team</title>
     <meta name="description" content="Learn about Convert The Spire - Free YouTube to MP3/MP4 converter created by the QuizTheSpire Team. Our mission, story, and commitment to providing the best free video conversion service.">
-    <meta name="keywords" content="about convert the spire, lukas bohez, video converter creator, free video converter, youtube to mp3 developer, open source converter">
+    <meta name="keywords" content="about convert the spire, video converter creator, free video converter, youtube to mp3 developer, open source converter">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
     <meta name="author" content="QuizTheSpire Team">
     <meta name="language" content="en">
@@ -33,9 +33,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="icon" href="../favicon.ico" sizes="192x192">
     
+    <script src="../js/themeManager.js"></script>
+    
     <!-- Structured Data -->
     <script type="application/ld+json">
-    [{
+    {
         "@context": "https://schema.org",
         "@type": "AboutPage",
         "name": "About Convert The Spire",
@@ -44,43 +46,16 @@
         "datePublished": "2025-09-27",
         "dateModified": "2025-09-27",
         "author": {
-            "@type": "Person",
-            "name": "Lukas Bohez",
-            "email": "our support chat",
-            "url": "https://github.com/Lukas-Bohez"
+            "@type": "Organization",
+            "name": "QuizTheSpire Team",
+            "email": "our support chat"
         },
         "publisher": {
             "@type": "Organization",
             "name": "Convert The Spire",
             "url": "https://quizthespire.duckdns.org"
         }
-    },
-    {
-        "@context": "https://schema.org",
-        "@type": "Person",
-        "name": "Lukas Bohez",
-        "jobTitle": "Software Developer",
-        "email": "our support chat",
-        "url": "https://github.com/Lukas-Bohez",
-        "knows": [
-            {
-                "@type": "Thing",
-                "name": "Web Development"
-            },
-            {
-                "@type": "Thing",
-                "name": "Video Processing"
-            },
-            {
-                "@type": "Thing",
-                "name": "API Development"
-            }
-        ],
-        "alumniOf": {
-            "@type": "EducationalOrganization",
-            "name": "Computer Science"
-        }
-    }]
+    }
     </script>
 
     <style>
@@ -335,9 +310,9 @@
         <a href="converter.html" class="c-header__link">
             <h1 class="c-header__title">Convert The Spire</h1>
         </a>
-        <div class="c-theme-toggle" id="themeToggle">
+        <button class="c-theme-toggle" id="theme-toggle" onclick="toggleTheme()">
             Toggle Theme
-        </div>
+        </button>
     </header>
 
     <main class="about-page">
@@ -422,30 +397,27 @@
             </div>
         </div>
 
-        <h2>👨‍💻 Meet the Creator</h2>
+        <h2>👨‍💻 Meet the Team</h2>
         <div class="creator-section">
             <div class="creator-info">
                 <div class="creator-avatar">
-                    LB
+                    CTS
                 </div>
                 <div class="creator-details">
-                    <h3>Lukas Bohez</h3>
-                    <p><strong>Software Developer & Creator of Convert The Spire</strong></p>
+                    <h3>The QuizTheSpire Team</h3>
+                    <p><strong>Creators of Convert The Spire</strong></p>
                     <p>
-                        Hi! I'm Lukas, a passionate software developer from Belgium with a love for creating tools that make people's lives easier. 
-                        I built Convert The Spire because I was frustrated with existing video converters that were slow, ad-heavy, or required payment for basic features.
+                        We're a passionate team of developers dedicated to creating tools that make the internet more accessible and user-friendly.
+                        Convert The Spire was built because we were frustrated with existing video converters that were slow, ad-heavy, or required payment for basic features.
                     </p>
                     <p>
-                        My goal was simple: create the video converter I wish existed. Something fast, clean, private, and completely free. 
+                        Our goal was simple: create the video converter we wish existed. Something fast, clean, private, and completely free.
                         Convert The Spire is the result of that vision, built with modern web technologies and a user-first mindset.
                     </p>
                     
                     <div class="contact-methods">
                         <a href="/html/support.html" class="contact-btn">
                             <i class="fas fa-comments"></i> Chat with Support
-                        </a>
-                        <a href="https://github.com/Lukas-Bohez" target="_blank" rel="noopener" class="contact-btn">
-                            <i class="fab fa-github"></i> GitHub
                         </a>
                     </div>
                 </div>
@@ -470,14 +442,14 @@
         <div class="faq-item">
             <div class="faq-question">Why is Convert The Spire completely free?</div>
             <div class="faq-answer">
-                <p>I believe that basic internet tools should be accessible to everyone. Convert The Spire is my contribution to making the web a better place. The service is sustainable through efficient design and community support.</p>
+                <p>We believe that basic internet tools should be accessible to everyone. Convert The Spire is our contribution to making the web a better place. The service is sustainable through efficient design and community support.</p>
             </div>
         </div>
 
         <div class="faq-item">
             <div class="faq-question">How do you make money if the service is free?</div>
             <div class="faq-answer">
-                <p>Convert The Spire is currently a passion project. The costs are minimal due to efficient architecture, and I maintain it as a service to the community. There are no ads, no premium tiers, and no hidden monetization.</p>
+                <p>Convert The Spire is currently a passion project. The costs are minimal due to efficient architecture, and we maintain it as a service to the community. There are no ads, no premium tiers, and no hidden monetization.</p>
             </div>
         </div>
 
@@ -491,7 +463,7 @@
         <div class="faq-item">
             <div class="faq-question">Can I suggest new features or platforms?</div>
             <div class="faq-answer">
-                <p>Yes! I love hearing from users. Send your suggestions, feature requests, or feedback to <a href="/html/support.html">our support chat</a>. User feedback drives the development roadmap.</p>
+                <p>Yes! We love hearing from users. Send your suggestions, feature requests, or feedback to <a href="/html/support.html">our support chat</a>. User feedback drives the development roadmap.</p>
             </div>
         </div>
 
@@ -506,21 +478,18 @@
         <div class="creator-section">
             <h3>Let's Connect!</h3>
             <p>
-                I love connecting with users of Convert The Spire. Whether you have questions, suggestions, feedback, or just want to say hello, 
-                I'm always excited to hear from the community that makes this project worthwhile.
+                We love connecting with users of Convert The Spire. Whether you have questions, suggestions, feedback, or just want to say hello,
+                we're always excited to hear from the community that makes this project worthwhile.
             </p>
             
             <div style="text-align: center; margin-top: 2rem;">
-                <a href="/html/support.html" class="contact-btn" style="margin-right: 1rem;">
+                <a href="/html/support.html" class="contact-btn">
                     <i class="fas fa-comments"></i> Start a Chat
-                </a>
-                <a href="https://github.com/Lukas-Bohez" target="_blank" rel="noopener" class="contact-btn">
-                    <i class="fab fa-github"></i> View Projects
                 </a>
             </div>
             
             <p style="text-align: center; margin-top: 1rem; font-style: italic;">
-                <strong>Response Time:</strong> I typically respond to emails within 24-48 hours. 
+                <strong>Response Time:</strong> We typically respond to messages within 24-48 hours.
                 For urgent technical issues, please include "URGENT" in your subject line.
             </p>
         </div>
@@ -528,13 +497,13 @@
         <div class="hero-section" style="margin-top: 3rem;">
             <h2>🙏 Thank You</h2>
             <p>
-                Thank you for using Convert The Spire and being part of our community. Your trust and support 
-                inspire me to keep improving and maintaining this service. Together, we're proving that 
+                Thank you for using Convert The Spire and being part of our community. Your trust and support
+                inspires us to keep improving and maintaining this service. Together, we're proving that
                 great tools can be free, private, and user-focused.
             </p>
             <p style="margin-top: 1rem;">
                 <strong>Happy converting!</strong><br>
-                — Lukas Bohez, Creator of Convert The Spire
+                — The QuizTheSpire Team
             </p>
         </div>
     </main>
@@ -552,20 +521,27 @@
     </footer>
 
     <script>
-        // Theme Toggle Functionality
-        const themeToggle = document.getElementById('themeToggle');
-        
-        // Load saved theme or default to light
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        
-        themeToggle.addEventListener('click', () => {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        // Theme synchronization for converter about page
+        (function(){
+            'use strict';
             
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-        });
+            function updateModals(){
+                const theme = document.documentElement.getAttribute('data-theme') || 
+                             (document.body.classList.contains('theme-dark') ? 'dark' : 'light');
+                const isDark = theme === 'dark';
+                
+                // Update any modal styling if needed
+                console.log('About page theme updated:', theme);
+            }
+            
+            // Listen for theme changes from themeManager
+            window.addEventListener('themeChanged', function(e) {
+                setTimeout(updateModals, 50);
+            });
+            
+            // Initial update after themeManager has loaded
+            setTimeout(updateModals, 200);
+        })();
 
         // Simple FAQ toggle functionality
         document.querySelectorAll('.faq-question').forEach(question => {

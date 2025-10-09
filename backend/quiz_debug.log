@@ -4506,3 +4506,9 @@ Output file #0 does not contain any stream
 2025-10-09 22:02:51,520 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1760040169.546799_failed to load meme.mp4 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1760040169.561348_failed to load meme.mp3
 2025-10-09 22:02:51,875 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1760040169.561348_failed to load meme.mp3 (156810 bytes)
 2025-10-09 22:02:51,875 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1760040169.561348_failed to load meme.mp3 (156810 bytes)
+2025-10-09 22:13:39,829 - INFO - Converting video file: /tmp/project-one/temp_uploads/1760040819.799231_2025-09-16 19-28-53.mp4 (42603273 bytes) to mp3
+2025-10-09 22:13:39,829 - INFO - Converting video file: /tmp/project-one/temp_uploads/1760040819.799231_2025-09-16 19-28-53.mp4 (42603273 bytes) to mp3
+2025-10-09 22:14:04,305 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1760040819.799231_2025-09-16 19-28-53.mp4 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1760040819.828976_2025-09-16 19-28-53.mp3
+2025-10-09 22:14:04,305 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1760040819.799231_2025-09-16 19-28-53.mp4 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1760040819.828976_2025-09-16 19-28-53.mp3
+2025-10-09 22:14:07,024 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1760040819.828976_2025-09-16 19-28-53.mp3 (2725780 bytes)
+2025-10-09 22:14:07,024 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1760040819.828976_2025-09-16 19-28-53.mp3 (2725780 bytes)

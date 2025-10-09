@@ -359,10 +359,59 @@
     </main>
     
     
-    <script src="../js/themeManager.js" defer></script>
+    <script src="../js/themeManager.js"></script>
     <script src="../js/study.js" defer></script>
     <script src="../js/lofi.js" defer></script>
     <script src="../js/infomodal.js" defer></script>
+    
+    <script>
+        // Theme synchronization for study page
+        (function(){
+            'use strict';
+            
+            function getCurrentTheme(){
+                const t = document.documentElement.getAttribute('data-theme');
+                if (t) return t;
+                if (document.body.classList.contains('theme-dark')) return 'dark';
+                if (document.body.classList.contains('theme-light')) return 'light';
+                return localStorage.getItem('quiz-theme-preference') || localStorage.getItem('theme') || 'light';
+            }
+            
+            function updateModals(){
+                const theme = getCurrentTheme();
+                const isDark = theme === 'dark';
+                
+                // Update any modals or special elements that need theme syncing
+                const infoModal = document.getElementById('infoModal');
+                if (infoModal) {
+                    const content = infoModal.querySelector('.modal-content');
+                    if (isDark) {
+                        infoModal.classList.add('qts-dark');
+                        if (content) {
+                            content.style.background = '#0f1724';
+                            content.style.color = '#e6eef9';
+                            content.style.boxShadow = '0 10px 30px rgba(0,0,0,0.6)';
+                        }
+                    } else {
+                        infoModal.classList.remove('qts-dark');
+                        if (content) {
+                            content.style.background = 'white';
+                            content.style.color = '#2c3e50';
+                            content.style.boxShadow = '0 10px 30px rgba(0,0,0,0.3)';
+                        }
+                    }
+                }
+            }
+            
+            // Listen for theme changes
+            window.addEventListener('themeChanged', function(e) {
+                setTimeout(updateModals, 50);
+            });
+            
+            // Initial update
+            setTimeout(updateModals, 100);
+        })();
+    </script>
     
     <!-- Initialize ads AFTER all other scripts load -->
     <script>

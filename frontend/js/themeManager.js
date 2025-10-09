@@ -217,33 +217,43 @@
         // System theme change handler removed - no longer needed
         
         initToggleButton() {
-            // Find the theme toggle button (support multiple IDs)
-            const toggleBtn = document.getElementById('servoTestBtn') || 
-                             document.getElementById('theme-toggle');
-            if (!toggleBtn) {
-                console.log('No theme toggle button found');
+            // Find all theme toggle buttons
+            const toggleBtns = [
+                document.getElementById('servoTestBtn'),
+                document.getElementById('servoTestBtn-mobile'),
+                document.getElementById('theme-toggle')
+            ].filter(btn => btn !== null);
+            
+            if (toggleBtns.length === 0) {
+                console.log('No theme toggle buttons found');
                 return;
             }
             
-            console.log('Found theme toggle button:', toggleBtn.id);
+            console.log('Found theme toggle buttons:', toggleBtns.map(btn => btn.id));
             
-            // Update button text and functionality
-            this.updateToggleButton();
-            
-            // Always add our event listener, but don't replace onclick if it exists
-            // This ensures our themeManager works alongside any existing onclick
-            toggleBtn.addEventListener('click', (e) => {
-                console.log('Theme toggle button clicked');
-                e.preventDefault();
-                e.stopPropagation();
-                this.toggleTheme();
+            // Update all buttons
+            toggleBtns.forEach(btn => {
+                this.updateToggleButton(btn);
+                
+                // If the button doesn't have an onclick handler, add our event listener
+                if (!btn.onclick) {
+                    btn.addEventListener('click', (e) => {
+                        console.log('Theme toggle button clicked (event listener):', btn.id);
+                        this.toggleTheme();
+                    });
+                    console.log('Added event listener to theme toggle button:', btn.id);
+                } else {
+                    console.log('Theme toggle button already has onclick handler:', btn.id);
+                }
             });
             
-            console.log('Theme toggle button initialized successfully');
+            console.log('Theme toggle buttons initialized successfully');
         }
         
-        updateToggleButton() {
-            const toggleBtn = document.getElementById('servoTestBtn') || 
+        updateToggleButton(specificBtn = null) {
+            const toggleBtn = specificBtn || 
+                             document.getElementById('servoTestBtn') || 
+                             document.getElementById('servoTestBtn-mobile') ||
                              document.getElementById('theme-toggle');
             if (!toggleBtn) return;
             
@@ -260,9 +270,8 @@
                 title = 'Light mode active. Click to switch to dark mode.';
             }
             
-            // Update button - don't set text content since CSS ::before handles the emoji
-            // toggleBtn.textContent = emoji;
-            
+            // Update button text content for buttons that display text
+            toggleBtn.textContent = text;
             toggleBtn.title = title;
             
             // Add accessibility attributes

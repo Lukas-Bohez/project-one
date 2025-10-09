@@ -31,6 +31,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="icon" href="../favicon.ico" sizes="192x192">
     
+    <script src="../js/themeManager.js"></script>
+    
     <!-- Structured Data -->
     <script type="application/ld+json">
     {
@@ -156,9 +158,9 @@
         <a href="converter.html" class="c-header__link">
             <h1 class="c-header__title">Convert The Spire</h1>
         </a>
-        <div class="c-theme-toggle" id="themeToggle" role="button" aria-pressed="false" tabindex="0">
+        <button class="c-theme-toggle" id="theme-toggle" onclick="toggleTheme()">
             Toggle Theme
-        </div>
+        </button>
     </header>
 
     <main class="legal-page">
@@ -358,95 +360,27 @@
     </main>
 
     <script>
-        // Theme toggle and persistence for privacy page
+        // Theme synchronization for converter privacy page
         (function(){
-            const root = document.documentElement;
-            const body = document.body;
-            const toggle = document.getElementById('themeToggle');
-
-            function applyTheme(theme){
-                if(theme === 'dark'){
-                    root.setAttribute('data-theme','dark');
-                    body.classList.add('theme-dark');
-                    toggle.setAttribute('aria-pressed','true');
-                } else {
-                    root.removeAttribute('data-theme');
-                    body.classList.remove('theme-dark');
-                    toggle.setAttribute('aria-pressed','false');
-                }
+            'use strict';
+            
+            function updateModals(){
+                const theme = document.documentElement.getAttribute('data-theme') || 
+                             (document.body.classList.contains('theme-dark') ? 'dark' : 'light');
+                const isDark = theme === 'dark';
+                
+                // Update any modal styling if needed
+                console.log('Privacy page theme updated:', theme);
             }
-
-            // Initialize (use unified 'theme' key)
-            const saved = localStorage.getItem('theme');
-            if(saved) applyTheme(saved);
-
-            // Toggle handler
-            const handler = () => {
-                const current = root.getAttribute('data-theme') === 'dark' || body.classList.contains('theme-dark') ? 'dark' : 'light';
-                const next = current === 'dark' ? 'light' : 'dark';
-                localStorage.setItem('theme', next);
-                applyTheme(next);
-            };
-
-            toggle.addEventListener('click', handler);
-            toggle.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); }});
+            
+            // Listen for theme changes from themeManager
+            window.addEventListener('themeChanged', function(e) {
+                setTimeout(updateModals, 50);
+            });
+            
+            // Initial update after themeManager has loaded
+            setTimeout(updateModals, 200);
         })();
-    </script>
-
-    <footer class="c-footer">
-        <div class="c-footer__container">
-            <div style="text-align: center; padding: 1rem;">
-                <p>&copy; 2025 Convert The Spire. All rights reserved. | 
-                <a href="converter.html" class="c-footer__link--inline">Back to Converter</a> | 
-                <a href="converter-terms.html" class="c-footer__link--inline">Terms of Service</a> | 
-                <a href="converter-about.html" class="c-footer__link--inline">About</a></p>
-            </div>
-        </div>
-    </footer>
-
-    <script>
-        // Theme Toggle Functionality
-        const themeToggle = document.getElementById('themeToggle');
-        
-        // Load saved theme or default to light
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        document.body.setAttribute('data-theme', savedTheme);
-        
-        themeToggle.addEventListener('click', () => {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            
-            document.documentElement.setAttribute('data-theme', newTheme);
-            document.body.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            
-            // Dispatch events to sync with other pages
-            try {
-                window.dispatchEvent(new StorageEvent('storage', {
-                    key: 'theme',
-                    newValue: newTheme,
-                    url: window.location.href
-                }));
-                window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: newTheme } }));
-            } catch (e) {}
-        });
-        
-        // Listen for messages from parent (privacy modal) to apply theme
-        window.addEventListener('message', (e) => {
-            if (e.origin !== window.location.origin) return;
-            if (e.data && e.data.type === 'applyTheme') {
-                const t = e.data.theme;
-                if (t === 'dark') {
-                    document.documentElement.setAttribute('data-theme', 'dark');
-                    document.body.setAttribute('data-theme', 'dark');
-                } else {
-                    document.documentElement.setAttribute('data-theme', 'light');
-                    document.body.setAttribute('data-theme', 'light');
-                }
-                localStorage.setItem('theme', t);
-            }
-        });
     </script>
 </body>
 </html>
