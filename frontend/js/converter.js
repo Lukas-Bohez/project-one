@@ -49,7 +49,6 @@ const downloadBtn = document.getElementById('download-btn');
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
-    initializeTheme();
     updateUIForPlatform('youtube');
 });
 
@@ -81,70 +80,8 @@ function initializeEventListeners() {
         downloadBtn.addEventListener('click', handleDownload);
     }
     
-    // Theme toggle - handle both desktop and mobile buttons
-    const themeToggle = document.getElementById('servoTestBtn');
-    const themeToggleMobile = document.getElementById('servoTestBtn-mobile');
-    
-    if (themeToggle) {
-        themeToggle.addEventListener('click', toggleTheme);
-    }
-    if (themeToggleMobile) {
-        themeToggleMobile.addEventListener('click', toggleTheme);
-    }
-    
     // Modal controls
     setupModalControls();
-}
-
-// Initialize theme from localStorage or system preference
-function initializeTheme() {
-    const savedTheme = localStorage.getItem('theme');
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (savedTheme) {
-        document.body.setAttribute('data-theme', savedTheme);
-    } else if (systemPrefersDark) {
-        document.body.setAttribute('data-theme', 'dark');
-    }
-    
-    updateThemeButton();
-}
-
-// Toggle theme between light and dark
-function toggleTheme() {
-    const currentTheme = document.body.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    
-    document.body.setAttribute('data-theme', newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
-    updateThemeButton();
-    
-    // Dispatch events to sync with main site
-    try {
-        window.dispatchEvent(new StorageEvent('storage', {
-            key: 'theme',
-            newValue: newTheme,
-            url: window.location.href
-        }));
-        window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: newTheme } }));
-    } catch (e) {}
-}
-
-// Update theme toggle button text
-function updateThemeButton() {
-    const themeButton = document.getElementById('servoTestBtn');
-    const themeButtonMobile = document.getElementById('servoTestBtn-mobile');
-    const currentTheme = document.body.getAttribute('data-theme');
-    
-    const buttonText = currentTheme === 'dark' ? 'Light Theme' : 'Dark Theme';
-    
-    if (themeButton) {
-        themeButton.textContent = buttonText;
-    }
-    if (themeButtonMobile) {
-        themeButtonMobile.textContent = buttonText;
-    }
 }
 
 // Setup dropdown functionality

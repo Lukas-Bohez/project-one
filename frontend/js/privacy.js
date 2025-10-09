@@ -111,46 +111,17 @@ document.addEventListener('DOMContentLoaded', () => {
         modalHeader.appendChild(modalTitle);
         modalContainer.appendChild(modalHeader);
 
-        // Create iframe container with proper scrolling
-        const iframeContainer = document.createElement('div');
-        iframeContainer.style.cssText = `
+        // Create content container with inline privacy content
+        const contentContainer = document.createElement('div');
+        contentContainer.style.cssText = `
             flex: 1;
             overflow: hidden;
             position: relative;
             min-height: 0;
         `;
-
-        // Create iframe for privacy.html
-        const iframe = document.createElement('iframe');
-        iframe.id = 'privacy-iframe';
-        iframe.src = '../html/privacy.html';
-        iframe.style.cssText = `
-            width: 100%;
-            height: 100%;
-            border: none;
-            display: block;
-        `;
         
-        // Handle iframe load event to ensure content is properly loaded
-        iframe.onload = () => {
-            try {
-                // Send a message to the iframe content to set up communication
-                iframe.contentWindow.postMessage('modalReady', window.location.origin);
-                // Also post current theme so iframe can apply it
-                // Determine current theme: prefer data-theme or body class, fallback to localStorage or system
-                const theme = (document.documentElement.getAttribute('data-theme') === 'dark' || document.body.classList.contains('theme-dark')) ? 'dark' : (localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
-                iframe.contentWindow.postMessage({ type: 'applyTheme', theme }, window.location.origin);
-            } catch (e) {
-                console.warn('Could not communicate with iframe:', e);
-            }
-        };
-
-        // Handle iframe load errors
-        iframe.onerror = () => {
-            console.error('Failed to load privacy.html');
-            // Fallback: show inline content if iframe fails
-            showInlinePrivacyContent(iframeContainer);
-        };
+        // Show inline privacy content directly
+        showInlinePrivacyContent(contentContainer);
         
         // Create modal footer with only Accept button
         const modalFooter = document.createElement('div');
@@ -193,8 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modalFooter.appendChild(acceptButton);
         
         // Add elements to DOM
-        iframeContainer.appendChild(iframe);
-        modalContainer.appendChild(iframeContainer);
+        modalContainer.appendChild(contentContainer);
         modalContainer.appendChild(modalFooter);
         modalOverlay.appendChild(modalContainer);
         document.body.appendChild(modalOverlay);
@@ -224,36 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        // Listen for messages from the iframe
-        const messageHandler = (event) => {
-            // Security check - verify message origin
-            if (event.origin !== window.location.origin) return;
-            
-            if (event.data === 'privacyConsentAccepted') {
-                // Save consent
-                const consentData = {
-                    accepted: true,
-                    timestamp: new Date().getTime()
-                };
-                localStorage.setItem('privacyConsent', JSON.stringify(consentData));
-                
-                // Remove modal
-                removePrivacyModal();
-            } else if (event.data === 'privacyConsentRejected') {
-                // Handle rejection from iframe
-                const consentData = {
-                    accepted: false,
-                    timestamp: new Date().getTime()
-                };
-                localStorage.setItem('privacyConsent', JSON.stringify(consentData));
-                
-                // Remove modal
-                removePrivacyModal();
-            }
-        };
-        
-        window.addEventListener('message', messageHandler);
-        modalOverlay._messageHandler = messageHandler;
+        // No iframe message handling needed since we're using inline content
 
         // Add CSS animations
         const style = document.createElement('style');
@@ -273,21 +214,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     max-height: none;
                 }
             }
-            /* Ensure iframe scrolling works properly */
-            #privacy-iframe {
+            /* Modal content scrolling */
+            #privacy-modal-container div[style*="overflow-y: auto"] {
                 scrollbar-width: thin;
             }
-            #privacy-iframe::-webkit-scrollbar {
+            #privacy-modal-container div[style*="overflow-y: auto"]::-webkit-scrollbar {
                 width: 8px;
             }
-            #privacy-iframe::-webkit-scrollbar-track {
+            #privacy-modal-container div[style*="overflow-y: auto"]::-webkit-scrollbar-track {
                 background: #f1f1f1;
             }
-            #privacy-iframe::-webkit-scrollbar-thumb {
+            #privacy-modal-container div[style*="overflow-y: auto"]::-webkit-scrollbar-thumb {
                 background: #888;
                 border-radius: 4px;
             }
-            #privacy-iframe::-webkit-scrollbar-thumb:hover {
+            #privacy-modal-container div[style*="overflow-y: auto"]::-webkit-scrollbar-thumb:hover {
                 background: #555;
             }
         `;
@@ -318,28 +259,147 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fallback function to show inline content if iframe fails
     function showInlinePrivacyContent(container) {
         container.innerHTML = `
-            <div style="padding: 20px; overflow-y: auto; height: 100%;">
-                <h2>Privacy Policy</h2>
-                <p>We value your privacy and are committed to protecting your personal information.</p>
-                
-                <h3>What information do we collect?</h3>
-                <ul>
-                    <li><strong>Environmental Sensor Data:</strong> Temperature and light levels to adjust game difficulty</li>
-                    <li><strong>Game Data:</strong> Performance metrics and progress</li>
-                    <li><strong>Technical Data:</strong> Browser and device information</li>
-                </ul>
+            <div style="padding: 20px; overflow-y: auto; height: 100%; background: var(--bg-primary); color: var(--text-primary);">
+                <h2 style="color: var(--primary-color); margin-bottom: 1rem;">Privacy Policy</h2>
+                <p style="margin-bottom: 2rem; line-height: 1.6;">
+                    Welcome to Quiz The Spire! We value your privacy and transparency regarding how we collect, use, and share data. This Privacy Policy explains what information we collect when you use our quiz game, why we collect it, and how we protect it.
+                </p>
 
-                <h3>Terms of Service</h3>
-                <ul>
-                    <li>You will not attempt to cheat or manipulate the game system</li>
-                    <li>You are responsible for maintaining account confidentiality</li>
-                    <li>We reserve the right to modify or terminate the service</li>
-                    <li>You must be at least 13 years old to use this service</li>
-                </ul>
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="color: var(--primary-color); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--primary-color);">What information do we collect?</h3>
+                    <p style="margin-bottom: 1rem; line-height: 1.6;">
+                        We collect various types of information to enhance your gaming experience and optimize the functionality of Quiz The Spire:
+                    </p>
+                    <ul style="margin-bottom: 1rem; padding-left: 2rem; line-height: 1.6;">
+                        <li style="margin-bottom: 0.5rem;">
+                            <strong>Environmental Sensor Data:</strong> To adjust the dynamic difficulty of the quiz, we collect anonymized data from environmental sensors, such as temperature and light levels, from your gaming environment. This data is used to influence the timer speed and question difficulty. This data is not directly linked to your identity.
+                        </li>
+                        <li style="margin-bottom: 0.5rem;">
+                            <strong>Game Data:</strong> Information about your quiz performance, points scored, items used, and game progress is collected to improve the game and display your results.
+                        </li>
+                        <li style="margin-bottom: 0.5rem;">
+                            <strong>Technical Data:</strong> Data such as your IP address, browser type, operating system, and device type may be automatically collected for diagnostic purposes and to ensure the stability of our service.
+                        </li>
+                    </ul>
+                </div>
 
-                <p><strong>Contact:</strong> lukasbohez@gmail.com</p>
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="color: var(--primary-color); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--primary-color);">How do we use your information?</h3>
+                    <p style="margin-bottom: 1rem; line-height: 1.6;">
+                        The collected information is used for the following purposes:
+                    </p>
+                    <ul style="margin-bottom: 1rem; padding-left: 2rem; line-height: 1.6;">
+                        <li style="margin-bottom: 0.5rem;">
+                            To <strong>personalize and improve gameplay</strong>, such as adjusting difficulty based on environmental sensor data.
+                        </li>
+                        <li style="margin-bottom: 0.5rem;">
+                            For <strong>internal analysis</strong> to understand game performance and develop new features.
+                        </li>
+                        <li style="margin-bottom: 0.5rem;">
+                            To ensure the <strong>stability and security</strong> of our service.
+                        </li>
+                    </ul>
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="color: var(--primary-color); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--primary-color);">Sharing information with third parties</h3>
+                    <p style="margin-bottom: 1rem; line-height: 1.6;">
+                        We do not share your information with third parties, except as described below:
+                    </p>
+                    <ul style="margin-bottom: 1rem; padding-left: 2rem; line-height: 1.6;">
+                        <li style="margin-bottom: 0.5rem;">
+                            <strong>Google Products:</strong> We may use Google ad code to generate revenue. In this case, Google, as a third party, may place and read cookies in your browser, and use web beacons or IP addresses to collect information through the display of ads on our website. You can find more information about how Google uses data when you use our partners' sites or apps via this link: <a href="https://policies.google.com/technologies/partner-sites" target="_blank" style="color: var(--primary-color);">How Google uses data</a>.
+                        </li>
+                        <li style="margin-bottom: 0.5rem;">
+                            <strong>Legal Obligations:</strong> We may disclose information if legally required, or if we believe in good faith that such action is necessary to comply with a legal obligation, protect our rights or property, or protect the safety of our users or the public.
+                        </li>
+                    </ul>
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="color: var(--primary-color); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--primary-color);">Your Choices and Rights</h3>
+                    <p style="margin-bottom: 1rem; line-height: 1.6;">
+                        You have the right to request access to the personal information we hold about you, to correct it, or to delete it. Please contact us at our support chat to exercise your rights.
+                    </p>
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="color: var(--primary-color); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--primary-color);">Data Security</h3>
+                    <p style="margin-bottom: 1rem; line-height: 1.6;">
+                        We take reasonable measures to protect your information from unauthorized access, use, or disclosure. However, no method of transmission over the internet or electronic storage is 100% secure.
+                    </p>
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="color: var(--primary-color); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--primary-color);">Changes to this Privacy Policy</h3>
+                    <p style="margin-bottom: 1rem; line-height: 1.6;">
+                        We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page. Changes are effective when they are posted on this page.
+                    </p>
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="color: var(--primary-color); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--primary-color);">Contact Us</h3>
+                    <p style="margin-bottom: 1rem; line-height: 1.6;">
+                        If you have any questions about this Privacy Policy, please contact us at our support chat.
+                    </p>
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="color: var(--primary-color); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--primary-color);">Terms of Service</h3>
+                    <p style="margin-bottom: 1rem; line-height: 1.6;">By using Quiz The Spire, you agree to the following terms:</p>
+                    <ul style="margin-bottom: 1rem; padding-left: 2rem; line-height: 1.6;">
+                        <li style="margin-bottom: 0.5rem;">You will not attempt to cheat or manipulate the game system</li>
+                        <li style="margin-bottom: 0.5rem;">You are responsible for maintaining the confidentiality of your account</li>
+                        <li style="margin-bottom: 0.5rem;">We reserve the right to modify or terminate the service at any time</li>
+                        <li style="margin-bottom: 0.5rem;">All user data will be handled in accordance with our privacy policy</li>
+                        <li style="margin-bottom: 0.5rem;">You must be at least 13 years old to use this service</li>
+                    </ul>
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="color: var(--primary-color); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--primary-color);">About Quiz The Spire</h3>
+                    <p style="margin-bottom: 1rem; line-height: 1.6;">
+                        Quiz The Spire is a <strong>completely free</strong> dynamic quiz game that adapts to your environment. Using temperature and lighting data, the game creates a unique experience with changing difficulty levels and timer speeds. Enjoy fun quizzes and questions that respond to your surroundings!
+                    </p>
+                </div>
+
+                <div style="border-top: 1px solid var(--border-color); padding-top: 2rem;">
+                    <h3 style="color: var(--primary-color); margin-bottom: 1rem;">Consent for Data Usage</h3>
+                    <p style="margin-bottom: 1.5rem; line-height: 1.6;">
+                        To fully enjoy "Quiz The Spire," we ask for your consent to use cookies and anonymized environmental data as described in this policy.
+                    </p>
+                    
+                    <div style="text-align: center;">
+                        <button id="reject-privacy-btn" style="padding: 12px 24px; background-color: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; margin-right: 10px;">Reject All</button>
+                    </div>
+                </div>
             </div>
         `;
+        
+        // Add event listener for the reject button
+        setTimeout(() => {
+            const rejectBtn = container.querySelector('#reject-privacy-btn');
+            if (rejectBtn) {
+                rejectBtn.addEventListener('click', () => {
+                    const consentData = {
+                        accepted: false,
+                        timestamp: new Date().getTime()
+                    };
+                    localStorage.setItem('privacyConsent', JSON.stringify(consentData));
+                    
+                    // Show reconsideration message
+                    container.innerHTML = `
+                        <div style="padding: 40px 20px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: var(--bg-primary); color: var(--text-primary);">
+                            <h3 style="color: var(--primary-color); margin-bottom: 1rem;">Privacy Preferences Saved</h3>
+                            <p style="margin-bottom: 2rem; line-height: 1.6; max-width: 400px;">
+                                You have chosen to reject all data processing. If you change your mind, you can refresh this page to reconsider our privacy policy.
+                            </p>
+                            <button onclick="window.location.reload()" style="padding: 12px 24px; background-color: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem;">Refresh Page</button>
+                        </div>
+                    `;
+                });
+            }
+        }, 100);
     }
 
     // Remove modal and all event listeners

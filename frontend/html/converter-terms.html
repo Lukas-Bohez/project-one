@@ -31,6 +31,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="icon" href="../favicon.ico" sizes="192x192">
     
+    <script src="../js/themeManager.js"></script>
+    
     <!-- Structured Data -->
     <script type="application/ld+json">
     {
@@ -61,9 +63,9 @@
         <a href="converter.html" class="c-header__link">
             <h1 class="c-header__title">Convert The Spire</h1>
         </a>
-        <div class="c-theme-toggle" id="themeToggle">
+        <button class="c-theme-toggle" id="theme-toggle" onclick="toggleTheme()">
             Toggle Theme
-        </div>
+        </button>
     </header>
 
     <main class="legal-page">
@@ -352,20 +354,27 @@
     </footer>
 
     <script>
-        // Theme Toggle Functionality
-        const themeToggle = document.getElementById('themeToggle');
-        
-        // Load saved theme or default to light
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        
-        themeToggle.addEventListener('click', () => {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        // Theme synchronization for converter terms page
+        (function(){
+            'use strict';
             
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-        });
+            function updateModals(){
+                const theme = document.documentElement.getAttribute('data-theme') || 
+                             (document.body.classList.contains('theme-dark') ? 'dark' : 'light');
+                const isDark = theme === 'dark';
+                
+                // Update any modal styling if needed
+                console.log('Terms page theme updated:', theme);
+            }
+            
+            // Listen for theme changes from themeManager
+            window.addEventListener('themeChanged', function(e) {
+                setTimeout(updateModals, 50);
+            });
+            
+            // Initial update after themeManager has loaded
+            setTimeout(updateModals, 200);
+        })();
     </script>
 </body>
 </html>
