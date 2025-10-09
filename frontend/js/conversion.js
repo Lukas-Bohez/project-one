@@ -729,6 +729,11 @@ class ConversionTheSpire {
     }
 
     async convertFileOnBackend(file, targetFormat) {
+        // Special validation for image to PDF conversions
+        if (targetFormat.toLowerCase() === 'pdf' && file.type.startsWith('image/')) {
+            await this.validateImageForPdfConversion(file);
+        }
+
         try {
             console.log(`🔄 Starting conversion: ${file.name} → ${targetFormat.toUpperCase()}`);
             
@@ -814,6 +819,19 @@ class ConversionTheSpire {
                 throw new Error('Network error: Cannot reach conversion server at quizthespire.duckdns.org');
             }
             
+            // Check for image to PDF specific errors
+            if (targetFormat.toLowerCase() === 'pdf' && file.type.startsWith('image/')) {
+                if (error.message.includes('cannot identify image file') || error.message.includes('corrupt') || error.message.includes('truncated')) {
+                    throw new Error('Image to PDF conversion failed: The image file appears to be corrupted or in an unsupported format. Try saving the image again or using a different image file.');
+                }
+                if (error.message.includes('memory') || error.message.includes('size')) {
+                    throw new Error('Image to PDF conversion failed: The image is too large. Try resizing the image or using a smaller file.');
+                }
+                if (error.message.includes('color') || error.message.includes('profile')) {
+                    throw new Error('Image to PDF conversion failed: The image has an incompatible color profile. Try converting to a different format first (like PNG or JPG).');
+                }
+            }
+            
             // Check for FFmpeg audio conversion errors
             if (error.message.includes('encoder setup failed') || error.message.includes('Error while opening encoder')) {
                 if (targetFormat.toLowerCase() === 'ogg') {
@@ -830,6 +848,46 @@ class ConversionTheSpire {
             
             throw new Error(`Conversion failed: ${error.message}`);
         }
+    }
+
+    async validateImageForPdfConversion(file) {
+        return new Promise((resolve, reject) => {
+            // Basic image validation
+            if (file.size > 50 * 1024 * 1024) { // 50MB limit for images to PDF
+                reject(new Error('Image file is too large for PDF conversion. Maximum size is 50MB. Try resizing the image.'));
+                return;
+            }
+
+            // Try to load the image to check if it's valid
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+            
+            img.onload = () => {
+                URL.revokeObjectURL(url);
+                
+                // Check dimensions (some PDF libraries have limits)
+                if (img.width > 10000 || img.height > 10000) {
+                    reject(new Error('Image dimensions are too large for PDF conversion. Maximum dimensions are 10000x10000 pixels. Try resizing the image.'));
+                    return;
+                }
+                
+                console.log(`✅ Image validation passed: ${img.width}x${img.height}, ${file.size} bytes`);
+                resolve();
+            };
+            
+            img.onerror = () => {
+                URL.revokeObjectURL(url);
+                reject(new Error('The image file appears to be corrupted or in an unsupported format. Try saving the image again or using a different image file.'));
+            };
+            
+            img.src = url;
+            
+            // Timeout for validation
+            setTimeout(() => {
+                URL.revokeObjectURL(url);
+                reject(new Error('Image validation timed out. The file may be corrupted.'));
+            }, 10000); // 10 second timeout
+        });
     }
 
     // All file conversion now happens on the backend
