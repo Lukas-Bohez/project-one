@@ -2779,3 +2779,7 @@
 2025-10-09 19:30:48,394 - INFO - is_timer_active(1000035): thread exists=True, is_alive=True
 2025-10-09 19:30:57,859 - INFO - INSIDE WHILE LOOP - selecting question
 2025-10-09 19:30:57,859 - INFO - INSIDE WHILE LOOP - selecting question
+2025-10-09 19:31:53,791 - INFO - ENDING QUIZ: Normal completion for session 1000035
+2025-10-09 19:31:53,791 - INFO - ENDING QUIZ: Normal completion for session 1000035
+2025-10-09 19:31:53,799 - INFO - Timer thread ending, removing from active_timers for session 1000035
+2025-10-09 19:31:53,799 - INFO - Timer thread ending, removing from active_timers for session 1000035
