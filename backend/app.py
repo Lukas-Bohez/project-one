@@ -6329,8 +6329,8 @@ os.makedirs(VIDEO_DOWNLOAD_DIR, exist_ok=True)
 # Retention (seconds)
 # Keep files short-lived: remove uploads and converted outputs quickly so the site
 # doesn't accumulate files and to avoid triggering reloaders or disk pressure.
-UPLOAD_RETENTION = 60        # 1 minute for uploaded files
-CONVERTED_RETENTION = 60     # 1 minute for converted files (user has time to download)
+UPLOAD_RETENTION = 300        # 5 minutes for uploaded files
+CONVERTED_RETENTION = 300     # 5 minutes for converted files (user has time to download)
 VIDEO_RETENTION = 180       # 3 minutes for downloaded videos (larger downloads may need time)
 
 def delete_file_safe(path: str):
@@ -6645,6 +6645,8 @@ async def convert_file_backend(input_path: str, target_format: str, original_fil
     """
     Convert file using appropriate backend tools
     """
+    import time
+    start_time = time.time()
     print(f"convert_file_backend called with: {input_path}, {target_format}, {original_filename}")
     file_extension = os.path.splitext(input_path)[1].lower()
     base_name = os.path.splitext(original_filename)[0]
@@ -6684,6 +6686,9 @@ async def convert_file_backend(input_path: str, target_format: str, original_fil
     except Exception as e:
         print(f"Conversion error in convert_file_backend: {e}")
         raise
+    finally:
+        end_time = time.time()
+        print(f"convert_file_backend completed in {end_time - start_time:.2f} seconds")
 
 async def convert_video_to_audio(input_path: str, output_path: str, format: str) -> str:
     """Convert video to audio using ffmpeg"""
@@ -7526,10 +7531,8 @@ else:
 # =============================================================================
 
 if __name__ == "__main__":
-    # Enable auto-reload only during development. Long-running conversions can trigger
-    # file writes and other activity that cause the StatReload reloader to restart
-    # the server unexpectedly. Make reload conditional on the DEV_RELOAD env var.
-    dev_reload = os.environ.get('DEV_RELOAD', '0') == '1'
+    # Disable auto-reload for production/long conversions
+    dev_reload = False
     uvicorn.run(
         "app:app",
         host="0.0.0.0",

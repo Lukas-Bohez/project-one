@@ -721,14 +721,14 @@ class ConversionTheSpire {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => {
                 controller.abort();
-            }, 120000); // 2 minute timeout
+            }, 600000); // 10 minute timeout
             
             // Start progress simulation for long operations
             const progressPromise = this.simulateProgress(controller);
             
             try {
                 // Send to backend conversion endpoint
-                const backendUrl = 'http://127.0.0.1:8002/api/v1/convert/upload';
+                const backendUrl = 'http://127.0.0.1:8001/api/v1/convert/upload';
                 console.log('🔗 Using backend URL:', backendUrl);
                 const response = await fetch(backendUrl, {
                     method: 'POST',
@@ -766,7 +766,7 @@ class ConversionTheSpire {
                 controller.abort(); // Stop progress simulation
                 
                 if (fetchError.name === 'AbortError') {
-                    throw new Error('Conversion timed out after 2 minutes. Please try with a smaller file.');
+                    throw new Error('Conversion timed out after 10 minutes. Please try with a smaller file.');
                 }
                 throw fetchError;
             }
