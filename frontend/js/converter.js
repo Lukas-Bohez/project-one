@@ -10,6 +10,15 @@ let videoQuality = 720;
 let isProcessing = false;
 let currentDownloadId = null;
 let statusCheckInterval = null;
+// Frontend playlist/queue storage for chunked downloads
+let playlistModeActive = false;
+let playlistQueue = []; // array of {id,title}
+let frontendStorage = []; // array of {filename, blob, size}
+let frontendStorageSize = 0; // bytes
+const FRONTEND_STORAGE_THRESHOLD = 1000000000; // 1GB
+let frontendPartIndex = 1;
+let processingQueue = false;
+let waitingForContinue = false;
 
 // URL patterns for different platforms
 const urlPatterns = {
@@ -422,6 +431,14 @@ async function showPlaylistUI(playlistId, playlistUrl) {
         if (response.ok && result.success) {
             currentPlaylistData = result;
 
+            // Enable playlist mode and disable main convert button to avoid normal flow
+            playlistModeActive = true;
+            if (convertButton) {
+                convertButton.disabled = true;
+                convertButton.classList.add('c-btn--disabled');
+                convertButton.setAttribute('title', 'Convert disabled while playlist is loaded. Use playlist controls.');
+            }
+
             // Check if playlist has 0 videos - fall back to individual video conversion
             if (result.video_count === 0) {
                 console.log('📋 Playlist has 0 videos, falling back to individual video conversion');
@@ -485,22 +502,41 @@ function renderPlaylistUI(playlistData) {
         <div class="playlist-header">
             <h3>${playlistData.title}</h3>
             <p>${playlistData.video_count} videos in playlist</p>
-            <div class="playlist-actions">
-                <button id="download-all-btn" class="download-all-btn">
+            <div id="playlist-status" class="playlist-status" style="margin-top:8px;font-size:0.95em;color:#bcd;">
+                <span id="playlist-status-text">Idle</span>
+            </div>
+            <div class="playlist-actions c-cta-buttons">
+                <button id="download-all-btn" class="c-btn c-btn--primary download-all-btn">
                     <i class="fas fa-download"></i> Download All (${playlistData.video_count} videos)
                 </button>
-                <button id="select-videos-btn" class="select-videos-btn">
+                <button id="download-up-to-now-btn" class="c-btn c-btn--tertiary download-up-to-now-btn" style="margin-left:8px;">
+                    <i class="fas fa-save"></i> Download Up To Now
+                </button>
+                <button id="select-videos-btn" class="c-btn c-btn--tertiary select-videos-btn">
                     <i class="fas fa-list"></i> Select Individual Videos
+                </button>
+                <button id="continue-btn" class="c-btn c-btn--primary" style="display:none;margin-left:12px;">
+                    <i class="fas fa-arrow-right"></i> Continue
+                </button>
+                <button id="cancel-btn" class="c-btn c-btn--tertiary" style="display:none;margin-left:8px;">
+                    <i class="fas fa-times"></i> Cancel
                 </button>
             </div>
         </div>
         <div id="playlist-videos" class="playlist-videos" style="display: none;">
             <div class="playlist-controls">
-                <button id="select-all-btn" class="select-all-btn">Select All</button>
-                <button id="deselect-all-btn" class="deselect-all-btn">Deselect All</button>
-                <button id="download-selected-btn" class="download-selected-btn" disabled>
+                <button id="select-all-btn" class="c-btn c-btn--tertiary select-all-btn">Select All</button>
+                <button id="deselect-all-btn" class="c-btn c-btn--tertiary deselect-all-btn">Deselect All</button>
+                <button id="download-selected-btn" class="c-btn c-btn--primary download-selected-btn" disabled>
                     <i class="fas fa-download"></i> Download Selected
                 </button>
+                <div style="display:inline-flex;align-items:center;margin-left:12px;">
+                    <label for="download-from-index-input" style="margin-right:6px;font-size:0.9em;color:#bcd;">From index:</label>
+                    <input id="download-from-index-input" type="number" min="1" value="1" style="width:70px;margin-right:6px;" />
+                    <button id="download-from-index-btn" class="c-btn c-btn--sm c-btn--tertiary download-from-index-btn">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
             </div>
             <div class="videos-list">
                 ${playlistData.videos.map(video => `
@@ -520,6 +556,69 @@ function renderPlaylistUI(playlistData) {
     
     // Add event listeners
     setupPlaylistEventListeners();
+    // Continue/Cancel handlers
+    const cont = document.getElementById('continue-btn');
+    const canc = document.getElementById('cancel-btn');
+    if (cont) cont.addEventListener('click', continueAfterPart);
+    if (canc) canc.addEventListener('click', cancelProcessing);
+}
+
+function showContinueControls(show) {
+    const cont = document.getElementById('continue-btn');
+    const canc = document.getElementById('cancel-btn');
+    if (cont) cont.style.display = show ? 'inline-flex' : 'none';
+    if (canc) canc.style.display = show ? 'inline-flex' : 'none';
+}
+
+async function continueAfterPart() {
+    // User confirms they've downloaded the part; clear persisted storage and resume
+    try {
+        // Clear in-memory and IDB persisted blobs for the flushed part
+        frontendStorage = [];
+        frontendStorageSize = 0;
+        waitingForContinue = false;
+        showContinueControls(false);
+        try { await clearAllBlobsFromIDB(); } catch (e) { console.warn('clearAllBlobsFromIDB failed', e); }
+        updatePlaylistStatusUI();
+        // Resume processing if queue not empty
+        if (playlistQueue.length > 0) {
+            processQueue();
+        }
+    } catch (e) {
+        console.error('continueAfterPart error', e);
+    }
+}
+
+function cancelProcessing() {
+    // User cancelled — clear all and reset
+    playlistQueue = [];
+    frontendStorage = [];
+    frontendStorageSize = 0;
+    waitingForContinue = false;
+    processingQueue = false;
+    showContinueControls(false);
+    try { clearAllBlobsFromIDB(); } catch (e) { console.warn('clearAllBlobsFromIDB failed', e); }
+    updatePlaylistStatusUI();
+    enableBulkControls();
+    if (convertButton) {
+        convertButton.disabled = false;
+        convertButton.classList.remove('c-btn--disabled');
+        convertButton.removeAttribute('title');
+    }
+}
+
+// Update the playlist status UI (safe if element missing)
+function updatePlaylistStatusUI(opts = {}) {
+    try {
+        const statusEl = document.getElementById('playlist-status-text');
+        if (!statusEl) return;
+        const queued = playlistQueue.length;
+        const storedFiles = frontendStorage.length;
+        const storedBytes = frontendStorageSize || 0;
+        const part = frontendPartIndex;
+        const current = opts.currentTitle ? `Current: ${opts.currentTitle}` : '';
+        statusEl.textContent = `Queued: ${queued} · Stored files: ${storedFiles} · Stored size: ${(storedBytes/1024/1024).toFixed(1)} MB · Part: ${part} ${current}`;
+    } catch (e) { console.warn('updatePlaylistStatusUI failed', e); }
 }
 
 function setupPlaylistEventListeners() {
@@ -557,6 +656,22 @@ function setupPlaylistEventListeners() {
     if (downloadSelectedBtn) {
         downloadSelectedBtn.addEventListener('click', () => downloadSelectedVideos());
     }
+    const downloadUpToNowBtn = document.getElementById('download-up-to-now-btn');
+    const downloadFromIndexBtn = document.getElementById('download-from-index-btn');
+    const downloadFromIndexInput = document.getElementById('download-from-index-input');
+    if (downloadUpToNowBtn) {
+        downloadUpToNowBtn.addEventListener('click', () => downloadUpToNow());
+    }
+    if (downloadFromIndexBtn) {
+        downloadFromIndexBtn.addEventListener('click', () => {
+            const raw = parseInt(downloadFromIndexInput.value, 10);
+            if (!raw || raw < 1) {
+                alert('Please enter a valid start index (1-based)');
+                return;
+            }
+            downloadFromIndex(raw);
+        });
+    }
     
     // Update download button when checkboxes change
     document.querySelectorAll('.video-checkbox').forEach(cb => {
@@ -574,11 +689,40 @@ function updateDownloadSelectedButton() {
     }
 }
 
+// Disable bulk playlist buttons to prevent duplicate bulk requests
+function disableBulkControls() {
+    const ids = ['download-all-btn','download-selected-btn','select-videos-btn','select-all-btn','deselect-all-btn'];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.disabled = true;
+            el.classList && el.classList.add('c-btn--disabled');
+            el.style.opacity = '0.6';
+            el.style.pointerEvents = 'none';
+        }
+    });
+}
+
+function enableBulkControls() {
+    const ids = ['download-all-btn','download-selected-btn','select-videos-btn','select-all-btn','deselect-all-btn'];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.disabled = false;
+            el.classList && el.classList.remove('c-btn--disabled');
+            el.style.opacity = '';
+            el.style.pointerEvents = '';
+        }
+    });
+}
+
 async function downloadAllVideos() {
     if (!currentPlaylistData) return;
-    
     const videoIds = currentPlaylistData.videos.map(v => v.id);
-    await startBulkDownload(videoIds, `Bulk: ${currentPlaylistData.title}`);
+    const titles = currentPlaylistData.videos.map(v => v.title);
+    enqueueVideos(videoIds, titles);
+    disableBulkControls();
+    processQueue();
 }
 
 async function downloadSelectedVideos() {
@@ -586,13 +730,24 @@ async function downloadSelectedVideos() {
     const videoIds = Array.from(selectedCheckboxes).map(cb => cb.value);
     
     if (videoIds.length === 0) return;
-    
     const selectedTitles = Array.from(selectedCheckboxes).map(cb => cb.dataset.title);
-    await startBulkDownload(videoIds, `Selected videos (${videoIds.length})`);
+    enqueueVideos(videoIds, selectedTitles);
+    disableBulkControls();
+    processQueue();
 }
 
 async function startBulkDownload(videoIds, description) {
     try {
+        // Prevent duplicate bulk or single conversions while processing
+        if (isProcessing) {
+            console.log('⚠️ Already processing a conversion, ignoring bulk download request');
+            return;
+        }
+        isProcessing = true;
+        // Disable bulk controls and the main convert button to avoid extra requests
+        disableBulkControls();
+        disableConvertButtonVisuals();
+
         showSpinner();
         updateSpinnerText('Preparing bulk download...');
         
@@ -621,6 +776,341 @@ async function startBulkDownload(videoIds, description) {
         console.error('Bulk download error:', error);
         showError(error.message || 'Bulk download failed');
         hideSpinner();
+        // Re-enable UI so the user can try again
+        isProcessing = false;
+        enableBulkControls();
+        enableConvertButtonVisuals();
+    }
+}
+
+// Enqueue video ids/titles for frontend sequential processing
+function enqueueVideos(ids, titles) {
+    if (!Array.isArray(ids)) return;
+    for (let i = 0; i < ids.length; i++) {
+        playlistQueue.push({ id: ids[i], title: (titles && titles[i]) ? titles[i] : ids[i] });
+    }
+}
+
+// Process the frontend queue one-by-one, converting each video via backend and storing blob
+async function processQueue() {
+    if (processingQueue) return;
+    processingQueue = true;
+
+    try {
+        while (playlistQueue.length > 0) {
+            const next = playlistQueue.shift();
+            const videoUrl = `https://www.youtube.com/watch?v=${next.id}`;
+
+            try {
+                updateSpinnerText();
+                isProcessing = true;
+                // Use a subtle spinner during long-running playlist processing
+                showSpinner('subtle');
+                updatePlaylistStatusUI({ currentTitle: next.title });
+
+                const convertResp = await fetch(`${API_BASE_URL}/api/v1/video/convert`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: videoUrl, format: formatValue, quality: formatValue === 1 ? audioQuality : videoQuality })
+                });
+
+                if (!convertResp.ok) {
+                    console.warn('Failed to start conversion for', next.id, await convertResp.text());
+                    continue; // proceed to next
+                }
+
+                const convertResult = await convertResp.json();
+                const downloadId = convertResult.download_id;
+                const status = await pollStatusUntilReady(downloadId);
+                if (!status || status.status === 'error') {
+                    console.warn('Conversion failed for', next.id, status && status.error);
+                    continue;
+                }
+
+                const downloadResp = await fetch(`${API_BASE_URL}/api/v1/video/download/${downloadId}`);
+                if (!downloadResp.ok) {
+                    console.warn('Failed to download converted file for', next.id, await downloadResp.text());
+                    continue;
+                }
+
+                const blob = await downloadResp.blob();
+                let disposition = downloadResp.headers.get('content-disposition');
+                let filename = null;
+                if (disposition) filename = getFilenameFromContentDisposition(disposition);
+                if (!filename) {
+                    const ext = (formatValue === 1) ? '.mp3' : '.mp4';
+                    const safe = (next.title || next.id).replace(/[<>:"/\\|?*\x00-\x1f]/g, '').substring(0,50).trim();
+                    filename = `${safe}${ext}`;
+                }
+
+                addToFrontendStorage(filename, blob);
+
+                if (frontendStorageSize >= FRONTEND_STORAGE_THRESHOLD) {
+                    updatePlaylistStatusUI();
+                    await flushFrontendStorageAsZip();
+                    // After a zip part is created we intentionally pause, keep subtle spinner
+                    // and wait for user Continue before clearing storage — do not hide UI.
+                    // The flush function handles showing the Continue controls.
+                }
+
+                // short pause to keep UI responsive
+                await new Promise(r => setTimeout(r, 200));
+                updatePlaylistStatusUI();
+
+            } catch (errItem) {
+                console.error('Error processing queue item', next, errItem);
+                // continue to next
+                updatePlaylistStatusUI();
+                continue;
+            }
+        }
+
+        // queue drained — flush remaining
+        if (frontendStorageSize > 0) {
+            await flushFrontendStorageAsZip();
+        }
+
+    } finally {
+        // Re-enable controls and reset state
+        playlistModeActive = false;
+        enableBulkControls();
+        if (convertButton) {
+            convertButton.disabled = false;
+            convertButton.classList.remove('c-btn--disabled');
+            convertButton.removeAttribute('title');
+        }
+        processingQueue = false;
+        isProcessing = false;
+        updatePlaylistStatusUI();
+    }
+}
+
+// Poll status endpoint until conversion is ready or error/timeout
+async function pollStatusUntilReady(downloadId, timeoutMs = 5 * 60 * 1000) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+        try {
+            const resp = await fetch(`${API_BASE_URL}/api/v1/video/status/${downloadId}`);
+            if (!resp.ok) {
+                await new Promise(r => setTimeout(r, 1000));
+                continue;
+            }
+            const s = await resp.json();
+            if (s.status === 'completed') return s;
+            if (s.status === 'error') return s;
+        } catch (e) {
+            // ignore and retry
+        }
+        await new Promise(r => setTimeout(r, 1500));
+    }
+    return null;
+}
+
+function addToFrontendStorage(filename, blob) {
+    const size = blob.size || 0;
+    frontendStorage.push({ filename, blob, size });
+    frontendStorageSize += size;
+    console.log(`Frontend storage: added ${filename} (${size} bytes). Total: ${frontendStorageSize} bytes.`);
+
+    // Persist to IndexedDB for resiliency across reloads
+    try {
+        addBlobToIDB(filename, blob, size).catch(e => console.warn('IDB store failed', e));
+    } catch (e) {
+        console.warn('IDB not available:', e);
+    }
+    // Update UI
+    updatePlaylistStatusUI();
+}
+
+// Ensure JSZip is loaded (via CDN) when needed
+function ensureJSZip() {
+    return new Promise((resolve, reject) => {
+        if (window.JSZip) return resolve(window.JSZip);
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+        script.onload = () => resolve(window.JSZip);
+        script.onerror = () => reject(new Error('Failed to load JSZip'));
+        document.head.appendChild(script);
+    });
+}
+
+// IndexedDB helpers (store persisted blobs for frontend packaging)
+const IDB_DB_NAME = 'converter_frontend_store_v1';
+const IDB_STORE_NAME = 'files';
+function openIDB() {
+    return new Promise((resolve, reject) => {
+        if (!window.indexedDB) return reject(new Error('IndexedDB not supported'));
+        const req = indexedDB.open(IDB_DB_NAME, 1);
+        req.onupgradeneeded = function(e) {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(IDB_STORE_NAME)) {
+                db.createObjectStore(IDB_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+            }
+        };
+        req.onsuccess = function(e) {
+            resolve(e.target.result);
+        };
+        req.onerror = function(e) {
+            reject(e.target.error || new Error('IDB open error'));
+        };
+    });
+}
+
+async function addBlobToIDB(filename, blob, size) {
+    const db = await openIDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE_NAME, 'readwrite');
+        const store = tx.objectStore(IDB_STORE_NAME);
+        const entry = { filename, blob, size, created: Date.now() };
+        const r = store.add(entry);
+        r.onsuccess = () => resolve(true);
+        r.onerror = (e) => reject(e.target ? e.target.error : e);
+    });
+}
+
+async function readAllBlobsFromIDB() {
+    const db = await openIDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE_NAME, 'readonly');
+        const store = tx.objectStore(IDB_STORE_NAME);
+        const req = store.getAll();
+        req.onsuccess = function(e) {
+            const results = e.target.result || [];
+            // Map to {filename, blob, size}
+            resolve(results.map(r => ({ filename: r.filename, blob: r.blob, size: r.size })));
+        };
+        req.onerror = function(e) { reject(e.target ? e.target.error : e); };
+    });
+}
+
+async function clearAllBlobsFromIDB() {
+    const db = await openIDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE_NAME, 'readwrite');
+        const store = tx.objectStore(IDB_STORE_NAME);
+        const req = store.clear();
+        req.onsuccess = () => resolve(true);
+        req.onerror = (e) => reject(e.target ? e.target.error : e);
+    });
+}
+
+async function flushFrontendStorageAsZip() {
+    // If nothing in in-memory storage, try to load persisted entries from IDB
+    if (frontendStorage.length === 0) {
+        try {
+            const persisted = await readAllBlobsFromIDB();
+            if (persisted && persisted.length > 0) {
+                frontendStorage = persisted.map(p => ({ filename: p.filename, blob: p.blob, size: p.size }));
+                frontendStorageSize = frontendStorage.reduce((s, it) => s + (it.size || 0), 0);
+            }
+        } catch (e) {
+            console.warn('Failed to read persisted frontend storage', e);
+        }
+    }
+    if (frontendStorage.length === 0) return;
+    try {
+        showSpinner('subtle');
+        const JSZipLib = await ensureJSZip();
+        const zip = new JSZipLib();
+        for (const item of frontendStorage) {
+            // add as arrayBuffer for better performance
+            const data = await item.blob.arrayBuffer();
+            zip.file(item.filename, data);
+        }
+
+        // Generate zip as blob (compression default)
+        const zipBlob = await zip.generateAsync({ type: 'blob' }, metadata => {
+            // optionally, update UI with progress
+            // console.log('zip progress', metadata.percent);
+        });
+
+        const partNameSafe = `playlist_part_${frontendPartIndex}.zip`;
+        triggerBlobDownload(zipBlob, partNameSafe);
+        frontendPartIndex += 1;
+
+        // Pause processing and ask user to Continue when they're ready.
+        waitingForContinue = true;
+        showContinueControls(true);
+        // Do NOT clear persisted storage until user confirms (continueAfterPart)
+
+    } catch (e) {
+        console.error('Failed to create ZIP part in frontend', e);
+    } finally {
+        hideSpinner('subtle');
+    }
+}
+
+function triggerBlobDownload(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+// Create ZIP from persisted IndexedDB blobs and trigger download
+async function downloadUpToNow() {
+    try {
+        // Read all persisted blobs
+        const items = await readAllBlobsFromIDB();
+        if (!items || items.length === 0) {
+            alert('No stored files available to download yet.');
+            return;
+        }
+        // Use all items
+        await createZipFromItems(items, `playlist_up_to_now_part_${frontendPartIndex}.zip`);
+        // Do not clear persisted storage; this is a copy for user convenience
+    } catch (e) {
+        console.error('downloadUpToNow failed', e);
+        alert('Failed to create ZIP: ' + (e && e.message ? e.message : e));
+    }
+}
+
+// Download from a given 1-based index (inclusive)
+async function downloadFromIndex(startIndexOneBased) {
+    try {
+        const items = await readAllBlobsFromIDB();
+        if (!items || items.length === 0) {
+            alert('No stored files available to download yet.');
+            return;
+        }
+        const start = Math.max(1, startIndexOneBased) - 1;
+        if (start >= items.length) {
+            alert(`Start index is greater than the number of stored files (${items.length}).`);
+            return;
+        }
+        const slice = items.slice(start);
+        await createZipFromItems(slice, `playlist_from_${startIndexOneBased}_part_${frontendPartIndex}.zip`);
+    } catch (e) {
+        console.error('downloadFromIndex failed', e);
+        alert('Failed to create ZIP: ' + (e && e.message ? e.message : e));
+    }
+}
+
+// Helper: create ZIP from array of {filename, blob, size} and trigger download
+async function createZipFromItems(items, outputFilename) {
+    if (!items || items.length === 0) return;
+    try {
+        showSpinner('subtle');
+        const JSZipLib = await ensureJSZip();
+        const zip = new JSZipLib();
+        for (const item of items) {
+            try {
+                const data = await item.blob.arrayBuffer();
+                zip.file(item.filename, data);
+            } catch (e) {
+                console.warn('Skipping item during ZIP creation', item && item.filename, e);
+            }
+        }
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        triggerBlobDownload(zipBlob, outputFilename);
+        // Advance part index so manual downloads don't collide with auto-flush part names
+        try { frontendPartIndex += 1; } catch (e) { /* ignore */ }
+    } finally {
+        hideSpinner('subtle');
     }
 }
 
@@ -634,14 +1124,40 @@ function formatDuration(seconds) {
 // Handle conversion process
 async function handleConversion(e) {
     e.preventDefault();
-    
     console.log('🎯 Convert button clicked!');
     console.log('🔄 isProcessing:', isProcessing);
-    
+
+    // Prevent duplicate clicks immediately: if we're already processing, ignore.
     if (isProcessing) {
         console.log('⚠️ Already processing, ignoring click');
         return;
     }
+
+    // If there is an active bulk download in progress, make Convert act as "Continue"
+    // so users can press it to fetch the next available part instead of restarting.
+    if (currentDownloadId) {
+        try {
+            const cont = await tryContinueBulkDownload();
+            if (cont) {
+                // We triggered a continue/download flow; no further action needed.
+                return;
+            }
+        } catch (err) {
+            console.warn('Continue bulk check failed, proceeding with normal conversion', err);
+        }
+    }
+
+    // If playlist UI is active, do not allow normal convert flow — playlists use frontend queue
+    if (playlistModeActive) {
+        console.log('Playlist mode active: normal Convert is disabled. Use playlist controls.');
+        // Visual hint already applied in showPlaylistUI; reset processing flag
+        isProcessing = false;
+        return;
+    }
+
+    // Mark processing and adjust visuals for a normal conversion start
+    isProcessing = true;
+    disableConvertButtonVisuals();
     
     const url = videoUrlInput.value.trim();
     console.log('🔗 URL from input:', url);
@@ -649,6 +1165,9 @@ async function handleConversion(e) {
     if (!url) {
         console.log('❌ No URL provided');
         showValidationError('Please enter a video URL');
+        // Reset processing state so the user can try again
+        isProcessing = false;
+        enableConvertButtonVisuals();
         return;
     }
     
@@ -658,6 +1177,9 @@ async function handleConversion(e) {
     
     if (!isValid) {
         console.log('❌ URL validation failed');
+        // Reset processing state so the user can try again
+        isProcessing = false;
+        enableConvertButtonVisuals();
         return;
     }
     
@@ -684,18 +1206,46 @@ async function handleConversion(e) {
         showError(error.message || 'Conversion failed');
         isProcessing = false;
         hideSpinner();
+        enableConvertButtonVisuals();
+    }
+}
+
+// Helper: check currentDownloadId status and if it's a bulk in-progress, trigger download flow
+async function tryContinueBulkDownload() {
+    if (!currentDownloadId) return false;
+
+    try {
+        const statusResp = await fetch(`${API_BASE_URL}/api/v1/video/status/${currentDownloadId}`);
+        if (!statusResp.ok) return false;
+        const status = await statusResp.json();
+
+        // If it's a bulk download and either a ready file_path exists or parts_remaining > 0,
+        // call the download handler (which will fetch the current part). Return true to indicate
+        // we performed a continue action.
+        if (status.format && status.format.includes('Bulk')) {
+            const hasReadyPart = !!status.parts_remaining && status.parts_remaining > 0;
+            const hasFilePath = !!status.file_path || hasReadyPart;
+
+            if (hasFilePath) {
+                console.log('🔁 Continuing bulk download via Convert button');
+                // Visuals: show spinner and call handleDownload
+                showSpinner();
+                await handleDownload();
+                return true;
+            }
+        }
+
+        return false;
+    } catch (e) {
+        console.warn('Error while checking for bulk continuation:', e);
+        return false;
     }
 }
 
 // Show loading spinner
 function showSpinner() {
-    formContainer.style.display = 'none';
-    videoInfo.style.display = 'none';
-    spinner.style.display = 'flex';
-    convertButton.disabled = true;
-    
-    // Update spinner text based on process stage
-    updateSpinnerText();
+    // Backwards compatible: default to modal behavior
+    showSpinner('modal');
 }
 
 // Hide spinner
@@ -703,6 +1253,70 @@ function hideSpinner() {
     spinner.style.display = 'none';
     formContainer.style.display = 'block';
     convertButton.disabled = false;
+}
+
+// Enhanced showSpinner with mode: 'modal' (hide UI) or 'subtle' (keep UI visible)
+function showSpinner(mode = 'modal') {
+    if (!spinner) return;
+    if (mode === 'modal') {
+        if (formContainer) formContainer.style.display = 'none';
+        if (videoInfo) videoInfo.style.display = 'none';
+        spinner.style.display = 'flex';
+        if (convertButton) convertButton.disabled = true;
+    } else if (mode === 'subtle') {
+        // subtle spinner: keep UI visible, show small spinner indicator
+        spinner.style.display = 'flex';
+        // don't hide form or video info, don't disable buttons
+        // apply a 'subtle' class so CSS can make it less intrusive if available
+        spinner.classList.add('spinner-subtle');
+    }
+
+    // Update spinner text based on process stage
+    updateSpinnerText();
+}
+
+function hideSpinner(mode = 'modal') {
+    if (!spinner) return;
+    spinner.style.display = 'none';
+    spinner.classList.remove('spinner-subtle');
+    if (mode === 'modal') {
+        if (formContainer) formContainer.style.display = 'block';
+        if (convertButton) convertButton.disabled = false;
+    }
+}
+
+// Visual disable (and warning) when a conversion is initiated to prevent duplicate requests
+function disableConvertButtonVisuals() {
+    if (!convertButton) return;
+    convertButton.disabled = true;
+    convertButton.setAttribute('aria-disabled', 'true');
+    convertButton.classList.add('c-btn--disabled');
+    // Make it visually muted
+    convertButton.style.opacity = '0.6';
+    convertButton.style.pointerEvents = 'none';
+    // Show a patience / rate limit warning so user knows to wait
+    let warn = document.getElementById('convert-warn');
+    if (!warn) {
+        warn = document.createElement('div');
+        warn.id = 'convert-warn';
+        warn.className = 'error-message';
+        warn.style.marginTop = '8px';
+        warn.style.fontWeight = '600';
+        warn.textContent = "Please wait — conversion in progress. Repeated requests may be rate-limited.";
+        if (formContainer) formContainer.appendChild(warn);
+    }
+}
+
+function enableConvertButtonVisuals() {
+    if (!convertButton) return;
+    convertButton.disabled = false;
+    convertButton.removeAttribute('aria-disabled');
+    convertButton.classList.remove('c-btn--disabled');
+    convertButton.style.opacity = '';
+    convertButton.style.pointerEvents = '';
+    // Remove patience warning
+    const warn = document.getElementById('convert-warn');
+    if (warn && warn.parentNode) warn.parentNode.removeChild(warn);
 }
 
 // Update spinner text during process
@@ -727,6 +1341,23 @@ function updateSpinnerText() {
             clearInterval(interval);
         }
     }, 1500);
+}
+
+// Helper to extract filename from Content-Disposition header
+function getFilenameFromContentDisposition(header) {
+    if (!header) return null;
+    // content-disposition: attachment; filename="example.zip"; filename*=UTF-8''example.zip
+    const filenameMatch = header.match(/filename\*=UTF-8''([^;\n\r]+)/i);
+    if (filenameMatch && filenameMatch[1]) {
+        try {
+            return decodeURIComponent(filenameMatch[1].replace(/"/g, ''));
+        } catch (e) {
+            return filenameMatch[1].replace(/"/g, '');
+        }
+    }
+    const simpleMatch = header.match(/filename="?([^";]+)"?/i);
+    if (simpleMatch && simpleMatch[1]) return simpleMatch[1];
+    return null;
 }
 
 // Start actual conversion process
@@ -754,7 +1385,7 @@ async function startConversion(url) {
         });
         
         console.log('📨 Convert response status:', response.status);
-        const result = await response.json();
+    const result = await response.json();
         console.log('📋 Convert result:', result);
         
         if (!response.ok) {
@@ -763,8 +1394,10 @@ async function startConversion(url) {
         
         currentDownloadId = result.download_id;
         
-        // Start polling for status
+    // Start polling for status
         startStatusPolling();
+    // Visual disable so user can't re-click convert while background work is happening
+    disableConvertButtonVisuals();
         
     } catch (error) {
         console.error('Conversion start error:', error);
@@ -792,15 +1425,48 @@ function startStatusPolling() {
             updateProgress(status);
             
             if (status.status === 'completed') {
-                clearInterval(statusCheckInterval);
-                showSuccess(status);
-                isProcessing = false;
+                // For bulk downloads we may get "completed" as the status when
+                // a ZIP part is ready. Do not stop polling for bulk downloads
+                // until the entire playlist is finished. Instead show a partial
+                // success (so the user can download the ready part) and keep
+                // polling until completed_count == total_videos and no parts
+                // remain.
+                if (status.format && status.format.includes('Bulk')) {
+                    const completed = status.completed_count || 0;
+                    const total = status.total_videos || 0;
+                    const partsRemaining = status.parts_remaining || 0;
+
+                    // Show availability for download but keep polling if more
+                    // videos remain or parts are still being produced.
+                    showSuccess(status);
+                    enableBulkControls();
+                    enableConvertButtonVisuals();
+
+                    if (!(completed >= total && partsRemaining === 0)) {
+                        // Keep polling — don't clear the interval yet
+                    } else {
+                        // Final completion: stop polling and mark processing done
+                        clearInterval(statusCheckInterval);
+                        isProcessing = false;
+                    }
+                } else {
+                    // Non-bulk downloads: behave as before
+                    clearInterval(statusCheckInterval);
+                    showSuccess(status);
+                    isProcessing = false;
+                    // Re-enable controls after successful completion
+                    enableBulkControls();
+                    enableConvertButtonVisuals();
+                }
             } else if (status.status === 'error') {
                 console.error('❌ Conversion failed:', status.error);
                 clearInterval(statusCheckInterval);
                 showError(status.error || 'Conversion failed');
                 isProcessing = false;
                 hideSpinner();
+                // Re-enable UI so user can retry
+                enableBulkControls();
+                enableConvertButtonVisuals();
             }
             
         } catch (error) {
@@ -809,6 +1475,9 @@ function startStatusPolling() {
             showError('Failed to check conversion status');
             isProcessing = false;
             hideSpinner();
+            // Re-enable UI so user can retry
+            enableBulkControls();
+            enableConvertButtonVisuals();
         }
     }, 2000); // Check every 2 seconds
 }
@@ -951,31 +1620,96 @@ async function handleDownload() {
         if (!response.ok) {
             throw new Error(`Download failed: ${response.status}`);
         }
-        
+
+        // Determine filename from headers when possible
+        let disposition = response.headers.get('content-disposition');
+        let contentType = response.headers.get('content-type') || '';
+        let finalFilename = null;
+
+        finalFilename = getFilenameFromContentDisposition(disposition);
+        if (!finalFilename) {
+            // If server returned a bulk ZIP, try to detect from content-type
+            if (contentType.includes('zip') || (statusData.format && statusData.format.includes('Bulk'))) {
+                finalFilename = (statusData.title ? statusData.title.replace(/[<>:"/\\|?*\x00-\x1f]/g, '').substring(0,50) : 'download') + '.zip';
+            } else if (contentType.includes('audio')) {
+                // prefer mp3 extension for audio
+                finalFilename = (statusData.title ? statusData.title.replace(/[<>:"/\\|?*\x00-\x1f]/g, '').substring(0,50) : 'download') + '.mp3';
+            } else if (contentType.includes('video')) {
+                finalFilename = (statusData.title ? statusData.title.replace(/[<>:"/\\|?*\x00-\x1f]/g, '').substring(0,50) : 'download') + '.mp4';
+            } else {
+                // Fallback to .bin
+                finalFilename = filename || ((statusData.title ? statusData.title.substring(0,50) : 'download') + '.bin');
+            }
+        }
+
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
-        
+
         // Create temporary link and trigger download
         const link = document.createElement('a');
         link.href = url;
-        link.download = filename;
+        link.download = finalFilename;
         link.style.display = 'none';
-        
+
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         // Clean up the object URL
         URL.revokeObjectURL(url);
         
         // Show completion message
         showDownloadComplete();
+
+        // If this was a multi-part bulk download, automatically fetch remaining parts
+        try {
+            // Poll status once to get parts_remaining
+            const statusResp = await fetch(statusUrl);
+            const statusObj = await statusResp.json();
+            let partsRemaining = statusObj.parts_remaining || 0;
+            let safetyCounter = 0;
+
+            while (partsRemaining > 0 && safetyCounter < 50) { // safety cap
+                console.log('🔁 Detected remaining parts, downloading next part...', partsRemaining);
+                // Start next download for the same download ID
+                const nextResp = await fetch(downloadUrl);
+                if (!nextResp.ok) break;
+                const nextDisposition = nextResp.headers.get('content-disposition');
+                const nextContentType = nextResp.headers.get('content-type') || '';
+                let nextFilename = getFilenameFromContentDisposition(nextDisposition);
+                if (!nextFilename) {
+                    if (nextContentType.includes('zip') || (statusObj.format && statusObj.format.includes('Bulk'))) {
+                        nextFilename = (statusObj.title ? statusObj.title.replace(/[<>:"/\\|?*\x00-\x1f]/g, '').substring(0,50) : 'download') + `.part${safetyCounter+2}.zip`;
+                    } else {
+                        nextFilename = `part_${safetyCounter+2}.bin`;
+                    }
+                }
+
+                const nextBlob = await nextResp.blob();
+                const nextUrl = URL.createObjectURL(nextBlob);
+                const nextLink = document.createElement('a');
+                nextLink.href = nextUrl;
+                nextLink.download = nextFilename;
+                nextLink.style.display = 'none';
+                document.body.appendChild(nextLink);
+                nextLink.click();
+                document.body.removeChild(nextLink);
+                URL.revokeObjectURL(nextUrl);
+
+                // Poll status again to update partsRemaining
+                const s = await (await fetch(statusUrl)).json();
+                partsRemaining = s.parts_remaining || 0;
+                safetyCounter += 1;
+            }
+        } catch (e) {
+            console.warn('Error while attempting to download subsequent parts:', e);
+        }
         
     } catch (error) {
         console.error('Download error:', error);
         showError('Download failed. Please try again.');
         
-        // Reset download button
+        // Reset download button state
         if (downloadBtn) {
             downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download File';
             downloadBtn.disabled = false;
@@ -1102,3 +1836,25 @@ videoUrlInput.addEventListener('input', function() {
 // Expose functions to global scope for HTML onclick handlers
 window.openModal = openModal;
 window.closeModal = closeModal;
+
+// Handler for the "Convert Another" button in the UI.
+// If a bulk download is active, attempt to continue it (download next part).
+// Otherwise, reset the UI to allow a new conversion.
+async function handleConvertAgain() {
+    // If there's an active download ID, try to continue
+    if (currentDownloadId) {
+        const continued = await tryContinueBulkDownload();
+        if (continued) return;
+    }
+
+    // Fallback: no active bulk to continue — reset UI for a fresh conversion
+    // Keep this client-side so we don't hard reload unless necessary
+    isProcessing = false;
+    hideSpinner();
+    enableBulkControls();
+    enableConvertButtonVisuals();
+    // Optionally clear currentDownloadId so UI starts fresh
+    currentDownloadId = null;
+}
+
+window.handleConvertAgain = handleConvertAgain;

@@ -47,6 +47,7 @@ from models.models import User, UserCreate, UserUpdate, UserPublic # Import your
 from database.datarepository import UserRepository
 from models.models import ErrorMessage,ErrorNotFound
 import queue
+from uuid import uuid4
 try:
     from raspberryPi5.RFIDYReaderske import HardcoreRFID
     from raspberryPi5.servomotor import ServoMotor
@@ -81,6 +82,18 @@ video_logger.addHandler(video_file_handler)
 video_logger.info("="*50)
 video_logger.info("Video Logger Initialized")
 video_logger.info("="*50)
+
+# General quiz logger used across the application for quiz-related messages
+quiz_log_file = '/home/student/Project/project-one/backend/quiz_debug.log'
+quiz_logger = logging.getLogger('quiz_debug')
+quiz_logger.setLevel(logging.INFO)
+quiz_file_handler = logging.FileHandler(quiz_log_file, mode='a')
+quiz_file_handler.setLevel(logging.INFO)
+quiz_file_handler.setFormatter(video_formatter)
+quiz_logger.addHandler(quiz_file_handler)
+quiz_logger.info("="*50)
+quiz_logger.info("Quiz Logger Initialized")
+quiz_logger.info("="*50)
 
 # Global variable for temperature effects
 virtualTemperature = 0
@@ -6435,6 +6448,9 @@ class ConversionStatus(BaseModel):
     quality: int
     title: Optional[str] = None
     error: Optional[str] = None
+    completed_count: Optional[int] = None
+    parts_remaining: Optional[int] = None
+    total_videos: Optional[int] = None
 
 class PlaylistInfoRequest(BaseModel):
     url: str
@@ -6587,11 +6603,13 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
                     'key': 'EmbedThumbnail'
                 }
             ],
-            # Attempt to download subtitles (which may include lyrics) where available
-            'writesubtitles': True,
-            'writeautomaticsub': True,
-            'subtitleslangs': ['en', 'en-US'],
-            'subtitlesformat': 'srt'
+            # Do not automatically download subtitles by default; subtitle
+            # downloads can trigger HTTP 429 'Too Many Requests' from providers
+            # and previously caused the entire conversion to fail. We still
+            # request thumbnails/metadata and attempt embedding, but subtitle
+            # fetching is left as a best-effort offline/optional step.
+            'writesubtitles': False,
+            'writeautomaticsub': False,
         })
     else:  # video
         # Add thumbnail and metadata options for video
@@ -6600,10 +6618,10 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
             'embedthumbnail': True,  # Embed thumbnail as album art
             'addmetadata': True,     # Add metadata to file
             'prefer_ffmpeg': True,
-            'writesubtitles': True,
-            'writeautomaticsub': True,
-            'subtitleslangs': ['en', 'en-US'],
-            'subtitlesformat': 'srt'
+            # Skip automatic subtitle downloads to avoid 429 errors; subtitles
+            # can be fetched separately when required.
+            'writesubtitles': False,
+            'writeautomaticsub': False,
         })
         quality_map = {
             144: 'worst[height<=144]',
@@ -7430,6 +7448,12 @@ if VIDEO_CONVERTER_AVAILABLE:
         try:
             completed_videos = []
             total_videos = len(video_ids)
+            # Files that are ready to be flushed into the next ZIP part
+            pending_part_files = []
+            pending_part_size = 0
+            last_flush_time = time.time()
+            FLUSH_INTERVAL = 60  # seconds, flush a ZIP part at least every 60s
+            MAX_PART_SIZE = 1_000_000_000  # 1 GB per part
             
             with download_lock:
                 if download_id in active_video_downloads:
@@ -7492,69 +7516,132 @@ if VIDEO_CONVERTER_AVAILABLE:
                                 apply_metadata(downloaded_file, info if 'info' in locals() else {}, output_path.replace('.%(ext)s',''), format_type)
                             except Exception as meta_err:
                                 video_logger.warning(f"Failed to apply metadata for bulk item: {meta_err}")
-                            safe_title = re.sub(r'[^\w\s-]', '', title)[:50]
-                            new_filename = f"{safe_title}.{extension}"
+                            # Ensure the filename is unique to avoid collisions when many videos have
+                            # similar/sanitized titles. Append the video_id to guarantee uniqueness.
+                            safe_title = re.sub(r'[^\w\s-]', '', title).strip()[:50]
+                            new_filename = f"{safe_title}_{video_id}.{extension}"
                             new_path = os.path.join(bulk_dir, new_filename)
                             
                             try:
                                 os.rename(downloaded_file, new_path)
                                 completed_videos.append(new_path)
+                                pending_part_files.append(new_path)
+                                try:
+                                    pending_part_size += os.path.getsize(new_path)
+                                except Exception:
+                                    pass
                                 video_logger.info(f"Renamed file to: {new_filename}")
                             except Exception as rename_error:
                                 video_logger.warning(f"Failed to rename file, using original: {rename_error}")
                                 completed_videos.append(downloaded_file)
+                                pending_part_files.append(downloaded_file)
+                                try:
+                                    pending_part_size += os.path.getsize(downloaded_file)
+                                except Exception:
+                                    pass
+
+                        # Update completed count in active download entry
+                        with download_lock:
+                            if download_id in active_video_downloads:
+                                active_video_downloads[download_id]['completed_videos'] = completed_videos.copy()
+                                active_video_downloads[download_id]['completed_count'] = len(completed_videos)
+                                active_video_downloads[download_id]['progress'] = min(((len(completed_videos)) / total_videos) * 100, 95.0)
+
+                        # Decide if we should flush a part now (time-based or size-based)
+                        now = time.time()
+                        if (now - last_flush_time >= FLUSH_INTERVAL and pending_part_files) or pending_part_size >= MAX_PART_SIZE:
+                            # Flush pending files into a new ZIP part
+                            try:
+                                part_index = len(active_video_downloads[download_id].get('parts', [])) + 1
+                                part_name = f"{os.path.splitext(zip_path)[0]}_part{part_index}.zip"
+                                with zipfile.ZipFile(part_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                                    for f in pending_part_files:
+                                        if os.path.exists(f):
+                                            zipf.write(f, os.path.basename(f))
+                                video_logger.info(f"Flushed ZIP part {part_index}: {part_name} (size ~{pending_part_size} bytes)")
+
+                                # Register the new part
+                                with download_lock:
+                                    entry = active_video_downloads.get(download_id)
+                                    if entry is not None:
+                                        parts = entry.get('parts') or []
+                                        parts.append(part_name)
+                                        entry['parts'] = parts
+                                        # If no file_path yet set, set to this first part
+                                        if not entry.get('file_path'):
+                                            entry['file_path'] = part_name
+                                            entry['status'] = 'completed'
+                                        entry['completed_count'] = len(completed_videos)
+                                        # We're still in the middle of producing parts; mark as not finished
+                                        entry['finished'] = False
+
+                                # After flushing, remove those files from disk (they've been archived)
+                                for f in pending_part_files:
+                                    try:
+                                        delete_file_safe(f)
+                                        video_logger.debug(f"Cleaned up file after flush: {f}")
+                                    except Exception as cleanup_error:
+                                        video_logger.warning(f"Failed to clean up file {f} after flush: {cleanup_error}")
+
+                                # Reset pending part buffers
+                                pending_part_files = []
+                                pending_part_size = 0
+                                last_flush_time = time.time()
+                            except Exception as flush_err:
+                                video_logger.error(f"Failed to flush ZIP part for {download_id}: {flush_err}")
                     
                     # Update progress
                     current_progress = ((i + 1) / total_videos) * 100
                     with download_lock:
                         if download_id in active_video_downloads:
                             active_video_downloads[download_id]['completed_videos'] = completed_videos.copy()
+                            active_video_downloads[download_id]['completed_count'] = len(completed_videos)
                             active_video_downloads[download_id]['progress'] = min(current_progress, 95.0)
                             
                 except Exception as e:
                     video_logger.error(f"Error downloading video {video_id}: {e}")
                     # Continue with next video
             
-            # Create ZIP file
-            video_logger.info(f"Creating ZIP file with {len(completed_videos)} completed videos")
-            if completed_videos:
-                with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                    for file_path in completed_videos:
-                        if os.path.exists(file_path):
-                            # Add file to ZIP with just the filename (no path)
-                            zipf.write(file_path, os.path.basename(file_path))
-                
-                video_logger.info(f"ZIP file created successfully: {zip_path}")
-                # Success
-                with download_lock:
-                    if download_id in active_video_downloads:
-                        active_video_downloads[download_id].update({
-                            'status': 'completed',
-                            'progress': 100.0,
-                            'file_path': zip_path,
-                            'finished': True,
-                            'completed_count': len(completed_videos)
-                        })
-                        
-                video_logger.info(f"Bulk download completed successfully: {download_id}")
-                # Clean up individual files
-                for file_path in completed_videos:
-                    try:
-                        delete_file_safe(file_path)
-                        video_logger.debug(f"Cleaned up file: {file_path}")
-                    except Exception as cleanup_error:
-                        video_logger.warning(f"Failed to clean up file {file_path}: {cleanup_error}")
-                
-                # Clean up bulk directory
+                # After loop completes, flush any remaining pending files into parts
+            parts = active_video_downloads[download_id].get('parts', []) if download_id in active_video_downloads else []
+            if pending_part_files:
                 try:
-                    os.rmdir(bulk_dir)
-                    video_logger.debug(f"Cleaned up bulk directory: {bulk_dir}")
-                except Exception as dir_cleanup_error:
-                    video_logger.warning(f"Failed to clean up bulk directory {bulk_dir}: {dir_cleanup_error}")
-                    
-            else:
-                video_logger.error(f"No videos were successfully downloaded for {download_id}")
-                raise Exception("No videos were successfully downloaded")
+                    part_index = len(parts) + 1
+                    part_name = f"{os.path.splitext(zip_path)[0]}_part{part_index}.zip"
+                    with zipfile.ZipFile(part_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                        for f in pending_part_files:
+                            if os.path.exists(f):
+                                zipf.write(f, os.path.basename(f))
+                    video_logger.info(f"Flushed final ZIP part {part_index}: {part_name} (size ~{pending_part_size} bytes)")
+
+                    with download_lock:
+                        entry = active_video_downloads.get(download_id)
+                        if entry is not None:
+                            parts = entry.get('parts') or []
+                            parts.append(part_name)
+                            entry['parts'] = parts
+                            if not entry.get('file_path'):
+                                entry['file_path'] = part_name
+                            entry['completed_count'] = len(completed_videos)
+
+                    for f in pending_part_files:
+                        try:
+                            delete_file_safe(f)
+                        except Exception:
+                            pass
+                except Exception as flush_err:
+                    video_logger.error(f"Failed to flush final ZIP part for {download_id}: {flush_err}")
+
+            # Mark download as finished only when all parts have been created; files are served and removed later
+            with download_lock:
+                if download_id in active_video_downloads:
+                    entry = active_video_downloads[download_id]
+                    entry['status'] = 'completed' if entry.get('parts') else 'error'
+                    entry['progress'] = 100.0 if entry.get('parts') else entry.get('progress', 0.0)
+                    entry['file_path'] = entry.get('parts')[0] if entry.get('parts') else entry.get('file_path')
+                    # We are at the end of the worker: mark finished True so cleanup can remove
+                    # the entry only after all parts have been served.
+                    entry['finished'] = True if entry.get('parts') else True
                 
         except Exception as e:
             # Error occurred
@@ -7841,9 +7928,9 @@ if VIDEO_CONVERTER_AVAILABLE:
                 video_logger.warning("No video IDs provided for bulk download")
                 raise HTTPException(status_code=400, detail="No video IDs provided")
             
-            if len(request.video_ids) > 50:  # Limit bulk downloads
-                video_logger.warning(f"Too many videos requested: {len(request.video_ids)} (max 50)")
-                raise HTTPException(status_code=400, detail="Maximum 50 videos per bulk download")
+            if len(request.video_ids) > 2000:  # Limit bulk downloads to a high ceiling
+                video_logger.warning(f"Too many videos requested: {len(request.video_ids)} (max 2000)")
+                raise HTTPException(status_code=400, detail="Maximum 2000 videos per bulk download")
             
             # Generate unique download ID
             download_id = str(uuid.uuid4())
@@ -7923,8 +8010,115 @@ async def get_conversion_status(download_id: str):
         format=download_info['format'],
         quality=download_info['quality'],
         title=download_info.get('title'),
-        error=download_info.get('error')
+        error=download_info.get('error'),
+        completed_count=download_info.get('completed_count', 0),
+        parts_remaining=(len(download_info.get('parts') or []) if download_info.get('parts') else 0),
+        total_videos=download_info.get('total_videos')
     )
+
+
+@app.post("/api/v1/video/create_upload_session")
+async def create_upload_session(request: Request, total_videos: int = Body(0), title: str = Body(None)):
+    """Create a server-side upload session: frontend will upload converted files which the server will bundle into ZIP parts."""
+    try:
+        download_id = str(uuid4())
+        client_ip = get_client_ip(request) if request else None
+
+        bulk_dir = os.path.join(VIDEO_DOWNLOAD_DIR, f"bulk_{download_id}")
+        os.makedirs(bulk_dir, exist_ok=True)
+
+        zip_path = os.path.join(VIDEO_DOWNLOAD_DIR, f"playlist_upload_{int(time.time())}_{download_id}.zip")
+
+        with download_lock:
+            active_video_downloads[download_id] = {
+                'status': 'downloading',
+                'progress': 0.0,
+                'platform': 'YouTube',
+                'format': 'Bulk (uploaded)',
+                'quality': None,
+                'title': title or f'Upload session {download_id}',
+                'output_path': zip_path,
+                'bulk_dir': bulk_dir,
+                'video_ids': [],
+                'completed_videos': [],
+                'total_videos': total_videos,
+                'created_at': time.time(),
+                'parts': [],
+                'error': None,
+                'finished': False,
+                'file_path': None
+            }
+
+        video_logger.info(f"Created upload session {download_id} (total_videos={total_videos}) from IP {client_ip}")
+        return JSONResponse({'success': True, 'download_id': download_id})
+    except Exception as e:
+        video_logger.error(f"Failed to create upload session: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/video/upload_part/{download_id}")
+async def upload_part(download_id: str, files: List[UploadFile] = File(...), request: Request = None):
+    """Accept uploaded files from frontend, create a ZIP part on the server, and register it for download."""
+    with download_lock:
+        if download_id not in active_video_downloads:
+            raise HTTPException(status_code=404, detail="Upload session not found")
+        entry = active_video_downloads[download_id]
+
+    try:
+        bulk_dir = entry.get('bulk_dir')
+        if not bulk_dir:
+            raise HTTPException(status_code=500, detail='Bulk directory not configured')
+
+        saved_files = []
+        for up in files:
+            filename = up.filename or f'file_{int(time.time())}'
+            safe = re.sub(r'[^\w\s\-\.()]', '_', filename)
+            dest = os.path.join(bulk_dir, safe)
+            with open(dest, 'wb') as out_f:
+                content = await up.read()
+                out_f.write(content)
+            saved_files.append(dest)
+            video_logger.info(f"Received uploaded file for {download_id}: {dest}")
+
+        # Create ZIP part
+        with download_lock:
+            part_index = len(entry.get('parts') or []) + 1
+            zip_base = entry.get('output_path') or os.path.join(VIDEO_DOWNLOAD_DIR, f"playlist_upload_{int(time.time())}_{download_id}.zip")
+            part_name = f"{os.path.splitext(zip_base)[0]}_part{part_index}.zip"
+
+        with zipfile.ZipFile(part_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for fpath in saved_files:
+                if os.path.exists(fpath):
+                    zipf.write(fpath, os.path.basename(fpath))
+
+        video_logger.info(f"Created uploaded ZIP part for {download_id}: {part_name}")
+
+        # Register part and set ready for download if needed
+        with download_lock:
+            parts = entry.get('parts') or []
+            parts.append(part_name)
+            entry['parts'] = parts
+            entry['completed_videos'] = entry.get('completed_videos', []) + saved_files
+            entry['completed_count'] = len(entry.get('completed_videos', []))
+            # If no current file_path set, set this part as ready
+            if not entry.get('file_path'):
+                entry['file_path'] = part_name
+                entry['status'] = 'completed'
+                entry['finished'] = False
+
+        # Clean up uploaded raw files — they've been archived
+        for fpath in saved_files:
+            try:
+                delete_file_safe(fpath)
+            except Exception:
+                pass
+
+        return JSONResponse({'success': True, 'part': part_name})
+    except HTTPException:
+        raise
+    except Exception as e:
+        video_logger.error(f"Error handling upload_part for {download_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/v1/video/download/{download_id}")
 async def download_converted_file(request: Request, download_id: str):
@@ -7958,7 +8152,9 @@ async def download_converted_file(request: Request, download_id: str):
         client_ip = None
 
     def bg_cleanup():
-        # Delete the file and remove active download entry
+        # When serving a bulk with multiple parts, remove the served part and
+        # advance the download entry to the next available part. If no parts
+        # remain, remove the entry entirely.
         try:
             delete_file_safe(file_path)
         except Exception as e:
@@ -7966,10 +8162,51 @@ async def download_converted_file(request: Request, download_id: str):
 
         try:
             with download_lock:
-                if download_id in active_video_downloads:
-                    del active_video_downloads[download_id]
+                entry = active_video_downloads.get(download_id)
+                if not entry:
+                    return
+
+                parts = entry.get('parts') or []
+                video_logger.debug(f"bg_cleanup: entry parts before removal for {download_id}: {parts}")
+                video_logger.debug(f"bg_cleanup: entry completed_count before removal for {download_id}: {entry.get('completed_count')}")
+                # If multiple parts were created, remove the first (served) part
+                if parts and file_path in parts:
+                    try:
+                        parts.remove(file_path)
+                    except ValueError:
+                        pass
+
+                video_logger.debug(f"bg_cleanup: entry parts after attempted removal for {download_id}: {parts}")
+                video_logger.debug(f"bg_cleanup: entry completed_count after attempted removal for {download_id}: {entry.get('completed_count')}")
+                if parts:
+                    # Set next part as ready for download
+                    entry['file_path'] = parts[0]
+                    entry['parts'] = parts
+                    # Keep status as completed (ready to download). Do not mark finished here;
+                    # the bulk worker controls when it is truly finished producing parts.
+                    entry['status'] = 'completed'
+                    video_logger.info(f"Advanced bulk download {download_id} to next part: {entry['file_path']}")
+                else:
+                    # No more parts currently available. Only remove the active entry if
+                    # the background bulk worker has finished producing parts. If the
+                    # worker is still running (finished == False or missing), keep the
+                    # entry so it can register future parts and the client can poll status.
+                    finished_flag = entry.get('finished', False)
+                    if finished_flag:
+                        try:
+                            del active_video_downloads[download_id]
+                            video_logger.info(f"All parts served and worker finished; removed active download entry {download_id}")
+                        except KeyError:
+                            pass
+                    else:
+                        # Worker still running — keep the entry but clear file_path so
+                        # clients know there's no ready part yet; status should reflect
+                        # ongoing processing.
+                        entry['file_path'] = None
+                        entry['parts'] = []
+                        entry['status'] = 'downloading'
         except Exception as e:
-            video_logger.warning(f"Error removing active video download record: {e}")
+            video_logger.warning(f"Error updating active video download record: {e}")
 
     def bg_cleanup_wrapper():
         try:
