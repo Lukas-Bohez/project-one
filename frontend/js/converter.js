@@ -512,6 +512,9 @@ function renderPlaylistUI(playlistData) {
                 <button id="download-up-to-now-btn" class="c-btn c-btn--tertiary download-up-to-now-btn" style="margin-left:8px;">
                     <i class="fas fa-save"></i> Download Up To Now
                 </button>
+                <button id="clear-cache-btn" class="c-btn c-btn--tertiary" style="margin-left:8px;">
+                    <i class="fas fa-trash-alt"></i> Clear Cache
+                </button>
                 <button id="select-videos-btn" class="c-btn c-btn--tertiary select-videos-btn">
                     <i class="fas fa-list"></i> Select Individual Videos
                 </button>
@@ -531,10 +534,13 @@ function renderPlaylistUI(playlistData) {
                     <i class="fas fa-download"></i> Download Selected
                 </button>
                 <div style="display:inline-flex;align-items:center;margin-left:12px;">
-                    <label for="download-from-index-input" style="margin-right:6px;font-size:0.9em;color:#bcd;">From index:</label>
+                    <label for="download-from-index-input" style="margin-right:6px;font-size:0.9em;color:#bcd;">From cache (start):</label>
                     <input id="download-from-index-input" type="number" min="1" value="1" style="width:70px;margin-right:6px;" />
+                    <label for="download-from-index-end" style="margin-right:6px;font-size:0.9em;color:#bcd;margin-left:6px;">to (optional):</label>
+                    <input id="download-from-index-end" type="number" min="1" placeholder="end" style="width:70px;margin-right:6px;" />
+                    <button id="select-range-btn" class="c-btn c-btn--sm c-btn--tertiary" style="margin-right:6px;">Select Range</button>
                     <button id="download-from-index-btn" class="c-btn c-btn--sm c-btn--tertiary download-from-index-btn">
-                        <i class="fas fa-download"></i>
+                        <i class="fas fa-download"></i> Download From Cache
                     </button>
                 </div>
             </div>
@@ -659,6 +665,9 @@ function setupPlaylistEventListeners() {
     const downloadUpToNowBtn = document.getElementById('download-up-to-now-btn');
     const downloadFromIndexBtn = document.getElementById('download-from-index-btn');
     const downloadFromIndexInput = document.getElementById('download-from-index-input');
+    const downloadFromIndexEnd = document.getElementById('download-from-index-end');
+    const selectRangeBtn = document.getElementById('select-range-btn');
+    const clearCacheBtn = document.getElementById('clear-cache-btn');
     if (downloadUpToNowBtn) {
         downloadUpToNowBtn.addEventListener('click', () => downloadUpToNow());
     }
@@ -669,8 +678,19 @@ function setupPlaylistEventListeners() {
                 alert('Please enter a valid start index (1-based)');
                 return;
             }
-            downloadFromIndex(raw);
+            const rawEnd = parseInt(downloadFromIndexEnd.value, 10);
+            if (rawEnd && rawEnd >= raw) {
+                downloadFromIndexRange(raw, rawEnd);
+            } else {
+                downloadFromIndex(raw);
+            }
         });
+    }
+    if (selectRangeBtn) {
+        selectRangeBtn.addEventListener('click', () => selectRange());
+    }
+    if (clearCacheBtn) {
+        clearCacheBtn.addEventListener('click', () => clearCachedSongs());
     }
     
     // Update download button when checkboxes change
@@ -1111,6 +1131,86 @@ async function createZipFromItems(items, outputFilename) {
         try { frontendPartIndex += 1; } catch (e) { /* ignore */ }
     } finally {
         hideSpinner('subtle');
+    }
+}
+
+// Select a range of videos in the playlist UI based on the from/to inputs
+function selectRange() {
+    try {
+        const startInput = document.getElementById('download-from-index-input');
+        const endInput = document.getElementById('download-from-index-end');
+        const start = Math.max(1, parseInt(startInput.value || '1', 10)) - 1;
+        const endRaw = parseInt(endInput.value || '', 10);
+        const checkboxes = Array.from(document.querySelectorAll('.video-checkbox'));
+        if (checkboxes.length === 0) {
+            alert('No videos available in the selection list.');
+            return;
+        }
+        let end = endRaw && endRaw > 0 ? Math.min(endRaw, checkboxes.length) - 1 : checkboxes.length - 1;
+        if (start < 0 || start >= checkboxes.length) {
+            alert('Start index out of range');
+            return;
+        }
+        if (end < start) {
+            alert('End index must be greater than or equal to start');
+            return;
+        }
+        // Deselect all first
+        checkboxes.forEach(cb => cb.checked = false);
+        // Select range
+        for (let i = start; i <= end; i++) {
+            checkboxes[i].checked = true;
+        }
+        updateDownloadSelectedButton();
+        // Ensure the videos list is visible
+        const playlistVideos = document.getElementById('playlist-videos');
+        if (playlistVideos) playlistVideos.style.display = 'block';
+    } catch (e) {
+        console.error('selectRange failed', e);
+        alert('Failed to select range');
+    }
+}
+
+// ZIP an inclusive range from start..end (1-based indices)
+async function downloadFromIndexRange(startOneBased, endOneBased) {
+    try {
+        const items = await readAllBlobsFromIDB();
+        if (!items || items.length === 0) {
+            alert('No stored files available to download yet.');
+            return;
+        }
+        const start = Math.max(1, startOneBased) - 1;
+        const end = Math.min(items.length, Math.max(startOneBased, endOneBased)) - 1;
+        if (start >= items.length) {
+            alert(`Start index is greater than the number of stored files (${items.length}).`);
+            return;
+        }
+        const slice = items.slice(start, end + 1);
+        await createZipFromItems(slice, `playlist_from_${startOneBased}_to_${endOneBased}_part_${frontendPartIndex}.zip`);
+    } catch (e) {
+        console.error('downloadFromIndexRange failed', e);
+        alert('Failed to create ZIP: ' + (e && e.message ? e.message : e));
+    }
+}
+
+// Clear in-memory and persisted cached songs (IndexedDB)
+async function clearCachedSongs() {
+    try {
+        if (!confirm('This will clear the locally cached downloaded files (frontend cache). Continue?')) return;
+        // Clear in-memory
+        frontendStorage = [];
+        frontendStorageSize = 0;
+        waitingForContinue = false;
+        // Clear persisted
+        try { await clearAllBlobsFromIDB(); } catch (e) { console.warn('Failed to clear IDB', e); }
+        // Uncheck any checkboxes and update UI
+        document.querySelectorAll('.video-checkbox').forEach(cb => cb.checked = false);
+        updateDownloadSelectedButton();
+        updatePlaylistStatusUI();
+        alert('Local cache cleared.');
+    } catch (e) {
+        console.error('clearCachedSongs failed', e);
+        alert('Failed to clear cache: ' + (e && e.message ? e.message : e));
     }
 }
 
