@@ -295,6 +295,12 @@ async function validateUrl() {
         console.log('📋 Validation result:', result);
         
         if (response.ok && result.valid) {
+            // Check if it's a playlist
+            if (result.is_playlist) {
+                showPlaylistUI(result.playlist_id, url);
+                return true;
+            }
+            
             // Auto-switch platform if detected
             if (result.platform !== currentPlatform) {
                 const platformButton = document.querySelector(`.social-button-container[data-platform="${result.platform}"]`);
@@ -302,9 +308,15 @@ async function validateUrl() {
                     platformButton.click();
                 }
             }
+            
+            // Hide playlist UI if it was shown
+            hidePlaylistUI();
+            
             showValidationSuccess(result.message);
             return true;
         } else {
+            // Hide playlist UI on error
+            hidePlaylistUI();
             showValidationError(result.error || 'Invalid URL');
             return false;
         }
@@ -389,6 +401,236 @@ function getOrCreateErrorContainer() {
     return container;
 }
 
+// Playlist UI functions
+let currentPlaylistData = null;
+
+async function showPlaylistUI(playlistId, playlistUrl) {
+    try {
+        console.log('📋 Fetching playlist info for:', playlistId);
+
+        const response = await fetch(`${API_BASE_URL}/api/v1/video/playlist-info`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ url: playlistUrl })
+        });
+
+        const result = await response.json();
+        console.log('📋 Playlist info result:', result);
+
+        if (response.ok && result.success) {
+            currentPlaylistData = result;
+
+            // Check if playlist has 0 videos - fall back to individual video conversion
+            if (result.video_count === 0) {
+                console.log('📋 Playlist has 0 videos, falling back to individual video conversion');
+                showValidationSuccess('Playlist is empty, converting individual video instead');
+
+                // Extract individual video URL from playlist URL
+                const individualVideoUrl = extractIndividualVideoUrl(playlistUrl);
+                if (individualVideoUrl) {
+                    console.log('✅ Extracted individual video URL:', individualVideoUrl);
+                    // Update the input field with the individual video URL for consistency
+                    videoUrlInput.value = individualVideoUrl;
+                    // Hide playlist UI
+                    hidePlaylistUI();
+                    // Return true to indicate validation passed - we'll use the individual URL
+                    return true;
+                } else {
+                    showValidationError('Could not extract individual video URL from playlist');
+                    hidePlaylistUI();
+                    return false;
+                }
+            }
+
+            renderPlaylistUI(result);
+            showValidationSuccess(`Playlist loaded: ${result.video_count} videos`);
+            return true;
+        } else {
+            showValidationError(result.error || 'Failed to load playlist');
+            hidePlaylistUI();
+            return false;
+        }
+    } catch (error) {
+        console.error('Playlist info error:', error);
+        showValidationError('Failed to load playlist information');
+        hidePlaylistUI();
+        return false;
+    }
+}
+
+function hidePlaylistUI() {
+    const playlistContainer = document.getElementById('playlist-container');
+    if (playlistContainer) {
+        playlistContainer.style.display = 'none';
+    }
+    currentPlaylistData = null;
+}
+
+function renderPlaylistUI(playlistData) {
+    let playlistContainer = document.getElementById('playlist-container');
+    
+    if (!playlistContainer) {
+        playlistContainer = document.createElement('div');
+        playlistContainer.id = 'playlist-container';
+        playlistContainer.className = 'playlist-container';
+        
+        // Insert after the converter form
+        const formContainer = document.getElementById('form-container');
+        formContainer.parentNode.insertBefore(playlistContainer, formContainer.nextSibling);
+    }
+    
+    playlistContainer.innerHTML = `
+        <div class="playlist-header">
+            <h3>${playlistData.title}</h3>
+            <p>${playlistData.video_count} videos in playlist</p>
+            <div class="playlist-actions">
+                <button id="download-all-btn" class="download-all-btn">
+                    <i class="fas fa-download"></i> Download All (${playlistData.video_count} videos)
+                </button>
+                <button id="select-videos-btn" class="select-videos-btn">
+                    <i class="fas fa-list"></i> Select Individual Videos
+                </button>
+            </div>
+        </div>
+        <div id="playlist-videos" class="playlist-videos" style="display: none;">
+            <div class="playlist-controls">
+                <button id="select-all-btn" class="select-all-btn">Select All</button>
+                <button id="deselect-all-btn" class="deselect-all-btn">Deselect All</button>
+                <button id="download-selected-btn" class="download-selected-btn" disabled>
+                    <i class="fas fa-download"></i> Download Selected
+                </button>
+            </div>
+            <div class="videos-list">
+                ${playlistData.videos.map(video => `
+                    <div class="video-item">
+                        <input type="checkbox" class="video-checkbox" value="${video.id}" data-title="${video.title}">
+                        <div class="video-info">
+                            <div class="video-title">${video.title}</div>
+                            <div class="video-duration">${video.duration ? formatDuration(video.duration) : ''}</div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    
+    playlistContainer.style.display = 'block';
+    
+    // Add event listeners
+    setupPlaylistEventListeners();
+}
+
+function setupPlaylistEventListeners() {
+    const downloadAllBtn = document.getElementById('download-all-btn');
+    const selectVideosBtn = document.getElementById('select-videos-btn');
+    const selectAllBtn = document.getElementById('select-all-btn');
+    const deselectAllBtn = document.getElementById('deselect-all-btn');
+    const downloadSelectedBtn = document.getElementById('download-selected-btn');
+    const playlistVideos = document.getElementById('playlist-videos');
+    
+    if (downloadAllBtn) {
+        downloadAllBtn.addEventListener('click', () => downloadAllVideos());
+    }
+    
+    if (selectVideosBtn) {
+        selectVideosBtn.addEventListener('click', () => {
+            playlistVideos.style.display = playlistVideos.style.display === 'none' ? 'block' : 'none';
+        });
+    }
+    
+    if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', () => {
+            document.querySelectorAll('.video-checkbox').forEach(cb => cb.checked = true);
+            updateDownloadSelectedButton();
+        });
+    }
+    
+    if (deselectAllBtn) {
+        deselectAllBtn.addEventListener('click', () => {
+            document.querySelectorAll('.video-checkbox').forEach(cb => cb.checked = false);
+            updateDownloadSelectedButton();
+        });
+    }
+    
+    if (downloadSelectedBtn) {
+        downloadSelectedBtn.addEventListener('click', () => downloadSelectedVideos());
+    }
+    
+    // Update download button when checkboxes change
+    document.querySelectorAll('.video-checkbox').forEach(cb => {
+        cb.addEventListener('change', updateDownloadSelectedButton);
+    });
+}
+
+function updateDownloadSelectedButton() {
+    const downloadSelectedBtn = document.getElementById('download-selected-btn');
+    const checkedBoxes = document.querySelectorAll('.video-checkbox:checked');
+    
+    if (downloadSelectedBtn) {
+        downloadSelectedBtn.disabled = checkedBoxes.length === 0;
+        downloadSelectedBtn.innerHTML = `<i class="fas fa-download"></i> Download Selected (${checkedBoxes.length})`;
+    }
+}
+
+async function downloadAllVideos() {
+    if (!currentPlaylistData) return;
+    
+    const videoIds = currentPlaylistData.videos.map(v => v.id);
+    await startBulkDownload(videoIds, `Bulk: ${currentPlaylistData.title}`);
+}
+
+async function downloadSelectedVideos() {
+    const selectedCheckboxes = document.querySelectorAll('.video-checkbox:checked');
+    const videoIds = Array.from(selectedCheckboxes).map(cb => cb.value);
+    
+    if (videoIds.length === 0) return;
+    
+    const selectedTitles = Array.from(selectedCheckboxes).map(cb => cb.dataset.title);
+    await startBulkDownload(videoIds, `Selected videos (${videoIds.length})`);
+}
+
+async function startBulkDownload(videoIds, description) {
+    try {
+        showSpinner();
+        updateSpinnerText('Preparing bulk download...');
+        
+        const response = await fetch(`${API_BASE_URL}/api/v1/video/bulk-download`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                playlist_url: videoUrlInput.value.trim(),
+                video_ids: videoIds,
+                format: formatValue,
+                quality: formatValue === 1 ? audioQuality : videoQuality
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+            currentDownloadId = result.download_id;
+            startStatusPolling();
+        } else {
+            throw new Error(result.detail || 'Bulk download failed');
+        }
+    } catch (error) {
+        console.error('Bulk download error:', error);
+        showError(error.message || 'Bulk download failed');
+        hideSpinner();
+    }
+}
+
+function formatDuration(seconds) {
+    if (!seconds) return '';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
 // Handle conversion process
 async function handleConversion(e) {
     e.preventDefault();
@@ -419,13 +661,24 @@ async function handleConversion(e) {
         return;
     }
     
+    // Check if URL is a playlist with potential 0 videos - extract individual URL if needed
+    let finalUrl = url;
+    if (url.includes('list=') && url.includes('v=')) {
+        console.log('🔗 URL appears to be a playlist, checking if we need to extract individual video URL');
+        const extractedUrl = extractIndividualVideoUrl(url);
+        if (extractedUrl) {
+            finalUrl = extractedUrl;
+            console.log('✅ Using extracted individual video URL for conversion:', finalUrl);
+        }
+    }
+    
     isProcessing = true;
     console.log('🚀 Starting conversion process...');
     showSpinner();
     
     try {
         // Start conversion process
-        await startConversion(url);
+        await startConversion(finalUrl);
     } catch (error) {
         console.error('💥 Conversion error:', error);
         showError(error.message || 'Conversion failed');
@@ -566,10 +819,25 @@ function updateProgress(status) {
         const progress = Math.round(status.progress || 0);
         let message = 'Processing...';
         
-        if (progress > 0 && progress < 100) {
-            message = `Converting... ${progress}%`;
-        } else if (progress >= 100) {
-            message = 'Finalizing...';
+        if (status.format && status.format.includes('Bulk')) {
+            // Bulk download progress
+            const completedCount = status.completed_count || 0;
+            const totalVideos = status.total_videos || 0;
+            
+            if (progress > 0 && progress < 100) {
+                message = `Downloading ${completedCount}/${totalVideos} videos... ${progress}%`;
+            } else if (progress >= 100) {
+                message = 'Creating ZIP archive...';
+            } else {
+                message = `Preparing bulk download...`;
+            }
+        } else {
+            // Single video progress
+            if (progress > 0 && progress < 100) {
+                message = `Converting... ${progress}%`;
+            } else if (progress >= 100) {
+                message = 'Finalizing...';
+            }
         }
         
         spinnerText.textContent = message;
@@ -604,14 +872,28 @@ function showSuccess(status = {}) {
     // Update success message with actual video title
     const title = document.getElementById('video-title');
     if (title) {
-        const format = formatValue === 1 ? 'MP3' : 'MP4';
+        const format = status.format || (formatValue === 1 ? 'MP3' : 'MP4');
         const videoTitle = status.title || 'Your content';
-        title.textContent = `"${videoTitle}" is ready for download as ${format}!`;
+        
+        // Check if this is a bulk download
+        if (status.format && status.format.includes('Bulk')) {
+            const completedCount = status.completed_count || 0;
+            title.textContent = `Bulk download complete! ${completedCount} files in ZIP archive.`;
+        } else {
+            title.textContent = `"${videoTitle}" is ready for download as ${format}!`;
+        }
     }
     
     // Show download button
     if (downloadBtn) {
         downloadBtn.style.display = 'inline-flex';
+        
+        // Update button text for bulk downloads
+        if (status.format && status.format.includes('Bulk')) {
+            downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download ZIP';
+        } else {
+            downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download File';
+        }
     }
 }
 
@@ -643,17 +925,48 @@ async function handleDownload() {
     try {
         showDownloadProgress();
         
+        // First, get the status to get the title for filename
+        const statusUrl = `${API_BASE_URL}/api/v1/video/status/${currentDownloadId}`;
+        const statusResponse = await fetch(statusUrl);
+        if (!statusResponse.ok) {
+            throw new Error(`Failed to get status: ${statusResponse.status}`);
+        }
+        const statusData = await statusResponse.json();
+        
+        // Create filename from title
+        let filename = 'download.mp3';
+        if (statusData.title) {
+            // Clean the title for filename - allow Unicode letters, numbers, spaces, hyphens, underscores, and common punctuation
+            const cleanTitle = statusData.title.replace(/[<>:"/\\|?*\x00-\x1f]/g, '').trim();
+            // Limit length and ensure it ends with .mp3
+            const baseName = cleanTitle.substring(0, 50).trim();
+            filename = baseName + '.mp3';
+        }
+        
         // Create download URL
         const downloadUrl = `${API_BASE_URL}/api/v1/video/download/${currentDownloadId}`;
         
+        // Fetch the file and trigger download
+        const response = await fetch(downloadUrl);
+        if (!response.ok) {
+            throw new Error(`Download failed: ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        
         // Create temporary link and trigger download
         const link = document.createElement('a');
-        link.href = downloadUrl;
+        link.href = url;
+        link.download = filename;
         link.style.display = 'none';
         
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        
+        // Clean up the object URL
+        URL.revokeObjectURL(url);
         
         // Show completion message
         showDownloadComplete();
@@ -732,6 +1045,33 @@ function getYouTubeVideoId(url) {
     const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|embed|watch|shorts)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
     const match = url.match(regex);
     return match ? match[1] : null;
+}
+
+// Extract individual video URL from playlist URL
+function extractIndividualVideoUrl(playlistUrl) {
+    console.log('🔗 Extracting individual video URL from playlist URL:', playlistUrl);
+
+    try {
+        // Parse the URL
+        const url = new URL(playlistUrl);
+        const params = new URLSearchParams(url.search);
+
+        // Get the video ID (v parameter)
+        const videoId = params.get('v');
+        if (!videoId) {
+            console.log('❌ No video ID found in playlist URL');
+            return null;
+        }
+
+        // Construct individual video URL
+        const individualUrl = `https://www.youtube.com/watch?v=${videoId}`;
+        console.log('✅ Extracted individual video URL:', individualUrl);
+        return individualUrl;
+
+    } catch (error) {
+        console.error('❌ Error extracting individual video URL:', error);
+        return null;
+    }
 }
 
 // Handle keyboard shortcuts

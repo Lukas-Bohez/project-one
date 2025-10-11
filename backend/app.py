@@ -2,6 +2,7 @@ import socketio
 import asyncio
 import uvicorn
 import os
+import zipfile
 from datetime import datetime,timedelta
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, status, Body, Header, File, Form, UploadFile
@@ -39,6 +40,7 @@ from models.models import (
     SaveConflictResolution, GameAuthResponse, GameLoginRequest, GameRegisterRequest
 )
 from typing import Dict, Any, Optional, List
+from io import BytesIO
 from fastapi import Request
 from fastapi import Query, Depends
 from models.models import User, UserCreate, UserUpdate, UserPublic # Import your new user models
@@ -60,25 +62,25 @@ except ImportError as e:
 # ----------------------------------------------------
 # Logging Setup
 # ----------------------------------------------------
-# Create a logger for quiz debugging
-quiz_logger = logging.getLogger('quiz_debug')
-quiz_logger.setLevel(logging.DEBUG)
+# Create a logger for video conversion debugging
+video_logger = logging.getLogger('video_debug')
+video_logger.setLevel(logging.DEBUG)
 
-# Create file handler
-log_file = '/home/student/Project/project-one/backend/quiz_debug.log'
-file_handler = logging.FileHandler(log_file, mode='a')
-file_handler.setLevel(logging.DEBUG)
+# Create file handler for video logs
+video_log_file = '/home/student/Project/project-one/backend/video_debug.log'
+video_file_handler = logging.FileHandler(video_log_file, mode='a')
+video_file_handler.setLevel(logging.DEBUG)
 
 # Create formatter
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-file_handler.setFormatter(formatter)
+video_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+video_file_handler.setFormatter(video_formatter)
 
 # Add handler to logger
-quiz_logger.addHandler(file_handler)
+video_logger.addHandler(video_file_handler)
 
-quiz_logger.info("="*50)
-quiz_logger.info("Quiz Logger Initialized")
-quiz_logger.info("="*50)
+video_logger.info("="*50)
+video_logger.info("Video Logger Initialized")
+video_logger.info("="*50)
 
 # Global variable for temperature effects
 virtualTemperature = 0
@@ -201,6 +203,15 @@ def get_client_ip_sync(request: Request) -> str:
     
     # Fall back to direct client IP
     return request.client.host if request.client else "unknown"
+
+
+# Lightweight synchronous wrapper to provide a single, non-async
+# helper called `get_client_ip` for internal code paths. The original
+# `/api/v1/client-ip` route used the same name which caused calls like
+# `get_client_ip(req)` to return a coroutine object (the route function)
+# instead of the IP string. Keep the route but rename it below.
+def get_client_ip(request: Request) -> str:
+    return get_client_ip_sync(request)
 
 def log_user_ip_address(user_id: int, ip_address: str):
     """Log the IP address for a user."""
@@ -1281,7 +1292,7 @@ async def get_user_by_id(user_id: int):
 
 
 @app.get("/api/v1/client-ip")
-async def get_client_ip(request: Request):
+async def get_client_ip_endpoint(request: Request):
     try:
         ip_address = request.headers.get("X-Forwarded-For") or request.client.host
         return {"ip_address": ip_address}
@@ -6389,9 +6400,10 @@ start_temp_cleanup(interval=30)
 try:
     import yt_dlp
     VIDEO_CONVERTER_AVAILABLE = True
-except ImportError:
+    print("Video converter enabled with yt-dlp")
+except ImportError as e:
     VIDEO_CONVERTER_AVAILABLE = False
-    print("Warning: yt-dlp not installed. Video converter endpoints will be disabled.")
+    print(f"Warning: yt-dlp not installed ({e}). Video converter endpoints will be disabled.")
 
 import uuid
 import threading
@@ -6423,6 +6435,30 @@ class ConversionStatus(BaseModel):
     quality: int
     title: Optional[str] = None
     error: Optional[str] = None
+
+class PlaylistInfoRequest(BaseModel):
+    url: str
+
+class PlaylistVideoInfo(BaseModel):
+    id: str
+    title: str
+    duration: Optional[int] = None
+    url: str
+
+class PlaylistInfoResponse(BaseModel):
+    success: bool
+    playlist_id: str
+    title: str
+    video_count: int
+    videos: List[PlaylistVideoInfo]
+    is_private: bool = False
+    error: Optional[str] = None
+
+class BulkDownloadRequest(BaseModel):
+    playlist_url: str
+    video_ids: List[str]  # List of video IDs to download
+    format: int = 1  # 1 = MP3, 0 = MP4
+    quality: int = 128
 
 # URL patterns for platform validation
 URL_PATTERNS = {
@@ -6481,39 +6517,94 @@ def detect_platform(url: str) -> Optional[str]:
             return platform
     return None
 
-def get_ydl_opts(format_type: str, quality: int, output_path: str) -> Dict[str, Any]:
+def is_playlist_url(url: str) -> bool:
+    """Check if URL is a playlist"""
+    video_logger.info(f"Checking if URL is playlist: {url}")
+    result = 'list=' in url and ('youtube.com' in url or 'youtu.be' in url)
+    video_logger.info(f"URL {url} is playlist: {result}")
+    return result
+
+def extract_playlist_id(url: str) -> Optional[str]:
+    """Extract playlist ID from YouTube playlist URL"""
+    video_logger.info(f"Extracting playlist ID from URL: {url}")
+    if not is_playlist_url(url):
+        video_logger.info(f"URL {url} is not a playlist, cannot extract ID")
+        return None
+    
+    # Extract list parameter
+    list_match = re.search(r'[?&]list=([a-zA-Z0-9_-]+)', url)
+    playlist_id = list_match.group(1) if list_match else None
+    video_logger.info(f"Extracted playlist ID: {playlist_id}")
+    return playlist_id
+
+def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restricted: bool = False) -> Dict[str, Any]:
     """Get yt-dlp options based on format and quality with metadata embedding"""
     base_opts = {
         'outtmpl': output_path,
         'no_warnings': False,
         'extractaudio': format_type == 'audio',
-        'ignoreerrors': True,
+        'ignoreerrors': False,  # Don't ignore errors so we can catch them
         'no_check_certificates': True,
-        'writethumbnail': True,  # Download thumbnail for album art
-        'embedthumbnail': True,  # Embed thumbnail as album art
-        'addmetadata': True,     # Add metadata to file
+        'quiet': False,  # Show output
+        'no_color': True,  # Disable colors for logging
     }
+    
+    # Add options for age-restricted content
+    if is_age_restricted:
+        base_opts.update({
+            'age_limit': 18,  # Allow adult content
+            'cookiesfrombrowser': ('chrome',),  # Try to use Chrome cookies
+            'cookiefile': None,  # Allow cookie file if available
+        })
+    
+    # Always try to handle age-restricted content
+    base_opts.update({
+        'age_limit': 18,  # Allow adult content
+        'geo_bypass': True,  # Bypass geo-restrictions
+        'geo_bypass_country': 'US',  # Use US as default country
+    })
     
     if format_type == 'audio':
         base_opts.update({
-            'format': 'bestaudio/best',
+            'format': 'bestaudio[ext=m4a]/bestaudio/best',
+            # Download thumbnail and try to embed it into the final audio file
+            'writethumbnail': True,
+            'embedthumbnail': True,
+            'addmetadata': True,
+            # Prefer ffmpeg for postprocessing
+            'prefer_ffmpeg': True,
             'postprocessors': [
                 {
                     'key': 'FFmpegExtractAudio',
                     'preferredcodec': 'mp3',
                     'preferredquality': str(quality),
                 },
+                # Embed metadata (title, artist, etc.) and cover art into the resulting file
                 {
-                    'key': 'FFmpegMetadata',  # Add metadata
-                    'add_metadata': True,
+                    'key': 'FFmpegMetadata'
                 },
                 {
-                    'key': 'EmbedThumbnail',  # Embed album art
-                    'already_have_thumbnail': False,
+                    'key': 'EmbedThumbnail'
                 }
-            ]
+            ],
+            # Attempt to download subtitles (which may include lyrics) where available
+            'writesubtitles': True,
+            'writeautomaticsub': True,
+            'subtitleslangs': ['en', 'en-US'],
+            'subtitlesformat': 'srt'
         })
     else:  # video
+        # Add thumbnail and metadata options for video
+        base_opts.update({
+            'writethumbnail': True,  # Download thumbnail for album art
+            'embedthumbnail': True,  # Embed thumbnail as album art
+            'addmetadata': True,     # Add metadata to file
+            'prefer_ffmpeg': True,
+            'writesubtitles': True,
+            'writeautomaticsub': True,
+            'subtitleslangs': ['en', 'en-US'],
+            'subtitlesformat': 'srt'
+        })
         quality_map = {
             144: 'worst[height<=144]',
             360: 'best[height<=360]',
@@ -6530,6 +6621,150 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str) -> Dict[str, 
         })
     
     return base_opts
+
+
+# Optional metadata helper: uses mutagen and Pillow to add tags, cover art and lyrics
+try:
+    from mutagen.easyid3 import EasyID3
+    from mutagen.id3 import ID3, APIC, USLT, TIT2, TPE1, TALB, ID3NoHeaderError
+    from mutagen.mp4 import MP4, MP4Cover
+    from PIL import Image
+    MUTAGEN_AVAILABLE = True
+except Exception:
+    MUTAGEN_AVAILABLE = False
+
+
+def apply_metadata(file_path: str, info: Dict[str, Any], base_pattern: str, format_type: str = 'audio'):
+    """Apply metadata (title, artist, album), embed cover art and lyrics when possible.
+    This function is optional: it logs and returns silently if mutagen/Pillow aren't available.
+    """
+    try:
+        if not MUTAGEN_AVAILABLE:
+            video_logger.debug("Mutagen or Pillow not available; skipping metadata embedding")
+            return
+
+        ext = os.path.splitext(file_path)[1].lower()
+        title = info.get('title') or None
+        artist = info.get('artist') or info.get('uploader') or info.get('channel') or None
+        album = info.get('album') or None
+
+        # Find thumbnail (support common image types)
+        thumbnail_path = None
+        for filename in os.listdir(VIDEO_DOWNLOAD_DIR):
+            if filename.startswith(os.path.basename(base_pattern)):
+                low = filename.lower()
+                if low.endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                    thumbnail_path = os.path.join(VIDEO_DOWNLOAD_DIR, filename)
+                    break
+
+        # Find subtitle file (srt) to use as lyrics
+        subtitle_path = None
+        for filename in os.listdir(VIDEO_DOWNLOAD_DIR):
+            if filename.startswith(os.path.basename(base_pattern)) and filename.lower().endswith(('.srt', '.vtt', '.txt')):
+                subtitle_path = os.path.join(VIDEO_DOWNLOAD_DIR, filename)
+                break
+
+        # Apply tags depending on extension
+        if ext in ('.mp3',):
+            try:
+                try:
+                    id3 = ID3(file_path)
+                except ID3NoHeaderError:
+                    id3 = ID3()
+
+                if title:
+                    id3.add(TIT2(encoding=3, text=title))
+                if artist:
+                    id3.add(TPE1(encoding=3, text=artist))
+                if album:
+                    id3.add(TALB(encoding=3, text=album))
+
+                # Embed cover art
+                if thumbnail_path and os.path.exists(thumbnail_path):
+                    try:
+                        # Convert webp to jpeg if needed
+                        with Image.open(thumbnail_path) as im:
+                            bio = BytesIO()
+                            if im.format == 'WEBP':
+                                im = im.convert('RGB')
+                                im.save(bio, format='JPEG')
+                                mime = 'image/jpeg'
+                            else:
+                                im.save(bio, format=im.format)
+                                mime = Image.MIME.get(im.format, 'image/jpeg')
+                            bio.seek(0)
+                            id3.add(APIC(encoding=3, mime=mime, type=3, desc='Cover', data=bio.read()))
+                    except Exception as e:
+                        video_logger.warning(f"Failed to embed cover art: {e}")
+
+                # Embed lyrics from subtitle if present
+                if subtitle_path and os.path.exists(subtitle_path):
+                    try:
+                        with open(subtitle_path, 'r', encoding='utf-8', errors='ignore') as sf:
+                            srt = sf.read()
+                        # Strip timestamps and sequence numbers crudely
+                        lyrics = re.sub(r"\r\n|\r|\n", "\n", srt)
+                        lyrics = re.sub(r"\d+\n", "", lyrics)
+                        lyrics = re.sub(r"\d{2}:\d{2}:\d{2},\d{3} --> .*\n", "", lyrics)
+                        lyrics_text = lyrics.strip()
+                        if lyrics_text:
+                            id3.add(USLT(encoding=3, lang='eng', desc='lyrics', text=lyrics_text))
+                    except Exception as e:
+                        video_logger.warning(f"Failed to embed lyrics from subtitle: {e}")
+
+                try:
+                    id3.save(file_path)
+                except Exception as e:
+                    video_logger.warning(f"Failed to save ID3 tags: {e}")
+            except Exception as e:
+                video_logger.warning(f"MP3 metadata embedding error: {e}")
+
+        elif ext in ('.m4a', '.mp4'):
+            try:
+                mp4 = MP4(file_path)
+                if title:
+                    mp4['\xa9nam'] = title
+                if artist:
+                    mp4['\xa9ART'] = artist
+                if album:
+                    mp4['\xa9alb'] = album
+
+                # Embed cover art
+                if thumbnail_path and os.path.exists(thumbnail_path):
+                    try:
+                        with open(thumbnail_path, 'rb') as tf:
+                            img = tf.read()
+                        # MP4Cover requires specifying format
+                        fmt = MP4Cover.FORMAT_JPEG
+                        if thumbnail_path.lower().endswith('.png'):
+                            fmt = MP4Cover.FORMAT_PNG
+                        mp4['covr'] = [MP4Cover(img, imageformat=fmt)]
+                    except Exception as e:
+                        video_logger.warning(f"Failed to embed MP4 cover art: {e}")
+
+                # Embed lyrics as "\x00lyr" tag where supported (some MP4 atoms use special keys)
+                if subtitle_path and os.path.exists(subtitle_path):
+                    try:
+                        with open(subtitle_path, 'r', encoding='utf-8', errors='ignore') as sf:
+                            srt = sf.read()
+                        lyrics = re.sub(r"\r\n|\r|\n", "\n", srt)
+                        lyrics = re.sub(r"\d+\n", "", lyrics)
+                        lyrics = re.sub(r"\d{2}:\d{2}:\d{2},\d{3} --> .*\n", "", lyrics)
+                        lyrics_text = lyrics.strip()
+                        if lyrics_text:
+                            mp4['\xa9lyr'] = lyrics_text
+                    except Exception as e:
+                        video_logger.warning(f"Failed to embed MP4 lyrics: {e}")
+
+                try:
+                    mp4.save()
+                except Exception as e:
+                    video_logger.warning(f"Failed to save MP4 tags: {e}")
+            except Exception as e:
+                video_logger.warning(f"MP4 metadata embedding error: {e}")
+
+    except Exception as e:
+        video_logger.warning(f"apply_metadata encountered an error: {e}")
 
 def cleanup_old_video_files():
     """Remove old downloaded video files"""
@@ -7046,6 +7281,9 @@ if VIDEO_CONVERTER_AVAILABLE:
     # Helper function for background video download
     def download_video_background(download_id: str, url: str, format_type: str, quality: int, output_path: str, client_ip: str = None):
         """Background function to download and convert video - includes rate limit cleanup"""
+        video_logger.info(f"Starting background download for {download_id}: {url}")
+        video_logger.info(f"Format: {format_type}, Quality: {quality}")
+        
         def progress_hook(d):
             if d['status'] == 'downloading':
                 try:
@@ -7059,9 +7297,10 @@ if VIDEO_CONVERTER_AVAILABLE:
                         if download_id in active_video_downloads:
                             active_video_downloads[download_id]['progress'] = min(progress, 90.0)
                             active_video_downloads[download_id]['status'] = 'downloading'
-                except:
-                    pass
+                except Exception as progress_error:
+                    video_logger.warning(f"Progress calculation error: {progress_error}")
             elif d['status'] == 'finished':
+                video_logger.info(f"Download finished for {download_id}")
                 with download_lock:
                     if download_id in active_video_downloads:
                         active_video_downloads[download_id]['progress'] = 95.0
@@ -7072,16 +7311,28 @@ if VIDEO_CONVERTER_AVAILABLE:
             with download_lock:
                 if download_id in active_video_downloads:
                     active_video_downloads[download_id]['status'] = 'downloading'
+                    video_logger.info(f"Set status to downloading for {download_id}")
             
             # Get yt-dlp options
             ydl_opts = get_ydl_opts(format_type, quality, output_path)
             ydl_opts['progress_hooks'] = [progress_hook]
+            video_logger.info(f"yt-dlp options configured for {download_id}")
             
             # Download the video
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                video_logger.info(f"Extracting video info for {download_id}")
                 # Extract info first
                 info = ydl.extract_info(url, download=False)
                 title = info.get('title', 'Unknown')
+                video_logger.info(f"Video title: {title}")
+                
+                # Check if video is age-restricted or unavailable
+                if info.get('age_limit', 0) > 0:
+                    video_logger.info(f"Video is age-restricted (age limit: {info.get('age_limit')})")
+                    is_age_restricted = True
+                    # Reconfigure options for age-restricted content
+                    ydl_opts = get_ydl_opts(format_type, quality, output_path, is_age_restricted)
+                    ydl_opts['progress_hooks'] = [progress_hook]
                 
                 # Update title
                 with download_lock:
@@ -7089,19 +7340,59 @@ if VIDEO_CONVERTER_AVAILABLE:
                         active_video_downloads[download_id]['title'] = title
                 
                 # Download
+                video_logger.info(f"Starting download for {download_id}")
                 ydl.download([url])
+                video_logger.info(f"Download completed for {download_id}")
             
             # Find the downloaded file
             downloaded_file = None
             base_pattern = output_path.replace('.%(ext)s', '')
-            
+            video_logger.info(f"Looking for downloaded file with pattern: {base_pattern}")
+
+            # Collect candidates that start with the base pattern
+            candidates = []
             for filename in os.listdir(VIDEO_DOWNLOAD_DIR):
                 if filename.startswith(os.path.basename(base_pattern)):
-                    downloaded_file = os.path.join(VIDEO_DOWNLOAD_DIR, filename)
-                    break
+                    candidates.append(os.path.join(VIDEO_DOWNLOAD_DIR, filename))
+
+            # Prefer actual audio/video files over thumbnails (e.g., .webp)
+            if candidates:
+                # Define priority extensions depending on format requested
+                if format_type == 'audio':
+                    priority_exts = ['.mp3', '.m4a', '.opus', '.webm', '.mka', '.aac']
+                else:
+                    priority_exts = ['.mp4', '.mkv', '.webm', '.mov', '.flv']
+
+                # Try to find the best candidate by priority
+                chosen = None
+                for ext in priority_exts:
+                    for path in candidates:
+                        if path.lower().endswith(ext):
+                            chosen = path
+                            break
+                    if chosen:
+                        break
+
+                # Fallback to any candidate if no prioritized ext matched
+                downloaded_file = chosen or candidates[0]
+                video_logger.info(f"Candidate files: {candidates}")
+                video_logger.info(f"Selected downloaded file: {downloaded_file}")
             
             if downloaded_file and os.path.exists(downloaded_file):
+                # Try to apply metadata (cover art, artist, lyrics) if possible
+                try:
+                    apply_metadata(downloaded_file, info if 'info' in locals() else {}, base_pattern, format_type)
+                except Exception as meta_err:
+                    video_logger.warning(f"Failed to apply metadata: {meta_err}")
+                # Check file size - if it's too small, it's probably corrupted
+                file_size = os.path.getsize(downloaded_file)
+                if file_size < 1024:  # Less than 1KB is probably corrupted
+                    video_logger.error(f"Downloaded file too small ({file_size} bytes) for {download_id}")
+                    os.remove(downloaded_file)  # Delete the corrupted file
+                    raise Exception(f"Downloaded file appears to be corrupted (only {file_size} bytes)")
+                
                 # Success
+                video_logger.info(f"Video conversion completed successfully: {download_id} ({file_size} bytes)")
                 with download_lock:
                     if download_id in active_video_downloads:
                         active_video_downloads[download_id].update({
@@ -7111,12 +7402,13 @@ if VIDEO_CONVERTER_AVAILABLE:
                             'finished': True
                         })
             else:
+                video_logger.error(f"Downloaded file not found for {download_id}")
                 raise Exception("Downloaded file not found")
                 
         except Exception as e:
             # Error occurred
             error_msg = str(e)
-            print(f"Video download error for {download_id}: {error_msg}")
+            video_logger.error(f"Video download error for {download_id}: {error_msg}")
             
             with download_lock:
                 if download_id in active_video_downloads:
@@ -7129,6 +7421,261 @@ if VIDEO_CONVERTER_AVAILABLE:
             # Decrement rate limit counter when download finishes (success or error)
             if client_ip:
                 decrement_video_rate_limit(client_ip)
+                video_logger.debug(f"Decremented rate limit for IP {client_ip}")
+
+    def bulk_download_background(download_id: str, video_ids: List[str], format_type: str, quality: int, bulk_dir: str, zip_path: str, client_ip: str = None):
+        """Background function to download multiple videos and create ZIP file"""
+        video_logger.info(f"Starting bulk download background process for {download_id}")
+        video_logger.info(f"Downloading {len(video_ids)} videos in {format_type} format")
+        try:
+            completed_videos = []
+            total_videos = len(video_ids)
+            
+            with download_lock:
+                if download_id in active_video_downloads:
+                    active_video_downloads[download_id]['status'] = 'downloading'
+                    video_logger.info(f"Set status to downloading for {download_id}")
+            
+            for i, video_id in enumerate(video_ids):
+                try:
+                    video_url = f"https://www.youtube.com/watch?v={video_id}"
+                    video_logger.info(f"Downloading video {i+1}/{total_videos}: {video_id}")
+                    
+                    # Create output path for this video
+                    timestamp = int(time.time())
+                    extension = 'mp3' if format_type == 'audio' else 'mp4'
+                    output_filename = f"{video_id}_{timestamp}.%(ext)s"
+                    output_path = os.path.join(bulk_dir, output_filename)
+                    
+                    # Download this video
+                    ydl_opts = get_ydl_opts(format_type, quality, output_path)
+                    
+                    def progress_hook(d):
+                        if d['status'] == 'finished':
+                            # Update overall progress
+                            current_progress = ((len(completed_videos) + 1) / total_videos) * 100
+                            with download_lock:
+                                if download_id in active_video_downloads:
+                                    active_video_downloads[download_id]['progress'] = min(current_progress, 95.0)
+                    
+                    ydl_opts['progress_hooks'] = [progress_hook]
+                    
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        info = ydl.extract_info(video_url, download=True)
+                        title = info.get('title', f'Video {video_id}')
+                        video_logger.info(f"Successfully downloaded: {title}")
+                        
+                        # Find the downloaded file by collecting candidates and prioritizing media extensions
+                        downloaded_file = None
+                        candidates = []
+                        for filename in os.listdir(bulk_dir):
+                            if filename.startswith(video_id):
+                                candidates.append(os.path.join(bulk_dir, filename))
+
+                        if candidates:
+                            priority_exts = ['.mp3', '.m4a', '.mp4', '.webm', '.mkv', '.aac']
+                            chosen = None
+                            for ext in priority_exts:
+                                for path in candidates:
+                                    if path.lower().endswith(ext):
+                                        chosen = path
+                                        break
+                                if chosen:
+                                    break
+                            downloaded_file = chosen or candidates[0]
+
+                        if downloaded_file:
+                            video_logger.info(f"Found downloaded file: {downloaded_file}")
+                            # Rename file to include title for ZIP
+                            # Apply metadata (attempt embedding cover/lyrics) for each item
+                            try:
+                                apply_metadata(downloaded_file, info if 'info' in locals() else {}, output_path.replace('.%(ext)s',''), format_type)
+                            except Exception as meta_err:
+                                video_logger.warning(f"Failed to apply metadata for bulk item: {meta_err}")
+                            safe_title = re.sub(r'[^\w\s-]', '', title)[:50]
+                            new_filename = f"{safe_title}.{extension}"
+                            new_path = os.path.join(bulk_dir, new_filename)
+                            
+                            try:
+                                os.rename(downloaded_file, new_path)
+                                completed_videos.append(new_path)
+                                video_logger.info(f"Renamed file to: {new_filename}")
+                            except Exception as rename_error:
+                                video_logger.warning(f"Failed to rename file, using original: {rename_error}")
+                                completed_videos.append(downloaded_file)
+                    
+                    # Update progress
+                    current_progress = ((i + 1) / total_videos) * 100
+                    with download_lock:
+                        if download_id in active_video_downloads:
+                            active_video_downloads[download_id]['completed_videos'] = completed_videos.copy()
+                            active_video_downloads[download_id]['progress'] = min(current_progress, 95.0)
+                            
+                except Exception as e:
+                    video_logger.error(f"Error downloading video {video_id}: {e}")
+                    # Continue with next video
+            
+            # Create ZIP file
+            video_logger.info(f"Creating ZIP file with {len(completed_videos)} completed videos")
+            if completed_videos:
+                with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                    for file_path in completed_videos:
+                        if os.path.exists(file_path):
+                            # Add file to ZIP with just the filename (no path)
+                            zipf.write(file_path, os.path.basename(file_path))
+                
+                video_logger.info(f"ZIP file created successfully: {zip_path}")
+                # Success
+                with download_lock:
+                    if download_id in active_video_downloads:
+                        active_video_downloads[download_id].update({
+                            'status': 'completed',
+                            'progress': 100.0,
+                            'file_path': zip_path,
+                            'finished': True,
+                            'completed_count': len(completed_videos)
+                        })
+                        
+                video_logger.info(f"Bulk download completed successfully: {download_id}")
+                # Clean up individual files
+                for file_path in completed_videos:
+                    try:
+                        delete_file_safe(file_path)
+                        video_logger.debug(f"Cleaned up file: {file_path}")
+                    except Exception as cleanup_error:
+                        video_logger.warning(f"Failed to clean up file {file_path}: {cleanup_error}")
+                
+                # Clean up bulk directory
+                try:
+                    os.rmdir(bulk_dir)
+                    video_logger.debug(f"Cleaned up bulk directory: {bulk_dir}")
+                except Exception as dir_cleanup_error:
+                    video_logger.warning(f"Failed to clean up bulk directory {bulk_dir}: {dir_cleanup_error}")
+                    
+            else:
+                video_logger.error(f"No videos were successfully downloaded for {download_id}")
+                raise Exception("No videos were successfully downloaded")
+                
+        except Exception as e:
+            # Error occurred
+            error_msg = str(e)
+            video_logger.error(f"Bulk download error for {download_id}: {error_msg}")
+            
+            with download_lock:
+                if download_id in active_video_downloads:
+                    active_video_downloads[download_id].update({
+                        'status': 'error',
+                        'error': error_msg,
+                        'finished': True
+                    })
+        finally:
+            # Decrement rate limit counter when download finishes (success or error)
+            if client_ip:
+                decrement_video_rate_limit(client_ip)
+                video_logger.debug(f"Decremented rate limit for IP {client_ip}")
+
+    @app.post("/api/v1/video/playlist-info", response_model=PlaylistInfoResponse)
+    async def get_playlist_info(request: PlaylistInfoRequest):
+        """Get information about a YouTube playlist"""
+        video_logger.info(f"Getting playlist info for URL: {request.url}")
+        try:
+            if not is_playlist_url(request.url):
+                video_logger.warning(f"Invalid playlist URL provided: {request.url}")
+                raise HTTPException(status_code=400, detail="URL is not a valid YouTube playlist")
+            
+            playlist_id = extract_playlist_id(request.url)
+            if not playlist_id:
+                video_logger.warning(f"Could not extract playlist ID from URL: {request.url}")
+                raise HTTPException(status_code=400, detail="Could not extract playlist ID from URL")
+            
+            video_logger.info(f"Extracted playlist ID: {playlist_id}")
+            
+            # yt-dlp options for playlist extraction
+            ydl_opts = {
+                'quiet': True,
+                'no_warnings': True,
+                'extract_flat': True,  # Don't download videos, just get info
+                'ignoreerrors': True,
+            }
+            
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                try:
+                    video_logger.info(f"Extracting playlist info with yt-dlp for ID: {playlist_id}")
+                    info = ydl.extract_info(request.url, download=False)
+                    
+                    if not info:
+                        video_logger.error(f"Playlist not found or unavailable: {playlist_id}")
+                        raise HTTPException(status_code=404, detail="Playlist not found or unavailable")
+                    
+                    # Check if playlist is private/unavailable
+                    if info.get('availability') == 'private':
+                        video_logger.warning(f"Playlist {playlist_id} is private")
+                        return PlaylistInfoResponse(
+                            success=False,
+                            playlist_id=playlist_id,
+                            title="Private Playlist",
+                            video_count=0,
+                            videos=[],
+                            is_private=True,
+                            error="This playlist is private. Please make it unlisted or public to access it."
+                        )
+                    
+                    playlist_title = info.get('title', f'Playlist {playlist_id}')
+                    entries = info.get('entries', [])
+                    
+                    videos = []
+                    for entry in entries:
+                        if entry and entry.get('id'):
+                            videos.append(PlaylistVideoInfo(
+                                id=entry['id'],
+                                title=entry.get('title', 'Unknown Title'),
+                                duration=entry.get('duration'),
+                                url=f"https://www.youtube.com/watch?v={entry['id']}"
+                            ))
+                    
+                    video_logger.info(f"Successfully extracted playlist info: {playlist_title} with {len(videos)} videos")
+                    return PlaylistInfoResponse(
+                        success=True,
+                        playlist_id=playlist_id,
+                        title=playlist_title,
+                        video_count=len(videos),
+                        videos=videos,
+                        is_private=False
+                    )
+                        
+                except Exception as e:
+                    error_msg = str(e)
+                    video_logger.error(f"Error extracting playlist info for {playlist_id}: {error_msg}")
+                    if "Sign in to confirm your age" in error_msg:
+                        video_logger.warning(f"Age-restricted playlist: {playlist_id}")
+                        return PlaylistInfoResponse(
+                            success=False,
+                            playlist_id=playlist_id,
+                            title="Age-Restricted Playlist",
+                            video_count=0,
+                            videos=[],
+                            error="This playlist contains age-restricted content. Some videos may not be downloadable."
+                        )
+                    elif "private" in error_msg.lower():
+                        video_logger.warning(f"Private playlist: {playlist_id}")
+                        return PlaylistInfoResponse(
+                            success=False,
+                            playlist_id=playlist_id,
+                            title="Private Playlist",
+                            video_count=0,
+                            videos=[],
+                            is_private=True,
+                            error="This playlist is private. Please make it unlisted or public to access it."
+                        )
+                    else:
+                        video_logger.error(f"Failed to extract playlist info for {playlist_id}: {error_msg}")
+                        raise HTTPException(status_code=500, detail=f"Failed to extract playlist info: {error_msg}")
+                        
+        except HTTPException:
+            raise
+        except Exception as e:
+            video_logger.error(f"Unexpected error in get_playlist_info: {str(e)}")
+            raise HTTPException(status_code=500, detail=str(e))
 
     @app.post("/api/v1/video/validate", response_model=Dict[str, Any])
     async def validate_video_url(request: VideoUrlValidation):
@@ -7137,6 +7684,16 @@ if VIDEO_CONVERTER_AVAILABLE:
             platform = detect_platform(request.url)
             if not platform:
                 return {"valid": False, "error": "Unsupported platform or invalid URL"}
+            
+            # Check if it's a playlist
+            if is_playlist_url(request.url):
+                return {
+                    "valid": True,
+                    "platform": platform,
+                    "is_playlist": True,
+                    "playlist_id": extract_playlist_id(request.url),
+                    "message": "YouTube playlist detected. Use /api/v1/video/playlist-info to get playlist details."
+                }
             
             # Test if yt-dlp can extract info
             ydl_opts = {'quiet': True, 'no_warnings': True}
@@ -7149,12 +7706,25 @@ if VIDEO_CONVERTER_AVAILABLE:
                     return {
                         "valid": True,
                         "platform": platform,
+                        "is_playlist": False,
                         "title": title,
                         "duration": duration,
                         "formats_available": True
                     }
                 except Exception as e:
-                    return {"valid": False, "error": f"Cannot extract video info: {str(e)}"}
+                    error_msg = str(e)
+                    if "Sign in to confirm your age" in error_msg:
+                        return {
+                            "valid": True,
+                            "platform": platform,
+                            "is_playlist": False,
+                            "title": "Age-Restricted Video",
+                            "duration": 0,
+                            "age_restricted": True,
+                            "warning": "This video is age-restricted. Download may require authentication."
+                        }
+                    else:
+                        return {"valid": False, "error": f"Cannot extract video info: {error_msg}"}
                     
         except Exception as e:
             return {"valid": False, "error": str(e)}
@@ -7162,12 +7732,15 @@ if VIDEO_CONVERTER_AVAILABLE:
     @app.post("/api/v1/video/convert", response_model=VideoConversionResponse)
     async def convert_video(request: VideoConversionRequest, req: Request):
         """Start video conversion process with rate limiting"""
+        video_logger.info(f"Starting video conversion for URL: {request.url}")
         try:
             # Get client IP for rate limiting
             client_ip = get_client_ip(req)
+            video_logger.info(f"Client IP: {client_ip}")
             
             # Check rate limit
             if not check_video_rate_limit(client_ip):
+                video_logger.warning(f"Rate limit exceeded for IP {client_ip}")
                 raise HTTPException(
                     status_code=429,
                     detail=f"Rate limit exceeded. Maximum {MAX_CONCURRENT_DOWNLOADS_PER_IP} concurrent downloads per IP. Please wait."
@@ -7176,12 +7749,16 @@ if VIDEO_CONVERTER_AVAILABLE:
             # Validate URL first
             platform = detect_platform(request.url)
             if not platform:
+                video_logger.warning(f"Unsupported platform for URL: {request.url}")
                 raise HTTPException(status_code=400, detail="Unsupported platform or invalid URL")
+            
+            video_logger.info(f"Detected platform: {platform}")
             
             # Block internal/localhost URLs (SSRF protection)
             from urllib.parse import urlparse
             parsed = urlparse(request.url)
             if parsed.hostname in ['localhost', '127.0.0.1', '0.0.0.0', '::1']:
+                video_logger.warning(f"Blocked localhost URL: {request.url}")
                 raise HTTPException(status_code=400, detail="Invalid URL: localhost not allowed")
             
             # Increment rate limit counter
@@ -7189,9 +7766,11 @@ if VIDEO_CONVERTER_AVAILABLE:
             
             # Generate unique download ID
             download_id = str(uuid.uuid4())
+            video_logger.info(f"Generated download ID: {download_id}")
             
             # Determine format and quality
             format_type = 'audio' if request.format == 1 else 'video'
+            video_logger.info(f"Format: {format_type}, Quality: {request.quality}")
             
             # Set up output filename
             timestamp = int(time.time())
@@ -7201,6 +7780,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                 output_filename = f"{download_id}_{timestamp}.%(ext)s"
             
             output_path = os.path.join(VIDEO_DOWNLOAD_DIR, output_filename)
+            video_logger.info(f"Output path: {output_path}")
             
             # Store download info
             with download_lock:
@@ -7220,12 +7800,14 @@ if VIDEO_CONVERTER_AVAILABLE:
                 }
             
             # Start download in background thread
+            video_logger.info(f"Starting background download thread for {download_id}")
             threading.Thread(
                 target=download_video_background, 
                 args=(download_id, request.url, format_type, request.quality, output_path, client_ip),
                 daemon=True
             ).start()
             
+            video_logger.info(f"Video conversion started successfully: {download_id}")
             return VideoConversionResponse(
                 success=True,
                 download_id=download_id,
@@ -7235,6 +7817,94 @@ if VIDEO_CONVERTER_AVAILABLE:
         except HTTPException:
             raise
         except Exception as e:
+            video_logger.error(f"Unexpected error in convert_video: {str(e)}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post("/api/v1/video/bulk-download", response_model=VideoConversionResponse)
+    async def bulk_download_playlist(request: BulkDownloadRequest, req: Request):
+        """Start bulk download of multiple videos from a playlist"""
+        video_logger.info(f"Starting bulk download for playlist: {request.playlist_url}")
+        video_logger.info(f"Video IDs to download: {len(request.video_ids)} videos")
+        try:
+            # Get client IP for rate limiting
+            client_ip = get_client_ip(req)
+            
+            # Check rate limit (more strict for bulk downloads)
+            if not check_video_rate_limit(client_ip):
+                video_logger.warning(f"Rate limit exceeded for IP {client_ip}")
+                raise HTTPException(
+                    status_code=429,
+                    detail=f"Rate limit exceeded. Maximum {MAX_CONCURRENT_DOWNLOADS_PER_IP} concurrent downloads per IP. Please wait."
+                )
+            
+            if not request.video_ids:
+                video_logger.warning("No video IDs provided for bulk download")
+                raise HTTPException(status_code=400, detail="No video IDs provided")
+            
+            if len(request.video_ids) > 50:  # Limit bulk downloads
+                video_logger.warning(f"Too many videos requested: {len(request.video_ids)} (max 50)")
+                raise HTTPException(status_code=400, detail="Maximum 50 videos per bulk download")
+            
+            # Generate unique download ID
+            download_id = str(uuid.uuid4())
+            video_logger.info(f"Generated download ID: {download_id}")
+            
+            # Determine format and quality
+            format_type = 'audio' if request.format == 1 else 'video'
+            extension = 'mp3' if format_type == 'audio' else 'mp4'
+            
+            # Create temporary directory for individual downloads
+            bulk_dir = os.path.join(VIDEO_DOWNLOAD_DIR, f"bulk_{download_id}")
+            os.makedirs(bulk_dir, exist_ok=True)
+            video_logger.info(f"Created bulk download directory: {bulk_dir}")
+            
+            # Create ZIP file path
+            zip_filename = f"playlist_download_{int(time.time())}.zip"
+            zip_path = os.path.join(VIDEO_DOWNLOAD_DIR, zip_filename)
+            
+            # Store download info
+            with download_lock:
+                active_video_downloads[download_id] = {
+                    'status': 'starting',
+                    'progress': 0.0,
+                    'platform': 'youtube',
+                    'format': f'Bulk {format_type.title()}',
+                    'quality': request.quality,
+                    'url': request.playlist_url,
+                    'output_path': zip_path,
+                    'bulk_dir': bulk_dir,
+                    'video_ids': request.video_ids,
+                    'completed_videos': [],
+                    'total_videos': len(request.video_ids),
+                    'created_at': time.time(),
+                    'title': f'Playlist Bulk Download ({len(request.video_ids)} videos)',
+                    'error': None,
+                    'finished': False,
+                    'file_path': None
+                }
+            
+            # Increment rate limit counter
+            increment_video_rate_limit(client_ip)
+            
+            # Start bulk download in background thread
+            video_logger.info(f"Starting background bulk download thread for {download_id}")
+            threading.Thread(
+                target=bulk_download_background, 
+                args=(download_id, request.video_ids, format_type, request.quality, bulk_dir, zip_path, client_ip),
+                daemon=True
+            ).start()
+            
+            video_logger.info(f"Bulk download started successfully: {download_id}")
+            return VideoConversionResponse(
+                success=True,
+                download_id=download_id,
+                message=f"Started bulk download of {len(request.video_ids)} videos"
+            )
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            video_logger.error(f"Unexpected error in bulk_download_playlist: {str(e)}")
             raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/v1/video/status/{download_id}", response_model=ConversionStatus)
@@ -7280,51 +7950,46 @@ async def download_converted_file(request: Request, download_id: str):
         ext = os.path.splitext(filename)[1]
         filename = f"{safe_title}{ext}"
 
-    def bg_cleanup():
-        try:
-            # Remove the file if it still exists
-            delete_file_safe(file_path)
-        finally:
-            try:
-                with download_lock:
-                    if download_id in active_video_downloads:
-                        del active_video_downloads[download_id]
-            except Exception as e:
-                print(f"Error removing active video download record: {e}")
-
-        # Try to get client IP for rate limiting bookkeeping
+    # Capture client IP synchronously for bookkeeping (avoid using request inside BG task)
+    client_ip = None
+    try:
+        client_ip = get_client_ip(request) if request else None
+    except Exception:
         client_ip = None
+
+    def bg_cleanup():
+        # Delete the file and remove active download entry
         try:
-            client_ip = request.client.host if request and request.client else None
-        except Exception:
-            client_ip = None
+            delete_file_safe(file_path)
+        except Exception as e:
+            video_logger.warning(f"Failed to delete file {file_path}: {e}")
 
-        # Increment rate limit counter for this client
-        if client_ip:
-            try:
-                increment_video_rate_limit(client_ip)
-            except Exception:
-                pass
+        try:
+            with download_lock:
+                if download_id in active_video_downloads:
+                    del active_video_downloads[download_id]
+        except Exception as e:
+            video_logger.warning(f"Error removing active video download record: {e}")
 
-        # Use BackgroundTask to delete file after response is sent
-        def bg_cleanup_wrapper():
-            try:
-                bg_cleanup()
-            finally:
-                if client_ip:
-                    try:
-                        decrement_video_rate_limit(client_ip)
-                    except Exception:
-                        pass
+    def bg_cleanup_wrapper():
+        try:
+            bg_cleanup()
+        finally:
+            if client_ip:
+                try:
+                    decrement_video_rate_limit(client_ip)
+                    video_logger.debug(f"Decremented rate limit for IP {client_ip}")
+                except Exception:
+                    pass
 
-        bg = BackgroundTask(bg_cleanup_wrapper)
+    bg = BackgroundTask(bg_cleanup_wrapper)
 
-        return FileResponse(
-            file_path,
-            filename=filename,
-            media_type='application/octet-stream',
-            background=bg
-        )
+    return FileResponse(
+        file_path,
+        filename=filename,
+        media_type='application/octet-stream',
+        background=bg
+    )
 
 # Video converter placeholder endpoints (if yt-dlp not available)
 if not VIDEO_CONVERTER_AVAILABLE:
@@ -7568,14 +8233,14 @@ else:
 # =============================================================================
 
 if __name__ == "__main__":
-    # Disable auto-reload for production/long conversions
-    dev_reload = False
+    # Enable auto-reload for development
+    dev_reload = True
     uvicorn.run(
         "app:app",
         host="0.0.0.0",
-        port=8001,
-        reload=dev_reload,
-        reload_dirs=["backend"] if dev_reload else None
+        port=8001,  # Changed port to avoid conflicts
+        reload=True,  # Enable auto-reload for development
+        reload_dirs=["/home/student/Project/project-one/backend"]  # Watch backend directory
     )
 
 
