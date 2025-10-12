@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Convert The Spire - Free YouTube to MP3 Converter by Oroka Conner</title>
-    <meta name="description" content="Free YouTube to MP3/MP4 converter with metadata, album art & lyrics. Download videos from YouTube, TikTok, Instagram, Reddit, Facebook, Twitch & Twitter. Created by Oroka Conner. No ads, no registration. High quality 320kbps MP3 & 1080p MP4 downloads.">
+    <title>Convert The Spire — YouTube Playlist Converter (Free)</title>
+    <meta name="description" content="Convert full YouTube playlists to MP3 or MP4 with metadata, album art and lyrics. Built for reliable playlist downloads and client-side ZIP chunking. Other platforms coming soon.">
     <meta name="keywords" content="youtube to mp3, youtube downloader, convert youtube to mp4, free video converter, tiktok downloader, instagram video download, social media converter, mp3 converter, video to audio, twitter video download, facebook video downloader, reddit video converter, twitch clip downloader, social media to mp3, online video converter, no registration video downloader, high quality mp3, 320kbps mp3, 1080p mp4, free online converter, mp3 with metadata, album art, cover art">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <meta name="author" content="Oroka Conner">
@@ -32,7 +32,7 @@
     
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="Convert The Spire - Free YouTube to MP3 Converter with Metadata by Oroka Conner">
-    <meta property="og:description" content="🚀 Free YouTube to MP3/MP4 converter with full metadata, album art & artist info. Download videos from YouTube, TikTok, Instagram, Reddit, Facebook, Twitch & Twitter. Created by Oroka Conner. No ads, no registration required. High quality 320kbps MP3 & 1080p MP4 downloads. Fast, secure, and completely free!">
+    <meta property="og:description" content="🚀 Full YouTube playlist converter — convert entire playlists to MP3/MP4 with metadata and album art. Optimized for large playlists with client-side packaging. Other platforms coming soon.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://quizthespire.duckdns.org/frontend/html/converter.html">
     <meta property="og:image" content="https://quizthespire.duckdns.org/frontend/img/converter-preview.jpg">
@@ -55,7 +55,7 @@
     <meta name="twitter:site" content="@ConvertTheSpire">
     <meta name="twitter:creator" content="@LukasBohez">
     <meta name="twitter:title" content="Convert The Spire - Free YouTube to MP3 Converter | Download Videos from Social Media">
-    <meta name="twitter:description" content="🚀 Free YouTube to MP3/MP4 converter. Download from YouTube, TikTok, Instagram, Reddit, Facebook, Twitch & Twitter. No ads, no registration. High quality 320kbps MP3 & 1080p MP4 downloads!">
+    <meta name="twitter:description" content="🎧 Convert entire YouTube playlists to MP3/MP4 with metadata and album art. Reliable playlist downloads with client-side zipping and 1GB part-splitting. Other platforms coming soon.">
     <meta name="twitter:image" content="https://quizthespire.duckdns.org/frontend/img/converter-preview.jpg">
     <meta name="twitter:image:alt" content="Convert The Spire - Free Video Converter Interface">
     <meta name="twitter:player" content="https://quizthespire.duckdns.org/demo-video.mp4">
@@ -112,20 +112,16 @@
             "validFrom": "2025-09-27"
         },
         "featureList": [
-            "YouTube to MP3 converter - High quality 320kbps",
-            "YouTube to MP4 downloader - Up to 1080p resolution", 
-            "TikTok video downloader - Save TikTok videos offline",
-            "Instagram Reel downloader - Download Instagram content",
-            "Reddit video downloader - Save Reddit videos",
-            "Facebook video downloader - Download Facebook videos",
-            "Twitch clip downloader - Save Twitch clips",
-            "Twitter/X video downloader - Download Twitter videos",
+            "YouTube playlist converter - Convert entire playlists to MP3 or MP4",
+            "Client-side packaging with 1GB part-splitting for large playlists",
+            "Embedded metadata & album art when available",
+            "Reliable sequential conversion with resume/continue support",
+            "Download up to now / Download from cache features",
             "No registration required - Use instantly",
             "Ad-free experience - Clean interface",
-            "Fast conversion speeds",
-            "Multiple quality options",
+            "Fast conversion speeds for YouTube content",
             "Mobile-friendly interface",
-            "Secure and private conversion"
+            "Other platform support (TikTok, Instagram, Reddit, Facebook, Twitch, Twitter) - Coming soon"
         ],
         "screenshot": "https://quizthespire.duckdns.org/frontend/img/converter-preview.jpg",
         "aggregateRating": {
@@ -224,8 +220,8 @@
     <main class="o-container">
         <!-- Welcome Message -->
         <section class="c-welcome-message">
-            <h1>Free YouTube to MP3 Converter with Metadata & Album Art</h1>
-            <p>Convert and download videos from <strong>YouTube, TikTok, Instagram, Reddit, Facebook, Twitch, and Twitter</strong> to high-quality MP3 (up to 320kbps) or MP4 (up to 1080p) format. <strong>Includes full metadata, artist info, album art, and cover images!</strong> Completely free, no registration required, and 100% ad-free experience!</p>
+                <h1>Full YouTube Playlist Converter — MP3 & MP4 with Metadata</h1>
+            <p>Convert entire <strong>YouTube playlists</strong> to high-quality MP3 (up to 320kbps) or MP4 (up to 1080p). Includes metadata, album art, and lyrics when available. Client-side packaging minimizes server load and supports large playlists with 1GB per-part ZIP splitting. Other platforms are marked "Coming soon".</p>
             <div class="c-note">
                 <span>🎵 <strong>Convert The Spire by Oroka Conner</strong> - The fastest and safest way to download your favorite videos and music with complete metadata. <a href="#how-to-use" target="_self"><strong>Learn how to use</strong></a></span>
             </div>
@@ -341,29 +337,29 @@
                     <i class="fab fa-youtube"></i>
                     <span>YouTube Videos & Shorts</span>
                 </button>
-                <button class="social-button-container tiktok" data-platform="tiktok">
+                <button class="social-button-container tiktok coming-soon" data-platform="tiktok" disabled title="Coming soon">
                     <i class="fab fa-tiktok"></i>
-                    <span>TikTok Videos</span>
+                    <span>TikTok (Coming soon)</span>
                 </button>
-                <button class="social-button-container reddit" data-platform="reddit">
+                <button class="social-button-container reddit coming-soon" data-platform="reddit" disabled title="Coming soon">
                     <i class="fab fa-reddit-alien"></i>
-                    <span>Reddit Videos & GIFs</span>
+                    <span>Reddit (Coming soon)</span>
                 </button>
-                <button class="social-button-container instagram" data-platform="instagram">
+                <button class="social-button-container instagram coming-soon" data-platform="instagram" disabled title="Coming soon">
                     <i class="fab fa-instagram"></i>
-                    <span>Instagram Reels</span>
+                    <span>Instagram (Coming soon)</span>
                 </button>
-                <button class="social-button-container facebook" data-platform="facebook">
+                <button class="social-button-container facebook coming-soon" data-platform="facebook" disabled title="Coming soon">
                     <i class="fab fa-facebook"></i>
-                    <span>Facebook Videos</span>
+                    <span>Facebook (Coming soon)</span>
                 </button>
-                <button class="social-button-container twitch" data-platform="twitch">
+                <button class="social-button-container twitch coming-soon" data-platform="twitch" disabled title="Coming soon">
                     <i class="fab fa-twitch"></i>
-                    <span>Twitch Clips</span>
+                    <span>Twitch (Coming soon)</span>
                 </button>
-                <button class="social-button-container twitter" data-platform="twitter">
+                <button class="social-button-container twitter coming-soon" data-platform="twitter" disabled title="Coming soon">
                     <i class="fab fa-twitter"></i>
-                    <span>Twitter/X Videos</span>
+                    <span>Twitter/X (Coming soon)</span>
                 </button>
             </div>
         </section>

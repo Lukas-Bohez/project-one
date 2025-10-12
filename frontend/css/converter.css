@@ -448,6 +448,29 @@ html, body {
     text-align: center;
 }
 
+/* Coming soon state for platform buttons */
+.social-button-container.coming-soon {
+    opacity: 0.55;
+    cursor: default;
+    filter: grayscale(40%);
+}
+
+.social-button-container.coming-soon span {
+    font-style: italic;
+}
+
+/* Small badge to indicate cached items in playlist */
+.cache-indicator {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(44,76,124,0.12);
+    color: var(--primary-color);
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-left: auto;
+}
+
 /* Platform-specific colors */
 .social-button-container.youtube.active {
     background: linear-gradient(135deg, #ff0000, #cc0000);
