@@ -177,6 +177,43 @@ const createNonInteractiveChart = (element, data, seriesName, color) => {
 
     const chart = new ApexCharts(element, options);
     chart.render();
+
+    // Force the chart to match the container height to avoid clipping/bottom overflow.
+    // We run multiple attempts because ApexCharts may set inline heights after initial render.
+    const resizeChartToContainer = () => {
+        try {
+            const rect = element.getBoundingClientRect();
+            let h = Math.round(rect.height);
+            if (!h || h === 0) {
+                // fallback to CSS variable or default
+                const cssVar = getComputedStyle(document.documentElement).getPropertyValue('--chart-base-height');
+                h = parseInt(cssVar, 10) || 300;
+            }
+            // Update chart height and trigger resize
+            chart.updateOptions({ chart: { height: h } }, false, false);
+            if (chart.resize) chart.resize();
+        } catch (err) {
+            // don't block rendering on errors
+            console.warn('resizeChartToContainer error', err);
+        }
+    };
+
+    // Try a few times after initial render to let the DOM and ApexCharts settle
+    setTimeout(resizeChartToContainer, 40);
+    setTimeout(resizeChartToContainer, 200);
+    setTimeout(resizeChartToContainer, 600);
+
+    // Keep chart responsive on window resize
+    const onWindowResize = () => resizeChartToContainer();
+    window.addEventListener('resize', onWindowResize);
+
+    // Clean up listener when chart is destroyed
+    const originalDestroy = chart.destroy ? chart.destroy.bind(chart) : null;
+    chart.destroy = function() {
+        window.removeEventListener('resize', onWindowResize);
+        if (originalDestroy) return originalDestroy();
+    };
+
     return chart;
 };
 
