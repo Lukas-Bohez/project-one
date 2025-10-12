@@ -411,16 +411,17 @@ body * {
 #studyQuizBtn,
 #articleTheSpireBtn,
 button[onclick*="idleGame/idlegame.html"] {
-    background-color: var(--primary-color) !important;
-    color: var(--text-inverse) !important;
-    border: none;
+    background-color: transparent !important;
+    color: var(--primary-color) !important;
+    border: 2px solid var(--primary-color) !important;
 }
 
 #startQuizBtn:hover,
 #studyQuizBtn:hover,
 #articleTheSpireBtn:hover,
 button[onclick*="idleGame/idlegame.html"]:hover {
-    background-color: var(--secondary-color) !important;
+    background-color: var(--primary-color) !important;
+    color: white !important;
 }
 
 .c-btn--admin {
