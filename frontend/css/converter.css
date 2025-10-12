@@ -7,6 +7,75 @@
     box-sizing: border-box;
 }
 
+/*
+  Color system (60-30-10 rule)
+  - Light mode: 60% background (near-white), 30% surface/grey, 10% primary (blue)
+  - Dark mode: 60% background (near-black), 30% surface/grey, 10% primary (blue)
+  Keep variable names limited to minimize changes elsewhere.
+*/
+:root {
+    /* Primary brand color (10%) */
+    --primary-color: #2c6fb8; /* blue */
+    --secondary-color: #1f5aa0; /* slightly darker blue for gradients */
+    --tertiary-color: #1a4f93;
+
+    /* Light mode neutrals */
+    --bg-60: #f7f8fa; /* 60% background - very light */
+    --bg-30: #e1e4e8; /* 30% surface/grey */
+    --bg-10: #ffffff; /* 10% accents (pure white) */
+
+    /* Text colors */
+    --text-60: #111418; /* primary text (dark) */
+    --text-30: #4b5561; /* secondary text (muted) */
+    --text-10: #9aa6b2; /* subtle muted */
+
+    /* UI helpers */
+    --border-color: #d3d7db;
+    --accent-color: var(--primary-color);
+    --success-color: #1f8a49;
+    --danger-color: #c62828;
+    --hover-bg: #f0f3f6;
+    --active-bg: #e6eef8;
+    --shadow-light: rgba(44,76,124,0.06);
+}
+
+/* Dark theme variables - same 60-30-10 principle but inverted */
+[data-theme="dark"] {
+    --primary-color: #2c6fb8; /* keep primary blue */
+    --secondary-color: #1f5aa0;
+    --tertiary-color: #1a4f93;
+
+    /* Dark mode neutrals */
+    --bg-60: #0f1112; /* 60% background - near black */
+    --bg-30: #1f2326; /* 30% surface/grey */
+    --bg-10: #0a0b0c; /* accents */
+
+    /* Text colors */
+    --text-60: #e6eef8; /* primary text (light) */
+    --text-30: #b9c5d6; /* secondary text */
+    --text-10: #8f9fb0; /* subtle muted */
+
+    /* UI helpers */
+    --border-color: #2a3034;
+    --accent-color: var(--primary-color);
+    --success-color: #36b37e;
+    --danger-color: #ff6b6b;
+    --hover-bg: #14171a;
+    --active-bg: #1a1f23;
+    --shadow-light: rgba(0,0,0,0.5);
+}
+
+/* Map commonly used vars to the 60/30/10 tokens for minimal changes */
+:root, [data-theme="dark"] {
+    --bg-primary: var(--bg-60);
+    --bg-secondary: var(--bg-30);
+    --bg-tertiary: var(--bg-10);
+
+    --text-primary: var(--text-60);
+    --text-secondary: var(--text-30);
+    --text-muted: var(--text-10);
+}
+
 html, body {
     max-width: 100%;
     overflow-x: hidden;
@@ -1018,17 +1087,18 @@ html, body {
 /* Typography Hierarchy */
 .legal-page h1,
 .about-page h1 {
-    color: var(--primary-color);
+    color: white;
     text-align: center;
     margin-bottom: 2rem;
     font-size: 2.5rem;
     font-weight: 700;
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
     text-shadow: none;
     position: relative;
+}
+
+[data-theme="light"] .legal-page h1,
+[data-theme="light"] .about-page h1 {
+    color: var(--text-60);
 }
 
 .legal-page h1::after,
@@ -1646,7 +1716,16 @@ html, body {
     border-bottom: none !important;
 }
 
+.about-page .highlight-box h3,
+.about-page .highlight-box h4 {
+    color: white !important;
+}
+
 .highlight-box p {
+    color: white !important;
+}
+
+.highlight-box strong {
     color: white !important;
 }
 
@@ -1917,4 +1996,21 @@ html, body {
     .video-checkbox {
         align-self: flex-start;
     }
+}
+
+/* Announcement Banner */
+.announcement-banner {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    text-align: center;
+    padding: 1rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 8px rgba(44, 76, 124, 0.2);
+    margin-bottom: 1rem;
+}
+
+.announcement-banner p {
+    margin: 0;
+    color: white;
 }

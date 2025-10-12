@@ -1,6 +1,6 @@
 # Projectgegevens
 
-**VOORNAAM NAAM:** Lukas Bohez
+**VOORNAAM NAAM:** Oroka Conner
 
 **Sparringpartner:** Mohammed Qraiqea
 

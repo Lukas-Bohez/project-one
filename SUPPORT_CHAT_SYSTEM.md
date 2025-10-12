@@ -48,8 +48,8 @@ All references to `lukasbohez@gmail.com` have been replaced with links to the su
 - JSON-LD schema email fields updated
 
 ### 3. **Personal Name References Updated**
-- "Lukas Bohez" → "QuizTheSpire Team"
-- "Created by Lukas Bohez" → "Created with ❤️ by the QuizTheSpire Team"
+- "Lukas Bohez" → "Oroka Conner"
+- "Created by Lukas Bohez" → "Created with ❤️ by Oroka Conner"
 - Author meta tags updated to "QuizTheSpire Team"
 
 ### 4. **Contact Buttons Updated**

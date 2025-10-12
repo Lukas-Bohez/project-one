@@ -14,7 +14,7 @@
         },
         {
             "title": "Your Data Rights",
-            "content": "You maintain full control over your information with rights to access, correct, or delete your data at any time by contacting us directly at lukasbohez@gmail.com."
+            "content": "You maintain full control over your information with rights to access, correct, or delete your data at any time by contacting our support chat."
         }
     ],
     "cards": [
@@ -106,7 +106,7 @@
             "title": "Contact Information",
             "content": "For questions, concerns, or data requests:",
             "list": [
-                "Email: lukasbohez@gmail.com",
+                "Email: our support chat",
                 "Response time: Within 48 business hours",
                 "Data access requests: Processed within 30 days",
                 "Technical support: Available through same contact method"

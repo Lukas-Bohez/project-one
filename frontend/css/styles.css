@@ -14,45 +14,30 @@ html, body {
 }
 
 :root {
-    /* Light theme colors (default) */
-    --primary-color: #1e3a8a;          /* donkerder blauw voor hogere contrast */
-    --secondary-color: #0c4061;
-    --tertiary-color: #0a5790;         /* donkerder voor ≥4.5:1 op wit */
-    --accent-color: #1d4ed8;           /* intenser blauw voor betere leesbaarheid */
-    
-    /* Background colors */
-    --bg-primary: #f4f8fc;
-    --bg-secondary: #ffffff;
-    --bg-tertiary: #e6eef9;            /* iets donkerder voor beter contrast */
-    --bg-overlay: rgba(0, 0, 0, 0.15); /* iets sterker overlay */
-    
+    /* Primary brand color (10%) */
+    --primary-color: #2c6fb8; /* blue */
+    --secondary-color: #1f5aa0; /* slightly darker blue for gradients */
+    --tertiary-color: #1a4f93;
+
+    /* Light mode neutrals */
+    --bg-60: #f7f8fa; /* 60% background - very light */
+    --bg-30: #e1e4e8; /* 30% surface/grey */
+    --bg-10: #ffffff; /* 10% accents (pure white) */
+
     /* Text colors */
-    --text-primary: #0a0f1a;           /* iets donkerder voor contrast */
-    --text-secondary: #1f2937;         /* Darker for better contrast (was #374151) */
-    --text-muted: #374151;             /* Darker for better contrast (was #4b5563) */
-    --text-inverse: #ffffff;
-    
-    /* Border and shadow colors */
-    --border-color: #9ca3af;           /* Darker for better contrast (was #cbd5e1) */
-    --border-focus: #1d4ed8;           /* accentkleur met goed contrast */
-    --shadow-light: rgba(0, 0, 0, 0.1);
-    --shadow-medium: rgba(0, 0, 0, 0.15);
-    --shadow-heavy: rgba(0, 0, 0, 0.25);
-    
-    /* Status colors */
-    --success-color: #1c7a2e;          /* donkerder groen */
-    --danger-color: #b91c1c;           /* donkerder rood */
-    --warning-color: #b45309;          /* donkerder oranje */
-    --info-color: #0c4a6e;             /* donkerder blauwgroen */
-    
-    /* Interactive states */
-    --hover-bg: rgba(29, 78, 216, 0.10);
-    --active-bg: rgba(29, 78, 216, 0.15);
-    
-    /* Pulse/animation colors */
-    --pulse-color: #1d4ed8;
-    --pulse-glow: rgba(29, 78, 216, 0.7);
-    
+    --text-60: #111418; /* primary text (dark) */
+    --text-30: #4b5561; /* secondary text (muted) */
+    --text-10: #9aa6b2; /* subtle muted */
+
+    /* UI helpers */
+    --border-color: #d3d7db;
+    --accent-color: var(--primary-color);
+    --success-color: #1f8a49;
+    --danger-color: #c62828;
+    --hover-bg: #f0f3f6;
+    --active-bg: #e6eef8;
+    --shadow-light: rgba(44,76,124,0.06);
+
     /* Spacing and sizing */
     --border-radius: 8px;
     --border-radius-sm: 4px;
@@ -62,7 +47,7 @@ html, body {
     --spacing-md: 1rem;
     --spacing-lg: 1.5rem;
     --spacing-xl: 2rem;
-    
+
     /* Typography */
     --font-size-xs: 0.75rem;
     --font-size-sm: 0.875rem;
@@ -70,47 +55,68 @@ html, body {
     --font-size-lg: 1.125rem;
     --font-size-xl: 1.25rem;
     --font-size-2xl: 2rem;
+
+    /* Map commonly used vars to the 60/30/10 tokens */
+    --bg-primary: var(--bg-60);
+    --bg-secondary: var(--bg-30);
+    --bg-tertiary: var(--bg-10);
+    --text-primary: var(--text-60);
+    --text-secondary: var(--text-30);
+    --text-muted: var(--text-10);
+    --text-inverse: #ffffff;
+    --border-focus: var(--primary-color);
+    --shadow-medium: rgba(44,76,124,0.15);
+    --shadow-heavy: rgba(44,76,124,0.25);
+    --pulse-color: var(--primary-color);
+    --pulse-glow: rgba(44,111,184,0.7);
+    --bg-overlay: rgba(0, 0, 0, 0.15);
+    --warning-color: #e65100;
+    --info-color: #0d61aa;
 }
 
 /* Dark theme - activated by .theme-dark class */
 [data-theme="dark"],
 .theme-dark {
-    /* Background colors */
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --bg-tertiary: #2d3b50;                /* iets lichter voor beter onderscheid */
-    --bg-overlay: rgba(255, 255, 255, 0.12);
-    
+    /* Primary brand color (10%) - keep blue */
+    --primary-color: #2c6fb8;
+    --secondary-color: #1f5aa0;
+    --tertiary-color: #1a4f93;
+
+    /* Dark mode neutrals */
+    --bg-60: #0f1112; /* 60% background - near black */
+    --bg-30: #1f2326; /* 30% surface/grey */
+    --bg-10: #0a0b0c; /* accents */
+
     /* Text colors */
-    --text-primary: #ffffff;               /* Pure white for maximum contrast */
-    --text-secondary: #f1f5f9;             /* Brighter for better contrast (was #e2e8f0) */
-    --text-muted: #e2e8f0;                 /* Brighter for better contrast (was #cbd5e1) */
-    --text-inverse: #0f172a;
-    
-    /* Border and shadow colors */
-    --border-color: #64748b;               /* Lighter for better contrast (was #475569) */
+    --text-60: #e6eef8; /* primary text (light) */
+    --text-30: #b9c5d6; /* secondary text */
+    --text-10: #8f9fb0; /* subtle muted */
+
+    /* UI helpers */
+    --border-color: #2a3034;
+    --accent-color: var(--primary-color);
+    --success-color: #36b37e;
+    --danger-color: #ff6b6b;
+    --hover-bg: #14171a;
+    --active-bg: #1a1f23;
+    --shadow-light: rgba(0,0,0,0.5);
+
+    /* Map commonly used vars */
+    --bg-primary: var(--bg-60);
+    --bg-secondary: var(--bg-30);
+    --bg-tertiary: var(--bg-10);
+    --text-primary: var(--text-60);
+    --text-secondary: var(--text-30);
+    --text-muted: var(--text-10);
+    --text-inverse: #0f1112;
     --border-focus: #60a5fa;
-    --shadow-light: rgba(0, 0, 0, 0.3);
-    --shadow-medium: rgba(0, 0, 0, 0.4);
-    --shadow-heavy: rgba(0, 0, 0, 0.6);
-    
-    /* Interactive states */
-    --hover-bg: rgba(96, 165, 250, 0.18);
-    --active-bg: rgba(96, 165, 250, 0.25);
-    
-    /* Adjusted colors for dark theme */
-    --primary-color: #60a5fa;
-    --secondary-color: #3b82f6;
-    --tertiary-color: #2563eb;
-    --accent-color: #3b82f6;
-    --pulse-color: #60a5fa;
-    --pulse-glow: rgba(96, 165, 250, 0.7);
-    
-    /* Status colors */
-    --success-color: #34d399;
-    --danger-color: #f87171;
-    --warning-color: #fbbf24;
-    --info-color: #38bdf8;
+    --shadow-medium: rgba(0,0,0,0.6);
+    --shadow-heavy: rgba(0,0,0,0.8);
+    --pulse-color: var(--primary-color);
+    --pulse-glow: rgba(44,111,184,0.7);
+    --bg-overlay: rgba(255, 255, 255, 0.12);
+    --warning-color: #ffb74d;
+    --info-color: #4fc3f7;
 }
 
 
