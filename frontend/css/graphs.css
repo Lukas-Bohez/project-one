@@ -1,3 +1,9 @@
+:root {
+    /* Default chart and title heights used to compute fixed container height
+       container height = chart height + title height + 20px (padding buffer) */
+    --chart-base-height: 300px;
+    --chart-title-height: 36px;
+}
 /*---------------------------------------/*
  # COMPONENTS
 /*---------------------------------------*/
@@ -28,7 +34,8 @@ main {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 2rem;
-    padding: 2rem;
+    /* Increased padding by 20px (was 20px) to give extra breathing room and prevent visual overflow */
+    padding: 40px;
     max-width: 1400px;
     margin: 0 auto;
     background-color: var(--bg-primary);
@@ -157,9 +164,17 @@ main {
     background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 1rem;
+    /* Reduced top padding to avoid pushing content and causing top overflow.
+       Keep larger left/right and extra bottom padding to prevent bottom overflow. */
+    padding: 12px 40px 48px 40px; /* top right bottom left (reduced bottom padding) */
     transition: all 0.3s ease;
-    min-height: 320px; /* Reserve space to prevent CLS when charts load */
+    /* Aggressively force a large minimum height so ApexCharts cannot overflow the bottom */
+    /* reduced overall buffer so the card isn't excessively large */
+    min-height: calc(var(--chart-base-height) + var(--chart-title-height) + 120px) !important;
+    /* Let height auto but respect the forced min-height */
+    height: auto !important;
+    /* Ensure any overflow is visible inside the card (but min-height prevents visual overflow) */
+    overflow: visible !important;
 }
 
 .chart-title {
@@ -173,8 +188,61 @@ main {
 .chart-placeholder {
     background-color: var(--bg-primary);
     border-radius: 4px;
-    min-height: 250px;
-    height: 250px; /* Fixed height to prevent CLS */
+    /* Let the chart determine its height so it won't overflow its parent */
+    min-height: 0;
+    /* Fixed chart area height so container sizing is stable (matches --chart-base-height) */
+    height: var(--chart-base-height);
+    box-sizing: border-box;
+    /* Add a little internal bottom spacing so chart elements don't extend past the bottom */
+    padding-bottom: 12px;
+}
+
+/* Add an invisible spacer after the chart to guarantee extra bottom room */
+.chart-placeholder::after {
+    content: "";
+    display: block;
+    height: 40px !important;
+    width: 100%;
+}
+
+/* Force ApexCharts SVG/canvas/foreignObject to fit within the declared chart height */
+.chart-placeholder .apexcharts-canvas,
+.chart-placeholder .apexcharts-svg,
+.chart-placeholder svg,
+.chart-placeholder foreignObject {
+    max-height: calc(var(--chart-base-height) + 0px) !important;
+    height: calc(var(--chart-base-height) + 0px) !important;
+    width: 100% !important;
+    overflow: hidden !important;
+}
+
+/* Mobile overrides: use smaller fixed chart height and recompute container height */
+@media only screen and (max-width: 768px) {
+    .chart-placeholder {
+        height: 220px;
+    }
+    .gamepad-chart-container {
+        height: calc(220px + 36px + 20px);
+        padding: 16px; /* reduce padding on mobile */
+        padding-bottom: 36px;
+    }
+}
+
+/* ApexCharts renders SVGs with inline width/height; prefer 100% sizing
+   so the charts adapt to their container instead of forcing overflow. */
+.chart-placeholder .apexcharts-canvas,
+.chart-placeholder .apexcharts-svg,
+.chart-placeholder svg {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 100% !important;
+}
+
+/* Ensure tooltip and legend wrappers don't force extra height */
+.chart-placeholder .apexcharts-legend,
+.chart-placeholder .apexcharts-tooltip {
+    max-width: 100% !important;
+    box-sizing: border-box;
 }
 
 .empty-state {
