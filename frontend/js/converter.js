@@ -533,27 +533,33 @@ function renderPlaylistUI(playlistData) {
                 <button id="download-selected-btn" class="c-btn c-btn--primary download-selected-btn" disabled>
                     <i class="fas fa-download"></i> Download Selected
                 </button>
-                <div style="display:inline-flex;align-items:center;margin-left:12px;">
-                    <label for="download-from-index-input" style="margin-right:6px;font-size:0.9em;color:#bcd;">From cache (start):</label>
-                    <input id="download-from-index-input" type="number" min="1" value="1" style="width:70px;margin-right:6px;" />
-                    <label for="download-from-index-end" style="margin-right:6px;font-size:0.9em;color:#bcd;margin-left:6px;">to (optional):</label>
-                    <input id="download-from-index-end" type="number" min="1" placeholder="end" style="width:70px;margin-right:6px;" />
-                    <button id="select-range-btn" class="c-btn c-btn--sm c-btn--tertiary" style="margin-right:6px;">Select Range</button>
-                    <button id="download-from-index-btn" class="c-btn c-btn--sm c-btn--tertiary download-from-index-btn">
-                        <i class="fas fa-download"></i> Download From Cache
-                    </button>
-                </div>
+                
             </div>
             <div class="videos-list">
-                ${playlistData.videos.map(video => `
-                    <div class="video-item">
+                ${playlistData.videos.map((video, idx) => `
+                    <div class="video-item" data-index="${idx+1}">
                         <input type="checkbox" class="video-checkbox" value="${video.id}" data-title="${video.title}">
                         <div class="video-info">
-                            <div class="video-title">${video.title}</div>
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                                <div class="video-title" style="flex:1;">${video.title}</div>
+                                <span class="cache-indicator" data-title="${video.title}">Not cached</span>
+                            </div>
                             <div class="video-duration">${video.duration ? formatDuration(video.duration) : ''}</div>
                         </div>
                     </div>
                 `).join('')}
+            </div>
+            <div class="playlist-range-inputs" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                <label for="download-from-index-input" style="font-size:0.95em;color:#bcd;">From cache (start):</label>
+                <input id="download-from-index-input" type="number" min="1" value="1" class="playlist-range-input" />
+                <label for="download-from-index-end" style="font-size:0.95em;color:#bcd;">to (optional):</label>
+                <input id="download-from-index-end" type="number" min="1" placeholder="end" class="playlist-range-input" />
+            </div>
+            <div class="playlist-range-actions" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                <button id="select-range-btn" class="c-btn c-btn--sm c-btn--tertiary" style="white-space:nowrap;">Select Range</button>
+                <button id="download-from-index-btn" class="c-btn c-btn--sm c-btn--tertiary download-from-index-btn" style="white-space:nowrap;">
+                    <i class="fas fa-download"></i> Download From Cache
+                </button>
             </div>
         </div>
     `;
@@ -562,6 +568,8 @@ function renderPlaylistUI(playlistData) {
     
     // Add event listeners
     setupPlaylistEventListeners();
+    // Update cached indicators based on persisted IDB entries
+    try { updateCachedIndicators(); } catch (e) { console.warn('updateCachedIndicators failed', e); }
     // Continue/Cancel handlers
     const cont = document.getElementById('continue-btn');
     const canc = document.getElementById('cancel-btn');
@@ -940,6 +948,26 @@ function addToFrontendStorage(filename, blob) {
     }
     // Update UI
     updatePlaylistStatusUI();
+    try { updateCachedIndicators(); } catch (e) { console.warn('updateCachedIndicators failed', e); }
+}
+
+// Mark which playlist items are cached based on persisted IDB filenames
+async function updateCachedIndicators() {
+    try {
+        const items = await readAllBlobsFromIDB();
+        const titles = (items || []).map(i => i.filename || i.title || '').filter(Boolean);
+        document.querySelectorAll('.cache-indicator').forEach(el => {
+            const t = el.getAttribute('data-title') || '';
+            // Simple substring match: filename may include title; for better accuracy you can normalize strings
+            const matched = titles.some(fn => fn.indexOf(t) !== -1 || t.indexOf(fn) !== -1);
+            el.textContent = matched ? 'Cached' : 'Not cached';
+            el.style.color = matched ? '#6ee7b7' : '#d0d0d0';
+            el.style.fontWeight = matched ? '700' : '400';
+            el.style.fontSize = '0.85em';
+        });
+    } catch (e) {
+        console.warn('updateCachedIndicators error', e);
+    }
 }
 
 // Ensure JSZip is loaded (via CDN) when needed

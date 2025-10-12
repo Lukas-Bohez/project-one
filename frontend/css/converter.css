@@ -1766,6 +1766,62 @@ html, body {
     flex-wrap: wrap;
 }
 
+.cache-indicator {
+    background: rgba(255,255,255,0.03);
+    padding: 4px 8px;
+    border-radius: 12px;
+    color: #d0d0d0;
+    font-size: 0.85em;
+    white-space: nowrap;
+}
+
+.playlist-range-controls input[type="number"] {
+    padding: 6px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.playlist-range-inputs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.playlist-range-input {
+    width: 90px;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.playlist-range-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+@media (max-width: 768px) {
+    .playlist-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .playlist-range-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .playlist-range-controls > div {
+        width: 100%;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+}
+
 .videos-list {
     max-height: 400px;
     overflow-y: auto;
