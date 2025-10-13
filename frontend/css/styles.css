@@ -413,7 +413,7 @@ body * {
 button[onclick*="idleGame/idlegame.html"] {
     background-color: var(--primary-color) !important;
     color: white !important;
-    border: 2px solid var(--primary-color) !important;
+    border: 2px solid black !important;
 }
 
 #startQuizBtn:hover,
