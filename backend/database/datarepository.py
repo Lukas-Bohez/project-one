@@ -546,7 +546,7 @@ class UserRepository:
     @staticmethod
     def get_all_users() -> List[Dict[str, Any]]:
         """Fetches all users from the database."""
-        sql = "SELECT id, last_name, first_name, rfid_code, userRoleId, soul_points, limb_points, last_active, session_expires_at, updated_by FROM users"
+        sql = "SELECT id, last_name, first_name, email, rfid_code, userRoleId, soul_points, limb_points, last_active, session_expires_at, updated_by FROM users"
         # Use get_rows which correctly handles fetching multiple dictionary rows
         return Database.get_rows(sql)
 

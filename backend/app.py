@@ -1201,6 +1201,8 @@ async def get_all_users(
             ))
         
         # Create user object with IP information
+        if user.get('email'):
+            user['first_name'] = user['email']
         user_with_ip = UserPublicWithIp(
             **user,  # Spread all existing user fields
             ip_addresses=ip_addresses
@@ -1250,6 +1252,8 @@ async def get_all_users_with_ip(
             **user,
             ip_addresses=ip_addresses
         )
+        if user_with_ip.email:
+            user_with_ip.first_name = user_with_ip.email
         users_with_ip.append(user_with_ip)
     
     return users_with_ip
@@ -1263,6 +1267,9 @@ async def get_all_users_with_ip(
 )
 async def get_all_users_basic():
     users = UserRepository.get_all_users()
+    for user in users:
+        if user.get('email'):
+            user['first_name'] = user['email']
     return [UserPublic(**user) for user in users]
 
 
@@ -4399,6 +4406,9 @@ async def get_all_users(request: Request):
     """
     try:
         users = UserRepository.get_all_users()
+        for user in users:
+            if user.get('email'):
+                user['first_name'] = user['email']
         # Your console log shows it's a list of dictionaries, so this should work.
         return [UserPublic(**user) for user in users]
     except Exception as e:
@@ -8260,7 +8270,7 @@ async def get_game_status():
 if JWT_AVAILABLE:
     # Game Authentication Endpoints
     @app.post(ENDPOINT + "/game/auth/register", response_model=GameAuthResponse, tags=["Kingdom Quarry"])
-    async def game_register(register_data: GameRegisterRequest):
+    async def game_register(register_data: GameRegisterRequest, request: Request):
         """Register a new game user account"""
         try:
             # Check if user already exists
@@ -8290,6 +8300,9 @@ if JWT_AVAILABLE:
             if not user_id:
                 raise HTTPException(status_code=500, detail="Failed to create user")
             
+            # Log IP address for the new user
+            log_user_ip_address(user_id, get_client_ip_sync(request))
+            
             # Initialize game data
             GameResourcesRepository.create_user_resources(user_id)
             GameUpgradesRepository.create_user_upgrades(user_id)
@@ -8310,7 +8323,7 @@ if JWT_AVAILABLE:
             raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
 
     @app.post(ENDPOINT + "/game/auth/login", response_model=GameAuthResponse, tags=["Kingdom Quarry"])
-    async def game_login(login_data: GameLoginRequest):
+    async def game_login(login_data: GameLoginRequest, request: Request):
         """Login to game account"""
         try:
             # Authenticate user: try multiple role formats to support new and
@@ -8326,6 +8339,9 @@ if JWT_AVAILABLE:
 
             if not user_id:
                 raise HTTPException(status_code=401, detail="Invalid username or password")
+            
+            # Log IP address for the authenticated user
+            log_user_ip_address(user_id, get_client_ip_sync(request))
             
             # Create access token
             access_token = create_access_token(user_id, login_data.username)
