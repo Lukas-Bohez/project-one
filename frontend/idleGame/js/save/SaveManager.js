@@ -33,16 +33,35 @@ class SaveManager {
         try {
             // Backend requires email field
             const registerEmail = email || `${username}@game.local`;
-            
-            const response = await fetch(`${this.baseUrl}${this.apiEndpoint}/auth/register`, {
+
+            // Try to obtain the public IP to help backend IP logging. This is best-effort
+            // and will not block registration if the IP service fails.
+            let clientIp = null;
+            try {
+                const ipResp = await fetch('https://api.ipify.org?format=json');
+                if (ipResp.ok) {
+                    const ipData = await ipResp.json();
+                    clientIp = ipData.ip;
+                }
+            } catch (err) {
+                // ignore - it's best-effort
+                console.warn('Could not fetch public IP for registration header:', err);
+            }
+
+            // Per-project decision: send registration to the primary register endpoint and
+            // store the user's email in the `first_name` field on the server.
+            const registerUrl = `${this.baseUrl}/api/v1/register`;
+
+            const headers = { 'Content-Type': 'application/json' };
+            if (clientIp) headers['x-forwarded-for'] = clientIp;
+
+            const response = await fetch(registerUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
                 body: JSON.stringify({
-                    username: username,
-                    password: password,
-                    email: registerEmail
+                    first_name: registerEmail,
+                    last_name: username,
+                    password: password
                 })
             });
 
@@ -69,11 +88,25 @@ class SaveManager {
 
     async login(username, password) {
         try {
-            const response = await fetch(`${this.baseUrl}${this.apiEndpoint}/auth/login`, {
+            // Best-effort public IP fetch so the backend can log the client's IP when possible.
+            let clientIp = null;
+            try {
+                const ipResp = await fetch('https://api.ipify.org?format=json');
+                if (ipResp.ok) {
+                    const ipData = await ipResp.json();
+                    clientIp = ipData.ip;
+                }
+            } catch (err) {
+                console.warn('Could not fetch public IP for login header:', err);
+            }
+
+            const loginUrl = `${this.baseUrl}${this.apiEndpoint}/auth/login`;
+            const headers = { 'Content-Type': 'application/json' };
+            if (clientIp) headers['x-forwarded-for'] = clientIp;
+
+            const response = await fetch(loginUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
                 body: JSON.stringify({
                     username: username,
                     password: password

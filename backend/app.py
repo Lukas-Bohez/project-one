@@ -20,6 +20,7 @@ from slowapi.middleware import SlowAPIMiddleware
 # Import the new ThemeRepository
 from fastapi.responses import HTMLResponse,JSONResponse
 from database.datarepository import QuestionRepository, AnswerRepository, ThemeRepository,UserRepository, IpAddressRepository, UserIpAddressRepository,QuizSessionRepository,SensorDataRepository,AuditLogRepository,PlayerItemRepository,ItemRepository,ChatLogRepository,SessionPlayerRepository,PlayerAnswerRepository,ArticlesRepository,StoriesRepository,GameSaveRepository,GameResourcesRepository,GameUpgradesRepository
+from database.user_email_repository import UserEmailRepository
 from models.models import (
     QuestionBase, QuestionCreate, QuestionResponse, QuestionUpdate,
     QuestionStatusUpdate, ErrorNotFound, QuestionWithAnswers,
@@ -8267,18 +8268,25 @@ if JWT_AVAILABLE:
             if existing_user:
                 raise HTTPException(status_code=400, detail="Username already exists")
             
-            # Create new user
+            # Create new user using the isolated repository so we can set the
+            # dedicated `email` column without touching the shared UserRepository
             hashed_info = UserRepository.hash_password(register_data.password)
-            user_data = {
+
+            detected_email = register_data.email if getattr(register_data, 'email', None) else (
+                register_data.username if '@' in register_data.username else None
+            )
+
+            user_payload = {
                 'first_name': register_data.username,
-                'last_name': 'Player',
+                'last_name': register_data.username,
+                'email': detected_email,
                 'password_hash': hashed_info['password_hash'],
                 'salt': hashed_info['salt'],
                 'rfid_code': f"game_{register_data.username}_{datetime.now().timestamp()}",
-                'userRoleId': 2  # Regular user role
+                'userRoleId': 1  # Regular user role (player)
             }
-            
-            user_id = UserRepository.create_user_with_password(user_data)
+
+            user_id = UserEmailRepository.create_user_with_email(user_payload)
             if not user_id:
                 raise HTTPException(status_code=500, detail="Failed to create user")
             
@@ -8305,8 +8313,17 @@ if JWT_AVAILABLE:
     async def game_login(login_data: GameLoginRequest):
         """Login to game account"""
         try:
-            # Authenticate user
-            user_id = UserRepository.authenticate_user(login_data.username, "Player", login_data.password)
+            # Authenticate user: try multiple role formats to support new and
+            # legacy account formats. Try lowercase 'player' first, then
+            # capitalized 'Player', then finally attempt to use the username
+            # as the role (legacy fallback).
+            user_id = None
+            try_roles = ["player", "Player", login_data.username]
+            for role_try in try_roles:
+                user_id = UserRepository.authenticate_user(login_data.username, role_try, login_data.password)
+                if user_id:
+                    break
+
             if not user_id:
                 raise HTTPException(status_code=401, detail="Invalid username or password")
             

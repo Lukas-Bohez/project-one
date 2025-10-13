@@ -681,7 +681,7 @@ class UserRepository:
             user_data['password_hash'], # This will now come from the endpoint
             user_data['salt'],         # This will now come from the endpoint
             user_data.get('rfid_code'),
-            user_data.get('userRoleId', 2), # Default to player role if not provided
+            user_data.get('userRoleId', 1), # Default to player role if not provided
             user_data.get('soul_points', 4),
             user_data.get('limb_points', 4),
             user_data.get('updated_by', 1) # Default to a system user or 1 if not provided
