@@ -194,9 +194,22 @@ body {
 }
 
 .c-header--admin {
-    background-color: var(--admin-primary);
-    border-bottom: 3px solid var(--admin-accent);
-    color: white;
+    /* Ensure the admin header always uses the primary/admin colors */
+    background-color: var(--admin-primary) !important;
+    border-bottom: 3px solid var(--admin-accent) !important;
+    color: white !important;
+}
+
+/* Strong override: prevent other gradients or background shorthand from replacing the admin header color */
+header.c-header.c-header--admin,
+body header.c-header.c-header--admin,
+.c-header.c-header--admin {
+    background-image: none !important;
+    background: var(--admin-primary) !important;
+    background-color: var(--admin-primary) !important;
+    -webkit-background-clip: padding-box !important;
+    background-clip: padding-box !important;
+    color: white !important;
 }
 
 .c-header__link {
