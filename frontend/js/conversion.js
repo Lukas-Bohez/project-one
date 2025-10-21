@@ -787,16 +787,6 @@ class ConversionTheSpire {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('target_format', targetFormat);
-
-            // Include optional per-download proxy from UI
-            const perDownloadProxyInput = document.getElementById('perDownloadProxy');
-            const proxyValue = perDownloadProxyInput ? perDownloadProxyInput.value.trim() : '';
-            if (proxyValue) {
-                // We'll send proxy as a JSON field via a small wrapper endpoint if supported by backend
-                // For the existing upload endpoint, include as an extra field so backend picks it up
-                formData.append('proxy', proxyValue);
-                console.log('🔀 Using per-download proxy:', proxyValue);
-            }
             
             console.log('📤 Sending file to backend...', {
                 fileName: file.name,
@@ -851,46 +841,7 @@ class ConversionTheSpire {
                     throw new Error(`Backend conversion failed (${response.status}): ${errorDetail}`);
                 }
                 
-                // If backend returns a JSON containing a download_id, attempt to upload cookies (if provided)
-                const contentType = response.headers.get('content-type') || '';
-                if (contentType.includes('application/json')) {
-                    const json = await response.json();
-                    // If backend supports returning download_id for processing (e.g., for video conversions)
-                    if (json && json.download_id) {
-                        const downloadId = json.download_id;
-                        // If user selected a cookies file, upload it to the per-download endpoint
-                        const cookieInput = document.getElementById('cookieUpload');
-                        if (cookieInput && cookieInput.files && cookieInput.files.length > 0) {
-                            try {
-                                const cookieFile = cookieInput.files[0];
-                                const cookieForm = new FormData();
-                                cookieForm.append('file', cookieFile, cookieFile.name);
-                                const uploadUrl = `${this.lanIP}/api/v1/video/upload-cookies/${downloadId}`;
-                                console.log('📤 Uploading cookies to', uploadUrl);
-                                await fetch(uploadUrl, { method: 'POST', body: cookieForm });
-                                console.log('✅ Uploaded cookies for download', downloadId);
-                            } catch (cookieErr) {
-                                console.warn('Failed to upload cookie file:', cookieErr);
-                            }
-                        }
-                    }
-                    // If the JSON contains a file payload base64 or a direct link, handle appropriately; otherwise fall through
-                    if (json && json.file_url) {
-                        // Fetch the file URL to get blob
-                        const fileResp = await fetch(json.file_url);
-                        const convertedBlob = await fileResp.blob();
-                        clearTimeout(timeoutId);
-                        controller.abort();
-                        return convertedBlob;
-                    }
-                    // Otherwise if there's 'error' field, throw
-                    if (json && json.error) {
-                        throw new Error(json.error);
-                    }
-                    // If successful but not a file, let the caller handle it
-                }
-
-                // Get the converted file as blob (fallback for direct binary responses)
+                // Get the converted file as blob
                 const convertedBlob = await response.blob();
                 console.log('✅ Conversion successful!', {
                     originalSize: file.size,

@@ -7326,6 +7326,7 @@ async def cleanup_conversion_files():
 
 if VIDEO_CONVERTER_AVAILABLE:
     # Map normalized URL -> download_id for coalescing concurrent requests
+    # Each mapping's value will be a dict: {'download_id': str, 'refcount': int}
     active_url_map = {}
 
     # Retry configuration from environment (defaults)
@@ -7622,13 +7623,28 @@ if VIDEO_CONVERTER_AVAILABLE:
             if client_ip:
                 decrement_video_rate_limit(client_ip)
                 video_logger.debug(f"Decremented rate limit for IP {client_ip}")
-            # Clean up any coalescing mapping for this URL
+            # Clean up any coalescing mapping for this URL - decrease refcount and remove when zero
             try:
                 normalized = url.strip()
                 with download_lock:
-                    if active_url_map.get(normalized) == download_id:
-                        del active_url_map[normalized]
-                        video_logger.debug(f"Removed coalescing mapping for URL {normalized}")
+                    mapping = active_url_map.get(normalized)
+                    if mapping:
+                        # mapping is a dict {'download_id': id, 'refcount': n}
+                        if mapping.get('download_id') == download_id:
+                            mapping['refcount'] = max(0, mapping.get('refcount', 1) - 1)
+                            video_logger.debug(f"Decremented refcount for URL {normalized}: {mapping['refcount']}")
+                            if mapping['refcount'] <= 0:
+                                try:
+                                    del active_url_map[normalized]
+                                    video_logger.debug(f"Removed coalescing mapping for URL {normalized}")
+                                except KeyError:
+                                    pass
+                    # Also decrement waiter count on the active download entry if present
+                    if download_id in active_video_downloads:
+                        entry = active_video_downloads[download_id]
+                        if 'waiters' in entry and entry['waiters'] > 0:
+                            entry['waiters'] = max(0, entry['waiters'] - 1)
+                            video_logger.debug(f"Decremented waiter count for download {download_id}: {entry['waiters']}")
             except Exception:
                 pass
 
@@ -8046,11 +8062,13 @@ if VIDEO_CONVERTER_AVAILABLE:
             with download_lock:
                 existing = active_url_map.get(normalized_url)
                 if existing:
-                    video_logger.info(f"Coalescing request: returning existing download ID {existing} for URL {normalized_url}")
+                    # Increment refcount so we know multiple clients are waiting
+                    existing['refcount'] = existing.get('refcount', 1) + 1
+                    video_logger.info(f"Coalescing request: returning existing download ID {existing['download_id']} for URL {normalized_url} (refcount={existing['refcount']})")
                     return VideoConversionResponse(
                         success=True,
-                        download_id=existing,
-                        message=f"Download already in progress. Using existing download ID {existing}"
+                        download_id=existing['download_id'],
+                        message=f"Download already in progress. Using existing download ID {existing['download_id']}"
                     )
 
             # Increment rate limit counter (only for new downloads)
@@ -8074,9 +8092,9 @@ if VIDEO_CONVERTER_AVAILABLE:
             output_path = os.path.join(VIDEO_DOWNLOAD_DIR, output_filename)
             video_logger.info(f"Output path: {output_path}")
             
-            # Register normalized URL -> download_id for coalescing
+            # Register normalized URL -> download_id for coalescing (with refcount)
             with download_lock:
-                active_url_map[normalized_url] = download_id
+                active_url_map[normalized_url] = {'download_id': download_id, 'refcount': 1}
 
             # Store download info
             with download_lock:
@@ -8092,6 +8110,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                     'title': None,
                     'error': None,
                     'finished': False,
+                    'waiters': 1,  # number of clients waiting for this download (coalesced)
                     'file_path': None
                 }
                 # If client provided a proxy parameter in the JSON body, accept it
