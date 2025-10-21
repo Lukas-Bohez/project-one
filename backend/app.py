@@ -69,7 +69,10 @@ video_logger = logging.getLogger('video_debug')
 video_logger.setLevel(logging.DEBUG)
 
 # Create file handler for video logs
-video_log_file = '/home/student/Project/project-one/backend/video_debug.log'
+video_log_file = '/home/student/Project-one/backend/video_debug.log'
+# Fallback to project path if that doesn't exist
+if not os.path.exists('/home/student/Project-one'):
+    video_log_file = '/home/student/Project/project-one/backend/video_debug.log'
 video_file_handler = logging.FileHandler(video_log_file, mode='a')
 video_file_handler.setLevel(logging.DEBUG)
 
@@ -77,8 +80,12 @@ video_file_handler.setLevel(logging.DEBUG)
 video_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 video_file_handler.setFormatter(video_formatter)
 
-# Add handler to logger
-video_logger.addHandler(video_file_handler)
+# Avoid adding duplicate handlers when module is reloaded
+if not any(isinstance(h, logging.FileHandler) and getattr(h, 'baseFilename', None) == video_file_handler.baseFilename for h in video_logger.handlers):
+    video_logger.addHandler(video_file_handler)
+
+# Prevent propagation to root logger to avoid duplicate outputs
+video_logger.propagate = False
 
 video_logger.info("="*50)
 video_logger.info("Video Logger Initialized")
@@ -91,7 +98,9 @@ quiz_logger.setLevel(logging.INFO)
 quiz_file_handler = logging.FileHandler(quiz_log_file, mode='a')
 quiz_file_handler.setLevel(logging.INFO)
 quiz_file_handler.setFormatter(video_formatter)
-quiz_logger.addHandler(quiz_file_handler)
+if not any(isinstance(h, logging.FileHandler) and getattr(h, 'baseFilename', None) == quiz_file_handler.baseFilename for h in quiz_logger.handlers):
+    quiz_logger.addHandler(quiz_file_handler)
+quiz_logger.propagate = False
 quiz_logger.info("="*50)
 quiz_logger.info("Quiz Logger Initialized")
 quiz_logger.info("="*50)
@@ -6571,7 +6580,8 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
         'no_warnings': False,
         'extractaudio': format_type == 'audio',
         'ignoreerrors': False,  # Don't ignore errors so we can catch them
-        'no_check_certificates': True,
+        # correct option name for yt-dlp
+        'nocheckcertificate': True,
         'quiet': False,  # Show output
         'no_color': True,  # Disable colors for logging
     }
@@ -6589,6 +6599,14 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
         'age_limit': 18,  # Allow adult content
         'geo_bypass': True,  # Bypass geo-restrictions
         'geo_bypass_country': 'US',  # Use US as default country
+        # Provide common headers to avoid simple 403 responses
+        'http_headers': {
+            'User-Agent': os.environ.get('YTDL_USER_AGENT', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36'),
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Referer': 'https://www.youtube.com/'
+        },
+        # disable persistent cache to avoid stale/resolved issues
+        'cachedir': False,
     })
     
     if format_type == 'audio':
@@ -7307,6 +7325,58 @@ async def cleanup_conversion_files():
 # ----------------------------------------------------
 
 if VIDEO_CONVERTER_AVAILABLE:
+    # Map normalized URL -> download_id for coalescing concurrent requests
+    active_url_map = {}
+
+    # Retry configuration from environment (defaults)
+    try:
+        YTDL_MAX_RETRIES = int(os.environ.get('YTDL_MAX_RETRIES', '5'))
+    except Exception:
+        YTDL_MAX_RETRIES = 5
+    # By default, retry forever to maximize chance of eventual success; set YTDL_RETRY_FOREVER=0/false to limit
+    if 'YTDL_RETRY_FOREVER' in os.environ:
+        YTDL_RETRY_FOREVER = os.environ.get('YTDL_RETRY_FOREVER', 'false').lower() in ('1', 'true', 'yes')
+    else:
+        YTDL_RETRY_FOREVER = True
+    try:
+        YTDL_BACKOFF_BASE = float(os.environ.get('YTDL_BACKOFF_BASE', '1.0'))
+    except Exception:
+        YTDL_BACKOFF_BASE = 1.0
+    try:
+        YTDL_BACKOFF_MAX = float(os.environ.get('YTDL_BACKOFF_MAX', '60.0'))
+    except Exception:
+        YTDL_BACKOFF_MAX = 60.0
+    # Worker pool configuration to prevent unbounded threads
+    try:
+        WORKER_POOL_SIZE = int(os.environ.get('YTDL_WORKER_POOL_SIZE', '6'))
+    except Exception:
+        WORKER_POOL_SIZE = 6
+    try:
+        WORKER_QUEUE_MAX = int(os.environ.get('YTDL_WORKER_QUEUE_MAX', '200'))
+    except Exception:
+        WORKER_QUEUE_MAX = 200
+
+    # Bounded queue and worker pool
+    worker_queue = queue.Queue(maxsize=WORKER_QUEUE_MAX)
+
+    def _worker_loop(index: int):
+        video_logger.info(f"Worker {index} started")
+        while True:
+            try:
+                func, args = worker_queue.get()
+                try:
+                    func(*args)
+                except Exception as e:
+                    video_logger.error(f"Worker {index} task error: {e}\n{traceback.format_exc()}")
+                finally:
+                    worker_queue.task_done()
+            except Exception as e:
+                video_logger.error(f"Worker {index} loop error: {e}\n{traceback.format_exc()}")
+
+    # Start worker threads
+    for i in range(WORKER_POOL_SIZE):
+        t = threading.Thread(target=_worker_loop, args=(i+1,), daemon=True)
+        t.start()
     # Helper function for background video download
     def download_video_background(download_id: str, url: str, format_type: str, quality: int, output_path: str, client_ip: str = None):
         """Background function to download and convert video - includes rate limit cleanup"""
@@ -7347,31 +7417,129 @@ if VIDEO_CONVERTER_AVAILABLE:
             ydl_opts['progress_hooks'] = [progress_hook]
             video_logger.info(f"yt-dlp options configured for {download_id}")
             
-            # Download the video
+            # Safer extract_info + download flow with persistent retry loop on transient 403s
+            video_logger.info(f"Extracting video info for {download_id}")
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                video_logger.info(f"Extracting video info for {download_id}")
-                # Extract info first
                 info = ydl.extract_info(url, download=False)
-                title = info.get('title', 'Unknown')
-                video_logger.info(f"Video title: {title}")
-                
-                # Check if video is age-restricted or unavailable
-                if info.get('age_limit', 0) > 0:
-                    video_logger.info(f"Video is age-restricted (age limit: {info.get('age_limit')})")
-                    is_age_restricted = True
-                    # Reconfigure options for age-restricted content
-                    ydl_opts = get_ydl_opts(format_type, quality, output_path, is_age_restricted)
-                    ydl_opts['progress_hooks'] = [progress_hook]
-                
-                # Update title
-                with download_lock:
-                    if download_id in active_video_downloads:
-                        active_video_downloads[download_id]['title'] = title
-                
-                # Download
-                video_logger.info(f"Starting download for {download_id}")
-                ydl.download([url])
-                video_logger.info(f"Download completed for {download_id}")
+            title = info.get('title', 'Unknown')
+            video_logger.info(f"Video title: {title}")
+
+            # Check if video is age-restricted and reconfigure if needed
+            if info.get('age_limit', 0) > 0:
+                video_logger.info(f"Video is age-restricted (age limit: {info.get('age_limit')})")
+                is_age_restricted = True
+                ydl_opts = get_ydl_opts(format_type, quality, output_path, is_age_restricted)
+                ydl_opts['progress_hooks'] = [progress_hook]
+
+            with download_lock:
+                if download_id in active_video_downloads:
+                    active_video_downloads[download_id]['title'] = title
+
+            # Prepare proxies list
+            proxy_env = os.environ.get('YTDL_PROXY')
+            proxy_list_env = os.environ.get('YTDL_PROXY_LIST')
+            proxies_to_try = []
+            if proxy_list_env:
+                proxies_to_try = [p.strip() for p in proxy_list_env.split(',') if p.strip()]
+            elif proxy_env:
+                proxies_to_try = [proxy_env.strip()]
+
+            # Per-download override for proxy and cookiefile
+            per_download_proxy = None
+            per_download_cookie = None
+            with download_lock:
+                entry = active_video_downloads.get(download_id, {})
+                per_download_proxy = entry.get('proxy')
+                per_download_cookie = entry.get('cookiefile') or entry.get('cookie_file')
+            if per_download_proxy:
+                # prefer per-download proxy first
+                proxies_to_try.insert(0, per_download_proxy)
+            if per_download_cookie and os.path.exists(per_download_cookie):
+                cookiefile = per_download_cookie
+
+            # Cookiefile if provided
+            cookiefile = os.environ.get('YTDL_COOKIE_FILE')
+            if cookiefile and not os.path.exists(cookiefile):
+                video_logger.warning(f"YTDL_COOKIE_FILE set but not found at {cookiefile}")
+
+            attempt = 0
+            last_exception = None
+            # Determine effective max attempts
+            effective_max = None if YTDL_RETRY_FOREVER else max(1, YTDL_MAX_RETRIES)
+
+            while True:
+                attempt += 1
+                try:
+                    video_logger.info(f"Attempt {attempt}: Starting download for {download_id}")
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        ydl.download([url])
+                    video_logger.info(f"Download completed for {download_id} on attempt {attempt}")
+                    last_exception = None
+                    break
+                except Exception as de:
+                    derr = str(de)
+                    video_logger.warning(f"Download attempt {attempt} failed for {download_id}: {derr}")
+                    last_exception = de
+
+                    # If not a 403-like error, don't attempt cookie/proxy retries endlessly
+                    is_403_like = ('403' in derr or 'forbidden' in derr.lower() or 'http error 403' in derr.lower() or 'unable to download video data' in derr.lower())
+
+                    # If cookiefile available and we haven't tried it yet in this attempt, try it now
+                    tried_cookie = False
+                    if is_403_like and cookiefile and os.path.exists(cookiefile):
+                        try:
+                            video_logger.info(f"Attempt {attempt}: retrying with cookiefile {cookiefile} for {download_id}")
+                            retry_opts = ydl_opts.copy()
+                            retry_opts['cookiefile'] = cookiefile
+                            retry_opts['progress_hooks'] = [progress_hook]
+                            with yt_dlp.YoutubeDL(retry_opts) as ydl:
+                                ydl.download([url])
+                            video_logger.info(f"Cookie retry succeeded for {download_id} on attempt {attempt}")
+                            last_exception = None
+                            break
+                        except Exception as cookie_err:
+                            video_logger.warning(f"Cookie retry failed for {download_id}: {cookie_err}")
+                            tried_cookie = True
+
+                    # Try rotating proxies one by one
+                    proxy_succeeded = False
+                    if is_403_like and proxies_to_try:
+                        for proxy in proxies_to_try:
+                            try:
+                                video_logger.info(f"Attempt {attempt}: retrying via proxy {proxy} for {download_id}")
+                                retry_opts2 = ydl_opts.copy()
+                                retry_opts2['proxy'] = proxy
+                                retry_opts2['progress_hooks'] = [progress_hook]
+                                with yt_dlp.YoutubeDL(retry_opts2) as ydl:
+                                    ydl.download([url])
+                                video_logger.info(f"Proxy retry succeeded for {download_id} via {proxy} on attempt {attempt}")
+                                proxy_succeeded = True
+                                last_exception = None
+                                break
+                            except Exception as proxy_err:
+                                video_logger.warning(f"Proxy retry failed for {download_id} via {proxy}: {proxy_err}")
+                                # small backoff between proxy attempts
+                                time.sleep(min(1.0, YTDL_BACKOFF_BASE))
+                        if proxy_succeeded:
+                            break
+
+                    # Check retry limits
+                    if effective_max is not None and attempt >= effective_max:
+                        video_logger.error(f"Download failed after {attempt} attempts for {download_id}; giving up")
+                        break
+
+                    # Backoff with jitter before next attempt
+                    backoff = min(YTDL_BACKOFF_MAX, YTDL_BACKOFF_BASE * (2 ** (attempt - 1)))
+                    jitter = random.uniform(0, backoff * 0.2)
+                    sleep_for = backoff + jitter
+                    video_logger.info(f"Sleeping {sleep_for:.1f}s before next attempt for {download_id}")
+                    time.sleep(sleep_for)
+
+                    # If retry-forever is enabled, continue looping; otherwise loop until attempts exhausted
+                    if not YTDL_RETRY_FOREVER and effective_max is not None and attempt >= effective_max:
+                        # Max attempts reached
+                        video_logger.error(f"Max retries reached ({effective_max}) for {download_id}")
+                        break
             
             # Find the downloaded file
             downloaded_file = None
@@ -7435,15 +7603,18 @@ if VIDEO_CONVERTER_AVAILABLE:
                 raise Exception("Downloaded file not found")
                 
         except Exception as e:
-            # Error occurred
+            # Error occurred - capture full traceback for debugging
             error_msg = str(e)
+            tb = traceback.format_exc()
             video_logger.error(f"Video download error for {download_id}: {error_msg}")
+            video_logger.debug(f"Full traceback for {download_id}:\n{tb}")
             
             with download_lock:
                 if download_id in active_video_downloads:
                     active_video_downloads[download_id].update({
                         'status': 'error',
                         'error': error_msg,
+                        'error_details': tb,
                         'finished': True
                     })
         finally:
@@ -7451,6 +7622,15 @@ if VIDEO_CONVERTER_AVAILABLE:
             if client_ip:
                 decrement_video_rate_limit(client_ip)
                 video_logger.debug(f"Decremented rate limit for IP {client_ip}")
+            # Clean up any coalescing mapping for this URL
+            try:
+                normalized = url.strip()
+                with download_lock:
+                    if active_url_map.get(normalized) == download_id:
+                        del active_url_map[normalized]
+                        video_logger.debug(f"Removed coalescing mapping for URL {normalized}")
+            except Exception:
+                pass
 
     def bulk_download_background(download_id: str, video_ids: List[str], format_type: str, quality: int, bulk_dir: str, zip_path: str, client_ip: str = None):
         """Background function to download multiple videos and create ZIP file"""
@@ -7859,9 +8039,23 @@ if VIDEO_CONVERTER_AVAILABLE:
                 video_logger.warning(f"Blocked localhost URL: {request.url}")
                 raise HTTPException(status_code=400, detail="Invalid URL: localhost not allowed")
             
-            # Increment rate limit counter
+            # Normalize URL for coalescing (simple normalization)
+            normalized_url = request.url.strip()
+
+            # If another worker is already downloading this URL, coalesce requests
+            with download_lock:
+                existing = active_url_map.get(normalized_url)
+                if existing:
+                    video_logger.info(f"Coalescing request: returning existing download ID {existing} for URL {normalized_url}")
+                    return VideoConversionResponse(
+                        success=True,
+                        download_id=existing,
+                        message=f"Download already in progress. Using existing download ID {existing}"
+                    )
+
+            # Increment rate limit counter (only for new downloads)
             increment_video_rate_limit(client_ip)
-            
+
             # Generate unique download ID
             download_id = str(uuid.uuid4())
             video_logger.info(f"Generated download ID: {download_id}")
@@ -7880,6 +8074,10 @@ if VIDEO_CONVERTER_AVAILABLE:
             output_path = os.path.join(VIDEO_DOWNLOAD_DIR, output_filename)
             video_logger.info(f"Output path: {output_path}")
             
+            # Register normalized URL -> download_id for coalescing
+            with download_lock:
+                active_url_map[normalized_url] = download_id
+
             # Store download info
             with download_lock:
                 active_video_downloads[download_id] = {
@@ -7896,14 +8094,33 @@ if VIDEO_CONVERTER_AVAILABLE:
                     'finished': False,
                     'file_path': None
                 }
+                # If client provided a proxy parameter in the JSON body, accept it
+                # (FastAPI will ignore extra fields unless declared; accept via request json)
+                try:
+                    body_json = await req.json()
+                    proxy_param = body_json.get('proxy')
+                    if proxy_param:
+                        with download_lock:
+                            if download_id in active_video_downloads:
+                                active_video_downloads[download_id]['proxy'] = proxy_param
+                                video_logger.info(f"Registered per-download proxy for {download_id}: {proxy_param}")
+                except Exception:
+                    pass
             
-            # Start download in background thread
-            video_logger.info(f"Starting background download thread for {download_id}")
-            threading.Thread(
-                target=download_video_background, 
-                args=(download_id, request.url, format_type, request.quality, output_path, client_ip),
-                daemon=True
-            ).start()
+            # Enqueue the download task into the worker queue
+            video_logger.info(f"Enqueuing background download task for {download_id}")
+            try:
+                worker_queue.put_nowait((download_video_background, (download_id, request.url, format_type, request.quality, output_path, client_ip)))
+            except queue.Full:
+                # Clean up coalescing entry and rate-limit increment since we couldn't start
+                with download_lock:
+                    if active_url_map.get(normalized_url) == download_id:
+                        del active_url_map[normalized_url]
+                    if download_id in active_video_downloads:
+                        del active_video_downloads[download_id]
+                decrement_video_rate_limit(client_ip)
+                video_logger.warning(f"Worker queue full; rejected download {download_id}")
+                raise HTTPException(status_code=429, detail="Server busy processing other downloads. Try again shortly.")
             
             video_logger.info(f"Video conversion started successfully: {download_id}")
             return VideoConversionResponse(
@@ -7984,13 +8201,17 @@ if VIDEO_CONVERTER_AVAILABLE:
             # Increment rate limit counter
             increment_video_rate_limit(client_ip)
             
-            # Start bulk download in background thread
-            video_logger.info(f"Starting background bulk download thread for {download_id}")
-            threading.Thread(
-                target=bulk_download_background, 
-                args=(download_id, request.video_ids, format_type, request.quality, bulk_dir, zip_path, client_ip),
-                daemon=True
-            ).start()
+            # Enqueue the bulk download task
+            video_logger.info(f"Enqueuing background bulk download task for {download_id}")
+            try:
+                worker_queue.put_nowait((bulk_download_background, (download_id, request.video_ids, format_type, request.quality, bulk_dir, zip_path, client_ip)))
+            except queue.Full:
+                with download_lock:
+                    if download_id in active_video_downloads:
+                        del active_video_downloads[download_id]
+                decrement_video_rate_limit(client_ip)
+                video_logger.warning(f"Worker queue full; rejected bulk download {download_id}")
+                raise HTTPException(status_code=429, detail="Server busy processing other downloads. Try again shortly.")
             
             video_logger.info(f"Bulk download started successfully: {download_id}")
             return VideoConversionResponse(
@@ -8003,6 +8224,31 @@ if VIDEO_CONVERTER_AVAILABLE:
             raise
         except Exception as e:
             video_logger.error(f"Unexpected error in bulk_download_playlist: {str(e)}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post('/api/v1/video/upload-cookies/{download_id}')
+    async def upload_cookies(download_id: str, file: UploadFile = File(...)):
+        """Upload a cookies.txt file to be used for a specific download (useful for age-restricted videos)."""
+        try:
+            with download_lock:
+                if download_id not in active_video_downloads:
+                    raise HTTPException(status_code=404, detail='Download ID not found')
+            dest_dir = VIDEO_DOWNLOAD_DIR
+            os.makedirs(dest_dir, exist_ok=True)
+            dest_path = os.path.join(dest_dir, f"cookies_{download_id}.txt")
+            contents = await file.read()
+            with open(dest_path, 'wb') as f:
+                f.write(contents)
+            with download_lock:
+                entry = active_video_downloads.get(download_id)
+                if entry is not None:
+                    entry['cookiefile'] = dest_path
+            video_logger.info(f"Uploaded cookiefile for {download_id}: {dest_path}")
+            return JSONResponse({'success': True, 'path': dest_path})
+        except HTTPException:
+            raise
+        except Exception as e:
+            video_logger.error(f"Failed to upload cookiefile for {download_id}: {e}")
             raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/v1/video/status/{download_id}", response_model=ConversionStatus)
