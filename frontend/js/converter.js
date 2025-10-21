@@ -1204,6 +1204,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const cancel = document.getElementById('cookiesModalCancel');
         const clearBtn = document.getElementById('cookiesModalClear');
         const saveBtn = document.getElementById('cookiesModalSave');
+    // optional textarea element (removed in manual-only mode, keep safe ref)
+    const textarea = document.getElementById('cookiesTextarea');
     const domainDiv = document.getElementById('domainDiv');
     const nameDiv = document.getElementById('nameDiv');
     const manualFields = document.getElementById('manualFields');
@@ -1955,28 +1957,45 @@ async function startConversion(url) {
             quality: formatValue === 1 ? audioQuality : videoQuality
         });
         
-        // If user requested 'Download in browser', attempt a direct CORS fetch first.
-        const tryInBrowser = document.getElementById('downloadInBrowser') && document.getElementById('downloadInBrowser').checked;
+        // If user requested 'Download in browser', attempt a direct fetch only for safe cases
+        const tryInBrowserElem = document.getElementById('downloadInBrowser');
+        const tryInBrowser = tryInBrowserElem && tryInBrowserElem.checked;
         if (tryInBrowser) {
             try {
-                showSpinner('subtle');
-                updateSpinnerText('Attempting direct browser download...');
-                const direct = await fetch(url, { method: 'GET' });
-                if (direct.ok) {
-                    const blob = await direct.blob();
-                    // Try to infer filename
-                    let filename = generateMockTitle(url).replace(/[^a-z0-9._-]/gi,'_');
-                    const ext = formatValue === 1 ? '.mp3' : '.mp4';
-                    filename += ext;
-                    saveBlobAsFile(blob, filename);
-                    hideSpinner();
-                    isProcessing = false;
-                    enableConvertButtonVisuals();
-                    return;
+                // Only attempt direct browser download for same-origin or safe protocols
+                let allowDirect = false;
+                try {
+                    const parsed = new URL(url, window.location.href);
+                    const proto = parsed.protocol;
+                    const sameOrigin = parsed.origin === window.location.origin;
+                    if (sameOrigin || proto === 'data:' || proto === 'blob:') allowDirect = true;
+                } catch (e) {
+                    // If URL parsing fails, do not attempt direct fetch
+                    allowDirect = false;
                 }
-                // If direct fetch not allowed (CORS, 403, etc.), fall through to server
+
+                if (!allowDirect) {
+                    console.debug('Skipping direct browser download for remote or unsupported URL; will use server instead.');
+                } else {
+                    showSpinner('subtle');
+                    updateSpinnerText('Attempting direct browser download...');
+                    const direct = await fetch(url, { method: 'GET' });
+                    if (direct.ok) {
+                        const blob = await direct.blob();
+                        // Try to infer filename
+                        let filename = generateMockTitle(url).replace(/[^a-z0-9._-]/gi,'_');
+                        const ext = formatValue === 1 ? '.mp3' : '.mp4';
+                        filename += ext;
+                        saveBlobAsFile(blob, filename);
+                        hideSpinner();
+                        isProcessing = false;
+                        enableConvertButtonVisuals();
+                        return;
+                    }
+                    // If direct fetch not allowed (CORS, 403, etc.), fall through to server
+                }
             } catch (directErr) {
-                console.warn('Direct browser download failed, falling back to server:', directErr);
+                console.warn('Direct browser download attempt encountered an error, falling back to server:', directErr);
             } finally {
                 hideSpinner();
             }
