@@ -308,6 +308,38 @@
                 </div>
             </div>
 
+            <!-- Per-download controls row (proxy, cookie create, convert-in-browser) -->
+            <div class="per-download-row" style="margin-top:10px;">
+                <!-- Top row: proxy input + create button -->
+                <div class="per-download-top" style="width:100%;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;">
+                    <div class="per-download-controls" style="flex:1 1 420px;max-width:620px;">
+                        <input type="text" id="perDownloadProxy" class="input-field-url" placeholder="Optional proxy (e.g. http://127.0.0.1:8080)" />
+                    </div>
+                    <div class="per-download-controls" style="flex:0 0 auto;">
+                        <button id="createCookiesBtn" class="c-btn c-btn--sm c-btn--tertiary" type="button" style="white-space:nowrap;">Create cookies.txt</button>
+                    </div>
+                    <div class="per-download-controls" style="flex:0 0 auto;align-items:center;">
+                        <label style="display:flex;align-items:center;gap:8px;margin:0;">
+                            <input type="checkbox" id="downloadInBrowser" checked />
+                            <span style="font-size:0.95rem;color:var(--text-secondary);">Download in browser (use your IP; may fail on some sites due to CORS). Default: ON</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Bottom row: cookies status centered -->
+                <div class="cookies-status-row" style="width:100%;display:flex;justify-content:center;margin-top:8px;">
+                    <span id="cookiesStatus" style="color:#9bb;">No saved cookies</span>
+                </div>
+            </div>
+            <div class="per-download-help" style="margin-top:8px;">
+                <small>
+                    <strong>Help:</strong> Proxy: enter an HTTP(s) proxy (e.g. <code>http://1.2.3.4:8080</code>) to route the server request through a different IP if a download is blocked. Cookies: upload a <code>cookies.txt</code> file when a video asks you to sign in or is age-restricted. Convert in browser: if checked, the browser will try a lightweight conversion first (works for many videos and reduces server load); it may be slower on old devices.
+                </small>
+            </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Loading Spinner -->
             <div id="spinner" class="spinner-container" style="display:none;">
                 <div class="animation-box">
@@ -633,5 +665,93 @@
     <script src="../js/lofi.js"></script>
     <script src="../js/converter.js"></script>
     <script src="../js/themeManager.js"></script>
+
+    <!-- Cookies Modal -->
+    <div id="cookiesModal" class="c-modal" style="display:none;">
+        <div class="c-modal__content" style="max-width:760px;">
+            <span class="c-modal__close" id="cookiesModalClose">&times;</span>
+            <h2>Provide cookies.txt (simple)</h2>
+            <p>Paste the <strong>cookies.txt</strong> content here. This helps downloads that require login or age-restrictions. We store it only in your browser and upload it to the server for the current conversion.</p>
+            <!-- Structured cookie inputs -->
+            <div class="cookies-form" style="display:flex;flex-direction:column;gap:8px;">
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <label style="font-weight:600;min-width:120px;">Platform:</label>
+                        <select id="cookiesPlatform" class="input-field-url" style="flex:1;">
+                            <option value="youtube" selected>YouTube</option>
+                            <option value="other" disabled>Other (coming soon)</option>
+                        </select>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <label style="font-weight:600;min-width:120px;">Method:</label>
+                        <div style="flex:1;color:var(--text-secondary);">Manual only — paste a single cookie token and save.</div>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <div id="domainDiv">
+                        <label style="display:block;font-weight:600;margin-bottom:4px;">Domain</label>
+                        <select id="cookiesDomain" class="input-field-url" style="width:100%;">
+                            <option value=".youtube.com">.youtube.com</option>
+                            <option value="accounts.google.com">accounts.google.com</option>
+                            <option value="other">Other (enter below)</option>
+                        </select>
+                        <input id="cookiesDomainOther" class="input-field-url" placeholder="Custom domain (e.g. .example.com)" style="width:100%;margin-top:6px;display:none;" />
+                    </div>
+                    <div id="nameDiv">
+                        <label style="display:block;font-weight:600;margin-bottom:4px;">Cookie Name</label>
+                        <select id="cookiesNameSelect" class="input-field-url" style="width:100%;">
+                            <option value="SID">SID</option>
+                            <option value="HSID">HSID</option>
+                            <option value="APISID">APISID</option>
+                            <option value="SAPISID">SAPISID</option>
+                            <option value="SSID">SSID</option>
+                            <option value="YSC">YSC</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                        <input id="cookiesNameCustom" class="input-field-url" placeholder="Custom cookie name" style="width:100%;margin-top:6px;display:none;" />
+                    </div>
+                </div>
+
+                <div id="manualFields">
+                <div id="manualGrid" style="grid-template-columns:1fr 1fr;gap:8px;">
+                    <div>
+                        <label style="display:block;font-weight:600;margin-bottom:4px;">Cookie Value</label>
+                        <input id="cookiesValue" class="input-field-url" placeholder="Paste cookie token here (e.g. A1B2C3...)" style="width:100%;" />
+                        <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:6px;">Tip: use a browser extension to export cookies, then paste the single cookie token here.</div>
+                    </div>
+                    <div>
+                        <label style="display:block;font-weight:600;margin-bottom:4px;">Expiry</label>
+                        <select id="cookiesExpirySelect" class="input-field-url" style="width:100%;">
+                            <option value="session">Session (browser close)</option>
+                            <option value="1h">1 hour</option>
+                            <option value="1d">1 day</option>
+                            <option value="1w">1 week</option>
+                            <option value="1m">1 month</option>
+                            <option value="1y">1 year</option>
+                            <option value="custom">Custom (unix timestamp)</option>
+                        </select>
+                        <input id="cookiesExpiryCustom" class="input-field-url" placeholder="Expiry unix timestamp (e.g. 1700000000)" style="width:100%;margin-top:6px;display:none;" />
+                    </div>
+                </div>
+
+                <div style="margin-top:6px;color:var(--text-secondary);font-size:0.95rem;">Manual: paste a single cookie token (value) and save. The modal will generate a simple cookies.txt entry for you.</div>
+                <div style="margin-top:8px;font-size:0.9rem;color:var(--text-secondary);">
+                    Need help exporting cookies? Try these browser extensions:
+                    <ul style="margin:6px 0 0 18px;color:var(--text-secondary);">
+                        <li><a href="https://chromewebstore.google.com/detail/cookie-editor/ookdjilphngeeeghgngjabigmpepanpl" target="_blank" rel="noopener">Cookie-Editor (Chrome)</a> — export cookies.txt easily.</li>
+                        <li><a href="https://addons.mozilla.org/firefox/addon/cookie-quick-manager/" target="_blank" rel="noopener">Cookie Quick Manager (Firefox)</a> — export cookies.txt.</li>
+                    </ul>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:8px;align-items:center;justify-content:flex-end;">
+                    <button id="cookiesModalClear" class="c-btn c-btn--tertiary">Clear saved</button>
+                    <button id="cookiesModalCancel" class="c-btn c-btn--tertiary">Cancel</button>
+                    <button id="cookiesModalSave" class="c-btn c-btn--primary">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cookies modal behavior moved to ../js/converter.js -->
 </body>
 </html>

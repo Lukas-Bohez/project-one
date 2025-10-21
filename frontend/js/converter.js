@@ -836,10 +836,34 @@ async function processQueue() {
                 showSpinner('subtle');
                 updatePlaylistStatusUI({ currentTitle: next.title });
 
+                // If user opted to try downloading in browser, attempt a direct fetch first
+                const tryInBrowser = document.getElementById('downloadInBrowser') && document.getElementById('downloadInBrowser').checked;
+                let convertResult = null;
+                if (tryInBrowser) {
+                    try {
+                        updateSpinnerText('Attempting direct browser download...');
+                        const directResp = await fetch(videoUrl, { method: 'GET' });
+                        if (directResp.ok) {
+                            const blob = await directResp.blob();
+                            const ext = (formatValue === 1) ? '.mp3' : '.mp4';
+                            const safe = (next.title || next.id).replace(/[<>:"/\\|?*\x00-\x1f]/g, '').substring(0,50).trim();
+                            const filename = `${safe}${ext}`;
+                            addToFrontendStorage(filename, blob);
+                            // short pause then continue to next
+                            await new Promise(r => setTimeout(r, 200));
+                            updatePlaylistStatusUI();
+                            continue;
+                        }
+                        // If directResp not ok (CORS/403/etc) fall through to server conversion
+                    } catch (errDirect) {
+                        console.warn('Direct browser download for playlist item failed, falling back to server conversion:', errDirect);
+                    }
+                }
+
                 const convertResp = await fetch(`${API_BASE_URL}/api/v1/video/convert`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: videoUrl, format: formatValue, quality: formatValue === 1 ? audioQuality : videoQuality })
+                    body: JSON.stringify({ url: videoUrl, format: formatValue, quality: formatValue === 1 ? audioQuality : videoQuality, proxy: (document.getElementById('perDownloadProxy') && document.getElementById('perDownloadProxy').value.trim()) || undefined })
                 });
 
                 if (!convertResp.ok) {
@@ -847,7 +871,24 @@ async function processQueue() {
                     continue; // proceed to next
                 }
 
-                const convertResult = await convertResp.json();
+                convertResult = await convertResp.json();
+                // Upload cookies if backend provided a download_id and user selected cookie file
+                try {
+                    if (convertResult && convertResult.download_id) {
+                        const cookieInput = document.getElementById('cookieUpload');
+                        if (cookieInput && cookieInput.files && cookieInput.files.length > 0) {
+                            const cookieFile = cookieInput.files[0];
+                            const cookieForm = new FormData();
+                            cookieForm.append('file', cookieFile, cookieFile.name);
+                            const uploadUrl = `${API_BASE_URL}/api/v1/video/upload-cookies/${convertResult.download_id}`;
+                            console.log('📤 Uploading cookies to', uploadUrl);
+                            await fetch(uploadUrl, { method: 'POST', body: cookieForm });
+                            console.log('✅ Uploaded cookies for download', convertResult.download_id);
+                        }
+                    }
+                } catch (cookieErr) {
+                    console.warn('Failed to upload cookie file for playlist item:', cookieErr);
+                }
                 const downloadId = convertResult.download_id;
                 const status = await pollStatusUntilReady(downloadId);
                 if (!status || status.status === 'error') {
@@ -1014,6 +1055,349 @@ async function addBlobToIDB(filename, blob, size) {
         r.onsuccess = () => resolve(true);
         r.onerror = (e) => reject(e.target ? e.target.error : e);
     });
+}
+
+// ------------------ Cookies storage (IndexedDB) ------------------
+const IDB_COOKIES_STORE = 'cookies';
+function openCookiesIDB() {
+    return new Promise((resolve, reject) => {
+        if (!window.indexedDB) return reject(new Error('IndexedDB not supported'));
+
+        // First open without forcing a version so we can inspect existing object stores
+        const openReq = indexedDB.open(IDB_DB_NAME);
+        openReq.onsuccess = function(e) {
+            const db = e.target.result;
+            // If cookies store exists, return the DB
+            if (db.objectStoreNames.contains(IDB_COOKIES_STORE)) {
+                return resolve(db);
+            }
+
+            // Otherwise, we need to perform a version upgrade to create the missing store
+            const newVersion = db.version + 1;
+            db.close();
+            const upgradeReq = indexedDB.open(IDB_DB_NAME, newVersion);
+            upgradeReq.onupgradeneeded = function(ev) {
+                const d = ev.target.result;
+                if (!d.objectStoreNames.contains(IDB_STORE_NAME)) {
+                    d.createObjectStore(IDB_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                }
+                if (!d.objectStoreNames.contains(IDB_COOKIES_STORE)) {
+                    d.createObjectStore(IDB_COOKIES_STORE, { keyPath: 'name' });
+                }
+            };
+            upgradeReq.onsuccess = function(ev) { resolve(ev.target.result); };
+            upgradeReq.onerror = function(ev) { reject(ev.target.error || new Error('IDB upgrade failed')); };
+        };
+        openReq.onerror = function(e) { reject(e.target ? e.target.error : new Error('IDB open error')); };
+    });
+}
+
+async function saveCookiesText(name, text) {
+    const db = await openCookiesIDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_COOKIES_STORE, 'readwrite');
+        const store = tx.objectStore(IDB_COOKIES_STORE);
+        const entry = { name: name, content: text, created: Date.now() };
+        const r = store.put(entry);
+        r.onsuccess = () => resolve(true);
+        r.onerror = (e) => reject(e.target ? e.target.error : e);
+    });
+}
+
+async function getSavedCookies(name = 'cookies.txt') {
+    const db = await openCookiesIDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_COOKIES_STORE, 'readonly');
+        const store = tx.objectStore(IDB_COOKIES_STORE);
+        const req = store.get(name);
+        req.onsuccess = function(e) {
+            const v = e.target.result;
+            resolve(v ? v.content : null);
+        };
+        req.onerror = function(e) { reject(e.target ? e.target.error : e); };
+    });
+}
+
+async function clearSavedCookies(name = 'cookies.txt') {
+    const db = await openCookiesIDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_COOKIES_STORE, 'readwrite');
+        const store = tx.objectStore(IDB_COOKIES_STORE);
+        const req = store.delete(name);
+        req.onsuccess = () => resolve(true);
+        req.onerror = (e) => reject(e.target ? e.target.error : e);
+    });
+}
+
+// Wire up the cookies editor UI
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        const createBtn = document.getElementById('createCookiesBtn');
+        const editor = document.getElementById('cookiesEditor');
+        const textarea = document.getElementById('cookiesTextareaInput');
+        const saveBtn = document.getElementById('saveCookiesBtn');
+        const clearBtn = document.getElementById('clearCookiesBtn');
+        const statusSpan = document.getElementById('cookiesStatus');
+
+        if (createBtn && editor && textarea && saveBtn && clearBtn && statusSpan) {
+            createBtn.addEventListener('click', async () => {
+                editor.style.display = editor.style.display === 'none' ? 'block' : 'none';
+                // load saved cookies if any
+                try {
+                    const saved = await getSavedCookies();
+                    if (saved) {
+                        textarea.value = saved;
+                        statusSpan.textContent = 'Saved cookies loaded';
+                    } else {
+                        textarea.value = '';
+                        statusSpan.textContent = 'No saved cookies';
+                    }
+                } catch (e) {
+                    console.warn('Failed to read saved cookies', e);
+                }
+            });
+
+            saveBtn.addEventListener('click', async () => {
+                try {
+                    await saveCookiesText('cookies.txt', textarea.value || '');
+                    statusSpan.textContent = 'Cookies saved in browser';
+                    // small flash
+                    setTimeout(() => statusSpan.textContent = 'Saved', 1200);
+                } catch (e) {
+                    console.error('saveCookies failed', e);
+                    statusSpan.textContent = 'Save failed';
+                }
+            });
+
+            clearBtn.addEventListener('click', async () => {
+                try {
+                    await clearSavedCookies();
+                    textarea.value = '';
+                    statusSpan.textContent = 'No saved cookies';
+                } catch (e) {
+                    console.error('clearSavedCookies failed', e);
+                    statusSpan.textContent = 'Clear failed';
+                }
+            });
+
+            // reflect existing saved cookies on load
+            (async () => {
+                try {
+                    const s = await getSavedCookies();
+                    if (s) statusSpan.textContent = 'Saved cookies present';
+                } catch (e) {
+                    // ignore
+                }
+            })();
+        }
+    } catch (e) {
+        console.warn('cookies editor wiring failed', e);
+    }
+});
+
+// Modal-based cookies UI wiring (moved from inline HTML)
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        const btn = document.getElementById('createCookiesBtn');
+        const modal = document.getElementById('cookiesModal');
+        const close = document.getElementById('cookiesModalClose');
+        const cancel = document.getElementById('cookiesModalCancel');
+        const clearBtn = document.getElementById('cookiesModalClear');
+        const saveBtn = document.getElementById('cookiesModalSave');
+    const domainDiv = document.getElementById('domainDiv');
+    const nameDiv = document.getElementById('nameDiv');
+    const manualFields = document.getElementById('manualFields');
+    const manualGrid = document.getElementById('manualGrid');
+    const statusSpan = document.getElementById('cookiesStatus');
+    // elements used elsewhere in handlers
+    const domainSel = document.getElementById('cookiesDomain');
+    const domainOther = document.getElementById('cookiesDomainOther');
+    const nameSel = document.getElementById('cookiesNameSelect');
+    const nameCustom = document.getElementById('cookiesNameCustom');
+    const valueInp = document.getElementById('cookiesValue');
+    const expirySel = document.getElementById('cookiesExpirySelect');
+    const expiryCustom = document.getElementById('cookiesExpiryCustom');
+
+        if (!modal || !btn) return;
+
+        // Ensure sensible defaults for modal controls so methods reliably show their UI
+        function setModalDefaults() {
+            try {
+                if (methodSel && !methodSel.value) methodSel.value = 'paste';
+                if (domainSel && !domainSel.value) domainSel.value = '.youtube.com';
+                if (nameSel && !nameSel.value) nameSel.value = 'SID';
+                if (expirySel && !expirySel.value) expirySel.value = 'session';
+            } catch (e) { /* ignore */ }
+        }
+
+        function openModal(){
+            modal.style.display = 'block';
+            setModalDefaults();
+            updateModalVisibility();
+            // If paste is the active method, ensure textarea is visible and focused
+            try {
+                const m = methodSel && methodSel.value ? methodSel.value.toString().trim().toLowerCase() : 'paste';
+                if (m === 'paste' && textarea) {
+                    textarea.style.display = 'block';
+                    textarea.focus();
+                    try { textarea.scrollIntoView({ behavior: 'auto', block: 'nearest' }); } catch (e) {}
+                }
+            } catch (e) { /* ignore */ }
+        }
+        function closeModal(){ modal.style.display = 'none'; }
+
+        btn.addEventListener('click', async () => {
+            try {
+                // Manual-only flow: load saved cookies and if a netscape line is present, parse it
+                const saved = await getSavedCookies();
+                if (saved) {
+                    const lines = saved.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                    for (const line of lines) {
+                        if (line.startsWith('#')) continue;
+                        const parts = line.split('\t');
+                        if (parts.length >= 7) {
+                            const domain = parts[0];
+                            const name = parts[5];
+                            const value = parts[6];
+                            if (domainSel) {
+                                if ([...domainSel.options].some(o => o.value === domain)) domainSel.value = domain;
+                                else if (domainOther) { domainSel.value = 'other'; domainOther.value = domain; }
+                            }
+                            if (nameSel) {
+                                if ([...nameSel.options].some(o => o.value === name)) nameSel.value = name;
+                                else if (nameCustom) { nameSel.value = 'custom'; nameCustom.value = name; }
+                            }
+                            if (valueInp) valueInp.value = value;
+                            break;
+                        }
+                    }
+                    if (statusSpan) statusSpan.textContent = 'Saved cookies present';
+                } else {
+                    if (statusSpan) statusSpan.textContent = 'No saved cookies';
+                }
+            } catch (e) {
+                console.warn('Failed to prefill cookies modal', e);
+            }
+            // Always ensure manual fields are visible
+            if (manualFields) manualFields.style.display = 'block';
+            if (manualGrid) manualGrid.style.display = 'grid';
+            if (domainDiv) domainDiv.style.display = 'block';
+            if (nameDiv) nameDiv.style.display = 'block';
+            openModal();
+        });
+
+        function updateModalVisibility() {
+            // Manual-only: always show manual groups and dependent controls
+            if (textarea) textarea.style.display = 'none';
+            if (manualFields) manualFields.style.display = 'block';
+            if (manualGrid) manualGrid.style.display = 'grid';
+            // guidedFields removed in manual-only mode
+            if (domainDiv) domainDiv.style.display = 'block';
+            if (nameDiv) nameDiv.style.display = 'block';
+            if (domainSel && domainOther) domainOther.style.display = domainSel.value === 'other' ? 'block' : 'none';
+            if (nameSel && nameCustom) nameCustom.style.display = nameSel.value === 'custom' ? 'block' : 'none';
+            if (expirySel && expiryCustom) expiryCustom.style.display = expirySel.value === 'custom' ? 'block' : 'none';
+        }
+
+    // No method selector in manual-only mode, but keep change handlers for dependent selects
+    if (domainSel && domainOther) domainSel.addEventListener('change', updateModalVisibility);
+    if (nameSel && nameCustom) nameSel.addEventListener('change', updateModalVisibility);
+    if (expirySel && expiryCustom) expirySel.addEventListener('change', updateModalVisibility);
+        if (domainSel && domainOther) domainSel.addEventListener('change', updateModalVisibility);
+        if (nameSel && nameCustom) nameSel.addEventListener('change', updateModalVisibility);
+        if (expirySel && expiryCustom) expirySel.addEventListener('change', updateModalVisibility);
+
+        if (close) close.addEventListener('click', closeModal);
+        if (cancel) cancel.addEventListener('click', closeModal);
+        window.addEventListener('click', function(e){ if (e.target === modal) closeModal(); });
+
+        if (clearBtn) clearBtn.addEventListener('click', async () => {
+            if (textarea) textarea.value = '';
+            if (domainSel) domainSel.value = '.youtube.com';
+            if (domainOther) domainOther.value = '';
+            if (nameSel) nameSel.value = 'SID';
+            if (nameCustom) nameCustom.value = '';
+            if (valueInp) valueInp.value = '';
+            if (expirySel) expirySel.value = 'session';
+            if (expiryCustom) expiryCustom.value = '';
+            // guided fields removed in manual-only mode
+            try {
+                await clearSavedCookies();
+                if (statusSpan) statusSpan.textContent = 'No saved cookies';
+            } catch (e) { console.warn('clearSavedCookies failed', e); }
+            updateModalVisibility();
+        });
+
+        if (saveBtn) saveBtn.addEventListener('click', async () => {
+            // Manual-only save: construct netscape-format cookie line from inputs
+            let domain = domainSel ? domainSel.value : '';
+            if (domain === 'other') domain = domainOther && domainOther.value ? domainOther.value.trim() : '';
+            let name = nameSel ? nameSel.value : '';
+            if (name === 'custom') name = nameCustom && nameCustom.value ? nameCustom.value.trim() : '';
+            const value = valueInp && valueInp.value ? valueInp.value.trim() : '';
+            if (!domain || !name || !value) {
+                if (statusSpan) statusSpan.textContent = 'Please provide domain, cookie name, and cookie value';
+                return;
+            }
+            if (value.length < 4) {
+                if (statusSpan) statusSpan.textContent = 'Cookie value looks too short — check you pasted the right token';
+                return;
+            }
+            let expiry = '2147483647';
+            const now = Math.floor(Date.now() / 1000);
+            if (expirySel) {
+                const v = expirySel.value;
+                if (v === 'session') expiry = '0';
+                else if (v === '1h') expiry = (now + 3600).toString();
+                else if (v === '1d') expiry = (now + 86400).toString();
+                else if (v === '1w') expiry = (now + 7*86400).toString();
+                else if (v === '1m') expiry = (now + 30*86400).toString();
+                else if (v === '1y') expiry = (now + 365*86400).toString();
+                else if (v === 'custom') {
+                    if (expiryCustom && expiryCustom.value) expiry = expiryCustom.value.trim();
+                }
+            }
+            let outText = `${domain}\tTRUE\t/\tFALSE\t${expiry}\t${name}\t${value}\n`;
+            try {
+                await saveCookiesText('cookies.txt', outText);
+                if (statusSpan) statusSpan.textContent = 'Saved cookies present';
+            } catch (e) { console.warn('saveCookiesText failed', e); if (statusSpan) statusSpan.textContent = 'Save failed'; }
+            closeModal();
+        });
+
+        // update status on load
+        (async () => {
+            try {
+                const s = await getSavedCookies();
+                if (s && statusSpan) statusSpan.textContent = 'Saved cookies present';
+            } catch(e){}
+        })();
+
+        updateModalVisibility();
+
+    } catch (e) {
+        console.warn('cookies modal wiring failed', e);
+    }
+});
+
+// Helper: auto-attach saved cookies when starting a conversion if no file chosen
+async function uploadSavedCookiesIfNeeded(download_id) {
+    try {
+        const cookieInput = document.getElementById('cookieUpload');
+        if (cookieInput && cookieInput.files && cookieInput.files.length > 0) return false; // user provided file
+        const saved = await getSavedCookies();
+        if (!saved) return false;
+        // create a Blob and FormData to upload to backend endpoint
+        const blob = new Blob([saved], { type: 'text/plain' });
+        const fd = new FormData();
+        fd.append('file', blob, 'cookies.txt');
+        const uploadUrl = `${API_BASE_URL}/api/v1/video/upload-cookies/${download_id}`;
+        await fetch(uploadUrl, { method: 'POST', body: fd });
+        return true;
+    } catch (e) {
+        console.warn('uploadSavedCookiesIfNeeded failed', e);
+        return false;
+    }
 }
 
 async function readAllBlobsFromIDB() {
@@ -1488,6 +1872,77 @@ function getFilenameFromContentDisposition(header) {
     return null;
 }
 
+// Best-effort in-browser audio extraction from a video File using MediaRecorder.
+// This is a lightweight fallback that works on many browsers for simple audio extraction.
+async function extractAudioInBrowser(file) {
+    return new Promise(async (resolve, reject) => {
+        if (!window.MediaRecorder) return reject(new Error('MediaRecorder not supported'));
+
+        try {
+            const url = URL.createObjectURL(file);
+            const video = document.createElement('video');
+            video.src = url;
+            video.muted = true;
+            video.playsInline = true;
+
+            await new Promise((res, rej) => {
+                const t = setTimeout(() => rej(new Error('Video load timeout')), 5000);
+                video.onloadedmetadata = () => { clearTimeout(t); res(); };
+                video.onerror = () => { clearTimeout(t); rej(new Error('Failed to load video metadata')); };
+            });
+
+            // Create an audio context and connect the video's audio to a destination
+            const stream = video.captureStream ? video.captureStream() : video.mozCaptureStream && video.mozCaptureStream();
+            if (!stream) {
+                URL.revokeObjectURL(url);
+                return reject(new Error('captureStream not available'));
+            }
+
+            const options = { mimeType: 'audio/webm' };
+            const recorder = new MediaRecorder(stream, options);
+            const chunks = [];
+            recorder.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+            recorder.onerror = ev => { console.warn('MediaRecorder error', ev); };
+
+            recorder.onstop = () => {
+                try {
+                    const blob = new Blob(chunks, { type: 'audio/webm' });
+                    URL.revokeObjectURL(url);
+                    resolve(blob);
+                } catch (err) {
+                    URL.revokeObjectURL(url);
+                    reject(err);
+                }
+            };
+
+            // Start playback and recording for a short duration to capture audio
+            video.play().then(() => {
+                recorder.start();
+                // Record up to 30 seconds or duration, whichever is smaller
+                const maxMs = Math.min(30_000, Math.max(5_000, (video.duration || 30) * 1000));
+                setTimeout(() => {
+                    try { recorder.stop(); } catch (e) { /* ignore */ }
+                    try { video.pause(); } catch (e) { }
+                }, maxMs);
+            }).catch(playErr => {
+                URL.revokeObjectURL(url);
+                reject(playErr);
+            });
+
+            // Safety timeout
+            setTimeout(() => {
+                if (recorder && recorder.state === 'recording') {
+                    try { recorder.stop(); } catch (e) { }
+                }
+            }, 35_000);
+
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+
 // Start actual conversion process
 async function startConversion(url) {
     try {
@@ -1500,6 +1955,33 @@ async function startConversion(url) {
             quality: formatValue === 1 ? audioQuality : videoQuality
         });
         
+        // If user requested 'Download in browser', attempt a direct CORS fetch first.
+        const tryInBrowser = document.getElementById('downloadInBrowser') && document.getElementById('downloadInBrowser').checked;
+        if (tryInBrowser) {
+            try {
+                showSpinner('subtle');
+                updateSpinnerText('Attempting direct browser download...');
+                const direct = await fetch(url, { method: 'GET' });
+                if (direct.ok) {
+                    const blob = await direct.blob();
+                    // Try to infer filename
+                    let filename = generateMockTitle(url).replace(/[^a-z0-9._-]/gi,'_');
+                    const ext = formatValue === 1 ? '.mp3' : '.mp4';
+                    filename += ext;
+                    saveBlobAsFile(blob, filename);
+                    hideSpinner();
+                    isProcessing = false;
+                    enableConvertButtonVisuals();
+                    return;
+                }
+                // If direct fetch not allowed (CORS, 403, etc.), fall through to server
+            } catch (directErr) {
+                console.warn('Direct browser download failed, falling back to server:', directErr);
+            } finally {
+                hideSpinner();
+            }
+        }
+
         const response = await fetch(`${API_BASE_URL}/api/v1/video/convert`, {
             method: 'POST',
             headers: {
@@ -1508,7 +1990,8 @@ async function startConversion(url) {
             body: JSON.stringify({
                 url: url,
                 format: formatValue,
-                quality: formatValue === 1 ? audioQuality : videoQuality
+                quality: formatValue === 1 ? audioQuality : videoQuality,
+                proxy: (document.getElementById('perDownloadProxy') && document.getElementById('perDownloadProxy').value.trim()) || undefined
             })
         });
         
@@ -1521,93 +2004,38 @@ async function startConversion(url) {
         }
         
         currentDownloadId = result.download_id;
-        
-    // Start polling for status
+
+        // If user uploaded a cookies.txt file, send it to the per-download cookie endpoint
+        try {
+            if (result && result.download_id) {
+                const cookieInput = document.getElementById('cookieUpload');
+                if (cookieInput && cookieInput.files && cookieInput.files.length > 0) {
+                    const cookieFile = cookieInput.files[0];
+                    const cookieForm = new FormData();
+                    cookieForm.append('file', cookieFile, cookieFile.name);
+                    const uploadUrl = `${API_BASE_URL}/api/v1/video/upload-cookies/${result.download_id}`;
+                    console.log('📤 Uploading cookies to', uploadUrl);
+                    await fetch(uploadUrl, { method: 'POST', body: cookieForm });
+                    console.log('✅ Uploaded cookies for download', result.download_id);
+                } else {
+                    await uploadSavedCookiesIfNeeded(result.download_id);
+                }
+            }
+        } catch (cookieErr) {
+            console.warn('Failed to upload cookie file for conversion start:', cookieErr);
+        }
+
+        // Start polling for status
         startStatusPolling();
-    // Visual disable so user can't re-click convert while background work is happening
-    disableConvertButtonVisuals();
-        
+        // Visual disable so user can't re-click convert while background work is happening
+        disableConvertButtonVisuals();
+
     } catch (error) {
         console.error('Conversion start error:', error);
         throw error;
     }
-}
 
-// Poll conversion status
-function startStatusPolling() {
-    if (statusCheckInterval) {
-        clearInterval(statusCheckInterval);
-    }
-    
-    statusCheckInterval = setInterval(async () => {
-        try {
-            console.log('📊 Checking status for download ID:', currentDownloadId);
-            const response = await fetch(`${API_BASE_URL}/api/v1/video/status/${currentDownloadId}`);
-            const status = await response.json();
-            console.log('📈 Status response:', status);
-            
-            if (!response.ok) {
-                throw new Error(status.error || 'Status check failed');
-            }
-            
-            updateProgress(status);
-            
-            if (status.status === 'completed') {
-                // For bulk downloads we may get "completed" as the status when
-                // a ZIP part is ready. Do not stop polling for bulk downloads
-                // until the entire playlist is finished. Instead show a partial
-                // success (so the user can download the ready part) and keep
-                // polling until completed_count == total_videos and no parts
-                // remain.
-                if (status.format && status.format.includes('Bulk')) {
-                    const completed = status.completed_count || 0;
-                    const total = status.total_videos || 0;
-                    const partsRemaining = status.parts_remaining || 0;
-
-                    // Show availability for download but keep polling if more
-                    // videos remain or parts are still being produced.
-                    showSuccess(status);
-                    enableBulkControls();
-                    enableConvertButtonVisuals();
-
-                    if (!(completed >= total && partsRemaining === 0)) {
-                        // Keep polling — don't clear the interval yet
-                    } else {
-                        // Final completion: stop polling and mark processing done
-                        clearInterval(statusCheckInterval);
-                        isProcessing = false;
-                    }
-                } else {
-                    // Non-bulk downloads: behave as before
-                    clearInterval(statusCheckInterval);
-                    showSuccess(status);
-                    isProcessing = false;
-                    // Re-enable controls after successful completion
-                    enableBulkControls();
-                    enableConvertButtonVisuals();
-                }
-            } else if (status.status === 'error') {
-                console.error('❌ Conversion failed:', status.error);
-                clearInterval(statusCheckInterval);
-                showError(status.error || 'Conversion failed');
-                isProcessing = false;
-                hideSpinner();
-                // Re-enable UI so user can retry
-                enableBulkControls();
-                enableConvertButtonVisuals();
-            }
-            
-        } catch (error) {
-            console.error('💥 Status check error:', error);
-            clearInterval(statusCheckInterval);
-            showError('Failed to check conversion status');
-            isProcessing = false;
-            hideSpinner();
-            // Re-enable UI so user can retry
-            enableBulkControls();
-            enableConvertButtonVisuals();
-        }
-    }, 2000); // Check every 2 seconds
+    // startStatusPolling() will handle polling — see implementation below
 }
 
 // Update progress display
@@ -1639,6 +2067,69 @@ function updateProgress(status) {
         
         spinnerText.textContent = message;
     }
+}
+
+// Start polling the status endpoint for the currentDownloadId
+function startStatusPolling() {
+    if (statusCheckInterval) {
+        clearInterval(statusCheckInterval);
+    }
+
+    statusCheckInterval = setInterval(async () => {
+        try {
+            console.log('📊 Checking status for download ID:', currentDownloadId);
+            const response = await fetch(`${API_BASE_URL}/api/v1/video/status/${currentDownloadId}`);
+            const status = await response.json();
+            console.log('📈 Status response:', status);
+
+            if (!response.ok) {
+                throw new Error(status.error || 'Status check failed');
+            }
+
+            updateProgress(status);
+
+            if (status.status === 'completed') {
+                if (status.format && status.format.includes('Bulk')) {
+                    const completed = status.completed_count || 0;
+                    const total = status.total_videos || 0;
+                    const partsRemaining = status.parts_remaining || 0;
+
+                    showSuccess(status);
+                    enableBulkControls();
+                    enableConvertButtonVisuals();
+
+                    if (!(completed >= total && partsRemaining === 0)) {
+                        // keep polling
+                    } else {
+                        clearInterval(statusCheckInterval);
+                        isProcessing = false;
+                    }
+                } else {
+                    clearInterval(statusCheckInterval);
+                    showSuccess(status);
+                    isProcessing = false;
+                    enableBulkControls();
+                    enableConvertButtonVisuals();
+                }
+            } else if (status.status === 'error') {
+                console.error('❌ Conversion failed:', status.error);
+                clearInterval(statusCheckInterval);
+                showError(status.error || 'Conversion failed');
+                isProcessing = false;
+                hideSpinner();
+                enableBulkControls();
+                enableConvertButtonVisuals();
+            }
+        } catch (error) {
+            console.error('💥 Status check error:', error);
+            clearInterval(statusCheckInterval);
+            showError('Failed to check conversion status');
+            isProcessing = false;
+            hideSpinner();
+            enableBulkControls();
+            enableConvertButtonVisuals();
+        }
+    }, 2000);
 }
 
 // Generate mock download URL
