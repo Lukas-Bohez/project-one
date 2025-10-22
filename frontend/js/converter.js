@@ -836,30 +836,7 @@ async function processQueue() {
                 showSpinner('subtle');
                 updatePlaylistStatusUI({ currentTitle: next.title });
 
-                // If user opted to try downloading in browser, attempt a direct fetch first
-                const tryInBrowser = document.getElementById('downloadInBrowser') && document.getElementById('downloadInBrowser').checked;
-                let convertResult = null;
-                if (tryInBrowser) {
-                    try {
-                        updateSpinnerText('Attempting direct browser download...');
-                        const directResp = await fetch(videoUrl, { method: 'GET' });
-                        if (directResp.ok) {
-                            const blob = await directResp.blob();
-                            const ext = (formatValue === 1) ? '.mp3' : '.mp4';
-                            const safe = (next.title || next.id).replace(/[<>:"/\\|?*\x00-\x1f]/g, '').substring(0,50).trim();
-                            const filename = `${safe}${ext}`;
-                            addToFrontendStorage(filename, blob);
-                            // short pause then continue to next
-                            await new Promise(r => setTimeout(r, 200));
-                            updatePlaylistStatusUI();
-                            continue;
-                        }
-                        // If directResp not ok (CORS/403/etc) fall through to server conversion
-                    } catch (errDirect) {
-                        console.warn('Direct browser download for playlist item failed, falling back to server conversion:', errDirect);
-                    }
-                }
-
+                // Start server conversion
                 const convertResp = await fetch(`${API_BASE_URL}/api/v1/video/convert`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1273,9 +1250,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             break;
                         }
                     }
-                    if (statusSpan) statusSpan.textContent = 'Saved cookies present';
+                    const cookieCount = lines.filter(l => !l.startsWith('#')).length;
+                    if (statusSpan) statusSpan.textContent = `✅ ${cookieCount} cookie${cookieCount !== 1 ? 's' : ''} configured`;
                 } else {
-                    if (statusSpan) statusSpan.textContent = 'No saved cookies';
+                    if (statusSpan) statusSpan.textContent = 'No cookies configured';
                 }
             } catch (e) {
                 console.warn('Failed to prefill cookies modal', e);
@@ -1325,7 +1303,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // guided fields removed in manual-only mode
             try {
                 await clearSavedCookies();
-                if (statusSpan) statusSpan.textContent = 'No saved cookies';
+                if (statusSpan) statusSpan.textContent = 'No cookies configured';
             } catch (e) { console.warn('clearSavedCookies failed', e); }
             updateModalVisibility();
         });
@@ -1362,8 +1340,8 @@ document.addEventListener('DOMContentLoaded', function() {
             let outText = `${domain}\tTRUE\t/\tFALSE\t${expiry}\t${name}\t${value}\n`;
             try {
                 await saveCookiesText('cookies.txt', outText);
-                if (statusSpan) statusSpan.textContent = 'Saved cookies present';
-            } catch (e) { console.warn('saveCookiesText failed', e); if (statusSpan) statusSpan.textContent = 'Save failed'; }
+                if (statusSpan) statusSpan.textContent = '✅ Cookies configured and active';
+            } catch (e) { console.warn('saveCookiesText failed', e); if (statusSpan) statusSpan.textContent = '❌ Save failed'; }
             closeModal();
         });
 
@@ -1371,8 +1349,15 @@ document.addEventListener('DOMContentLoaded', function() {
         (async () => {
             try {
                 const s = await getSavedCookies();
-                if (s && statusSpan) statusSpan.textContent = 'Saved cookies present';
-            } catch(e){}
+                if (s && statusSpan) {
+                    const lines = s.split(/\r?\n/).filter(l => l.trim() && !l.startsWith('#')).length;
+                    statusSpan.textContent = `✅ ${lines} cookie${lines !== 1 ? 's' : ''} configured`;
+                } else if (statusSpan) {
+                    statusSpan.textContent = 'No cookies configured';
+                }
+            } catch(e){
+                if (statusSpan) statusSpan.textContent = 'No cookies configured';
+            }
         })();
 
         updateModalVisibility();
@@ -1957,50 +1942,7 @@ async function startConversion(url) {
             quality: formatValue === 1 ? audioQuality : videoQuality
         });
         
-        // If user requested 'Download in browser', attempt a direct fetch only for safe cases
-        const tryInBrowserElem = document.getElementById('downloadInBrowser');
-        const tryInBrowser = tryInBrowserElem && tryInBrowserElem.checked;
-        if (tryInBrowser) {
-            try {
-                // Only attempt direct browser download for same-origin or safe protocols
-                let allowDirect = false;
-                try {
-                    const parsed = new URL(url, window.location.href);
-                    const proto = parsed.protocol;
-                    const sameOrigin = parsed.origin === window.location.origin;
-                    if (sameOrigin || proto === 'data:' || proto === 'blob:') allowDirect = true;
-                } catch (e) {
-                    // If URL parsing fails, do not attempt direct fetch
-                    allowDirect = false;
-                }
-
-                if (!allowDirect) {
-                    console.debug('Skipping direct browser download for remote or unsupported URL; will use server instead.');
-                } else {
-                    showSpinner('subtle');
-                    updateSpinnerText('Attempting direct browser download...');
-                    const direct = await fetch(url, { method: 'GET' });
-                    if (direct.ok) {
-                        const blob = await direct.blob();
-                        // Try to infer filename
-                        let filename = generateMockTitle(url).replace(/[^a-z0-9._-]/gi,'_');
-                        const ext = formatValue === 1 ? '.mp3' : '.mp4';
-                        filename += ext;
-                        saveBlobAsFile(blob, filename);
-                        hideSpinner();
-                        isProcessing = false;
-                        enableConvertButtonVisuals();
-                        return;
-                    }
-                    // If direct fetch not allowed (CORS, 403, etc.), fall through to server
-                }
-            } catch (directErr) {
-                console.warn('Direct browser download attempt encountered an error, falling back to server:', directErr);
-            } finally {
-                hideSpinner();
-            }
-        }
-
+        // All conversions now go through the server for reliability
         const response = await fetch(`${API_BASE_URL}/api/v1/video/convert`, {
             method: 'POST',
             headers: {
@@ -2063,24 +2005,40 @@ function updateProgress(status) {
         const progress = Math.round(status.progress || 0);
         let message = 'Processing...';
         
+        // Show retry attempts if available
+        const retryInfo = status.retry_attempt ? ` (Attempt ${status.retry_attempt}/10)` : '';
+        
         if (status.format && status.format.includes('Bulk')) {
             // Bulk download progress
             const completedCount = status.completed_count || 0;
             const totalVideos = status.total_videos || 0;
             
             if (progress > 0 && progress < 100) {
-                message = `Downloading ${completedCount}/${totalVideos} videos... ${progress}%`;
+                message = `Downloading ${completedCount}/${totalVideos} videos... ${progress}%${retryInfo}`;
             } else if (progress >= 100) {
                 message = 'Creating ZIP archive...';
             } else {
-                message = `Preparing bulk download...`;
+                message = `Preparing bulk download...${retryInfo}`;
             }
         } else {
             // Single video progress
             if (progress > 0 && progress < 100) {
-                message = `Converting... ${progress}%`;
+                message = `Converting... ${progress}%${retryInfo}`;
             } else if (progress >= 100) {
                 message = 'Finalizing...';
+            } else if (retryInfo) {
+                message = `Processing${retryInfo}...`;
+            }
+        }
+        
+        // Add specific status messages if available
+        if (status.message) {
+            if (status.message.includes('rotating user agent')) {
+                message += ' 🔄';
+            } else if (status.message.includes('throttling')) {
+                message += ' ⏱️';
+            } else if (status.message.includes('extended backoff')) {
+                message += ' ⏸️';
             }
         }
         
