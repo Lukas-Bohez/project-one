@@ -217,8 +217,12 @@
         </div>
     </header>
 
-    <div class="announcement-banner">
-        <p>YouTube playlist support is now live! Other platforms coming soon.</p>
+    <div class="announcement-banner" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin-bottom: 10px;">
+        <p><strong>🚀 Smart Download System!</strong> Browser cookies + Proxy rotation + Invidious fallback for maximum reliability.</p>
+    </div>
+    
+    <div class="announcement-banner" style="background: linear-gradient(135deg, #2c4c7c 0%, #0c4061 100%); margin-bottom: 20px;">
+        <p>✨ Auto-fallback: Tries browser cookies → proxies → Invidious mirrors. Upload cookies via Advanced Options for best results!</p>
     </div>
 
     <main class="o-container">
@@ -308,33 +312,49 @@
                 </div>
             </div>
 
-            <!-- Per-download controls row (proxy, cookie create, convert-in-browser) -->
-            <div class="per-download-row" style="margin-top:10px;">
-                <!-- Top row: proxy input + create button -->
-                <div class="per-download-top" style="width:100%;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;">
-                    <div class="per-download-controls" style="flex:1 1 420px;max-width:620px;">
-                        <input type="text" id="perDownloadProxy" class="input-field-url" placeholder="Optional proxy (e.g. http://127.0.0.1:8080)" />
+            <!-- Advanced Options (Simplified) -->
+            <div class="per-download-row" style="margin-top:15px;">
+                <details style="width:100%;max-width:800px;margin:0 auto;">
+                    <summary style="cursor:pointer;padding:12px;background:var(--surface-color);border-radius:8px;font-weight:600;color:var(--text-primary);user-select:none;">
+                        ⚙️ Advanced Options (Optional)
+                    </summary>
+                    <div style="padding:15px;background:var(--background-secondary);border-radius:8px;margin-top:10px;">
+                        <!-- Cookies Management -->
+                        <div class="per-download-controls" style="margin-bottom:15px;">
+                            <label style="display:block;font-weight:600;margin-bottom:8px;color:var(--text-primary);">
+                                🍪 Cookies (for age-restricted or private videos)
+                            </label>
+                            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                                <button id="createCookiesBtn" class="c-btn c-btn--sm c-btn--secondary" type="button">
+                                    Manage Cookies
+                                </button>
+                                <span id="cookiesStatus" style="color:var(--text-secondary);font-size:0.9em;">
+                                    No cookies configured
+                                </span>
+                            </div>
+                            <small style="display:block;margin-top:8px;color:var(--text-secondary);">
+                                <strong>Tip:</strong> Export cookies from your browser using "Get cookies.txt" extension, then upload here for age-restricted content.
+                            </small>
+                        </div>
+                        
+                        <!-- Proxy (Optional) -->
+                        <div class="per-download-controls">
+                            <label for="perDownloadProxy" style="display:block;font-weight:600;margin-bottom:8px;color:var(--text-primary);">
+                                🌐 Proxy (for blocked IPs)
+                            </label>
+                            <input 
+                                type="text" 
+                                id="perDownloadProxy" 
+                                class="input-field-url" 
+                                placeholder="http://proxy.example.com:8080" 
+                                style="width:100%;max-width:600px;"
+                            />
+                            <small style="display:block;margin-top:8px;color:var(--text-secondary);">
+                                <strong>Optional:</strong> Use a proxy server if your IP is blocked. Leave empty for direct connection.
+                            </small>
+                        </div>
                     </div>
-                    <div class="per-download-controls" style="flex:0 0 auto;">
-                        <button id="createCookiesBtn" class="c-btn c-btn--sm c-btn--tertiary" type="button" style="white-space:nowrap;">Create cookies.txt</button>
-                    </div>
-                    <div class="per-download-controls" style="flex:0 0 auto;align-items:center;">
-                        <label style="display:flex;align-items:center;gap:8px;margin:0;">
-                            <input type="checkbox" id="downloadInBrowser" checked />
-                            <span style="font-size:0.95rem;color:var(--text-secondary);">Download in browser (use your IP; may fail on some sites due to CORS). Default: ON</span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Bottom row: cookies status centered -->
-                <div class="cookies-status-row" style="width:100%;display:flex;justify-content:center;margin-top:8px;">
-                    <span id="cookiesStatus" style="color:#9bb;">No saved cookies</span>
-                </div>
-            </div>
-            <div class="per-download-help" style="margin-top:8px;">
-                <small>
-                    <strong>Help:</strong> Proxy: enter an HTTP(s) proxy (e.g. <code>http://1.2.3.4:8080</code>) to route the server request through a different IP if a download is blocked. Cookies: upload a <code>cookies.txt</code> file when a video asks you to sign in or is age-restricted. Convert in browser: if checked, the browser will try a lightweight conversion first (works for many videos and reduces server load); it may be slower on old devices.
-                </small>
+                </details>
             </div>
                     </div>
                 </div>

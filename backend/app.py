@@ -13,6 +13,10 @@ import threading
 from threading import Thread, Event, Lock
 import socket
 import logging
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -6522,6 +6526,18 @@ last_youtube_request_time = 0
 youtube_request_lock = threading.Lock()
 MIN_REQUEST_INTERVAL = 0.5  # Minimum 0.5 seconds between YouTube requests
 
+# Invidious instances for fallback (when YouTube blocks us)
+INVIDIOUS_INSTANCES = [
+    'https://invidious.private.coffee',
+    'https://inv.nadeko.net',
+    'https://invidious.protokolla.fi',
+    'https://yt.artemislena.eu',
+    'https://invidious.flokinet.to',
+    'https://invidious.privacydev.net',
+]
+current_invidious_index = 0
+invidious_lock = threading.Lock()
+
 def throttle_youtube_request():
     """Ensure minimum time between YouTube requests to avoid rate limiting"""
     global last_youtube_request_time
@@ -6589,8 +6605,17 @@ def extract_playlist_id(url: str) -> Optional[str]:
     video_logger.info(f"Extracted playlist ID: {playlist_id}")
     return playlist_id
 
-def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restricted: bool = False) -> Dict[str, Any]:
-    """Get yt-dlp options based on format and quality with metadata embedding"""
+def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restricted: bool = False, use_invidious: bool = False, invidious_instance: str = None) -> Dict[str, Any]:
+    """Get yt-dlp options based on format and quality with metadata embedding
+    
+    Args:
+        format_type: 'audio' or 'video'
+        quality: Quality setting (144, 360, 480, 720, 1080 for video or bitrate for audio)
+        output_path: Where to save the file
+        is_age_restricted: Whether content is age-restricted
+        use_invidious: Whether to use Invidious proxy
+        invidious_instance: Specific Invidious instance URL to use
+    """
     base_opts = {
         'outtmpl': output_path,
         'no_warnings': False,
@@ -6614,11 +6639,20 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
         'sleep_interval_subtitles': 0,
     }
     
+    # Use Invidious proxy if requested (for Layer 3 fallback)
+    if use_invidious and invidious_instance:
+        video_logger.info(f"🔄 Using Invidious instance: {invidious_instance}")
+        # Invidious acts as a proxy - we change the extractor
+        base_opts['extractor_args'] = {
+            'youtube': {
+                'player_client': ['android', 'web'],
+            }
+        }
+    
     # Add options for age-restricted content
     if is_age_restricted:
         base_opts.update({
             'age_limit': 18,  # Allow adult content
-            'cookiesfrombrowser': ('chrome',),  # Try to use Chrome cookies
             'cookiefile': None,  # Allow cookie file if available
         })
     
@@ -6721,6 +6755,59 @@ def get_random_user_agent() -> str:
     """Get a random user agent to avoid detection"""
     import random
     return random.choice(USER_AGENTS)
+
+
+def get_next_invidious_instance() -> str:
+    """Get next Invidious instance in rotation"""
+    global current_invidious_index
+    with invidious_lock:
+        instance = INVIDIOUS_INSTANCES[current_invidious_index]
+        current_invidious_index = (current_invidious_index + 1) % len(INVIDIOUS_INSTANCES)
+        return instance
+
+
+def try_invidious_download(url: str, format_type: str, quality: int, output_path: str) -> tuple[bool, Optional[Dict], Optional[str]]:
+    """Try downloading via Invidious instances as fallback
+    
+    Returns:
+        (success: bool, info: Dict, error: str)
+    """
+    video_logger.info("🔄 Attempting Invidious fallback...")
+    
+    for i in range(len(INVIDIOUS_INSTANCES)):
+        instance = get_next_invidious_instance()
+        try:
+            video_logger.info(f"Trying Invidious instance {i+1}/{len(INVIDIOUS_INSTANCES)}: {instance}")
+            
+            # Convert YouTube URL to Invidious URL
+            video_id = None
+            if 'youtu.be/' in url:
+                video_id = url.split('youtu.be/')[-1].split('?')[0]
+            elif 'watch?v=' in url:
+                video_id = url.split('watch?v=')[-1].split('&')[0]
+            
+            if not video_id:
+                video_logger.warning(f"Could not extract video ID from URL: {url}")
+                continue
+            
+            invidious_url = f"{instance}/watch?v={video_id}"
+            video_logger.info(f"Converted to Invidious URL: {invidious_url}")
+            
+            # Try download with Invidious
+            ydl_opts = get_ydl_opts(format_type, quality, output_path, use_invidious=True, invidious_instance=instance)
+            
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(invidious_url, download=True)
+                video_logger.info(f"✅ Invidious download successful via {instance}")
+                return True, info, None
+                
+        except Exception as e:
+            error_msg = str(e)
+            video_logger.warning(f"Invidious instance {instance} failed: {error_msg}")
+            continue
+    
+    video_logger.error("❌ All Invidious instances failed")
+    return False, None, "All Invidious fallback instances failed"
 
 
 # Optional metadata helper: uses mutagen and Pillow to add tags, cover art and lyrics
@@ -7459,6 +7546,10 @@ if VIDEO_CONVERTER_AVAILABLE:
                         active_video_downloads[download_id]['progress'] = 95.0
                         active_video_downloads[download_id]['status'] = 'processing'
         
+        # Initialize cookiefile variable at function scope
+        cookiefile = None
+        temp_cookie_file = None
+        
         try:
             # Update status
             with download_lock:
@@ -7466,8 +7557,8 @@ if VIDEO_CONVERTER_AVAILABLE:
                     active_video_downloads[download_id]['status'] = 'downloading'
                     video_logger.info(f"Set status to downloading for {download_id}")
             
-            # Get yt-dlp options
-            ydl_opts = get_ydl_opts(format_type, quality, output_path)
+            # Get yt-dlp options WITHOUT browser cookie extraction (do that separately)
+            ydl_opts = get_ydl_opts(format_type, quality, output_path, use_invidious=False, invidious_instance=None)
             ydl_opts['progress_hooks'] = [progress_hook]
             video_logger.info(f"yt-dlp options configured for {download_id}")
             
@@ -7511,38 +7602,98 @@ if VIDEO_CONVERTER_AVAILABLE:
             if per_download_cookie and os.path.exists(per_download_cookie):
                 cookiefile = per_download_cookie
 
-            # Cookiefile if provided
+            # Cookiefile if provided (check env first, then per-download)
             cookiefile = os.environ.get('YTDL_COOKIE_FILE')
-            if cookiefile and not os.path.exists(cookiefile):
-                video_logger.warning(f"YTDL_COOKIE_FILE set but not found at {cookiefile}")
+            if per_download_cookie and os.path.exists(per_download_cookie):
+                cookiefile = per_download_cookie  # Per-download cookie takes priority
+                video_logger.info(f"📌 Using per-download cookiefile: {cookiefile}")
+            elif cookiefile and os.path.exists(cookiefile):
+                video_logger.info(f"📌 Using global cookiefile: {cookiefile}")
+            elif cookiefile and not os.path.exists(cookiefile):
+                video_logger.warning(f"⚠️ YTDL_COOKIE_FILE set but not found at {cookiefile}")
+                cookiefile = None
+            
+            # No fallback cookie - user must provide if needed
+            if not cookiefile:
+                video_logger.debug(f"No cookie file configured for {download_id}, will try other methods")
+            
+            # 🚀 OPTIMIZATION: Try Invidious FIRST if no cookies - it works reliably!
+            # Skip wasting time on direct attempts that will fail with 403
+            invidious_success = False
+            if not cookiefile:
+                video_logger.info(f"🔄 No cookies configured - trying Invidious first for {download_id}")
+                invidious_success, invidious_info, invidious_error = try_invidious_download(
+                    url, format_type, quality, output_path
+                )
+                if invidious_success:
+                    video_logger.info(f"✅ Invidious succeeded immediately for {download_id}")
+                    # Skip the entire retry loop - we're done!
+                    last_exception = None
+                    # Jump to file-finding section below
+                else:
+                    video_logger.warning(f"Invidious first-attempt failed for {download_id}: {invidious_error}")
+                    video_logger.info(f"Falling back to direct YouTube attempts...")
 
             attempt = 0
             last_exception = None
             consecutive_403s = 0
             # Determine effective max attempts
             effective_max = None if YTDL_RETRY_FOREVER else max(1, YTDL_MAX_RETRIES)
+            
+            # Skip retry loop if Invidious already succeeded
+            if not (not cookiefile and invidious_success):
+                while True:
+                    attempt += 1
+                    try:
+                        video_logger.info(f"Attempt {attempt}: Starting download for {download_id}")
+                        
+                        # Throttle requests to avoid overwhelming YouTube
+                        throttle_youtube_request()
+                        
+                        # Refresh yt-dlp options with new user agent for each attempt
+                        ydl_opts = get_ydl_opts(format_type, quality, output_path)
+                        ydl_opts['progress_hooks'] = [progress_hook]
+                        
+                        # LAYER 1: Try browser cookie extraction if no cookie file configured
+                        # Only try on FIRST attempt - don't waste retries on missing browser
+                        if not cookiefile and attempt == 1:
+                            try:
+                                # Try Chrome first (most common)
+                                ydl_opts['cookiesfrombrowser'] = ('chrome',)
+                                video_logger.debug(f"Attempt {attempt}: Trying Chrome browser cookies")
+                            except:
+                                try:
+                                    # Fallback to Firefox
+                                    ydl_opts['cookiesfrombrowser'] = ('firefox',)
+                                    video_logger.debug(f"Attempt {attempt}: Trying Firefox browser cookies")
+                                except:
+                                    pass  # No browser cookies available, will use other layers
+                        
+                        # Use cookie file if available (takes priority over browser extraction)
+                        if cookiefile and os.path.exists(cookiefile):
+                            ydl_opts['cookiefile'] = cookiefile
+                            # Remove browser cookie option if we have a file
+                            if 'cookiesfrombrowser' in ydl_opts:
+                                del ydl_opts['cookiesfrombrowser']
+                            video_logger.info(f"🍪 Using cookie file on attempt {attempt}")
+                        
+                        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                            ydl.download([url])
+                        video_logger.info(f"✅ Download completed for {download_id} on attempt {attempt}")
 
-            while True:
-                attempt += 1
-                try:
-                    video_logger.info(f"Attempt {attempt}: Starting download for {download_id}")
-                    
-                    # Throttle requests to avoid overwhelming YouTube
-                    throttle_youtube_request()
-                    
-                    # Refresh yt-dlp options with new user agent for each attempt
-                    ydl_opts = get_ydl_opts(format_type, quality, output_path)
-                    ydl_opts['progress_hooks'] = [progress_hook]
-                    
-                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                        ydl.download([url])
-                    video_logger.info(f"Download completed for {download_id} on attempt {attempt}")
-                    last_exception = None
-                    break
-                except Exception as de:
-                    derr = str(de)
-                    video_logger.warning(f"Download attempt {attempt} failed for {download_id}: {derr}")
-                    last_exception = de
+                        last_exception = None
+                        break
+                    except Exception as de:
+                        derr = str(de)
+                        video_logger.warning(f"Download attempt {attempt} failed for {download_id}: {derr}")
+                        last_exception = de
+                        
+                        # Detect browser cookie errors - stop trying browser extraction
+                        is_browser_error = ('could not find' in derr.lower() and 'cookies database' in derr.lower())
+                        if is_browser_error and attempt == 1:
+                            video_logger.info(f"Browser cookies not available, skipping browser extraction for remaining attempts")
+                            # Try immediately with Invidious on next attempt
+                        consecutive_403s = 3  # Trigger Invidious fallback
 
                     # Detect 403 errors
                     is_403_like = ('403' in derr or 'forbidden' in derr.lower() or 'http error 403' in derr.lower() or 'unable to download video data' in derr.lower())
@@ -7555,35 +7706,39 @@ if VIDEO_CONVERTER_AVAILABLE:
                     else:
                         consecutive_403s = 0  # Reset counter for non-403 errors
 
-                    # If cookiefile available and we haven't tried it yet in this attempt, try it now
+                    # CRITICAL: Always use cookies on first 403, not just attempt <= 2
                     tried_cookie = False
-                    if is_403_like and cookiefile and os.path.exists(cookiefile) and attempt <= 2:
+                    if is_403_like and cookiefile and os.path.exists(cookiefile) and attempt <= 5:
                         try:
-                            video_logger.info(f"Attempt {attempt}: retrying with cookiefile {cookiefile} for {download_id}")
+                            video_logger.info(f"🍪 Attempt {attempt}: retrying with cookiefile for {download_id}")
                             retry_opts = get_ydl_opts(format_type, quality, output_path)
                             retry_opts['cookiefile'] = cookiefile
                             retry_opts['progress_hooks'] = [progress_hook]
                             with yt_dlp.YoutubeDL(retry_opts) as ydl:
                                 ydl.download([url])
-                            video_logger.info(f"Cookie retry succeeded for {download_id} on attempt {attempt}")
+                            video_logger.info(f"✅ Cookie retry succeeded for {download_id} on attempt {attempt}")
                             last_exception = None
                             break
                         except Exception as cookie_err:
                             video_logger.warning(f"Cookie retry failed for {download_id}: {cookie_err}")
                             tried_cookie = True
 
-                    # Try rotating proxies one by one (but only first few attempts)
+                    # Try rotating proxies FIRST (higher priority than just cookies)
                     proxy_succeeded = False
-                    if is_403_like and proxies_to_try and attempt <= 3:
+                    if is_403_like and proxies_to_try and attempt <= 7:
                         for proxy in proxies_to_try:
                             try:
-                                video_logger.info(f"Attempt {attempt}: retrying via proxy {proxy} for {download_id}")
+                                video_logger.info(f"🌐 Attempt {attempt}: retrying via proxy {proxy} for {download_id}")
                                 retry_opts2 = get_ydl_opts(format_type, quality, output_path)
                                 retry_opts2['proxy'] = proxy
+                                # Use cookies WITH proxy for best results
+                                if cookiefile and os.path.exists(cookiefile):
+                                    retry_opts2['cookiefile'] = cookiefile
+                                    video_logger.info(f"🍪🌐 Using proxy + cookies for {download_id}")
                                 retry_opts2['progress_hooks'] = [progress_hook]
                                 with yt_dlp.YoutubeDL(retry_opts2) as ydl:
                                     ydl.download([url])
-                                video_logger.info(f"Proxy retry succeeded for {download_id} via {proxy} on attempt {attempt}")
+                                video_logger.info(f"✅ Proxy+cookie retry succeeded for {download_id} via {proxy}")
                                 proxy_succeeded = True
                                 last_exception = None
                                 break
@@ -7594,20 +7749,40 @@ if VIDEO_CONVERTER_AVAILABLE:
                         if proxy_succeeded:
                             break
 
+                    # LAYER 3: Try Invidious fallback if browser cookies failed or persistent 403s
+                    # Trigger immediately on browser error (consecutive_403s set to 3) or after 3 real 403s
+                    if (is_browser_error or is_403_like) and consecutive_403s >= 3 and attempt <= 8:
+                        video_logger.info(f"🔄 Attempting Invidious fallback for {download_id}")
+                        invidious_success, invidious_info, invidious_error = try_invidious_download(
+                            url, format_type, quality, output_path
+                        )
+                        if invidious_success:
+                            video_logger.info(f"✅ Invidious fallback succeeded for {download_id}")
+                            last_exception = None
+                            break
+                        else:
+                            video_logger.warning(f"Invidious fallback failed for {download_id}: {invidious_error}")
+
                     # Check retry limits
                     if effective_max is not None and attempt >= effective_max:
                         video_logger.error(f"Download failed after {attempt} attempts for {download_id}; giving up")
                         break
 
-                    # Smart backoff: if we're getting repeated 403s, increase backoff significantly
-                    if consecutive_403s >= 3:
+                    # Smart backoff: if we're getting repeated errors, increase backoff
+                    # BUT: Skip long backoff if browser cookies just failed (jump to Invidious immediately)
+                    if is_browser_error and attempt == 1:
+                        sleep_for = 0.5  # Minimal delay before trying Invidious
+                        video_logger.info(f"Browser cookies failed, trying Invidious immediately")
+                    elif consecutive_403s >= 3:
                         backoff = min(YTDL_BACKOFF_MAX, YTDL_BACKOFF_BASE * (2 ** (attempt + 2)))
-                        video_logger.info(f"Multiple 403s detected, using extended backoff")
+                        jitter = random.uniform(0, backoff * 0.3)
+                        sleep_for = backoff + jitter
+                        video_logger.info(f"Multiple errors detected, using extended backoff")
                     else:
                         backoff = min(YTDL_BACKOFF_MAX, YTDL_BACKOFF_BASE * (2 ** (attempt - 1)))
+                        jitter = random.uniform(0, backoff * 0.3)
+                        sleep_for = backoff + jitter
                     
-                    jitter = random.uniform(0, backoff * 0.3)
-                    sleep_for = backoff + jitter
                     video_logger.info(f"Sleeping {sleep_for:.1f}s before next attempt for {download_id}")
                     time.sleep(sleep_for)
 
@@ -7694,6 +7869,15 @@ if VIDEO_CONVERTER_AVAILABLE:
                         'finished': True
                     })
         finally:
+            # Clean up temp cookie file if we created one
+            if temp_cookie_file:
+                try:
+                    if os.path.exists(temp_cookie_file):
+                        os.remove(temp_cookie_file)
+                        video_logger.debug(f"Cleaned up temp cookie file: {temp_cookie_file}")
+                except Exception as cleanup_err:
+                    video_logger.debug(f"Failed to cleanup temp cookie: {cleanup_err}")
+            
             # Decrement rate limit counter when download finishes (success or error)
             if client_ip:
                 decrement_video_rate_limit(client_ip)
@@ -8843,6 +9027,61 @@ else:
 # =============================================================================
 
 if __name__ == "__main__":
+    # System startup info - Triple-layer fallback system
+    import sys
+    cookie_file = os.environ.get('YTDL_COOKIE_FILE')
+    proxy = os.environ.get('YTDL_PROXY')
+    proxy_list = os.environ.get('YTDL_PROXY_LIST')
+    
+    has_cookies = cookie_file and os.path.exists(cookie_file)
+    has_proxy = proxy or proxy_list
+    
+    print("\n" + "="*80)
+    print("🚀 YouTube Download System - Triple-Layer Fallback Initialized")
+    print("="*80)
+    print("\n📋 Active Protection Layers:")
+    print("  ✅ LAYER 1: Browser Cookie Auto-Extraction (Chrome/Firefox)")
+    print("  ✅ LAYER 2: Proxy Rotation (if configured)")
+    print(f"  ✅ LAYER 3: Invidious Fallback ({len(INVIDIOUS_INSTANCES)} instances)")
+    print("\n🔧 Configuration Status:")
+    
+    if has_cookies:
+        print(f"  ✅ Global cookies: {cookie_file}")
+    else:
+        print("  ⚠️  No global cookies (will try browser extraction)")
+    
+    if has_proxy:
+        if proxy:
+            print(f"  ✅ Proxy configured: {proxy}")
+        if proxy_list:
+            proxy_count = len(proxy_list.split(','))
+            print(f"  ✅ Proxy rotation: {proxy_count} proxies")
+    else:
+        print("  ℹ️  No proxy configured (optional)")
+    
+    print("\n💡 Tips:")
+    print("  • System will try browser cookies if Chrome/Firefox is logged in")
+    print("  • Invidious instances provide fallback when YouTube blocks")
+    print("  • Users can upload cookies via frontend UI for authentication")
+    print("  • Proxy rotation helps avoid IP-based blocking")
+    print("="*80 + "\n")
+    
+    # Show recommendations based on config
+    if not has_cookies and not has_proxy:
+        print("💡 RECOMMENDED: Configure at least one authentication method:")
+        print("  1. Log into YouTube in Chrome/Firefox on this server (easiest)")
+        print("  2. Or set: YTDL_PROXY=http://proxy.example.com:8080")
+        print("  3. Or set: YTDL_COOKIE_FILE=/path/to/cookies.txt")
+        print("  4. Or users can upload cookies via the frontend UI")
+        print()
+    
+    elif not has_cookies:
+        print("\nℹ️  No global cookies - relying on browser extraction and proxies")
+    elif not has_proxy:
+        print("\nℹ️  No proxy - using direct connection with cookies")
+    else:
+        print("\n✅ Optimal config: Both cookies and proxy configured!")
+    
     # Enable auto-reload for development
     dev_reload = True
     uvicorn.run(

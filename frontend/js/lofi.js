@@ -680,8 +680,9 @@ const pollYouTubeConversion = async (item) => {
                 throw new Error(status.error || 'Status check failed');
             }
             
-            // Update progress
+            // Update progress with retry info
             item.progress = Math.round(status.progress || 0);
+            item.retryAttempt = status.retry_attempt || 0;
             
             if (status.status === 'completed') {
                 clearInterval(pollInterval);
