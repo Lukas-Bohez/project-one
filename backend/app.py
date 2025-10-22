@@ -6514,8 +6514,24 @@ download_lock = threading.Lock()
 
 # Rate limiting for video downloads (prevent DDoS)
 video_download_rate_limit = {}  # {ip: {'count': int, 'reset_time': float}}
-MAX_CONCURRENT_DOWNLOADS_PER_IP = 3
+MAX_CONCURRENT_DOWNLOADS_PER_IP = 5  # Increased from 3 to allow more concurrent downloads per user
 RATE_LIMIT_WINDOW = 60  # seconds
+
+# Global request throttling to avoid overwhelming YouTube
+last_youtube_request_time = 0
+youtube_request_lock = threading.Lock()
+MIN_REQUEST_INTERVAL = 0.5  # Minimum 0.5 seconds between YouTube requests
+
+def throttle_youtube_request():
+    """Ensure minimum time between YouTube requests to avoid rate limiting"""
+    global last_youtube_request_time
+    with youtube_request_lock:
+        current_time = time.time()
+        time_since_last = current_time - last_youtube_request_time
+        if time_since_last < MIN_REQUEST_INTERVAL:
+            sleep_time = MIN_REQUEST_INTERVAL - time_since_last
+            time.sleep(sleep_time)
+        last_youtube_request_time = time.time()
 
 def check_video_rate_limit(client_ip: str) -> bool:
     """Check if IP has exceeded video download rate limit"""
@@ -6584,6 +6600,18 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
         'nocheckcertificate': True,
         'quiet': False,  # Show output
         'no_color': True,  # Disable colors for logging
+        # Enhanced anti-403 measures
+        'extractor_retries': 3,
+        'fragment_retries': 10,
+        'skip_unavailable_fragments': True,
+        'keepvideo': False,
+        'retries': 10,
+        'file_access_retries': 3,
+        # Randomize sleep intervals between retries
+        'sleep_interval': 1,
+        'max_sleep_interval': 5,
+        'sleep_interval_requests': 1,
+        'sleep_interval_subtitles': 0,
     }
     
     # Add options for age-restricted content
@@ -6594,16 +6622,25 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
             'cookiefile': None,  # Allow cookie file if available
         })
     
-    # Always try to handle age-restricted content
+    # Always try to handle age-restricted content with robust headers
     base_opts.update({
         'age_limit': 18,  # Allow adult content
         'geo_bypass': True,  # Bypass geo-restrictions
         'geo_bypass_country': 'US',  # Use US as default country
-        # Provide common headers to avoid simple 403 responses
+        # Provide common headers to avoid simple 403 responses - rotate user agents
         'http_headers': {
-            'User-Agent': os.environ.get('YTDL_USER_AGENT', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36'),
+            'User-Agent': get_random_user_agent(),
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.9',
-            'Referer': 'https://www.youtube.com/'
+            'Accept-Encoding': 'gzip, deflate',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Referer': 'https://www.youtube.com/',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Cache-Control': 'max-age=0',
         },
         # disable persistent cache to avoid stale/resolved issues
         'cachedir': False,
@@ -6668,6 +6705,22 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
         })
     
     return base_opts
+
+
+# User agent rotation to avoid detection
+USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+]
+
+def get_random_user_agent() -> str:
+    """Get a random user agent to avoid detection"""
+    import random
+    return random.choice(USER_AGENTS)
 
 
 # Optional metadata helper: uses mutagen and Pillow to add tags, cover art and lyrics
@@ -7331,31 +7384,31 @@ if VIDEO_CONVERTER_AVAILABLE:
 
     # Retry configuration from environment (defaults)
     try:
-        YTDL_MAX_RETRIES = int(os.environ.get('YTDL_MAX_RETRIES', '5'))
+        YTDL_MAX_RETRIES = int(os.environ.get('YTDL_MAX_RETRIES', '10'))
     except Exception:
-        YTDL_MAX_RETRIES = 5
-    # By default, retry forever to maximize chance of eventual success; set YTDL_RETRY_FOREVER=0/false to limit
+        YTDL_MAX_RETRIES = 10
+    # By default, don't retry forever - use reasonable max attempts
     if 'YTDL_RETRY_FOREVER' in os.environ:
         YTDL_RETRY_FOREVER = os.environ.get('YTDL_RETRY_FOREVER', 'false').lower() in ('1', 'true', 'yes')
     else:
-        YTDL_RETRY_FOREVER = True
+        YTDL_RETRY_FOREVER = False
     try:
-        YTDL_BACKOFF_BASE = float(os.environ.get('YTDL_BACKOFF_BASE', '1.0'))
+        YTDL_BACKOFF_BASE = float(os.environ.get('YTDL_BACKOFF_BASE', '2.0'))
     except Exception:
-        YTDL_BACKOFF_BASE = 1.0
+        YTDL_BACKOFF_BASE = 2.0
     try:
-        YTDL_BACKOFF_MAX = float(os.environ.get('YTDL_BACKOFF_MAX', '60.0'))
+        YTDL_BACKOFF_MAX = float(os.environ.get('YTDL_BACKOFF_MAX', '30.0'))
     except Exception:
-        YTDL_BACKOFF_MAX = 60.0
+        YTDL_BACKOFF_MAX = 30.0
     # Worker pool configuration to prevent unbounded threads
     try:
-        WORKER_POOL_SIZE = int(os.environ.get('YTDL_WORKER_POOL_SIZE', '6'))
+        WORKER_POOL_SIZE = int(os.environ.get('YTDL_WORKER_POOL_SIZE', '12'))
     except Exception:
-        WORKER_POOL_SIZE = 6
+        WORKER_POOL_SIZE = 12
     try:
-        WORKER_QUEUE_MAX = int(os.environ.get('YTDL_WORKER_QUEUE_MAX', '200'))
+        WORKER_QUEUE_MAX = int(os.environ.get('YTDL_WORKER_QUEUE_MAX', '500'))
     except Exception:
-        WORKER_QUEUE_MAX = 200
+        WORKER_QUEUE_MAX = 500
 
     # Bounded queue and worker pool
     worker_queue = queue.Queue(maxsize=WORKER_QUEUE_MAX)
@@ -7465,6 +7518,7 @@ if VIDEO_CONVERTER_AVAILABLE:
 
             attempt = 0
             last_exception = None
+            consecutive_403s = 0
             # Determine effective max attempts
             effective_max = None if YTDL_RETRY_FOREVER else max(1, YTDL_MAX_RETRIES)
 
@@ -7472,6 +7526,14 @@ if VIDEO_CONVERTER_AVAILABLE:
                 attempt += 1
                 try:
                     video_logger.info(f"Attempt {attempt}: Starting download for {download_id}")
+                    
+                    # Throttle requests to avoid overwhelming YouTube
+                    throttle_youtube_request()
+                    
+                    # Refresh yt-dlp options with new user agent for each attempt
+                    ydl_opts = get_ydl_opts(format_type, quality, output_path)
+                    ydl_opts['progress_hooks'] = [progress_hook]
+                    
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                         ydl.download([url])
                     video_logger.info(f"Download completed for {download_id} on attempt {attempt}")
@@ -7482,15 +7544,23 @@ if VIDEO_CONVERTER_AVAILABLE:
                     video_logger.warning(f"Download attempt {attempt} failed for {download_id}: {derr}")
                     last_exception = de
 
-                    # If not a 403-like error, don't attempt cookie/proxy retries endlessly
+                    # Detect 403 errors
                     is_403_like = ('403' in derr or 'forbidden' in derr.lower() or 'http error 403' in derr.lower() or 'unable to download video data' in derr.lower())
+                    
+                    if is_403_like:
+                        consecutive_403s += 1
+                        # If we get too many consecutive 403s, it's likely not a transient issue
+                        if consecutive_403s >= 3:
+                            video_logger.warning(f"Got {consecutive_403s} consecutive 403 errors for {download_id}, trying alternative methods")
+                    else:
+                        consecutive_403s = 0  # Reset counter for non-403 errors
 
                     # If cookiefile available and we haven't tried it yet in this attempt, try it now
                     tried_cookie = False
-                    if is_403_like and cookiefile and os.path.exists(cookiefile):
+                    if is_403_like and cookiefile and os.path.exists(cookiefile) and attempt <= 2:
                         try:
                             video_logger.info(f"Attempt {attempt}: retrying with cookiefile {cookiefile} for {download_id}")
-                            retry_opts = ydl_opts.copy()
+                            retry_opts = get_ydl_opts(format_type, quality, output_path)
                             retry_opts['cookiefile'] = cookiefile
                             retry_opts['progress_hooks'] = [progress_hook]
                             with yt_dlp.YoutubeDL(retry_opts) as ydl:
@@ -7502,13 +7572,13 @@ if VIDEO_CONVERTER_AVAILABLE:
                             video_logger.warning(f"Cookie retry failed for {download_id}: {cookie_err}")
                             tried_cookie = True
 
-                    # Try rotating proxies one by one
+                    # Try rotating proxies one by one (but only first few attempts)
                     proxy_succeeded = False
-                    if is_403_like and proxies_to_try:
+                    if is_403_like and proxies_to_try and attempt <= 3:
                         for proxy in proxies_to_try:
                             try:
                                 video_logger.info(f"Attempt {attempt}: retrying via proxy {proxy} for {download_id}")
-                                retry_opts2 = ydl_opts.copy()
+                                retry_opts2 = get_ydl_opts(format_type, quality, output_path)
                                 retry_opts2['proxy'] = proxy
                                 retry_opts2['progress_hooks'] = [progress_hook]
                                 with yt_dlp.YoutubeDL(retry_opts2) as ydl:
@@ -7529,9 +7599,14 @@ if VIDEO_CONVERTER_AVAILABLE:
                         video_logger.error(f"Download failed after {attempt} attempts for {download_id}; giving up")
                         break
 
-                    # Backoff with jitter before next attempt
-                    backoff = min(YTDL_BACKOFF_MAX, YTDL_BACKOFF_BASE * (2 ** (attempt - 1)))
-                    jitter = random.uniform(0, backoff * 0.2)
+                    # Smart backoff: if we're getting repeated 403s, increase backoff significantly
+                    if consecutive_403s >= 3:
+                        backoff = min(YTDL_BACKOFF_MAX, YTDL_BACKOFF_BASE * (2 ** (attempt + 2)))
+                        video_logger.info(f"Multiple 403s detected, using extended backoff")
+                    else:
+                        backoff = min(YTDL_BACKOFF_MAX, YTDL_BACKOFF_BASE * (2 ** (attempt - 1)))
+                    
+                    jitter = random.uniform(0, backoff * 0.3)
                     sleep_for = backoff + jitter
                     video_logger.info(f"Sleeping {sleep_for:.1f}s before next attempt for {download_id}")
                     time.sleep(sleep_for)
