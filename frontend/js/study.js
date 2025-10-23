@@ -788,14 +788,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Initialize ads if available
-        if (typeof adsbygoogle !== 'undefined') {
-            try {
-                (adsbygoogle = window.adsbygoogle || []).push({});
-            } catch (adError) {
-                console.log('Ad initialization skipped');
-            }
-        }
     };
 
     main();

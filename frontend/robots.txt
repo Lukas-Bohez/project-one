@@ -27,4 +27,4 @@ Allow: /articles/posts/stock-market-steals-from-workers.html
 Allow: /articles/posts/why-youre-poorer-despite-more-money.html
 
 # Sitemap location
-Sitemap: https://quizthespire.duckdns.org/sitemap.xml
+Sitemap: https://quizthespire.com/sitemap.xml

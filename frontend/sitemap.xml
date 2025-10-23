@@ -1,104 +1,104 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-        <loc>https://quizthespire.duckdns.org/</loc>
-        <lastmod>2025-09-25</lastmod>
+        <loc>https://quizthespire.com/</loc>
+        <lastmod>2025-10-23</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
     </url>
     <url>
-        <loc>https://quizthespire.duckdns.org/html/storyCreator.html</loc>
-        <lastmod>2025-09-25</lastmod>
+        <loc>https://quizthespire.com/html/storyCreator.html</loc>
+        <lastmod>2025-10-23</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
-        <loc>https://quizthespire.duckdns.org/html/content.html</loc>
-        <lastmod>2025-09-25</lastmod>
+        <loc>https://quizthespire.com/html/content.html</loc>
+        <lastmod>2025-10-23</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://quizthespire.duckdns.org/frontend/html/converter.html</loc>
-        <lastmod>2025-09-27</lastmod>
+        <loc>https://quizthespire.com/frontend/html/converter.html</loc>
+        <lastmod>2025-10-23</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
-        <loc>https://quizthespire.duckdns.org/frontend/html/converter-privacy.html</loc>
-        <lastmod>2025-09-27</lastmod>
+        <loc>https://quizthespire.com/frontend/html/converter-privacy.html</loc>
+        <lastmod>2025-10-23</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.3</priority>
     </url>
     <url>
-        <loc>https://quizthespire.duckdns.org/frontend/html/converter-terms.html</loc>
-        <lastmod>2025-09-27</lastmod>
+        <loc>https://quizthespire.com/frontend/html/converter-terms.html</loc>
+        <lastmod>2025-10-23</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.3</priority>
     </url>
     <url>
-        <loc>https://quizthespire.duckdns.org/frontend/html/converter-about.html</loc>
-        <lastmod>2025-09-27</lastmod>
+        <loc>https://quizthespire.com/frontend/html/converter-about.html</loc>
+        <lastmod>2025-10-23</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
     </url>
     <url>
-        <loc>https://quizthespire.duckdns.org/html/study.html</loc>
-        <lastmod>2025-09-25</lastmod>
+        <loc>https://quizthespire.com/html/study.html</loc>
+        <lastmod>2025-10-23</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://quizthespire.duckdns.org/html/graphs.html</loc>
-        <lastmod>2025-09-25</lastmod>
+        <loc>https://quizthespire.com/html/graphs.html</loc>
+        <lastmod>2025-10-23</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     
     <!-- Articles Section -->
     <url>
-        <loc>https://quizthespire.duckdns.org/articles/</loc>
-        <lastmod>2025-10-02</lastmod>
+        <loc>https://quizthespire.com/articles/</loc>
+        <lastmod>2025-10-23</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
-        <loc>https://quizthespire.duckdns.org/articles/index.html</loc>
-        <lastmod>2025-10-02</lastmod>
+        <loc>https://quizthespire.com/articles/index.html</loc>
+        <lastmod>2025-10-23</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.9</priority>
     </url>
     
     <!-- Individual Articles -->
     <url>
-        <loc>https://quizthespire.duckdns.org/articles/posts/2025-budget-cuts-health-impact.html</loc>
-        <lastmod>2025-10-02</lastmod>
+        <loc>https://quizthespire.com/articles/posts/2025-budget-cuts-health-impact.html</loc>
+        <lastmod>2025-10-23</lastmod>
         <changefreq>monthly</changefreq>
         <priority>1.0</priority>
     </url>
     <url>
-        <loc>https://quizthespire.duckdns.org/articles/posts/stock-market-steals-from-workers.html</loc>
-        <lastmod>2025-09-30</lastmod>
+        <loc>https://quizthespire.com/articles/posts/stock-market-steals-from-workers.html</loc>
+        <lastmod>2025-10-23</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
-        <loc>https://quizthespire.duckdns.org/articles/posts/why-youre-poorer-despite-more-money.html</loc>
-        <lastmod>2025-09-29</lastmod>
+        <loc>https://quizthespire.com/articles/posts/why-youre-poorer-despite-more-money.html</loc>
+        <lastmod>2025-10-23</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.9</priority>
     </url>
     
     <!-- Industrial Empire Game -->
     <url>
-        <loc>https://quizthespire.duckdns.org/idleGame/</loc>
-        <lastmod>2025-10-02</lastmod>
+        <loc>https://quizthespire.com/idleGame/</loc>
+        <lastmod>2025-10-23</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://quizthespire.duckdns.org/idleGame/index.html</loc>
-        <lastmod>2025-10-02</lastmod>
+        <loc>https://quizthespire.com/idleGame/index.html</loc>
+        <lastmod>2025-10-23</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
