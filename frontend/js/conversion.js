@@ -172,7 +172,7 @@ class ConversionTheSpire {
     async testBackendConnection() {
         try {
             console.log('🔍 Testing backend connection...');
-            const response = await fetch('https://quizthespire.duckdns.org/', {
+            const response = await fetch('https://quizthespire.com/', {
                 method: 'GET'
             });
             console.log('✅ Backend connection test:', {
@@ -183,7 +183,7 @@ class ConversionTheSpire {
             return true;
         } catch (error) {
             console.error('❌ Backend connection failed:', error);
-            this.showNotification('Backend connection failed! Make sure the server is running on quizthespire.duckdns.org.', 'error');
+            this.showNotification('Backend connection failed! Make sure the server is running on quizthespire.com.', 'error');
             return false;
         }
     }
@@ -870,12 +870,12 @@ class ConversionTheSpire {
             
             // Check for network errors
             if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                throw new Error('Cannot connect to conversion server. Please check if the backend is running on quizthespire.duckdns.org.');
+                throw new Error('Cannot connect to conversion server. Please check if the backend is running on quizthespire.com.');
             }
             
             // Check for specific error types
             if (error.message.includes('Failed to fetch')) {
-                throw new Error('Network error: Cannot reach conversion server at quizthespire.duckdns.org');
+                throw new Error('Network error: Cannot reach conversion server at quizthespire.com');
             }
             
             // Check for image to PDF specific errors

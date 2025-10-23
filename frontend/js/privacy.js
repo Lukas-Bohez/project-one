@@ -364,6 +364,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         timestamp: new Date().getTime()
                     };
                     localStorage.setItem('privacyConsent', JSON.stringify(consentData));
+                    try {
+                        // Google Consent Mode v2 - grant consent
+                        window.dataLayer = window.dataLayer || [];
+                        function gtag(){dataLayer.push(arguments);} // eslint-disable-line no-inner-declarations
+                        gtag('consent','update',{
+                            'ad_storage': 'granted',
+                            'analytics_storage': 'granted',
+                            'ad_user_data': 'granted',
+                            'ad_personalization': 'granted'
+                        });
+                    } catch(e) { /* noop */ }
                     
                     // Remove modal
                     removePrivacyModal();
@@ -384,6 +395,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         timestamp: new Date().getTime()
                     };
                     localStorage.setItem('privacyConsent', JSON.stringify(consentData));
+                    try {
+                        // Google Consent Mode v2 - deny consent
+                        window.dataLayer = window.dataLayer || [];
+                        function gtag(){dataLayer.push(arguments);} // eslint-disable-line no-inner-declarations
+                        gtag('consent','update',{
+                            'ad_storage': 'denied',
+                            'analytics_storage': 'denied',
+                            'ad_user_data': 'denied',
+                            'ad_personalization': 'denied'
+                        });
+                    } catch(e) { /* noop */ }
                     
                     // Show reconsideration message
                     container.innerHTML = `
