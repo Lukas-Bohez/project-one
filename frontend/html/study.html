@@ -26,7 +26,6 @@
     <meta name="twitter:image" content="https://quizthespire.com/images/twitter-quiz-practice.jpg">
     
     <!-- Canonical URL -->
-    <link rel="dns-prefetch" href="//pagead2.googlesyndication.com">
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     
@@ -58,19 +57,7 @@
     
     <link rel="preload" href="../css/study.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="../css/study.css"></noscript>
-    <!-- Google AdSense - Defer loading -->
-    <script>
-        // Defer AdSense loading to improve initial page load
-        window.addEventListener('load', function() {
-            setTimeout(function() {
-                const script = document.createElement('script');
-                script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449';
-                script.crossOrigin = 'anonymous';
-                script.async = true;
-                document.head.appendChild(script);
-            }, 2000); // Load ads 2 seconds after page load
-        });
-    </script>
+    
 
 </head>
 <body>
@@ -248,41 +235,13 @@
                     </div>
                 </section>
                 
-                <!-- Sidebar Ad -->
-                <div class="ad-container">
-                    <span class="ad-label">Advertisement</span>
-                    <div class="ad-unit">
-                        <ins class="adsbygoogle"
-                             style="display:block"
-                             data-ad-client="ca-pub-8418485814964449"
-                             data-ad-slot="7822007431"
-                             data-ad-format="auto"
-                             data-full-width-responsive="true"></ins>
-                        <script>
-                             (adsbygoogle = window.adsbygoogle || []).push({});
-                        </script>
-                    </div>
-                </div>
+                
             </aside>
         </div>
         
 
         
-        <!-- Middle Ad -->
-        <div class="ad-container middle-ad">
-            <span class="ad-label">Advertisement</span>
-            <div class="ad-unit">
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-8418485814964449"
-                     data-ad-slot="7261554873"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-                <script>
-                     (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div>
-        </div>
+        
 
         <!-- Quality Content Section -->
         <section class="quality-content" aria-labelledby="qualityContentHeading">
@@ -341,21 +300,7 @@
         </section>
 
         
-        <!-- Bottom Ad -->
-        <div class="ad-container">
-            <span class="ad-label">Advertisement</span>
-            <div class="ad-unit">
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-8418485814964449"
-                     data-ad-slot="7822007431"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-                <script>
-                     (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div>
-        </div>
+        
     </main>
     
     
@@ -413,24 +358,6 @@
         })();
     </script>
     
-    <!-- Initialize ads AFTER all other scripts load -->
-    <script>
-        // Delay ad initialization to prevent conflicts with main site functionality
-        setTimeout(function() {
-            try {
-                // Initialize all ads at once after everything else is loaded
-                if (typeof adsbygoogle !== 'undefined' && window.adsbygoogle) {
-                    // Push ads for each ad unit
-                    const adElements = document.querySelectorAll('.adsbygoogle');
-                    adElements.forEach(() => {
-                        (adsbygoogle = window.adsbygoogle || []).push({});
-                    });
-                }
-            } catch (adError) {
-                console.log('Ad initialization failed:', adError);
-                // Site continues to work even if ads fail
-            }
-        }, 1000); // Wait 1 second after page load
-    </script>
+    
 </body>
 </html>
