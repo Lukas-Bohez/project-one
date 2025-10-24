@@ -518,9 +518,6 @@ function renderPlaylistUI(playlistData) {
                 <button id="select-videos-btn" class="c-btn c-btn--tertiary select-videos-btn">
                     <i class="fas fa-list"></i> Select Individual Videos
                 </button>
-                <button id="continue-btn" class="c-btn c-btn--primary" style="display:none;margin-left:12px;">
-                    <i class="fas fa-arrow-right"></i> Continue
-                </button>
                 <button id="cancel-btn" class="c-btn c-btn--tertiary" style="display:none;margin-left:8px;">
                     <i class="fas fa-times"></i> Cancel
                 </button>
@@ -570,36 +567,26 @@ function renderPlaylistUI(playlistData) {
     setupPlaylistEventListeners();
     // Update cached indicators based on persisted IDB entries
     try { updateCachedIndicators(); } catch (e) { console.warn('updateCachedIndicators failed', e); }
-    // Continue/Cancel handlers
-    const cont = document.getElementById('continue-btn');
+    // Cancel handler
     const canc = document.getElementById('cancel-btn');
-    if (cont) cont.addEventListener('click', continueAfterPart);
     if (canc) canc.addEventListener('click', cancelProcessing);
 }
 
 function showContinueControls(show) {
-    const cont = document.getElementById('continue-btn');
     const canc = document.getElementById('cancel-btn');
-    if (cont) cont.style.display = show ? 'inline-flex' : 'none';
+    const clearCache = document.getElementById('clear-cache-btn');
+    
     if (canc) canc.style.display = show ? 'inline-flex' : 'none';
-}
-
-async function continueAfterPart() {
-    // User confirms they've downloaded the part; clear persisted storage and resume
-    try {
-        // Clear in-memory and IDB persisted blobs for the flushed part
-        frontendStorage = [];
-        frontendStorageSize = 0;
-        waitingForContinue = false;
-        showContinueControls(false);
-        try { await clearAllBlobsFromIDB(); } catch (e) { console.warn('clearAllBlobsFromIDB failed', e); }
-        updatePlaylistStatusUI();
-        // Resume processing if queue not empty
-        if (playlistQueue.length > 0) {
-            processQueue();
-        }
-    } catch (e) {
-        console.error('continueAfterPart error', e);
+    
+    // Update Clear Cache button text to indicate it will resume processing
+    if (clearCache && show) {
+        clearCache.innerHTML = '<i class="fas fa-trash-alt"></i> Clear Cache & Continue';
+        clearCache.style.backgroundColor = 'var(--success-color)';
+        clearCache.style.fontWeight = 'bold';
+    } else if (clearCache) {
+        clearCache.innerHTML = '<i class="fas fa-trash-alt"></i> Clear Cache';
+        clearCache.style.backgroundColor = '';
+        clearCache.style.fontWeight = '';
     }
 }
 
@@ -897,6 +884,14 @@ async function processQueue() {
                     // After a zip part is created we intentionally pause, keep subtle spinner
                     // and wait for user Continue before clearing storage — do not hide UI.
                     // The flush function handles showing the Continue controls.
+                    
+                    // IMPORTANT: Stop processing here and return - user must click Continue
+                    // to resume processing the queue
+                    hideSpinner('subtle');
+                    isProcessing = false;
+                    processingQueue = false;
+                    updatePlaylistStatusUI({ currentTitle: `⏸️ Paused - Please download the ZIP and click "Continue"` });
+                    return; // Exit the loop, wait for user to continue
                 }
 
                 // short pause to keep UI responsive
@@ -1429,6 +1424,8 @@ async function flushFrontendStorageAsZip() {
     if (frontendStorage.length === 0) return;
     try {
         showSpinner('subtle');
+        updatePlaylistStatusUI({ currentTitle: `📦 Creating ZIP part ${frontendPartIndex}...` });
+        
         const JSZipLib = await ensureJSZip();
         const zip = new JSZipLib();
         for (const item of frontendStorage) {
@@ -1447,13 +1444,17 @@ async function flushFrontendStorageAsZip() {
         triggerBlobDownload(zipBlob, partNameSafe);
         frontendPartIndex += 1;
 
-        // Pause processing and ask user to Continue when they're ready.
+        // Pause processing and require user to clear cache before continuing
         waitingForContinue = true;
         showContinueControls(true);
-        // Do NOT clear persisted storage until user confirms (continueAfterPart)
+        updatePlaylistStatusUI({ 
+            currentTitle: `⏸️ PAUSED - ZIP downloaded! Click "Clear Cache & Continue" to resume processing remaining videos.` 
+        });
+        // Cache MUST be cleared by user clicking "Clear Cache & Continue" before resuming
 
     } catch (e) {
         console.error('Failed to create ZIP part in frontend', e);
+        updatePlaylistStatusUI({ currentTitle: `❌ Error creating ZIP - please try again` });
     } finally {
         hideSpinner('subtle');
     }
@@ -1595,18 +1596,28 @@ async function downloadFromIndexRange(startOneBased, endOneBased) {
 // Clear in-memory and persisted cached songs (IndexedDB)
 async function clearCachedSongs() {
     try {
+        const wasWaitingForContinue = waitingForContinue;
+        
         if (!confirm('This will clear the locally cached downloaded files (frontend cache). Continue?')) return;
         // Clear in-memory
         frontendStorage = [];
         frontendStorageSize = 0;
         waitingForContinue = false;
+        showContinueControls(false);
+        
         // Clear persisted
         try { await clearAllBlobsFromIDB(); } catch (e) { console.warn('Failed to clear IDB', e); }
         // Uncheck any checkboxes and update UI
         document.querySelectorAll('.video-checkbox').forEach(cb => cb.checked = false);
         updateDownloadSelectedButton();
-        updatePlaylistStatusUI();
+        updatePlaylistStatusUI({ currentTitle: '✅ Cache cleared' });
         alert('Local cache cleared.');
+        
+        // If we were paused waiting for continue, resume the queue now
+        if (wasWaitingForContinue && playlistQueue.length > 0) {
+            updatePlaylistStatusUI({ currentTitle: '✅ Cache cleared - Resuming...' });
+            await processQueue();
+        }
     } catch (e) {
         console.error('clearCachedSongs failed', e);
         alert('Failed to clear cache: ' + (e && e.message ? e.message : e));
