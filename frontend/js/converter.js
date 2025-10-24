@@ -1001,7 +1001,8 @@ const IDB_STORE_NAME = 'files';
 function openIDB() {
     return new Promise((resolve, reject) => {
         if (!window.indexedDB) return reject(new Error('IndexedDB not supported'));
-        const req = indexedDB.open(IDB_DB_NAME, 1);
+        // Open without specifying a version to avoid VersionError when the DB has been upgraded elsewhere
+        const req = indexedDB.open(IDB_DB_NAME);
         req.onupgradeneeded = function(e) {
             const db = e.target.result;
             if (!db.objectStoreNames.contains(IDB_STORE_NAME)) {
