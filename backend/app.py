@@ -5952,48 +5952,54 @@ async def handle_theme_selection(sid, data):
     """
     Handle theme selection votes and start voting timer when first vote is cast
     """
-    print(f"data received is for theme selection {data}")
+    print(f"[THEME_SELECTION] Received from sid {sid}: {data}")
     try:
         # Get active session and check phase
         active_session_id = get_active_session_id()
         
         if not active_session_id:
+            print(f"[THEME_SELECTION] ERROR: No active session found")
             await sio.emit('answer_response', {
                 'success': False,
                 'error': 'No active session found'
-            })
+            }, to=sid)
             return
         
         # Check if we're in voting phase
         current_phase = get_session_phase(active_session_id)
         if current_phase != 'voting':
+            print(f"[THEME_SELECTION] ERROR: Wrong phase '{current_phase}', expected 'voting'")
             await sio.emit('answer_response', {
                 'success': False,
                 'error': f'Cannot vote during {current_phase} phase'
-            })
+            }, to=sid)
             return
             
         # Get the full session details using the ID
         active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
         
         if not active_session_info:
+            print(f"[THEME_SELECTION] ERROR: Session {active_session_id} not found")
             await sio.emit('answer_response', {
                 'success': False,
                 'error': 'Session not found'
-            })
+            }, to=sid)
             return
             
         # Check if theme is already set
         if active_session_info.get('themeId'):
+            print(f"[THEME_SELECTION] ERROR: Theme already set for session {active_session_id}")
             await sio.emit('answer_response', {
                 'success': False,
                 'error': 'Theme already selected for this session'
-            })
+            }, to=sid)
             return
         
         user_id = data.get('userId', 1)
         theme_id = int(data['themeId'])
         session_id = active_session_id
+        
+        print(f"[THEME_SELECTION] Processing vote: user_id={user_id}, theme_id={theme_id}, session_id={session_id}")
         
         with theme_votes_lock:
             # Initialize session structure
@@ -6013,21 +6019,24 @@ async def handle_theme_selection(sid, data):
                 votes[old_theme] -= 1
                 if votes[old_theme] <= 0:
                     del votes[old_theme]
+                print(f"[THEME_SELECTION] Removed previous vote for theme {old_theme}")
             
             # Add new vote
             votes[theme_id] += 1
             user_votes[user_id] = theme_id
+            print(f"[THEME_SELECTION] Added vote for theme {theme_id}. Total votes: {dict(votes)}")
         
-        # Broadcast vote updates
+        # Broadcast vote updates to all users in the session
         await sio.emit('theme_votes_update', {
             'session_id': session_id,
             'votes': dict(votes)
         })
+        print(f"[THEME_SELECTION] Broadcasted vote update")
         
         # Start timer on first vote
         total_votes = sum(votes.values())
         if total_votes == 1:
-            print(f"Starting voting timer for session {session_id}")
+            print(f"[THEME_SELECTION] First vote received! Starting voting timer for session {session_id}")
             timer_config = {
                 'voting_time': 33,
                 'theme_display_time': 10,
@@ -6037,15 +6046,17 @@ async def handle_theme_selection(sid, data):
             set_session_phase(session_id, 'voting')
             start_generic_timer(sio, asyncio.get_event_loop(), session_id, timer_config)
         
-        await sio.emit('answer_response', {'success': True})
+        # Send success response to the specific client
+        await sio.emit('answer_response', {'success': True}, to=sid)
+        print(f"[THEME_SELECTION] SUCCESS: Vote recorded for user {user_id}")
         
     except Exception as e:
-        print(f"Error in handle_theme_selection: {e}")
+        print(f"[THEME_SELECTION] EXCEPTION: {e}")
         traceback.print_exc()
         await sio.emit('answer_response', {
             'success': False,
             'error': 'Vote failed: ' + str(e)
-        })
+        }, to=sid)
 
 
 
@@ -6518,13 +6529,13 @@ download_lock = threading.Lock()
 
 # Rate limiting for video downloads (prevent DDoS)
 video_download_rate_limit = {}  # {ip: {'count': int, 'reset_time': float}}
-MAX_CONCURRENT_DOWNLOADS_PER_IP = 5  # Increased from 3 to allow more concurrent downloads per user
+MAX_CONCURRENT_DOWNLOADS_PER_IP = 8  # 🚀 OPTIMIZED: Increased from 5 to 8 for better throughput
 RATE_LIMIT_WINDOW = 60  # seconds
 
 # Global request throttling to avoid overwhelming YouTube
 last_youtube_request_time = 0
 youtube_request_lock = threading.Lock()
-MIN_REQUEST_INTERVAL = 0.5  # Minimum 0.5 seconds between YouTube requests
+MIN_REQUEST_INTERVAL = 0.3  # 🚀 OPTIMIZED: Reduced from 0.5 to 0.3 for faster processing
 
 # Invidious instances for fallback (when YouTube blocks us)
 INVIDIOUS_INSTANCES = [
@@ -6537,6 +6548,66 @@ INVIDIOUS_INSTANCES = [
 ]
 current_invidious_index = 0
 invidious_lock = threading.Lock()
+
+# 🚀 OPTIMIZATION: Track Invidious instance health for smarter fallback
+invidious_health = {}  # {instance_url: {'success_count': int, 'fail_count': int, 'last_success': float, 'last_fail': float}}
+invidious_health_lock = threading.Lock()
+
+def update_invidious_health(instance: str, success: bool):
+    """Track instance health to prioritize working instances"""
+    with invidious_health_lock:
+        if instance not in invidious_health:
+            invidious_health[instance] = {
+                'success_count': 0,
+                'fail_count': 0,
+                'last_success': 0,
+                'last_fail': 0
+            }
+        
+        if success:
+            invidious_health[instance]['success_count'] += 1
+            invidious_health[instance]['last_success'] = time.time()
+        else:
+            invidious_health[instance]['fail_count'] += 1
+            invidious_health[instance]['last_fail'] = time.time()
+
+def get_healthy_invidious_instances() -> list:
+    """Get Invidious instances sorted by health (best first)"""
+    with invidious_health_lock:
+        # Calculate health score for each instance
+        scored_instances = []
+        current_time = time.time()
+        
+        for instance in INVIDIOUS_INSTANCES:
+            health = invidious_health.get(instance, {
+                'success_count': 0,
+                'fail_count': 0,
+                'last_success': 0,
+                'last_fail': 0
+            })
+            
+            # Calculate score (higher is better)
+            success_count = health['success_count']
+            fail_count = health['fail_count']
+            last_success = health['last_success']
+            last_fail = health['last_fail']
+            
+            # Prefer instances that:
+            # 1. Have succeeded recently (last 5 minutes)
+            # 2. Have high success rate
+            # 3. Haven't failed recently
+            recency_bonus = 100 if (current_time - last_success) < 300 else 0
+            recent_fail_penalty = -50 if (current_time - last_fail) < 60 else 0
+            
+            total = success_count + fail_count
+            success_rate = (success_count / total * 100) if total > 0 else 50  # Default 50 for unknown
+            
+            score = success_rate + recency_bonus + recent_fail_penalty
+            scored_instances.append((instance, score))
+        
+        # Sort by score (highest first) and return instance URLs
+        scored_instances.sort(key=lambda x: x[1], reverse=True)
+        return [inst for inst, score in scored_instances]
 
 def throttle_youtube_request():
     """Ensure minimum time between YouTube requests to avoid rate limiting"""
@@ -6767,18 +6838,16 @@ def get_next_invidious_instance() -> str:
 
 
 def try_invidious_download(url: str, format_type: str, quality: int, output_path: str) -> tuple[bool, Optional[Dict], Optional[str]]:
-    """Try downloading via Invidious instances as fallback
+    """Try downloading via Invidious instances as fallback - optimized with health tracking
     
     Returns:
         (success: bool, info: Dict, error: str)
     """
-    video_logger.info("🔄 Attempting Invidious fallback...")
+    # Get instances sorted by health (best first)
+    sorted_instances = get_healthy_invidious_instances()
     
-    for i in range(len(INVIDIOUS_INSTANCES)):
-        instance = get_next_invidious_instance()
+    for i, instance in enumerate(sorted_instances):
         try:
-            video_logger.info(f"Trying Invidious instance {i+1}/{len(INVIDIOUS_INSTANCES)}: {instance}")
-            
             # Convert YouTube URL to Invidious URL
             video_id = None
             if 'youtu.be/' in url:
@@ -6787,23 +6856,31 @@ def try_invidious_download(url: str, format_type: str, quality: int, output_path
                 video_id = url.split('watch?v=')[-1].split('&')[0]
             
             if not video_id:
-                video_logger.warning(f"Could not extract video ID from URL: {url}")
                 continue
             
             invidious_url = f"{instance}/watch?v={video_id}"
-            video_logger.info(f"Converted to Invidious URL: {invidious_url}")
+            
+            # Only log first attempt and failures - reduce log spam
+            if i == 0:
+                video_logger.info(f"🔄 Attempting Invidious download via {instance}")
             
             # Try download with Invidious
             ydl_opts = get_ydl_opts(format_type, quality, output_path, use_invidious=True, invidious_instance=instance)
             
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(invidious_url, download=True)
+                
+                # Update health tracking on success
+                update_invidious_health(instance, success=True)
                 video_logger.info(f"✅ Invidious download successful via {instance}")
                 return True, info, None
                 
         except Exception as e:
-            error_msg = str(e)
-            video_logger.warning(f"Invidious instance {instance} failed: {error_msg}")
+            # Update health tracking on failure
+            update_invidious_health(instance, success=False)
+            # Only log if it's the last instance or a critical error
+            if i == len(sorted_instances) - 1:
+                video_logger.warning(f"Invidious instance {instance} failed: {str(e)}")
             continue
     
     video_logger.error("❌ All Invidious instances failed")
@@ -7489,13 +7566,13 @@ if VIDEO_CONVERTER_AVAILABLE:
         YTDL_BACKOFF_MAX = 30.0
     # Worker pool configuration to prevent unbounded threads
     try:
-        WORKER_POOL_SIZE = int(os.environ.get('YTDL_WORKER_POOL_SIZE', '12'))
+        WORKER_POOL_SIZE = int(os.environ.get('YTDL_WORKER_POOL_SIZE', '20'))  # 🚀 OPTIMIZED: Increased from 12 to 20
     except Exception:
-        WORKER_POOL_SIZE = 12
+        WORKER_POOL_SIZE = 20
     try:
-        WORKER_QUEUE_MAX = int(os.environ.get('YTDL_WORKER_QUEUE_MAX', '500'))
+        WORKER_QUEUE_MAX = int(os.environ.get('YTDL_WORKER_QUEUE_MAX', '800'))  # 🚀 OPTIMIZED: Increased from 500 to 800
     except Exception:
-        WORKER_QUEUE_MAX = 500
+        WORKER_QUEUE_MAX = 800
 
     # Bounded queue and worker pool
     worker_queue = queue.Queue(maxsize=WORKER_QUEUE_MAX)
@@ -7621,31 +7698,40 @@ if VIDEO_CONVERTER_AVAILABLE:
             # Skip wasting time on direct attempts that will fail with 403
             invidious_success = False
             if not cookiefile:
-                video_logger.info(f"🔄 No cookies configured - trying Invidious first for {download_id}")
+                # Try Invidious first without verbose logging
                 invidious_success, invidious_info, invidious_error = try_invidious_download(
                     url, format_type, quality, output_path
                 )
                 if invidious_success:
-                    video_logger.info(f"✅ Invidious succeeded immediately for {download_id}")
-                    # Skip the entire retry loop - we're done!
+                    # Success! Skip the entire retry loop
                     last_exception = None
                     # Jump to file-finding section below
+                    video_logger.info(f"✅ Video downloaded successfully via Invidious for {download_id}")
                 else:
-                    video_logger.warning(f"Invidious first-attempt failed for {download_id}: {invidious_error}")
-                    video_logger.info(f"Falling back to direct YouTube attempts...")
+                    # Only log if Invidious completely failed - will fall back to direct attempts
+                    video_logger.debug(f"Invidious unavailable for {download_id}, trying direct download")
 
             attempt = 0
             last_exception = None
             consecutive_403s = 0
-            # Determine effective max attempts
-            effective_max = None if YTDL_RETRY_FOREVER else max(1, YTDL_MAX_RETRIES)
+            # Determine effective max attempts - up to 30 retries for transient errors
+            # (unavailable/deleted videos still quit immediately via error detection above)
+            effective_max = min(30, max(1, YTDL_MAX_RETRIES)) if not YTDL_RETRY_FOREVER else 30
             
             # Skip retry loop if Invidious already succeeded
             if not (not cookiefile and invidious_success):
                 while True:
                     attempt += 1
+                    
+                    # Check if we've exceeded max attempts
+                    if effective_max and attempt > effective_max:
+                        video_logger.warning(f"Max retries ({effective_max}) exceeded for {download_id}")
+                        break
+                    
                     try:
-                        video_logger.info(f"Attempt {attempt}: Starting download for {download_id}")
+                        # Only log every 2nd attempt to reduce log spam
+                        if attempt % 2 == 1:
+                            video_logger.debug(f"Attempt {attempt} for {download_id}")
                         
                         # Throttle requests to avoid overwhelming YouTube
                         throttle_youtube_request()
@@ -7654,46 +7740,66 @@ if VIDEO_CONVERTER_AVAILABLE:
                         ydl_opts = get_ydl_opts(format_type, quality, output_path)
                         ydl_opts['progress_hooks'] = [progress_hook]
                         
-                        # LAYER 1: Try browser cookie extraction if no cookie file configured
-                        # Only try on FIRST attempt - don't waste retries on missing browser
-                        if not cookiefile and attempt == 1:
-                            try:
-                                # Try Chrome first (most common)
-                                ydl_opts['cookiesfrombrowser'] = ('chrome',)
-                                video_logger.debug(f"Attempt {attempt}: Trying Chrome browser cookies")
-                            except:
-                                try:
-                                    # Fallback to Firefox
-                                    ydl_opts['cookiesfrombrowser'] = ('firefox',)
-                                    video_logger.debug(f"Attempt {attempt}: Trying Firefox browser cookies")
-                                except:
-                                    pass  # No browser cookies available, will use other layers
+                        # 🚀 OPTIMIZATION: Skip browser cookie extraction entirely
+                        # It's slow, unreliable, and Invidious works better
+                        # Only use if explicitly provided via cookiefile
                         
-                        # Use cookie file if available (takes priority over browser extraction)
+                        # Use cookie file if available
                         if cookiefile and os.path.exists(cookiefile):
                             ydl_opts['cookiefile'] = cookiefile
-                            # Remove browser cookie option if we have a file
-                            if 'cookiesfrombrowser' in ydl_opts:
-                                del ydl_opts['cookiesfrombrowser']
-                            video_logger.info(f"🍪 Using cookie file on attempt {attempt}")
                         
                         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                             ydl.download([url])
-                        video_logger.info(f"✅ Download completed for {download_id} on attempt {attempt}")
+                        
+                        # Success - only log on success
+                        video_logger.info(f"✅ Download completed for {download_id} (attempt {attempt})")
 
                         last_exception = None
                         break
                     except Exception as de:
                         derr = str(de)
-                        video_logger.warning(f"Download attempt {attempt} failed for {download_id}: {derr}")
                         last_exception = de
+                        
+                        # 🚨 CRITICAL: Check for UNRECOVERABLE errors - quit immediately
+                        is_unavailable = any(keyword in derr.lower() for keyword in [
+                            'video unavailable',
+                            'this video is unavailable',
+                            'video has been removed',
+                            'video is not available',
+                            'this video has been deleted',
+                            'this video does not exist',
+                            'video is private',
+                            'members-only content',
+                            'join this channel',
+                            'premium content',
+                            'video not found',
+                            'account has been terminated',
+                            'account associated with this video has been terminated'
+                        ])
+                        
+                        if is_unavailable:
+                            video_logger.error(f"❌ Video is unavailable/deleted/private for {download_id}: {derr}")
+                            # Mark as error and exit immediately - don't waste time retrying
+                            with download_lock:
+                                if download_id in active_video_downloads:
+                                    active_video_downloads[download_id].update({
+                                        'status': 'error',
+                                        'error': 'Video is unavailable, private, or has been removed',
+                                        'error_type': 'unavailable',
+                                        'finished': True
+                                    })
+                            # Exit the retry loop immediately
+                            raise Exception('Video is unavailable, private, or has been removed')
+                        
+                        # Log other errors (will be retried)
+                        video_logger.warning(f"Download attempt {attempt} failed for {download_id}: {derr}")
                         
                         # Detect browser cookie errors - stop trying browser extraction
                         is_browser_error = ('could not find' in derr.lower() and 'cookies database' in derr.lower())
                         if is_browser_error and attempt == 1:
                             video_logger.info(f"Browser cookies not available, skipping browser extraction for remaining attempts")
                             # Try immediately with Invidious on next attempt
-                        consecutive_403s = 3  # Trigger Invidious fallback
+                            consecutive_403s = 3  # Trigger Invidious fallback
 
                     # Detect 403 errors
                     is_403_like = ('403' in derr or 'forbidden' in derr.lower() or 'http error 403' in derr.lower() or 'unable to download video data' in derr.lower())
