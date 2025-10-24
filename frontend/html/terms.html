@@ -28,145 +28,9 @@
     <meta name="keywords" content="terms of service, quiz the spire terms, user agreement, acceptable use policy">
     
     <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/legal.css">
+    <link rel="stylesheet" href="../css/footer.css">
     <script src="../js/themeManager.js"></script>
-    
-    <style>
-        /* Custom theme toggle button styling for legal pages */
-        .c-theme-toggle {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            background: white !important;
-            color: #1e3a8a !important;
-            border: 2px solid #1e3a8a !important;
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .c-theme-toggle:hover {
-            background: #1e3a8a !important;
-            color: white !important;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
-        }
-        
-        .c-theme-toggle::before {
-            content: '☀️';
-            font-size: 1.1rem;
-        }
-        
-        [data-theme="dark"] .c-theme-toggle::before,
-        body[data-theme="dark"] .c-theme-toggle::before {
-            content: '🌙';
-        }
-        
-        @media (max-width: 768px) {
-            .c-theme-toggle {
-                top: 10px;
-                right: 10px;
-                padding: 8px 16px;
-                font-size: 0.85rem;
-            }
-        }
-        
-        .legal-page {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 2rem;
-            line-height: 1.7;
-        }
-        
-        .legal-page h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            text-align: center;
-        }
-        
-        .legal-page h2 {
-            font-size: 1.8rem;
-            margin-top: 2.5rem;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid;
-        }
-        
-        .legal-page h3 {
-            font-size: 1.4rem;
-            margin-top: 2rem;
-            margin-bottom: 0.75rem;
-        }
-        
-        .legal-page p {
-            margin-bottom: 1rem;
-        }
-        
-        .legal-page ul, .legal-page ol {
-            margin-bottom: 1rem;
-            padding-left: 2rem;
-        }
-        
-        .legal-page li {
-            margin-bottom: 0.5rem;
-        }
-        
-        .last-updated {
-            text-align: center;
-            font-style: italic;
-            margin-bottom: 2rem;
-            opacity: 0.8;
-        }
-        
-        .highlight-box {
-            background: linear-gradient(135deg, #1e3a8a, #0c4061);
-            color: white;
-            padding: 2rem;
-            border-radius: 12px;
-            margin: 2rem 0;
-            text-align: center;
-        }
-        
-        .info-box {
-            background: var(--bg-secondary, #f4f8fc);
-            padding: 1.5rem;
-            border-radius: 8px;
-            margin: 1.5rem 0;
-            border-left: 4px solid #1e3a8a;
-        }
-        
-        .back-link {
-            display: inline-block;
-            margin-bottom: 2rem;
-            padding: 0.75rem 1.5rem;
-            background: #1e3a8a;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-        
-        .back-link:hover {
-            background: #0c4061;
-        }
-        
-        @media (max-width: 768px) {
-            .legal-page {
-                padding: 1rem;
-            }
-            
-            .legal-page h1 {
-                font-size: 2rem;
-            }
-        }
-    </style>
 </head>
 <body>
     <header class="c-header">
@@ -243,7 +107,7 @@
         <h3>4.2 Prohibited Conduct</h3>
         <div class="info-box">
             <p><strong>You Must NOT:</strong></p>
-            <ul style="margin: 0;">
+            <ul class="u-list-tight-bottom">
                 <li>Use automated systems, bots, or scripts to gain unfair advantages in quizzes</li>
                 <li>Cheat, exploit bugs, or manipulate the quiz system or leaderboards</li>
                 <li>Harass, abuse, or send inappropriate messages to other users</li>
@@ -311,7 +175,7 @@
         <h3>8.1 Service Disclaimer</h3>
         <div class="info-box">
             <p><strong>IMPORTANT:</strong> Quiz The Spire is provided "AS IS" and "AS AVAILABLE" without warranties of any kind, either express or implied. We make no guarantees about:</p>
-            <ul style="margin: 0;">
+            <ul class="u-list-tight-bottom">
                 <li>Uninterrupted or error-free service availability</li>
                 <li>Accuracy of quiz questions or leaderboard data</li>
                 <li>Compatibility with all devices or browsers</li>
@@ -415,7 +279,7 @@
             <p>
                 If you have any questions, concerns, or feedback regarding these Terms of Service, please contact us:
             </p>
-            <ul style="margin: 0;">
+            <ul class="u-list-tight-bottom">
                 <li><strong>Support Chat:</strong> <a href="support.html">quizthespire.com/html/support.html</a></li>
                 <li><strong>Contact Page:</strong> <a href="contact.html">quizthespire.com/html/contact.html</a></li>
                 <li><strong>Service Owner:</strong> Oroka Conner</li>
@@ -430,24 +294,24 @@
             </p>
         </div>
 
-        <p style="text-align: center; margin-top: 3rem; font-style: italic;">
+        <p class="u-signature">
             <strong>Quiz The Spire</strong><br>
             Created, Owned & Operated by Oroka Conner<br>
             © 2025 All rights reserved
         </p>
     </main>
 
-    <footer style="text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.1);">
-        <p style="margin: 5px 0; font-size: 0.95em;">
+    <footer class="c-footer">
+        <p class="c-footer__text">
             <strong>© 2025 Quiz The Spire</strong><br>
             Created, Owned & Operated by <strong>Oroka Conner</strong><br>
             All rights reserved.
         </p>
-        <p style="margin-top: 15px; font-size: 0.9em;">
-            <a href="privacy.html" style="margin: 0 10px;">Privacy Policy</a> |
-            <a href="contact.html" style="margin: 0 10px;">Contact Us</a> |
-            <a href="terms.html" style="margin: 0 10px;">Terms of Service</a> |
-            <a href="about.html" style="margin: 0 10px;">About</a>
+        <p class="c-footer__links">
+            <a href="privacy.html" class="c-footer__link">Privacy Policy</a> |
+            <a href="contact.html" class="c-footer__link">Contact Us</a> |
+            <a href="terms.html" class="c-footer__link">Terms of Service</a> |
+            <a href="about.html" class="c-footer__link">About</a>
         </p>
     </footer>
 

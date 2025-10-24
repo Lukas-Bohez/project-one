@@ -34,98 +34,11 @@
     <meta property="og:site_name" content="Quiz The Spire">
     
     <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/legal.css">
+    <link rel="stylesheet" href="../css/footer.css">
     <script src="../js/themeManager.js"></script>
     
     <style>
-        /* Custom theme toggle button styling for legal pages */
-        .c-theme-toggle {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            background: white !important;
-            color: #1e3a8a !important;
-            border: 2px solid #1e3a8a !important;
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .c-theme-toggle:hover {
-            background: #1e3a8a !important;
-            color: white !important;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
-        }
-        
-        .c-theme-toggle::before {
-            content: '☀️';
-            font-size: 1.1rem;
-        }
-        
-        [data-theme="dark"] .c-theme-toggle::before,
-        body[data-theme="dark"] .c-theme-toggle::before {
-            content: '🌙';
-        }
-        
-        @media (max-width: 768px) {
-            .c-theme-toggle {
-                top: 10px;
-                right: 10px;
-                padding: 8px 16px;
-                font-size: 0.85rem;
-            }
-        }
-        
-        .contact-page {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem;
-            line-height: 1.6;
-        }
-        
-        .contact-page h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            text-align: center;
-        }
-        
-        .contact-page h2 {
-            font-size: 1.8rem;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid;
-        }
-        
-        .contact-page p {
-            margin-bottom: 1rem;
-        }
-        
-        .hero-section {
-            background: linear-gradient(135deg, #1e3a8a, #0c4061);
-            color: white;
-            padding: 3rem 2rem;
-            border-radius: 12px;
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-        
-        .contact-box {
-            background: var(--bg-secondary, #f4f8fc);
-            padding: 2rem;
-            border-radius: 12px;
-            margin: 1.5rem 0;
-            border-left: 6px solid #1e3a8a;
-        }
-        
         .contact-methods {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -236,7 +149,7 @@
 
         <div class="hero-section">
             <h1>Contact Us</h1>
-            <p style="font-size: 1.1rem; margin-top: 1rem;">We're here to help! Get in touch with Quiz The Spire</p>
+            <p class="hero-section__subtitle-lg">We're here to help! Get in touch with Quiz The Spire</p>
         </div>
 
         <div class="contact-box">
@@ -252,7 +165,7 @@
         
         <div class="contact-methods">
             <div class="contact-card">
-                <div style="font-size: 3rem;">💬</div>
+                <div class="contact-icon">💬</div>
                 <h3>Support Chat</h3>
                 <p>
                     Our primary and only support channel. Click the button below to access our interactive support chat for assistance with any questions or issues.
@@ -263,7 +176,7 @@
 
         <h2>What We Can Help With</h2>
         <div class="contact-box">
-            <ul style="margin: 0; padding-left: 1.5rem;">
+            <ul class="u-list-tight">
                 <li><strong>Technical Support:</strong> Quiz not loading, connection issues, display problems</li>
                 <li><strong>Account Questions:</strong> Progress tracking, leaderboard issues, session management</li>
                 <li><strong>Content Feedback:</strong> Question corrections, suggestions for new topics, difficulty feedback</li>
@@ -278,7 +191,7 @@
         <h2>Before You Contact Us</h2>
         <div class="info-box">
             <h4>Quick Solutions - Try These First:</h4>
-            <ul style="margin-bottom: 0;">
+            <ul class="u-list-tight-bottom">
                 <li><strong>Connection Issues:</strong> Try refreshing the page or checking your internet connection</li>
                 <li><strong>Quiz Not Starting:</strong> Make sure you've entered a valid session code or created a new session</li>
                 <li><strong>Display Problems:</strong> Try toggling between light and dark theme, or testing in a different browser</li>
@@ -290,7 +203,7 @@
         <h2>Other Resources</h2>
         <div class="contact-box">
             <p>Before contacting us, you might find answers in these resources:</p>
-            <ul style="margin: 0; padding-left: 1.5rem;">
+            <ul class="u-list-tight">
                 <li><a href="about.html"><strong>About Quiz The Spire</strong></a> - Learn about our mission, features, and creator</li>
                 <li><a href="privacy.html"><strong>Privacy Policy</strong></a> - Understand how we handle your data</li>
                 <li><a href="terms.html"><strong>Terms of Service</strong></a> - Know your rights and our policies</li>
@@ -304,14 +217,14 @@
                 Interested in partnerships, collaborations, or business opportunities with Quiz The Spire or Convert The Spire? 
                 We're open to discussing:
             </p>
-            <ul style="margin: 0; padding-left: 1.5rem;">
+            <ul class="u-list-tight">
                 <li>Content partnerships and cross-promotions</li>
                 <li>Sponsorship opportunities</li>
                 <li>Educational institution integrations</li>
                 <li>Tournament hosting and events</li>
                 <li>Custom quiz development</li>
             </ul>
-            <p style="margin-top: 1rem;">
+            <p class="u-spacing-top">
                 Please reach out through our support chat and mention that you're inquiring about business opportunities.
             </p>
         </div>
@@ -321,40 +234,40 @@
             <p>
                 <strong>Quiz The Spire is operated by Oroka Conner</strong>, and we're committed to providing timely support:
             </p>
-            <ul style="margin: 0; padding-left: 1.5rem;">
+            <ul class="u-list-tight">
                 <li><strong>Support Chat:</strong> Typically within a few hours during business hours</li>
                 <li><strong>General Inquiries:</strong> 24-48 hours</li>
                 <li><strong>Technical Issues:</strong> Priority response, usually within 12-24 hours</li>
                 <li><strong>Business Inquiries:</strong> 2-3 business days for detailed proposals</li>
             </ul>
-            <p style="margin-top: 1rem; font-style: italic; opacity: 0.8;">
+            <p class="u-text-note u-spacing-top">
                 Note: Response times may be longer during weekends and holidays. We appreciate your patience!
             </p>
         </div>
 
-        <div class="hero-section" style="margin-top: 3rem;">
+        <div class="hero-section u-spacing-top">
             <h2>We're Here to Help!</h2>
             <p>
                 Your feedback and questions help us make Quiz The Spire better for everyone. 
                 Don't hesitate to reach out — we genuinely appreciate hearing from our community.
             </p>
-            <a href="support.html" class="contact-btn" style="margin-top: 1.5rem; display: inline-block;">
+            <a href="support.html" class="contact-btn u-spacing-top u-center-button">
                 Contact Support Now
             </a>
         </div>
     </main>
 
-    <footer style="text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.1);">
-        <p style="margin: 5px 0; font-size: 0.95em;">
+    <footer class="c-footer">
+        <p class="c-footer__text">
             <strong>© 2025 Quiz The Spire</strong><br>
             Created, Owned & Operated by <strong>Oroka Conner</strong><br>
             All rights reserved.
         </p>
-        <p style="margin-top: 15px; font-size: 0.9em;">
-            <a href="privacy.html" style="margin: 0 10px;">Privacy Policy</a> |
-            <a href="contact.html" style="margin: 0 10px;">Contact Us</a> |
-            <a href="terms.html" style="margin: 0 10px;">Terms of Service</a> |
-            <a href="about.html" style="margin: 0 10px;">About</a>
+        <p class="c-footer__links">
+            <a href="privacy.html" class="c-footer__link">Privacy Policy</a> |
+            <a href="contact.html" class="c-footer__link">Contact Us</a> |
+            <a href="terms.html" class="c-footer__link">Terms of Service</a> |
+            <a href="about.html" class="c-footer__link">About</a>
         </p>
     </footer>
 

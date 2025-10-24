@@ -26,6 +26,7 @@
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/quiz.css">
     <link rel="stylesheet" href="../css/chat.css">
+    <link rel="stylesheet" href="../css/footer.css">
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" defer></script>
 </head>
 
@@ -39,15 +40,9 @@
     <main class="c-quiz-container">
         <div class="c-quiz-header">
             <div class="c-items-container">
-                <div class="c-item-slot gamepad-special gamepad" id="item1">
-                    <!-- Hover controls removed -->
-                </div>
-                <div class="c-item-slot gamepad-special gamepad" id="item2">
-                    <!-- Hover controls removed -->
-                </div>
-                <div class="c-item-slot gamepad-special gamepad" id="item3">
-                    <!-- Hover controls removed -->
-                </div>
+                <div class="c-item-slot gamepad-special gamepad" id="item1"></div>
+                <div class="c-item-slot gamepad-special gamepad" id="item2"></div>
+                <div class="c-item-slot gamepad-special gamepad" id="item3"></div>
             </div>
             <div class="c-quiz-controls">
                 <button id="servoTestBtn" class="c-btn c-btn--tertiary gamepad">Toggle Theme</button>
@@ -71,12 +66,9 @@
             <button class="c-answer-btn gamepad" id="answer3"></button>
             <button class="c-answer-btn gamepad" id="answer4"></button>
         </div>
-        <!-- Place Players and Chat below answers -->
         <div class="c-players-container">
             <h3>Players</h3>
-            <div class="c-players-list" id="playersList">
-                <!-- Player items will be added here dynamically -->
-            </div>
+            <div class="c-players-list" id="playersList"></div>
         </div>
         <div class="c-chat-container">
             <div class="c-chat-header">
@@ -84,9 +76,7 @@
                 <button id="chatToggle" class="c-chat-toggle">−</button>
             </div>
             <div class="c-chat-content" id="chatContent">
-                <div class="c-chat-messages" id="chatMessages">
-                    <!-- Chat messages will be added here dynamically -->
-                </div>
+                <div class="c-chat-messages" id="chatMessages"></div>
                 <div class="c-chat-input-container">
                     <input type="text" id="chatInput" class="c-chat-input" placeholder="Type a message..."
                         maxlength="1000">
@@ -96,17 +86,17 @@
         </div>
     </main>
     
-    <footer style="text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.1);">
-        <p style="margin: 5px 0; font-size: 0.95em;">
+    <footer class="c-footer">
+        <p class="c-footer__text">
             <strong>© 2025 Quiz The Spire</strong><br>
             Created, Owned & Operated by <strong>Oroka Conner</strong><br>
             All rights reserved.
         </p>
-        <p style="margin-top: 15px; font-size: 0.9em;">
-            <a href="privacy.html" style="margin: 0 10px; color: inherit; text-decoration: underline;">Privacy Policy</a> |
-            <a href="contact.html" style="margin: 0 10px; color: inherit; text-decoration: underline;">Contact Us</a> |
-            <a href="terms.html" style="margin: 0 10px; color: inherit; text-decoration: underline;">Terms of Service</a> |
-            <a href="about.html" style="margin: 0 10px; color: inherit; text-decoration: underline;">About</a>
+        <p class="c-footer__links">
+            <a href="privacy.html" class="c-footer__link">Privacy Policy</a> |
+            <a href="contact.html" class="c-footer__link">Contact Us</a> |
+            <a href="terms.html" class="c-footer__link">Terms of Service</a> |
+            <a href="about.html" class="c-footer__link">About</a>
         </p>
     </footer>
     
@@ -117,7 +107,6 @@
     <script src="../js/gamepadQuiz.js"></script>
     <script src="../js/quiz.js"></script>
     <script src="../js/quizmain.js" defer></script>
-    <div class="c-scroll-extension"></div>
     <script src="../js/lofi.js" defer></script>
     <script src="../js/quizlogic2.js"></script>
     <script src="../js/quizlogic.js"></script>

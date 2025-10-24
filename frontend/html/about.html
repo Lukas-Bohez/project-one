@@ -34,120 +34,11 @@
     <meta property="og:site_name" content="Quiz The Spire">
     
     <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/legal.css">
+    <link rel="stylesheet" href="../css/footer.css">
     <script src="../js/themeManager.js"></script>
     
     <style>
-        /* Custom theme toggle button styling for legal pages */
-        .c-theme-toggle {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            background: white !important;
-            color: #1e3a8a !important;
-            border: 2px solid #1e3a8a !important;
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .c-theme-toggle:hover {
-            background: #1e3a8a !important;
-            color: white !important;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
-        }
-        
-        .c-theme-toggle::before {
-            content: '☀️';
-            font-size: 1.1rem;
-        }
-        
-        [data-theme="dark"] .c-theme-toggle::before,
-        body[data-theme="dark"] .c-theme-toggle::before {
-            content: '🌙';
-        }
-        
-        @media (max-width: 768px) {
-            .c-theme-toggle {
-                top: 10px;
-                right: 10px;
-                padding: 8px 16px;
-                font-size: 0.85rem;
-            }
-        }
-        
-        .about-page {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 2rem;
-            line-height: 1.6;
-        }
-        
-        .about-page h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            text-align: center;
-        }
-        
-        .about-page h2 {
-            font-size: 1.8rem;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid;
-        }
-        
-        .about-page h3 {
-            font-size: 1.4rem;
-            margin-top: 1.5rem;
-            margin-bottom: 0.75rem;
-        }
-        
-        .about-page p {
-            margin-bottom: 1rem;
-        }
-        
-        .about-page ul {
-            margin-bottom: 1rem;
-            padding-left: 2rem;
-        }
-        
-        .about-page li {
-            margin-bottom: 0.5rem;
-        }
-        
-        .hero-section {
-            background: linear-gradient(135deg, #1e3a8a, #0c4061);
-            color: white;
-            padding: 3rem 2rem;
-            border-radius: 12px;
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-        
-        .mission-box {
-            background: var(--bg-secondary, #f4f8fc);
-            padding: 2rem;
-            border-radius: 12px;
-            margin: 2rem 0;
-            border-left: 6px solid #1e3a8a;
-        }
-        
-        .creator-section {
-            background: var(--bg-secondary, #f4f8fc);
-            padding: 2rem;
-            border-radius: 12px;
-            margin: 2rem 0;
-        }
-        
         .expertise-list {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -162,33 +53,11 @@
             border-left: 4px solid #0c4061;
         }
         
-        .back-link {
-            display: inline-block;
-            margin-bottom: 2rem;
-            padding: 0.75rem 1.5rem;
-            background: #1e3a8a;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-        
-        .back-link:hover {
-            background: #0c4061;
-        }
-        
-        @media (max-width: 768px) {
-            .about-page {
-                padding: 1rem;
-            }
-            
-            .hero-section {
-                padding: 2rem 1rem;
-            }
-            
-            .about-page h1 {
-                font-size: 2rem;
-            }
+        .creator-section {
+            background: var(--bg-secondary, #f4f8fc);
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
         }
     </style>
 </head>
@@ -210,8 +79,8 @@
 
         <div class="hero-section">
             <h1>About Quiz The Spire</h1>
-            <p style="font-size: 1.2rem; margin-top: 1rem;">Created and Owned by Oroka Conner</p>
-            <p style="font-size: 1rem; margin-top: 0.5rem; opacity: 0.9;">Making learning fun through interactive, competitive quiz experiences</p>
+            <p class="hero-section__subtitle-lg">Created and Owned by Oroka Conner</p>
+            <p class="hero-section__subtitle">Making learning fun through interactive, competitive quiz experiences</p>
         </div>
 
         <h2>Our Mission</h2>
@@ -332,17 +201,17 @@
         </div>
     </main>
 
-    <footer style="text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.1);">
-        <p style="margin: 5px 0; font-size: 0.95em;">
+    <footer class="c-footer">
+        <p class="c-footer__text">
             <strong>© 2025 Quiz The Spire</strong><br>
             Created, Owned & Operated by <strong>Oroka Conner</strong><br>
             All rights reserved.
         </p>
-        <p style="margin-top: 15px; font-size: 0.9em;">
-            <a href="privacy.html" style="margin: 0 10px;">Privacy Policy</a> |
-            <a href="contact.html" style="margin: 0 10px;">Contact Us</a> |
-            <a href="terms.html" style="margin: 0 10px;">Terms of Service</a> |
-            <a href="about.html" style="margin: 0 10px;">About</a>
+        <p class="c-footer__links">
+            <a href="privacy.html" class="c-footer__link">Privacy Policy</a> |
+            <a href="contact.html" class="c-footer__link">Contact Us</a> |
+            <a href="terms.html" class="c-footer__link">Terms of Service</a> |
+            <a href="about.html" class="c-footer__link">About</a>
         </p>
     </footer>
 

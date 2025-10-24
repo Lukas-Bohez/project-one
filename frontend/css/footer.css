@@ -1,0 +1,33 @@
+/* Common Footer Styles */
+.c-footer {
+    text-align: center;
+    padding: 20px;
+    margin-top: 40px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.c-footer__text {
+    margin: 5px 0;
+    font-size: 0.95em;
+}
+
+.c-footer__links {
+    margin-top: 15px;
+    font-size: 0.9em;
+}
+
+.c-footer__link {
+    margin: 0 10px;
+    color: inherit;
+    text-decoration: underline;
+}
+
+.c-footer__link:hover {
+    opacity: 0.8;
+}
+
+/* Dark theme support */
+[data-theme="dark"] .c-footer,
+body[data-theme="dark"] .c-footer {
+    border-top-color: rgba(255, 255, 255, 0.08);
+}
