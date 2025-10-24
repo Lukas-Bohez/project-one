@@ -6025,3 +6025,27 @@ Output file #0 does not contain any stream
 2025-10-24 15:50:35,100 - INFO - is_timer_active(1000066): thread exists=False, is_alive=False
 2025-10-24 15:50:36,137 - INFO - is_timer_active(1000066): thread exists=False, is_alive=False
 2025-10-24 15:50:37,172 - INFO - is_timer_active(1000066): thread exists=False, is_alive=False
+2025-10-24 15:53:11,742 - INFO - [LOGIN] Created new session 1000067 with status=2 (active)
+2025-10-24 15:53:11,794 - INFO - is_timer_active(1000067): thread exists=False, is_alive=False
+2025-10-24 15:53:12,785 - INFO - is_timer_active(1000067): thread exists=False, is_alive=False
+2025-10-24 15:53:13,826 - INFO - is_timer_active(1000067): thread exists=False, is_alive=False
+2025-10-24 15:53:14,868 - INFO - is_timer_active(1000067): thread exists=False, is_alive=False
+2025-10-24 15:53:15,920 - INFO - is_timer_active(1000067): thread exists=False, is_alive=False
+2025-10-24 15:53:16,954 - INFO - is_timer_active(1000067): thread exists=False, is_alive=False
+2025-10-24 15:53:17,987 - INFO - is_timer_active(1000067): thread exists=False, is_alive=False
+2025-10-24 15:53:19,021 - INFO - is_timer_active(1000067): thread exists=False, is_alive=False
+2025-10-24 15:53:43,618 - INFO - [LOGIN] Created new session 1000068 with status=2 (active)
+2025-10-24 15:53:43,645 - INFO - is_timer_active(1000068): thread exists=False, is_alive=False
+2025-10-24 15:53:44,683 - INFO - is_timer_active(1000068): thread exists=False, is_alive=False
+2025-10-24 15:53:45,721 - INFO - is_timer_active(1000068): thread exists=False, is_alive=False
+2025-10-24 15:53:46,759 - INFO - is_timer_active(1000068): thread exists=False, is_alive=False
+2025-10-24 15:53:47,800 - INFO - is_timer_active(1000068): thread exists=False, is_alive=False
+2025-10-24 15:53:48,836 - INFO - is_timer_active(1000068): thread exists=False, is_alive=False
+2025-10-24 15:53:49,874 - INFO - is_timer_active(1000068): thread exists=False, is_alive=False
+2025-10-24 15:53:50,911 - INFO - is_timer_active(1000068): thread exists=False, is_alive=False
+2025-10-24 15:53:51,954 - INFO - is_timer_active(1000068): thread exists=False, is_alive=False
+2025-10-24 15:53:52,999 - INFO - is_timer_active(1000068): thread exists=False, is_alive=False
+2025-10-24 15:53:54,041 - INFO - is_timer_active(1000068): thread exists=False, is_alive=False
+2025-10-24 15:53:55,080 - INFO - is_timer_active(1000068): thread exists=False, is_alive=False
+2025-10-24 15:53:56,115 - INFO - is_timer_active(1000068): thread exists=False, is_alive=False
+2025-10-24 15:53:57,150 - INFO - is_timer_active(1000068): thread exists=False, is_alive=False

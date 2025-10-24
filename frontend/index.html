@@ -29,6 +29,7 @@
     </style>
     
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/footer.css">
     <link rel="preload" href="css/radar.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="css/radar.css"></noscript>
     <meta name="google-site-verification" content="i-fm4jHv_Tzy9zhCDiAArKCN0CTisNhAbAm3rmEwpfM" />
@@ -65,7 +66,7 @@
     
     <header class="c-header">
         <h1 class="c-header__title">Quiz The Spire</h1>
-        <p style="font-size: 1.5; opacity: 0.8; margin-top: 5px;">Created and owned by Oroka Conner</p>
+        <p class="c-header__subtitle">Created and owned by Oroka Conner</p>
     </header>
     <main class="o-container">
         <div class="c-welcome-message">
@@ -88,34 +89,33 @@
                 <button id="articleTheSpireBtn" class="c-btn c-btn--tertiary" onclick="window.location.href='html/content.html'">Article the spire</button>
                 <button id="storyCreatorBtn" class="c-btn c-btn--tertiary" onclick="window.location.href='html/storyCreator.html'">Story Creator</button>
             </div>
-            <div class="c-servo-visual" id="servoVisual"></div>
         </div>
         <!-- Separate row below the big section -->
-        <div class="o-button-group u-mt-2" style="max-width: 320px; margin-left: auto; margin-right: auto;">
+        <div class="o-button-group u-mt-2 u-center-button">
             <button id="articlesHubBtn" class="c-btn c-btn--tertiary c-btn--sm" onclick="window.location.href='articles/articlepagenew.html'">📰 New Articles</button>
         </div>
         <!-- Game section below main buttons -->
-        <div class="o-button-group u-mb-2" style="max-width: 320px; margin-left: auto; margin-right: auto;">
-            <button id="kingdomQuarryBtn" class="c-btn c-btn--primary c-btn--sm" onclick="window.location.href='idleGame/idlegame.html';")>⛏️ Industrial Empire</button>
+        <div class="o-button-group u-mb-2 u-center-button">
+            <button id="kingdomQuarryBtn" class="c-btn c-btn--primary c-btn--sm" onclick="window.location.href='idleGame/idlegame.html';">⛏️ Industrial Empire</button>
         </div>
 
-        <div class="o-button-group u-mb-2" style="max-width: 320px; margin-left: auto; margin-right: auto;">
-            <button id="kingdomQuarryBtn" class="c-btn c-btn--primary c-btn--sm" onclick="window.location.href='html/support.html';")> Contact Support</button>
+        <div class="o-button-group u-mb-2 u-center-button">
+            <button id="supportBtn" class="c-btn c-btn--primary c-btn--sm" onclick="window.location.href='html/support.html';">💬 Contact Support</button>
         </div>
     
     </main>
 
-    <footer style="text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.1);">
-        <p style="margin: 5px 0; font-size: 0.95em;">
+    <footer class="c-footer">
+        <p class="c-footer__text">
             <strong>© 2025 Quiz The Spire</strong><br>
             Created, Owned & Operated by <strong>Oroka Conner</strong><br>
             All rights reserved.
         </p>
-        <p style="margin-top: 15px; font-size: 0.9em;">
-            <a href="html/privacy.html" style="margin: 0 10px; color: inherit; text-decoration: underline;">Privacy Policy</a> |
-            <a href="html/contact.html" style="margin: 0 10px; color: inherit; text-decoration: underline;">Contact Us</a> |
-            <a href="html/terms.html" style="margin: 0 10px; color: inherit; text-decoration: underline;">Terms of Service</a> |
-            <a href="html/about.html" style="margin: 0 10px; color: inherit; text-decoration: underline;">About</a>
+        <p class="c-footer__links">
+            <a href="html/privacy.html" class="c-footer__link">Privacy Policy</a> |
+            <a href="html/contact.html" class="c-footer__link">Contact Us</a> |
+            <a href="html/terms.html" class="c-footer__link">Terms of Service</a> |
+            <a href="html/about.html" class="c-footer__link">About</a>
         </p>
     </footer>
 

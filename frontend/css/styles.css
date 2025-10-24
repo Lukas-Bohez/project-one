@@ -905,7 +905,20 @@ button[onclick*="idleGame/idlegame.html"]:hover {
         
         --success-color: #10b981;
         --danger-color: #ef4444;
-        --warning-color: #f59e0b;
+                --warning-color: #f59e0b;
         --info-color: #2c4c7c;
     }
+}
+
+/* Utility Classes */
+.u-center-button {
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.c-header__subtitle {
+    font-size: 1rem;
+    opacity: 0.8;
+    margin-top: 5px;
 }
