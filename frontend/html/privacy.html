@@ -28,6 +28,7 @@
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary">
     <link rel="stylesheet" href="../css/styles.css">
+    <script src="../js/themeManager.js"></script>
     <script src="../js/gamepad.js" defer></script>
     
     <!-- Structured Data for SEO -->
@@ -52,6 +53,53 @@
     </script>
     
     <style>
+        /* Custom theme toggle button styling for legal pages */
+        .c-theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 72px;
+            z-index: 1000;
+            background: white !important;
+            color: #1e3a8a !important;
+            border: 2px solid #1e3a8a !important;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .c-theme-toggle:hover {
+            background: #1e3a8a !important;
+            color: white !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
+        }
+        
+        .c-theme-toggle::before {
+            content: '☀️';
+            font-size: 1.1rem;
+        }
+        
+        [data-theme="dark"] .c-theme-toggle::before,
+        body[data-theme="dark"] .c-theme-toggle::before {
+            content: '🌙';
+        }
+        
+        @media (max-width: 768px) {
+            .c-theme-toggle {
+                top: 10px;
+                right: 10px;
+                padding: 8px 16px;
+                font-size: 0.85rem;
+            }
+        }
+        
         /* Reconsideration Modal Styles */
         #reconsider-modal {
             position: fixed;
@@ -118,19 +166,38 @@
         }
         
         .reject-btn {
-            background-color: #d9534f !important;
-            border-color: #d9534f !important;
+            background-color: #dc3545 !important;
+            border-color: #dc3545 !important;
+            color: white !important;
         }
         
         .reject-btn:hover {
-            background-color: #c9302c !important;
-            border-color: #c9302c !important;
+            background-color: white !important;
+            border-color: #dc3545 !important;
+            color: #dc3545 !important;
+        }
+        
+        .accept-btn {
+            background-color: #2e7d32 !important;
+            border-color: #2e7d32 !important;
+            color: white !important;
+        }
+        
+        .accept-btn:hover {
+            background-color: white !important;
+            border-color: #2e7d32 !important;
+            color: #2e7d32 !important;
         }
     </style>
 </head>
 <body>
     <header class="c-header">
+        <a href="../index.html" class="c-header__link">
             <h1 class="c-header__title">Quiz The Spire</h1>
+        </a>
+        <button class="c-theme-toggle" id="theme-toggle" onclick="toggleTheme()">
+            Toggle Theme
+        </button>
     </header>
 
     <main class="o-container c-welcome-message">
@@ -245,10 +312,25 @@
             </p>
             
             <div class="o-button-group u-flex u-gap-1" style="justify-content: center; margin-top: 1.5rem;">
-                <button id="rejectPrivacy" class="c-btn c-btn--secondary gamepad reject-btn" style="min-width: 200px;">Reject All</button>
+                <button id="acceptPrivacy" class="c-btn c-btn--primary gamepad accept-btn" style="min-width: 200px; background-color: #2e7d32; border-color: #2e7d32;">Accept All</button>
+                <button id="rejectPrivacy" class="c-btn c-btn--secondary gamepad reject-btn" style="min-width: 200px; background-color: #dc3545; border-color: #dc3545;">Reject All</button>
             </div>
         </div>
     </main>
+
+    <footer style="text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <p style="margin: 5px 0; font-size: 0.95em;">
+            <strong>© 2025 Quiz The Spire</strong><br>
+            Created, Owned & Operated by <strong>Oroka Conner</strong><br>
+            All rights reserved.
+        </p>
+        <p style="margin-top: 15px; font-size: 0.9em;">
+            <a href="privacy.html" style="margin: 0 10px; color: inherit; text-decoration: underline;">Privacy Policy</a> |
+            <a href="contact.html" style="margin: 0 10px; color: inherit; text-decoration: underline;">Contact Us</a> |
+            <a href="terms.html" style="margin: 0 10px; color: inherit; text-decoration: underline;">Terms of Service</a> |
+            <a href="about.html" style="margin: 0 10px; color: inherit; text-decoration: underline;">About</a>
+        </p>
+    </footer>
 
     <!-- Reconsideration Modal -->
     <div id="reconsider-modal">
@@ -261,9 +343,37 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const acceptBtn = document.getElementById('acceptPrivacy');
             const rejectBtn = document.getElementById('rejectPrivacy');
             const reconsiderModal = document.getElementById('reconsider-modal');
             const refreshButton = document.getElementById('refresh-button');
+
+            if (acceptBtn) {
+                acceptBtn.addEventListener('click', () => {
+                    const consentData = {
+                        accepted: true,
+                        timestamp: new Date().getTime()
+                    };
+                    localStorage.setItem('privacyConsent', JSON.stringify(consentData));
+                    
+                    try {
+                        // Google Consent Mode v2 - grant consent
+                        window.dataLayer = window.dataLayer || [];
+                        function gtag(){dataLayer.push(arguments);}
+                        gtag('consent','update',{
+                            'ad_storage': 'granted',
+                            'analytics_storage': 'granted',
+                            'ad_user_data': 'granted',
+                            'ad_personalization': 'granted'
+                        });
+                    } catch(e) { /* noop */ }
+                    
+                    // Show success message
+                    alert('Thank you! Your privacy preferences have been saved.');
+                    // Optionally redirect to home
+                    window.location.href = '../index.html';
+                });
+            }
 
             if (rejectBtn) {
                 rejectBtn.addEventListener('click', () => {
@@ -272,6 +382,18 @@
                         timestamp: new Date().getTime()
                     };
                     localStorage.setItem('privacyConsent', JSON.stringify(consentData));
+                    
+                    try {
+                        // Google Consent Mode v2 - deny consent
+                        window.dataLayer = window.dataLayer || [];
+                        function gtag(){dataLayer.push(arguments);}
+                        gtag('consent','update',{
+                            'ad_storage': 'denied',
+                            'analytics_storage': 'denied',
+                            'ad_user_data': 'denied',
+                            'ad_personalization': 'denied'
+                        });
+                    } catch(e) { /* noop */ }
                     
                     // Show the reconsideration modal
                     reconsiderModal.classList.add('active');
@@ -324,6 +446,7 @@
             });
         })();
     </script>
+    <script src="../js/lofi.js" defer></script>
     <script src="../js/infomodal.js" defer></script>
 </body>
 </html>
