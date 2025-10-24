@@ -40,8 +40,10 @@ body[data-theme="dark"] .c-theme-toggle::before {
 
 @media (max-width: 768px) {
     .c-theme-toggle {
-        top: 10px;
-        right: 10px;
+        position: relative;
+        top: auto;
+        right: auto;
+        margin: 0 auto 1.5rem auto;
         padding: 8px 16px;
         font-size: 0.85rem;
     }
