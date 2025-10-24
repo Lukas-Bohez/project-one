@@ -22,8 +22,16 @@ class QuizApp {
         // Initialize all systems
         this.chatSystem = new ChatSystem();
         this.authSystem = new AuthSystem();
-        this.quizLogic = new QuizLogic();
-
+        
+        // Use existing instance if available, otherwise create new one
+        if (window.quizLogicInstance) {
+            console.log('Using existing QuizLogic instance');
+            this.quizLogic = window.quizLogicInstance;
+        } else {
+            console.log('Creating new QuizLogic instance');
+            this.quizLogic = new QuizLogic();
+            window.quizLogicInstance = this.quizLogic;
+        }
 
         // Set up cross-system communication
         this.setupCrossSystemEvents();

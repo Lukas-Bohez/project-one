@@ -436,33 +436,29 @@ bindAnswerEvents() {
         return;
     }
 
+    // Always set this instance as the active handler
+    window.activeQuizHandler = this;
+    console.log("Setting active quiz handler to:", this);
+
     answerBoxes.forEach((box) => {
         // Remove ALL existing listeners to prevent conflicts
-        const oldListeners = box.getEventListeners ? box.getEventListeners('click') : [];
         if (box.__quizAnswerListener) {
             box.removeEventListener('click', box.__quizAnswerListener);
             box.__quizAnswerListener = null;
         }
 
-        // Mark this handler as the active one
-        if (!window.activeQuizHandler) {
-            window.activeQuizHandler = this;
-        }
-
-        // Only bind if this is the active handler
-        if (window.activeQuizHandler === this) {
-            const newClickListener = (event) => {
-                // Prevent other handlers from processing this click
-                event.stopImmediatePropagation();
-                console.log("Answer clicked by active handler:", this);
-                this.handleAnswerClick(box);
-            };
-            box.addEventListener('click', newClickListener, { capture: true });
-            box.__quizAnswerListener = newClickListener;
-        }
+        // Bind the new click listener
+        const newClickListener = (event) => {
+            // Prevent other handlers from processing this click
+            event.stopImmediatePropagation();
+            console.log("Answer clicked by active handler:", this);
+            this.handleAnswerClick(box);
+        };
+        box.addEventListener('click', newClickListener, { capture: true });
+        box.__quizAnswerListener = newClickListener;
     });
 
-    console.log("Bound events to", answerBoxes.length, "answer boxes (active handler:", window.activeQuizHandler === this, ")");
+    console.log("Bound events to", answerBoxes.length, "answer boxes (active handler: true )");
 }
 
 handleAnswerClick(boxElement) {
