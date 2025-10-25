@@ -519,6 +519,154 @@ def threadsafe_emit_message_sent(sio, session_id, loop):
     """
     Thread-safe emission of 'message_sent' event
     
+
+# ----------------------------------------------------
+# Stories Endpoints
+# ----------------------------------------------------
+
+def _slugify(value: str) -> str:
+    try:
+        import re
+        return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+    except Exception:
+        return value
+
+@app.get(ENDPOINT + "/stories/", tags=["Stories"])
+def list_stories():
+    try:
+        stories = StoriesRepository.list_stories()
+        return stories or []
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list stories: {e}")
+
+@app.post(ENDPOINT + "/stories/create-if-not-exists", tags=["Stories"])
+def create_story_if_not_exists(payload: Dict[str, Any] = Body(...)):
+    name = (payload or {}).get("name")
+    if not name or not isinstance(name, str):
+        raise HTTPException(status_code=400, detail="Field 'name' is required")
+    slug = (payload or {}).get("slug") or _slugify(name)
+    description = (payload or {}).get("description")
+    try:
+        existing = StoriesRepository.get_story_by_name(name)
+        if existing:
+            return {"created": False, "story": existing}
+        new_id = StoriesRepository.create_story(name, slug, description)
+        if not new_id:
+            raise HTTPException(status_code=500, detail="Failed to create story")
+        created = StoriesRepository.get_story_by_id(int(new_id))
+        return {"created": True, "story": created}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create story: {e}")
+
+
+# ----------------------------------------------------
+# Articles Endpoints (fix view/create/update/delete and by-story)
+# ----------------------------------------------------
+
+@app.get(ENDPOINT + "/articles/by-story/{story_id}/", tags=["Articles"])
+def get_articles_by_story(story_id: int, active_only: bool = False):
+    try:
+        articles = ArticlesRepository.get_articles_by_story_id(story_id, active_only=active_only)
+        return articles or []
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch articles for story {story_id}: {e}")
+
+
+@app.get(ENDPOINT + "/articles/{article_id}/", tags=["Articles"])
+def get_article(article_id: int, increment_view: bool = True):
+    try:
+        if increment_view:
+            try:
+                ArticlesRepository.increment_view_count(article_id)
+            except Exception:
+                # Non-fatal
+                pass
+        article = ArticlesRepository.get_article_by_id(article_id)
+        if not article:
+            raise HTTPException(status_code=404, detail="Article not found")
+        return article
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch article {article_id}: {e}")
+
+
+@app.post(ENDPOINT + "/articles/", tags=["Articles"])
+def create_article(payload: Dict[str, Any] = Body(...)):
+    try:
+        title = payload.get("title")
+        author = payload.get("author") or "Unknown"
+        date_written = payload.get("date_written") or datetime.now().strftime("%Y-%m-%d")
+        story = payload.get("story")
+        story_id = payload.get("story_id")
+        story_order = payload.get("story_order") or 0
+        content = payload.get("content") or ""
+        excerpt = payload.get("excerpt")
+        category = payload.get("category") or "general"
+        tags = payload.get("tags")
+        word_count = payload.get("word_count") or 0
+        reading_time_minutes = payload.get("reading_time_minutes") or 0
+        is_active = bool(payload.get("is_active", True))
+        is_featured = bool(payload.get("is_featured", False))
+
+        if not title:
+            raise HTTPException(status_code=400, detail="Field 'title' is required")
+
+        new_id = ArticlesRepository.create_article(
+            title=title,
+            author=author,
+            date_written=date_written,
+            story=story,
+            content=content,
+            excerpt=excerpt,
+            category=category,
+            tags=tags,
+            word_count=word_count,
+            reading_time_minutes=reading_time_minutes,
+            is_active=is_active,
+            is_featured=is_featured,
+            story_id=story_id,
+            story_order=story_order
+        )
+        if not new_id:
+            raise HTTPException(status_code=500, detail="Failed to create article")
+        created = ArticlesRepository.get_article_by_id(int(new_id))
+        return created
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create article: {e}")
+
+
+@app.put(ENDPOINT + "/articles/{article_id}/", tags=["Articles"])
+def update_article(article_id: int, payload: Dict[str, Any] = Body(...)):
+    try:
+        ok = ArticlesRepository.update_article(article_id, **(payload or {}))
+        if not ok:
+            raise HTTPException(status_code=400, detail="No valid fields to update or update failed")
+        updated = ArticlesRepository.get_article_by_id(article_id)
+        return updated
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update article {article_id}: {e}")
+
+
+@app.delete(ENDPOINT + "/articles/{article_id}/", tags=["Articles"])
+def delete_article(article_id: int):
+    try:
+        # StoriesRepository contains delete_article helper
+        ok = StoriesRepository.delete_article(article_id)
+        if not ok:
+            raise HTTPException(status_code=404, detail="Article not found or already deleted")
+        return {"deleted": True, "article_id": article_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete article {article_id}: {e}")
+
     Args:
         sio: Socket.IO client instance
         session_id: The session ID to include in the message
