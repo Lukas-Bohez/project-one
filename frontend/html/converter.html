@@ -5,22 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- Performance hint for AdSense -->
-    <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin>
-    <!-- Google Consent Mode v2 default (deny until consent) -->
-        <script>
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('consent','default',{
-                'ad_storage':'denied',
-                'analytics_storage':'denied',
-                'ad_user_data':'denied',
-                'ad_personalization':'denied',
-                'functionality_storage':'granted',
-                'security_storage':'granted'
-            });
-        </script>
-        <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449" crossorigin="anonymous"></script>
+        <!-- AdSense and ad-related code removed: site is now ad-free -->
     <title>Convert The Spire — YouTube Playlist Converter (Free)</title>
     <meta name="description" content="Convert full YouTube playlists to MP3 or MP4 with metadata, album art and lyrics. Built for reliable playlist downloads and client-side ZIP chunking. Other platforms coming soon.">
     <meta name="keywords" content="youtube to mp3, youtube downloader, convert youtube to mp4, free video converter, tiktok downloader, instagram video download, social media converter, mp3 converter, video to audio, twitter video download, facebook video downloader, reddit video converter, twitch clip downloader, social media to mp3, online video converter, no registration video downloader, high quality mp3, 320kbps mp3, 1080p mp4, free online converter, mp3 with metadata, album art, cover art">
@@ -37,7 +22,6 @@
     <meta name="category" content="multimedia">
     <meta name="subject" content="Video conversion and downloading service">
     <meta name="copyright" content="© 2025 Convert The Spire by Oroka Conner. All rights reserved.">
-    <meta name="reply-to" content="our support chat">
     <meta name="designer" content="Oroka Conner">
     <meta name="target" content="all">
     <meta name="audience" content="all">
@@ -93,6 +77,43 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="icon" href="../favicon.ico" sizes="192x192">
     <link rel="apple-touch-icon" href="../favicon.ico" sizes="192x192">
+    <script>
+    // Add leave-site confirmation for links that navigate back to Quiz The Spire
+    (function(){
+        const selector = 'a[href="../index.html"], a[href^="/html/"]';
+        document.addEventListener('DOMContentLoaded', function(){
+            document.querySelectorAll(selector).forEach(function(el){
+                // Skip links that open in a new tab already
+                if(el.target && el.target === '_blank') return;
+                el.addEventListener('click', function(e){
+                    const msg = 'You are leaving Convert The Spire to go to Quiz The Spire (a separate site). Continue?';
+                    if(!confirm(msg)){
+                        e.preventDefault();
+                    }
+                    // If confirmed, default navigation proceeds
+                });
+                // Improve accessibility by adding a title
+                if(!el.getAttribute('title')){
+                    el.setAttribute('title','Leaving Convert The Spire: opens Quiz The Spire (separate site)');
+                }
+            });
+        });
+    })();
+    </script>
+    <style>
+        /* Owner-notice styling with dark mode support */
+        .owner-notice{background:#fff3cd;border-left:4px solid #ffc107;padding:14px;border-radius:6px;margin:16px 0;color:#856404}
+        .owner-notice strong{display:block;margin-bottom:6px}
+        .owner-notice p{margin:0 0 6px 0}
+        .owner-notice a{color:#0645ad}
+        /* Dark theme variants (themeManager may use data-theme or body classes) */
+        [data-theme="dark"] .owner-notice, body.theme-dark .owner-notice, .theme-dark .owner-notice{
+            background:#071026;border-left-color:#f59e0b;color:#f8f3dd
+        }
+        [data-theme="dark"] .owner-notice a, body.theme-dark .owner-notice a, .theme-dark .owner-notice a{
+            color:#93c5fd
+        }
+    </style>
     
     <!-- Structured Data for SEO -->
     <!-- Enhanced Structured Data for Maximum SEO -->
@@ -114,8 +135,6 @@
         "author": {
             "@type": "Person",
             "name": "Oroka Conner",
-            "email": "our support chat",
-            "url": "https://github.com/OrokaConner"
         },
         "publisher": {
             "@type": "Organization",
@@ -239,15 +258,13 @@
         <p><strong>🚀 Smart Download System!</strong> Browser cookies + Proxy rotation + Invidious fallback for maximum reliability.</p>
     </div>
     
-    <div class="announcement-banner" style="background: linear-gradient(135deg, #2c4c7c 0%, #0c4061 100%); margin-bottom: 20px;">
-        <p>✨ Auto-fallback: Tries browser cookies → proxies → Invidious mirrors. Upload cookies via Advanced Options for best results!</p>
-    </div>
+
 
     <main class="o-container">
         <!-- Welcome Message -->
         <section class="c-welcome-message">
                 <h1>Full YouTube Playlist Converter — MP3 & MP4 with Metadata</h1>
-            <p>Convert entire <strong>YouTube playlists</strong> to high-quality MP3 (up to 320kbps) or MP4 (up to 1080p). Includes metadata, album art, and lyrics when available. Client-side packaging minimizes server load and supports large playlists with 1GB per-part ZIP splitting. Other platforms are marked "Coming soon".</p>
+            <p>Convert entire <strong>YouTube playlists</strong> to high-quality MP3 (up to 320kbps) or MP4 (up to 1080p). Includes metadata, album art, and lyrics when available. Client-side packaging minimizes server load and supports large playlists with 1GB per-part ZIP splitting.</p>
             <div class="c-note">
                 <span>🎵 <strong>Convert The Spire by Oroka Conner</strong> - The fastest and safest way to download your favorite videos and music with complete metadata. <a href="#how-to-use" target="_self"><strong>Learn how to use</strong></a></span>
             </div>
@@ -446,6 +463,13 @@
                 <p><strong>Convert YouTube videos to MP3 or MP4</strong> and download them with Convert The Spire. Our YouTube converter is the <em>fastest and safest</em> solution that supports high-quality audio up to <strong>320kbps</strong> and video up to <strong>1080p HD</strong>.</p>
                 <p>Convert The Spire is the ultimate <strong>YouTube to MP3 converter</strong> that allows you to download YouTube videos and convert them into audio or video format. Perfect for listening to music, podcasts, and educational content offline on any device. Our YouTube downloader works with regular videos, YouTube Shorts, and live streams.</p>
 
+                <!-- Prominent owner-only disclaimer -->
+                <div class="owner-notice">
+                    <strong>🚨 Important — Owner / Permission Notice</strong>
+                    <p>Convert The Spire is intended only for converting videos that you personally own or for which you have explicit permission from the copyright holder. By using this service you confirm that you own the rights to the content or have been granted permission to convert and download it.</p>
+                    <p>Do not use this service to download copyrighted content without authorization. For details, see our <a href="converter-terms.html">Terms of Service</a> and <a href="converter-privacy.html">Privacy Policy</a>.</p>
+                </div>
+
                 <h3>How to Convert YouTube Videos to MP3/MP4 - Step by Step</h3>
                 <ol>
                     <li>Go to YouTube and find the video you want to convert and download.</li>
@@ -458,6 +482,7 @@
 
                 <h3>Why Convert The Spire is the Best YouTube to MP3 Converter</h3>
                 <ul>
+                    <li>🛡️ Now <strong>100% ad-free</strong> for a better user experience!</li>
                     <li>⚡ <strong>Lightning Fast Conversion:</strong> Convert YouTube to MP3 in seconds</li>
                     <li>🔒 <strong>Safe & Secure:</strong> No malware, viruses, or data collection</li>
                     <li>🎵 <strong>High Quality Downloads:</strong> Up to 320kbps MP3 audio and 1080p MP4 video</li>
@@ -626,12 +651,6 @@
                     All rights reserved.
                 </p>
                 <div class="c-footer__social">
-                    <a href="/html/support.html" class="c-footer__social-link" title="Contact Us">
-                        <i class="fas fa-envelope"></i>
-                    </a>
-                    <a href="https://github.com/OrokaConner" class="c-footer__social-link" title="GitHub" target="_blank" rel="noopener">
-                        <i class="fab fa-github"></i>
-                    </a>
                 </div>
             </div>
             
@@ -664,7 +683,6 @@
                     <li><a href="converter-privacy.html" class="c-footer__link">Privacy Policy</a></li>
                     <li><a href="converter-terms.html" class="c-footer__link">Terms of Service</a></li>
                     <li><a href="converter-about.html" class="c-footer__link">About Us</a></li>
-                    <li><a href="/html/support.html" class="c-footer__link">Contact Support</a></li>
                     <li><a href="converter-about.html#faq" class="c-footer__link">FAQ</a></li>
                     <li><a href="../sitemap.xml" class="c-footer__link">Sitemap</a></li>
                 </ul>
@@ -673,10 +691,6 @@
         
         <div class="c-footer__bottom">
             <div class="c-footer__container">
-                <div class="c-footer__copyright">
-                    <p>&copy; 2025 Convert The Spire. All rights reserved. | 
-                    Created with ❤️ by the <a href="/html/support.html" class="c-footer__link--inline">QuizTheSpire Team</a></p>
-                </div>
                 <div class="c-footer__disclaimer">
                     <p><small>
                         Convert The Spire is a free service for personal use. Users are responsible for ensuring they have the right to download content. 

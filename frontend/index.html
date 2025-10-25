@@ -85,7 +85,7 @@
                 <button id="servoTestBtn" class="c-btn c-btn--tertiary gamepad">Toggle Theme</button>
                 <button id="conversionBtn" class="c-btn c-btn--tertiary" onclick="window.location.href='html/conversion.html'">File Converter</button>
                 <button id="studyQuizBtn" class="c-btn c-btn--tertiary" onclick="window.location.href='html/study.html'">Study quiz questions</button>
-                <button id="mediaConverterBtn" class="c-btn c-btn--primary" onclick="window.location.href='html/converter.html'">🎵 Convert The Spire</button>
+                <button id="mediaConverterBtn" class="c-btn c-btn--primary" onclick="if(!confirm('You are leaving Quiz The Spire and will be taken to Convert The Spire (a separate tool). Continue?')) return; window.location.href='html/converter.html'">🎵 Convert The Spire</button>
                 <button id="articleTheSpireBtn" class="c-btn c-btn--tertiary" onclick="window.location.href='html/content.html'">Article the spire</button>
                 <button id="storyCreatorBtn" class="c-btn c-btn--tertiary" onclick="window.location.href='html/storyCreator.html'">Story Creator</button>
             </div>
@@ -111,6 +111,11 @@
             Created, Owned & Operated by <strong>Oroka Conner</strong><br>
             All rights reserved.
         </p>
+        <div>
+            <strong>Disclaimer:</strong>
+            <div>Convert The Spire is a separate tool, unaffiliated with Quiz The Spire except for being hosted on the same domain. <br> This link opens a separate tool intended only for converting videos you own or have explicit permission to use.<br> Please do not use it to download copyrighted content without authorization.</div>
+            <div style="margin-top:6px;">Quiz The Spire does not endorse or operate Convert The Spire.</div>
+        </div>
         <p class="c-footer__links">
             <a href="html/privacy.html" class="c-footer__link">Privacy Policy</a> |
             <a href="html/contact.html" class="c-footer__link">Contact Us</a> |
