@@ -337,32 +337,41 @@
 
     const prevIndex = idx - 1;
     const nextIndex = idx + 1;
+    const hasMultipleArticles = articles.length > 1;
+    const hasPrevious = prevIndex >= 0;
+    const hasNext = nextIndex < articles.length;
 
-    const prevButton = prevIndex >= 0 ?
+    const prevButton = hasPrevious ?
       `<button class="nav-button prev-button" onclick="loadArticle(${prevIndex})">
         <span class="button-icon">←</span>
-        Previous: ${escapeHTML(articles[prevIndex].title)}
+        Previous
       </button>` : '';
 
-    const nextButton = nextIndex < articles.length ?
+    const nextButton = hasNext ?
       `<button class="nav-button next-button" onclick="loadArticle(${nextIndex})">
-        Next: ${escapeHTML(articles[nextIndex].title)}
+        Next
         <span class="button-icon">→</span>
       </button>` : '';
 
-    const navigationHTML = `
+    const navigationHTML = hasMultipleArticles ? `
       <div class="article-navigation top-navigation">
-        ${prevButton}
-        ${nextButton}
+        <div class="nav-controls" style="display: flex; align-items: center; gap: 1rem;">
+          ${prevButton}
+          <span class="article-counter">${idx + 1} / ${articles.length}</span>
+          ${nextButton}
+        </div>
       </div>
-    `;
+    ` : '';
 
-    const bottomNavigationHTML = `
+    const bottomNavigationHTML = hasMultipleArticles ? `
       <div class="article-navigation bottom-navigation">
-        ${prevButton}
-        ${nextButton}
+        <div class="nav-controls" style="display: flex; align-items: center; gap: 1rem;">
+          ${prevButton}
+          <span class="article-counter">${idx + 1} / ${articles.length}</span>
+          ${nextButton}
+        </div>
       </div>
-    `;
+    ` : '';
 
     articleDisplay.innerHTML = `
       <div class="article">
@@ -424,6 +433,25 @@
     });
   }
 
+  // Clear articles cache
+  function clearArticlesCache() {
+    try {
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('contentPlus_articles_')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      console.log(`Cleared ${keysToRemove.length} articles cache entries`);
+      alert(`Cleared ${keysToRemove.length} articles cache entries. Refresh the page to reload fresh data.`);
+    } catch (e) {
+      console.error('Error clearing articles cache:', e);
+      alert('Error clearing articles cache. Check console for details.');
+    }
+  }
+
   // Auto-init on DOM ready
   document.addEventListener('DOMContentLoaded', () => {
     bindThemeToggle();
@@ -435,5 +463,6 @@
   window.loadStory = loadStory;
   window.loadArticle = loadArticle;
   window.showSection = showSection;
+  window.clearArticlesCache = clearArticlesCache;
 
 })();
