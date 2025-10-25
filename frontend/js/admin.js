@@ -286,6 +286,37 @@ const fetchUsers = async () => {
     }
 };
 
+// Fetch stories list for Stories tab and story filters (renamed to avoid collision with articles.js)
+const fetchStoriesAdmin = async () => {
+    const url = `${lanIP}/api/v1/stories/`;
+    try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        return Array.isArray(data) ? data : [];
+    } catch (err) {
+        console.error('Failed to fetch stories:', err);
+        return [];
+    }
+};
+
+// Create story if not exists
+const createStoryIfNotExists = async (name, description = '', slug = '') => {
+    const url = `${lanIP}/api/v1/stories/create-if-not-exists`;
+    const payload = { name, description };
+    if (slug && typeof slug === 'string') payload.slug = slug;
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+        const txt = await res.text().catch(() => '');
+        throw new Error(`Failed to create story: HTTP ${res.status} ${txt}`);
+    }
+    return res.json();
+};
+
 // Fallback function to fetch basic user info without IP addresses
 const fetchUsersBasic = async () => {
     const url = `${lanIP}/api/v1/users/basic/`;
@@ -2630,8 +2661,8 @@ const handleMigrationClick = async () => {
 window.addEventListener('DOMContentLoaded', async () => {
   try {
     const storyFilter = document.querySelector('.js-story-filter');
-    if (storyFilter && typeof fetchStories === 'function') {
-      const stories = await fetchStories();
+        if (storyFilter) {
+            const stories = await fetchStoriesAdmin();
       storyFilter.innerHTML = '<option value="">All Stories</option>' +
         stories.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
       storyFilter.addEventListener('change', async (e) => {
@@ -2652,14 +2683,40 @@ window.addEventListener('DOMContentLoaded', async () => {
 async function loadStoriesTab() {
   const container = document.querySelector('.c-story-list');
   if (!container) return;
-  container.innerHTML = '<div class="c-loading">Loading stories...</div>';
+    container.innerHTML = '<div class="c-loading">Loading stories...</div>';
   try {
-    const stories = (typeof fetchStories === 'function') ? await fetchStories() : [];
+    const stories = await fetchStoriesAdmin();
     if (!stories || stories.length === 0) {
-      container.innerHTML = '<div class="c-empty-state"><i class="fas fa-book-open"></i><h3>No stories yet</h3><p>Create articles with a story to get started.</p></div>';
+            container.innerHTML = `
+                <div class="c-admin-header" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;">
+                    <h2 class="c-admin-title" style="margin:0;">Stories</h2>
+                    <button class="c-btn c-btn--primary js-create-story"><i class="fas fa-plus"></i> Create Story</button>
+                </div>
+                <div class="c-empty-state"><i class="fas fa-book-open"></i><h3>No stories yet</h3><p>Create a story to start grouping articles.</p></div>
+            `;
+            const createBtn = container.querySelector('.js-create-story');
+            if (createBtn) {
+                createBtn.addEventListener('click', async () => {
+                    try {
+                        const name = prompt('Story name (required):');
+                        if (!name || !name.trim()) return;
+                        const description = prompt('Story description (optional):') || '';
+                        const result = await createStoryIfNotExists(name.trim(), description.trim());
+                        showNotification(result.created ? 'Story created' : 'Story already existed', 'success');
+                        await loadStoriesTab();
+                    } catch (e) {
+                        console.error(e);
+                        showNotification(e.message || 'Failed to create story', 'error');
+                    }
+                });
+            }
       return;
     }
-    container.innerHTML = `
+        container.innerHTML = `
+            <div class="c-admin-header" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;">
+                <h2 class="c-admin-title" style="margin:0;">Stories</h2>
+                <button class="c-btn c-btn--primary js-create-story"><i class="fas fa-plus"></i> Create Story</button>
+            </div>
       <div class="c-stories-grid">
         ${stories.map(s => `
           <div class="c-story-card" data-story-id="${s.id}">
@@ -2678,6 +2735,24 @@ async function loadStoriesTab() {
       <div class="c-story-articles js-story-articles" style="margin-top:16px;"></div>
     `;
 
+        // Hook up Create Story button
+        const createBtn = container.querySelector('.js-create-story');
+        if (createBtn) {
+            createBtn.addEventListener('click', async () => {
+                try {
+                    const name = prompt('Story name (required):');
+                    if (!name || !name.trim()) return;
+                    const description = prompt('Story description (optional):') || '';
+                    const result = await createStoryIfNotExists(name.trim(), description.trim());
+                    showNotification(result.created ? 'Story created' : 'Story already existed', 'success');
+                    await loadStoriesTab();
+                } catch (e) {
+                    console.error(e);
+                    showNotification(e.message || 'Failed to create story', 'error');
+                }
+            });
+        }
+
     container.querySelectorAll('.js-view-story').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const storyId = e.currentTarget.getAttribute('data-id');
@@ -2690,22 +2765,115 @@ async function loadStoriesTab() {
           const list = await res.json();
           // Ensure ordered by story_order ascending
           list.sort((a, b) => (a.story_order ?? 0) - (b.story_order ?? 0));
-          target.innerHTML = list.map(a => `
-            <div class="c-article-item" data-id="${a.id}">
-              <div class="c-article-header">
-                <h3 class="c-article-title">${a.title}</h3>
-                <span class="c-article-status c-article-status--${a.is_active ? 'published' : 'draft'}">
-                  ${a.is_active ? 'published' : 'draft'}
-                </span>
+          
+          // Parse content and render articles like articles.js does
+          target.innerHTML = list.map(a => {
+            const createdAt = new Date(a.created_at).toLocaleDateString();
+            const updatedAt = new Date(a.updated_at).toLocaleDateString();
+            
+            // Parse the JSON content
+            let contentData = {};
+            try {
+              contentData = typeof a.content === 'string' ? JSON.parse(a.content) : (a.content || {});
+            } catch (e) {
+              console.warn('Failed to parse article content JSON:', e);
+              contentData = {};
+            }
+            
+            // Get highlights from parsed content (up to 3)
+            const highlights = Array.isArray(contentData.highlights) 
+              ? contentData.highlights.slice(0, 3).map(h => {
+                  const title = typeof h === 'object' ? h.title : h;
+                  return `<span class="c-article-highlight">${escapeHTML(title)}</span>`;
+                }).join('')
+              : '';
+            
+            // Get intro from parsed content, fall back to story field, then excerpt
+            const intro = contentData.intro || a.story || a.excerpt || 'No introduction available';
+            
+            // Determine article status
+            const status = a.is_active ? 'published' : 'draft';
+            
+            return `
+              <div class="c-article-item" data-id="${a.id}">
+                <div class="c-article-header">
+                  <h3 class="c-article-title">${escapeHTML(a.title)}</h3>
+                  <span class="c-article-status c-article-status--${status}">
+                    <i class="fas fa-${status === 'published' ? 'globe' : 'edit'}"></i>
+                    ${status}
+                  </span>
+                </div>
+                
+                <div class="c-article-meta">
+                  <span class="c-article-meta-item">
+                    <i class="fas fa-hashtag"></i>
+                    Order: ${a.story_order ?? 0}
+                  </span>
+                  <span class="c-article-meta-item">
+                    <i class="fas fa-user"></i>
+                    ${escapeHTML(a.author)}
+                  </span>
+                  <span class="c-article-meta-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    Written: ${a.date_written || 'Not specified'}
+                  </span>
+                  <span class="c-article-meta-item">
+                    <i class="fas fa-calendar"></i>
+                    Created: ${createdAt}
+                  </span>
+                  <span class="c-article-meta-item">
+                    <i class="fas fa-edit"></i>
+                    Updated: ${updatedAt}
+                  </span>
+                  ${a.category ? `
+                  <span class="c-article-meta-item">
+                    <i class="fas fa-tag"></i>
+                    ${escapeHTML(a.category)}
+                  </span>
+                  ` : ''}
+                  ${a.view_count !== undefined ? `
+                  <span class="c-article-meta-item">
+                    <i class="fas fa-eye"></i>
+                    ${a.view_count} views
+                  </span>
+                  ` : ''}
+                </div>
+                
+                <div class="c-article-intro">${escapeHTML(intro)}</div>
+                
+                ${highlights ? `<div class="c-article-highlights">${highlights}</div>` : ''}
+                
+                <div class="c-article-actions">
+                  <button class="c-btn c-btn--primary js-view-article-story" data-id="${a.id}">
+                    <i class="fas fa-eye"></i> View
+                  </button>
+                </div>
               </div>
-              <div class="c-article-meta">
-                <span><i class="fas fa-hashtag"></i> Order: ${a.story_order ?? 0}</span>
-                <span><i class="fas fa-user"></i> ${a.author}</span>
-                <span><i class="fas fa-calendar-alt"></i> ${a.date_written || ''}</span>
-              </div>
-              <div class="c-article-intro">${(function(){ try{ const c = typeof a.content==='string'?JSON.parse(a.content):a.content||{}; return c.intro || a.excerpt || ''; }catch(e){ return a.excerpt || ''; } })()}</div>
-            </div>
-          `).join('');
+            `;
+          }).join('');
+          
+          // Attach click listeners to view buttons
+          target.querySelectorAll('.js-view-article-story').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = btn.getAttribute('data-id');
+              try {
+                const viewRes = await fetch(`${lanIP}/api/v1/articles/${encodeURIComponent(id)}/`);
+                if (!viewRes.ok) throw new Error(`HTTP ${viewRes.status}`);
+                const art = await viewRes.json();
+                
+                // Use the same showArticleDetails function from articles.js if available
+                if (typeof showArticleDetails === 'function') {
+                  showArticleDetails(art);
+                } else {
+                  console.log('Viewed article:', art);
+                  showNotification('Article loaded (view modal not available)', 'info');
+                }
+              } catch (e) {
+                console.error('View article failed:', e);
+                showNotification('Failed to load article', 'error');
+              }
+            });
+          });
         } catch (err) {
           console.error('Failed to load story articles:', err);
           target.innerHTML = '<div class="c-error-state">Failed to load articles for this story.</div>';

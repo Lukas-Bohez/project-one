@@ -356,7 +356,7 @@ const renderArticlesGrouped = async () => {
     }
 };
 
-// Simple read-only view modal for an article
+// Simple read-only view modal for an article (enhanced to show full JSON content)
 const showArticleDetails = (article) => {
     const modal = domAdmin.editModal;
     const modalTitle = modal.querySelector('.c-modal-title');
@@ -366,16 +366,81 @@ const showArticleDetails = (article) => {
     try {
         contentData = typeof article.content === 'string' ? JSON.parse(article.content) : (article.content || {});
     } catch {}
+
+    const highlightsHtml = (() => {
+        if (!Array.isArray(contentData.highlights) || contentData.highlights.length === 0) return '';
+        return `
+            <div class="content-highlights">
+                <h3 class="content-section-title"><i class="fas fa-star"></i> Highlights</h3>
+                <div class="content-highlights-grid">
+                    ${contentData.highlights.map(h => {
+                        if (typeof h === 'object') {
+                            return `
+                                <div class="content-highlight-item">
+                                    <h4 class="content-highlight-title">${escapeHTML(h.title || '')}</h4>
+                                    ${h.content ? `<p class="content-highlight-content">${escapeHTML(h.content)}</p>` : ''}
+                                </div>
+                            `;
+                        }
+                        return `<div class="content-highlight-item"><p class="content-highlight-content">${escapeHTML(String(h))}</p></div>`;
+                    }).join('')}
+                </div>
+            </div>`;
+    })();
+
+    const cardsHtml = (() => {
+        if (!Array.isArray(contentData.cards) || contentData.cards.length === 0) return '';
+        return `
+            <div class="content-cards">
+                <h3 class="content-section-title"><i class="fas fa-th-large"></i> Cards</h3>
+                <div class="content-cards-grid">
+                    ${contentData.cards.map(card => {
+                        const listHtml = Array.isArray(card.list) && card.list.length
+                            ? `<ul class="content-card-list">${card.list.map(li => `<li>${escapeHTML(String(li))}</li>`).join('')}</ul>`
+                            : '';
+                        const imgHtml = card.image ? `<div class="content-card-image"><img src="${escapeHTML(card.image)}" alt="${escapeHTML(card.title || 'Card image')}"></div>` : '';
+                        return `
+                            <div class="content-card">
+                                <h4 class="content-card-title">${escapeHTML(card.title || '')}</h4>
+                                ${imgHtml}
+                                ${card.content ? `<p class="content-card-content">${escapeHTML(card.content)}</p>` : ''}
+                                ${listHtml}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>`;
+    })();
+
+    const sectionsHtml = (() => {
+        if (!Array.isArray(contentData.sections) || contentData.sections.length === 0) return '';
+        return `
+            <div class="content-sections">
+                ${contentData.sections.map(sec => `
+                    <div class="content-section">
+                        <h3 class="content-section-heading">${escapeHTML(sec.title || '')}</h3>
+                        ${sec.content ? `<p class="content-section-text">${escapeHTML(sec.content)}</p>` : ''}
+                        ${Array.isArray(sec.list) && sec.list.length ? `<ul class="content-section-list">${sec.list.map(li => `<li>${escapeHTML(String(li))}</li>`).join('')}</ul>` : ''}
+                    </div>
+                `).join('')}
+            </div>`;
+    })();
+
     form.innerHTML = `
-        <div class="c-article-view">
-            <h3>${escapeHTML(article.title)}</h3>
-            <div class="c-article-meta">
-                <span><i class="fas fa-user"></i> ${escapeHTML(article.author || '')}</span>
-                <span><i class="fas fa-calendar-alt"></i> ${article.date_written || ''}</span>
-                <span><i class="fas fa-hashtag"></i> Order: ${article.story_order ?? 0}</span>
+        <div class="content-enhancement-container">
+            <div class="content-article-header">
+                <h1 class="content-article-title">${escapeHTML(article.title)}</h1>
+                <div class="content-article-meta">
+                    <div class="content-meta-item"><i class="fas fa-user"></i> ${escapeHTML(article.author || '')}</div>
+                    <div class="content-meta-item"><i class="fas fa-calendar-alt"></i> ${article.date_written || ''}</div>
+                    <div class="content-meta-item"><i class="fas fa-hashtag"></i> Order: ${article.story_order ?? 0}</div>
+                    ${article.view_count !== undefined ? `<div class="content-meta-item"><i class="fas fa-eye"></i> ${article.view_count} views</div>` : ''}
+                </div>
             </div>
-            <p>${escapeHTML(contentData.intro || article.excerpt || '')}</p>
-            ${Array.isArray(contentData.highlights) && contentData.highlights.length ? `<ul>${contentData.highlights.map(h => `<li>${escapeHTML(typeof h === 'object' ? h.title : h)}</li>`).join('')}</ul>` : ''}
+            ${contentData.intro || article.excerpt ? `<p class="content-article-intro">${escapeHTML(contentData.intro || article.excerpt || '')}</p>` : ''}
+            ${highlightsHtml}
+            ${cardsHtml}
+            ${sectionsHtml}
             <div class="c-form-actions">
                 <button type="button" class="c-btn c-btn--cancel js-close-modal">Close</button>
             </div>
