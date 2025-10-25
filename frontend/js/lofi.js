@@ -33,6 +33,25 @@ const config = {
     }
 };
 
+// Allowed pages for YouTube-related features (only these pages may load the YouTube API
+// or schedule YouTube downloads). Keep in sync with the converter/support pages where
+// the YouTube UI is intended to appear.
+const YT_ALLOWED_PAGES = [
+    'converter.html',
+    'converter-terms.html',
+    'converter-privacy.html',
+    'converter-about.html'
+];
+
+const isAllowedPage = () => {
+    try {
+        const p = window.location.pathname.split('/').pop();
+        return YT_ALLOWED_PAGES.includes(p);
+    } catch (e) {
+        return false;
+    }
+};
+
 // ADD YOUR AUDIO FILENAMES HERE (only if folder scanning doesn't work)
 const manualSongList = [
     // Example: 'my-song.mp3', 'another-track.wav', 'chill-beat.mp3'
@@ -341,6 +360,11 @@ const activateLofiPlayer = () => {
 
 // Load YouTube API
 const loadYouTubeAPI = () => {
+    if (!isAllowedPage()) {
+        console.log('YouTube API load blocked on this page (not a converter/support page)');
+        return;
+    }
+
     if (window.YT) {
         console.log('YouTube API already loaded');
         return;
@@ -468,6 +492,11 @@ const playNextYouTube = () => {
 
 // Switch to YouTube mode
 const switchToYouTube = (url) => {
+    // Extra safety: do not allow entering YouTube mode on disallowed pages
+    if (!isAllowedPage()) {
+        console.warn('Attempt to switch to YouTube blocked: page not allowed for YouTube features');
+        return false;
+    }
     // Strict mode separation: only play YouTube content in YouTube mode
     if (!isYouTubeMode) {
         console.log('MODE: In Local mode - YouTube playback blocked. Switch to YouTube mode first.');
@@ -620,6 +649,10 @@ const addYouTubeToCachedList = (input) => {
 
 // Schedule YouTube video download and conversion
 const scheduleYouTubeDownload = async (item) => {
+    if (!isAllowedPage()) {
+        console.warn('YouTube downloads are disabled on this page; scheduleYouTubeDownload() blocked');
+        return;
+    }
     if (!item || item.status === 'converting' || item.status === 'ready') {
         return; // Skip if already in progress or ready
     }
@@ -666,6 +699,10 @@ const scheduleYouTubeDownload = async (item) => {
 
 // Poll conversion status and download when ready
 const pollYouTubeConversion = async (item) => {
+    if (!isAllowedPage()) {
+        console.warn('YouTube conversion polling disabled on this page');
+        return;
+    }
     if (!item.downloadId) {
         console.error('DOWNLOAD: No download ID for polling');
         return;
@@ -756,6 +793,10 @@ const updateYouTubeItemInCache = (updatedItem) => {
 
 // Resume pending downloads on app start
 const resumePendingDownloads = async () => {
+    if (!isAllowedPage()) {
+        console.log('resumePendingDownloads skipped: YouTube features disabled on this page');
+        return;
+    }
     const pendingItems = cachedYouTubePlaylist.filter(item => 
         item.status === 'converting' || item.status === 'stream'
     );
@@ -942,6 +983,10 @@ const refreshCachedYouTubeListUI = () => {
 
 // Play cached YouTube item (stays in YouTube mode)
 const playCachedYouTubeItem = async (item) => {
+    if (!isAllowedPage()) {
+        console.warn('YouTube playback blocked: page not allowed for YouTube features');
+        return;
+    }
     // Strict mode separation: only play YouTube content in YouTube mode
     if (!isYouTubeMode) {
         console.log('MODE: In Local mode - cached YouTube playback blocked. Switch to YouTube mode first.');
@@ -1040,7 +1085,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadPersistentSettings();
     console.log('Lofi player boot. Enabled in cache:', isPlayerEnabled);
 
-    if (config.youtube.enabled) {
+    if (config.youtube.enabled && isAllowedPage()) {
         loadYouTubeAPI();
         // Resume any pending downloads after a short delay
         setTimeout(() => {
@@ -1048,6 +1093,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 resumePendingDownloads();
             }
         }, 2000);
+    } else if (config.youtube.enabled && !isAllowedPage()) {
+        // Explicitly log that YouTube features are disabled on this page for safety
+        console.log('YouTube features disabled on this page by allowlist');
     }
 
     if (isPlayerEnabled || config.enableLofi) {
@@ -2754,6 +2802,25 @@ const createLofiModal = () => {
         </div>
     `;
     modal.appendChild(modeToggleDiv);
+    // Only show the YouTube mode button on converter-related pages (converter and support pages).
+    // This prevents YouTube download controls from appearing on unrelated sites.
+    try {
+        const allowedFilenames = ['converter.html', 'converter-terms.html', 'converter-privacy.html', 'converter-about.html'];
+        const pathParts = (window.location && window.location.pathname) ? window.location.pathname.split('/') : [];
+        const currentFile = pathParts.length ? pathParts[pathParts.length - 1] : '';
+        const isAllowedPage = allowedFilenames.includes(currentFile);
+        const youtubeModeBtnCheck = modeToggleDiv.querySelector('#youtube-mode-btn');
+        if (youtubeModeBtnCheck && !isAllowedPage) {
+            // Hide and disable the YouTube button on non-converter pages
+            youtubeModeBtnCheck.style.display = 'none';
+            youtubeModeBtnCheck.disabled = true;
+            // Ensure YouTube controls are not shown
+            const youtubeControls = document.getElementById('youtube-controls');
+            if (youtubeControls) youtubeControls.style.display = 'none';
+        }
+    } catch (err) {
+        console.warn('lofi: failed to apply page restriction for YouTube button', err);
+    }
 
     // Mode toggle functionality
     const localModeBtn = modeToggleDiv.querySelector('#local-mode-btn');
