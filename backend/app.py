@@ -263,15 +263,15 @@ def log_user_ip_address(user_id: int, ip_address: str):
     except Exception as e:
         print(f"Error logging user IP address: {e}")
 
-def verify_user(user_id: int, rfid_code: str) -> str:
+def verify_user(user_id: int, rfid_code: str, client_ip: str = None) -> str:
     user = UserRepository.get_user_by_id(user_id)
     
     if not user:
-        quiz_logger.warning(f"Authentication failed: User {user_id} not found")
+        quiz_logger.warning(f"Authentication failed: User {user_id} not found from IP {client_ip}")
         raise HTTPException(status_code=404, detail="User not found")
     
     if user['rfid_code'] != rfid_code:
-        quiz_logger.warning(f"Authentication failed: Invalid RFID for user {user_id} from IP {get_client_ip_sync(None)}")
+        quiz_logger.warning(f"Authentication failed: Invalid RFID for user {user_id} from IP {client_ip}")
         raise HTTPException(status_code=403, detail="Invalid RFID code")
     
     role = user['userRoleId']
@@ -283,7 +283,7 @@ def verify_user(user_id: int, rfid_code: str) -> str:
     elif role == 3:
         return "admin"
     else:
-        quiz_logger.warning(f"Authentication failed: Unknown role {role} for user {user_id}")
+        quiz_logger.warning(f"Authentication failed: Unknown role {role} for user {user_id} from IP {client_ip}")
         raise HTTPException(status_code=403, detail="Unknown role")
 
 async def get_current_user_info(
@@ -309,7 +309,7 @@ async def get_current_user_info(
     
     return {
         "id": user_id,
-        "role": verify_user(user_id, x_rfid)
+        "role": verify_user(user_id, x_rfid, client_ip)
     }
 
 # Store connected clients
@@ -512,18 +512,6 @@ async def leave_room(sid, data):
 # HTTP API endpoints
 # ----------------------------------------------------
 
-
-import asyncio
-
-def threadsafe_emit_message_sent(sio, session_id, loop):
-    """
-    Thread-safe emission of 'message_sent' event
-    
-
-# ----------------------------------------------------
-# Stories Endpoints
-# ----------------------------------------------------
-
 def _slugify(value: str) -> str:
     try:
         import re
@@ -540,7 +528,17 @@ def list_stories():
         raise HTTPException(status_code=500, detail=f"Failed to list stories: {e}")
 
 @app.post(ENDPOINT + "/stories/create-if-not-exists", tags=["Stories"])
-def create_story_if_not_exists(payload: Dict[str, Any] = Body(...)):
+def create_story_if_not_exists(
+    payload: Dict[str, Any] = Body(...),
+    current_user_info: dict = Depends(get_current_user_info)
+):
+    user_id = current_user_info["id"]
+    role = current_user_info["role"]
+    
+    # Only admins can create stories
+    if role != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can create stories")
+    
     name = (payload or {}).get("name")
     if not name or not isinstance(name, str):
         raise HTTPException(status_code=400, detail="Field 'name' is required")
@@ -594,7 +592,17 @@ def get_article(article_id: int, increment_view: bool = True):
 
 
 @app.post(ENDPOINT + "/articles/", tags=["Articles"])
-def create_article(payload: Dict[str, Any] = Body(...)):
+def create_article(
+    payload: Dict[str, Any] = Body(...),
+    current_user_info: dict = Depends(get_current_user_info)
+):
+    user_id = current_user_info["id"]
+    role = current_user_info["role"]
+    
+    # Only admins can create articles
+    if role != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can create articles")
+    
     try:
         title = payload.get("title")
         author = payload.get("author") or "Unknown"
@@ -666,18 +674,6 @@ def delete_article(article_id: int):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete article {article_id}: {e}")
-
-    Args:
-        sio: Socket.IO client instance
-        session_id: The session ID to include in the message
-        loop: The event loop to run the coroutine in
-    """
-    asyncio.run_coroutine_threadsafe(
-        sio.emit('message_sent', {
-            'session_id': session_id
-        }), 
-        loop
-    )
 
 
 
