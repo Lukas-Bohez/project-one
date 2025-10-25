@@ -34,6 +34,22 @@
     <link rel="icon" href="../favicon.ico" sizes="192x192">
     
     <script src="../js/themeManager.js"></script>
+    <script>
+    // Leave-site confirmation for links pointing back to Quiz The Spire
+    (function(){
+        const selector = 'a[href="../index.html"], a[href^="/html/"]';
+        document.addEventListener('DOMContentLoaded', function(){
+            document.querySelectorAll(selector).forEach(function(el){
+                if(el.target && el.target === '_blank') return;
+                el.addEventListener('click', function(e){
+                    const msg = 'You are leaving Convert The Spire to go to Quiz The Spire (a separate site). Continue?';
+                    if(!confirm(msg)) e.preventDefault();
+                });
+                if(!el.getAttribute('title')) el.setAttribute('title','Leaving Convert The Spire: opens Quiz The Spire (separate site)');
+            });
+        });
+    })();
+    </script>
     
     <!-- Structured Data -->
     <script type="application/ld+json">
@@ -218,7 +234,6 @@
                 <li>❌ We DON'T use tracking cookies or analytics that identify you</li>
                 <li>❌ We DON'T require accounts or personal information</li>
                 <li>❌ We DON'T assist or facilitate copyright infringement — you must have rights or permission to any content you convert</li>
-                <li>❌ We DON'T keep logs of what you convert</li>
                 <li>❌ We DON'T share data with advertisers or third parties</li>
             </ul>
         </div>
