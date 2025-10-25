@@ -305,9 +305,20 @@ const createStoryIfNotExists = async (name, description = '', slug = '') => {
     const url = `${lanIP}/api/v1/stories/create-if-not-exists`;
     const payload = { name, description };
     if (slug && typeof slug === 'string') payload.slug = slug;
+    
+    // Get authentication headers
+    const userId = sessionStorage.getItem('admin_user_id');
+    const rfidCode = sessionStorage.getItem('admin_rfid_code');
+    
+    const headers = { 'Content-Type': 'application/json' };
+    if (userId && rfidCode) {
+        headers['X-User-ID'] = userId;
+        headers['X-RFID'] = rfidCode;
+    }
+    
     const res = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: headers,
         body: JSON.stringify(payload)
     });
     if (!res.ok) {

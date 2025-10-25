@@ -88,12 +88,19 @@ const fetchArticleStats = async () => {
 
 const createArticle = async (articleData) => {
     try {
+        const userId = sessionStorage.getItem('admin_user_id');
+        const rfidCode = sessionStorage.getItem('admin_rfid_code');
+        
+        if (!userId || !rfidCode) {
+            throw new Error('Authentication required. Please log in as admin first.');
+        }
+        
         const response = await fetch(`${lanIP}/api/v1/articles/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-User-ID': localStorage.getItem('currentUserId') || '1',
-                'X-RFID': localStorage.getItem('currentUserRFID') || 'admin'
+                'X-User-ID': userId,
+                'X-RFID': rfidCode
             },
             body: JSON.stringify(articleData)
         });
@@ -115,12 +122,19 @@ const createArticle = async (articleData) => {
 
 const updateArticle = async (articleId, articleData) => {
     try {
+        const userId = sessionStorage.getItem('admin_user_id');
+        const rfidCode = sessionStorage.getItem('admin_rfid_code');
+        
+        if (!userId || !rfidCode) {
+            throw new Error('Authentication required. Please log in as admin first.');
+        }
+        
         const response = await fetch(`${lanIP}/api/v1/articles/${articleId}/`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
-                'X-User-ID': localStorage.getItem('currentUserId') || '1',
-                'X-RFID': localStorage.getItem('currentUserRFID') || 'admin'
+                'X-User-ID': userId,
+                'X-RFID': rfidCode
             },
             body: JSON.stringify(articleData)
         });
@@ -142,11 +156,18 @@ const updateArticle = async (articleId, articleData) => {
 
 const deleteArticle = async (articleId) => {
     try {
+        const userId = sessionStorage.getItem('admin_user_id');
+        const rfidCode = sessionStorage.getItem('admin_rfid_code');
+        
+        if (!userId || !rfidCode) {
+            throw new Error('Authentication required. Please log in as admin first.');
+        }
+        
         const response = await fetch(`${lanIP}/api/v1/articles/${articleId}/`, {
             method: 'DELETE',
             headers: {
-                'X-User-ID': localStorage.getItem('currentUserId') || '1',
-                'X-RFID': localStorage.getItem('currentUserRFID') || 'admin'
+                'X-User-ID': userId,
+                'X-RFID': rfidCode
             }
         });
 
@@ -1067,6 +1088,66 @@ const setupArticleFormListeners = () => {
     }
 };
 
+// Helper functions for content analysis
+const calculateWordCount = (intro, highlights, cards, sections) => {
+    let totalWords = 0;
+    
+    // Count words in intro
+    if (intro) {
+        totalWords += intro.trim().split(/\s+/).length;
+    }
+    
+    // Count words in highlights
+    highlights.forEach(h => {
+        if (typeof h === 'string') {
+            totalWords += h.trim().split(/\s+/).length;
+        } else if (h.title) {
+            totalWords += h.title.trim().split(/\s+/).length;
+            if (h.content) {
+                totalWords += h.content.trim().split(/\s+/).length;
+            }
+        }
+    });
+    
+    // Count words in cards
+    cards.forEach(card => {
+        if (card.title) {
+            totalWords += card.title.trim().split(/\s+/).length;
+        }
+        if (card.content) {
+            totalWords += card.content.trim().split(/\s+/).length;
+        }
+        if (Array.isArray(card.list)) {
+            card.list.forEach(item => {
+                totalWords += String(item).trim().split(/\s+/).length;
+            });
+        }
+    });
+    
+    // Count words in sections
+    sections.forEach(section => {
+        if (section.title) {
+            totalWords += section.title.trim().split(/\s+/).length;
+        }
+        if (section.content) {
+            totalWords += section.content.trim().split(/\s+/).length;
+        }
+        if (Array.isArray(section.list)) {
+            section.list.forEach(item => {
+                totalWords += String(item).trim().split(/\s+/).length;
+            });
+        }
+    });
+    
+    return totalWords;
+};
+
+const calculateReadingTime = (intro, highlights, cards, sections) => {
+    const wordsPerMinute = 200; // Average reading speed
+    const wordCount = calculateWordCount(intro, highlights, cards, sections);
+    return Math.max(1, Math.ceil(wordCount / wordsPerMinute));
+};
+
 const collectArticleFormData = () => {
     const title = document.getElementById('article-title').value.trim();
     const author = document.getElementById('article-author').value.trim();
@@ -1146,7 +1227,9 @@ const collectArticleFormData = () => {
             highlights,
             cards,
             sections
-        })
+        }),
+        word_count: calculateWordCount(intro, highlights, cards, sections),
+        reading_time_minutes: calculateReadingTime(intro, highlights, cards, sections)
     };
 };
 
