@@ -34,6 +34,22 @@
     <link rel="icon" href="../favicon.ico" sizes="192x192">
     
     <script src="../js/themeManager.js"></script>
+    <script>
+    // Leave-site confirmation for links pointing back to Quiz The Spire
+    (function(){
+        const selector = 'a[href="../index.html"], a[href^="/html/"]';
+        document.addEventListener('DOMContentLoaded', function(){
+            document.querySelectorAll(selector).forEach(function(el){
+                if(el.target && el.target === '_blank') return;
+                el.addEventListener('click', function(e){
+                    const msg = 'You are leaving Convert The Spire to go to Quiz The Spire (a separate site). Continue?';
+                    if(!confirm(msg)) e.preventDefault();
+                });
+                if(!el.getAttribute('title')) el.setAttribute('title','Leaving Convert The Spire: opens Quiz The Spire (separate site)');
+            });
+        });
+    })();
+    </script>
     
     <!-- Structured Data -->
     <script type="application/ld+json">
@@ -80,7 +96,7 @@
         </a>
 
         <h1>Terms of Service</h1>
-        <p class="last-updated"><strong>Last Updated:</strong> September 27, 2025</p>
+        <p class="last-updated"><strong>Last Updated:</strong> Oktober 25, 2025</p>
 
         <div class="highlight-box">
             <h3>📋 Simple Terms, Fair Use</h3>
