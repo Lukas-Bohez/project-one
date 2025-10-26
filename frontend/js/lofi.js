@@ -2343,7 +2343,7 @@ const createFloatingIcon = () => {
     icon.id = 'lofi-player-icon';
     icon.style.position = 'fixed';
     icon.style.bottom = '20px';
-    icon.style.left = '20px';
+    icon.style.left = '12px';
     icon.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
     icon.style.color = 'var(--light-color, #f4f8fc)';
     icon.style.borderRadius = '50%';
@@ -2602,11 +2602,16 @@ const createLofiModal = () => {
     modal.id = 'lofi-player-modal';
     modal.style.position = 'fixed';
     modal.style.bottom = '90px'; // Above the icon
-    modal.style.left = '20px';
+    // Use tighter side offsets so the modal doesn't overflow on small/mobile screens
+    // Keep the modal left-aligned on desktop (right:auto) so it doesn't center
+    modal.style.left = '12px';
+    modal.style.right = 'auto';
     modal.style.width = 'auto';
     modal.style.height = 'auto';
-    modal.style.minWidth = '380px';
+    modal.style.minWidth = '0';
     modal.style.maxWidth = '96vw';
+    // Limit modal width on large screens so it doesn't stretch edge-to-edge
+    modal.style.maxWidth = '960px';
     modal.style.maxHeight = '80vh';
     modal.style.overflowY = 'auto';
     modal.style.overflowX = 'hidden';
@@ -3370,6 +3375,35 @@ style.innerHTML = `
     #song-selector option {
         background-color: var(--secondary-color, #0c4061);
         color: var(--light-color, #f4f8fc);
+    }
+
+    /* Responsive adjustments to prevent the player from overflowing on small screens */
+    #lofi-player-icon {
+        left: 12px;
+        bottom: 12px;
+        right: auto;
+    }
+
+    #lofi-player-modal {
+        left: 12px;
+        right: auto; /* keep left-aligned on larger viewports */
+        min-width: 0;
+        max-width: 960px; /* prevent stretching on large desktops */
+        box-sizing: border-box;
+    }
+
+    @media (max-width: 480px) {
+        #lofi-player-modal {
+            bottom: 78px; /* slightly above the icon */
+            padding: 10px;
+            border-radius: 8px;
+            max-height: 86vh;
+        }
+        #lofi-player-icon {
+            width: 46px;
+            height: 46px;
+            font-size: 20px;
+        }
     }
 `;
 document.head.appendChild(style);
