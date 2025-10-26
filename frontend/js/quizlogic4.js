@@ -97,6 +97,13 @@ class QuizQuestionHandler {
 
     loadQuestion(questionData) {
         console.log("Loading question:", questionData);
+        try {
+            console.log("[DEBUG] questionData.type:", questionData.type);
+            console.log("[DEBUG] questionData.answers.length:", questionData.answers ? questionData.answers.length : 'N/A');
+            console.log("[DEBUG] questionData.themes.length:", questionData.themes ? questionData.themes.length : 'N/A');
+        } catch (e) {
+            console.warn('[DEBUG] Failed to read questionData diagnostic fields:', e);
+        }
         this.currentQuestion = questionData;
 
         // Clear the question load timeout since we got a question
@@ -113,6 +120,54 @@ class QuizQuestionHandler {
 
         // Clear previous question
         this.clearQuestion();
+
+        // If a theme modal was shown (fallback), remove it so the question area is visible
+        try {
+            const existingThemeModal = document.getElementById('themeModal');
+            if (existingThemeModal) {
+                console.log('[DEBUG] Removing #themeModal fallback overlay');
+                existingThemeModal.remove();
+            }
+            if (this.currentThemeModal && this.currentThemeModal.parentNode) {
+                console.log('[DEBUG] Removing this.currentThemeModal fallback overlay');
+                this.currentThemeModal.parentNode.removeChild(this.currentThemeModal);
+            }
+            this.currentThemeModal = null;
+        } catch (e) {
+            console.warn('Error removing theme modal:', e);
+        }
+        // Strong fallback: remove any theme overlays and ensure question/answers are visible
+        try {
+            // Remove any theme modal overlays by class
+            const overlays = document.querySelectorAll('.theme-modal-overlay, .theme-modal-backdrop, .theme-overlay');
+            if (overlays && overlays.length) console.log('[DEBUG] Removing overlays:', overlays.length);
+            overlays.forEach(o => {
+                try { o.remove(); } catch (e) { console.warn('Failed to remove overlay element', e); }
+            });
+
+            // Ensure main question containers are visible
+            const questionTextEl = document.getElementById('questionText');
+            const questionImageEl = document.getElementById('questionImage');
+            const answerContainer = document.querySelector('.c-answers-container');
+            if (questionTextEl) questionTextEl.style.display = '';
+            if (questionImageEl) questionImageEl.style.display = '';
+            if (answerContainer) answerContainer.style.display = '';
+
+            console.log('[DEBUG] Question/answer containers forced visible');
+
+            // Ensure answer buttons are visible and enabled
+            const answerButtons = document.querySelectorAll('.c-answer-btn, .answer-box, .snes-button');
+            answerButtons.forEach(btn => {
+                try {
+                    btn.style.display = '';
+                    btn.disabled = false;
+                    btn.classList.remove('disabled');
+                } catch (e) { console.warn('Error restoring answer button', e); }
+            });
+            console.log('[DEBUG] Restored answer buttons visibility/state count=', answerButtons.length);
+        } catch (e) {
+            console.warn('Error during strong UI fallback for question view:', e);
+        }
 
         // Set question text
         this.setQuestionText(questionData);
@@ -250,14 +305,24 @@ setupAnswerOptions(questionData) {
         : questionData.answers;
     
     if (!options?.length) {
+        console.warn('[DEBUG] setupAnswerOptions: no options available for', questionData.type);
         this.handleErrorDisplay('No options available');
         return;
     }
 
+    console.log('[DEBUG] setupAnswerOptions: questionType=', questionData.type, 'options.length=', options.length);
+
     // 3. Prepare Container - DON'T replace the class, ADD to it
     const container = document.querySelector('.c-answers-container');
     if (!container) return;
-    
+
+    // Ensure the main answer container is visible (it may have been hidden during theme display)
+    try {
+        container.style.display = container.style.display && container.style.display !== 'none' ? container.style.display : '';
+    } catch (e) {
+        /* ignore styling errors */
+    }
+
     container.innerHTML = '';
     container.classList.add('answer-grid-container'); // Add instead of replace
 
@@ -331,6 +396,7 @@ renderAnswerBoxes(options, container, questionType) {
        
         container.appendChild(box);
     });
+    console.log('[DEBUG] renderAnswerBoxes: appended', options.length, 'boxes to container');
 }
 
 // ========================
