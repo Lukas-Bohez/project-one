@@ -125,6 +125,27 @@ from collections import defaultdict
 # In-memory tracking of which themes have been played per session (runtime only)
 session_played_themes = defaultdict(list)
 session_played_lock = Lock()
+# Runtime-wide tracking of how many distinct themes have been used in a session
+# (None means no artificial cap; the session will keep selecting new themes until
+# there are no unplayed active themes left or some other end condition occurs).
+MAX_THEMES_PER_SESSION = None
+
+# Ensure threadsafe helper exists early so timer threads can call it without
+# risking a NameError if the file defines helpers later.
+def threadsafe_emit_message_sent(sio, session_id, loop):
+    """
+    Thread-safe emit helper for 'message_sent' events.
+    Emits {'session_id': session_id} to clients using the provided event loop.
+    This lightweight definition is placed early to avoid NameError in timer threads.
+    """
+    try:
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('message_sent', {'session_id': session_id}),
+            loop
+        )
+    except Exception as e:
+        # Don't let missing emit helper crash timer threads; log and continue
+        print(f"[WARN] threadsafe_emit_message_sent failed to schedule emit for session {session_id}: {e}")
 # ----------------------------------------------------
 # App setup
 # ----------------------------------------------------
@@ -4803,7 +4824,9 @@ def is_timer_active(session_id):
     with timer_lock:
         timer_thread = active_timers.get(session_id)
         is_alive = timer_thread.is_alive() if timer_thread else False
-        quiz_logger.info(f"is_timer_active({session_id}): thread exists={timer_thread is not None}, is_alive={is_alive}")
+        # Use debug for this check to avoid spamming info logs; callers can
+        # still treat the return value normally. Avoid printing to stdout here.
+        quiz_logger.debug(f"is_timer_active({session_id}): thread exists={timer_thread is not None}, is_alive={is_alive}")
         return is_alive
 
 
@@ -5374,6 +5397,12 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
                 'message': 'Quiz ended - no players remaining.'
             }), loop
         ).result(timeout=1)
+        # Clear played-theme tracking for this session now that the quiz ended
+        try:
+            with session_played_lock:
+                session_played_themes.pop(session_id, None)
+        except Exception:
+            pass
         return
 
     # Check if there are any available questions left
@@ -5389,6 +5418,14 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
             played = []
 
         all_active_themes = ThemeRepository.get_active_themes() or []
+        # Diagnostic logging: show which themes are active and which have been played
+        try:
+            active_ids = [t.get('id') for t in all_active_themes]
+            quiz_logger.info(f"handle_quiz_phase: session {session_id} played themes: {played}, active theme ids: {active_ids}")
+            print(f"[DEBUG] handle_quiz_phase: session {session_id} played themes: {played}, active theme ids: {active_ids}")
+        except Exception:
+            pass
+
         remaining_themes = [t for t in all_active_themes if t.get('id') not in set(played)]
 
         if remaining_themes:
@@ -5429,6 +5466,12 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
             # No themes left - end quiz normally
             quiz_logger.warning(f"ENDING QUIZ: No available questions and no remaining themes for session {session_id}")
             print(f"ENDING QUIZ: No available questions and no remaining themes for session {session_id}")
+            # Clear played-theme tracking for this session since the quiz is ending
+            try:
+                with session_played_lock:
+                    session_played_themes.pop(session_id, None)
+            except Exception:
+                pass
             QuizSessionRepository.update_session_status(session_id, 3)
             final_state = get_quiz_state(session_id)
             player_scores = PlayerAnswerRepository.get_all_player_scores_for_session(session_id)
@@ -5713,7 +5756,80 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
         available_questions = [q for q in all_questions if q['id'] not in quiz_state['asked_questions']]
 
     # Quiz finished - Update session status
+    # If we've exited the question loop because the current theme ran out of questions,
+    # allow the session to move to voting for another unplayed theme instead of ending.
+    try:
+        with session_played_lock:
+            played = list(session_played_themes.get(session_id, []))
+    except Exception:
+        played = []
+    try:
+        all_active_themes = ThemeRepository.get_active_themes() or []
+        remaining_themes = [t for t in all_active_themes if t.get('id') not in set(played)]
+    except Exception:
+        remaining_themes = []
+
+    if remaining_themes and not quiz_ended_early:
+        # There are still themes left to play in this session - start voting again
+        quiz_logger.info(f"Current theme exhausted but other themes remain for session {session_id}; reopening voting")
+        print(f"[DEBUG] Reopening voting for session {session_id}, played={played}, remaining={len(remaining_themes)}")
+        # Reset session theme and phase
+        QuizSessionRepository.update_session_theme(session_id, None)
+        set_session_phase(session_id, 'voting')
+
+        ChatLogRepository.create_chat_message(
+            session_id=session_id,
+            message_text="This theme has finished. Vote for the next theme!",
+            user_id=1,
+            message_type='system',
+            reply_to_id=1
+        )
+        threadsafe_emit_message_sent(sio, session_id, loop)
+
+        try:
+            # Exclude already played themes from the next vote
+            emit_combined_theme_selection(sio, loop, None, True, played)
+        except Exception as e:
+            print(f"Failed to emit theme selection for next theme in session {session_id}: {e}")
+
+        try:
+            timer_config = {
+                'voting_time': 33,
+                'theme_display_time': 10,
+                'question_time': 15,
+                'explanation_time': 15
+            }
+            start_generic_timer(sio, loop, session_id, timer_config)
+        except Exception as e:
+            print(f"Failed to start voting timer for new theme in session {session_id}: {e}")
+
+        return
+
     quiz_logger.info(f"ENDING QUIZ: Normal completion for session {session_id}")
+    # Diagnostic: log played themes / active themes / remaining questions so we can
+    # investigate why the quiz ended (useful when quiz stops after a single theme).
+    try:
+        with session_played_lock:
+            played = list(session_played_themes.get(session_id, []))
+    except Exception:
+        played = []
+    try:
+        active_themes = ThemeRepository.get_active_themes() or []
+        active_ids = [t.get('id') for t in active_themes]
+    except Exception:
+        active_ids = []
+    try:
+        quiz_logger.info(f"handle_quiz_phase ENDING: session {session_id} played={played}, active_ids={active_ids}, remaining_available_questions={len(available_questions) if 'available_questions' in locals() else 'N/A'}")
+        print(f"[DEBUG] handle_quiz_phase ENDING: session {session_id} played={played}, active_ids={active_ids}, remaining_available_questions={len(available_questions) if 'available_questions' in locals() else 'N/A'}")
+    except Exception:
+        pass
+
+    # Clear played-theme tracking for this session since the quiz is ending
+    try:
+        with session_played_lock:
+            session_played_themes.pop(session_id, None)
+    except Exception:
+        pass
     QuizSessionRepository.update_session_status(session_id, 3)
     
     # Get final data for quiz_finished event
@@ -6027,6 +6143,12 @@ def emit_theme_selection_if_needed(sio, loop):
                     else:
                         # No more questions - end quiz
                         print("No more questions available, ending quiz")
+                        # Clear played-theme tracking for this session since the quiz is ending
+                        try:
+                            with session_played_lock:
+                                session_played_themes.pop(active_session_id, None)
+                        except Exception:
+                            pass
                         QuizSessionRepository.update_session_status(active_session_id, 3)
                         asyncio.run_coroutine_threadsafe(
                             sio.emit('quiz_finished', {
