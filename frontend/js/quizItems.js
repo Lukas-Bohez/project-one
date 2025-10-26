@@ -173,63 +173,63 @@ const loadPlayerItems = async () => {
     }
 };
 
-// Function to display items in the 3 slots
+// Function to display items in the 3 slots (supports stacks and total cap = 3)
 const displayPlayerItems = (items) => {
     console.log("🎮 Displaying items:", items);
-    
+
     // Validate input
     if (!Array.isArray(items)) {
         console.error("❌ displayPlayerItems called with invalid items:", items);
         clearAllItemSlots();
         return;
     }
-    
-    // Flatten items array (convert quantities into individual items)
-    const flattenedItems = [];
-    items.forEach(item => {
-        const quantity = item.quantity || 1;
-        for (let i = 0; i < quantity; i++) {
-            flattenedItems.push({...item, quantity: 1});
-        }
-    });
-    
-    // Display up to 3 items, checking for changes to prevent flashing
+
+    // Build display slots that respect the max total items (3). Each slot may
+    // represent a stack of the same item (quantity > 1). We show as many items
+    // as possible up to the 3-item capacity.
     const maxSlots = 3;
-    const itemsToShow = flattenedItems.slice(0, maxSlots);
-    
-    console.log(`📋 Items to show (${itemsToShow.length}/${flattenedItems.length}):`, itemsToShow);
-    
-    // Process each slot
+    let remainingCapacity = 3; // total items we can show
+    const slots = [];
+
+    for (const item of items) {
+        if (remainingCapacity <= 0) break;
+        const totalQty = item.quantity || 1;
+        const takeQty = Math.min(totalQty, remainingCapacity);
+        if (takeQty <= 0) continue;
+        slots.push({ item: item, displayQuantity: takeQty });
+        remainingCapacity -= takeQty;
+    }
+
+    // If there are fewer than 3 physical slots filled, we'll leave the remainder empty
+    console.log(`📋 Slots to show: ${slots.length}, remainingCapacity: ${remainingCapacity}`, slots);
+
+    // Process each visual slot (3 fixed slots in the UI)
     for (let slotIndex = 0; slotIndex < maxSlots; slotIndex++) {
         const slotNumber = slotIndex + 1;
         const slotElement = document.getElementById(`item${slotNumber}`);
-        const newItem = itemsToShow[slotIndex];
-        
+        const slotData = slots[slotIndex];
+
         if (!slotElement) {
             console.error(`❌ Slot element #item${slotNumber} not found in DOM`);
             continue;
         }
-        
+
+        // Determine new slot data
+        const newItem = slotData ? slotData.item : null;
+        const newItemId = newItem ? (newItem.itemId || newItem.id) : null;
+
         // Get current slot data
         const currentItemId = slotElement.getAttribute('data-item-id');
-        
-        // Determine new slot data
-        const newItemId = newItem ? (newItem.itemId || newItem.id) : null;
-        
-        // Check if slot needs updating
+
         const needsUpdate = currentItemId !== (newItemId || '');
-        
+
         if (needsUpdate) {
-            console.log(`🔄 Slot ${slotNumber} needs update:`, {
-                from: { id: currentItemId },
-                to: { id: newItemId }
-            });
-            
             if (newItem && newItemId) {
-                // Populate with new item
+                // Attach displayQuantity to the item for rendering
+                const itemWithDisplay = { ...newItem, displayQuantity: slotData.displayQuantity };
                 try {
-                    populateItemSlot(slotElement, newItem, slotNumber);
-                    console.log(`✅ Updated slot ${slotNumber} with item`);
+                    populateItemSlot(slotElement, itemWithDisplay, slotNumber);
+                    console.log(`✅ Updated slot ${slotNumber} with item`, itemWithDisplay);
                 } catch (error) {
                     console.error(`💥 Error updating slot ${slotNumber}:`, error);
                 }
@@ -242,7 +242,7 @@ const displayPlayerItems = (items) => {
             console.log(`⏭️ Slot ${slotNumber} unchanged, skipping update`);
         }
     }
-    
+
     console.log("🏁 Finished displaying all items");
 };
 
@@ -532,58 +532,97 @@ const findMatchingSVG = (itemName, availableSVGs) => {
 };
 
 // Function to setup click event listener for an item slot
+// Single-click: use/activate the item
+// Double-click (two taps/clicks within SHORT_CLICK_MS): discard without activating
 const setupItemClickHandler = (slotElement, item) => {
     console.log("🖱️ Setting up click handler for item:", item.name);
-    
+
     // Remove any existing event listeners by cloning the element
     const newSlotElement = slotElement.cloneNode(true);
     slotElement.parentNode.replaceChild(newSlotElement, slotElement);
-    
-    // Add click event listener
+
+    const SHORT_CLICK_MS = 350; // threshold to detect double-click / double-tap
+    let clickTimer = null;
+    let clickCount = 0;
+
+    const itemId = item.itemId || item.id;
+    const itemName = item.name || 'Unknown Item';
+
+    const doUse = () => {
+        console.log(`🎯 Single-click detected for ${itemName} (${itemId}) - using item`);
+        // small press animation
+        newSlotElement.style.transform = 'scale(0.95)';
+        setTimeout(() => { newSlotElement.style.transform = 'scale(1)'; }, 100);
+        useItem(itemId, itemName, false);
+    };
+
+    const doDiscard = () => {
+        console.log(`🗑️ Double-click detected for ${itemName} (${itemId}) - discarding item without activating`);
+        // discard animation
+        newSlotElement.style.transform = 'scale(0.9)';
+        setTimeout(() => { newSlotElement.style.transform = 'scale(1)'; }, 120);
+        useItem(itemId, itemName, true);
+    };
+
+    // Click handler implementing single vs double click semantics
     newSlotElement.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        
-        const itemId = item.itemId || item.id;
-        const itemName = item.name || 'Unknown Item';
-        console.log(`🎯 Item clicked: ${itemName} (${itemId})`);
-        
-        // Add visual feedback for click
-        newSlotElement.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-            newSlotElement.style.transform = 'scale(1)';
-        }, 100);
-        
-        useItem(itemId, itemName);
+
+        clickCount++;
+        if (clickCount === 1) {
+            // Start timer - if no second click arrives, treat as single click
+            clickTimer = setTimeout(() => {
+                clickCount = 0;
+                clickTimer = null;
+                doUse();
+            }, SHORT_CLICK_MS);
+        } else if (clickCount === 2) {
+            // Double click detected within threshold
+            if (clickTimer) {
+                clearTimeout(clickTimer);
+                clickTimer = null;
+            }
+            clickCount = 0;
+            doDiscard();
+        }
     });
-    
-    // Add touch support for mobile
-    newSlotElement.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        newSlotElement.style.transform = 'scale(0.95)';
-    });
-    
+
+    // Touch support - interpret taps similarly to clicks
+    let lastTouchTime = 0;
     newSlotElement.addEventListener('touchend', (e) => {
         e.preventDefault();
-        newSlotElement.style.transform = 'scale(1)';
+        const now = Date.now();
+        if (now - lastTouchTime < SHORT_CLICK_MS) {
+            // double-tap
+            if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+            clickCount = 0;
+            doDiscard();
+        } else {
+            // start timer for potential double-tap
+            clickCount = 1;
+            if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+            clickTimer = setTimeout(() => { clickCount = 0; clickTimer = null; doUse(); }, SHORT_CLICK_MS);
+        }
+        lastTouchTime = now;
     });
 };
 
-// Function to use an item
-const useItem = async (itemId, itemName) => {
+// Function to use an item. If `discard` is true, the item will be removed from
+// inventory without executing its effect.
+const useItem = async (itemId, itemName, discard = false) => {
     if (!currentUser || !currentUser.id) {
         console.log("❌ No user authenticated for item use");
         return;
     }
     
-    console.log(`🎮 Using item: ${itemName} (${itemId})`);
+    console.log(`🎮 ${discard ? 'Discarding' : 'Using'} item: ${itemName} (${itemId})`);
     
     try {
-        const response = await fetch(`/api/player/${currentUser.id}/items/${itemId}/use`, {
+        const url = `/api/player/${currentUser.id}/items/${itemId}/use` + (discard ? '?discard=true' : '');
+        const response = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
+            headers: { 'Content-Type': 'application/json' }
         });
         
         if (!response.ok) {
@@ -593,18 +632,23 @@ const useItem = async (itemId, itemName) => {
         const data = await response.json();
         
         if (data.success) {
-            console.log(`✅ Successfully used item: ${itemName}`);
-            showItemFeedback(`Used ${itemName}!`, 'success');
+            if (discard) {
+                console.log(`✅ Successfully discarded item: ${itemName}`);
+                showItemFeedback(`Discarded ${itemName}`, 'info');
+            } else {
+                console.log(`✅ Successfully used item: ${itemName}`);
+                showItemFeedback(`Used ${itemName}!`, 'success');
+            }
             
             // Reload items to update display
             setTimeout(() => loadPlayerItems(), 100);
         } else {
             console.error("❌ Failed to use item:", data.error);
-            showItemFeedback(`Failed to use ${itemName}: ${data.error}`, 'error');
+            showItemFeedback(`Failed: ${data.error}`, 'error');
         }
     } catch (error) {
         console.error("💥 Error using item:", error);
-        showItemFeedback(`Error using ${itemName}: ${error.message}`, 'error');
+        showItemFeedback(`Error: ${error.message}`, 'error');
     }
 };
 

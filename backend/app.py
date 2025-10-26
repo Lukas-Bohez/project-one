@@ -120,6 +120,11 @@ newClient = None  # This should be set elsewhere in your code
 current_phase = None    
 sensorData = None
 multiplier = None
+from collections import defaultdict
+
+# In-memory tracking of which themes have been played per session (runtime only)
+session_played_themes = defaultdict(list)
+session_played_lock = Lock()
 # ----------------------------------------------------
 # App setup
 # ----------------------------------------------------
@@ -5039,39 +5044,56 @@ def start_generic_timer(sio, loop, session_id, timer_config):
         'explanation_time': 5
     }
     """
+    # Ensure only one timer per session. If a previous thread exists but is dead, allow replacement.
     with timer_lock:
-        if session_id in active_timers:
-            quiz_logger.info(f"start_generic_timer: Timer already exists for session {session_id}, returning False")
-            return False  # Timer already running
-        
-        def timer_task():
+        existing = active_timers.get(session_id)
+        if existing:
             try:
-                current_phase = get_session_phase(session_id)
-                quiz_logger.info(f"Timer thread started for session {session_id}, phase: {current_phase}")
-                print(f"Starting timer for session {session_id}, phase: {current_phase}")
-                
-                if current_phase == 'voting':
-                    handle_voting_phase(sio, loop, session_id, timer_config.get('voting_time', 33))
-                elif current_phase == 'theme_display':
-                    handle_theme_display_phase(sio, loop, session_id, timer_config.get('theme_display_time', 10))
-                elif current_phase == 'quiz':
-                    handle_quiz_phase(sio, loop, session_id, timer_config)
-                    
-            except Exception as e:
-                quiz_logger.error(f"Timer error for session {session_id}: {e}")
-                print(f"Timer error for session {session_id}: {e}")
-                traceback.print_exc()
-            finally:
-                with timer_lock:
-                    quiz_logger.info(f"Timer thread ending, removing from active_timers for session {session_id}")
-                    active_timers.pop(session_id, None)
-        
-        # Start timer thread
-        timer_thread = Thread(target=timer_task, daemon=True)
+                alive = existing.is_alive()
+            except Exception:
+                alive = False
+            if alive:
+                quiz_logger.info(f"start_generic_timer: Timer already exists for session {session_id}, returning False")
+                print(f"[DEBUG] start_generic_timer: timer already exists and alive for session {session_id}")
+                return False
+            else:
+                # remove stale thread entry and continue
+                quiz_logger.info(f"start_generic_timer: Found stale timer for session {session_id}, removing and replacing")
+                print(f"[DEBUG] start_generic_timer: removing stale timer for session {session_id}")
+                active_timers.pop(session_id, None)
+
+    def timer_task():
+        try:
+            current_phase = get_session_phase(session_id)
+            quiz_logger.info(f"Timer thread started for session {session_id}, phase: {current_phase}")
+            print(f"[DEBUG] Timer thread started for session {session_id}, phase: {current_phase}")
+
+            if current_phase == 'voting':
+                handle_voting_phase(sio, loop, session_id, timer_config.get('voting_time', 33))
+            elif current_phase == 'theme_display':
+                handle_theme_display_phase(sio, loop, session_id, timer_config.get('theme_display_time', 10))
+            elif current_phase == 'quiz':
+                handle_quiz_phase(sio, loop, session_id, timer_config)
+            else:
+                print(f"[DEBUG] Timer thread for session {session_id} found unexpected phase: {current_phase}")
+
+        except Exception as e:
+            quiz_logger.error(f"Timer error for session {session_id}: {e}")
+            print(f"Timer error for session {session_id}: {e}")
+            traceback.print_exc()
+        finally:
+            with timer_lock:
+                quiz_logger.info(f"Timer thread ending, removing from active_timers for session {session_id}")
+                active_timers.pop(session_id, None)
+
+    # Start timer thread
+    timer_thread = Thread(target=timer_task, daemon=True)
+    with timer_lock:
         active_timers[session_id] = timer_thread
-        quiz_logger.info(f"start_generic_timer: Created and starting timer thread for session {session_id}")
-        timer_thread.start()
-        return True
+    quiz_logger.info(f"start_generic_timer: Created and starting timer thread for session {session_id}")
+    print(f"[DEBUG] start_generic_timer: starting timer thread for session {session_id}")
+    timer_thread.start()
+    return True
 
 def handle_voting_phase(sio, loop, session_id, voting_time):
     """Handle the voting countdown phase with dynamic speed based on votes"""
@@ -5153,6 +5175,14 @@ def handle_voting_phase(sio, loop, session_id, voting_time):
         print(f"Database update result: {success}")
         
         if success:
+            # Record that this theme has been played for this session (runtime tracking)
+            try:
+                with session_played_lock:
+                    if winning_theme not in session_played_themes[session_id]:
+                        session_played_themes[session_id].append(winning_theme)
+            except Exception as e:
+                print(f"Warning: failed to record played theme for session {session_id}: {e}")
+
             # Move to theme display phase
             set_session_phase(session_id, 'theme_display')
             
@@ -5250,6 +5280,19 @@ def handle_theme_display_phase(sio, loop, session_id, display_time):
     future.result(timeout=1)
     
     print(f"Theme display finished for session {session_id}, ready for quiz")
+    # Start the quiz timer immediately so questions are emitted after theme display
+    try:
+        timer_config = {
+            'voting_time': 33,
+            'theme_display_time': display_time,
+            'question_time': 15,  # default question time
+            'explanation_time': 15
+        }
+        quiz_logger.info(f"handle_theme_display_phase: starting quiz timer for session {session_id}")
+        start_generic_timer(sio, loop, session_id, timer_config)
+    except Exception as e:
+        quiz_logger.error(f"Failed to start quiz timer after theme display for session {session_id}: {e}")
+        print(f"Failed to start quiz timer after theme display for session {session_id}: {e}")
 
 
 
@@ -5292,6 +5335,14 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
     ids = [row['questionId'] for row in rows]
     quiz_logger.info(f"Already answered questions: {ids}")
     print(f"Already answered questions: {ids}")
+    # Diagnostic: log available questions count
+    try:
+        theme_id = session_info['themeId']
+        all_questions = QuestionRepository.get_questions_by_theme(theme_id, active_only=True)
+        total_questions = len(all_questions) if all_questions else 0
+        print(f"[DEBUG] handle_quiz_phase: total_questions for theme {theme_id}: {total_questions}")
+    except Exception as e:
+        print(f"[DEBUG] handle_quiz_phase: error while counting questions: {e}")
     if not quiz_state['question_count']:
         quiz_state['question_count'] = len(ids)
     available_questions = [q for q in all_questions if q['id'] not in ids]
@@ -5327,24 +5378,73 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
 
     # Check if there are any available questions left
     if not available_questions:
-        quiz_logger.warning(f"ENDING QUIZ: No available questions for session {session_id}")
-        print(f"ENDING QUIZ: No available questions for session {session_id}")
-        QuizSessionRepository.update_session_status(session_id, 3)
-        final_state = get_quiz_state(session_id)
-        player_scores = PlayerAnswerRepository.get_all_player_scores_for_session(session_id)
-        total_score = sum(float(score.get('total_score', 0)) for score in player_scores)
-        asyncio.run_coroutine_threadsafe(
-            sio.emit('quiz_finished', {
-                'session_id': session_id,
-                'final_score': total_score,
-                'questions_asked': final_state['question_count'],
-                'all_questions_answered': True,
-                'ended_early': False,
-                'final_scores': [],
-                'message': f'Quiz completed! All questions answered. Final score: {total_score}'
-            }), loop
-        ).result(timeout=1)
-        return
+        quiz_logger.info(f"No available questions for theme {theme_id} in session {session_id}")
+        print(f"No available questions for theme {theme_id} in session {session_id}")
+
+        # Check whether there are other active themes left that haven't been played
+        try:
+            with session_played_lock:
+                played = list(session_played_themes.get(session_id, []))
+        except Exception:
+            played = []
+
+        all_active_themes = ThemeRepository.get_active_themes() or []
+        remaining_themes = [t for t in all_active_themes if t.get('id') not in set(played)]
+
+        if remaining_themes:
+            # Reset session theme so players can vote again and exclude already played themes
+            QuizSessionRepository.update_session_theme(session_id, None)
+            set_session_phase(session_id, 'voting')
+
+            # Inform players and emit theme selection excluding played themes
+            ChatLogRepository.create_chat_message(
+                session_id=session_id,
+                message_text="No more questions in this theme. Please choose another theme.",
+                user_id=1,
+                message_type='system',
+                reply_to_id=1
+            )
+            threadsafe_emit_message_sent(sio, session_id, loop)
+
+            try:
+                # emit_combined_theme_selection signature: (sio, loop, target=None, active_only=True, exclude_ids=None)
+                emit_combined_theme_selection(sio, loop, None, True, played)
+            except Exception as e:
+                print(f"Failed to emit new theme selection for session {session_id}: {e}")
+
+            # Start voting timer so players can vote for next theme
+            try:
+                timer_config = {
+                    'voting_time': 33,
+                    'theme_display_time': 10,
+                    'question_time': 15,
+                    'explanation_time': 15
+                }
+                start_generic_timer(sio, loop, session_id, timer_config)
+            except Exception as e:
+                print(f"Failed to start voting timer for new theme selection in session {session_id}: {e}")
+
+            return
+        else:
+            # No themes left - end quiz normally
+            quiz_logger.warning(f"ENDING QUIZ: No available questions and no remaining themes for session {session_id}")
+            print(f"ENDING QUIZ: No available questions and no remaining themes for session {session_id}")
+            QuizSessionRepository.update_session_status(session_id, 3)
+            final_state = get_quiz_state(session_id)
+            player_scores = PlayerAnswerRepository.get_all_player_scores_for_session(session_id)
+            total_score = sum(float(score.get('total_score', 0)) for score in player_scores)
+            asyncio.run_coroutine_threadsafe(
+                sio.emit('quiz_finished', {
+                    'session_id': session_id,
+                    'final_score': total_score,
+                    'questions_asked': final_state['question_count'],
+                    'all_questions_answered': True,
+                    'ended_early': False,
+                    'final_scores': [],
+                    'message': f'Quiz completed! All questions answered. Final score: {total_score}'
+                }), loop
+            ).result(timeout=1)
+            return
 
     # Only send "Preparing question" message if we have questions to ask
     quiz_logger.info(f"About to send 'Preparing question {quiz_state['question_count'] + 1}' message")
@@ -5371,6 +5471,12 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
         question = select_question_based_on_sensors(available_questions, temp_sensor, light_sensor) or \
                   random.choice(available_questions) if available_questions else None
         print(f"Selected question: {question['id'] if question else 'None'}")
+        # Diagnostic: show how many available_questions remain and IDs
+        try:
+            avail_ids = [q['id'] for q in available_questions]
+        except Exception:
+            avail_ids = []
+        print(f"Available question IDs (pre-remove): {avail_ids}")
         if not question:
             print(f"ERROR: No question selected, breaking loop")
             break
@@ -5386,8 +5492,16 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
         question_time = max(question.get('time_limit', 15), 9)
         explanation_time = max(5, min(10, question_time))
 
-        emit_combined_question_and_answers(question['id'], sio, loop)
+        # Emit the combined question+answers payload and log outcome
+        try:
+            print(f"[DEBUG] About to emit questionData for question_id={question['id']}")
+            emit_combined_question_and_answers(question['id'], sio, loop)
+            print(f"[DEBUG] emit_combined_question_and_answers called for question_id={question['id']}")
+        except Exception as e:
+            print(f"[ERROR] emit_combined_question_and_answers failed for question {question['id']}: {e}")
+            traceback.print_exc()
         answers = AnswerRepository.get_correct_answers_for_question(question['id'])
+        print(f"[DEBUG] Found {len(answers) if answers else 0} correct answers for question {question['id']}")
         asyncio.run_coroutine_threadsafe(
             sio.emit('question_started', {
                 'session_id': session_id,
@@ -5668,47 +5782,60 @@ def emit_error(sio, loop, session_id, error_message):
     )
     future.result(timeout=1)
 
-def emit_combined_theme_selection(sio, loop, active_only=True):
+def emit_combined_theme_selection(sio, loop, target=None, active_only=True, exclude_ids=None):
     """
     Emit theme selection question with theme options via socket.io.
+    - target: if provided, send only to that room/sid; otherwise broadcast
+    - active_only: whether to use active themes only
+    - exclude_ids: optional list of theme IDs to exclude from selection
     """
     try:
+        # Backwards-compat: allow callers passing (sio, loop, True) where True was active_only
+        if isinstance(target, bool):
+            active_only = target
+            target = None
+
         if active_only:
-            themes = ThemeRepository.get_active_themes()
+            themes = ThemeRepository.get_active_themes() or []
         else:
-            themes = ThemeRepository.get_all_themes()
-            
+            themes = ThemeRepository.get_all_themes() or []
+
+        # Filter out any excluded theme ids
+        if exclude_ids:
+            themes = [t for t in themes if t.get('id') not in set(exclude_ids)]
+
         if not themes:
             error_data = {
                 'error': 'not_found',
-                'message': 'No themes found',
+                'message': 'No themes available',
                 'status_code': 404
             }
             try:
-                future = asyncio.run_coroutine_threadsafe(
-                    sio.emit('theme_selection_error', error_data),
-                    loop
-                )
+                if target:
+                    asyncio.run_coroutine_threadsafe(sio.emit('theme_selection_error', error_data, room=target), loop)
+                else:
+                    asyncio.run_coroutine_threadsafe(sio.emit('theme_selection_error', error_data), loop)
             except Exception as e:
                 print(f"Failed to schedule 'theme_selection_error' emit: {e}")
-        else:
-            theme_names = [t.get('name') or t.get('title') for t in themes]
-            combined_data = {
-                'id': 'theme_selection',
-                'question': 'Choose a theme?',
-                'type': 'theme_selection',
-                'themes': themes,
-                'count': len(themes),
-                'active_only': active_only,
-                'timestamp': time.time()
-            }
-            try:
-                future = asyncio.run_coroutine_threadsafe(
-                    sio.emit('questionData', combined_data),
-                    loop
-                )
-            except Exception as e:
-                print(f"Failed to schedule 'theme_selection_data' emit: {e}")
+            return
+
+        combined_data = {
+            'id': 'theme_selection',
+            'question': 'Choose a theme?',
+            'type': 'theme_selection',
+            'themes': themes,
+            'count': len(themes),
+            'active_only': active_only,
+            'timestamp': time.time()
+        }
+
+        try:
+            if target:
+                asyncio.run_coroutine_threadsafe(sio.emit('questionData', combined_data, room=target), loop)
+            else:
+                asyncio.run_coroutine_threadsafe(sio.emit('questionData', combined_data), loop)
+        except Exception as e:
+            print(f"Failed to schedule 'theme_selection_data' emit: {e}")
 
     except Exception as e:
         print(f"An unexpected error occurred during emit_combined_theme_selection: {e}")
@@ -5776,9 +5903,19 @@ def emit_combined_question_and_answers(question_id, sio, loop):
         }
 
         # 4. Emit the unified data on a single, predictable channel
-        asyncio.run_coroutine_threadsafe(
-            sio.emit('questionData', combined_data), loop
-        )
+        print(f"[DEBUG] Emitting questionData for question_id={question_id} with {len(answers) if answers else 0} answers")
+        try:
+            future = asyncio.run_coroutine_threadsafe(
+                sio.emit('questionData', combined_data), loop
+            )
+            # Attempt to get result to surface any scheduling errors quickly
+            try:
+                future.result(timeout=1)
+                print(f"[DEBUG] questionData emit scheduled for question_id={question_id}")
+            except Exception as e:
+                print(f"[DEBUG] questionData emit may have failed to schedule: {e}")
+        except Exception as e:
+            print(f"[ERROR] Failed to run_coroutine_threadsafe for questionData: {e}")
 
     except Exception as e:
         # Catch any other unexpected errors during the process
@@ -6237,6 +6374,21 @@ def threadsafe_emit_item_effect(sio, loop):
     )
 
 
+def threadsafe_emit_message_sent(sio, session_id, loop):
+    """
+    Thread-safe emit helper for 'message_sent' events.
+    Emits {'session_id': session_id} to clients using the provided event loop.
+    """
+    try:
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('message_sent', {'session_id': session_id}),
+            loop
+        )
+    except Exception as e:
+        # Don't let missing emit helper crash timer threads; log and continue
+        print(f"[WARN] threadsafe_emit_message_sent failed to schedule emit for session {session_id}: {e}")
+
+
 def activateAdvertFlood():
     """Triggers 10-second ad flood on all clients (thread-safe)"""
     print("sending advert flood emit")
@@ -6312,19 +6464,29 @@ def clear_player_items(user_id: int):
 
 
 @app.post("/api/player/{user_id}/items/{item_id}/use")
-async def use_item(user_id: int, item_id: int):
-    """Use an item (activate its effect and remove from inventory)"""
+async def use_item(user_id: int, item_id: int, discard: bool = False):
+    """Use an item (activate its effect and remove from inventory).
+
+    If `discard=True` is provided as a query parameter, the item is removed
+    from the player's inventory without executing its effect (this is used
+    for the "double-click to discard" UX requested by the frontend).
+    """
     try:
         # Get item details first
         item = PlayerItemRepository.get_player_item(user_id, item_id)
         if not item:
             return {"success": False, "error": "Item not found in player inventory"}
-        
-        # Use the item (removes from inventory)
+
+        # Remove one quantity from inventory (works for stacks)
         success = PlayerItemRepository.use_item(user_id, item_id, 1)
         if not success:
-            return {"success": False, "error": "Failed to use item"}
-        # Activate item effect based on the effect string
+            return {"success": False, "error": "Failed to remove item from inventory"}
+
+        # If this request is a discard request, do not execute any effect
+        if discard:
+            return {"success": True, "discarded": True, "item": item}
+
+        # Otherwise, activate the item effect based on the effect string
         effect = item.get('effect', '')
         print(f"Player {user_id} activated {item_id} with effect {effect}")
         try:
@@ -6342,9 +6504,9 @@ async def use_item(user_id: int, item_id: int):
                         globals()[function_name]()
         except Exception as effect_error:
             print(f"Error executing item effect: {effect_error}")
-        
+
         return {"success": True, "item_used": item}
-        
+
     except Exception as e:
         return {"success": False, "error": str(e)}
 
