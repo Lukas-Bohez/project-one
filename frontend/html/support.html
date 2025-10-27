@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+    <link rel="stylesheet" href="../css/support.css">
     <!-- Performance hint for AdSense -->
     <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin>
     <!-- Google Consent Mode v2 default (deny until consent) -->
@@ -24,272 +24,98 @@
     <title>Community Support Chat - Quiz The Spire</title>
     <meta name="author" content="Oroka Conner">
     <link rel="stylesheet" href="../css/styles.css">
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="../js/themeManager.js"></script>
     <script src="../js/supportLogin.js"></script>
     <script src="../js/supportChat.js"></script>
-    <script src="../js/lofi.js"></script>
-    
+    <script src="../js/supportUI.js"></script>
+
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .support-header {
-            text-align: center;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .support-header:hover {
-            transform: scale(1.01);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-
-        .support-header h1 {
-            margin: 0 0 5px 0;
-            font-size: 2em;
-        }
-
-        .support-header p {
-            margin: 0;
-            font-size: 1em;
-            opacity: 0.9;
-        }
-
-        .back-hint {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            font-size: 0.9em;
-            opacity: 0.8;
-        }
-
-        .chat-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .chat-info {
-            background: var(--bg-secondary, #f8f9fa);
-            padding: 15px;
+        /* Theme Toggle Button Styling */
+        .c-theme-toggle {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
             border-radius: 8px;
-            margin-bottom: 15px;
-            border: 1px solid var(--border-color, #dee2e6);
-        }
-
-        .chat-info h3 {
-            margin: 0 0 10px 0;
-            color: var(--text-primary, #333);
-        }
-
-        .chat-info p {
-            margin: 5px 0;
-            color: var(--text-secondary, #666);
-            font-size: 0.9em;
-        }
-
-        #chatBox {
-            flex: 1;
-            background: var(--bg-primary, white);
-            border: 2px solid var(--border-color, #dee2e6);
-            border-radius: 8px;
-            padding: 20px;
-            overflow-y: auto;
-            min-height: 400px;
-            max-height: 600px;
-            margin-bottom: 15px;
-        }
-
-        .chat-message {
-            margin-bottom: 15px;
-            padding: 12px;
-            border-radius: 8px;
-            animation: slideIn 0.3s ease-out;
-            word-wrap: break-word;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .chat-message.own {
-            background: #667eea;
-            color: white;
-            margin-left: 20%;
-        }
-
-        .chat-message.other {
-            background: var(--bg-secondary, #f1f3f5);
-            color: var(--text-primary, #333);
-            margin-right: 20%;
-        }
-
-        .chat-message .username {
-            font-weight: bold;
-            margin-bottom: 5px;
-            font-size: 0.9em;
-        }
-
-        .chat-message.own .username {
-            color: rgba(255,255,255,0.9);
-        }
-
-        .chat-message.other .username {
-            color: #667eea;
-        }
-
-        .chat-message .timestamp {
-            font-size: 0.75em;
-            opacity: 0.7;
-            margin-top: 5px;
-        }
-
-        .input-area {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .message-input {
-            display: flex;
-            gap: 10px;
-        }
-
-        #messageInput {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid var(--border-color, #dee2e6);
-            border-radius: 6px;
-            font-size: 1em;
-            resize: vertical;
-            min-height: 50px;
-            max-height: 150px;
-            font-family: inherit;
-            background: var(--bg-primary, white);
-            color: var(--text-primary, #333);
-        }
-
-        #sendButton {
-            padding: 12px 30px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 1em;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-
-        #sendButton:hover:not(:disabled) {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-
-        #sendButton:active:not(:disabled) {
-            transform: translateY(0);
-        }
-
-        #sendButton:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-
-        .status-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
             padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
             font-weight: 500;
+            min-width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
-        .status-indicator.connected {
-            background: rgba(40, 167, 69, 0.1);
-            color: #28a745;
+        .c-theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
-        .status-indicator.disconnected {
-            background: rgba(220, 53, 69, 0.1);
-            color: #dc3545;
+        .c-theme-toggle:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            animation: pulse 2s ease-in-out infinite;
+        /* Dark theme adjustments for toggle */
+        [data-theme="dark"] .c-theme-toggle {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
         }
 
-        .status-indicator.connected .status-dot {
-            background: #28a745;
-        }
-
-        .status-indicator.disconnected .status-dot {
-            background: #dc3545;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        [data-theme="dark"] .c-theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
         @media (max-width: 768px) {
-            .support-header h1 {
-                font-size: 1.5em;
+            .support-header {
+                flex-direction: column !important;
+                text-align: center !important;
             }
-
-            .back-hint {
-                position: static;
-                margin-top: 10px;
+            
+            .header-center {
+                order: 1 !important;
             }
-
-            .chat-message {
-                margin-left: 0 !important;
-                margin-right: 0 !important;
+            
+            .c-theme-toggle {
+                order: 2 !important;
+                align-self: center !important;
+                margin: 10px 0;
             }
-
-            .message-input {
-                flex-direction: column;
-            }
-
-            #sendButton {
-                width: 100%;
+            
+            .header-right {
+                order: 3 !important;
+                justify-content: center !important;
             }
         }
     </style>
+
 </head>
 <body class="theme-blue">
-    <header class="support-header" onclick="window.location.href='../index.html'" title="Click to return home">
-        <h1>💬 Community Support Chat</h1>
-        <p>Get help, ask questions, and connect with the Quiz The Spire community</p>
-        <div class="back-hint">← Click to go back</div>
+    <header class="support-header" onclick="window.location.href='../index.html'" title="Click to return home" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+        <button class="c-theme-toggle" id="theme-toggle" onclick="event.stopPropagation(); toggleTheme()" style="order: 1; flex-shrink: 0;">
+            Light Mode
+        </button>
+        
+        <div class="header-center" style="order: 2; flex: 1; text-align: center; min-width: 0;">
+            <h1>💬 Community Support Chat</h1>
+            <p>Get help, ask questions, and connect with the Quiz The Spire community</p>
+        </div>
+        
+        <div class="header-right" style="order: 3; flex-shrink: 0; display: flex; align-items: center; gap: 10px;">
+            <div class="back-hint">← Click to go back</div>
+            <div class="user-info" id="userInfo" style="display: none;">
+                <span class="user-greeting">Logged in as: <span id="userName"></span></span>
+            </div>
+        </div>
     </header>
 
     <div class="chat-container">
@@ -315,77 +141,5 @@
         </div>
     </div>
 
-    <script>
-        // Support chat system instance
-        let supportChatSystem = null;
-        let authSystem = null;
-
-        // Initialize authentication and chat system
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Support page loaded, initializing systems...');
-            
-            // Initialize support auth system (NOT quiz auth)
-            authSystem = new SupportAuthSystem();
-            
-            // Initialize support chat system (it will wait for authentication)
-            supportChatSystem = new SupportChatSystem();
-            
-            // Set up UI event handlers
-            setupUIHandlers();
-        });
-
-        function setupUIHandlers() {
-            const sendButton = document.getElementById('sendButton');
-            const messageInput = document.getElementById('messageInput');
-            
-            if (sendButton) {
-                sendButton.addEventListener('click', handleSendMessage);
-            }
-            
-            if (messageInput) {
-                messageInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage();
-                    }
-                });
-                
-                // Auto-resize textarea
-                messageInput.addEventListener('input', function() {
-                    this.style.height = 'auto';
-                    this.style.height = Math.min(this.scrollHeight, 150) + 'px';
-                });
-            }
-        }
-
-        async function handleSendMessage() {
-            const messageInput = document.getElementById('messageInput');
-            if (!messageInput) return;
-            
-            const message = messageInput.value.trim();
-            if (!message) return;
-            
-            if (!supportChatSystem) {
-                console.error('Support chat system not initialized');
-                return;
-            }
-            
-            // Send the message
-            const success = await supportChatSystem.sendMessage(message);
-            
-            if (success) {
-                // Clear input
-                messageInput.value = '';
-                messageInput.style.height = 'auto';
-            }
-        }
-
-        // Clean up on page unload
-        window.addEventListener('beforeunload', function() {
-            if (supportChatSystem) {
-                supportChatSystem.destroy();
-            }
-        });
-    </script>
 </body>
 </html>
