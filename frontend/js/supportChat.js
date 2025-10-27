@@ -49,6 +49,16 @@ class SupportChatSystem {
             this.updateConnectionStatus(false);
         });
 
+        this.socket.on('reconnect', (attemptNumber) => {
+            console.log('SupportChatSystem: Reconnected after', attemptNumber, 'attempts');
+            this.updateConnectionStatus(true);
+        });
+
+        this.socket.on('reconnecting', (attemptNumber) => {
+            console.log('SupportChatSystem: Reconnecting, attempt', attemptNumber);
+            this.updateConnectionStatus(false); // This will show "Reconnecting..." due to the isReconnecting check
+        });
+
         this.socket.on('message_sent', (data) => {
             console.log('SupportChatSystem: Received message_sent event:', data);
             
@@ -246,18 +256,23 @@ class SupportChatSystem {
         if (!statusEl || !sendButton) return;
 
         const user = this.getCurrentUserWithFallback();
+        const isReconnecting = this.socket && this.socket.reconnecting;
 
         if (connected && user) {
             statusEl.className = 'status-indicator connected';
             statusEl.querySelector('span:last-child').textContent = 'Connected';
             sendButton.disabled = false;
+        } else if (isReconnecting && user) {
+            statusEl.className = 'status-indicator connecting';
+            statusEl.querySelector('span:last-child').textContent = 'Reconnecting...';
+            sendButton.disabled = true;
         } else if (!user) {
             statusEl.className = 'status-indicator disconnected';
             statusEl.querySelector('span:last-child').textContent = 'Please log in to chat...';
             sendButton.disabled = true;
         } else {
             statusEl.className = 'status-indicator disconnected';
-            statusEl.querySelector('span:last-child').textContent = 'Disconnected - Reconnecting...';
+            statusEl.querySelector('span:last-child').textContent = 'Disconnected';
             sendButton.disabled = true;
         }
     }
