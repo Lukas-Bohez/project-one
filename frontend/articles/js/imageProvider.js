@@ -3,7 +3,7 @@
 (function(){
   'use strict';
 
-  const CACHE_KEY = 'qts-articles-ai-images';
+  const CACHE_KEY = 'qts-articles-ai-images-v2'; // Updated to force cache refresh for better housing images
   const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
   function loadCache(){

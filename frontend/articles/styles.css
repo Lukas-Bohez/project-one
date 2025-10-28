@@ -88,17 +88,21 @@ html, body {
   overflow: hidden;
   display: flex; flex-direction: column;
   transition: transform .2s ease, box-shadow .2s ease;
+  aspect-ratio: 3/4;
 }
 .a-card:hover {transform: translateY(-2px); box-shadow: 0 8px 18px rgba(0,0,0,.12)}
-.a-card__thumb {position: relative; aspect-ratio: 16/9; background: #0f172a10; display:flex; align-items:center; justify-content:center; overflow:hidden; transition: aspect-ratio 0.3s ease, max-height 0.3s ease}
+.a-card__thumb {position: relative; flex: 2; background: #0f172a10; display:flex; align-items:center; justify-content:center; overflow:hidden; transition: aspect-ratio 0.3s ease, max-height 0.3s ease}
 .a-card__thumb.no-img {color: white; font-weight: 700; font-size: 1.1rem}
 .a-card__thumb .a-card__img {width:100%; height:100%; object-fit:cover; display:block; transition: object-fit 0.3s ease, object-position 0.3s ease}
-.a-card__body {padding: 1rem 1rem 1.2rem}
-.a-card__title {font-size: 1.125rem; font-weight: 700; margin-bottom: .4rem}
-.a-card__meta {color: var(--ink-muted); font-size: .9rem; margin-bottom: .75rem}
-.a-card__desc {color: var(--ink-muted)}
-.a-card__tags {display:flex; flex-wrap: wrap; gap:.4rem; margin-top:.75rem}
-.tag {border:1px solid var(--border); color: var(--ink); padding:.2rem .5rem; border-radius:999px; font-size:.8rem}
+.a-card__body {flex: 1; padding: 0.75rem; display: flex; flex-direction: column; justify-content: space-between;}
+.a-card__title {font-size: 1rem; font-weight: 700; margin-bottom: .3rem; line-height: 1.2;}
+.a-card__meta {color: var(--ink-muted); font-size: .8rem; margin-bottom: .5rem}
+.a-card__desc {color: var(--ink-muted); font-size: 0.9rem; flex: 1; overflow: hidden; display: -webkit-box; line-clamp: 3; -webkit-line-clamp: 3; -webkit-box-orient: vertical;}
+.a-card__desc--expanded {line-clamp: none; -webkit-line-clamp: none; display: block;}
+.a-card__expand-btn {background: none; border: none; color: var(--accent); font-size: 0.85rem; font-weight: 600; cursor: pointer; padding: 0; margin: 0.25rem 0; text-decoration: underline; align-self: flex-start;}
+.a-card__expand-btn:hover {color: var(--accent-2);}
+.a-card__tags {display:flex; flex-wrap: wrap; gap:.3rem; margin-top:.5rem}
+.tag {border:1px solid var(--border); color: var(--ink); padding:.2rem .4rem; border-radius:999px; font-size:.75rem}
 
 .a-toolbar {display:flex; gap:.5rem; align-items:center; margin-top: .75rem}
 .a-input {flex:1; border:2px solid var(--border); background: var(--bg); color: var(--ink); border-radius:10px; padding:.6rem .8rem}
