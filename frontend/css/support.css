@@ -242,6 +242,39 @@ body {
 }
 
 @media (max-width: 768px) {
+    .support-header {
+        flex-direction: column !important;
+        text-align: center !important;
+    }
+    
+    .header-center {
+        order: 1 !important;
+    }
+    
+    .c-theme-toggle {
+        order: 2 !important;
+        align-self: center !important;
+        margin: 10px 0;
+    }
+    
+    .header-right {
+        order: 3 !important;
+        justify-content: center !important;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .user-info {
+        position: static !important;
+        margin-top: 10px;
+        background: none !important;
+        padding: 0 !important;
+        border-radius: 0 !important;
+        opacity: 1 !important;
+        font-size: 0.9em;
+        color: white;
+    }
+
     .support-header h1 {
         font-size: 1.5em;
     }

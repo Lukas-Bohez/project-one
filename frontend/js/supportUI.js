@@ -110,6 +110,16 @@ class SupportUI {
         if (userInfo && userName) {
             userName.textContent = fullName;
             userInfo.style.display = 'block';
+
+            // Adjust styling for mobile devices to integrate with flexbox
+            if (window.innerWidth <= 768) {
+                userInfo.style.position = 'static';
+                userInfo.style.marginTop = '10px';
+                userInfo.style.background = 'none';
+                userInfo.style.padding = '0';
+                userInfo.style.borderRadius = '0';
+                userInfo.style.opacity = '1';
+            }
         }
     }
 
