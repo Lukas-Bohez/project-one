@@ -60,9 +60,14 @@ class ArticlesManager {
         const articlesHTML = filteredArticles.map(article => this.createArticleCard(article)).join('');
         container.innerHTML = `<div class="a-grid">${articlesHTML}</div>`;
 
-        // After render, populate AI thumbnails if available
+        // After render, populate AI thumbnails asynchronously (don't block UI)
         if (window.imageProvider) {
-            window.imageProvider.populateThumbnails(container);
+            // Use setTimeout to ensure DOM is updated before starting image loading
+            setTimeout(() => {
+                window.imageProvider.populateThumbnails(container).catch(err => {
+                    console.warn('Failed to populate thumbnails:', err);
+                });
+            }, 100);
         }
     }
 

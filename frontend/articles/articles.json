@@ -1,6 +1,20 @@
 {
   "articles": [
     {
+      "id": "public-domain-directory",
+      "title": "Public Domain Directory: Free Books, Music, Art, Films & More",
+      "subtitle": "The Ultimate Collection of Free Creative Content - No Copyright Restrictions",
+      "author": "Oroka Conner",
+      "date": "2025-10-28",
+      "description": "The most comprehensive public domain directory on the internet. Thousands of free books, music, art, films, and resources. Direct links to Project Gutenberg, Internet Archive, Wikimedia Commons, and more. Everything you need for unlimited creative freedom.",
+      "tags": ["public-domain", "directory", "free-content", "books", "music", "art", "films", "resources", "creative-commons", "literature", "classical-music", "masterpieces", "copyright-free"],
+      "category": "technology",
+      "imageQuery": "massive library with endless bookshelves, musical instruments, art galleries, film reels, treasure chests overflowing, public domain directory, infinite free content, grand archive, professional editorial photography, golden hour lighting, expansive collection",
+      "readTime": "15 min read",
+      "featured": true,
+      "htmlFile": "public-domain-directory.html"
+    },
+    {
       "id": "public-domain-goldmine",
       "title": "The Public Domain Goldmine: Free Books, Music, Art & Films Worth Millions",
       "subtitle": "Millions in Creative Content Available for Free - No Copyright, No Restrictions",

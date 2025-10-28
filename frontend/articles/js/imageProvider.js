@@ -21,18 +21,34 @@
   }
 
   async function lexicaSearch(query){
-    const url = `https://lexica.art/api/v1/search?q=${encodeURIComponent(query)}`;
-    const res = await fetch(url, {mode:'cors'});
-    if(!res.ok) throw new Error('Lexica search failed: '+res.status);
-    const data = await res.json();
-    if(!data || !Array.isArray(data.images) || data.images.length === 0){
-      throw new Error('No images from Lexica');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+    try {
+      const url = `https://lexica.art/api/v1/search?q=${encodeURIComponent(query)}`;
+      const res = await fetch(url, {
+        mode:'cors',
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if(!res.ok) throw new Error('Lexica search failed: '+res.status);
+      const data = await res.json();
+      if(!data || !Array.isArray(data.images) || data.images.length === 0){
+        throw new Error('No images from Lexica');
+      }
+      // Prefer highest quality src if available
+      const img = data.images[0];
+      const src = img.src || img.srcSmall || img.image || img.url;
+      if(!src) throw new Error('No usable image URL');
+      return {url: src, prompt: img.prompt || query};
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error('Lexica search timed out');
+      }
+      throw error;
     }
-    // Prefer highest quality src if available
-    const img = data.images[0];
-    const src = img.src || img.srcSmall || img.image || img.url;
-    if(!src) throw new Error('No usable image URL');
-    return {url: src, prompt: img.prompt || query};
   }
 
   function fallbackImage(query){
@@ -52,12 +68,32 @@
       const result = await lexicaSearch(query);
       cache[key] = {url: result.url, prompt: result.prompt, ts: now};
       saveCache(cache);
+
+      // Notify service worker to cache this image
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'CACHE_IMAGE',
+          url: result.url,
+          query: query
+        });
+      }
+
       return cache[key];
     }catch(err){
       console.warn('Lexica failed, using fallback image for', query, err);
       const f = fallbackImage(query);
       cache[key] = {url: f.url, prompt: f.prompt, ts: now};
       saveCache(cache);
+
+      // Notify service worker to cache fallback image too
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'CACHE_IMAGE',
+          url: f.url,
+          query: query
+        });
+      }
+
       return cache[key];
     }
   }
@@ -163,10 +199,18 @@
 
   async function populateThumbnails(container){
     const thumbs = (container || document).querySelectorAll('[data-ai-query]');
-    for(const t of thumbs){
-      const q = t.getAttribute('data-ai-query');
-      if(q) await applyToThumb(t, q);
-    }
+    // Process all thumbnails in parallel to avoid blocking
+    const promises = Array.from(thumbs).map(async (t) => {
+      try {
+        const q = t.getAttribute('data-ai-query');
+        if(q) await applyToThumb(t, q);
+      } catch (err) {
+        console.warn('Failed to load thumbnail:', err);
+        // Continue with other thumbnails even if one fails
+      }
+    });
+    // Don't await here - let thumbnails load in background
+    Promise.allSettled(promises).catch(err => console.warn('Some thumbnails failed to load:', err));
   }
 
   async function populateInline(){
