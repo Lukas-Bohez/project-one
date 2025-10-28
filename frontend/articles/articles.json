@@ -1,6 +1,20 @@
 {
   "articles": [
     {
+      "id": "public-domain-goldmine",
+      "title": "The Public Domain Goldmine: Free Books, Music, Art & Films Worth Millions",
+      "subtitle": "Millions in Creative Content Available for Free - No Copyright, No Restrictions",
+      "author": "Oroka Conner",
+      "date": "2025-10-28",
+      "description": "Discover the incredible wealth of public domain content available for free. Classic books by Shakespeare, Dickens, and Austen; symphonies by Beethoven and Mozart; masterpieces by da Vinci and van Gogh; films by Chaplin and Welles - all yours to use without restrictions.",
+      "tags": ["public-domain", "copyright", "free-content", "books", "music", "art", "films", "creative-commons", "literature", "classical-music"],
+      "category": "technology",
+      "imageQuery": "treasure chest overflowing with classic books, musical notes, paintbrushes, film reels, gold coins spilling out, public domain riches, vintage illustrations, wealth of free content, professional editorial photography, golden lighting, abundant treasures",
+      "readTime": "12 min read",
+      "featured": true,
+      "htmlFile": "posts/public-domain-goldmine.html"
+    },
+    {
       "id": "google-revolution",
       "title": "How Google Revolutionized Search and Changed the Internet Forever",
       "subtitle": "From a Simple Search Box to the World's Most Powerful Technology Company",
@@ -153,6 +167,13 @@
     "search-engine": "Search engine technology and algorithms",
     "history": "Historical analysis and company origins",
     "internet": "Internet technology and development",
-    "company-culture": "Corporate culture and business practices"
+    "company-culture": "Corporate culture and business practices",
+    "public-domain": "Public domain content and copyright-free works",
+    "copyright": "Copyright law and intellectual property",
+    "free-content": "Free and open content resources",
+    "books": "Books and literature",
+    "classical-music": "Classical music and compositions",
+    "creative-commons": "Creative Commons licensing",
+    "literature": "Literary works and writing"
   }
 }
