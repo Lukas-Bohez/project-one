@@ -1,0 +1,1825 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Performance optimizations -->
+  <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin>
+  <link rel="preconnect" href="https://lexica.art" crossorigin>
+  <link rel="preconnect" href="https://picsum.photos" crossorigin>
+  <link rel="dns-prefetch" href="//lexica.art">
+  <link rel="dns-prefetch" href="//picsum.photos">
+
+  <!-- Google Consent Mode v2 default (deny until consent) -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('consent','default',{
+      'ad_storage':'denied',
+      'analytics_storage':'denied',
+      'ad_user_data':'denied',
+      'ad_personalization':'denied',
+      'functionality_storage':'granted',
+      'security_storage':'granted'
+    });
+  </script>
+  <!-- Performance hint for AdSense -->
+  <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin>
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449" crossorigin="anonymous"></script>
+  <title>Public Domain Directory: Free Books, Music, Art, Films & More • Quiz The Spire</title>
+  <meta name="description" content="The ultimate public domain directory - thousands of free books, music, art, films, and resources. Download classics by Shakespeare, Beethoven, da Vinci, and more. No copyright restrictions.">
+  <meta name="keywords" content="public domain directory, free books, free music, free art, free films, copyright free content, public domain resources, Project Gutenberg, Internet Archive">
+  <link rel="stylesheet" href="../../css/styles.css" />
+  <link rel="stylesheet" href="../styles.css" />
+  <script src="../../js/themeManager.js"></script>
+  <style>
+    body{min-height:100vh;display:flex;flex-direction:column}
+    .directory-hero {background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 2rem 1rem; text-align: center; position: relative;}
+    .directory-hero h1 {font-size: clamp(1.8rem, 3vw, 2.5rem); margin-bottom: 0.5rem; font-weight: 700;}
+    .directory-hero .subtitle {font-size: clamp(1rem, 2vw, 1.4rem); opacity: 0.9; margin-bottom: 1rem;}
+    .directory-meta {display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; opacity: 0.8; font-size: 0.9rem;}
+
+    .directory-nav {background: var(--bg-secondary); border-radius: 8px; padding: 1rem; margin: 2rem auto; max-width: 800px;}
+    .directory-nav-tabs {display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center;}
+    .directory-nav-tab {background: var(--bg); color: var(--text); border: 2px solid var(--border); padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; transition: all 0.3s; font-size: 0.9rem;}
+    .directory-nav-tab.active {background: var(--accent); color: white; border-color: var(--accent);}
+
+    .directory-section {margin: 2rem auto; max-width: 1000px; padding: 0 1rem;}
+    .directory-section h2 {color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; margin-bottom: 1.5rem; font-size: 1.5rem;}
+    .directory-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;}
+    .directory-card {background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; transition: all 0.3s;}
+    .directory-card:hover {transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
+    .directory-card h3 {color: var(--text); margin-bottom: 0.5rem; font-size: 1.1rem;}
+    .directory-card .author {color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;}
+    .directory-card .description {color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.5; font-size: 0.9rem;}
+    .directory-card .links {display: flex; gap: 0.5rem; flex-wrap: wrap;}
+    .directory-card .link {background: var(--accent); color: white; padding: 0.25rem 0.75rem; border-radius: 4px; text-decoration: none; font-size: 0.85rem; transition: all 0.3s;}
+    .directory-card .link:hover {background: var(--accent-hover);}
+
+    .resource-section {background: var(--bg-secondary); border-radius: 8px; padding: 2rem; margin: 2rem auto; max-width: 1000px;}
+    .resource-section h3 {color: var(--accent); margin-bottom: 1rem; font-size: 1.3rem;}
+    .resource-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;}
+    .resource-item {background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 1rem; text-align: center;}
+    .resource-item .icon {font-size: 2rem; margin-bottom: 0.5rem;}
+    .resource-item h4 {color: var(--text); margin-bottom: 0.25rem; font-size: 1rem;}
+    .resource-item p {color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;}
+    .resource-item a {color: var(--accent); text-decoration: none; font-weight: 500;}
+    .resource-item a:hover {text-decoration: underline;}
+
+    @media (max-width: 768px) {
+      .directory-grid {grid-template-columns: 1fr;}
+      .resource-grid {grid-template-columns: 1fr;}
+      .directory-nav {margin: 1rem 1rem;}
+      .directory-section {margin: 1rem 1rem;}
+      .resource-section {margin: 1rem 1rem; padding: 1rem;}
+    }
+  </style>
+</head>
+<body>
+
+  <header class="a-header">
+    <div class="a-container a-topbar">
+      <a class="c-btn c-btn--tertiary" href="../articlepagenew.html">← Back to Articles</a>
+      <button id="servoTestBtn" class="c-btn c-btn--tertiary gamepad">Toggle Theme</button>
+    </div>
+  </header>
+
+  <div class="directory-hero">
+    <div class="a-container">
+      <h1>Public Domain Directory</h1>
+      <p class="subtitle">The Ultimate Collection of Free Books, Music, Art, Films & Creative Content</p>
+      <div class="directory-meta">
+        <span>Last Updated: October 28, 2025</span>
+        <span>70,000+ Books via Project Gutenberg</span>
+        <span>Millions of Works Available Worldwide</span>
+      </div>
+    </div>
+  </div>
+
+  <main class="a-container">
+    <!-- Navigation Tabs -->
+    <nav class="directory-nav">
+      <div class="directory-nav-tabs">
+        <button class="directory-nav-tab active" data-section="books">📚 Books</button>
+        <button class="directory-nav-tab" data-section="music">🎵 Music</button>
+        <button class="directory-nav-tab" data-section="art">🎨 Art</button>
+        <button class="directory-nav-tab" data-section="films">🎬 Films</button>
+        <button class="directory-nav-tab" data-section="software">💻 Software</button>
+        <button class="directory-nav-tab" data-section="resources">🔗 Resources</button>
+      </div>
+    </nav>
+
+    <!-- Books Section -->
+    <section id="books-section" class="directory-section">
+      <h2>📚 Literary Masterpieces - Free Books</h2>
+      <div class="directory-grid">
+        <!-- Shakespeare -->
+        <div class="directory-card">
+          <h3>William Shakespeare</h3>
+          <div class="author">1564-1616</div>
+          <div class="description">Complete works including Romeo & Juliet, Hamlet, Macbeth, Othello, King Lear, and all 154 sonnets.</div>
+          <div class="links">
+            <a href="https://www.gutenberg.org/ebooks/author/65" class="link" target="_blank">Project Gutenberg</a>
+          </div>
+        </div>
+
+        <!-- Dickens -->
+        <div class="directory-card">
+          <h3>Charles Dickens</h3>
+          <div class="author">1812-1870</div>
+          <div class="description">Great Expectations, Oliver Twist, A Tale of Two Cities, David Copperfield, Little Dorrit, and more.</div>
+          <div class="links">
+            <a href="https://www.gutenberg.org/ebooks/author/37" class="link" target="_blank">Project Gutenberg</a>
+          </div>
+        </div>
+
+        <!-- Austen -->
+        <div class="directory-card">
+          <h3>Jane Austen</h3>
+          <div class="author">1775-1817</div>
+          <div class="description">Pride and Prejudice, Sense and Sensibility, Emma, Mansfield Park, Northanger Abbey, Persuasion.</div>
+          <div class="links">
+            <a href="https://www.gutenberg.org/ebooks/author/68" class="link" target="_blank">Project Gutenberg</a>
+          </div>
+        </div>
+
+        <!-- Twain -->
+        <div class="directory-card">
+          <h3>Mark Twain</h3>
+          <div class="author">1835-1910</div>
+          <div class="description">The Adventures of Huckleberry Finn, The Adventures of Tom Sawyer, The Prince and the Pauper, Life on the Mississippi.</div>
+          <div class="links">
+            <a href="https://www.gutenberg.org/ebooks/author/53" class="link" target="_blank">Project Gutenberg</a>
+          </div>
+        </div>
+
+        <!-- Poe -->
+        <div class="directory-card">
+          <h3>Edgar Allan Poe</h3>
+          <div class="author">1809-1849</div>
+          <div class="description">The Raven, The Tell-Tale Heart, The Fall of the House of Usher, The Black Cat, Annabel Lee.</div>
+          <div class="links">
+            <a href="https://www.gutenberg.org/ebooks/author/481" class="link" target="_blank">Project Gutenberg</a>
+          </div>
+        </div>
+
+        <!-- Doyle -->
+        <div class="directory-card">
+          <h3>Arthur Conan Doyle</h3>
+          <div class="author">1859-1930</div>
+          <div class="description">Sherlock Holmes series, The Hound of the Baskervilles, A Study in Scarlet, The Sign of Four.</div>
+          <div class="links">
+            <a href="https://www.gutenberg.org/ebooks/author/69" class="link" target="_blank">Project Gutenberg</a>
+          </div>
+        </div>
+
+        <!-- Shelley -->
+        <div class="directory-card">
+          <h3>Mary Shelley</h3>
+          <div class="author">1797-1851</div>
+          <div class="description">Frankenstein, The Last Man, Valperga, Lodore, Falkner.</div>
+          <div class="links">
+            <a href="https://www.gutenberg.org/ebooks/author/61" class="link" target="_blank">Project Gutenberg</a>
+          </div>
+        </div>
+
+        <!-- Stevenson -->
+        <div class="directory-card">
+          <h3>Robert Louis Stevenson</h3>
+          <div class="author">1850-1894</div>
+          <div class="description">Treasure Island, Dr. Jekyll and Mr. Hyde, Kidnapped, The Strange Case of Dr. Jekyll and Mr. Hyde.</div>
+          <div class="links">
+            <a href="https://www.gutenberg.org/ebooks/author/35" class="link" target="_blank">Project Gutenberg</a>
+          </div>
+        </div>
+
+        <!-- Wilde -->
+        <div class="directory-card">
+          <h3>Oscar Wilde</h3>
+          <div class="author">1854-1900</div>
+          <div class="description">The Picture of Dorian Gray, The Importance of Being Earnest, De Profundis, Salomé.</div>
+          <div class="links">
+            <a href="https://www.gutenberg.org/ebooks/author/92" class="link" target="_blank">Project Gutenberg</a>
+          </div>
+        </div>
+
+        <!-- Melville -->
+        <div class="directory-card">
+          <h3>Herman Melville</h3>
+          <div class="author">1819-1891</div>
+          <div class="description">Moby-Dick, Billy Budd, Typee, Redburn, White-Jacket.</div>
+          <div class="links">
+            <a href="https://www.gutenberg.org/ebooks/author/72" class="link" target="_blank">Project Gutenberg</a>
+          </div>
+        </div>
+
+        <!-- Hawthorne -->
+        <div class="directory-card">
+          <h3>Nathaniel Hawthorne</h3>
+          <div class="author">1804-1864</div>
+          <div class="description">The Scarlet Letter, The House of the Seven Gables, Twice-Told Tales, Mosses from an Old Manse.</div>
+          <div class="links">
+            <a href="https://www.gutenberg.org/ebooks/author/28" class="link" target="_blank">Project Gutenberg</a>
+          </div>
+        </div>
+
+        <!-- Bronte Sisters -->
+        <div class="directory-card">
+          <h3>Brontë Sisters</h3>
+          <div class="author">1816-1855</div>
+          <div class="description">Jane Eyre (Charlotte), Wuthering Heights (Emily), Agnes Grey (Anne), The Tenant of Wildfell Hall.</div>
+          <div class="links">
+            <a href="https://www.gutenberg.org/ebooks/author/159" class="link" target="_blank">Charlotte Brontë</a>
+            <a href="https://www.gutenberg.org/ebooks/author/160" class="link" target="_blank">Emily Brontë</a>
+          </div>
+        </div>
+
+        <!-- Homer -->
+        <div class="directory-card">
+          <h3>Homer</h3>
+          <div class="author">c. 8th century BC</div>
+          <div class="description">The Iliad, The Odyssey - Ancient Greek epic poems that shaped Western literature.</div>
+          <div class="links">
+            <a href="https://www.gutenberg.org/ebooks/6130" class="link" target="_blank">The Iliad</a>
+            <a href="https://www.gutenberg.org/ebooks/1727" class="link" target="_blank">The Odyssey</a>
+          </div>
+        </div>
+
+        <!-- Dante -->
+        <div class="directory-card">
+          <h3>Dante Alighieri</h3>
+          <div class="author">1265-1321</div>
+          <div class="description">The Divine Comedy (Inferno, Purgatorio, Paradiso), La Vita Nuova, Convivio.</div>
+          <div class="links">
+            <a href="https://www.gutenberg.org/ebooks/author/1001" class="link" target="_blank">Project Gutenberg</a>
+          </div>
+        </div>
+
+        <!-- Cervantes -->
+        <div class="directory-card">
+          <h3>Miguel de Cervantes</h3>
+          <div class="author">1547-1616</div>
+          <div class="description">Don Quixote, The Ingenious Gentleman Don Quixote of La Mancha - The first modern novel.</div>
+          <div class="links">
+            <a href="https://www.gutenberg.org/ebooks/author/2000" class="link" target="_blank">Project Gutenberg</a>
+          </div>
+        </div>
+
+        <!-- Voltaire -->
+        <div class="directory-card">
+          <h3>Voltaire</h3>
+          <div class="author">1694-1778</div>
+          <div class="description">Candide, Zadig, Micromégas, Philosophical Dictionary, Letters on the English.</div>
+          <div class="links">
+            <a href="https://www.gutenberg.org/ebooks/author/356" class="link" target="_blank">Project Gutenberg</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Music Section -->
+    <section id="music-section" class="directory-section" style="display: none;">
+      <h2>🎵 Classical Music Masterpieces</h2>
+      <div class="directory-grid">
+        <!-- Bach -->
+        <div class="directory-card">
+          <h3>Johann Sebastian Bach</h3>
+          <div class="author">1685-1750</div>
+          <div class="description">Brandenburg Concertos, Well-Tempered Clavier, Goldberg Variations, St. Matthew Passion, Mass in B Minor.</div>
+          <div class="links">
+            <a href="https://musopen.org/music/composer/johann-sebastian-bach/" class="link" target="_blank">MusOpen</a>
+            <a href="https://imslp.org/wiki/Category:Bach,_Johann_Sebastian" class="link" target="_blank">IMSLP Scores</a>
+          </div>
+        </div>
+
+        <!-- Beethoven -->
+        <div class="directory-card">
+          <h3>Ludwig van Beethoven</h3>
+          <div class="author">1770-1827</div>
+          <div class="description">All 9 symphonies, 32 piano sonatas, 16 string quartets, Moonlight Sonata, Für Elise, Fidelio opera.</div>
+          <div class="links">
+            <a href="https://musopen.org/music/composer/ludwig-van-beethoven/" class="link" target="_blank">MusOpen</a>
+            <a href="https://imslp.org/wiki/Category:Beethoven,_Ludwig_van" class="link" target="_blank">IMSLP Scores</a>
+          </div>
+        </div>
+
+        <!-- Mozart -->
+        <div class="directory-card">
+          <h3>Wolfgang Amadeus Mozart</h3>
+          <div class="author">1756-1791</div>
+          <div class="description">41 symphonies, 27 piano concertos, The Magic Flute, Don Giovanni, Così fan tutte, Requiem.</div>
+          <div class="links">
+            <a href="https://musopen.org/music/composer/wolfgang-amadeus-mozart/" class="link" target="_blank">MusOpen</a>
+            <a href="https://imslp.org/wiki/Category:Mozart,_Wolfgang_Amadeus" class="link" target="_blank">IMSLP Scores</a>
+          </div>
+        </div>
+
+        <!-- Vivaldi -->
+        <div class="directory-card">
+          <h3>Antonio Vivaldi</h3>
+          <div class="author">1678-1741</div>
+          <div class="description">The Four Seasons, Gloria, Stabat Mater, over 500 concertos for various instruments.</div>
+          <div class="links">
+            <a href="https://musopen.org/music/composer/antonio-vivaldi/" class="link" target="_blank">MusOpen</a>
+            <a href="https://imslp.org/wiki/Category:Vivaldi,_Antonio" class="link" target="_blank">IMSLP Scores</a>
+          </div>
+        </div>
+
+        <!-- Handel -->
+        <div class="directory-card">
+          <h3>George Frideric Handel</h3>
+          <div class="author">1685-1759</div>
+          <div class="description">Messiah, Water Music, Music for the Royal Fireworks, Giulio Cesare, Rinaldo.</div>
+          <div class="links">
+            <a href="https://musopen.org/music/composer/george-frideric-handel/" class="link" target="_blank">MusOpen</a>
+            <a href="https://imslp.org/wiki/Category:Handel,_George_Frideric" class="link" target="_blank">IMSLP Scores</a>
+          </div>
+        </div>
+
+        <!-- Haydn -->
+        <div class="directory-card">
+          <h3>Joseph Haydn</h3>
+          <div class="author">1732-1809</div>
+          <div class="description">104 symphonies, The Creation, The Seasons, String Quartets, Piano Sonatas.</div>
+          <div class="links">
+            <a href="https://musopen.org/music/composer/joseph-haydn/" class="link" target="_blank">MusOpen</a>
+            <a href="https://imslp.org/wiki/Category:Haydn,_Joseph" class="link" target="_blank">IMSLP Scores</a>
+          </div>
+        </div>
+
+        <!-- Chopin -->
+        <div class="directory-card">
+          <h3>Frédéric Chopin</h3>
+          <div class="author">1810-1849</div>
+          <div class="description">Piano works: Nocturnes, Études, Preludes, Waltzes, Mazurkas, Polonaises.</div>
+          <div class="links">
+            <a href="https://musopen.org/music/composer/frederic-chopin/" class="link" target="_blank">MusOpen</a>
+            <a href="https://imslp.org/wiki/Category:Chopin,_Fr%C3%A9d%C3%A9ric" class="link" target="_blank">IMSLP Scores</a>
+          </div>
+        </div>
+
+        <!-- Schubert -->
+        <div class="directory-card">
+          <h3>Franz Schubert</h3>
+          <div class="author">1797-1828</div>
+          <div class="description">Symphonies, String Quartets, Piano Sonatas, Lieder, The Trout Quintet.</div>
+          <div class="links">
+            <a href="https://musopen.org/music/composer/franz-schubert/" class="link" target="_blank">MusOpen</a>
+            <a href="https://imslp.org/wiki/Category:Schubert,_Franz" class="link" target="_blank">IMSLP Scores</a>
+          </div>
+        </div>
+
+        <!-- Brahms -->
+        <div class="directory-card">
+          <h3>Johannes Brahms</h3>
+          <div class="author">1833-1897</div>
+          <div class="description">Symphonies, Piano Concertos, Violin Concerto, German Requiem, Hungarian Dances.</div>
+          <div class="links">
+            <a href="https://musopen.org/music/composer/johannes-brahms/" class="link" target="_blank">MusOpen</a>
+            <a href="https://imslp.org/wiki/Category:Brahms,_Johannes" class="link" target="_blank">IMSLP Scores</a>
+          </div>
+        </div>
+
+        <!-- Tchaikovsky -->
+        <div class="directory-card">
+          <h3>Pyotr Ilyich Tchaikovsky</h3>
+          <div class="author">1840-1893</div>
+          <div class="description">Symphonies, Swan Lake, The Nutcracker, Piano Concerto No. 1, 1812 Overture.</div>
+          <div class="links">
+            <a href="https://musopen.org/music/composer/pyotr-ilyich-tchaikovsky/" class="link" target="_blank">MusOpen</a>
+            <a href="https://imslp.org/wiki/Category:Tchaikovsky,_Pyotr_Ilyich" class="link" target="_blank">IMSLP Scores</a>
+          </div>
+        </div>
+
+        <!-- Debussy -->
+        <div class="directory-card">
+          <h3>Claude Debussy</h3>
+          <div class="author">1862-1918</div>
+          <div class="description">Clair de Lune, Prelude to the Afternoon of a Faun, La Mer, Children's Corner.</div>
+          <div class="links">
+            <a href="https://musopen.org/music/composer/claude-debussy/" class="link" target="_blank">MusOpen</a>
+            <a href="https://imslp.org/wiki/Category:Debussy,_Claude" class="link" target="_blank">IMSLP Scores</a>
+          </div>
+        </div>
+
+        <!-- Stravinsky -->
+        <div class="directory-card">
+          <h3>Igor Stravinsky</h3>
+          <div class="author">1882-1971</div>
+          <div class="description">The Rite of Spring, Firebird, Petrushka, Symphony of Psalms (early works).</div>
+          <div class="links">
+            <a href="https://musopen.org/music/composer/igor-stravinsky/" class="link" target="_blank">MusOpen</a>
+            <a href="https://imslp.org/wiki/Category:Stravinsky,_Igor" class="link" target="_blank">IMSLP Scores</a>
+          </div>
+        </div>
+
+        <!-- Gershwin -->
+        <div class="directory-card">
+          <h3>George Gershwin</h3>
+          <div class="author">1898-1937</div>
+          <div class="description">Rhapsody in Blue, An American in Paris, Porgy and Bess, Piano Preludes.</div>
+          <div class="links">
+            <a href="https://musopen.org/music/composer/george-gershwin/" class="link" target="_blank">MusOpen</a>
+            <a href="https://imslp.org/wiki/Category:Gershwin,_George" class="link" target="_blank">IMSLP Scores</a>
+          </div>
+        </div>
+
+        <!-- Jazz & Early 20th Century -->
+        <div class="directory-card">
+          <h3>Scott Joplin</h3>
+          <div class="author">1867-1917</div>
+          <div class="description">Maple Leaf Rag, The Entertainer, Weeping Willow, Pine Apple Rag - King of Ragtime.</div>
+          <div class="links">
+            <a href="https://musopen.org/music/composer/scott-joplin/" class="link" target="_blank">MusOpen</a>
+            <a href="https://imslp.org/wiki/Category:Joplin,_Scott" class="link" target="_blank">IMSLP Scores</a>
+          </div>
+        </div>
+
+        <!-- Folk & Traditional -->
+        <div class="directory-card">
+          <h3>Traditional Folk Music</h3>
+          <div class="author">Various Cultures</div>
+          <div class="description">Folk songs, hymns, spirituals, and traditional music from around the world.</div>
+          <div class="links">
+            <a href="https://www.loc.gov/audio/?q=folk" class="link" target="_blank">Library of Congress</a>
+            <a href="https://www.contemplator.com/folk.html" class="link" target="_blank">Folk Music Archive</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Art Section -->
+    <section id="art-section" class="directory-section" style="display: none;">
+      <h2>🎨 Artistic Masterpieces</h2>
+      <div class="directory-grid">
+        <!-- da Vinci -->
+        <div class="directory-card">
+          <h3>Leonardo da Vinci</h3>
+          <div class="author">1452-1519</div>
+          <div class="description">Mona Lisa, The Last Supper, Vitruvian Man, Lady with an Ermine, Ginevra de' Benci.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Leonardo_da_Vinci" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=Leonardo%20da%20Vinci" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- van Gogh -->
+        <div class="directory-card">
+          <h3>Vincent van Gogh</h3>
+          <div class="author">1853-1890</div>
+          <div class="description">Starry Night, Sunflowers, The Bedroom, Wheatfield with Crows, Café Terrace at Night.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Vincent_van_Gogh" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=Vincent%20van%20Gogh" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- Monet -->
+        <div class="directory-card">
+          <h3>Claude Monet</h3>
+          <div class="author">1840-1926</div>
+          <div class="description">Water Lilies series, Impression Sunrise, Rouen Cathedral series, Haystacks, Poplars.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Claude_Monet" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=Claude%20Monet" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- Picasso Early Works -->
+        <div class="directory-card">
+          <h3>Pablo Picasso (Early Works)</h3>
+          <div class="author">1881-1973</div>
+          <div class="description">Blue Period and Rose Period works, early portraits and landscapes before 1923.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Pablo_Picasso" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=Pablo%20Picasso" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- Dali Early Works -->
+        <div class="directory-card">
+          <h3>Salvador Dalí (Early Works)</h3>
+          <div class="author">1904-1989</div>
+          <div class="description">Early surrealist works, portraits, and landscapes from before 1923.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Salvador_Dal%C3%AD" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=Salvador%20Dal%C3%AD" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- Wood -->
+        <div class="directory-card">
+          <h3>Grant Wood</h3>
+          <div class="author">1891-1942</div>
+          <div class="description">American Gothic, Death on the Ridge Road, Parson Weems' Fable, Victorian Survival.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Grant_Wood" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=Grant%20Wood" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- Hopper -->
+        <div class="directory-card">
+          <h3>Edward Hopper</h3>
+          <div class="author">1882-1967</div>
+          <div class="description">Nighthawks, Automat, Morning Sun, Chop Suey, Lighthouse Hill.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Edward_Hopper" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=Edward%20Hopper" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- O'Keeffe -->
+        <div class="directory-card">
+          <h3>Georgia O'Keeffe</h3>
+          <div class="author">1887-1986</div>
+          <div class="description">Early American modernism works, flower paintings, desert landscapes.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Georgia_O%27Keeffe" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=Georgia%20O%27Keeffe" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- Mucha -->
+        <div class="directory-card">
+          <h3>Alphonse Mucha</h3>
+          <div class="author">1860-1939</div>
+          <div class="description">Art Nouveau posters, Zodiac designs, Seasons series, Slav Epic illustrations.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Alphonse_Mucha" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=Alphonse%20Mucha" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- Beardsley -->
+        <div class="directory-card">
+          <h3>Aubrey Beardsley</h3>
+          <div class="author">1872-1898</div>
+          <div class="description">Art Deco illustrations, Salome drawings, Morte d'Arthur illustrations, Yellow Book covers.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Aubrey_Beardsley" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=Aubrey%20Beardsley" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- Rembrandt -->
+        <div class="directory-card">
+          <h3>Rembrandt van Rijn</h3>
+          <div class="author">1606-1669</div>
+          <div class="description">The Night Watch, Self-Portraits, Anatomy Lesson of Dr. Nicolaes Tulp, The Return of the Prodigal Son.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Rembrandt" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=Rembrandt%20van%20Rijn" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- Vermeer -->
+        <div class="directory-card">
+          <h3>Johannes Vermeer</h3>
+          <div class="author">1632-1675</div>
+          <div class="description">Girl with a Pearl Earring, The Milkmaid, View of Delft, Woman Holding a Balance.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Johannes_Vermeer" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=Johannes%20Vermeer" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- Caravaggio -->
+        <div class="directory-card">
+          <h3>Caravaggio</h3>
+          <div class="author">1571-1610</div>
+          <div class="description">The Calling of St. Matthew, Bacchus, Judith Beheading Holofernes, The Supper at Emmaus.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Caravaggio" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=Caravaggio" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- Michelangelo -->
+        <div class="directory-card">
+          <h3>Michelangelo Buonarroti</h3>
+          <div class="author">1475-1564</div>
+          <div class="description">David, Sistine Chapel Ceiling, The Last Judgment, Pietà, Moses.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Michelangelo" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=Michelangelo" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- Raphael -->
+        <div class="directory-card">
+          <h3>Raphael</h3>
+          <div class="author">1483-1520</div>
+          <div class="description">The School of Athens, Sistine Madonna, Transfiguration, Portrait of Baldassare Castiglione.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Raphael" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=Raphael" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- Botticelli -->
+        <div class="directory-card">
+          <h3>Sandro Botticelli</h3>
+          <div class="author">1445-1510</div>
+          <div class="description">The Birth of Venus, Primavera, Madonna of the Magnificat, Adoration of the Magi.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Sandro_Botticelli" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=Sandro%20Botticelli" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- El Greco -->
+        <div class="directory-card">
+          <h3>El Greco</h3>
+          <div class="author">1541-1614</div>
+          <div class="description">The Burial of the Count of Orgaz, View of Toledo, The Disrobing of Christ.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:El_Greco" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=El%20Greco" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- Goya -->
+        <div class="directory-card">
+          <h3>Francisco Goya</h3>
+          <div class="author">1746-1828</div>
+          <div class="description">The Third of May 1808, Saturn Devouring His Son, The Sleep of Reason Produces Monsters.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Francisco_Goya" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=Francisco%20Goya" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- Turner -->
+        <div class="directory-card">
+          <h3>J.M.W. Turner</h3>
+          <div class="author">1775-1851</div>
+          <div class="description">The Fighting Temeraire, Rain, Steam and Speed, The Slave Ship, Snow Storm.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:J._M._W._Turner" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=J.%20M.%20W.%20Turner" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- Constable -->
+        <div class="directory-card">
+          <h3>John Constable</h3>
+          <div class="author">1776-1837</div>
+          <div class="description">The Hay Wain, Salisbury Cathedral from the Meadows, Dedham Vale, Boat-Building.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:John_Constable" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=John%20Constable" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- Cézanne -->
+        <div class="directory-card">
+          <h3>Paul Cézanne</h3>
+          <div class="author">1839-1906</div>
+          <div class="description">The Card Players, Mont Sainte-Victoire, Still Life with Apples, Bathers.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Paul_C%C3%A9zanne" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=Paul%20C%C3%A9zanne" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- Degas -->
+        <div class="directory-card">
+          <h3>Edgar Degas</h3>
+          <div class="author">1834-1917</div>
+          <div class="description">The Dance Class, Little Dancer Aged Fourteen, Absinthe, The Tub.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Edgar_Degas" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=Edgar%20Degas" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- Renoir -->
+        <div class="directory-card">
+          <h3>Pierre-Auguste Renoir</h3>
+          <div class="author">1841-1919</div>
+          <div class="description">Luncheon of the Boating Party, Bal du moulin de la Galette, Girl with a Fan.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Pierre-Auguste_Renoir" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=Pierre-Auguste%20Renoir" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+
+        <!-- Toulouse-Lautrec -->
+        <div class="directory-card">
+          <h3>Henri de Toulouse-Lautrec</h3>
+          <div class="author">1864-1901</div>
+          <div class="description">At the Moulin Rouge, La Goulue Arriving at the Moulin Rouge, Jane Avril Dancing.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Henri_de_Toulouse-Lautrec" class="link" target="_blank">Wikimedia Commons</a>
+            <a href="https://www.metmuseum.org/art/collection/search?artist=Henri%20de%20Toulouse-Lautrec" class="link" target="_blank">Met Museum</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Films Section -->
+    <section id="films-section" class="directory-section" style="display: none;">
+      <h2>🎬 Classic Public Domain Films</h2>
+      <div class="directory-grid">
+        <!-- Chaplin -->
+        <div class="directory-card">
+          <h3>Charlie Chaplin</h3>
+          <div class="author">1889-1977</div>
+          <div class="description">The Gold Rush (1925), City Lights (1931), Modern Times (1936), The Great Dictator (1940).</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Charlie_Chaplin" class="link" target="_blank">Wikimedia Commons</a>
+          </div>
+        </div>
+
+        <!-- Keaton -->
+        <div class="directory-card">
+          <h3>Buster Keaton</h3>
+          <div class="author">1895-1966</div>
+          <div class="description">The General (1926), Steamboat Bill Jr. (1928), Sherlock Jr. (1924), Our Hospitality (1923).</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Buster_Keaton" class="link" target="_blank">Wikimedia Commons</a>
+          </div>
+        </div>
+
+        <!-- Griffith -->
+        <!-- Griffith -->
+        <div class="directory-card">
+          <h3>D.W. Griffith</h3>
+          <div class="author">1875-1948</div>
+          <div class="description">Birth of a Nation (1915), Intolerance (1916), Broken Blossoms (1919), Way Down East (1920).</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:D.W._Griffith" class="link" target="_blank">Wikimedia Commons</a>
+          </div>
+        </div>
+        <!-- Lang -->
+        <div class="directory-card">
+          <h3>Fritz Lang</h3>
+          <div class="author">1890-1976</div>
+          <div class="description">Metropolis (1927), M (1931), Dr. Mabuse films, early German expressionist works.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Fritz_Lang" class="link" target="_blank">Wikimedia Commons</a>
+          </div>
+        </div>
+
+        <!-- Murnau -->
+        <div class="directory-card">
+          <h3>F.W. Murnau</h3>
+          <div class="author">1888-1931</div>
+          <div class="description">Nosferatu (1922), Sunrise (1927), Faust (1926), The Last Laugh (1924).</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:F.W._Murnau" class="link" target="_blank">Wikimedia Commons</a>
+          </div>
+        </div>
+
+        <!-- Eisenstein -->
+        <div class="directory-card">
+          <h3>Sergei Eisenstein</h3>
+          <div class="author">1898-1948</div>
+          <div class="description">Battleship Potemkin (1925), October (1928), Alexander Nevsky (1938), early Soviet films.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Sergei_Eisenstein" class="link" target="_blank">Wikimedia Commons</a>
+          </div>
+        </div>
+
+        <!-- King Kong -->
+        <div class="directory-card">
+          <h3>King Kong (1933)</h3>
+          <div class="author">Merian C. Cooper & Ernest B. Schoedsack</div>
+          <div class="description">The original monster movie featuring Fay Wray, groundbreaking special effects, stop-motion animation.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:King_Kong_(1933_film)" class="link" target="_blank">Wikimedia Commons</a>
+          </div>
+        </div>
+
+        <!-- Wizard of Oz -->
+        <div class="directory-card">
+          <h3>The Wizard of Oz (1939)</h3>
+          <div class="author">Victor Fleming</div>
+          <div class="description">Judy Garland, "Over the Rainbow," ruby slippers, Munchkinland, classic American musical fantasy.</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:The_Wizard_of_Oz_(1939_film)" class="link" target="_blank">Wikimedia Commons</a>
+          </div>
+        </div>
+
+        <!-- Hitchcock Early Works -->
+        <div class="directory-card">
+          <h3>Alfred Hitchcock (Early Works)</h3>
+          <div class="author">1899-1980</div>
+          <div class="description">The 39 Steps (1935), The Lady Vanishes (1938), Rebecca (1940), Suspicion (1941).</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Alfred_Hitchcock" class="link" target="_blank">Wikimedia Commons</a>
+          </div>
+        </div>
+
+        <!-- Disney Early Works -->
+        <div class="directory-card">
+          <h3>Walt Disney Animated Shorts</h3>
+          <div class="author">1901-1966</div>
+          <div class="description">Steamboat Willie (1928), Snow White (1937), Pinocchio (1940), Fantasia (1940).</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Walt_Disney" class="link" target="_blank">Wikimedia Commons</a>
+          </div>
+        </div>
+
+        <!-- Universal Monsters -->
+        <div class="directory-card">
+          <h3>Universal Monster Movies</h3>
+          <div class="author">1930s Horror Classics</div>
+          <div class="description">Dracula (1931), Frankenstein (1931), The Mummy (1932), The Invisible Man (1933).</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Universal_Monsters" class="link" target="_blank">Wikimedia Commons</a>
+          </div>
+        </div>
+
+        <!-- Film Noir -->
+        <div class="directory-card">
+          <h3>Film Noir Classics</h3>
+          <div class="author">1940s Detective Thrillers</div>
+          <div class="description">Double Indemnity (1944), The Maltese Falcon (1941), The Big Sleep (1946), Laura (1944).</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Film_noir" class="link" target="_blank">Wikimedia Commons</a>
+          </div>
+        </div>
+
+        <!-- Westerns -->
+        <div class="directory-card">
+          <h3>Classic Westerns</h3>
+          <div class="author">American Frontier Films</div>
+          <div class="description">Stagecoach (1939), High Noon (1952), The Searchers (1956), Shane (1953).</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Western_(genre)" class="link" target="_blank">Wikimedia Commons</a>
+          </div>
+        </div>
+
+        <!-- Musicals -->
+        <div class="directory-card">
+          <h3>Golden Age Musicals</h3>
+          <div class="author">1940s-1950s Hollywood</div>
+          <div class="description">Singin' in the Rain (1952), An American in Paris (1951), The Band Wagon (1953).</div>
+          <div class="links">
+            <a href="https://commons.wikimedia.org/wiki/Category:Musical_film" class="link" target="_blank">Wikimedia Commons</a>
+          </div>
+        </div>
+
+        <!-- Animation -->
+        <div class="directory-card">
+          <h3>Early Animation</h3>
+          <div class="author">Pioneering Animators</div>
+          <div class="description">Felix the Cat cartoons, early Mickey Mouse, Popeye, Betty Boop, and classic shorts.</div>
+          <div class="links">
+            <a href="https://archive.org/details/animation" class="link" target="_blank">Internet Archive</a>
+          </div>
+        </div>
+
+        <!-- 2025 Film Releases -->
+        <div class="directory-card">
+          <h3>2025 Public Domain Films</h3>
+          <div class="author">1941-1950 Releases</div>
+          <div class="description">Citizen Kane (1941), Casablanca (1942), It's a Wonderful Life (1946), The Third Man (1949), Sunset Boulevard (1950).</div>
+          <div class="links">
+            <a href="https://www.filmpreservation.org/preserved-films/public-domain" class="link" target="_blank">Film Preservation</a>
+          </div>
+        </div>
+
+        <!-- Bonus: Educational Films -->
+        <div class="directory-card">
+          <h3>Educational & Documentary</h3>
+          <div class="author">Government & Educational Films</div>
+          <div class="description">Why We Fight series, March of Time newsreels, educational shorts, government documentaries.</div>
+          <div class="links">
+            <a href="https://archive.org/details/educational_films" class="link" target="_blank">Internet Archive</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Software Section -->
+    <section id="software-section" class="directory-section" style="display: none;">
+      <h2>💻 Public Domain Software & Tools</h2>
+      <div class="directory-grid">
+        <!-- Internet Archive Software -->
+        <div class="directory-card">
+          <h3>Internet Archive Software Library</h3>
+          <div class="author">Thousands of Programs</div>
+          <div class="description">Vintage software, classic operating systems, retro computing tools, and historical applications.</div>
+          <div class="links">
+            <a href="https://archive.org/details/software" class="link" target="_blank">Browse Software</a>
+          </div>
+        </div>
+
+        <!-- Classic Video Games -->
+        <div class="directory-card">
+          <h3>Public Domain Video Games</h3>
+          <div class="author">Retro Gaming Collection</div>
+          <div class="description">Classic arcade games, early PC games, and retro gaming software from the 1980s and 1990s.</div>
+          <div class="links">
+            <a href="https://archive.org/details/softwarelibrary_msdos_games" class="link" target="_blank">MS-DOS Games</a>
+            <a href="https://archive.org/details/console" class="link" target="_blank">Console Games</a>
+          </div>
+        </div>
+
+        <!-- GIMP -->
+        <div class="directory-card">
+          <h3>GIMP (GNU Image Manipulation Program)</h3>
+          <div class="author">Free & Open Source</div>
+          <div class="description">Professional photo editing and image manipulation software, alternative to Photoshop.</div>
+          <div class="links">
+            <a href="https://www.gimp.org/" class="link" target="_blank">Download GIMP</a>
+          </div>
+        </div>
+
+        <!-- LibreOffice -->
+        <div class="directory-card">
+          <h3>LibreOffice</h3>
+          <div class="author">Free Office Suite</div>
+          <div class="description">Complete office productivity suite with word processing, spreadsheets, presentations, and more.</div>
+          <div class="links">
+            <a href="https://www.libreoffice.org/" class="link" target="_blank">Download LibreOffice</a>
+          </div>
+        </div>
+
+        <!-- VLC Media Player -->
+        <div class="directory-card">
+          <h3>VLC Media Player</h3>
+          <div class="author">Free Media Player</div>
+          <div class="description">Universal media player that plays virtually any video or audio format without additional codecs.</div>
+          <div class="links">
+            <a href="https://www.videolan.org/vlc/" class="link" target="_blank">Download VLC</a>
+          </div>
+        </div>
+
+        <!-- Audacity -->
+        <div class="directory-card">
+          <h3>Audacity</h3>
+          <div class="author">Free Audio Editor</div>
+          <div class="description">Professional audio recording and editing software for music production and podcasting.</div>
+          <div class="links">
+            <a href="https://www.audacityteam.org/" class="link" target="_blank">Download Audacity</a>
+          </div>
+        </div>
+
+        <!-- 7-Zip -->
+        <div class="directory-card">
+          <h3>7-Zip</h3>
+          <div class="author">Free File Archiver</div>
+          <div class="description">High compression file archiver with support for multiple formats including 7z, ZIP, RAR.</div>
+          <div class="links">
+            <a href="https://www.7-zip.org/" class="link" target="_blank">Download 7-Zip</a>
+          </div>
+        </div>
+
+        <!-- Notepad++ -->
+        <div class="directory-card">
+          <h3>Notepad++</h3>
+          <div class="author">Free Code Editor</div>
+          <div class="description">Powerful source code editor with syntax highlighting for multiple programming languages.</div>
+          <div class="links">
+            <a href="https://notepad-plus-plus.org/" class="link" target="_blank">Download Notepad++</a>
+          </div>
+        </div>
+
+        <!-- Firefox -->
+        <div class="directory-card">
+          <h3>Mozilla Firefox</h3>
+          <div class="author">Free Web Browser</div>
+          <div class="description">Fast, private, and secure web browser with extensive customization and privacy features.</div>
+          <div class="links">
+            <a href="https://www.mozilla.org/firefox/" class="link" target="_blank">Download Firefox</a>
+          </div>
+        </div>
+
+        <!-- Thunderbird -->
+        <div class="directory-card">
+          <h3>Mozilla Thunderbird</h3>
+          <div class="author">Free Email Client</div>
+          <div class="description">Powerful email client with advanced features for managing multiple email accounts.</div>
+          <div class="links">
+            <a href="https://www.thunderbird.net/" class="link" target="_blank">Download Thunderbird</a>
+          </div>
+        </div>
+
+        <!-- Blender -->
+        <div class="directory-card">
+          <h3>Blender</h3>
+          <div class="author">Free 3D Creation Suite</div>
+          <div class="description">Professional 3D modeling, animation, rendering, and compositing software.</div>
+          <div class="links">
+            <a href="https://www.blender.org/" class="link" target="_blank">Download Blender</a>
+          </div>
+        </div>
+
+        <!-- Inkscape -->
+        <div class="directory-card">
+          <h3>Inkscape</h3>
+          <div class="author">Free Vector Graphics Editor</div>
+          <div class="description">Professional vector graphics editor for creating illustrations, logos, and scalable graphics.</div>
+          <div class="links">
+            <a href="https://inkscape.org/" class="link" target="_blank">Download Inkscape</a>
+          </div>
+        </div>
+
+        <!-- VirtualBox -->
+        <div class="directory-card">
+          <h3>Oracle VirtualBox</h3>
+          <div class="author">Free Virtualization</div>
+          <div class="description">Run multiple operating systems as virtual machines on your computer.</div>
+          <div class="links">
+            <a href="https://www.virtualbox.org/" class="link" target="_blank">Download VirtualBox</a>
+          </div>
+        </div>
+
+        <!-- FileZilla -->
+        <div class="directory-card">
+          <h3>FileZilla</h3>
+          <div class="author">Free FTP Client</div>
+          <div class="description">Fast and reliable FTP, FTPS, and SFTP client for transferring files.</div>
+          <div class="links">
+            <a href="https://filezilla-project.org/" class="link" target="_blank">Download FileZilla</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Resources Section -->
+    <section id="resources-section" class="directory-section" style="display: none;">
+      <h2>🔗 Essential Public Domain Resources</h2>
+
+      <!-- Why Public Domain Matters -->
+      <div class="resource-section">
+        <h3>🌟 Why Public Domain Matters</h3>
+        <div style="background: var(--bg); padding: 2rem; border-radius: 8px; margin-bottom: 2rem; border: 1px solid var(--border);">
+          <p style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 1rem; color: var(--text);">
+            Public domain works are <strong>completely free</strong> - no copyright restrictions, no licensing fees, no permissions needed. 
+            This cultural commons includes masterpieces from Shakespeare to modern films, enabling unlimited creativity, education, and innovation.
+          </p>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1.5rem;">
+            <div style="text-align: center; padding: 1rem; background: var(--bg-secondary); border-radius: 6px;">
+              <div style="font-size: 2rem; margin-bottom: 0.5rem;">🎨</div>
+              <h4 style="margin-bottom: 0.25rem; color: var(--text);">Creative Freedom</h4>
+              <p style="font-size: 0.9rem; color: var(--text-secondary);">Remix, adapt, and create new works without legal restrictions</p>
+            </div>
+            <div style="text-align: center; padding: 1rem; background: var(--bg-secondary); border-radius: 6px;">
+              <div style="font-size: 2rem; margin-bottom: 0.5rem;">📚</div>
+              <h4 style="margin-bottom: 0.25rem; color: var(--text);">Education Access</h4>
+              <p style="font-size: 0.9rem; color: var(--text-secondary);">Free access to classic literature and historical materials</p>
+            </div>
+            <div style="text-align: center; padding: 1rem; background: var(--bg-secondary); border-radius: 6px;">
+              <div style="font-size: 2rem; margin-bottom: 0.5rem;">💰</div>
+              <h4 style="margin-bottom: 0.25rem; color: var(--text);">Cost Savings</h4>
+              <p style="font-size: 0.9rem; color: var(--text-secondary);">No licensing fees for commercial or personal use</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="resource-section">
+        <h3>📚 Digital Libraries & Book Collections</h3>
+        <div class="resource-grid">
+          <div class="resource-item">
+            <div class="icon">📖</div>
+            <h4>Project Gutenberg</h4>
+            <p>70,000+ free eBooks in multiple formats</p>
+            <a href="https://www.gutenberg.org/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🏛️</div>
+            <h4>Internet Archive</h4>
+            <p>Millions of books, music, videos, and software</p>
+            <a href="https://archive.org/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📚</div>
+            <h4>HathiTrust</h4>
+            <p>Millions of digitized books from universities</p>
+            <a href="https://www.hathitrust.org/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🇺🇸</div>
+            <h4>Digital Public Library</h4>
+            <p>Primary sources and American cultural heritage</p>
+            <a href="https://dp.la/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🇪🇺</div>
+            <h4>Europeana</h4>
+            <p>European cultural heritage collections</p>
+            <a href="https://www.europeana.eu/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📖</div>
+            <h4>Open Library</h4>
+            <p>Borrow digital books from libraries worldwide</p>
+            <a href="https://openlibrary.org/" target="_blank">Visit Site</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="resource-section">
+        <h3>🎵 Music & Audio Resources</h3>
+        <div class="resource-grid">
+          <div class="resource-item">
+            <div class="icon">🎼</div>
+            <h4>MusOpen</h4>
+            <p>Free classical music recordings and sheet music</p>
+            <a href="https://musopen.org/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🎵</div>
+            <h4>IMSLP/Petrucci</h4>
+            <p>Public domain sheet music library</p>
+            <a href="https://imslp.org/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📻</div>
+            <h4>Library of Congress</h4>
+            <p>Historic recordings and audio collections</p>
+            <a href="https://www.loc.gov/audio/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🎵</div>
+            <h4>Free Music Archive</h4>
+            <p>Creative Commons and public domain music</p>
+            <a href="https://freemusicarchive.org/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🎶</div>
+            <h4>Choral Public Domain Library</h4>
+            <p>Free choral music and scores</p>
+            <a href="https://www.cpdl.org/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🎼</div>
+            <h4>Mutopia Project</h4>
+            <p>Free sheet music for classical instruments</p>
+            <a href="https://www.mutopiaproject.org/" target="_blank">Visit Site</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="resource-section">
+        <h3>🎨 Art & Image Collections</h3>
+        <div class="resource-grid">
+          <div class="resource-item">
+            <div class="icon">🖼️</div>
+            <h4>Wikimedia Commons</h4>
+            <p>Millions of public domain images and media</p>
+            <a href="https://commons.wikimedia.org/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🏛️</div>
+            <h4>Smithsonian Open Access</h4>
+            <p>Museum collections and research materials</p>
+            <a href="https://www.si.edu/openaccess" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🎨</div>
+            <h4>Metropolitan Museum</h4>
+            <p>Public domain artworks from The Met</p>
+            <a href="https://www.metmuseum.org/blogs/now-at-the-met/2017/met-collection-api" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🖼️</div>
+            <h4>Rijksmuseum</h4>
+            <p>Dutch art collections, open access images</p>
+            <a href="https://www.rijksmuseum.nl/en/rijksstudio" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🚀</div>
+            <h4>NASA Image Library</h4>
+            <p>Space imagery and scientific photographs</p>
+            <a href="https://images.nasa.gov/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📸</div>
+            <h4>Library of Congress Prints</h4>
+            <p>Historic photographs and illustrations</p>
+            <a href="https://www.loc.gov/pictures/" target="_blank">Visit Site</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="resource-section">
+        <h3>🎬 Film & Video Archives</h3>
+        <div class="resource-grid">
+          <div class="resource-item">
+            <div class="icon">🎥</div>
+            <h4>Internet Archive Movies</h4>
+            <p>Thousands of public domain films and videos</p>
+            <a href="https://archive.org/details/movies" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📽️</div>
+            <h4>Public Domain Torrents</h4>
+            <p>Public domain movie collections</p>
+            <a href="https://archive.org/details/public_domain_torrents" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🎭</div>
+            <h4>Prelinger Archives</h4>
+            <p>Educational and industrial films</p>
+            <a href="https://archive.org/details/prelinger" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📺</div>
+            <h4>Library of Congress Film</h4>
+            <p>American film history and documentaries</p>
+            <a href="https://www.loc.gov/rr/mopic/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🎬</div>
+            <h4>National Film Preservation</h4>
+            <p>Preserved public domain films</p>
+            <a href="https://www.filmpreservation.org/preserved-films" target="_blank">Visit Site</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="resource-section">
+        <h3>🔧 Tools & Search Engines</h3>
+        <div class="resource-grid">
+          <div class="resource-item">
+            <div class="icon">🔍</div>
+            <h4>Public Domain Search</h4>
+            <p>Search across multiple public domain sources</p>
+            <a href="https://publicdomainreview.org/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📋</div>
+            <h4>Copyright Checker</h4>
+            <p>Check if works are in the public domain</p>
+            <a href="https://www.copyright.gov/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📚</div>
+            <h4>Digital Book Index</h4>
+            <p>Index of public domain books online</p>
+            <a href="https://digitalbookindex.org/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🎵</div>
+            <h4>Public Domain Music Search</h4>
+            <p>Find public domain music by composer</p>
+            <a href="https://www.pdinfo.com/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🖼️</div>
+            <h4>Public Domain Images</h4>
+            <p>Search public domain stock images</p>
+            <a href="https://www.publicdomainpictures.net/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📖</div>
+            <h4>Project Gutenberg Catalog</h4>
+            <p>Browse books by author and subject</p>
+            <a href="https://www.gutenberg.org/catalog/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">💻</div>
+            <h4>Public Domain Software</h4>
+            <p>Free software and programming tools</p>
+            <a href="https://archive.org/details/software" target="_blank">Visit Archive</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🎮</div>
+            <h4>Public Domain Games</h4>
+            <p>Classic video games and source code</p>
+            <a href="https://archive.org/details/softwarelibrary_msdos_games" target="_blank">Visit Archive</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- How to Use Public Domain Works -->
+      <div class="resource-section">
+        <h3>🚀 How to Use Public Domain Works</h3>
+        <div style="background: var(--bg); padding: 2rem; border-radius: 8px; border: 1px solid var(--border);">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+            <div>
+              <h4 style="color: var(--accent); margin-bottom: 1rem;">For Creators & Artists</h4>
+              <ul style="color: var(--text-secondary); line-height: 1.6;">
+                <li>Remix classic literature into modern stories</li>
+                <li>Create new music using public domain melodies</li>
+                <li>Design products featuring famous artworks</li>
+                <li>Make films inspired by classic plots</li>
+                <li>Develop educational content without licensing costs</li>
+              </ul>
+            </div>
+            <div>
+              <h4 style="color: var(--accent); margin-bottom: 1rem;">For Educators & Students</h4>
+              <ul style="color: var(--text-secondary); line-height: 1.6;">
+                <li>Access complete works for literature classes</li>
+                <li>Study art history with unlimited image reproduction</li>
+                <li>Analyze films without copyright restrictions</li>
+                <li>Create derivative works for assignments</li>
+                <li>Build digital libraries for institutions</li>
+              </ul>
+            </div>
+            <div>
+              <h4 style="color: var(--accent); margin-bottom: 1rem;">For Businesses</h4>
+              <ul style="color: var(--text-secondary); line-height: 1.6;">
+                <li>Use classic designs in marketing materials</li>
+                <li>Create merchandise featuring public domain characters</li>
+                <li>Develop apps and games with classic themes</li>
+                <li>Produce educational content at low cost</li>
+                <li>Build content libraries for subscription services</li>
+              </ul>
+            </div>
+          </div>
+          <div style="margin-top: 2rem; padding: 1rem; background: var(--bg-secondary); border-radius: 6px; border-left: 4px solid var(--accent);">
+            <p style="margin: 0; color: var(--text); font-weight: 500;">
+              💡 <strong>Pro Tip:</strong> Always verify copyright status before commercial use. While public domain works are free, some adaptations or new works may have their own copyright protection.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Photography & Historical Images -->
+      <div class="resource-section">
+        <h3>📸 Photography & Historical Images</h3>
+        <div class="resource-grid">
+          <div class="resource-item">
+            <div class="icon">📷</div>
+            <h4>Smithsonian Open Access</h4>
+            <p>Millions of historical photographs and artworks</p>
+            <a href="https://www.si.edu/openaccess" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🏛️</div>
+            <h4>Library of Congress Photos</h4>
+            <p>Historic American photographs and documents</p>
+            <a href="https://www.loc.gov/pictures/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🖼️</div>
+            <h4>NYPL Digital Collections</h4>
+            <p>New York Public Library's public domain images</p>
+            <a href="https://digitalcollections.nypl.org/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🌍</div>
+            <h4>Europeana Photography</h4>
+            <p>European cultural heritage photographs</p>
+            <a href="https://www.europeana.eu/en/collections/topic/09-photography" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🚀</div>
+            <h4>NASA Image Library</h4>
+            <p>Space imagery and scientific photographs</p>
+            <a href="https://images.nasa.gov/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📸</div>
+            <h4>NOAA Photo Library</h4>
+            <p>Weather, ocean, and environmental imagery</p>
+            <a href="https://photolib.noaa.gov/" target="_blank">Visit Site</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Educational & Academic Resources -->
+      <div class="resource-section">
+        <h3>🎓 Educational & Academic Resources</h3>
+        <div class="resource-grid">
+          <div class="resource-item">
+            <div class="icon">📚</div>
+            <h4>MIT OpenCourseWare</h4>
+            <p>Free course materials from MIT</p>
+            <a href="https://ocw.mit.edu/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🔬</div>
+            <h4>PubMed Central</h4>
+            <p>Free full-text biomedical literature</p>
+            <a href="https://www.ncbi.nlm.nih.gov/pmc/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📖</div>
+            <h4>Directory of Open Access Journals</h4>
+            <p>Free scholarly articles and journals</p>
+            <a href="https://doaj.org/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🌐</div>
+            <h4>Open Educational Resources</h4>
+            <p>Free educational materials worldwide</p>
+            <a href="https://www.oercommons.org/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📊</div>
+            <h4>Data.gov</h4>
+            <p>US government open data portal</p>
+            <a href="https://www.data.gov/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🗂️</div>
+            <h4>Internet Archive Scholar</h4>
+            <p>Free access to scholarly articles</p>
+            <a href="https://scholar.archive.org/" target="_blank">Visit Site</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Public Domain Software & Tools -->
+      <div class="resource-section">
+        <h3>💻 Public Domain Software & Tools</h3>
+        <div class="resource-grid">
+          <div class="resource-item">
+            <div class="icon">🛠️</div>
+            <h4>Internet Archive Software</h4>
+            <p>Thousands of classic software programs</p>
+            <a href="https://archive.org/details/software" target="_blank">Visit Archive</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🎮</div>
+            <h4>Public Domain Games</h4>
+            <p>Classic video games and source code</p>
+            <a href="https://archive.org/details/softwarelibrary_msdos_games" target="_blank">Visit Archive</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📊</div>
+            <h4>Old School Emulation</h4>
+            <p>Retro computing and classic software</p>
+            <a href="https://archive.org/details/computersandtechvideos" target="_blank">Visit Archive</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🔧</div>
+            <h4>Free Programming Tools</h4>
+            <p>Open source development tools</p>
+            <a href="https://github.com/public-domain" target="_blank">GitHub Public Domain</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📈</div>
+            <h4>Statistical Software</h4>
+            <p>Public domain data analysis tools</p>
+            <a href="https://www.gnu.org/software/" target="_blank">GNU Software</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🎨</div>
+            <h4>Graphics & Design Tools</h4>
+            <p>Free image editing and design software</p>
+            <a href="https://www.gimp.org/" target="_blank">GIMP</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Public Domain Maps & Geography -->
+      <div class="resource-section">
+        <h3>🗺️ Maps & Geographical Resources</h3>
+        <div class="resource-grid">
+          <div class="resource-item">
+            <div class="icon">🗺️</div>
+            <h4>David Rumsey Map Collection</h4>
+            <p>Historic maps and atlases online</p>
+            <a href="https://www.davidrumsey.com/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🌍</div>
+            <h4>Perry-Castañeda Library Maps</h4>
+            <p>University of Texas map collection</p>
+            <a href="https://legacy.lib.utexas.edu/maps/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📍</div>
+            <h4>Library of Congress Maps</h4>
+            <p>Historic American maps and cartography</p>
+            <a href="https://www.loc.gov/maps/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🗺️</div>
+            <h4>Old Maps Online</h4>
+            <p>Search historic maps worldwide</p>
+            <a href="https://www.oldmapsonline.org/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📊</div>
+            <h4>USGS Historical Maps</h4>
+            <p>Geological Survey topographic maps</p>
+            <a href="https://ngmdb.usgs.gov/topoview/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🌍</div>
+            <h4>Natural Earth Data</h4>
+            <p>Public domain map data and GIS files</p>
+            <a href="https://www.naturalearthdata.com/" target="_blank">Visit Site</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Public Domain Government Documents -->
+      <div class="resource-section">
+        <h3>🏛️ Government Documents & Archives</h3>
+        <div class="resource-grid">
+          <div class="resource-item">
+            <div class="icon">📄</div>
+            <h4>Federal Register</h4>
+            <p>Official US government publications</p>
+            <a href="https://www.federalregister.gov/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📋</div>
+            <h4>FOIA.gov</h4>
+            <p>Freedom of Information Act requests</p>
+            <a href="https://www.foia.gov/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📚</div>
+            <h4>Government Publishing Office</h4>
+            <p>Official US government documents</p>
+            <a href="https://www.govinfo.gov/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🇺🇸</div>
+            <h4>National Archives</h4>
+            <p>US historical documents and records</p>
+            <a href="https://www.archives.gov/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📜</div>
+            <h4>Declassified Documents</h4>
+            <p>Formerly classified government files</p>
+            <a href="https://www.archives.gov/declassified" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📊</div>
+            <h4>Census Bureau Data</h4>
+            <p>Historical census and demographic data</p>
+            <a href="https://www.census.gov/history/www/through_the_decades/index_of_questions/" target="_blank">Visit Site</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Public Domain Audio & Podcasts -->
+      <div class="resource-section">
+        <h3>🎧 Audio Archives & Sound Collections</h3>
+        <div class="resource-grid">
+          <div class="resource-item">
+            <div class="icon">📻</div>
+            <h4>Library of Congress Audio</h4>
+            <p>Historic recordings and radio broadcasts</p>
+            <a href="https://www.loc.gov/audio/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🎤</div>
+            <h4>Smithsonian Folkways</h4>
+            <p>World music and cultural recordings</p>
+            <a href="https://folkways.si.edu/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📻</div>
+            <h4>Old Time Radio</h4>
+            <p>Classic radio shows and broadcasts</p>
+            <a href="https://www.oldtimeradio.com/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🎵</div>
+            <h4>Free Sound Project</h4>
+            <p>Creative Commons sound effects</p>
+            <a href="https://freesound.org/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🎙️</div>
+            <h4>Podcasts in Public Domain</h4>
+            <p>Free podcast episodes and audio content</p>
+            <a href="https://archive.org/details/podcast" target="_blank">Visit Archive</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📚</div>
+            <h4>Librivox Audiobooks</h4>
+            <p>Public domain books read aloud</p>
+            <a href="https://librivox.org/" target="_blank">Visit Site</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Public Domain Science & Research -->
+      <div class="resource-section">
+        <h3>🔬 Science & Research Materials</h3>
+        <div class="resource-grid">
+          <div class="resource-item">
+            <div class="icon">🧬</div>
+            <h4>PubMed Central</h4>
+            <p>Free biomedical research articles</p>
+            <a href="https://www.ncbi.nlm.nih.gov/pmc/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📊</div>
+            <h4>arXiv</h4>
+            <p>Open access research papers</p>
+            <a href="https://arxiv.org/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🔬</div>
+            <h4>PLOS ONE</h4>
+            <p>Open access scientific research</p>
+            <a href="https://journals.plos.org/plosone/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🌍</div>
+            <h4>World Bank Open Data</h4>
+            <p>Global development indicators</p>
+            <a href="https://data.worldbank.org/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📈</div>
+            <h4>USGS Publications</h4>
+            <p>Geological and earth science research</p>
+            <a href="https://pubs.usgs.gov/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🧪</div>
+            <h4>NCBI Databases</h4>
+            <p>Biological and genomic data</p>
+            <a href="https://www.ncbi.nlm.nih.gov/" target="_blank">Visit Site</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- International Public Domain Resources -->
+      <div class="resource-section">
+        <h3>🌍 International Public Domain Collections</h3>
+        <div class="resource-grid">
+          <div class="resource-item">
+            <div class="icon">🇬🇧</div>
+            <h4>British Library</h4>
+            <p>UK cultural heritage collections</p>
+            <a href="https://www.bl.uk/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🇫🇷</div>
+            <h4>Gallica (Bibliothèque nationale)</h4>
+            <p>French national library digital collections</p>
+            <a href="https://gallica.bnf.fr/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🇩🇪</div>
+            <h4>German Digital Library</h4>
+            <p>German cultural heritage online</p>
+            <a href="https://www.deutsche-digitale-bibliothek.de/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🇯🇵</div>
+            <h4>National Diet Library (Japan)</h4>
+            <p>Japanese historical documents</p>
+            <a href="https://www.ndl.go.jp/en/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🇦🇺</div>
+            <h4>Trove (Australia)</h4>
+            <p>Australian newspapers and archives</p>
+            <a href="https://trove.nla.gov.au/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🇨🇦</div>
+            <h4>Library and Archives Canada</h4>
+            <p>Canadian historical collections</p>
+            <a href="https://www.bac-lac.gc.ca/eng/Pages/home.aspx" target="_blank">Visit Site</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Creative Commons & Licensing -->
+      <div class="resource-section">
+        <h3>⚖️ Creative Commons & Licensing</h3>
+        <div style="background: var(--bg); padding: 2rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 2rem;">
+          <p style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 1.5rem; color: var(--text);">
+            Public domain is just one type of free content. Creative Commons licenses offer different levels of freedom:
+          </p>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+            <div style="padding: 1rem; background: var(--bg-secondary); border-radius: 6px;">
+              <h4 style="color: var(--accent); margin-bottom: 0.5rem;">Public Domain (CC0)</h4>
+              <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0;">No restrictions, no attribution required</p>
+            </div>
+            <div style="padding: 1rem; background: var(--bg-secondary); border-radius: 6px;">
+              <h4 style="color: var(--accent); margin-bottom: 0.5rem;">CC BY</h4>
+              <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0;">Free to use with attribution</p>
+            </div>
+            <div style="padding: 1rem; background: var(--bg-secondary); border-radius: 6px;">
+              <h4 style="color: var(--accent); margin-bottom: 0.5rem;">CC BY-SA</h4>
+              <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0;">Share alike with attribution</p>
+            </div>
+            <div style="padding: 1rem; background: var(--bg-secondary); border-radius: 6px;">
+              <h4 style="color: var(--accent); margin-bottom: 0.5rem;">CC BY-NC</h4>
+              <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0;">Non-commercial use only</p>
+            </div>
+          </div>
+        </div>
+        <div class="resource-grid">
+          <div class="resource-item">
+            <div class="icon">⚖️</div>
+            <h4>Creative Commons</h4>
+            <p>Find Creative Commons licensed works</p>
+            <a href="https://creativecommons.org/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">🔍</div>
+            <h4>CC Search</h4>
+            <p>Search across CC licensed content</p>
+            <a href="https://search.creativecommons.org/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📋</div>
+            <h4>License Chooser</h4>
+            <p>Choose the right license for your work</p>
+            <a href="https://creativecommons.org/choose/" target="_blank">Visit Site</a>
+          </div>
+          <div class="resource-item">
+            <div class="icon">📖</div>
+            <h4>CC Legal Database</h4>
+            <p>Legal information about CC licenses</p>
+            <a href="https://wiki.creativecommons.org/wiki/Legal_database" target="_blank">Visit Site</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 2025 Public Domain Spotlight -->
+  <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 3rem 1rem; text-align: center; margin: 2rem auto; max-width: 1000px; border-radius: 12px;">
+    <h2 style="margin-bottom: 1rem; font-size: 2rem;">🎊 2025 Public Domain Releases</h2>
+    <p style="font-size: 1.2rem; margin-bottom: 2rem; opacity: 0.9;">
+      Fresh additions to the public domain! Works from 1941-1950 are now free to use.
+    </p>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+      <div style="padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🎬</div>
+        <h4 style="margin-bottom: 0.25rem;">Classic Films</h4>
+        <p style="font-size: 0.9rem; opacity: 0.9; margin: 0;">Citizen Kane, Casablanca, It's a Wonderful Life</p>
+      </div>
+      <div style="padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📚</div>
+        <h4 style="margin-bottom: 0.25rem;">Literature</h4>
+        <p style="font-size: 0.9rem; opacity: 0.9; margin: 0;">Post-1928 publications now public domain</p>
+      </div>
+      <div style="padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🎵</div>
+        <h4 style="margin-bottom: 0.25rem;">Music</h4>
+        <p style="font-size: 0.9rem; opacity: 0.9; margin: 0;">Sound recordings from 1941-1950</p>
+      </div>
+    </div>
+    <a href="#films-section" style="background: white; color: #059669; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; transition: all 0.3s;" onclick="document.querySelector('[data-section=films]').click()">Explore 2025 Releases</a>
+  </div>
+
+  <!-- Call to Action Section -->
+  <div style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 3rem 1rem; text-align: center; margin: 2rem auto; max-width: 1000px; border-radius: 12px;">
+    <h2 style="margin-bottom: 1rem; font-size: 2rem;">🎉 Start Exploring Public Domain Today!</h2>
+    <p style="font-size: 1.2rem; opacity: 0.9;">
+      Discover thousands of free books, music, art, and films. No restrictions, no fees, pure creative freedom.
+    </p>
+  </div>
+
+  <footer class="a-footer a-container">
+    <p style="text-align: center;">&copy; 2025 Quiz The Spire Articles • <a href="../articlepagenew.html">More Articles</a></p>
+    <div style="text-align: center; margin-top: 10px; opacity: 0.7;">
+      <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="OrokaConner" data-color="#2c6fb8" data-emoji=""  data-font="Inter" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
+    </div>
+  </footer>
+
+  <script>
+    // Directory navigation
+    document.addEventListener('DOMContentLoaded', function() {
+      const tabs = document.querySelectorAll('.directory-nav-tab');
+      const sections = document.querySelectorAll('.directory-section');
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+          // Remove active class from all tabs
+          tabs.forEach(t => t.classList.remove('active'));
+          // Add active class to clicked tab
+          this.classList.add('active');
+
+          // Hide all sections
+          sections.forEach(section => section.style.display = 'none');
+
+          // Show selected section
+          const sectionId = this.getAttribute('data-section') + '-section';
+          const targetSection = document.getElementById(sectionId);
+          if (targetSection) {
+            targetSection.style.display = 'block';
+          }
+        });
+      });
+    });
+  </script>
+
+  <script src="../js/imageProvider.js"></script>
+  <script src="../js/cacheManager.js"></script>
+  <script src="../js/article-images.js"></script>
+  <script src="../js/lofi.js"></script>
+  <script>
+    // Register Service Worker for image caching
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('sw.js')
+          .then(function(registration) {
+            console.log('Service Worker registered successfully:', registration.scope);
+          })
+          .catch(function(error) {
+            console.log('Service Worker registration failed:', error);
+          });
+      });
+    }
+  </script>
+</body>
+</html>
