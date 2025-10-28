@@ -12333,3 +12333,5 @@ Output file #0 does not contain any stream
 2025-10-27 19:12:54,133 - INFO - ENDING QUIZ: Normal completion for session 1000111
 2025-10-27 19:12:54,134 - INFO - handle_quiz_phase ENDING: session 1000111 played=[41, 24], active_ids=[41, 1, 24, 43, 42, 21, 19], remaining_available_questions=12
 2025-10-27 19:12:54,141 - INFO - Timer thread ending, removing from active_timers for session 1000111
+2025-10-28 19:30:59,875 - INFO - [LOGIN] Created new session 1000112 with status=2 (active)
+2025-10-28 19:31:13,463 - INFO - [LOGIN] Created new session 1000113 with status=2 (active)

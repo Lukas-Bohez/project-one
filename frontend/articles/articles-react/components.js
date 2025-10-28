@@ -23,16 +23,24 @@
   }
 
   function ArticleCard({a}){
+    const [expanded, setExpanded] = React.useState(false);
     const href = a.url || `article.html?slug=${encodeURIComponent(a.slug)}`;
     const click = () => { location.href = href; };
+    const desc = a.description ? (a.description.length > 120 ? a.description.slice(0, 120) + '...' : a.description) : null;
+    const fullDesc = a.description;
     return e('article', {className:'a-card', role:'article'}, [
       a.thumbnail ? e('img', {className:'a-card__thumb', src:a.thumbnail, alt:''}) : null,
       e('div', {className:'a-card__body'}, [
         e('h2', {className:'a-card__title'}, a.title),
         e('div', {className:'a-card__meta'}, `${new Date(a.date).toLocaleDateString()}${a.author? ' • ' + a.author:''}`),
-        a.description ? e('p', {className:'a-card__desc'}, a.description) : null,
+        fullDesc ? e('p', {className: expanded ? 'a-card__desc a-card__desc--expanded' : 'a-card__desc'}, expanded ? fullDesc : desc) : null,
+        fullDesc && fullDesc.length > 120 ? e('button', {
+          className:'a-card__expand-btn',
+          onClick: (e) => { e.stopPropagation(); setExpanded(!expanded); },
+          'aria-expanded': expanded
+        }, expanded ? 'Show less' : 'Read more') : null,
         a.tags?.length ? e('div', {className:'a-card__tags'}, a.tags.map(t=>e('span', {key:t, className:'tag'}, t))) : null,
-        e('div', {style:{marginTop:'.9rem'}},
+        e('div', {style:{marginTop:'auto'}},
           e('a', {className:'c-btn c-btn--tertiary', href: href}, 'Read article')
         )
       ])
