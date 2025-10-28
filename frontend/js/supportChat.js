@@ -12,27 +12,38 @@ class SupportChatSystem {
     }
 
     initializeSocket() {
-        if (typeof io === 'undefined') {
-            console.error('SupportChatSystem: Socket.IO not loaded');
-            return;
-        }
-
-        console.log('SupportChatSystem: Creating Socket.IO connection...');
+        console.log('SupportChatSystem: Initializing Socket.IO connection...');
         
-        this.socket = io(this.lanIP, {
-            transports: ["polling", "websocket"],
-            timeout: 30000,
-            reconnection: true,
-            reconnectionAttempts: 10,
-            reconnectionDelay: 2000,
-            reconnectionDelayMax: 10000,
-            autoConnect: true,
-            forceNew: false
-        });
+        this.socket = window.createCompatibleSocket ? 
+            window.createCompatibleSocket(this.lanIP, {
+                transports: ["polling", "websocket"],
+                timeout: 30000,
+                reconnection: true,
+                reconnectionAttempts: 10,
+                reconnectionDelay: 2000,
+                reconnectionDelayMax: 10000,
+                autoConnect: true,
+                forceNew: false
+            }) : 
+            io(this.lanIP, {
+                transports: ["polling", "websocket"],
+                timeout: 30000,
+                reconnection: true,
+                reconnectionAttempts: 10,
+                reconnectionDelay: 2000,
+                reconnectionDelayMax: 10000,
+                forceNew: false,
+                upgrade: true,
+                rememberUpgrade: false,
+                autoConnect: true
+            });
+        
+        // Make socket available globally for other systems
+        window.supportSocket = this.socket;
 
         this.socket.on('connect', () => {
             console.log('SupportChatSystem: Connected to server with ID:', this.socket.id);
-            this.updateConnectionStatus(true);
+            this.updateConnectionStatus();
             
             // Join the support session room
             this.socket.emit('join', `quiz_session_${this.sessionId}`, (response) => {
@@ -46,17 +57,17 @@ class SupportChatSystem {
 
         this.socket.on('disconnect', (reason) => {
             console.log('SupportChatSystem: Disconnected:', reason);
-            this.updateConnectionStatus(false);
+            this.updateConnectionStatus();
         });
 
         this.socket.on('reconnect', (attemptNumber) => {
             console.log('SupportChatSystem: Reconnected after', attemptNumber, 'attempts');
-            this.updateConnectionStatus(true);
+            this.updateConnectionStatus();
         });
 
         this.socket.on('reconnecting', (attemptNumber) => {
             console.log('SupportChatSystem: Reconnecting, attempt', attemptNumber);
-            this.updateConnectionStatus(false); // This will show "Reconnecting..." due to the isReconnecting check
+            this.updateConnectionStatus();
         });
 
         this.socket.on('message_sent', (data) => {
@@ -85,13 +96,13 @@ class SupportChatSystem {
             
             // Load messages when user logs in
             this.loadMessages();
-            this.updateConnectionStatus(this.socket && this.socket.connected);
+            this.updateConnectionStatus();
         });
 
         document.addEventListener('userLoggedOut', () => {
             console.log('SupportChatSystem: User logged out');
             this.currentUser = null;
-            this.updateConnectionStatus(false);
+            this.updateConnectionStatus();
         });
     }
 
@@ -249,13 +260,19 @@ class SupportChatSystem {
         }
     }
 
-    updateConnectionStatus(connected) {
+    updateConnectionStatus(connected = null) {
         const statusEl = document.getElementById('connectionStatus');
         const sendButton = document.getElementById('sendButton');
 
         if (!statusEl || !sendButton) return;
 
         const user = this.getCurrentUserWithFallback();
+        
+        // If connected parameter not provided, check actual socket state
+        if (connected === null) {
+            connected = this.socket && this.socket.connected;
+        }
+        
         const isReconnecting = this.socket && this.socket.reconnecting;
 
         if (connected && user) {
