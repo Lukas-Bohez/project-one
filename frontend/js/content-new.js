@@ -62,9 +62,9 @@
         try {
             const cached = localStorage.getItem(key);
             if (cached) {
-                const { timestamp, data } = JSON.parse(cached);
-                if (Date.now() - timestamp < CACHE_DURATION) {
-                    return data;
+                const parsed = JSON.parse(cached);
+                if (parsed && typeof parsed.timestamp === 'number' && parsed.data !== undefined) {
+                    return parsed;
                 }
             }
         } catch (e) {
@@ -84,6 +84,10 @@
         }
     }
 
+    function isValid(cached, duration) {
+        return Date.now() - cached.timestamp < duration;
+    }
+
     // API functions
     async function fetchFreshStories() {
         const response = await fetch(`${CONFIG.apiBaseUrl}/stories/`);
@@ -96,8 +100,7 @@
         const cached = getCache(CACHE_KEY);
         if (cached) {
             console.log('[Content Cache Hit] Using cached stories');
-            // Background update if needed
-            if (Date.now() - JSON.parse(localStorage.getItem(CACHE_KEY)).timestamp >= CACHE_DURATION) {
+            if (!isValid(cached, CACHE_DURATION)) {
                 fetchFreshStories().then(freshData => {
                     setCache(CACHE_KEY, freshData);
                     console.log('[Content Cache Update] Stories updated in background');
@@ -105,7 +108,7 @@
                     contentState.stories = freshData;
                 }).catch(err => console.error('Background stories fetch failed:', err));
             }
-            return cached;
+            return cached.data;
         } else {
             console.log('[Content Cache Miss] Fetching fresh stories');
             const data = await fetchFreshStories();
@@ -128,8 +131,7 @@
         const cached = getCache(CACHE_KEY);
         if (cached) {
             console.log(`[Content Cache Hit] Using cached articles for story ${storyId}`);
-            // Background update if needed
-            if (Date.now() - JSON.parse(localStorage.getItem(CACHE_KEY)).timestamp >= CACHE_DURATION) {
+            if (!isValid(cached, CACHE_DURATION)) {
                 fetchFreshArticlesByStory(storyId).then(freshData => {
                     setCache(CACHE_KEY, freshData);
                     console.log(`[Content Cache Update] Articles updated in background for story ${storyId}`);
@@ -139,7 +141,7 @@
                     }
                 }).catch(err => console.error('Background articles fetch failed:', err));
             }
-            return cached;
+            return cached.data;
         } else {
             console.log(`[Content Cache Miss] Fetching fresh articles for story ${storyId}`);
             const data = await fetchFreshArticlesByStory(storyId);
