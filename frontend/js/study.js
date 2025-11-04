@@ -274,26 +274,60 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     const fetchThemes = async () => {
+        const CACHE_KEY = 'study_themes';
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+        // Check for cache bypass
+        const urlParams = new URLSearchParams(window.location.search);
+        const bypassCache = urlParams.has('nocache') || urlParams.has('refresh');
+
         try {
-            const themesUrl = `${lanIP}/api/v1/themes/`;
-            console.log(`[API Request] Fetching themes from: ${themesUrl}`);
+            const cachedData = cache.get(CACHE_KEY);
             
-            const response = await fetch(themesUrl);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const themes = await response.json();
-            
-            // Calculate question counts from the allQuestions array instead of API
-            // This is more reliable than calling the question_count endpoint
-            const themesWithCounts = themes.map(theme => {
-                const count = allQuestions.filter(q => q.themeId === theme.id).length;
-                return { ...theme, questionCount: { count } };
-            });
-            
-            return themesWithCounts;
+            if (cachedData && !bypassCache) {
+                if (cache.isValid(cachedData, CACHE_DURATION)) {
+                    console.log(`[Cache Hit] Using cached themes, age: ${Date.now() - cachedData.timestamp}ms`);
+                    return cachedData.data;
+                } else {
+                    console.log(`[Cache Stale] Cached themes are stale, fetching fresh data in background`);
+                    // Fetch fresh in background
+                    fetchFreshThemes().then(freshData => {
+                        cache.set(CACHE_KEY, freshData);
+                        console.log(`[Cache Update] Themes updated in background`);
+                    }).catch(error => {
+                        console.error(`[Cache Update] Background fetch failed: ${error.message}`);
+                    });
+                    // Return stale data
+                    return cachedData.data;
+                }
+            } else {
+                console.log(`[Cache Miss] Fetching fresh themes`);
+                const data = await fetchFreshThemes();
+                cache.set(CACHE_KEY, data);
+                return data;
+            }
         } catch (error) {
-            console.error("Error fetching themes:", error);
+            console.error("Error in fetchThemes:", error);
             return [];
         }
+    };
+
+    const fetchFreshThemes = async () => {
+        const themesUrl = `${lanIP}/api/v1/themes/`;
+        console.log(`[API Request] Fetching themes from: ${themesUrl}`);
+        
+        const response = await fetch(themesUrl);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const themes = await response.json();
+        
+        // Calculate question counts from the allQuestions array instead of API
+        // This is more reliable than calling the question_count endpoint
+        const themesWithCounts = themes.map(theme => {
+            const count = allQuestions.filter(q => q.themeId === theme.id).length;
+            return { ...theme, questionCount: { count } };
+        });
+        
+        return themesWithCounts;
     };
     // #endregion
 
