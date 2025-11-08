@@ -1,2 +1,4 @@
 config.py
 venv_fswd
+# Log backups
+backend/log_backups/
