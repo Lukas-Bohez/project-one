@@ -7098,6 +7098,33 @@ def extract_playlist_id(url: str) -> Optional[str]:
     playlist_id = list_match.group(1) if list_match else None
     return playlist_id
 
+# ===================================
+# PLAYLIST CACHING
+# ===================================
+# Cache playlist info to avoid redundant API calls (TTL: 5 minutes)
+playlist_info_cache: Dict[str, Dict[str, Any]] = {}
+PLAYLIST_CACHE_TTL = 300  # 5 minutes
+
+def get_cached_playlist_info(playlist_id: str) -> Optional[Dict[str, Any]]:
+    """Get cached playlist info if available and not expired"""
+    if playlist_id in playlist_info_cache:
+        cache_entry = playlist_info_cache[playlist_id]
+        if time.time() - cache_entry['timestamp'] < PLAYLIST_CACHE_TTL:
+            video_logger.info(f"Using cached playlist info for {playlist_id}")
+            return cache_entry['data']
+        else:
+            # Expired - remove from cache
+            del playlist_info_cache[playlist_id]
+    return None
+
+def cache_playlist_info(playlist_id: str, data: Dict[str, Any]):
+    """Cache playlist info with timestamp"""
+    playlist_info_cache[playlist_id] = {
+        'data': data,
+        'timestamp': time.time()
+    }
+    video_logger.info(f"Cached playlist info for {playlist_id}")
+
 def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restricted: bool = False, use_invidious: bool = False, invidious_instance: str = None) -> Dict[str, Any]:
     """Get yt-dlp options based on format and quality with metadata embedding
     
@@ -7141,11 +7168,26 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
             }
         }
     
+    # 🍪 COOKIE SUPPORT: Check for cookies.txt to handle age-restricted content
+    # Priority: 1. Environment variable, 2. Backend directory cookies.txt
+    cookie_file = os.environ.get('YTDL_COOKIE_FILE')
+    if not cookie_file:
+        # Check for cookies.txt in backend directory
+        backend_cookie_path = os.path.join(os.path.dirname(__file__), 'cookies.txt')
+        if os.path.exists(backend_cookie_path):
+            cookie_file = backend_cookie_path
+    
+    # Add cookies if available - CRITICAL for age-restricted content
+    if cookie_file and os.path.exists(cookie_file):
+        base_opts['cookiefile'] = cookie_file
+        video_logger.info(f"Using cookies from: {cookie_file}")
+    else:
+        video_logger.warning("No cookies.txt found - age-restricted videos may fail")
+    
     # Add options for age-restricted content
     if is_age_restricted:
         base_opts.update({
             'age_limit': 18,  # Allow adult content
-            'cookiefile': None,  # Allow cookie file if available
         })
     
     # Always try to handle age-restricted content with robust headers
@@ -8584,7 +8626,7 @@ if VIDEO_CONVERTER_AVAILABLE:
 
     @app.post("/api/v1/video/playlist-info", response_model=PlaylistInfoResponse)
     async def get_playlist_info(request: PlaylistInfoRequest):
-        """Get information about a YouTube playlist"""
+        """Get information about a YouTube playlist with caching"""
         video_logger.info(f"Getting playlist info for URL: {request.url}")
         try:
             if not is_playlist_url(request.url):
@@ -8598,13 +8640,30 @@ if VIDEO_CONVERTER_AVAILABLE:
             
             video_logger.info(f"Extracted playlist ID: {playlist_id}")
             
-            # yt-dlp options for playlist extraction
+            # 🚀 CHECK CACHE FIRST - avoid redundant API calls
+            cached_info = get_cached_playlist_info(playlist_id)
+            if cached_info:
+                video_logger.info(f"Returning cached playlist info for {playlist_id}")
+                return cached_info
+            
+            # yt-dlp options for playlist extraction with cookie support
             ydl_opts = {
                 'quiet': True,
                 'no_warnings': True,
                 'extract_flat': True,  # Don't download videos, just get info
                 'ignoreerrors': True,
             }
+            
+            # 🍪 ADD COOKIES for age-restricted playlists
+            cookie_file = os.environ.get('YTDL_COOKIE_FILE')
+            if not cookie_file:
+                backend_cookie_path = os.path.join(os.path.dirname(__file__), 'cookies.txt')
+                if os.path.exists(backend_cookie_path):
+                    cookie_file = backend_cookie_path
+            
+            if cookie_file and os.path.exists(cookie_file):
+                ydl_opts['cookiefile'] = cookie_file
+                video_logger.info(f"Using cookies for playlist extraction: {cookie_file}")
             
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 try:
@@ -8618,7 +8677,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                     # Check if playlist is private/unavailable
                     if info.get('availability') == 'private':
                         video_logger.warning(f"Playlist {playlist_id} is private")
-                        return PlaylistInfoResponse(
+                        response = PlaylistInfoResponse(
                             success=False,
                             playlist_id=playlist_id,
                             title="Private Playlist",
@@ -8627,6 +8686,8 @@ if VIDEO_CONVERTER_AVAILABLE:
                             is_private=True,
                             error="This playlist is private. Please make it unlisted or public to access it."
                         )
+                        # Don't cache error responses
+                        return response
                     
                     playlist_title = info.get('title', f'Playlist {playlist_id}')
                     entries = info.get('entries', [])
@@ -8642,7 +8703,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                             ))
                     
                     video_logger.info(f"Successfully extracted playlist info: {playlist_title} with {len(videos)} videos")
-                    return PlaylistInfoResponse(
+                    response = PlaylistInfoResponse(
                         success=True,
                         playlist_id=playlist_id,
                         title=playlist_title,
@@ -8650,6 +8711,11 @@ if VIDEO_CONVERTER_AVAILABLE:
                         videos=videos,
                         is_private=False
                     )
+                    
+                    # 💾 CACHE THE RESULT to avoid redundant API calls
+                    cache_playlist_info(playlist_id, response)
+                    
+                    return response
                         
                 except Exception as e:
                     error_msg = str(e)
