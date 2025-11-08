@@ -7086,22 +7086,16 @@ def detect_platform(url: str) -> Optional[str]:
 
 def is_playlist_url(url: str) -> bool:
     """Check if URL is a playlist"""
-    video_logger.info(f"Checking if URL is playlist: {url}")
-    result = 'list=' in url and ('youtube.com' in url or 'youtu.be' in url)
-    video_logger.info(f"URL {url} is playlist: {result}")
-    return result
+    return 'list=' in url and ('youtube.com' in url or 'youtu.be' in url)
 
 def extract_playlist_id(url: str) -> Optional[str]:
     """Extract playlist ID from YouTube playlist URL"""
-    video_logger.info(f"Extracting playlist ID from URL: {url}")
     if not is_playlist_url(url):
-        video_logger.info(f"URL {url} is not a playlist, cannot extract ID")
         return None
     
     # Extract list parameter
     list_match = re.search(r'[?&]list=([a-zA-Z0-9_-]+)', url)
     playlist_id = list_match.group(1) if list_match else None
-    video_logger.info(f"Extracted playlist ID: {playlist_id}")
     return playlist_id
 
 def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restricted: bool = False, use_invidious: bool = False, invidious_instance: str = None) -> Dict[str, Any]:
@@ -7140,7 +7134,6 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
     
     # Use Invidious proxy if requested (for Layer 3 fallback)
     if use_invidious and invidious_instance:
-        video_logger.info(f"🔄 Using Invidious instance: {invidious_instance}")
         # Invidious acts as a proxy - we change the extractor
         base_opts['extractor_args'] = {
             'youtube': {
@@ -7288,10 +7281,6 @@ def try_invidious_download(url: str, format_type: str, quality: int, output_path
             
             invidious_url = f"{instance}/watch?v={video_id}"
             
-            # Only log first attempt and failures - reduce log spam
-            if i == 0:
-                video_logger.info(f"🔄 Attempting Invidious download via {instance}")
-            
             # Try download with Invidious
             ydl_opts = get_ydl_opts(format_type, quality, output_path, use_invidious=True, invidious_instance=instance)
             
@@ -7300,18 +7289,13 @@ def try_invidious_download(url: str, format_type: str, quality: int, output_path
                 
                 # Update health tracking on success
                 update_invidious_health(instance, success=True)
-                video_logger.info(f"✅ Invidious download successful via {instance}")
                 return True, info, None
                 
         except Exception as e:
             # Update health tracking on failure
             update_invidious_health(instance, success=False)
-            # Only log if it's the last instance or a critical error
-            if i == len(sorted_instances) - 1:
-                video_logger.warning(f"Invidious instance {instance} failed: {str(e)}")
             continue
     
-    video_logger.error("❌ All Invidious instances failed")
     return False, None, "All Invidious fallback instances failed"
 
 
@@ -8026,8 +8010,7 @@ if VIDEO_CONVERTER_AVAILABLE:
     # Helper function for background video download
     def download_video_background(download_id: str, url: str, format_type: str, quality: int, output_path: str, client_ip: str = None):
         """Background function to download and convert video - includes rate limit cleanup"""
-        video_logger.info(f"Starting background download for {download_id}: {url}")
-        video_logger.info(f"Format: {format_type}, Quality: {quality}")
+        video_logger.info(f"IP: {client_ip or 'Unknown'} | Starting: {url}")
         
         def progress_hook(d):
             if d['status'] == 'downloading':
@@ -8043,9 +8026,8 @@ if VIDEO_CONVERTER_AVAILABLE:
                             active_video_downloads[download_id]['progress'] = min(progress, 90.0)
                             active_video_downloads[download_id]['status'] = 'downloading'
                 except Exception as progress_error:
-                    video_logger.warning(f"Progress calculation error: {progress_error}")
+                    pass  # Silent progress errors
             elif d['status'] == 'finished':
-                video_logger.info(f"Download finished for {download_id}")
                 with download_lock:
                     if download_id in active_video_downloads:
                         active_video_downloads[download_id]['progress'] = 95.0
@@ -8060,23 +8042,18 @@ if VIDEO_CONVERTER_AVAILABLE:
             with download_lock:
                 if download_id in active_video_downloads:
                     active_video_downloads[download_id]['status'] = 'downloading'
-                    video_logger.info(f"Set status to downloading for {download_id}")
             
             # Get yt-dlp options WITHOUT browser cookie extraction (do that separately)
             ydl_opts = get_ydl_opts(format_type, quality, output_path, use_invidious=False, invidious_instance=None)
             ydl_opts['progress_hooks'] = [progress_hook]
-            video_logger.info(f"yt-dlp options configured for {download_id}")
             
             # Safer extract_info + download flow with persistent retry loop on transient 403s
-            video_logger.info(f"Extracting video info for {download_id}")
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
             title = info.get('title', 'Unknown')
-            video_logger.info(f"Video title: {title}")
 
             # Check if video is age-restricted and reconfigure if needed
             if info.get('age_limit', 0) > 0:
-                video_logger.info(f"Video is age-restricted (age limit: {info.get('age_limit')})")
                 is_age_restricted = True
                 ydl_opts = get_ydl_opts(format_type, quality, output_path, is_age_restricted)
                 ydl_opts['progress_hooks'] = [progress_hook]
@@ -8111,16 +8088,8 @@ if VIDEO_CONVERTER_AVAILABLE:
             cookiefile = os.environ.get('YTDL_COOKIE_FILE')
             if per_download_cookie and os.path.exists(per_download_cookie):
                 cookiefile = per_download_cookie  # Per-download cookie takes priority
-                video_logger.info(f"📌 Using per-download cookiefile: {cookiefile}")
-            elif cookiefile and os.path.exists(cookiefile):
-                video_logger.info(f"📌 Using global cookiefile: {cookiefile}")
             elif cookiefile and not os.path.exists(cookiefile):
-                video_logger.warning(f"⚠️ YTDL_COOKIE_FILE set but not found at {cookiefile}")
                 cookiefile = None
-            
-            # No fallback cookie - user must provide if needed
-            if not cookiefile:
-                video_logger.debug(f"No cookie file configured for {download_id}, will try other methods")
             
             # 🚀 OPTIMIZATION: Try Invidious FIRST if no cookies - it works reliably!
             # Skip wasting time on direct attempts that will fail with 403
@@ -8134,10 +8103,6 @@ if VIDEO_CONVERTER_AVAILABLE:
                     # Success! Skip the entire retry loop
                     last_exception = None
                     # Jump to file-finding section below
-                    video_logger.info(f"✅ Video downloaded successfully via Invidious for {download_id}")
-                else:
-                    # Only log if Invidious completely failed - will fall back to direct attempts
-                    video_logger.debug(f"Invidious unavailable for {download_id}, trying direct download")
 
             attempt = 0
             last_exception = None
@@ -8153,14 +8118,9 @@ if VIDEO_CONVERTER_AVAILABLE:
                     
                     # Check if we've exceeded max attempts
                     if effective_max and attempt > effective_max:
-                        video_logger.warning(f"Max retries ({effective_max}) exceeded for {download_id}")
                         break
                     
                     try:
-                        # Only log every 2nd attempt to reduce log spam
-                        if attempt % 2 == 1:
-                            video_logger.debug(f"Attempt {attempt} for {download_id}")
-                        
                         # Throttle requests to avoid overwhelming YouTube
                         throttle_youtube_request()
                         
@@ -8179,9 +8139,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                             ydl.download([url])
                         
-                        # Success - only log on success
-                        video_logger.info(f"✅ Download completed for {download_id} (attempt {attempt})")
-
+                        # Success
                         last_exception = None
                         break
                     except Exception as de:
@@ -8206,7 +8164,6 @@ if VIDEO_CONVERTER_AVAILABLE:
                         ])
                         
                         if is_unavailable:
-                            video_logger.error(f"❌ Video is unavailable/deleted/private for {download_id}: {derr}")
                             # Mark as error and exit immediately - don't waste time retrying
                             with download_lock:
                                 if download_id in active_video_downloads:
@@ -8219,13 +8176,9 @@ if VIDEO_CONVERTER_AVAILABLE:
                             # Exit the retry loop immediately
                             raise Exception('Video is unavailable, private, or has been removed')
                         
-                        # Log other errors (will be retried)
-                        video_logger.warning(f"Download attempt {attempt} failed for {download_id}: {derr}")
-                        
                         # Detect browser cookie errors - stop trying browser extraction
                         is_browser_error = ('could not find' in derr.lower() and 'cookies database' in derr.lower())
                         if is_browser_error and attempt == 1:
-                            video_logger.info(f"Browser cookies not available, skipping browser extraction for remaining attempts")
                             # Try immediately with Invidious on next attempt
                             consecutive_403s = 3  # Trigger Invidious fallback
 
@@ -8235,8 +8188,6 @@ if VIDEO_CONVERTER_AVAILABLE:
                     if is_403_like:
                         consecutive_403s += 1
                         # If we get too many consecutive 403s, it's likely not a transient issue
-                        if consecutive_403s >= 3:
-                            video_logger.warning(f"Got {consecutive_403s} consecutive 403 errors for {download_id}, trying alternative methods")
                     else:
                         consecutive_403s = 0  # Reset counter for non-403 errors
 
@@ -8244,17 +8195,14 @@ if VIDEO_CONVERTER_AVAILABLE:
                     tried_cookie = False
                     if is_403_like and cookiefile and os.path.exists(cookiefile) and attempt <= 5:
                         try:
-                            video_logger.info(f"🍪 Attempt {attempt}: retrying with cookiefile for {download_id}")
                             retry_opts = get_ydl_opts(format_type, quality, output_path)
                             retry_opts['cookiefile'] = cookiefile
                             retry_opts['progress_hooks'] = [progress_hook]
                             with yt_dlp.YoutubeDL(retry_opts) as ydl:
                                 ydl.download([url])
-                            video_logger.info(f"✅ Cookie retry succeeded for {download_id} on attempt {attempt}")
                             last_exception = None
                             break
                         except Exception as cookie_err:
-                            video_logger.warning(f"Cookie retry failed for {download_id}: {cookie_err}")
                             tried_cookie = True
 
                     # Try rotating proxies FIRST (higher priority than just cookies)
@@ -8262,22 +8210,18 @@ if VIDEO_CONVERTER_AVAILABLE:
                     if is_403_like and proxies_to_try and attempt <= 7:
                         for proxy in proxies_to_try:
                             try:
-                                video_logger.info(f"🌐 Attempt {attempt}: retrying via proxy {proxy} for {download_id}")
                                 retry_opts2 = get_ydl_opts(format_type, quality, output_path)
                                 retry_opts2['proxy'] = proxy
                                 # Use cookies WITH proxy for best results
                                 if cookiefile and os.path.exists(cookiefile):
                                     retry_opts2['cookiefile'] = cookiefile
-                                    video_logger.info(f"🍪🌐 Using proxy + cookies for {download_id}")
                                 retry_opts2['progress_hooks'] = [progress_hook]
                                 with yt_dlp.YoutubeDL(retry_opts2) as ydl:
                                     ydl.download([url])
-                                video_logger.info(f"✅ Proxy+cookie retry succeeded for {download_id} via {proxy}")
                                 proxy_succeeded = True
                                 last_exception = None
                                 break
                             except Exception as proxy_err:
-                                video_logger.warning(f"Proxy retry failed for {download_id} via {proxy}: {proxy_err}")
                                 # small backoff between proxy attempts
                                 time.sleep(min(1.0, YTDL_BACKOFF_BASE))
                         if proxy_succeeded:
@@ -8286,50 +8230,40 @@ if VIDEO_CONVERTER_AVAILABLE:
                     # LAYER 3: Try Invidious fallback if browser cookies failed or persistent 403s
                     # Trigger immediately on browser error (consecutive_403s set to 3) or after 3 real 403s
                     if (is_browser_error or is_403_like) and consecutive_403s >= 3 and attempt <= 8:
-                        video_logger.info(f"🔄 Attempting Invidious fallback for {download_id}")
                         invidious_success, invidious_info, invidious_error = try_invidious_download(
                             url, format_type, quality, output_path
                         )
                         if invidious_success:
-                            video_logger.info(f"✅ Invidious fallback succeeded for {download_id}")
                             last_exception = None
                             break
-                        else:
-                            video_logger.warning(f"Invidious fallback failed for {download_id}: {invidious_error}")
 
                     # Check retry limits
                     if effective_max is not None and attempt >= effective_max:
-                        video_logger.error(f"Download failed after {attempt} attempts for {download_id}; giving up")
                         break
 
                     # Smart backoff: if we're getting repeated errors, increase backoff
                     # BUT: Skip long backoff if browser cookies just failed (jump to Invidious immediately)
                     if is_browser_error and attempt == 1:
                         sleep_for = 0.5  # Minimal delay before trying Invidious
-                        video_logger.info(f"Browser cookies failed, trying Invidious immediately")
                     elif consecutive_403s >= 3:
                         backoff = min(YTDL_BACKOFF_MAX, YTDL_BACKOFF_BASE * (2 ** (attempt + 2)))
                         jitter = random.uniform(0, backoff * 0.3)
                         sleep_for = backoff + jitter
-                        video_logger.info(f"Multiple errors detected, using extended backoff")
                     else:
                         backoff = min(YTDL_BACKOFF_MAX, YTDL_BACKOFF_BASE * (2 ** (attempt - 1)))
                         jitter = random.uniform(0, backoff * 0.3)
                         sleep_for = backoff + jitter
                     
-                    video_logger.info(f"Sleeping {sleep_for:.1f}s before next attempt for {download_id}")
                     time.sleep(sleep_for)
 
                     # If retry-forever is enabled, continue looping; otherwise loop until attempts exhausted
                     if not YTDL_RETRY_FOREVER and effective_max is not None and attempt >= effective_max:
                         # Max attempts reached
-                        video_logger.error(f"Max retries reached ({effective_max}) for {download_id}")
                         break
             
             # Find the downloaded file
             downloaded_file = None
             base_pattern = output_path.replace('.%(ext)s', '')
-            video_logger.info(f"Looking for downloaded file with pattern: {base_pattern}")
 
             # Collect candidates that start with the base pattern
             candidates = []
@@ -8357,24 +8291,21 @@ if VIDEO_CONVERTER_AVAILABLE:
 
                 # Fallback to any candidate if no prioritized ext matched
                 downloaded_file = chosen or candidates[0]
-                video_logger.info(f"Candidate files: {candidates}")
-                video_logger.info(f"Selected downloaded file: {downloaded_file}")
             
             if downloaded_file and os.path.exists(downloaded_file):
                 # Try to apply metadata (cover art, artist, lyrics) if possible
                 try:
                     apply_metadata(downloaded_file, info if 'info' in locals() else {}, base_pattern, format_type)
                 except Exception as meta_err:
-                    video_logger.warning(f"Failed to apply metadata: {meta_err}")
+                    pass  # Silent metadata errors
                 # Check file size - if it's too small, it's probably corrupted
                 file_size = os.path.getsize(downloaded_file)
                 if file_size < 1024:  # Less than 1KB is probably corrupted
-                    video_logger.error(f"Downloaded file too small ({file_size} bytes) for {download_id}")
                     os.remove(downloaded_file)  # Delete the corrupted file
                     raise Exception(f"Downloaded file appears to be corrupted (only {file_size} bytes)")
                 
-                # Success
-                video_logger.info(f"Video conversion completed successfully: {download_id} ({file_size} bytes)")
+                # Success - Log simplified entry
+                video_logger.info(f"IP: {client_ip or 'Unknown'} | {title} | SUCCESS ({file_size} bytes)")
                 with download_lock:
                     if download_id in active_video_downloads:
                         active_video_downloads[download_id].update({
@@ -8384,22 +8315,18 @@ if VIDEO_CONVERTER_AVAILABLE:
                             'finished': True
                         })
             else:
-                video_logger.error(f"Downloaded file not found for {download_id}")
                 raise Exception("Downloaded file not found")
                 
         except Exception as e:
-            # Error occurred - capture full traceback for debugging
+            # Error occurred - Log simplified error
             error_msg = str(e)
-            tb = traceback.format_exc()
-            video_logger.error(f"Video download error for {download_id}: {error_msg}")
-            video_logger.debug(f"Full traceback for {download_id}:\n{tb}")
+            video_logger.error(f"IP: {client_ip or 'Unknown'} | {locals().get('title', url)} | FAILED: {error_msg}")
             
             with download_lock:
                 if download_id in active_video_downloads:
                     active_video_downloads[download_id].update({
                         'status': 'error',
                         'error': error_msg,
-                        'error_details': tb,
                         'finished': True
                     })
         finally:
@@ -8408,14 +8335,12 @@ if VIDEO_CONVERTER_AVAILABLE:
                 try:
                     if os.path.exists(temp_cookie_file):
                         os.remove(temp_cookie_file)
-                        video_logger.debug(f"Cleaned up temp cookie file: {temp_cookie_file}")
                 except Exception as cleanup_err:
-                    video_logger.debug(f"Failed to cleanup temp cookie: {cleanup_err}")
+                    pass
             
             # Decrement rate limit counter when download finishes (success or error)
             if client_ip:
                 decrement_video_rate_limit(client_ip)
-                video_logger.debug(f"Decremented rate limit for IP {client_ip}")
             # Clean up any coalescing mapping for this URL - decrease refcount and remove when zero
             try:
                 normalized = url.strip()
@@ -8425,11 +8350,9 @@ if VIDEO_CONVERTER_AVAILABLE:
                         # mapping is a dict {'download_id': id, 'refcount': n}
                         if mapping.get('download_id') == download_id:
                             mapping['refcount'] = max(0, mapping.get('refcount', 1) - 1)
-                            video_logger.debug(f"Decremented refcount for URL {normalized}: {mapping['refcount']}")
                             if mapping['refcount'] <= 0:
                                 try:
                                     del active_url_map[normalized]
-                                    video_logger.debug(f"Removed coalescing mapping for URL {normalized}")
                                 except KeyError:
                                     pass
                     # Also decrement waiter count on the active download entry if present
@@ -8437,7 +8360,6 @@ if VIDEO_CONVERTER_AVAILABLE:
                         entry = active_video_downloads[download_id]
                         if 'waiters' in entry and entry['waiters'] > 0:
                             entry['waiters'] = max(0, entry['waiters'] - 1)
-                            video_logger.debug(f"Decremented waiter count for download {download_id}: {entry['waiters']}")
             except Exception:
                 pass
 
@@ -8659,7 +8581,6 @@ if VIDEO_CONVERTER_AVAILABLE:
             # Decrement rate limit counter when download finishes (success or error)
             if client_ip:
                 decrement_video_rate_limit(client_ip)
-                video_logger.debug(f"Decremented rate limit for IP {client_ip}")
 
     @app.post("/api/v1/video/playlist-info", response_model=PlaylistInfoResponse)
     async def get_playlist_info(request: PlaylistInfoRequest):
@@ -8819,11 +8740,9 @@ if VIDEO_CONVERTER_AVAILABLE:
     @app.post("/api/v1/video/convert", response_model=VideoConversionResponse)
     async def convert_video(request: VideoConversionRequest, req: Request):
         """Start video conversion process with rate limiting"""
-        video_logger.info(f"Starting video conversion for URL: {request.url}")
         try:
             # Get client IP for rate limiting
             client_ip = get_client_ip(req)
-            video_logger.info(f"Client IP: {client_ip}")
             
             # Check rate limit
             if not check_video_rate_limit(client_ip):
@@ -8836,16 +8755,12 @@ if VIDEO_CONVERTER_AVAILABLE:
             # Validate URL first
             platform = detect_platform(request.url)
             if not platform:
-                video_logger.warning(f"Unsupported platform for URL: {request.url}")
                 raise HTTPException(status_code=400, detail="Unsupported platform or invalid URL")
-            
-            video_logger.info(f"Detected platform: {platform}")
             
             # Block internal/localhost URLs (SSRF protection)
             from urllib.parse import urlparse
             parsed = urlparse(request.url)
             if parsed.hostname in ['localhost', '127.0.0.1', '0.0.0.0', '::1']:
-                video_logger.warning(f"Blocked localhost URL: {request.url}")
                 raise HTTPException(status_code=400, detail="Invalid URL: localhost not allowed")
             
             # Normalize URL for coalescing (simple normalization)
@@ -8869,11 +8784,9 @@ if VIDEO_CONVERTER_AVAILABLE:
 
             # Generate unique download ID
             download_id = str(uuid.uuid4())
-            video_logger.info(f"Generated download ID: {download_id}")
             
             # Determine format and quality
             format_type = 'audio' if request.format == 1 else 'video'
-            video_logger.info(f"Format: {format_type}, Quality: {request.quality}")
             
             # Set up output filename
             timestamp = int(time.time())
@@ -8883,7 +8796,6 @@ if VIDEO_CONVERTER_AVAILABLE:
                 output_filename = f"{download_id}_{timestamp}.%(ext)s"
             
             output_path = os.path.join(VIDEO_DOWNLOAD_DIR, output_filename)
-            video_logger.info(f"Output path: {output_path}")
             
             # Register normalized URL -> download_id for coalescing (with refcount)
             with download_lock:
@@ -8920,7 +8832,6 @@ if VIDEO_CONVERTER_AVAILABLE:
                     pass
             
             # Enqueue the download task into the worker queue
-            video_logger.info(f"Enqueuing background download task for {download_id}")
             try:
                 worker_queue.put_nowait((download_video_background, (download_id, request.url, format_type, request.quality, output_path, client_ip)))
             except queue.Full:
@@ -8934,7 +8845,6 @@ if VIDEO_CONVERTER_AVAILABLE:
                 video_logger.warning(f"Worker queue full; rejected download {download_id}")
                 raise HTTPException(status_code=429, detail="Server busy processing other downloads. Try again shortly.")
             
-            video_logger.info(f"Video conversion started successfully: {download_id}")
             return VideoConversionResponse(
                 success=True,
                 download_id=download_id,
@@ -9236,8 +9146,6 @@ async def download_converted_file(request: Request, download_id: str):
                     return
 
                 parts = entry.get('parts') or []
-                video_logger.debug(f"bg_cleanup: entry parts before removal for {download_id}: {parts}")
-                video_logger.debug(f"bg_cleanup: entry completed_count before removal for {download_id}: {entry.get('completed_count')}")
                 # If multiple parts were created, remove the first (served) part
                 if parts and file_path in parts:
                     try:
@@ -9245,8 +9153,6 @@ async def download_converted_file(request: Request, download_id: str):
                     except ValueError:
                         pass
 
-                video_logger.debug(f"bg_cleanup: entry parts after attempted removal for {download_id}: {parts}")
-                video_logger.debug(f"bg_cleanup: entry completed_count after attempted removal for {download_id}: {entry.get('completed_count')}")
                 if parts:
                     # Set next part as ready for download
                     entry['file_path'] = parts[0]
@@ -9264,7 +9170,6 @@ async def download_converted_file(request: Request, download_id: str):
                     if finished_flag:
                         try:
                             del active_video_downloads[download_id]
-                            video_logger.info(f"All parts served and worker finished; removed active download entry {download_id}")
                         except KeyError:
                             pass
                     else:
@@ -9284,7 +9189,6 @@ async def download_converted_file(request: Request, download_id: str):
             if client_ip:
                 try:
                     decrement_video_rate_limit(client_ip)
-                    video_logger.debug(f"Decremented rate limit for IP {client_ip}")
                 except Exception:
                     pass
 
