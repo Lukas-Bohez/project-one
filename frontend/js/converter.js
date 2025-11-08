@@ -439,26 +439,21 @@ async function showPlaylistUI(playlistId, playlistUrl) {
                 convertButton.setAttribute('title', 'Convert disabled while playlist is loaded. Use playlist controls.');
             }
 
-            // Check if playlist has 0 videos - fall back to individual video conversion
+            // Check if playlist has 0 videos - show error instead of falling back
             if (result.video_count === 0) {
-                console.log('📋 Playlist has 0 videos, falling back to individual video conversion');
-                showValidationSuccess('Playlist is empty, converting individual video instead');
-
-                // Extract individual video URL from playlist URL
-                const individualVideoUrl = extractIndividualVideoUrl(playlistUrl);
-                if (individualVideoUrl) {
-                    console.log('✅ Extracted individual video URL:', individualVideoUrl);
-                    // Update the input field with the individual video URL for consistency
-                    videoUrlInput.value = individualVideoUrl;
-                    // Hide playlist UI
-                    hidePlaylistUI();
-                    // Return true to indicate validation passed - we'll use the individual URL
-                    return true;
+                console.log('📋 Playlist has 0 videos');
+                
+                // Check if it's a private playlist or has an error message
+                if (result.is_private) {
+                    showValidationError('This playlist is private. Please make it unlisted or public to download.');
+                } else if (result.error) {
+                    showValidationError(result.error);
                 } else {
-                    showValidationError('Could not extract individual video URL from playlist');
-                    hidePlaylistUI();
-                    return false;
+                    showValidationError('This playlist is empty or all videos are unavailable. Please check the playlist and try again.');
                 }
+                
+                hidePlaylistUI();
+                return false;
             }
 
             renderPlaylistUI(result);

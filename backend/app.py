@@ -8650,8 +8650,9 @@ if VIDEO_CONVERTER_AVAILABLE:
             ydl_opts = {
                 'quiet': True,
                 'no_warnings': True,
-                'extract_flat': True,  # Don't download videos, just get info
-                'ignoreerrors': True,
+                'extract_flat': 'in_playlist',  # Extract basic info for playlist items
+                'ignoreerrors': True,  # Continue even if some videos fail
+                'skip_unavailable_fragments': True,
             }
             
             # 🍪 ADD COOKIES for age-restricted playlists
@@ -8693,14 +8694,24 @@ if VIDEO_CONVERTER_AVAILABLE:
                     entries = info.get('entries', [])
                     
                     videos = []
+                    skipped_count = 0
                     for entry in entries:
-                        if entry and entry.get('id'):
-                            videos.append(PlaylistVideoInfo(
-                                id=entry['id'],
-                                title=entry.get('title', 'Unknown Title'),
-                                duration=entry.get('duration'),
-                                url=f"https://www.youtube.com/watch?v={entry['id']}"
-                            ))
+                        if entry:
+                            # Handle different entry formats
+                            video_id = entry.get('id') or entry.get('url', '').split('v=')[-1].split('&')[0] if entry.get('url') else None
+                            if video_id:
+                                videos.append(PlaylistVideoInfo(
+                                    id=video_id,
+                                    title=entry.get('title', 'Unknown Title'),
+                                    duration=entry.get('duration'),
+                                    url=f"https://www.youtube.com/watch?v={video_id}"
+                                ))
+                            else:
+                                skipped_count += 1
+                                video_logger.debug(f"Skipped entry without ID: {entry.get('title', 'Unknown')}")
+                    
+                    if skipped_count > 0:
+                        video_logger.info(f"Skipped {skipped_count} unavailable/private videos in playlist {playlist_id}")
                     
                     video_logger.info(f"Successfully extracted playlist info: {playlist_title} with {len(videos)} videos")
                     response = PlaylistInfoResponse(
