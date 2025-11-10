@@ -603,6 +603,26 @@ body {
     box-shadow: none;
 }
 
+/* Ensure button text is white when enabled */
+.action-btn .btn-title,
+.action-btn .btn-cost,
+.action-btn .btn-description,
+.sell-btn .btn-title,
+.sell-btn .btn-cost,
+.sell-btn .btn-description {
+    color: white;
+}
+
+/* Disabled button text color */
+.action-btn:disabled .btn-title,
+.action-btn:disabled .btn-cost,
+.action-btn:disabled .btn-description,
+.sell-btn:disabled .btn-title,
+.sell-btn:disabled .btn-cost,
+.sell-btn:disabled .btn-description {
+    color: #a0aec0;
+}
+
 /* Button Variants */
 .sell-btn {
     background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
