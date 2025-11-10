@@ -392,6 +392,8 @@ class SaveManager {
                     markets: state.city.markets || 0,
                     universities: state.city.universities || 0,
                     salesDepartment: state.city.salesDepartment || 0,
+                    miningAcademy: state.city.miningAcademy || 0,
+                    automationLab: state.city.automationLab || 0,
                     corruption: state.city.corruption || 0,
                     theftRisk: state.city.theftRisk || 0,
                     theftLosses: state.city.theftLosses || 0,
@@ -416,8 +418,18 @@ class SaveManager {
                     unlock_processing: state.unlock_processing || false,
                     unlock_electronics: state.unlock_electronics || false,
                     unlock_jewelry: state.unlock_jewelry || false,
-                    unlock_automotive: state.unlock_automotive || false
+                    unlock_automotive: state.unlock_automotive || false,
+                    // Auto-craft tier unlocks
+                    unlock_autocraft_basic: state.unlock_autocraft_basic || false,
+                    unlock_autocraft_intermediate: state.unlock_autocraft_intermediate || false,
+                    unlock_autocraft_advanced: state.unlock_autocraft_advanced || false,
+                    unlock_autocraft_premium: state.unlock_autocraft_premium || false
                 },
+                
+                // Crafting system
+                crafted: state.crafted || { basic: 0, intermediate: 0, advanced: 0, premium: 0 },
+                autoCraft: state.autoCraft || false,
+                autoTransport: state.autoTransport || { basic: false, intermediate: false, advanced: false, premium: false },
                 
                 // Statistics
                 stats: {
@@ -575,6 +587,22 @@ class SaveManager {
             state.unlock_electronics = !!customData.unlocks.unlock_electronics;
             state.unlock_jewelry = !!customData.unlocks.unlock_jewelry;
             state.unlock_automotive = !!customData.unlocks.unlock_automotive;
+            // Auto-craft tier unlocks
+            state.unlock_autocraft_basic = !!customData.unlocks.unlock_autocraft_basic;
+            state.unlock_autocraft_intermediate = !!customData.unlocks.unlock_autocraft_intermediate;
+            state.unlock_autocraft_advanced = !!customData.unlocks.unlock_autocraft_advanced;
+            state.unlock_autocraft_premium = !!customData.unlocks.unlock_autocraft_premium;
+        }
+        
+        // Restore crafting system
+        if (customData.crafted) {
+            state.crafted = Object.assign({}, customData.crafted);
+        }
+        if (customData.autoCraft !== undefined) {
+            state.autoCraft = !!customData.autoCraft;
+        }
+        if (customData.autoTransport) {
+            state.autoTransport = Object.assign({}, customData.autoTransport);
         }
         
         // Restore statistics

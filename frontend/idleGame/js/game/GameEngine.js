@@ -113,6 +113,8 @@ class GameEngine {
                 markets: 0,
                 universities: 0,
                 salesDepartment: 0,  // Auto-sells finished goods (upgradable)
+                miningAcademy: 0,    // Boosts resource gathering efficiency (upgradable)
+                automationLab: 0,    // Boosts auto-craft speed (upgradable)
                 corruption: 0,
                 // Theft system
                 theftRisk: 0,
@@ -330,9 +332,10 @@ class GameEngine {
         const salesDept = this.state.city?.salesDepartment || 0;
         if (salesDept <= 0) return; // No sales department = no auto-sell
         
-        // Sell all items every minute, with less time per level
-        // Level 1: 60s, Level 2: 50s, Level 3: 40s, Level 4: 30s, Level 5: 20s, Level 6+: 10s
-        const interval = Math.max(10000, 60000 - (salesDept - 1) * 10000);
+        // Sell all items periodically, with less time per level
+        // Level 1: 60s, Level 2: 50s, Level 3: 40s, Level 4: 30s, Level 5: 20s, 
+        // Level 6: 15s, Level 7: 10s, Level 8+: 5s
+        const interval = Math.max(5000, 60000 - (salesDept - 1) * 10000);
         
         if (now < this.nextAutoSellFinishedAt) return;
         
@@ -368,6 +371,22 @@ class GameEngine {
         // Accumulate fractional transports
         this.transportAccumulator = (this.transportAccumulator || 0) + transportRate;
         
+        // Get current theme item names
+        const rebirths = this.state.city?.rebirths || 0;
+        const theme = this.rebirthThemes?.getTheme(rebirths);
+        const themeItemNames = {
+            'basic': theme?.crafting?.basic?.result || 'Deployable App',
+            'intermediate': theme?.crafting?.intermediate?.result || 'SaaS Platform',
+            'advanced': theme?.crafting?.advanced?.result || 'Enterprise Product',
+            'premium': theme?.crafting?.premium?.result || 'Unicorn Startup'
+        };
+        
+        // Create reverse mapping
+        const craftedItemsReverse = {};
+        for (const [tier, itemName] of Object.entries(themeItemNames)) {
+            craftedItemsReverse[itemName] = tier;
+        }
+        
         // Transport whole units (use actual capacity for weight checks)
         while (this.transportAccumulator >= 1) {
             const result = this.newResourceManager.transportOne(capacity, this.state.autoTransport);
@@ -375,13 +394,7 @@ class GameEngine {
             
             // If a crafted item was transported, decrease the crafted counter
             if (result.item && result.tier === 'finished') {
-                const craftedItems = {
-                    'Deployable App': 'basic',
-                    'SaaS Platform': 'intermediate',
-                    'Enterprise Product': 'advanced',
-                    'Unicorn Startup': 'premium'
-                };
-                const craftTier = craftedItems[result.item];
+                const craftTier = craftedItemsReverse[result.item];
                 if (craftTier) {
                     this.state.crafted[craftTier] = Math.max(0, (this.state.crafted[craftTier] || 0) - 1);
                 }
@@ -445,6 +458,9 @@ class GameEngine {
         // Auto-crafting system
         this.tryAutoCraft();
         
+        // Auto-transport crafted items from factory to city (for toggle buttons)
+        this.tryAutoTransportCrafted();
+        
         // Automatic transport of goods from factory to city
         this.updateAutoTransport(deltaTime);
         
@@ -459,7 +475,14 @@ class GameEngine {
     }
     
     updateMiningProduction(deltaTime) {
+        // Base efficiency from global and mining
         let efficiency = this.state.efficiency.mining * this.state.efficiency.global;
+        
+        // Apply Mining Academy bonus (+15% per level)
+        const miningAcademy = this.state.city.miningAcademy || 0;
+        if (miningAcademy > 0) {
+            efficiency *= (1 + miningAcademy * 0.15);
+        }
         
         // Apply ad bonuses
         if (this.state.ads.efficiencyBoost.active) {
@@ -752,9 +775,20 @@ class GameEngine {
         
         // Update sales department with level and interval info
         const salesDept = this.state.city.salesDepartment || 0;
-        const interval = salesDept > 0 ? Math.max(10, 60 - (salesDept - 1) * 10) : 0;
+        const interval = salesDept > 0 ? Math.max(5, 60 - (salesDept - 1) * 10) : 0;
         const salesSpeed = salesDept > 0 ? `Level ${salesDept} (sells all every ${interval}s)` : 'Level 0';
         this.updateElement('sales-dept-count', salesSpeed);
+        
+        // Update mining academy display
+        const miningAcademy = this.state.city.miningAcademy || 0;
+        const miningBonus = miningAcademy * 15; // 15% per level
+        const miningText = miningAcademy > 0 ? `Level ${miningAcademy} (+${miningBonus}% gathering)` : 'Level 0';
+        this.updateElement('mining-academy-count', miningText);
+        
+        // Update automation lab display
+        const automationLab = this.state.city.automationLab || 0;
+        const craftSpeed = automationLab > 0 ? `Level ${automationLab} (${automationLab + 1}x speed)` : 'Level 0';
+        this.updateElement('automation-lab-count', craftSpeed);
         
         // Update sales timer countdown
         const timerRow = document.getElementById('sales-timer-row');
@@ -947,6 +981,38 @@ class GameEngine {
             }
         }
         
+        // Mining Academy button - dynamic cost based on level
+        const miningAcademyLevel = this.state.city.miningAcademy || 0;
+        const miningAcademyCost = 400 * Math.pow(1.5, miningAcademyLevel);
+        this.updateElement('mining-academy-cost', Math.floor(miningAcademyCost).toString());
+        this.updateButtonState('build-mining-academy-btn', this.state.resources.gold >= miningAcademyCost);
+        
+        const miningAcademyBtn = document.getElementById('build-mining-academy-btn');
+        if (miningAcademyBtn) {
+            const titleDiv = miningAcademyBtn.querySelector('.btn-title');
+            if (titleDiv && window.rebirthThemes) {
+                const theme = window.rebirthThemes.getCurrentTheme();
+                const themeName = theme.city.miningAcademy.name;
+                titleDiv.textContent = miningAcademyLevel === 0 ? `Build ${themeName}` : `Upgrade ${themeName} (Lv ${miningAcademyLevel})`;
+            }
+        }
+        
+        // Automation Lab button - dynamic cost based on level
+        const automationLabLevel = this.state.city.automationLab || 0;
+        const automationLabCost = 600 * Math.pow(1.5, automationLabLevel);
+        this.updateElement('automation-lab-cost', Math.floor(automationLabCost).toString());
+        this.updateButtonState('build-automation-lab-btn', this.state.resources.gold >= automationLabCost);
+        
+        const automationLabBtn = document.getElementById('build-automation-lab-btn');
+        if (automationLabBtn) {
+            const titleDiv = automationLabBtn.querySelector('.btn-title');
+            if (titleDiv && window.rebirthThemes) {
+                const theme = window.rebirthThemes.getCurrentTheme();
+                const themeName = theme.city.automationLab.name;
+                titleDiv.textContent = automationLabLevel === 0 ? `Build ${themeName}` : `Upgrade ${themeName} (Lv ${automationLabLevel})`;
+            }
+        }
+        
         // Rebirth button (enable at 99.5%+ decay to handle floating point + rounding)
         const effectiveMaxDecay = this.state.city.adjustedMaxDecay || this.state.city.maxDecay;
         this.updateButtonState('rebirth-btn', this.state.city.decay >= (effectiveMaxDecay - 0.5));
@@ -960,8 +1026,12 @@ class GameEngine {
         this.updateButtonState('craft-premium-btn', 
             (this.state.crafted?.advanced || 0) >= 1 && this.state.resources.silver >= 2 && this.state.unlock_silver);
         
-        // Auto-craft toggle (requires automation research)
-        this.updateButtonState('toggle-autocraft-btn', this.state.research_automation);
+        // Auto-craft toggle (unlocked if ANY auto-craft tier is unlocked)
+        const hasAnyAutoCraft = this.state.unlock_autocraft_basic || 
+                                this.state.unlock_autocraft_intermediate || 
+                                this.state.unlock_autocraft_advanced || 
+                                this.state.unlock_autocraft_premium;
+        this.updateButtonState('toggle-autocraft-btn', hasAnyAutoCraft);
         
         // Transport toggle buttons (always enabled once you have items)
         // These are always clickable to toggle
@@ -990,7 +1060,7 @@ class GameEngine {
             this.state.resources.gold >= 10000 && !this.state.unlock_autocraft_premium && this.state.unlock_silver);
         
         // Hide purchased unlock buttons
-        const unlockKeys = ['unlock_coal', 'unlock_iron', 'unlock_silver', 'unlock_oil', 'unlock_rubber', 'unlock_processing', 'unlock_electronics', 'unlock_jewelry', 'unlock_automotive'];
+        const unlockKeys = ['unlock_coal', 'unlock_iron', 'unlock_silver', 'unlock_oil', 'unlock_rubber', 'unlock_processing', 'unlock_electronics', 'unlock_jewelry', 'unlock_automotive', 'unlock_autocraft_basic', 'unlock_autocraft_intermediate', 'unlock_autocraft_advanced', 'unlock_autocraft_premium'];
         unlockKeys.forEach(key => {
             if (this.state[key]) {
                 const button = document.querySelector(`[data-unlock="${key}"]`);
@@ -1211,41 +1281,51 @@ class GameEngine {
     
     // Manual Crafting System
     craftItem(tier) {
+        // Get current theme to use correct item names
+        const rebirths = this.state.city?.rebirths || 0;
+        const theme = this.rebirthThemes?.getTheme(rebirths);
+        const themeItemNames = {
+            basic: theme?.crafting?.basic?.result || 'Deployable App',
+            intermediate: theme?.crafting?.intermediate?.result || 'SaaS Platform',
+            advanced: theme?.crafting?.advanced?.result || 'Enterprise Product',
+            premium: theme?.crafting?.premium?.result || 'Unicorn Startup'
+        };
+        
         const recipes = {
             basic: {
                 requires: { stone: 10 },
                 produces: 'basic',
-                producesItem: 'Deployable App',
+                producesItem: themeItemNames.basic,
                 amount: 1,
                 sellValue: 3,  // 3x manual sell (10 stone * 0.1 = 1, so 3x = 3)
-                name: 'Deployable App',
+                name: themeItemNames.basic,
                 weight: 1
             },
             intermediate: {
                 requires: { basic: 1, coal: 5 },
                 produces: 'intermediate',
-                producesItem: 'SaaS Platform',
+                producesItem: themeItemNames.intermediate,
                 amount: 1,
                 sellValue: 9,  // 3x (1 basic (3) + 5 coal * 0.5 = 5.5, ~3x = 9)
-                name: 'SaaS Platform',
+                name: themeItemNames.intermediate,
                 weight: 2
             },
             advanced: {
                 requires: { intermediate: 1, iron: 3 },
                 produces: 'advanced',
-                producesItem: 'Enterprise Product',
+                producesItem: themeItemNames.advanced,
                 amount: 1,
                 sellValue: 30,  // 3x (1 int (9) + 3 iron * 1.2 = 12.6, ~3x = 30)
-                name: 'Enterprise Product',
+                name: themeItemNames.advanced,
                 weight: 3
             },
             premium: {
                 requires: { advanced: 1, silver: 2 },
                 produces: 'premium',
-                producesItem: 'Unicorn Startup',
+                producesItem: themeItemNames.premium,
                 amount: 1,
                 sellValue: 120,  // 3x (1 adv (30) + 2 silver * 6 = 42, ~3x = 120)
-                name: 'Unicorn Startup',
+                name: themeItemNames.premium,
                 weight: 5
             }
         };
@@ -1296,7 +1376,6 @@ class GameEngine {
         return true;
     }
     
-    // Transport crafted item from factory to city
     toggleTransportCrafted(tier) {
         // Initialize autoTransport state if it doesn't exist
         if (!this.state.autoTransport) {
@@ -1308,17 +1387,20 @@ class GameEngine {
             };
         }
         
-        const itemNames = {
-            basic: 'Apps',
-            intermediate: 'Platforms',
-            advanced: 'Products',
-            premium: 'Startups'
+        // Get current theme item names
+        const rebirths = this.state.city?.rebirths || 0;
+        const theme = this.rebirthThemes?.getTheme(rebirths);
+        const themeItemNames = {
+            basic: theme?.crafting?.basic?.result || 'Apps',
+            intermediate: theme?.crafting?.intermediate?.result || 'Platforms',
+            advanced: theme?.crafting?.advanced?.result || 'Products',
+            premium: theme?.crafting?.premium?.result || 'Startups'
         };
         
         // Toggle the state
         this.state.autoTransport[tier] = !this.state.autoTransport[tier];
         const status = this.state.autoTransport[tier] ? 'ON' : 'OFF';
-        const itemName = itemNames[tier];
+        const itemName = themeItemNames[tier];
         
         // Update button text
         const btn = document.getElementById(`transport-${tier}-btn`);
@@ -1337,35 +1419,43 @@ class GameEngine {
     tryAutoTransportCrafted() {
         if (!this.state.autoTransport) return;
         
-        const itemNames = {
-            basic: 'Deployable App',
-            intermediate: 'SaaS Platform',
-            advanced: 'Enterprise Product',
-            premium: 'Unicorn Startup'
+        // Get current theme item names
+        const rebirths = this.state.city?.rebirths || 0;
+        const theme = this.rebirthThemes?.getTheme(rebirths);
+        const themeItemNames = {
+            basic: theme?.crafting?.basic?.result || 'Deployable App',
+            intermediate: theme?.crafting?.intermediate?.result || 'SaaS Platform',
+            advanced: theme?.crafting?.advanced?.result || 'Enterprise Product',
+            premium: theme?.crafting?.premium?.result || 'Unicorn Startup'
         };
         
-        // Try each tier that's enabled
+        let transported = false;
+        
+        // Try each tier that's enabled (transport all items at once for efficiency)
         for (const [tier, enabled] of Object.entries(this.state.autoTransport)) {
             if (!enabled) continue;
             
-            const itemName = itemNames[tier];
+            const itemName = themeItemNames[tier];
             const factoryAmount = this.state.factory?.finished?.[itemName] || 0;
             
             if (factoryAmount > 0) {
-                // Move one item from factory to city
-                this.state.factory.finished[itemName] -= 1;
+                // Move ALL items of this tier from factory to city
+                this.state.factory.finished[itemName] = 0;
                 if (!this.state.cityInventory.finished[itemName]) {
                     this.state.cityInventory.finished[itemName] = 0;
                 }
-                this.state.cityInventory.finished[itemName] += 1;
+                this.state.cityInventory.finished[itemName] += factoryAmount;
                 
                 // Decrease crafted inventory counter
-                this.state.crafted[tier] = Math.max(0, (this.state.crafted[tier] || 0) - 1);
+                this.state.crafted[tier] = Math.max(0, (this.state.crafted[tier] || 0) - factoryAmount);
                 
-                this.playSound('transport');
-                // Only show notification for first transport
-                return;
+                transported = true;
             }
+        }
+        
+        // Play sound once if any items were transported
+        if (transported) {
+            this.playSound('transport');
         }
     }
     
@@ -1378,14 +1468,17 @@ class GameEngine {
             premium: 120
         };
         
-        const itemNames = {
-            basic: 'Deployable App',
-            intermediate: 'SaaS Platform',
-            advanced: 'Enterprise Product',
-            premium: 'Unicorn Startup'
+        // Get current theme item names
+        const rebirths = this.state.city?.rebirths || 0;
+        const theme = this.rebirthThemes?.getTheme(rebirths);
+        const themeItemNames = {
+            basic: theme?.crafting?.basic?.result || 'Deployable App',
+            intermediate: theme?.crafting?.intermediate?.result || 'SaaS Platform',
+            advanced: theme?.crafting?.advanced?.result || 'Enterprise Product',
+            premium: theme?.crafting?.premium?.result || 'Unicorn Startup'
         };
         
-        const itemName = itemNames[tier];
+        const itemName = themeItemNames[tier];
         const cityAmount = this.state.cityInventory?.finished?.[itemName] || 0;
         
         if (cityAmount < 1) return false;
@@ -1417,14 +1510,17 @@ class GameEngine {
             premium: 120
         };
         
-        const itemNames = {
-            basic: 'Deployable App',
-            intermediate: 'SaaS Platform',
-            advanced: 'Enterprise Product',
-            premium: 'Unicorn Startup'
+        // Get current theme item names
+        const rebirths = this.state.city?.rebirths || 0;
+        const theme = this.rebirthThemes?.getTheme(rebirths);
+        const themeItemNames = {
+            basic: theme?.crafting?.basic?.result || 'Deployable App',
+            intermediate: theme?.crafting?.intermediate?.result || 'SaaS Platform',
+            advanced: theme?.crafting?.advanced?.result || 'Enterprise Product',
+            premium: theme?.crafting?.premium?.result || 'Unicorn Startup'
         };
         
-        const itemName = itemNames[tier];
+        const itemName = themeItemNames[tier];
         const cityAmount = this.state.cityInventory?.finished?.[itemName] || 0;
         
         if (cityAmount < 1) return false;
@@ -1451,9 +1547,14 @@ class GameEngine {
     }
     
     toggleAutoCraft() {
-        // Check if automation is unlocked
-        if (!this.state.research_automation) {
-            this.showNotification('🔒 Research Automation first!');
+        // Check if any auto-craft tier is unlocked
+        const hasAnyAutoCraft = this.state.unlock_autocraft_basic || 
+                                this.state.unlock_autocraft_intermediate || 
+                                this.state.unlock_autocraft_advanced || 
+                                this.state.unlock_autocraft_premium;
+        
+        if (!hasAnyAutoCraft) {
+            this.showNotification('🔒 Unlock at least one Auto-Craft tier first!');
             return false;
         }
         
@@ -1475,11 +1576,27 @@ class GameEngine {
             basic: this.state.unlock_autocraft_basic
         };
         
+        // Automation Lab increases auto-craft speed
+        // Level 0: 1 craft per tick, Level 1: 2 crafts, Level 2: 3 crafts, etc.
+        const automationLab = this.state.city.automationLab || 0;
+        const craftsPerTick = 1 + automationLab;
+        
         const tiers = ['premium', 'advanced', 'intermediate', 'basic'];
-        for (const tier of tiers) {
-            if (tierUnlocks[tier] && this.craftItem(tier)) {
-                return; // Only craft one item per cycle
+        let craftsMade = 0;
+        
+        // Try to craft multiple items per tick based on automation lab level
+        while (craftsMade < craftsPerTick) {
+            let craftedThisCycle = false;
+            for (const tier of tiers) {
+                if (tierUnlocks[tier] && this.craftItem(tier)) {
+                    craftedThisCycle = true;
+                    craftsMade++;
+                    break; // Craft one, then check if we can craft more
+                }
             }
+            
+            // If we couldn't craft anything this cycle, stop trying
+            if (!craftedThisCycle) break;
         }
     }
 
@@ -1608,18 +1725,29 @@ class GameEngine {
     // Manual transport: move one best item based on value/weight
     transportNext() {
         if (!this.newResourceManager) return false;
+        
+        // Get current theme item names
+        const rebirths = this.state.city?.rebirths || 0;
+        const theme = this.rebirthThemes?.getTheme(rebirths);
+        const themeItemNames = {
+            'basic': theme?.crafting?.basic?.result || 'Deployable App',
+            'intermediate': theme?.crafting?.intermediate?.result || 'SaaS Platform',
+            'advanced': theme?.crafting?.advanced?.result || 'Enterprise Product',
+            'premium': theme?.crafting?.premium?.result || 'Unicorn Startup'
+        };
+        
+        // Create reverse mapping
+        const craftedItemsReverse = {};
+        for (const [tier, itemName] of Object.entries(themeItemNames)) {
+            craftedItemsReverse[itemName] = tier;
+        }
+        
         // Use smallest capacity unit (1 weight) as click-based transport
         const result = this.newResourceManager.transportOne(1, this.state.autoTransport);
         if (result.moved) {
             // If a crafted item was transported, decrease the crafted counter
             if (result.item && result.tier === 'finished') {
-                const craftedItems = {
-                    'Deployable App': 'basic',
-                    'SaaS Platform': 'intermediate',
-                    'Enterprise Product': 'advanced',
-                    'Unicorn Startup': 'premium'
-                };
-                const craftTier = craftedItems[result.item];
+                const craftTier = craftedItemsReverse[result.item];
                 if (craftTier) {
                     this.state.crafted[craftTier] = Math.max(0, (this.state.crafted[craftTier] || 0) - 1);
                 }
@@ -1635,13 +1763,22 @@ class GameEngine {
     sellOneFinished(item = null) {
         if (!this.newResourceManager) return false;
         
-        // Define crafted items and their values
-        const craftedItems = {
-            'Deployable App': { tier: 'basic', value: 3 },
-            'SaaS Platform': { tier: 'intermediate', value: 9 },
-            'Enterprise Product': { tier: 'advanced', value: 30 },
-            'Unicorn Startup': { tier: 'premium', value: 120 }
+        // Get current theme item names
+        const rebirths = this.state.city?.rebirths || 0;
+        const theme = this.rebirthThemes?.getTheme(rebirths);
+        const themeItemNames = {
+            'basic': theme?.crafting?.basic?.result || 'Deployable App',
+            'intermediate': theme?.crafting?.intermediate?.result || 'SaaS Platform',
+            'advanced': theme?.crafting?.advanced?.result || 'Enterprise Product',
+            'premium': theme?.crafting?.premium?.result || 'Unicorn Startup'
         };
+        
+        // Define crafted items and their values using theme names
+        const craftedItems = {};
+        craftedItems[themeItemNames.basic] = { tier: 'basic', value: 3 };
+        craftedItems[themeItemNames.intermediate] = { tier: 'intermediate', value: 9 };
+        craftedItems[themeItemNames.advanced] = { tier: 'advanced', value: 30 };
+        craftedItems[themeItemNames.premium] = { tier: 'premium', value: 120 };
         
         if (!item) {
             // pick best valued item in city inventory
@@ -1706,31 +1843,39 @@ class GameEngine {
             bank: { cost: 500, stateKey: 'banks' },
             market: { cost: 1000, stateKey: 'markets' },
             university: { cost: 2500, stateKey: 'universities' },
-            salesDepartment: { cost: 300, stateKey: 'salesDepartment' }
+            salesDepartment: { cost: 300, stateKey: 'salesDepartment' },
+            miningAcademy: { cost: 400, stateKey: 'miningAcademy' },
+            automationLab: { cost: 600, stateKey: 'automationLab' }
         };
         
         const config = buildingConfig[buildingType];
         if (!config) return false;
         
-        // Sales department has scaling costs for upgrades
-        if (buildingType === 'salesDepartment') {
-            const currentLevel = this.state.city.salesDepartment || 0;
-            const cost = Math.floor(config.cost * Math.pow(1.5, currentLevel)); // 300, 450, 675, 1012, etc.
+        // Upgradable buildings (scaling costs)
+        const upgradableBuildings = ['salesDepartment', 'miningAcademy', 'automationLab'];
+        
+        if (upgradableBuildings.includes(buildingType)) {
+            const currentLevel = this.state.city[config.stateKey] || 0;
+            const cost = Math.floor(config.cost * Math.pow(1.5, currentLevel));
             
-            console.log(`Sales Bot: Current level ${currentLevel}, Cost: ${cost}, Gold: ${this.state.resources.gold}`);
+            console.log(`${buildingType}: Current level ${currentLevel}, Cost: ${cost}, Gold: ${this.state.resources.gold}`);
             
             if (this.state.resources.gold >= cost) {
                 this.state.resources.gold -= cost;
                 this.state.stats.totalGoldSpent += cost;
-                this.state.city.salesDepartment++;
+                this.state.city[config.stateKey]++;
                 
                 this.playSound('build');
                 this.flashElement('gold-amount');
-                console.log(`✅ Sales Bot upgraded! New level: ${this.state.city.salesDepartment}`);
+                console.log(`✅ ${buildingType} upgraded! New level: ${this.state.city[config.stateKey]}`);
+                
+                // Apply efficiency bonuses
+                this.updateRDLabsEfficiency();
+                
                 this.updateUI(); // Force UI update
                 return true;
             }
-            console.log(`❌ Not enough gold for Sales Bot (need ${cost})`);
+            console.log(`❌ Not enough gold for ${buildingType} (need ${cost})`);
             return false;
         }
         
