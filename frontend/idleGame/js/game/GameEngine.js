@@ -867,22 +867,23 @@ class GameEngine {
             }
         }
         
-        // Update auto-transport toggle button texts
-        const transportTiers = {
-            basic: 'Apps',
-            intermediate: 'Platforms',
-            advanced: 'Products',
-            premium: 'Startups'
-        };
-        
+        // Update auto-transport toggle button texts with theme-aware names
         if (this.state.autoTransport) {
-            for (const [tier, itemName] of Object.entries(transportTiers)) {
+            const rebirths = this.state.city?.rebirths || 0;
+            const theme = this.rebirthThemes?.getTheme(rebirths);
+            
+            const tiers = ['basic', 'intermediate', 'advanced', 'premium'];
+            for (const tier of tiers) {
                 const btn = document.getElementById(`transport-${tier}-btn`);
-                if (btn) {
+                if (btn && theme?.crafting?.[tier]) {
                     const titleDiv = btn.querySelector('.btn-title');
                     if (titleDiv) {
                         const status = this.state.autoTransport[tier] ? 'ON' : 'OFF';
-                        titleDiv.textContent = `📦 ${itemName}: ${status}`;
+                        const resultName = theme.crafting[tier].result;
+                        const shortName = resultName.split(' ').length > 2 ? 
+                            resultName.split(' ').slice(0, 2).join(' ') : resultName;
+                        const emoji = theme.crafting[tier].emoji || '📦';
+                        titleDiv.textContent = `${emoji} ${shortName}: ${status}`;
                     }
                 }
             }
@@ -1405,28 +1406,28 @@ class GameEngine {
         // Get current theme item names
         const rebirths = this.state.city?.rebirths || 0;
         const theme = this.rebirthThemes?.getTheme(rebirths);
-        const themeItemNames = {
-            basic: theme?.crafting?.basic?.result || 'Apps',
-            intermediate: theme?.crafting?.intermediate?.result || 'Platforms',
-            advanced: theme?.crafting?.advanced?.result || 'Products',
-            premium: theme?.crafting?.premium?.result || 'Startups'
-        };
+        const crafting = theme?.crafting?.[tier];
         
         // Toggle the state
         this.state.autoTransport[tier] = !this.state.autoTransport[tier];
         const status = this.state.autoTransport[tier] ? 'ON' : 'OFF';
-        const itemName = themeItemNames[tier];
+        
+        // Get short name from result
+        const resultName = crafting?.result || 'Items';
+        const shortName = resultName.split(' ').length > 2 ? 
+            resultName.split(' ').slice(0, 2).join(' ') : resultName;
+        const emoji = crafting?.emoji || '📦';
         
         // Update button text
         const btn = document.getElementById(`transport-${tier}-btn`);
         if (btn) {
             const title = btn.querySelector('.btn-title');
             if (title) {
-                title.textContent = `📦 ${itemName}: ${status}`;
+                title.textContent = `${emoji} ${shortName}: ${status}`;
             }
         }
         
-        this.showNotification(`🚚 Auto-transport ${itemName}: ${status}`);
+        this.showNotification(`🚚 Auto-transport ${resultName}: ${status}`);
         return this.state.autoTransport[tier];
     }
     

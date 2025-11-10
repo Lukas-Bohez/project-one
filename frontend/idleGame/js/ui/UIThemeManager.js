@@ -342,6 +342,82 @@ class UIThemeManager {
                 if (descDiv) descDiv.textContent = `→ ${crafting.premium.result} (Sells for 120 ${resources.gold.name.toLowerCase()})`;
             }
         }
+        
+        // Update crafted inventory labels
+        this.updateCraftedInventoryLabels(theme);
+    }
+
+    updateCraftedInventoryLabels(theme) {
+        if (!theme.crafting) return;
+        
+        const crafting = theme.crafting;
+        const cityName = theme.tabs?.city?.name || 'City';
+        
+        // Update the section header
+        const transportHeader = document.getElementById('transport-to-city-header');
+        if (transportHeader) {
+            transportHeader.textContent = `${theme.tabs?.transport?.emoji || '🚛'} Transport to ${cityName}`;
+        }
+        
+        // Update the section description
+        const transportDesc = document.getElementById('transport-to-city-desc');
+        if (transportDesc) {
+            transportDesc.textContent = `Toggle which items to automatically transport via ${theme.tabs?.transport?.name || 'Infrastructure'} tab`;
+        }
+        
+        // Update the labels for crafted inventory items
+        if (crafting.basic) {
+            this.updateTextContent('crafted-basic-label', `${crafting.basic.result}:`);
+            this.updateTooltip('crafted-basic-row', `Ready for transport to ${cityName.toLowerCase()}`);
+        }
+        if (crafting.intermediate) {
+            this.updateTextContent('crafted-intermediate-label', `${crafting.intermediate.result}:`);
+            this.updateTooltip('crafted-intermediate-row', `Ready for transport to ${cityName.toLowerCase()}`);
+        }
+        if (crafting.advanced) {
+            this.updateTextContent('crafted-advanced-label', `${crafting.advanced.result}:`);
+            this.updateTooltip('crafted-advanced-row', `Ready for transport to ${cityName.toLowerCase()}`);
+        }
+        if (crafting.premium) {
+            this.updateTextContent('crafted-premium-label', `${crafting.premium.result}:`);
+            this.updateTooltip('crafted-premium-row', `Ready for transport to ${cityName.toLowerCase()}`);
+        }
+        
+        // Update transport button labels to match
+        this.updateTransportButtonLabels(theme);
+    }
+
+    updateTransportButtonLabels(theme) {
+        if (!theme.crafting) return;
+        
+        const crafting = theme.crafting;
+        
+        // Update transport toggle button labels
+        const transportButtons = [
+            { id: 'transport-basic-btn', tier: 'basic' },
+            { id: 'transport-intermediate-btn', tier: 'intermediate' },
+            { id: 'transport-advanced-btn', tier: 'advanced' },
+            { id: 'transport-premium-btn', tier: 'premium' }
+        ];
+        
+        transportButtons.forEach(btn => {
+            const button = document.getElementById(btn.id);
+            if (button && crafting[btn.tier]) {
+                const titleDiv = button.querySelector('.btn-title');
+                if (titleDiv) {
+                    // Get current ON/OFF state from game state
+                    const autoTransport = this.gameEngine?.state?.autoTransport || {};
+                    const state = autoTransport[btn.tier] ? 'ON' : 'OFF';
+                    
+                    // Extract a short name from the result (first word or full name if short)
+                    const resultName = crafting[btn.tier].result;
+                    const shortName = resultName.split(' ').length > 2 ? 
+                        resultName.split(' ').slice(0, 2).join(' ') : resultName;
+                    
+                    titleDiv.textContent = `${crafting[btn.tier].emoji} ${shortName}: ${state}`;
+                }
+            }
+        });
     }
 
     updateResearchNames(theme) {
