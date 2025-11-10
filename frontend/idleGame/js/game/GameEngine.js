@@ -52,6 +52,12 @@ class GameEngine {
                 premium: 0         // Unicorn Startups (1 advanced + 2 silver)
             },
             autoCraft: false,  // Auto-craft toggle
+            autoTransport: {   // Auto-transport toggles per tier
+                basic: false,
+                intermediate: false,
+                advanced: false,
+                premium: false
+            },
             
             // Resource production per second
             production: {
@@ -1036,12 +1042,21 @@ class GameEngine {
         // Transport toggle buttons (always enabled once you have items)
         // These are always clickable to toggle
         
-        // City sell crafted buttons (need items in city)
+        // City sell crafted buttons (need items in city) - use theme-aware names
         const cityInv = this.state.cityInventory?.finished || {};
-        this.updateButtonState('sell-city-basic-btn', (cityInv['Deployable App'] || 0) >= 1);
-        this.updateButtonState('sell-city-intermediate-btn', (cityInv['SaaS Platform'] || 0) >= 1);
-        this.updateButtonState('sell-city-advanced-btn', (cityInv['Enterprise Product'] || 0) >= 1);
-        this.updateButtonState('sell-city-premium-btn', (cityInv['Unicorn Startup'] || 0) >= 1);
+        const rebirths = this.state.city?.rebirths || 0;
+        const theme = this.rebirthThemes?.getTheme(rebirths);
+        const themeItemNames = {
+            basic: theme?.crafting?.basic?.result || 'Deployable App',
+            intermediate: theme?.crafting?.intermediate?.result || 'SaaS Platform',
+            advanced: theme?.crafting?.advanced?.result || 'Enterprise Product',
+            premium: theme?.crafting?.premium?.result || 'Unicorn Startup'
+        };
+        
+        this.updateButtonState('sell-city-basic-btn', (cityInv[themeItemNames.basic] || 0) >= 1);
+        this.updateButtonState('sell-city-intermediate-btn', (cityInv[themeItemNames.intermediate] || 0) >= 1);
+        this.updateButtonState('sell-city-advanced-btn', (cityInv[themeItemNames.advanced] || 0) >= 1);
+        this.updateButtonState('sell-city-premium-btn', (cityInv[themeItemNames.premium] || 0) >= 1);
         
         // Research buttons
         this.updateResearchButtonState('research-mining-btn', 'mining', 50);
@@ -1418,6 +1433,12 @@ class GameEngine {
     // Try to auto-transport crafted items (called each tick)
     tryAutoTransportCrafted() {
         if (!this.state.autoTransport) return;
+        
+        // Don't auto-transport if we have no transport capacity
+        const totalTransport = (this.state.transport?.carts || 0) + 
+                               (this.state.transport?.wagons || 0) + 
+                               (this.state.transport?.trains || 0);
+        if (totalTransport === 0) return;
         
         // Get current theme item names
         const rebirths = this.state.city?.rebirths || 0;
