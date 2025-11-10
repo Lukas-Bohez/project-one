@@ -90,7 +90,7 @@ class IndustrialEmpireApp {
         this.bindButton('hire-iron-miner-btn', () => this.gameEngine.hireWorker('ironMiner'));
         this.bindButton('hire-silver-miner-btn', () => this.gameEngine.hireWorker('silverMiner'));
         
-        // Processing tab actions
+        // Processing tab actions - OLD SYSTEM (now replaced with manual crafting)
         this.bindButton('build-smelter-btn', () => this.gameEngine.buildProcessor('smelter'));
         this.bindButton('build-forge-btn', () => this.gameEngine.buildProcessor('forge'));
         this.bindButton('build-refinery-btn', () => this.gameEngine.buildProcessor('refinery'));
@@ -102,6 +102,25 @@ class IndustrialEmpireApp {
     this.bindButton('build-jeweler-btn', () => this.gameEngine.buildProcessor('jewelers'));
     this.bindButton('build-assembly-btn', () => this.gameEngine.buildProcessor('assemblies'));
     this.bindButton('build-autoplant-btn', () => this.gameEngine.buildProcessor('autoPlants'));
+        
+        // NEW Manual Crafting System
+        this.bindButton('craft-basic-btn', () => this.gameEngine.craftItem('basic'));
+        this.bindButton('craft-intermediate-btn', () => this.gameEngine.craftItem('intermediate'));
+        this.bindButton('craft-advanced-btn', () => this.gameEngine.craftItem('advanced'));
+        this.bindButton('craft-premium-btn', () => this.gameEngine.craftItem('premium'));
+        this.bindButton('toggle-autocraft-btn', () => this.gameEngine.toggleAutoCraft());
+        
+        // Toggle auto-transport for crafted items
+        this.bindButton('transport-basic-btn', () => this.gameEngine.toggleTransportCrafted('basic'));
+        this.bindButton('transport-intermediate-btn', () => this.gameEngine.toggleTransportCrafted('intermediate'));
+        this.bindButton('transport-advanced-btn', () => this.gameEngine.toggleTransportCrafted('advanced'));
+        this.bindButton('transport-premium-btn', () => this.gameEngine.toggleTransportCrafted('premium'));
+        
+        // Sell crafted items from city
+        this.bindButton('sell-city-basic-btn', () => this.gameEngine.sellAllCraftedFromCity('basic'));
+        this.bindButton('sell-city-intermediate-btn', () => this.gameEngine.sellAllCraftedFromCity('intermediate'));
+        this.bindButton('sell-city-advanced-btn', () => this.gameEngine.sellAllCraftedFromCity('advanced'));
+        this.bindButton('sell-city-premium-btn', () => this.gameEngine.sellAllCraftedFromCity('premium'));
         
         // Market tab actions
         this.bindButton('sell-stone-btn', () => this.gameEngine.sellResource('stone'));
@@ -115,8 +134,7 @@ class IndustrialEmpireApp {
     // Transport tab actions
     this.bindButton('transport-next-btn', () => this.gameEngine.transportNext());
 
-    // City tab actions
-    this.bindButton('sell-finished-btn', () => this.gameEngine.sellOneFinished());
+    // City tab actions (removed sell-finished-btn - no longer needed)
 
         // Research unlocks
         const unlockButtons = document.querySelectorAll('[data-unlock]');

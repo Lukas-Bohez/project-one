@@ -131,62 +131,84 @@
             <section id="processing-tab" class="tab-content">
                 <div class="panel-grid">
                     <div class="panel">
-                        <h2 id="processing-header">🏗️ Deployment Systems</h2>
+                        <h2 id="processing-header">🔨 Manual Crafting</h2>
+                        <p style="font-size: 0.9em; opacity: 0.8; margin-bottom: 15px;">💡 Tip: Craft items to earn big profits! Each tier requires the previous crafted item.</p>
                         <div class="action-buttons">
-                            <button id="build-smelter-btn" class="action-btn processing-btn" data-action="buildProcessor" data-processor="smelter">
-                                <div class="btn-title">Build Code Compiler</div>
-                                <div class="btn-cost">Cost: <span id="smelter-cost">20</span> gold</div>
-                                <div class="btn-description">Compiles code into deployable apps</div>
+                            <!-- Tier 1: Basic Processing (Always available) -->
+                            <button id="craft-basic-btn" class="action-btn craft-btn" data-craft="basic">
+                                <div class="btn-title">⚙️ Compile Code</div>
+                                <div class="btn-cost">Needs: <span>10</span> Code Commits</div>
+                                <div class="btn-description">→ Deployable App (Sells for 3 capital)</div>
                             </button>
                             
-                            <button id="build-forge-btn" class="action-btn processing-btn" data-action="buildProcessor" data-processor="forge">
-                                <div class="btn-title">Build Data Center</div>
-                                <div class="btn-cost">Cost: <span id="forge-cost">100</span> gold</div>
-                                <div class="btn-description">Hosts cloud infrastructure</div>
+                            <!-- Tier 2: Intermediate -->
+                            <button id="craft-intermediate-btn" class="action-btn craft-btn" data-craft="intermediate">
+                                <div class="btn-title">🏗️ Build Platform</div>
+                                <div class="btn-cost">Needs: <span>1</span> Deployable App + <span>5</span> Cloud Servers</div>
+                                <div class="btn-description">→ SaaS Platform (Sells for 9 capital)</div>
                             </button>
                             
-                            <button id="build-refinery-btn" class="action-btn processing-btn" data-action="buildProcessor" data-processor="refinery">
-                                <div class="btn-title">Build Marketing Engine</div>
-                                <div class="btn-cost">Cost: <span id="refinery-cost">500</span> gold</div>
-                                <div class="btn-description">Converts users to premium</div>
+                            <!-- Tier 3: Advanced -->
+                            <button id="craft-advanced-btn" class="action-btn craft-btn" data-craft="advanced">
+                                <div class="btn-title">📊 Scale Service</div>
+                                <div class="btn-cost">Needs: <span>1</span> SaaS Platform + <span>3</span> User Accounts</div>
+                                <div class="btn-description">→ Enterprise Product (Sells for 30 capital)</div>
                             </button>
                             
-                            <button id="build-mint-btn" class="action-btn processing-btn" data-action="buildProcessor" data-processor="mint">
-                                <div class="btn-title">Build IPO Machine</div>
-                                <div class="btn-cost">Cost: <span id="mint-cost">2000</span> gold</div>
-                                <div class="btn-description">Generates massive capital</div>
+                            <!-- Tier 4: Premium -->
+                            <button id="craft-premium-btn" class="action-btn craft-btn" data-craft="premium">
+                                <div class="btn-title">⭐ Premium Service</div>
+                                <div class="btn-cost">Needs: <span>1</span> Enterprise Product + <span>2</span> Premium Subs</div>
+                                <div class="btn-description">→ Unicorn Startup (Sells for 120 capital)</div>
+                            </button>
+                            
+                            <!-- Auto-craft toggle -->
+                            <button id="toggle-autocraft-btn" class="action-btn city-btn">
+                                <div class="btn-title">🤖 Auto-Craft: OFF</div>
+                                <div class="btn-cost">Toggle automatic crafting</div>
+                                <div class="btn-description">When ON, crafts highest tier possible</div>
                             </button>
                         </div>
                     </div>
 
                     <div class="panel">
-                        <h2>⚙️ Processing Status</h2>
+                        <h2>📦 Crafted Inventory</h2>
                         <div class="resource-grid">
-                            <div class="resource-row">
-                                <span id="smelters-label" class="resource-type">Code Compilers:</span>
-                                <span id="smelters-count" class="resource-count">0</span>
+                            <div class="resource-row" data-tooltip="Ready for transport to city">
+                                <span class="resource-type">Deployable Apps:</span>
+                                <span id="crafted-basic-count" class="resource-count">0</span>
                             </div>
-                            <div class="resource-row">
-                                <span id="forges-label" class="resource-type">Data Centers:</span>
-                                <span id="forges-count" class="resource-count">0</span>
+                            <div class="resource-row" data-tooltip="Ready for transport to city">
+                                <span class="resource-type">SaaS Platforms:</span>
+                                <span id="crafted-intermediate-count" class="resource-count">0</span>
                             </div>
-                            <div class="resource-row">
-                                <span id="refineries-label" class="resource-type">Marketing Engines:</span>
-                                <span id="refineries-count" class="resource-count">0</span>
+                            <div class="resource-row" data-tooltip="Ready for transport to city">
+                                <span class="resource-type">Enterprise Products:</span>
+                                <span id="crafted-advanced-count" class="resource-count">0</span>
                             </div>
-                            <div class="resource-row">
-                                <span id="mints-label" class="resource-type">IPO Machines:</span>
-                                <span id="mints-count" class="resource-count">0</span>
+                            <div class="resource-row" data-tooltip="Ready for transport to city">
+                                <span class="resource-type">Unicorn Startups:</span>
+                                <span id="crafted-premium-count" class="resource-count">0</span>
                             </div>
-                            <div class="resource-row" data-tooltip="Overall processing speed after penalties and boosts">
-                                <span class="resource-type">Processing Rate:</span>
-                                <span id="processing-efficiency" class="resource-count">100%</span>
-                            </div>
-                            <div class="progress progress-purple"><div id="processing-efficiency-bar" class="progress-bar" style="width: 100%"></div></div>
                         </div>
-                        <div class="inventory-panel">
-                            <h3>🏭 Factory Finished Inventory</h3>
-                            <div id="factory-finished-inventory" class="resource-count">(empty)</div>
+                        
+                        <div class="inventory-panel" style="margin-top: 20px;">
+                            <h3>� Transport to City</h3>
+                            <p style="font-size: 0.85em; opacity: 0.8; margin: 5px 0;">Toggle which items to automatically transport via Infrastructure tab</p>
+                            <div class="action-buttons" style="grid-template-columns: 1fr 1fr;">
+                                <button id="transport-basic-btn" class="action-btn transport-btn" style="padding: 10px;">
+                                    <div class="btn-title" style="font-size: 0.9em;">📦 Apps: OFF</div>
+                                </button>
+                                <button id="transport-intermediate-btn" class="action-btn transport-btn" style="padding: 10px;">
+                                    <div class="btn-title" style="font-size: 0.9em;">📦 Platforms: OFF</div>
+                                </button>
+                                <button id="transport-advanced-btn" class="action-btn transport-btn" style="padding: 10px;">
+                                    <div class="btn-title" style="font-size: 0.9em;">📦 Products: OFF</div>
+                                </button>
+                                <button id="transport-premium-btn" class="action-btn transport-btn" style="padding: 10px;">
+                                    <div class="btn-title" style="font-size: 0.9em;">📦 Startups: OFF</div>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -275,19 +297,19 @@
                             <button id="buy-cart-btn" class="action-btn transport-btn" data-action="buyTransport" data-transport="cart">
                                 <div class="btn-title">Buy Ox Cart</div>
                                 <div class="btn-cost">Cost: <span id="cart-cost">30</span> gold</div>
-                                <div class="btn-description">+10 transport capacity</div>
+                                <div class="btn-description">+1 transport capacity</div>
                             </button>
                             
                             <button id="buy-wagon-btn" class="action-btn transport-btn" data-action="buyTransport" data-transport="wagon">
                                 <div class="btn-title">Buy Steam Wagon</div>
                                 <div class="btn-cost">Cost: <span id="wagon-cost">150</span> gold</div>
-                                <div class="btn-description">+50 transport capacity</div>
+                                <div class="btn-description">+5 transport capacity</div>
                             </button>
                             
                             <button id="buy-train-btn" class="action-btn transport-btn" data-action="buyTransport" data-transport="train">
                                 <div class="btn-title">Build Railway</div>
                                 <div class="btn-cost">Cost: <span id="train-cost">800</span> gold</div>
-                                <div class="btn-description">+200 transport capacity</div>
+                                <div class="btn-description">+20 transport capacity</div>
                             </button>
 
                             <button id="transport-next-btn" class="action-btn" data-action="transportNext">
@@ -335,45 +357,39 @@
                         <div class="action-buttons">
                             
                             <button id="hire-politician-btn" class="action-btn city-btn" data-action="hireService" data-service="politician">
-                                <div class="btn-title">Hire Lobbyists</div>
-                                <div class="btn-cost">Cost: <span id="politician-cost">250</span> gold</div>
-                                <div class="btn-description">+5% trading efficiency per lobbyist</div>
+                                <div class="btn-title" id="hire-politician-title">Hire Lobbyists</div>
+                                <div class="btn-cost">Cost: <span id="politician-cost">250</span> <span id="politician-currency">gold</span></div>
+                                <div class="btn-description" id="hire-politician-desc">+5% trading efficiency per lobbyist</div>
                             </button>
                             
                             <button id="build-bank-btn" class="action-btn city-btn" data-action="buildCity" data-building="bank">
-                                <div class="btn-title">Build Accounting Dept</div>
-                                <div class="btn-cost">Cost: <span id="bank-cost">500</span> gold</div>
-                                <div class="btn-description">+20% gold from sales</div>
+                                <div class="btn-title" id="build-bank-title">Build Accounting Dept</div>
+                                <div class="btn-cost">Cost: <span id="bank-cost">500</span> <span id="bank-currency">gold</span></div>
+                                <div class="btn-description" id="build-bank-desc">+20% to ALL city sales (stacks!)</div>
                             </button>
                             
                             <button id="build-market-btn" class="action-btn city-btn" data-action="buildCity" data-building="market">
-                                <div class="btn-title">Build App Stores</div>
-                                <div class="btn-cost">Cost: <span id="market-cost">1000</span> gold</div>
-                                <div class="btn-description">+15% trading efficiency (better prices)</div>
+                                <div class="btn-title" id="build-market-title">Build App Stores</div>
+                                <div class="btn-cost">Cost: <span id="market-cost">1000</span> <span id="market-currency">gold</span></div>
+                                <div class="btn-description" id="build-market-desc">+15% trading efficiency (better prices)</div>
                             </button>
                             
                             <button id="build-university-btn" class="action-btn city-btn" data-action="buildCity" data-building="university">
-                                <div class="btn-title">Build R&D Labs</div>
-                                <div class="btn-cost">Cost: <span id="university-cost">2500</span> venture capital</div>
-                                <div class="btn-description">+10% global efficiency per lab</div>
+                                <div class="btn-title" id="build-university-title">Build R&D Labs</div>
+                                <div class="btn-cost">Cost: <span id="university-cost">2500</span> <span id="university-currency">venture capital</span></div>
+                                <div class="btn-description" id="build-university-desc">+10% global efficiency per lab</div>
                             </button>
 
                             <button id="build-sales-dept-btn" class="action-btn city-btn" data-action="buildCity" data-building="salesDepartment">
-                                <div class="btn-title">Build Sales Bot</div>
-                                <div class="btn-cost">Cost: <span id="sales-dept-cost">300</span> venture capital</div>
-                                <div class="btn-description">Auto-sells products (upgradable AI)</div>
-                            </button>
-
-                            <button id="sell-finished-btn" class="action-btn sell-btn" data-action="sellOneFinished">
-                                <div class="btn-title">Sell 1 Finished Good</div>
-                                <div class="btn-cost">Manual</div>
-                                <div class="btn-description">Sells best value item in city</div>
+                                <div class="btn-title" id="build-sales-dept-title">Build Sales Bot</div>
+                                <div class="btn-cost">Cost: <span id="sales-dept-cost">300</span> <span id="sales-dept-currency">venture capital</span></div>
+                                <div class="btn-description" id="build-sales-dept-desc">Auto-sells products (upgradable AI)</div>
                             </button>
 
                             <button id="hire-police-btn" class="action-btn city-btn" data-action="hireService" data-service="police">
-                                <div class="btn-title">Hire Security Team</div>
-                                <div class="btn-cost">Cost: <span id="police-cost">5000</span> gold</div>
-                                <div class="btn-description">Generates city decay progress</div>
+                                <div class="btn-title" id="hire-police-title">Hire Security Team</div>
+                                <div class="btn-cost">Cost: <span id="police-cost">5000</span> <span id="police-currency">gold</span></div>
+                                <div class="btn-description" id="hire-police-desc">Generates city decay progress</div>
                             </button>
 
                             <button id="rebirth-btn" class="action-btn prestige-btn" data-action="rebirth">
@@ -381,6 +397,43 @@
                                 <div class="btn-cost">Requires 100% decay</div>
                                 <div class="btn-description">Reset city for permanent bonuses</div>
                             </button>
+                        </div>
+                    </div>
+                    
+                    <div class="panel">
+                        <h2 id="city-sell-header">💰 Sell Products</h2>
+                        <div class="action-buttons">
+                            <!-- Sell Crafted Items from City -->
+                            <button id="sell-city-basic-btn" class="action-btn sell-btn" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);">
+                                <div class="btn-title" id="sell-city-basic-title">💰 Sell Apps from City</div>
+                                <div class="btn-cost">3 <span id="sell-basic-currency">venture capital</span> (+20% per Accounting Dept)</div>
+                                <div class="btn-description" id="sell-city-basic-desc">Sell all Deployable Apps in city</div>
+                            </button>
+                            
+                            <button id="sell-city-intermediate-btn" class="action-btn sell-btn" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
+                                <div class="btn-title" id="sell-city-intermediate-title">💰 Sell Platforms from City</div>
+                                <div class="btn-cost">9 <span id="sell-intermediate-currency">venture capital</span> (+20% per Accounting Dept)</div>
+                                <div class="btn-description" id="sell-city-intermediate-desc">Sell all SaaS Platforms in city</div>
+                            </button>
+                            
+                            <button id="sell-city-advanced-btn" class="action-btn sell-btn" style="background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);">
+                                <div class="btn-title" id="sell-city-advanced-title">💰 Sell Products from City</div>
+                                <div class="btn-cost">30 <span id="sell-advanced-currency">venture capital</span> (+20% per Accounting Dept)</div>
+                                <div class="btn-description" id="sell-city-advanced-desc">Sell all Enterprise Products in city</div>
+                            </button>
+                            
+                            <button id="sell-city-premium-btn" class="action-btn sell-btn" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                                <div class="btn-title" id="sell-city-premium-title">💰 Sell Startups from City</div>
+                                <div class="btn-cost">120 <span id="sell-premium-currency">venture capital</span> (+20% per Accounting Dept)</div>
+                                <div class="btn-description" id="sell-city-premium-desc">Sell all Unicorn Startups in city</div>
+                            </button>
+                        </div>
+                        
+                        <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);">
+                            <h3 id="city-inventory-header" style="margin: 0 0 10px 0; font-size: 1.1em; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">📦 City Inventory</h3>
+                            <div id="city-finished-inventory" class="resource-grid" style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; min-height: 60px;">
+                                <!-- Finished goods will be rendered here by JS -->
+                            </div>
                         </div>
                     </div>
 
@@ -399,6 +452,10 @@
                                 <span id="banks-label" class="resource-type">Accounting Dept:</span>
                                 <span id="banks-count" class="resource-count">0</span>
                             </div>
+                            <div class="resource-row" id="bank-bonus-row" style="opacity: 0.8;">
+                                <span class="resource-type">💰 Sales Bonus:</span>
+                                <span id="bank-bonus-display" class="resource-count" style="color: #4ade80;">+0%</span>
+                            </div>
                             <div class="resource-row">
                                 <span id="markets-label" class="resource-type">App Stores:</span>
                                 <span id="markets-count" class="resource-count">0</span>
@@ -410,6 +467,10 @@
                             <div class="resource-row">
                                 <span id="sales-dept-label" class="resource-type">Sales Bot:</span>
                                 <span id="sales-dept-count" class="resource-count">Level 0</span>
+                            </div>
+                            <div class="resource-row" id="sales-timer-row" style="display: none;">
+                                <span class="resource-type">Next Sale:</span>
+                                <span id="sales-timer" class="resource-count" style="color: #4ade80;">--</span>
                             </div>
                             <div class="resource-row">
                                 <span class="resource-type">Rebirths:</span>
@@ -426,13 +487,6 @@
                                 <span id="city-decay" class="resource-count">0%</span>
                             </div>
                             <div class="progress progress-red"><div id="city-decay-bar" class="progress-bar" style="width: 0%"></div></div>
-                        </div>
-                    </div>
-
-                    <div class="panel">
-                        <h2 id="city-inventory-header">📦 City Finished Inventory</h2>
-                        <div id="city-finished-inventory" class="resource-grid">
-                            <!-- Finished goods will be rendered here by JS -->
                         </div>
                     </div>
                 </div>
@@ -498,6 +552,28 @@
                                 <div class="btn-title">Unlock Deployment</div>
                                 <div class="btn-cost">Cost: 80 gold</div>
                                 <div class="btn-description">Unlock production buildings</div>
+                            </button>
+                            
+                            <!-- Auto-Crafter Unlocks -->
+                            <button class="action-btn unlock-btn" id="unlock-autocraft-basic-btn" data-unlock="unlock_autocraft_basic">
+                                <div class="btn-title">🤖 Auto-Craft Basic</div>
+                                <div class="btn-cost">Cost: 100 gold</div>
+                                <div class="btn-description">Auto-craft Tier 1 items when resources available</div>
+                            </button>
+                            <button class="action-btn unlock-btn" id="unlock-autocraft-intermediate-btn" data-unlock="unlock_autocraft_intermediate">
+                                <div class="btn-title">🤖 Auto-Craft Intermediate</div>
+                                <div class="btn-cost">Cost: 500 gold</div>
+                                <div class="btn-description">Auto-craft Tier 2 items when resources available</div>
+                            </button>
+                            <button class="action-btn unlock-btn" id="unlock-autocraft-advanced-btn" data-unlock="unlock_autocraft_advanced">
+                                <div class="btn-title">🤖 Auto-Craft Advanced</div>
+                                <div class="btn-cost">Cost: 2500 gold</div>
+                                <div class="btn-description">Auto-craft Tier 3 items when resources available</div>
+                            </button>
+                            <button class="action-btn unlock-btn" id="unlock-autocraft-premium-btn" data-unlock="unlock_autocraft_premium">
+                                <div class="btn-title">🤖 Auto-Craft Premium</div>
+                                <div class="btn-cost">Cost: 10000 gold</div>
+                                <div class="btn-description">Auto-craft Tier 4 items when resources available</div>
                             </button>
                         </div>
                     </div>

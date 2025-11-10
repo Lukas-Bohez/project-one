@@ -31,6 +31,7 @@ class UIThemeManager {
         this.updateTraderNames(theme);
         this.updateTransportNames(theme);
         this.updateCityNames(theme);
+        this.updateCraftingNames(theme); // NEW: Update crafting button text
         this.updateResearchNames(theme);
         this.updateUnlockNames(theme); // NEW: Update unlock button text
         this.updateCostCurrency(theme); // NEW: Update all "gold" references to themed currency
@@ -225,6 +226,7 @@ class UIThemeManager {
 
     updateCityNames(theme) {
         const city = theme.city;
+        const resources = theme.resources;
         
         // Update section headers
         this.updateTextContent('city-header', `${theme.tabs.city.emoji} ${theme.tabs.city.name} HQ`);
@@ -243,6 +245,7 @@ class UIThemeManager {
         this.updateButtonDescription('build-university-btn', `+10% global efficiency per ${city.universities.name.toLowerCase()}`);
         this.updateButtonDescription('hire-politician-btn', `+5% trading efficiency per ${city.politicians.name.toLowerCase()}`);
         this.updateButtonDescription('build-market-btn', `+15% trading efficiency per ${city.markets.name.toLowerCase()}`);
+        this.updateButtonDescription('build-bank-btn', `+20% to ALL city sales (stacks!)`);
         
         // Update status labels
         this.updateLabel('police-label', `${city.police.name}:`);
@@ -250,6 +253,88 @@ class UIThemeManager {
         this.updateLabel('banks-label', `${city.banks.name}:`);
         this.updateLabel('markets-label', `${city.markets.name}:`);
         this.updateLabel('universities-label', `${city.universities.name}:`);
+        
+        // Update sell button costs with themed bank name
+        const sellButtons = [
+            { id: 'sell-city-basic-btn', value: 3, tier: 'basic' },
+            { id: 'sell-city-intermediate-btn', value: 9, tier: 'intermediate' },
+            { id: 'sell-city-advanced-btn', value: 30, tier: 'advanced' },
+            { id: 'sell-city-premium-btn', value: 120, tier: 'premium' }
+        ];
+        
+        sellButtons.forEach(btn => {
+            const button = document.getElementById(btn.id);
+            if (button && theme.crafting && theme.crafting[btn.tier]) {
+                const craftData = theme.crafting[btn.tier];
+                
+                // Update title
+                const titleDiv = button.querySelector('.btn-title');
+                if (titleDiv) {
+                    titleDiv.textContent = `💰 Sell ${craftData.result} from ${theme.tabs.city.name}`;
+                }
+                
+                // Update cost
+                const costDiv = button.querySelector('.btn-cost');
+                if (costDiv) {
+                    costDiv.innerHTML = `${btn.value} <span class="themed-currency">${resources.gold.name.toLowerCase()}</span> (+20% per ${city.banks.name})`;
+                }
+                
+                // Update description
+                const descDiv = button.querySelector('.btn-description');
+                if (descDiv) {
+                    descDiv.textContent = `Sell all ${craftData.result} in ${theme.tabs.city.name.toLowerCase()}`;
+                }
+            }
+        });
+    }
+
+    updateCraftingNames(theme) {
+        if (!theme.crafting) return;
+        
+        const crafting = theme.crafting;
+        const resources = theme.resources;
+        
+        // Update crafting button titles and descriptions
+        if (crafting.basic) {
+            this.updateTextContent('craft-basic-btn', crafting.basic.title);
+            const basicBtn = document.getElementById('craft-basic-btn');
+            if (basicBtn) {
+                const titleDiv = basicBtn.querySelector('.btn-title');
+                const descDiv = basicBtn.querySelector('.btn-description');
+                if (titleDiv) titleDiv.textContent = `${crafting.basic.emoji} ${crafting.basic.title}`;
+                if (descDiv) descDiv.textContent = `→ ${crafting.basic.result} (Sells for 3 ${resources.gold.name.toLowerCase()})`;
+            }
+        }
+        
+        if (crafting.intermediate) {
+            const intBtn = document.getElementById('craft-intermediate-btn');
+            if (intBtn) {
+                const titleDiv = intBtn.querySelector('.btn-title');
+                const descDiv = intBtn.querySelector('.btn-description');
+                if (titleDiv) titleDiv.textContent = `${crafting.intermediate.emoji} ${crafting.intermediate.title}`;
+                if (descDiv) descDiv.textContent = `→ ${crafting.intermediate.result} (Sells for 9 ${resources.gold.name.toLowerCase()})`;
+            }
+        }
+        
+        if (crafting.advanced) {
+            const advBtn = document.getElementById('craft-advanced-btn');
+            if (advBtn) {
+                const titleDiv = advBtn.querySelector('.btn-title');
+                const descDiv = advBtn.querySelector('.btn-description');
+                if (titleDiv) titleDiv.textContent = `${crafting.advanced.emoji} ${crafting.advanced.title}`;
+                if (descDiv) descDiv.textContent = `→ ${crafting.advanced.result} (Sells for 30 ${resources.gold.name.toLowerCase()})`;
+            }
+        }
+        
+        if (crafting.premium) {
+            const premBtn = document.getElementById('craft-premium-btn');
+            if (premBtn) {
+                const titleDiv = premBtn.querySelector('.btn-title');
+                const descDiv = premBtn.querySelector('.btn-description');
+                if (titleDiv) titleDiv.textContent = `${crafting.premium.emoji} ${crafting.premium.title}`;
+                if (descDiv) descDiv.textContent = `→ ${crafting.premium.result} (Sells for 120 ${resources.gold.name.toLowerCase()})`;
+            }
+        }
     }
 
     updateResearchNames(theme) {

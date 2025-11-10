@@ -58,9 +58,35 @@ class RebirthThemes {
                     universities: { name: "R&D Labs" },
                     politicians: { name: "Lobbyists" }
                 },
+                crafting: {
+                    basic: { 
+                        title: "Compile Code", 
+                        emoji: "⚙️",
+                        result: "Deployable App",
+                        inputs: "Code Commits"
+                    },
+                    intermediate: { 
+                        title: "Build Platform", 
+                        emoji: "🏗️",
+                        result: "SaaS Platform",
+                        inputs: "App + Servers"
+                    },
+                    advanced: { 
+                        title: "Scale Service", 
+                        emoji: "📊",
+                        result: "Enterprise Product",
+                        inputs: "Platform + Users"
+                    },
+                    premium: { 
+                        title: "Launch Unicorn", 
+                        emoji: "⭐",
+                        result: "Unicorn Startup",
+                        inputs: "Product + Premium Subs"
+                    }
+                },
                 tabs: {
                     mining: { name: "Development", emoji: "💻" },
-                    processing: { name: "Deployment", emoji: "🚀" },
+                    processing: { name: "Crafting", emoji: "🔨" },
                     market: { name: "Marketplace", emoji: "🏪" },
                     transport: { name: "Infrastructure", emoji: "🌐" },
                     city: { name: "Corporate", emoji: "🏢" },
@@ -126,6 +152,32 @@ class RebirthThemes {
                     markets: { name: "Farmer's Markets" },
                     universities: { name: "culinary school" },
                     politicians: { name: "Health Inspectors" }
+                },
+                crafting: {
+                    basic: { 
+                        title: "Wash Produce", 
+                        emoji: "🧺",
+                        result: "Fresh Salads",
+                        inputs: "Produce"
+                    },
+                    intermediate: { 
+                        title: "Prepare Meals", 
+                        emoji: "👨‍🍳",
+                        result: "Ready Meals",
+                        inputs: "Salad + Canned Goods"
+                    },
+                    advanced: { 
+                        title: "Create Combo", 
+                        emoji: "🍱",
+                        result: "Family Packs",
+                        inputs: "Meal + Frozen"
+                    },
+                    premium: { 
+                        title: "Gourmet Basket", 
+                        emoji: "🧺",
+                        result: "Gift Baskets",
+                        inputs: "Pack + Premium"
+                    }
                 },
                 tabs: {
                     mining: { name: "Sourcing", emoji: "📦" },
@@ -196,6 +248,32 @@ class RebirthThemes {
                     universities: { name: "Mining School" },
                     politicians: { name: "Union Bosses" }
                 },
+                crafting: {
+                    basic: { 
+                        title: "Crush Ore", 
+                        emoji: "⚒️",
+                        result: "Raw Ingots",
+                        inputs: "Raw Ore"
+                    },
+                    intermediate: { 
+                        title: "Smelt Metal", 
+                        emoji: "🔥",
+                        result: "Metal Bars",
+                        inputs: "Ingots + Coal"
+                    },
+                    advanced: { 
+                        title: "Forge Tools", 
+                        emoji: "🔨",
+                        result: "Steel Tools",
+                        inputs: "Bars + Iron"
+                    },
+                    premium: { 
+                        title: "Refine Precious", 
+                        emoji: "💎",
+                        result: "Pure Metals",
+                        inputs: "Tools + Precious"
+                    }
+                },
                 tabs: {
                     mining: { name: "Extraction", emoji: "⛏️" },
                     processing: { name: "Smelting", emoji: "🔥" },
@@ -264,6 +342,32 @@ class RebirthThemes {
                     markets: { name: "Flea Markets" },
                     universities: { name: "Trade School" },
                     politicians: { name: "Tax Collectors" }
+                },
+                crafting: {
+                    basic: { 
+                        title: "Sort Scrap", 
+                        emoji: "♻️",
+                        result: "Sorted Parts",
+                        inputs: "Scrap Metal"
+                    },
+                    intermediate: { 
+                        title: "Repair Parts", 
+                        emoji: "🔧",
+                        result: "Fixed Components",
+                        inputs: "Parts + Power"
+                    },
+                    advanced: { 
+                        title: "Assemble Units", 
+                        emoji: "🏭",
+                        result: "Factory Goods",
+                        inputs: "Components + Materials"
+                    },
+                    premium: { 
+                        title: "Quality Check", 
+                        emoji: "✅",
+                        result: "Premium Products",
+                        inputs: "Goods + Quality Parts"
+                    }
                 },
                 tabs: {
                     mining: { name: "Scavenging", emoji: "🔩" },
@@ -334,6 +438,32 @@ class RebirthThemes {
                     universities: { name: "Guild Halls" },
                     politicians: { name: "Town Council" }
                 },
+                crafting: {
+                    basic: { 
+                        title: "Shape Materials", 
+                        emoji: "🪚",
+                        result: "Basic Crafts",
+                        inputs: "Timber/Stone"
+                    },
+                    intermediate: { 
+                        title: "Forge Items", 
+                        emoji: "🔨",
+                        result: "Fine Crafts",
+                        inputs: "Crafts + Coal"
+                    },
+                    advanced: { 
+                        title: "Create Art", 
+                        emoji: "🎨",
+                        result: "Artisan Goods",
+                        inputs: "Fine + Materials"
+                    },
+                    premium: { 
+                        title: "Masterwork", 
+                        emoji: "✨",
+                        result: "Masterpieces",
+                        inputs: "Artisan + Quality"
+                    }
+                },
                 tabs: {
                     mining: { name: "Gathering", emoji: "🪨" },
                     processing: { name: "Crafting", emoji: "🔨" },
@@ -402,6 +532,32 @@ class RebirthThemes {
                     markets: { name: "Street Corners" },
                     universities: { name: "Soup Kitchen" },
                     politicians: { name: "Gang Leaders" }
+                },
+                crafting: {
+                    basic: { 
+                        title: "Sort Junk", 
+                        emoji: "♻️",
+                        result: "Cleaned Items",
+                        inputs: "Junk"
+                    },
+                    intermediate: { 
+                        title: "Repair Stuff", 
+                        emoji: "🔧",
+                        result: "Working Items",
+                        inputs: "Clean + Firewood"
+                    },
+                    advanced: { 
+                        title: "Polish Up", 
+                        emoji: "✨",
+                        result: "Sellable Goods",
+                        inputs: "Working + Parts"
+                    },
+                    premium: { 
+                        title: "Fake Antiques", 
+                        emoji: "🏺",
+                        result: "Valuable Items",
+                        inputs: "Goods + Antiques"
+                    }
                 },
                 tabs: {
                     mining: { name: "Selling", emoji: "🛒" },
@@ -472,6 +628,32 @@ class RebirthThemes {
                     universities: { name: "Library Ruins" },
                     politicians: { name: "Warlords" }
                 },
+                crafting: {
+                    basic: { 
+                        title: "Break Down", 
+                        emoji: "🔨",
+                        result: "Useful Parts",
+                        inputs: "Rubble"
+                    },
+                    intermediate: { 
+                        title: "Make Tools", 
+                        emoji: "🔧",
+                        result: "Crude Tools",
+                        inputs: "Parts + Debris"
+                    },
+                    advanced: { 
+                        title: "Build Shelter", 
+                        emoji: "🏚️",
+                        result: "Safe Spaces",
+                        inputs: "Tools + Scraps"
+                    },
+                    premium: { 
+                        title: "Purify Resources", 
+                        emoji: "💧",
+                        result: "Survival Kit",
+                        inputs: "Shelter + Water"
+                    }
+                },
                 tabs: {
                     mining: { name: "Scavenging", emoji: "🔍" },
                     processing: { name: "Surviving", emoji: "🔥" },
@@ -540,6 +722,32 @@ class RebirthThemes {
                     markets: { name: "Abandoned Buildings" },
                     universities: { name: "Burned Books" },
                     politicians: { name: "Madness" }
+                },
+                crafting: {
+                    basic: { 
+                        title: "Find Twigs", 
+                        emoji: "🌿",
+                        result: "Kindling",
+                        inputs: "Sticks"
+                    },
+                    intermediate: { 
+                        title: "Make Fire", 
+                        emoji: "🔥",
+                        result: "Warmth",
+                        inputs: "Kindling + Moss"
+                    },
+                    advanced: { 
+                        title: "Boil Water", 
+                        emoji: "💧",
+                        result: "Clean Water",
+                        inputs: "Warmth + Mud"
+                    },
+                    premium: { 
+                        title: "Will to Continue", 
+                        emoji: "💔",
+                        result: "Another Day",
+                        inputs: "Water + Hope"
+                    }
                 },
                 tabs: {
                     mining: { name: "Foraging", emoji: "🌾" },
@@ -610,6 +818,32 @@ class RebirthThemes {
                     universities: { name: "Medical Library" },
                     politicians: { name: "Hospital Admin" }
                 },
+                crafting: {
+                    basic: { 
+                        title: "Breathe", 
+                        emoji: "💨",
+                        result: "Moments",
+                        inputs: "Breaths"
+                    },
+                    intermediate: { 
+                        title: "Remember", 
+                        emoji: "💭",
+                        result: "Memories",
+                        inputs: "Moments + Medication"
+                    },
+                    advanced: { 
+                        title: "Accept", 
+                        emoji: "🕊️",
+                        result: "Peace",
+                        inputs: "Memories + Therapy"
+                    },
+                    premium: { 
+                        title: "Let Go", 
+                        emoji: "✨",
+                        result: "Closure",
+                        inputs: "Peace + Visitors"
+                    }
+                },
                 tabs: {
                     mining: { name: "Breathing", emoji: "💨" },
                     processing: { name: "Medications", emoji: "💊" },
@@ -678,6 +912,32 @@ class RebirthThemes {
                     markets: { name: "Life" },
                     universities: { name: "Wisdom" },
                     politicians: { name: "Fate" }
+                },
+                crafting: {
+                    basic: { 
+                        title: "Feel", 
+                        emoji: "💓",
+                        result: "Sensation",
+                        inputs: "Heartbeats"
+                    },
+                    intermediate: { 
+                        title: "Recall", 
+                        emoji: "✨",
+                        result: "Flashbacks",
+                        inputs: "Sensation + Thoughts"
+                    },
+                    advanced: { 
+                        title: "Understand", 
+                        emoji: "🌟",
+                        result: "Meaning",
+                        inputs: "Flashbacks + Wisdom"
+                    },
+                    premium: { 
+                        title: "Release", 
+                        emoji: "🕊️",
+                        result: "Transcendence",
+                        inputs: "Meaning + Peace"
+                    }
                 },
                 tabs: {
                     mining: { name: "Heartbeat", emoji: "💓" },
