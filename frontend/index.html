@@ -63,7 +63,7 @@
             <button id="viewGraphsBtn" class="c-btn c-btn--tertiary gamepad">View Graphs</button>
             <button id="startQuizBtn" class="c-btn c-btn--tertiary gamepad">Start or join Quiz</button>
             <button id="manageQuizBtn" class="c-btn c-btn--tertiary">Manage Quiz</button>
-            <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="OrokaConner" data-color="#2c6fb8" data-emoji=""  data-font="Inter" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
+            <!-- Buy Me a Coffee moved to footer top to avoid visual clutter -->
         </div>
         <div class="c-servo-test">
             <div class="o-servo-buttons">
@@ -75,22 +75,19 @@
                 <button id="storyCreatorBtn" class="c-btn c-btn--tertiary" onclick="window.location.href='html/storyCreator.html'">Story Creator</button>
             </div>
         </div>
-        <!-- Separate row below the big section -->
-        <div class="o-button-group u-mt-2 u-center-button">
+        <!-- Compact action row: New Articles, Industrial Empire and Contact Support -->
+        <div class="o-button-group compact-button-row u-mt-2">
             <button id="articlesHubBtn" class="c-btn c-btn--tertiary c-btn--sm" onclick="window.location.href='articles/articlepagenew.html'">📰 New Articles</button>
-        </div>
-        <!-- Game section below main buttons -->
-        <div class="o-button-group u-mb-2 u-center-button">
             <button id="kingdomQuarryBtn" class="c-btn c-btn--primary c-btn--sm" onclick="window.location.href='idleGame/idlegame.html';">⛏️ Industrial Empire</button>
-        </div>
-
-        <div class="o-button-group u-mb-2 u-center-button">
             <button id="supportBtn" class="c-btn c-btn--primary c-btn--sm" onclick="window.location.href='html/support.html';">💬 Contact Support</button>
         </div>
     
     </main>
 
     <footer class="c-footer">
+        <div class="c-footer__bmc" aria-hidden="false">
+            <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="OrokaConner" data-color="#2c6fb8" data-emoji=""  data-font="Inter" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
+        </div>
         <p class="c-footer__text">
             <strong>© 2025 Quiz The Spire</strong><br>
             Created, Owned & Operated by <strong>Oroka Conner</strong><br>
