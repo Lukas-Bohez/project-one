@@ -174,27 +174,27 @@
                     <div class="panel">
                         <h2>📦 Crafted Inventory</h2>
                         <div class="resource-grid">
-                            <div class="resource-row" data-tooltip="Ready for transport to city">
-                                <span class="resource-type">Deployable Apps:</span>
+                            <div class="resource-row" data-tooltip="Ready for transport to city" id="crafted-basic-row">
+                                <span class="resource-type" id="crafted-basic-label">Deployable Apps:</span>
                                 <span id="crafted-basic-count" class="resource-count">0</span>
                             </div>
-                            <div class="resource-row" data-tooltip="Ready for transport to city">
-                                <span class="resource-type">SaaS Platforms:</span>
+                            <div class="resource-row" data-tooltip="Ready for transport to city" id="crafted-intermediate-row">
+                                <span class="resource-type" id="crafted-intermediate-label">SaaS Platforms:</span>
                                 <span id="crafted-intermediate-count" class="resource-count">0</span>
                             </div>
-                            <div class="resource-row" data-tooltip="Ready for transport to city">
-                                <span class="resource-type">Enterprise Products:</span>
+                            <div class="resource-row" data-tooltip="Ready for transport to city" id="crafted-advanced-row">
+                                <span class="resource-type" id="crafted-advanced-label">Enterprise Products:</span>
                                 <span id="crafted-advanced-count" class="resource-count">0</span>
                             </div>
-                            <div class="resource-row" data-tooltip="Ready for transport to city">
-                                <span class="resource-type">Unicorn Startups:</span>
+                            <div class="resource-row" data-tooltip="Ready for transport to city" id="crafted-premium-row">
+                                <span class="resource-type" id="crafted-premium-label">Unicorn Startups:</span>
                                 <span id="crafted-premium-count" class="resource-count">0</span>
                             </div>
                         </div>
                         
                         <div class="inventory-panel" style="margin-top: 20px;">
-                            <h3>� Transport to City</h3>
-                            <p style="font-size: 0.85em; opacity: 0.8; margin: 5px 0;">Toggle which items to automatically transport via Infrastructure tab</p>
+                            <h3 id="transport-to-city-header">🚛 Transport to City</h3>
+                            <p id="transport-to-city-desc" style="font-size: 0.85em; opacity: 0.8; margin: 5px 0;">Toggle which items to automatically transport via Infrastructure tab</p>
                             <div class="action-buttons" style="grid-template-columns: 1fr 1fr;">
                                 <button id="transport-basic-btn" class="action-btn transport-btn" style="padding: 10px;">
                                     <div class="btn-title" style="font-size: 0.9em;">📦 Apps: OFF</div>
