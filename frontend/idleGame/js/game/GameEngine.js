@@ -893,6 +893,32 @@ class GameEngine {
         } else if (mineButton) {
             mineButton.classList.remove('pulse');
         }
+        
+        // Update unlock button states
+        this.updateUnlockButtonStates();
+    }
+    
+    updateUnlockButtonStates() {
+        const unlockCosts = {
+            unlock_coal: 25,
+            unlock_iron: 60,
+            unlock_silver: 200,
+            unlock_oil: 150,
+            unlock_rubber: 120,
+            unlock_processing: 80,
+            unlock_electronics: 800,
+            unlock_jewelry: 500,
+            unlock_automotive: 2000
+        };
+        
+        // Update each unlock button based on affordability
+        Object.entries(unlockCosts).forEach(([key, cost]) => {
+            const button = document.querySelector(`[data-unlock="${key}"]`);
+            if (button && !this.state[key]) { // Only update if not already unlocked
+                const canAfford = this.state.resources.gold >= cost;
+                button.disabled = !canAfford;
+            }
+        });
     }
 
     unlockFeature(key) {
