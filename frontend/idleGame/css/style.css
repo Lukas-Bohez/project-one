@@ -659,6 +659,45 @@ body {
     background: linear-gradient(135deg, #9138ed 0%, #5e2881 100%);
 }
 
+.craft-btn {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
+    border: 2px solid rgba(245, 87, 108, 0.4);
+    position: relative;
+}
+
+.craft-btn:hover {
+    box-shadow: 0 8px 25px rgba(240, 147, 251, 0.6);
+    background: linear-gradient(135deg, #df82ea 0%, #e4465b 100%);
+    border-color: rgba(245, 87, 108, 0.6);
+}
+
+.craft-btn:disabled {
+    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%) !important;
+    border-color: rgba(74, 85, 104, 0.5) !important;
+    color: #a0aec0 !important;
+    cursor: not-allowed !important;
+    opacity: 0.6 !important;
+    box-shadow: none !important;
+}
+
+.craft-btn:active:not(:disabled) {
+    animation: craftPulse 0.3s ease-out;
+}
+
+@keyframes craftPulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(0.95);
+        box-shadow: 0 0 20px rgba(240, 147, 251, 0.8), inset 0 0 20px rgba(255, 255, 255, 0.3);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
 .trader-btn {
     background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     color: #1a1a2e;

@@ -44,6 +44,15 @@ class GameEngine {
             factory: { raw: {}, processed: {}, finished: {} },
             cityInventory: { finished: {} },
             
+            // Crafted items inventory
+            crafted: {
+                basic: 0,          // Deployable Apps (10 stone)
+                intermediate: 0,   // SaaS Platforms (1 basic + 5 coal)
+                advanced: 0,       // Enterprise Products (1 intermediate + 3 iron)
+                premium: 0         // Unicorn Startups (1 advanced + 2 silver)
+            },
+            autoCraft: false,  // Auto-craft toggle
+            
             // Resource production per second
             production: {
                 stone: 0,
@@ -321,19 +330,27 @@ class GameEngine {
         const salesDept = this.state.city?.salesDepartment || 0;
         if (salesDept <= 0) return; // No sales department = no auto-sell
         
-        // Each level of sales department increases speed
-        // Level 1: sell every 1000ms, Level 2: 800ms, Level 3: 600ms, etc.
-        const interval = Math.max(100, 1000 - (salesDept - 1) * 200);
+        // Sell all items every minute, with less time per level
+        // Level 1: 60s, Level 2: 50s, Level 3: 40s, Level 4: 30s, Level 5: 20s, Level 6+: 10s
+        const interval = Math.max(10000, 60000 - (salesDept - 1) * 10000);
         
         if (now < this.nextAutoSellFinishedAt) return;
         
+        // Sell ALL items in city at once
         const inv = this.state.cityInventory?.finished || {};
+        let itemsSold = 0;
         for (const k in inv) { 
-            if (inv[k] > 0) { 
-                this.sellOneFinished();
-                break;
+            while (inv[k] > 0) { 
+                const success = this.sellOneFinished();
+                if (!success) break;
+                itemsSold++;
             }
         }
+        
+        if (itemsSold > 0) {
+            this.showNotification(`🤖 Sales Bot sold ${itemsSold} items!`);
+        }
+        
         this.nextAutoSellFinishedAt = now + interval;
     }
 
@@ -345,17 +362,33 @@ class GameEngine {
         const capacity = this.state.transport?.capacity || 0;
         if (capacity <= 0) return;
         
-        // Transport efficiency: 1 item per second per 100 capacity units
-        const transportRate = (capacity / 100) * deltaTime;
+        // Transport rate: capacity units per second (e.g., 10 capacity = 10 items/sec)
+        const transportRate = capacity * deltaTime;
         
         // Accumulate fractional transports
         this.transportAccumulator = (this.transportAccumulator || 0) + transportRate;
         
-        // Transport whole units
+        // Transport whole units (use actual capacity for weight checks)
         while (this.transportAccumulator >= 1) {
-            const result = this.newResourceManager.transportOne(capacity);
+            const result = this.newResourceManager.transportOne(capacity, this.state.autoTransport);
             if (!result || result.moved === 0) break; // Nothing left to transport
-            this.transportAccumulator -= 1;
+            
+            // If a crafted item was transported, decrease the crafted counter
+            if (result.item && result.tier === 'finished') {
+                const craftedItems = {
+                    'Deployable App': 'basic',
+                    'SaaS Platform': 'intermediate',
+                    'Enterprise Product': 'advanced',
+                    'Unicorn Startup': 'premium'
+                };
+                const craftTier = craftedItems[result.item];
+                if (craftTier) {
+                    this.state.crafted[craftTier] = Math.max(0, (this.state.crafted[craftTier] || 0) - 1);
+                }
+            }
+            
+            // Deduct the weight of the item transported
+            this.transportAccumulator -= (result.weight || 1);
         }
     }
 
@@ -408,6 +441,9 @@ class GameEngine {
         if (this.newResourceManager) {
             this.newResourceManager.update(deltaTime);
         }
+        
+        // Auto-crafting system
+        this.tryAutoCraft();
         
         // Automatic transport of goods from factory to city
         this.updateAutoTransport(deltaTime);
@@ -624,11 +660,11 @@ class GameEngine {
     }
     
     updateTransport() {
-        // Calculate total transport capacity
+        // Calculate total transport capacity (reduced for better balance)
         const capacity = 
-            this.state.transport.carts * 10 +
-            this.state.transport.wagons * 50 +
-            this.state.transport.trains * 200;
+            this.state.transport.carts * 1 +      // Was 10, now 1
+            this.state.transport.wagons * 5 +     // Was 50, now 5
+            this.state.transport.trains * 20;     // Was 200, now 20
             
         this.state.transport.capacity = capacity * this.state.efficiency.transport;
         
@@ -710,10 +746,26 @@ class GameEngine {
         this.updateElement('markets-count', this.state.city.markets.toString());
         this.updateElement('universities-count', this.state.city.universities.toString());
         
-        // Update sales department with level and speed info
+        // Update bank bonus display
+        const bankBonusPct = this.state.city.banks * 20; // 20% per bank
+        this.updateElement('bank-bonus-display', `+${bankBonusPct}%`);
+        
+        // Update sales department with level and interval info
         const salesDept = this.state.city.salesDepartment || 0;
-        const salesSpeed = salesDept > 0 ? `Level ${salesDept} (${(1000 / Math.max(100, 1000 - (salesDept - 1) * 200)).toFixed(1)}/sec)` : 'Level 0';
+        const interval = salesDept > 0 ? Math.max(10, 60 - (salesDept - 1) * 10) : 0;
+        const salesSpeed = salesDept > 0 ? `Level ${salesDept} (sells all every ${interval}s)` : 'Level 0';
         this.updateElement('sales-dept-count', salesSpeed);
+        
+        // Update sales timer countdown
+        const timerRow = document.getElementById('sales-timer-row');
+        if (salesDept > 0 && this.nextAutoSellFinishedAt) {
+            if (timerRow) timerRow.style.display = '';
+            const timeUntilSale = Math.max(0, this.nextAutoSellFinishedAt - Date.now());
+            const secondsLeft = Math.ceil(timeUntilSale / 1000);
+            this.updateElement('sales-timer', `${secondsLeft}s`);
+        } else {
+            if (timerRow) timerRow.style.display = 'none';
+        }
         
         // Update city dynamics
         this.updateElement('politicians-count', this.state.city.politicians?.toString() || '0');
@@ -744,6 +796,57 @@ class GameEngine {
         // Update research status
         const completedResearch = Object.values(this.state.research).filter(r => r).length;
         this.updateElement('completed-research', completedResearch.toString());
+        
+        // Update crafted inventory
+        this.updateElement('crafted-basic-count', (this.state.crafted?.basic || 0).toString());
+        this.updateElement('crafted-intermediate-count', (this.state.crafted?.intermediate || 0).toString());
+        this.updateElement('crafted-advanced-count', (this.state.crafted?.advanced || 0).toString());
+        this.updateElement('crafted-premium-count', (this.state.crafted?.premium || 0).toString());
+        
+        // Update auto-craft button text with unlocked tiers
+        const autoCraftBtn = document.getElementById('toggle-autocraft-btn');
+        if (autoCraftBtn) {
+            const titleDiv = autoCraftBtn.querySelector('.btn-title');
+            const descDiv = autoCraftBtn.querySelector('.btn-description');
+            if (titleDiv) {
+                const status = this.state.autoCraft ? 'ON' : 'OFF';
+                titleDiv.textContent = `🤖 Auto-Craft: ${status}`;
+            }
+            if (descDiv) {
+                const unlockedTiers = [];
+                if (this.state.unlock_autocraft_basic) unlockedTiers.push('T1');
+                if (this.state.unlock_autocraft_intermediate) unlockedTiers.push('T2');
+                if (this.state.unlock_autocraft_advanced) unlockedTiers.push('T3');
+                if (this.state.unlock_autocraft_premium) unlockedTiers.push('T4');
+                
+                if (unlockedTiers.length > 0) {
+                    descDiv.textContent = `Unlocked tiers: ${unlockedTiers.join(', ')}`;
+                } else {
+                    descDiv.textContent = 'Unlock auto-craft tiers in Research tab';
+                }
+            }
+        }
+        
+        // Update auto-transport toggle button texts
+        const transportTiers = {
+            basic: 'Apps',
+            intermediate: 'Platforms',
+            advanced: 'Products',
+            premium: 'Startups'
+        };
+        
+        if (this.state.autoTransport) {
+            for (const [tier, itemName] of Object.entries(transportTiers)) {
+                const btn = document.getElementById(`transport-${tier}-btn`);
+                if (btn) {
+                    const titleDiv = btn.querySelector('.btn-title');
+                    if (titleDiv) {
+                        const status = this.state.autoTransport[tier] ? 'ON' : 'OFF';
+                        titleDiv.textContent = `📦 ${itemName}: ${status}`;
+                    }
+                }
+            }
+        }
         
         // Update factory and city inventories
         this.updateInventoryDisplays();
@@ -848,11 +951,43 @@ class GameEngine {
         const effectiveMaxDecay = this.state.city.adjustedMaxDecay || this.state.city.maxDecay;
         this.updateButtonState('rebirth-btn', this.state.city.decay >= (effectiveMaxDecay - 0.5));
         
+        // Crafting buttons
+        this.updateButtonState('craft-basic-btn', this.state.resources.stone >= 10);
+        this.updateButtonState('craft-intermediate-btn', 
+            (this.state.crafted?.basic || 0) >= 1 && this.state.resources.coal >= 5 && this.state.unlock_coal);
+        this.updateButtonState('craft-advanced-btn', 
+            (this.state.crafted?.intermediate || 0) >= 1 && this.state.resources.iron >= 3 && this.state.unlock_iron);
+        this.updateButtonState('craft-premium-btn', 
+            (this.state.crafted?.advanced || 0) >= 1 && this.state.resources.silver >= 2 && this.state.unlock_silver);
+        
+        // Auto-craft toggle (requires automation research)
+        this.updateButtonState('toggle-autocraft-btn', this.state.research_automation);
+        
+        // Transport toggle buttons (always enabled once you have items)
+        // These are always clickable to toggle
+        
+        // City sell crafted buttons (need items in city)
+        const cityInv = this.state.cityInventory?.finished || {};
+        this.updateButtonState('sell-city-basic-btn', (cityInv['Deployable App'] || 0) >= 1);
+        this.updateButtonState('sell-city-intermediate-btn', (cityInv['SaaS Platform'] || 0) >= 1);
+        this.updateButtonState('sell-city-advanced-btn', (cityInv['Enterprise Product'] || 0) >= 1);
+        this.updateButtonState('sell-city-premium-btn', (cityInv['Unicorn Startup'] || 0) >= 1);
+        
         // Research buttons
         this.updateResearchButtonState('research-mining-btn', 'mining', 50);
         this.updateResearchButtonState('research-processing-btn', 'processing', 100);
         this.updateResearchButtonState('research-automation-btn', 'automation', 50);
         this.updateResearchButtonState('research-logistics-btn', 'logistics', 1000);
+        
+        // Auto-craft unlock buttons
+        this.updateButtonState('unlock-autocraft-basic-btn', 
+            this.state.resources.gold >= 100 && !this.state.unlock_autocraft_basic);
+        this.updateButtonState('unlock-autocraft-intermediate-btn', 
+            this.state.resources.gold >= 500 && !this.state.unlock_autocraft_intermediate && this.state.unlock_coal);
+        this.updateButtonState('unlock-autocraft-advanced-btn', 
+            this.state.resources.gold >= 2500 && !this.state.unlock_autocraft_advanced && this.state.unlock_iron);
+        this.updateButtonState('unlock-autocraft-premium-btn', 
+            this.state.resources.gold >= 10000 && !this.state.unlock_autocraft_premium && this.state.unlock_silver);
         
         // Hide purchased unlock buttons
         const unlockKeys = ['unlock_coal', 'unlock_iron', 'unlock_silver', 'unlock_oil', 'unlock_rubber', 'unlock_processing', 'unlock_electronics', 'unlock_jewelry', 'unlock_automotive'];
@@ -931,7 +1066,11 @@ class GameEngine {
             unlock_processing: 80,
             unlock_electronics: 800,
             unlock_jewelry: 500,
-            unlock_automotive: 2000
+            unlock_automotive: 2000,
+            unlock_autocraft_basic: 100,
+            unlock_autocraft_intermediate: 500,
+            unlock_autocraft_advanced: 2500,
+            unlock_autocraft_premium: 10000
         };
         const cost = costs[key] || 0;
         if (this.state[key]) return false; // already unlocked
@@ -957,7 +1096,7 @@ class GameEngine {
         console.log('Checking purchased items visibility...');
         
         // Hide purchased unlocks
-        const unlockKeys = ['unlock_coal', 'unlock_iron', 'unlock_silver', 'unlock_oil', 'unlock_rubber', 'unlock_processing', 'unlock_electronics', 'unlock_jewelry', 'unlock_automotive'];
+        const unlockKeys = ['unlock_coal', 'unlock_iron', 'unlock_silver', 'unlock_oil', 'unlock_rubber', 'unlock_processing', 'unlock_electronics', 'unlock_jewelry', 'unlock_automotive', 'unlock_autocraft_basic', 'unlock_autocraft_intermediate', 'unlock_autocraft_advanced', 'unlock_autocraft_premium'];
         unlockKeys.forEach(key => {
             if (this.state[key]) {
                 console.log(`Hiding unlock: ${key}`);
@@ -1070,6 +1209,280 @@ class GameEngine {
         return false;
     }
     
+    // Manual Crafting System
+    craftItem(tier) {
+        const recipes = {
+            basic: {
+                requires: { stone: 10 },
+                produces: 'basic',
+                producesItem: 'Deployable App',
+                amount: 1,
+                sellValue: 3,  // 3x manual sell (10 stone * 0.1 = 1, so 3x = 3)
+                name: 'Deployable App',
+                weight: 1
+            },
+            intermediate: {
+                requires: { basic: 1, coal: 5 },
+                produces: 'intermediate',
+                producesItem: 'SaaS Platform',
+                amount: 1,
+                sellValue: 9,  // 3x (1 basic (3) + 5 coal * 0.5 = 5.5, ~3x = 9)
+                name: 'SaaS Platform',
+                weight: 2
+            },
+            advanced: {
+                requires: { intermediate: 1, iron: 3 },
+                produces: 'advanced',
+                producesItem: 'Enterprise Product',
+                amount: 1,
+                sellValue: 30,  // 3x (1 int (9) + 3 iron * 1.2 = 12.6, ~3x = 30)
+                name: 'Enterprise Product',
+                weight: 3
+            },
+            premium: {
+                requires: { advanced: 1, silver: 2 },
+                produces: 'premium',
+                producesItem: 'Unicorn Startup',
+                amount: 1,
+                sellValue: 120,  // 3x (1 adv (30) + 2 silver * 6 = 42, ~3x = 120)
+                name: 'Unicorn Startup',
+                weight: 5
+            }
+        };
+        
+        const recipe = recipes[tier];
+        if (!recipe) return false;
+        
+        // Check if we have the required resources
+        for (const [resource, amount] of Object.entries(recipe.requires)) {
+            if (resource === 'basic' || resource === 'intermediate' || resource === 'advanced' || resource === 'premium') {
+                // Check crafted items
+                if (!this.state.crafted[resource] || this.state.crafted[resource] < amount) {
+                    console.log(`Not enough ${resource} crafted items`);
+                    return false;
+                }
+            } else {
+                // Check regular resources
+                if (!this.state.resources[resource] || this.state.resources[resource] < amount) {
+                    console.log(`Not enough ${resource}`);
+                    return false;
+                }
+            }
+        }
+        
+        // Consume resources
+        for (const [resource, amount] of Object.entries(recipe.requires)) {
+            if (resource === 'basic' || resource === 'intermediate' || resource === 'advanced' || resource === 'premium') {
+                this.state.crafted[resource] -= amount;
+            } else {
+                this.state.resources[resource] -= amount;
+                this.flashElement(`${resource}-amount`);
+            }
+        }
+        
+        // Produce crafted item - mark for transport in factory finished inventory
+        this.state.crafted[recipe.produces] = (this.state.crafted[recipe.produces] || 0) + recipe.amount;
+        
+        // Mark item for transport in factory finished inventory
+        if (this.state.factory && this.state.factory.finished) {
+            const itemName = recipe.producesItem;
+            this.state.factory.finished[itemName] = (this.state.factory.finished[itemName] || 0) + recipe.amount;
+        }
+        
+        this.playSound('build');
+        // Removed annoying notification popup for crafting
+        // this.showNotification(`🔨 Crafted ${recipe.name}! (Ready for transport)`);
+        console.log(`Crafted ${tier}: ${recipe.name}`);
+        return true;
+    }
+    
+    // Transport crafted item from factory to city
+    toggleTransportCrafted(tier) {
+        // Initialize autoTransport state if it doesn't exist
+        if (!this.state.autoTransport) {
+            this.state.autoTransport = {
+                basic: false,
+                intermediate: false,
+                advanced: false,
+                premium: false
+            };
+        }
+        
+        const itemNames = {
+            basic: 'Apps',
+            intermediate: 'Platforms',
+            advanced: 'Products',
+            premium: 'Startups'
+        };
+        
+        // Toggle the state
+        this.state.autoTransport[tier] = !this.state.autoTransport[tier];
+        const status = this.state.autoTransport[tier] ? 'ON' : 'OFF';
+        const itemName = itemNames[tier];
+        
+        // Update button text
+        const btn = document.getElementById(`transport-${tier}-btn`);
+        if (btn) {
+            const title = btn.querySelector('.btn-title');
+            if (title) {
+                title.textContent = `📦 ${itemName}: ${status}`;
+            }
+        }
+        
+        this.showNotification(`🚚 Auto-transport ${itemName}: ${status}`);
+        return this.state.autoTransport[tier];
+    }
+    
+    // Try to auto-transport crafted items (called each tick)
+    tryAutoTransportCrafted() {
+        if (!this.state.autoTransport) return;
+        
+        const itemNames = {
+            basic: 'Deployable App',
+            intermediate: 'SaaS Platform',
+            advanced: 'Enterprise Product',
+            premium: 'Unicorn Startup'
+        };
+        
+        // Try each tier that's enabled
+        for (const [tier, enabled] of Object.entries(this.state.autoTransport)) {
+            if (!enabled) continue;
+            
+            const itemName = itemNames[tier];
+            const factoryAmount = this.state.factory?.finished?.[itemName] || 0;
+            
+            if (factoryAmount > 0) {
+                // Move one item from factory to city
+                this.state.factory.finished[itemName] -= 1;
+                if (!this.state.cityInventory.finished[itemName]) {
+                    this.state.cityInventory.finished[itemName] = 0;
+                }
+                this.state.cityInventory.finished[itemName] += 1;
+                
+                // Decrease crafted inventory counter
+                this.state.crafted[tier] = Math.max(0, (this.state.crafted[tier] || 0) - 1);
+                
+                this.playSound('transport');
+                // Only show notification for first transport
+                return;
+            }
+        }
+    }
+    
+    // Sell crafted item from city inventory
+    sellCraftedFromCity(tier) {
+        const sellValues = {
+            basic: 3,
+            intermediate: 9,
+            advanced: 30,
+            premium: 120
+        };
+        
+        const itemNames = {
+            basic: 'Deployable App',
+            intermediate: 'SaaS Platform',
+            advanced: 'Enterprise Product',
+            premium: 'Unicorn Startup'
+        };
+        
+        const itemName = itemNames[tier];
+        const cityAmount = this.state.cityInventory?.finished?.[itemName] || 0;
+        
+        if (cityAmount < 1) return false;
+        
+        const value = sellValues[tier];
+        
+        // Remove from city
+        this.state.cityInventory.finished[itemName] -= 1;
+        
+        // Add gold (with city bonuses applied)
+        const bankBonus = 1 + (this.state.city.banks * 0.2);
+        const finalValue = Math.floor(value * bankBonus);
+        
+        this.state.resources.gold += finalValue;
+        this.state.stats.totalGoldEarned += finalValue;
+        
+        this.playSound('sell');
+        this.flashElement('gold-amount');
+        this.showNotification(`💰 Sold ${itemName} for ${finalValue} capital!`);
+        return true;
+    }
+    
+    // Sell ALL crafted items of a tier from city inventory
+    sellAllCraftedFromCity(tier) {
+        const sellValues = {
+            basic: 3,
+            intermediate: 9,
+            advanced: 30,
+            premium: 120
+        };
+        
+        const itemNames = {
+            basic: 'Deployable App',
+            intermediate: 'SaaS Platform',
+            advanced: 'Enterprise Product',
+            premium: 'Unicorn Startup'
+        };
+        
+        const itemName = itemNames[tier];
+        const cityAmount = this.state.cityInventory?.finished?.[itemName] || 0;
+        
+        if (cityAmount < 1) return false;
+        
+        const value = sellValues[tier];
+        
+        // Add gold (with city bonuses applied)
+        const bankBonus = 1 + (this.state.city.banks * 0.2);
+        const finalValue = Math.floor(value * bankBonus * cityAmount);
+        
+        // Remove ALL from city
+        this.state.cityInventory.finished[itemName] = 0;
+        
+        // Also decrease the crafted inventory counter
+        this.state.crafted[tier] = Math.max(0, (this.state.crafted[tier] || 0) - cityAmount);
+        
+        this.state.resources.gold += finalValue;
+        this.state.stats.totalGoldEarned += finalValue;
+        
+        this.playSound('sell');
+        this.flashElement('gold-amount');
+        this.showNotification(`💰 Sold ${cityAmount}x ${itemName} for ${finalValue} capital!`);
+        return true;
+    }
+    
+    toggleAutoCraft() {
+        // Check if automation is unlocked
+        if (!this.state.research_automation) {
+            this.showNotification('🔒 Research Automation first!');
+            return false;
+        }
+        
+        this.state.autoCraft = !this.state.autoCraft;
+        const status = this.state.autoCraft ? 'ON' : 'OFF';
+        this.showNotification(`🤖 Auto-Craft ${status}`);
+        console.log(`Auto-craft toggled: ${status}`);
+        return this.state.autoCraft;
+    }
+    
+    tryAutoCraft() {
+        if (!this.state.autoCraft) return;
+        
+        // Check which tiers are unlocked and try crafting from highest to lowest
+        const tierUnlocks = {
+            premium: this.state.unlock_autocraft_premium,
+            advanced: this.state.unlock_autocraft_advanced,
+            intermediate: this.state.unlock_autocraft_intermediate,
+            basic: this.state.unlock_autocraft_basic
+        };
+        
+        const tiers = ['premium', 'advanced', 'intermediate', 'basic'];
+        for (const tier of tiers) {
+            if (tierUnlocks[tier] && this.craftItem(tier)) {
+                return; // Only craft one item per cycle
+            }
+        }
+    }
+
     buildProcessor(processorType) {
         const costs = {
             smelter: 20,
@@ -1196,8 +1609,22 @@ class GameEngine {
     transportNext() {
         if (!this.newResourceManager) return false;
         // Use smallest capacity unit (1 weight) as click-based transport
-        const result = this.newResourceManager.transportOne(1);
+        const result = this.newResourceManager.transportOne(1, this.state.autoTransport);
         if (result.moved) {
+            // If a crafted item was transported, decrease the crafted counter
+            if (result.item && result.tier === 'finished') {
+                const craftedItems = {
+                    'Deployable App': 'basic',
+                    'SaaS Platform': 'intermediate',
+                    'Enterprise Product': 'advanced',
+                    'Unicorn Startup': 'premium'
+                };
+                const craftTier = craftedItems[result.item];
+                if (craftTier) {
+                    this.state.crafted[craftTier] = Math.max(0, (this.state.crafted[craftTier] || 0) - 1);
+                }
+            }
+            
             this.playSound('transport');
             return true;
         }
@@ -1207,6 +1634,15 @@ class GameEngine {
     // Sell one finished good currently in city inventory (best value by default)
     sellOneFinished(item = null) {
         if (!this.newResourceManager) return false;
+        
+        // Define crafted items and their values
+        const craftedItems = {
+            'Deployable App': { tier: 'basic', value: 3 },
+            'SaaS Platform': { tier: 'intermediate', value: 9 },
+            'Enterprise Product': { tier: 'advanced', value: 30 },
+            'Unicorn Startup': { tier: 'premium', value: 120 }
+        };
+        
         if (!item) {
             // pick best valued item in city inventory
             const inv = this.state.cityInventory?.finished || {};
@@ -1214,15 +1650,47 @@ class GameEngine {
             Object.keys(inv).forEach(k => {
                 const amount = inv[k];
                 if (amount > 0) {
-                    // Check both processed and finished catalogs for value
-                    const meta = this.newResourceManager.catalog.processed[k] || 
-                                 this.newResourceManager.catalog.finished[k] || {};
-                    const val = meta.value || 0;
-                    if (val > bestVal) { bestVal = val; best = k; }
+                    // Check if it's a crafted item
+                    if (craftedItems[k]) {
+                        const val = craftedItems[k].value;
+                        if (val > bestVal) { bestVal = val; best = k; }
+                    } else {
+                        // Check both processed and finished catalogs for value
+                        const meta = this.newResourceManager.catalog.processed[k] || 
+                                     this.newResourceManager.catalog.finished[k] || {};
+                        const val = meta.value || 0;
+                        if (val > bestVal) { bestVal = val; best = k; }
+                    }
                 }
             });
             item = best;
         }
+        
+        // Check if it's a crafted item
+        if (item && craftedItems[item]) {
+            const cityAmount = this.state.cityInventory?.finished?.[item] || 0;
+            if (cityAmount < 1) return false;
+            
+            const craftInfo = craftedItems[item];
+            const bankBonus = 1 + (this.state.city.banks * 0.2);
+            const finalValue = Math.floor(craftInfo.value * bankBonus);
+            
+            // Remove one from city
+            this.state.cityInventory.finished[item] -= 1;
+            
+            // Decrease crafted inventory counter
+            this.state.crafted[craftInfo.tier] = Math.max(0, (this.state.crafted[craftInfo.tier] || 0) - 1);
+            
+            // Add gold
+            this.state.resources.gold += finalValue;
+            this.state.stats.totalGoldEarned += finalValue;
+            
+            this.playSound('sell');
+            this.flashElement('gold-amount');
+            return true;
+        }
+        
+        // Use regular selling for non-crafted items
         const res = this.newResourceManager.sellOne(item);
         if (res.sold) {
             this.playSound('sell');

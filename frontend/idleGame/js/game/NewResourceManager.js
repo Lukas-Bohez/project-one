@@ -23,7 +23,13 @@ class NewResourceManager {
 			},
 			// Processed and finished are now theme-dependent and created dynamically
 			processed: {},
-			finished: {}
+			finished: {
+				// Crafted items (always available) - 3x manual sell value
+				'Deployable App': { value: 3, weight: 1 },
+				'SaaS Platform': { value: 9, weight: 2 },
+				'Enterprise Product': { value: 30, weight: 3 },
+				'Unicorn Startup': { value: 120, weight: 5 }
+			}
 		};
 	}
 
@@ -275,16 +281,33 @@ class NewResourceManager {
 	}
 
 	// Transport: pick the next item (processed or finished) to transport based on value/weight ratio
-	pickNextForTransport() {
+	pickNextForTransport(autoTransportPrefs = null) {
 		this.ensureInventories();
 		let bestItem = null;
 		let bestScore = -Infinity;
 		let bestTier = null;
 		
+		// Crafted items mapping
+		const craftedItems = {
+			'Deployable App': 'basic',
+			'SaaS Platform': 'intermediate',
+			'Enterprise Product': 'advanced',
+			'Unicorn Startup': 'premium'
+		};
+		
 		// Check both processed AND finished goods
 		['processed', 'finished'].forEach(tier => {
 			Object.entries(this.state.factory[tier]).forEach(([res, qty]) => {
 				if (qty <= 0) return;
+				
+				// Check if this is a crafted item and if auto-transport is disabled for it
+				if (tier === 'finished' && craftedItems[res] && autoTransportPrefs) {
+					const craftTier = craftedItems[res];
+					if (!autoTransportPrefs[craftTier]) {
+						return; // Skip this item if auto-transport is disabled
+					}
+				}
+				
 				const meta = this.catalog[tier][res];
 				if (!meta) return;
 				const score = meta.value / Math.max(1, meta.weight);
@@ -300,8 +323,8 @@ class NewResourceManager {
 	}
 
 	// Move 1 unit (or as much as capacity allows) from factory to city
-	transportOne(capacity = 1) {
-		const result = this.pickNextForTransport();
+	transportOne(capacity = 1, autoTransportPrefs = null) {
+		const result = this.pickNextForTransport(autoTransportPrefs);
 		if (!result) return { moved: 0 };
 		
 		const { item, tier } = result;
@@ -317,7 +340,7 @@ class NewResourceManager {
 		// City inventory stores everything in 'finished' for simplicity
 		this.state.cityInventory.finished[item] = (this.state.cityInventory.finished[item] || 0) + 1;
 		
-		return { item, moved: 1, weight };
+		return { item, tier, moved: 1, weight };
 	}
 
 	// Sell one unit in city
