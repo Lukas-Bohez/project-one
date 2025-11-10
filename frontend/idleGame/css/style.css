@@ -809,16 +809,19 @@ body {
     border: 2px solid rgba(155, 89, 182, 0.5);
     position: relative;
     overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .unlock-btn::before {
     content: '🔓';
     position: absolute;
-    left: 10px;
+    right: 15px;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 1.5em;
-    opacity: 0.3;
+    font-size: 2em;
+    opacity: 0.15;
+    transition: all 0.3s ease;
+    pointer-events: none;
 }
 
 .unlock-btn:hover {
@@ -827,13 +830,36 @@ body {
     border-color: rgba(155, 89, 182, 0.8);
 }
 
+.unlock-btn:hover::before {
+    opacity: 0.25;
+    transform: translateY(-50%) scale(1.1);
+}
+
 .unlock-btn:disabled {
-    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
-    border-color: rgba(127, 140, 141, 0.5);
+    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%) !important;
+    border-color: rgba(74, 85, 104, 0.5) !important;
+    color: #a0aec0 !important;
+    cursor: not-allowed !important;
+    opacity: 0.6 !important;
+    box-shadow: none !important;
+    transform: none !important;
 }
 
 .unlock-btn:disabled::before {
     content: '🔒';
+    opacity: 0.3;
+}
+
+.unlock-btn:disabled:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%) !important;
+}
+
+.unlock-btn:disabled .btn-title,
+.unlock-btn:disabled .btn-cost,
+.unlock-btn:disabled .btn-description {
+    color: #a0aec0 !important;
 }
 
 .danger {
