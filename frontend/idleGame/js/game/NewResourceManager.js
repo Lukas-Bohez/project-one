@@ -46,6 +46,23 @@ class NewResourceManager {
 		const rebirths = this.state.city?.rebirths || 0;
 		const theme = this.rebirthThemes.getTheme(rebirths);
 
+		// Update crafted items catalog with theme-specific names
+		this.catalog.finished = {};
+		if (theme?.crafting) {
+			if (theme.crafting.basic) {
+				this.catalog.finished[theme.crafting.basic.result] = { value: 3, weight: 1 };
+			}
+			if (theme.crafting.intermediate) {
+				this.catalog.finished[theme.crafting.intermediate.result] = { value: 9, weight: 2 };
+			}
+			if (theme.crafting.advanced) {
+				this.catalog.finished[theme.crafting.advanced.result] = { value: 30, weight: 3 };
+			}
+			if (theme.crafting.premium) {
+				this.catalog.finished[theme.crafting.premium.result] = { value: 120, weight: 5 };
+			}
+		}
+
 		// Define theme-specific output items and their properties
 		const themeOutputs = {
 			// Rebirth 0: Tech Empire
@@ -287,13 +304,17 @@ class NewResourceManager {
 		let bestScore = -Infinity;
 		let bestTier = null;
 		
-		// Crafted items mapping
-		const craftedItems = {
-			'Deployable App': 'basic',
-			'SaaS Platform': 'intermediate',
-			'Enterprise Product': 'advanced',
-			'Unicorn Startup': 'premium'
-		};
+		// Get current theme-aware crafted items mapping
+		const rebirths = this.state.city?.rebirths || 0;
+		const theme = this.rebirthThemes?.getTheme(rebirths);
+		const craftedItems = {};
+		
+		if (theme?.crafting) {
+			if (theme.crafting.basic) craftedItems[theme.crafting.basic.result] = 'basic';
+			if (theme.crafting.intermediate) craftedItems[theme.crafting.intermediate.result] = 'intermediate';
+			if (theme.crafting.advanced) craftedItems[theme.crafting.advanced.result] = 'advanced';
+			if (theme.crafting.premium) craftedItems[theme.crafting.premium.result] = 'premium';
+		}
 		
 		// Check both processed AND finished goods
 		['processed', 'finished'].forEach(tier => {

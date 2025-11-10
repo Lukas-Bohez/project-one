@@ -241,6 +241,10 @@ class UIThemeManager {
         this.updateButtonText('build-market-btn', `Build ${city.markets.name}`);
         this.updateButtonText('build-university-btn', `Build ${city.universities.name}`);
         
+        // Update new upgrade buttons
+        this.updateButtonText('build-sales-department-btn', `Build ${city.salesDepartment.name}`);
+        // Mining Academy and Automation Lab buttons handled in GameEngine.js with dynamic titles
+        
         // Update button descriptions with theme-specific names
         this.updateButtonDescription('build-university-btn', `+10% global efficiency per ${city.universities.name.toLowerCase()}`);
         this.updateButtonDescription('hire-politician-btn', `+5% trading efficiency per ${city.politicians.name.toLowerCase()}`);
@@ -253,6 +257,9 @@ class UIThemeManager {
         this.updateLabel('banks-label', `${city.banks.name}:`);
         this.updateLabel('markets-label', `${city.markets.name}:`);
         this.updateLabel('universities-label', `${city.universities.name}:`);
+        this.updateLabel('sales-department-label', `${city.salesDepartment.name}:`);
+        this.updateLabel('mining-academy-label', `${city.miningAcademy.name}:`);
+        this.updateLabel('automation-lab-label', `${city.automationLab.name}:`);
         
         // Update sell button costs with themed bank name
         const sellButtons = [

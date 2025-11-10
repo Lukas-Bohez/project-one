@@ -56,7 +56,10 @@ class RebirthThemes {
                     banks: { name: "Accounting Dept" },
                     markets: { name: "App Stores" },
                     universities: { name: "R&D Labs" },
-                    politicians: { name: "Lobbyists" }
+                    politicians: { name: "Lobbyists" },
+                    salesDepartment: { name: "Sales Department" },
+                    miningAcademy: { name: "Dev Bootcamp" },
+                    automationLab: { name: "Automation Lab" }
                 },
                 crafting: {
                     basic: { 
@@ -151,7 +154,10 @@ class RebirthThemes {
                     banks: { name: "Credit Unions" },
                     markets: { name: "Farmer's Markets" },
                     universities: { name: "culinary school" },
-                    politicians: { name: "Health Inspectors" }
+                    politicians: { name: "Health Inspectors" },
+                    salesDepartment: { name: "Marketing Team" },
+                    miningAcademy: { name: "Training Program" },
+                    automationLab: { name: "Logistics Center" }
                 },
                 crafting: {
                     basic: { 
@@ -246,7 +252,10 @@ class RebirthThemes {
                     banks: { name: "Credit Office" },
                     markets: { name: "Company Store" },
                     universities: { name: "Mining School" },
-                    politicians: { name: "Union Bosses" }
+                    politicians: { name: "Union Bosses" },
+                    salesDepartment: { name: "Sales Office" },
+                    miningAcademy: { name: "Mining Academy" },
+                    automationLab: { name: "Equipment Bay" }
                 },
                 crafting: {
                     basic: { 
@@ -341,7 +350,10 @@ class RebirthThemes {
                     banks: { name: "Loan Office" },
                     markets: { name: "Flea Markets" },
                     universities: { name: "Trade School" },
-                    politicians: { name: "Tax Collectors" }
+                    politicians: { name: "Tax Collectors" },
+                    salesDepartment: { name: "Trading Post" },
+                    miningAcademy: { name: "Workshop" },
+                    automationLab: { name: "Forge" }
                 },
                 crafting: {
                     basic: { 
@@ -436,7 +448,10 @@ class RebirthThemes {
                     banks: { name: "Moneylenders" },
                     markets: { name: "Market Stalls" },
                     universities: { name: "Guild Halls" },
-                    politicians: { name: "Town Council" }
+                    politicians: { name: "Town Council" },
+                    salesDepartment: { name: "Merchant Guild" },
+                    miningAcademy: { name: "Craftsman School" },
+                    automationLab: { name: "Mill" }
                 },
                 crafting: {
                     basic: { 
@@ -531,7 +546,10 @@ class RebirthThemes {
                     banks: { name: "Loan Sharks" },
                     markets: { name: "Street Corners" },
                     universities: { name: "Soup Kitchen" },
-                    politicians: { name: "Gang Leaders" }
+                    politicians: { name: "Gang Leaders" },
+                    salesDepartment: { name: "Fence Network" },
+                    miningAcademy: { name: "Street Smarts" },
+                    automationLab: { name: "Chop Shop" }
                 },
                 crafting: {
                     basic: { 
@@ -626,7 +644,10 @@ class RebirthThemes {
                     banks: { name: "Hidden Stash" },
                     markets: { name: "Ruins" },
                     universities: { name: "Library Ruins" },
-                    politicians: { name: "Warlords" }
+                    politicians: { name: "Warlords" },
+                    salesDepartment: { name: "Barter Post" },
+                    miningAcademy: { name: "Survival Camp" },
+                    automationLab: { name: "Scrap Yard" }
                 },
                 crafting: {
                     basic: { 
@@ -721,7 +742,10 @@ class RebirthThemes {
                     banks: { name: "Empty Caches" },
                     markets: { name: "Abandoned Buildings" },
                     universities: { name: "Burned Books" },
-                    politicians: { name: "Madness" }
+                    politicians: { name: "Madness" },
+                    salesDepartment: { name: "Ghost Market" },
+                    miningAcademy: { name: "Forgotten Skills" },
+                    automationLab: { name: "Broken Machines" }
                 },
                 crafting: {
                     basic: { 
@@ -816,7 +840,10 @@ class RebirthThemes {
                     banks: { name: "Insurance" },
                     markets: { name: "Gift Shop" },
                     universities: { name: "Medical Library" },
-                    politicians: { name: "Hospital Admin" }
+                    politicians: { name: "Hospital Admin" },
+                    salesDepartment: { name: "Billing Dept" },
+                    miningAcademy: { name: "Nurse Training" },
+                    automationLab: { name: "Pharmacy" }
                 },
                 crafting: {
                     basic: { 
@@ -911,7 +938,10 @@ class RebirthThemes {
                     banks: { name: "Worth" },
                     markets: { name: "Life" },
                     universities: { name: "Wisdom" },
-                    politicians: { name: "Fate" }
+                    politicians: { name: "Fate" },
+                    salesDepartment: { name: "Purpose" },
+                    miningAcademy: { name: "Growth" },
+                    automationLab: { name: "Flow" }
                 },
                 crafting: {
                     basic: { 

@@ -386,6 +386,18 @@
                                 <div class="btn-description" id="build-sales-dept-desc">Auto-sells products (upgradable AI)</div>
                             </button>
 
+                            <button id="build-mining-academy-btn" class="action-btn city-btn" data-action="buildCity" data-building="miningAcademy">
+                                <div class="btn-title" id="build-mining-academy-title">Build Mining Academy</div>
+                                <div class="btn-cost">Cost: <span id="mining-academy-cost">400</span> <span id="mining-academy-currency">venture capital</span></div>
+                                <div class="btn-description" id="build-mining-academy-desc">+15% resource gathering per level</div>
+                            </button>
+
+                            <button id="build-automation-lab-btn" class="action-btn city-btn" data-action="buildCity" data-building="automationLab">
+                                <div class="btn-title" id="build-automation-lab-title">Build Automation Lab</div>
+                                <div class="btn-cost">Cost: <span id="automation-lab-cost">600</span> <span id="automation-lab-currency">venture capital</span></div>
+                                <div class="btn-description" id="build-automation-lab-desc">+1 auto-craft per tick per level</div>
+                            </button>
+
                             <button id="hire-police-btn" class="action-btn city-btn" data-action="hireService" data-service="police">
                                 <div class="btn-title" id="hire-police-title">Hire Security Team</div>
                                 <div class="btn-cost">Cost: <span id="police-cost">5000</span> <span id="police-currency">gold</span></div>
@@ -471,6 +483,14 @@
                             <div class="resource-row" id="sales-timer-row" style="display: none;">
                                 <span class="resource-type">Next Sale:</span>
                                 <span id="sales-timer" class="resource-count" style="color: #4ade80;">--</span>
+                            </div>
+                            <div class="resource-row">
+                                <span id="mining-academy-label" class="resource-type">Mining Academy:</span>
+                                <span id="mining-academy-count" class="resource-count">Level 0</span>
+                            </div>
+                            <div class="resource-row">
+                                <span id="automation-lab-label" class="resource-type">Automation Lab:</span>
+                                <span id="automation-lab-count" class="resource-count">Level 0</span>
                             </div>
                             <div class="resource-row">
                                 <span class="resource-type">Rebirths:</span>
