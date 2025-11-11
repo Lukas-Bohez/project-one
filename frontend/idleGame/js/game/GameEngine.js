@@ -109,7 +109,9 @@ class GameEngine {
                 usage: 0,
                 // Temporary penalties applied per-tick based on bottlenecks
                 penaltyTrading: 1.0,
-                penaltyProcessing: 1.0
+                penaltyProcessing: 1.0,
+                // Transport cooldown timer
+                lastTransportTime: 0
             },
             
             // City services
@@ -734,6 +736,36 @@ class GameEngine {
     }
     
     updateUI() {
+        // Check if we're at rebirth 10 - show ending screen only
+        const rebirths = this.state.city?.rebirths || 0;
+        const theme = this.rebirthThemes?.getTheme(rebirths);
+        
+        if (rebirths >= 10 && theme?.hideAllUI) {
+            // Show ending screen
+            const endingScreen = document.getElementById('ending-screen');
+            if (endingScreen) endingScreen.style.display = 'flex';
+            
+            // Hide game container
+            const gameContainer = document.getElementById('game-container');
+            if (gameContainer) gameContainer.style.display = 'none';
+            
+            return; // Don't update any other UI
+        } else {
+            // Ensure ending screen is hidden
+            const endingScreen = document.getElementById('ending-screen');
+            if (endingScreen) endingScreen.style.display = 'none';
+            
+            // Ensure game container is visible
+            const gameContainer = document.getElementById('game-container');
+            if (gameContainer) gameContainer.style.display = 'block';
+            
+            // Hide golden reward at rebirths < 9
+            if (rebirths < 9) {
+                const goldenReward = document.getElementById('final-rebirth-reward');
+                if (goldenReward) goldenReward.style.display = 'none';
+            }
+        }
+        
         // Update resource display
         this.updateElement('stone-amount', this.formatNumber(this.state.resources.stone));
         this.updateElement('coal-amount', this.formatNumber(this.state.resources.coal));
@@ -1376,18 +1408,10 @@ class GameEngine {
             }
         }
         
-        // Produce crafted item - mark for transport in factory finished inventory
+        // Produce crafted item - stays in crafted inventory until transported
         this.state.crafted[recipe.produces] = (this.state.crafted[recipe.produces] || 0) + recipe.amount;
         
-        // Mark item for transport in factory finished inventory
-        if (this.state.factory && this.state.factory.finished) {
-            const itemName = recipe.producesItem;
-            this.state.factory.finished[itemName] = (this.state.factory.finished[itemName] || 0) + recipe.amount;
-        }
-        
         this.playSound('build');
-        // Removed annoying notification popup for crafting
-        // this.showNotification(`🔨 Crafted ${recipe.name}! (Ready for transport)`);
         console.log(`Crafted ${tier}: ${recipe.name}`);
         return true;
     }
@@ -1435,42 +1459,86 @@ class GameEngine {
     tryAutoTransportCrafted() {
         if (!this.state.autoTransport) return;
         
-        // Don't auto-transport if we have no transport capacity
-        const totalTransport = (this.state.transport?.carts || 0) + 
-                               (this.state.transport?.wagons || 0) + 
-                               (this.state.transport?.trains || 0);
+        // Calculate actual transport capacity (NOT minimum 1)
+        const totalTransport = 
+            (this.state.transport?.carts || 0) + 
+            (this.state.transport?.wagons || 0) * 2 + 
+            (this.state.transport?.trains || 0) * 5;
+        
+        // If no transport capacity, user must manually transport
         if (totalTransport === 0) return;
         
-        // Get current theme item names
+        // Transport happens every second based on capacity
+        const now = Date.now();
+        const cooldown = 1000; // 1 second in milliseconds
+        if (!this.state.transport.lastTransportTime) {
+            this.state.transport.lastTransportTime = 0;
+        }
+        
+        if (now - this.state.transport.lastTransportTime < cooldown) {
+            return; // Still in cooldown
+        }
+        
+        // Update last transport time
+        this.state.transport.lastTransportTime = now;
+        
+        // Get current theme item names and their values (for prioritization)
         const rebirths = this.state.city?.rebirths || 0;
         const theme = this.rebirthThemes?.getTheme(rebirths);
-        const themeItemNames = {
-            basic: theme?.crafting?.basic?.result || 'Deployable App',
-            intermediate: theme?.crafting?.intermediate?.result || 'SaaS Platform',
-            advanced: theme?.crafting?.advanced?.result || 'Enterprise Product',
-            premium: theme?.crafting?.premium?.result || 'Unicorn Startup'
+        
+        const tierInfo = {
+            premium: { 
+                name: theme?.crafting?.premium?.result || 'Unicorn Startup',
+                value: 120,
+                priority: 4
+            },
+            advanced: { 
+                name: theme?.crafting?.advanced?.result || 'Enterprise Product',
+                value: 30,
+                priority: 3
+            },
+            intermediate: { 
+                name: theme?.crafting?.intermediate?.result || 'SaaS Platform',
+                value: 9,
+                priority: 2
+            },
+            basic: { 
+                name: theme?.crafting?.basic?.result || 'Deployable App',
+                value: 3,
+                priority: 1
+            }
         };
         
+        // Sort tiers by priority (most expensive first)
+        const sortedTiers = Object.keys(tierInfo).sort((a, b) => 
+            tierInfo[b].priority - tierInfo[a].priority
+        );
+        
+        let remainingCapacity = totalTransport;
         let transported = false;
         
-        // Try each tier that's enabled (transport all items at once for efficiency)
-        for (const [tier, enabled] of Object.entries(this.state.autoTransport)) {
-            if (!enabled) continue;
+        // Transport items starting with most valuable, up to capacity
+        for (const tier of sortedTiers) {
+            if (remainingCapacity <= 0) break;
+            if (!this.state.autoTransport[tier]) continue;
             
-            const itemName = themeItemNames[tier];
-            const factoryAmount = this.state.factory?.finished?.[itemName] || 0;
+            const craftedAmount = this.state.crafted?.[tier] || 0;
+            if (craftedAmount <= 0) continue;
             
-            if (factoryAmount > 0) {
-                // Move ALL items of this tier from factory to city
-                this.state.factory.finished[itemName] = 0;
+            // Transport as many as we can (up to capacity)
+            const amountToTransport = Math.min(craftedAmount, remainingCapacity);
+            
+            if (amountToTransport > 0) {
+                // Move items from crafted to city
+                this.state.crafted[tier] -= amountToTransport;
+                
+                const itemName = tierInfo[tier].name;
                 if (!this.state.cityInventory.finished[itemName]) {
                     this.state.cityInventory.finished[itemName] = 0;
                 }
-                this.state.cityInventory.finished[itemName] += factoryAmount;
+                this.state.cityInventory.finished[itemName] += amountToTransport;
                 
-                // Decrease crafted inventory counter
-                this.state.crafted[tier] = Math.max(0, (this.state.crafted[tier] || 0) - factoryAmount);
-                
+                remainingCapacity -= amountToTransport;
                 transported = true;
             }
         }
@@ -1590,6 +1658,22 @@ class GameEngine {
     tryAutoCraft() {
         if (!this.state.autoCraft) return;
         
+        // Add cooldown - auto-craft only happens every 2 seconds (can be improved by automation lab)
+        const now = Date.now();
+        if (!this.state.lastAutoCraftTime) {
+            this.state.lastAutoCraftTime = 0;
+        }
+        
+        // Automation Lab reduces cooldown: Base 2s, -200ms per level (max 1s at level 5+)
+        const automationLab = this.state.city.automationLab || 0;
+        const cooldown = Math.max(1000, 2000 - (automationLab * 200));
+        
+        if (now - this.state.lastAutoCraftTime < cooldown) {
+            return; // Still in cooldown
+        }
+        
+        this.state.lastAutoCraftTime = now;
+        
         // Check which tiers are unlocked and try crafting from highest to lowest
         const tierUnlocks = {
             premium: this.state.unlock_autocraft_premium,
@@ -1598,16 +1682,15 @@ class GameEngine {
             basic: this.state.unlock_autocraft_basic
         };
         
-        // Automation Lab increases auto-craft speed
-        // Level 0: 1 craft per tick, Level 1: 2 crafts, Level 2: 3 crafts, etc.
-        const automationLab = this.state.city.automationLab || 0;
-        const craftsPerTick = 1 + automationLab;
+        // Automation Lab increases crafts per cycle
+        // Level 0: 1 craft, Level 1: 2 crafts, Level 2: 3 crafts, etc.
+        const craftsPerCycle = 1 + Math.floor(automationLab / 2);
         
         const tiers = ['premium', 'advanced', 'intermediate', 'basic'];
         let craftsMade = 0;
         
-        // Try to craft multiple items per tick based on automation lab level
-        while (craftsMade < craftsPerTick) {
+        // Try to craft multiple items per cycle based on automation lab level
+        while (craftsMade < craftsPerCycle) {
             let craftedThisCycle = false;
             for (const tier of tiers) {
                 if (tierUnlocks[tier] && this.craftItem(tier)) {
@@ -1746,39 +1829,60 @@ class GameEngine {
 
     // Manual transport: move one best item based on value/weight
     transportNext() {
-        if (!this.newResourceManager) return false;
-        
-        // Get current theme item names
+        // Get current theme item names and their values (for prioritization)
         const rebirths = this.state.city?.rebirths || 0;
         const theme = this.rebirthThemes?.getTheme(rebirths);
-        const themeItemNames = {
-            'basic': theme?.crafting?.basic?.result || 'Deployable App',
-            'intermediate': theme?.crafting?.intermediate?.result || 'SaaS Platform',
-            'advanced': theme?.crafting?.advanced?.result || 'Enterprise Product',
-            'premium': theme?.crafting?.premium?.result || 'Unicorn Startup'
+        
+        const tierInfo = {
+            premium: { 
+                name: theme?.crafting?.premium?.result || 'Unicorn Startup',
+                value: 120,
+                priority: 4
+            },
+            advanced: { 
+                name: theme?.crafting?.advanced?.result || 'Enterprise Product',
+                value: 30,
+                priority: 3
+            },
+            intermediate: { 
+                name: theme?.crafting?.intermediate?.result || 'SaaS Platform',
+                value: 9,
+                priority: 2
+            },
+            basic: { 
+                name: theme?.crafting?.basic?.result || 'Deployable App',
+                value: 3,
+                priority: 1
+            }
         };
         
-        // Create reverse mapping
-        const craftedItemsReverse = {};
-        for (const [tier, itemName] of Object.entries(themeItemNames)) {
-            craftedItemsReverse[itemName] = tier;
+        // Sort tiers by priority (most expensive first)
+        const sortedTiers = Object.keys(tierInfo).sort((a, b) => 
+            tierInfo[b].priority - tierInfo[a].priority
+        );
+        
+        // Find the first tier with available items that has transport enabled
+        for (const tier of sortedTiers) {
+            // Check if transport is enabled for this tier
+            if (!this.state.autoTransport?.[tier]) continue;
+            
+            const craftedAmount = this.state.crafted?.[tier] || 0;
+            if (craftedAmount > 0) {
+                // Transport 1 item
+                this.state.crafted[tier] -= 1;
+                
+                const itemName = tierInfo[tier].name;
+                if (!this.state.cityInventory.finished[itemName]) {
+                    this.state.cityInventory.finished[itemName] = 0;
+                }
+                this.state.cityInventory.finished[itemName] += 1;
+                
+                this.playSound('transport');
+                return true;
+            }
         }
         
-        // Use smallest capacity unit (1 weight) as click-based transport
-        const result = this.newResourceManager.transportOne(1, this.state.autoTransport);
-        if (result.moved) {
-            // If a crafted item was transported, decrease the crafted counter
-            if (result.item && result.tier === 'finished') {
-                const craftTier = craftedItemsReverse[result.item];
-                if (craftTier) {
-                    this.state.crafted[craftTier] = Math.max(0, (this.state.crafted[craftTier] || 0) - 1);
-                }
-            }
-            
-            this.playSound('transport');
-            return true;
-        }
-        return false;
+        return false; // Nothing to transport
     }
 
     // Sell one finished good currently in city inventory (best value by default)

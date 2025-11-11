@@ -1872,17 +1872,46 @@ body {
 }
 
 .atmosphere-sterile h1, .atmosphere-sterile h2, .atmosphere-sterile .resource-label {
-    color: #333;
+    color: #1e293b;
 }
 
 .atmosphere-sterile .resource-value {
-    color: #666;
+    color: #334155;
 }
 
 .atmosphere-sterile .action-btn {
     background: linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 100%);
-    color: #333;
-    border-color: #999;
+    color: #1e293b;
+    border-color: #64748b;
+}
+
+.atmosphere-sterile .btn-title, .atmosphere-sterile .btn-cost, .atmosphere-sterile .btn-description {
+    color: #1e293b;
+}
+
+.atmosphere-sterile .panel-title {
+    color: #1e293b;
+}
+
+.atmosphere-sterile p, .atmosphere-sterile span, .atmosphere-sterile div {
+    color: #334155;
+}
+
+.atmosphere-sterile .tab-btn {
+    background: rgba(30, 41, 59, 0.9);
+    color: #f1f5f9;
+    border-color: #475569;
+}
+
+.atmosphere-sterile .tab-btn.active {
+    background: rgba(15, 23, 42, 1);
+    color: #ffffff;
+    border-color: #1e293b;
+}
+
+.atmosphere-sterile .tab-btn:hover {
+    background: rgba(51, 65, 85, 0.95);
+    color: #ffffff;
 }
 
 /* Void - The End (Rebirth 9) */
