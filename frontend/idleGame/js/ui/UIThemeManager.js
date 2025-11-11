@@ -307,8 +307,10 @@ class UIThemeManager {
             const basicBtn = document.getElementById('craft-basic-btn');
             if (basicBtn) {
                 const titleDiv = basicBtn.querySelector('.btn-title');
+                const costDiv = basicBtn.querySelector('.btn-cost');
                 const descDiv = basicBtn.querySelector('.btn-description');
                 if (titleDiv) titleDiv.textContent = `${crafting.basic.emoji} ${crafting.basic.title}`;
+                if (costDiv) costDiv.innerHTML = `Needs: <span>10</span> ${resources.stone.name}`;
                 if (descDiv) descDiv.textContent = `→ ${crafting.basic.result} (Sells for 3 ${resources.gold.name.toLowerCase()})`;
             }
         }
@@ -317,8 +319,10 @@ class UIThemeManager {
             const intBtn = document.getElementById('craft-intermediate-btn');
             if (intBtn) {
                 const titleDiv = intBtn.querySelector('.btn-title');
+                const costDiv = intBtn.querySelector('.btn-cost');
                 const descDiv = intBtn.querySelector('.btn-description');
                 if (titleDiv) titleDiv.textContent = `${crafting.intermediate.emoji} ${crafting.intermediate.title}`;
+                if (costDiv) costDiv.innerHTML = `Needs: <span>1</span> ${crafting.basic.result} + <span>5</span> ${resources.coal.name}`;
                 if (descDiv) descDiv.textContent = `→ ${crafting.intermediate.result} (Sells for 9 ${resources.gold.name.toLowerCase()})`;
             }
         }
@@ -327,8 +331,10 @@ class UIThemeManager {
             const advBtn = document.getElementById('craft-advanced-btn');
             if (advBtn) {
                 const titleDiv = advBtn.querySelector('.btn-title');
+                const costDiv = advBtn.querySelector('.btn-cost');
                 const descDiv = advBtn.querySelector('.btn-description');
                 if (titleDiv) titleDiv.textContent = `${crafting.advanced.emoji} ${crafting.advanced.title}`;
+                if (costDiv) costDiv.innerHTML = `Needs: <span>1</span> ${crafting.intermediate.result} + <span>3</span> ${resources.iron.name}`;
                 if (descDiv) descDiv.textContent = `→ ${crafting.advanced.result} (Sells for 30 ${resources.gold.name.toLowerCase()})`;
             }
         }
@@ -337,8 +343,10 @@ class UIThemeManager {
             const premBtn = document.getElementById('craft-premium-btn');
             if (premBtn) {
                 const titleDiv = premBtn.querySelector('.btn-title');
+                const costDiv = premBtn.querySelector('.btn-cost');
                 const descDiv = premBtn.querySelector('.btn-description');
                 if (titleDiv) titleDiv.textContent = `${crafting.premium.emoji} ${crafting.premium.title}`;
+                if (costDiv) costDiv.innerHTML = `Needs: <span>1</span> ${crafting.advanced.result} + <span>2</span> ${resources.silver.name}`;
                 if (descDiv) descDiv.textContent = `→ ${crafting.premium.result} (Sells for 120 ${resources.gold.name.toLowerCase()})`;
             }
         }
