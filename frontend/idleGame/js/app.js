@@ -157,6 +157,8 @@ class IndustrialEmpireApp {
         this.bindButton('build-market-btn', () => this.gameEngine.buildCity('market'));
         this.bindButton('build-university-btn', () => this.gameEngine.buildCity('university'));
         this.bindButton('build-sales-dept-btn', () => this.gameEngine.buildCity('salesDepartment'));
+        this.bindButton('build-mining-academy-btn', () => this.gameEngine.buildCity('miningAcademy'));
+        this.bindButton('build-automation-lab-btn', () => this.gameEngine.buildCity('automationLab'));
     this.bindButton('rebirth-btn', () => this.gameEngine.rebirth());
         
         // Research tab actions
@@ -199,6 +201,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     window.app = new IndustrialEmpireApp();
     await window.app.initialize();
+    
+    // Wait a bit to ensure all DOM elements are ready
+    setTimeout(() => {
+        // Initialize Developer Menu
+        if (window.DeveloperMenu && window.app.gameEngine) {
+            window.devMenu = new DeveloperMenu(window.app.gameEngine);
+            console.log('Developer Menu initialized');
+        } else {
+            console.error('DeveloperMenu class not found or gameEngine not available');
+            console.log('window.DeveloperMenu:', window.DeveloperMenu);
+            console.log('window.app.gameEngine:', window.app.gameEngine);
+        }
+    }, 100);
+    
     // Initialize UI toggles from state
     // UI state initialization removed - no longer using checkbox
 });

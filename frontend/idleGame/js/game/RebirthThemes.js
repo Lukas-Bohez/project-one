@@ -802,9 +802,11 @@ class RebirthThemes {
                 description: "You wake up in a hospital. Was it all a dream? Are you dying?",
                 atmosphere: "sterile",
                 colorScheme: {
-                    primary: "#ffffff",
-                    secondary: "#e0e0e0",
-                    background: "linear-gradient(135deg, #f5f5f5, #e8e8e8, #d0d0d0)"
+                    primary: "#1e3a8a",
+                    secondary: "#2563eb",
+                    background: "linear-gradient(135deg, #f5f5f5, #e8e8e8, #d0d0d0)",
+                    textColor: "#1e293b",
+                    textColorSecondary: "#334155"
                 },
                 resources: {
                     stone: { name: "Strength", emoji: "💪", description: "Physical energy" },
@@ -991,6 +993,61 @@ class RebirthThemes {
                 },
                 rebirthButton: { text: "Euthanasia", emoji: "☠️" },
                 isEnding: true
+            },
+            
+            // Rebirth 10 - The Final End (Golden Chest Only)
+            {
+                id: 10,
+                name: "✨ The End ✨",
+                description: "Beyond the void, only the golden reward remains...",
+                tabs: {
+                    city: { name: "✨ Eternity", emoji: "✨" },
+                    factory: { name: "✨ Nothing", emoji: "✨" },
+                    transport: { name: "✨ Still", emoji: "✨" },
+                    resources: { name: "✨ Void", emoji: "✨" }
+                },
+                resources: {
+                    basic: { name: "✨ Memory", emoji: "✨", source: "The Past" },
+                    intermediate: { name: "✨ Dream", emoji: "✨", source: "The Void" }
+                },
+                workers: {
+                    gatherer: { name: "✨ Ghost", emoji: "👻" },
+                    crafter: { name: "✨ Echo", emoji: "👤" }
+                },
+                crafting: {
+                    basic: { 
+                        name: "✨ Sparkle",
+                        result: "✨ Sparkle",
+                        emoji: "✨"
+                    },
+                    intermediate: { 
+                        name: "✨ Glimmer",
+                        result: "✨ Glimmer",
+                        emoji: "✨"
+                    },
+                    advanced: { 
+                        name: "✨ Shine",
+                        result: "✨ Shine",
+                        emoji: "✨"
+                    },
+                    premium: { 
+                        name: "✨ Radiance",
+                        result: "✨ Radiance",
+                        emoji: "✨"
+                    }
+                },
+                transport: {
+                    basic: { name: "✨ Drift", emoji: "✨" },
+                    intermediate: { name: "✨ Float", emoji: "✨" },
+                    advanced: { name: "✨ Glide", emoji: "✨" }
+                },
+                upgrades: {
+                    efficiency: "✨ Transcendence",
+                    speed: "✨ Timelessness"
+                },
+                rebirthButton: { text: "✨ Final Rest", emoji: "✨" },
+                isEnding: true,
+                hideAllUI: true  // Special flag to hide everything except golden chest
             }
         ];
     }

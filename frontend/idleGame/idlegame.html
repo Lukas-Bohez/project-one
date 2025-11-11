@@ -20,11 +20,6 @@
             <h1 id="game-title" onclick="window.location.href='../index.html';">🏭 Industrial Empire</h1>
             <p style="font-size: 0.8em; opacity: 0.8; margin: 2px 0;">by Oroka Conner</p>
             
-            <!-- Buy Me a Coffee Button -->
-            <div style="margin: 8px 0;">
-                <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="OrokaConner" data-color="#2c6fb8" data-emoji="☕"  data-font="Inter" data-text="Support this game" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
-            </div>
-            
             <div class="resource-display">
                 <div class="resource-item stone">
                     <span id="stone-icon" class="resource-icon">🪨</span>
@@ -778,6 +773,234 @@
                 <span id="user-status" style="display: none;"></span>
             </div>
         </footer>
+        
+        <!-- Bottom Section: Support & Developer Menu -->
+        <div style="text-align: center; padding: 20px 0; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 20px;">
+            <!-- Buy Me a Coffee Button -->
+            <div style="margin-bottom: 15px;">
+                <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="OrokaConner" data-color="#2c6fb8" data-emoji="☕"  data-font="Inter" data-text="Support this game" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
+            </div>
+            
+            <!-- Developer Menu Button -->
+            <button id="dev-menu-btn" class="control-btn" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border: 1px solid rgba(255,255,255,0.2);" onclick="openDevMenuDirect()">
+                🔧 Developer Menu
+            </button>
+            
+            <script>
+                function openDevMenuDirect() {
+                    console.log('openDevMenuDirect called');
+                    const modal = document.getElementById('dev-menu-modal');
+                    console.log('Modal found:', modal);
+                    if (modal) {
+                        modal.style.display = 'flex';
+                        modal.style.alignItems = 'center';
+                        modal.style.justifyContent = 'center';
+                        console.log('Modal should now be visible');
+                    } else {
+                        alert('Modal element not found! Check console.');
+                    }
+                }
+                
+                function closeDevMenuDirect() {
+                    console.log('closeDevMenuDirect called');
+                    const modal = document.getElementById('dev-menu-modal');
+                    if (modal) {
+                        modal.style.display = 'none';
+                    }
+                    // Clear password input
+                    const passwordInput = document.getElementById('dev-password');
+                    if (passwordInput) passwordInput.value = '';
+                    // Hide error
+                    const errorMsg = document.getElementById('dev-password-error');
+                    if (errorMsg) errorMsg.style.display = 'none';
+                }
+                
+                function unlockDevMenu() {
+                    console.log('unlockDevMenu called');
+                    const passwordInput = document.getElementById('dev-password');
+                    const errorMsg = document.getElementById('dev-password-error');
+                    const passwordSection = document.getElementById('dev-password-section');
+                    const contentSection = document.getElementById('dev-menu-content');
+                    
+                    if (!passwordInput) return;
+                    
+                    const enteredPassword = passwordInput.value;
+                    const correctPassword = "CapitalismIsDead";
+                    
+                    if (enteredPassword === correctPassword) {
+                        // Correct password!
+                        console.log('Password correct!');
+                        if (passwordSection) passwordSection.style.display = 'none';
+                        if (contentSection) contentSection.style.display = 'block';
+                        if (errorMsg) errorMsg.style.display = 'none';
+                        
+                        // Update selector to current rebirth
+                        if (window.app && window.app.gameEngine) {
+                            const selector = document.getElementById('rebirth-selector');
+                            const currentRebirths = window.app.gameEngine.state?.city?.rebirths || 0;
+                            if (selector) selector.value = currentRebirths.toString();
+                        }
+                    } else {
+                        // Wrong password
+                        console.log('Wrong password');
+                        if (errorMsg) errorMsg.style.display = 'block';
+                        
+                        // Shake animation
+                        if (passwordInput) {
+                            passwordInput.style.animation = 'shake 0.5s';
+                            setTimeout(() => {
+                                passwordInput.style.animation = '';
+                            }, 500);
+                        }
+                    }
+                }
+                
+                function applyRebirthDirect() {
+                    console.log('applyRebirthDirect called');
+                    const selector = document.getElementById('rebirth-selector');
+                    if (!selector || !window.app || !window.app.gameEngine) {
+                        alert('Game engine not available');
+                        return;
+                    }
+                    
+                    const gameEngine = window.app.gameEngine;
+                    const targetRebirth = parseInt(selector.value);
+                    const currentRebirth = gameEngine.state?.city?.rebirths || 0;
+                    
+                    if (targetRebirth === currentRebirth) {
+                        if (gameEngine.showNotification) {
+                            gameEngine.showNotification('ℹ️ Already at this rebirth level');
+                        }
+                        return;
+                    }
+                    
+                    // Set the rebirth count
+                    gameEngine.state.city.rebirths = targetRebirth;
+                    
+                    // Force theme update
+                    if (gameEngine.themeManager) {
+                        gameEngine.themeManager.currentTheme = null; // Force refresh
+                        gameEngine.themeManager.updateTheme();
+                    }
+                    
+                    // Update UI
+                    if (gameEngine.updateUI) {
+                        gameEngine.updateUI();
+                    }
+                    
+                    // Show notification
+                    if (gameEngine.showNotification) {
+                        const themeName = gameEngine.rebirthThemes?.getTheme(targetRebirth)?.name || 'Unknown';
+                        gameEngine.showNotification(`🔧 Jumped to Rebirth ${targetRebirth}: ${themeName}`);
+                    }
+                    
+                    console.log(`Developer: Set rebirth to ${targetRebirth}`);
+                    
+                    // Close menu
+                    closeDevMenuDirect();
+                }
+                
+                // Back to start function for ending screen
+                function backToStart() {
+                    if (!window.app || !window.app.gameEngine) {
+                        alert('Game engine not available');
+                        return;
+                    }
+                    
+                    const gameEngine = window.app.gameEngine;
+                    
+                    // Set rebirth back to 0
+                    gameEngine.state.city.rebirths = 0;
+                    
+                    // Force theme update
+                    if (gameEngine.themeManager) {
+                        gameEngine.themeManager.currentTheme = null; // Force refresh
+                        gameEngine.themeManager.updateTheme();
+                    }
+                    
+                    // Update UI
+                    if (gameEngine.updateUI) {
+                        gameEngine.updateUI();
+                    }
+                    
+                    // Show notification
+                    if (gameEngine.showNotification) {
+                        gameEngine.showNotification('🔄 Returned to the beginning');
+                    }
+                    
+                    console.log('Developer: Returned to Rebirth 0');
+                }
+                
+                // Add shake animation CSS
+                const shakeStyle = document.createElement('style');
+                shakeStyle.textContent = `
+                    @keyframes shake {
+                        0%, 100% { transform: translateX(0); }
+                        10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+                        20%, 40%, 60%, 80% { transform: translateX(10px); }
+                    }
+                `;
+                document.head.appendChild(shakeStyle);
+            </script>
+            
+            <!-- Final Rebirth Reward Message (hidden by default) -->
+            <div id="final-rebirth-reward" style="display: none; margin-top: 15px; padding: 15px; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); border-radius: 12px; border: 2px solid #92400e; box-shadow: 0 8px 32px rgba(251, 191, 36, 0.4);">
+                <p style="margin: 0; font-weight: bold; font-size: 1.1em; color: #1e293b;">🎉 Congratulations on reaching the end!</p>
+                <p style="margin: 8px 0 0 0; color: #1e293b;">Developer Menu Password: <span style="font-weight: bold; font-family: monospace; font-size: 1.1em; color: #7c2d12;">CapitalismIsDead</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Developer Menu Modal -->
+    <div id="dev-menu-modal" onclick="if(event.target === this) closeDevMenuDirect()">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>🔧 Developer Menu</h3>
+                <span class="close-modal" id="close-dev-menu" onclick="closeDevMenuDirect()" style="cursor: pointer;">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="dev-password-section">
+                    <p style="text-align: center; margin-bottom: 15px;">Enter the password to access developer tools:</p>
+                    <div class="form-group">
+                        <input type="password" id="dev-password" placeholder="Enter password" onkeypress="if(event.key === 'Enter') unlockDevMenu()" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #e0e6ed; font-size: 1rem;">
+                    </div>
+                    <button id="dev-unlock-btn" class="control-btn" onclick="unlockDevMenu()" style="width: 100%; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                        Unlock
+                    </button>
+                    <p id="dev-password-error" style="color: #ef4444; text-align: center; margin-top: 10px; display: none;">Incorrect password!</p>
+                    <p style="text-align: center; margin-top: 15px; font-size: 0.9em; opacity: 0.8;">Hint: Reach the final rebirth to receive the password as a reward</p>
+                </div>
+                
+                <div id="dev-menu-content" style="display: none;">
+                    <p style="text-align: center; margin-bottom: 20px; color: #4ade80; font-weight: bold;">🔓 Developer Access Granted</p>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: bold;">Jump to Rebirth:</label>
+                        <select id="rebirth-selector" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #e0e6ed; font-size: 1rem;">
+                            <option value="0">Rebirth 0 - Tech Empire</option>
+                            <option value="1">Rebirth 1 - Post-Dot-Com</option>
+                            <option value="2">Rebirth 2 - Industrial Age</option>
+                            <option value="3">Rebirth 3 - Deindustrialization</option>
+                            <option value="4">Rebirth 4 - Retail Collapse</option>
+                            <option value="5">Rebirth 5 - Post-Collapse</option>
+                            <option value="6">Rebirth 6 - Subsistence</option>
+                            <option value="7">Rebirth 7 - Desolation</option>
+                            <option value="8">Rebirth 8 - Medical Triage</option>
+                            <option value="9">Rebirth 9 - The Void</option>
+                            <option value="10">Rebirth 10 - The End</option>
+                        </select>
+                    </div>
+                    
+                    <button id="apply-rebirth-btn" class="control-btn" onclick="applyRebirthDirect()" style="width: 100%; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); margin-bottom: 10px;">
+                        Apply Rebirth
+                    </button>
+                    
+                    <button id="close-dev-menu-btn" class="control-btn" onclick="closeDevMenuDirect()" style="width: 100%; background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Login Modal -->
@@ -816,6 +1039,42 @@
     </div>
         <div class="emptyspace"></div>
 
+    <!-- Rebirth 10 Ending Screen (Full Screen Overlay) -->
+    <div id="ending-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%); z-index: 9999; align-items: center; justify-content: center;">
+        <div style="text-align: center; max-width: 600px; padding: 40px;">
+            <div style="font-size: 4em; margin-bottom: 20px; animation: pulse 2s ease-in-out infinite;">
+                ✨🏆✨
+            </div>
+            <h1 style="font-size: 3em; margin: 0 0 20px 0; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #fbbf24 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: bold; text-shadow: 0 0 40px rgba(251, 191, 36, 0.5);">
+                ✨ The End ✨
+            </h1>
+            <p style="font-size: 1.3em; color: #e2e8f0; margin-bottom: 30px; line-height: 1.6;">
+                You have witnessed the complete cycle.<br>
+                From empire to void, from everything to nothing.
+            </p>
+            <div style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); padding: 30px; border-radius: 16px; border: 3px solid #92400e; box-shadow: 0 0 60px rgba(251, 191, 36, 0.6), inset 0 0 30px rgba(255, 255, 255, 0.1); margin-top: 40px;">
+                <p style="margin: 0 0 15px 0; font-weight: bold; font-size: 1.4em; color: #1e293b; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+                    🎉 Congratulations, Developer! 🎉
+                </p>
+                <p style="margin: 0 0 10px 0; color: #1e293b; font-size: 1.1em;">
+                    Your reward for reaching the end:
+                </p>
+                <div style="background: rgba(0, 0, 0, 0.2); padding: 15px; border-radius: 8px; margin-top: 15px;">
+                    <p style="margin: 0 0 8px 0; color: #fef3c7; font-weight: 600;">Developer Menu Password:</p>
+                    <p style="margin: 0; font-family: monospace; font-size: 1.5em; font-weight: bold; color: #ffffff; letter-spacing: 2px; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);">
+                        CapitalismIsDead
+                    </p>
+                </div>
+                <p style="margin: 20px 0 0 0; color: #451a03; font-size: 0.95em; font-style: italic;">
+                    Use this password to access the developer menu and jump between rebirths.
+                </p>
+            </div>
+            <button onclick="backToStart()" style="margin-top: 30px; padding: 15px 40px; font-size: 1.2em; font-weight: bold; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4); transition: all 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 30px rgba(59, 130, 246, 0.6)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 20px rgba(59, 130, 246, 0.4)'">
+                🔄 Back to Start
+            </button>
+        </div>
+    </div>
+
     <!-- JavaScript Modules -->
     <script src="js/game/ResourceManager.js"></script>
     <script src="js/game/UpgradeSystem.js"></script>
@@ -827,6 +1086,7 @@
     <script src="js/ui/UIThemeManager.js"></script>
     <script src="js/game/GameEngine.js"></script>
     <script src="js/api/ApiClient.js"></script>
+    <script src="js/devMenu.js"></script>
     <script src="js/app.js"></script>
     <script src="js/debug.js"></script>
     <script src="../js/lofi.js" defer></script>
