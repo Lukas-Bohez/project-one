@@ -544,6 +544,63 @@ html, body {
     font-weight: 600;
 }
 
+/* Idle Game Link */
+.idle-game-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    text-decoration: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.idle-game-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(59, 130, 246, 0.4);
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.idle-game-link:active {
+    transform: translateY(0);
+}
+
+.idle-game-icon {
+    font-size: 1.5em;
+    animation: bounce 2s ease-in-out infinite;
+}
+
+.idle-game-text {
+    font-size: 1em;
+    letter-spacing: 0.3px;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .idle-game-link {
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+    box-shadow: 0 4px 15px rgba(96, 165, 250, 0.3);
+}
+
+[data-theme="dark"] .idle-game-link:hover {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    box-shadow: 0 6px 25px rgba(96, 165, 250, 0.4);
+}
+
 /* Video Info Section */
 .video-info {
     background-color: var(--bg-secondary);
