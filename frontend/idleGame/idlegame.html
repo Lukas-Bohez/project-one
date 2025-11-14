@@ -57,6 +57,7 @@
             <button id="tab-btn-transport" class="tab-btn" data-tab="transport">🚛 Transport</button>
             <button id="tab-btn-city" class="tab-btn" data-tab="city">🏙️ City</button>
             <button id="tab-btn-research" class="tab-btn" data-tab="research">🔬 Research</button>
+            <button id="tab-btn-arcade" class="tab-btn" data-tab="arcade">🎮 Arcade</button>
         </nav>
 
         <!-- Main Game Area -->
@@ -781,7 +782,73 @@
                     </div>
                 </div>
             </section>
+            
+            <!-- Arcade Tab -->
+            <section id="arcade-tab" class="tab-content">
+                <div class="panel-grid">
+                    <div class="panel">
+                        <h2>🎮 Retro Arcade</h2>
+                        <p style="margin-bottom: 15px; color: var(--text-secondary, #e2e8f0); opacity: 0.9;">Play classic DOS games to boost your idle game progress! Each hour of gameplay adds permanent bonuses.</p>
+                        
+                        <div id="arcade-games-container" class="action-buttons">
+                            <!-- Games will be dynamically populated here -->
+                        </div>
+                    </div>
+                    
+                    <div class="panel">
+                        <h2>📊 Arcade Stats & Bonuses</h2>
+                        <div class="resource-grid">
+                            <div class="resource-row">
+                                <span class="resource-type">Total Play Time:</span>
+                                <span id="arcade-total-time" class="resource-count">0h 0m</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Resource Bonus:</span>
+                                <span id="arcade-resource-bonus" class="resource-count">+0%</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Efficiency Bonus:</span>
+                                <span id="arcade-efficiency-bonus" class="resource-count">+0%</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Gold Bonus:</span>
+                                <span id="arcade-gold-bonus" class="resource-count">+0%</span>
+                            </div>
+                            <div class="resource-row">
+                                <span class="resource-type">Crafting Bonus:</span>
+                                <span id="arcade-crafting-bonus" class="resource-count">+0%</span>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 20px; padding: 15px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 8px;">
+                            <p style="margin: 0; font-size: 0.9em; color: var(--text-primary, #f1f5f9);"><strong style="color: var(--text-primary, #fbbf24);">💡 Tip:</strong> Playing games gives bonuses that stack up over time! Each game provides different bonuses. The idle game continues running while you play!</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
+
+        <!-- DOS Game Modal -->
+        <div id="dos-game-modal" class="modal" style="display: none;">
+            <div class="modal-content" style="max-width: 800px; width: 90%;">
+                <div class="modal-header">
+                    <h3 id="dos-game-title">🎮 Game</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="control-btn" onclick="toggleDosFullscreen()" style="padding: 8px 15px; font-size: 0.9em;">⛶ Fullscreen</button>
+                        <button class="close-modal" onclick="closeDosGame()">&times;</button>
+                    </div>
+                </div>
+                <div class="modal-body" style="padding: 0;">
+                    <div id="dosbox-container" style="width: 100%; display: flex; justify-content: center; align-items: center; background: #000; min-height: 400px;">
+                        <canvas id="dosbox" style="max-width: 100%; max-height: 400px;"></canvas>
+                    </div>
+                    <div style="padding: 15px; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.1);">
+                        <p id="dos-game-playtime" style="margin: 0; text-align: center; color: #94a3b8;">Play time: 0m 0s</p>
+                        <button onclick="closeDosGame()" class="control-btn" style="width: 100%; margin-top: 10px;">Close Game</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Game Controls -->
         <footer class="game-footer">
@@ -1099,12 +1166,206 @@
     </div>
 
     <!-- JavaScript Modules -->
+    <!-- js-dos library for DOS games -->
+    <script src="https://js-dos.com/6.22/current/js-dos.js"></script>
+    
+    <!-- Arcade Functions -->
+    <script>
+        let currentDosbox = null;
+        
+        function openDosGame(gameId) {
+            if (!window.app || !window.app.gameEngine || !window.app.gameEngine.arcadeManager) {
+                alert('Arcade system not initialized');
+                return;
+            }
+            
+            const arcadeManager = window.app.gameEngine.arcadeManager;
+            const game = arcadeManager.games[gameId];
+            
+            if (!game) {
+                alert('Game not found');
+                return;
+            }
+            
+            // Start tracking play time
+            arcadeManager.startGame(gameId);
+            
+            // Show modal
+            const modal = document.getElementById('dos-game-modal');
+            const title = document.getElementById('dos-game-title');
+            title.textContent = `🎮 ${game.name}`;
+            modal.style.display = 'flex';
+            
+            // Clear previous dosbox instance
+            const dosboxCanvas = document.getElementById('dosbox');
+            const dosboxContainer = document.getElementById('dosbox-container');
+            
+            // Completely clear container and reset styles
+            dosboxContainer.innerHTML = '';
+            dosboxContainer.style.cssText = 'width: 100%; display: flex; justify-content: center; align-items: center; background: #000; min-height: 400px;';
+            
+            // Create fresh canvas with forced centering
+            const newCanvas = document.createElement('canvas');
+            newCanvas.id = 'dosbox';
+            newCanvas.style.cssText = 'display: block; max-width: 100%; max-height: 400px; margin: 0 auto;';
+            dosboxContainer.appendChild(newCanvas);
+            
+            // Initialize js-dos with v6.22 API
+            Dos(newCanvas, {
+                wdosboxUrl: "https://js-dos.com/6.22/current/wdosbox.js",
+            }).ready((fs, main) => {
+                // Construct full URL with correct path
+                // Get the base URL and ensure we use the correct case for idleGame folder
+                const baseUrl = window.location.origin + '/idleGame/'; // Force correct capitalization
+                const gamePath = baseUrl + game.zipUrl;
+                
+                console.log('Loading game from:', gamePath);
+                console.log('Game relative path:', game.zipUrl);
+                
+                // Fetch and add the game zip file
+                fs.extract(gamePath).then(() => {
+                    console.log('Game extracted successfully, running:', game.executable);
+                    // Run the executable
+                    main(["-c", game.executable]);
+                }).catch((error) => {
+                    console.error('Error loading game:', error);
+                    console.error('Game path attempted:', gamePath);
+                    alert(`Failed to load game from: ${gamePath}\n\nError: ${error.message}\n\nMake sure:\n1. File exists: ${game.zipUrl}\n2. Web server can access it\n3. Check console for details`);
+                    closeDosGame();
+                });
+            });
+            
+            // Update playtime display
+            updateDosPlaytime(gameId);
+        }
+        
+        function closeDosGame() {
+            if (window.app && window.app.gameEngine && window.app.gameEngine.arcadeManager) {
+                window.app.gameEngine.arcadeManager.stopGame();
+            }
+            
+            // Exit fullscreen if active
+            if (document.fullscreenElement || document.webkitFullscreenElement || 
+                document.mozFullScreenElement || document.msFullscreenElement) {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+            
+            // Hide modal
+            const modal = document.getElementById('dos-game-modal');
+            modal.style.display = 'none';
+            
+            // Completely reset the container - this will be recreated on next open
+            const dosboxContainer = document.getElementById('dosbox-container');
+            if (dosboxContainer) {
+                dosboxContainer.innerHTML = '';
+                dosboxContainer.style.cssText = 'width: 100%; display: flex; justify-content: center; align-items: center; background: #000; min-height: 400px;';
+                
+                // Add placeholder canvas
+                const placeholderCanvas = document.createElement('canvas');
+                placeholderCanvas.id = 'dosbox';
+                placeholderCanvas.style.cssText = 'display: block; max-width: 100%; max-height: 400px; margin: 0 auto;';
+                dosboxContainer.appendChild(placeholderCanvas);
+            }
+            
+            currentDosbox = null;
+        }
+        
+        function toggleDosFullscreen() {
+            const modal = document.getElementById('dos-game-modal');
+            const canvas = document.getElementById('dosbox');
+            
+            if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement) {
+                // Enter fullscreen on the canvas directly
+                const elem = canvas;
+                
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) {
+                    elem.webkitRequestFullscreen();
+                } else if (elem.mozRequestFullScreen) {
+                    elem.mozRequestFullScreen();
+                } else if (elem.msRequestFullscreen) {
+                    elem.msRequestFullscreen();
+                }
+            } else {
+                // Exit fullscreen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        }
+        
+        // Handle fullscreen change events for all browsers
+        function handleFullscreenChange() {
+            const dosboxContainer = document.getElementById('dosbox-container');
+            const canvas = document.getElementById('dosbox');
+            const modal = document.getElementById('dos-game-modal');
+            
+            if (document.fullscreenElement || document.webkitFullscreenElement || 
+                document.mozFullScreenElement || document.msFullscreenElement) {
+                // Canvas is in fullscreen - fill entire screen while maintaining aspect ratio
+                if (canvas) {
+                    canvas.style.cssText = 'display: block; width: 100vw; height: 100vh; max-width: 100vw; max-height: 100vh; object-fit: contain; background-color: #000; margin: 0;';
+                }
+            } else {
+                // Not fullscreen - restore normal centered size
+                if (canvas) {
+                    canvas.style.cssText = 'display: block; max-width: 100%; max-height: 400px; margin: 0 auto;';
+                }
+                // Reset container
+                if (dosboxContainer) {
+                    dosboxContainer.style.cssText = 'width: 100%; display: flex; justify-content: center; align-items: center; background: #000; min-height: 400px;';
+                }
+            }
+        }
+        
+        // Add event listeners for all fullscreen change events
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+        
+        function updateDosPlaytime(gameId) {
+            if (!window.app || !window.app.gameEngine || !window.app.gameEngine.arcadeManager) {
+                return;
+            }
+            
+            const arcadeManager = window.app.gameEngine.arcadeManager;
+            const playtimeDisplay = document.getElementById('dos-game-playtime');
+            
+            if (arcadeManager.state.arcade.activeGame === gameId && playtimeDisplay) {
+                const playTime = arcadeManager.state.arcade.playTime[gameId] || 0;
+                const minutes = Math.floor(playTime / 60);
+                const seconds = Math.floor(playTime % 60);
+                playtimeDisplay.textContent = `Play time: ${minutes}m ${seconds}s`;
+                
+                // Update again in 1 second
+                setTimeout(() => updateDosPlaytime(gameId), 1000);
+            }
+        }
+    </script>
+    
     <script src="js/game/ResourceManager.js"></script>
     <script src="js/game/UpgradeSystem.js"></script>
     <script src="js/game/MarketSystem.js"></script>
     <script src="js/game/NewResourceManager.js"></script>
     <script src="js/game/RebirthThemes.js"></script>
     <script src="js/game/RebirthRewards.js"></script>
+    <script src="js/game/ArcadeManager.js"></script>
     <script src="js/save/SaveManager.js"></script>
     <script src="js/ui/UIManager.js"></script>
     <script src="js/ui/UIThemeManager.js"></script>

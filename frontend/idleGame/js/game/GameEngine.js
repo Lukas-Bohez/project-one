@@ -282,6 +282,12 @@ class GameEngine {
             this.rebirthRewards = new RebirthRewards();
             console.log('RebirthRewards initialized');
         }
+        
+        // Initialize Arcade Manager
+        if (window.ArcadeManager) {
+            this.arcadeManager = new ArcadeManager(this);
+            console.log('ArcadeManager initialized');
+        }
 
         // Start the main game loop
         this.tickInterval = setInterval(() => {
@@ -464,6 +470,11 @@ class GameEngine {
         // Calculate base production from workers
         this.updateMiningProduction(deltaTime);
         
+        // Update arcade manager (but don't apply bonuses to efficiency yet)
+        if (this.arcadeManager) {
+            this.arcadeManager.update(deltaTime);
+        }
+        
         // Update transport capacity usage early so penalties apply this tick
         this.updateTransport();
         
@@ -495,8 +506,31 @@ class GameEngine {
     }
     
     updateMiningProduction(deltaTime) {
+        // Get rebirth upgrade effects
+        const rebirthEffects = this.rebirthRewards ? 
+            this.rebirthRewards.getActiveEffects(this.state.rebirthUpgrades || {}) : 
+            { gatheringSpeed: 1, workerEfficiency: 1, quantumWorkerBonus: 1, doubleGatherChance: 0, megaGatherChance: 0, efficiencyBoost: 1, transcendenceBonus: 1 };
+        
+        // Get arcade bonuses
+        const arcadeBonuses = this.arcadeManager ? 
+            this.arcadeManager.getArcadeBonuses() : 
+            { resourceBonus: 1, efficiencyBonus: 1 };
+        
         // Base efficiency from global and mining
         let efficiency = this.state.efficiency.mining * this.state.efficiency.global;
+        
+        // Apply bonuses additively to avoid exponential growth
+        // Convert multipliers to additive bonuses
+        const gatheringBonus = (rebirthEffects.gatheringSpeed - 1);
+        const workerBonus = (rebirthEffects.workerEfficiency - 1);
+        const quantumBonus = (rebirthEffects.quantumWorkerBonus - 1);
+        const efficiencyBonus = (rebirthEffects.efficiencyBoost - 1);
+        const transcendenceBonus = (rebirthEffects.transcendenceBonus - 1);
+        const arcadeBonus = (arcadeBonuses.resourceBonus - 1) + (arcadeBonuses.efficiencyBonus - 1);
+        
+        // Sum all bonuses and apply as a single multiplier
+        const totalBonus = 1 + gatheringBonus + workerBonus + quantumBonus + efficiencyBonus + transcendenceBonus + arcadeBonus;
+        efficiency *= totalBonus;
         
         // Apply Mining Academy bonus (+15% per level)
         const miningAcademy = this.state.city.miningAcademy || 0;
@@ -509,8 +543,25 @@ class GameEngine {
             efficiency *= 1.5; // +50% from ad boost
         }
         
+        // Helper function to apply gathering chance bonuses
+        const applyGatherChance = (baseAmount) => {
+            let amount = baseAmount;
+            
+            // Check for mega gather (5x)
+            if (rebirthEffects.megaGatherChance > 0 && Math.random() < rebirthEffects.megaGatherChance) {
+                amount *= 5;
+            }
+            // Otherwise check for double gather (2x)
+            else if (rebirthEffects.doubleGatherChance > 0 && Math.random() < rebirthEffects.doubleGatherChance) {
+                amount *= 2;
+            }
+            
+            return amount;
+        };
+        
         // Stone mining
         let stoneProduced = this.state.workers.stoneMiners * efficiency * deltaTime;
+        stoneProduced = applyGatherChance(stoneProduced);
         
         // Apply double resources bonus
         if (this.state.ads.doubleResources.active) {
@@ -523,6 +574,7 @@ class GameEngine {
         
         // Coal mining (direct)
         let coalProduced = this.state.workers.coalMiners * efficiency * deltaTime;
+        coalProduced = applyGatherChance(coalProduced);
         if (this.state.ads.doubleResources.active) coalProduced *= 2;
         this.state.resources.coal += coalProduced;
         this.state.stats.totalResourcesMined.coal += coalProduced;
@@ -530,12 +582,14 @@ class GameEngine {
         
         // Iron mining (direct)
         let ironProduced = this.state.workers.ironMiners * efficiency * deltaTime;
+        ironProduced = applyGatherChance(ironProduced);
         if (this.state.ads.doubleResources.active) ironProduced *= 2;
         this.state.resources.iron += ironProduced;
         this.state.stats.totalResourcesMined.iron += ironProduced;
         
         // Silver mining (direct)
         let silverProduced = this.state.workers.silverMiners * efficiency * deltaTime;
+        silverProduced = applyGatherChance(silverProduced);
         if (this.state.ads.doubleResources.active) silverProduced *= 2;
         this.state.resources.silver += silverProduced;
         this.state.stats.totalResourcesMined.silver += silverProduced;
@@ -646,11 +700,11 @@ class GameEngine {
         // Police cost gold per second but reduce corruption
         // Changed from 50 to 0.5 gold/sec (30 gold/min per police officer)
         const policeCost = this.state.city.police * 0.5 * deltaTime;
-        if (this.state.resources.gold >= policeCost) {
+        if (this.state.resources.gold >= policeCost && policeCost > 0) {
             this.state.resources.gold -= policeCost;
             this.state.stats.totalGoldSpent += policeCost;
             this.state.city.corruption = Math.max(0, this.state.city.corruption - 1 * deltaTime);
-        } else {
+        } else if (this.state.city.police > 0) {
             // Can't afford police, corruption increases
             this.state.city.corruption = Math.min(100, this.state.city.corruption + 2 * deltaTime);
         }
@@ -668,21 +722,29 @@ class GameEngine {
             });
         }
         
+        // Get rebirth upgrade effects
+        const rebirthEffects = this.rebirthRewards ? 
+            this.rebirthRewards.getActiveEffects(this.state.rebirthUpgrades || {}) : 
+            { decayReduction: 1, decayGeneration: 1 };
+        
         // City decay system - REDESIGNED
         // Decay is ONLY generated by Security Guards (police), NOT by passive city growth
         // This makes reaching 100% decay much harder and requires active investment
         
-        // Only Security Guards generate decay
-        const decayGeneration = (this.state.city.police || 0) * 0.5; // Each guard generates 0.5 decay per second
+        // Only Security Guards generate decay (apply decay generation multiplier from rebirth upgrades)
+        const decayGeneration = (this.state.city.police || 0) * 0.5 * rebirthEffects.decayGeneration; // Each guard generates 0.5 decay per second
+        
+        // Apply decay reduction from rebirth upgrades
+        const adjustedDecayGeneration = decayGeneration * rebirthEffects.decayReduction;
         
         // Scale decay requirement with rebirths (each rebirth increases the challenge)
         const rebirthMultiplier = 1 + (this.state.city.rebirths * 0.5); // +50% per rebirth
         const adjustedMaxDecay = this.state.city.maxDecay * rebirthMultiplier;
         
         // Apply decay generation
-        if (decayGeneration > 0) {
+        if (adjustedDecayGeneration > 0) {
             this.state.city.decay = Math.min(adjustedMaxDecay, 
-                this.state.city.decay + decayGeneration * deltaTime);
+                this.state.city.decay + adjustedDecayGeneration * deltaTime);
         }
         
         // Store adjusted max for UI display
@@ -694,22 +756,36 @@ class GameEngine {
         
         // Track gold earned this tick for tax calculation
         const goldEarnedThisTick = this.state.stats.totalGoldEarned - (this.lastGoldEarned || 0);
-        if (goldEarnedThisTick > 0) {
+        if (goldEarnedThisTick > 0 && effectiveTaxRate > 0) {
             const taxAmount = goldEarnedThisTick * effectiveTaxRate;
-            this.state.resources.gold -= taxAmount;
-            this.state.stats.totalTaxesPaid += taxAmount;
+            // Only apply tax if we have enough gold (prevent going negative)
+            if (this.state.resources.gold >= taxAmount) {
+                this.state.resources.gold -= taxAmount;
+                this.state.stats.totalTaxesPaid += taxAmount;
+            } else {
+                // Tax what we can without going negative
+                const affordableTax = Math.max(0, this.state.resources.gold);
+                this.state.resources.gold -= affordableTax;
+                this.state.stats.totalTaxesPaid += affordableTax;
+            }
         }
         this.lastGoldEarned = this.state.stats.totalGoldEarned;
     }
     
     updateTransport() {
+        // Get rebirth upgrade effects for transport capacity
+        const rebirthEffects = this.rebirthRewards ? 
+            this.rebirthRewards.getActiveEffects(this.state.rebirthUpgrades || {}) : 
+            { transportCapacity: 1 };
+        
         // Calculate total transport capacity (reduced for better balance)
-        const capacity = 
+        const baseCapacity = 
             this.state.transport.carts * 1 +      // Was 10, now 1
             this.state.transport.wagons * 5 +     // Was 50, now 5
             this.state.transport.trains * 20;     // Was 200, now 20
-            
-        this.state.transport.capacity = capacity * this.state.efficiency.transport;
+        
+        // Apply transport capacity multiplier from rebirth upgrades
+        this.state.transport.capacity = baseCapacity * this.state.efficiency.transport * rebirthEffects.transportCapacity;
         
         // Estimate throughput demand based on current per-second production rates rather than stored stockpiles
         const totalProductionPerSec =
@@ -890,6 +966,11 @@ class GameEngine {
         if (cdb) cdb.style.width = Math.max(0, Math.min(100, decayPct)) + '%';
         
         this.updateElement('rebirths-count', (this.state.city.rebirths || 0).toString());
+        
+        // Update arcade stats if arcade manager exists
+        if (this.arcadeManager && window.app) {
+            window.app.updateArcadeStats();
+        }
         
         // Update global efficiency display (for mining/processing tabs)
         const globalEff = Math.round(this.state.efficiency.global * 100);
@@ -1340,7 +1421,7 @@ class GameEngine {
     }
     
     hireWorker(workerType) {
-        const costs = {
+        const baseCosts = {
             stoneMiner: 5,
             coalMiner: 25,
             ironMiner: 100,
@@ -1362,7 +1443,14 @@ class GameEngine {
             return false;
         }
         
-        const cost = costs[workerType];
+        // Apply building discount from rebirth upgrades
+        const rebirthEffects = this.rebirthRewards ? 
+            this.rebirthRewards.getActiveEffects(this.state.rebirthUpgrades || {}) : 
+            { buildingDiscount: 1 };
+        
+        const baseCost = baseCosts[workerType];
+        const cost = Math.ceil(baseCost * rebirthEffects.buildingDiscount);
+        
         if (this.state.resources.gold >= cost) {
             this.state.resources.gold -= cost;
             this.state.stats.totalGoldSpent += cost;
@@ -1370,7 +1458,7 @@ class GameEngine {
             
             this.playSound('hire');
             this.flashElement('gold-amount');
-            console.log(`Hired ${workerType} for ${cost} gold`);
+            console.log(`Hired ${workerType} for ${cost} gold (discount applied)`);
             return true;
         }
         return false;
@@ -1430,6 +1518,11 @@ class GameEngine {
         const recipe = recipes[tier];
         if (!recipe) return false;
         
+        // Get rebirth upgrade effects
+        const rebirthEffects = this.rebirthRewards ? 
+            this.rebirthRewards.getActiveEffects(this.state.rebirthUpgrades || {}) : 
+            { doubleCraftChance: 0, freeCraftChance: 0 };
+        
         // Check if we have the required resources
         for (const [resource, amount] of Object.entries(recipe.requires)) {
             if (resource === 'basic' || resource === 'intermediate' || resource === 'advanced' || resource === 'premium') {
@@ -1447,21 +1540,32 @@ class GameEngine {
             }
         }
         
-        // Consume resources
-        for (const [resource, amount] of Object.entries(recipe.requires)) {
-            if (resource === 'basic' || resource === 'intermediate' || resource === 'advanced' || resource === 'premium') {
-                this.state.crafted[resource] -= amount;
-            } else {
-                this.state.resources[resource] -= amount;
-                this.flashElement(`${resource}-amount`);
+        // Check for free craft chance
+        const isFree = rebirthEffects.freeCraftChance > 0 && Math.random() < rebirthEffects.freeCraftChance;
+        
+        // Consume resources (unless free craft proc'd)
+        if (!isFree) {
+            for (const [resource, amount] of Object.entries(recipe.requires)) {
+                if (resource === 'basic' || resource === 'intermediate' || resource === 'advanced' || resource === 'premium') {
+                    this.state.crafted[resource] -= amount;
+                } else {
+                    this.state.resources[resource] -= amount;
+                    this.flashElement(`${resource}-amount`);
+                }
             }
         }
         
+        // Calculate amount to produce (apply double craft chance)
+        let produceAmount = recipe.amount;
+        if (rebirthEffects.doubleCraftChance > 0 && Math.random() < rebirthEffects.doubleCraftChance) {
+            produceAmount *= 2;
+        }
+        
         // Produce crafted item - stays in crafted inventory until transported
-        this.state.crafted[recipe.produces] = (this.state.crafted[recipe.produces] || 0) + recipe.amount;
+        this.state.crafted[recipe.produces] = (this.state.crafted[recipe.produces] || 0) + produceAmount;
         
         this.playSound('build');
-        console.log(`Crafted ${tier}: ${recipe.name}`);
+        console.log(`Crafted ${tier}: ${recipe.name} (x${produceAmount})`);
         return true;
     }
     
@@ -1627,9 +1731,25 @@ class GameEngine {
         // Remove from city
         this.state.cityInventory.finished[itemName] -= 1;
         
-        // Add gold (with city bonuses applied)
+        // Get rebirth upgrade effects for gold multipliers
+        const rebirthEffects = this.rebirthRewards ? 
+            this.rebirthRewards.getActiveEffects(this.state.rebirthUpgrades || {}) : 
+            { goldMultiplier: 1, cosmicMultiplier: 1, sellingBonus: 1, transcendenceBonus: 1 };
+        
+        // Get arcade bonuses
+        const arcadeBonuses = this.arcadeManager ? 
+            this.arcadeManager.getArcadeBonuses() : 
+            { goldBonus: 1 };
+        
+        // Add gold (with city bonuses, rebirth upgrades, and arcade bonuses applied)
         const bankBonus = 1 + (this.state.city.banks * 0.2);
-        const finalValue = Math.floor(value * bankBonus);
+        let finalValue = value * bankBonus;
+        finalValue *= rebirthEffects.goldMultiplier;
+        finalValue *= rebirthEffects.cosmicMultiplier;
+        finalValue *= rebirthEffects.sellingBonus;
+        finalValue *= rebirthEffects.transcendenceBonus;
+        finalValue *= arcadeBonuses.goldBonus;
+        finalValue = Math.floor(finalValue);
         
         this.state.resources.gold += finalValue;
         this.state.stats.totalGoldEarned += finalValue;
@@ -1666,9 +1786,25 @@ class GameEngine {
         
         const value = sellValues[tier];
         
-        // Add gold (with city bonuses applied)
+        // Get rebirth upgrade effects for gold multipliers
+        const rebirthEffects = this.rebirthRewards ? 
+            this.rebirthRewards.getActiveEffects(this.state.rebirthUpgrades || {}) : 
+            { goldMultiplier: 1, cosmicMultiplier: 1, sellingBonus: 1, transcendenceBonus: 1 };
+        
+        // Get arcade bonuses
+        const arcadeBonuses = this.arcadeManager ? 
+            this.arcadeManager.getArcadeBonuses() : 
+            { goldBonus: 1 };
+        
+        // Add gold (with city bonuses, rebirth upgrades, and arcade bonuses applied)
         const bankBonus = 1 + (this.state.city.banks * 0.2);
-        const finalValue = Math.floor(value * bankBonus * cityAmount);
+        let finalValue = value * bankBonus * cityAmount;
+        finalValue *= rebirthEffects.goldMultiplier;
+        finalValue *= rebirthEffects.cosmicMultiplier;
+        finalValue *= rebirthEffects.sellingBonus;
+        finalValue *= rebirthEffects.transcendenceBonus;
+        finalValue *= arcadeBonuses.goldBonus;
+        finalValue = Math.floor(finalValue);
         
         // Remove ALL from city
         this.state.cityInventory.finished[itemName] = 0;
@@ -1707,21 +1843,34 @@ class GameEngine {
     tryAutoCraft() {
         if (!this.state.autoCraft) return;
         
-        // Add cooldown - auto-craft only happens every 2 seconds (can be improved by automation lab)
-        const now = Date.now();
-        if (!this.state.lastAutoCraftTime) {
-            this.state.lastAutoCraftTime = 0;
+        // Get rebirth upgrade effects
+        const rebirthEffects = this.rebirthRewards ? 
+            this.rebirthRewards.getActiveEffects(this.state.rebirthUpgrades || {}) : 
+            { instantCraftChance: 0, automationSpeedMultiplier: 1, extraAutoCrafts: 0 };
+        
+        // Check for instant craft (bypasses cooldown)
+        if (rebirthEffects.instantCraftChance > 0 && Math.random() < rebirthEffects.instantCraftChance) {
+            // Instant craft - no cooldown, no notification
+        } else {
+            // Add cooldown - auto-craft only happens every 2 seconds (can be improved by automation lab and rebirth upgrades)
+            const now = Date.now();
+            if (!this.state.lastAutoCraftTime) {
+                this.state.lastAutoCraftTime = 0;
+            }
+            
+            // Automation Lab reduces cooldown: Base 2s, -200ms per level (max 1s at level 5+)
+            const automationLab = this.state.city.automationLab || 0;
+            let cooldown = Math.max(1000, 2000 - (automationLab * 200));
+            
+            // Apply automation speed multiplier from rebirth upgrades
+            cooldown = cooldown / rebirthEffects.automationSpeedMultiplier;
+            
+            if (now - this.state.lastAutoCraftTime < cooldown) {
+                return; // Still in cooldown
+            }
+            
+            this.state.lastAutoCraftTime = now;
         }
-        
-        // Automation Lab reduces cooldown: Base 2s, -200ms per level (max 1s at level 5+)
-        const automationLab = this.state.city.automationLab || 0;
-        const cooldown = Math.max(1000, 2000 - (automationLab * 200));
-        
-        if (now - this.state.lastAutoCraftTime < cooldown) {
-            return; // Still in cooldown
-        }
-        
-        this.state.lastAutoCraftTime = now;
         
         // Check which tiers are unlocked and try crafting from highest to lowest
         const tierUnlocks = {
@@ -1733,12 +1882,15 @@ class GameEngine {
         
         // Automation Lab increases crafts per cycle
         // Level 0: 1 craft, Level 1: 2 crafts, Level 2: 3 crafts, etc.
-        const craftsPerCycle = 1 + Math.floor(automationLab / 2);
+        const baseCraftsPerCycle = 1 + Math.floor((this.state.city.automationLab || 0) / 2);
+        
+        // Add extra crafts from rebirth upgrades
+        const craftsPerCycle = baseCraftsPerCycle + rebirthEffects.extraAutoCrafts;
         
         const tiers = ['premium', 'advanced', 'intermediate', 'basic'];
         let craftsMade = 0;
         
-        // Try to craft multiple items per cycle based on automation lab level
+        // Try to craft multiple items per cycle based on automation lab level and upgrades
         while (craftsMade < craftsPerCycle) {
             let craftedThisCycle = false;
             for (const tier of tiers) {
@@ -2204,9 +2356,9 @@ class GameEngine {
         }
         
         // Render upgrades by tier
-        for (let tier = 1; tier <= 5; tier++) {
+        for (let tier = 1; tier <= 9; tier++) {
             const tierUpgrades = tiers[tier];
-            if (tierUpgrades.length === 0) continue;
+            if (!tierUpgrades || tierUpgrades.length === 0) continue;
             
             // Add tier header
             const tierHeader = document.createElement('div');
@@ -2351,11 +2503,21 @@ class GameEngine {
             }
         }
         
-        // Apply rebirth bonuses
+        // RESET efficiency multipliers to base 1.0 before applying rebirth bonuses
+        // This prevents exponential growth from stacking multipliers
+        this.state.efficiency.mining = 1.0;
+        this.state.efficiency.processing = 1.0;
+        this.state.efficiency.trading = 1.0;
+        this.state.efficiency.transport = 1.0;
+        this.state.efficiency.global = 1.0;
+        
+        // Now apply rebirth bonuses on clean base
         this.state.efficiency.mining *= (1 + rebirthBonus.mining);
         this.state.efficiency.processing *= (1 + rebirthBonus.processing);
         this.state.efficiency.trading *= (1 + rebirthBonus.trading);
         this.state.efficiency.transport *= (1 + rebirthBonus.transport);
+        
+        console.log(`🔄 Efficiency reset to base with rebirth bonuses: mining=${this.state.efficiency.mining}, processing=${this.state.efficiency.processing}`);
         
         // Safety check: Ensure gold is never negative after rebirth
         if (this.state.resources.gold < 0) {
@@ -2547,41 +2709,85 @@ class GameEngine {
     reset() {
         console.log('🔄 RESET: Starting game reset...');
         
-        // Set reset flag to prevent auto-save interference
-        if (this.saveManager) {
-            this.saveManager._isResetting = true;
-            console.log('🔒 RESET: Lock acquired, auto-save blocked');
-        }
-        
-        this.stop();
-        this.state = this.getInitialState();
-        
-        if (this.resourceManager) this.resourceManager.setState(this.state);
-        if (this.upgradeSystem) this.upgradeSystem.setState(this.state);
-        if (this.marketSystem) this.marketSystem.setState(this.state);
-        
-        // Hide prestige panel
-        const prestigePanel = document.getElementById('prestige-panel');
-        if (prestigePanel) {
-            prestigePanel.style.display = 'none';
-        }
-        
-        console.log('💾 RESET: Immediately saving reset state to prevent auto-save corruption...');
-        // CRITICAL: Save immediately after reset to prevent auto-save from restoring old state
-        if (this.saveManager) {
-            this.saveManager.saveGame(this.state).then(() => {
-                // Release the lock after save completes
-                this.saveManager._isResetting = false;
-                console.log('🔓 RESET: Lock released after save');
-            }).catch((error) => {
-                console.error('❌ RESET: Save failed:', error);
-                this.saveManager._isResetting = false;
-                console.log('🔓 RESET: Lock released (error)');
+        // Return a promise so UI can wait for completion
+        return new Promise((resolve, reject) => {
+            // Set reset flag to prevent auto-save interference
+            if (this.saveManager) {
+                this.saveManager._isResetting = true;
+                console.log('🔒 RESET: Lock acquired, auto-save blocked');
+            }
+            
+            this.stop();
+            const freshState = this.getInitialState();
+            
+            // Set timestamp
+            freshState.lastSave = Date.now();
+            
+            // CRITICAL: Immediately assign fresh state so save captures empty game
+            this.state = freshState;
+            
+            // Reinitialize all managers with fresh state
+            if (this.resourceManager) this.resourceManager.setState(this.state);
+            if (this.upgradeSystem) this.upgradeSystem.setState(this.state);
+            if (this.marketSystem) this.marketSystem.setState(this.state);
+            if (this.newResourceManager) {
+                this.newResourceManager.state = this.state;
+                this.newResourceManager.updateThemeRecipes();
+            }
+            if (this.rebirthRewards) this.rebirthRewards.state = this.state;
+            if (this.arcadeManager) {
+                // Completely reset arcade - clear all progress
+                this.state.arcade = {
+                    unlockedGames: [],
+                    playTime: {},
+                    highScores: {},
+                    totalPlayTime: 0,
+                    activeGame: null,
+                    gameStartTime: null
+                };
+                this.arcadeManager.state = this.state;
+            }
+            if (this.themeManager) {
+                this.themeManager.updateTheme();
+            }
+            
+            // Hide prestige panel
+            const prestigePanel = document.getElementById('prestige-panel');
+            if (prestigePanel) {
+                prestigePanel.style.display = 'none';
+            }
+            
+            console.log('💾 RESET: Saving EMPTY state to server to overwrite old save...');
+            console.log('🔍 RESET: Fresh state to save:', {
+                gold: this.state.resources.gold,
+                rebirths: this.state.city.rebirths,
+                workers: this.state.workers,
+                hasArcade: !!this.state.arcade
             });
-        }
-        
-        this.start();
-        console.log('✅ RESET: Game reset complete and saved!');
+            
+            // CRITICAL: Save empty state to server BEFORE resolving promise
+            // This prevents reload from loading old data
+            if (this.saveManager) {
+                this.saveManager.saveGame(this.state, true).then(() => {
+                    // Release the lock after save completes
+                    this.saveManager._isResetting = false;
+                    console.log('🔓 RESET: Lock released after save');
+                    console.log('✅ RESET: Empty state saved to server successfully!');
+                    
+                    this.start();
+                    resolve(); // Resolve promise after successful save
+                }).catch((error) => {
+                    console.error('❌ RESET: Save failed:', error);
+                    this.saveManager._isResetting = false;
+                    console.log('🔓 RESET: Lock released (error)');
+                    this.start();
+                    reject(error); // Reject promise on error
+                });
+            } else {
+                this.start();
+                resolve(); // No save manager, just resolve
+            }
+        });
     }
 
     // Alias for UI compatibility

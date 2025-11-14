@@ -153,6 +153,122 @@ class RebirthRewards {
                 costGrowth: 3.5,
                 maxLevel: 4,
                 effect: (level) => ({ decayReduction: 1 - (level * 0.2) })
+            },
+            
+            // Tier 6: Available at Rebirth 6+
+            arcadeMaster: {
+                name: "Arcade Master",
+                description: "+20% bonus from arcade games",
+                minRebirths: 6,
+                baseCost: 250,
+                costGrowth: 4.5,
+                maxLevel: 5,
+                effect: (level) => ({ arcadeBonus: 1 + (level * 0.2) })
+            },
+            quantumEfficiency: {
+                name: "Quantum Efficiency",
+                description: "Workers produce 30% more",
+                minRebirths: 6,
+                baseCost: 300,
+                costGrowth: 4.8,
+                maxLevel: 4,
+                effect: (level) => ({ quantumWorkerBonus: 1 + (level * 0.3) })
+            },
+            megaCrafter: {
+                name: "Mega Crafter",
+                description: "Craft 2 extra items per auto-craft cycle",
+                minRebirths: 6,
+                baseCost: 280,
+                costGrowth: 4.5,
+                maxLevel: 3,
+                effect: (level) => ({ extraAutoCrafts: level * 2 })
+            },
+            
+            // Tier 7: Available at Rebirth 7+
+            ultimateGatherer: {
+                name: "Ultimate Gatherer",
+                description: "10% chance to gather 5x resources",
+                minRebirths: 7,
+                baseCost: 400,
+                costGrowth: 5.0,
+                maxLevel: 3,
+                effect: (level) => ({ megaGatherChance: level * 0.1 })
+            },
+            cosmicMultiplier: {
+                name: "Cosmic Multiplier",
+                description: "+100% to all gold earnings",
+                minRebirths: 7,
+                baseCost: 500,
+                costGrowth: 5.5,
+                maxLevel: 3,
+                effect: (level) => ({ goldMultiplier: 1 + (level * 1.0) })
+            },
+            voidResistance: {
+                name: "Void Resistance",
+                description: "Start with 50% decay filled",
+                minRebirths: 7,
+                baseCost: 350,
+                costGrowth: 4.8,
+                maxLevel: 5,
+                effect: (level) => ({ startingDecay: level * 10 })
+            },
+            
+            // Tier 8: Available at Rebirth 8+
+            transcendence: {
+                name: "Transcendence",
+                description: "All multipliers increased by 75%",
+                minRebirths: 8,
+                baseCost: 800,
+                costGrowth: 6.0,
+                maxLevel: 2,
+                effect: (level) => ({ transcendenceBonus: 1 + (level * 0.75) })
+            },
+            infiniteAutomation: {
+                name: "Infinite Automation",
+                description: "Automation speed 2x per level",
+                minRebirths: 8,
+                baseCost: 700,
+                costGrowth: 5.8,
+                maxLevel: 3,
+                effect: (level) => ({ automationSpeedMultiplier: Math.pow(2, level) })
+            },
+            realityBender: {
+                name: "Reality Bender",
+                description: "50% chance items cost nothing",
+                minRebirths: 8,
+                baseCost: 900,
+                costGrowth: 6.5,
+                maxLevel: 2,
+                effect: (level) => ({ freeCraftChance: level * 0.25 })
+            },
+            
+            // Tier 9: Available at Rebirth 9+ (The Void)
+            voidMastery: {
+                name: "Void Mastery",
+                description: "Reach the void faster (2x decay)",
+                minRebirths: 9,
+                baseCost: 1500,
+                costGrowth: 7.0,
+                maxLevel: 3,
+                effect: (level) => ({ decayGeneration: 1 + (level * 1.0) })
+            },
+            omnipotence: {
+                name: "Omnipotence",
+                description: "All bonuses doubled",
+                minRebirths: 9,
+                baseCost: 2000,
+                costGrowth: 8.0,
+                maxLevel: 1,
+                effect: (level) => ({ omnipotenceBonus: level > 0 ? 2 : 1 })
+            },
+            arcadeLegend: {
+                name: "Arcade Legend",
+                description: "Arcade time generates resources",
+                minRebirths: 9,
+                baseCost: 1800,
+                costGrowth: 7.5,
+                maxLevel: 5,
+                effect: (level) => ({ arcadeResourceGen: level * 0.1 })
             }
         };
     }
@@ -183,13 +299,13 @@ class RebirthRewards {
     // Get upgrades by tier
     getUpgradesByTier(rebirthCount) {
         const tiers = {
-            1: [], 2: [], 3: [], 4: [], 5: []
+            1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: []
         };
 
         Object.entries(this.rebirthUpgrades).forEach(([key, upgrade]) => {
             if (rebirthCount >= upgrade.minRebirths) {
                 const tier = upgrade.minRebirths;
-                if (tier <= 5) {
+                if (tier <= 9) {
                     tiers[tier].push({ key, ...upgrade });
                 }
             }
@@ -215,7 +331,19 @@ class RebirthRewards {
             cooldownReduction: 1,
             efficiencyBoost: 1,
             instantCraftChance: 0,
-            decayReduction: 1
+            decayReduction: 1,
+            // New tier 6-9 effects
+            arcadeBonus: 1,
+            quantumWorkerBonus: 1,
+            megaGatherChance: 0,
+            cosmicMultiplier: 1,
+            startingDecay: 0,
+            transcendenceBonus: 1,
+            automationSpeedMultiplier: 1,
+            freeCraftChance: 0,
+            decayGeneration: 1,
+            omnipotenceBonus: 1,
+            arcadeResourceGen: 0
         };
 
         Object.entries(purchasedUpgrades).forEach(([key, level]) => {
@@ -226,7 +354,9 @@ class RebirthRewards {
                     // Multiplicative effects
                     if (['gatheringSpeed', 'craftingSpeed', 'sellingBonus', 'workerEfficiency', 
                          'transportCapacity', 'buildingDiscount', 'goldMultiplier', 'cooldownReduction',
-                         'efficiencyBoost', 'decayReduction'].includes(effectKey)) {
+                         'efficiencyBoost', 'decayReduction', 'arcadeBonus', 'quantumWorkerBonus',
+                         'cosmicMultiplier', 'transcendenceBonus', 'automationSpeedMultiplier',
+                         'decayGeneration', 'omnipotenceBonus'].includes(effectKey)) {
                         effects[effectKey] *= value;
                     }
                     // Additive effects
@@ -236,6 +366,18 @@ class RebirthRewards {
                 });
             }
         });
+        
+        // Apply omnipotence bonus to all multiplicative effects if active
+        if (effects.omnipotenceBonus > 1) {
+            Object.keys(effects).forEach(key => {
+                if (['gatheringSpeed', 'craftingSpeed', 'sellingBonus', 'workerEfficiency', 
+                     'transportCapacity', 'goldMultiplier', 'efficiencyBoost', 'arcadeBonus',
+                     'quantumWorkerBonus', 'cosmicMultiplier', 'transcendenceBonus', 
+                     'automationSpeedMultiplier'].includes(key)) {
+                    effects[key] *= effects.omnipotenceBonus;
+                }
+            });
+        }
 
         return effects;
     }
