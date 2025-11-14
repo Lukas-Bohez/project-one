@@ -1,0 +1,26 @@
+# Allow access to ZIP files for DOS games
+# Simplified Apache2-compatible configuration
+
+# Set MIME type for zip files
+AddType application/zip .zip .ZIP
+
+# Enable CORS for js-dos library
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type"
+</IfModule>
+
+# Allow access to all files in this directory
+<IfModule mod_authz_core.c>
+    Require all granted
+</IfModule>
+
+# Fallback for older Apache versions
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Allow from all
+</IfModule>
+
+# Disable directory listing
+Options -Indexes

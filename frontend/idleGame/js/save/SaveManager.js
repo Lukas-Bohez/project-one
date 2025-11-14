@@ -175,8 +175,9 @@ class SaveManager {
             this.gameEngine.showNotification('⚠️ You must be logged in to save your game! Click "Login" to create an account or sign in.');
             return { success: false, message: 'Not authenticated - Please login to save your game' };
         }
+    }
 
-        // 🔒 Prevent concurrent save/load operations
+    async saveGame(gameState = null, forceReset = false) {
         if (this._isSaving) {
             console.log('⏸️ SAVE: Already saving, skipping...');
             return { success: false, message: 'Save already in progress' };
@@ -185,7 +186,7 @@ class SaveManager {
             console.log('⏸️ SAVE: Load in progress, skipping save...');
             return { success: false, message: 'Load in progress' };
         }
-        if (this._isResetting) {
+        if (this._isResetting && !forceReset) {
             console.log('⏸️ SAVE: Reset in progress, skipping save...');
             return { success: false, message: 'Reset in progress' };
         }
@@ -453,6 +454,16 @@ class SaveManager {
                 // Rebirth permanent upgrades
                 rebirthUpgrades: state.rebirthUpgrades || {},
                 
+                // Arcade progress
+                arcade: state.arcade || {
+                    unlockedGames: [],
+                    playTime: {},
+                    highScores: {},
+                    totalPlayTime: 0,
+                    activeGame: null,
+                    gameStartTime: null
+                },
+                
                 // Statistics
                 stats: {
                     total_resources_mined: state.stats?.totalResourcesMined || {},
@@ -633,6 +644,19 @@ class SaveManager {
             console.log('Restored rebirth upgrades:', state.rebirthUpgrades);
         }
         
+        // Restore arcade progress
+        if (customData.arcade) {
+            state.arcade = Object.assign({
+                unlockedGames: [],
+                playTime: {},
+                highScores: {},
+                totalPlayTime: 0,
+                activeGame: null,
+                gameStartTime: null
+            }, customData.arcade);
+            console.log('Restored arcade progress:', state.arcade);
+        }
+        
         // Restore statistics
         if (customData.stats) {
             state.stats = state.stats || { totalResourcesMined: {}, totalGoldEarned: 0, totalGoldSpent: 0 };
@@ -754,7 +778,25 @@ class SaveManager {
                     
                     console.log(`Restored session for user: ${this.username}`);
                     
-                    // Try to load game data
+                    // Check if game was just reset - if so, skip auto-load and start fresh
+                    const justReset = localStorage.getItem('gameJustReset');
+                    const resetTimestamp = localStorage.getItem('resetTimestamp');
+                    
+                    if (justReset === 'true' && resetTimestamp) {
+                        // Check if reset was within last 10 seconds
+                        const timeSinceReset = Date.now() - parseInt(resetTimestamp);
+                        if (timeSinceReset < 10000) {
+                            console.log('🔄 RESET DETECTED: Skipping auto-load, starting with fresh state');
+                            localStorage.removeItem('gameJustReset');
+                            localStorage.removeItem('resetTimestamp');
+                            // Don't load - let game start fresh
+                            // Still start auto-save for future saves
+                            this.startAutoSave();
+                            return;
+                        }
+                    }
+                    
+                    // Normal behavior - load game data
                     setTimeout(() => this.loadGame(), 1000);
                     
                     // Start auto-save

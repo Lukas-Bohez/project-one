@@ -54,6 +54,11 @@ class IndustrialEmpireApp {
             btn.addEventListener('click', (e) => {
                 const tabName = e.target.dataset.tab;
                 this.switchTab(tabName);
+                
+                // If switching to arcade tab, update arcade UI
+                if (tabName === 'arcade') {
+                    this.updateArcadeUI();
+                }
             });
         });
         
@@ -61,6 +66,111 @@ class IndustrialEmpireApp {
         this.switchTab('mining');
         
         console.log('Tab system initialized');
+    }
+    
+    updateArcadeUI() {
+        if (!this.gameEngine || !this.gameEngine.arcadeManager) return;
+        
+        const arcadeManager = this.gameEngine.arcadeManager;
+        const container = document.getElementById('arcade-games-container');
+        
+        if (!container) return;
+        
+        // Clear container
+        container.innerHTML = '';
+        
+        // Get available games
+        const games = arcadeManager.getAvailableGames();
+        
+        // Create buttons for each game
+        games.forEach(game => {
+            const button = document.createElement('button');
+            button.className = game.unlocked ? 'action-btn success-btn' : (game.canUnlock ? 'action-btn' : 'action-btn disabled');
+            button.disabled = !game.unlocked && !game.canUnlock;
+            
+            const title = document.createElement('div');
+            title.className = 'btn-title';
+            title.textContent = `${game.icon} ${game.name}`;
+            button.appendChild(title);
+            
+            if (game.unlocked) {
+                const playTime = document.createElement('div');
+                playTime.className = 'btn-cost';
+                playTime.textContent = `Played: ${game.playTime}`;
+                button.appendChild(playTime);
+                
+                const bonus = document.createElement('div');
+                bonus.className = 'btn-description';
+                const playTimeHours = (arcadeManager.state.arcade.playTime[game.id] || 0) / 3600;
+                const effectiveHours = Math.min(10, playTimeHours);
+                const bonusPercent = Math.round(effectiveHours * game.bonusAmount * 100);
+                bonus.textContent = `${game.description} | Bonus: +${bonusPercent}%`;
+                button.appendChild(bonus);
+                
+                button.onclick = () => openDosGame(game.id);
+            } else {
+                const cost = document.createElement('div');
+                cost.className = 'btn-cost';
+                cost.textContent = `Unlock: ${game.unlockCost} gold`;
+                button.appendChild(cost);
+                
+                const desc = document.createElement('div');
+                desc.className = 'btn-description';
+                desc.textContent = game.description;
+                button.appendChild(desc);
+                
+                if (game.canUnlock) {
+                    button.onclick = () => {
+                        if (arcadeManager.unlockGame(game.id)) {
+                            this.updateArcadeUI();
+                            this.updateArcadeStats();
+                        }
+                    };
+                }
+            }
+            
+            container.appendChild(button);
+        });
+        
+        // Update stats
+        this.updateArcadeStats();
+    }
+    
+    updateArcadeStats() {
+        if (!this.gameEngine || !this.gameEngine.arcadeManager) return;
+        
+        const arcadeManager = this.gameEngine.arcadeManager;
+        const bonuses = arcadeManager.getArcadeBonuses();
+        
+        // Update total play time
+        const totalTime = arcadeManager.state.arcade.totalPlayTime;
+        const hours = Math.floor(totalTime / 3600);
+        const minutes = Math.floor((totalTime % 3600) / 60);
+        const totalTimeEl = document.getElementById('arcade-total-time');
+        if (totalTimeEl) {
+            totalTimeEl.textContent = `${hours}h ${minutes}m`;
+        }
+        
+        // Update bonuses
+        const resourceBonusEl = document.getElementById('arcade-resource-bonus');
+        if (resourceBonusEl) {
+            resourceBonusEl.textContent = `+${Math.round((bonuses.resourceBonus - 1) * 100)}%`;
+        }
+        
+        const efficiencyBonusEl = document.getElementById('arcade-efficiency-bonus');
+        if (efficiencyBonusEl) {
+            efficiencyBonusEl.textContent = `+${Math.round((bonuses.efficiencyBonus - 1) * 100)}%`;
+        }
+        
+        const goldBonusEl = document.getElementById('arcade-gold-bonus');
+        if (goldBonusEl) {
+            goldBonusEl.textContent = `+${Math.round((bonuses.goldBonus - 1) * 100)}%`;
+        }
+        
+        const craftingBonusEl = document.getElementById('arcade-crafting-bonus');
+        if (craftingBonusEl) {
+            craftingBonusEl.textContent = `+${Math.round((bonuses.craftingBonus - 1) * 100)}%`;
+        }
     }
 
     switchTab(tabName) {

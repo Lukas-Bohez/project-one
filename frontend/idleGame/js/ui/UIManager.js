@@ -275,19 +275,31 @@ class UIManager {
 
     handleReset() {
         if (confirm('Are you sure you want to reset your game? This will delete all progress but keep you logged in!')) {
+            this.showNotification('Resetting game and saving to server...', 'info');
+            
             // Save login status before reset
             const wasLoggedIn = this.isLoggedIn;
             const currentUser = this.currentUser;
             
-            this.gameEngine.resetGame();
-            
-            // Restore login status after reset
-            this.isLoggedIn = wasLoggedIn;
-            this.currentUser = currentUser;
-            this.updateAuthButtons();
-            
-            this.showNotification('Game reset successfully!', 'info');
-            this.updateSaveStatus('Reset');
+            // Reset the game and wait for save to complete
+            this.gameEngine.resetGame().then(() => {
+                console.log('✅ Reset complete, game saved to server');
+                
+                // Restore login status
+                this.isLoggedIn = wasLoggedIn;
+                this.currentUser = currentUser;
+                this.updateAuthButtons();
+                
+                // Show success message
+                this.showNotification('Game reset complete!', 'success');
+                this.updateSaveStatus('Reset Complete');
+                
+                // Update UI to show fresh state (no reload needed)
+                this.gameEngine.updateUI();
+            }).catch((error) => {
+                console.error('❌ Reset failed:', error);
+                this.showNotification('Reset failed - please try again', 'error');
+            });
         }
     }
 
