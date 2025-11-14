@@ -99,8 +99,24 @@ class UIManager {
     }
 
     showAuthModal() {
-        document.getElementById('auth-modal').style.display = 'block';
-        document.getElementById('username').focus();
+        const modal = document.getElementById('auth-modal');
+        if (!modal) {
+            console.error('Auth modal element not found!');
+            return;
+        }
+        console.log('Opening auth modal...');
+        modal.style.setProperty('display', 'flex', 'important');
+        modal.style.setProperty('align-items', 'center', 'important');
+        modal.style.setProperty('justify-content', 'center', 'important');
+        modal.style.setProperty('position', 'fixed', 'important');
+        modal.style.setProperty('z-index', '10000', 'important');
+        console.log('Modal display style set to flex with !important');
+        console.log('Modal computed style:', window.getComputedStyle(modal).display);
+        
+        const usernameInput = document.getElementById('username');
+        if (usernameInput) {
+            setTimeout(() => usernameInput.focus(), 100);
+        }
     }
 
     hideAuthModal() {

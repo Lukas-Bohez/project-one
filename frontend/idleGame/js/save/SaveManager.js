@@ -34,23 +34,29 @@ class SaveManager {
             // Backend requires email field
             const registerEmail = email || `${username}@game.local`;
 
-            // Try to obtain the public IP to help backend IP logging. This is best-effort
-            // and will not block registration if the IP service fails.
+            // Try to obtain the public IP with timeout
             let clientIp = null;
             try {
-                const ipResp = await fetch('https://api.ipify.org?format=json');
+                const ipController = new AbortController();
+                const ipTimeout = setTimeout(() => ipController.abort(), 2000); // 2 second timeout
+                
+                const ipResp = await fetch('https://api.ipify.org?format=json', {
+                    signal: ipController.signal
+                });
+                clearTimeout(ipTimeout);
+                
                 if (ipResp.ok) {
                     const ipData = await ipResp.json();
                     clientIp = ipData.ip;
                 }
             } catch (err) {
-                // ignore - it's best-effort
                 console.warn('Could not fetch public IP for registration header:', err);
             }
 
             // Per-project decision: send registration to the primary register endpoint and
             // store the user's email in the `first_name` field on the server.
             const registerUrl = `${this.baseUrl}/api/v1/register`;
+            console.log('📝 Attempting registration to:', registerUrl);
 
             const headers = { 'Content-Type': 'application/json' };
             if (clientIp) headers['x-forwarded-for'] = clientIp;
@@ -65,7 +71,9 @@ class SaveManager {
                 })
             });
 
+            console.log('📡 Register response status:', response.status);
             const data = await response.json();
+            console.log('📡 Register response data:', data);
             
             if (response.ok) {
                 this.authToken = data.access_token;
@@ -88,10 +96,17 @@ class SaveManager {
 
     async login(username, password) {
         try {
-            // Best-effort public IP fetch so the backend can log the client's IP when possible.
+            // Best-effort public IP fetch with timeout
             let clientIp = null;
             try {
-                const ipResp = await fetch('https://api.ipify.org?format=json');
+                const ipController = new AbortController();
+                const ipTimeout = setTimeout(() => ipController.abort(), 2000); // 2 second timeout
+                
+                const ipResp = await fetch('https://api.ipify.org?format=json', {
+                    signal: ipController.signal
+                });
+                clearTimeout(ipTimeout);
+                
                 if (ipResp.ok) {
                     const ipData = await ipResp.json();
                     clientIp = ipData.ip;
@@ -101,6 +116,8 @@ class SaveManager {
             }
 
             const loginUrl = `${this.baseUrl}${this.apiEndpoint}/auth/login`;
+            console.log('🔐 Attempting login to:', loginUrl);
+            
             const headers = { 'Content-Type': 'application/json' };
             if (clientIp) headers['x-forwarded-for'] = clientIp;
 
@@ -113,7 +130,9 @@ class SaveManager {
                 })
             });
 
+            console.log('📡 Login response status:', response.status);
             const data = await response.json();
+            console.log('📡 Login response data:', data);
             
             if (response.ok) {
                 this.authToken = data.access_token;
@@ -431,6 +450,9 @@ class SaveManager {
                 autoCraft: state.autoCraft || false,
                 autoTransport: state.autoTransport || { basic: false, intermediate: false, advanced: false, premium: false },
                 
+                // Rebirth permanent upgrades
+                rebirthUpgrades: state.rebirthUpgrades || {},
+                
                 // Statistics
                 stats: {
                     total_resources_mined: state.stats?.totalResourcesMined || {},
@@ -603,6 +625,12 @@ class SaveManager {
         }
         if (customData.autoTransport) {
             state.autoTransport = Object.assign({}, customData.autoTransport);
+        }
+        
+        // Restore rebirth permanent upgrades
+        if (customData.rebirthUpgrades) {
+            state.rebirthUpgrades = Object.assign({}, customData.rebirthUpgrades);
+            console.log('Restored rebirth upgrades:', state.rebirthUpgrades);
         }
         
         // Restore statistics
