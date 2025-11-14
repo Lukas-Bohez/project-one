@@ -790,6 +790,18 @@
                         <h2>🎮 Retro Arcade</h2>
                         <p style="margin-bottom: 15px; color: var(--text-secondary, #e2e8f0); opacity: 0.9;">Play classic DOS games to boost your idle game progress! Each hour of gameplay adds permanent bonuses.</p>
                         
+                        <div style="margin-bottom: 20px; padding: 15px; background: var(--panel-bg, rgba(30, 41, 59, 0.95)); border: 2px solid var(--border-color, rgba(100, 116, 139, 0.3)); border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);">
+                            <p style="margin: 0 0 10px 0; font-size: 0.9em; color: var(--text-primary, #f1f5f9); line-height: 1.6;">
+                                <strong style="color: var(--accent-color, #fbbf24);">📜 Legal Disclaimer & Preservation Notice:</strong>
+                            </p>
+                            <p style="margin: 0 0 8px 0; font-size: 0.85em; color: var(--text-primary, #f1f5f9); line-height: 1.5;">
+                                These classic DOS games are provided for educational and historical preservation purposes only. The games featured here are either abandonware, freeware, or publicly distributed shareware versions from the early computing era.
+                            </p>
+                            <p style="margin: 0; font-size: 0.85em; color: var(--text-primary, #f1f5f9); line-height: 1.5;">
+                                <strong>No copyright infringement is intended.</strong> If you are a rights holder and believe any content should be removed, please contact us immediately and we will promptly comply. These games are archived to preserve gaming history and prevent them from being lost to obscurity.
+                            </p>
+                        </div>
+                        
                         <div id="arcade-games-container" class="action-buttons">
                             <!-- Games will be dynamically populated here -->
                         </div>
@@ -1213,6 +1225,7 @@
             // Initialize js-dos with v6.22 API
             Dos(newCanvas, {
                 wdosboxUrl: "https://js-dos.com/6.22/current/wdosbox.js",
+                cycles: game.cyclesLimit || 'auto',  // Apply cycles limit if specified
             }).ready((fs, main) => {
                 // Construct full URL with correct path
                 // Get the base URL and ensure we use the correct case for idleGame folder
