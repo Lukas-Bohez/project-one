@@ -45,6 +45,7 @@ class ArcadeManager {
                 description: 'Classic arcade digging action',
                 zipUrl: 'dos-games/digger.zip',
                 executable: 'DIGGER.COM',
+                cyclesLimit: 3000,  // Limit CPU cycles to slow down the game
                 bonus: { type: 'trading', value: 0.03 }, // 3% trading bonus per hour
                 bonusAmount: 0.03
             },
