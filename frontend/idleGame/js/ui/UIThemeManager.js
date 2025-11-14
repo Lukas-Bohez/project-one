@@ -242,8 +242,7 @@ class UIThemeManager {
         this.updateButtonText('build-university-btn', `Build ${city.universities.name}`);
         
         // Update new upgrade buttons
-        this.updateButtonText('build-sales-department-btn', `Build ${city.salesDepartment.name}`);
-        // Mining Academy and Automation Lab buttons handled in GameEngine.js with dynamic titles
+        // Sales Department, Mining Academy and Automation Lab buttons handled in GameEngine.js with dynamic titles
         
         // Update button descriptions with theme-specific names
         this.updateButtonDescription('build-university-btn', `+10% global efficiency per ${city.universities.name.toLowerCase()}`);

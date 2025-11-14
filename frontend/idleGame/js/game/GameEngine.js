@@ -137,6 +137,12 @@ class GameEngine {
                 politicians: 0
             },
             
+            // Rebirth permanent upgrades
+            rebirthUpgrades: {
+                // Stores level of each permanent upgrade
+                // Example: { efficientGathering: 2, quickCrafting: 1, ... }
+            },
+            
             // Research
             research: {
                 mining: false,
@@ -269,6 +275,12 @@ class GameEngine {
                 this.themeManager.updateTheme();
                 console.log('UIThemeManager initialized');
             }
+        }
+        
+        // Initialize Rebirth Rewards System
+        if (window.RebirthRewards) {
+            this.rebirthRewards = new RebirthRewards();
+            console.log('RebirthRewards initialized');
         }
 
         // Start the main game loop
@@ -817,16 +829,43 @@ class GameEngine {
         const salesSpeed = salesDept > 0 ? `Level ${salesDept} (sells all every ${interval}s)` : 'Level 0';
         this.updateElement('sales-dept-count', salesSpeed);
         
+        // Update sales department label with themed name
+        if (this.rebirthThemes) {
+            const theme = this.rebirthThemes.getCurrentTheme(this.state);
+            const salesLabel = document.getElementById('sales-dept-label');
+            if (salesLabel) {
+                salesLabel.textContent = theme.city.salesDepartment.name + ':';
+            }
+        }
+        
         // Update mining academy display
         const miningAcademy = this.state.city.miningAcademy || 0;
         const miningBonus = miningAcademy * 15; // 15% per level
         const miningText = miningAcademy > 0 ? `Level ${miningAcademy} (+${miningBonus}% gathering)` : 'Level 0';
         this.updateElement('mining-academy-count', miningText);
         
+        // Update mining academy label with themed name
+        if (this.rebirthThemes) {
+            const theme = this.rebirthThemes.getCurrentTheme(this.state);
+            const miningLabel = document.getElementById('mining-academy-label');
+            if (miningLabel) {
+                miningLabel.textContent = theme.city.miningAcademy.name + ':';
+            }
+        }
+        
         // Update automation lab display
         const automationLab = this.state.city.automationLab || 0;
         const craftSpeed = automationLab > 0 ? `Level ${automationLab} (${automationLab + 1}x speed)` : 'Level 0';
         this.updateElement('automation-lab-count', craftSpeed);
+        
+        // Update automation lab label with themed name
+        if (this.rebirthThemes) {
+            const theme = this.rebirthThemes.getCurrentTheme(this.state);
+            const automationLabel = document.getElementById('automation-lab-label');
+            if (automationLabel) {
+                automationLabel.textContent = theme.city.automationLab.name + ':';
+            }
+        }
         
         // Update sales timer countdown
         const timerRow = document.getElementById('sales-timer-row');
@@ -961,6 +1000,14 @@ class GameEngine {
                 ).join('');
             }
         }
+        
+        // Update rebirth upgrades UI (if system is available)
+        if (this.rebirthRewards && (this.state.city.rebirths > 0 || this.rebirthUpgradesInitialized)) {
+            if (!this.rebirthUpgradesInitialized) {
+                this.updateRebirthUpgradesUI();
+                this.rebirthUpgradesInitialized = true;
+            }
+        }
     }
     
     updateButtonStates() {
@@ -1011,12 +1058,14 @@ class GameEngine {
         this.updateElement('sales-dept-cost', Math.floor(salesDeptCost).toString());
         this.updateButtonState('build-sales-dept-btn', this.state.resources.gold >= salesDeptCost);
         
-        // Update button text based on level
+        // Update button text based on level with themed name
         const salesBtn = document.getElementById('build-sales-dept-btn');
         if (salesBtn) {
             const titleDiv = salesBtn.querySelector('.btn-title');
-            if (titleDiv) {
-                titleDiv.textContent = salesDeptLevel === 0 ? 'Build Sales Bot' : `Upgrade Sales Bot (Lv ${salesDeptLevel})`;
+            if (titleDiv && this.rebirthThemes) {
+                const theme = this.rebirthThemes.getCurrentTheme(this.state);
+                const themeName = theme.city.salesDepartment.name;
+                titleDiv.textContent = salesDeptLevel === 0 ? `Build ${themeName}` : `Upgrade ${themeName} (Lv ${salesDeptLevel})`;
             }
         }
         
@@ -1029,8 +1078,8 @@ class GameEngine {
         const miningAcademyBtn = document.getElementById('build-mining-academy-btn');
         if (miningAcademyBtn) {
             const titleDiv = miningAcademyBtn.querySelector('.btn-title');
-            if (titleDiv && window.rebirthThemes) {
-                const theme = window.rebirthThemes.getCurrentTheme();
+            if (titleDiv && this.rebirthThemes) {
+                const theme = this.rebirthThemes.getCurrentTheme(this.state);
                 const themeName = theme.city.miningAcademy.name;
                 titleDiv.textContent = miningAcademyLevel === 0 ? `Build ${themeName}` : `Upgrade ${themeName} (Lv ${miningAcademyLevel})`;
             }
@@ -1045,8 +1094,8 @@ class GameEngine {
         const automationLabBtn = document.getElementById('build-automation-lab-btn');
         if (automationLabBtn) {
             const titleDiv = automationLabBtn.querySelector('.btn-title');
-            if (titleDiv && window.rebirthThemes) {
-                const theme = window.rebirthThemes.getCurrentTheme();
+            if (titleDiv && this.rebirthThemes) {
+                const theme = this.rebirthThemes.getCurrentTheme(this.state);
                 const themeName = theme.city.automationLab.name;
                 titleDiv.textContent = automationLabLevel === 0 ? `Build ${themeName}` : `Upgrade ${themeName} (Lv ${automationLabLevel})`;
             }
@@ -2061,6 +2110,161 @@ class GameEngine {
             case 'processing':
                 this.state.efficiency.processing *= 1.25;
                 break;
+            case 'logistics':
+                this.state.efficiency.transport *= 1.5;
+                break;
+            case 'quantum':
+                this.state.efficiency.mining *= 2.0;
+                this.state.efficiency.processing *= 2.0;
+                this.state.efficiency.trading *= 2.0;
+                this.state.efficiency.transport *= 2.0;
+                break;
+        }
+    }
+    
+    // Rebirth Upgrade System
+    purchaseRebirthUpgrade(upgradeKey) {
+        if (!this.rebirthRewards) return false;
+        
+        const currentLevel = this.state.rebirthUpgrades[upgradeKey] || 0;
+        const upgrade = this.rebirthRewards.rebirthUpgrades[upgradeKey];
+        
+        if (!upgrade) return false;
+        
+        // Check if max level reached
+        if (currentLevel >= upgrade.maxLevel) {
+            this.showNotification(`⚠️ ${upgrade.name} is already at max level!`);
+            return false;
+        }
+        
+        // Check if available
+        const rebirthCount = this.state.city.rebirths || 0;
+        if (rebirthCount < upgrade.minRebirths) {
+            this.showNotification(`⚠️ Requires ${upgrade.minRebirths} rebirths to unlock!`);
+            return false;
+        }
+        
+        // Calculate cost
+        const cost = this.rebirthRewards.getUpgradeCost(upgradeKey, currentLevel);
+        
+        if (this.state.resources.gold >= cost) {
+            this.state.resources.gold -= cost;
+            this.state.stats.totalGoldSpent += cost;
+            this.state.rebirthUpgrades[upgradeKey] = currentLevel + 1;
+            
+            this.playSound('research');
+            this.flashElement('gold-amount');
+            this.showNotification(`⭐ Upgraded ${upgrade.name} to Level ${currentLevel + 1}!`);
+            
+            // Update UI
+            this.updateRebirthUpgradesUI();
+            this.updateUI();
+            
+            console.log(`Purchased rebirth upgrade: ${upgradeKey} (Level ${currentLevel + 1})`);
+            return true;
+        } else {
+            this.showNotification(`⚠️ Need ${cost} gold to upgrade ${upgrade.name}!`);
+            return false;
+        }
+    }
+    
+    // Update rebirth upgrades UI
+    updateRebirthUpgradesUI() {
+        if (!this.rebirthRewards) return;
+        
+        const container = document.getElementById('rebirth-upgrades-container');
+        if (!container) return;
+        
+        const rebirthCount = this.state.city.rebirths || 0;
+        
+        // Update rebirth power display
+        const powerData = this.rebirthRewards.calculateRebirthPower(rebirthCount, this.state.rebirthUpgrades);
+        const powerDisplay = document.getElementById('rebirth-power-value');
+        const countDisplay = document.getElementById('rebirth-power-count');
+        if (powerDisplay) {
+            powerDisplay.textContent = `+${Math.round(powerData.totalPower * 100)}%`;
+        }
+        if (countDisplay) {
+            countDisplay.textContent = rebirthCount.toString();
+        }
+        
+        // Get available upgrades by tier
+        const tiers = this.rebirthRewards.getUpgradesByTier(rebirthCount);
+        
+        // Clear container
+        container.innerHTML = '';
+        
+        if (rebirthCount === 0) {
+            container.innerHTML = `
+                <p style="grid-column: 1 / -1; text-align: center; opacity: 0.7; padding: 20px;">
+                    Complete your first rebirth to unlock permanent upgrades!
+                </p>
+            `;
+            return;
+        }
+        
+        // Render upgrades by tier
+        for (let tier = 1; tier <= 5; tier++) {
+            const tierUpgrades = tiers[tier];
+            if (tierUpgrades.length === 0) continue;
+            
+            // Add tier header
+            const tierHeader = document.createElement('div');
+            tierHeader.style.gridColumn = '1 / -1';
+            tierHeader.style.marginTop = tier > 1 ? '20px' : '0';
+            tierHeader.innerHTML = `<h3 style="margin: 10px 0; color: #fbbf24;">Tier ${tier} (Rebirth ${tier}+)</h3>`;
+            container.appendChild(tierHeader);
+            
+            // Add upgrades in this tier
+            tierUpgrades.forEach(({ key, ...upgrade }) => {
+                const currentLevel = this.state.rebirthUpgrades[key] || 0;
+                const cost = this.rebirthRewards.getUpgradeCost(key, currentLevel);
+                const isMaxed = currentLevel >= upgrade.maxLevel;
+                const canAfford = this.state.resources.gold >= cost;
+                
+                const button = document.createElement('button');
+                button.className = 'action-btn research-btn';
+                button.dataset.upgrade = key;
+                button.style.position = 'relative';
+                
+                if (isMaxed) {
+                    button.style.background = 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)';
+                    button.style.border = '2px solid #22c55e';
+                }
+                
+                const effectText = upgrade.description;
+                const statusText = isMaxed ? 'MAX LEVEL' : `Level ${currentLevel}/${upgrade.maxLevel}`;
+                
+                button.innerHTML = `
+                    <div class="btn-title">${upgrade.name}</div>
+                    <div class="btn-cost">${isMaxed ? statusText : `Cost: ${cost} gold`}</div>
+                    <div class="btn-description">${effectText}</div>
+                    <div style="margin-top: 5px; font-size: 0.85em; opacity: 0.8;">${statusText}</div>
+                `;
+                
+                if (!isMaxed) {
+                    button.onclick = () => this.purchaseRebirthUpgrade(key);
+                    if (!canAfford) {
+                        button.style.opacity = '0.5';
+                        button.style.cursor = 'not-allowed';
+                    }
+                } else {
+                    button.style.cursor = 'default';
+                }
+                
+                container.appendChild(button);
+            });
+        }
+    }
+    
+    applyResearchBonus(researchType) {
+        switch (researchType) {
+            case 'mining':
+                this.state.efficiency.mining *= 1.25;
+                break;
+            case 'processing':
+                this.state.efficiency.processing *= 1.25;
+                break;
             case 'automation':
                 // Unlock auto-systems (handled in UI)
                 break;
@@ -2128,6 +2332,7 @@ class GameEngine {
         // Store current data before reset
         const newRebirthCount = currentRebirths + 1;
         const savedEfficiency = { ...this.state.efficiency };
+        const savedRebirthUpgrades = { ...this.state.rebirthUpgrades }; // Preserve rebirth upgrades!
         
         // Reset game completely (including unlocks and research)
         this.state = this.getInitialState();
@@ -2135,6 +2340,16 @@ class GameEngine {
         // Restore enhanced efficiency
         this.state.efficiency = savedEfficiency;
         this.state.city.rebirths = newRebirthCount;
+        this.state.rebirthUpgrades = savedRebirthUpgrades; // Restore rebirth upgrades!
+        
+        // Apply starting gold bonus from rebirth upgrades
+        if (this.rebirthRewards && savedRebirthUpgrades) {
+            const effects = this.rebirthRewards.getActiveEffects(savedRebirthUpgrades);
+            if (effects.startingGold > 0) {
+                this.state.resources.gold += effects.startingGold;
+                console.log(`💰 Starting gold bonus: +${effects.startingGold} gold`);
+            }
+        }
         
         // Apply rebirth bonuses
         this.state.efficiency.mining *= (1 + rebirthBonus.mining);
@@ -2159,6 +2374,13 @@ class GameEngine {
             setTimeout(() => {
                 this.themeManager.updateTheme();
             }, 100);
+        }
+        
+        // Update rebirth upgrades UI
+        if (this.rebirthRewards) {
+            setTimeout(() => {
+                this.updateRebirthUpgradesUI();
+            }, 150);
         }
         
         this.playSound('prestige');
