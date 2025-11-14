@@ -1223,10 +1223,15 @@
             dosboxContainer.appendChild(newCanvas);
             
             // Initialize js-dos with v6.22 API
-            Dos(newCanvas, {
+            const dosboxInstance = Dos(newCanvas, {
                 wdosboxUrl: "https://js-dos.com/6.22/current/wdosbox.js",
                 cycles: game.cyclesLimit || 'auto',  // Apply cycles limit if specified
-            }).ready((fs, main) => {
+            });
+            
+            // Store reference for later cleanup
+            currentDosbox = dosboxInstance;
+            
+            dosboxInstance.ready((fs, main) => {
                 // Construct full URL with correct path
                 // Get the base URL and ensure we use the correct case for idleGame folder
                 const baseUrl = window.location.origin + '/idleGame/'; // Force correct capitalization
@@ -1257,6 +1262,15 @@
                 window.app.gameEngine.arcadeManager.stopGame();
             }
             
+            // Try to properly exit/stop the DOSBox instance
+            if (currentDosbox && currentDosbox.exit) {
+                try {
+                    currentDosbox.exit();
+                } catch (e) {
+                    console.log('Error exiting dosbox:', e);
+                }
+            }
+            
             // Exit fullscreen if active
             if (document.fullscreenElement || document.webkitFullscreenElement || 
                 document.mozFullScreenElement || document.msFullscreenElement) {
@@ -1278,6 +1292,14 @@
             // Completely reset the container - this will be recreated on next open
             const dosboxContainer = document.getElementById('dosbox-container');
             if (dosboxContainer) {
+                // Force stop any audio/video elements that might be running
+                const mediaElements = dosboxContainer.querySelectorAll('audio, video');
+                mediaElements.forEach(el => {
+                    el.pause();
+                    el.src = '';
+                });
+                
+                // Clear everything
                 dosboxContainer.innerHTML = '';
                 dosboxContainer.style.cssText = 'width: 100%; display: flex; justify-content: center; align-items: center; background: #000; min-height: 400px;';
                 

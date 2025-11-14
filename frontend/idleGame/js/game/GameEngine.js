@@ -208,6 +208,16 @@ class GameEngine {
                 global: 1.0
             },
             
+            // Arcade system
+            arcade: {
+                unlockedGames: ['doom', 'digger', 'commander', 'prince'], // All unlocked for playtesting
+                playTime: {},
+                highScores: {},
+                totalPlayTime: 0,
+                activeGame: null,
+                gameStartTime: null
+            },
+            
             // Game time
             gameTime: 0,
             offlineTime: 0,
@@ -512,9 +522,9 @@ class GameEngine {
             { gatheringSpeed: 1, workerEfficiency: 1, quantumWorkerBonus: 1, doubleGatherChance: 0, megaGatherChance: 0, efficiencyBoost: 1, transcendenceBonus: 1 };
         
         // Get arcade bonuses
-        const arcadeBonuses = this.arcadeManager ? 
+        const arcadeBonuses = (this.arcadeManager && this.arcadeManager.getArcadeBonuses) ? 
             this.arcadeManager.getArcadeBonuses() : 
-            { resourceBonus: 1, efficiencyBonus: 1 };
+            { resourceBonus: 1, efficiencyBonus: 1, goldBonus: 1, craftingBonus: 1 };
         
         // Base efficiency from global and mining
         let efficiency = this.state.efficiency.mining * this.state.efficiency.global;

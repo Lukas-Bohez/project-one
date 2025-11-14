@@ -170,14 +170,12 @@ class SaveManager {
     // Save/Load Operations
     // ===================
 
-    async saveGame() {
+    async saveGame(gameState = null, forceReset = false) {
         if (!this.isAuthenticated) {
             this.gameEngine.showNotification('⚠️ You must be logged in to save your game! Click "Login" to create an account or sign in.');
             return { success: false, message: 'Not authenticated - Please login to save your game' };
         }
-    }
-
-    async saveGame(gameState = null, forceReset = false) {
+        
         if (this._isSaving) {
             console.log('⏸️ SAVE: Already saving, skipping...');
             return { success: false, message: 'Save already in progress' };
@@ -677,6 +675,19 @@ class SaveManager {
             state.prestige.level = saveData.prestige_level;
         } else if (customData.prestige) {
             state.prestige = Object.assign({}, customData.prestige);
+        }
+        
+        // Restore arcade progress
+        if (customData.arcade) {
+            console.log('Restoring arcade progress:', customData.arcade);
+            state.arcade = state.arcade || {};
+            state.arcade.unlockedGames = customData.arcade.unlockedGames || ['doom', 'digger', 'commander', 'prince'];
+            state.arcade.playTime = customData.arcade.playTime || {};
+            state.arcade.highScores = customData.arcade.highScores || {};
+            state.arcade.totalPlayTime = customData.arcade.totalPlayTime || 0;
+            // Don't restore activeGame or gameStartTime (these are session-specific)
+            state.arcade.activeGame = null;
+            state.arcade.gameStartTime = null;
         }
         
         // Restore efficiency
