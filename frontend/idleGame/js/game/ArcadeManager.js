@@ -32,8 +32,8 @@ class ArcadeManager {
                 description: 'Classic FPS that defined a generation',
                 zipUrl: 'dos-games/doom.zip',
                 executable: 'cd DOOM && DOOM.COM',
-                bonus: { type: 'mining', value: 0.05 }, // 5% mining speed per hour
-                bonusAmount: 0.05
+                bonusType: 'resourceBonus',
+                bonusAmount: 0.05  // 5% resource bonus per hour
             },
             digger: {
                 id: 'digger',
@@ -45,9 +45,9 @@ class ArcadeManager {
                 description: 'Classic arcade digging action',
                 zipUrl: 'dos-games/digger.zip',
                 executable: 'DIGGER.COM',
-                cyclesLimit: 3000,  // Limit CPU cycles to slow down the game
-                bonus: { type: 'trading', value: 0.03 }, // 3% trading bonus per hour
-                bonusAmount: 0.03
+                cyclesLimit: 1500,  // Limit CPU cycles to slow down the game
+                bonusType: 'resourceBonus',
+                bonusAmount: 0.03  // 3% resource bonus per hour
             },
             commander: {
                 id: 'commander',
@@ -59,8 +59,8 @@ class ArcadeManager {
                 description: 'Side-scrolling platform adventure',
                 zipUrl: 'dos-games/keen4.zip',
                 executable: 'cd KEEN4 && KEEN4E.EXE',
-                bonus: { type: 'processing', value: 0.04 }, // 4% processing speed per hour
-                bonusAmount: 0.04
+                bonusType: 'efficiencyBonus',
+                bonusAmount: 0.04  // 4% efficiency bonus per hour
             },
             prince: {
                 id: 'prince',
@@ -72,8 +72,8 @@ class ArcadeManager {
                 description: 'Legendary platformer with fluid animation',
                 zipUrl: 'dos-games/prince.zip',
                 executable: 'cd Ppersia && PRINCE.EXE',
-                bonus: { type: 'global', value: 0.02 }, // 2% global efficiency per hour
-                bonusAmount: 0.02
+                bonusType: 'goldBonus',
+                bonusAmount: 0.02  // 2% gold bonus per hour
             }
         };
     }
@@ -145,6 +145,12 @@ class ArcadeManager {
     
     // Update arcade bonuses (called each game tick)
     update(deltaTime) {
+        // Safety check
+        if (!this.state || !this.state.arcade) {
+            console.warn('Arcade state not initialized');
+            return;
+        }
+        
         // If a game is active, accumulate play time
         if (this.state.arcade.activeGame && this.state.arcade.gameStartTime) {
             const gameId = this.state.arcade.activeGame;
@@ -177,19 +183,15 @@ class ArcadeManager {
                 const effectiveHours = Math.min(10, playTimeHours);
                 const bonus = effectiveHours * game.bonusAmount * rebirthEffects.arcadeBonus;
                 
-                switch (game.bonusType) {
-                    case 'combat':
-                        bonuses.resourceBonus += bonus;
-                        break;
-                    case 'survival':
-                        bonuses.efficiencyBonus += bonus;
-                        break;
-                    case 'power':
-                        bonuses.goldBonus += bonus;
-                        break;
-                    case 'precision':
-                        bonuses.craftingBonus += bonus;
-                        break;
+                // Apply bonus to the appropriate category
+                if (game.bonusType === 'resourceBonus') {
+                    bonuses.resourceBonus += bonus;
+                } else if (game.bonusType === 'efficiencyBonus') {
+                    bonuses.efficiencyBonus += bonus;
+                } else if (game.bonusType === 'goldBonus') {
+                    bonuses.goldBonus += bonus;
+                } else if (game.bonusType === 'craftingBonus') {
+                    bonuses.craftingBonus += bonus;
                 }
             }
         });
