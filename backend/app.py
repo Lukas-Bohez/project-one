@@ -11,6 +11,8 @@ import time
 import traceback
 import threading
 from threading import Thread, Event, Lock
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+import asyncio
 import socket
 import logging
 from dotenv import load_dotenv
@@ -4574,6 +4576,15 @@ async def shutdown_event():
     # Give the thread a moment to clean up (optional, as it's a daemon thread)
     # If the thread is not a daemon, you'd want to join it: pi_thread.join(timeout=5)
     print("Shutdown signal sent to Raspberry Pi thread.")
+    
+    # Shutdown video conversion process pool gracefully
+    try:
+        if VIDEO_CONVERTER_AVAILABLE and 'video_process_pool' in globals():
+            print("Shutting down video conversion process pool...")
+            video_process_pool.shutdown(wait=False, cancel_futures=True)
+            print("✅ Video process pool shutdown complete")
+    except Exception as e:
+        print(f"Error during video process pool shutdown: {e}")
 
 
 # --- FastAPI Endpoints ---
@@ -7195,9 +7206,27 @@ def process_next_in_queue():
         # Start the download
         video_logger.info(f"Starting queued download {download_id}")
         try:
-            worker_queue.put_nowait((download_video_background, (download_id, url, format_type, quality, output_path, client_ip)))
-        except queue.Full:
-            video_logger.error(f"Worker queue full when trying to start {download_id}")
+            # Submit to process pool instead of thread queue (prevents blocking)
+            future = video_process_pool.submit(
+                download_video_background,
+                download_id, url, format_type, quality, output_path, client_ip
+            )
+            
+            # Add completion callback
+            def done_callback(fut):
+                try:
+                    fut.result()  # Raises exception if download failed
+                except Exception as e:
+                    video_logger.error(f"Download {download_id} error: {e}")
+                finally:
+                    decrement_active_conversions()
+                    decrement_video_rate_limit(client_ip)
+                    process_next_in_queue()
+            
+            future.add_done_callback(done_callback)
+            
+        except Exception as e:
+            video_logger.error(f"Failed to submit {download_id} to process pool: {e}")
             decrement_active_conversions()
             with download_lock:
                 if download_id in active_video_downloads:
@@ -8148,37 +8177,57 @@ if VIDEO_CONVERTER_AVAILABLE:
         YTDL_BACKOFF_MAX = float(os.environ.get('YTDL_BACKOFF_MAX', '30.0'))
     except Exception:
         YTDL_BACKOFF_MAX = 30.0
-    # Worker pool configuration to prevent unbounded threads
+    # 🚀 CRITICAL FIX: Use ProcessPoolExecutor instead of threading to prevent blocking
+    # FastAPI's async event loop. Threads share GIL and can block Socket.IO connections.
     try:
-        WORKER_POOL_SIZE = int(os.environ.get('YTDL_WORKER_POOL_SIZE', '20'))  # 🚀 OPTIMIZED: Increased from 12 to 20
+        WORKER_POOL_SIZE = int(os.environ.get('YTDL_WORKER_POOL_SIZE', '4'))  # Reduced to 4 processes (quality over quantity)
     except Exception:
-        WORKER_POOL_SIZE = 20
-    try:
-        WORKER_QUEUE_MAX = int(os.environ.get('YTDL_WORKER_QUEUE_MAX', '800'))  # 🚀 OPTIMIZED: Increased from 500 to 800
-    except Exception:
-        WORKER_QUEUE_MAX = 800
-
-    # Bounded queue and worker pool
-    worker_queue = queue.Queue(maxsize=WORKER_QUEUE_MAX)
-
-    def _worker_loop(index: int):
-        video_logger.info(f"Worker {index} started")
-        while True:
+        WORKER_POOL_SIZE = 4
+    
+    # Create process pool for CPU/IO intensive video downloads
+    # This ensures video conversions run in completely separate processes
+    video_process_pool = ProcessPoolExecutor(
+        max_workers=WORKER_POOL_SIZE,
+        max_tasks_per_child=10  # Restart workers after 10 tasks to prevent memory leaks
+    )
+    video_logger.info(f"✅ Video conversion process pool initialized with {WORKER_POOL_SIZE} workers")
+    
+    # Lightweight thread pool for quick coordination tasks only
+    coordination_thread_pool = ThreadPoolExecutor(max_workers=4, thread_name_prefix="video_coord")
+    
+    # Async wrapper to submit downloads to process pool
+    async def submit_video_download_async(download_id: str, url: str, format_type: str, quality: int, output_path: str, client_ip: str = None):
+        """Submit video download to process pool and handle completion asynchronously"""
+        loop = asyncio.get_event_loop()
+        
+        def completion_callback(future):
+            """Handle download completion in background thread"""
             try:
-                func, args = worker_queue.get()
-                try:
-                    func(*args)
-                except Exception as e:
-                    video_logger.error(f"Worker {index} task error: {e}\n{traceback.format_exc()}")
-                finally:
-                    worker_queue.task_done()
+                result = future.result()
+                video_logger.info(f"Download {download_id} completed: {result}")
+                decrement_active_conversions()
+                decrement_video_rate_limit(client_ip)
+                # Process next in queue
+                process_next_in_queue()
             except Exception as e:
-                video_logger.error(f"Worker {index} loop error: {e}\n{traceback.format_exc()}")
-
-    # Start worker threads
-    for i in range(WORKER_POOL_SIZE):
-        t = threading.Thread(target=_worker_loop, args=(i+1,), daemon=True)
-        t.start()
+                video_logger.error(f"Download {download_id} failed: {e}")
+                decrement_active_conversions()
+                decrement_video_rate_limit(client_ip)
+                with download_lock:
+                    if download_id in active_video_downloads:
+                        active_video_downloads[download_id]['status'] = 'error'
+                        active_video_downloads[download_id]['error'] = str(e)
+                # Process next in queue even on error
+                process_next_in_queue()
+        
+        # Submit to process pool (non-blocking)
+        future = video_process_pool.submit(
+            download_video_background,
+            download_id, url, format_type, quality, output_path, client_ip
+        )
+        future.add_done_callback(completion_callback)
+        return future
+    
     # Helper function for background video download
     def download_video_background(download_id: str, url: str, format_type: str, quality: int, output_path: str, client_ip: str = None):
         """Background function to download and convert video - includes rate limit cleanup"""
@@ -9111,13 +9160,32 @@ if VIDEO_CONVERTER_AVAILABLE:
             # Check if we can start immediately
             if can_start_conversion():
                 increment_active_conversions()
-                # Enqueue the download task into the worker queue
+                # Submit to process pool instead of thread queue
                 try:
-                    worker_queue.put_nowait((download_video_background, (download_id, request.url, format_type, request.quality, output_path, client_ip)))
+                    future = video_process_pool.submit(
+                        download_video_background,
+                        download_id, request.url, format_type, request.quality, output_path, client_ip
+                    )
+                    
+                    # Add completion callback
+                    def done_callback(fut):
+                        try:
+                            fut.result()
+                        except Exception as e:
+                            video_logger.error(f"Download {download_id} error: {e}")
+                        finally:
+                            decrement_active_conversions()
+                            decrement_video_rate_limit(client_ip)
+                            process_next_in_queue()
+                    
+                    future.add_done_callback(done_callback)
+                    
                     with download_lock:
                         if download_id in active_video_downloads:
                             active_video_downloads[download_id]['status'] = 'starting'
-                except queue.Full:
+                            
+                except Exception as e:
+                    video_logger.error(f"Failed to submit {download_id}: {e}")
                     decrement_active_conversions()
                     # Clean up coalescing entry and rate-limit increment since we couldn't start
                     with download_lock:
@@ -9127,7 +9195,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                             del active_video_downloads[download_id]
                     remove_from_queue(download_id)
                     decrement_video_rate_limit(client_ip)
-                    video_logger.warning(f"Worker queue full; rejected download {download_id}")
+                    video_logger.warning(f"Process pool error; rejected download {download_id}")
                     raise HTTPException(status_code=429, detail="Server busy processing other downloads. Try again shortly.")
             
             response_message = f"Started {format_type} conversion from {platform}"
@@ -9212,11 +9280,27 @@ if VIDEO_CONVERTER_AVAILABLE:
             # Increment rate limit counter
             increment_video_rate_limit(client_ip)
             
-            # Enqueue the bulk download task
-            video_logger.info(f"Enqueuing background bulk download task for {download_id}")
+            # Submit bulk download to process pool
+            video_logger.info(f"Submitting background bulk download task for {download_id}")
             try:
-                worker_queue.put_nowait((bulk_download_background, (download_id, request.video_ids, format_type, request.quality, bulk_dir, zip_path, client_ip)))
-            except queue.Full:
+                future = video_process_pool.submit(
+                    bulk_download_background,
+                    download_id, request.video_ids, format_type, request.quality, bulk_dir, zip_path, client_ip
+                )
+                
+                # Add completion callback
+                def done_callback(fut):
+                    try:
+                        fut.result()
+                    except Exception as e:
+                        video_logger.error(f"Bulk download {download_id} error: {e}")
+                    finally:
+                        decrement_video_rate_limit(client_ip)
+                
+                future.add_done_callback(done_callback)
+                
+            except Exception as e:
+                video_logger.error(f"Failed to submit bulk download {download_id}: {e}")
                 with download_lock:
                     if download_id in active_video_downloads:
                         del active_video_downloads[download_id]
