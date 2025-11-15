@@ -288,6 +288,7 @@
                     <h4 style="margin: 0; color: var(--text-primary, #333); font-size: 1em;">💾 Download Cache</h4>
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <span id="cache-size-display" style="color: var(--text-secondary, #666); font-size: 0.9em;">0 MB used</span>
+                        <button id="download-all-cache-btn" style="padding: 6px 12px; background: rgba(40, 167, 69, 0.1); color: #28a745; border: 1px solid rgba(40, 167, 69, 0.3); border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: 500;">⬇️ Download All</button>
                         <button id="clear-all-cache-btn" style="padding: 6px 12px; background: rgba(220, 53, 69, 0.1); color: #dc3545; border: 1px solid rgba(220, 53, 69, 0.3); border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: 500;">Clear All</button>
                         <button id="refresh-cache-btn" style="padding: 6px 12px; background: rgba(44, 111, 184, 0.1); color: #2c6fb8; border: 1px solid rgba(44, 111, 184, 0.3); border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: 500;">🔄 Refresh</button>
                     </div>
@@ -739,8 +740,9 @@
         </div>
     </footer>
 
-    <script src="../js/lofi.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="../js/converter.js"></script>
+    <script src="../js/lofi.js"></script>
     <script src="../js/themeManager.js"></script>
 
     <!-- Cookies Modal -->

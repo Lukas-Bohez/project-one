@@ -1,6 +1,9 @@
 // Simple Random Lofi Player - Enhanced with Shuffle and Repeat Modes
-// API Configuration  
-const API_BASE_URL = `https://${window.location.hostname}`;
+// API Configuration (use different name to avoid conflict with converter.js)
+const LOFI_API_BASE_URL = `https://${window.location.hostname}`;
+
+// Use unified cache constants from window (set by converter.js)
+// Reference them directly from window to avoid redeclaration errors
 
 // Configuration
 const config = {
@@ -87,37 +90,34 @@ let cachedYouTubePlaylist = []; // Cached YouTube songs
 let cachedVolume = config.volume; // Cached volume setting
 let isPlayerEnabled = false; // Cached player enabled state
 
-// IndexedDB for audio blob caching
-let lofiDB = null;
-
 // --- Unicode/URL helpers ---
-// Detect if a string already contains percent-encoded bytes
 const isPercentEncoded = (s) => /%[0-9A-Fa-f]{2}/.test(s);
-// Safely decode URI components; if not encoded, return original
 const safeDecode = (s) => { try { return decodeURIComponent(s); } catch { return s; } };
-// Encode a filename for use in a URL path segment without double-encoding
 const toUrlFilename = (name) => isPercentEncoded(name) ? name : encodeURIComponent(name);
-// Build a playable song URL from folder + filename, handling Unicode universally
 const buildSongPath = (name) => `${config.folder}${toUrlFilename(name)}`;
 
+// Unified cache functions for lofi (using converter.js functions if available)
 const openLofiDB = async () => {
-    if (lofiDB) return lofiDB;
+    // Use unified cache if converter.js functions are available
+    if (typeof openUnifiedCacheDB === 'function') {
+        return await openUnifiedCacheDB();
+    }
     
+    // Fallback to direct unified cache access
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open('lofi-cache', 1);
+        const request = indexedDB.open(window.UNIFIED_CACHE_DB || 'unified_media_cache_v1');
         
         request.onerror = () => reject(request.error);
-        request.onsuccess = () => {
-            lofiDB = request.result;
-            resolve(lofiDB);
-        };
+        request.onsuccess = () => resolve(request.result);
         
         request.onupgradeneeded = (event) => {
             const db = event.target.result;
-            if (!db.objectStoreNames.contains('audioBlobs')) {
-                const store = db.createObjectStore('audioBlobs', { keyPath: 'id' });
+            const storeName = window.CACHE_STORE_MEDIA || 'media_files';
+            if (!db.objectStoreNames.contains(storeName)) {
+                const store = db.createObjectStore(storeName, { keyPath: 'id' });
+                store.createIndex('type', 'type', { unique: false });
                 store.createIndex('videoId', 'videoId', { unique: false });
-                store.createIndex('status', 'status', { unique: false });
+                store.createIndex('created', 'created', { unique: false });
             }
         };
     });
@@ -140,12 +140,38 @@ const prettyTitle = (s) => {
 const getCachedAudioBlob = async (videoId) => {
     try {
         const db = await openLofiDB();
-        const transaction = db.transaction(['audioBlobs'], 'readonly');
-        const store = transaction.objectStore('audioBlobs');
+        const storeName = window.CACHE_STORE_MEDIA || 'media_files';
+        const transaction = db.transaction([storeName], 'readonly');
+        const store = transaction.objectStore(storeName);
         
         return new Promise((resolve, reject) => {
+            // First try direct lookup by ID
             const request = store.get(videoId);
-            request.onsuccess = () => resolve(request.result);
+            request.onsuccess = () => {
+                const result = request.result;
+                if (result) {
+                    resolve(result);
+                    return;
+                }
+                
+                // If not found by ID, search through all entries for matching videoId
+                const cursorRequest = store.openCursor();
+                cursorRequest.onsuccess = (event) => {
+                    const cursor = event.target.result;
+                    if (cursor) {
+                        const entry = cursor.value;
+                        if (entry.videoId === videoId) {
+                            resolve(entry);
+                            return;
+                        }
+                        cursor.continue();
+                    } else {
+                        // Not found
+                        resolve(null);
+                    }
+                };
+                cursorRequest.onerror = () => reject(cursorRequest.error);
+            };
             request.onerror = () => reject(request.error);
         });
     } catch (error) {
@@ -157,16 +183,24 @@ const getCachedAudioBlob = async (videoId) => {
 const saveCachedAudioBlob = async (videoId, blob, metadata = {}) => {
     try {
         const db = await openLofiDB();
-        const transaction = db.transaction(['audioBlobs'], 'readwrite');
-        const store = transaction.objectStore('audioBlobs');
+        const storeName = window.CACHE_STORE_MEDIA || 'media_files';
+        const transaction = db.transaction([storeName], 'readwrite');
+        const store = transaction.objectStore(storeName);
         
         const record = {
             id: videoId,
+            download_id: videoId,
             videoId: videoId,
             blob: blob,
             status: 'ready',
             title: metadata.title || videoId,
+            filename: `${metadata.title || videoId}.mp3`,
             fileExt: 'mp3',
+            size: blob.size,
+            type: 'lofi',
+            created: Date.now(),
+            platform: 'youtube',
+            format: 'MP3',
             cachedAt: new Date().toISOString(),
             ...metadata
         };
@@ -190,11 +224,13 @@ const hasCachedAudio = async (videoId) => {
 const listCachedAudioKeys = async () => {
     try {
         const db = await openLofiDB();
-        const transaction = db.transaction(['audioBlobs'], 'readonly');
-        const store = transaction.objectStore('audioBlobs');
+        const storeName = window.CACHE_STORE_MEDIA || 'media_files';
+        const transaction = db.transaction([storeName], 'readonly');
+        const store = transaction.objectStore(storeName);
+        const typeIndex = store.index('type');
         
         return new Promise((resolve, reject) => {
-            const request = store.getAllKeys();
+            const request = typeIndex.getAllKeys(IDBKeyRange.only('lofi'));
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
         });
@@ -204,11 +240,117 @@ const listCachedAudioKeys = async () => {
     }
 };
 
+// Forcefully sync all cached items from IndexedDB to lofi playlist
+const syncCacheToPlaylist = async () => {
+    try {
+        console.log('🔄 Syncing IndexedDB cache to lofi playlist...');
+        const db = await openLofiDB();
+        const storeName = window.CACHE_STORE_MEDIA || 'media_files';
+        const transaction = db.transaction([storeName], 'readonly');
+        const store = transaction.objectStore(storeName);
+        
+        return new Promise((resolve, reject) => {
+            const allItems = [];
+            const request = store.openCursor();
+            
+            request.onsuccess = (event) => {
+                const cursor = event.target.result;
+                if (cursor) {
+                    const item = cursor.value;
+                    
+                    // Only add YouTube audio items (MP3 format)
+                    if (item.videoId && (item.format === 'MP3' || item.filename?.endsWith('.mp3'))) {
+                        // Check if already in playlist (by videoId OR id)
+                        const existsInPlaylist = cachedYouTubePlaylist.some(
+                            x => x.id === item.videoId || x.id === item.id
+                        );
+                        
+                        if (!existsInPlaylist) {
+                            // Add to playlist with proper structure
+                            const playlistItem = {
+                                id: item.videoId || item.id,
+                                title: item.title || item.filename || 'Unknown',
+                                url: `https://www.youtube.com/watch?v=${item.videoId || item.id}`,
+                                type: 'video',
+                                status: 'ready',
+                                cachedAt: item.created || Date.now(),
+                                source: item.type || 'unknown' // 'converter', 'playlist', or 'lofi'
+                            };
+                            
+                            cachedYouTubePlaylist.push(playlistItem);
+                            allItems.push(playlistItem);
+                            console.log('➕ Added to playlist:', playlistItem.title, `(source: ${playlistItem.source})`);
+                        }
+                    }
+                    
+                    cursor.continue();
+                } else {
+                    // Done iterating - now deduplicate the entire playlist
+                    const originalLength = cachedYouTubePlaylist.length;
+                    cachedYouTubePlaylist = deduplicatePlaylist(cachedYouTubePlaylist);
+                    const removedCount = originalLength - cachedYouTubePlaylist.length;
+                    
+                    if (removedCount > 0) {
+                        console.log(`🧹 Removed ${removedCount} duplicate(s) from playlist`);
+                    }
+                    
+                    if (allItems.length > 0 || removedCount > 0) {
+                        console.log(`✅ Synced ${allItems.length} new items, removed ${removedCount} duplicates`);
+                        // Save to localStorage
+                        try {
+                            localStorage.setItem(
+                                config.persistence.youtubePlaylistKey,
+                                JSON.stringify(cachedYouTubePlaylist)
+                            );
+                        } catch (e) {
+                            console.warn('Failed to save playlist to localStorage:', e);
+                        }
+                        // Refresh UI
+                        refreshCachedYouTubeListUI();
+                    } else {
+                        console.log('ℹ️ No new items to sync and no duplicates found');
+                    }
+                    resolve(allItems);
+                }
+            };
+            
+            request.onerror = () => {
+                console.error('❌ Error syncing cache to playlist:', request.error);
+                reject(request.error);
+            };
+        });
+    } catch (error) {
+        console.error('❌ Error in syncCacheToPlaylist:', error);
+        return [];
+    }
+};
+
+// Deduplicate playlist by videoId (keeps newest entries)
+const deduplicatePlaylist = (playlist) => {
+    const seen = new Map(); // videoId -> item
+    
+    // Sort by cachedAt (newest first)
+    const sorted = [...playlist].sort((a, b) => (b.cachedAt || 0) - (a.cachedAt || 0));
+    
+    for (const item of sorted) {
+        const key = item.id;
+        if (key && !seen.has(key)) {
+            seen.set(key, item);
+        }
+    }
+    
+    return Array.from(seen.values());
+};
+
+// Expose for manual triggering from console
+window.syncCacheToPlaylist = syncCacheToPlaylist;
+
 const updateCachedAudioStatus = async (videoId, updates) => {
     try {
         const db = await openLofiDB();
-        const transaction = db.transaction(['audioBlobs'], 'readwrite');
-        const store = transaction.objectStore('audioBlobs');
+        const storeName = window.CACHE_STORE_MEDIA || 'media_files';
+        const transaction = db.transaction([storeName], 'readwrite');
+        const store = transaction.objectStore(storeName);
         
         return new Promise(async (resolve, reject) => {
             // Get existing record
@@ -666,7 +808,7 @@ const scheduleYouTubeDownload = async (item) => {
         updateYouTubeItemInCache(item);
         
         // Start conversion via backend
-        const convertResponse = await fetch(`${API_BASE_URL}/api/v1/video/convert`, {
+        const convertResponse = await fetch(`${LOFI_API_BASE_URL}/api/v1/video/convert`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -710,7 +852,7 @@ const pollYouTubeConversion = async (item) => {
     
     const pollInterval = setInterval(async () => {
         try {
-            const statusResponse = await fetch(`${API_BASE_URL}/api/v1/video/status/${item.downloadId}`);
+            const statusResponse = await fetch(`${LOFI_API_BASE_URL}/api/v1/video/status/${item.downloadId}`);
             const status = await statusResponse.json();
             
             if (!statusResponse.ok) {
@@ -726,7 +868,7 @@ const pollYouTubeConversion = async (item) => {
                 console.log('DOWNLOAD: Conversion completed, downloading blob...');
                 
                 // Download the converted file
-                const downloadResponse = await fetch(`${API_BASE_URL}/api/v1/video/download/${item.downloadId}`);
+                const downloadResponse = await fetch(`${LOFI_API_BASE_URL}/api/v1/video/download/${item.downloadId}`);
                 
                 if (!downloadResponse.ok) {
                     throw new Error('Download failed');
@@ -1084,6 +1226,15 @@ const playCachedYouTubeItem = async (item) => {
 document.addEventListener('DOMContentLoaded', () => {
     loadPersistentSettings();
     console.log('Lofi player boot. Enabled in cache:', isPlayerEnabled);
+
+    // Forcefully sync IndexedDB cache to playlist (finds converter/playlist downloads)
+    setTimeout(async () => {
+        try {
+            await syncCacheToPlaylist();
+        } catch (e) {
+            console.warn('Failed to sync cache to playlist:', e);
+        }
+    }, 500);
 
     if (config.youtube.enabled && isAllowedPage()) {
         loadYouTubeAPI();
@@ -2768,7 +2919,45 @@ const createLofiModal = () => {
     ytListHeader.style.fontSize = '0.9em';
     ytListHeader.style.color = 'var(--light-color, #f4f8fc)';
     ytListHeader.style.display = 'none'; // Hidden by default
-    ytListHeader.textContent = 'Saved YouTube items:';
+    ytListHeader.style.cssText += 'display: flex; justify-content: space-between; align-items: center;';
+    
+    const ytListTitle = document.createElement('span');
+    ytListTitle.textContent = 'Saved YouTube items:';
+    ytListHeader.appendChild(ytListTitle);
+    
+    const syncBtn = document.createElement('button');
+    syncBtn.textContent = '🔄 Sync Cache';
+    syncBtn.title = 'Sync downloaded videos from cache';
+    syncBtn.style.cssText = `
+        padding: 4px 8px;
+        background: var(--success-color, #2e8b34);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.75em;
+    `;
+    syncBtn.addEventListener('click', async () => {
+        syncBtn.textContent = '⏳ Syncing...';
+        syncBtn.disabled = true;
+        try {
+            const added = await syncCacheToPlaylist();
+            syncBtn.textContent = added.length > 0 ? `✅ Added ${added.length}` : '✅ Up to date';
+            setTimeout(() => {
+                syncBtn.textContent = '🔄 Sync Cache';
+                syncBtn.disabled = false;
+            }, 2000);
+        } catch (e) {
+            console.error('Sync error:', e);
+            syncBtn.textContent = '❌ Error';
+            setTimeout(() => {
+                syncBtn.textContent = '🔄 Sync Cache';
+                syncBtn.disabled = false;
+            }, 2000);
+        }
+    });
+    ytListHeader.appendChild(syncBtn);
+    
     modal.appendChild(ytListHeader);
 
     const ytListContainer = document.createElement('div');

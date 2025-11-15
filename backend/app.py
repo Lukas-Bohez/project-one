@@ -7280,13 +7280,13 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
         'keepvideo': False,
         'retries': 5,  # Reduced from 10 to prevent infinite loops
         'file_access_retries': 3,
-        # Randomize sleep intervals between retries
-        'sleep_interval': 1,
-        'max_sleep_interval': 5,
+        # Randomize sleep intervals between retries - increased to avoid rate limiting
+        'sleep_interval': 3,  # Increased from 1 to 3 seconds
+        'max_sleep_interval': 10,  # Increased from 5 to 10 seconds
         # Add socket timeout to prevent hanging
         'socket_timeout': 30,  # 30 seconds max per connection
-        'sleep_interval_requests': 1,
-        'sleep_interval_subtitles': 0,
+        'sleep_interval_requests': 2,  # Increased from 1 to 2 seconds between requests
+        'sleep_interval_subtitles': 1,  # Added delay for subtitle requests
     }
     
     # Use Invidious proxy if requested (for Layer 3 fallback)
@@ -8334,6 +8334,27 @@ if VIDEO_CONVERTER_AVAILABLE:
                             'account has been terminated',
                             'account associated with this video has been terminated'
                         ])
+                        
+                        # Check for YouTube rate limiting
+                        is_rate_limited = any(keyword in derr.lower() for keyword in [
+                            'rate-limited',
+                            'rate limited',
+                            'too many requests',
+                            '429',
+                            'try again later'
+                        ])
+                        
+                        if is_rate_limited:
+                            error_msg = 'YouTube rate limit exceeded. Try: 1) Adding YouTube cookies (logged-in account), 2) Waiting 10-60 minutes, 3) Using a different IP/VPN'
+                            with download_lock:
+                                if download_id in active_video_downloads:
+                                    active_video_downloads[download_id].update({
+                                        'status': 'error',
+                                        'error': error_msg,
+                                        'error_type': 'rate_limit',
+                                        'finished': True
+                                    })
+                            raise Exception(error_msg)
                         
                         if is_unavailable:
                             # Mark as error and exit immediately - don't waste time retrying
