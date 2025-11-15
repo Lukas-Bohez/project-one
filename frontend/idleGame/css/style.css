@@ -263,10 +263,10 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
-    min-height: 100vh;
     display: flex;
     flex-direction: column;
     gap: 20px;
+    justify-content: flex-start;
 }
 
 /* Header Styles */
@@ -429,10 +429,14 @@ body {
 .tab-content {
     display: none;
     animation: fadeIn 0.3s ease;
+    margin: 0;
+    padding: 0;
 }
 
 .tab-content.active {
     display: block;
+    margin: 0;
+    padding: 0;
 }
 
 @keyframes fadeIn {
@@ -450,10 +454,12 @@ body {
 
 /* Main Game Area */
 .game-main {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 20px;
-    align-items: start;
+    display: block;
+    flex-shrink: 0;
+    flex-grow: 0;
+    margin: 0;
+    padding: 0;
+    min-height: 0;
 }
 
 /* Panel Styles */
