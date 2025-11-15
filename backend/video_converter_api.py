@@ -15,6 +15,10 @@ from datetime import datetime, timedelta
 import re
 from urllib.parse import urlparse
 import logging
+from concurrent.futures import ProcessPoolExecutor
+import json
+import pickle
+from pathlib import Path
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -44,11 +48,16 @@ def require_video_api_key(req):
 
 # Configuration
 DOWNLOAD_DIR = os.path.join(tempfile.gettempdir(), 'convert_the_spire')
+JOBS_DB_FILE = os.path.join(DOWNLOAD_DIR, 'jobs.json')
 CLEANUP_INTERVAL = 3600  # 1 hour
 FILE_EXPIRY = 7200  # 2 hours
+MAX_WORKERS = 2  # Limit concurrent video conversions to prevent CPU overload
 
 # Ensure download directory exists
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+
+# Create process pool for video conversions (isolated from main Flask thread)
+executor = ProcessPoolExecutor(max_workers=MAX_WORKERS)
 
 # URL patterns for platform validation
 URL_PATTERNS = {
@@ -61,8 +70,38 @@ URL_PATTERNS = {
     'twitter': r'(?:twitter\.com\/[\w]+\/status\/\d+|x\.com\/[\w]+\/status\/\d+)'
 }
 
-# Active downloads tracking
+# Active downloads tracking (with persistence)
 active_downloads = {}
+jobs_lock = threading.Lock()
+
+def save_jobs():
+    """Persist jobs to disk"""
+    try:
+        with jobs_lock:
+            serializable_jobs = {}
+            for job_id, job_data in active_downloads.items():
+                serializable_jobs[job_id] = {
+                    k: str(v) if isinstance(v, datetime) else v
+                    for k, v in job_data.items()
+                    if k != 'future'  # Don't serialize Future objects
+                }
+            with open(JOBS_DB_FILE, 'w') as f:
+                json.dump(serializable_jobs, f)
+    except Exception as e:
+        logger.error(f"Error saving jobs: {e}")
+
+def load_jobs():
+    """Load jobs from disk"""
+    try:
+        if os.path.exists(JOBS_DB_FILE):
+            with open(JOBS_DB_FILE, 'r') as f:
+                return json.load(f)
+    except Exception as e:
+        logger.error(f"Error loading jobs: {e}")
+    return {}
+
+# Load existing jobs on startup
+active_downloads = load_jobs()
 
 def cleanup_old_files():
     """Remove old downloaded files"""
@@ -99,6 +138,8 @@ def get_ydl_opts(format_type, quality, output_path):
         'no_warnings': False,
         'extractaudio': format_type == 'audio',
         'ignoreerrors': True,
+        'quiet': False,
+        'no_color': True,
     }
     
     if format_type == 'audio':
@@ -121,6 +162,33 @@ def get_ydl_opts(format_type, quality, output_path):
         base_opts['format'] = quality_map.get(quality, 'best[height<=720]')
     
     return base_opts
+
+def download_video_worker(url, format_type, quality, output_path, download_id):
+    """Worker function that runs in separate process for video conversion"""
+    try:
+        logger.info(f"Worker process started for {download_id}")
+        
+        ydl_opts = get_ydl_opts(format_type, quality, output_path)
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            
+            result = {
+                'status': 'completed',
+                'title': info.get('title', 'Downloaded Video'),
+                'duration': info.get('duration', 0),
+                'file_path': ydl.prepare_filename(info)
+            }
+            
+            logger.info(f"Worker process completed for {download_id}")
+            return result
+            
+    except Exception as e:
+        logger.error(f"Worker process error for {download_id}: {e}")
+        return {
+            'status': 'error',
+            'error': str(e)
+        }
 
 @app.route('/api/validate-url', methods=['POST'])
 def validate_url():
@@ -183,7 +251,7 @@ def get_video_info():
 
 @app.route('/api/convert', methods=['POST'])
 def convert_video():
-    """Convert and download video"""
+    """Convert and download video (non-blocking using process pool)"""
     try:
         data = request.get_json()
         url = data.get('url', '').strip()
@@ -197,72 +265,71 @@ def convert_video():
         if not platform:
             return jsonify({'error': 'Unsupported URL format'}), 400
         
-        # Generate unique filename
-        download_id = str(uuid.uuid4())
-        extension = 'mp3' if format_type == 'audio' else 'mp4'
-        output_filename = f"{download_id}.{extension}"
-        output_path = os.path.join(DOWNLOAD_DIR, f"{download_id}.%(ext)s")
-        
         # Require API key for conversion
         if not require_video_api_key(request):
             return jsonify({'error': 'Unauthorized'}), 401
-
-        # Track download
-        active_downloads[download_id] = {
-            'status': 'processing',
-            'progress': 0,
-            'url': url,
-            'format': format_type,
-            'quality': quality,
-            'platform': platform,
-            'started_at': datetime.now()
-        }
         
-        # Configure yt-dlp options
-        ydl_opts = get_ydl_opts(format_type, quality, output_path)
+        # Generate unique filename
+        download_id = str(uuid.uuid4())
+        extension = 'mp3' if format_type == 'audio' else 'mp4'
+        output_path = os.path.join(DOWNLOAD_DIR, f"{download_id}.%(ext)s")
         
-        def progress_hook(d):
-            if download_id in active_downloads:
-                if d['status'] == 'downloading':
-                    if 'total_bytes' in d and d['total_bytes']:
-                        progress = (d['downloaded_bytes'] / d['total_bytes']) * 100
-                        active_downloads[download_id]['progress'] = min(progress, 90)
-                elif d['status'] == 'finished':
-                    active_downloads[download_id]['progress'] = 100
-                    active_downloads[download_id]['status'] = 'completed'
-                    active_downloads[download_id]['file_path'] = d['filename']
+        # Track download with initial state
+        with jobs_lock:
+            active_downloads[download_id] = {
+                'status': 'queued',
+                'progress': 0,
+                'url': url,
+                'format': format_type,
+                'quality': quality,
+                'platform': platform,
+                'started_at': str(datetime.now()),
+                'title': None,
+                'duration': None,
+                'file_path': None,
+                'error': None
+            }
+            save_jobs()
         
-        ydl_opts['progress_hooks'] = [progress_hook]
+        # Submit to process pool (runs in separate process, won't block Flask)
+        future = executor.submit(
+            download_video_worker,
+            url, format_type, quality, output_path, download_id
+        )
         
-        # Download in background thread
-        def download_worker():
+        # Add callback to update job status when done
+        def job_done_callback(future):
             try:
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    info = ydl.extract_info(url, download=True)
-                    
-                    # Update download info with video details
+                result = future.result()
+                with jobs_lock:
+                    if download_id in active_downloads:
+                        active_downloads[download_id].update(result)
+                        active_downloads[download_id]['progress'] = 100
+                        save_jobs()
+                logger.info(f"Job {download_id} completed with status: {result.get('status')}")
+            except Exception as e:
+                logger.error(f"Callback error for {download_id}: {e}")
+                with jobs_lock:
                     if download_id in active_downloads:
                         active_downloads[download_id].update({
-                            'title': info.get('title', 'Downloaded Video'),
-                            'duration': info.get('duration', 0),
-                            'status': 'completed'
+                            'status': 'error',
+                            'error': str(e)
                         })
-                        
-            except Exception as e:
-                logger.error(f"Download error for {download_id}: {e}")
-                if download_id in active_downloads:
-                    active_downloads[download_id].update({
-                        'status': 'error',
-                        'error': str(e)
-                    })
+                        save_jobs()
         
-        thread = threading.Thread(target=download_worker)
-        thread.start()
+        future.add_done_callback(job_done_callback)
+        
+        # Update status to processing
+        with jobs_lock:
+            active_downloads[download_id]['status'] = 'processing'
+            save_jobs()
+        
+        logger.info(f"Video conversion job {download_id} queued for {platform}")
         
         return jsonify({
             'success': True,
             'download_id': download_id,
-            'message': 'Download started'
+            'message': 'Download started in background process'
         })
         
     except Exception as e:
@@ -272,14 +339,15 @@ def convert_video():
 @app.route('/api/status/<download_id>', methods=['GET'])
 def get_download_status(download_id):
     """Get download status"""
-    if download_id not in active_downloads:
-        return jsonify({'error': 'Download not found'}), 404
+    with jobs_lock:
+        if download_id not in active_downloads:
+            return jsonify({'error': 'Download not found'}), 404
+        
+        download_info = active_downloads[download_id].copy()
     
-    download_info = active_downloads[download_id].copy()
-    
-    # Remove sensitive information
-    if 'file_path' in download_info:
-        del download_info['file_path']
+    # Remove sensitive internal information
+    download_info.pop('file_path', None)
+    download_info.pop('future', None)
     
     return jsonify(download_info)
 
@@ -290,15 +358,16 @@ def download_file(download_id):
     if not require_video_api_key(request):
         return jsonify({'error': 'Unauthorized'}), 401
 
-    if download_id not in active_downloads:
-        return jsonify({'error': 'Download not found'}), 404
-    
-    download_info = active_downloads[download_id]
+    with jobs_lock:
+        if download_id not in active_downloads:
+            return jsonify({'error': 'Download not found'}), 404
+        
+        download_info = active_downloads[download_id].copy()
     
     if download_info['status'] != 'completed':
-        return jsonify({'error': 'Download not ready'}), 400
+        return jsonify({'error': 'Download not ready', 'status': download_info['status']}), 400
     
-    if 'file_path' not in download_info:
+    if not download_info.get('file_path'):
         return jsonify({'error': 'File not available'}), 404
     
     file_path = download_info['file_path']
@@ -327,10 +396,18 @@ def download_file(download_id):
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
+    with jobs_lock:
+        active_count = len([j for j in active_downloads.values() if j['status'] in ['queued', 'processing']])
+        completed_count = len([j for j in active_downloads.values() if j['status'] == 'completed'])
+        error_count = len([j for j in active_downloads.values() if j['status'] == 'error'])
+    
     return jsonify({
         'status': 'healthy',
-        'active_downloads': len(active_downloads),
-        'uptime': 'OK'
+        'total_jobs': len(active_downloads),
+        'active_jobs': active_count,
+        'completed_jobs': completed_count,
+        'failed_jobs': error_count,
+        'max_workers': MAX_WORKERS
     })
 
 @app.errorhandler(404)
@@ -341,7 +418,30 @@ def not_found(error):
 def internal_error(error):
     return jsonify({'error': 'Internal server error'}), 500
 
+@app.before_request
+def check_executor():
+    """Ensure executor is available"""
+    global executor
+    if executor._shutdown:
+        logger.warning("Executor was shutdown, recreating...")
+        executor = ProcessPoolExecutor(max_workers=MAX_WORKERS)
+
+def shutdown_executor():
+    """Gracefully shutdown the process pool"""
+    logger.info("Shutting down video conversion process pool...")
+    executor.shutdown(wait=True, cancel_futures=True)
+    logger.info("Process pool shutdown complete")
+
+import atexit
+atexit.register(shutdown_executor)
+
 if __name__ == '__main__':
     print("Starting Convert The Spire Backend API...")
     print(f"Download directory: {DOWNLOAD_DIR}")
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    print(f"Max concurrent conversions: {MAX_WORKERS}")
+    print(f"Job persistence: {JOBS_DB_FILE}")
+    
+    try:
+        app.run(debug=True, host='0.0.0.0', port=5001)
+    finally:
+        shutdown_executor()
