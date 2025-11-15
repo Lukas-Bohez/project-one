@@ -62,6 +62,29 @@ class DeveloperMenu {
             applyRebirthBtn.addEventListener('click', () => this.applyRebirth());
         }
         
+        // Currency buttons
+        const giveGoldBtn = document.getElementById('give-gold-btn');
+        const giveStoneBtn = document.getElementById('give-stone-btn');
+        const giveCoalBtn = document.getElementById('give-coal-btn');
+        const giveIronBtn = document.getElementById('give-iron-btn');
+        const giveSilverBtn = document.getElementById('give-silver-btn');
+        
+        if (giveGoldBtn) {
+            giveGoldBtn.addEventListener('click', () => this.giveCurrency('gold'));
+        }
+        if (giveStoneBtn) {
+            giveStoneBtn.addEventListener('click', () => this.giveCurrency('stone'));
+        }
+        if (giveCoalBtn) {
+            giveCoalBtn.addEventListener('click', () => this.giveCurrency('coal'));
+        }
+        if (giveIronBtn) {
+            giveIronBtn.addEventListener('click', () => this.giveCurrency('iron'));
+        }
+        if (giveSilverBtn) {
+            giveSilverBtn.addEventListener('click', () => this.giveCurrency('silver'));
+        }
+        
         // Close modal on outside click
         const modal = document.getElementById('dev-menu-modal');
         if (modal) {
@@ -157,6 +180,57 @@ class DeveloperMenu {
         }
     }
     
+    giveCurrency(resourceType) {
+        const inputId = `dev-${resourceType}-input`;
+        const input = document.getElementById(inputId);
+        
+        if (!input || !this.gameEngine?.state?.resources) return;
+        
+        const amount = parseFloat(input.value);
+        
+        if (isNaN(amount) || amount <= 0) {
+            if (this.gameEngine.showNotification) {
+                this.gameEngine.showNotification('⚠️ Please enter a valid positive amount');
+            }
+            return;
+        }
+        
+        // Add the resource
+        this.gameEngine.state.resources[resourceType] = (this.gameEngine.state.resources[resourceType] || 0) + amount;
+        
+        // Update UI
+        if (this.gameEngine.updateUI) {
+            this.gameEngine.updateUI();
+        }
+        
+        // Get theme-aware resource name
+        let resourceName = resourceType;
+        if (this.gameEngine.themeManager && this.gameEngine.themeManager.currentTheme) {
+            const themeResources = this.gameEngine.themeManager.currentTheme.resources;
+            if (themeResources && themeResources[resourceType]) {
+                resourceName = themeResources[resourceType];
+            }
+        }
+        
+        // Show notification with theme-aware name
+        if (this.gameEngine.showNotification) {
+            const icons = {
+                gold: '💰',
+                stone: '🪨',
+                coal: '⚫',
+                iron: '⚙️',
+                silver: '🥈'
+            };
+            const icon = icons[resourceType] || '📦';
+            this.gameEngine.showNotification(`${icon} Added ${amount} ${resourceName}!`);
+        }
+        
+        // Clear input
+        input.value = '';
+        
+        console.log(`Developer: Added ${amount} ${resourceType} (${resourceName})`);
+    }
+    
     updateRebirthSelector() {
         const selector = document.getElementById('rebirth-selector');
         if (selector && this.gameEngine?.state?.city) {
@@ -206,9 +280,14 @@ class DeveloperMenu {
     }
 }
 
+// Export for use in other modules
+window.DeveloperMenu = DeveloperMenu;
+
 // Add shake animation to CSS if not already present
-const style = document.createElement('style');
-style.textContent = `
+if (!document.getElementById('dev-menu-styles')) {
+    const devMenuStyle = document.createElement('style');
+    devMenuStyle.id = 'dev-menu-styles';
+    devMenuStyle.textContent = `
     @keyframes shake {
         0%, 100% { transform: translateX(0); }
         10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
@@ -258,4 +337,5 @@ style.textContent = `
         }
     }
 `;
-document.head.appendChild(style);
+    document.head.appendChild(devMenuStyle);
+}

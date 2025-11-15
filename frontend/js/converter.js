@@ -55,6 +55,7 @@ const downloadBtn = document.getElementById('download-btn');
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
     updateUIForPlatform('youtube');
+    loadCacheManager();
 });
 
 // Initialize all event listeners
@@ -83,6 +84,16 @@ function initializeEventListeners() {
     // Download button
     if (downloadBtn) {
         downloadBtn.addEventListener('click', handleDownload);
+    }
+    
+    // Cache manager buttons
+    const refreshCacheBtn = document.getElementById('refresh-cache-btn');
+    const clearAllCacheBtn = document.getElementById('clear-all-cache-btn');
+    if (refreshCacheBtn) {
+        refreshCacheBtn.addEventListener('click', loadCacheManager);
+    }
+    if (clearAllCacheBtn) {
+        clearAllCacheBtn.addEventListener('click', clearAllCache);
     }
     
     // Modal controls
@@ -759,7 +770,7 @@ async function startBulkDownload(videoIds, description) {
         disableConvertButtonVisuals();
 
         showSpinner();
-        updateSpinnerText('Preparing bulk download...');
+        if (spinnerText) spinnerText.textContent = 'Preparing bulk download...';
         
         const response = await fetch(`${API_BASE_URL}/api/v1/video/bulk-download`, {
             method: 'POST',
@@ -812,10 +823,10 @@ async function processQueue() {
             const videoUrl = `https://www.youtube.com/watch?v=${next.id}`;
 
             try {
-                updateSpinnerText();
                 isProcessing = true;
                 // Use a subtle spinner during long-running playlist processing
                 showSpinner('subtle');
+                if (spinnerText) spinnerText.textContent = 'Processing playlist...';
                 updatePlaylistStatusUI({ currentTitle: next.title });
 
                 // Start server conversion
@@ -1027,6 +1038,7 @@ async function addBlobToIDB(filename, blob, size) {
 
 // ------------------ Cookies storage (IndexedDB) ------------------
 const IDB_COOKIES_STORE = 'cookies';
+const IDB_DOWNLOADS_STORE = 'downloaded_files';
 function openCookiesIDB() {
     return new Promise((resolve, reject) => {
         if (!window.indexedDB) return reject(new Error('IndexedDB not supported'));
@@ -1051,6 +1063,9 @@ function openCookiesIDB() {
                 }
                 if (!d.objectStoreNames.contains(IDB_COOKIES_STORE)) {
                     d.createObjectStore(IDB_COOKIES_STORE, { keyPath: 'name' });
+                }
+                if (!d.objectStoreNames.contains(IDB_DOWNLOADS_STORE)) {
+                    d.createObjectStore(IDB_DOWNLOADS_STORE, { keyPath: 'download_id' });
                 }
             };
             upgradeReq.onsuccess = function(ev) { resolve(ev.target.result); };
@@ -1096,6 +1111,295 @@ async function clearSavedCookies(name = 'cookies.txt') {
         req.onerror = (e) => reject(e.target ? e.target.error : e);
     });
 }
+
+// ------------------ Downloaded files cache (IndexedDB) ------------------
+async function saveDownloadedFile(downloadId, filename, blob, metadata = {}) {
+    try {
+        const db = await openCookiesIDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(IDB_DOWNLOADS_STORE, 'readwrite');
+            const store = tx.objectStore(IDB_DOWNLOADS_STORE);
+            const entry = {
+                download_id: downloadId,
+                filename: filename,
+                blob: blob,
+                size: blob.size,
+                created: Date.now(),
+                title: metadata.title || '',
+                format: metadata.format || '',
+                platform: metadata.platform || ''
+            };
+            const req = store.put(entry);
+            req.onsuccess = () => {
+                console.log('💾 Saved download to cache:', filename);
+                resolve(true);
+            };
+            req.onerror = (e) => {
+                console.error('❌ Failed to save download to cache:', e);
+                reject(e.target ? e.target.error : e);
+            };
+        });
+    } catch (error) {
+        console.error('❌ Error saving to download cache:', error);
+    }
+}
+
+async function getCachedDownload(downloadId) {
+    try {
+        const db = await openCookiesIDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(IDB_DOWNLOADS_STORE, 'readonly');
+            const store = tx.objectStore(IDB_DOWNLOADS_STORE);
+            const req = store.get(downloadId);
+            req.onsuccess = function(e) {
+                const entry = e.target.result;
+                if (entry) {
+                    console.log('✅ Found cached download:', entry.filename);
+                }
+                resolve(entry || null);
+            };
+            req.onerror = function(e) {
+                console.error('❌ Error reading download cache:', e);
+                reject(e.target ? e.target.error : e);
+            };
+        });
+    } catch (error) {
+        console.error('❌ Error accessing download cache:', error);
+        return null;
+    }
+}
+
+async function getAllCachedDownloads() {
+    try {
+        const db = await openCookiesIDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(IDB_DOWNLOADS_STORE, 'readonly');
+            const store = tx.objectStore(IDB_DOWNLOADS_STORE);
+            const req = store.getAll();
+            req.onsuccess = function(e) {
+                resolve(e.target.result || []);
+            };
+            req.onerror = function(e) {
+                console.error('❌ Error reading all cached downloads:', e);
+                reject(e.target ? e.target.error : e);
+            };
+        });
+    } catch (error) {
+        console.error('❌ Error accessing download cache:', error);
+        return [];
+    }
+}
+
+async function deleteCachedDownload(downloadId) {
+    try {
+        const db = await openCookiesIDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(IDB_DOWNLOADS_STORE, 'readwrite');
+            const store = tx.objectStore(IDB_DOWNLOADS_STORE);
+            const req = store.delete(downloadId);
+            req.onsuccess = () => {
+                console.log('🗑️ Deleted cached download:', downloadId);
+                resolve(true);
+            };
+            req.onerror = (e) => {
+                console.error('❌ Error deleting cached download:', e);
+                reject(e.target ? e.target.error : e);
+            };
+        });
+    } catch (error) {
+        console.error('❌ Error deleting from cache:', error);
+        return false;
+    }
+}
+
+async function clearAllCache() {
+    if (!confirm('Are you sure you want to clear all cached downloads? This cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const db = await openCookiesIDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(IDB_DOWNLOADS_STORE, 'readwrite');
+            const store = tx.objectStore(IDB_DOWNLOADS_STORE);
+            const req = store.clear();
+            req.onsuccess = () => {
+                console.log('🗑️ Cleared all cached downloads');
+                loadCacheManager();
+                resolve(true);
+            };
+            req.onerror = (e) => {
+                console.error('❌ Error clearing cache:', e);
+                reject(e.target ? e.target.error : e);
+            };
+        });
+    } catch (error) {
+        console.error('❌ Error clearing cache:', error);
+    }
+}
+
+async function loadCacheManager() {
+    const container = document.getElementById('cache-items-container');
+    const sizeDisplay = document.getElementById('cache-size-display');
+    
+    if (!container || !sizeDisplay) return;
+    
+    try {
+        const cachedFiles = await getAllCachedDownloads();
+        
+        // Calculate total size
+        const totalSize = cachedFiles.reduce((sum, file) => sum + (file.size || 0), 0);
+        const sizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+        sizeDisplay.textContent = `${sizeMB} MB used (${cachedFiles.length} file${cachedFiles.length !== 1 ? 's' : ''})`;
+        
+        // Display cached files
+        if (cachedFiles.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-secondary, #666); font-size: 0.9em; text-align: center; margin: 20px 0;">No cached downloads yet</p>';
+            return;
+        }
+        
+        // Sort by creation date (newest first)
+        cachedFiles.sort((a, b) => (b.created || 0) - (a.created || 0));
+        
+        let html = '<div style="display: flex; flex-direction: column; gap: 8px;">';
+        for (const file of cachedFiles) {
+            const fileSize = ((file.size || 0) / (1024 * 1024)).toFixed(2);
+            const createdDate = file.created ? new Date(file.created).toLocaleDateString() : 'Unknown';
+            const title = file.title || file.filename || 'Unknown';
+            const format = file.format || 'Unknown';
+            const platform = file.platform || '';
+            const platformEmoji = platform === 'youtube' ? '📺' : platform === 'tiktok' ? '🎵' : '🎬';
+            
+            html += `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--surface-color, rgba(255,255,255,0.5)); border-radius: 6px; border: 1px solid var(--border-color, rgba(0,0,0,0.1));">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: 500; color: var(--text-primary, #333); font-size: 0.9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${title}">
+                            ${platformEmoji} ${title}
+                        </div>
+                        <div style="font-size: 0.8em; color: var(--text-secondary, #666); margin-top: 3px;">
+                            ${format} • ${fileSize} MB • ${createdDate}
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-left: 12px;">
+                        <button onclick="downloadCachedFile('${file.download_id}')" style="padding: 6px 12px; background: rgba(40, 167, 69, 0.1); color: #28a745; border: 1px solid rgba(40, 167, 69, 0.3); border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: 500; white-space: nowrap;">
+                            ⬇️ Download
+                        </button>
+                        <button onclick="deleteCachedFile('${file.download_id}')" style="padding: 6px 12px; background: rgba(220, 53, 69, 0.1); color: #dc3545; border: 1px solid rgba(220, 53, 69, 0.3); border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: 500;">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        html += '</div>';
+        
+        container.innerHTML = html;
+    } catch (error) {
+        console.error('❌ Error loading cache manager:', error);
+        container.innerHTML = '<p style="color: var(--text-secondary, #666); font-size: 0.9em; text-align: center; margin: 20px 0;">Cache empty</p>';
+        sizeDisplay.textContent = '0 MB used';
+    }
+}
+
+// Automatically download file from server and save to cache (background operation)
+async function autoDownloadAndCache(status) {
+    if (!currentDownloadId) {
+        console.error('❌ No download ID for auto-caching');
+        return;
+    }
+    
+    // Skip for bulk downloads
+    if (status.format && status.format.includes('Bulk')) {
+        console.log('📦 Skipping auto-cache for bulk download');
+        return;
+    }
+    
+    try {
+        console.log('💾 Auto-downloading and caching file...');
+        
+        // Get the file from the server
+        const downloadUrl = `${API_BASE_URL}/api/v1/video/download/${currentDownloadId}`;
+        const response = await fetch(downloadUrl);
+        
+        if (!response.ok) {
+            console.error('❌ Auto-download failed:', response.status);
+            return;
+        }
+        
+        // Determine filename
+        let filename = 'download.mp3';
+        const disposition = response.headers.get('content-disposition');
+        const contentType = response.headers.get('content-type') || '';
+        
+        const extractedFilename = getFilenameFromContentDisposition(disposition);
+        if (extractedFilename) {
+            filename = extractedFilename;
+        } else if (status.title) {
+            const cleanTitle = status.title.replace(/[<>:"/\\|?*\x00-\x1f]/g, '').trim();
+            const baseName = cleanTitle.substring(0, 50).trim();
+            const extension = contentType.includes('video') ? '.mp4' : '.mp3';
+            filename = baseName + extension;
+        }
+        
+        // Get the blob
+        const blob = await response.blob();
+        
+        // Save to IndexedDB cache
+        await saveDownloadedFile(currentDownloadId, filename, blob, {
+            title: status.title,
+            format: status.format,
+            platform: currentPlatform
+        });
+        
+        console.log('✅ File automatically cached:', filename);
+        
+        // Update cache manager display
+        loadCacheManager();
+        
+    } catch (error) {
+        console.error('❌ Error in auto-download and cache:', error);
+        // Don't throw - this is a background operation
+    }
+}
+
+// Global functions for cache manager buttons
+window.downloadCachedFile = async function(downloadId) {
+    try {
+        const cachedFile = await getCachedDownload(downloadId);
+        if (!cachedFile) {
+            alert('File not found in cache');
+            return;
+        }
+        
+        const url = URL.createObjectURL(cachedFile.blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = cachedFile.filename;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('❌ Error downloading cached file:', error);
+        alert('Error downloading file from cache');
+    }
+};
+
+window.deleteCachedFile = async function(downloadId) {
+    if (!confirm('Delete this file from cache?')) {
+        return;
+    }
+    
+    try {
+        await deleteCachedDownload(downloadId);
+        loadCacheManager();
+    } catch (error) {
+        console.error('❌ Error deleting cached file:', error);
+        alert('Error deleting file from cache');
+    }
+};
+
 
 // Wire up the cookies editor UI
 document.addEventListener('DOMContentLoaded', function() {
@@ -1777,8 +2081,10 @@ function showSpinner(mode = 'modal') {
         spinner.classList.add('spinner-subtle');
     }
 
-    // Update spinner text based on process stage
-    updateSpinnerText();
+    // Don't cycle through meaningless messages - let backend status updates control the text
+    if (spinnerText && !spinnerText.textContent) {
+        spinnerText.textContent = 'Processing...';
+    }
 }
 
 function hideSpinner(mode = 'modal') {
@@ -1823,30 +2129,6 @@ function enableConvertButtonVisuals() {
     // Remove patience warning
     const warn = document.getElementById('convert-warn');
     if (warn && warn.parentNode) warn.parentNode.removeChild(warn);
-}
-
-// Update spinner text during process
-function updateSpinnerText() {
-    const stages = [
-        'Analyzing URL...',
-        'Fetching video data...',
-        'Processing conversion...',
-        'Preparing download...'
-    ];
-    
-    let stageIndex = 0;
-    spinnerText.textContent = stages[stageIndex];
-    
-    const interval = setInterval(() => {
-        stageIndex = (stageIndex + 1) % stages.length;
-        if (spinnerText) {
-            spinnerText.textContent = stages[stageIndex];
-        }
-        
-        if (!isProcessing) {
-            clearInterval(interval);
-        }
-    }, 1500);
 }
 
 // Helper to extract filename from Content-Disposition header
@@ -2028,8 +2310,26 @@ function updateProgress(status) {
                 message = `Preparing bulk download...${retryInfo}`;
             }
         } else {
-            // Single video progress
-            if (progress > 0 && progress < 100) {
+            // Single video progress - show detailed status
+            if (status.status === 'downloading') {
+                if (progress > 0 && progress < 100) {
+                    message = `Downloading... ${progress}%${retryInfo}`;
+                } else {
+                    message = `Downloading from YouTube...${retryInfo}`;
+                }
+            } else if (status.status === 'converting') {
+                if (progress > 0 && progress < 100) {
+                    message = `Converting to ${status.format || 'MP3'}... ${progress}%${retryInfo}`;
+                } else {
+                    message = `Converting to ${status.format || 'MP3'}...${retryInfo}`;
+                }
+            } else if (status.status === 'processing') {
+                if (progress > 0 && progress < 100) {
+                    message = `Processing... ${progress}%${retryInfo}`;
+                } else {
+                    message = `Processing video...${retryInfo}`;
+                }
+            } else if (progress > 0 && progress < 100) {
                 message = `Converting... ${progress}%${retryInfo}`;
             } else if (progress >= 100) {
                 message = 'Finalizing...';
@@ -2062,6 +2362,60 @@ function startStatusPolling() {
     statusCheckInterval = setInterval(async () => {
         try {
             console.log('📊 Checking status for download ID:', currentDownloadId);
+            
+            // Check queue status first
+            const queueResponse = await fetch(`${API_BASE_URL}/api/v1/video/queue/${currentDownloadId}`);
+            const queueStatus = await queueResponse.json();
+            console.log('🎯 Queue status:', queueStatus);
+            
+            // Get the dedicated queue status element
+            const queueStatusDisplay = document.getElementById('queue-status-display');
+            const queueStatusText = document.getElementById('queue-status-text');
+            
+            // Always show queue status when available (even if position is 1)
+            if (queueStatus.success && queueStatus.queue) {
+                const queueInfo = queueStatus.queue;
+                const position = queueInfo.position || 1;
+                const queueLength = queueInfo.queue_length || 1;
+                const activeConversions = queueInfo.active_conversions || 0;
+                const waitTime = Math.ceil(queueInfo.estimated_wait_seconds || 0);
+                
+                // Show queue status in dedicated visible element
+                if (queueStatusDisplay && queueStatusText) {
+                    queueStatusDisplay.style.display = 'block';
+                    
+                    if (position === 1 && activeConversions === 1) {
+                        queueStatusText.textContent = `🎬 Processing your video... (${activeConversions} active conversion${activeConversions > 1 ? 's' : ''})`;
+                    } else if (position > 1) {
+                        const minutes = Math.floor(waitTime / 60);
+                        const seconds = waitTime % 60;
+                        const waitStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+                        queueStatusText.textContent = `⏳ Position ${position}/${queueLength} in queue - Estimated wait: ${waitStr} (${activeConversions} active)`;
+                    } else {
+                        queueStatusText.textContent = `🎬 Processing... (Queue: ${queueLength}, Active: ${activeConversions})`;
+                    }
+                }
+                
+                // Also update spinner text for consistency
+                if (spinnerText) {
+                    if (position === 1 && activeConversions === 1) {
+                        spinnerText.textContent = `🎬 Processing your video... (${activeConversions} active)`;
+                    } else if (position > 1) {
+                        const minutes = Math.floor(waitTime / 60);
+                        const seconds = waitTime % 60;
+                        const waitStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+                        spinnerText.textContent = `⏳ Position ${position}/${queueLength} - Wait: ${waitStr} (${activeConversions} active)`;
+                    } else {
+                        spinnerText.textContent = `🎬 Processing... (Queue: ${queueLength}, Active: ${activeConversions})`;
+                    }
+                }
+            } else {
+                // Hide queue status when not available
+                if (queueStatusDisplay) {
+                    queueStatusDisplay.style.display = 'none';
+                }
+            }
+            
             const response = await fetch(`${API_BASE_URL}/api/v1/video/status/${currentDownloadId}`);
             const status = await response.json();
             console.log('📈 Status response:', status);
@@ -2070,7 +2424,10 @@ function startStatusPolling() {
                 throw new Error(status.error || 'Status check failed');
             }
 
-            updateProgress(status);
+            // Only update progress if not in queue or if processing
+            if (!queueStatus.queue || !queueStatus.queue.in_queue || status.status !== 'queued') {
+                updateProgress(status);
+            }
 
             if (status.status === 'completed') {
                 if (status.format && status.format.includes('Bulk')) {
@@ -2090,10 +2447,20 @@ function startStatusPolling() {
                     }
                 } else {
                     clearInterval(statusCheckInterval);
-                    showSuccess(status);
                     isProcessing = false;
                     enableBulkControls();
                     enableConvertButtonVisuals();
+                    
+                    // Automatically download and cache the file immediately
+                    await autoDownloadAndCache(status);
+                    
+                    showSuccess(status);
+                    
+                    // Hide queue status display
+                    const queueStatusDisplay = document.getElementById('queue-status-display');
+                    if (queueStatusDisplay) {
+                        queueStatusDisplay.style.display = 'none';
+                    }
                 }
             } else if (status.status === 'error') {
                 console.error('❌ Conversion failed:', status.error);
@@ -2103,6 +2470,12 @@ function startStatusPolling() {
                 hideSpinner();
                 enableBulkControls();
                 enableConvertButtonVisuals();
+                
+                // Hide queue status display
+                const queueStatusDisplay = document.getElementById('queue-status-display');
+                if (queueStatusDisplay) {
+                    queueStatusDisplay.style.display = 'none';
+                }
             }
         } catch (error) {
             console.error('💥 Status check error:', error);
@@ -2197,6 +2570,23 @@ async function handleDownload() {
     try {
         showDownloadProgress();
         
+        // Check if file is already cached
+        const cachedFile = await getCachedDownload(currentDownloadId);
+        if (cachedFile) {
+            console.log('📦 Using cached download:', cachedFile.filename);
+            const url = URL.createObjectURL(cachedFile.blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = cachedFile.filename;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showDownloadComplete();
+            return;
+        }
+        
         // First, get the status to get the title for filename
         const statusUrl = `${API_BASE_URL}/api/v1/video/status/${currentDownloadId}`;
         const statusResponse = await fetch(statusUrl);
@@ -2246,6 +2636,16 @@ async function handleDownload() {
         }
 
         const blob = await response.blob();
+        
+        // Save to cache for future downloads (non-bulk only)
+        if (!statusData.format || !statusData.format.includes('Bulk')) {
+            await saveDownloadedFile(currentDownloadId, finalFilename, blob, {
+                title: statusData.title,
+                format: statusData.format,
+                platform: currentPlatform
+            });
+        }
+        
         const url = URL.createObjectURL(blob);
 
         // Create temporary link and trigger download
@@ -2340,6 +2740,9 @@ function showDownloadComplete() {
             downloadBtn.classList.remove('c-btn--tertiary');
         }, 2000);
     }
+    
+    // Refresh cache manager to show newly cached file
+    loadCacheManager();
 }
 
 // Setup modal controls

@@ -2512,6 +2512,11 @@ class GameEngine {
             }
         }
         
+        // 🔒 REBIRTH LOCK: Prevent saves during rebirth process
+        if (this.saveManager) {
+            this.saveManager._isResetting = true;
+        }
+        
         // Calculate rebirth bonuses based on achievements
         const rebirthBonus = {
             mining: 0.05, // 5% bonus per rebirth
@@ -2525,6 +2530,8 @@ class GameEngine {
         const savedEfficiency = { ...this.state.efficiency };
         const savedRebirthUpgrades = { ...this.state.rebirthUpgrades }; // Preserve rebirth upgrades!
         
+        console.log(`🔄 REBIRTH: Starting rebirth #${newRebirthCount}, preserving upgrades:`, savedRebirthUpgrades);
+        
         // Reset game completely (including unlocks and research)
         this.state = this.getInitialState();
         
@@ -2532,6 +2539,8 @@ class GameEngine {
         this.state.efficiency = savedEfficiency;
         this.state.city.rebirths = newRebirthCount;
         this.state.rebirthUpgrades = savedRebirthUpgrades; // Restore rebirth upgrades!
+        
+        console.log(`🔄 REBIRTH: After reset, rebirth count is ${this.state.city.rebirths}`);
         
         // Apply starting gold bonus from rebirth upgrades
         if (this.rebirthRewards && savedRebirthUpgrades) {
@@ -2587,6 +2596,16 @@ class GameEngine {
         this.playSound('prestige');
         this.showNotification(`🔄 Rebirth #${newRebirthCount} - A new chapter begins...`);
         console.log(`City rebirth completed! Total rebirths: ${newRebirthCount}`);
+        
+        // 🔓 REBIRTH UNLOCK: Release lock and force save the new state
+        if (this.saveManager) {
+            this.saveManager._isResetting = false;
+            // Force save immediately to persist the rebirth
+            setTimeout(() => {
+                console.log('🔄 REBIRTH: Force-saving new rebirth state');
+                this.saveManager.saveGame(null, true); // forceReset = true to bypass lock check
+            }, 500);
+        }
         
         return true;
     }

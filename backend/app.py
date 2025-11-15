@@ -6955,6 +6955,12 @@ URL_PATTERNS = {
 active_video_downloads: Dict[str, Dict[str, Any]] = {}
 download_lock = threading.Lock()
 
+# Queue system for managing concurrent downloads
+video_conversion_queue = []  # List of {download_id, url, timestamp, client_ip}
+queue_lock = threading.Lock()
+MAX_CONCURRENT_CONVERSIONS = 3  # Maximum number of conversions running at once
+active_conversions_count = 0
+
 # Rate limiting for video downloads (prevent DDoS)
 video_download_rate_limit = {}  # {ip: {'count': int, 'reset_time': float}}
 MAX_CONCURRENT_DOWNLOADS_PER_IP = 8  # 🚀 OPTIMIZED: Increased from 5 to 8 for better throughput
@@ -7076,6 +7082,128 @@ def decrement_video_rate_limit(client_ip: str):
     """Decrement video download counter when download completes"""
     if client_ip in video_download_rate_limit and video_download_rate_limit[client_ip]['count'] > 0:
         video_download_rate_limit[client_ip]['count'] -= 1
+
+def get_queue_position(download_id: str) -> dict:
+    """Get the position of a download in the queue and estimated wait time"""
+    global active_conversions_count
+    with queue_lock:
+        # Find position in queue
+        for idx, item in enumerate(video_conversion_queue):
+            if item['download_id'] == download_id:
+                position = idx + 1
+                # Estimate wait time: assume 30 seconds per video ahead in queue
+                # Plus time for active conversions to complete
+                active_slots_used = active_conversions_count
+                videos_ahead = idx
+                estimated_wait = videos_ahead * 30  # 30 seconds per video
+                if active_slots_used >= MAX_CONCURRENT_CONVERSIONS:
+                    estimated_wait += 30  # Add buffer for currently processing videos
+                
+                return {
+                    'in_queue': True,
+                    'position': position,
+                    'queue_length': len(video_conversion_queue),
+                    'estimated_wait_seconds': estimated_wait,
+                    'active_conversions': active_slots_used,
+                    'max_concurrent': MAX_CONCURRENT_CONVERSIONS
+                }
+        
+        # Not in queue, might be processing or completed
+        return {
+            'in_queue': False,
+            'position': 0,
+            'queue_length': len(video_conversion_queue),
+            'estimated_wait_seconds': 0,
+            'active_conversions': active_conversions_count,
+            'max_concurrent': MAX_CONCURRENT_CONVERSIONS
+        }
+
+def add_to_queue(download_id: str, url: str, client_ip: str):
+    """Add a download to the queue"""
+    with queue_lock:
+        video_conversion_queue.append({
+            'download_id': download_id,
+            'url': url,
+            'client_ip': client_ip,
+            'timestamp': time.time()
+        })
+        video_logger.info(f"Added download {download_id} to queue. Queue length: {len(video_conversion_queue)}")
+
+def remove_from_queue(download_id: str):
+    """Remove a download from the queue"""
+    global video_conversion_queue
+    with queue_lock:
+        video_conversion_queue = [item for item in video_conversion_queue if item['download_id'] != download_id]
+        video_logger.info(f"Removed download {download_id} from queue. Queue length: {len(video_conversion_queue)}")
+
+def can_start_conversion() -> bool:
+    """Check if we can start a new conversion based on concurrent limit"""
+    global active_conversions_count
+    return active_conversions_count < MAX_CONCURRENT_CONVERSIONS
+
+def increment_active_conversions():
+    """Increment the count of active conversions"""
+    global active_conversions_count
+    active_conversions_count += 1
+    video_logger.info(f"Active conversions: {active_conversions_count}/{MAX_CONCURRENT_CONVERSIONS}")
+
+def decrement_active_conversions():
+    """Decrement the count of active conversions"""
+    global active_conversions_count
+    if active_conversions_count > 0:
+        active_conversions_count -= 1
+    video_logger.info(f"Active conversions: {active_conversions_count}/{MAX_CONCURRENT_CONVERSIONS}")
+
+def process_next_in_queue():
+    """Process the next item in the queue if there's capacity"""
+    try:
+        if not can_start_conversion():
+            video_logger.info("Cannot start new conversion - at max capacity")
+            return
+        
+        with queue_lock:
+            if not video_conversion_queue:
+                video_logger.info("Queue is empty - no more conversions to process")
+                return
+            
+            # Get the first item in queue
+            next_item = video_conversion_queue[0]
+            download_id = next_item['download_id']
+            url = next_item['url']
+            client_ip = next_item['client_ip']
+        
+        # Check if this download still exists
+        with download_lock:
+            if download_id not in active_video_downloads:
+                video_logger.warning(f"Download {download_id} no longer exists, skipping")
+                remove_from_queue(download_id)
+                # Try next item
+                process_next_in_queue()
+                return
+            
+            download_info = active_video_downloads[download_id]
+            format_type = 'audio' if download_info['format'] == 'MP3' else 'video'
+            quality = download_info['quality']
+            output_path = download_info['output_path']
+            
+            # Update status to starting
+            download_info['status'] = 'starting'
+        
+        # Increment active conversions
+        increment_active_conversions()
+        
+        # Start the download
+        video_logger.info(f"Starting queued download {download_id}")
+        try:
+            worker_queue.put_nowait((download_video_background, (download_id, url, format_type, quality, output_path, client_ip)))
+        except queue.Full:
+            video_logger.error(f"Worker queue full when trying to start {download_id}")
+            decrement_active_conversions()
+            with download_lock:
+                if download_id in active_video_downloads:
+                    active_video_downloads[download_id]['status'] = 'queued'
+    except Exception as e:
+        video_logger.error(f"Error processing next in queue: {str(e)}")
 
 def detect_platform(url: str) -> Optional[str]:
     """Detect platform from URL"""
@@ -8356,6 +8484,14 @@ if VIDEO_CONVERTER_AVAILABLE:
                             'file_path': downloaded_file,
                             'finished': True
                         })
+                
+                # Remove from queue and decrement active conversions
+                remove_from_queue(download_id)
+                decrement_active_conversions()
+                
+                # Process next item in queue if any
+                process_next_in_queue()
+                
             else:
                 raise Exception("Downloaded file not found")
                 
@@ -8371,6 +8507,13 @@ if VIDEO_CONVERTER_AVAILABLE:
                         'error': error_msg,
                         'finished': True
                     })
+            
+            # Remove from queue and decrement active conversions on error too
+            remove_from_queue(download_id)
+            decrement_active_conversions()
+            
+            # Process next item in queue if any
+            process_next_in_queue()
         finally:
             # Clean up temp cookie file if we created one
             if temp_cookie_file:
@@ -8762,6 +8905,33 @@ if VIDEO_CONVERTER_AVAILABLE:
             video_logger.error(f"Unexpected error in get_playlist_info: {str(e)}")
             raise HTTPException(status_code=500, detail=str(e))
 
+    @app.get("/api/v1/video/queue/{download_id}")
+    async def get_queue_status(download_id: str):
+        """Get the queue status for a specific download ID"""
+        try:
+            queue_info = get_queue_position(download_id)
+            
+            # Also check if download is active
+            download_info = None
+            with download_lock:
+                if download_id in active_video_downloads:
+                    download_info = {
+                        'status': active_video_downloads[download_id].get('status'),
+                        'progress': active_video_downloads[download_id].get('progress', 0),
+                        'title': active_video_downloads[download_id].get('title'),
+                        'error': active_video_downloads[download_id].get('error')
+                    }
+            
+            return {
+                'success': True,
+                'download_id': download_id,
+                'queue': queue_info,
+                'download': download_info
+            }
+        except Exception as e:
+            video_logger.error(f"Error getting queue status: {str(e)}")
+            raise HTTPException(status_code=500, detail=str(e))
+
     @app.post("/api/v1/video/validate", response_model=Dict[str, Any])
     async def validate_video_url(request: VideoUrlValidation):
         """Validate if URL is supported and return platform info"""
@@ -8881,7 +9051,7 @@ if VIDEO_CONVERTER_AVAILABLE:
             # Store download info
             with download_lock:
                 active_video_downloads[download_id] = {
-                    'status': 'starting',
+                    'status': 'queued',  # Start as queued instead of starting
                     'progress': 0.0,
                     'platform': platform,
                     'format': 'MP3' if format_type == 'audio' else 'MP4',
@@ -8893,7 +9063,8 @@ if VIDEO_CONVERTER_AVAILABLE:
                     'error': None,
                     'finished': False,
                     'waiters': 1,  # number of clients waiting for this download (coalesced)
-                    'file_path': None
+                    'file_path': None,
+                    'client_ip': client_ip
                 }
                 # If client provided a proxy parameter in the JSON body, accept it
                 # (FastAPI will ignore extra fields unless declared; accept via request json)
@@ -8908,24 +9079,42 @@ if VIDEO_CONVERTER_AVAILABLE:
                 except Exception:
                     pass
             
-            # Enqueue the download task into the worker queue
-            try:
-                worker_queue.put_nowait((download_video_background, (download_id, request.url, format_type, request.quality, output_path, client_ip)))
-            except queue.Full:
-                # Clean up coalescing entry and rate-limit increment since we couldn't start
-                with download_lock:
-                    if active_url_map.get(normalized_url) == download_id:
-                        del active_url_map[normalized_url]
-                    if download_id in active_video_downloads:
-                        del active_video_downloads[download_id]
-                decrement_video_rate_limit(client_ip)
-                video_logger.warning(f"Worker queue full; rejected download {download_id}")
-                raise HTTPException(status_code=429, detail="Server busy processing other downloads. Try again shortly.")
+            # Add to queue
+            add_to_queue(download_id, request.url, client_ip)
+            
+            # Get queue position for response
+            queue_info = get_queue_position(download_id)
+            
+            # Check if we can start immediately
+            if can_start_conversion():
+                increment_active_conversions()
+                # Enqueue the download task into the worker queue
+                try:
+                    worker_queue.put_nowait((download_video_background, (download_id, request.url, format_type, request.quality, output_path, client_ip)))
+                    with download_lock:
+                        if download_id in active_video_downloads:
+                            active_video_downloads[download_id]['status'] = 'starting'
+                except queue.Full:
+                    decrement_active_conversions()
+                    # Clean up coalescing entry and rate-limit increment since we couldn't start
+                    with download_lock:
+                        if active_url_map.get(normalized_url, {}).get('download_id') == download_id:
+                            del active_url_map[normalized_url]
+                        if download_id in active_video_downloads:
+                            del active_video_downloads[download_id]
+                    remove_from_queue(download_id)
+                    decrement_video_rate_limit(client_ip)
+                    video_logger.warning(f"Worker queue full; rejected download {download_id}")
+                    raise HTTPException(status_code=429, detail="Server busy processing other downloads. Try again shortly.")
+            
+            response_message = f"Started {format_type} conversion from {platform}"
+            if queue_info['in_queue'] and queue_info['position'] > 1:
+                response_message += f" (queued at position {queue_info['position']}, estimated wait: {queue_info['estimated_wait_seconds']}s)"
             
             return VideoConversionResponse(
                 success=True,
                 download_id=download_id,
-                message=f"Started {format_type} conversion from {platform}"
+                message=response_message
             )
             
         except HTTPException:

@@ -79,6 +79,10 @@ class SaveManager {
                 this.authToken = data.access_token;
                 this.username = username;
                 this.isAuthenticated = true;
+                
+                // Store password (encrypted in real production!) for token refresh
+                localStorage.setItem('gamePassword', password);
+                
                 this.saveCredentials();
                 this.startAutoSave();
                 
@@ -94,7 +98,54 @@ class SaveManager {
         }
     }
 
-    async login(username, password) {
+    // Check if token is expired and refresh if needed
+    isTokenExpired() {
+        if (!this.authToken) return true;
+        
+        try {
+            // JWT tokens have 3 parts: header.payload.signature
+            const parts = this.authToken.split('.');
+            if (parts.length !== 3) return true;
+            
+            // Decode payload (base64)
+            const payload = JSON.parse(atob(parts[1]));
+            
+            // Check expiration (exp is in seconds, Date.now() is in milliseconds)
+            if (payload.exp && payload.exp * 1000 < Date.now()) {
+                console.log('🔐 Token expired');
+                return true;
+            }
+            
+            return false;
+        } catch (error) {
+            console.error('Error checking token expiration:', error);
+            return true;
+        }
+    }
+    
+    async refreshToken() {
+        if (!this.username) {
+            console.log('🔐 No username - cannot refresh token');
+            return false;
+        }
+        
+        try {
+            // Re-login silently with stored credentials
+            const storedPassword = localStorage.getItem('gamePassword');
+            if (!storedPassword) {
+                console.log('🔐 No stored password - cannot refresh');
+                return false;
+            }
+            
+            const result = await this.login(this.username, storedPassword, true);
+            return result.success;
+        } catch (error) {
+            console.error('Token refresh failed:', error);
+            return false;
+        }
+    }
+
+    async login(username, password, silent = false) {
         try {
             // Best-effort public IP fetch with timeout
             let clientIp = null;
@@ -138,13 +189,19 @@ class SaveManager {
                 this.authToken = data.access_token;
                 this.username = username;
                 this.isAuthenticated = true;
+                
+                // Store password (encrypted in real production!) for token refresh
+                localStorage.setItem('gamePassword', password);
+                
                 this.saveCredentials();
                 this.startAutoSave();
                 
-                this.gameEngine.showNotification(`✅ Welcome back, ${username}!`);
-                
-                // Try to load saved game
-                await this.loadGame();
+                if (!silent) {
+                    this.gameEngine.showNotification(`✅ Welcome back, ${username}!`);
+                    
+                    // Try to load saved game
+                    await this.loadGame();
+                }
                 
                 return { success: true, message: 'Login successful!' };
             } else {
@@ -209,6 +266,15 @@ class SaveManager {
             console.log('💾 SAVE: Sending to:', `${this.baseUrl}${this.apiEndpoint}/save`);
             console.log('💾 SAVE: Payload size:', JSON.stringify(requestPayload).length, 'bytes');
             
+            // Check and refresh token if expired
+            if (this.isTokenExpired()) {
+                console.log('🔐 Token expired, refreshing...');
+                const refreshed = await this.refreshToken();
+                if (!refreshed) {
+                    throw new Error('Token expired and refresh failed - please log in again');
+                }
+            }
+            
             const response = await fetch(`${this.baseUrl}${this.apiEndpoint}/save`, {
                 method: 'POST',
                 headers: {
@@ -255,6 +321,12 @@ class SaveManager {
             console.log('⚠️ LOAD: Already loading, skipping duplicate call');
             return { success: false, message: 'Load already in progress' };
         }
+        
+        // 🔒 REBIRTH PROTECTION: Don't load during rebirth
+        if (this._isResetting) {
+            console.log('⚠️ LOAD: Rebirth in progress, skipping load to preserve rebirth state');
+            return { success: false, message: 'Rebirth in progress' };
+        }
 
         this._isLoading = true;
 
@@ -263,12 +335,31 @@ class SaveManager {
             console.log('🔍 LOAD: Using token:', this.authToken ? 'Token exists' : 'NO TOKEN');
             console.log('🔍 LOAD: Current user:', this.username);
             
+            // Check and refresh token if expired
+            if (this.isTokenExpired()) {
+                console.log('🔐 Token expired, refreshing...');
+                const refreshed = await this.refreshToken();
+                if (!refreshed) {
+                    throw new Error('Token expired and refresh failed - please log in again');
+                }
+            }
+            
+            // Add timeout to prevent hanging forever
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => {
+                console.warn('⏱️ LOAD: Request timeout after 10 seconds');
+                controller.abort();
+            }, 10000);
+            
             const response = await fetch(`${this.baseUrl}${this.apiEndpoint}/save`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${this.authToken}`
-                }
+                },
+                signal: controller.signal
             });
+            
+            clearTimeout(timeoutId);
 
             console.log('🔍 LOAD: Response status:', response.status);
 
@@ -285,12 +376,13 @@ class SaveManager {
 
             if (response.status === 404 || (response.ok && data && data.has_save === false)) {
                 // No save file exists - this is okay for new players
-                console.log('No save file found - starting new game');
+                console.log('📭 LOAD: No save file found on server - starting new game');
                 this.gameEngine.showNotification('🎮 Starting new game!');
                 return { success: true, message: 'Starting new game' };
             } else if (response.ok && data && data.has_save === true && data.save_data) {
                 // GameLoadResponse structure: { save_data: GameSaveData, has_save: true, ... }
-                console.log('Loading save data from server:', data.save_data);
+                console.log('✅ LOAD: Loading save data from server:', data.save_data);
+                console.log('✅ LOAD: Rebirth count in saved data:', data.save_data?.custom_data?.city?.rebirths);
                 this.applySaveData(data.save_data);
                 
                 // Always force UI refresh after loading
@@ -299,13 +391,13 @@ class SaveManager {
                 }
                 
                 this.gameEngine.showNotification('📂 Game loaded successfully!');
-                console.log('Load successful - game state restored');
+                console.log('✅ LOAD: Load successful - game state restored');
                 return { success: true, message: 'Game loaded successfully!' };
             } else if (response.ok) {
                 // Fallback: try to extract payload from other structures
                 const payload = data?.save_data || data?.data || data || null;
                 if (payload && typeof payload === 'object' && Object.keys(payload).length > 0) {
-                    console.log('Loading save data from alternate structure:', payload);
+                    console.log('⚠️ LOAD: Loading save data from alternate structure:', payload);
                     this.applySaveData(payload);
                     
                     // Always force UI refresh after loading
@@ -316,9 +408,9 @@ class SaveManager {
                     this.gameEngine.showNotification('📂 Game loaded successfully!');
                     return { success: true, message: 'Game loaded successfully!' };
                 } else {
-                    console.log('Load response OK but no save data; starting fresh');
-                    this.gameEngine.showNotification('🎮 Starting new game!');
-                    return { success: true, message: 'No saved game yet' };
+                    console.log('⚠️ LOAD: Response OK but no save data - NOT resetting current game');
+                    // DON'T show "starting new game" - keep current progress!
+                    return { success: true, message: 'No saved game found, keeping current progress' };
                 }
             } else {
                 const detail = (data && (data.detail || data.message)) || 'Load failed';
@@ -326,6 +418,10 @@ class SaveManager {
             }
         } catch (error) {
             console.error('❌ LOAD ERROR:', error);
+            if (error.name === 'AbortError') {
+                this.gameEngine.showNotification(`⏱️ Load timed out - keeping current progress`);
+                return { success: false, message: 'Load timed out' };
+            }
             this.gameEngine.showNotification(`❌ Load failed: ${error.message}`);
             return { success: false, message: error.message };
         } finally {
@@ -599,7 +695,15 @@ class SaveManager {
         // Restore city
         if (customData.city) {
             console.log('Restoring city:', customData.city);
+            const currentRebirths = state.city?.rebirths || 0;
             state.city = Object.assign({}, customData.city);
+            
+            // 🛡️ REBIRTH PROTECTION: Never decrease rebirth count
+            // If current rebirth is higher than saved, keep current (prevents rebirth rollback)
+            if (currentRebirths > state.city.rebirths) {
+                console.warn(`⚠️ REBIRTH PROTECTION: Saved rebirth (${state.city.rebirths}) < current (${currentRebirths}), keeping current`);
+                state.city.rebirths = currentRebirths;
+            }
         }
         
         // Restore research and unlocks
