@@ -47,6 +47,8 @@ const videoUrlInput = document.getElementById('video-url');
 const convertButton = document.getElementById('convert-button');
 const spinner = document.getElementById('spinner');
 const spinnerText = document.getElementById('spinner-text');
+const progressDisplay = document.getElementById('progress-display');
+const progressText = document.getElementById('progress-text');
 const videoInfo = document.getElementById('video-info');
 const formContainer = document.getElementById('form-container');
 const downloadBtn = document.getElementById('download-btn');
@@ -1047,12 +1049,16 @@ function openCookiesIDB() {
         const openReq = indexedDB.open(IDB_DB_NAME);
         openReq.onsuccess = function(e) {
             const db = e.target.result;
-            // If cookies store exists, return the DB
-            if (db.objectStoreNames.contains(IDB_COOKIES_STORE)) {
+            // Check if ALL required stores exist
+            const hasAllStores = db.objectStoreNames.contains(IDB_STORE_NAME) &&
+                                db.objectStoreNames.contains(IDB_COOKIES_STORE) &&
+                                db.objectStoreNames.contains(IDB_DOWNLOADS_STORE);
+            
+            if (hasAllStores) {
                 return resolve(db);
             }
 
-            // Otherwise, we need to perform a version upgrade to create the missing store
+            // Otherwise, we need to perform a version upgrade to create missing stores
             const newVersion = db.version + 1;
             db.close();
             const upgradeReq = indexedDB.open(IDB_DB_NAME, newVersion);
@@ -1271,20 +1277,20 @@ async function loadCacheManager() {
             const platformEmoji = platform === 'youtube' ? '📺' : platform === 'tiktok' ? '🎵' : '🎬';
             
             html += `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--surface-color, rgba(255,255,255,0.5)); border-radius: 6px; border: 1px solid var(--border-color, rgba(0,0,0,0.1));">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(44, 111, 184, 0.15); border-radius: 6px; border: 1px solid rgba(44, 111, 184, 0.3);">
                     <div style="flex: 1; min-width: 0;">
-                        <div style="font-weight: 500; color: var(--text-primary, #333); font-size: 0.9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${title}">
+                        <div style="font-weight: 600; color: var(--text-primary, #fff); font-size: 0.9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${title}">
                             ${platformEmoji} ${title}
                         </div>
-                        <div style="font-size: 0.8em; color: var(--text-secondary, #666); margin-top: 3px;">
+                        <div style="font-size: 0.8em; color: rgba(255, 255, 255, 0.8); margin-top: 3px;">
                             ${format} • ${fileSize} MB • ${createdDate}
                         </div>
                     </div>
                     <div style="display: flex; gap: 8px; margin-left: 12px;">
-                        <button onclick="downloadCachedFile('${file.download_id}')" style="padding: 6px 12px; background: rgba(40, 167, 69, 0.1); color: #28a745; border: 1px solid rgba(40, 167, 69, 0.3); border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: 500; white-space: nowrap;">
+                        <button onclick="downloadCachedFile('${file.download_id}')" style="padding: 6px 12px; background: rgba(40, 167, 69, 0.2); color: #5adb6e; border: 1px solid rgba(40, 167, 69, 0.4); border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: 600; white-space: nowrap;">
                             ⬇️ Download
                         </button>
-                        <button onclick="deleteCachedFile('${file.download_id}')" style="padding: 6px 12px; background: rgba(220, 53, 69, 0.1); color: #dc3545; border: 1px solid rgba(220, 53, 69, 0.3); border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: 500;">
+                        <button onclick="deleteCachedFile('${file.download_id}')" style="padding: 6px 12px; background: rgba(220, 53, 69, 0.2); color: #ff6b7a; border: 1px solid rgba(220, 53, 69, 0.4); border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: 600;">
                             🗑️
                         </button>
                     </div>
@@ -2095,6 +2101,15 @@ function hideSpinner(mode = 'modal') {
         if (formContainer) formContainer.style.display = 'block';
         if (convertButton) convertButton.disabled = false;
     }
+    
+    // Hide progress and queue displays
+    const queueStatusDisplay = document.getElementById('queue-status-display');
+    if (queueStatusDisplay) {
+        queueStatusDisplay.style.display = 'none';
+    }
+    if (progressDisplay) {
+        progressDisplay.style.display = 'none';
+    }
 }
 
 // Visual disable (and warning) when a conversion is initiated to prevent duplicate requests
@@ -2290,7 +2305,7 @@ async function startConversion(url) {
 
 // Update progress display
 function updateProgress(status) {
-    if (spinnerText) {
+    if (progressDisplay && progressText) {
         const progress = Math.round(status.progress || 0);
         let message = 'Processing...';
         
@@ -2349,7 +2364,8 @@ function updateProgress(status) {
             }
         }
         
-        spinnerText.textContent = message;
+        progressText.textContent = message;
+        progressDisplay.style.display = 'block';
     }
 }
 
@@ -2393,20 +2409,6 @@ function startStatusPolling() {
                         queueStatusText.textContent = `⏳ Position ${position}/${queueLength} in queue - Estimated wait: ${waitStr} (${activeConversions} active)`;
                     } else {
                         queueStatusText.textContent = `🎬 Processing... (Queue: ${queueLength}, Active: ${activeConversions})`;
-                    }
-                }
-                
-                // Also update spinner text for consistency
-                if (spinnerText) {
-                    if (position === 1 && activeConversions === 1) {
-                        spinnerText.textContent = `🎬 Processing your video... (${activeConversions} active)`;
-                    } else if (position > 1) {
-                        const minutes = Math.floor(waitTime / 60);
-                        const seconds = waitTime % 60;
-                        const waitStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
-                        spinnerText.textContent = `⏳ Position ${position}/${queueLength} - Wait: ${waitStr} (${activeConversions} active)`;
-                    } else {
-                        spinnerText.textContent = `🎬 Processing... (Queue: ${queueLength}, Active: ${activeConversions})`;
                     }
                 }
             } else {
@@ -2460,6 +2462,11 @@ function startStatusPolling() {
                     const queueStatusDisplay = document.getElementById('queue-status-display');
                     if (queueStatusDisplay) {
                         queueStatusDisplay.style.display = 'none';
+                    }
+                    
+                    // Hide progress display
+                    if (progressDisplay) {
+                        progressDisplay.style.display = 'none';
                     }
                 }
             } else if (status.status === 'error') {
