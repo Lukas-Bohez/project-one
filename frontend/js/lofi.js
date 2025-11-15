@@ -3278,9 +3278,11 @@ const toggleModal = () => {
     }
 };
 
-// Enhanced CSS styles
-const style = document.createElement('style');
-style.innerHTML = `
+// Enhanced CSS styles (only add if not already present)
+if (!document.getElementById('lofi-player-styles')) {
+    const lofiPlayerStyle = document.createElement('style');
+    lofiPlayerStyle.id = 'lofi-player-styles';
+    lofiPlayerStyle.innerHTML = `
     :root {
         --primary-color: #2c4c7c;
         --secondary-color: #0c4061;
@@ -3406,4 +3408,5 @@ style.innerHTML = `
         }
     }
 `;
-document.head.appendChild(style);
+    document.head.appendChild(lofiPlayerStyle);
+}
