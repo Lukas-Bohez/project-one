@@ -625,8 +625,16 @@ function updatePlaylistStatusUI(opts = {}) {
         const storedFiles = frontendStorage.length;
         const storedBytes = frontendStorageSize || 0;
         const part = frontendPartIndex;
-        const current = opts.currentTitle ? `Current: ${opts.currentTitle}` : '';
-        statusEl.textContent = `Queued: ${queued} · Stored files: ${storedFiles} · Stored size: ${(storedBytes/1024/1024).toFixed(1)} MB · Part: ${part} ${current}`;
+        
+        // Show detailed progress if available
+        if (opts.currentTitle) {
+            statusEl.textContent = opts.currentTitle;
+        } else if (opts.processedCount && opts.totalItems) {
+            const progressPercent = Math.round((opts.processedCount / opts.totalItems) * 100);
+            statusEl.textContent = `Progress: ${opts.processedCount}/${opts.totalItems} (${progressPercent}%) · Queued: ${queued} · Cached: ${storedFiles} · Size: ${(storedBytes/1024/1024).toFixed(1)} MB · Part: ${part}`;
+        } else {
+            statusEl.textContent = `Queued: ${queued} · Stored files: ${storedFiles} · Stored size: ${(storedBytes/1024/1024).toFixed(1)} MB · Part: ${part}`;
+        }
     } catch (e) { console.warn('updatePlaylistStatusUI failed', e); }
 }
 
@@ -820,16 +828,25 @@ async function processQueue() {
     processingQueue = true;
 
     try {
+        const totalItems = playlistQueue.length + frontendStorage.length;
+        let processedCount = frontendStorage.length;
+        
         while (playlistQueue.length > 0) {
             const next = playlistQueue.shift();
+            processedCount++;
             const videoUrl = `https://www.youtube.com/watch?v=${next.id}`;
+            const progressPercent = Math.round((processedCount / totalItems) * 100);
 
             try {
                 isProcessing = true;
                 // Use a subtle spinner during long-running playlist processing
                 showSpinner('subtle');
-                if (spinnerText) spinnerText.textContent = 'Processing playlist...';
-                updatePlaylistStatusUI({ currentTitle: next.title });
+                if (spinnerText) spinnerText.textContent = `Processing playlist... ${processedCount}/${totalItems} (${progressPercent}%)`;
+                updatePlaylistStatusUI({ 
+                    currentTitle: `🎵 ${processedCount}/${totalItems} (${progressPercent}%) - ${next.title}`,
+                    processedCount: processedCount,
+                    totalItems: totalItems
+                });
 
                 // Start server conversion
                 const convertResp = await fetch(`${API_BASE_URL}/api/v1/video/convert`, {
@@ -884,6 +901,21 @@ async function processQueue() {
                     filename = `${safe}${ext}`;
                 }
 
+                // Save to download cache immediately
+                try {
+                    await saveDownloadedFile(downloadId, filename, blob, {
+                        title: next.title || next.id,
+                        format: formatValue === 1 ? 'MP3' : 'MP4',
+                        platform: 'youtube',
+                        isPlaylistItem: true
+                    });
+                    console.log('💾 Playlist item cached:', filename);
+                    // Refresh cache manager UI
+                    loadCacheManager();
+                } catch (cacheErr) {
+                    console.warn('Failed to cache playlist item:', cacheErr);
+                }
+
                 addToFrontendStorage(filename, blob);
 
                 if (frontendStorageSize >= FRONTEND_STORAGE_THRESHOLD) {
@@ -904,20 +936,34 @@ async function processQueue() {
 
                 // short pause to keep UI responsive
                 await new Promise(r => setTimeout(r, 200));
-                updatePlaylistStatusUI();
+                updatePlaylistStatusUI({
+                    currentTitle: `✅ ${processedCount}/${totalItems} (${progressPercent}%) - Completed: ${next.title}`,
+                    processedCount: processedCount,
+                    totalItems: totalItems
+                });
 
             } catch (errItem) {
                 console.error('Error processing queue item', next, errItem);
                 // continue to next
-                updatePlaylistStatusUI();
+                updatePlaylistStatusUI({
+                    currentTitle: `⚠️ ${processedCount}/${totalItems} (${progressPercent}%) - Error: ${next.title}`,
+                    processedCount: processedCount,
+                    totalItems: totalItems
+                });
                 continue;
             }
         }
 
         // queue drained — flush remaining
         if (frontendStorageSize > 0) {
+            updatePlaylistStatusUI({ currentTitle: `📦 All ${totalItems} songs processed! Creating final ZIP...` });
             await flushFrontendStorageAsZip();
+        } else {
+            updatePlaylistStatusUI({ currentTitle: `✅ All ${totalItems} songs downloaded and cached!` });
         }
+        
+        // Refresh cache display to show all downloaded files
+        loadCacheManager();
 
     } finally {
         // Re-enable controls and reset state
@@ -967,21 +1013,32 @@ function addToFrontendStorage(filename, blob) {
     } catch (e) {
         console.warn('IDB not available:', e);
     }
-    // Update UI
+    // Update UI - refresh cache indicators to reflect new cached items
     updatePlaylistStatusUI();
-    try { updateCachedIndicators(); } catch (e) { console.warn('updateCachedIndicators failed', e); }
+    try { 
+        updateCachedIndicators();
+    } catch (e) { 
+        console.warn('updateCachedIndicators failed', e); 
+    }
 }
 
 // Mark which playlist items are cached based on persisted IDB filenames
 async function updateCachedIndicators() {
     try {
-        const items = await readAllBlobsFromIDB();
-        const titles = (items || []).map(i => i.filename || i.title || '').filter(Boolean);
+        // Check both temporary playlist storage and permanent download cache
+        const tempItems = await readAllBlobsFromIDB();
+        const cachedItems = await getAllCachedDownloads();
+        
+        // Combine titles from both sources
+        const tempTitles = (tempItems || []).map(i => i.filename || i.title || '').filter(Boolean);
+        const cachedTitles = (cachedItems || []).map(i => i.filename || i.title || '').filter(Boolean);
+        const allTitles = [...tempTitles, ...cachedTitles];
+        
         document.querySelectorAll('.cache-indicator').forEach(el => {
             const t = el.getAttribute('data-title') || '';
             // Simple substring match: filename may include title; for better accuracy you can normalize strings
-            const matched = titles.some(fn => fn.indexOf(t) !== -1 || t.indexOf(fn) !== -1);
-            el.textContent = matched ? 'Cached' : 'Not cached';
+            const matched = allTitles.some(fn => fn.indexOf(t) !== -1 || t.indexOf(fn) !== -1);
+            el.textContent = matched ? '✅ Cached' : 'Not cached';
             el.style.color = matched ? '#6ee7b7' : '#d0d0d0';
             el.style.fontWeight = matched ? '700' : '400';
             el.style.fontSize = '0.85em';
