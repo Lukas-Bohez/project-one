@@ -2570,10 +2570,10 @@ async function handleDownload() {
     try {
         showDownloadProgress();
         
-        // Check if file is already cached
+        // Always try to download from cache first
         const cachedFile = await getCachedDownload(currentDownloadId);
         if (cachedFile) {
-            console.log('📦 Using cached download:', cachedFile.filename);
+            console.log('📦 Downloading from cache:', cachedFile.filename);
             const url = URL.createObjectURL(cachedFile.blob);
             const link = document.createElement('a');
             link.href = url;
@@ -2587,126 +2587,9 @@ async function handleDownload() {
             return;
         }
         
-        // First, get the status to get the title for filename
-        const statusUrl = `${API_BASE_URL}/api/v1/video/status/${currentDownloadId}`;
-        const statusResponse = await fetch(statusUrl);
-        if (!statusResponse.ok) {
-            throw new Error(`Failed to get status: ${statusResponse.status}`);
-        }
-        const statusData = await statusResponse.json();
-        
-        // Create filename from title
-        let filename = 'download.mp3';
-        if (statusData.title) {
-            // Clean the title for filename - allow Unicode letters, numbers, spaces, hyphens, underscores, and common punctuation
-            const cleanTitle = statusData.title.replace(/[<>:"/\\|?*\x00-\x1f]/g, '').trim();
-            // Limit length and ensure it ends with .mp3
-            const baseName = cleanTitle.substring(0, 50).trim();
-            filename = baseName + '.mp3';
-        }
-        
-        // Create download URL
-        const downloadUrl = `${API_BASE_URL}/api/v1/video/download/${currentDownloadId}`;
-        
-        // Fetch the file and trigger download
-        const response = await fetch(downloadUrl);
-        if (!response.ok) {
-            throw new Error(`Download failed: ${response.status}`);
-        }
-
-        // Determine filename from headers when possible
-        let disposition = response.headers.get('content-disposition');
-        let contentType = response.headers.get('content-type') || '';
-        let finalFilename = null;
-
-        finalFilename = getFilenameFromContentDisposition(disposition);
-        if (!finalFilename) {
-            // If server returned a bulk ZIP, try to detect from content-type
-            if (contentType.includes('zip') || (statusData.format && statusData.format.includes('Bulk'))) {
-                finalFilename = (statusData.title ? statusData.title.replace(/[<>:"/\\|?*\x00-\x1f]/g, '').substring(0,50) : 'download') + '.zip';
-            } else if (contentType.includes('audio')) {
-                // prefer mp3 extension for audio
-                finalFilename = (statusData.title ? statusData.title.replace(/[<>:"/\\|?*\x00-\x1f]/g, '').substring(0,50) : 'download') + '.mp3';
-            } else if (contentType.includes('video')) {
-                finalFilename = (statusData.title ? statusData.title.replace(/[<>:"/\\|?*\x00-\x1f]/g, '').substring(0,50) : 'download') + '.mp4';
-            } else {
-                // Fallback to .bin
-                finalFilename = filename || ((statusData.title ? statusData.title.substring(0,50) : 'download') + '.bin');
-            }
-        }
-
-        const blob = await response.blob();
-        
-        // Save to cache for future downloads (non-bulk only)
-        if (!statusData.format || !statusData.format.includes('Bulk')) {
-            await saveDownloadedFile(currentDownloadId, finalFilename, blob, {
-                title: statusData.title,
-                format: statusData.format,
-                platform: currentPlatform
-            });
-        }
-        
-        const url = URL.createObjectURL(blob);
-
-        // Create temporary link and trigger download
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = finalFilename;
-        link.style.display = 'none';
-
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        // Clean up the object URL
-        URL.revokeObjectURL(url);
-        
-        // Show completion message
-        showDownloadComplete();
-
-        // If this was a multi-part bulk download, automatically fetch remaining parts
-        try {
-            // Poll status once to get parts_remaining
-            const statusResp = await fetch(statusUrl);
-            const statusObj = await statusResp.json();
-            let partsRemaining = statusObj.parts_remaining || 0;
-            let safetyCounter = 0;
-
-            while (partsRemaining > 0 && safetyCounter < 50) { // safety cap
-                console.log('🔁 Detected remaining parts, downloading next part...', partsRemaining);
-                // Start next download for the same download ID
-                const nextResp = await fetch(downloadUrl);
-                if (!nextResp.ok) break;
-                const nextDisposition = nextResp.headers.get('content-disposition');
-                const nextContentType = nextResp.headers.get('content-type') || '';
-                let nextFilename = getFilenameFromContentDisposition(nextDisposition);
-                if (!nextFilename) {
-                    if (nextContentType.includes('zip') || (statusObj.format && statusObj.format.includes('Bulk'))) {
-                        nextFilename = (statusObj.title ? statusObj.title.replace(/[<>:"/\\|?*\x00-\x1f]/g, '').substring(0,50) : 'download') + `.part${safetyCounter+2}.zip`;
-                    } else {
-                        nextFilename = `part_${safetyCounter+2}.bin`;
-                    }
-                }
-
-                const nextBlob = await nextResp.blob();
-                const nextUrl = URL.createObjectURL(nextBlob);
-                const nextLink = document.createElement('a');
-                nextLink.href = nextUrl;
-                nextLink.download = nextFilename;
-                nextLink.style.display = 'none';
-                document.body.appendChild(nextLink);
-                nextLink.click();
-                document.body.removeChild(nextLink);
-                URL.revokeObjectURL(nextUrl);
-
-                // Poll status again to update partsRemaining
-                const s = await (await fetch(statusUrl)).json();
-                partsRemaining = s.parts_remaining || 0;
-                safetyCounter += 1;
-            }
-        } catch (e) {
-            console.warn('Error while attempting to download subsequent parts:', e);
-        }
+        // If not in cache, show error (file may have been deleted from backend)
+        showError('File not available. It may have expired from the server.');
+        return;
         
     } catch (error) {
         console.error('Download error:', error);

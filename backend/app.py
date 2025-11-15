@@ -7273,16 +7273,18 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
         'nocheckcertificate': True,
         'quiet': False,  # Show output
         'no_color': True,  # Disable colors for logging
-        # Enhanced anti-403 measures
+        # Enhanced anti-403 measures with limits to prevent infinite loops
         'extractor_retries': 3,
-        'fragment_retries': 10,
+        'fragment_retries': 5,  # Reduced from 10 to prevent infinite loops
         'skip_unavailable_fragments': True,
         'keepvideo': False,
-        'retries': 10,
+        'retries': 5,  # Reduced from 10 to prevent infinite loops
         'file_access_retries': 3,
         # Randomize sleep intervals between retries
         'sleep_interval': 1,
         'max_sleep_interval': 5,
+        # Add socket timeout to prevent hanging
+        'socket_timeout': 30,  # 30 seconds max per connection
         'sleep_interval_requests': 1,
         'sleep_interval_subtitles': 0,
     }
