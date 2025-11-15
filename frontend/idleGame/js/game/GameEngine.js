@@ -443,18 +443,18 @@ class GameEngine {
 
     updateRDLabsEfficiency() {
         // R&D Labs provide efficiency boosts across the board
-        // Each lab adds +10% to global efficiency AND market efficiency
+        // Each lab multiplies effect by 1.10x (10% increase, compounding)
         const labs = this.state.city.universities || 0;
         const baseEfficiency = 1.0;
-        const rdBonus = labs * 0.10; // 10% per lab
+        const rdBonus = Math.pow(1.10, labs) - 1; // Compound 10% per lab
         
-        // Markets boost trading efficiency (+15% per market)
+        // Markets boost trading efficiency (15% per market, compounding)
         const markets = this.state.city.markets || 0;
-        const marketBonus = markets * 0.15; // 15% per market
+        const marketBonus = Math.pow(1.15, markets) - 1; // Compound 15% per market
         
-        // Politicians boost trading efficiency (+5% per politician)
+        // Politicians boost trading efficiency (5% per politician, compounding)
         const politicians = this.state.city.politicians || 0;
-        const politicianBonus = politicians * 0.05; // 5% per politician
+        const politicianBonus = Math.pow(1.05, politicians) - 1; // Compound 5% per politician
         
         // Calculate total global efficiency from all sources
         let globalEff = baseEfficiency + rdBonus;
@@ -542,10 +542,10 @@ class GameEngine {
         const totalBonus = 1 + gatheringBonus + workerBonus + quantumBonus + efficiencyBonus + transcendenceBonus + arcadeBonus;
         efficiency *= totalBonus;
         
-        // Apply Mining Academy bonus (+15% per level)
+        // Apply Mining Academy bonus (15% compound per level)
         const miningAcademy = this.state.city.miningAcademy || 0;
         if (miningAcademy > 0) {
-            efficiency *= (1 + miningAcademy * 0.15);
+            efficiency *= Math.pow(1.15, miningAcademy);
         }
         
         // Apply ad bonuses
@@ -665,7 +665,7 @@ class GameEngine {
         );
         if (stoneToSell > 0) {
             this.state.resources.stone -= stoneToSell;
-            const goldEarned = stoneToSell * 0.1 * (1 + this.state.city.banks * 0.2);
+            const goldEarned = stoneToSell * 0.1 * Math.pow(1.20, this.state.city.banks);
             this.state.resources.gold += goldEarned;
             this.state.stats.totalGoldEarned += goldEarned;
         }
@@ -677,7 +677,7 @@ class GameEngine {
         );
         if (coalToSell > 0) {
             this.state.resources.coal -= coalToSell;
-            const goldEarned = coalToSell * 0.5 * (1 + this.state.city.banks * 0.2);
+            const goldEarned = coalToSell * 0.5 * Math.pow(1.20, this.state.city.banks);
             this.state.resources.gold += goldEarned;
             this.state.stats.totalGoldEarned += goldEarned;
         }
@@ -689,7 +689,7 @@ class GameEngine {
         );
         if (ironToSell > 0) {
             this.state.resources.iron -= ironToSell;
-            const goldEarned = ironToSell * 2 * (1 + this.state.city.banks * 0.2);
+            const goldEarned = ironToSell * 2 * Math.pow(1.20, this.state.city.banks);
             this.state.resources.gold += goldEarned;
             this.state.stats.totalGoldEarned += goldEarned;
         }
@@ -700,7 +700,7 @@ class GameEngine {
         );
         if (silverToSell > 0) {
             this.state.resources.silver -= silverToSell;
-            const goldEarned = silverToSell * 8 * (1 + this.state.city.banks * 0.2);
+            const goldEarned = silverToSell * 8 * Math.pow(1.20, this.state.city.banks);
             this.state.resources.gold += goldEarned;
             this.state.stats.totalGoldEarned += goldEarned;
         }
@@ -761,7 +761,7 @@ class GameEngine {
         this.state.city.adjustedMaxDecay = adjustedMaxDecay;
         
         // Apply taxes on gold income (reduced by politicians)
-        const taxReduction = this.state.city.politicians * 0.02; // 2% reduction per politician
+        const taxReduction = 1 - Math.pow(0.98, this.state.city.politicians); // 2% reduction per politician (compound)
         const effectiveTaxRate = Math.max(0, this.state.city.taxRate - taxReduction);
         
         // Track gold earned this tick for tax calculation
@@ -906,7 +906,7 @@ class GameEngine {
         this.updateElement('universities-count', this.state.city.universities.toString());
         
         // Update bank bonus display
-        const bankBonusPct = this.state.city.banks * 20; // 20% per bank
+        const bankBonusPct = (Math.pow(1.20, this.state.city.banks) - 1) * 100; // 20% per bank (compound)
         this.updateElement('bank-bonus-display', `+${bankBonusPct}%`);
         
         // Update sales department with level and interval info
@@ -926,7 +926,7 @@ class GameEngine {
         
         // Update mining academy display
         const miningAcademy = this.state.city.miningAcademy || 0;
-        const miningBonus = miningAcademy * 15; // 15% per level
+        const miningBonus = miningAcademy > 0 ? Math.round((Math.pow(1.15, miningAcademy) - 1) * 100) : 0; // Compound 15% per level
         const miningText = miningAcademy > 0 ? `Level ${miningAcademy} (+${miningBonus}% gathering)` : 'Level 0';
         this.updateElement('mining-academy-count', miningText);
         
@@ -1136,17 +1136,41 @@ class GameEngine {
         this.updateButtonState('buy-wagon-btn', this.state.resources.gold >= 150);
         this.updateButtonState('buy-train-btn', this.state.resources.gold >= 800);
         
-        // City buttons
-        this.updateButtonState('hire-police-btn', this.state.resources.gold >= 5000);
-        this.updateButtonState('hire-politician-btn', this.state.resources.gold >= 250);
-        this.updateButtonState('build-bank-btn', this.state.resources.gold >= 500);
-        this.updateButtonState('build-market-btn', this.state.resources.gold >= 1000);
-        this.updateButtonState('build-university-btn', this.state.resources.gold >= 2500);
+        // City buttons - dynamic costs based on current level
+        // Police/Security cost scales with 1.25x per hire (generates decay for rebirth)
+        const policeCount = this.state.city.police || 0;
+        const policeCost = Math.floor(5000 * Math.pow(1.25, policeCount));
+        this.updateElement('police-cost', policeCost.toString());
+        this.updateButtonState('hire-police-btn', this.state.resources.gold >= policeCost);
+        
+        // Politician cost scales with 1.05x per hire
+        const politicianCount = this.state.city.politicians || 0;
+        const politicianCost = Math.floor(250 * Math.pow(1.05, politicianCount));
+        this.updateElement('politician-cost', politicianCost.toString());
+        this.updateButtonState('hire-politician-btn', this.state.resources.gold >= politicianCost);
+        
+        // Bank cost scales with 1.20x per building
+        const bankCount = this.state.city.banks || 0;
+        const bankCost = Math.floor(500 * Math.pow(1.20, bankCount));
+        this.updateElement('bank-cost', bankCost.toString());
+        this.updateButtonState('build-bank-btn', this.state.resources.gold >= bankCost);
+        
+        // Market cost scales with 1.15x per building
+        const marketCount = this.state.city.markets || 0;
+        const marketCost = Math.floor(1000 * Math.pow(1.15, marketCount));
+        this.updateElement('market-cost', marketCost.toString());
+        this.updateButtonState('build-market-btn', this.state.resources.gold >= marketCost);
+        
+        // University cost scales with 1.10x per building
+        const universityCount = this.state.city.universities || 0;
+        const universityCost = Math.floor(2500 * Math.pow(1.10, universityCount));
+        this.updateElement('university-cost', universityCost.toString());
+        this.updateButtonState('build-university-btn', this.state.resources.gold >= universityCost);
         
         // Sales department button - dynamic cost based on level
         const salesDeptLevel = this.state.city.salesDepartment || 0;
-        const salesDeptCost = 300 * Math.pow(1.5, salesDeptLevel);
-        this.updateElement('sales-dept-cost', Math.floor(salesDeptCost).toString());
+        const salesDeptCost = Math.floor(300 * Math.pow(1.5, salesDeptLevel));
+        this.updateElement('sales-dept-cost', salesDeptCost.toString());
         this.updateButtonState('build-sales-dept-btn', this.state.resources.gold >= salesDeptCost);
         
         // Update button text based on level with themed name
@@ -1162,8 +1186,8 @@ class GameEngine {
         
         // Mining Academy button - dynamic cost based on level
         const miningAcademyLevel = this.state.city.miningAcademy || 0;
-        const miningAcademyCost = 400 * Math.pow(1.5, miningAcademyLevel);
-        this.updateElement('mining-academy-cost', Math.floor(miningAcademyCost).toString());
+        const miningAcademyCost = Math.floor(400 * Math.pow(1.15, miningAcademyLevel));
+        this.updateElement('mining-academy-cost', miningAcademyCost.toString());
         this.updateButtonState('build-mining-academy-btn', this.state.resources.gold >= miningAcademyCost);
         
         const miningAcademyBtn = document.getElementById('build-mining-academy-btn');
@@ -1178,8 +1202,8 @@ class GameEngine {
         
         // Automation Lab button - dynamic cost based on level
         const automationLabLevel = this.state.city.automationLab || 0;
-        const automationLabCost = 600 * Math.pow(1.5, automationLabLevel);
-        this.updateElement('automation-lab-cost', Math.floor(automationLabCost).toString());
+        const automationLabCost = Math.floor(600 * Math.pow(1.5, automationLabLevel));
+        this.updateElement('automation-lab-cost', automationLabCost.toString());
         this.updateButtonState('build-automation-lab-btn', this.state.resources.gold >= automationLabCost);
         
         const automationLabBtn = document.getElementById('build-automation-lab-btn');
@@ -1752,7 +1776,7 @@ class GameEngine {
             { goldBonus: 1 };
         
         // Add gold (with city bonuses, rebirth upgrades, and arcade bonuses applied)
-        const bankBonus = 1 + (this.state.city.banks * 0.2);
+        const bankBonus = Math.pow(1.20, this.state.city.banks);
         let finalValue = value * bankBonus;
         finalValue *= rebirthEffects.goldMultiplier;
         finalValue *= rebirthEffects.cosmicMultiplier;
@@ -1807,7 +1831,7 @@ class GameEngine {
             { goldBonus: 1 };
         
         // Add gold (with city bonuses, rebirth upgrades, and arcade bonuses applied)
-        const bankBonus = 1 + (this.state.city.banks * 0.2);
+        const bankBonus = Math.pow(1.20, this.state.city.banks);
         let finalValue = value * bankBonus * cityAmount;
         finalValue *= rebirthEffects.goldMultiplier;
         finalValue *= rebirthEffects.cosmicMultiplier;
@@ -2012,7 +2036,9 @@ class GameEngine {
     
     hireService(serviceType) {
         if (serviceType === 'police') {
-            const cost = 5000;
+            const currentPolice = this.state.city.police || 0;
+            // Scale cost significantly since police generate decay progress (needed for rebirth)
+            const cost = Math.floor(5000 * Math.pow(1.25, currentPolice)); // 25% increase per hire
             if (this.state.resources.gold >= cost) {
                 this.state.resources.gold -= cost;
                 this.state.stats.totalGoldSpent += cost;
@@ -2020,18 +2046,19 @@ class GameEngine {
                 
                 this.playSound('hire');
                 this.flashElement('gold-amount');
-                console.log(`Hired police for ${cost} gold (upkeep: 0.5 gold/sec or 30 gold/min)`);
+                console.log(`Hired security guard #${this.state.city.police} for ${cost} gold (upkeep: 0.5 gold/sec or 30 gold/min, generates decay)`);
                 return true;
             }
         } else if (serviceType === 'politician') {
-            const cost = 250;
+            const currentPoliticians = this.state.city.politicians || 0;
+            const cost = Math.floor(250 * Math.pow(1.05, currentPoliticians));
             if (this.state.resources.gold >= cost) {
                 this.state.resources.gold -= cost;
                 this.state.stats.totalGoldSpent += cost;
                 this.state.city.politicians++;
                 this.playSound('hire');
                 this.flashElement('gold-amount');
-                console.log(`Hired politician for ${cost} gold (reduces tax rate by 2%)`);
+                console.log(`Hired politician #${this.state.city.politicians} for ${cost} gold (reduces tax rate by 2% compound)`);
                 return true;
             }
         }
@@ -2146,7 +2173,7 @@ class GameEngine {
             if (cityAmount < 1) return false;
             
             const craftInfo = craftedItems[item];
-            const bankBonus = 1 + (this.state.city.banks * 0.2);
+            const bankBonus = Math.pow(1.20, this.state.city.banks);
             const finalValue = Math.floor(craftInfo.value * bankBonus);
             
             // Remove one from city
@@ -2175,14 +2202,14 @@ class GameEngine {
     }
     
     buildCity(buildingType) {
-        // Define costs and proper state keys
+        // Define costs, proper state keys, and effect multipliers
         const buildingConfig = {
-            bank: { cost: 500, stateKey: 'banks' },
-            market: { cost: 1000, stateKey: 'markets' },
-            university: { cost: 2500, stateKey: 'universities' },
-            salesDepartment: { cost: 300, stateKey: 'salesDepartment' },
-            miningAcademy: { cost: 400, stateKey: 'miningAcademy' },
-            automationLab: { cost: 600, stateKey: 'automationLab' }
+            bank: { cost: 500, stateKey: 'banks', effectMultiplier: 1.20 },  // 20% bonus per bank
+            market: { cost: 1000, stateKey: 'markets', effectMultiplier: 1.15 },  // 15% bonus per market
+            university: { cost: 2500, stateKey: 'universities', effectMultiplier: 1.10 },  // 10% bonus per university
+            salesDepartment: { cost: 300, stateKey: 'salesDepartment', effectMultiplier: 1.5 },
+            miningAcademy: { cost: 400, stateKey: 'miningAcademy', effectMultiplier: 1.15 },  // 15% bonus per level
+            automationLab: { cost: 600, stateKey: 'automationLab', effectMultiplier: 1.5 }
         };
         
         const config = buildingConfig[buildingType];
@@ -2193,7 +2220,7 @@ class GameEngine {
         
         if (upgradableBuildings.includes(buildingType)) {
             const currentLevel = this.state.city[config.stateKey] || 0;
-            const cost = Math.floor(config.cost * Math.pow(1.5, currentLevel));
+            const cost = Math.floor(config.cost * Math.pow(config.effectMultiplier, currentLevel));
             
             console.log(`${buildingType}: Current level ${currentLevel}, Cost: ${cost}, Gold: ${this.state.resources.gold}`);
             
@@ -2216,8 +2243,10 @@ class GameEngine {
             return false;
         }
         
-        // Regular buildings (bank, market, university)
-        const cost = config.cost;
+        // Regular buildings (bank, market, university) - now also scale with effect multiplier
+        const currentLevel = this.state.city[config.stateKey] || 0;
+        const cost = Math.floor(config.cost * Math.pow(config.effectMultiplier, currentLevel));
+        
         if (this.state.resources.gold >= cost) {
             this.state.resources.gold -= cost;
             this.state.stats.totalGoldSpent += cost;
@@ -2225,7 +2254,7 @@ class GameEngine {
             
             this.playSound('build');
             this.flashElement('gold-amount');
-            console.log(`Built ${buildingType} (${config.stateKey}) for ${cost} gold. Total: ${this.state.city[config.stateKey]}`);
+            console.log(`Built ${buildingType} level ${this.state.city[config.stateKey]} for ${cost} gold (base: ${config.cost})`);
             return true;
         }
         return false;
@@ -2448,7 +2477,7 @@ class GameEngine {
         };
         
         if (this.state.resources[resourceType] >= 1) {
-            const goldEarned = sellRates[resourceType] * (1 + this.state.city.banks * 0.2);
+            const goldEarned = sellRates[resourceType] * Math.pow(1.20, this.state.city.banks);
             this.state.resources[resourceType] -= 1;
             this.state.resources.gold += goldEarned;
             this.state.stats.totalGoldEarned += goldEarned;
