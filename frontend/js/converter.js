@@ -2,6 +2,9 @@
  # CONVERTER JAVASCRIPT
 /*---------------------------------------*/
 
+// API Configuration
+const API_BASE_URL = `https://${window.location.hostname}`;
+
 // Global variables
 let currentPlatform = 'youtube';
 let formatValue = 1; // 1 = MP3, 0 = MP4
@@ -58,6 +61,9 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
     updateUIForPlatform('youtube');
     loadCacheManager();
+    
+    // Migrate old caches on startup
+    migrateOldCachesToUnified().catch(e => console.error('Migration error:', e));
 });
 
 // Initialize all event listeners
@@ -91,11 +97,15 @@ function initializeEventListeners() {
     // Cache manager buttons
     const refreshCacheBtn = document.getElementById('refresh-cache-btn');
     const clearAllCacheBtn = document.getElementById('clear-all-cache-btn');
+    const downloadAllCacheBtn = document.getElementById('download-all-cache-btn');
     if (refreshCacheBtn) {
         refreshCacheBtn.addEventListener('click', loadCacheManager);
     }
     if (clearAllCacheBtn) {
         clearAllCacheBtn.addEventListener('click', clearAllCache);
+    }
+    if (downloadAllCacheBtn) {
+        downloadAllCacheBtn.addEventListener('click', downloadAllFromCache);
     }
     
     // Modal controls
@@ -749,6 +759,22 @@ function enableBulkControls() {
 
 async function downloadAllVideos() {
     if (!currentPlaylistData) return;
+    
+    const videoCount = currentPlaylistData.videos.length;
+    const estimatedMinutes = Math.ceil((videoCount * 7.5) / 60); // Average 7.5s per video
+    
+    // Warn user about time for large playlists
+    if (videoCount > 20) {
+        const proceed = confirm(
+            `⏱️ Rate Limit Protection Active\n\n` +
+            `Downloading ${videoCount} videos with 5-10 second delays between each to avoid YouTube rate limiting.\n\n` +
+            `Estimated time: ~${estimatedMinutes} minutes\n\n` +
+            `💡 Tip: Use YouTube cookies from a logged-in account to reduce rate limiting.\n\n` +
+            `Continue?`
+        );
+        if (!proceed) return;
+    }
+    
     const videoIds = currentPlaylistData.videos.map(v => v.id);
     const titles = currentPlaylistData.videos.map(v => v.title);
     enqueueVideos(videoIds, titles);
@@ -828,6 +854,22 @@ async function processQueue() {
     processingQueue = true;
 
     try {
+        // Check cache limit before starting
+        const limitCheck = await checkCacheLimit();
+        if (!limitCheck.ok) {
+            alert(limitCheck.message);
+            hideSpinner();
+            playlistModeActive = false;
+            processingQueue = false;
+            isProcessing = false;
+            updatePlaylistStatusUI();
+            return;
+        }
+        
+        if (limitCheck.warning) {
+            console.warn('⚠️', limitCheck.message);
+        }
+        
         const totalItems = playlistQueue.length + frontendStorage.length;
         let processedCount = frontendStorage.length;
         
@@ -907,7 +949,8 @@ async function processQueue() {
                         title: next.title || next.id,
                         format: formatValue === 1 ? 'MP3' : 'MP4',
                         platform: 'youtube',
-                        isPlaylistItem: true
+                        type: 'playlist',
+                        videoId: next.id  // Store the YouTube video ID for lofi.js lookup
                     });
                     console.log('💾 Playlist item cached:', filename);
                     // Refresh cache manager UI
@@ -915,6 +958,7 @@ async function processQueue() {
                 } catch (cacheErr) {
                     console.warn('Failed to cache playlist item:', cacheErr);
                 }
+
 
                 addToFrontendStorage(filename, blob);
 
@@ -934,10 +978,21 @@ async function processQueue() {
                     return; // Exit the loop, wait for user to continue
                 }
 
-                // short pause to keep UI responsive
-                await new Promise(r => setTimeout(r, 200));
+                // Add delay between downloads to avoid YouTube rate limiting
+                // Use 5-10 second random delay to mimic human behavior
+                const delayMs = 5000 + Math.random() * 5000; // 5-10 seconds
+                const delaySec = (delayMs / 1000).toFixed(1);
+                
                 updatePlaylistStatusUI({
-                    currentTitle: `✅ ${processedCount}/${totalItems} (${progressPercent}%) - Completed: ${next.title}`,
+                    currentTitle: `✅ ${processedCount}/${totalItems} (${progressPercent}%) - Completed: ${next.title} (waiting ${delaySec}s before next...)`,
+                    processedCount: processedCount,
+                    totalItems: totalItems
+                });
+                
+                await new Promise(r => setTimeout(r, delayMs));
+                
+                updatePlaylistStatusUI({
+                    currentTitle: `🎵 ${processedCount}/${totalItems} (${progressPercent}%) - Ready for next video`,
                     processedCount: processedCount,
                     totalItems: totalItems
                 });
@@ -1060,75 +1115,175 @@ function ensureJSZip() {
     });
 }
 
-// IndexedDB helpers (store persisted blobs for frontend packaging)
-const IDB_DB_NAME = 'converter_frontend_store_v1';
-const IDB_STORE_NAME = 'files';
-function openIDB() {
-    return new Promise((resolve, reject) => {
-        if (!window.indexedDB) return reject(new Error('IndexedDB not supported'));
-        // Open without specifying a version to avoid VersionError when the DB has been upgraded elsewhere
-        const req = indexedDB.open(IDB_DB_NAME);
-        req.onupgradeneeded = function(e) {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains(IDB_STORE_NAME)) {
-                db.createObjectStore(IDB_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+// Migration function: Move data from old caches to unified cache
+async function migrateOldCachesToUnified() {
+    try {
+        console.log('🔄 Checking for old cache data to migrate...');
+        let migratedCount = 0;
+        
+        // Migrate old converter_frontend_store_v1 (playlist storage)
+        try {
+            const oldDB = await new Promise((resolve, reject) => {
+                const req = indexedDB.open('converter_frontend_store_v1');
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+            
+            if (oldDB.objectStoreNames.contains('files')) {
+                const tx = oldDB.transaction('files', 'readonly');
+                const store = tx.objectStore('files');
+                const allOldItems = await new Promise((resolve, reject) => {
+                    const req = store.getAll();
+                    req.onsuccess = () => resolve(req.result || []);
+                    req.onerror = () => reject(req.error);
+                });
+                
+                console.log(`📦 Found ${allOldItems.length} items in old playlist storage`);
+                
+                for (const item of allOldItems) {
+                    const id = `migrated_playlist_${item.id || Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                    await saveDownloadedFile(id, item.filename, item.blob, {
+                        type: 'playlist',
+                        title: item.filename
+                    });
+                    migratedCount++;
+                }
+                
+                oldDB.close();
+                // Delete old database
+                await new Promise(resolve => {
+                    const delReq = indexedDB.deleteDatabase('converter_frontend_store_v1');
+                    delReq.onsuccess = () => resolve();
+                    delReq.onerror = () => resolve(); // Continue even if delete fails
+                });
+                console.log(`✅ Migrated ${migratedCount} playlist items from old storage`);
+            } else {
+                oldDB.close();
             }
-        };
-        req.onsuccess = function(e) {
-            resolve(e.target.result);
-        };
-        req.onerror = function(e) {
-            reject(e.target.error || new Error('IDB open error'));
-        };
+        } catch (e) {
+            console.log('ℹ️ No old playlist storage found or already migrated');
+        }
+        
+        // Migrate old lofi-cache
+        try {
+            const lofiDB = await new Promise((resolve, reject) => {
+                const req = indexedDB.open('lofi-cache');
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+            
+            if (lofiDB.objectStoreNames.contains('audioBlobs')) {
+                const tx = lofiDB.transaction('audioBlobs', 'readonly');
+                const store = tx.objectStore('audioBlobs');
+                const allLofiItems = await new Promise((resolve, reject) => {
+                    const req = store.getAll();
+                    req.onsuccess = () => resolve(req.result || []);
+                    req.onerror = () => reject(req.error);
+                });
+                
+                console.log(`🎵 Found ${allLofiItems.length} items in old lofi cache`);
+                
+                let lofiMigrated = 0;
+                for (const item of allLofiItems) {
+                    if (item.blob && (item.videoId || item.id)) {
+                        const id = item.videoId || item.id;
+                        await saveDownloadedFile(id, item.title || item.filename || id, item.blob, {
+                            type: 'lofi',
+                            title: item.title,
+                            videoId: id,
+                            format: 'MP3',
+                            platform: 'youtube'
+                        });
+                        lofiMigrated++;
+                        migratedCount++;
+                    }
+                }
+                
+                lofiDB.close();
+                // Delete old database
+                await new Promise(resolve => {
+                    const delReq = indexedDB.deleteDatabase('lofi-cache');
+                    delReq.onsuccess = () => resolve();
+                    delReq.onerror = () => resolve();
+                });
+                console.log(`✅ Migrated ${lofiMigrated} lofi items from old cache`);
+            } else {
+                lofiDB.close();
+            }
+        } catch (e) {
+            console.log('ℹ️ No old lofi cache found or already migrated:', e.message);
+        }
+        
+        if (migratedCount > 0) {
+            console.log(`✅ Total migrated: ${migratedCount} items`);
+            loadCacheManager(); // Refresh UI
+        } else {
+            console.log('✅ No old cache data to migrate');
+        }
+    } catch (error) {
+        console.error('❌ Error during cache migration:', error);
+    }
+}
+
+// Expose migration function for manual triggering
+window.migrateOldCachesToUnified = migrateOldCachesToUnified;
+
+// Playlist storage now uses unified cache
+async function addBlobToIDB(filename, blob, size, metadata = {}) {
+    // Use unified cache with playlist type
+    const id = `playlist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return await saveDownloadedFile(id, filename, blob, {
+        ...metadata,
+        type: 'playlist',
+        title: metadata.title || filename
     });
 }
 
-async function addBlobToIDB(filename, blob, size) {
-    const db = await openIDB();
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction(IDB_STORE_NAME, 'readwrite');
-        const store = tx.objectStore(IDB_STORE_NAME);
-        const entry = { filename, blob, size, created: Date.now() };
-        const r = store.add(entry);
-        r.onsuccess = () => resolve(true);
-        r.onerror = (e) => reject(e.target ? e.target.error : e);
-    });
-}
+// ------------------ UNIFIED CACHE SYSTEM (IndexedDB) ------------------
+// All media files (converter, playlist, lofi) use one central cache
+const UNIFIED_CACHE_DB = 'unified_media_cache_v1';
+const CACHE_STORE_MEDIA = 'media_files'; // Unified store for all audio/video
+const CACHE_STORE_COOKIES = 'cookies';
+const CACHE_SIZE_LIMIT = 1 * 1024 * 1024 * 1024; // 1GB hard limit
+const CACHE_SIZE_WARNING = 0.9 * 1024 * 1024 * 1024; // 900MB warning threshold
 
-// ------------------ Cookies storage (IndexedDB) ------------------
-const IDB_COOKIES_STORE = 'cookies';
-const IDB_DOWNLOADS_STORE = 'downloaded_files';
-function openCookiesIDB() {
+// Export constants for use by lofi.js
+window.UNIFIED_CACHE_DB = UNIFIED_CACHE_DB;
+window.CACHE_STORE_MEDIA = CACHE_STORE_MEDIA;
+window.CACHE_STORE_COOKIES = CACHE_STORE_COOKIES;
+
+// Backwards compatibility aliases
+const IDB_DB_NAME = UNIFIED_CACHE_DB;
+const IDB_COOKIES_STORE = CACHE_STORE_COOKIES;
+const IDB_DOWNLOADS_STORE = CACHE_STORE_MEDIA;
+
+function openUnifiedCacheDB() {
     return new Promise((resolve, reject) => {
         if (!window.indexedDB) return reject(new Error('IndexedDB not supported'));
 
-        // First open without forcing a version so we can inspect existing object stores
-        const openReq = indexedDB.open(IDB_DB_NAME);
+        const openReq = indexedDB.open(UNIFIED_CACHE_DB);
         openReq.onsuccess = function(e) {
             const db = e.target.result;
-            // Check if ALL required stores exist
-            const hasAllStores = db.objectStoreNames.contains(IDB_STORE_NAME) &&
-                                db.objectStoreNames.contains(IDB_COOKIES_STORE) &&
-                                db.objectStoreNames.contains(IDB_DOWNLOADS_STORE);
+            const hasAllStores = db.objectStoreNames.contains(CACHE_STORE_MEDIA) &&
+                                db.objectStoreNames.contains(CACHE_STORE_COOKIES);
             
             if (hasAllStores) {
                 return resolve(db);
             }
 
-            // Otherwise, we need to perform a version upgrade to create missing stores
             const newVersion = db.version + 1;
             db.close();
-            const upgradeReq = indexedDB.open(IDB_DB_NAME, newVersion);
+            const upgradeReq = indexedDB.open(UNIFIED_CACHE_DB, newVersion);
             upgradeReq.onupgradeneeded = function(ev) {
                 const d = ev.target.result;
-                if (!d.objectStoreNames.contains(IDB_STORE_NAME)) {
-                    d.createObjectStore(IDB_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                if (!d.objectStoreNames.contains(CACHE_STORE_MEDIA)) {
+                    const mediaStore = d.createObjectStore(CACHE_STORE_MEDIA, { keyPath: 'id' });
+                    mediaStore.createIndex('type', 'type', { unique: false }); // 'converter', 'playlist', 'lofi'
+                    mediaStore.createIndex('videoId', 'videoId', { unique: false });
+                    mediaStore.createIndex('created', 'created', { unique: false });
                 }
-                if (!d.objectStoreNames.contains(IDB_COOKIES_STORE)) {
-                    d.createObjectStore(IDB_COOKIES_STORE, { keyPath: 'name' });
-                }
-                if (!d.objectStoreNames.contains(IDB_DOWNLOADS_STORE)) {
-                    d.createObjectStore(IDB_DOWNLOADS_STORE, { keyPath: 'download_id' });
+                if (!d.objectStoreNames.contains(CACHE_STORE_COOKIES)) {
+                    d.createObjectStore(CACHE_STORE_COOKIES, { keyPath: 'name' });
                 }
             };
             upgradeReq.onsuccess = function(ev) { resolve(ev.target.result); };
@@ -1136,6 +1291,57 @@ function openCookiesIDB() {
         };
         openReq.onerror = function(e) { reject(e.target ? e.target.error : new Error('IDB open error')); };
     });
+}
+
+// Export for use by lofi.js
+window.openUnifiedCacheDB = openUnifiedCacheDB;
+
+// Backwards compatibility
+const openCookiesIDB = openUnifiedCacheDB;
+
+// Get total cache size across all media
+async function getTotalCacheSize() {
+    try {
+        const db = await openUnifiedCacheDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(CACHE_STORE_MEDIA, 'readonly');
+            const store = tx.objectStore(CACHE_STORE_MEDIA);
+            const req = store.getAll();
+            req.onsuccess = () => {
+                const items = req.result || [];
+                const totalSize = items.reduce((sum, item) => sum + (item.size || 0), 0);
+                resolve(totalSize);
+            };
+            req.onerror = () => reject(req.error);
+        });
+    } catch (error) {
+        console.error('❌ Error getting cache size:', error);
+        return 0;
+    }
+}
+
+// Check if cache is near or over limit
+async function checkCacheLimit() {
+    const size = await getTotalCacheSize();
+    const sizeMB = (size / (1024 * 1024)).toFixed(2);
+    const limitMB = (CACHE_SIZE_LIMIT / (1024 * 1024)).toFixed(0);
+    
+    if (size >= CACHE_SIZE_LIMIT) {
+        return {
+            ok: false,
+            size: size,
+            message: `Cache is full (${sizeMB}MB / ${limitMB}MB)! Please download files from cache and clear some space before continuing.`
+        };
+    } else if (size >= CACHE_SIZE_WARNING) {
+        return {
+            ok: true,
+            warning: true,
+            size: size,
+            message: `Cache is ${((size / CACHE_SIZE_LIMIT) * 100).toFixed(0)}% full (${sizeMB}MB / ${limitMB}MB). Consider downloading and clearing old files.`
+        };
+    }
+    
+    return { ok: true, size: size };
 }
 
 async function saveCookiesText(name, text) {
@@ -1176,21 +1382,37 @@ async function clearSavedCookies(name = 'cookies.txt') {
 }
 
 // ------------------ Downloaded files cache (IndexedDB) ------------------
+// Save to unified cache with type classification
 async function saveDownloadedFile(downloadId, filename, blob, metadata = {}) {
     try {
-        const db = await openCookiesIDB();
+        // Check cache limit before saving
+        const limitCheck = await checkCacheLimit();
+        if (!limitCheck.ok) {
+            console.warn('⚠️ Cache limit reached:', limitCheck.message);
+            alert(limitCheck.message);
+            return false;
+        }
+        
+        if (limitCheck.warning) {
+            console.warn('⚠️ Cache warning:', limitCheck.message);
+        }
+        
+        const db = await openUnifiedCacheDB();
         return new Promise((resolve, reject) => {
-            const tx = db.transaction(IDB_DOWNLOADS_STORE, 'readwrite');
-            const store = tx.objectStore(IDB_DOWNLOADS_STORE);
+            const tx = db.transaction(CACHE_STORE_MEDIA, 'readwrite');
+            const store = tx.objectStore(CACHE_STORE_MEDIA);
             const entry = {
-                download_id: downloadId,
+                id: downloadId,
+                download_id: downloadId, // backwards compat
                 filename: filename,
                 blob: blob,
                 size: blob.size,
                 created: Date.now(),
                 title: metadata.title || '',
                 format: metadata.format || '',
-                platform: metadata.platform || ''
+                platform: metadata.platform || '',
+                type: metadata.type || 'converter', // 'converter', 'playlist', 'lofi'
+                videoId: metadata.videoId || null
             };
             const req = store.put(entry);
             req.onsuccess = () => {
@@ -1209,10 +1431,10 @@ async function saveDownloadedFile(downloadId, filename, blob, metadata = {}) {
 
 async function getCachedDownload(downloadId) {
     try {
-        const db = await openCookiesIDB();
+        const db = await openUnifiedCacheDB();
         return new Promise((resolve, reject) => {
-            const tx = db.transaction(IDB_DOWNLOADS_STORE, 'readonly');
-            const store = tx.objectStore(IDB_DOWNLOADS_STORE);
+            const tx = db.transaction(CACHE_STORE_MEDIA, 'readonly');
+            const store = tx.objectStore(CACHE_STORE_MEDIA);
             const req = store.get(downloadId);
             req.onsuccess = function(e) {
                 const entry = e.target.result;
@@ -1234,10 +1456,10 @@ async function getCachedDownload(downloadId) {
 
 async function getAllCachedDownloads() {
     try {
-        const db = await openCookiesIDB();
+        const db = await openUnifiedCacheDB();
         return new Promise((resolve, reject) => {
-            const tx = db.transaction(IDB_DOWNLOADS_STORE, 'readonly');
-            const store = tx.objectStore(IDB_DOWNLOADS_STORE);
+            const tx = db.transaction(CACHE_STORE_MEDIA, 'readonly');
+            const store = tx.objectStore(CACHE_STORE_MEDIA);
             const req = store.getAll();
             req.onsuccess = function(e) {
                 resolve(e.target.result || []);
@@ -1255,10 +1477,10 @@ async function getAllCachedDownloads() {
 
 async function deleteCachedDownload(downloadId) {
     try {
-        const db = await openCookiesIDB();
+        const db = await openUnifiedCacheDB();
         return new Promise((resolve, reject) => {
-            const tx = db.transaction(IDB_DOWNLOADS_STORE, 'readwrite');
-            const store = tx.objectStore(IDB_DOWNLOADS_STORE);
+            const tx = db.transaction(CACHE_STORE_MEDIA, 'readwrite');
+            const store = tx.objectStore(CACHE_STORE_MEDIA);
             const req = store.delete(downloadId);
             req.onsuccess = () => {
                 console.log('🗑️ Deleted cached download:', downloadId);
@@ -1275,16 +1497,78 @@ async function deleteCachedDownload(downloadId) {
     }
 }
 
+async function downloadAllFromCache() {
+    try {
+        const cachedFiles = await getAllCachedDownloads();
+        
+        if (cachedFiles.length === 0) {
+            alert('No files in cache to download');
+            return;
+        }
+        
+        if (!confirm(`Download all ${cachedFiles.length} file${cachedFiles.length !== 1 ? 's' : ''} from cache as a ZIP file?`)) {
+            return;
+        }
+        
+        console.log(`📦 Creating ZIP archive with ${cachedFiles.length} files...`);
+        
+        // Import JSZip dynamically if not already loaded
+        if (typeof JSZip === 'undefined') {
+            alert('Loading ZIP library, please try again in a moment...');
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+            script.onload = () => console.log('✅ JSZip loaded');
+            document.head.appendChild(script);
+            return;
+        }
+        
+        const zip = new JSZip();
+        
+        // Add each file to the ZIP
+        for (let i = 0; i < cachedFiles.length; i++) {
+            const file = cachedFiles[i];
+            try {
+                zip.file(file.filename, file.blob);
+                console.log(`✅ Added to ZIP ${i + 1}/${cachedFiles.length}: ${file.filename}`);
+            } catch (error) {
+                console.error(`❌ Error adding ${file.filename} to ZIP:`, error);
+            }
+        }
+        
+        // Generate ZIP file
+        console.log('🔄 Generating ZIP file...');
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        
+        // Download the ZIP
+        const url = URL.createObjectURL(zipBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        const timestamp = new Date().toISOString().slice(0, 10);
+        link.download = `cached-downloads-${timestamp}.zip`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        console.log('✅ ZIP download started');
+        alert(`✅ Successfully created ZIP with ${cachedFiles.length} file${cachedFiles.length !== 1 ? 's' : ''}!`);
+    } catch (error) {
+        console.error('❌ Error creating ZIP from cache:', error);
+        alert('Error creating ZIP file from cache');
+    }
+}
+
 async function clearAllCache() {
     if (!confirm('Are you sure you want to clear all cached downloads? This cannot be undone.')) {
         return;
     }
     
     try {
-        const db = await openCookiesIDB();
+        const db = await openUnifiedCacheDB();
         return new Promise((resolve, reject) => {
-            const tx = db.transaction(IDB_DOWNLOADS_STORE, 'readwrite');
-            const store = tx.objectStore(IDB_DOWNLOADS_STORE);
+            const tx = db.transaction(CACHE_STORE_MEDIA, 'readwrite');
+            const store = tx.objectStore(CACHE_STORE_MEDIA);
             const req = store.clear();
             req.onsuccess = () => {
                 console.log('🗑️ Cleared all cached downloads');
@@ -1301,6 +1585,29 @@ async function clearAllCache() {
     }
 }
 
+// Helper function to safely decode URL-encoded strings
+const safeDecodeConverter = (s) => { 
+    try { 
+        return decodeURIComponent(s); 
+    } catch { 
+        return s; 
+    } 
+};
+
+// Clean up titles that may contain percent-encoding or odd prefixes
+const prettyTitleConverter = (s) => {
+    if (!s || typeof s !== 'string') return s;
+    let t = s.trim();
+    // Remove common stray charset prefixes
+    t = t.replace(/^utf[-_]?8/i, '');
+    // Replace plus (form-encoding) with spaces, then percent-decode safely
+    t = t.replace(/\+/g, ' ');
+    t = safeDecodeConverter(t);
+    // Collapse repeated whitespace
+    t = t.replace(/\s{2,}/g, ' ').trim();
+    return t;
+};
+
 async function loadCacheManager() {
     const container = document.getElementById('cache-items-container');
     const sizeDisplay = document.getElementById('cache-size-display');
@@ -1310,10 +1617,27 @@ async function loadCacheManager() {
     try {
         const cachedFiles = await getAllCachedDownloads();
         
-        // Calculate total size
+        // Calculate total size and check limits
         const totalSize = cachedFiles.reduce((sum, file) => sum + (file.size || 0), 0);
         const sizeMB = (totalSize / (1024 * 1024)).toFixed(2);
-        sizeDisplay.textContent = `${sizeMB} MB used (${cachedFiles.length} file${cachedFiles.length !== 1 ? 's' : ''})`;
+        const limitMB = (CACHE_SIZE_LIMIT / (1024 * 1024)).toFixed(0);
+        const percentFull = ((totalSize / CACHE_SIZE_LIMIT) * 100).toFixed(0);
+        
+        // Update size display with warning colors
+        let sizeColor = 'var(--text-secondary, #666)';
+        let sizeText = `${sizeMB} MB used (${cachedFiles.length} file${cachedFiles.length !== 1 ? 's' : ''})`;
+        
+        if (totalSize >= CACHE_SIZE_LIMIT) {
+            sizeColor = '#dc3545';
+            sizeText = `⚠️ ${sizeMB} / ${limitMB} MB (FULL!)`;
+        } else if (totalSize >= CACHE_SIZE_WARNING) {
+            sizeColor = '#ff9800';
+            sizeText = `⚠️ ${sizeMB} / ${limitMB} MB (${percentFull}% full)`;
+        }
+        
+        sizeDisplay.textContent = sizeText;
+        sizeDisplay.style.color = sizeColor;
+        sizeDisplay.style.fontWeight = totalSize >= CACHE_SIZE_WARNING ? '700' : '400';
         
         // Display cached files
         if (cachedFiles.length === 0) {
@@ -1321,17 +1645,55 @@ async function loadCacheManager() {
             return;
         }
         
-        // Sort by creation date (newest first)
+        // Deduplicate files by videoId (prefer newer entries)
+        const uniqueFiles = [];
+        const seenVideoIds = new Set();
+        const seenFilenames = new Set();
+        
+        // Sort by creation date (newest first) before deduplication
         cachedFiles.sort((a, b) => (b.created || 0) - (a.created || 0));
         
-        let html = '<div style="display: flex; flex-direction: column; gap: 8px;">';
         for (const file of cachedFiles) {
+            const videoId = file.videoId;
+            const filename = file.filename;
+            
+            // Skip if we've seen this videoId or exact filename
+            if (videoId && seenVideoIds.has(videoId)) {
+                console.log('⏭️ Skipping duplicate videoId:', videoId, file.title);
+                continue;
+            }
+            if (filename && seenFilenames.has(filename)) {
+                console.log('⏭️ Skipping duplicate filename:', filename);
+                continue;
+            }
+            
+            // Add to unique list and tracking sets
+            uniqueFiles.push(file);
+            if (videoId) seenVideoIds.add(videoId);
+            if (filename) seenFilenames.add(filename);
+        }
+        
+        console.log(`📊 Cache: ${cachedFiles.length} total files, ${uniqueFiles.length} unique after deduplication`);
+        console.log(`📊 Cache: ${cachedFiles.length} total files, ${uniqueFiles.length} unique after deduplication`);
+        
+        let html = '<div style="display: flex; flex-direction: column; gap: 8px;">';
+        for (const file of uniqueFiles) {
             const fileSize = ((file.size || 0) / (1024 * 1024)).toFixed(2);
             const createdDate = file.created ? new Date(file.created).toLocaleDateString() : 'Unknown';
-            const title = file.title || file.filename || 'Unknown';
+            const rawTitle = file.title || file.filename || 'Unknown';
+            const title = prettyTitleConverter(rawTitle); // Decode URL-encoded titles
             const format = file.format || 'Unknown';
             const platform = file.platform || '';
+            const type = file.type || 'converter';
             const platformEmoji = platform === 'youtube' ? '📺' : platform === 'tiktok' ? '🎵' : '🎬';
+            
+            // Type badge
+            const typeBadges = {
+                'converter': '<span style="background: rgba(44, 111, 184, 0.3); padding: 2px 6px; border-radius: 3px; font-size: 0.75em; margin-right: 4px;">Converter</span>',
+                'playlist': '<span style="background: rgba(156, 39, 176, 0.3); padding: 2px 6px; border-radius: 3px; font-size: 0.75em; margin-right: 4px;">Playlist</span>',
+                'lofi': '<span style="background: rgba(255, 152, 0, 0.3); padding: 2px 6px; border-radius: 3px; font-size: 0.75em; margin-right: 4px;">Lofi</span>'
+            };
+            const typeBadge = typeBadges[type] || '';
             
             html += `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(44, 111, 184, 0.15); border-radius: 6px; border: 1px solid rgba(44, 111, 184, 0.3);">
@@ -1340,14 +1702,14 @@ async function loadCacheManager() {
                             ${platformEmoji} ${title}
                         </div>
                         <div style="font-size: 0.8em; color: rgba(255, 255, 255, 0.8); margin-top: 3px;">
-                            ${format} • ${fileSize} MB • ${createdDate}
+                            ${typeBadge}${format} • ${fileSize} MB • ${createdDate}
                         </div>
                     </div>
                     <div style="display: flex; gap: 8px; margin-left: 12px;">
-                        <button onclick="downloadCachedFile('${file.download_id}')" style="padding: 6px 12px; background: rgba(40, 167, 69, 0.2); color: #5adb6e; border: 1px solid rgba(40, 167, 69, 0.4); border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: 600; white-space: nowrap;">
+                        <button onclick="downloadCachedFile('${file.id || file.download_id}')" style="padding: 6px 12px; background: rgba(40, 167, 69, 0.2); color: #5adb6e; border: 1px solid rgba(40, 167, 69, 0.4); border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: 600; white-space: nowrap;">
                             ⬇️ Download
                         </button>
-                        <button onclick="deleteCachedFile('${file.download_id}')" style="padding: 6px 12px; background: rgba(220, 53, 69, 0.2); color: #ff6b7a; border: 1px solid rgba(220, 53, 69, 0.4); border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: 600;">
+                        <button onclick="deleteCachedFile('${file.id || file.download_id}')" style="padding: 6px 12px; background: rgba(220, 53, 69, 0.2); color: #ff6b7a; border: 1px solid rgba(220, 53, 69, 0.4); border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: 600;">
                             🗑️
                         </button>
                     </div>
@@ -1407,11 +1769,30 @@ async function autoDownloadAndCache(status) {
         // Get the blob
         const blob = await response.blob();
         
+        // Extract video ID from URL for cache lookup
+        let videoId = null;
+        const urlInput = document.getElementById('videoUrl');
+        if (urlInput && urlInput.value) {
+            const url = urlInput.value.trim();
+            // Extract YouTube video ID
+            if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                if (url.includes('youtu.be/')) {
+                    videoId = url.split('youtu.be/')[1].split('?')[0].split('&')[0];
+                } else if (url.includes('watch?v=')) {
+                    videoId = url.split('watch?v=')[1].split('&')[0];
+                } else if (url.includes('v=')) {
+                    videoId = url.split('v=')[1].split('&')[0];
+                }
+            }
+        }
+        
         // Save to IndexedDB cache
         await saveDownloadedFile(currentDownloadId, filename, blob, {
             title: status.title,
             format: status.format,
-            platform: currentPlatform
+            platform: currentPlatform,
+            type: 'converter',
+            videoId: videoId
         });
         
         console.log('✅ File automatically cached:', filename);
@@ -1745,30 +2126,49 @@ async function uploadSavedCookiesIfNeeded(download_id) {
     }
 }
 
+// Read all playlist blobs from unified cache
 async function readAllBlobsFromIDB() {
-    const db = await openIDB();
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction(IDB_STORE_NAME, 'readonly');
-        const store = tx.objectStore(IDB_STORE_NAME);
-        const req = store.getAll();
-        req.onsuccess = function(e) {
-            const results = e.target.result || [];
-            // Map to {filename, blob, size}
-            resolve(results.map(r => ({ filename: r.filename, blob: r.blob, size: r.size })));
-        };
-        req.onerror = function(e) { reject(e.target ? e.target.error : e); };
-    });
+    try {
+        const allItems = await getAllCachedDownloads();
+        // Filter only playlist type items
+        const playlistItems = allItems.filter(item => item.type === 'playlist');
+        return playlistItems.map(item => ({
+            filename: item.filename,
+            blob: item.blob,
+            size: item.size,
+            title: item.title
+        }));
+    } catch (error) {
+        console.error('❌ Error reading playlist items from cache:', error);
+        return [];
+    }
 }
 
+// Clear all playlist items from unified cache
 async function clearAllBlobsFromIDB() {
-    const db = await openIDB();
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction(IDB_STORE_NAME, 'readwrite');
-        const store = tx.objectStore(IDB_STORE_NAME);
-        const req = store.clear();
-        req.onsuccess = () => resolve(true);
-        req.onerror = (e) => reject(e.target ? e.target.error : e);
-    });
+    try {
+        const db = await openUnifiedCacheDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(CACHE_STORE_MEDIA, 'readwrite');
+            const store = tx.objectStore(CACHE_STORE_MEDIA);
+            const typeIndex = store.index('type');
+            const req = typeIndex.openCursor(IDBKeyRange.only('playlist'));
+            
+            req.onsuccess = (e) => {
+                const cursor = e.target.result;
+                if (cursor) {
+                    cursor.delete();
+                    cursor.continue();
+                } else {
+                    resolve(true);
+                }
+            };
+            req.onerror = (e) => reject(e.target ? e.target.error : e);
+        });
+    } catch (error) {
+        console.error('❌ Error clearing playlist items:', error);
+        return false;
+    }
 }
 
 async function flushFrontendStorageAsZip() {
