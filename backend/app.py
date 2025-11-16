@@ -7200,6 +7200,9 @@ def process_next_in_queue():
             # Update status to starting
             download_info['status'] = 'starting'
         
+        # Remove from queue BEFORE starting (so position updates immediately)
+        remove_from_queue(download_id)
+        
         # Increment active conversions
         increment_active_conversions()
         
@@ -7228,6 +7231,15 @@ def process_next_in_queue():
         except Exception as e:
             video_logger.error(f"Failed to submit {download_id} to process pool: {e}")
             decrement_active_conversions()
+            # Re-add to queue since submission failed (it was removed before trying)
+            with queue_lock:
+                # Add back to front of queue since it should be processed next
+                video_conversion_queue.insert(0, {
+                    'download_id': download_id,
+                    'url': url,
+                    'client_ip': client_ip,
+                    'timestamp': time.time()
+                })
             with download_lock:
                 if download_id in active_video_downloads:
                     active_video_downloads[download_id]['status'] = 'queued'
@@ -8177,25 +8189,22 @@ if VIDEO_CONVERTER_AVAILABLE:
         YTDL_BACKOFF_MAX = float(os.environ.get('YTDL_BACKOFF_MAX', '30.0'))
     except Exception:
         YTDL_BACKOFF_MAX = 30.0
-    # 🚀 CRITICAL FIX: Use ProcessPoolExecutor instead of threading to prevent blocking
-    # FastAPI's async event loop. Threads share GIL and can block Socket.IO connections.
+    # 🚀 CRITICAL FIX: Use ThreadPoolExecutor to allow shared memory for status updates
+    # ProcessPoolExecutor doesn't share memory, so status updates are lost!
     try:
-        WORKER_POOL_SIZE = int(os.environ.get('YTDL_WORKER_POOL_SIZE', '4'))  # Reduced to 4 processes (quality over quantity)
+        WORKER_POOL_SIZE = int(os.environ.get('YTDL_WORKER_POOL_SIZE', '12'))  # Threads can handle more concurrent downloads
     except Exception:
-        WORKER_POOL_SIZE = 4
+        WORKER_POOL_SIZE = 12
     
-    # Create process pool for CPU/IO intensive video downloads
-    # This ensures video conversions run in completely separate processes
-    video_process_pool = ProcessPoolExecutor(
+    # Create thread pool for video downloads (threads share memory with main process)
+    # This ensures status updates in active_video_downloads are visible to the main process
+    video_process_pool = ThreadPoolExecutor(
         max_workers=WORKER_POOL_SIZE,
-        max_tasks_per_child=10  # Restart workers after 10 tasks to prevent memory leaks
+        thread_name_prefix="video_download"
     )
-    video_logger.info(f"✅ Video conversion process pool initialized with {WORKER_POOL_SIZE} workers")
+    video_logger.info(f"✅ Video conversion thread pool initialized with {WORKER_POOL_SIZE} workers")
     
-    # Lightweight thread pool for quick coordination tasks only
-    coordination_thread_pool = ThreadPoolExecutor(max_workers=4, thread_name_prefix="video_coord")
-    
-    # Async wrapper to submit downloads to process pool
+    # Async wrapper to submit downloads to thread pool
     async def submit_video_download_async(download_id: str, url: str, format_type: str, quality: int, output_path: str, client_ip: str = None):
         """Submit video download to process pool and handle completion asynchronously"""
         loop = asyncio.get_event_loop()
@@ -8557,8 +8566,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                             'finished': True
                         })
                 
-                # Remove from queue and decrement active conversions
-                remove_from_queue(download_id)
+                # Decrement active conversions (item already removed from queue when started)
                 decrement_active_conversions()
                 
                 # Process next item in queue if any
@@ -8580,8 +8588,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                         'finished': True
                     })
             
-            # Remove from queue and decrement active conversions on error too
-            remove_from_queue(download_id)
+            # Decrement active conversions on error (item already removed from queue when started)
             decrement_active_conversions()
             
             # Process next item in queue if any
@@ -9159,7 +9166,15 @@ if VIDEO_CONVERTER_AVAILABLE:
             
             # Check if we can start immediately
             if can_start_conversion():
+                # Remove from queue BEFORE starting (so it doesn't stay in queue forever)
+                remove_from_queue(download_id)
                 increment_active_conversions()
+                
+                # Set status to 'starting' BEFORE submitting to avoid race condition
+                with download_lock:
+                    if download_id in active_video_downloads:
+                        active_video_downloads[download_id]['status'] = 'starting'
+                
                 # Submit to process pool instead of thread queue
                 try:
                     future = video_process_pool.submit(
@@ -9179,10 +9194,6 @@ if VIDEO_CONVERTER_AVAILABLE:
                             process_next_in_queue()
                     
                     future.add_done_callback(done_callback)
-                    
-                    with download_lock:
-                        if download_id in active_video_downloads:
-                            active_video_downloads[download_id]['status'] = 'starting'
                             
                 except Exception as e:
                     video_logger.error(f"Failed to submit {download_id}: {e}")
