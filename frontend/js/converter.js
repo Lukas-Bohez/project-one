@@ -1688,13 +1688,21 @@ async function loadCacheManager() {
             return;
         }
         
-        // Deduplicate files by videoId (prefer newer entries)
+        // Deduplicate files by videoId (prefer items with clean titles)
         const uniqueFiles = [];
         const seenVideoIds = new Set();
         const seenFilenames = new Set();
         
-        // Sort by creation date (newest first) before deduplication
-        cachedFiles.sort((a, b) => (b.created || 0) - (a.created || 0));
+        // Sort by creation date (newest first) and prefer clean titles (no file extensions)
+        cachedFiles.sort((a, b) => {
+            // Prefer items with clean titles (no .mp3/.mp4/.webm extensions)
+            const aHasExt = /\.(mp3|mp4|webm)$/i.test(a.title || '');
+            const bHasExt = /\.(mp3|mp4|webm)$/i.test(b.title || '');
+            if (aHasExt && !bHasExt) return 1;
+            if (!aHasExt && bHasExt) return -1;
+            // Then sort by date (newest first)
+            return (b.created || 0) - (a.created || 0);
+        });
         
         for (const file of cachedFiles) {
             const videoId = file.videoId;
@@ -1723,6 +1731,7 @@ async function loadCacheManager() {
         for (const file of uniqueFiles) {
             const fileSize = ((file.size || 0) / (1024 * 1024)).toFixed(2);
             const createdDate = file.created ? new Date(file.created).toLocaleDateString() : 'Unknown';
+            // Prefer title field (clean) over filename (may have extensions)
             const rawTitle = file.title || file.filename || 'Unknown';
             const title = prettyTitleConverter(rawTitle); // Decode URL-encoded titles
             const format = file.format || 'Unknown';
