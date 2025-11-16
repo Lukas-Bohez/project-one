@@ -557,7 +557,7 @@ function renderPlaylistUI(playlistData) {
                         <div class="video-info">
                             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
                                 <div class="video-title" style="flex:1;">${video.title}</div>
-                                <span class="cache-indicator" data-title="${video.title}">Not cached</span>
+                                <span class="cache-indicator" data-video-id="${video.id}" data-title="${video.title}">Not cached</span>
                             </div>
                             <div class="video-duration">${video.duration ? formatDuration(video.duration) : ''}</div>
                         </div>
@@ -890,6 +890,37 @@ async function processQueue() {
                     totalItems: totalItems
                 });
 
+                // Check if this video is already cached
+                const cachedItems = await getAllCachedDownloads();
+                const alreadyCached = cachedItems.find(item => item.videoId === next.id);
+                
+                if (alreadyCached) {
+                    console.log('⏭️ Skipping already cached video:', next.title);
+                    
+                    // Update spinner text to show skip
+                    if (spinnerText) {
+                        spinnerText.textContent = `⏭️ Skipped (already cached) ${processedCount}/${totalItems} (${progressPercent}%)`;
+                    }
+                    
+                    // Update progress display
+                    const progressDisplay = document.getElementById('progress-display');
+                    const progressText = document.getElementById('progress-text');
+                    if (progressDisplay && progressText) {
+                        progressDisplay.style.display = 'block';
+                        progressText.textContent = `⏭️ ${processedCount}/${totalItems} (${progressPercent}%) - Skipped: ${next.title} (already cached)`;
+                    }
+                    
+                    updatePlaylistStatusUI({
+                        currentTitle: `⏭️ ${processedCount}/${totalItems} (${progressPercent}%) - Skipped (already cached): ${next.title}`,
+                        processedCount: processedCount,
+                        totalItems: totalItems
+                    });
+                    
+                    // Longer delay so user can see the skip message clearly
+                    await new Promise(r => setTimeout(r, 2000));
+                    continue; // Skip to next video
+                }
+
                 // Start server conversion
                 const convertResp = await fetch(`${API_BASE_URL}/api/v1/video/convert`, {
                     method: 'POST',
@@ -955,6 +986,8 @@ async function processQueue() {
                     console.log('💾 Playlist item cached:', filename);
                     // Refresh cache manager UI
                     loadCacheManager();
+                    // Update playlist cached indicators immediately
+                    await updateCachedIndicators();
                 } catch (cacheErr) {
                     console.warn('Failed to cache playlist item:', cacheErr);
                 }
@@ -1084,20 +1117,30 @@ async function updateCachedIndicators() {
         const tempItems = await readAllBlobsFromIDB();
         const cachedItems = await getAllCachedDownloads();
         
-        // Combine titles from both sources
-        const tempTitles = (tempItems || []).map(i => i.filename || i.title || '').filter(Boolean);
-        const cachedTitles = (cachedItems || []).map(i => i.filename || i.title || '').filter(Boolean);
-        const allTitles = [...tempTitles, ...cachedTitles];
+        // Build set of cached video IDs from both sources
+        const cachedVideoIds = new Set();
         
+        // Add video IDs from temporary playlist storage
+        (tempItems || []).forEach(item => {
+            if (item.videoId) cachedVideoIds.add(item.videoId);
+        });
+        
+        // Add video IDs from permanent cache
+        (cachedItems || []).forEach(item => {
+            if (item.videoId) cachedVideoIds.add(item.videoId);
+        });
+        
+        // Update each indicator based on video ID match
         document.querySelectorAll('.cache-indicator').forEach(el => {
-            const t = el.getAttribute('data-title') || '';
-            // Simple substring match: filename may include title; for better accuracy you can normalize strings
-            const matched = allTitles.some(fn => fn.indexOf(t) !== -1 || t.indexOf(fn) !== -1);
+            const videoId = el.getAttribute('data-video-id');
+            const matched = videoId && cachedVideoIds.has(videoId);
             el.textContent = matched ? '✅ Cached' : 'Not cached';
             el.style.color = matched ? '#6ee7b7' : '#d0d0d0';
             el.style.fontWeight = matched ? '700' : '400';
             el.style.fontSize = '0.85em';
         });
+        
+        console.log(`🔍 Cache check: Found ${cachedVideoIds.size} cached videos`);
     } catch (e) {
         console.warn('updateCachedIndicators error', e);
     }
@@ -2694,6 +2737,47 @@ async function extractAudioInBrowser(file) {
 // Start actual conversion process
 async function startConversion(url) {
     try {
+        // Check if this video is already cached (YouTube only for now)
+        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+            const videoId = getYouTubeVideoId(url);
+            if (videoId) {
+                const cachedItems = await getAllCachedDownloads();
+                const alreadyCached = cachedItems.find(item => item.videoId === videoId);
+                
+                if (alreadyCached) {
+                    console.log('✅ Video already cached:', alreadyCached.filename);
+                    
+                    // Show success state with cached file
+                    hideSpinner();
+                    showSuccess({
+                        title: alreadyCached.title || 'Cached Video',
+                        status: 'completed',
+                        format: alreadyCached.format || (formatValue === 1 ? 'MP3' : 'MP4')
+                    });
+                    
+                    // Set up download button to download from cache
+                    currentDownloadId = alreadyCached.id;
+                    const downloadBtn = document.getElementById('download-btn');
+                    if (downloadBtn) {
+                        downloadBtn.onclick = async () => {
+                            const blob = alreadyCached.blob;
+                            const filename = alreadyCached.filename;
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = filename;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                        };
+                    }
+                    
+                    return; // Don't start server conversion
+                }
+            }
+        }
+        
         // Start conversion
         console.log('🚀 Starting conversion...');
         console.log('📡 Convert endpoint:', `${API_BASE_URL}/api/v1/video/convert`);
