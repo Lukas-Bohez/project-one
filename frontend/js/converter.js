@@ -23,6 +23,12 @@ let frontendPartIndex = 1;
 let processingQueue = false;
 let waitingForContinue = false;
 
+// 🛡️ HEALTH CHECK: Monitor backend availability
+let backendHealthy = true;
+let healthCheckInterval = null;
+let statusCheckFailures = 0;
+const MAX_STATUS_FAILURES = 3;  // Number of failed status checks before showing warning
+
 // URL patterns for different platforms
 const urlPatterns = {
     youtube: /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|embed|watch|shorts)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
@@ -3036,15 +3042,135 @@ function startStatusPolling() {
             }
         } catch (error) {
             console.error('💥 Status check error:', error);
-            clearInterval(statusCheckInterval);
-            showError('Failed to check conversion status');
-            isProcessing = false;
-            hideSpinner();
-            enableBulkControls();
-            enableConvertButtonVisuals();
+            statusCheckFailures++;
+            
+            // 🛡️ Check if backend is down
+            if (statusCheckFailures >= MAX_STATUS_FAILURES) {
+                console.error('🚨 Multiple status check failures - backend may be down');
+                clearInterval(statusCheckInterval);
+                showError(
+                    'Server connection lost. The backend may have stopped or crashed. ' +
+                    'Please refresh the page and try again. If the problem persists, contact support.'
+                );
+                isProcessing = false;
+                hideSpinner();
+                enableBulkControls();
+                enableConvertButtonVisuals();
+                
+                // Show backend down warning
+                showBackendDownWarning();
+            }
         }
     }, 2000);
 }
+
+// 🛡️ Show backend down warning
+function showBackendDownWarning() {
+    const warningDiv = document.createElement('div');
+    warningDiv.id = 'backend-down-warning';
+    warningDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #ff4444;
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 10000;
+        max-width: 400px;
+        font-size: 14px;
+    `;
+    warningDiv.innerHTML = `
+        <div style="font-weight: bold; margin-bottom: 10px; font-size: 16px;">⚠️ Server Connection Lost</div>
+        <div style="margin-bottom: 10px;">
+            The backend server appears to be down or not responding. Your download may have been interrupted.
+        </div>
+        <div style="margin-bottom: 10px;">
+            <strong>What to do:</strong>
+            <ul style="margin: 5px 0; padding-left: 20px;">
+                <li>Refresh this page</li>
+                <li>Wait a few minutes and try again</li>
+                <li>Check if the server is running</li>
+            </ul>
+        </div>
+        <button onclick="location.reload()" style="
+            background: white;
+            color: #ff4444;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-right: 10px;
+        ">Refresh Page</button>
+        <button onclick="this.parentElement.remove()" style="
+            background: transparent;
+            color: white;
+            border: 1px solid white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        ">Dismiss</button>
+    `;
+    
+    // Remove existing warning if any
+    const existing = document.getElementById('backend-down-warning');
+    if (existing) existing.remove();
+    
+    document.body.appendChild(warningDiv);
+}
+
+// 🛡️ Health check function
+async function checkBackendHealth() {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);  // 5 second timeout
+        
+        const response = await fetch(`${API_BASE_URL}/api/v1/health`, {
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+            const health = await response.json();
+            backendHealthy = true;
+            statusCheckFailures = 0;  // Reset failure counter
+            return true;
+        } else {
+            backendHealthy = false;
+            return false;
+        }
+    } catch (error) {
+        backendHealthy = false;
+        return false;
+    }
+}
+
+// 🛡️ Start periodic health checks
+function startHealthChecks() {
+    if (healthCheckInterval) return;
+    
+    // Check every 30 seconds
+    healthCheckInterval = setInterval(async () => {
+        const healthy = await checkBackendHealth();
+        
+        if (!healthy && !document.getElementById('backend-down-warning')) {
+            console.warn('⚠️ Backend health check failed');
+            
+            // If user has an active download, show warning
+            if (isProcessing) {
+                showBackendDownWarning();
+            }
+        }
+    }, 30000);
+}
+
+// Start health checks when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    checkBackendHealth();  // Initial check
+    startHealthChecks();   // Start periodic checks
+});
 
 // Generate mock download URL
 function generateMockDownloadUrl(originalUrl) {
@@ -3105,16 +3231,51 @@ function showError(message) {
     formContainer.style.display = 'block';
     convertButton.disabled = false;
     
+    // 🛡️ Enhanced error messages with helpful suggestions
+    let suggestions = [];
+    
+    // Detect specific error types and add helpful suggestions
+    if (message.includes('timeout') || message.includes('exceeded time limit')) {
+        suggestions.push('This video may be too large or the connection is slow');
+        suggestions.push('Try a lower quality setting');
+    } else if (message.includes('rate limit') || message.includes('too many requests')) {
+        suggestions.push('YouTube is temporarily limiting downloads');
+        suggestions.push('Wait 10-60 minutes before trying again');
+    } else if (message.includes('unavailable') || message.includes('private') || message.includes('removed')) {
+        suggestions.push('This video may be deleted, private, or region-restricted');
+    } else if (message.includes('stalled')) {
+        suggestions.push('Download got stuck with no progress');
+        suggestions.push('Try again in a few minutes');
+    } else if (message.includes('Server connection lost') || message.includes('backend')) {
+        suggestions.push('The server may have crashed or restarted');
+        suggestions.push('Refresh the page and try again');
+    }
+    
     // Show error message
     const errorDiv = document.createElement('div');
     errorDiv.className = 'error-message';
-    errorDiv.textContent = message;
+    errorDiv.style.cssText = 'padding: 20px; margin: 15px 0; background: #ff4444; color: white; border-radius: 8px;';
+    
+    let html = `<div style="font-weight: bold; margin-bottom: 10px;">${message}</div>`;
+    
+    if (suggestions.length > 0) {
+        html += `
+            <div style="margin-top: 10px; font-size: 14px; opacity: 0.9;">
+                <div style="font-weight: bold; margin-bottom: 5px;">💡 Suggestions:</div>
+                <ul style="margin: 5px 0; padding-left: 20px;">
+                    ${suggestions.map(s => `<li>${s}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+    
+    errorDiv.innerHTML = html;
     formContainer.appendChild(errorDiv);
     
-    // Remove error message after 5 seconds
+    // Remove error message after 8 seconds (increased from 5)
     setTimeout(() => {
         errorDiv.remove();
-    }, 5000);
+    }, 8000);
 }
 
 // Handle download
