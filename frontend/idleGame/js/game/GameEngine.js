@@ -1143,11 +1143,33 @@ class GameEngine {
         this.updateElement('police-cost', policeCost.toString());
         this.updateButtonState('hire-police-btn', this.state.resources.gold >= policeCost);
         
+        // Update police button text based on level with themed name
+        const policeBtn = document.getElementById('hire-police-btn');
+        if (policeBtn) {
+            const titleDiv = policeBtn.querySelector('.btn-title');
+            if (titleDiv && this.rebirthThemes) {
+                const theme = this.rebirthThemes.getCurrentTheme(this.state);
+                const themeName = theme.city.police.name;
+                titleDiv.textContent = policeCount === 0 ? `Hire ${themeName}` : `Hire ${themeName} (Lv ${policeCount})`;
+            }
+        }
+        
         // Politician cost scales with 1.05x per hire
         const politicianCount = this.state.city.politicians || 0;
         const politicianCost = Math.floor(250 * Math.pow(1.05, politicianCount));
         this.updateElement('politician-cost', politicianCost.toString());
         this.updateButtonState('hire-politician-btn', this.state.resources.gold >= politicianCost);
+        
+        // Update politician button text based on level with themed name
+        const politicianBtn = document.getElementById('hire-politician-btn');
+        if (politicianBtn) {
+            const titleDiv = politicianBtn.querySelector('.btn-title');
+            if (titleDiv && this.rebirthThemes) {
+                const theme = this.rebirthThemes.getCurrentTheme(this.state);
+                const themeName = theme.city.politicians.name;
+                titleDiv.textContent = politicianCount === 0 ? `Hire ${themeName}` : `Hire ${themeName} (Lv ${politicianCount})`;
+            }
+        }
         
         // Bank cost scales with 1.20x per building
         const bankCount = this.state.city.banks || 0;
@@ -1155,17 +1177,50 @@ class GameEngine {
         this.updateElement('bank-cost', bankCost.toString());
         this.updateButtonState('build-bank-btn', this.state.resources.gold >= bankCost);
         
+        // Update bank button text based on level with themed name
+        const bankBtn = document.getElementById('build-bank-btn');
+        if (bankBtn) {
+            const titleDiv = bankBtn.querySelector('.btn-title');
+            if (titleDiv && this.rebirthThemes) {
+                const theme = this.rebirthThemes.getCurrentTheme(this.state);
+                const themeName = theme.city.banks.name;
+                titleDiv.textContent = bankCount === 0 ? `Build ${themeName}` : `Build ${themeName} (Lv ${bankCount})`;
+            }
+        }
+        
         // Market cost scales with 1.15x per building
         const marketCount = this.state.city.markets || 0;
         const marketCost = Math.floor(1000 * Math.pow(1.15, marketCount));
         this.updateElement('market-cost', marketCost.toString());
         this.updateButtonState('build-market-btn', this.state.resources.gold >= marketCost);
         
+        // Update market button text based on level with themed name
+        const marketBtn = document.getElementById('build-market-btn');
+        if (marketBtn) {
+            const titleDiv = marketBtn.querySelector('.btn-title');
+            if (titleDiv && this.rebirthThemes) {
+                const theme = this.rebirthThemes.getCurrentTheme(this.state);
+                const themeName = theme.city.markets.name;
+                titleDiv.textContent = marketCount === 0 ? `Build ${themeName}` : `Build ${themeName} (Lv ${marketCount})`;
+            }
+        }
+        
         // University cost scales with 1.10x per building
         const universityCount = this.state.city.universities || 0;
         const universityCost = Math.floor(2500 * Math.pow(1.10, universityCount));
         this.updateElement('university-cost', universityCost.toString());
         this.updateButtonState('build-university-btn', this.state.resources.gold >= universityCost);
+        
+        // Update university button text based on level with themed name
+        const universityBtn = document.getElementById('build-university-btn');
+        if (universityBtn) {
+            const titleDiv = universityBtn.querySelector('.btn-title');
+            if (titleDiv && this.rebirthThemes) {
+                const theme = this.rebirthThemes.getCurrentTheme(this.state);
+                const themeName = theme.city.universities.name;
+                titleDiv.textContent = universityCount === 0 ? `Build ${themeName}` : `Build ${themeName} (Lv ${universityCount})`;
+            }
+        }
         
         // Sales department button - dynamic cost based on level
         const salesDeptLevel = this.state.city.salesDepartment || 0;
@@ -2423,7 +2478,10 @@ class GameEngine {
                     button.style.border = '2px solid #22c55e';
                 }
                 
-                const effectText = upgrade.description;
+                // Get dynamic description based on current level
+                const effectText = isMaxed 
+                    ? this.rebirthRewards.getUpgradeDescription(key, currentLevel).replace(/Next:.*/, '').replace(/\|.*/, '').trim()
+                    : this.rebirthRewards.getUpgradeDescription(key, currentLevel);
                 const statusText = isMaxed ? 'MAX LEVEL' : `Level ${currentLevel}/${upgrade.maxLevel}`;
                 
                 button.innerHTML = `
