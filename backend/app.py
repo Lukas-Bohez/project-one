@@ -7437,10 +7437,15 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
         }
         base_opts['format'] = quality_map.get(quality, 'best[height<=720]')
         base_opts.update({
-            'postprocessors': [{
-                'key': 'FFmpegMetadata',
-                'add_metadata': True,
-            }]
+            'postprocessors': [
+                {
+                    'key': 'FFmpegMetadata',
+                    'add_metadata': True,
+                },
+                {
+                    'key': 'EmbedThumbnail'  # Embed thumbnail into video file
+                }
+            ]
         })
     
     return base_opts
