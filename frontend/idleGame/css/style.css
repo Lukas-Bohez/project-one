@@ -359,7 +359,7 @@ body {
 }
 
 .resource-item.stone .resource-value { color: #8d8d8d; }
-.resource-item.coal .resource-value { color: #2c2c2c; }
+.resource-item.coal .resource-value { color: #b0b0b0; }
 .resource-item.iron .resource-value { color: #a8a8a8; }
 .resource-item.silver .resource-value { color: #c0c0c0; }
 .resource-item.gold .resource-value { color: #ffd700; }

@@ -282,6 +282,130 @@ class RebirthRewards {
         return Math.floor(upgrade.baseCost * Math.pow(upgrade.costGrowth, currentLevel));
     }
 
+    // Get dynamic description showing current effect level
+    getUpgradeDescription(upgradeKey, currentLevel) {
+        const upgrade = this.rebirthUpgrades[upgradeKey];
+        if (!upgrade) return '';
+        
+        const nextLevel = currentLevel + 1;
+        const currentEffect = currentLevel > 0 ? upgrade.effect(currentLevel) : null;
+        const nextEffect = upgrade.effect(nextLevel);
+        
+        // Generate description based on upgrade type
+        switch(upgradeKey) {
+            case 'efficientGathering':
+                return currentLevel > 0 
+                    ? `Currently: +${Math.round((currentEffect.gatheringSpeed - 1) * 100)}% gathering speed | Next: +${Math.round((nextEffect.gatheringSpeed - 1) * 100)}%`
+                    : `+${Math.round((nextEffect.gatheringSpeed - 1) * 100)}% gathering speed per level`;
+            case 'quickCrafting':
+                return currentLevel > 0
+                    ? `Currently: +${Math.round((currentEffect.craftingSpeed - 1) * 100)}% crafting speed | Next: +${Math.round((nextEffect.craftingSpeed - 1) * 100)}%`
+                    : `+${Math.round((nextEffect.craftingSpeed - 1) * 100)}% crafting speed per level`;
+            case 'shrewdTrader':
+                return currentLevel > 0
+                    ? `Currently: +${Math.round((currentEffect.sellingBonus - 1) * 100)}% selling price | Next: +${Math.round((nextEffect.sellingBonus - 1) * 100)}%`
+                    : `+${Math.round((nextEffect.sellingBonus - 1) * 100)}% selling price per level`;
+            case 'masterCrafter':
+                return currentLevel > 0
+                    ? `Currently: ${Math.round(currentEffect.doubleCraftChance * 100)}% chance to craft 2x | Next: ${Math.round(nextEffect.doubleCraftChance * 100)}%`
+                    : `${Math.round(nextEffect.doubleCraftChance * 100)}% chance to craft 2x items per level`;
+            case 'luckyFind':
+                return currentLevel > 0
+                    ? `Currently: ${Math.round(currentEffect.doubleGatherChance * 100)}% chance to find 2x | Next: ${Math.round(nextEffect.doubleGatherChance * 100)}%`
+                    : `${Math.round(nextEffect.doubleGatherChance * 100)}% chance to find 2x resources per level`;
+            case 'fastLearner':
+                return currentLevel > 0
+                    ? `Currently: +${Math.round((currentEffect.workerEfficiency - 1) * 100)}% worker efficiency | Next: +${Math.round((nextEffect.workerEfficiency - 1) * 100)}%`
+                    : `+${Math.round((nextEffect.workerEfficiency - 1) * 100)}% worker efficiency per level`;
+            case 'bulkProduction':
+                return currentLevel > 0
+                    ? `Currently: Auto-craft ${currentEffect.extraAutoCrafts} extra items | Next: ${nextEffect.extraAutoCrafts}`
+                    : `Auto-craft ${nextEffect.extraAutoCrafts} items simultaneously per level`;
+            case 'massTransport':
+                return currentLevel > 0
+                    ? `Currently: +${Math.round((currentEffect.transportCapacity - 1) * 100)}% transport capacity | Next: +${Math.round((nextEffect.transportCapacity - 1) * 100)}%`
+                    : `+${Math.round((nextEffect.transportCapacity - 1) * 100)}% transport capacity per level`;
+            case 'thriftyBuilder':
+                return currentLevel > 0
+                    ? `Currently: ${Math.round((1 - currentEffect.buildingDiscount) * 100)}% building discount | Next: ${Math.round((1 - nextEffect.buildingDiscount) * 100)}%`
+                    : `${Math.round((1 - nextEffect.buildingDiscount) * 100)}% building discount per level`;
+            case 'goldenTouch':
+                return currentLevel > 0
+                    ? `Currently: +${Math.round((currentEffect.goldMultiplier - 1) * 100)}% gold earned | Next: +${Math.round((nextEffect.goldMultiplier - 1) * 100)}%`
+                    : `+${Math.round((nextEffect.goldMultiplier - 1) * 100)}% gold earned per level`;
+            case 'empireBuilder':
+                return currentLevel > 0
+                    ? `Currently: Start with ${currentEffect.startingGold} gold | Next: ${nextEffect.startingGold}`
+                    : `Start with ${nextEffect.startingGold} gold per level`;
+            case 'timeWarp':
+                return currentLevel > 0
+                    ? `Currently: ${Math.round((1 - currentEffect.cooldownReduction) * 100)}% cooldown reduction | Next: ${Math.round((1 - nextEffect.cooldownReduction) * 100)}%`
+                    : `${Math.round((1 - nextEffect.cooldownReduction) * 100)}% cooldown reduction per level`;
+            case 'legendarySkill':
+                return currentLevel > 0
+                    ? `Currently: +${Math.round((currentEffect.efficiencyBoost - 1) * 100)}% all efficiency | Next: +${Math.round((nextEffect.efficiencyBoost - 1) * 100)}%`
+                    : `+${Math.round((nextEffect.efficiencyBoost - 1) * 100)}% all efficiency per level`;
+            case 'instantCraft':
+                return currentLevel > 0
+                    ? `Currently: ${Math.round(currentEffect.instantCraftChance * 100)}% instant craft | Next: ${Math.round(nextEffect.instantCraftChance * 100)}%`
+                    : `${Math.round(nextEffect.instantCraftChance * 100)}% chance to instantly complete crafting per level`;
+            case 'decayResistance':
+                return currentLevel > 0
+                    ? `Currently: ${Math.round((1 - currentEffect.decayReduction) * 100)}% less decay | Next: ${Math.round((1 - nextEffect.decayReduction) * 100)}%`
+                    : `${Math.round((1 - nextEffect.decayReduction) * 100)}% less decay per level`;
+            case 'arcadeMaster':
+                return currentLevel > 0
+                    ? `Currently: +${Math.round((currentEffect.arcadeBonus - 1) * 100)}% arcade rewards | Next: +${Math.round((nextEffect.arcadeBonus - 1) * 100)}%`
+                    : `+${Math.round((nextEffect.arcadeBonus - 1) * 100)}% bonus from arcade games per level`;
+            case 'quantumEfficiency':
+                return currentLevel > 0
+                    ? `Currently: Workers produce +${Math.round((currentEffect.quantumWorkerBonus - 1) * 100)}% more | Next: +${Math.round((nextEffect.quantumWorkerBonus - 1) * 100)}%`
+                    : `Workers produce +${Math.round((nextEffect.quantumWorkerBonus - 1) * 100)}% more per level`;
+            case 'megaCrafter':
+                return currentLevel > 0
+                    ? `Currently: Craft ${currentEffect.extraAutoCrafts} extra items | Next: ${nextEffect.extraAutoCrafts}`
+                    : `Craft ${nextEffect.extraAutoCrafts} extra items per auto-craft cycle per level`;
+            case 'ultimateGatherer':
+                return currentLevel > 0
+                    ? `Currently: ${Math.round(currentEffect.megaGatherChance * 100)}% chance for 5x resources | Next: ${Math.round(nextEffect.megaGatherChance * 100)}%`
+                    : `${Math.round(nextEffect.megaGatherChance * 100)}% chance to gather 5x resources per level`;
+            case 'cosmicMultiplier':
+                return currentLevel > 0
+                    ? `Currently: +${Math.round((currentEffect.goldMultiplier - 1) * 100)}% gold | Next: +${Math.round((nextEffect.goldMultiplier - 1) * 100)}%`
+                    : `+${Math.round((nextEffect.goldMultiplier - 1) * 100)}% to all gold earnings per level`;
+            case 'voidResistance':
+                return currentLevel > 0
+                    ? `Currently: Start with ${currentEffect.startingDecay}% decay | Next: ${nextEffect.startingDecay}%`
+                    : `Start with ${nextEffect.startingDecay}% decay per level`;
+            case 'transcendence':
+                return currentLevel > 0
+                    ? `Currently: +${Math.round((currentEffect.transcendenceBonus - 1) * 100)}% to all multipliers | Next: +${Math.round((nextEffect.transcendenceBonus - 1) * 100)}%`
+                    : `+${Math.round((nextEffect.transcendenceBonus - 1) * 100)}% to all multipliers per level`;
+            case 'infiniteAutomation':
+                return currentLevel > 0
+                    ? `Currently: ${currentEffect.automationSpeedMultiplier}x automation speed | Next: ${nextEffect.automationSpeedMultiplier}x`
+                    : `${nextEffect.automationSpeedMultiplier}x automation speed per level`;
+            case 'realityBender':
+                return currentLevel > 0
+                    ? `Currently: ${Math.round(currentEffect.freeCraftChance * 100)}% free craft chance | Next: ${Math.round(nextEffect.freeCraftChance * 100)}%`
+                    : `${Math.round(nextEffect.freeCraftChance * 100)}% chance items cost nothing per level`;
+            case 'voidMastery':
+                return currentLevel > 0
+                    ? `Currently: ${currentEffect.decayGeneration}x decay generation | Next: ${nextEffect.decayGeneration}x`
+                    : `${nextEffect.decayGeneration}x decay generation per level`;
+            case 'omnipotence':
+                return currentLevel > 0
+                    ? `All bonuses doubled (ACTIVE)`
+                    : `All bonuses doubled`;
+            case 'arcadeLegend':
+                return currentLevel > 0
+                    ? `Currently: ${Math.round(currentEffect.arcadeResourceGen * 100)}% resource gen | Next: ${Math.round(nextEffect.arcadeResourceGen * 100)}%`
+                    : `Arcade time generates ${Math.round(nextEffect.arcadeResourceGen * 100)}% resources per level`;
+            default:
+                return upgrade.description;
+        }
+    }
+
     // Check if upgrade is available based on rebirth count
     isUpgradeAvailable(upgradeKey, rebirthCount) {
         const upgrade = this.rebirthUpgrades[upgradeKey];
