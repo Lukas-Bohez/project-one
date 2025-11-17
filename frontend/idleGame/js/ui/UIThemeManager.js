@@ -530,72 +530,113 @@ class UIThemeManager {
             container.classList.remove('game-ending');
         }
         
-        // Fix arcade text readability for Sterile theme (Rebirth 8)
-        if (theme.atmosphere === 'sterile') {
-            this.fixArcadeTextForSterile();
-        }
+        // Fix arcade text readability for all themes
+        this.fixArcadeTextContrast(theme);
     }
     
-    fixArcadeTextForSterile() {
-        // Override inline styles that use CSS variables for arcade section
+    fixArcadeTextContrast(theme) {
+        // Dynamically adjust arcade section text colors based on theme brightness
         const arcadeTab = document.getElementById('arcade-tab');
         if (!arcadeTab) return;
         
-        // Fix all h2 headers in arcade
+        // Determine if we need light or dark text based on atmosphere
+        const darkBackgrounds = ['bright', 'sterile']; // Light backgrounds need dark text
+        const needsDarkText = darkBackgrounds.includes(theme.atmosphere);
+        
+        // Define color schemes for different brightness levels
+        let textConfig;
+        
+        if (needsDarkText) {
+            // Light background themes (Rebirth 0 and 8)
+            textConfig = {
+                heading: '#1e293b',
+                body: '#1e293b',
+                bodyOpacity: '1',
+                resourceLabel: '#1e293b',
+                resourceCount: '#000000',
+                tipBackground: 'rgba(219, 234, 254, 0.8)',
+                tipBorder: 'rgba(59, 130, 246, 0.6)',
+                tipText: '#1e293b',
+                tipStrong: '#1e3a8a',
+                disclaimerBackground: 'rgba(30, 41, 59, 0.95)',
+                disclaimerBorder: 'rgba(100, 116, 139, 0.3)',
+                disclaimerText: '#f1f5f9',
+                disclaimerStrong: '#fbbf24'
+            };
+        } else {
+            // Dark background themes (All other rebirths)
+            textConfig = {
+                heading: '#f1f5f9',
+                body: '#e2e8f0',
+                bodyOpacity: '1',
+                resourceLabel: '#e2e8f0',
+                resourceCount: '#ffffff',
+                tipBackground: 'rgba(59, 130, 246, 0.25)',
+                tipBorder: 'rgba(59, 130, 246, 0.6)',
+                tipText: '#f1f5f9',
+                tipStrong: '#fbbf24',
+                disclaimerBackground: 'rgba(30, 41, 59, 0.95)',
+                disclaimerBorder: 'rgba(100, 116, 139, 0.3)',
+                disclaimerText: '#f1f5f9',
+                disclaimerStrong: '#fbbf24'
+            };
+        }
+        
+        // Apply heading colors
         const h2Elements = arcadeTab.querySelectorAll('.panel h2');
         h2Elements.forEach(h2 => {
-            h2.style.color = '#1e293b';
+            h2.style.color = textConfig.heading;
         });
         
-        // Fix resource labels and counts
+        // Apply resource label and count colors
         const resourceTypes = arcadeTab.querySelectorAll('.resource-type');
         resourceTypes.forEach(el => {
-            el.style.color = '#1e293b';
+            el.style.color = textConfig.resourceLabel;
         });
         
         const resourceCounts = arcadeTab.querySelectorAll('.resource-count');
         resourceCounts.forEach(el => {
-            el.style.color = '#000000';
+            el.style.color = textConfig.resourceCount;
         });
         
-        // Fix intro paragraph
+        // Apply intro paragraph colors
         const introParagraphs = arcadeTab.querySelectorAll('.panel > p[style*="margin-bottom: 15px"]');
         introParagraphs.forEach(p => {
-            p.style.color = '#1e293b';
-            p.style.opacity = '1';
+            p.style.color = textConfig.body;
+            p.style.opacity = textConfig.bodyOpacity;
         });
         
-        // Fix tip box - make background lighter and text darker
+        // Apply tip box styling
         const tipBoxes = arcadeTab.querySelectorAll('div[style*="background: rgba(59, 130, 246"]');
         tipBoxes.forEach(box => {
-            box.style.background = 'rgba(219, 234, 254, 0.8)';
-            box.style.borderColor = 'rgba(59, 130, 246, 0.6)';
+            box.style.background = textConfig.tipBackground;
+            box.style.borderColor = textConfig.tipBorder;
             
             const paragraphs = box.querySelectorAll('p');
             paragraphs.forEach(p => {
-                p.style.color = '#1e293b';
+                p.style.color = textConfig.tipText;
             });
             
             const strongs = box.querySelectorAll('strong');
             strongs.forEach(s => {
-                s.style.color = '#1e3a8a';
+                s.style.color = textConfig.tipStrong;
             });
         });
         
-        // Keep legal disclaimer dark with light text
+        // Apply legal disclaimer styling
         const legalDisclaimer = document.getElementById('arcade-legal-disclaimer');
         if (legalDisclaimer) {
-            legalDisclaimer.style.background = 'rgba(30, 41, 59, 0.95)';
-            legalDisclaimer.style.borderColor = 'rgba(100, 116, 139, 0.3)';
+            legalDisclaimer.style.background = textConfig.disclaimerBackground;
+            legalDisclaimer.style.borderColor = textConfig.disclaimerBorder;
             
             const disclaimerParagraphs = legalDisclaimer.querySelectorAll('p');
             disclaimerParagraphs.forEach(p => {
-                p.style.color = '#f1f5f9';
+                p.style.color = textConfig.disclaimerText;
             });
             
             const disclaimerStrongs = legalDisclaimer.querySelectorAll('strong');
             disclaimerStrongs.forEach(s => {
-                s.style.color = '#fbbf24';
+                s.style.color = textConfig.disclaimerStrong;
             });
         }
     }
