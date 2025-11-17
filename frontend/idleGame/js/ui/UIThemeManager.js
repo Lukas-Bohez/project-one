@@ -20,6 +20,15 @@ class UIThemeManager {
         
         this.currentTheme = theme;
         console.log(`Applying theme: ${theme.name}`);
+
+        // Expose current rebirth count on the main container so CSS can scope styles
+        try {
+            const rebirths = this.gameEngine?.state?.city?.rebirths || 0;
+            const container = document.getElementById('game-container');
+            if (container) container.setAttribute('data-rebirth', String(rebirths));
+        } catch (e) {
+            // Fail silently if DOM not ready yet
+        }
         
         // Update all UI elements
         this.updatePageTitle(theme);
@@ -61,6 +70,16 @@ class UIThemeManager {
         root.style.setProperty('--theme-primary', theme.colorScheme.primary);
         root.style.setProperty('--theme-secondary', theme.colorScheme.secondary);
         root.style.setProperty('--theme-background', theme.colorScheme.background);
+        
+        // Set text colors for inline styles (arcade section, etc.)
+        if (theme.colorScheme.textColor) {
+            root.style.setProperty('--text-primary', theme.colorScheme.textColor);
+        }
+        if (theme.colorScheme.textColorSecondary) {
+            root.style.setProperty('--text-secondary', theme.colorScheme.textColorSecondary);
+        }
+        // Set accent color (defaults to primary if not specified)
+        root.style.setProperty('--accent-color', theme.colorScheme.accentColor || theme.colorScheme.primary);
         
         // Apply background
         const body = document.body;
@@ -509,6 +528,75 @@ class UIThemeManager {
             container.classList.add('game-ending');
         } else {
             container.classList.remove('game-ending');
+        }
+        
+        // Fix arcade text readability for Sterile theme (Rebirth 8)
+        if (theme.atmosphere === 'sterile') {
+            this.fixArcadeTextForSterile();
+        }
+    }
+    
+    fixArcadeTextForSterile() {
+        // Override inline styles that use CSS variables for arcade section
+        const arcadeTab = document.getElementById('arcade-tab');
+        if (!arcadeTab) return;
+        
+        // Fix all h2 headers in arcade
+        const h2Elements = arcadeTab.querySelectorAll('.panel h2');
+        h2Elements.forEach(h2 => {
+            h2.style.color = '#1e293b';
+        });
+        
+        // Fix resource labels and counts
+        const resourceTypes = arcadeTab.querySelectorAll('.resource-type');
+        resourceTypes.forEach(el => {
+            el.style.color = '#1e293b';
+        });
+        
+        const resourceCounts = arcadeTab.querySelectorAll('.resource-count');
+        resourceCounts.forEach(el => {
+            el.style.color = '#000000';
+        });
+        
+        // Fix intro paragraph
+        const introParagraphs = arcadeTab.querySelectorAll('.panel > p[style*="margin-bottom: 15px"]');
+        introParagraphs.forEach(p => {
+            p.style.color = '#1e293b';
+            p.style.opacity = '1';
+        });
+        
+        // Fix tip box - make background lighter and text darker
+        const tipBoxes = arcadeTab.querySelectorAll('div[style*="background: rgba(59, 130, 246"]');
+        tipBoxes.forEach(box => {
+            box.style.background = 'rgba(219, 234, 254, 0.8)';
+            box.style.borderColor = 'rgba(59, 130, 246, 0.6)';
+            
+            const paragraphs = box.querySelectorAll('p');
+            paragraphs.forEach(p => {
+                p.style.color = '#1e293b';
+            });
+            
+            const strongs = box.querySelectorAll('strong');
+            strongs.forEach(s => {
+                s.style.color = '#1e3a8a';
+            });
+        });
+        
+        // Keep legal disclaimer dark with light text
+        const legalDisclaimer = document.getElementById('arcade-legal-disclaimer');
+        if (legalDisclaimer) {
+            legalDisclaimer.style.background = 'rgba(30, 41, 59, 0.95)';
+            legalDisclaimer.style.borderColor = 'rgba(100, 116, 139, 0.3)';
+            
+            const disclaimerParagraphs = legalDisclaimer.querySelectorAll('p');
+            disclaimerParagraphs.forEach(p => {
+                p.style.color = '#f1f5f9';
+            });
+            
+            const disclaimerStrongs = legalDisclaimer.querySelectorAll('strong');
+            disclaimerStrongs.forEach(s => {
+                s.style.color = '#fbbf24';
+            });
         }
     }
 

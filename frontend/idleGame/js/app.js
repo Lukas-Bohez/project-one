@@ -190,6 +190,13 @@ class IndustrialEmpireApp {
         if (selectedBtn) selectedBtn.classList.add('active');
         
         this.currentTab = tabName;
+        
+        // Fix arcade text when switching to arcade tab in Sterile theme
+        if (tabName === 'arcade' && this.themeManager && this.themeManager.currentTheme) {
+            if (this.themeManager.currentTheme.atmosphere === 'sterile') {
+                setTimeout(() => this.themeManager.fixArcadeTextForSterile(), 50);
+            }
+        }
     }
 
     setupActionListeners() {
