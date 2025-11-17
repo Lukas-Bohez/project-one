@@ -1915,6 +1915,54 @@ body {
     color: #ffffff;
 }
 
+/* Arcade-specific text styling for Sterile theme (Rebirth 8) */
+.atmosphere-sterile #arcade-tab .panel h2 {
+    color: #1e293b !important;
+    border-bottom-color: rgba(30, 41, 59, 0.3) !important;
+}
+
+.atmosphere-sterile #arcade-tab .panel:hover h2 {
+    color: #1e293b !important;
+    text-shadow: none !important;
+}
+
+.atmosphere-sterile #arcade-tab .resource-type {
+    color: #1e293b !important;
+}
+
+.atmosphere-sterile #arcade-tab .resource-count {
+    color: #000000 !important;
+}
+
+.atmosphere-sterile #arcade-tab .resource-row:hover .resource-type {
+    color: #1e293b !important;
+}
+
+.atmosphere-sterile #arcade-tab .resource-row:hover .resource-count {
+    color: #000000 !important;
+    text-shadow: none !important;
+}
+
+/* Only target the main intro paragraph, not the legal disclaimer */
+.atmosphere-sterile #arcade-tab .panel > p[style*="margin-bottom: 15px"] {
+    color: #1e293b !important;
+    opacity: 1 !important;
+}
+
+/* Make the tip box more readable - lighter background, dark text */
+.atmosphere-sterile #arcade-tab div[style*="background: rgba(59, 130, 246"] {
+    background: rgba(219, 234, 254, 0.8) !important;
+    border-color: rgba(59, 130, 246, 0.6) !important;
+}
+
+.atmosphere-sterile #arcade-tab div[style*="background: rgba(59, 130, 246"] p {
+    color: #1e293b !important;
+}
+
+.atmosphere-sterile #arcade-tab div[style*="background: rgba(59, 130, 246"] strong {
+    color: #1e3a8a !important;
+}
+
 /* Void - The End (Rebirth 9) */
 .atmosphere-void body {
     background: #000000;
