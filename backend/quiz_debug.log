@@ -18463,3 +18463,43 @@ Output file #0 does not contain any stream
 2025-11-17 14:46:43,502 - INFO - ENDING QUIZ: Normal completion for session 1000123
 2025-11-17 14:46:43,504 - INFO - handle_quiz_phase ENDING: session 1000123 played=[41, 19], active_ids=[41, 1, 24, 43, 42, 21, 19], remaining_available_questions=53
 2025-11-17 14:46:43,567 - INFO - Timer thread ending, removing from active_timers for session 1000123
+2025-11-17 20:04:59,866 - INFO - [LOGIN] Created new session 1000124 with status=2 (active)
+2025-11-17 20:05:10,670 - INFO - start_generic_timer: Created and starting timer thread for session 1000124
+2025-11-17 20:05:10,670 - INFO - Timer thread started for session 1000124, phase: voting
+2025-11-17 20:05:26,686 - INFO - handle_theme_display_phase: starting quiz timer for session 1000124
+2025-11-17 20:05:26,686 - INFO - start_generic_timer: Timer already exists for session 1000124, returning False
+2025-11-17 20:05:26,686 - INFO - Timer thread ending, removing from active_timers for session 1000124
+2025-11-17 20:05:27,423 - INFO - Main loop check - quiz phase, no timer. Session 1000124
+2025-11-17 20:05:27,597 - INFO - Room check: quiz_session_1000124 has 1 participants
+2025-11-17 20:05:27,597 - INFO - Main loop: About to check available questions and start timer
+2025-11-17 20:05:27,600 - INFO - Main loop: Calling start_generic_timer for session 1000124
+2025-11-17 20:05:27,600 - INFO - start_generic_timer: Created and starting timer thread for session 1000124
+2025-11-17 20:05:27,600 - INFO - Timer thread started for session 1000124, phase: quiz
+2025-11-17 20:05:27,600 - INFO - Main loop: start_generic_timer returned True
+2025-11-17 20:05:27,601 - INFO - ========== HANDLE_QUIZ_PHASE CALLED for session 1000124 ==========
+2025-11-17 20:05:27,602 - INFO - Found 1 total questions for theme 41
+2025-11-17 20:05:27,604 - INFO - Already answered questions: []
+2025-11-17 20:05:27,604 - INFO - Available questions: 1
+2025-11-17 20:05:27,605 - INFO - Total players: 1
+2025-11-17 20:05:27,605 - INFO - Room check: quiz_session_1000124 has 1 participants
+2025-11-17 20:05:27,605 - INFO - Is quiz session active (Socket.IO room check): True
+2025-11-17 20:05:27,605 - INFO - About to send 'Preparing question 1' message
+2025-11-17 20:05:27,617 - INFO - ENTERING WHILE LOOP: available_questions=1, quiz_ended_early=False
+2025-11-17 20:05:27,617 - INFO - INSIDE WHILE LOOP - selecting question
+2025-11-17 20:05:42,057 - INFO - ENDING QUIZ: Normal completion for session 1000124
+2025-11-17 20:05:42,058 - INFO - handle_quiz_phase ENDING: session 1000124 played=[41], active_ids=[41, 1, 24, 43, 42, 21, 19], remaining_available_questions=0
+2025-11-17 20:05:42,082 - INFO - Timer thread ending, removing from active_timers for session 1000124
+2025-11-17 20:07:56,171 - INFO - [LOGIN] Created new session 1000125 with status=2 (active)
+2025-11-17 20:08:33,926 - INFO - [LOGIN] Created new session 1000126 with status=2 (active)
+2025-11-17 20:25:36,109 - INFO - ==================================================
+2025-11-17 20:25:36,109 - INFO - Quiz Logger Initialized
+2025-11-17 20:25:36,109 - INFO - ==================================================
+2025-11-17 20:25:36,661 - INFO - ==================================================
+2025-11-17 20:25:36,661 - INFO - Quiz Logger Initialized
+2025-11-17 20:25:36,661 - INFO - ==================================================
+2025-11-17 20:26:00,062 - INFO - ==================================================
+2025-11-17 20:26:00,062 - INFO - Quiz Logger Initialized
+2025-11-17 20:26:00,062 - INFO - ==================================================
+2025-11-17 20:26:00,415 - INFO - ==================================================
+2025-11-17 20:26:00,415 - INFO - Quiz Logger Initialized
+2025-11-17 20:26:00,415 - INFO - ==================================================

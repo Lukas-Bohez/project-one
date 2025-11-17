@@ -152,6 +152,11 @@ def get_ydl_opts(format_type, quality, output_path):
             }]
         })
     else:  # video
+        base_opts.update({
+            'writethumbnail': True,  # Download thumbnail
+            'embedthumbnail': True,  # Embed thumbnail into video
+            'addmetadata': True,     # Add metadata to file
+        })
         quality_map = {
             144: 'worst[height<=144]',
             360: 'best[height<=360]',
@@ -160,6 +165,17 @@ def get_ydl_opts(format_type, quality, output_path):
             1080: 'best[height<=1080]'
         }
         base_opts['format'] = quality_map.get(quality, 'best[height<=720]')
+        base_opts.update({
+            'postprocessors': [
+                {
+                    'key': 'FFmpegMetadata',
+                    'add_metadata': True,
+                },
+                {
+                    'key': 'EmbedThumbnail'  # Embed thumbnail into video file
+                }
+            ]
+        })
     
     return base_opts
 
