@@ -6977,6 +6977,14 @@ video_download_rate_limit = {}  # {ip: {'count': int, 'reset_time': float}}
 MAX_CONCURRENT_DOWNLOADS_PER_IP = 8  # 🚀 OPTIMIZED: Increased from 5 to 8 for better throughput
 RATE_LIMIT_WINDOW = 60  # seconds
 
+# 🛡️ TIMEOUT PROTECTION: Maximum time for a single download
+DOWNLOAD_TIMEOUT_SECONDS = 600  # 10 minutes max per download
+DOWNLOAD_STALL_TIMEOUT = 120  # 2 minutes with no progress = stalled
+
+# 🔍 WATCHDOG: Monitor stuck downloads
+watchdog_thread = None
+watchdog_running = False
+
 # Global request throttling to avoid overwhelming YouTube
 last_youtube_request_time = 0
 youtube_request_lock = threading.Lock()
@@ -8209,6 +8217,53 @@ if VIDEO_CONVERTER_AVAILABLE:
     )
     video_logger.info(f"✅ Video conversion thread pool initialized with {WORKER_POOL_SIZE} workers")
     
+    # 🔍 WATCHDOG: Monitor and kill stuck downloads
+    def watchdog_monitor():
+        """Background thread that monitors downloads for timeouts and stalls"""
+        global watchdog_running
+        watchdog_running = True
+        video_logger.info("🔍 Watchdog monitor started")
+        
+        while watchdog_running:
+            try:
+                time.sleep(30)  # Check every 30 seconds
+                current_time = time.time()
+                
+                with download_lock:
+                    stuck_downloads = []
+                    for download_id, entry in list(active_video_downloads.items()):
+                        # Skip completed/errored downloads
+                        if entry.get('finished') or entry.get('status') in ['completed', 'error']:
+                            continue
+                        
+                        start_time = entry.get('start_time', 0)
+                        last_update = entry.get('last_progress_update', start_time)
+                        
+                        # Check if download exceeded max time
+                        if start_time > 0 and (current_time - start_time) > DOWNLOAD_TIMEOUT_SECONDS:
+                            stuck_downloads.append((download_id, 'timeout', current_time - start_time))
+                        # Check if download stalled (no progress updates)
+                        elif last_update > 0 and (current_time - last_update) > DOWNLOAD_STALL_TIMEOUT:
+                            stuck_downloads.append((download_id, 'stalled', current_time - last_update))
+                    
+                    # Kill stuck downloads
+                    for download_id, reason, duration in stuck_downloads:
+                        video_logger.warning(f"🚨 Watchdog killing stuck download {download_id}: {reason} ({duration:.0f}s)")
+                        entry = active_video_downloads.get(download_id)
+                        if entry:
+                            entry['status'] = 'error'
+                            entry['error'] = f'Download {reason} - exceeded time limit'
+                            entry['finished'] = True
+                            
+            except Exception as e:
+                video_logger.error(f"Watchdog error: {e}")
+        
+        video_logger.info("🔍 Watchdog monitor stopped")
+    
+    # Start watchdog thread
+    watchdog_thread = threading.Thread(target=watchdog_monitor, daemon=True, name='watchdog')
+    watchdog_thread.start()
+    
     # Async wrapper to submit downloads to thread pool
     async def submit_video_download_async(download_id: str, url: str, format_type: str, quality: int, output_path: str, client_ip: str = None):
         """Submit video download to process pool and handle completion asynchronously"""
@@ -8244,8 +8299,9 @@ if VIDEO_CONVERTER_AVAILABLE:
     
     # Helper function for background video download
     def download_video_background(download_id: str, url: str, format_type: str, quality: int, output_path: str, client_ip: str = None):
-        """Background function to download and convert video - includes rate limit cleanup"""
+        """Background function to download and convert video - includes rate limit cleanup and timeout protection"""
         video_logger.info(f"IP: {client_ip or 'Unknown'} | Starting: {url}")
+        start_time = time.time()
         
         def progress_hook(d):
             if d['status'] == 'downloading':
@@ -8260,6 +8316,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                         if download_id in active_video_downloads:
                             active_video_downloads[download_id]['progress'] = min(progress, 90.0)
                             active_video_downloads[download_id]['status'] = 'downloading'
+                            active_video_downloads[download_id]['last_progress_update'] = time.time()
                 except Exception as progress_error:
                     pass  # Silent progress errors
             elif d['status'] == 'finished':
@@ -8267,25 +8324,40 @@ if VIDEO_CONVERTER_AVAILABLE:
                     if download_id in active_video_downloads:
                         active_video_downloads[download_id]['progress'] = 95.0
                         active_video_downloads[download_id]['status'] = 'processing'
+                        active_video_downloads[download_id]['last_progress_update'] = time.time()
         
         # Initialize cookiefile variable at function scope
         cookiefile = None
         temp_cookie_file = None
         
         try:
-            # Update status
+            # Update status with timeout tracking
             with download_lock:
                 if download_id in active_video_downloads:
                     active_video_downloads[download_id]['status'] = 'downloading'
+                    active_video_downloads[download_id]['start_time'] = start_time
+                    active_video_downloads[download_id]['last_progress_update'] = start_time
+            
+            # 🛡️ TIMEOUT CHECK: Abort if download takes too long
+            def check_timeout():
+                elapsed = time.time() - start_time
+                if elapsed > DOWNLOAD_TIMEOUT_SECONDS:
+                    raise TimeoutError(f"Download exceeded maximum time limit of {DOWNLOAD_TIMEOUT_SECONDS}s")
             
             # Get yt-dlp options WITHOUT browser cookie extraction (do that separately)
             ydl_opts = get_ydl_opts(format_type, quality, output_path, use_invidious=False, invidious_instance=None)
             ydl_opts['progress_hooks'] = [progress_hook]
             
             # Safer extract_info + download flow with persistent retry loop on transient 403s
+            # 🛡️ Check timeout before starting
+            check_timeout()
+            
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
             title = info.get('title', 'Unknown')
+            
+            # 🛡️ Check timeout after extraction
+            check_timeout()
 
             # Check if video is age-restricted and reconfigure if needed
             if info.get('age_limit', 0) > 0:
@@ -8356,6 +8428,9 @@ if VIDEO_CONVERTER_AVAILABLE:
                         break
                     
                     try:
+                        # 🛡️ Check timeout before each retry attempt
+                        check_timeout()
+                        
                         # Throttle requests to avoid overwhelming YouTube
                         throttle_youtube_request()
                         
@@ -9383,6 +9458,37 @@ async def get_conversion_status(download_id: str):
         parts_remaining=(len(download_info.get('parts') or []) if download_info.get('parts') else 0),
         total_videos=download_info.get('total_videos')
     )
+
+@app.get("/api/v1/health")
+async def health_check():
+    """Health check endpoint for frontend to verify backend is running"""
+    try:
+        response = {
+            "status": "healthy",
+            "timestamp": time.time(),
+            "video_converter_available": VIDEO_CONVERTER_AVAILABLE
+        }
+        
+        # Only include video converter stats if it's available
+        if VIDEO_CONVERTER_AVAILABLE:
+            with download_lock:
+                active_count = len([d for d in active_video_downloads.values() if not d.get('finished')])
+                total_downloads = len(active_video_downloads)
+            
+            response.update({
+                "active_downloads": active_count,
+                "total_tracked": total_downloads,
+                "watchdog_running": watchdog_running if 'watchdog_running' in globals() else False,
+                "worker_pool_size": WORKER_POOL_SIZE if 'WORKER_POOL_SIZE' in globals() else 0
+            })
+        
+        return response
+    except Exception as e:
+        return {
+            "status": "degraded",
+            "error": str(e),
+            "timestamp": time.time()
+        }
 
 
 @app.post("/api/v1/video/create_upload_session")
