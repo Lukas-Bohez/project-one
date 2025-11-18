@@ -242,6 +242,71 @@ html, body {
     transition: all 0.3s ease;
 }
 
+/* Support for legacy/alternate answer card markup (.snes-button / .answer-content)
+   Ensures very short answers (like a single number) don't collapse visually. */
+.answer-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.snes-button {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    box-sizing: border-box;
+    padding: calc(var(--spacing-sm) + 2px) var(--spacing-md);
+    min-height: 60px;
+    min-width: 120px; /* keeps short answers from collapsing */
+    max-width: 320px; /* prevents extremely long cards from dominating */
+    width: auto;
+    border-radius: var(--border-radius-sm);
+    color: var(--text-primary);
+    text-align: left;
+    background-clip: padding-box;
+    box-shadow: 0 6px 12px rgba(16,24,40,0.06);
+    border: 1px solid rgba(13, 16, 21, 0.04);
+}
+
+.snes-button .button-label {
+    align-self: flex-end;
+    font-size: var(--font-size-xs);
+    opacity: 0.95;
+    background: rgba(255,255,255,0.06);
+    padding: 4px 6px;
+    border-radius: 6px;
+}
+
+.snes-button .answer-content {
+    display: block;
+    font-weight: 700;
+    font-size: var(--font-size-md);
+    line-height: 1.1;
+    color: inherit;
+    /* keep numeric answers single-line, but allow long titles to wrap */
+    white-space: nowrap;
+}
+
+/* If the snes button contains longer title text, allow wrapping for that element */
+.snes-button.long-title .answer-content {
+    white-space: normal;
+}
+
+@media (max-width: 768px) {
+    .snes-button {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        text-align: left;
+    }
+    .snes-button .answer-content {
+        white-space: normal;
+        font-size: var(--font-size-sm);
+    }
+}
+
 .c-quiz-controls {
     display: flex;
     justify-content: center;
