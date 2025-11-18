@@ -160,8 +160,9 @@ class SupportChatSystem {
                 chatBox.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary, #999);">No messages yet. Start the conversation!</div>';
             } else {
                 // Reverse messages so oldest appears first (top) and newest last (bottom)
-                messages.reverse().forEach(msg => {
-                    this.displayMessage(msg);
+                messages.reverse().forEach((msg, idx) => {
+                    // Pass the index so displayMessage can show a stable fallback when timestamps are missing
+                    this.displayMessage(msg, idx);
                 });
             }
 
@@ -176,7 +177,7 @@ class SupportChatSystem {
         }
     }
 
-    displayMessage(msg) {
+    displayMessage(msg, idx = null) {
         const chatBox = document.getElementById('chatBox');
         if (!chatBox) return;
 
@@ -196,7 +197,19 @@ class SupportChatSystem {
 
         const timestampDiv = document.createElement('div');
         timestampDiv.className = 'timestamp';
-        timestampDiv.textContent = this.formatTimestamp(msg.created_at);
+
+        // Compute formatted timestamp once (avoid double-parsing)
+        const candidateTs = this.getTimestampFromMessage(msg) || msg.created_at || msg.createdAt || msg.timestamp || msg.sent_at || msg.sentAt || msg.time || msg.date;
+        const formattedTs = this.formatTimestamp(candidateTs);
+
+        // If there's no usable timestamp, show a stable fallback using the message index (oldest-first)
+        if (formattedTs === 'Unknown time' && Number.isInteger(idx)) {
+            timestampDiv.textContent = `Message #${idx + 1} · Unknown time`;
+        } else {
+            timestampDiv.textContent = formattedTs;
+        }
+
+        // No debug logging here — use fallback timestamp extraction when fields are missing
 
         messageDiv.appendChild(usernameSpan);
         messageDiv.appendChild(contentDiv);
@@ -295,9 +308,64 @@ class SupportChatSystem {
     }
 
     formatTimestamp(timestamp) {
-        if (!timestamp) return 'Just now';
+        // Distinguish missing timestamp from a recent timestamp.
+        // When there's no timestamp available, return an empty string so nothing is shown.
+        if (timestamp === null || timestamp === undefined || timestamp === '') return '';
 
-        const date = new Date(timestamp);
+        // Normalize and robustly parse many timestamp formats:
+        // - Unix seconds (e.g. 1630000000)
+        // - Unix milliseconds (e.g. 1630000000000)
+        // - Numeric strings of the above
+        // - Common SQL datetime strings ("YYYY-MM-DD HH:MM:SS")
+        // - ISO strings
+        let date = null;
+
+        try {
+            if (typeof timestamp === 'number') {
+                // If it looks like seconds (10 digits), convert to ms
+                date = timestamp < 1e12 ? new Date(timestamp * 1000) : new Date(timestamp);
+            } else if (typeof timestamp === 'string') {
+                const s = timestamp.trim();
+
+                // Pure numeric string
+                if (/^\d+$/.test(s)) {
+                    const num = parseInt(s, 10);
+                    date = num < 1e12 ? new Date(num * 1000) : new Date(num);
+                } else {
+                    // Fix SQL-style 'YYYY-MM-DD HH:MM:SS' -> 'YYYY-MM-DDTHH:MM:SS' for reliable parsing
+                    let normalized = s;
+                    // Normalize SQL-style 'YYYY-MM-DD HH:MM:SS[.micro]' -> 'YYYY-MM-DDTHH:MM:SS[.ms][zone]'
+                    const sqlMatch = s.match(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2}(?:\.\d+)?)(.*)$/);
+                    if (sqlMatch) {
+                        normalized = `${sqlMatch[1]}T${sqlMatch[2]}${sqlMatch[3] || ''}`;
+                    }
+
+                    // Trim fractional seconds to milliseconds precision (max 3 digits)
+                    // e.g. 2025-11-18T17:24:27.122398 -> 2025-11-18T17:24:27.122
+                    normalized = normalized.replace(/(\.\d{3})\d+/, '$1');
+
+                    date = new Date(normalized);
+
+                    // If still invalid, try removing fractional seconds entirely then parse
+                    if (isNaN(date)) {
+                        const withoutFraction = normalized.replace(/\.\d+/, '');
+                        date = new Date(withoutFraction);
+                    }
+
+                    // If still invalid, try treating as UTC by appending 'Z'
+                    if (isNaN(date) && !/Z$/.test(normalized)) {
+                        date = new Date(normalized + 'Z');
+                    }
+                }
+            }
+        } catch (err) {
+            date = null;
+        }
+
+        if (!date || isNaN(date.getTime())) {
+            return 'Just now';
+        }
+
         const now = new Date();
         const diffMs = now - date;
         const diffMins = Math.floor(diffMs / 60000);
@@ -307,6 +375,37 @@ class SupportChatSystem {
         if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
 
         return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // Try to extract a timestamp from a message object by checking common fields
+    getTimestampFromMessage(msg) {
+        if (!msg || typeof msg !== 'object') return null;
+
+        // Common known fields
+        const keysToTry = ['created_at', 'createdAt', 'timestamp', 'sent_at', 'sentAt', 'time', 'date', 'created', 'created_on', 'createdOn', 'ts'];
+        for (const k of keysToTry) {
+            if (k in msg && msg[k]) return msg[k];
+        }
+
+        // Shallow scan: look for any string/number value that looks like a date/time
+        const isoLike = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+\-]\d{2}:?\d{2})?$/;
+        const sqlLike = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d+)?$/;
+        for (const k in msg) {
+            try {
+                const v = msg[k];
+                if (typeof v === 'string') {
+                    const s = v.trim();
+                    if (isoLike.test(s) || sqlLike.test(s) || /^\d{10,13}$/.test(s)) return s;
+                } else if (typeof v === 'number') {
+                    // plausible unix seconds or ms
+                    if (v > 1e9) return v;
+                }
+            } catch (err) {
+                // ignore
+            }
+        }
+
+        return null;
     }
 
     scrollToBottom() {
