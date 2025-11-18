@@ -339,6 +339,24 @@ async function validateUrl() {
                 return true;
             }
             
+            // 🎯 Show warnings for large/long videos
+            if (result.warnings && result.warnings.length > 0) {
+                const warningMsg = result.warnings.join('. ');
+                
+                // Add chunking info if video will be chunked
+                let fullWarning = warningMsg;
+                if (result.will_chunk && result.chunk_count) {
+                    fullWarning = `${warningMsg}
+                    
+                    <div style="margin-top: 10px; padding: 12px; background: rgba(103, 126, 234, 0.1); border-left: 3px solid #667eea; border-radius: 4px;">
+                        <strong>📦 Multi-Part Download:</strong> This video will be split into ${result.chunk_count} parts (~5 minutes each).
+                        You'll download each part separately to avoid browser storage limits and server timeouts.
+                    </div>`;
+                }
+                
+                showValidationWarning(fullWarning, result.title);
+            }
+            
             // Auto-switch platform if detected
             if (result.platform !== currentPlatform) {
                 const platformButton = document.querySelector(`.social-button-container[data-platform="${result.platform}"]`);
@@ -355,7 +373,13 @@ async function validateUrl() {
         } else {
             // Hide playlist UI on error
             hidePlaylistUI();
-            showValidationError(result.error || 'Invalid URL');
+            
+            // 🎯 Check for size/duration limit errors
+            if (result.size_limit_exceeded || result.duration_limit_exceeded) {
+                showSizeLimitError(result.error, result.filesize, result.duration);
+            } else {
+                showValidationError(result.error || 'Invalid URL');
+            }
             return false;
         }
     } catch (error) {
@@ -411,7 +435,7 @@ function showValidationSuccess(message = 'URL looks good!') {
     const errorContainer = getOrCreateErrorContainer();
     errorContainer.textContent = message;
     errorContainer.classList.add('success-message');
-    errorContainer.classList.remove('error-message');
+    errorContainer.classList.remove('error-message', 'warning-message');
     
     // Hide success message after 3 seconds
     setTimeout(() => {
@@ -420,12 +444,72 @@ function showValidationSuccess(message = 'URL looks good!') {
     }, 3000);
 }
 
+// 🎯 Show validation warning for large/long videos
+function showValidationWarning(message, title = '') {
+    videoUrlInput.classList.remove('input-error');
+    const errorContainer = getOrCreateErrorContainer();
+    errorContainer.innerHTML = `
+        <div style="display: flex; align-items: start; gap: 8px;">
+            <span style="font-size: 1.2em;">⚠️</span>
+            <div>
+                ${title ? `<div style="font-weight: 600; margin-bottom: 4px;">${title}</div>` : ''}
+                <div>${message}</div>
+                <div style="margin-top: 6px; font-size: 0.9em; opacity: 0.9;">You can still try downloading, but it may fail or be very slow.</div>
+            </div>
+        </div>
+    `;
+    errorContainer.classList.add('warning-message');
+    errorContainer.classList.remove('error-message', 'success-message');
+}
+
+// 🎯 Show size limit error
+function showSizeLimitError(message, filesize, duration) {
+    videoUrlInput.classList.add('input-error');
+    const errorContainer = getOrCreateErrorContainer();
+    
+    let details = '';
+    if (filesize) {
+        const sizeMB = (filesize / (1024 * 1024)).toFixed(0);
+        const sizeGB = (filesize / (1024 * 1024 * 1024)).toFixed(2);
+        details += `File size: ${sizeMB}MB (${sizeGB}GB)`;
+    }
+    if (duration) {
+        const hours = (duration / 3600).toFixed(1);
+        const minutes = (duration / 60).toFixed(0);
+        if (details) details += ' • ';
+        details += `Duration: ${hours}h (${minutes} minutes)`;
+    }
+    
+    errorContainer.innerHTML = `
+        <div style="display: flex; align-items: start; gap: 8px;">
+            <span style="font-size: 1.2em;">🚫</span>
+            <div>
+                <div style="font-weight: 600; margin-bottom: 4px;">${message}</div>
+                ${details ? `<div style="font-size: 0.9em; opacity: 0.8; margin-bottom: 8px;">${details}</div>` : ''}
+                <div style="margin-top: 6px; font-size: 0.9em;">
+                    <strong>💡 Why this limit?</strong>
+                    <p style="margin: 4px 0 8px 0;">Videos over 4 hours exceed browser storage limits. However, videos between 5 minutes and 4 hours will be automatically split into ~5 minute parts that you can download sequentially.</p>
+                    
+                    <strong>Suggestions:</strong>
+                    <ul style="margin: 4px 0 0 0; padding-left: 20px;">
+                        <li>Try downloading a shorter clip or segment</li>
+                        <li>Use a lower quality setting (e.g., 360p or 480p)</li>
+                        <li>Download audio only (MP3) instead of video</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    `;
+    errorContainer.classList.add('error-message');
+    errorContainer.classList.remove('success-message', 'warning-message');
+}
+
 // Clear validation errors
 function clearValidationErrors() {
     videoUrlInput.classList.remove('input-error');
     const errorContainer = getOrCreateErrorContainer();
     errorContainer.textContent = '';
-    errorContainer.classList.remove('error-message', 'success-message');
+    errorContainer.classList.remove('error-message', 'success-message', 'warning-message');
 }
 
 // Get or create error container
@@ -1754,7 +1838,7 @@ async function loadCacheManager() {
             const typeBadge = typeBadges[type] || '';
             
             html += `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(44, 111, 184, 0.15); border-radius: 6px; border: 1px solid rgba(44, 111, 184, 0.3);">
+                <div style="display: flex; flex-direction: column; gap: 10px; padding: 10px 12px; background: rgba(44, 111, 184, 0.15); border-radius: 6px; border: 1px solid rgba(44, 111, 184, 0.3);">
                     <div style="flex: 1; min-width: 0;">
                         <div style="font-weight: 600; color: var(--text-primary, #fff); font-size: 0.9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${title}">
                             ${platformEmoji} ${title}
@@ -1763,11 +1847,11 @@ async function loadCacheManager() {
                             ${typeBadge}${format} • ${fileSize} MB • ${createdDate}
                         </div>
                     </div>
-                    <div style="display: flex; gap: 8px; margin-left: 12px;">
-                        <button onclick="downloadCachedFile('${file.id || file.download_id}')" style="padding: 6px 12px; background: rgba(40, 167, 69, 0.2); color: #5adb6e; border: 1px solid rgba(40, 167, 69, 0.4); border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: 600; white-space: nowrap;">
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button onclick="downloadCachedFile('${file.id || file.download_id}')" style="flex: 1 1 120px; padding: 8px 12px; background: rgba(40, 167, 69, 0.2); color: #5adb6e; border: 1px solid rgba(40, 167, 69, 0.4); border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: 600; white-space: nowrap;">
                             ⬇️ Download
                         </button>
-                        <button onclick="deleteCachedFile('${file.id || file.download_id}')" style="padding: 6px 12px; background: rgba(220, 53, 69, 0.2); color: #ff6b7a; border: 1px solid rgba(220, 53, 69, 0.4); border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: 600;">
+                        <button onclick="deleteCachedFile('${file.id || file.download_id}')" style="flex: 0 0 auto; padding: 8px 12px; background: rgba(220, 53, 69, 0.2); color: #ff6b7a; border: 1px solid rgba(220, 53, 69, 0.4); border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: 600;">
                             🗑️
                         </button>
                     </div>
@@ -1782,6 +1866,307 @@ async function loadCacheManager() {
         container.innerHTML = '<p style="color: var(--text-secondary, #666); font-size: 0.9em; text-align: center; margin: 20px 0;">Cache empty</p>';
         sizeDisplay.textContent = '0 MB used';
     }
+}
+
+// 📦 Start progressive chunked download - request one chunk at a time
+async function startChunkedDownload(status) {
+    const totalParts = status.chunk_count || 0;
+    const chunkDuration = status.chunk_duration || 600; // 10 minutes default
+    const totalDuration = status.total_duration || 0;
+    const title = status.title || 'video';
+    const format = status.format || 'mp4';
+    const url = videoUrlInput.value.trim();
+    
+    if (totalParts === 0) {
+        console.error('❌ No chunk count in status');
+        showError('Unable to determine chunk count');
+        return;
+    }
+    
+    console.log(`📦 Starting progressive chunked download: ${totalParts} parts`);
+    console.log(`   Duration: ${totalDuration}s, Chunk size: ${chunkDuration}s`);
+    
+    // Start with the first chunk
+    await requestNextChunk(url, title, format, 1, totalParts, chunkDuration, totalDuration);
+}
+
+// Request a specific chunk from the backend
+async function requestNextChunk(url, title, format, chunkIndex, totalParts, chunkDuration, totalDuration) {
+    try {
+        console.log(`📥 Requesting chunk ${chunkIndex}/${totalParts}...`);
+        
+        // Calculate time range for this chunk
+        const chunkStart = (chunkIndex - 1) * chunkDuration;
+        const chunkEnd = Math.min(chunkIndex * chunkDuration, totalDuration);
+        
+        showSpinner(`Downloading part ${chunkIndex} of ${totalParts}... (${Math.floor(chunkStart/60)}m-${Math.floor(chunkEnd/60)}m)`);
+        
+        // Request this specific chunk from backend
+        const requestData = {
+            url: url,
+            format: format === 'mp3' ? 1 : 0,
+            quality: qualityValue || 128,
+            chunk_index: chunkIndex,
+            chunk_start: chunkStart,
+            chunk_end: chunkEnd
+        };
+        
+        console.log(`📤 Requesting chunk with params:`, requestData);
+        
+        const response = await fetch(`${API_BASE_URL}/api/v1/video/convert`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `Failed to request chunk ${chunkIndex}`);
+        }
+        
+        const result = await response.json();
+        const chunkDownloadId = result.download_id;
+        
+        console.log(`✅ Chunk ${chunkIndex} request submitted: ${chunkDownloadId}`);
+        
+        // Poll for this chunk's completion
+        await pollChunkStatus(chunkDownloadId, url, title, format, chunkIndex, totalParts, chunkDuration, totalDuration);
+        
+    } catch (error) {
+        console.error(`❌ Error requesting chunk ${chunkIndex}:`, error);
+        hideSpinner();
+        showError(`Failed to download part ${chunkIndex}: ${error.message}`);
+    }
+}
+
+// Poll status for a single chunk
+async function pollChunkStatus(chunkDownloadId, url, title, format, chunkIndex, totalParts, chunkDuration, totalDuration) {
+    let attempts = 0;
+    const maxAttempts = 600; // 10 minutes max (1 check per second)
+    
+    return new Promise((resolve, reject) => {
+        const pollInterval = setInterval(async () => {
+            try {
+                attempts++;
+                
+                if (attempts > maxAttempts) {
+                    clearInterval(pollInterval);
+                    reject(new Error('Chunk download timeout'));
+                    return;
+                }
+                
+                const response = await fetch(`${API_BASE_URL}/api/v1/video/status/${chunkDownloadId}`);
+                const status = await response.json();
+                
+                if (!response.ok) {
+                    clearInterval(pollInterval);
+                    reject(new Error(status.error || 'Status check failed'));
+                    return;
+                }
+                
+                // Update progress message
+                const progress = Math.round(status.progress || 0);
+                if (progress > 0) {
+                    updateSpinnerText(`Downloading part ${chunkIndex}/${totalParts}... ${progress}%`);
+                }
+                
+                if (status.status === 'completed') {
+                    clearInterval(pollInterval);
+                    console.log(`✅ Chunk ${chunkIndex} completed`);
+                    
+                    // Download and cache this chunk
+                    await downloadAndCacheChunk(chunkDownloadId, title, format, chunkIndex, totalParts);
+                    
+                    // Show message and prompt for next chunk
+                    if (chunkIndex < totalParts) {
+                        showChunkReadyMessage(title, chunkIndex, totalParts, url, format, chunkDuration, totalDuration);
+                    } else {
+                        showChunkCompleteMessage(title, chunkIndex, totalParts);
+                    }
+                    
+                    resolve();
+                } else if (status.status === 'error') {
+                    clearInterval(pollInterval);
+                    reject(new Error(status.error || 'Chunk conversion failed'));
+                }
+                
+            } catch (error) {
+                clearInterval(pollInterval);
+                reject(error);
+            }
+        }, 1000); // Check every second
+    });
+}
+
+// Download and cache a single chunk
+async function downloadAndCacheChunk(downloadId, title, format, chunkIndex, totalParts) {
+    try {
+        console.log(`💾 Downloading chunk ${chunkIndex} to cache...`);
+        
+        updateSpinnerText(`Saving part ${chunkIndex}/${totalParts} to cache...`);
+        
+        const downloadUrl = `${API_BASE_URL}/api/v1/video/download/${downloadId}`;
+        const response = await fetch(downloadUrl);
+        
+        if (!response.ok) {
+            throw new Error(`Failed to download chunk ${chunkIndex}`);
+        }
+        
+        const blob = await response.blob();
+        const filename = `${title}_part${String(chunkIndex).padStart(2, '0')}.${format}`;
+        const fileSize = (blob.size / 1024 / 1024).toFixed(2);
+        
+        console.log(`✅ Downloaded chunk ${chunkIndex}: ${fileSize}MB`);
+        
+        // Save to IndexedDB
+        const cacheId = `${downloadId}_chunk${chunkIndex}`;
+        await saveDownloadedFile(
+            cacheId,
+            filename,
+            blob,
+            {
+                title: `${title} (Part ${chunkIndex}/${totalParts})`,
+                format: format.toUpperCase(),
+                platform: currentPlatform,
+                type: 'converter',
+                chunked: true,
+                chunk_index: chunkIndex,
+                chunk_total: totalParts
+            }
+        );
+        
+        // Update cache manager
+        loadCacheManager();
+        
+        console.log(`✅ Chunk ${chunkIndex} saved to cache`);
+        
+    } catch (error) {
+        console.error(`❌ Error caching chunk ${chunkIndex}:`, error);
+        throw error;
+    }
+}
+
+// 📦 Download chunked video parts one at a time (DEPRECATED - kept for backwards compatibility)
+async function downloadAndPackageChunks(status) {
+    // This function is deprecated - chunking now happens via separate requests
+    console.warn('⚠️ downloadAndPackageChunks called but chunking should use startChunkedDownload');
+}
+
+// Download a single chunk, cache it, and prompt user to download before continuing (DEPRECATED)
+async function downloadNextChunk(downloadId, title, format, chunkIndex, totalParts) {
+    // Deprecated - chunking now handled by requestNextChunk
+    console.warn('⚠️ downloadNextChunk called but should use requestNextChunk');
+}
+
+// Show message when chunk is ready with button to continue
+function showChunkReadyMessage(title, chunkIndex, totalParts, url, format, chunkDuration, totalDuration) {
+    // Hide spinner and show video info container
+    hideSpinner();
+    
+    if (videoInfo) {
+        videoInfo.style.display = 'block';
+    }
+    
+    // Get or create chunk message container
+    let chunkContainer = document.getElementById('chunk-message-container');
+    if (!chunkContainer) {
+        chunkContainer = document.createElement('div');
+        chunkContainer.id = 'chunk-message-container';
+        chunkContainer.style.cssText = 'padding: 20px; margin: 20px 0;';
+        
+        // Insert after videoInfo or in formContainer
+        if (videoInfo && videoInfo.parentElement) {
+            videoInfo.parentElement.insertBefore(chunkContainer, videoInfo.nextSibling);
+        } else if (formContainer) {
+            formContainer.appendChild(chunkContainer);
+        }
+    }
+    
+    chunkContainer.innerHTML = `
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h3 style="margin: 0 0 15px 0; font-size: 24px;">✅ Part ${chunkIndex}/${totalParts} Ready!</h3>
+            <p style="margin: 0 0 10px 0; font-size: 18px; font-weight: 600;">${title}_part${String(chunkIndex).padStart(2, '0')}.${format}</p>
+            <p style="margin: 0 0 20px 0; opacity: 0.95;">This file is now in your cache and ready to download.</p>
+            
+            <div style="background: rgba(255, 255, 255, 0.15); padding: 20px; border-radius: 8px; margin: 20px 0; backdrop-filter: blur(10px);">
+                <p style="margin: 0 0 15px 0; font-weight: 600; font-size: 16px;">📋 Next Steps:</p>
+                <ol style="margin: 0; padding-left: 20px; line-height: 1.8;">
+                    <li><strong>Download</strong> this part from the cache manager below</li>
+                    <li><strong>Clear the cache</strong> to free up space for the next part</li>
+                    <li><strong>Click "Continue"</strong> to download part ${chunkIndex + 1}</li>
+                </ol>
+            </div>
+            
+            <button id="continue-chunk-btn" style="background: white; color: #667eea; border: none; padding: 15px 30px; font-size: 16px; font-weight: 600; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: transform 0.2s, box-shadow 0.2s;">
+                Continue to Part ${chunkIndex + 1}/${totalParts} →
+            </button>
+        </div>
+    `;
+    
+    chunkContainer.style.display = 'block';
+    
+    // Add event listener for continue button
+    const continueBtn = document.getElementById('continue-chunk-btn');
+    if (continueBtn) {
+        continueBtn.addEventListener('mouseenter', () => {
+            continueBtn.style.transform = 'translateY(-2px)';
+            continueBtn.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+        });
+        continueBtn.addEventListener('mouseleave', () => {
+            continueBtn.style.transform = 'translateY(0)';
+            continueBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+        });
+        continueBtn.addEventListener('click', async () => {
+            chunkContainer.style.display = 'none';
+            await requestNextChunk(url, title, format, chunkIndex + 1, totalParts, chunkDuration, totalDuration);
+        });
+    }
+}
+
+// Show final completion message
+function showChunkCompleteMessage(title, chunkIndex, totalParts, isFinal) {
+    // Hide spinner and show video info container
+    hideSpinner();
+    
+    if (videoInfo) {
+        videoInfo.style.display = 'block';
+    }
+    
+    // Get or create chunk message container
+    let chunkContainer = document.getElementById('chunk-message-container');
+    if (!chunkContainer) {
+        chunkContainer = document.createElement('div');
+        chunkContainer.id = 'chunk-message-container';
+        chunkContainer.style.cssText = 'padding: 20px; margin: 20px 0;';
+        
+        // Insert after videoInfo or in formContainer
+        if (videoInfo && videoInfo.parentElement) {
+            videoInfo.parentElement.insertBefore(chunkContainer, videoInfo.nextSibling);
+        } else if (formContainer) {
+            formContainer.appendChild(chunkContainer);
+        }
+    }
+    
+    chunkContainer.innerHTML = `
+        <div style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h3 style="margin: 0 0 15px 0; font-size: 24px;">🎉 All Parts Complete!</h3>
+            <p style="margin: 0 0 10px 0; font-size: 18px; font-weight: 600;">${title}_part${String(chunkIndex).padStart(2, '0')}</p>
+            <p style="margin: 0 0 20px 0; opacity: 0.95;">This is the final part (${chunkIndex}/${totalParts}).</p>
+            
+            <div style="background: rgba(255, 255, 255, 0.15); padding: 20px; border-radius: 8px; margin: 20px 0; backdrop-filter: blur(10px);">
+                <p style="margin: 0 0 8px 0; font-weight: 600; font-size: 16px;">✅ Download Complete</p>
+                <p style="margin: 0; line-height: 1.6;">All ${totalParts} parts have been processed successfully. Download the final part from the cache manager below, and you'll have the complete video!</p>
+            </div>
+            
+            <p style="margin: 0; font-size: 14px; opacity: 0.9;">
+                <strong>Tip:</strong> You can use video editing software to combine all parts into a single file, or watch them individually.
+            </p>
+        </div>
+    `;
+    
+    chunkContainer.style.display = 'block';
 }
 
 // Automatically download file from server and save to cache (background operation)
@@ -2589,12 +2974,24 @@ function hideSpinner() {
 // Enhanced showSpinner with mode: 'modal' (hide UI) or 'subtle' (keep UI visible)
 function showSpinner(mode = 'modal') {
     if (!spinner) return;
-    if (mode === 'modal') {
+    
+    // If mode is a string message, show it and default to modal mode
+    let actualMode = 'modal';
+    let message = null;
+    
+    if (typeof mode === 'string' && (mode === 'modal' || mode === 'subtle')) {
+        actualMode = mode;
+    } else if (typeof mode === 'string') {
+        message = mode;
+        actualMode = 'modal';
+    }
+    
+    if (actualMode === 'modal') {
         if (formContainer) formContainer.style.display = 'none';
         if (videoInfo) videoInfo.style.display = 'none';
         spinner.style.display = 'flex';
         if (convertButton) convertButton.disabled = true;
-    } else if (mode === 'subtle') {
+    } else if (actualMode === 'subtle') {
         // subtle spinner: keep UI visible, show small spinner indicator
         spinner.style.display = 'flex';
         // don't hide form or video info, don't disable buttons
@@ -2602,9 +2999,19 @@ function showSpinner(mode = 'modal') {
         spinner.classList.add('spinner-subtle');
     }
 
-    // Don't cycle through meaningless messages - let backend status updates control the text
-    if (spinnerText && !spinnerText.textContent) {
-        spinnerText.textContent = 'Processing...';
+    // Set custom message if provided, otherwise use default
+    if (spinnerText) {
+        if (message) {
+            spinnerText.textContent = message;
+        } else if (!spinnerText.textContent) {
+            spinnerText.textContent = 'Processing...';
+        }
+    }
+}
+
+function updateSpinnerText(message) {
+    if (spinnerText) {
+        spinnerText.textContent = message;
     }
 }
 
@@ -3003,6 +3410,26 @@ function startStatusPolling() {
                         clearInterval(statusCheckInterval);
                         isProcessing = false;
                     }
+                } else if (status.parts && status.parts.length > 1) {
+                    // 📦 CHUNKED DOWNLOAD: Multiple parts detected
+                    console.log(`📦 Chunked download completed: ${status.parts.length} parts`);
+                    
+                    clearInterval(statusCheckInterval);
+                    isProcessing = false;
+                    enableBulkControls();
+                    enableConvertButtonVisuals();
+                    
+                    // Start progressive chunk download (one at a time)
+                    await downloadAndPackageChunks(status);
+                    
+                    // Hide queue/progress displays
+                    const queueStatusDisplay = document.getElementById('queue-status-display');
+                    if (queueStatusDisplay) {
+                        queueStatusDisplay.style.display = 'none';
+                    }
+                    if (progressDisplay) {
+                        progressDisplay.style.display = 'none';
+                    }
                 } else {
                     clearInterval(statusCheckInterval);
                     isProcessing = false;
@@ -3025,6 +3452,26 @@ function startStatusPolling() {
                         progressDisplay.style.display = 'none';
                     }
                 }
+            } else if (status.status === 'needs_chunking') {
+                // 📦 VIDEO NEEDS CHUNKING: Backend determined video is too long
+                console.log(`📦 Video needs chunking: ${status.chunk_count} parts`);
+                
+                clearInterval(statusCheckInterval);
+                isProcessing = false;
+                enableBulkControls();
+                enableConvertButtonVisuals();
+                
+                // Hide queue/progress displays
+                const queueStatusDisplay = document.getElementById('queue-status-display');
+                if (queueStatusDisplay) {
+                    queueStatusDisplay.style.display = 'none';
+                }
+                if (progressDisplay) {
+                    progressDisplay.style.display = 'none';
+                }
+                
+                // Start progressive chunked download (one chunk at a time)
+                await startChunkedDownload(status);
             } else if (status.status === 'error') {
                 console.error('❌ Conversion failed:', status.error);
                 clearInterval(statusCheckInterval);

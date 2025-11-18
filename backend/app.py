@@ -6908,6 +6908,9 @@ class VideoConversionRequest(BaseModel):
     url: str
     format: int = 1  # 1 = MP3, 0 = MP4
     quality: int = 128
+    chunk_index: Optional[int] = None  # For chunked downloads: which part (1-indexed)
+    chunk_start: Optional[int] = None  # Start time in seconds
+    chunk_end: Optional[int] = None    # End time in seconds
 
 class VideoConversionResponse(BaseModel):
     success: bool
@@ -6925,6 +6928,9 @@ class ConversionStatus(BaseModel):
     completed_count: Optional[int] = None
     parts_remaining: Optional[int] = None
     total_videos: Optional[int] = None
+    chunk_count: Optional[int] = None
+    chunk_duration: Optional[int] = None
+    total_duration: Optional[int] = None
 
 class PlaylistInfoRequest(BaseModel):
     url: str
@@ -6978,8 +6984,18 @@ MAX_CONCURRENT_DOWNLOADS_PER_IP = 8  # 🚀 OPTIMIZED: Increased from 5 to 8 for
 RATE_LIMIT_WINDOW = 60  # seconds
 
 # 🛡️ TIMEOUT PROTECTION: Maximum time for a single download
-DOWNLOAD_TIMEOUT_SECONDS = 600  # 10 minutes max per download
-DOWNLOAD_STALL_TIMEOUT = 120  # 2 minutes with no progress = stalled
+DOWNLOAD_TIMEOUT_SECONDS = 1200  # 20 minutes max per download (increased for large files)
+DOWNLOAD_STALL_TIMEOUT = 600  # 10 minutes with no progress = stalled (was 2 minutes)
+
+# 🎯 SIZE/DURATION LIMITS: Prevent crashes from massive files
+MAX_VIDEO_FILESIZE = 524_288_000  # 500MB max (to stay under 1GB IndexedDB limit)
+MAX_VIDEO_DURATION = 14400  # 4 hours max (14,400 seconds) - with chunking
+WARN_VIDEO_FILESIZE = 314_572_800  # Warn at 300MB
+WARN_VIDEO_DURATION = 300  # Warn at 5 minutes (triggers chunking)
+
+# 📦 CHUNKING SETTINGS: Split large videos into manageable parts
+CHUNK_DURATION = 300  # 5 minutes per chunk (in seconds) - prevents watchdog timeout
+ENABLE_AUTO_CHUNKING = True  # Auto-split videos approaching size limits
 
 # 🔍 WATCHDOG: Monitor stuck downloads
 watchdog_thread = None
@@ -8265,7 +8281,7 @@ if VIDEO_CONVERTER_AVAILABLE:
     watchdog_thread.start()
     
     # Async wrapper to submit downloads to thread pool
-    async def submit_video_download_async(download_id: str, url: str, format_type: str, quality: int, output_path: str, client_ip: str = None):
+    async def submit_video_download_async(download_id: str, url: str, format_type: str, quality: int, output_path: str, client_ip: str = None, chunk_index: int = None, chunk_start: int = None, chunk_end: int = None):
         """Submit video download to process pool and handle completion asynchronously"""
         loop = asyncio.get_event_loop()
         
@@ -8292,13 +8308,13 @@ if VIDEO_CONVERTER_AVAILABLE:
         # Submit to process pool (non-blocking)
         future = video_process_pool.submit(
             download_video_background,
-            download_id, url, format_type, quality, output_path, client_ip
+            download_id, url, format_type, quality, output_path, client_ip, chunk_index, chunk_start, chunk_end
         )
         future.add_done_callback(completion_callback)
         return future
     
     # Helper function for background video download
-    def download_video_background(download_id: str, url: str, format_type: str, quality: int, output_path: str, client_ip: str = None):
+    def download_video_background(download_id: str, url: str, format_type: str, quality: int, output_path: str, client_ip: str = None, chunk_index: int = None, chunk_start: int = None, chunk_end: int = None):
         """Background function to download and convert video - includes rate limit cleanup and timeout protection"""
         video_logger.info(f"IP: {client_ip or 'Unknown'} | Starting: {url}")
         start_time = time.time()
@@ -8358,6 +8374,71 @@ if VIDEO_CONVERTER_AVAILABLE:
             
             # 🛡️ Check timeout after extraction
             check_timeout()
+            
+            # 🎯 SIZE/DURATION CHECKS: Prevent massive downloads
+            filesize = info.get('filesize') or info.get('filesize_approx', 0)
+            duration = info.get('duration', 0)
+            
+            # 📦 CHUNKING: Check if this is a chunk request
+            is_chunk_request = chunk_start is not None and chunk_end is not None
+            
+            if is_chunk_request:
+                # Processing a specific time range chunk
+                video_logger.info(
+                    f"📦 Processing chunk {chunk_index or '?'}: "
+                    f"{chunk_start}s - {chunk_end}s ({(chunk_end - chunk_start)/60:.1f} minutes)"
+                )
+                needs_chunking = False  # Already chunked, process this segment
+                chunk_count = 0
+            else:
+                # 📦 CHUNKING DECISION: Should we tell frontend to split this video?
+                needs_chunking = False
+                chunk_count = 0
+                
+                if ENABLE_AUTO_CHUNKING and duration > WARN_VIDEO_DURATION:
+                    # Video is long - calculate how many chunks frontend should request
+                    chunk_count = (duration // CHUNK_DURATION) + (1 if duration % CHUNK_DURATION > 0 else 0)
+                    needs_chunking = chunk_count > 1
+                    
+                    if needs_chunking:
+                        video_logger.info(
+                            f"📦 Video should be split into {chunk_count} parts "
+                            f"({CHUNK_DURATION/60:.0f} minutes each) - will send metadata to frontend"
+                        )
+            
+            # Hard limits - reject if too large (unless chunking will handle it or processing a chunk)
+            if not needs_chunking and not is_chunk_request and filesize > MAX_VIDEO_FILESIZE:
+                size_mb = filesize / (1024 * 1024)
+                size_gb = filesize / (1024 * 1024 * 1024)
+                raise ValueError(
+                    f"Video file size ({size_gb:.2f}GB / {size_mb:.0f}MB) exceeds maximum allowed size "
+                    f"({MAX_VIDEO_FILESIZE / (1024 * 1024):.0f}MB). "
+                    f"Try a lower quality setting or shorter video. "
+                    f"Note: Videos over 5 minutes are automatically chunked to bypass this limit."
+                )
+            
+            if not needs_chunking and not is_chunk_request and duration > MAX_VIDEO_DURATION:
+                hours = duration / 3600
+                raise ValueError(
+                    f"Video duration ({hours:.1f} hours) exceeds maximum allowed "
+                    f"({MAX_VIDEO_DURATION / 3600:.0f} hours). "
+                    f"Even with automatic chunking, this video is too long. "
+                    f"Please try a shorter video or use a lower quality setting."
+                )
+            
+            # Warnings - log if approaching limits
+            if not needs_chunking and filesize > WARN_VIDEO_FILESIZE:
+                size_mb = filesize / (1024 * 1024)
+                video_logger.warning(
+                    f"Large video detected: {size_mb:.1f}MB (duration: {duration/60:.1f}min). "
+                    f"Download may be slow or fail."
+                )
+            
+            if not needs_chunking and duration > WARN_VIDEO_DURATION:
+                video_logger.warning(
+                    f"Long video detected: {duration/60:.1f} minutes. "
+                    f"Download may take a while or timeout."
+                )
 
             # Check if video is age-restricted and reconfigure if needed
             if info.get('age_limit', 0) > 0:
@@ -8410,6 +8491,64 @@ if VIDEO_CONVERTER_AVAILABLE:
                     # Success! Skip the entire retry loop
                     last_exception = None
                     # Jump to file-finding section below
+            
+            # 📦 CHUNKING: If video needs splitting, return metadata to frontend
+            if needs_chunking and chunk_count > 1:
+                video_logger.info(
+                    f"📦 Video requires chunking: {chunk_count} parts. "
+                    f"Returning metadata to frontend for progressive download."
+                )
+                
+                # Don't download anything - just return chunking info
+                with download_lock:
+                    if download_id in active_video_downloads:
+                        active_video_downloads[download_id]['status'] = 'needs_chunking'
+                        active_video_downloads[download_id]['chunk_count'] = chunk_count
+                        active_video_downloads[download_id]['chunk_duration'] = CHUNK_DURATION
+                        active_video_downloads[download_id]['total_duration'] = duration
+                        active_video_downloads[download_id]['progress'] = 0
+                        active_video_downloads[download_id]['title'] = title
+                        active_video_downloads[download_id]['format'] = 'mp4' if format_type == 'video' else 'mp3'
+                        active_video_downloads[download_id]['finished'] = True  # Mark as finished so watchdog doesn't kill it
+                
+                # Skip the download loop - frontend will request chunks individually
+                last_exception = None
+                skip_normal_download = True
+            
+            # 📦 CHUNK REQUEST: Process specific time range
+            elif is_chunk_request:
+                video_logger.info(f"📦 Processing chunk request: {chunk_start}s to {chunk_end}s")
+                
+                # Modify output path to include chunk index
+                if chunk_index:
+                    output_path = output_path.replace('.%(ext)s', f'_part{chunk_index:02d}.%(ext)s')
+                
+                # Configure yt-dlp with time range postprocessor
+                chunk_opts = get_ydl_opts(format_type, quality, output_path)
+                chunk_opts['postprocessor_args'] = [
+                    '-ss', str(chunk_start),
+                    '-to', str(chunk_end),
+                    '-c', 'copy'  # Copy codec (fast, no re-encoding)
+                ]
+                if cookiefile and os.path.exists(cookiefile):
+                    chunk_opts['cookiefile'] = cookiefile
+                
+                # Download the chunk
+                try:
+                    with yt_dlp.YoutubeDL(chunk_opts) as ydl:
+                        ydl.download([url])
+                    
+                    video_logger.info(f"✅ Chunk {chunk_index} downloaded successfully")
+                    last_exception = None
+                    
+                except Exception as chunk_error:
+                    video_logger.error(f"❌ Chunk {chunk_index} failed: {chunk_error}")
+                    raise
+                
+                # Skip normal download logic
+                skip_normal_download = True
+            else:
+                skip_normal_download = False
 
             attempt = 0
             last_exception = None
@@ -8418,8 +8557,8 @@ if VIDEO_CONVERTER_AVAILABLE:
             # (unavailable/deleted videos still quit immediately via error detection above)
             effective_max = min(30, max(1, YTDL_MAX_RETRIES)) if not YTDL_RETRY_FOREVER else 30
             
-            # Skip retry loop if Invidious already succeeded
-            if not (not cookiefile and invidious_success):
+            # Skip retry loop if Invidious already succeeded OR chunking metadata OR chunk completed
+            if not (not cookiefile and invidious_success) and not skip_normal_download:
                 while True:
                     attempt += 1
                     
@@ -9116,15 +9255,77 @@ if VIDEO_CONVERTER_AVAILABLE:
                     info = ydl.extract_info(request.url, download=False)
                     title = info.get('title', 'Unknown')
                     duration = info.get('duration', 0)
+                    filesize = info.get('filesize') or info.get('filesize_approx', 0)
                     
-                    return {
+                    # 🎯 Check size/duration limits
+                    warnings = []
+                    
+                    # Check if chunking will be needed
+                    will_chunk = ENABLE_AUTO_CHUNKING and duration > WARN_VIDEO_DURATION
+                    chunk_count = 0
+                    if will_chunk:
+                        chunk_count = (duration // CHUNK_DURATION) + (1 if duration % CHUNK_DURATION > 0 else 0)
+                    
+                    # Only reject for filesize if video won't be chunked
+                    if not will_chunk and filesize > MAX_VIDEO_FILESIZE:
+                        size_gb = filesize / (1024 * 1024 * 1024)
+                        return {
+                            "valid": False,
+                            "error": f"Video is too large ({size_gb:.2f}GB). Maximum allowed: {MAX_VIDEO_FILESIZE / (1024**3):.1f}GB. Try a video over 5 minutes for automatic chunking.",
+                            "size_limit_exceeded": True,
+                            "filesize": filesize,
+                            "duration": duration
+                        }
+                    
+                    if duration > MAX_VIDEO_DURATION:
+                        hours = duration / 3600
+                        return {
+                            "valid": False,
+                            "error": f"Video is too long ({hours:.1f} hours). Maximum allowed: {MAX_VIDEO_DURATION / 3600:.0f} hours with chunking.",
+                            "duration_limit_exceeded": True,
+                            "filesize": filesize,
+                            "duration": duration
+                        }
+                    
+                    # Warnings for large but acceptable files
+                    if filesize > WARN_VIDEO_FILESIZE:
+                        size_mb = filesize / (1024 * 1024)
+                        size_gb = filesize / (1024 * 1024 * 1024)
+                        if will_chunk:
+                            warnings.append(f"Large file: {size_gb:.2f}GB - will be split into chunks")
+                        else:
+                            warnings.append(f"Large file: {size_mb:.0f}MB - download may be slow")
+                    
+                    if duration > WARN_VIDEO_DURATION:
+                        minutes = duration / 60
+                        hours = duration / 3600
+                        warnings.append(f"Long video: {hours:.1f} hours ({minutes:.0f} minutes)")
+                    
+                    # Add chunking info if applicable
+                    if will_chunk and chunk_count > 1:
+                        warnings.append(
+                            f"Video will be split into {chunk_count} parts (~{CHUNK_DURATION/60:.0f} min each) "
+                            f"that you can download one at a time"
+                        )
+                    
+                    response = {
                         "valid": True,
                         "platform": platform,
                         "is_playlist": False,
                         "title": title,
                         "duration": duration,
-                        "formats_available": True
+                        "formats_available": True,
+                        "will_chunk": will_chunk,
+                        "chunk_count": chunk_count if will_chunk else 0
                     }
+                    
+                    if filesize:
+                        response["filesize"] = filesize
+                    
+                    if warnings:
+                        response["warnings"] = warnings
+                    
+                    return response
                 except Exception as e:
                     error_msg = str(e)
                     if "Sign in to confirm your age" in error_msg:
@@ -9259,7 +9460,8 @@ if VIDEO_CONVERTER_AVAILABLE:
                 try:
                     future = video_process_pool.submit(
                         download_video_background,
-                        download_id, request.url, format_type, request.quality, output_path, client_ip
+                        download_id, request.url, format_type, request.quality, output_path, client_ip,
+                        request.chunk_index, request.chunk_start, request.chunk_end
                     )
                     
                     # Add completion callback
@@ -9446,7 +9648,8 @@ async def get_conversion_status(download_id: str):
         
         download_info = active_video_downloads[download_id].copy()
     
-    return ConversionStatus(
+    # Build response
+    status_response = ConversionStatus(
         status=download_info['status'],
         progress=download_info['progress'],
         platform=download_info['platform'],
@@ -9458,6 +9661,14 @@ async def get_conversion_status(download_id: str):
         parts_remaining=(len(download_info.get('parts') or []) if download_info.get('parts') else 0),
         total_videos=download_info.get('total_videos')
     )
+    
+    # Add chunking metadata if needed
+    if download_info['status'] == 'needs_chunking':
+        status_response.chunk_count = download_info.get('chunk_count', 0)
+        status_response.chunk_duration = download_info.get('chunk_duration', 0)
+        status_response.total_duration = download_info.get('total_duration', 0)
+    
+    return status_response
 
 @app.get("/api/v1/health")
 async def health_check():
