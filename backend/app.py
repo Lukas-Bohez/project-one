@@ -9791,7 +9791,7 @@ async def upload_part(download_id: str, files: List[UploadFile] = File(...), req
                 entry['status'] = 'completed'
                 entry['finished'] = False
 
-        # Clean up uploaded raw files — they've been archived
+        # Clean up uploaded raw files  they've been archived
         for fpath in saved_files:
             try:
                 delete_file_safe(fpath)
@@ -9879,7 +9879,7 @@ async def download_converted_file(request: Request, download_id: str):
                         except KeyError:
                             pass
                     else:
-                        # Worker still running — keep the entry but clear file_path so
+                        # Worker still running  keep the entry but clear file_path so
                         # clients know there's no ready part yet; status should reflect
                         # ongoing processing.
                         entry['file_path'] = None

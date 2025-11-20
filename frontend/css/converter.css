@@ -2229,3 +2229,210 @@ html, body {
 [data-theme="dark"] .owner-notice a, body.theme-dark .owner-notice a, .theme-dark .owner-notice a{
     color:#93c5fd
 }
+/* ---------- Inline styles migrated from converter.html ---------- */
+
+/* Utility visibility helpers */
+.hidden { display: none !important; }
+.visible { display: block !important; }
+
+/* Header byline */
+.converter-byline { font-size: 0.9em; opacity: 0.9; margin: 6px 0 0 0; }
+
+/* Support section converted inline styles */
+.support-section--inline {
+    text-align: center;
+    margin: 30px 0;
+    padding: 20px;
+    background: var(--surface-color, rgba(255,255,255,0.05));
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+.support-inner { max-width: 760px; margin: 12px auto 0; text-align: center; }
+.support-cta-title { margin-bottom: 15px; color: var(--text-primary, #222); font-size: 1.2em; }
+.muted-small { display: block; color: var(--text-secondary, #666); font-size: 0.95em; }
+.small-muted { display: block; margin-top: 8px; color: var(--text-secondary); }
+
+/* Donation progress and block */
+.donation-block { max-width: 420px; margin: 0 auto 8px; text-align: left; }
+#donation-progress { width: 100%; height: 10px; border-radius: 6px; }
+
+/* Button variant used on support links */
+.btn-no-underline { text-decoration: none; padding: 8px 14px; }
+
+/* Queue / progress / cache manager boxes */
+.queue-status-display-inline {
+    margin-top: 15px;
+    padding: 12px 20px;
+    background: rgba(44, 111, 184, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(44, 111, 184, 0.3);
+    display: none;
+}
+.progress-display-inline {
+    margin-top: 15px;
+    padding: 12px 20px;
+    background: rgba(255, 193, 7, 0.15);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 193, 7, 0.4);
+    display: none;
+}
+.cache-manager-inline {
+    margin-top: 15px;
+    padding: 12px 15px;
+    background: rgba(44, 111, 184, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(44, 111, 184, 0.2);
+}
+
+/* Converter form inline states */
+.social-input { display: none; }
+.social-input.show { display: block; }
+.select-list-hidden { display: none; }
+.select-list-visible { display: block; }
+
+.per-download-row--mt { margin-top: 15px; }
+
+/* Details / summary replacement styles */
+.details-summary { cursor: pointer; padding: 12px; background: var(--surface-color); border-radius: 8px; font-weight: 600; color: var(--text-primary); user-select: none; }
+.details-panel { padding: 15px; background: var(--bg-secondary); border-radius: 8px; margin-top: 10px; }
+
+/* Proxy input sizing */
+.per-download-proxy-input { width: 100%; max-width: 600px; }
+
+/* Spinner container visibility helper */
+#spinner.hidden { display: none; }
+
+/* Video info initial hidden state */
+#video-info.hidden { display: none; }
+
+/* Content section visibility */
+.content-second--hidden { display: none; }
+.content-second--visible { display: block; }
+
+/* Cookies modal helpers */
+.cookies-modal-hidden { display: none; }
+.c-modal__content.maxwidth-760 { max-width: 760px; }
+.cookies-form-inline { display: flex; flex-direction: column; gap: 8px; }
+.manual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ul-inline-style { margin: 6px 0 0 18px; color: var(--text-secondary); }
+
+/* Footer SEO links small text */
+.c-footer__seo-links.inline { font-size: 0.8em; opacity: 0.7; text-align: center; padding: 10px; }
+
+/* small support area at bottom */
+.support-script-wrapper { text-align: center; margin: 20px 0; opacity: 0.7; }
+
+/* Small utility margins */
+.mt-8 { margin-top: 8px; }
+.mt-20 { margin-top: 20px; }
+
+/* end migrated inline styles */
+
+/* Additional utilities used by migrated HTML */
+.flex-center-wrap { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:10px; }
+.label-block { display:block; font-weight:600; margin-bottom:8px; color: var(--text-primary); }
+.label-compact { font-size:0.8em; color: var(--text-muted); }
+.donation-select { padding:6px 8px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); }
+.flex-row-center-gap { margin-top:8px; display:flex; gap:8px; align-items:center; }
+.queue-status-text { color: var(--text-primary, #333); font-size: 0.95em; font-weight: 500; text-align: center; }
+.progress-text { color: var(--text-primary, #333); font-size: 0.95em; font-weight: 600; text-align: center; }
+.flex-column-gap { display:flex; flex-direction:column; gap:10px; margin-bottom:12px; }
+.cache-title { margin:0; color: var(--text-primary, #333); font-size: 1em; }
+.cache-size-display { color: var(--text-secondary, #666); font-size: 0.85em; }
+.flex-wrap-gap { display:flex; flex-wrap:wrap; gap:8px; }
+.cache-btn-styled { flex: 1 1 120px; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em; font-weight: 500; white-space: nowrap; }
+.cache-btn-styled.small { flex: 1 1 100px; }
+.cache-items-container { max-height: 400px; overflow-y: auto; }
+.cache-empty-text { color: var(--text-secondary, #666); font-size: 0.9em; text-align: center; margin: 20px 0; }
+.select-box-hidden { display:none; }
+.details-wrapper { width:100%; max-width:800px; margin:0 auto; }
+.per-download-controls--mb { margin-bottom:15px; }
+.flex-row-gap-center-wrap { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.cookies-status { color:var(--text-secondary); font-size:0.9em; }
+.footer-description-strong { margin-top: 10px; font-weight: 600; }
+.flex-1 { flex: 1; }
+.w-100 { width: 100%; }
+.mt-6 { margin-top: 6px; }
+.display-none { display: none; }
+.flex-row-end { display:flex; gap:8px; margin-top:8px; align-items:center; justify-content:flex-end; }
+.align-center { align-items: center; }
+.min-width-120 { min-width: 120px; }
+.tip-text { font-size: 0.85rem; color: var(--text-secondary); margin-top: 6px; }
+.manual-note { margin-top: 6px; color: var(--text-secondary); font-size: 0.95rem; }
+.donation-conversions { line-height: 1.2; }
+.muted-inline { color: var(--text-secondary); }
+.help-list-wrapper { margin-top: 8px; font-size: 0.9rem; color: var(--text-secondary); }
+
+/* Mobile responsiveness fixes (prevent clipping and stacking issues) */
+@media (max-width: 600px) {
+    /* Make donation block content stack vertically and stretch */
+    .donation-block {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0;
+    }
+
+    .flex-row-center-gap,
+    .flex-center-wrap {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .donation-currency-label {
+        min-width: 0;
+        margin: 0 0 6px 0;
+        display: block;
+        font-size: 0.95rem;
+    }
+
+    .donation-select,
+    .donation-select select,
+    .donation-select .donation-select {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    #donation-progress { width: 100%; }
+
+    /* Make action buttons full width so they don't overflow */
+    .cache-btn-styled,
+    .cache-btn-styled.small {
+        flex: 1 1 100%;
+        width: 100%;
+    }
+
+    /* Ensure the support/contact area doesn't overflow horizontally */
+    .support-inner { padding-left: 8px; padding-right: 8px; }
+
+    /* Increase touch targets for selects & displays */
+    .select-display { min-height: 48px; padding: 12px; }
+}
+
+@media (max-width: 480px) {
+    /* Further tighten spacing for very small screens */
+    .donation-block { gap: 6px; }
+    .flex-row-center-gap { gap: 6px; }
+    .support-cta-title { font-size: 1.05rem; }
+
+    /* Make footer SEO links smaller and wrap nicely */
+    .c-footer__seo-links.inline { font-size: 0.75em; padding: 6px; }
+
+    /* Limit select list height to viewport to avoid clipping behind keyboard */
+    .select-list { max-height: 40vh; }
+
+    /* Ensure modal content has comfortable padding on mobile */
+    .c-modal__content.maxwidth-760 { padding: 12px; margin: 0 6px; }
+}
+
+/* Accessibility: ensure long text wraps instead of causing horizontal scroll */
+@media (max-width: 600px) {
+    .donation-block, .support-inner, .cache-items-container, .c-footer__seo-links.inline {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+}

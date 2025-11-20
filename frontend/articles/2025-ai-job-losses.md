@@ -4,7 +4,7 @@
 
 **Published: October 28, 2025** | **Category: Opinion**
 
-In the dead of night, while you slept, artificial intelligence fired 10 million American workers. Not with a pink slip or severance package—no, AI doesn't bother with such formalities. It simply made them obsolete, irrelevant, unnecessary. And this is just the beginning. Your job? It's next on the chopping block.
+In the dead of night, while you slept, artificial intelligence fired 10 million American workers. Not with a pink slip or severance packageno, AI doesn't bother with such formalities. It simply made them obsolete, irrelevant, unnecessary. And this is just the beginning. Your job? It's next on the chopping block.
 
 ## The Great AI Purge of 2025: Numbers Don't Lie
 
@@ -23,7 +23,7 @@ These aren't projections. These are cold, hard facts from the Bureau of Labor St
 
 ## Your Boss Loves AI (And Hates You)
 
-Corporate America isn't mourning these job losses—they're celebrating them. Why pay a human $50,000 annually when an AI system costs $5,000 to implement and never takes sick days?
+Corporate America isn't mourning these job lossesthey're celebrating them. Why pay a human $50,000 annually when an AI system costs $5,000 to implement and never takes sick days?
 
 **CEO Quotes from 2025 Earnings Calls:**
 - "AI has increased our productivity by 340% while reducing costs by 67%" - TechCorp CEO
@@ -49,7 +49,7 @@ Or consider Mike, a truck driver for 25 years. "I drove cross-country for decade
 
 ## The Rich Get Richer: AI's Class Warfare
 
-While workers lose everything, the wealthy elite are getting richer than ever. The AI revolution isn't creating a utopia—it's creating a new aristocracy.
+While workers lose everything, the wealthy elite are getting richer than ever. The AI revolution isn't creating a utopiait's creating a new aristocracy.
 
 **Wealth Distribution in AI Era:**
 - **Top 1%**: Own 89% of AI companies
@@ -67,7 +67,7 @@ Politicians talk a big game about "retraining programs" and "universal basic inc
 - **Universal Basic Income pilot** in 3 states (covering 0.1% of population)
 - **AI tax of 2%** on corporations (easily offset by job cuts savings)
 
-The government isn't protecting workers—it's protecting corporations. Campaign donations from AI companies ensure that regulation remains toothless.
+The government isn't protecting workersit's protecting corporations. Campaign donations from AI companies ensure that regulation remains toothless.
 
 ## Your Job Is Next: The Brutal Truth
 
@@ -102,7 +102,7 @@ The strike cost the economy $1.2 trillion in lost productivity, but it sent a me
 
 Don't wait for the government. Don't wait for your boss. Take action today:
 
-1. **Skill up relentlessly**: Learn AI, coding, prompt engineering—become the human-AI hybrid
+1. **Skill up relentlessly**: Learn AI, coding, prompt engineeringbecome the human-AI hybrid
 2. **Unionize**: Join or create unions with AI bargaining power
 3. **Vote with your wallet**: Support companies that prioritize human workers
 4. **Demand accountability**: Contact your representatives daily about AI regulation
@@ -110,7 +110,7 @@ Don't wait for the government. Don't wait for your boss. Take action today:
 
 ## The Choice: Evolution or Extinction
 
-AI isn't the enemy—corporate greed is. The technology could liberate humanity from drudgery, but instead it's being used to concentrate wealth and power in fewer hands.
+AI isn't the enemycorporate greed is. The technology could liberate humanity from drudgery, but instead it's being used to concentrate wealth and power in fewer hands.
 
 Will you fight for your place in the new economy, or become another statistic in the AI unemployment line?
 

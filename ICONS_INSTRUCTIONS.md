@@ -1,4 +1,4 @@
-Favicons & icons — generation and deployment
+Favicons & icons  generation and deployment
 
 Goal
 - Provide small PNG favicons (16x16, 32x32, 48x48, 192x192) in /icons/ and a manifest so Google and modern browsers can easily discover and cache them.

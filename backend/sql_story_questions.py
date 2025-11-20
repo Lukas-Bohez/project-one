@@ -136,7 +136,7 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
             {
                 "q": "What weapons did the resistance fighters primarily use?",
                 "difficulty": "easy",
-                "exp": "They used crude weapons—clubs, spears tipped with scavenged metal, knuckles wrapped in iron.",
+                "exp": "They used crude weaponsclubs, spears tipped with scavenged metal, knuckles wrapped in iron.",
                 "answers": [
                     {"text": "Swords and shields from armory"},
                     {"text": "Farming tools adapted for combat"},
@@ -185,7 +185,7 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
             {
                 "q": "The clock tower built from Kael Hoff became infamous for what effect?",
                 "difficulty": "medium",
-                "exp": "Its bells drained life and suffering from those below—time measured in anguish.",
+                "exp": "Its bells drained life and suffering from those belowtime measured in anguish.",
                 "answers": [
                     {"text": "Ringing that drained life from the city", "is_correct": True},
                     {"text": "Opening portals to safe havens"},
@@ -198,7 +198,7 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
             {
                 "q": "What did Daren and Selene realize about their own lineage at the port town?",
                 "difficulty": "hard",
-                "exp": "They learned their parents were once Ash Bloods reborn into human flesh—echoes in their powers.",
+                "exp": "They learned their parents were once Ash Bloods reborn into human fleshechoes in their powers.",
                 "answers": [
                     {"text": "They descend from reborn Ash Bloods", "is_correct": True},
                     {"text": "They are unrelated to any curse"},
@@ -376,7 +376,7 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
             {
                 "q": "Why did Selene initially oppose Daren's challenge?",
                 "difficulty": "easy",
-                "exp": "Her visions showed Daren broken or dead—futures where the mission failed.",
+                "exp": "Her visions showed Daren broken or deadfutures where the mission failed.",
                 "answers": [
                     {"text": "Prophetic visions of Daren's defeat", "is_correct": True},
                     {"text": "Lack of entry fee"},
@@ -506,7 +506,7 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
             {
                 "q": "What vulnerability did Daren exploit to defeat Viktor?",
                 "difficulty": "hard",
-                "exp": "Thermal imbalance—localized plasma heating disrupted the alchemical process maintaining the metal.",
+                "exp": "Thermal imbalancelocalized plasma heating disrupted the alchemical process maintaining the metal.",
                 "answers": [
                     {"text": "Thermal disruption of alchemical balance", "is_correct": True},
                     {"text": "Acid corrosion of outer skin"},
@@ -517,7 +517,7 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
             {
                 "q": "Where did this duel take place?",
                 "difficulty": "easy",
-                "exp": "In the Forge Arena—a working smithy surrounding the battlefield.",
+                "exp": "In the Forge Arenaa working smithy surrounding the battlefield.",
                 "answers": [
                     {"text": "The Forge Arena among molten metal", "is_correct": True},
                     {"text": "The Hall of Mirrors"},
@@ -542,7 +542,7 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
             {
                 "q": "What fundamental shift let Daren fight Seraphina in her domain?",
                 "difficulty": "hard",
-                "exp": "He treated gravity as 3D—'falling' in any direction to achieve true flight.",
+                "exp": "He treated gravity as 3D'falling' in any direction to achieve true flight.",
                 "answers": [
                     {"text": "3D gravity control enabling flight", "is_correct": True},
                     {"text": "Borrowed wind magic from relics"},
@@ -589,7 +589,7 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
             {
                 "q": "When did the decisive final exchange occur between Daren and Kazuki?",
                 "difficulty": "medium",
-                "exp": "During 'Tengoku He'—without field effects, pure technique met pure technique.",
+                "exp": "During 'Tengoku He'without field effects, pure technique met pure technique.",
                 "answers": [
                     {"text": "During 'Tengoku He' without enhancement", "is_correct": True},
                     {"text": "During 'Ikou' with full field"},
@@ -600,7 +600,7 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
             {
                 "q": "What did both fighters gain from the duel's outcome?",
                 "difficulty": "easy",
-                "exp": "Mutual respect and evolution—knowledge shared to strengthen the coming war efforts.",
+                "exp": "Mutual respect and evolutionknowledge shared to strengthen the coming war efforts.",
                 "answers": [
                     {"text": "Mutual respect and shared knowledge", "is_correct": True},
                     {"text": "A rematch scheduled for next year"},

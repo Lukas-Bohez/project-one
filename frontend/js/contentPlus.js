@@ -222,7 +222,7 @@
 
 {
   "title": "The Day the Air Turned",
-  "intro": "Before breath became currency, before the Pneuma-Meters, there was only the day the air itself betrayed them. Jacob and his little sister Lila witnessed the beginning of the Great Choking—the moment the world shifted from living to surviving.",
+  "intro": "Before breath became currency, before the Pneuma-Meters, there was only the day the air itself betrayed them. Jacob and his little sister Lila witnessed the beginning of the Great Chokingthe moment the world shifted from living to surviving.",
   "highlights": [
     {
       "title": "The First Stings",
@@ -263,9 +263,9 @@
       "list": [
         "He stumbles in, eyes red, lips blistered, his hair dusted in yellow grit.",
         "The stench of the toxic haze clings to him like a curse.",
-        "He rasps, 'They lied—it’s everywhere. The whole district’s choking.'",
+        "He rasps, 'They liedit’s everywhere. The whole district’s choking.'",
         "His coughing fit bends him double, while Jacob and Lila watch, terrified.",
-        "Their mother hushes him, whispering, 'You’ll scare the children,' but Jacob already feels it—something permanent has shifted."
+        "Their mother hushes him, whispering, 'You’ll scare the children,' but Jacob already feels itsomething permanent has shifted."
       ]
     },
     {
@@ -283,7 +283,7 @@
 
 {
   "title": "The Price of Breath",
-  "intro": "The haze did not pass. It thickened, and with it came the merchants of air—men who wore filters and carried ledgers instead of mercy. For Jacob and Lila, the horror was no longer the burning of their lungs, but the price stamped on survival.",
+  "intro": "The haze did not pass. It thickened, and with it came the merchants of airmen who wore filters and carried ledgers instead of mercy. For Jacob and Lila, the horror was no longer the burning of their lungs, but the price stamped on survival.",
   "highlights": [
     {
       "title": "The Stranger’s Arrival",
@@ -291,7 +291,7 @@
     },
     {
       "title": "The Parents’ Bargain",
-      "content": "In order to keep their children breathing, Jacob’s mother and father signed themselves away—sold their labor, their freedom, perhaps even their lives—to the Air Authority."
+      "content": "In order to keep their children breathing, Jacob’s mother and father signed themselves awaysold their labor, their freedom, perhaps even their livesto the Air Authority."
     },
     {
       "title": "Children Left Behind",
@@ -316,7 +316,7 @@
         "Their parents, he says, have signed a contract with the Authority.",
         "The contract trades their lives for air credit, to ensure their children may continue breathing.",
         "He speaks as though listing commodities: liters, hours, quotas.",
-        "Jacob notices the man never removes his mask—he does not share their air."
+        "Jacob notices the man never removes his maskhe does not share their air."
       ]
     },
     {
@@ -338,7 +338,7 @@
         "'When are they coming back?' Lila whispers, clutching her patchwork cat. Her voice is so small it barely disturbs the stale air.",
         "Jacob's throat tightens. 'I... I don't know, Lil.' He reaches for her hand, surprised by how cold her fingers feel.",
         "'Promise me they're okay?' she pleads, and Jacob nods even though the lie burns in his chest.",
-        "For the first time, he looks at his sister not as a playmate, but as someone whose life depends on his choices—and the weight of it nearly breaks him. In that moment, Jacob stops being a child and becomes something harder, more desperate: a guardian in a world that devours the innocent."
+        "For the first time, he looks at his sister not as a playmate, but as someone whose life depends on his choicesand the weight of it nearly breaks him. In that moment, Jacob stops being a child and becomes something harder, more desperate: a guardian in a world that devours the innocent."
       ]
     }
   ]
@@ -346,7 +346,7 @@
 
 {
   "title": "The House That Breathes",
-  "intro": "Before the Great Choking, their apartment was ordinary—one among thousands of concrete blocks crammed together in the city’s smog-stained skyline. Now, every crack, every sealed window, every possession takes on the weight of survival. For Jacob and Lila, the house is no longer a home; it is a lung, fragile and failing.",
+  "intro": "Before the Great Choking, their apartment was ordinaryone among thousands of concrete blocks crammed together in the city’s smog-stained skyline. Now, every crack, every sealed window, every possession takes on the weight of survival. For Jacob and Lila, the house is no longer a home; it is a lung, fragile and failing.",
   "highlights": [
     {
       "title": "A Yellow Room",
@@ -358,7 +358,7 @@
     },
     {
       "title": "The Apartment as Fortress",
-      "content": "Curtains nailed into place, towels stuffed into vents, water buckets lined against walls—their home is both barricade and prison, built against an enemy that seeps through the cracks."
+      "content": "Curtains nailed into place, towels stuffed into vents, water buckets lined against wallstheir home is both barricade and prison, built against an enemy that seeps through the cracks."
     }
   ],
   "sections": [
@@ -368,7 +368,7 @@
       "list": [
         "Walls painted in stubborn yellow, peeling in places but still warm against the sickly orange glow outside.",
         "A shelf lined with wooden blocks and tin soldiers, untouched since the haze thickened.",
-        "Under the window sits a small handmade box—half-toy, half-coffin—crafted by his father during the first weeks of the crisis.",
+        "Under the window sits a small handmade boxhalf-toy, half-coffincrafted by his father during the first weeks of the crisis.",
         "The window glass is cloudy, crusted with dried chemical film from the poisoned air."
       ]
     },
@@ -377,7 +377,7 @@
       "content": "The little girl’s corner still breathes innocence:",
       "list": [
         "Her bed is crowded with stuffed animals: a rabbit missing an ear, a bear with button eyes, a patchwork cat stitched by their mother.",
-        "Books stacked beside her pillow, their pages warped from damp air—fairy tales where air is never taxed.",
+        "Books stacked beside her pillow, their pages warped from damp airfairy tales where air is never taxed.",
         "Drawings taped to the wall with dull tape: stick figures in green parks, skies painted an impossible blue."
       ]
     },
@@ -397,7 +397,7 @@
         "Water jugs filled and stacked against the wall, some already running low.",
         "A crate of stale crackers and dried beans, scavenged during the early days of rationing.",
         "A sputtering gas stove, its flame coughing blue when lit, the air around it acrid and thin.",
-        "Tools hung on hooks: a hammer, bent nails, rolls of tape—items repurposed for survival rather than repair."
+        "Tools hung on hooks: a hammer, bent nails, rolls of tapeitems repurposed for survival rather than repair."
       ]
     },
     {
@@ -415,7 +415,7 @@
 
 {
   "title": "The House That Holds Its Breath",
-  "intro": "Every corner of Jacob and Lila’s apartment has become charged with meaning. It is no longer just a place to live—it is a fragile system, an organism, where each room serves a role in their fight against suffocation. From bathroom to balcony, the details of the home speak of a family’s desperate attempt to keep the poison out and the children alive.",
+  "intro": "Every corner of Jacob and Lila’s apartment has become charged with meaning. It is no longer just a place to liveit is a fragile system, an organism, where each room serves a role in their fight against suffocation. From bathroom to balcony, the details of the home speak of a family’s desperate attempt to keep the poison out and the children alive.",
   "highlights": [
     {
       "title": "The Bathroom",
@@ -446,7 +446,7 @@
       "title": "The Hallway",
       "content": "The narrow passage between rooms has transformed into both memory wall and defensive barrier:",
       "list": [
-        "Shoes, too small for Jacob now, line the wall—tiny sneakers that once belonged to Lila, boots that were their father’s pride. None have been touched since their parents left.",
+        "Shoes, too small for Jacob now, line the walltiny sneakers that once belonged to Lila, boots that were their father’s pride. None have been touched since their parents left.",
         "Coats hang limp on rusting hooks, their fabric stiff from the dust that creeps in despite every seal.",
         "Family photographs are scattered along the hallway wall: birthdays, park outings, a rare holiday. All fading under a soft gray film of neglect. In each image, the sky looks impossibly blue.",
         "Ventilation grates have been sealed with tape and towels, now yellowed and stiff, forming strange swollen shapes along the ceiling and floor. The hallway feels like the throat of a sealed throat, clogged and straining."
@@ -476,7 +476,7 @@
       "title": "The Utility Closet",
       "content": "The smallest space in the apartment has become their storehouse of survival tools:",
       "list": [
-        "On the top shelf sits a toolbox, its lid dented but inside crammed with hammers, pliers, screws, nails—all repurposed for sealing or barricading.",
+        "On the top shelf sits a toolbox, its lid dented but inside crammed with hammers, pliers, screws, nailsall repurposed for sealing or barricading.",
         "Rolls of duct tape and plastic tarps are stacked in the corner, the real treasures of the apartment. Every crack sealed with them buys another hour of clean air.",
         "A pair of gas masks lie discarded on the floor, too small for Jacob and Lila now, their filters long since expired.",
         "The lower shelves are filled with jars: beans, rice, dried lentils. Not enough for comfort, but enough to measure survival by the handful."
@@ -489,7 +489,7 @@
         "The entire place feels like a lung in collapse, each sealed vent a scar, each fogged window an eye shut against the poisoned world.",
         "Every room has its own rhythm of silence: the drip of a faucet in the bathroom, the hum of the light in the living room, the soft rasp of Lila’s sleep in her bed.",
         "Jacob moves through it carefully, as though each door might crack and release the toxic world pressing against the walls.",
-        "The apartment is not home anymore—it is a fragile, wheezing organism, and the children are trapped inside it like breath in failing lungs."
+        "The apartment is not home anymoreit is a fragile, wheezing organism, and the children are trapped inside it like breath in failing lungs."
       ]
     }
   ]
@@ -497,7 +497,7 @@
 
 {
   "title": "The Breath Thieves",
-  "intro": "When Jacob and Lila step outside their barricaded home for the first time, they discover a neighborhood half-dead, half-plundered, where even air is hunted. Armed with failing masks and a handful of supplies, they return to find their sanctuary violated. The city is no longer theirs—it belongs to a new master.",
+  "intro": "When Jacob and Lila step outside their barricaded home for the first time, they discover a neighborhood half-dead, half-plundered, where even air is hunted. Armed with failing masks and a handful of supplies, they return to find their sanctuary violated. The city is no longer theirsit belongs to a new master.",
   "highlights": [
     {
       "title": "First Steps Outside",
@@ -505,7 +505,7 @@
     },
     {
       "title": "The Ruined Neighborhood",
-      "content": "Their block has become a graveyard of abandoned cars and suffocated homes. They scavenge small supplies—cans, cloth, a rusted kettle—but everywhere they feel watched."
+      "content": "Their block has become a graveyard of abandoned cars and suffocated homes. They scavenge small suppliescans, cloth, a rusted kettlebut everywhere they feel watched."
     },
     {
       "title": "The Theft",
@@ -513,7 +513,7 @@
     },
     {
       "title": "A New Ruler",
-      "content": "Word spreads that the city has fallen under the control of Hiroto Tanaka, a wealthy industrialist with his own private army. He now controls oxygen distribution—and through it, life itself."
+      "content": "Word spreads that the city has fallen under the control of Hiroto Tanaka, a wealthy industrialist with his own private army. He now controls oxygen distributionand through it, life itself."
     }
   ],
   "sections": [
@@ -524,7 +524,7 @@
         "He straps the old respirator mask to Lila’s face, tightening the cracked rubber until it seals as best it can.",
         "His own mask fits poorly, the filter cartridge rattling, but it is all they have.",
         "From the utility closet, he packs duct tape, a hammer, and a small bundle of tarps.",
-        "They carry a few jars of dried beans, a cracked kettle, and a single water jug—items scavenged from the kitchen and bathroom.",
+        "They carry a few jars of dried beans, a cracked kettle, and a single water jugitems scavenged from the kitchen and bathroom.",
         "Every step out the door feels final, as though the air itself is waiting to kill them."
       ]
     },
@@ -553,21 +553,21 @@
       "content": "Hope of safety collapses the moment they return:",
       "list": [
         "The apartment door hangs crooked on its hinges, the lock broken clean off.",
-        "Inside, chaos—water spilled across the kitchen floor, their food stores gone, and drawers ripped open.",
+        "Inside, chaoswater spilled across the kitchen floor, their food stores gone, and drawers ripped open.",
         "The brass Pneuma-Meter lies shattered in pieces, its tiny screen cracked, its beeps silenced forever.",
         "Lila’s bed is overturned, her stuffed rabbit torn open, as though even innocence was worth plundering.",
-        "The house that once held its breath has been gutted—it no longer belongs to them."
+        "The house that once held its breath has been guttedit no longer belongs to them."
       ]
     },
     {
       "title": "The City’s New Master",
       "content": "The final blow comes not from thieves, but from power:",
       "list": [
-        "From neighbors whispering in the hall, they learn the name Hiroto Tanaka—a Japanese industrial magnate who arrived with wealth, soldiers, and his own oxygen reserves.",
+        "From neighbors whispering in the hall, they learn the name Hiroto Tanakaa Japanese industrial magnate who arrived with wealth, soldiers, and his own oxygen reserves.",
         "Tanaka’s private military now patrols the streets in black respirators, rifles slung across their shoulders.",
         "The government has receded into silence; Tanaka alone decides who breathes and who suffocates.",
         "A banner hangs across the street, white letters against black plastic: 'OXYGEN IS ORDER. TANAKA PROVIDES.'",
-        "Jacob looks at Lila and knows: they cannot stay. The city is no longer their home—it is his."
+        "Jacob looks at Lila and knows: they cannot stay. The city is no longer their homeit is his."
       ]
     }
   ]
@@ -603,7 +603,7 @@
         "One jar of beans, only half full after weeks of rationing.",
         "A single water jug, dented and leaking from a hairline crack.",
         "The rusted kettle scavenged earlier, strapped with rope for carrying.",
-        "A bundle of cloth, tarps, and duct tape—their most precious defense against cracks and leaks.",
+        "A bundle of cloth, tarps, and duct tapetheir most precious defense against cracks and leaks.",
         "Masks with filters far past expiration, their cartridges rattling when shaken."
       ]
     },
@@ -622,7 +622,7 @@
       "content": "From neighbors and scavenged notes, Jacob learns of possible routes:",
       "list": [
         "The main highway, patrolled by Tanaka’s soldiers. It promises cleaner checkpoints and possible oxygen rations, but those who go rarely return.",
-        "The subway tunnels, abandoned since the haze thickened. Rumor says the air there is thicker, heavier—but soldiers fear the darkness below.",
+        "The subway tunnels, abandoned since the haze thickened. Rumor says the air there is thicker, heavierbut soldiers fear the darkness below.",
         "Some speak of smugglers who guide people out for a price in oxygen credits, but Jacob and Lila have none to give."
       ]
     },
@@ -699,14 +699,14 @@
         "Jacob squeezes Lila’s hand so tightly she winces, but says nothing.",
         "Their breath fogs the inside of their masks, the filters whining with each inhale.",
         "Soldiers pause at the end of the street, their respirators hissing in rhythm, but do not notice the children melting into an alley.",
-        "The night is alive with dangers—scavengers, soldiers, the air itself—all pressing in on their every step."
+        "The night is alive with dangersscavengers, soldiers, the air itselfall pressing in on their every step."
       ]
     },
     {
       "title": "The Path Ahead",
       "content": "At the edge of the district, they face their choice:",
       "list": [
-        "To the left lies the highway, its gates manned by soldiers in black respirators, searchlights cutting the haze. Passage might mean life—or capture.",
+        "To the left lies the highway, its gates manned by soldiers in black respirators, searchlights cutting the haze. Passage might mean lifeor capture.",
         "To the right yawns the mouth of the subway, its stairwell sinking into darkness. The haze gathers thicker there, swirling in the black, but no soldiers patrol its depths.",
         "Jacob stares at both paths, the weight of decision crushing down on his chest harder than the failing air.",
         "He grips Lila’s hand tighter. One way or another, their breaths must buy them freedom."
@@ -733,7 +733,7 @@
     },
     {
       "title": "The Exit",
-      "content": "After hours of stumbling through debris and darkness, the tunnels break open into the outskirts—air still toxic, but lighter, freer than the suffocating choke of the city behind them."
+      "content": "After hours of stumbling through debris and darkness, the tunnels break open into the outskirtsair still toxic, but lighter, freer than the suffocating choke of the city behind them."
     }
   ],
   "sections": [
@@ -749,7 +749,7 @@
     },
     {
       "title": "The Dead Tunnels",
-      "content": "The underground is not empty—it is suffocating with its own kind of death:",
+      "content": "The underground is not emptyit is suffocating with its own kind of death:",
       "list": [
         "Collapsed ceilings scatter rubble across the tracks, rebar bent like broken bones.",
         "A derailed train car lies on its side, windows shattered, seats filled with gray dust.",
@@ -783,7 +783,7 @@
       "list": [
         "A ragged hole in the tunnel wall opens to a slope of dirt and broken stone.",
         "They climb out into the outskirts, where the air still burns their lungs but carries a faint, liberating chill.",
-        "Behind them, the city looms—sepia haze glowing faintly under Tanaka’s banners, the sound of patrols echoing faintly even here.",
+        "Behind them, the city loomssepia haze glowing faintly under Tanaka’s banners, the sound of patrols echoing faintly even here.",
         "Jacob pulls Lila close. They are out. The city has lost them."
       ]
     }
@@ -792,7 +792,7 @@
 
 {
   "title": "The Final Breath",
-  "intro": "Beyond the city walls, Jacob and Lila finally see the heart of the Great Choking: Tanaka’s factory, a monstrous machine that feeds on air itself. But its fall is not salvation—only another wound in a dying world. As explosions rip through its reactors, the children’s failing filters drag them into the silence from which no escape exists.",
+  "intro": "Beyond the city walls, Jacob and Lila finally see the heart of the Great Choking: Tanaka’s factory, a monstrous machine that feeds on air itself. But its fall is not salvationonly another wound in a dying world. As explosions rip through its reactors, the children’s failing filters drag them into the silence from which no escape exists.",
   "highlights": [
     {
       "title": "The Factory of Breath",
@@ -834,7 +834,7 @@
     },
     {
       "title": "The Second Plane",
-      "content": "Salvation does not come—only another strike:",
+      "content": "Salvation does not comeonly another strike:",
       "list": [
         "Through the haze, the faint shadow of a plane appears, low and trembling.",
         "It cuts across the sky in silence, swallowed by the smog, until the roar of its engines rises too late.",
@@ -867,23 +867,23 @@
 
 {
   "title": "The Coming of the Ash-Bloods",
-  "intro": "They appeared first as whispers, then as women—beautiful, magnetic, and impossible to resist. By daylight, they laughed and charmed in village markets, weaving themselves into lives as friends, neighbors, and lovers. But by night, they revealed their true forms: Ash-Bloods, a new race of predators who drained men of their very essence and remade them in their image. A fate worse than death, for the drained became Ash-Bloods themselves, hollowed out and reborn as hunters of their own kind.",
+  "intro": "They appeared first as whispers, then as womenbeautiful, magnetic, and impossible to resist. By daylight, they laughed and charmed in village markets, weaving themselves into lives as friends, neighbors, and lovers. But by night, they revealed their true forms: Ash-Bloods, a new race of predators who drained men of their very essence and remade them in their image. A fate worse than death, for the drained became Ash-Bloods themselves, hollowed out and reborn as hunters of their own kind.",
   "highlights": [
     {
       "title": "By Day, Deception",
-      "content": "Ash-Bloods mask themselves in illusion—makeup, clothes, and a practiced charisma. They are indistinguishable from ordinary women, until the daylight fades."
+      "content": "Ash-Bloods mask themselves in illusionmakeup, clothes, and a practiced charisma. They are indistinguishable from ordinary women, until the daylight fades."
     },
     {
       "title": "By Night, Hunger",
-      "content": "Under darkness they hunt, slipping into bedrooms or luring men into shadows. Their touch extracts life, leaving behind a husk or worse—an infected victim who awakens no longer human."
+      "content": "Under darkness they hunt, slipping into bedrooms or luring men into shadows. Their touch extracts life, leaving behind a husk or worsean infected victim who awakens no longer human."
     },
     {
       "title": "A Fate Worse Than Death",
-      "content": "Those who fall to a Ash-Blood do not stay men. Their minds unravel, their bodies twist, until they awaken in the form of the very thing they feared—a new Ash-Blood, eager to hunt."
+      "content": "Those who fall to a Ash-Blood do not stay men. Their minds unravel, their bodies twist, until they awaken in the form of the very thing they feareda new Ash-Blood, eager to hunt."
     },
     {
       "title": "The Mountain Resistance",
-      "content": "High in the mountains, a band of men trains to resist. They fight with brutal discipline, targeting the illusions—tearing away disguises, stripping glamour, exposing the predator beneath. Their champion is Kael Hoff."
+      "content": "High in the mountains, a band of men trains to resist. They fight with brutal discipline, targeting the illusionstearing away disguises, stripping glamour, exposing the predator beneath. Their champion is Kael Hoff."
     }
   ],
   "sections": [
@@ -909,7 +909,7 @@
     },
     {
       "title": "The Infection",
-      "content": "What they take is not just life—it is identity:",
+      "content": "What they take is not just lifeit is identity:",
       "list": [
         "Men drained by Ash-Bloods first wither, their eyes turning glassy, their voices breaking.",
         "Then comes the infection: their own bodies betray them, reshaping into something lithe, feminine, and monstrous.",
@@ -922,17 +922,17 @@
       "content": "Not all submit. Some fight back:",
       "list": [
         "A band of men has retreated to the mountain ridges, far from villages where Ash-Bloods roam freely.",
-        "They train in a brutal martial style designed to expose the predators—tearing clothes, smearing makeup, breaking the illusions before striking the creature beneath.",
+        "They train in a brutal martial style designed to expose the predatorstearing clothes, smearing makeup, breaking the illusions before striking the creature beneath.",
         "Their methods are strange but effective; the Ash-Bloods fear them.",
         "At their head stands Kael Hoff, a man who has faced the infection and lived, his scars proof of survival."
       ]
     },
     {
       "title": "The Champion",
-      "content": "Kael Hoff is more than a fighter—he is a symbol:",
+      "content": "Kael Hoff is more than a fighterhe is a symbol:",
       "list": [
         "He once loved a woman who revealed herself as a Ash-Blood, barely escaping her grasp.",
-        "Her kiss left him marked—half-infected, but resistant, able to sense their presence.",
+        "Her kiss left him markedhalf-infected, but resistant, able to sense their presence.",
         "His fists are trained not just to break bone, but to break illusions, tearing away masks and lies.",
         "The men in the mountains call him the 'Breaker of Glamour.' The Ash-Bloods call him only by a hissed word: 'Threat.'"
       ]
@@ -942,7 +942,7 @@
 
 {
   "title": "The Mountain Stronghold",
-  "intro": "Far from the poisoned valleys and cities where Ash-Bloods stalk freely, a hidden stronghold in the mountains becomes the last bastion of resistance. Here, men live like wolves—sleeping lightly, training brutally, preparing for the next night when the predators descend. Kael Hoff shapes them into weapons against illusions, teaching them how to fight not only with fists, but with willpower strong enough to withstand the Ash-Bloods’ charms.",
+  "intro": "Far from the poisoned valleys and cities where Ash-Bloods stalk freely, a hidden stronghold in the mountains becomes the last bastion of resistance. Here, men live like wolvessleeping lightly, training brutally, preparing for the next night when the predators descend. Kael Hoff shapes them into weapons against illusions, teaching them how to fight not only with fists, but with willpower strong enough to withstand the Ash-Bloods’ charms.",
   "highlights": [
     {
       "title": "The Fortress in Stone",
@@ -950,11 +950,11 @@
     },
     {
       "title": "The Training of Glamour-Breaking",
-      "content": "Every day, recruits spar until bloodied, learning to tear illusions apart—targeting disguises first, then striking the creature beneath."
+      "content": "Every day, recruits spar until bloodied, learning to tear illusions aparttargeting disguises first, then striking the creature beneath."
     },
     {
       "title": "Weapons Against Shadows",
-      "content": "They fight with fists, clubs, and sharpened tools scavenged from ruins, but their greatest weapon is ritual discipline—breath control, chants, and focused rage to block infection."
+      "content": "They fight with fists, clubs, and sharpened tools scavenged from ruins, but their greatest weapon is ritual disciplinebreath control, chants, and focused rage to block infection."
     },
     {
       "title": "The Leadership of Kael Hoff",
@@ -969,14 +969,14 @@
         "Carved into the cliffside, its entrance is hidden behind slabs of fallen rock and smoke-darkened tarps.",
         "Inside, the air smells of sweat, ash, and iron. Fires are kept low, their glow masked to prevent detection.",
         "Bunkers are dug into the walls, where men sleep with weapons clutched in their hands.",
-        "Every surface is marked with carvings—warnings, names of the fallen, and crude sketches of Ash-Blood faces crossed out with knife marks."
+        "Every surface is marked with carvingswarnings, names of the fallen, and crude sketches of Ash-Blood faces crossed out with knife marks."
       ]
     },
     {
       "title": "The Ritual of Training",
       "content": "Kael’s methods are brutal, but necessary:",
       "list": [
-        "Each dawn begins with breath control drills—holding air until lungs burn, simulating the suffocation a Ash-Blood’s glamour brings.",
+        "Each dawn begins with breath control drillsholding air until lungs burn, simulating the suffocation a Ash-Blood’s glamour brings.",
         "Recruits are forced to stare at painted masks while being struck, learning to fight past distraction and false beauty.",
         "Combat drills end only when one fighter collapses; weakness is punished, survival rewarded.",
         "Kael watches every sparring match, calling out mistakes with a voice like stone breaking."
@@ -997,9 +997,9 @@
       "content": "Beyond weapons, they harden their minds:",
       "list": [
         "Chants are recited nightly, mantras that steady the mind against the Ash-Bloods’ whispered temptations.",
-        "Scars are worn as badges—men slice their own skin, proving they can endure pain without faltering.",
+        "Scars are worn as badgesmen slice their own skin, proving they can endure pain without faltering.",
         "The infected are dragged before the camp to be executed, their deaths a warning carved into memory.",
-        "No laughter, no softness—only survival."
+        "No laughter, no softnessonly survival."
       ]
     },
     {
@@ -1017,7 +1017,7 @@
 
 {
   "title": "The Villages Below",
-  "intro": "Beneath the mountain stronghold, villages lie in shadow. Here the Ash-Bloods walk openly by day, cloaked in smiles and false warmth, their presence woven into every market, tavern, and home. Life continues under their gaze, but it is no longer human life—it is life bent to serve predators, where trust is a liability, and every gesture might mask a snare.",
+  "intro": "Beneath the mountain stronghold, villages lie in shadow. Here the Ash-Bloods walk openly by day, cloaked in smiles and false warmth, their presence woven into every market, tavern, and home. Life continues under their gaze, but it is no longer human lifeit is life bent to serve predators, where trust is a liability, and every gesture might mask a snare.",
   "highlights": [
     {
       "title": "The Market of Masks",
@@ -1029,7 +1029,7 @@
     },
     {
       "title": "The Hollowed Ones",
-      "content": "Infected men do not die—they change. They return as women who smile too widely, their voices carrying echoes of the men they once were. Villagers call them 'the Hollowed.'"
+      "content": "Infected men do not diethey change. They return as women who smile too widely, their voices carrying echoes of the men they once were. Villagers call them 'the Hollowed.'"
     },
     {
       "title": "The Rule of Fear",
@@ -1044,7 +1044,7 @@
         "Stalls line the dirt roads, selling smoked meats, wilted vegetables, and crude pottery. But buyers do not haggle loudly; every word is measured.",
         "Women laugh together at fountains, drawing water and gossiping as if nothing is amiss. Yet men glance quickly away, afraid to see glamour shimmer at the corner of their vision.",
         "Children play, but mothers snatch them indoors at the first shadow stretching across the street.",
-        "A man selling salted fish wears charms of bone around his neck—talismans said to ward off glamour. Few believe they work, but fear clings to symbols."
+        "A man selling salted fish wears charms of bone around his necktalismans said to ward off glamour. Few believe they work, but fear clings to symbols."
       ]
     },
     {
@@ -1054,7 +1054,7 @@
         "Doors slam shut, barred with planks and iron scraps scavenged from ruins.",
         "Candles are snuffed to hide signs of life; windows are smeared with soot to block the glow.",
         "Men sit in silence, clutching knives or clubs, praying their homes are overlooked.",
-        "Outside, laughter drifts through the streets—too sweet, too deliberate, the sound of Ash-Bloods prowling in groups.",
+        "Outside, laughter drifts through the streetstoo sweet, too deliberate, the sound of Ash-Bloods prowling in groups.",
         "Occasionally, screams break the quiet, muffled quickly, followed by silence heavier than death."
       ]
     },
@@ -1085,7 +1085,7 @@
         "They eat first at feasts, and no one refuses them.",
         "They demand gifts of food, fabric, or tools, smiling as they accept tribute with hands too delicate to be trusted.",
         "Men suspected of disloyalty are never seen again, their families quietly relocating to the mountains or falling silent.",
-        "Every household holds at least one story of betrayal—neighbors trading neighbors, brothers turning in brothers, all for a moment’s mercy."
+        "Every household holds at least one story of betrayalneighbors trading neighbors, brothers turning in brothers, all for a moment’s mercy."
       ]
     },
     {
@@ -1095,7 +1095,7 @@
         "Villagers whisper of the mountain fighters, men who punch through illusions and send Ash-Bloods fleeing.",
         "Children carve figures of Kael Hoff from wood scraps, hiding them under beds as protective idols.",
         "Some men vanish into the night not because they are taken, but because they are climbing toward the stronghold, seeking the resistance.",
-        "Hope is fragile, but it spreads in whispers—and whispers are the one thing the Ash-Bloods cannot fully silence."
+        "Hope is fragile, but it spreads in whispersand whispers are the one thing the Ash-Bloods cannot fully silence."
       ]
     }
   ]
@@ -1103,11 +1103,11 @@
 
 {
   "title": "The Lairs of the Ash-Bloods",
-  "intro": "The Ash-Bloods do not vanish with daylight. They retreat to lairs hidden beneath the villages, in ruins, and in forgotten halls of stone. There, their illusions fade, their painted faces run, and their true nature reveals itself in rituals of hunger and power. Understanding their lairs means understanding their dominion—for the Ash-Bloods are not wild beasts, but a race with order, hierarchy, and a hunger woven into every ritual.",
+  "intro": "The Ash-Bloods do not vanish with daylight. They retreat to lairs hidden beneath the villages, in ruins, and in forgotten halls of stone. There, their illusions fade, their painted faces run, and their true nature reveals itself in rituals of hunger and power. Understanding their lairs means understanding their dominionfor the Ash-Bloods are not wild beasts, but a race with order, hierarchy, and a hunger woven into every ritual.",
   "highlights": [
     {
       "title": "The Hidden Nests",
-      "content": "Every village shelters at least one lair—cellars, caves, or collapsed sewers—masked by glamour to appear abandoned or harmless."
+      "content": "Every village shelters at least one laircellars, caves, or collapsed sewersmasked by glamour to appear abandoned or harmless."
     },
     {
       "title": "The Unmasking",
@@ -1119,7 +1119,7 @@
     },
     {
       "title": "The Hierarchy of Packs",
-      "content": "Ash-Bloods hunt in packs led by Matrons—older, more grotesque forms who command younger sisters. Rivalries burn, but hunger unites them."
+      "content": "Ash-Bloods hunt in packs led by Matronsolder, more grotesque forms who command younger sisters. Rivalries burn, but hunger unites them."
     }
   ],
   "sections": [
@@ -1130,7 +1130,7 @@
         "Cellars beneath taverns, their doors disguised with crumbling planks and broken locks no one dares to touch.",
         "Collapsed sewer tunnels reeking of stagnant water, walls painted with symbols that shift when seen at the corner of the eye.",
         "Caves along riversides, where currents carry away bones and clothes of the drained.",
-        "The air in these lairs is heavy—sweet and metallic, like rotting fruit mixed with rusted iron."
+        "The air in these lairs is heavysweet and metallic, like rotting fruit mixed with rusted iron."
       ]
     },
     {
@@ -1145,11 +1145,11 @@
     },
     {
       "title": "The Ritual of Feeding",
-      "content": "Feeding is not chaotic—it is structured:",
+      "content": "Feeding is not chaoticit is structured:",
       "list": [
         "Victims are bound in circles drawn with ash and blood, symbols carved into the floor with claws.",
         "The Ash-Bloods chant in unison, a rhythm that builds until the victim gasps in synchrony with their voices.",
-        "They drink essence not through blood, but through breath and touch—pressing lips, hands, or foreheads until the man collapses in shuddering silence.",
+        "They drink essence not through blood, but through breath and touchpressing lips, hands, or foreheads until the man collapses in shuddering silence.",
         "The drained are left either lifeless or Hollowed, depending on the will of the pack."
       ]
     },
@@ -1157,9 +1157,9 @@
       "title": "The Hierarchy of Packs",
       "content": "Not all Ash-Bloods are equal:",
       "list": [
-        "Matrons lead, their bodies warped by countless feedings—taller, broader, their faces cracked yet still commanding.",
+        "Matrons lead, their bodies warped by countless feedingstaller, broader, their faces cracked yet still commanding.",
         "Younger Ash-Bloods obey, competing for the right to hunt, their rivalries violent but contained within the pack.",
-        "The Hollowed—the freshly turned—occupy the lowest rung, often used as bait or sentries at lair entrances.",
+        "The Hollowedthe freshly turnedoccupy the lowest rung, often used as bait or sentries at lair entrances.",
         "Disobedience is punished by isolation; a Ash-Blood cast out of her pack becomes feral, more dangerous but less cunning."
       ]
     },
@@ -1167,7 +1167,7 @@
       "title": "The Symbols of Power",
       "content": "Their lairs are marked with unsettling art:",
       "list": [
-        "Walls daubed in mixtures of blood, ash, and pigment—faces with too many eyes, mouths stretched into spirals.",
+        "Walls daubed in mixtures of blood, ash, and pigmentfaces with too many eyes, mouths stretched into spirals.",
         "Clothes taken from victims hung like banners, trophies draped over rafters and beams.",
         "Mirrors cracked deliberately, reflecting warped fragments of whoever gazes into them.",
         "Altars made from bone and stone, upon which victims are prepared before feeding."
@@ -1179,8 +1179,8 @@
       "list": [
         "No Ash-Blood feeds alone unless sanctioned; solitary hunting risks exposure.",
         "Victims taken by one pack are never shared with another unless tribute is demanded.",
-        "Any Ash-Blood who falls in love with a victim is executed—the infection must always serve hunger, not weakness.",
-        "Matrons whisper of an even older order, a Queen who rules all packs—though no one has seen her in generations, her presence haunts every lair. They say she sleeps in the deep places, dreaming of the day when all men kneel and all women hunt, when the world itself becomes her feeding ground."
+        "Any Ash-Blood who falls in love with a victim is executedthe infection must always serve hunger, not weakness.",
+        "Matrons whisper of an even older order, a Queen who rules all packsthough no one has seen her in generations, her presence haunts every lair. They say she sleeps in the deep places, dreaming of the day when all men kneel and all women hunt, when the world itself becomes her feeding ground."
       ]
     }
   ]
@@ -1188,7 +1188,7 @@
 
 {
   "title": "The First Raid",
-  "intro": "From the high ridges, Kael Hoff led his fighters down into the valley, where a village cellar concealed a Ash-Blood nest. For months, they had trained for this night—learning to strike through illusions, to ignore the false beauty, and to trust only what their fists could shatter. Now, as the torches burned low and the soil trembled with ritual songs below, the resistance entered the lair of nightmares.",
+  "intro": "From the high ridges, Kael Hoff led his fighters down into the valley, where a village cellar concealed a Ash-Blood nest. For months, they had trained for this nightlearning to strike through illusions, to ignore the false beauty, and to trust only what their fists could shatter. Now, as the torches burned low and the soil trembled with ritual songs below, the resistance entered the lair of nightmares.",
   "highlights": [
     {
       "title": "The Descent",
@@ -1196,7 +1196,7 @@
     },
     {
       "title": "The Breaking of Glamour",
-      "content": "Ash-Bloods shimmered with false faces, but Kael’s fighters struck at their clothes, their painted lips, and their mirrors—stripping illusions away until monsters stood revealed."
+      "content": "Ash-Bloods shimmered with false faces, but Kael’s fighters struck at their clothes, their painted lips, and their mirrorsstripping illusions away until monsters stood revealed."
     },
     {
       "title": "The Clash of Ritual and Fist",
@@ -1214,17 +1214,17 @@
       "list": [
         "The village tavern stood abandoned, its roof sagging, its walls damp with mildew. A trapdoor hid beneath a broken table, concealed only by a layer of soot and ash.",
         "Kael knelt, fingers brushing the edge, feeling the warmth rising from below. 'Remember,' he whispered to his fighters, 'trust nothing you see until you break it first.'",
-        "His men tightened their grips on crude weapons—clubs, spears tipped with scavenged metal, knuckles wrapped in iron. One younger fighter, Marcus, crossed himself with shaking hands.",
+        "His men tightened their grips on crude weaponsclubs, spears tipped with scavenged metal, knuckles wrapped in iron. One younger fighter, Marcus, crossed himself with shaking hands.",
         "'First time?' Kael asked quietly. Marcus nodded, sweat beading despite the cool air. 'Good. Fear keeps you alive. Just don't let it freeze you.'",
         "They lit torches coated in resin and descended into the cellar, where the air thickened with the sweet, metallic rot of Ash-Blood lairs.",
-        "The earth trembled faintly. Below them, a low hum of voices rose and fell—a ritual in progress. Kael's scarred hands clenched. He remembered that sound too well."
+        "The earth trembled faintly. Below them, a low hum of voices rose and fella ritual in progress. Kael's scarred hands clenched. He remembered that sound too well."
       ]
     },
     {
       "title": "The Lair’s First Glimpse",
       "content": "The cellar opened into caverns far larger than expected:",
       "list": [
-        "Stone walls dripped with moisture, streaked with dark stains that might have been water—or blood.",
+        "Stone walls dripped with moisture, streaked with dark stains that might have been wateror blood.",
         "Mirrors lined the passageways, cracked and warped, each reflecting the fighters in grotesque distortions.",
         "Garments of victims hung from hooks, their colors faded, their fabrics stiff with age.",
         "Symbols scrawled in ash spiraled across the ceiling, glowing faintly as if alive."
@@ -1234,11 +1234,11 @@
       "title": "The Breaking of Glamour",
       "content": "The first Ash-Bloods appeared, illusions intact:",
       "list": [
-        "They looked like young women at first—faces painted, smiles gentle, voices coaxing as they called out the fighters’ names.",
+        "They looked like young women at firstfaces painted, smiles gentle, voices coaxing as they called out the fighters’ names.",
         "Marcus faltered, lowering his club, his eyes glazing. The creature's voice was honey and silk, promising rest, warmth, love...",
         "'MARCUS!' Kael's roar shattered the spell. The young fighter blinked, stumbled backward as Kael's fist smashed through a mirror.",
-        "With practiced precision, fighters swung not at flesh, but at clothes and makeup—ripping fabric, smearing paint, breaking mirrors to shatter the illusions.",
-        "The air rippled as glamours collapsed, revealing twisted forms—skin pale as wax, eyes wide and hungry, fingers tipped with claws."
+        "With practiced precision, fighters swung not at flesh, but at clothes and makeupripping fabric, smearing paint, breaking mirrors to shatter the illusions.",
+        "The air rippled as glamours collapsed, revealing twisted formsskin pale as wax, eyes wide and hungry, fingers tipped with claws."
       ]
     },
     {
@@ -1257,8 +1257,8 @@
       "list": [
         "Kael struck down a Matron, her body shattering a cracked mirror as she fell, her blood black and steaming.",
         "Two fighters lay dead, their throats torn open, and one more dragged away screaming into the shadows.",
-        "The bound man was freed, though his eyes were glassy—he whispered in a woman’s voice before collapsing.",
-        "As the survivors set fire to the lair, the walls trembled, and a distant sound—like a deeper, older voice—echoed in the dark tunnels."
+        "The bound man was freed, though his eyes were glassyhe whispered in a woman’s voice before collapsing.",
+        "As the survivors set fire to the lair, the walls trembled, and a distant soundlike a deeper, older voiceechoed in the dark tunnels."
       ]
     },
     {
@@ -1266,9 +1266,9 @@
       "content": "The resistance left the lair scarred but alive:",
       "list": [
         "Smoke poured from the tavern cellar like black prayer, carrying the stench of burnt illusion and steaming blood. The ash symbols painted on stone walls curled and blackened, their power finally broken.",
-        "Villagers gathered at a distance, children peeking from behind their mothers' skirts, all too fearful to approach but unable to look away. They whispered Kael Hoff's name like an incantation—half hope, half terror.",
+        "Villagers gathered at a distance, children peeking from behind their mothers' skirts, all too fearful to approach but unable to look away. They whispered Kael Hoff's name like an incantationhalf hope, half terror.",
         "Among the resistance, silence fell heavy as lead. They had tasted victory, but Marcus clutched his wounded arm and trembled. 'Did you hear it?' he whispered. 'That voice in the tunnels... it sounded like my sister.'",
-        "Kael looked toward the mountains, his scarred face grim in the firelight. This was one nest, one small victory. But somewhere in the darkness, if the legends spoke truth, an ancient Queen was beginning to stir—and her hunger would dwarf anything they had faced."
+        "Kael looked toward the mountains, his scarred face grim in the firelight. This was one nest, one small victory. But somewhere in the darkness, if the legends spoke truth, an ancient Queen was beginning to stirand her hunger would dwarf anything they had faced."
       ]
     },
     {
@@ -1278,7 +1278,7 @@
         "Marcus sat apart from the others, staring at his hands. 'I heard my sister's voice,' he whispered to Kael. 'When that thing spoke... it sounded exactly like her. What if she's already...?' He couldn't finish the sentence.",
         "Old Henrik, a veteran of three raids, worked methodically to clean Ash-Blood blood from his knuckles. 'You never get used to how they scream,' he muttered. 'Like they remember being human, just for a moment.'",
         "The youngest fighter, barely sixteen, had not spoken since they climbed out of the tunnels. He kept touching his throat, where an Ash-Blood's claws had nearly found their mark.",
-        "Kael moved among his men, checking wounds, offering quiet words. But inside, he carried his own burden—the memory of that voice in the deep tunnels, ancient and patient, whispering his name."
+        "Kael moved among his men, checking wounds, offering quiet words. But inside, he carried his own burdenthe memory of that voice in the deep tunnels, ancient and patient, whispering his name."
       ]
     }
   ]
@@ -1294,7 +1294,7 @@
     },
     {
       "title": "The Retaliation",
-      "content": "That night, the Ash-Bloods struck back—not in the tavern ruins, but in homes, dragging men screaming into the dark."
+      "content": "That night, the Ash-Bloods struck backnot in the tavern ruins, but in homes, dragging men screaming into the dark."
     },
     {
       "title": "The Seeds of Strategy",
@@ -1312,7 +1312,7 @@
       "list": [
         "Men whispered Kael Hoff’s name as if it carried protection, carving it into doors and fences, a new kind of talisman.",
         "Some women approached with baskets of food, offering bread or dried meat, their smiles warm but their eyes darting, testing.",
-        "Others turned away, silent, their voices low in corners—warning that Kael had doomed them all.",
+        "Others turned away, silent, their voices low in cornerswarning that Kael had doomed them all.",
         "Children followed the fighters like shadows, wide-eyed, carving toy clubs from sticks and striking at the air with nervous pride."
       ]
     },
@@ -1331,19 +1331,19 @@
       "content": "Kael called his fighters to the mountain edge:",
       "list": [
         "They gathered around a fire, smoke curling into the night, the tavern’s ruin still smoldering in the valley below.",
-        "Kael drew maps in the dirt with a charred stick—circles for lairs, lines for tunnels, arrows for raids.",
+        "Kael drew maps in the dirt with a charred stickcircles for lairs, lines for tunnels, arrows for raids.",
         "He spoke of patterns: how Ash-Bloods always returned to certain wells, certain crossroads, certain ruined churches.",
-        "They would not fight passively. They would strike again, harder, deeper—until even the Matrons whispered Kael Hoff’s name with fear."
+        "They would not fight passively. They would strike again, harder, deeperuntil even the Matrons whispered Kael Hoff’s name with fear."
       ]
     },
     {
       "title": "The Whispers of the Queen",
       "content": "But the fire had awakened something more:",
       "list": [
-        "Survivors from the lair swore they had heard a voice in the smoke—not a scream, but a song.",
+        "Survivors from the lair swore they had heard a voice in the smokenot a scream, but a song.",
         "The bound man freed from the ritual gasped her name before dying, though no one understood the syllables.",
         "Villagers whispered of an ancient Queen who had not walked in centuries, sleeping beneath the deepest tunnels.",
-        "The Matrons, it was said, were not rulers at all, but her daughters—keepers of a throne carved from bone."
+        "The Matrons, it was said, were not rulers at all, but her daughterskeepers of a throne carved from bone."
       ]
     },
     {
@@ -1353,7 +1353,7 @@
         "Fighters who had killed their first Ash-Bloods sat in silence, staring at their fists as if expecting them to change.",
         "Kael walked the village edge alone, his knuckles bruised, his chest heavy with the names of the men lost.",
         "In the distance, dogs barked at nothing, their howls sharp against the quiet night.",
-        "Hope had been lit, yes—but so too had the wrath of the enemy, and the smoke of both lingered in every breath."
+        "Hope had been lit, yesbut so too had the wrath of the enemy, and the smoke of both lingered in every breath."
       ]
     }
   ]
@@ -1361,7 +1361,7 @@
 
 {
   "title": "Into the Deep Tunnels",
-  "intro": "Smoke still lingered in the village above when Kael Hoff led his fighters below again. This time, they would not raid a shallow cellar or a half-forgotten sewer—they would descend into the deep tunnels, where even villagers feared to whisper. Here, the air was colder, the stones older, and the shadows heavier. And here, for the first time, the resistance felt the pulse of something vast, something ancient, something that whispered not with one voice, but with many—the Queen.",
+  "intro": "Smoke still lingered in the village above when Kael Hoff led his fighters below again. This time, they would not raid a shallow cellar or a half-forgotten sewerthey would descend into the deep tunnels, where even villagers feared to whisper. Here, the air was colder, the stones older, and the shadows heavier. And here, for the first time, the resistance felt the pulse of something vast, something ancient, something that whispered not with one voice, but with manythe Queen.",
   "highlights": [
     {
       "title": "The Descent Below",
@@ -1369,11 +1369,11 @@
     },
     {
       "title": "The Signs of the Queen",
-      "content": "Symbols burned faintly on walls, shifting when torches flickered—crowns of eyes, thrones of teeth."
+      "content": "Symbols burned faintly on walls, shifting when torches flickeredcrowns of eyes, thrones of teeth."
     },
     {
       "title": "The Lurking Packs",
-      "content": "Ash-Bloods prowled in silence here, not with glamour, but with raw hunger—creatures closer to beasts than women."
+      "content": "Ash-Bloods prowled in silence here, not with glamour, but with raw hungercreatures closer to beasts than women."
     },
     {
       "title": "The Voice in the Stone",
@@ -1387,7 +1387,7 @@
       "list": [
         "The tunnel mouth lay beneath a collapsed chapel, its altar shattered, its crucifix snapped into splinters.",
         "Steps descended in spirals, stones slick with moss and centuries of damp.",
-        "Bones were embedded in the walls—not laid to rest, but mortared in, staring outward with hollow sockets.",
+        "Bones were embedded in the wallsnot laid to rest, but mortared in, staring outward with hollow sockets.",
         "The fighters moved in silence, torches guttering, their own breaths louder than they wished."
       ]
     },
@@ -1395,15 +1395,15 @@
       "title": "The Signs of the Queen",
       "content": "Deeper still, the walls began to change:",
       "list": [
-        "Symbols glowed faintly—crowns with too many points, eyes drawn within eyes, thrones carved from shapes that might have been teeth.",
+        "Symbols glowed faintlycrowns with too many points, eyes drawn within eyes, thrones carved from shapes that might have been teeth.",
         "Every torch flicker made the symbols shift, as if the walls themselves breathed.",
         "The fighters avoided looking too long, but Kael forced himself to study them, memorizing every curve and line.",
-        "He felt a rhythm in the symbols—like a heartbeat, steady and slow, echoing from below."
+        "He felt a rhythm in the symbolslike a heartbeat, steady and slow, echoing from below."
       ]
     },
     {
       "title": "The Lurking Packs",
-      "content": "The first Ash-Bloods they met here were different—and far worse:",
+      "content": "The first Ash-Bloods they met here were differentand far worse:",
       "list": [
         "No glamour softened their faces; no makeup could mask the raw, gnawing hunger that had carved hollow canyons in their cheeks and stretched their mouths into permanent grins.",
         "Their limbs had grown unnaturally long, joints bending in directions that made men's eyes water to watch. Their movements were a sickening dance of predator and puppet, as if humanity had rotted out of them like meat from bone.",
@@ -1416,26 +1416,26 @@
       "content": "At the heart of the tunnel, the air changed:",
       "list": [
         "The fighters stopped, their torches quivering in unseen drafts.",
-        "A low hum vibrated through the stone—not wind, not echo, but a voice so deep it made their teeth ache.",
+        "A low hum vibrated through the stonenot wind, not echo, but a voice so deep it made their teeth ache.",
         "Some men pressed their hands to the walls and swore they felt it pulsing like a vein beneath skin.",
         "Kael raised his fist to halt them, listening. The hum grew into words, not spoken but understood: *‘You descend into My mouth.’*"
       ]
     },
     {
       "title": "The First Retreat",
-      "content": "They did not face her yet—but they knew they were seen:",
+      "content": "They did not face her yetbut they knew they were seen:",
       "list": [
         "A shadow moved far below, larger than any pack, its shape too vast to comprehend.",
         "Symbols flared on the walls, their glow burning brighter as if marking prey.",
         "Kael ordered the retreat, pulling his men back before panic could break them.",
-        "When they emerged from the chapel ruins, dawn was breaking—and yet every man knew the sun had lost some of its strength against the dark below."
+        "When they emerged from the chapel ruins, dawn was breakingand yet every man knew the sun had lost some of its strength against the dark below."
       ]
     },
     {
       "title": "The Whisper of Legends",
       "content": "Back at camp, silence lingered until one man spoke:",
       "list": [
-        "He told of old stories—legends whispered by grandfathers of a Queen who lay beneath the world, dreaming in stone.",
+        "He told of old storieslegends whispered by grandfathers of a Queen who lay beneath the world, dreaming in stone.",
         "The Ash-Bloods above were only her daughters, her shadows, her breath upon the surface.",
         "When her hunger stirred, villages fell. When she rose, empires crumbled.",
         "Kael listened, his fists clenched. He had not yet seen her, but he knew now: their war was not against packs or Matrons. It was against the Queen herself."
@@ -1446,7 +1446,7 @@
 
 {
   "title": "Whispers of the Queen",
-  "intro": "After the retreat from the deep tunnels, silence clung to Kael Hoff’s camp. No man spoke of the voice in the stone without shivering, yet whispers crept among them. In the villages, in ruins, in carvings older than memory, fragments of the Queen’s myth surfaced. She was not a beast, nor a woman, nor a spirit—but something vaster, a hunger woven into the earth itself, clothed in beauty only to mask her endless maw.",
+  "intro": "After the retreat from the deep tunnels, silence clung to Kael Hoff’s camp. No man spoke of the voice in the stone without shivering, yet whispers crept among them. In the villages, in ruins, in carvings older than memory, fragments of the Queen’s myth surfaced. She was not a beast, nor a woman, nor a spiritbut something vaster, a hunger woven into the earth itself, clothed in beauty only to mask her endless maw.",
   "highlights": [
     {
       "title": "The Songs of Grandfathers",
@@ -1472,7 +1472,7 @@
       "list": [
         "An old shepherd sang by the fire, his voice cracked, the tune more moan than melody.",
         "The lyrics told of a Queen who sleeps beneath stone, her breath shaking the roots of the mountains.",
-        "Children once learned the song as a warning—never to wander caves, never to follow voices in the dark.",
+        "Children once learned the song as a warningnever to wander caves, never to follow voices in the dark.",
         "Men in Kael’s camp listened, and though they laughed nervously, none could shake the way the refrain clung to them: *‘When she wakes, the earth forgets your name.’*"
       ]
     },
@@ -1482,7 +1482,7 @@
       "list": [
         "On a chapel wall, beneath layers of soot, Kael found a carving of a woman crowned with eyes, her arms spread wide, her ribs opening like gates.",
         "On cliff faces near rivers, thrones carved in spirals stretched downward into the rock, as if descending endlessly.",
-        "Villagers claimed that sometimes, at night, the carvings shifted—eyes opening, mouths whispering when no wind stirred.",
+        "Villagers claimed that sometimes, at night, the carvings shiftedeyes opening, mouths whispering when no wind stirred.",
         "Kael traced one carving with his hand and felt the stone pulse faintly, as though a heart beat deep inside."
       ]
     },
@@ -1501,9 +1501,9 @@
       "content": "Every fragment shared a warning:",
       "list": [
         "When smoke touched her symbols, she stirred. When blood soaked her throne, she opened her eyes.",
-        "Her daughters—the Ash-Bloods—were not her creations, but her reflections, each one a shard of her hunger.",
+        "Her daughtersthe Ash-Bloodswere not her creations, but her reflections, each one a shard of her hunger.",
         "Matrons were said to be her breath, Hollowed her whispers, younger Ash-Bloods her laughter in flesh.",
-        "When she finally rose, legends claimed, she would not walk—she would open her mouth, and the world would step inside."
+        "When she finally rose, legends claimed, she would not walkshe would open her mouth, and the world would step inside."
       ]
     },
     {
@@ -1513,7 +1513,7 @@
         "Some dismissed them as superstition, yet their hands trembled when the wind carried echoes from caves.",
         "Others grew restless, asking if fists could break hunger itself, or if they were doomed to be swallowed in the end.",
         "Kael sat apart, silent, his knuckles pressed into the dirt until blood welled. He did not believe in surrender, even to myths.",
-        "But when he closed his eyes that night, he heard the hum again—the voice in the stone, waiting."
+        "But when he closed his eyes that night, he heard the hum againthe voice in the stone, waiting."
       ]
     }
   ]
@@ -1521,7 +1521,7 @@
 
 {
   "title": "Kael Hoff vs. The Queen: A Love Fight",
-  "intro": "The whispers of the Queen weighed heavy on the camp, but Kael Hoff saw through them. If the Queen fed on love, then fists alone would never end her hunger. The answer, absurd as it seemed, was clear: he would make her fall in love with him. And then, in the only language he knew—fists, sweat, and grit—he would fight her in the ring. The apocalypse’s darkest chapter would become its strangest romance.",
+  "intro": "The whispers of the Queen weighed heavy on the camp, but Kael Hoff saw through them. If the Queen fed on love, then fists alone would never end her hunger. The answer, absurd as it seemed, was clear: he would make her fall in love with him. And then, in the only language he knewfists, sweat, and grithe would fight her in the ring. The apocalypse’s darkest chapter would become its strangest romance.",
   "highlights": [
     {
       "title": "The Romantic Strategy",
@@ -1533,11 +1533,11 @@
     },
     {
       "title": "The Ring of Stone",
-      "content": "At the Queen’s throne, an arena forms from shifting rock—her power shaping their duel into something between courtship and combat."
+      "content": "At the Queen’s throne, an arena forms from shifting rockher power shaping their duel into something between courtship and combat."
     },
     {
       "title": "The First Round: Words",
-      "content": "Before fists, there is banter—Kael’s cocky charm against the Queen’s centuries of sultry menace."
+      "content": "Before fists, there is banterKael’s cocky charm against the Queen’s centuries of sultry menace."
     },
     {
       "title": "The Second Round: Fists",
@@ -1550,7 +1550,7 @@
       "content": "Kael explained it to his bewildered fighters:",
       "list": [
         "‘You can’t beat hunger with more hunger,’ he said, tying his hand wraps. ‘But you can choke it with affection.’",
-        "His men thought him mad, but none could argue—their fists had broken Ash-Bloods, but not the Queen herself.",
+        "His men thought him mad, but none could arguetheir fists had broken Ash-Bloods, but not the Queen herself.",
         "So he set about his plan: not war, but wooing."
       ]
     },
@@ -1570,7 +1570,7 @@
       "list": [
         "Columns of bone spiraled into ceilings unseen.",
         "Her throne was not a seat but a ribcage the size of a house.",
-        "As Kael entered, the floor reshaped itself into a perfect circle of stone—ropes of sinew tightening into an arena.",
+        "As Kael entered, the floor reshaped itself into a perfect circle of stoneropes of sinew tightening into an arena.",
         "She descended from shadows, her crown of eyes watching, her lips curling. ‘A challenger? Or a lover?’ she asked."
       ]
     },
@@ -1579,7 +1579,7 @@
       "content": "Before fists, there was banter:",
       "list": [
         "Kael bowed slightly, presenting the wilted roses. ‘For you, Queen. Don’t eat them all at once.’",
-        "She laughed—a sound like caves collapsing. ‘You think me a woman to be charmed?’",
+        "She laugheda sound like caves collapsing. ‘You think me a woman to be charmed?’",
         "‘Nah,’ Kael said, wrapping his fists tighter. ‘I think you’re a woman who’s bored.’",
         "Her smile sharpened. ‘Then entertain me.’"
       ]
@@ -1590,9 +1590,9 @@
       "list": [
         "Kael ducked her claws, countered with a left hook that cracked like thunder.",
         "She swept him with a leg made of shadows, then giggled as he tumbled, sweat mixing with dust.",
-        "Every strike carried innuendo—her claws grazing, his fists landing with declarations hidden in the rhythm.",
+        "Every strike carried innuendoher claws grazing, his fists landing with declarations hidden in the rhythm.",
         "It was courtship by combat, passion in the form of bruises.",
-        "And as the fight went on, her laughter changed—less hunger, more delight. For the first time in centuries, the Queen was not feeding. She was falling."
+        "And as the fight went on, her laughter changedless hunger, more delight. For the first time in centuries, the Queen was not feeding. She was falling."
       ]
     }
   ]
@@ -1600,7 +1600,7 @@
 
 {
   "title": "No Goon: The Final Round",
-  "intro": "The ring of stone was slick with sweat, dust, and shadows. Kael Hoff stood bloodied but unbroken, while the Queen loomed above him, her crown of eyes dimming, her laughter softer. Blow after blow had carried something stranger than violence—it carried affection. And at last, against all odds, the Queen had fallen in love. But Kael’s fists had one last word to say.",
+  "intro": "The ring of stone was slick with sweat, dust, and shadows. Kael Hoff stood bloodied but unbroken, while the Queen loomed above him, her crown of eyes dimming, her laughter softer. Blow after blow had carried something stranger than violenceit carried affection. And at last, against all odds, the Queen had fallen in love. But Kael’s fists had one last word to say.",
   "highlights": [
     {
       "title": "The Dance of Violence and Love",
@@ -1630,7 +1630,7 @@
       "list": [
         "Kael’s ribs ached, his fists bruised, but his grin never faltered.",
         "The Queen, once an unstoppable hunger, hesitated when her eyes met his.",
-        "Every punch landed with rhythm—jab, hook, uppercut—each strike a question, each dodge an answer.",
+        "Every punch landed with rhythmjab, hook, uppercuteach strike a question, each dodge an answer.",
         "She laughed at first, then sighed, then finally smiled with something almost human."
       ]
     },
@@ -1646,7 +1646,7 @@
     },
     {
       "title": "Kael’s Last Words",
-      "content": "Kael saw it then—the chance, the weakness:",
+      "content": "Kael saw it thenthe chance, the weakness:",
       "list": [
         "He stepped close, close enough to smell the dust of centuries in her hair.",
         "He smiled, cocky even as blood ran down his lip.",
@@ -1693,7 +1693,7 @@
   "highlights": [
     {
       "title": "The Meat Clock",
-      "content": "A monument of flesh and steel that governs the city by demands — each strike of the hour brings a ritual sacrifice, a task, or worse."
+      "content": "A monument of flesh and steel that governs the city by demands  each strike of the hour brings a ritual sacrifice, a task, or worse."
     },
     {
       "title": "Erik",
@@ -1709,7 +1709,7 @@
       "title": "The City That Breathes",
       "content": "The environment itself is alive:",
       "list": [
-        "The towers are grown, not built—bone spires wrapped in wires, lungs stitched into walls to filter the toxic sky.",
+        "The towers are grown, not builtbone spires wrapped in wires, lungs stitched into walls to filter the toxic sky.",
         "Every alley smells of rust and bile, every shadow hums faintly with the sound of organs working.",
         "Citizens walk slowly, as if afraid to disturb the pulse of the city itself."
       ]
@@ -1730,7 +1730,7 @@
       "list": [
         "The wallpaper flakes in strips, revealing pulsing veins beneath the plaster.",
         "A single chair sits crooked, a table stacked with air filters and jars of preserved marrow.",
-        "On the bed, wrapped in cloth, lies a respirator—illegal, smuggled from the old factories Erik once worked in.",
+        "On the bed, wrapped in cloth, lies a respiratorillegal, smuggled from the old factories Erik once worked in.",
         "His boots are cracked leather, soles stitched with thread scavenged from butcher shops."
       ]
     },
@@ -1741,7 +1741,7 @@
         "At noon, the spine pendulum cracks against bone gears, echoing across the city.",
         "Crowds gather in the square, staring up as fresh letters carve themselves into the wet steel face.",
         "The words drip blood as they appear: *A memory, willingly given.*",
-        "Gasps ripple through the crowd—no one has seen such a demand before.",
+        "Gasps ripple through the crowdno one has seen such a demand before.",
         "Erik ties his respirator onto his belt. He already knows the memory the Clock will want."
       ]
     },
@@ -1760,7 +1760,7 @@
 
 {
   "title": "The Memory Market",
-  "intro": "By evening, the square had changed. The Clock’s demand echoed through every alley, and merchants were already at work. Stalls sprouted like tumors—tents stitched from skin, jars lined with glass teeth—each promising to buy, sell, or trade the one thing everyone suddenly feared to lose: memory. Erik pushed through the crowds, keeping his respirator close. He had seen lungs, marrow, even entire spines traded before. But never this. Never laughter, never love, never a face in the dark.",
+  "intro": "By evening, the square had changed. The Clock’s demand echoed through every alley, and merchants were already at work. Stalls sprouted like tumorstents stitched from skin, jars lined with glass teetheach promising to buy, sell, or trade the one thing everyone suddenly feared to lose: memory. Erik pushed through the crowds, keeping his respirator close. He had seen lungs, marrow, even entire spines traded before. But never this. Never laughter, never love, never a face in the dark.",
   "highlights": [
     {
       "title": "The Market Erupts",
@@ -1776,7 +1776,7 @@
     },
     {
       "title": "Erik’s Dilemma",
-      "content": "He knows which memory they’ll want—his sister’s laugh—but swears he’ll never give it up."
+      "content": "He knows which memory they’ll wanthis sister’s laughbut swears he’ll never give it up."
     }
   ],
   "sections": [
@@ -1785,7 +1785,7 @@
       "content": "The city responded to the demand with speed and greed:",
       "list": [
         "Booths sprang up overnight, their banners stitched from flayed cloth reading: *Buy & Sell Your Past!*",
-        "Merchants clinked glass vials of glowing liquid—memories liquefied into pale light.",
+        "Merchants clinked glass vials of glowing liquidmemories liquefied into pale light.",
         "One stall sold only first-kisses, stacked in bottles like perfume; another sold childhoods, labeled by age.",
         "The air smelled of burnt hair and copper, the scent of thought being torn out."
       ]
@@ -1797,14 +1797,14 @@
         "Enforcers marched in groups of three, dragging citizens to collection booths where drills hummed.",
         "People came out pale and shivering, unable to recall the names of their children.",
         "One woman clawed her own face raw, screaming: ‘Give me back my wedding day!’",
-        "The crowd stepped aside, silent, afraid—afraid it would be them next."
+        "The crowd stepped aside, silent, afraidafraid it would be them next."
       ]
     },
     {
       "title": "The Memory Thieves",
       "content": "Not everyone obeyed the Clock with ceremony:",
       "list": [
-        "In narrow alleys, shadow surgeons offered quick trades—rip out one bad memory, swap it for cash.",
+        "In narrow alleys, shadow surgeons offered quick tradesrip out one bad memory, swap it for cash.",
         "Some men staggered away laughing, unable to remember their debts.",
         "Others walked into walls, their minds scooped hollow.",
         "Rumors spread of thieves who stole memories through touch, brushing past you in a crowd and leaving you nameless."
@@ -1815,7 +1815,7 @@
       "content": "For Erik, the cost was personal:",
       "list": [
         "He ducked into an alley, pressing his back to the damp brick, his respirator heavy on his chest.",
-        "In his head, he heard it—his sister’s laugh, bright as summer, cutting through the rot of the city.",
+        "In his head, he heard ithis sister’s laugh, bright as summer, cutting through the rot of the city.",
         "The Clock wanted it. He knew. It always chose the wound that bled deepest.",
         "Erik spat, tightening his fists. ‘Over my dead body,’ he muttered. ‘You’ll choke before you take her from me.’"
       ]
@@ -1827,7 +1827,7 @@
         "A man leaned against the wall, coat stitched from pages of burned books.",
         "His eyes glowed faintly, like bottled memories themselves.",
         "‘You’re planning to fight it,’ the stranger said, voice flat, certain.",
-        "Erik froze. The man smiled. ‘Good. Because you’ll need help. The Clock doesn’t just eat what you give—it takes what you hide.’"
+        "Erik froze. The man smiled. ‘Good. Because you’ll need help. The Clock doesn’t just eat what you giveit takes what you hide.’"
       ]
     }
   ]
@@ -1835,7 +1835,7 @@
 
 {
   "title": "The Stranger of Ash and Paper",
-  "intro": "The man’s coat rustled as though it remembered what it once was—pages of forbidden books, scorched, sewn together into a single garment. His eyes glowed faintly, their light pulsing like bottled memories. Erik didn’t trust him, but the man’s words stuck: the Clock doesn’t just eat what you give—it takes what you hide. In the choking dark of the alley, the stranger leaned close and whispered of places Erik had only heard of in drunk whispers: the Memory Wells. If Erik wanted to save what mattered, he’d have to go there first.",
+  "intro": "The man’s coat rustled as though it remembered what it once waspages of forbidden books, scorched, sewn together into a single garment. His eyes glowed faintly, their light pulsing like bottled memories. Erik didn’t trust him, but the man’s words stuck: the Clock doesn’t just eat what you giveit takes what you hide. In the choking dark of the alley, the stranger leaned close and whispered of places Erik had only heard of in drunk whispers: the Memory Wells. If Erik wanted to save what mattered, he’d have to go there first.",
   "highlights": [
     {
       "title": "The Stranger",
@@ -1847,7 +1847,7 @@
     },
     {
       "title": "The Proposal",
-      "content": "If Erik can reach the Wells, he can hide his sister’s laugh where the Clock cannot reach—or steal enough memories to buy his way free."
+      "content": "If Erik can reach the Wells, he can hide his sister’s laugh where the Clock cannot reachor steal enough memories to buy his way free."
     },
     {
       "title": "The Risk",
@@ -1872,7 +1872,7 @@
         "Vast chambers beneath the Clock where harvested memories drip like rain into vats of black glass.",
         "The air there tastes of salt and iron, as though thought itself were bleeding.",
         "Enforcers patrol the bridges above the vats, while machines whisper lullabies to keep the liquid calm.",
-        "Sometimes, citizens claim they hear laughter rising through the sewers—fragments of stolen childhoods echoing back."
+        "Sometimes, citizens claim they hear laughter rising through the sewersfragments of stolen childhoods echoing back."
       ]
     },
     {
@@ -1889,7 +1889,7 @@
       "title": "The Risk",
       "content": "The warning was clear:",
       "list": [
-        "Calis spread his coat wide, showing pages that told half-legible stories—his own memories burned and sewn into fabric.",
+        "Calis spread his coat wide, showing pages that told half-legible storieshis own memories burned and sewn into fabric.",
         "‘This is what the Wells leave you with if you’re lucky,’ he said. ‘Fragments. Ink where laughter used to be.’",
         "Erik looked down at his cracked boots, thinking of his sister’s smile. He didn’t care about luck.",
         "‘Show me the way,’ he said. ‘If the Clock wants her laugh, it’ll choke on it first.’"
@@ -1910,7 +1910,7 @@
 
 {
   "title": "The Wells of Stolen Laughter",
-  "intro": "The tunnels led them downward for hours, or maybe minutes—the air stole time the way it stole breath. When the last torch burned low, the walls opened into a cavern so vast it might have been the inside of a skull. The Wells stretched below, pools of liquid memory glowing in shades of pale blue, crimson, and sickly green. Erik gripped the rusted railing of the bridge, and for the first time, he heard it: laughter, his sister’s laughter, rising faint and broken from the depths.",
+  "intro": "The tunnels led them downward for hours, or maybe minutesthe air stole time the way it stole breath. When the last torch burned low, the walls opened into a cavern so vast it might have been the inside of a skull. The Wells stretched below, pools of liquid memory glowing in shades of pale blue, crimson, and sickly green. Erik gripped the rusted railing of the bridge, and for the first time, he heard it: laughter, his sister’s laughter, rising faint and broken from the depths.",
   "highlights": [
     {
       "title": "The Cavern",
@@ -1918,7 +1918,7 @@
     },
     {
       "title": "The Sound",
-      "content": "The Wells echo with fragments of stolen memories—voices, cries, songs, laughter—interwoven like static."
+      "content": "The Wells echo with fragments of stolen memoriesvoices, cries, songs, laughterinterwoven like static."
     },
     {
       "title": "The Watchers",
@@ -1930,7 +1930,7 @@
     },
     {
       "title": "The Plan",
-      "content": "Calis explains how to drown a memory so the Clock cannot consume it—but warns Erik of the cost."
+      "content": "Calis explains how to drown a memory so the Clock cannot consume itbut warns Erik of the cost."
     }
   ],
   "sections": [
@@ -1939,7 +1939,7 @@
       "content": "The Wells were unlike anything Erik had imagined:",
       "list": [
         "Bridges of rusted iron stretched across a black gulf, dripping with condensation that reeked of salt and iron.",
-        "Below, pools churned with faint light—some glowing pale blue, others crimson, others sickly green.",
+        "Below, pools churned with faint lightsome glowing pale blue, others crimson, others sickly green.",
         "The air shimmered with heat and voices, as though the cavern itself breathed.",
         "Each pool pulsed faintly, in rhythm with the distant heartbeat of the Clock above."
       ]
@@ -1951,7 +1951,7 @@
         "A child sobbing for its mother, the words echoing endlessly.",
         "A man laughing drunkenly, the sound repeating like a broken record.",
         "Songs hummed by forgotten mouths, lullabies tangled with screams.",
-        "And in the middle of it all—clear as a bell—his sister’s laugh, warped but unmistakable."
+        "And in the middle of it allclear as a bellhis sister’s laugh, warped but unmistakable."
       ]
     },
     {
@@ -1978,10 +1978,10 @@
       "title": "The Plan",
       "content": "At the far edge of the cavern, Calis stopped and spoke low:",
       "list": [
-        "‘To keep your sister’s laugh safe, you drown it here—bury it under the weight of a thousand other memories. The Clock won’t taste it. But you’ll never reach it again either.’",
+        "‘To keep your sister’s laugh safe, you drown it herebury it under the weight of a thousand other memories. The Clock won’t taste it. But you’ll never reach it again either.’",
         "‘Or,’ Calis added, eyes glowing brighter, ‘you could take from the Wells. Drink deep. Steal other people’s pasts. Grow stronger. But you won’t come back the same.’",
         "Erik stared down at the pools, fists clenched. He had come to save what was his, but now the choice loomed larger: sacrifice, or theft.",
-        "Above them, the Wells began to stir—the laughter rising louder, the pools bubbling as if aware of his decision."
+        "Above them, the Wells began to stirthe laughter rising louder, the pools bubbling as if aware of his decision."
       ]
     }
   ]
@@ -1989,7 +1989,7 @@
 
 {
   "title": "The Memory That Refused to Drown",
-  "intro": "The pools bubbled louder as Erik approached the edge, the laughter rising until it was the only sound left. He knelt, trembling, a vial in his hand. The plan was simple: drown the sound of his sister’s laugh beneath countless others, hide it forever. But the pool had its own ideas. The surface rippled and rose like a living skin, showing him everything he’d lost—and everything he could take. Calis hissed behind him, ‘Decide. Now.’",
+  "intro": "The pools bubbled louder as Erik approached the edge, the laughter rising until it was the only sound left. He knelt, trembling, a vial in his hand. The plan was simple: drown the sound of his sister’s laugh beneath countless others, hide it forever. But the pool had its own ideas. The surface rippled and rose like a living skin, showing him everything he’d lostand everything he could take. Calis hissed behind him, ‘Decide. Now.’",
   "highlights": [
     {
       "title": "The Attempt",
@@ -1997,11 +1997,11 @@
     },
     {
       "title": "The Visions",
-      "content": "The Wells show Erik not only his childhood but futures that never happened—temptations to break his resolve."
+      "content": "The Wells show Erik not only his childhood but futures that never happenedtemptations to break his resolve."
     },
     {
       "title": "The Choice",
-      "content": "Erik refuses to let go. Instead of drowning the memory, he draws it back—and with it, something else."
+      "content": "Erik refuses to let go. Instead of drowning the memory, he draws it backand with it, something else."
     },
     {
       "title": "The Consequence",
@@ -2014,7 +2014,7 @@
       "content": "Erik held the vial over the surface of the pool:",
       "list": [
         "The laughter shimmered inside, faint as a candle flame.",
-        "He opened the stopper and let it fall—just a drop—into the swirling liquid.",
+        "He opened the stopper and let it falljust a dropinto the swirling liquid.",
         "The pool hissed, steam rising, and the laughter grew louder, not softer.",
         "Instead of swallowing it, the liquid surged upward, clinging to the vial like grasping fingers."
       ]
@@ -2024,9 +2024,9 @@
       "content": "The Wells showed him everything:",
       "list": [
         "Running barefoot through green grass, though no green grass remained in the world.",
-        "Holding his sister’s hand as fireworks lit the sky—fireworks he had never seen.",
+        "Holding his sister’s hand as fireworks lit the skyfireworks he had never seen.",
         "A woman’s face he didn’t know, lips brushing his cheek, whispering his name as if it mattered.",
-        "The vision shifted—himself on a throne of gears, the city bowing before him, the Clock shattered at his feet."
+        "The vision shiftedhimself on a throne of gears, the city bowing before him, the Clock shattered at his feet."
       ]
     },
     {
@@ -2046,7 +2046,7 @@
         "The pools boiled, sending waves crashing against the bridges.",
         "Eyeless figures shrieked and leapt from the walls, swarming toward Erik.",
         "Calis yanked him back, torch swinging, as shadows lunged from every corner.",
-        "But Erik was no longer the same—his veins glowed faintly blue, the laugh pulsing inside his chest.",
+        "But Erik was no longer the samehis veins glowed faintly blue, the laugh pulsing inside his chest.",
         "As they ran, he realized: he hadn’t just saved the memory. He had stolen something else with it."
       ]
     },
@@ -2056,7 +2056,7 @@
       "list": [
         "The iron groaned beneath their boots, chunks falling into the glowing pools below.",
         "Enforcers charged from the far side, masks gleaming in the torchlight.",
-        "Erik raised his hand instinctively—and a shockwave of sound blasted from his chest, hurling them aside.",
+        "Erik raised his hand instinctivelyand a shockwave of sound blasted from his chest, hurling them aside.",
         "Calis stared at him in awe and terror. ‘What did you take?’",
         "Erik didn’t answer. He didn’t know. But whatever it was, it was alive inside him."
       ]
@@ -2066,7 +2066,7 @@
 
 {
   "title": "The City That Heard Him",
-  "intro": "When Erik and Calis clawed their way up from the tunnels, dawn had already turned the sky the color of rust. The city moved like clockwork above—the Market waking, gears grinding, the first toll of the day echoing from the great face of the Clock. But something was different. As Erik stepped into the light, the city shuddered. The ground trembled, glass cracked in windows, and heads turned in unison. The Wells had marked him. The Clock had heard him.",
+  "intro": "When Erik and Calis clawed their way up from the tunnels, dawn had already turned the sky the color of rust. The city moved like clockwork abovethe Market waking, gears grinding, the first toll of the day echoing from the great face of the Clock. But something was different. As Erik stepped into the light, the city shuddered. The ground trembled, glass cracked in windows, and heads turned in unison. The Wells had marked him. The Clock had heard him.",
   "highlights": [
     {
       "title": "The Return",
@@ -2074,11 +2074,11 @@
     },
     {
       "title": "The Reaction",
-      "content": "As Erik breathes the open air, the ground trembles, and the citizens feel it—something stolen, something wrong."
+      "content": "As Erik breathes the open air, the ground trembles, and the citizens feel itsomething stolen, something wrong."
     },
     {
       "title": "The Clock’s Attention",
-      "content": "The great tower turns its gaze—its bells toll not just for time, but for him."
+      "content": "The great tower turns its gazeits bells toll not just for time, but for him."
     },
     {
       "title": "The Warning",
@@ -2086,7 +2086,7 @@
     },
     {
       "title": "The Decision",
-      "content": "Erik realizes he can’t just run. He must decide whether to flee the city entirely—or strike at the Clock before it strikes him."
+      "content": "Erik realizes he can’t just run. He must decide whether to flee the city entirelyor strike at the Clock before it strikes him."
     }
   ],
   "sections": [
@@ -2104,10 +2104,10 @@
       "title": "The Reaction",
       "content": "The city did not welcome them back:",
       "list": [
-        "The first toll of the day rang from the Clocktower, but it was wrong—lower, heavier, like a warning.",
+        "The first toll of the day rang from the Clocktower, but it was wronglower, heavier, like a warning.",
         "Windows shuddered in their frames. Dogs howled. A woman clutched her ears and fell to her knees.",
         "As Erik stepped into the street, children stopped playing and stared at him with hollow eyes.",
-        "Somewhere deep within the city’s gears, a groan echoed—metal straining, stone cracking."
+        "Somewhere deep within the city’s gears, a groan echoedmetal straining, stone cracking."
       ]
     },
     {
@@ -2134,7 +2134,7 @@
       "title": "The Decision",
       "content": "The choice pressed down heavier than the sky:",
       "list": [
-        "He could flee with Calis, vanish into the wastes beyond the city walls—but the Clock’s reach was long, and his sister’s laugh would still be hunted.",
+        "He could flee with Calis, vanish into the wastes beyond the city wallsbut the Clock’s reach was long, and his sister’s laugh would still be hunted.",
         "Or he could turn back, climb toward the tower that ruled them all, and strike before it crushed him.",
         "The glow in his veins flared brighter, searing him from within, as though demanding an answer.",
         "Calis waited, silent, his burned eyes fixed on him.",
@@ -2146,7 +2146,7 @@
 
 {
   "title": "The Tower That Breathes",
-  "intro": "Erik clenched his fists until the blue glow dimmed beneath his skin. He thought of his sister’s laugh, burning inside him like a coal, and made his choice. He would not flee. The Clock had stolen enough—it would not take her too. Calis saw the decision in his face before Erik spoke. ‘Then we climb,’ the librarian said, his burned coat whispering like turning pages. Above them, the Clocktower loomed, exhaling steam and smoke, every breath a warning.",
+  "intro": "Erik clenched his fists until the blue glow dimmed beneath his skin. He thought of his sister’s laugh, burning inside him like a coal, and made his choice. He would not flee. The Clock had stolen enoughit would not take her too. Calis saw the decision in his face before Erik spoke. ‘Then we climb,’ the librarian said, his burned coat whispering like turning pages. Above them, the Clocktower loomed, exhaling steam and smoke, every breath a warning.",
   "highlights": [
     {
       "title": "The Resolve",
@@ -2158,7 +2158,7 @@
     },
     {
       "title": "The Hunters",
-      "content": "They encounter the first of the Clock’s hunters—figures born of silence, moving only between the tolls."
+      "content": "They encounter the first of the Clock’s huntersfigures born of silence, moving only between the tolls."
     },
     {
       "title": "The Growing Power",
@@ -2166,7 +2166,7 @@
     },
     {
       "title": "The Tower’s Breath",
-      "content": "The closer they draw, the more alive the Clocktower becomes—its gears groaning like lungs, its bells like a heartbeat."
+      "content": "The closer they draw, the more alive the Clocktower becomesits gears groaning like lungs, its bells like a heartbeat."
     }
   ],
   "sections": [
@@ -2205,7 +2205,7 @@
       "list": [
         "The glow in his veins pulsed in rhythm with the bells, each toll sending a shockwave through his bones.",
         "His breath fogged blue, a vapor that made metal groan when it touched.",
-        "Once, in panic, he lashed out—and the air shattered, the sound bursting outward and cracking windows for a block.",
+        "Once, in panic, he lashed outand the air shattered, the sound bursting outward and cracking windows for a block.",
         "Calis grabbed his arm: ‘Control it, or it will control you.’"
       ]
     },
@@ -2240,11 +2240,11 @@
     },
     {
       "title": "The Unstable Power",
-      "content": "Erik unleashes bursts of sound that ripple reality—but each use frays his body further."
+      "content": "Erik unleashes bursts of sound that ripple realitybut each use frays his body further."
     },
     {
       "title": "The Breach in the Wall",
-      "content": "At last they spot a potential entry into the tower—not the main gates, but a crack leaking steam."
+      "content": "At last they spot a potential entry into the towernot the main gates, but a crack leaking steam."
     }
   ],
   "sections": [
@@ -2341,8 +2341,8 @@
       "title": "The Trials Begin",
       "content": "The tower did not offer straight paths. It tested them:",
       "list": [
-        "A corridor of crushing gears, grinding together so fast they blurred—Erik had to time each step to the tolling of the bells, muscles burning as he dragged Calis through.",
-        "A spiral staircase that turned as they climbed, so they never seemed to gain height until Erik shouted into the air—his voice breaking the loop and setting the steps solid again.",
+        "A corridor of crushing gears, grinding together so fast they blurredErik had to time each step to the tolling of the bells, muscles burning as he dragged Calis through.",
+        "A spiral staircase that turned as they climbed, so they never seemed to gain height until Erik shouted into the airhis voice breaking the loop and setting the steps solid again.",
         "A chamber filled with mirrors, each showing Erik’s face twisted with greed, fear, or despair. He had to choose the one reflection that still carried his sister’s laugh before the others shattered into glass teeth."
       ]
     },
@@ -2361,7 +2361,7 @@
       "content": "At last, they reached the tower’s heart:",
       "list": [
         "A vast chamber of bronze and black stone, lit by a dim, pulsing glow.",
-        "Chains crisscrossed the room, suspending a figure at its center—naked chest fused with gears, veins pumping liquid light into the machinery.",
+        "Chains crisscrossed the room, suspending a figure at its centernaked chest fused with gears, veins pumping liquid light into the machinery.",
         "The face was gaunt but unmistakable: Kael Hoff, the city’s lost champion, his eyes half-open, glowing faint blue like Erik’s veins.",
         "His voice was a broken rasp, carried by the tower’s echoes: ‘Welcome… to me.’"
       ]
@@ -2370,7 +2370,7 @@
       "title": "The Choice Ahead",
       "content": "The revelation burned itself into Erik’s mind:",
       "list": [
-        "Kael Hoff was no prisoner—he was the tower’s core, its engine of flesh and memory.",
+        "Kael Hoff was no prisonerhe was the tower’s core, its engine of flesh and memory.",
         "The gears turned with his heartbeat, the bells tolled with his breath.",
         "To destroy the Clock, Erik would have to kill the man who had once fought to save the city.",
         "The laugh inside his chest throbbed, as if it already knew what he must do."
@@ -2381,7 +2381,7 @@
 
 {
   "title": "The Guardian of the Core",
-  "intro": "The chamber trembled as Erik and Calis approached Kael Hoff’s suspended form. But before they could draw closer, the chains above snapped loose, lowering a monstrous figure forged of bronze and glass. The guardian—half-machine, half-shadow—descended from the tower’s ceiling, its eyes burning with borrowed memory. This was no hunter, no echo. This was the Clock’s hand, raised to defend its heart.",
+  "intro": "The chamber trembled as Erik and Calis approached Kael Hoff’s suspended form. But before they could draw closer, the chains above snapped loose, lowering a monstrous figure forged of bronze and glass. The guardianhalf-machine, half-shadowdescended from the tower’s ceiling, its eyes burning with borrowed memory. This was no hunter, no echo. This was the Clock’s hand, raised to defend its heart.",
   "highlights": [
     {
       "title": "The Guardian Descends",
@@ -2401,7 +2401,7 @@
     },
     {
       "title": "The Final Choice",
-      "content": "Weakened and bleeding, they stand before Kael Hoff—forced to choose whether to end him and the Clock, or collapse with it."
+      "content": "Weakened and bleeding, they stand before Kael Hoffforced to choose whether to end him and the Clock, or collapse with it."
     }
   ],
   "sections": [
@@ -2452,7 +2452,7 @@
         "Erik fell to his knees, clutching his bleeding side, vision blurring red.",
         "Calis crawled to him, teeth clenched against the pain, whispering: ‘We don’t… have long.’",
         "Kael Hoff’s suspended form loomed above them, eyes glowing faintly blue, chains rattling with each tortured breath.",
-        "The tower trembled, waiting. The choice was clear: use their last strength to end him—or collapse with the Clock."
+        "The tower trembled, waiting. The choice was clear: use their last strength to end himor collapse with the Clock."
       ]
     }
   ]
@@ -2490,8 +2490,8 @@
       "list": [
         "‘You think you’ve fought me. But you’ve only proven yourselves worthy.’",
         "His chest glowed, chains pulsing like veins, pumping blue light into the gears around him.",
-        "‘Take the chains. Let the tower bind to you. Imagine it—the power to turn time, to silence hunger, to bend the city on its knees.’",
-        "Calis staggered forward, whispering to Erik: ‘Don’t listen. That’s not his voice—it’s the tower speaking through him.’"
+        "‘Take the chains. Let the tower bind to you. Imagine itthe power to turn time, to silence hunger, to bend the city on its knees.’",
+        "Calis staggered forward, whispering to Erik: ‘Don’t listen. That’s not his voiceit’s the tower speaking through him.’"
       ]
     },
     {
@@ -2499,7 +2499,7 @@
       "content": "The choice cut deeper than their wounds:",
       "list": [
         "Erik’s ribs burned, blood soaking his shirt, yet he forced himself upright.",
-        "The laugh inside his chest pulsed weakly, but it was enough—reminding him of why he fought.",
+        "The laugh inside his chest pulsed weakly, but it was enoughreminding him of why he fought.",
         "‘I don’t want your power,’ Erik rasped. ‘I just want her laugh to live. Not to rule.’",
         "Calis leaned against him, blood on her lips, nodding: ‘We’re not your heirs, Hoff. We’re your ending.’"
       ]
@@ -2520,7 +2520,7 @@
       "list": [
         "The chamber walls cracked, bronze plates peeling away as the machinery seized.",
         "Hunters across the city fell like puppets with cut strings, shattering into glass dust.",
-        "The bells rang one last time—then silence, a silence so deep it shook the bones.",
+        "The bells rang one last timethen silence, a silence so deep it shook the bones.",
         "The tower began to crumble, its shadow breaking into shards of light and dust as Erik and Calis crawled toward daylight."
       ]
     },
@@ -2528,7 +2528,7 @@
       "title": "The Aftermath",
       "content": "The world outside was not the same:",
       "list": [
-        "The air felt thinner, freer, but unsteady—like a song missing half its notes.",
+        "The air felt thinner, freer, but unsteadylike a song missing half its notes.",
         "Crowds gathered in the ruins of the plaza, staring at the fallen tower in awe and terror.",
         "Whispers rose: some wept, others shouted in fear, already hungry for someone to claim power in the vacuum.",
         "Calis leaned against Erik, her voice faint: ‘This isn’t an ending. It’s a beginning.’",
@@ -2540,7 +2540,7 @@
 
 {
   "title": "Ashes of the Plaza",
-  "intro": "The city awoke to silence. For generations, its people had lived under the constant toll of the Clock—every hour measured, every breath timed. Now the bells were gone. In their absence, the city’s heartbeat faltered, leaving a vacuum filled with confusion, grief, and hunger for something new. Erik and Calis stumbled through the rubble, witnesses not just to a tower’s fall, but to a society unraveling.",
+  "intro": "The city awoke to silence. For generations, its people had lived under the constant toll of the Clockevery hour measured, every breath timed. Now the bells were gone. In their absence, the city’s heartbeat faltered, leaving a vacuum filled with confusion, grief, and hunger for something new. Erik and Calis stumbled through the rubble, witnesses not just to a tower’s fall, but to a society unraveling.",
   "highlights": [
     {
       "title": "The Silence",
@@ -2566,12 +2566,12 @@
   "sections": [
     {
       "title": "The Silence",
-      "content": "The absence of bells was not peace—it was terror:",
+      "content": "The absence of bells was not peaceit was terror:",
       "list": [
         "Merchants in the bazaar stood frozen, unsure when to open or close their stalls without the tolls.",
         "Children wept, clutching their ears, waiting for a sound that never came.",
         "Some covered their mouths, convinced that speaking too loudly might summon the bells back.",
-        "Time itself felt unmoored—minutes stretched, or snapped short, with no measure to guide them."
+        "Time itself felt unmooredminutes stretched, or snapped short, with no measure to guide them."
       ]
     },
     {
@@ -2601,7 +2601,7 @@
         "Men in patched uniforms declared themselves ‘Timekeepers,’ promising to keep order with stolen weapons.",
         "A preacher climbed onto a broken pillar, claiming the Clock’s fall as divine judgment, drawing a fervent crowd.",
         "Merchants banded together into guilds, hoarding supplies in guarded warehouses.",
-        "Whispers named a woman in red—a former collector—as already uniting hunters’ remnants into a new faction."
+        "Whispers named a woman in reda former collectoras already uniting hunters’ remnants into a new faction."
       ]
     },
     {
@@ -2609,7 +2609,7 @@
       "content": "Amidst the chaos, Erik and Calis watched the city shift:",
       "list": [
         "The plaza’s ruins became a marketplace for rumors, schemes, and the seeds of rebellion.",
-        "Children painted the broken stones with chalk, sketching suns and rivers—dreams of a world beyond bells.",
+        "Children painted the broken stones with chalk, sketching suns and riversdreams of a world beyond bells.",
         "Erik’s wounds burned, every step a reminder that they were not saviors, only survivors.",
         "Calis whispered, staring at the crowd: ‘We’ve traded one prison for another. The real fight hasn’t even started.’"
       ]
@@ -2619,7 +2619,7 @@
 
 {
   "title": "The Hollow Victory",
-  "intro": "Dust still rained from the broken tower when Erik stumbled, clutching his side. Calis reached for him, her lips trembling. But there was no blood anymore, no pain—only the echo of it. They turned to one another and saw it clearly: their bodies lay crushed beneath the tower’s ruins far below. What walked now were not survivors, but freed fragments of soul. And above, in the city, humanity had already begun to pay the price for their freedom in darker ways.",
+  "intro": "Dust still rained from the broken tower when Erik stumbled, clutching his side. Calis reached for him, her lips trembling. But there was no blood anymore, no painonly the echo of it. They turned to one another and saw it clearly: their bodies lay crushed beneath the tower’s ruins far below. What walked now were not survivors, but freed fragments of soul. And above, in the city, humanity had already begun to pay the price for their freedom in darker ways.",
   "highlights": [
     {
       "title": "The Realization",
@@ -2647,7 +2647,7 @@
       "title": "The Realization",
       "content": "The truth struck harder than any blow from the guardian:",
       "list": [
-        "Erik’s wounds were gone, but so was the weight of his body—he was lighter, almost transparent.",
+        "Erik’s wounds were gone, but so was the weight of his bodyhe was lighter, almost transparent.",
         "Calis touched her chest, searching for her heartbeat, and found only silence.",
         "Below them, through cracks in the rubble, their bodies lay twisted, unmoving, already half-buried in dust.",
         "‘We… never left,’ Calis whispered. ‘We died down there. We’ve been walking as ghosts.’"
@@ -2670,7 +2670,7 @@
         "Time had no master, and with it, order collapsed further each day.",
         "The Timekeepers lost control of their ranks, weapons turning inward.",
         "Merchants starved their neighbors to protect dwindling stores.",
-        "A hunger for power spread—not the kind of food or air, but dominion. People craved something to fill the silence."
+        "A hunger for power spreadnot the kind of food or air, but dominion. People craved something to fill the silence."
       ]
     },
     {
@@ -2680,7 +2680,7 @@
         "In cellars and burned-out temples, men carved sigils into stone with blood-stained knives.",
         "An old woman offered her right arm, burning it in a brazier to summon a demon that cooked food from ashes.",
         "A boy gave up both eyes, and a serpent of smoke became his seeing hound.",
-        "Others offered not flesh but memory—forgetting their children, their lovers, their own names—in exchange for monstrous servants bound to their will."
+        "Others offered not flesh but memoryforgetting their children, their lovers, their own namesin exchange for monstrous servants bound to their will."
       ]
     },
     {
@@ -2690,7 +2690,7 @@
         "Streets filled with creatures stitched to human masters, half-servants, half-captors.",
         "Those with nothing left to give became prey for those who had already bargained.",
         "Erik and Calis drifted above, powerless, watching the beginning of a darker age.",
-        "The bells had fallen silent forever. Now, whispers replaced them—the whispers of demons bargaining in every shadow."
+        "The bells had fallen silent forever. Now, whispers replaced themthe whispers of demons bargaining in every shadow."
       ]
     }
   ]
@@ -2698,7 +2698,7 @@
 
 {
   "title": "The Age of Bargains",
-  "intro": "With the Clock’s fall, silence did not bring peace—it brought hunger. To fill the void, the people of the city turned to the whispers in the cracks of stone, the shadows between lamps, the voices that had waited for centuries. Demons, once chained beyond sight, were summoned into flesh and smoke. And for every bargain struck, the city itself warped to match the cost. Erik and Calis, untethered souls, drifted through the ruins, seeing the city they once knew reshaped into something unholy.",
+  "intro": "With the Clock’s fall, silence did not bring peaceit brought hunger. To fill the void, the people of the city turned to the whispers in the cracks of stone, the shadows between lamps, the voices that had waited for centuries. Demons, once chained beyond sight, were summoned into flesh and smoke. And for every bargain struck, the city itself warped to match the cost. Erik and Calis, untethered souls, drifted through the ruins, seeing the city they once knew reshaped into something unholy.",
   "highlights": [
     {
       "title": "The Markets of Flesh",
@@ -2706,7 +2706,7 @@
     },
     {
       "title": "The Demon Servants",
-      "content": "Each demon bore the mark of its master’s sacrifice—reflecting both strength and loss."
+      "content": "Each demon bore the mark of its master’s sacrificereflecting both strength and loss."
     },
     {
       "title": "The Districts Transformed",
@@ -2728,7 +2728,7 @@
       "list": [
         "In the plaza, surgeons worked beside sorcerers, carving arms, legs, and eyes from volunteers who wanted demons more than wholeness.",
         "Jars of teeth, vials of blood, and locks of hair lined makeshift stalls, each tagged with runes of exchange.",
-        "A man’s laughter was bottled and sold—drunk by another to summon a demon with a voice that drove enemies mad.",
+        "A man’s laughter was bottled and solddrunk by another to summon a demon with a voice that drove enemies mad.",
         "Children learned to haggle not for toys or food, but for the weight of memories they no longer wished to keep."
       ]
     },
@@ -2739,7 +2739,7 @@
         "A merchant with one leg missing commanded a spider-legged demon that carried his wares.",
         "A soldier without his left arm marched with a wolf of ash fused to his stump, snapping at all who drew near.",
         "A mother who gave her memories of her child now walked with a faceless wraith, silent but obedient.",
-        "The city’s streets filled with grotesque shapes—half-animals, half-nightmares, bound by invisible chains to their human summoners."
+        "The city’s streets filled with grotesque shapeshalf-animals, half-nightmares, bound by invisible chains to their human summoners."
       ]
     },
     {
@@ -2748,7 +2748,7 @@
       "list": [
         "The Market District became a maze of bone-white stalls, bones hammered into posts where demons crouched like beasts of burden.",
         "The River Quarter blackened, its waters boiling with smoke-demons whose masters had drowned their voices in exchange for their strength.",
-        "The Noble Hill gleamed with false light—wealthy families sacrificing memories of guilt and shame, their demons pale angels with hollow eyes.",
+        "The Noble Hill gleamed with false lightwealthy families sacrificing memories of guilt and shame, their demons pale angels with hollow eyes.",
         "The Old Clock Plaza remained scarred, a crater filled with whispering shadows, where desperate souls gathered to offer everything they had."
       ]
     },
@@ -2756,7 +2756,7 @@
       "title": "The New Hierarchies",
       "content": "Power now came from sacrifice:",
       "list": [
-        "Those who gave only small pieces—a finger, a tooth—were mocked as ‘pet owners,’ their demons weak and petty.",
+        "Those who gave only small piecesa finger, a toothwere mocked as ‘pet owners,’ their demons weak and petty.",
         "The most feared were those who surrendered entire halves of themselves: one man without legs rode a serpent of brass coils; another, who gave his memories of childhood, commanded a demon that could unravel others’ minds.",
         "Guilds formed, measuring rank not by wealth but by the depth of sacrifice made to demons.",
         "Whispers spread of a man who gave away his shadow, and whose demon moved unseen in the streets, killing without a trace."
@@ -2777,7 +2777,7 @@
 
 {
   "title": "The Forgotten Hearths",
-  "intro": "In the Age of Bargains, not all stories were about power. In narrow alleys and crumbling homes, families still clung to the idea of a future, no matter how fragile. It was here—among mothers cooking thin soups, children drawing shapes in dust, fathers mending walls that would not last—that the seeds of tragedy were sown. Erik and Calis drifted unseen through these places, watching lives that reminded them of their own: homes, laughter, and dreams that would one day burn. Every face was a memory waiting to become a ghost.",
+  "intro": "In the Age of Bargains, not all stories were about power. In narrow alleys and crumbling homes, families still clung to the idea of a future, no matter how fragile. It was hereamong mothers cooking thin soups, children drawing shapes in dust, fathers mending walls that would not lastthat the seeds of tragedy were sown. Erik and Calis drifted unseen through these places, watching lives that reminded them of their own: homes, laughter, and dreams that would one day burn. Every face was a memory waiting to become a ghost.",
   "highlights": [
     {
       "title": "The Hearths",
@@ -2785,7 +2785,7 @@
     },
     {
       "title": "The Children",
-      "content": "They still dreamed—of gardens, of rivers clean enough to swim in, of skies without smoke."
+      "content": "They still dreamedof gardens, of rivers clean enough to swim in, of skies without smoke."
     },
     {
       "title": "The Echoes of Erik and Calis",
@@ -2807,7 +2807,7 @@
       "list": [
         "One house leaned so hard it seemed ready to collapse, yet smoke still curled from its chimney every night.",
         "Inside, a family sat at a rough wooden table, their meal nothing more than broth flavored with bones too old to gnaw.",
-        "On the walls hung faded cloths—family heirlooms long stripped of color, but still treasured.",
+        "On the walls hung faded clothsfamily heirlooms long stripped of color, but still treasured.",
         "Erik whispered to Calis: ‘It looks like our house used to.’ She nodded, though her eyes were wet."
       ]
     },
@@ -2856,11 +2856,11 @@
 
 {
   "title": "The Children of Ash",
-  "intro": "In the shadow of the Old Clock Plaza, where desperation echoed off cracked stone and hope cost more than bread, the Ashworth family clung to fragments of a life that was already ending. Garron's calloused hands still shaped wood into meaning. Lira's voice still carried lullabies through rooms that leaked cold and fear. Daren still believed the poisoned river might run clean again. Selene still drew suns in her secret journal, though she'd never seen the sky without smoke. They were ordinary people in an extraordinary darkness—until the night their ordinariness shattered, and blood awakened something in their children that should have stayed sleeping forever.",
+  "intro": "In the shadow of the Old Clock Plaza, where desperation echoed off cracked stone and hope cost more than bread, the Ashworth family clung to fragments of a life that was already ending. Garron's calloused hands still shaped wood into meaning. Lira's voice still carried lullabies through rooms that leaked cold and fear. Daren still believed the poisoned river might run clean again. Selene still drew suns in her secret journal, though she'd never seen the sky without smoke. They were ordinary people in an extraordinary darknessuntil the night their ordinariness shattered, and blood awakened something in their children that should have stayed sleeping forever.",
   "highlights": [
     {
       "title": "The Family",
-      "content": "A small household of four—mother, father, son, and daughter—living on the edge of ruin."
+      "content": "A small household of fourmother, father, son, and daughterliving on the edge of ruin."
     },
     {
       "title": "The Attack",
@@ -2876,7 +2876,7 @@
     },
     {
       "title": "The Awakening",
-      "content": "The son’s grief and rage unlock his hidden half-demon nature—his power tied to protecting his sister, who reveals her own twisted heritage."
+      "content": "The son’s grief and rage unlock his hidden half-demon naturehis power tied to protecting his sister, who reveals her own twisted heritage."
     }
   ],
   "sections": [
@@ -2886,7 +2886,7 @@
       "list": [
         "The father, Garron, a carpenter whose tools were more splinters than steel, still mended chairs and beams for neighbors who could not pay.",
         "The mother, Lira, sang softly as she stirred thin soups, her voice weaving warmth through a house of draft and dust.",
-        "The son, Daren, tall for his age, dreamed of becoming a fisherman—though the river was poison, he swore it would heal one day.",
+        "The son, Daren, tall for his age, dreamed of becoming a fishermanthough the river was poison, he swore it would heal one day.",
         "The daughter, Selene, kept a secret journal, filling it with drawings of suns, stars, and places she had never seen."
       ]
     },
@@ -2894,10 +2894,10 @@
       "title": "The Attack",
       "content": "The night came with a sound like stone splitting:",
       "list": [
-        "At first, just trembling—the walls shuddering like a held breath. Then the sound: stone ripping open, reality tearing at the seams.",
-        "The door exploded inward in a shower of splinters and smoke. Through the wreckage came something that had never been human—fire-veins pulsing under charred flesh, wings like burnt leather unfurling in impossible space.",
-        "The demon's jaw unhinged with a wet snap, revealing a furnace throat that turned the air thick and poisonous. Its claws—curved like sickles, glowing like molten metal—raked across walls, leaving deep scars that wept orange light.",
-        "Time fractured. Selene's scream pierced the air. Daren's hand found her wrist, pulling her backward as their world collapsed. And in the doorway—small, fragile, utterly human—their parents stepped forward to face the impossible.",
+        "At first, just tremblingthe walls shuddering like a held breath. Then the sound: stone ripping open, reality tearing at the seams.",
+        "The door exploded inward in a shower of splinters and smoke. Through the wreckage came something that had never been humanfire-veins pulsing under charred flesh, wings like burnt leather unfurling in impossible space.",
+        "The demon's jaw unhinged with a wet snap, revealing a furnace throat that turned the air thick and poisonous. Its clawscurved like sickles, glowing like molten metalraked across walls, leaving deep scars that wept orange light.",
+        "Time fractured. Selene's scream pierced the air. Daren's hand found her wrist, pulling her backward as their world collapsed. And in the doorwaysmall, fragile, utterly humantheir parents stepped forward to face the impossible.",
         "'Behind us,' Garron whispered, and in that moment Daren understood: this was how love looked when it chose to die."
       ]
     },
@@ -2906,7 +2906,7 @@
       "content": "The parents did not flee:",
       "list": [
         "Garron lifted a broken chair leg like a club, stepping into the firelight with steady hands.",
-        "Lira sang—louder now, her voice trembling but fierce, as though song alone could hold back the beast.",
+        "Lira sanglouder now, her voice trembling but fierce, as though song alone could hold back the beast.",
         "‘Run!’ Garron shouted, eyes fixed on his children. ‘Run and don’t look back!’",
         "Daren dragged Selene through the rear window, both stumbling into the night as the demon’s roar drowned out their mother’s song."
       ]
@@ -2915,7 +2915,7 @@
       "title": "The Confrontation",
       "content": "They fled into the alleys, the fire lighting the city behind them:",
       "list": [
-        "Through winding streets they saw him—the summoner, cloaked in ash-grey robes, his hands slick with blood where he had carved his bargain.",
+        "Through winding streets they saw himthe summoner, cloaked in ash-grey robes, his hands slick with blood where he had carved his bargain.",
         "His demon still raged within their home, but he smiled as if it were a game.",
         "‘Children,’ he said, his voice like oil poured on water, ‘you should thank me. I’ve freed you of weakness.’",
         "Selene’s nails dug into Daren’s arm. He felt her trembling, and something broke inside him."
@@ -2927,8 +2927,8 @@
       "list": [
         "Daren’s vision blurred red, veins crawling with heat that was not his own.",
         "His shadow split, horns of smoke rising from it as though another figure walked inside him.",
-        "Selene cried out—not in fear, but resonance. Her own shadow shimmered, eyes opening where none should be, revealing she too was not fully human.",
-        "‘Stay back,’ Daren snarled to the summoner, his voice now doubled—half-boy, half-demon. For the first time, he stepped forward to fight, not flee."
+        "Selene cried outnot in fear, but resonance. Her own shadow shimmered, eyes opening where none should be, revealing she too was not fully human.",
+        "‘Stay back,’ Daren snarled to the summoner, his voice now doubledhalf-boy, half-demon. For the first time, he stepped forward to fight, not flee."
       ]
     }
   ]
@@ -2936,7 +2936,7 @@
 
 {
   "title": "The First Battle",
-  "intro": "The alley smelled of blood and fire. Behind them, their home was ash; before them, the summoner smiled as though he’d merely shifted pieces on a game board. Daren’s body burned with strange weight, pulling at the stones beneath his feet. Selene’s eyes glowed faintly, glimpsing fragments of memories that weren’t her own. Together, they faced their first true fight—not for dreams, not for revenge, but simply to live.",
+  "intro": "The alley smelled of blood and fire. Behind them, their home was ash; before them, the summoner smiled as though he’d merely shifted pieces on a game board. Daren’s body burned with strange weight, pulling at the stones beneath his feet. Selene’s eyes glowed faintly, glimpsing fragments of memories that weren’t her own. Together, they faced their first true fightnot for dreams, not for revenge, but simply to live.",
   "highlights": [
     {
       "title": "The Summoner’s Demon",
@@ -2944,7 +2944,7 @@
     },
     {
       "title": "Daren’s Gravity",
-      "content": "He discovers his power—able to bend weight, to crush or to lighten, though uncontrolled."
+      "content": "He discovers his powerable to bend weight, to crush or to lighten, though uncontrolled."
     },
     {
       "title": "Selene’s Memory Vision",
@@ -2975,17 +2975,17 @@
       "content": "Daren felt his chest tighten, the ground trembling beneath him:",
       "list": [
         "When he stepped forward, the cobblestones cracked under his weight, sinking as though the earth bent to him.",
-        "The demon lunged—and Daren lifted his arm, instinctively pressing down with unseen force.",
+        "The demon lungedand Daren lifted his arm, instinctively pressing down with unseen force.",
         "The beast’s wings faltered, its body driven to the ground with a thunderous crash.",
-        "Daren gasped, sweat pouring—he hadn’t struck the demon, yet it had fallen."
+        "Daren gasped, sweat pouringhe hadn’t struck the demon, yet it had fallen."
       ]
     },
     {
       "title": "Selene’s Memory Vision",
       "content": "Selene’s eyes burned, and the world shifted:",
       "list": [
-        "She saw the alley not as it was, but as it had been—children playing marbles, a woman selling herbs, men fighting over bread.",
-        "She looked at the summoner and gasped: his past memories flickered across his skin—faces he had betrayed, bargains he had made.",
+        "She saw the alley not as it was, but as it had beenchildren playing marbles, a woman selling herbs, men fighting over bread.",
+        "She looked at the summoner and gasped: his past memories flickered across his skinfaces he had betrayed, bargains he had made.",
         "Most of all, she saw the demon’s origin: once a starving soldier, twisted by the summoner’s pact, its body torn and remade into fire and wings.",
         "‘He was human!’ Selene cried. ‘That thing was human once!’"
       ]
@@ -2995,8 +2995,8 @@
       "content": "The fight turned brutal, each moment testing them:",
       "list": [
         "The demon’s claws scraped stone, sparks flying as it pinned Daren to the wall.",
-        "Daren screamed, pushing outward with his power—the weight shifted, and the wall itself cracked, dropping rubble onto the beast.",
-        "Selene stumbled, clutching her head as visions flooded her—memories of the demon’s pain, of hunger, of betrayal.",
+        "Daren screamed, pushing outward with his powerthe weight shifted, and the wall itself cracked, dropping rubble onto the beast.",
+        "Selene stumbled, clutching her head as visions flooded hermemories of the demon’s pain, of hunger, of betrayal.",
         "‘Don’t look!’ Daren shouted, but she whispered back, ‘If I see him, I can understand him.’"
       ]
     },
@@ -3004,7 +3004,7 @@
       "title": "The Turning Point",
       "content": "They fought not with skill, but with desperation:",
       "list": [
-        "Selene shouted what she saw—moments the demon remembered of being human, names it had once known.",
+        "Selene shouted what she sawmoments the demon remembered of being human, names it had once known.",
         "The beast faltered, its claws slowing as though weighed by grief.",
         "Daren seized the moment, pulling gravity down on the demon, driving it to its knees.",
         "Together, they turned toward the summoner. Selene’s eyes pierced his mind, revealing his lies; Daren’s power dragged him down, stone cracking beneath his body.",
@@ -3055,7 +3055,7 @@
       "content": "The summoner’s smile twisted to rage:",
       "list": [
         "Daren’s gravity dragged him to the ground, stone splitting beneath his body.",
-        "Selene’s gaze flayed him open—visions of his bargains, the lives he destroyed, his betrayals whispered into the night.",
+        "Selene’s gaze flayed him openvisions of his bargains, the lives he destroyed, his betrayals whispered into the night.",
         "For the first time, his composure cracked. He spat blood, snarling at them like an animal cornered.",
         "‘Children,’ he hissed, ‘you know nothing of what waits in the dark.’"
       ]
@@ -3066,7 +3066,7 @@
       "list": [
         "With his bloodied hand, he sliced the rune that bound his demon.",
         "The creature shrieked, burning from within, its body collapsing into a pool of molten embers.",
-        "The moment of distraction was enough—he whispered a word, a shadow surged, and his body slipped into the cracks of the alley like smoke.",
+        "The moment of distraction was enoughhe whispered a word, a shadow surged, and his body slipped into the cracks of the alley like smoke.",
         "Daren slammed the ground with his power, but nothing remained except the echo of his laughter."
       ]
     },
@@ -3076,7 +3076,7 @@
       "list": [
         "‘I will return for you, little half-breeds.’",
         "‘Your shadows will be mine, and your city will kneel.’",
-        "‘Enjoy the ashes you stand in—they are the first of many.’",
+        "‘Enjoy the ashes you stand inthey are the first of many.’",
         "Selene trembled. Daren clenched his fists, vowing silently that next time, he would not escape."
       ]
     },
@@ -3086,7 +3086,7 @@
       "list": [
         "Their house burned behind them, their parents gone.",
         "The air stank of sulfur and ash, and neighbors peeked from broken windows, whispering of the children who fought a demon.",
-        "For the first time, others had seen them—half-demons standing against one of the city’s summoners.",
+        "For the first time, others had seen themhalf-demons standing against one of the city’s summoners.",
         "The city would not forget. Neither would the siblings. The war had only begun."
       ]
     }
@@ -3095,11 +3095,11 @@
 
 {
   "title": "Searching the Ashes",
-  "intro": "The night after the battle left more than scars on the siblings’ bodies — it left questions burning hotter than the flames of their ruined home. Daren and Selene knew the summoner hadn’t chosen them at random. Their family was marked. But why? With nothing left behind but smoke and whispers, they turned their steps toward the veins of the city, where answers lived in hidden places: the underground archives, the demon markets, and the mouths of those too afraid to speak. What they found would twist their grief into resolve, and their powers into weapons for survival.",
+  "intro": "The night after the battle left more than scars on the siblings’ bodies  it left questions burning hotter than the flames of their ruined home. Daren and Selene knew the summoner hadn’t chosen them at random. Their family was marked. But why? With nothing left behind but smoke and whispers, they turned their steps toward the veins of the city, where answers lived in hidden places: the underground archives, the demon markets, and the mouths of those too afraid to speak. What they found would twist their grief into resolve, and their powers into weapons for survival.",
   "highlights": [
     {
       "title": "Among the Ruins",
-      "content": "Sifting through what remained of their home, they find a clue left behind — a sigil burned into the foundation stone."
+      "content": "Sifting through what remained of their home, they find a clue left behind  a sigil burned into the foundation stone."
     },
     {
       "title": "Into the City’s Underbelly",
@@ -3111,7 +3111,7 @@
     },
     {
       "title": "A Growing Bond",
-      "content": "Daren struggles with the violence inside him, Selene grounds him with memory — together they begin shaping their powers with intent."
+      "content": "Daren struggles with the violence inside him, Selene grounds him with memory  together they begin shaping their powers with intent."
     },
     {
       "title": "The Mark of the Enemy",
@@ -3126,7 +3126,7 @@
         "Their mother’s pendant, cracked but still gleaming, half-buried in char.",
         "A scorched toy of Selene’s, untouched since childhood, melted into the floorboards.",
         "A sigil carved into the foundation stone: jagged, circular, throbbing faintly with ember-light.",
-        "Selene touched it and shuddered—visions of hands carving it, whispers promising fire. She saw Veynar’s eyes in that vision, blood-red and burning with hunger."
+        "Selene touched it and shudderedvisions of hands carving it, whispers promising fire. She saw Veynar’s eyes in that vision, blood-red and burning with hunger."
       ]
     },
     {
@@ -3134,7 +3134,7 @@
       "content": "With no home to return to, they turned to the labyrinth beneath the city:",
       "list": [
         "Daren led them through drainage tunnels and half-collapsed catacombs.",
-        "Selene’s memory-vision lit their path—touching walls revealed flashes of smugglers, summoners, beggars, and demons passing unseen.",
+        "Selene’s memory-vision lit their pathtouching walls revealed flashes of smugglers, summoners, beggars, and demons passing unseen.",
         "The air grew thick with incense and sulfur as they entered the black markets, where men bartered fingers, teeth, and years of life for fragments of demon strength.",
         "Whispers followed them: ‘Half-breeds.’ ‘The ones who fought the fire-chain demon.’"
       ]
@@ -3153,7 +3153,7 @@
       "title": "A Growing Bond",
       "content": "Daren’s anger burned hotter each step they took:",
       "list": [
-        "His powers strained in his fists—stones cracked when he clenched them.",
+        "His powers strained in his fistsstones cracked when he clenched them.",
         "Selene steadied him with her visions, showing him memories of their parents’ laughter, their house before the ash, grounding his fury.",
         "‘We fight smart,’ she whispered. ‘Not just strong.’",
         "He nodded, letting her memory-vision thread into his gravity, finding a rhythm between destruction and control."
@@ -3174,7 +3174,7 @@
 
 {
   "title": "The Cult Strikes Back",
-  "intro": "The siblings had a name now. Veynar. A face, a brand, a sworn enemy. But names drew attention, and the Ash Circle did not let their failures linger. As Daren and Selene huddled in the ruins of an abandoned chapel, patching their wounds and gathering what little strength they could, the shadows shifted. From those shadows came the Circle’s retribution: a hunter whose power warped reality itself. The siblings would learn that not every enemy could be crushed by gravity or unraveled by memory — some required wit, patience, and trust.",
+  "intro": "The siblings had a name now. Veynar. A face, a brand, a sworn enemy. But names drew attention, and the Ash Circle did not let their failures linger. As Daren and Selene huddled in the ruins of an abandoned chapel, patching their wounds and gathering what little strength they could, the shadows shifted. From those shadows came the Circle’s retribution: a hunter whose power warped reality itself. The siblings would learn that not every enemy could be crushed by gravity or unraveled by memory  some required wit, patience, and trust.",
   "highlights": [
     {
       "title": "A Vulnerable Refuge",
@@ -3186,7 +3186,7 @@
     },
     {
       "title": "The Unique Ability",
-      "content": "His power bends perception — making attacks miss, walls shift, and memories misalign."
+      "content": "His power bends perception  making attacks miss, walls shift, and memories misalign."
     },
     {
       "title": "The Siblings Struggle",
@@ -3205,7 +3205,7 @@
         "They lit candles in the hollowed altar, shadows flickering across stone saints worn faceless by time.",
         "Selene pressed her palms to broken pews, glimpsing faint memories of villagers who once prayed here.",
         "Daren unwrapped his burned knuckles, the skin raw from forcing his power against stone.",
-        "For a brief hour, they almost breathed like children again — exhausted, aching, but together."
+        "For a brief hour, they almost breathed like children again  exhausted, aching, but together."
       ]
     },
     {
@@ -3220,7 +3220,7 @@
     },
     {
       "title": "The Unique Ability",
-      "content": "The assassin revealed his gift — a distortion of perception:",
+      "content": "The assassin revealed his gift  a distortion of perception:",
       "list": [
         "Walls shifted, stretching like molten wax, making exits vanish.",
         "Every strike Daren threw collapsed into empty air as the man appeared elsewhere.",
@@ -3233,7 +3233,7 @@
       "content": "The battle turned desperate:",
       "list": [
         "Daren’s gravity cracked the chapel floor, but his blows struck only illusions.",
-        "Selene clutched her head, visions flashing in violent bursts — one moment she saw Daren fighting, the next he was crumpled and bleeding.",
+        "Selene clutched her head, visions flashing in violent bursts  one moment she saw Daren fighting, the next he was crumpled and bleeding.",
         "The assassin walked calmly through the chaos, knife gleaming faintly, each cut grazing closer.",
         "‘You’ll die blind,’ he promised. ‘Just like your parents.’"
       ]
@@ -3253,7 +3253,7 @@
 
 {
   "title": "Anchoring Reality",
-  "intro": "The assassin’s illusions tore the world apart, bending walls, twisting time, and making each breath feel like drowning in smoke. But Daren and Selene were not ordinary prey. Piece by piece, through grit and instinct, they began to unravel the trick. With every flicker when the assassin touched the ground, with every broken thread in his illusions, the siblings found their anchor. The tide began to turn, though victory was still an arm’s length away — and survival would demand more than raw power. It would demand trust.",
+  "intro": "The assassin’s illusions tore the world apart, bending walls, twisting time, and making each breath feel like drowning in smoke. But Daren and Selene were not ordinary prey. Piece by piece, through grit and instinct, they began to unravel the trick. With every flicker when the assassin touched the ground, with every broken thread in his illusions, the siblings found their anchor. The tide began to turn, though victory was still an arm’s length away  and survival would demand more than raw power. It would demand trust.",
   "highlights": [
     {
       "title": "Struggling to Stand",
@@ -3273,7 +3273,7 @@
     },
     {
       "title": "The Promise of Victory",
-      "content": "Though still wounded and cornered, the siblings glimpse the assassin’s fear — proof that the fight is not yet lost."
+      "content": "Though still wounded and cornered, the siblings glimpse the assassin’s fear  proof that the fight is not yet lost."
     }
   ],
   "sections": [
@@ -3284,14 +3284,14 @@
         "Daren stumbled through a wall that melted into smoke, coughing as he struck only air.",
         "Selene’s eyes bled faintly from overusing her gift, each vision splintering into dozens of lies.",
         "Knives of light grazed their skin, the assassin’s laughter echoing: ‘Children should not meddle with shadows.’",
-        "For a moment, they teetered on the brink of collapse — but then Selene’s voice cut through the chaos."
+        "For a moment, they teetered on the brink of collapse  but then Selene’s voice cut through the chaos."
       ]
     },
     {
       "title": "Selene’s Anchor",
       "content": "Selene forced herself to grip the real, even through the lies:",
       "list": [
-        "Her hands pressed to the broken altar, pulling memory after memory from its wood — weddings, prayers, voices long silenced.",
+        "Her hands pressed to the broken altar, pulling memory after memory from its wood  weddings, prayers, voices long silenced.",
         "She clung to those truths, weaving them into her vision, creating a lattice of real images the assassin’s illusions could not fully overwrite.",
         "‘Daren,’ she gasped, ‘trust me. What I see now is real. Everything else is smoke.’",
         "Through her, the flickers became clearer, each step of the assassin revealed when his foot struck the earth."
@@ -3324,7 +3324,7 @@
         "The assassin circled warily now, no longer walking so boldly through his illusions.",
         "Selene’s hands trembled, but her voice was steady: ‘He’s afraid. He knows we’ve seen him.’",
         "Daren raised his fists, blood dripping but eyes burning with focus. ‘Then let’s make him bleed too.’",
-        "The hunter’s smirk flickered — the first crack in his mask. The tide was shifting."
+        "The hunter’s smirk flickered  the first crack in his mask. The tide was shifting."
       ]
     }
   ]
@@ -3332,7 +3332,7 @@
 
 {
   "title": "Shattering the Illusion",
-  "intro": "The chapel shook with collapsing stone and broken light. The assassin’s illusions bent reality, but the siblings had found their anchor. Together, Daren and Selene fought with precision — not wild swings or frantic escapes, but deliberate strikes born of trust. The cult’s hunter had come to break them. Instead, he became the first to fall to their growing strength. The Circle’s message had failed. In his death, a new message was carved into the city: the children of ash could fight back.",
+  "intro": "The chapel shook with collapsing stone and broken light. The assassin’s illusions bent reality, but the siblings had found their anchor. Together, Daren and Selene fought with precision  not wild swings or frantic escapes, but deliberate strikes born of trust. The cult’s hunter had come to break them. Instead, he became the first to fall to their growing strength. The Circle’s message had failed. In his death, a new message was carved into the city: the children of ash could fight back.",
   "highlights": [
     {
       "title": "Pinning the Assassin",
@@ -3352,7 +3352,7 @@
     },
     {
       "title": "The Silence After",
-      "content": "The chapel stands ruined, but the siblings stand victorious — the first step on their path of vengeance."
+      "content": "The chapel stands ruined, but the siblings stand victorious  the first step on their path of vengeance."
     }
   ],
   "sections": [
@@ -3381,7 +3381,7 @@
       "content": "The siblings pressed their attack:",
       "list": [
         "Daren raised a dome of crushing gravity, forcing the assassin into one corner of the chapel.",
-        "Selene blinded him further by feeding him his own memories — mistakes, failures, faces of those he’d killed.",
+        "Selene blinded him further by feeding him his own memories  mistakes, failures, faces of those he’d killed.",
         "The hunter lashed out, but his strikes were clumsy, desperate, scraping against stone instead of flesh.",
         "‘You wanted blood,’ Selene hissed. ‘Now choke on your own.’"
       ]
@@ -3403,7 +3403,7 @@
         "The chapel was ruined, its roof caved and its walls fractured, but the candles still burned faintly in the altar.",
         "Selene leaned against her brother, exhausted but alive, her visions quieting for the first time since the attack began.",
         "Daren stared at the assassin’s body, his jaw tight, then spat on the stone: ‘Tell your Circle we’re coming.’",
-        "Above them, the city stirred — whispers spreading of two children who had killed a cult assassin."
+        "Above them, the city stirred  whispers spreading of two children who had killed a cult assassin."
       ]
     }
   ]
@@ -3411,7 +3411,7 @@
 
 {
   "title": "Ashes of Resolve",
-  "intro": "The assassin lay broken in the chapel ruins, his illusions shattered, his body crushed beneath the weight of Daren’s will. For the first time since the fire that took their parents, the siblings had not merely survived — they had chosen the fight and won. But victory brought no comfort. It brought questions, exhaustion, and the creeping realization that every step forward would only draw the Circle’s eyes closer. In the stillness after battle, Daren and Selene found themselves reshaping who they were — no longer children of ash, but something harder, sharper, forged by loss and rage.",
+  "intro": "The assassin lay broken in the chapel ruins, his illusions shattered, his body crushed beneath the weight of Daren’s will. For the first time since the fire that took their parents, the siblings had not merely survived  they had chosen the fight and won. But victory brought no comfort. It brought questions, exhaustion, and the creeping realization that every step forward would only draw the Circle’s eyes closer. In the stillness after battle, Daren and Selene found themselves reshaping who they were  no longer children of ash, but something harder, sharper, forged by loss and rage.",
   "highlights": [
     {
       "title": "The Ruined Chapel",
@@ -3427,7 +3427,7 @@
     },
     {
       "title": "A Path Forward",
-      "content": "They decide that hiding is no longer an option — they must hunt the Circle before it consumes them."
+      "content": "They decide that hiding is no longer an option  they must hunt the Circle before it consumes them."
     },
     {
       "title": "The First Clue",
@@ -3451,7 +3451,7 @@
       "list": [
         "Daren’s knuckles were split, his arms bruised from the recoil of his own power.",
         "Selene’s temples ached, blood dried at the corner of her eyes where her gift had strained her body.",
-        "They had food for only two days, and no safe haven left — the Circle’s reach meant nowhere was untouched.",
+        "They had food for only two days, and no safe haven left  the Circle’s reach meant nowhere was untouched.",
         "‘We killed one,’ Daren muttered. ‘But there are dozens more. Hundreds, maybe.’"
       ]
     },
@@ -3460,7 +3460,7 @@
       "content": "The siblings leaned on each other more than stone walls:",
       "list": [
         "Daren’s anger threatened to consume him, his power flaring in small tremors that cracked the chapel floor.",
-        "Selene reached for him, pulling from her memories — their mother singing, their father teaching Daren how to sharpen a knife.",
+        "Selene reached for him, pulling from her memories  their mother singing, their father teaching Daren how to sharpen a knife.",
         "‘We’re still us,’ she whispered, ‘no matter what they try to make us.’",
         "His fists loosened. He pressed his forehead to hers, silent but anchored."
       ]
@@ -3471,7 +3471,7 @@
       "list": [
         "‘If we keep running, they’ll burn down every street we touch,’ Daren said, voice iron.",
         "Selene nodded, her voice quiet but certain: ‘Then we don’t run. We find them before they find us.’",
-        "The assassin’s death was a warning — not to them, but to the Circle.",
+        "The assassin’s death was a warning  not to them, but to the Circle.",
         "From now on, their lives would not be about escape. They would be about pursuit."
       ]
     },
@@ -3480,7 +3480,7 @@
       "content": "Searching the assassin’s robes, they uncovered more than knives:",
       "list": [
         "A shard of obsidian carved with the same jagged sigil they’d seen beneath their burned home.",
-        "A list of names, most crossed out — their family’s included, with only Daren and Selene left unmarked.",
+        "A list of names, most crossed out  their family’s included, with only Daren and Selene left unmarked.",
         "And a note, written in hurried script: ‘Report to Veynar at the Hollow Market.’",
         "Selene closed her fist around the shard. Daren’s jaw tightened. They had a target now, and a place to start."
       ]
@@ -3490,7 +3490,7 @@
 
 {
   "title": "Shadows in Company",
-  "intro": "The assassin’s body was cold, the chapel’s silence heavier than the grave. Daren and Selene stepped out into the night with a shard of obsidian and a name: Veynar. But vengeance required more than rage. They needed food, weapons, masks strong enough to breathe through the city’s rotting veins. And in the alleys between ruin and smoke, they found a man who promised such things — a wanderer named Corin. His smile was easy, his hands quick, his stories practiced. To Daren, he was a risk. To Selene, he was a chance. Neither saw the shadow beneath his words. Not yet.",
+  "intro": "The assassin’s body was cold, the chapel’s silence heavier than the grave. Daren and Selene stepped out into the night with a shard of obsidian and a name: Veynar. But vengeance required more than rage. They needed food, weapons, masks strong enough to breathe through the city’s rotting veins. And in the alleys between ruin and smoke, they found a man who promised such things  a wanderer named Corin. His smile was easy, his hands quick, his stories practiced. To Daren, he was a risk. To Selene, he was a chance. Neither saw the shadow beneath his words. Not yet.",
   "highlights": [
     {
       "title": "Searching the Ash Streets",
@@ -3510,7 +3510,7 @@
     },
     {
       "title": "Foreshadowed Betrayal",
-      "content": "Corin leaves subtle cracks in his mask — a question asked too sharply, a glance that lingers too long on their obsidian shard."
+      "content": "Corin leaves subtle cracks in his mask  a question asked too sharply, a glance that lingers too long on their obsidian shard."
     }
   ],
   "sections": [
@@ -3531,7 +3531,7 @@
         "He stepped from a crumbling archway with hands raised, a grin spread across his face.",
         "‘Easy there. You look like you need more than a glare to keep you alive.’",
         "His pack bulged with supplies: dried meat, metal tools, even a half-working respirator.",
-        "He introduced himself as Corin — a wanderer, a trader, and, as he put it, ‘a man with a nose for survival.’"
+        "He introduced himself as Corin  a wanderer, a trader, and, as he put it, ‘a man with a nose for survival.’"
       ]
     },
     {
@@ -3548,7 +3548,7 @@
       "title": "An Uneasy Pact",
       "content": "Necessity forced their hand:",
       "list": [
-        "Corin claimed he knew the Hollow Market — its hidden entrances, its guards, its secret signals.",
+        "Corin claimed he knew the Hollow Market  its hidden entrances, its guards, its secret signals.",
         "He offered to guide them if they shared food and spared suspicion.",
         "After hours of silence on the road, Daren finally nodded once, though his eyes stayed cold.",
         "‘Good,’ Corin said, slinging his pack across his shoulder. ‘You’ll find I’m worth more alive than dead.’"
@@ -3560,7 +3560,7 @@
       "list": [
         "He eyed the obsidian shard too long, though he said nothing about it.",
         "When Daren asked about his past, his answers were too quick, too polished.",
-        "Selene noticed him murmuring a name in his sleep — Veynar.",
+        "Selene noticed him murmuring a name in his sleep  Veynar.",
         "The road stretched on, three souls walking together, but only two hearts beating in rhythm."
       ]
     }
@@ -3569,7 +3569,7 @@
 
 {
   "title": "The Road of Ash and Echoes",
-  "intro": "With Corin at their side, Daren and Selene left the city’s broken bones behind and walked into the ashlands. The road was no road at all—just a scar of blackened stone winding through fields of dead grass and hollow villages. Along the way, they learned to walk in uneasy rhythm with their new companion. Corin’s stories carried laughter, Selene’s questions carried hope, and Daren’s silence carried warning. But the road does not lie; it reveals. And in the long miles of dust and firelight, cracks began to spread, small enough to ignore, sharp enough to cut later.",
+  "intro": "With Corin at their side, Daren and Selene left the city’s broken bones behind and walked into the ashlands. The road was no road at alljust a scar of blackened stone winding through fields of dead grass and hollow villages. Along the way, they learned to walk in uneasy rhythm with their new companion. Corin’s stories carried laughter, Selene’s questions carried hope, and Daren’s silence carried warning. But the road does not lie; it reveals. And in the long miles of dust and firelight, cracks began to spread, small enough to ignore, sharp enough to cut later.",
   "highlights": [
     {
       "title": "Through the Ashlands",
@@ -3577,7 +3577,7 @@
     },
     {
       "title": "Corin’s Stories",
-      "content": "The rogue fills silence with tales of his travels — some humorous, some heroic, some too convenient to believe."
+      "content": "The rogue fills silence with tales of his travels  some humorous, some heroic, some too convenient to believe."
     },
     {
       "title": "Sibling Tension",
@@ -3585,11 +3585,11 @@
     },
     {
       "title": "Echoes of Other Summoners",
-      "content": "The road offers glimpses of other survivors — and the costs they’ve paid to bind demons to their will."
+      "content": "The road offers glimpses of other survivors  and the costs they’ve paid to bind demons to their will."
     },
     {
       "title": "The First Crack",
-      "content": "A slip in Corin’s mask — a name uttered too sharply, a look that lingers too long — plants a seed of doubt they cannot yet confront."
+      "content": "A slip in Corin’s mask  a name uttered too sharply, a look that lingers too long  plants a seed of doubt they cannot yet confront."
     }
   ],
   "sections": [
@@ -3600,14 +3600,14 @@
         "Fields of wheat reduced to brittle stalks that crumbled at a touch.",
         "An overturned wagon in the road, its wood gnawed hollow by fire and weather.",
         "Villages half-abandoned, doors swinging open on rusted hinges, children’s drawings scrawled in ash on crumbling walls.",
-        "Selene paused once, staring at a doll left in the dirt — its glass eyes cracked but still staring skyward."
+        "Selene paused once, staring at a doll left in the dirt  its glass eyes cracked but still staring skyward."
       ]
     },
     {
       "title": "Corin’s Stories",
       "content": "Corin hated silence, and filled it eagerly:",
       "list": [
-        "He spoke of gambling dens where he’d won his first blade — and lost three fingers he later ‘borrowed back.’",
+        "He spoke of gambling dens where he’d won his first blade  and lost three fingers he later ‘borrowed back.’",
         "He described outwitting guards by pretending to be drunk, only to actually get drunk halfway through the act.",
         "Selene laughed, genuine and tired, letting the sound ring against the dead fields.",
         "Daren said nothing, watching Corin’s eyes rather than his words, memorizing each slip of tongue."
@@ -3648,7 +3648,7 @@
 
 {
   "title": "Ashstorm Crossing",
-  "intro": "On the third night, the horizon turned black. Not with soldiers, nor with demons, but with the sky itself. The ashstorm rolled across the plains with a hunger that swallowed sound and light, a wall of fire-choked dust that scraped bone and split lungs. To turn back was death, to stand still was worse. The only path was through. Daren, Selene, and Corin braced themselves for nature’s trial, and in its fury the balance between them shifted once more. When the storm broke, they stood at the edge of the Hollow Market — and at the edge of betrayal.",
+  "intro": "On the third night, the horizon turned black. Not with soldiers, nor with demons, but with the sky itself. The ashstorm rolled across the plains with a hunger that swallowed sound and light, a wall of fire-choked dust that scraped bone and split lungs. To turn back was death, to stand still was worse. The only path was through. Daren, Selene, and Corin braced themselves for nature’s trial, and in its fury the balance between them shifted once more. When the storm broke, they stood at the edge of the Hollow Market  and at the edge of betrayal.",
   "highlights": [
     {
       "title": "The Storm Approaches",
@@ -3668,7 +3668,7 @@
     },
     {
       "title": "The Market Revealed",
-      "content": "At dawn, the storm recedes, unveiling the Hollow Market — a place of smoke, secrets, and whispers of the Circle."
+      "content": "At dawn, the storm recedes, unveiling the Hollow Market  a place of smoke, secrets, and whispers of the Circle."
     }
   ],
   "sections": [
@@ -3699,7 +3699,7 @@
         "He shouted directions, leading them between collapsed barns and half-buried wagons.",
         "At times, he vanished into the haze, only to reappear ahead with a mocking grin.",
         "‘Keep up, or I’ll leave you for the wind!’ he roared, though his arm caught Selene when she stumbled.",
-        "Daren hated him more in that moment — because he was right, because he was useful, because Selene trusted him."
+        "Daren hated him more in that moment  because he was right, because he was useful, because Selene trusted him."
       ]
     },
     {
@@ -3717,7 +3717,7 @@
       "content": "At last, the storm broke:",
       "list": [
         "The ash fell silent, settling like gray snow across their shoulders.",
-        "Before them stretched the Hollow Market — a cavernous pit carved into the earth, smoke rising from hundreds of hidden fires.",
+        "Before them stretched the Hollow Market  a cavernous pit carved into the earth, smoke rising from hundreds of hidden fires.",
         "Tents of bone and hide clung to the edges, traders shouting in tongues both human and not.",
         "Selene whispered, awe and dread in her voice: ‘This is where the Circle breathes.’"
       ]
@@ -3727,7 +3727,7 @@
 
 {
   "title": "Blades in the Pit",
-  "intro": "The Hollow Market was not a marketplace in the human sense. It was a carnival of whispers, smoke, and silent trades. Beneath it all, hidden behind bone-carved gates, lay the Pits — great hollowed arenas where blood bought power and spectacle bought loyalty. Here, demonmasters tested their slaves, warriors proved their worth, and challengers rose or died in firelit sand. Daren and Selene, pressed by the Market’s watchful eyes, found themselves in such a place. And when a swordsman demon called them weaklings unfit for the Circle’s attention, Daren stepped into the arena — horn broken, power silenced, his only weapon a borrowed blade and his sister’s guiding visions.",
+  "intro": "The Hollow Market was not a marketplace in the human sense. It was a carnival of whispers, smoke, and silent trades. Beneath it all, hidden behind bone-carved gates, lay the Pits  great hollowed arenas where blood bought power and spectacle bought loyalty. Here, demonmasters tested their slaves, warriors proved their worth, and challengers rose or died in firelit sand. Daren and Selene, pressed by the Market’s watchful eyes, found themselves in such a place. And when a swordsman demon called them weaklings unfit for the Circle’s attention, Daren stepped into the arena  horn broken, power silenced, his only weapon a borrowed blade and his sister’s guiding visions.",
   "highlights": [
     {
       "title": "The Pits of the Market",
@@ -3777,7 +3777,7 @@
       "list": [
         "The demon moved faster than his eyes could follow, blade whistling through the air.",
         "Pain exploded across Daren’s skull as the weapon clipped his horn, shattering the jagged bone to its base.",
-        "His gravity flared once — then died, cut off as though a part of his soul had been severed.",
+        "His gravity flared once  then died, cut off as though a part of his soul had been severed.",
         "The crowd howled with laughter, shouting bets, already certain of his death."
       ]
     },
@@ -3786,9 +3786,9 @@
       "content": "Selene’s scream cut through the noise:",
       "list": [
         "Her eyes burned silver, visions pouring like a river she could barely hold back.",
-        "She saw flashes — the demon’s next steps, the angle of his blade, the breath before he struck.",
+        "She saw flashes  the demon’s next steps, the angle of his blade, the breath before he struck.",
         "‘Left! Duck low! Strike his knee!’ she cried, her voice echoing in Daren’s ears.",
-        "For the first time, her visions weren’t only memory — they were survival written in real time."
+        "For the first time, her visions weren’t only memory  they were survival written in real time."
       ]
     },
     {
@@ -3806,7 +3806,7 @@
 
 {
   "title": "Blades in the Pit",
-  "intro": "The Hollow Market was not a marketplace in the human sense. It was a carnival of whispers, smoke, and silent trades. Beneath it all, hidden behind bone-carved gates, lay the Pits — great hollowed arenas where blood bought power and spectacle bought loyalty. Here, demonmasters tested their slaves, warriors proved their worth, and challengers rose or died in firelit sand. Daren and Selene, pressed by the Market’s watchful eyes, found themselves in such a place. And when a swordsman demon called them weaklings unfit for the Circle’s attention, Daren stepped into the arena — horn broken, power silenced, his only weapon a borrowed blade and his sister’s guiding visions.",
+  "intro": "The Hollow Market was not a marketplace in the human sense. It was a carnival of whispers, smoke, and silent trades. Beneath it all, hidden behind bone-carved gates, lay the Pits  great hollowed arenas where blood bought power and spectacle bought loyalty. Here, demonmasters tested their slaves, warriors proved their worth, and challengers rose or died in firelit sand. Daren and Selene, pressed by the Market’s watchful eyes, found themselves in such a place. And when a swordsman demon called them weaklings unfit for the Circle’s attention, Daren stepped into the arena  horn broken, power silenced, his only weapon a borrowed blade and his sister’s guiding visions.",
   "highlights": [
     {
       "title": "The Pits of the Market",
@@ -3856,7 +3856,7 @@
       "list": [
         "The demon moved faster than his eyes could follow, blade whistling through the air.",
         "Pain exploded across Daren’s skull as the weapon clipped his horn, shattering the jagged bone to its base.",
-        "His gravity flared once — then died, cut off as though a part of his soul had been severed.",
+        "His gravity flared once  then died, cut off as though a part of his soul had been severed.",
         "The crowd howled with laughter, shouting bets, already certain of his death."
       ]
     },
@@ -3865,9 +3865,9 @@
       "content": "Selene’s scream cut through the noise:",
       "list": [
         "Her eyes burned silver, visions pouring like a river she could barely hold back.",
-        "She saw flashes — the demon’s next steps, the angle of his blade, the breath before he struck.",
+        "She saw flashes  the demon’s next steps, the angle of his blade, the breath before he struck.",
         "‘Left! Duck low! Strike his knee!’ she cried, her voice echoing in Daren’s ears.",
-        "For the first time, her visions weren’t only memory — they were survival written in real time."
+        "For the first time, her visions weren’t only memory  they were survival written in real time."
       ]
     },
     {
@@ -3885,7 +3885,7 @@
 
 {
   "title": "Ash and Steel",
-  "intro": "Blood stained the sand of the Pit, but it was not Daren’s. The swordsman demon, beaten and bound, fell silent before the siblings’ will. His master — a cultist who had jeered the loudest — begged for mercy, and received none. The crowd roared, not with mockery now, but with something closer to respect. For a moment, Daren and Selene were no longer prey. They were predators who had carved their place with steel and vision. And when the dust settled, the Hollow Market opened its gates — a labyrinth of trade and whispers where power was bought with more than coin. Armed with victory and new knowledge, they turned their steps once more to vengeance, the road calling them beyond the Market’s smoke.",
+  "intro": "Blood stained the sand of the Pit, but it was not Daren’s. The swordsman demon, beaten and bound, fell silent before the siblings’ will. His master  a cultist who had jeered the loudest  begged for mercy, and received none. The crowd roared, not with mockery now, but with something closer to respect. For a moment, Daren and Selene were no longer prey. They were predators who had carved their place with steel and vision. And when the dust settled, the Hollow Market opened its gates  a labyrinth of trade and whispers where power was bought with more than coin. Armed with victory and new knowledge, they turned their steps once more to vengeance, the road calling them beyond the Market’s smoke.",
   "highlights": [
     {
       "title": "The Demon Conquered",
@@ -3935,7 +3935,7 @@
       "list": [
         "Chants of their names rose in strange accents, echoing across the cavern walls.",
         "Traders nodded as they passed, eyes sharp but filled with a wary respect.",
-        "Even Corin’s smile changed — thinner now, calculating, as though measuring their worth anew.",
+        "Even Corin’s smile changed  thinner now, calculating, as though measuring their worth anew.",
         "Selene whispered, ‘We’ve painted a target on ourselves.’ Daren only muttered back, ‘Good.’"
       ]
     },
@@ -3964,7 +3964,7 @@
 
 {
   "title": "The Ashroad",
-  "intro": "Leaving the Hollow Market behind, Daren and Selene step onto the ashroad — a scar that winds through landscapes both poisoned and alive in ways no human hand could have intended. The path to Malrec’s fortress is not just a road but a trial, lined with flora that drinks from blood and fauna that thrives on the weakness of travelers. Every step away from the Market feels like stepping deeper into another world, one that hums with danger, beauty, and secrets too old to be named.",
+  "intro": "Leaving the Hollow Market behind, Daren and Selene step onto the ashroad  a scar that winds through landscapes both poisoned and alive in ways no human hand could have intended. The path to Malrec’s fortress is not just a road but a trial, lined with flora that drinks from blood and fauna that thrives on the weakness of travelers. Every step away from the Market feels like stepping deeper into another world, one that hums with danger, beauty, and secrets too old to be named.",
   "highlights": [
     {
       "title": "The Blasted Trees",
@@ -3976,7 +3976,7 @@
     },
     {
       "title": "The Living Pools",
-      "content": "Pools of liquid shimmer red and gold in shallow craters, but are alive — colonies of organisms that breathe like lungs, exhaling toxic fumes."
+      "content": "Pools of liquid shimmer red and gold in shallow craters, but are alive  colonies of organisms that breathe like lungs, exhaling toxic fumes."
     },
     {
       "title": "Whispers in the Wind",
@@ -4003,7 +4003,7 @@
       "content": "The road is not empty for long:",
       "list": [
         "Ash-lizards crawl from cracks in the road, their glassy spines catching the faint light.",
-        "They circle in packs, moving silently except for their cries — a sound like shattered glass rolling over stone.",
+        "They circle in packs, moving silently except for their cries  a sound like shattered glass rolling over stone.",
         "Daren draws his blade, ready to strike, but the creatures scatter at Selene’s sudden scream.",
         "‘They only hunt weakness,’ she realizes, eyes wide. ‘They thought we were dying.’"
       ]
@@ -4013,7 +4013,7 @@
       "content": "The land itself breathes against them:",
       "list": [
         "Crimson pools shimmer in shallow craters, glowing faintly under the pale sun.",
-        "When Daren leans close, the liquid ripples — expanding and contracting like lungs.",
+        "When Daren leans close, the liquid ripples  expanding and contracting like lungs.",
         "A sudden exhale sends a plume of golden gas into the air, stinging their eyes and throats.",
         "Selene yanks him back just in time, muttering, ‘Even the water here wants to kill us.’"
       ]
@@ -4025,14 +4025,14 @@
         "As they huddle beneath fractured stone for shelter, the wind carries voices over the plains.",
         "Selene hears her mother’s lullaby, soft and sweet, though impossible in this dead land.",
         "Daren insists it’s the wind playing tricks, but he clutches his sword tighter, not sleeping.",
-        "When morning comes, footprints circle their camp — too small for lizards, too human to ignore."
+        "When morning comes, footprints circle their camp  too small for lizards, too human to ignore."
       ]
     },
     {
       "title": "The Shadow of Malrec",
       "content": "The destination begins to appear:",
       "list": [
-        "Far on the horizon, a jagged silhouette rises — half mountain, half fortress, carved with cruel geometry.",
+        "Far on the horizon, a jagged silhouette rises  half mountain, half fortress, carved with cruel geometry.",
         "Lightning flickers around its peak, illuminating spires that look like teeth biting into the sky.",
         "Selene stares in silence, clutching her obsidian shard. ‘He’s waiting,’ she says simply.",
         "Daren says nothing, but the weight in his chest grows heavier with each step closer."
@@ -4043,7 +4043,7 @@
 
 {
   "title": "The Dream of Malrec",
-  "intro": "Exhausted and frayed by the road, the siblings make camp beneath the fractured shell of an ancient archway. For the first time since leaving the Hollow Market, sleep takes them both — and in that sleep, Malrec comes. The fortress lord does not send a scout or a beast but himself, stepping into their minds like a storm breaking a door. In the dream, there is no hiding, no strength, no escape. There is only the taste of his power, and the crushing reminder of how small they are before him. When dawn comes, they wake with wounds that should not be possible, and the looming fortress gates rise before them.",
+  "intro": "Exhausted and frayed by the road, the siblings make camp beneath the fractured shell of an ancient archway. For the first time since leaving the Hollow Market, sleep takes them both  and in that sleep, Malrec comes. The fortress lord does not send a scout or a beast but himself, stepping into their minds like a storm breaking a door. In the dream, there is no hiding, no strength, no escape. There is only the taste of his power, and the crushing reminder of how small they are before him. When dawn comes, they wake with wounds that should not be possible, and the looming fortress gates rise before them.",
   "highlights": [
     {
       "title": "The Archway Camp",
@@ -4059,7 +4059,7 @@
     },
     {
       "title": "The Mark of Defeat",
-      "content": "Selene’s arm burns with a phantom wound, and Daren wakes coughing blood — proof the dream was no illusion."
+      "content": "Selene’s arm burns with a phantom wound, and Daren wakes coughing blood  proof the dream was no illusion."
     },
     {
       "title": "The Fortress Gates",
@@ -4074,7 +4074,7 @@
         "The archway rises from the ash like the rib of some ancient beast, carved with faded runes.",
         "They settle beneath it, using broken stones for shelter, sharing silence more than words.",
         "Selene clutches the obsidian shard close, whispering prayers she barely believes in.",
-        "Sleep comes like falling into water — too fast, too deep, too heavy."
+        "Sleep comes like falling into water  too fast, too deep, too heavy."
       ]
     },
     {
@@ -4082,7 +4082,7 @@
       "content": "The dream begins with sound:",
       "list": [
         "Footsteps echo in the dark, each one shaking the black ground beneath them.",
-        "The mist parts, revealing Malrec — tall, cloaked in ash, his eyes silver fire that sees through skin to the soul.",
+        "The mist parts, revealing Malrec  tall, cloaked in ash, his eyes silver fire that sees through skin to the soul.",
         "‘So,’ his voice ripples, low and amused, ‘the little half-bloods dare to walk my road.’",
         "Daren and Selene feel their limbs heavy, as if the dream itself bows before him."
       ]
@@ -4092,7 +4092,7 @@
       "content": "They try to resist, but the dream belongs to him:",
       "list": [
         "Daren lifts his blade, shouting as he channels what gravity he can, but Malrec waves a hand and crushes him into the ground.",
-        "Selene summons visions — thousands of mirrored Malrecs, twisting and breaking — but the real one cuts through them with a single stroke.",
+        "Selene summons visions  thousands of mirrored Malrecs, twisting and breaking  but the real one cuts through them with a single stroke.",
         "His presence alone suffocates, a pressure like the air has turned to stone around their lungs.",
         "‘Children playing with borrowed power,’ he whispers, striking them down with effortless cruelty."
       ]
@@ -4103,7 +4103,7 @@
       "list": [
         "Selene wakes with her arm blistered and raw, the same wound Malrec left in the dream.",
         "Daren coughs blood into the dirt, his chest aching where Malrec’s hand crushed him.",
-        "Neither speaks for a long time — both know this was no vision but a deliberate strike.",
+        "Neither speaks for a long time  both know this was no vision but a deliberate strike.",
         "‘He’s waiting,’ Selene finally says, voice hollow. Daren only nods, jaw tight, eyes hard."
       ]
     },
@@ -4122,7 +4122,7 @@
 
 {
   "title": "The Quiz of Chains",
-  "intro": "The gates of Malrec’s fortress are no ordinary iron and stone. They breathe, whisper, and test those who dare approach. Chains thick as trees shift and groan, forming a mouth that speaks in a dozen voices at once. To pass, Daren and Selene are not asked for strength, nor for sacrifice, but for loyalty — to Veynar, the master who sits above Malrec. The quiz is mocking, cruel, and impossible to win honestly. Yet survival demands an answer.",
+  "intro": "The gates of Malrec’s fortress are no ordinary iron and stone. They breathe, whisper, and test those who dare approach. Chains thick as trees shift and groan, forming a mouth that speaks in a dozen voices at once. To pass, Daren and Selene are not asked for strength, nor for sacrifice, but for loyalty  to Veynar, the master who sits above Malrec. The quiz is mocking, cruel, and impossible to win honestly. Yet survival demands an answer.",
   "highlights": [
     {
       "title": "The Living Gates",
@@ -4138,7 +4138,7 @@
     },
     {
       "title": "The Siblings’ Deception",
-      "content": "Daren spits blood, Selene clenches her shard — and together, they lie, swearing loyalty to Veynar."
+      "content": "Daren spits blood, Selene clenches her shard  and together, they lie, swearing loyalty to Veynar."
     },
     {
       "title": "The Chains Unlock",
@@ -4201,7 +4201,7 @@
 
 {
   "title": "The First Altar: The Ice Devil",
-  "intro": "Inside Malrec’s fortress, the air is colder, thinner, almost unwilling to be breathed. The halls lead them to a chamber of frost and bone, where the first altar pulses with pale blue light. Bound to it is a demon of ice — the Ice Devil — whose power feeds directly into Malrec. To weaken him, the siblings must break the altar and slay its guardian. But the Ice Devil is no ordinary beast: it is cunning, armored, and perfectly built to smother their strengths.",
+  "intro": "Inside Malrec’s fortress, the air is colder, thinner, almost unwilling to be breathed. The halls lead them to a chamber of frost and bone, where the first altar pulses with pale blue light. Bound to it is a demon of ice  the Ice Devil  whose power feeds directly into Malrec. To weaken him, the siblings must break the altar and slay its guardian. But the Ice Devil is no ordinary beast: it is cunning, armored, and perfectly built to smother their strengths.",
   "highlights": [
     {
       "title": "The Frozen Chamber",
@@ -4272,7 +4272,7 @@
         "Each time Daren drives his sword into the demon’s chest, the ice melts and reforms, knitting the wound shut.",
         "Selene burns her voice raw shouting warnings, but the devil shrugs off her attempts to disorient it.",
         "Daren collapses briefly, panting, his blade steaming with frost.",
-        "The devil stands tall, unbroken, smirking with its frozen jaws — the altar pulsing brighter with every heartbeat."
+        "The devil stands tall, unbroken, smirking with its frozen jaws  the altar pulsing brighter with every heartbeat."
       ]
     }
   ]
@@ -4310,8 +4310,8 @@
       "list": [
         "The Ice Devil falters mid-strike, leaving a thin fracture in its ice walls.",
         "She plunges her vision through, screaming as shards cut into her mind like knives.",
-        "For a heartbeat, she sees not the present but the creature’s memories — the way it was bound, the secret of its body.",
-        "Her voice cracks as she shouts: ‘Its ankle! Daren — its heart is in its ankle!’"
+        "For a heartbeat, she sees not the present but the creature’s memories  the way it was bound, the secret of its body.",
+        "Her voice cracks as she shouts: ‘Its ankle! Daren  its heart is in its ankle!’"
       ]
     },
     {
@@ -4351,7 +4351,7 @@
         "Selene’s eyes bleed freely, her vision blurred, the shard trembling in her hands.",
         "Daren’s hands are frozen to his hilt, skin peeling as he tears them free.",
         "Both breathe raggedly, surrounded by broken shards of the devil’s body.",
-        "For the first time, silence fills the fortress — but it is the silence before the next storm."
+        "For the first time, silence fills the fortress  but it is the silence before the next storm."
       ]
     }
   ]
@@ -4375,7 +4375,7 @@
     },
     {
       "title": "Veynar’s Voice",
-      "content": "A whisper slithers through the hall — not memory, but the living echo of Veynar himself."
+      "content": "A whisper slithers through the hall  not memory, but the living echo of Veynar himself."
     },
     {
       "title": "A Warning",
@@ -4388,7 +4388,7 @@
       "content": "The fortress walls themselves tell stories:",
       "list": [
         "Painted in what looks like dried blood, murals stretch from floor to ceiling.",
-        "They show Malrec as a man — tall, armored — kneeling before a towering figure cloaked in shadow: Veynar.",
+        "They show Malrec as a man  tall, armored  kneeling before a towering figure cloaked in shadow: Veynar.",
         "Chains spill from Veynar’s hand into Malrec’s chest, piercing him as he bows.",
         "Selene shudders. ‘He wasn’t born a demon. He chose this.’"
       ]
@@ -4407,7 +4407,7 @@
       "title": "The Origin of the Fortress",
       "content": "Further within, carvings reveal the truth of the fortress itself:",
       "list": [
-        "Once, this mountain was a city of men — a citadel of scholars and masons.",
+        "Once, this mountain was a city of men  a citadel of scholars and masons.",
         "But Malrec, newly bound, drowned it in ice and blood, hollowing the mountain into a fortress.",
         "The bones of its citizens line the walls, frozen into foundations as eternal mortar.",
         "Selene whispers, ‘Every stone here is a grave.’"
@@ -4438,7 +4438,7 @@
 
 {
   "title": "Doubt in the Dark",
-  "intro": "The fortress breathes around them, alive with whispers of Malrec’s pact and Veynar’s shadow. The Ice Devil’s death has won them ground, yet in victory comes a deeper fear: every altar they break sharpens Veynar’s gaze. Daren and Selene retreat into a shattered chapel within the fortress, where fractured stained glass filters weak light through red and black shards. Here, brother and sister confront not a demon, but themselves, asking if their path is righteous—or doomed.",
+  "intro": "The fortress breathes around them, alive with whispers of Malrec’s pact and Veynar’s shadow. The Ice Devil’s death has won them ground, yet in victory comes a deeper fear: every altar they break sharpens Veynar’s gaze. Daren and Selene retreat into a shattered chapel within the fortress, where fractured stained glass filters weak light through red and black shards. Here, brother and sister confront not a demon, but themselves, asking if their path is righteousor doomed.",
   "highlights": [
     {
       "title": "The Cracked Chapel",
@@ -4487,7 +4487,7 @@
       "list": [
         "‘And when Malrec is gone? What if Veynar simply takes his place? What if we’re cutting chains only to bind ourselves tighter?’",
         "She grips her temples as echoes of Veynar’s whisper crawl through her memory. ‘I can feel him, Daren. Watching us. Smiling.’",
-        "Her fear isn’t weakness—it’s clarity. She knows too well what it means to be a pawn in someone else’s design."
+        "Her fear isn’t weaknessit’s clarity. She knows too well what it means to be a pawn in someone else’s design."
       ]
     },
     {
@@ -4515,7 +4515,7 @@
 
 {
   "title": "The Blood Devil’s Altar",
-  "intro": "The chapel’s warmth vanishes the moment they step into the next chamber. The air is thick, coppery, every breath like drinking from a wound. At the altar stands the Blood Devil, a towering figure whose veins glow scarlet, skin split by rivers of boiling blood. With every step, streams burst from his arms and whip into high-pressured jets, cutting through stone like paper. This battle is not endurance—it is survival by wit and precision, where Daren and Selene’s bond is tested against blood itself.",
+  "intro": "The chapel’s warmth vanishes the moment they step into the next chamber. The air is thick, coppery, every breath like drinking from a wound. At the altar stands the Blood Devil, a towering figure whose veins glow scarlet, skin split by rivers of boiling blood. With every step, streams burst from his arms and whip into high-pressured jets, cutting through stone like paper. This battle is not enduranceit is survival by wit and precision, where Daren and Selene’s bond is tested against blood itself.",
   "highlights": [
     {
       "title": "The Chamber of Veins",
@@ -4527,7 +4527,7 @@
     },
     {
       "title": "Daren’s Risk",
-      "content": "By applying gravity to his own blood, he forces his heart to pump harder, making himself faster and stronger—but at the cost of his life."
+      "content": "By applying gravity to his own blood, he forces his heart to pump harder, making himself faster and strongerbut at the cost of his life."
     },
     {
       "title": "Selene’s Vision",
@@ -4558,7 +4558,7 @@
       "list": [
         "The Blood Devil roars, whipping out streams of compressed blood that slice the stone floor into ribbons.",
         "One stream grazes Daren’s arm, burning as though acid had seared his flesh.",
-        "Selene yells, ‘Don’t let it touch you—it clings like tar!’",
+        "Selene yells, ‘Don’t let it touch youit clings like tar!’",
         "The devil laughs, his voice bubbling with liquid, ‘Every drop you spill, I claim.’"
       ]
     },
@@ -4566,10 +4566,10 @@
       "title": "Daren’s Risk",
       "content": "Daren pushes his limits:",
       "list": [
-        "He plants his feet, clenches his fists, and forces his gravity inward—not on the battlefield, but on himself.",
+        "He plants his feet, clenches his fists, and forces his gravity inwardnot on the battlefield, but on himself.",
         "His veins bulge, blood racing faster, every heartbeat thundering like a drum.",
         "Pain shoots through his chest, but with it comes speed and strength beyond his normal reach.",
-        "Selene gasps, realizing what he’s done. ‘Daren—you’ll burst your own heart!’",
+        "Selene gasps, realizing what he’s done. ‘Darenyou’ll burst your own heart!’",
         "‘Then I’ll burst his first!’ he spits, charging forward."
       ]
     },
@@ -4578,8 +4578,8 @@
       "content": "Her role sharpens the fight:",
       "list": [
         "Selene’s eyes glaze white as she reaches into the Blood Devil’s memory, forcing herself through the river of his thoughts.",
-        "She sees each attack before it lands—the whip of blood, the lunge, the claw raised high.",
-        "‘Left now! Duck! His shoulder—no, his hand!’",
+        "She sees each attack before it landsthe whip of blood, the lunge, the claw raised high.",
+        "‘Left now! Duck! His shoulderno, his hand!’",
         "Daren moves as if she pulls his strings, weaving through strikes that would have carved him open."
       ]
     },
@@ -4587,7 +4587,7 @@
       "title": "The Heart in His Hands",
       "content": "The discovery breaks the stalemate:",
       "list": [
-        "Selene’s vision dives deeper into the demon’s memory—rituals of sacrifice, chains piercing flesh, a pulsing heart severed from chest and sealed into clawed hands.",
+        "Selene’s vision dives deeper into the demon’s memoryrituals of sacrifice, chains piercing flesh, a pulsing heart severed from chest and sealed into clawed hands.",
         "‘His hands, Daren! His heart beats in his hands!’",
         "The Blood Devil snarls, clenching his claws as if to hide the truth, but blood gushes between his fingers with every pulse."
       ]
@@ -4600,7 +4600,7 @@
         "With a roar, he leaps, slamming his gravity into his own body to propel himself like a falling star.",
         "The sword cleaves through the Blood Devil’s claw, exploding the heart hidden within in a shower of red mist.",
         "The altar screams as veins retract, walls convulsing, before shattering into silence.",
-        "Both siblings collapse to their knees, drenched in blood, their breathing ragged—but alive."
+        "Both siblings collapse to their knees, drenched in blood, their breathing raggedbut alive."
       ]
     }
   ]
@@ -4608,7 +4608,7 @@
 
 {
   "title": "Blood on Their Hands",
-  "intro": "The Blood Devil lies in ruin, his altar broken, veins shriveled to dust. But victory has a cost. Daren’s reckless gamble with his gravity leaves him trembling, his blood surging like fire, and Selene can see he’s closer to death than triumph. They stagger into the fortress’s deeper halls, where silence becomes tension once again—because every altar destroyed stirs something darker awake. And in the distance, whispers coil around a new name: the Bone Devil.",
+  "intro": "The Blood Devil lies in ruin, his altar broken, veins shriveled to dust. But victory has a cost. Daren’s reckless gamble with his gravity leaves him trembling, his blood surging like fire, and Selene can see he’s closer to death than triumph. They stagger into the fortress’s deeper halls, where silence becomes tension once againbecause every altar destroyed stirs something darker awake. And in the distance, whispers coil around a new name: the Bone Devil.",
   "highlights": [
     {
       "title": "Aftermath of the Battle",
@@ -4659,7 +4659,7 @@
         "She tears strips from her cloak to bind the bleeding cuts on his arm.",
         "Her hands tremble, though she hides it beneath anger. ‘I can’t predict *you* when you’re trying to kill yourself.’",
         "Daren leans back against the wall, exhaling. ‘Then I’ll just have to trust you to keep me alive.’",
-        "For a fleeting moment, amid the ruins of blood and bone, they share a look—one of unspoken reliance."
+        "For a fleeting moment, amid the ruins of blood and bone, they share a lookone of unspoken reliance."
       ]
     },
     {
@@ -4687,7 +4687,7 @@
 
 {
   "title": "The Bone Devil’s Altar: Phase One",
-  "intro": "The fortress leads Daren and Selene into a cavernous hall carved from marrow-white stone. The walls are latticed with ribcages, femurs, and skulls, all fused together into a grotesque cathedral of bone. At the center looms the Bone Devil—towering, armored in plates of jagged ivory, his grin wide and unblinking. His altar thrums with pale light, and as he steps forward, the chamber erupts into a battlefield of splintering bone. The first phase of the fight begins, and already the siblings are pressed to their limits.",
+  "intro": "The fortress leads Daren and Selene into a cavernous hall carved from marrow-white stone. The walls are latticed with ribcages, femurs, and skulls, all fused together into a grotesque cathedral of bone. At the center looms the Bone Deviltowering, armored in plates of jagged ivory, his grin wide and unblinking. His altar thrums with pale light, and as he steps forward, the chamber erupts into a battlefield of splintering bone. The first phase of the fight begins, and already the siblings are pressed to their limits.",
   "highlights": [
     {
       "title": "The Altar of Bone",
@@ -4716,7 +4716,7 @@
       "content": "The siblings step into the chamber:",
       "list": [
         "The ceiling arches high, formed from the spines of giants, each vertebra as large as a man.",
-        "The floor crunches underfoot—thousands of shattered finger bones carpeting the ground.",
+        "The floor crunches underfootthousands of shattered finger bones carpeting the ground.",
         "At the altar, a figure rises, taller than any they’ve faced yet. The Bone Devil grins with teeth too sharp, too many.",
         "His voice rattles like a jawbone: ‘You are marrow. You are meat. You will be ground into dust.’"
       ]
@@ -4756,7 +4756,7 @@
       "content": "Her foresight keeps them alive:",
       "list": [
         "Her eyes flash white, diving into the Bone Devil’s memories of battles fought across centuries.",
-        "‘Left rib—he’s swinging low! Above you! Behind!’",
+        "‘Left ribhe’s swinging low! Above you! Behind!’",
         "Daren ducks and rolls, barely avoiding spears that would have skewered him.",
         "But the Bone Devil slows his strikes, twisting unpredictably. He’s *learning* her rhythm.",
         "Selene gasps. ‘He’s adapting…’"
@@ -4816,8 +4816,8 @@
       "content": "They strain against his power:",
       "list": [
         "Daren slams gravity downward, crushing the incoming shards into dust, but blood sprays from his lips with the effort.",
-        "Selene’s eyes flash white, but the memories she reads overlap chaotically—the Bone Devil has fought too many battles, his tactics branching like a tree of nightmares.",
-        "‘I can’t see clearly,’ she gasps, clutching her temples. ‘Too much—too fast!’",
+        "Selene’s eyes flash white, but the memories she reads overlap chaoticallythe Bone Devil has fought too many battles, his tactics branching like a tree of nightmares.",
+        "‘I can’t see clearly,’ she gasps, clutching her temples. ‘Too muchtoo fast!’",
         "The Bone Devil stomps forward, wings spread wide, voice booming: ‘You are nothing but marrow to grind!’"
       ]
     },
@@ -4835,7 +4835,7 @@
       "title": "A New Strategy",
       "content": "Their plan forms under pressure:",
       "list": [
-        "Selene steadies herself, breathing slow. ‘His power spread when he transformed. Wings, armor, claws—he can’t focus all of it at once.’",
+        "Selene steadies herself, breathing slow. ‘His power spread when he transformed. Wings, armor, clawshe can’t focus all of it at once.’",
         "Her eyes flare white again. ‘If we force him to overuse the wings, the rest of him will slow.’",
         "Daren wipes blood from his mouth, smirking through the pain. ‘Then I’ll clip him.’",
         "They rise together from cover, prepared for phase three."
@@ -4846,7 +4846,7 @@
 
 {
   "title": "The Bone Devil’s Final Form",
-  "intro": "The Bone Devil writhes, his cracked body shedding shards of old bone like a husk. From within, a darker, leaner form emerges—his true self, honed by centuries of torment and bloodshed. Wings sharpen into spears, his spine elongates into a segmented tail tipped with a serrated blade, and his eyes burn with endless hunger. Daren and Selene face not just a demon, but the distilled essence of death itself.",
+  "intro": "The Bone Devil writhes, his cracked body shedding shards of old bone like a husk. From within, a darker, leaner form emergeshis true self, honed by centuries of torment and bloodshed. Wings sharpen into spears, his spine elongates into a segmented tail tipped with a serrated blade, and his eyes burn with endless hunger. Daren and Selene face not just a demon, but the distilled essence of death itself.",
   "highlights": [
     {
       "title": "Shedding the Shell",
@@ -4896,7 +4896,7 @@
       "list": [
         "The Bone Devil launches forward, tail, claws, and wings attacking in a storm of death.",
         "Daren blocks one strike, only to feel the sting of another claw rake his side.",
-        "Selene cries out warnings, but her voice trembles—there are too many angles at once.",
+        "Selene cries out warnings, but her voice tremblesthere are too many angles at once.",
         "‘He’s everywhere!’ Daren shouts, blood dripping down his arm."
       ]
     },
@@ -4965,7 +4965,7 @@
       "list": [
         "Her eyes blaze white, but instead of clarity, she is drowned in a thousand screams.",
         "She sees every life the Bone Devil ever ended, memories overlapping in a storm of death.",
-        "She collapses to her knees, clawing at her temples. ‘Make it stop—please!’",
+        "She collapses to her knees, clawing at her temples. ‘Make it stopplease!’",
         "The Bone Devil leans low, voice dripping with glee. ‘You asked to see, little seer. Now *see it all*.’"
       ]
     },
@@ -5004,7 +5004,7 @@
 
 {
   "title": "The Spark of Defiance",
-  "intro": "On the brink of defeat, Daren and Selene refuse to yield. From the rubble of despair, they rise again—scarred, bloodied, but unbroken. Selene pierces through the flood of memories to find clarity, and Daren forces his broken body to channel gravity anew. Together, they claw their way back into rhythm, striking at the Bone Devil with desperate precision. For the first time since his final transformation, the monster staggers.",
+  "intro": "On the brink of defeat, Daren and Selene refuse to yield. From the rubble of despair, they rise againscarred, bloodied, but unbroken. Selene pierces through the flood of memories to find clarity, and Daren forces his broken body to channel gravity anew. Together, they claw their way back into rhythm, striking at the Bone Devil with desperate precision. For the first time since his final transformation, the monster staggers.",
   "highlights": [
     {
       "title": "Selene’s Clarity",
@@ -5034,7 +5034,7 @@
       "list": [
         "Selene steadies her breath, tears streaking her dust-stained cheeks.",
         "She forces her visions into order, filtering screams until only the present remains.",
-        "The Bone Devil lunges—and she sees it clearly, one path amid the chaos.",
+        "The Bone Devil lungesand she sees it clearly, one path amid the chaos.",
         "Her voice steadies. ‘Left wing sweep. Duck now!’"
       ]
     },
@@ -5053,8 +5053,8 @@
       "content": "The siblings reunite in rhythm:",
       "list": [
         "Selene calls the visions, Daren moves without hesitation.",
-        "‘Claw incoming—sidestep!’ He shifts, blade slicing upward, parrying the blow cleanly.",
-        "‘Tail strike high—block low!’ He ducks, gravity slamming the tail into the floor instead of his chest.",
+        "‘Claw incomingsidestep!’ He shifts, blade slicing upward, parrying the blow cleanly.",
+        "‘Tail strike highblock low!’ He ducks, gravity slamming the tail into the floor instead of his chest.",
         "Their broken bond reforges, stronger for having been tested."
       ]
     },
@@ -5062,7 +5062,7 @@
       "title": "Breaking the Tail",
       "content": "Their first counterstrike lands:",
       "list": [
-        "Selene screams, ‘Now! The tail—he’s overextending!’",
+        "Selene screams, ‘Now! The tailhe’s overextending!’",
         "Daren pulls gravity against the tail’s momentum, forcing it to drag mid-swing.",
         "He leaps forward, blade flashing, and slices through half the serrated length.",
         "The Bone Devil shrieks, staggering back, ichor spraying like molten tar."
@@ -5122,7 +5122,7 @@
       "content": "Her clarity is absolute:",
       "list": [
         "Her eyes blaze white, calm at last in the storm.",
-        "‘Step right—now! Duck low—strike high!’",
+        "‘Step rightnow! Duck lowstrike high!’",
         "Her voice is sharp, unwavering, cutting through chaos like a blade.",
         "Daren follows her every word, weaving through death as though she’s pulling him by the hand."
       ]
@@ -5163,7 +5163,7 @@
 
 {
   "title": "The Road to Malrec",
-  "intro": "With the Bone Devil’s ashes still clinging to their clothes, Daren and Selene stand at the edge of the fortress’s deepest sanctum. Three altars have fallen, their demonic guardians destroyed. Only one remains—the altar that fuels Malrec himself. The siblings know this battle will not just test their strength, but decide the fate of everything they’ve fought for. The road leads only forward, into the throne of darkness.",
+  "intro": "With the Bone Devil’s ashes still clinging to their clothes, Daren and Selene stand at the edge of the fortress’s deepest sanctum. Three altars have fallen, their demonic guardians destroyed. Only one remainsthe altar that fuels Malrec himself. The siblings know this battle will not just test their strength, but decide the fate of everything they’ve fought for. The road leads only forward, into the throne of darkness.",
   "highlights": [
     {
       "title": "The Fortress Shudders",
@@ -5234,7 +5234,7 @@
         "A vast chamber opens, larger than any they’ve seen.",
         "At its center, a black altar burns with crimson fire, chains of bone wrapping around it like veins.",
         "Upon a throne of skulls sits Malrec, massive and unmoving, his horned silhouette filling the room with dread.",
-        "His voice rolls across the chamber: ‘You’ve come far. But the last altar is mine—and so is your blood.’"
+        "His voice rolls across the chamber: ‘You’ve come far. But the last altar is mineand so is your blood.’"
       ]
     }
   ]
@@ -5258,7 +5258,7 @@
     },
     {
       "title": "Temptation",
-      "content": "He offers Daren and Selene power, a place at his side, and survival—if they bow."
+      "content": "He offers Daren and Selene power, a place at his side, and survivalif they bow."
     },
     {
       "title": "Defiance",
@@ -5299,7 +5299,7 @@
       "list": [
         "‘Bow before me. Accept my chains and you’ll live as kings in the new order. Resist, and your bones will join the throne.’",
         "His gaze lingers on Daren. ‘You bear the blood of demons already. Why fight what you are? I could make you whole.’",
-        "Then on Selene. ‘And you—your visions could rule nations. Imagine, no more fear. Only certainty. Only power.’"
+        "Then on Selene. ‘And youyour visions could rule nations. Imagine, no more fear. Only certainty. Only power.’"
       ]
     },
     {
@@ -5428,7 +5428,7 @@
       "content": "But arrogance breeds carelessness:",
       "list": [
         "Malrec raises his chalice mid-battle, sipping as though bored.",
-        "In that instant, Selene gasps—her vision clears, showing him leaning to his left.",
+        "In that instant, Selene gaspsher vision clears, showing him leaning to his left.",
         "‘Now, Daren!’ she cries.",
         "Daren shifts gravity mid-strike, pulling his blade upward instead of down, cutting across Malrec’s exposed side."
       ]
@@ -5458,7 +5458,7 @@
         "Chains erupt from the ground, woven of bone and shadow, glowing with molten cracks.",
         "One lashes out, coiling around Daren’s leg, dragging him down with crushing force.",
         "Another snakes toward Selene, her visions splintering as the links coil through her mind itself.",
-        "‘I am Dominion,’ Malrec thunders. ‘Your bodies, your wills, your souls—they are mine.’"
+        "‘I am Dominion,’ Malrec thunders. ‘Your bodies, your wills, your soulsthey are mine.’"
       ]
     }
   ]
@@ -5466,7 +5466,7 @@
 
 {
   "title": "Breaking the Chains, Phase Three",
-  "intro": "The Dominion Chains close in, binding Daren’s body and Selene’s mind. Malrec’s laughter fills the chamber as he believes his victory certain. Yet in the suffocating grip of his power, the siblings begin to see cracks—seeds of hope, and a strategy to break free.",
+  "intro": "The Dominion Chains close in, binding Daren’s body and Selene’s mind. Malrec’s laughter fills the chamber as he believes his victory certain. Yet in the suffocating grip of his power, the siblings begin to see cracksseeds of hope, and a strategy to break free.",
   "highlights": [
     {
       "title": "Chains of Flesh",
@@ -5482,7 +5482,7 @@
     },
     {
       "title": "A Realization",
-      "content": "Selene notices that the chains react to Malrec’s heartbeat—they are extensions of his will, not unbreakable."
+      "content": "Selene notices that the chains react to Malrec’s heartbeatthey are extensions of his will, not unbreakable."
     },
     {
       "title": "The Seed of Strategy",
@@ -5521,7 +5521,7 @@
       "title": "A Realization",
       "content": "But Selene sees what he cannot hide:",
       "list": [
-        "Through the haze of visions, her sight flickers—Malrec’s chains pulse in rhythm with his heartbeat.",
+        "Through the haze of visions, her sight flickersMalrec’s chains pulse in rhythm with his heartbeat.",
         "Every time his chest heaves, the chains flare brighter, their strength ebbing and surging.",
         "‘They’re not eternal,’ she gasps to Daren, voice strained. ‘They’re alive. They’re him.’"
       ]
@@ -5530,7 +5530,7 @@
       "title": "The Seed of Strategy",
       "content": "Daren seizes on her insight:",
       "list": [
-        "He forces his gravity inward, not outward—drawing on his own body, focusing on the pull within.",
+        "He forces his gravity inward, not outwarddrawing on his own body, focusing on the pull within.",
         "Pain arcs through his veins, but he feels the rhythm of his own heart syncing with Malrec’s chains.",
         "‘Then we don’t fight the chains,’ he growls, teeth gritted. ‘We break the beast behind them.’"
       ]
@@ -5540,7 +5540,7 @@
 
 {
   "title": "Shattering Dominion, Phase Four",
-  "intro": "The Dominion Chains tighten, threatening to end it all. Selene drowns in illusions of servitude, Daren’s bones crack under the weight of Malrec’s power. At the breaking point, a spark ignites in Daren—a new ability that turns despair into defiance. The chains are about to break.",
+  "intro": "The Dominion Chains tighten, threatening to end it all. Selene drowns in illusions of servitude, Daren’s bones crack under the weight of Malrec’s power. At the breaking point, a spark ignites in Darena new ability that turns despair into defiance. The chains are about to break.",
   "highlights": [
     {
       "title": "The Crushing Grip",
@@ -5552,7 +5552,7 @@
     },
     {
       "title": "The Snap of Despair",
-      "content": "Daren feels the verge of collapse—both his body and soul near shattering."
+      "content": "Daren feels the verge of collapseboth his body and soul near shattering."
     },
     {
       "title": "A New Spark",
@@ -5578,8 +5578,8 @@
       "content": "She claws her way through the illusions:",
       "list": [
         "Her visions flicker between futures, each one showing Daren’s death, her own surrender.",
-        "But one thread—thin and faint—shows light breaking through.",
-        "‘Daren!’ she cries, voice cracking. ‘You can bend the weight itself—so bend his!’"
+        "But one threadthin and faintshows light breaking through.",
+        "‘Daren!’ she cries, voice cracking. ‘You can bend the weight itselfso bend his!’"
       ]
     },
     {
@@ -5596,8 +5596,8 @@
       "content": "The breaking point becomes awakening:",
       "list": [
         "His demon blood burns hotter, veins glowing faint crimson.",
-        "The weight of the chains no longer feels external—it resonates with him, as if his heart beats against Malrec’s.",
-        "He feels not just pull, but collapse—the instinct of gravity’s final truth: the black hole."
+        "The weight of the chains no longer feels externalit resonates with him, as if his heart beats against Malrec’s.",
+        "He feels not just pull, but collapsethe instinct of gravity’s final truth: the black hole."
       ]
     },
     {
@@ -5615,7 +5615,7 @@
 
 {
   "title": "The Final Exchange, Phase Five",
-  "intro": "Daren’s Event Horizon devours Malrec’s Dominion Chains, collapsing the battlefield into chaos. But Malrec refuses defeat, forcing his own chains into the singularity until it implodes, leaving both warriors drained of power. Exhausted and stripped of abilities, they face each other as men—not demons, not champions of gods. The battle ends in fists.",
+  "intro": "Daren’s Event Horizon devours Malrec’s Dominion Chains, collapsing the battlefield into chaos. But Malrec refuses defeat, forcing his own chains into the singularity until it implodes, leaving both warriors drained of power. Exhausted and stripped of abilities, they face each other as mennot demons, not champions of gods. The battle ends in fists.",
   "highlights": [
     {
       "title": "The Implosion",
@@ -5659,7 +5659,7 @@
     },
     {
       "title": "Respect",
-      "content": "Malrec finally smiles—a grim acknowledgment:",
+      "content": "Malrec finally smilesa grim acknowledgment:",
       "list": [
         "‘No one… no one has ever pushed me this far,’ he growls.",
         "He clenches his fists, raising them in a stance. ‘No tricks. No gods. Just us.’",
@@ -5673,14 +5673,14 @@
         "Daren lunges, driving a hook into Malrec’s jaw, teeth shattering.",
         "Malrec counters with a hammering blow to the ribs, nearly dropping him.",
         "They grapple, slam each other into the stone floor, blood spraying with every impact.",
-        "Every strike is slower, weaker—but each carries the weight of all they’ve endured."
+        "Every strike is slower, weakerbut each carries the weight of all they’ve endured."
       ]
     },
     {
       "title": "Selene’s Witness",
       "content": "She can only watch:",
       "list": [
-        "Her visions blur with blood, but all show the same end—this fight will leave only one standing.",
+        "Her visions blur with blood, but all show the same endthis fight will leave only one standing.",
         "Her voice breaks as she calls, ‘Daren…!’",
         "But neither man listens. In the ruined throne room, they are no longer warrior and warlord. They are simply men, finishing what began."
       ]
@@ -5706,7 +5706,7 @@
     },
     {
       "title": "Selene’s Tears",
-      "content": "She holds her brother upright, her visions confirming Malrec’s end—but also hinting at Veynar’s shadow looming larger still."
+      "content": "She holds her brother upright, her visions confirming Malrec’s endbut also hinting at Veynar’s shadow looming larger still."
     },
     {
       "title": "The Aftermath",
@@ -5747,12 +5747,12 @@
       "list": [
         "She rushes to her brother, catching him as he nearly collapses.",
         "Her visions, once blinding with endless threads, dim now, but one truth remains: Malrec is gone.",
-        "Yet in the threads beyond, a greater shadow coils—Veynar, watching, waiting."
+        "Yet in the threads beyond, a greater shadow coilsVeynar, watching, waiting."
       ]
     },
     {
       "title": "The Aftermath",
-      "content": "Malrec dies with something rare for a demon—honor:",
+      "content": "Malrec dies with something rare for a demonhonor:",
       "list": [
         "His body dissolves into ash and chains, fading into the ruined floor.",
         "The throne is empty, the fortress silent, save for the siblings’ ragged breaths.",
@@ -5764,7 +5764,7 @@
 
 {
   "title": "Shadows in the Ruins",
-  "intro": "The fortress does not die with Malrec. Beneath the crumbling stones, secrets remain—fragments of lore, whispers of Veynar’s dominion, and signs of the next warlord rising. The siblings press deeper into the ruins, seeking understanding before the world plunges into greater darkness.",
+  "intro": "The fortress does not die with Malrec. Beneath the crumbling stones, secrets remainfragments of lore, whispers of Veynar’s dominion, and signs of the next warlord rising. The siblings press deeper into the ruins, seeking understanding before the world plunges into greater darkness.",
   "highlights": [
     {
       "title": "The Hollow Throne",
@@ -5803,14 +5803,14 @@
       "list": [
         "Beneath the throne, a staircase spirals downward into a vault lit by faint, blood-red glow.",
         "Within lie shattered chains, some still pulsing faintly, as if alive.",
-        "Tomes rest open on lecterns, pages filled with diagrams of altars and sigils of binding—blueprints of Veynar’s dominion."
+        "Tomes rest open on lecterns, pages filled with diagrams of altars and sigils of bindingblueprints of Veynar’s dominion."
       ]
     },
     {
       "title": "Selene’s Vision",
       "content": "Her gift seizes her in the vault:",
       "list": [
-        "The walls shimmer, and a scene plays before her eyes—Malrec kneeling, chains burning into his flesh.",
+        "The walls shimmer, and a scene plays before her eyesMalrec kneeling, chains burning into his flesh.",
         "Veynar looms above, cloaked in shadows, his voice like grinding stone: ‘You will be my gaoler, Malrec. My warlord of chains.’",
         "Selene gasps and collapses, whispering: ‘He was just a prisoner who wore the mask of a king.’"
       ]
@@ -5819,7 +5819,7 @@
       "title": "The Whisper of Names",
       "content": "The vault reveals more:",
       "list": [
-        "On the far wall, names are carved in jagged script—each one a warlord bound to Veynar.",
+        "On the far wall, names are carved in jagged scripteach one a warlord bound to Veynar.",
         "Most are faded, but one name burns faintly, fresh with power: *Zerath, the Flame Tyrant.*",
         "Daren clenches his fist. ‘Then he’s next.’"
       ]
@@ -5829,7 +5829,7 @@
       "content": "But they are not alone:",
       "list": [
         "A shadow unfurls from the chains, filling the vault with suffocating weight.",
-        "A voice echoes—not Malrec’s, but Veynar’s: ‘You cut one chain and call it victory? Fools. My dominion is endless.’",
+        "A voice echoesnot Malrec’s, but Veynar’s: ‘You cut one chain and call it victory? Fools. My dominion is endless.’",
         "The shadow withdraws, leaving only the siblings’ racing hearts and the promise of a darker trial ahead."
       ]
     }
@@ -5838,7 +5838,7 @@
 
 {
   "title": "The Island of the Gilded Few",
-  "intro": "Malrec’s fortress lies in ruin, but beyond it, a hidden truth emerges. The siblings discover an island city—shimmering and untouched—where the wealthy thrived under Malrec’s oppression. His fall has shaken their security, and now the siblings must confront those who profited while others bled.",
+  "intro": "Malrec’s fortress lies in ruin, but beyond it, a hidden truth emerges. The siblings discover an island cityshimmering and untouchedwhere the wealthy thrived under Malrec’s oppression. His fall has shaken their security, and now the siblings must confront those who profited while others bled.",
   "highlights": [
     {
       "title": "Crossing the Wreckage",
@@ -5846,7 +5846,7 @@
     },
     {
       "title": "A City of Excess",
-      "content": "Behind the walls, luxury flourishes—gleaming villas, gardens fed by enslaved labor, and air thick with the scent of spiced wine."
+      "content": "Behind the walls, luxury flourishesgleaming villas, gardens fed by enslaved labor, and air thick with the scent of spiced wine."
     },
     {
       "title": "The Survivors’ Anger",
@@ -5858,7 +5858,7 @@
     },
     {
       "title": "The Shadow of Zerath",
-      "content": "Whispers in the city speak of fire on the horizon—the rise of another warlord, Zerath, whose influence already reaches the island."
+      "content": "Whispers in the city speak of fire on the horizonthe rise of another warlord, Zerath, whose influence already reaches the island."
     }
   ],
   "sections": [
@@ -5868,7 +5868,7 @@
       "list": [
         "The siblings walk across bridges of stone cracked by Malrec’s fall, smoke and dust still rising from the ruins.",
         "Beyond, the sea spreads out, calm and unnervingly quiet, broken only by a narrow causeway stretching into the mist.",
-        "At the end, the outline of walls gleams—polished, intact, untouched by war."
+        "At the end, the outline of walls gleamspolished, intact, untouched by war."
       ]
     },
     {
@@ -5886,7 +5886,7 @@
       "list": [
         "Liberated villagers have crossed the causeway too, their chains broken but scars still raw.",
         "They spit at the sight of the villas, shouting curses at those who never starved or bled.",
-        "Clashes break out in the streets—rage colliding with arrogance."
+        "Clashes break out in the streetsrage colliding with arrogance."
       ]
     },
     {
@@ -5894,7 +5894,7 @@
       "content": "The wealthy defend themselves:",
       "list": [
         "‘We were prisoners too,’ one noblewoman insists, her gown glittering with gold thread. ‘Our wealth was protection. Without it, we would have perished like you.’",
-        "Others nod, their voices rising—‘Do not blame us for surviving.’",
+        "Others nod, their voices rising‘Do not blame us for surviving.’",
         "Selene’s visions flicker, catching glimpses of the truth: some bargains were survival, but others were cruelty in disguise."
       ]
     },
@@ -5942,7 +5942,7 @@
       "list": [
         "A marble hall lined with gilded masks and banners, where nobles in silks sip wine as if war had never touched them.",
         "Daren slams his fist onto the long table, shattering goblets. ‘Enough lies. You knew of Malrec. You profited. Now you answer.’",
-        "Selene’s vision flashes—chains of fire wrapping around the nobles’ shadows. Their loyalty lies elsewhere."
+        "Selene’s vision flasheschains of fire wrapping around the nobles’ shadows. Their loyalty lies elsewhere."
       ]
     },
     {
@@ -5950,7 +5950,7 @@
       "content": "Their mask of innocence crumbles:",
       "list": [
         "Books bound in red leather, marked with sigils of flame, are uncovered behind the throne dais.",
-        "On the table, scrolls detail shipments of ore and names of spies—all marked for Zerath’s forces.",
+        "On the table, scrolls detail shipments of ore and names of spiesall marked for Zerath’s forces.",
         "One noble sneers: ‘Malrec was crude. Zerath is refinement. We chose the stronger master.’"
       ]
     },
@@ -5960,7 +5960,7 @@
       "list": [
         "They rise as one, their voices chanting in a guttural tongue.",
         "Symbols flare across the walls, igniting in crimson light.",
-        "The air thickens with sulfur as a fiery core blooms at the center of the hall—an explosion gathering to consume everything."
+        "The air thickens with sulfur as a fiery core blooms at the center of the hallan explosion gathering to consume everything."
       ]
     },
     {
@@ -5978,7 +5978,7 @@
       "list": [
         "The hall is gone, reduced to ash and broken stone.",
         "The nobles are dead, their bodies burned to cinders, their scheme buried with them.",
-        "But so too are the villagers—innocents who had crossed the causeway seeking freedom.",
+        "But so too are the villagersinnocents who had crossed the causeway seeking freedom.",
         "Selene’s hand shakes as she grips her brother’s. ‘We saved no one… but ourselves.’"
       ]
     }
@@ -5987,7 +5987,7 @@
 
 {
   "title": "Ashes and Warnings",
-  "intro": "Amid the ruins of fire and ash, the siblings discover one survivor—broken, dying, but still clinging to life. With their final breaths, the survivor offers a warning, a fragment of truth about Zerath’s growing dominion. The siblings leave the island with grief in their hearts and fire in their eyes.",
+  "intro": "Amid the ruins of fire and ash, the siblings discover one survivorbroken, dying, but still clinging to life. With their final breaths, the survivor offers a warning, a fragment of truth about Zerath’s growing dominion. The siblings leave the island with grief in their hearts and fire in their eyes.",
   "highlights": [
     {
       "title": "The Silence of Ash",
@@ -6077,11 +6077,11 @@
     },
     {
       "title": "The Clock Tower",
-      "content": "The monstrous tower built from Hoff’s body and spirit—a monument to their despair."
+      "content": "The monstrous tower built from Hoff’s body and spirita monument to their despair."
     },
     {
       "title": "Rebirth into Demons",
-      "content": "The Ash Bloods’ death became not an end, but a transformation into demons—the cycle continuing."
+      "content": "The Ash Bloods’ death became not an end, but a transformation into demonsthe cycle continuing."
     },
     {
       "title": "A Personal Revelation",
@@ -6094,7 +6094,7 @@
       "content": "The port town greets them with rare serenity:",
       "list": [
         "Wooden docks stretch into calm waters, gulls circling lazily overhead.",
-        "Fishermen mend their nets, paying little mind to the siblings—just two more weary travelers in a weary world.",
+        "Fishermen mend their nets, paying little mind to the siblingsjust two more weary travelers in a weary world.",
         "For the first time in weeks, Daren and Selene breathe air untainted by smoke and blood."
       ]
     },
@@ -6103,7 +6103,7 @@
       "content": "The past weighs heavy:",
       "list": [
         "Over a quiet fire, Selene recalls the stories: a power plant’s core rupturing, spewing ash across the land.",
-        "Those who inhaled it changed—skin cracking, blood thickening, minds unravelling into something not quite human.",
+        "Those who inhaled it changedskin cracking, blood thickening, minds unravelling into something not quite human.",
         "They became the Ash Bloods: the first cursed, feeding on the breath and strength of others to survive."
       ]
     },
@@ -6112,7 +6112,7 @@
       "content": "The siblings speak of the man whose name still echoes:",
       "list": [
         "Kael Hoff, the champion who rose to drive back the Ash Bloods, whose fists carved their end.",
-        "But in victory, he was claimed—infected, transformed, becoming the very thing he fought.",
+        "But in victory, he was claimedinfected, transformed, becoming the very thing he fought.",
         "Selene’s eyes dim. ‘He ended them, but also birthed what came next.’"
       ]
     },
@@ -6129,9 +6129,9 @@
       "title": "Rebirth into Demons",
       "content": "But destruction was not the end:",
       "list": [
-        "From the ashes of the tower came something worse—the demons, reborn from the Ash Bloods’ essence.",
+        "From the ashes of the tower came something worsethe demons, reborn from the Ash Bloods’ essence.",
         "They carried their curses into new forms: altars, dominions, powers twisted from human fear.",
-        "Selene whispers, ‘Every chain, every flame—it all began with that explosion.’"
+        "Selene whispers, ‘Every chain, every flameit all began with that explosion.’"
       ]
     },
     {
@@ -6139,7 +6139,7 @@
       "content": "The truth grows personal:",
       "list": [
         "Through scattered records and whispered lore, the siblings piece it together: their parents were once Ash Bloods themselves, reborn into human flesh before demons claimed them.",
-        "Daren grips his knees, struggling with the thought: his gravity, her visions—echoes of that cursed bloodline.",
+        "Daren grips his knees, struggling with the thought: his gravity, her visionsechoes of that cursed bloodline.",
         "‘We’re part of this cycle,’ he mutters. ‘But maybe we’re the ones meant to break it.’"
       ]
     }
@@ -6148,14 +6148,14 @@
 
 {
   "title": "The Rhythm of Time",
-  "intro": "Following rumors of ancient techniques and gathering supplies for their war against Zerath, Daren and Selene find themselves in Kaizahara, a sprawling merchant city where the great Tournament of Echoes is held every decade. What begins as a simple resupply mission transforms into a revelation about power, perception, and the deadly dance between time and space. In the arena's blood-soaked sands, they witness a fighter whose mastery over temporal perception defies all understanding—until Daren notices the rhythm that governs even the ungovernable.",
+  "intro": "Following rumors of ancient techniques and gathering supplies for their war against Zerath, Daren and Selene find themselves in Kaizahara, a sprawling merchant city where the great Tournament of Echoes is held every decade. What begins as a simple resupply mission transforms into a revelation about power, perception, and the deadly dance between time and space. In the arena's blood-soaked sands, they witness a fighter whose mastery over temporal perception defies all understandinguntil Daren notices the rhythm that governs even the ungovernable.",
   "sections": [
     {
       "title": "Arrival in Kaizahara",
       "content": "The merchant city sprawls before them like a golden web:",
       "list": [
         "Kaizahara's towers twist skyward in spirals of brass and jade, their surfaces catching the afternoon sun in brilliant flashes that dance across the crowded streets below.",
-        "The air thrums with a thousand conversations in a dozen languages—traders haggling over demon-bone weapons, scholars debating the properties of cursed artifacts, mercenaries boasting of their latest conquests.",
+        "The air thrums with a thousand conversations in a dozen languagestraders haggling over demon-bone weapons, scholars debating the properties of cursed artifacts, mercenaries boasting of their latest conquests.",
         "Daren adjusts the weight of their coin purse, feeling the reassuring clink of hard-earned gold. 'We need supplies,' he reminds Selene as they navigate the labyrinthine bazaars. 'Demon-steel rope, crystallized mana cores, maybe some of those ward-stones the old woman mentioned.'"
       ]
     },
@@ -6164,7 +6164,7 @@
       "content": "Their practical mission takes an unexpected turn:",
       "list": [
         "As they emerge from a weapon-smith's forge, disappointment heavy on their shoulders after learning the demon-steel rope won't be ready for three days, a thunderous roar echoes across the city.",
-        "The Tournament of Echoes—Kaizahara's legendary decennial competition where the world's greatest fighters gather to test their mettle against powers both ancient and terrible.",
+        "The Tournament of EchoesKaizahara's legendary decennial competition where the world's greatest fighters gather to test their mettle against powers both ancient and terrible.",
         "Selene's eyes gleam with curiosity. 'We could learn something,' she suggests, watching the crowds streaming toward the massive colosseum that dominates the city's heart. 'See how others fight the things we're up against.'"
       ]
     },
@@ -6173,7 +6173,7 @@
       "content": "The arena defies expectation at every turn:",
       "list": [
         "The colosseum is carved from a single piece of obsidian, its walls rising in impossible curves that seem to bend space itself, creating acoustics that carry every whisper to every seat while amplifying battle cries into earth-shaking thunder.",
-        "Forty thousand spectators pack the stands, their excitement crackling in the air like static before a storm—nobles in silk and silver, common folk clutching copper betting tokens, scholars scribbling notes about fighting techniques in leather-bound journals.",
+        "Forty thousand spectators pack the stands, their excitement crackling in the air like static before a stormnobles in silk and silver, common folk clutching copper betting tokens, scholars scribbling notes about fighting techniques in leather-bound journals.",
         "The arena floor shifts and morphs between matches: now a field of razor-sharp crystal spires, now a maze of floating platforms suspended over an abyss that glows with unnatural light, now a simple circle of sand that somehow feels more dangerous than any elaborate trap.",
         "Daren and Selene find seats in the middle tiers, close enough to see the fighters' expressions but far enough to avoid the spray of blood that often reaches the first few rows."
       ]
@@ -6184,7 +6184,7 @@
       "list": [
         "They watch Thane the Ironwright forge weapons from thin air and hurl them with such force they punch through solid stone; his opponent responds by becoming liquid shadow, flowing around each strike before reforming with claws of pure darkness.",
         "Sister Morwyn of the Burning Choir fights with prayers that manifest as golden chains, binding her enemy while she speaks words of power that heal her wounds even as they inflict agony on her foe.",
-        "A warrior from the Northern Wastes commands a pack of spectral wolves, each one the size of a horse and glowing with pale fire, while his opponent—a slight woman in robes of midnight blue—calls down stars from the sky that explode on impact like falling suns.",
+        "A warrior from the Northern Wastes commands a pack of spectral wolves, each one the size of a horse and glowing with pale fire, while his opponenta slight woman in robes of midnight bluecalls down stars from the sky that explode on impact like falling suns.",
         "Each match teaches them something new about the breadth of power in this world, about techniques they might face when they finally confront Zerath and his demonic legions."
       ]
     },
@@ -6192,8 +6192,8 @@
       "title": "The Anomaly Enters",
       "content": "Then comes the fighter who breaks all rules:",
       "list": [
-        "The arena announcer's voice booms across the colosseum with barely contained awe: 'Ladies and gentlemen, the Undefeated, the Timeless, the one who has never known defeat in seventeen years of competition—Kazuki Tenshin!'",
-        "The man who enters the arena looks unremarkable at first glance—average height, lean build, dressed in simple black fighting clothes that seem to absorb light rather than reflect it.",
+        "The arena announcer's voice booms across the colosseum with barely contained awe: 'Ladies and gentlemen, the Undefeated, the Timeless, the one who has never known defeat in seventeen years of competitionKazuki Tenshin!'",
+        "The man who enters the arena looks unremarkable at first glanceaverage height, lean build, dressed in simple black fighting clothes that seem to absorb light rather than reflect it.",
         "But there's something in his eyes, something that makes Daren's gravity powers stir uneasily in his chest: a depth that suggests he's seen things that exist outside the normal flow of existence.",
         "His opponent, a demon-touched berserker whose skin ripples with molten veins and whose every breath releases sulfurous smoke, charges forward with a roar that shakes the colosseum's foundations."
       ]
@@ -6202,11 +6202,11 @@
       "title": "The Impossible Victory",
       "content": "What follows defies all understanding of combat:",
       "list": [
-        "The berserker's massive war-hammer, wreathed in hellfire and moving faster than the eye can track, simply stops midair—not blocked, not parried, but frozen in space as if time itself has chosen to pause.",
+        "The berserker's massive war-hammer, wreathed in hellfire and moving faster than the eye can track, simply stops midairnot blocked, not parried, but frozen in space as if time itself has chosen to pause.",
         "Kazuki moves through the stillness like a ghost, his movements fluid and precise as he strikes pressure points along his opponent's frozen form with fingertips that barely seem to touch the skin.",
         "Then time resumes with a snap that resonates through the arena, and the berserker collapses instantly, his massive frame hitting the sand with a crash that sends tremors through the obsidian walls.",
-        "The crowd erupts in confusion and awe—some cheering wildly, others sitting in stunned silence, many frantically scribbling notes as they try to understand what they've just witnessed.",
-        "'Impossible,' Selene breathes, her precognitive abilities screaming warnings about power that shouldn't exist. 'He didn't just move fast—he actually stopped time.'"
+        "The crowd erupts in confusion and awesome cheering wildly, others sitting in stunned silence, many frantically scribbling notes as they try to understand what they've just witnessed.",
+        "'Impossible,' Selene breathes, her precognitive abilities screaming warnings about power that shouldn't exist. 'He didn't just move fasthe actually stopped time.'"
       ]
     },
     {
@@ -6214,40 +6214,40 @@
       "content": "As match after match unfolds, Kazuki's dominance becomes absolute:",
       "list": [
         "Against the Windcaller of Ashara, whose tornadoes can strip flesh from bone, Kazuki simply walks through the storm as if the air itself has forgotten how to move, emerging unscathed to deliver a single, gentle tap that sends his opponent tumbling unconscious to the ground.",
-        "The Shadow Weaver's darkness manipulation—tendrils of pure void that devour light and matter alike—freeze mid-strike like black glass sculptures, allowing Kazuki to step between them and place his palm against his opponent's forehead with surgical precision.",
+        "The Shadow Weaver's darkness manipulationtendrils of pure void that devour light and matter alikefreeze mid-strike like black glass sculptures, allowing Kazuki to step between them and place his palm against his opponent's forehead with surgical precision.",
         "Even the tournament's reigning champion, a warrior-mage who can split himself into seven bodies each wielding different elemental powers, finds all seven versions of himself caught in temporal amber while Kazuki methodically taps each one on the shoulder in turn.",
-        "With each victory, the crowd's reaction shifts from amazement to something approaching religious awe—they're witnessing something beyond skill, beyond training, beyond the normal laws that govern combat and existence itself."
+        "With each victory, the crowd's reaction shifts from amazement to something approaching religious awethey're witnessing something beyond skill, beyond training, beyond the normal laws that govern combat and existence itself."
       ]
     },
     {
       "title": "Daren's Observation",
       "content": "But Daren notices what others miss:",
       "list": [
-        "While the crowd sees impossible power, Daren's analytical mind—sharpened by months of studying demon patterns and energy flows—begins to pick apart the rhythm underlying Kazuki's seemingly chaotic temporal manipulations.",
-        "The arena's musicians, positioned in alcoves carved into the colosseum walls, play a complex piece called 'Tengoku He Ikou'—a traditional battle hymn that rises and falls in intricate patterns, its melody weaving through major and minor keys like a serpent through tall grass.",
-        "During the portions labeled 'Tengoku He'—the ascending, hopeful passages where the music builds toward crescendo—Kazuki fights like any skilled but mortal warrior, his movements quick and precise but bound by the normal laws of physics and time.",
-        "But when the music shifts to 'Ikou'—the descending, mournful sections that speak of journeys end and final rest—something changes, and the very air around Kazuki seems to thicken and slow.",
-        "'Look at the pattern,' Daren whispers urgently to Selene, his eyes never leaving the fighter. 'He's not controlling time—he's controlling perception. The music is his cue, his anchor. He fights normally during Tengoku He, but when Ikou plays...' He trails off, pieces clicking into place with almost audible precision."
+        "While the crowd sees impossible power, Daren's analytical mindsharpened by months of studying demon patterns and energy flowsbegins to pick apart the rhythm underlying Kazuki's seemingly chaotic temporal manipulations.",
+        "The arena's musicians, positioned in alcoves carved into the colosseum walls, play a complex piece called 'Tengoku He Ikou'a traditional battle hymn that rises and falls in intricate patterns, its melody weaving through major and minor keys like a serpent through tall grass.",
+        "During the portions labeled 'Tengoku He'the ascending, hopeful passages where the music builds toward crescendoKazuki fights like any skilled but mortal warrior, his movements quick and precise but bound by the normal laws of physics and time.",
+        "But when the music shifts to 'Ikou'the descending, mournful sections that speak of journeys end and final restsomething changes, and the very air around Kazuki seems to thicken and slow.",
+        "'Look at the pattern,' Daren whispers urgently to Selene, his eyes never leaving the fighter. 'He's not controlling timehe's controlling perception. The music is his cue, his anchor. He fights normally during Tengoku He, but when Ikou plays...' He trails off, pieces clicking into place with almost audible precision."
       ]
     },
     {
       "title": "The Truth Behind the Power",
       "content": "Understanding dawns like a terrible sunrise:",
       "list": [
-        "It's not time that stops—it's the perception of time in everyone watching, everyone fighting against him, their neural processes slowing to a crawl while Kazuki remains unaffected, moving at normal speed through a world that experiences him as impossibly fast.",
-        "The technique is so subtle, so perfectly executed, that even the fighters caught in its grip believe they're experiencing temporal manipulation rather than neurological interference—a mass hypnosis so complete it becomes functionally identical to the power it mimics.",
-        "Daren's gravity powers let him feel the subtle shifts in space-time that true temporal manipulation would cause, and there are none—no ripples in the fabric of reality, no distortions in gravitational fields, just the eerie stillness of minds caught in an induced trance.",
-        "But the precision required to affect multiple opponents simultaneously while maintaining the illusion of supernatural power suggests training that goes far beyond normal martial arts—this is the work of someone who has spent decades, perhaps centuries, perfecting a technique that borders on the divine.",
-        "'He's not a time manipulator,' Daren breathes, his voice filled with equal parts admiration and concern. 'He's something far more dangerous—a master of the human mind itself.'"
+        "It's not time that stopsit's the perception of time in everyone watching, everyone fighting against him, their neural processes slowing to a crawl while Kazuki remains unaffected, moving at normal speed through a world that experiences him as impossibly fast.",
+        "The technique is so subtle, so perfectly executed, that even the fighters caught in its grip believe they're experiencing temporal manipulation rather than neurological interferencea mass hypnosis so complete it becomes functionally identical to the power it mimics.",
+        "Daren's gravity powers let him feel the subtle shifts in space-time that true temporal manipulation would cause, and there are noneno ripples in the fabric of reality, no distortions in gravitational fields, just the eerie stillness of minds caught in an induced trance.",
+        "But the precision required to affect multiple opponents simultaneously while maintaining the illusion of supernatural power suggests training that goes far beyond normal martial artsthis is the work of someone who has spent decades, perhaps centuries, perfecting a technique that borders on the divine.",
+        "'He's not a time manipulator,' Daren breathes, his voice filled with equal parts admiration and concern. 'He's something far more dangerousa master of the human mind itself.'"
       ]
     },
     {
       "title": "Selene's Strategic Mind",
       "content": "Selene sees the opportunity within the revelation:",
       "list": [
-        "Her precognitive abilities, enhanced by the emotional intensity of the tournament and the psychic resonance of forty thousand minds focused on combat, begin showing her flashes of potential futures—scenarios where they might face Kazuki or someone with similar abilities.",
+        "Her precognitive abilities, enhanced by the emotional intensity of the tournament and the psychic resonance of forty thousand minds focused on combat, begin showing her flashes of potential futuresscenarios where they might face Kazuki or someone with similar abilities.",
         "In vision after vision, she sees the same pattern: fighters attempting to match speed with speed, power with power, only to find themselves caught in that terrible perceptual trap where thought itself becomes sluggish and defeat inevitable.",
-        "But one vision stands out—a scenario where the battlefield itself becomes the weapon, where instead of fighting against Kazuki's control over perception, they use it against him by creating a situation where his own technique becomes his downfall.",
+        "But one vision stands outa scenario where the battlefield itself becomes the weapon, where instead of fighting against Kazuki's control over perception, they use it against him by creating a situation where his own technique becomes his downfall.",
         "'I have an idea,' she says softly, her eyes still tracking Kazuki's movements as he dispatches another opponent with casual ease. 'If he can slow their perception, make them experience him as faster than he really is, then what happens when he attacks something that isn't dependent on perception at all?'",
         "Daren follows her line of thought, his understanding of gravitational forces providing the missing piece of her puzzle. 'A gravity well,' he whispers. 'If I create one the moment his perception field activates, he won't see it as dangerous because everyone's minds are focused on him, not on the environment. He'll attack into it at normal speed...'"
       ]
@@ -6256,22 +6256,22 @@
       "title": "The Perfect Counter",
       "content": "Their plan crystallizes with deadly clarity:",
       "list": [
-        "The beauty of the strategy lies in its simplicity: Kazuki's technique works by controlling how others perceive his movements, but gravity wells exist independently of perception—they warp space-time itself based on mass and energy, not on what observers think they see.",
-        "During the 'Ikou' portions of the music, when Kazuki's perception field is active and his opponents' minds are sluggish, he always moves in the same pattern—a direct, confident approach that takes advantage of his seeming invulnerability to launch devastating close-range attacks.",
+        "The beauty of the strategy lies in its simplicity: Kazuki's technique works by controlling how others perceive his movements, but gravity wells exist independently of perceptionthey warp space-time itself based on mass and energy, not on what observers think they see.",
+        "During the 'Ikou' portions of the music, when Kazuki's perception field is active and his opponents' minds are sluggish, he always moves in the same patterna direct, confident approach that takes advantage of his seeming invulnerability to launch devastating close-range attacks.",
         "If Daren can time the creation of a gravity well to coincide with that approach, Kazuki will walk directly into a spatial distortion that will tear apart anything that enters it, regardless of speed or skill or mental manipulation.",
-        "The key is positioning and timing—they would need to be in the arena themselves, close enough for Daren to feel the subtle shifts in the music and the crowd's mental state, ready to act in the split second when Kazuki commits to his attack pattern.",
-        "'It would only work once,' Selene notes, her tactical mind already thinking three moves ahead. 'Someone with his experience would adapt immediately. But once might be all we need—either to defeat him or to prove that his power has limits, that the legend of invincibility is just that—a legend.'"
+        "The key is positioning and timingthey would need to be in the arena themselves, close enough for Daren to feel the subtle shifts in the music and the crowd's mental state, ready to act in the split second when Kazuki commits to his attack pattern.",
+        "'It would only work once,' Selene notes, her tactical mind already thinking three moves ahead. 'Someone with his experience would adapt immediately. But once might be all we needeither to defeat him or to prove that his power has limits, that the legend of invincibility is just thata legend.'"
       ]
     },
     {
       "title": "The Weight of Knowledge",
       "content": "Understanding brings its own burden:",
       "list": [
-        "As they watch Kazuki claim victory after effortless victory, the siblings realize they're witnessing something that could change the balance of power in their fight against Zerath—both the technique itself and the knowledge of how to counter it.",
-        "If Zerath or his demonic lieutenants possess similar abilities to manipulate perception and thought, then conventional approaches to combat will prove not just ineffective but suicidal—armies and heroes alike would be rendered helpless by powers that turn their own minds against them.",
+        "As they watch Kazuki claim victory after effortless victory, the siblings realize they're witnessing something that could change the balance of power in their fight against Zerathboth the technique itself and the knowledge of how to counter it.",
+        "If Zerath or his demonic lieutenants possess similar abilities to manipulate perception and thought, then conventional approaches to combat will prove not just ineffective but suicidalarmies and heroes alike would be rendered helpless by powers that turn their own minds against them.",
         "But their newfound understanding also offers hope: if they can develop counters to perception-based abilities, if they can fight using forces that exist independently of mental manipulation, then they might have a chance against enemies who seem invincible to others.",
-        "The tournament continues around them, but their focus has shifted from entertainment to education—every technique they observe, every power they witness, becomes a piece of the larger puzzle they must solve to have any hope of victory against the demonic forces gathering strength across the world.",
-        "As the sun begins to set over Kaizahara, painting the obsidian colosseum in shades of gold and crimson, Daren and Selene exchange a look of grim determination—they came here seeking supplies, but they've found something far more valuable: knowledge that might tip the scales in the war to come."
+        "The tournament continues around them, but their focus has shifted from entertainment to educationevery technique they observe, every power they witness, becomes a piece of the larger puzzle they must solve to have any hope of victory against the demonic forces gathering strength across the world.",
+        "As the sun begins to set over Kaizahara, painting the obsidian colosseum in shades of gold and crimson, Daren and Selene exchange a look of grim determinationthey came here seeking supplies, but they've found something far more valuable: knowledge that might tip the scales in the war to come."
       ]
     },
     {
@@ -6281,19 +6281,19 @@
         "His opponent is Valdris the Eternal, a warrior who has lived for three hundred years by absorbing the life force of defeated enemies, his body a patchwork of scars from battles across centuries, his eyes holding the cold wisdom of someone who has seen empires rise and fall.",
         "Valdris brings every trick learned across three lifetimes: weapons that phase between dimensions, armor that adapts to different types of damage, martial techniques stolen from the greatest fighters of a dozen different eras.",
         "The battle begins as it always does, with Valdris pressing a fierce assault during the 'Tengoku He' portions of the music, his centuries of experience showing as he adapts his fighting style moment by moment to match Kazuki's responses.",
-        "But when 'Ikou' plays and the perception field activates, even Valdris—with all his accumulated power and wisdom—finds himself caught in that terrible web of slowed thought and distorted time, his ancient reflexes useless against an enemy who fights on a completely different plane of existence.",
-        "Kazuki's victory comes not with flashy displays of power but with a simple touch to Valdris's forehead—gentle as a blessing, final as death—that sends the ancient warrior crashing to the arena floor in unconscious defeat."
+        "But when 'Ikou' plays and the perception field activates, even Valdriswith all his accumulated power and wisdomfinds himself caught in that terrible web of slowed thought and distorted time, his ancient reflexes useless against an enemy who fights on a completely different plane of existence.",
+        "Kazuki's victory comes not with flashy displays of power but with a simple touch to Valdris's foreheadgentle as a blessing, final as deaththat sends the ancient warrior crashing to the arena floor in unconscious defeat."
       ]
     },
     {
       "title": "Seeds of the Future",
       "content": "As they leave the colosseum, plans begin to form:",
       "list": [
-        "The demon-steel rope will be ready in two days, the ward-stones can be purchased tomorrow, and the crystallized mana cores are available immediately—but now their shopping list has expanded to include research materials about perception-based combat techniques and gravitational manipulation theory.",
+        "The demon-steel rope will be ready in two days, the ward-stones can be purchased tomorrow, and the crystallized mana cores are available immediatelybut now their shopping list has expanded to include research materials about perception-based combat techniques and gravitational manipulation theory.",
         "Selene's visions have begun showing her new possibilities: training scenarios where they practice the gravity well counter, battles where they use Kazuki's technique as a template to develop their own methods of battlefield control, futures where their understanding of perception and reality becomes the key to victory.",
         "They walk through Kaizahara's night markets in contemplative silence, their minds processing the implications of what they've learned while their hands automatically sort through the practical matters of resupply and preparation.",
-        "The Tournament of Echoes has given them more than entertainment—it has shown them that power takes forms they never imagined, that victory sometimes comes not from strength or speed but from understanding the hidden rules that govern combat itself.",
-        "As they return to their inn, coin purses lighter but minds heavy with new knowledge, both siblings share the same thought: when they finally face Zerath and his demonic armies, they will bring more than weapons and determination—they will bring the hard-won wisdom of those who have learned to see beyond the surface of power to the mechanics that make it possible."
+        "The Tournament of Echoes has given them more than entertainmentit has shown them that power takes forms they never imagined, that victory sometimes comes not from strength or speed but from understanding the hidden rules that govern combat itself.",
+        "As they return to their inn, coin purses lighter but minds heavy with new knowledge, both siblings share the same thought: when they finally face Zerath and his demonic armies, they will bring more than weapons and determinationthey will bring the hard-won wisdom of those who have learned to see beyond the surface of power to the mechanics that make it possible."
       ]
     }
   ]
@@ -6301,7 +6301,7 @@
 
 {
   "title": "The Challenge Accepted",
-  "intro": "Three days have passed since witnessing Kazuki's dominance in the Tournament of Echoes. With their supplies gathered—demon-steel rope coiled in their packs, ward-stones pulsing with protective energy, crystallized mana cores humming with stored power—Daren finds himself unable to forget the rhythm that governs the seemingly unbeatable fighter. As they prepare to leave Kaizahara, a chance encounter with the tournament's organizers changes everything. Daren's analytical mind has found the pattern, and his pride demands he test his theory against the legend himself.",
+  "intro": "Three days have passed since witnessing Kazuki's dominance in the Tournament of Echoes. With their supplies gathereddemon-steel rope coiled in their packs, ward-stones pulsing with protective energy, crystallized mana cores humming with stored powerDaren finds himself unable to forget the rhythm that governs the seemingly unbeatable fighter. As they prepare to leave Kaizahara, a chance encounter with the tournament's organizers changes everything. Daren's analytical mind has found the pattern, and his pride demands he test his theory against the legend himself.",
   "sections": [
     {
       "title": "The Departure Delayed",
@@ -6309,7 +6309,7 @@
       "list": [
         "The inn's common room buzzes with conversation about yesterday's tournament, merchants and travelers debating the techniques they witnessed, some claiming Kazuki's power is divine intervention while others insist it must be some form of advanced magic.",
         "Daren sits in brooding silence over his morning meal, his analytical mind replaying every moment of Kazuki's fights, the musical cues, the precise timing of the perception field activation, the way opponents moved like sleepwalkers through their own defeat.",
-        "Selene watches her brother with growing concern, recognizing the dangerous gleam in his eyes—the same look he had before challenging the demon lord Vorthak, before diving headfirst into the ruins of the Clock Tower, before every reckless decision that had nearly gotten them killed.",
+        "Selene watches her brother with growing concern, recognizing the dangerous gleam in his eyesthe same look he had before challenging the demon lord Vorthak, before diving headfirst into the ruins of the Clock Tower, before every reckless decision that had nearly gotten them killed.",
         "'You're thinking of something stupid,' she says quietly, not bothering to phrase it as a question. 'I can see it in your face. You want to challenge him.'"
       ]
     },
@@ -6341,14 +6341,14 @@
         "Kazuki Tenshin stands at the end of the gauntlet, undefeated in seventeen years, his technique refined to perfection through countless victories, his confidence absolute after facing and defeating every type of opponent imaginable.",
         "'Many have challenged this path,' Veloria explains, her tone growing serious. 'Warriors, mages, demons, even angels have tried. All have fallen before reaching the end. The last challenger made it to Viktor before being hospitalized for three months.'",
         "The tournament master's eyes gleam with professional interest. 'But you saw something yesterday that others missed. Your gravity manipulation could theoretically counter perception-based techniques, if wielded with sufficient precision and timing.'",
-        "She leans forward, her voice dropping to a conspiratorial whisper. 'The tournament offers substantial rewards for defeating champions—artifacts, knowledge, gold beyond counting. But more than that, it offers the chance to prove that legends can bleed.'"
+        "She leans forward, her voice dropping to a conspiratorial whisper. 'The tournament offers substantial rewards for defeating championsartifacts, knowledge, gold beyond counting. But more than that, it offers the chance to prove that legends can bleed.'"
       ]
     },
     {
       "title": "Selene's Opposition",
       "content": "The siblings face their first real disagreement:",
       "list": [
-        "Selene's precognitive abilities explode with violent imagery the moment Daren begins considering the challenge—visions of him broken and bleeding on arena sand, of Kazuki's gentle touch ending everything, of a future where their mission against Zerath dies with her brother's pride.",
+        "Selene's precognitive abilities explode with violent imagery the moment Daren begins considering the challengevisions of him broken and bleeding on arena sand, of Kazuki's gentle touch ending everything, of a future where their mission against Zerath dies with her brother's pride.",
         "'This is insane,' she hisses, her eyes flashing with prophetic fire. 'I see you losing, Daren. I see you hurt, maybe dead. We have a war to fight, demons to stop. We can't waste time on your ego.'",
         "But other visions flicker through her consciousness: Daren standing victorious over Kazuki, the crowd erupting in disbelief, knowledge gained that transforms their understanding of combat itself, techniques learned that prove crucial in their eventual confrontation with Zerath.",
         "The conflicting futures war in her mind, each equally possible, the timeline fracturing around this single decision like glass struck by a hammer, forcing her to confront the terrifying truth that some choices cannot be foreseen with certainty."
@@ -6360,7 +6360,7 @@
       "list": [
         "Daren stands slowly, his decision crystallizing with the weight of inevitability. 'I have to know,' he says quietly, his voice carrying the conviction of someone who has found their purpose. 'If my theory is wrong, we need to know before we face Zerath.'",
         "'And if you're right,' Selene whispers, her resistance crumbling as she sees the steel in her brother's eyes, 'if you can actually beat him, then we'll have proven that even the impossible has weaknesses.'",
-        "Magistra Veloria's smile widens with predatory satisfaction. 'Excellent. The first match can be arranged for tomorrow evening. I suggest you spend today preparing—Thane Bloodaxe has killed seventeen challengers this year alone.'",
+        "Magistra Veloria's smile widens with predatory satisfaction. 'Excellent. The first match can be arranged for tomorrow evening. I suggest you spend today preparingThane Bloodaxe has killed seventeen challengers this year alone.'",
         "As the tournament master glides away to make arrangements, the siblings sit in contemplative silence, both aware that their simple supply run has transformed into something that could change the course of their war against the demonic forces threatening the world."
       ]
     }
@@ -6369,14 +6369,14 @@
 
 {
   "title": "The Berserker King",
-  "intro": "The first test begins at sunset in the Tournament of Echoes' smaller practice arena, where challenges are held away from the main spectacle. Word has spread quickly through Kaizahara's fighting community—a young gravity wielder seeks to walk the Challenge Path that has broken so many before him. Thane Bloodaxe awaits, his legendary rage already beginning to simmer as he prepares to add another name to his list of defeated opponents. But Daren has spent the day studying, planning, and preparing for a fight that will determine whether his quest continues or ends in blood and failure.",
+  "intro": "The first test begins at sunset in the Tournament of Echoes' smaller practice arena, where challenges are held away from the main spectacle. Word has spread quickly through Kaizahara's fighting communitya young gravity wielder seeks to walk the Challenge Path that has broken so many before him. Thane Bloodaxe awaits, his legendary rage already beginning to simmer as he prepares to add another name to his list of defeated opponents. But Daren has spent the day studying, planning, and preparing for a fight that will determine whether his quest continues or ends in blood and failure.",
   "sections": [
     {
       "title": "The Practice Arena",
       "content": "A more intimate stage for deadly combat:",
       "list": [
         "The practice arena carved from black granite seats only a few hundred spectators, but every seat fills with tournament veterans, fighters, and scholars eager to witness either a remarkable upset or a predictable slaughter.",
-        "The fighting space itself is a perfect circle thirty feet across, unmarked by the elaborate mechanisms of the main colosseum but somehow more menacing in its simplicity—just smooth stone where warriors live or die based purely on skill and power.",
+        "The fighting space itself is a perfect circle thirty feet across, unmarked by the elaborate mechanisms of the main colosseum but somehow more menacing in its simplicityjust smooth stone where warriors live or die based purely on skill and power.",
         "Thane Bloodaxe enters through the eastern gate like a force of nature made flesh, his massive frame draped in furs and leather, twin war-axes gleaming in the torchlight, his presence so intimidating that several spectators unconsciously lean back in their seats.",
         "Standing nearly seven feet tall with arms like tree trunks and scars mapping every inch of visible skin, Thane represents pure physical dominance honed by decades of constant warfare, his very breathing seeming to heat the air around him."
       ]
@@ -6386,7 +6386,7 @@
       "content": "Whispers fill the arena as Thane prepares:",
       "list": [
         "Veterans recount his most famous victories: the time he fought for three days straight against a demon army, healing from wounds that should have been fatal while his rage burned hotter with each passing hour.",
-        "His berserker technique is unlike any other—rather than losing control, his fury enhances his awareness, makes him faster and stronger while simultaneously accelerating his natural healing to supernatural levels.",
+        "His berserker technique is unlike any otherrather than losing control, his fury enhances his awareness, makes him faster and stronger while simultaneously accelerating his natural healing to supernatural levels.",
         "The axes he carries were forged from the bones of an ancient dragon, their edges sharp enough to cleave through enchanted armor, their weight perfectly balanced for the devastating spinning attacks that have become his signature.",
         "In seventeen years of tournament fighting, Thane has never been defeated, never even been seriously wounded, his combination of tactical awareness and unstoppable rage proving too much for every challenger brave enough to face him."
       ]
@@ -6407,7 +6407,7 @@
       "list": [
         "Thane's opening charge comes with the force of an avalanche, both axes spinning in deadly arcs that would bisect any normal opponent, but Daren sidesteps using a localized gravity field that literally pulls him to safety while redirecting the berserker's momentum.",
         "The first exchange sets the tone: Thane's raw power against Daren's precision, brute force meeting tactical brilliance as gravity fields deflect axe strikes that could shatter stone while maintaining constant pressure on the larger fighter.",
-        "Spectators gasp as Daren demonstrates techniques they've never seen—walking on walls and ceiling using gravitational manipulation, attacking from impossible angles, creating crushing fields that compress the air itself into weapons.",
+        "Spectators gasp as Daren demonstrates techniques they've never seenwalking on walls and ceiling using gravitational manipulation, attacking from impossible angles, creating crushing fields that compress the air itself into weapons.",
         "But Thane adapts quickly, his battle-tested instincts compensating for the unfamiliar fighting style, his axes finding their mark more frequently as he begins to read the patterns in Daren's gravitational attacks."
       ]
     },
@@ -6417,7 +6417,7 @@
       "list": [
         "Twenty minutes into the fight, Thane's legendary stamina begins to show as his healing factor works overtime to repair the accumulated damage from dozens of gravitational crushes, his breathing becoming labored, his movements slightly slower.",
         "But the berserker's rage has been building throughout the battle, his fury reaching critical mass as he realizes he's facing an opponent who might actually defeat him, his tactical awareness sharpening to razor focus despite the supernatural anger.",
-        "The decisive moment comes when Thane launches into his signature spinning attack—a whirlwind of steel and fury that has ended countless fights—only to find himself caught in a gravitational vortex that amplifies his spin beyond control.",
+        "The decisive moment comes when Thane launches into his signature spinning attacka whirlwind of steel and fury that has ended countless fightsonly to find himself caught in a gravitational vortex that amplifies his spin beyond control.",
         "Unable to stop or change direction, Thane becomes his own worst enemy as the gravity field increases his rotational velocity until his axes fly from numbed hands and his massive frame crashes into the arena wall with bone-jarring force."
       ]
     },
@@ -6426,9 +6426,9 @@
       "content": "The impossible becomes reality:",
       "list": [
         "Thane struggles to rise, his healing factor working frantically to repair internal damage, but Daren is already there with a localized gravity field that pins the berserker to the ground with the weight of a mountain, ending the fight without further violence.",
-        "The arena erupts in stunned silence broken by scattered applause, spectators struggling to process what they've witnessed—the undefeatable Berserker King defeated not by superior rage or strength, but by tactical brilliance and unprecedented power manipulation.",
+        "The arena erupts in stunned silence broken by scattered applause, spectators struggling to process what they've witnessedthe undefeatable Berserker King defeated not by superior rage or strength, but by tactical brilliance and unprecedented power manipulation.",
         "Magistra Veloria nods approvingly from her observation box, making notes in a leather-bound journal while calculating the odds for Daren's next challenge, her professional interest clearly piqued by this unexpected turn of events.",
-        "As Daren helps Thane to his feet, the defeated berserker offers grudging respect: 'Never fought anyone who could turn my own strength against me like that. You've earned this victory, gravity wielder. Don't let it go to your head—the others won't be as straightforward as me.'"
+        "As Daren helps Thane to his feet, the defeated berserker offers grudging respect: 'Never fought anyone who could turn my own strength against me like that. You've earned this victory, gravity wielder. Don't let it go to your headthe others won't be as straightforward as me.'"
       ]
     }
   ]
@@ -6436,7 +6436,7 @@
 
 {
   "title": "Dancing with Shadows",
-  "intro": "Two days after his victory over Thane Bloodaxe, Daren faces his second challenge in the Tournament's Hall of Mirrors—a specialized arena designed to accommodate Lady Whisper's unique abilities. The Shadow Dancer exists partially in the void between dimensions, making her one of the most feared opponents in the tournament's history. Unlike Thane's straightforward assault, Lady Whisper represents subtlety and deception refined to lethal perfection. Daren must adapt his gravitational mastery to fight an enemy who may not always exist in the same reality as the battlefield.",
+  "intro": "Two days after his victory over Thane Bloodaxe, Daren faces his second challenge in the Tournament's Hall of Mirrorsa specialized arena designed to accommodate Lady Whisper's unique abilities. The Shadow Dancer exists partially in the void between dimensions, making her one of the most feared opponents in the tournament's history. Unlike Thane's straightforward assault, Lady Whisper represents subtlety and deception refined to lethal perfection. Daren must adapt his gravitational mastery to fight an enemy who may not always exist in the same reality as the battlefield.",
   "sections": [
     {
       "title": "The Hall of Mirrors",
@@ -6454,7 +6454,7 @@
       "list": [
         "She materializes rather than walks into the arena, her form flickering between solid flesh and translucent shadow, dressed in midnight-blue silk that seems to absorb light while somehow remaining visible.",
         "Her face shifts constantly between beautiful and terrible, youthful and ancient, sometimes showing multiple expressions simultaneously as different aspects of her existence overlay each other in the viewing space.",
-        "When she moves, reality bends around her—shadows stretch in impossible directions, mirrors reflect images of her that don't match her current position, and the very air seems to thicken with otherworldly presence.",
+        "When she moves, reality bends around hershadows stretch in impossible directions, mirrors reflect images of her that don't match her current position, and the very air seems to thicken with otherworldly presence.",
         "Her weapon is a blade forged from crystallized void, its edge so sharp it can cut through the barriers between dimensions, allowing her to strike from angles that exist outside normal three-dimensional space."
       ]
     },
@@ -6462,7 +6462,7 @@
       "title": "The Impossible Fight",
       "content": "Combat begins with Daren's first lesson in futility:",
       "list": [
-        "Lady Whisper's opening attack comes from seven different directions simultaneously—her blade emerging from shadows, mirrors, and dimensional rifts while her physical form remains motionless in the arena's center.",
+        "Lady Whisper's opening attack comes from seven different directions simultaneouslyher blade emerging from shadows, mirrors, and dimensional rifts while her physical form remains motionless in the arena's center.",
         "Daren's gravitational shields prove useless against attacks that bypass three-dimensional space entirely, the void-blade sliding through his defenses like they don't exist, forcing him into desperate evasive maneuvers.",
         "Every mirror in the chamber becomes a potential attack vector as Lady Whisper steps between reflections, using the obsidian surfaces as gateways to strike from behind, above, and through solid crystal formations.",
         "The gravity wielder finds himself fighting not just an opponent but the arena itself, as shadows gain physical weight and substance under Lady Whisper's control, turning the very darkness into chains that bind his movements."
@@ -6472,7 +6472,7 @@
       "title": "Learning the Pattern",
       "content": "Adaptation becomes survival:",
       "list": [
-        "Through painful trial and error, Daren begins to understand that Lady Whisper's dimensional abilities follow quantum mechanics—she exists in multiple states simultaneously until observed, at which point she collapses into a single reality.",
+        "Through painful trial and error, Daren begins to understand that Lady Whisper's dimensional abilities follow quantum mechanicsshe exists in multiple states simultaneously until observed, at which point she collapses into a single reality.",
         "The key insight comes when he realizes his gravitational powers affect space-time itself, meaning he can detect dimensional distortions even when he can't see Lady Whisper directly, giving him split-second warnings of incoming attacks.",
         "By creating gravitational lensing effects, Daren learns to bend light in ways that reveal Lady Whisper's position across multiple dimensions, turning the mirrors from her advantage into his surveillance network.",
         "The breakthrough moment arrives when he discovers that intense gravitational fields can actually anchor interdimensional entities to a single reality, preventing Lady Whisper from phase-shifting during critical moments."
@@ -6484,7 +6484,7 @@
       "list": [
         "Daren begins creating overlapping gravity wells throughout the arena, not to attack directly but to map the quantum probability fields that govern Lady Whisper's dimensional existence, predicting where she'll materialize based on gravitational disturbances.",
         "The Shadow Dancer realizes her advantage is slipping as her movements become increasingly predictable, her dimensional shortcuts blocked by gravity fields that force her to fight in conventional three-dimensional space.",
-        "The climactic exchange comes when Lady Whisper attempts her signature technique—splitting into twelve simultaneous manifestations to attack from every possible angle—only to find each version trapped in separate gravitational cages.",
+        "The climactic exchange comes when Lady Whisper attempts her signature techniquesplitting into twelve simultaneous manifestations to attack from every possible angleonly to find each version trapped in separate gravitational cages.",
         "Unable to merge back into a single entity while caught in Daren's overlapping field matrix, Lady Whisper experiences the terrifying sensation of her consciousness fragmenting across multiple realities, her dimensional mastery turned against her."
       ]
     },
@@ -6492,10 +6492,10 @@
       "title": "Victory Through Understanding",
       "content": "The second challenge falls to scientific precision:",
       "list": [
-        "Lady Whisper's surrender comes not from physical defeat but from psychological breakdown—the horror of being trapped between dimensions while remaining conscious of all possibilities forces her to collapse back into single reality and yield.",
+        "Lady Whisper's surrender comes not from physical defeat but from psychological breakdownthe horror of being trapped between dimensions while remaining conscious of all possibilities forces her to collapse back into single reality and yield.",
         "The arena's mirrors return to normal reflection as Lady Whisper's dimensional distortions fade, the crystalline formations losing their otherworldly resonance, reality reasserting itself with almost audible relief.",
         "Spectators who witnessed the fight struggle to describe what they saw, many reporting contradictory memories of the same moments, their minds unable to fully process combat that occurred across multiple dimensional states.",
-        "As Daren helps the shaken Shadow Dancer to her feet, she whispers, 'You didn't just defeat me—you taught me that no power is absolute. Even the void has rules, and you found them all.' Her respect is evident despite her defeat, her dimensional blade offered as a token of acknowledgment."
+        "As Daren helps the shaken Shadow Dancer to her feet, she whispers, 'You didn't just defeat meyou taught me that no power is absolute. Even the void has rules, and you found them all.' Her respect is evident despite her defeat, her dimensional blade offered as a token of acknowledgment."
       ]
     }
   ]
@@ -6503,7 +6503,7 @@
 
 {
   "title": "Breaking the Unbreakable",
-  "intro": "Viktor Ironheart represents the ultimate defensive fighter—a man whose flesh has been alchemically transformed into living metal, whose techniques focus entirely on absorbing and redirecting attacks while waiting for opponents to exhaust themselves. In the tournament's Forge Arena, surrounded by the heat and din of a working smithy, Daren faces his greatest test of patience and precision. Raw power has failed against Viktor for twenty-three years; only perfect understanding of force, leverage, and the hidden weaknesses in even the strongest materials will allow victory against the Unbreakable Wall.",
+  "intro": "Viktor Ironheart represents the ultimate defensive fightera man whose flesh has been alchemically transformed into living metal, whose techniques focus entirely on absorbing and redirecting attacks while waiting for opponents to exhaust themselves. In the tournament's Forge Arena, surrounded by the heat and din of a working smithy, Daren faces his greatest test of patience and precision. Raw power has failed against Viktor for twenty-three years; only perfect understanding of force, leverage, and the hidden weaknesses in even the strongest materials will allow victory against the Unbreakable Wall.",
   "sections": [
     {
       "title": "The Forge Arena",
@@ -6511,7 +6511,7 @@
       "list": [
         "The circular battlefield sits at the center of a massive working forge, with anvils, hammers, and molten metal pools arranged around the fighting space, the constant heat and noise creating a hellish atmosphere that tests endurance as much as skill.",
         "Steam rises from cooling channels cut into the floor, while overhead, massive bellows pump air that keeps the surrounding forges blazing at temperatures that would kill ordinary humans, creating an environment that favors fighters accustomed to extremes.",
-        "Weapon racks line the arena's perimeter—not for the combatants' use, but as potential projectiles and obstacles, their presence adding an element of improvisation to what might otherwise be a straightforward test of strength versus technique.",
+        "Weapon racks line the arena's perimeternot for the combatants' use, but as potential projectiles and obstacles, their presence adding an element of improvisation to what might otherwise be a straightforward test of strength versus technique.",
         "The audience watches from heat-shielded galleries, their faces lit by the orange glow of molten metal, their voices barely audible over the constant hammer-fall and roar of flames that transform this space into a primordial battlefield."
       ]
     },
@@ -6521,18 +6521,18 @@
       "list": [
         "Viktor Ironheart stands seven and a half feet tall, his entire body transformed through alchemical processes that replaced flesh and bone with living metal that maintains flexibility while providing absolute defensive capability.",
         "His skin gleams like polished steel in the forge-light, marked with intricate patterns that aren't tattoos but actual metal inlays that channel and distribute impact force throughout his entire frame, making him effectively immune to conventional weapons.",
-        "The defensive techniques he's mastered over decades of combat turn every attack into an opportunity for counterstrikes—absorbed momentum redirected back at opponents with compound interest, making aggression self-defeating.",
-        "His fighting style is patient, methodical, inexorable—he allows enemies to exhaust themselves against his defenses while studying their patterns, then delivers precise counters that exploit the weaknesses revealed by desperation and fatigue."
+        "The defensive techniques he's mastered over decades of combat turn every attack into an opportunity for counterstrikesabsorbed momentum redirected back at opponents with compound interest, making aggression self-defeating.",
+        "His fighting style is patient, methodical, inexorablehe allows enemies to exhaust themselves against his defenses while studying their patterns, then delivers precise counters that exploit the weaknesses revealed by desperation and fatigue."
       ]
     },
     {
       "title": "The Futile Assault",
       "content": "Initial strategy meets immovable object:",
       "list": [
-        "Daren's opening gravitational barrage—crushing fields that would pulverize stone and compress steel—flows around Viktor's metallic form like water around a ship's hull, the living metal adapting its density and structure to distribute forces perfectly.",
+        "Daren's opening gravitational barragecrushing fields that would pulverize stone and compress steelflows around Viktor's metallic form like water around a ship's hull, the living metal adapting its density and structure to distribute forces perfectly.",
         "Attempts to lift Viktor with gravity manipulation fail as the Unbreakable Wall somehow increases his mass at will, rooting himself to the arena floor with weight that exceeds what should be physically possible for his size.",
         "Viktor's counterattacks come as precisely timed hammer blows that use Daren's own gravitational momentum against him, turning the gravity wielder's mobility into a liability as redirected force threatens to shatter bones and organs.",
-        "After fifteen minutes of increasingly desperate attacks, Daren realizes he's fighting the incarnation of Newton's Third Law—every action produces an equal and opposite reaction, and Viktor has mastered the art of making that reaction devastating."
+        "After fifteen minutes of increasingly desperate attacks, Daren realizes he's fighting the incarnation of Newton's Third Lawevery action produces an equal and opposite reaction, and Viktor has mastered the art of making that reaction devastating."
       ]
     },
     {
@@ -6540,9 +6540,9 @@
       "content": "Understanding materials reveals opportunity:",
       "list": [
         "Drawing on knowledge gained from purchasing demon-steel rope and ward-stones, Daren begins to analyze Viktor's metallic composition using gravitational fields as a form of non-destructive testing, mapping stress patterns and structural weaknesses.",
-        "The revelation comes through careful observation: Viktor's living metal maintains its properties through continuous alchemical processes that require precise temperature regulation—the forge arena isn't just atmospheric, it's necessary for Viktor's abilities.",
+        "The revelation comes through careful observation: Viktor's living metal maintains its properties through continuous alchemical processes that require precise temperature regulationthe forge arena isn't just atmospheric, it's necessary for Viktor's abilities.",
         "By creating localized gravitational fields that compress air into plasma, Daren begins to superheat specific points on Viktor's body, disrupting the delicate thermal balance that maintains his metallic transformation.",
-        "The strategy requires incredible precision—too little heat and Viktor adapts, too much and the plasma becomes uncontrollable, potentially destroying the arena and everyone in it, including Daren himself."
+        "The strategy requires incredible precisiontoo little heat and Viktor adapts, too much and the plasma becomes uncontrollable, potentially destroying the arena and everyone in it, including Daren himself."
       ]
     },
     {
@@ -6559,7 +6559,7 @@
       "title": "The Unbreakable Breaks",
       "content": "Twenty-three years of invincibility end:",
       "list": [
-        "The decisive moment comes when Viktor's right arm—superheated to the point where the living metal begins to flow like liquid—fails to deflect one of Daren's gravitational crushes, the compromised structure crumpling under pressure it would normally distribute effortlessly.",
+        "The decisive moment comes when Viktor's right armsuperheated to the point where the living metal begins to flow like liquidfails to deflect one of Daren's gravitational crushes, the compromised structure crumpling under pressure it would normally distribute effortlessly.",
         "Viktor's expression shows not pain but profound confusion as he experiences physical damage for the first time in over two decades, his tactical understanding of combat suddenly inadequate to handle the impossible sensation of vulnerability.",
         "Rather than press his advantage, Daren immediately ceases his thermal attacks and offers Viktor the chance to yield, recognizing that further damage to the living metal structure might cause permanent injury to a worthy opponent.",
         "Viktor's surrender comes with characteristic dignity: 'You found the one weakness I thought impossible to exploit,' he says, his voice carrying newfound respect. 'I've spent decades perfecting my defenses, but you showed me that absolute protection is an illusion. Well fought, gravity wielder.'"
@@ -6570,7 +6570,7 @@
 
 {
   "title": "Storm's End",
-  "intro": "The final challenge before facing Kazuki Tenshin arrives in the form of Seraphina the Stormcaller, mistress of weather and wind who has never been defeated in ground-based combat because she rarely touches the ground at all. In the Tournament's Sky Arena—a platform suspended a thousand feet above Kaizahara—Daren must master three-dimensional combat while battling an opponent who commands the very air around them. This fight will test not just his gravitational powers but his courage, as defeat here means a fall that no amount of skill can survive.",
+  "intro": "The final challenge before facing Kazuki Tenshin arrives in the form of Seraphina the Stormcaller, mistress of weather and wind who has never been defeated in ground-based combat because she rarely touches the ground at all. In the Tournament's Sky Arenaa platform suspended a thousand feet above KaizaharaDaren must master three-dimensional combat while battling an opponent who commands the very air around them. This fight will test not just his gravitational powers but his courage, as defeat here means a fall that no amount of skill can survive.",
   "sections": [
     {
       "title": "The Sky Arena",
@@ -6578,7 +6578,7 @@
       "list": [
         "The fighting platform stretches sixty feet in diameter, carved from a single piece of sky-blue crystal and suspended by ancient levitation enchantments that have held it aloft for three centuries, its surface polished smooth as glass and offering no handholds for those who might slip.",
         "A thousand feet below, Kaizahara spreads like a living map, its golden towers and bustling markets reduced to toy-like detail, while above, clouds drift close enough to touch, their shadows racing across the crystal platform in patterns that shift with the wind.",
-        "Safety barriers that exist in other arenas are notably absent here—the Sky Arena's only protection comes from its implicit understanding that only masters of aerial combat should dare to fight in this domain where a single misstep means death.",
+        "Safety barriers that exist in other arenas are notably absent herethe Sky Arena's only protection comes from its implicit understanding that only masters of aerial combat should dare to fight in this domain where a single misstep means death.",
         "Spectators observe from floating observation platforms positioned at respectful distances, their faces showing the tension of witnesses to combat where defeat carries ultimate consequences, making every exchange potentially the last."
       ]
     },
@@ -6587,9 +6587,9 @@
       "content": "The Stormcaller takes her domain:",
       "list": [
         "Seraphina arrives riding a controlled tornado that deposits her gently at the platform's center before dissipating into warm summer breezes, her mastery over atmospheric forces so complete that weather itself seems to respond to her emotions.",
-        "Her appearance shifts with the winds she commands—hair flowing like liquid lightning, robes that billow and snap with hurricane force while somehow never tangling or restricting her movement, eyes that flash with the electric blue of storm clouds.",
+        "Her appearance shifts with the winds she commandshair flowing like liquid lightning, robes that billow and snap with hurricane force while somehow never tangling or restricting her movement, eyes that flash with the electric blue of storm clouds.",
         "Staff in hand, she begins her preparation ritual: calling forth winds from all four cardinal directions, summoning clouds that crackle with barely contained lightning, turning the open sky around the platform into a weapon awaiting her command.",
-        "The demonstration of power is both beautiful and terrifying—she gestures casually and rain falls upward, speaks a single word and thunder rolls from a cloudless sky, her control over meteorological forces so absolute it seems to mock natural law."
+        "The demonstration of power is both beautiful and terrifyingshe gestures casually and rain falls upward, speaks a single word and thunder rolls from a cloudless sky, her control over meteorological forces so absolute it seems to mock natural law."
       ]
     },
     {
@@ -6599,14 +6599,14 @@
         "Seraphina's opening assault lifts her thirty feet above the platform while winds slam into Daren from six directions simultaneously, their force calculated to knock him from the crystal surface while avoiding the appearance of an immediate execution.",
         "Daren's gravitational anchoring keeps him grounded, but his range of movement becomes severely limited as he must constantly resist wind shears that would tear apart aircraft, his every step requiring conscious effort against forces trying to drag him skyward.",
         "Lightning strikes begin raining down with surgical precision, each bolt perfectly aimed to force Daren into increasingly small areas of safety, the crystal platform conducting electrical energy in ways that turn every surface potentially lethal.",
-        "The gravity wielder's attempts to attack are frustrated by Seraphina's three-dimensional mobility—she dances through the air above, beside, and around him, untouchable in her element while he remains trapped on the platform like a target in a shooting gallery."
+        "The gravity wielder's attempts to attack are frustrated by Seraphina's three-dimensional mobilityshe dances through the air above, beside, and around him, untouchable in her element while he remains trapped on the platform like a target in a shooting gallery."
       ]
     },
     {
       "title": "Learning to Fly",
       "content": "Adaptation becomes liberation:",
       "list": [
-        "The breakthrough comes when Daren stops thinking of gravity as purely downward force and begins treating it as a three-dimensional tool—creating localized fields that allow him to 'fall' in any direction, effectively granting him the flight he needs to match Seraphina.",
+        "The breakthrough comes when Daren stops thinking of gravity as purely downward force and begins treating it as a three-dimensional toolcreating localized fields that allow him to 'fall' in any direction, effectively granting him the flight he needs to match Seraphina.",
         "His first tentative movements through the air are clumsy, like a baby bird learning to use wings, but the principle is sound: by constantly adjusting his personal gravity field, he can navigate three-dimensional space with increasing confidence.",
         "Seraphina's expression shifts from confident dominance to concerned surprise as her aerial advantage evaporates, her domain of sky suddenly contested by an opponent who can match her mobility while bringing powers she's never faced before.",
         "The combat transforms from aerial bombardment to true three-dimensional warfare, both fighters now moving through the open sky around the platform in a deadly dance that spans hundreds of feet in all directions."
@@ -6616,7 +6616,7 @@
       "title": "The Storm War",
       "content": "Masters clash in their shared element:",
       "list": [
-        "Seraphina calls forth her greatest tempest—a hurricane in miniature that centers on the crystal platform while extending tendrils of wind and lightning throughout the surrounding airspace, turning the entire sky into a weapon of mass destruction.",
+        "Seraphina calls forth her greatest tempesta hurricane in miniature that centers on the crystal platform while extending tendrils of wind and lightning throughout the surrounding airspace, turning the entire sky into a weapon of mass destruction.",
         "Daren responds by creating gravitational chaos, his fields disrupting air pressure patterns and temperature gradients that hurricanes require, literally tearing apart the storm's structure through applied physics rather than magical counterforce.",
         "The battle becomes a war between competing natural forces: meteorology against gravitation, atmospheric pressure against space-time curvature, each fighter wielding fundamental aspects of physical reality as weapons.",
         "Lightning and gravity fields interact in spectacular ways, creating plasma displays that paint the sky in colors that don't exist in nature, while thunder claps blend with gravitational waves in a symphony of destruction that echoes across the entire city below."
@@ -6629,7 +6629,7 @@
         "The decisive moment comes when Daren creates a gravity well so intense it forms a temporary vacuum around Seraphina, removing the air she needs to generate winds while simultaneously disrupting the pressure differentials that allow her to fly.",
         "Caught in gravitational forces beyond her experience, the Stormcaller finds herself falling toward the crystal platform with increasing velocity, her weather-mastery useless in the absence of atmosphere to manipulate.",
         "Daren cushions her landing with carefully controlled gravity fields, preventing injury while demonstrating the precision that separates masters from amateurs, his victory achieved without unnecessary harm to a worthy opponent.",
-        "Seraphina's acknowledgment comes with appropriate dignity: 'You didn't just defeat me,' she says, rising gracefully from the crystal surface, 'you taught me that even the sky has limits. I've ruled the air for fifteen years, but you showed me what lies beyond weather—the forces that govern space itself.'"
+        "Seraphina's acknowledgment comes with appropriate dignity: 'You didn't just defeat me,' she says, rising gracefully from the crystal surface, 'you taught me that even the sky has limits. I've ruled the air for fifteen years, but you showed me what lies beyond weatherthe forces that govern space itself.'"
       ]
     }
   ]
@@ -6637,16 +6637,16 @@
 
 {
   "title": "The Timeless Challenge",
-  "intro": "After defeating four legendary champions, Daren stands at the threshold of the ultimate test. Kazuki Tenshin awaits in the Tournament's Grand Arena, his seventeen-year reign of invincibility about to face its greatest challenge. The entire fighting world has gathered to witness this clash—the analytical mind that discovered the rhythm behind temporal mastery against the perception-bending technique that has never known defeat. Armed with knowledge, strategy, and hard-won confidence, Daren prepares to test whether legends can truly be broken by those who understand the rules that create them.",
+  "intro": "After defeating four legendary champions, Daren stands at the threshold of the ultimate test. Kazuki Tenshin awaits in the Tournament's Grand Arena, his seventeen-year reign of invincibility about to face its greatest challenge. The entire fighting world has gathered to witness this clashthe analytical mind that discovered the rhythm behind temporal mastery against the perception-bending technique that has never known defeat. Armed with knowledge, strategy, and hard-won confidence, Daren prepares to test whether legends can truly be broken by those who understand the rules that create them.",
   "sections": [
     {
       "title": "The Grand Arena Returns",
       "content": "The stage is set for legend:",
       "list": [
         "Fifty thousand spectators pack the obsidian colosseum, their excitement crackling through the air like electricity before a storm, while betting houses across Kaizahara suspend odds after unprecedented wagering on the match.",
-        "The arena floor has been reset to its simplest configuration—a perfect circle of sand thirty feet across, unmarked by obstacles or mechanisms, allowing nothing to interfere with what will be a pure test of technique against technique.",
-        "Musicians take their positions in the carved alcoves, their instruments ready to play 'Tengoku He Ikou'—the battle hymn that has provided the rhythm for Kazuki's victories, now potentially the key to his defeat.",
-        "Magistra Veloria announces the match with barely contained anticipation, her voice carrying across the colosseum as she introduces the challenger who has achieved what none before him have managed—reaching the final test of the Challenge Path."
+        "The arena floor has been reset to its simplest configurationa perfect circle of sand thirty feet across, unmarked by obstacles or mechanisms, allowing nothing to interfere with what will be a pure test of technique against technique.",
+        "Musicians take their positions in the carved alcoves, their instruments ready to play 'Tengoku He Ikou'the battle hymn that has provided the rhythm for Kazuki's victories, now potentially the key to his defeat.",
+        "Magistra Veloria announces the match with barely contained anticipation, her voice carrying across the colosseum as she introduces the challenger who has achieved what none before him have managedreaching the final test of the Challenge Path."
       ]
     },
     {
@@ -6655,7 +6655,7 @@
       "list": [
         "Kazuki enters with the same unassuming presence that has deceived opponents for nearly two decades, his simple black fighting clothes and average build giving no hint of the devastating power he commands.",
         "But those who know how to look can see the signs: the way space seems to bend slightly around him, the subtle wrongness in how light falls across his form, the depth in his eyes that suggests experiences beyond normal human comprehension.",
-        "His pre-fight ritual is minimal—a brief bow to the four cardinal directions, a moment of meditation that centers his breathing, a final check of the finger wrappings that protect his hands during the precise strikes that end battles.",
+        "His pre-fight ritual is minimala brief bow to the four cardinal directions, a moment of meditation that centers his breathing, a final check of the finger wrappings that protect his hands during the precise strikes that end battles.",
         "When he speaks, his voice carries clearly across the arena without seeming loud: 'You have earned this moment through genuine skill, gravity wielder. I will honor your achievement by showing you the full extent of what you seek to overcome.'"
       ]
     },
@@ -6664,18 +6664,18 @@
       "content": "Rhythm governs reality:",
       "list": [
         "'Tengoku He Ikou' fills the colosseum with its complex melody, the musicians' perfect synchronization creating the sonic framework within which Kazuki's technique operates, each note precisely placed to support the perception-bending effects that follow.",
-        "During the opening 'Tengoku He' passages, both fighters engage in conventional combat—Daren's gravitational attacks meeting Kazuki's fluid counters, power meeting precision in exchanges that showcase their respective mastery without supernatural enhancement.",
+        "During the opening 'Tengoku He' passages, both fighters engage in conventional combatDaren's gravitational attacks meeting Kazuki's fluid counters, power meeting precision in exchanges that showcase their respective mastery without supernatural enhancement.",
         "The first 'Ikou' section arrives like a shift in reality itself, and Daren feels the world slow around him as Kazuki's perception field activates, his own thoughts becoming sluggish as neural processes are subtly disrupted by techniques refined across countless battles.",
-        "But unlike previous opponents, Daren maintains awareness of what's happening—his analytical mind recognizing the neurological manipulation even as it affects him, his understanding of the technique providing partial resistance to its effects."
+        "But unlike previous opponents, Daren maintains awareness of what's happeninghis analytical mind recognizing the neurological manipulation even as it affects him, his understanding of the technique providing partial resistance to its effects."
       ]
     },
     {
       "title": "The Counter Revealed",
       "content": "Knowledge becomes weapon:",
       "list": [
-        "As Kazuki moves through the slowed perception field to deliver his signature precise strikes, Daren executes the strategy conceived during that first observation—creating a gravity well at the exact point where the attack will land based on predicted movement patterns.",
+        "As Kazuki moves through the slowed perception field to deliver his signature precise strikes, Daren executes the strategy conceived during that first observationcreating a gravity well at the exact point where the attack will land based on predicted movement patterns.",
         "The technique works perfectly in theory but nearly fails in execution as the perception field makes it almost impossible to time the gravity well's creation with sufficient precision, requiring superhuman concentration to overcome neurological disruption.",
-        "Kazuki's eyes widen in the first genuine surprise he's experienced in years as his strike—delivered at normal speed through a field of manipulated perception—carries him directly into a spatial distortion that threatens to tear apart anything that enters it.",
+        "Kazuki's eyes widen in the first genuine surprise he's experienced in years as his strikedelivered at normal speed through a field of manipulated perceptioncarries him directly into a spatial distortion that threatens to tear apart anything that enters it.",
         "Only reflexes honed by decades of combat save the time-master from serious injury as he aborts his attack at the last possible moment, his perfect technique disrupted by an opponent who understands it better than anyone who has faced him before."
       ]
     },
@@ -6683,10 +6683,10 @@
       "title": "Adaptation and Evolution",
       "content": "Masters push beyond their limits:",
       "list": [
-        "Kazuki immediately alters his tactics, abandoning the direct approaches that have served him flawlessly for seventeen years, his analytical mind—every bit as sharp as Daren's—processing this new variable and developing countermeasures in real-time.",
+        "Kazuki immediately alters his tactics, abandoning the direct approaches that have served him flawlessly for seventeen years, his analytical mindevery bit as sharp as Daren'sprocessing this new variable and developing countermeasures in real-time.",
         "The perception field technique evolves during the fight itself, becoming more subtle and complex as Kazuki layers multiple levels of neurological manipulation, creating confusion about timing, distance, and even the direction of attacks.",
         "Daren responds by treating the battle as a physics problem rather than a combat encounter, using gravitational lensing to detect spatial distortions that reveal Kazuki's true position regardless of what his manipulated perceptions report.",
-        "The music continues its eternal cycle, but both fighters now work within and around its rhythm—Kazuki adapting his technique to less predictable timing while Daren learns to create gravity wells based on spatial analysis rather than visual cues."
+        "The music continues its eternal cycle, but both fighters now work within and around its rhythmKazuki adapting his technique to less predictable timing while Daren learns to create gravity wells based on spatial analysis rather than visual cues."
       ]
     },
     {
@@ -6695,8 +6695,8 @@
       "list": [
         "The decisive moment comes not during 'Ikou' but during 'Tengoku He,' when both fighters operate without supernatural enhancement, their pure skill and training creating the most technically perfect exchange in tournament history.",
         "Kazuki's final gambit abandons perception manipulation entirely, instead relying on speed and precision so perfect they transcend the need for mental tricks, his strikes coming faster than human reaction time should allow.",
-        "Daren's response demonstrates mastery achieved through the challenge path—gravitational fields that respond to intention rather than conscious thought, his power operating at an instinctive level that matches Kazuki's transcendent technique.",
-        "The exchange lasts less than three seconds in real time but encompasses dozens of attacks and counters, ending when both fighters simultaneously connect—Kazuki's fingertips touching Daren's sternum while a gravity field compresses around the time-master's torso."
+        "Daren's response demonstrates mastery achieved through the challenge pathgravitational fields that respond to intention rather than conscious thought, his power operating at an instinctive level that matches Kazuki's transcendent technique.",
+        "The exchange lasts less than three seconds in real time but encompasses dozens of attacks and counters, ending when both fighters simultaneously connectKazuki's fingertips touching Daren's sternum while a gravity field compresses around the time-master's torso."
       ]
     },
     {
@@ -6704,7 +6704,7 @@
       "content": "Some battles have no losers:",
       "list": [
         "Both fighters step back simultaneously, their attacks having landed but neither delivering the decisive force that would end the match, their mutual respect preventing the finishing blows that their positions would normally demand.",
-        "Kazuki speaks first, his voice carrying wonder: 'In seventeen years, you are the first to truly understand what I do and find a way to counter it. This is not defeat—this is evolution. We have both transcended what we were.'",
+        "Kazuki speaks first, his voice carrying wonder: 'In seventeen years, you are the first to truly understand what I do and find a way to counter it. This is not defeatthis is evolution. We have both transcended what we were.'",
         "The crowd erupts in confusion and amazement as the undefeated champion and his challenger bow to each other with equal respect, their battle having pushed both beyond their previous limits into realms of technique that few could hope to comprehend.",
         "Magistra Veloria's announcement reflects the unprecedented nature of what has occurred: 'Ladies and gentlemen, you have witnessed not the end of a legend, but its transformation. Both fighters have proven themselves masters beyond conventional measure.'"
       ]

@@ -18920,3 +18920,9 @@ Output file #0 does not contain any stream
 2025-11-19 21:15:48,432 - INFO - Timer thread ending, removing from active_timers for session 1000137
 2025-11-19 21:16:01,801 - INFO - [LOGIN] Created new session 1000138 with status=2 (active)
 2025-11-19 21:30:28,505 - INFO - [LOGIN] Created new session 1000139 with status=2 (active)
+2025-11-20 20:27:51,205 - INFO - ==================================================
+2025-11-20 20:27:51,205 - INFO - Quiz Logger Initialized
+2025-11-20 20:27:51,205 - INFO - ==================================================
+2025-11-20 20:27:51,957 - INFO - ==================================================
+2025-11-20 20:27:51,957 - INFO - Quiz Logger Initialized
+2025-11-20 20:27:51,957 - INFO - ==================================================

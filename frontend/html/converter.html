@@ -206,7 +206,7 @@
         <a href="../index.html" class="c-header__link">
             <h1 class="c-header__title">Convert The Spire</h1>
         </a>
-        <p class="converter-byline" style="font-size: 0.9em; opacity: 0.9; margin: 6px 0 0 0;">by Oroka Conner</p>
+        <p class="converter-byline">by Oroka Conner</p>
         <button class="c-theme-toggle" id="servoTestBtn" onclick="console.log('Theme button clicked'); toggleTheme()">
             Toggle Theme
         </button>
@@ -218,9 +218,6 @@
         </div>
     </header>
 
-    <div class="announcement-banner" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin-bottom: 10px;">
-        <p><strong>🚀 Smart Download System!</strong> Browser cookies + Proxy rotation + Invidious fallback for maximum reliability.</p>
-    </div>
     
 
 
@@ -235,42 +232,41 @@
         </section>
 
         <!-- Support Section -->
-        <section class="support-section" style="text-align: center; margin: 30px 0; padding: 20px; background: var(--surface-color, rgba(255,255,255,0.05)); border-radius: 12px; border: 1px solid var(--border-color, rgba(255,255,255,0.1));">
-            <h3 style="margin-bottom: 15px; color: var(--text-primary, #333); font-size: 1.2em;">Support Convert The Spire</h3>
-            <p style="margin-bottom: 20px; color: var(--text-secondary, #666); font-size: 0.95em;">Enjoying the free converter? Consider supporting the development!</p>
+        <section class="support-section support-section--inline">
+            <h3 class="support-cta-title">Support Convert The Spire</h3>
+            <p class="muted-small">Enjoying the free converter? Consider supporting the development!</p>
             <!-- Improved donation block: tiered quick-donate, main CTA, and optional progress -->
-            <div style="max-width:760px;margin:12px auto 0;text-align:center;">
-                <h3 style="margin-bottom:8px;color:var(--text-primary,#222);font-size:1.05em;">Help Keep Conversions Fast</h3>
-                <p style="margin:0 0 12px;color:var(--text-secondary,#666);font-size:0.95em;">
+            <div class="support-inner">
+                <h3 class="support-cta-title">Help Keep Conversions Fast</h3>
+                <p class="muted-small">
                     Small donations pay for server time, bandwidth, and continued development. Even a few dollars help keep queue times short. Thank you!
                 </p>
 
-                <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:10px;">
+                <div class="flex-center-wrap">
                     <a href="https://www.buymeacoffee.com/OrokaConner" target="_blank" rel="noopener noreferrer" class="c-btn accent-blue" aria-label="Donate (other amount)" onclick="window.dataLayer?.push?.({event:'donation_click',amount:'other'});">⭐ Support me (Buy Me A Coffee) ☕</a>
                 </div>
 
-                <div class="donation-block" style="max-width:420px;margin:0 auto 8px;text-align:left;">
-                                        <label for="donation-progress" style="display:block;font-size:0.8em;color:var(--text-muted,#888);">This month: <strong id="donation-amount">320</strong> / <strong id="donation-goal">1000</strong> <span id="donation-base-currency">USD</span></label>
-                                        <progress id="donation-progress" value="320" max="1000" style="width:100%;height:10px;border-radius:6px;"></progress>
-                                        <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
-                                            <label for="donation-currency-select" style="font-size:0.85em;color:var(--text-secondary);min-width:120px;">Show in:</label>
-                                            <select id="donation-currency-select" style="padding:6px 8px;border-radius:6px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);">
+                <div class="donation-block">
+                                        <label for="donation-progress" class="label-compact">This month: <strong id="donation-amount">320</strong> / <strong id="donation-goal">1000</strong> <span id="donation-base-currency">USD</span></label>
+                                        <progress id="donation-progress" value="320" max="1000"></progress>
+                                        <div class="flex-row-center-gap">
+                                            <label for="donation-currency-select" class="donation-currency-label">Show in:</label>
+                                            <select id="donation-currency-select" class="donation-select">
                                                 <!-- options populated by donationProgress.js -->
                                             </select>
                                         </div>
-                                        <div id="donation-conversions" style="margin-top:8px;line-height:1.2"></div>
+                                        <div id="donation-conversions" class="mt-8 donation-conversions"></div>
                 </div>
-
-                <small style="display:block;color:var(--text-muted,#888);font-size:0.85em;">Secure payments via BuyMeACoffee. No personal data stored by this site.</small>
+                <small class="small-muted">Secure payments via BuyMeACoffee. No personal data stored by this site.</small>
             </div>
 
             <!-- Support chat link (re-linked back into converter) -->
-            <div style="margin-top:18px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-                <a href="../html/support.html" target="_blank" rel="noopener noreferrer" class="c-btn bw-btn" style="text-decoration:none; padding:8px 14px;" aria-label="Contact Support">💬 Contact Support</a>
+            <div class="flex-center-wrap mt-20">
+                <a href="../html/support.html" target="_blank" rel="noopener noreferrer" class="c-btn bw-btn btn-no-underline" aria-label="Contact Support">💬 Contact Support</a>
             </div>
 
             <!-- Idle Game Link -->
-            <div style="margin-top: 20px;">
+            <div class="mt-20">
                 <a href="../idleGame/idlegame.html" target="_blank" class="idle-game-link">
                     <span class="idle-game-icon">🎮</span>
                     <span class="idle-game-text">Or play Industrial Empire while you wait for conversions!</span>
@@ -278,28 +274,28 @@
             </div>
             
             <!-- Queue Status Display (Always Visible) -->
-            <div id="queue-status-display" style="margin-top: 15px; padding: 12px 20px; background: rgba(44, 111, 184, 0.1); border-radius: 8px; border: 1px solid rgba(44, 111, 184, 0.3); display: none;">
-                <div id="queue-status-text" style="color: var(--text-primary, #333); font-size: 0.95em; font-weight: 500; text-align: center;"></div>
+            <div id="queue-status-display" class="queue-status-display-inline hidden">
+                <div id="queue-status-text" class="queue-status-text"></div>
             </div>
-            
+
             <!-- Progress Display (Separate from Queue Status) -->
-            <div id="progress-display" style="margin-top: 15px; padding: 12px 20px; background: rgba(255, 193, 7, 0.15); border-radius: 8px; border: 1px solid rgba(255, 193, 7, 0.4); display: none;">
-                <div id="progress-text" style="color: var(--text-primary, #333); font-size: 0.95em; font-weight: 600; text-align: center;"></div>
+            <div id="progress-display" class="progress-display-inline hidden">
+                <div id="progress-text" class="progress-text"></div>
             </div>
             
             <!-- IndexedDB Cache Manager -->
-            <div id="cache-manager" style="margin-top: 15px; padding: 12px 15px; background: rgba(44, 111, 184, 0.05); border-radius: 8px; border: 1px solid rgba(44, 111, 184, 0.2);">
-                <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px;">
-                    <h4 style="margin: 0; color: var(--text-primary, #333); font-size: 1em;">💾 Download Cache</h4>
-                    <span id="cache-size-display" style="color: var(--text-secondary, #666); font-size: 0.85em;">0 MB used</span>
-                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                        <button id="download-all-cache-btn" class="bw-btn" style="flex: 1 1 120px; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em; font-weight: 500; white-space: nowrap;">⬇️ Download All</button>
-                        <button id="clear-all-cache-btn" class="bw-btn" style="flex: 1 1 100px; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em; font-weight: 500; white-space: nowrap;">Clear All</button>
-                        <button id="refresh-cache-btn" class="bw-btn" style="flex: 1 1 100px; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em; font-weight: 500; white-space: nowrap;">🔄 Refresh</button>
+            <div id="cache-manager" class="cache-manager-inline">
+                <div class="flex-column-gap">
+                    <h4 class="cache-title">💾 Download Cache</h4>
+                    <span id="cache-size-display" class="cache-size-display">0 MB used</span>
+                    <div class="flex-wrap-gap">
+                        <button id="download-all-cache-btn" class="bw-btn cache-btn-styled">⬇️ Download All</button>
+                        <button id="clear-all-cache-btn" class="bw-btn cache-btn-styled small">Clear All</button>
+                        <button id="refresh-cache-btn" class="bw-btn cache-btn-styled small">🔄 Refresh</button>
                     </div>
                 </div>
-                <div id="cache-items-container" style="max-height: 400px; overflow-y: auto;">
-                    <p style="color: var(--text-secondary, #666); font-size: 0.9em; text-align: center; margin: 20px 0;">No cached downloads yet</p>
+                <div id="cache-items-container" class="cache-items-container">
+                    <p class="cache-empty-text">No cached downloads yet</p>
                 </div>
             </div>
         </section>
@@ -310,28 +306,28 @@
                 <div id="converter-form" class="converter-input-box">
                     <div class="converter-input">
                         <div class="input-text">
-                            <span class="social-input-youtube" style="display: block;">Enter YouTube Video or Shorts URL</span>
-                            <span class="social-input-tiktok" style="display: none;">Enter TikTok URL</span>
-                            <span class="social-input-reddit" style="display: none;">Enter Reddit Video URL</span>
-                            <span class="social-input-instagram" style="display: none;">Enter Instagram Reel URL</span>
-                            <span class="social-input-facebook" style="display: none;">Enter Facebook Video URL</span>
-                            <span class="social-input-twitch" style="display: none;">Enter Twitch Clip URL</span>
-                            <span class="social-input-twitter" style="display: none;">Enter Twitter/X Video URL</span>
+                            <span class="social-input social-input-youtube show">Enter YouTube Video or Shorts URL</span>
+                            <span class="social-input social-input-tiktok">Enter TikTok URL</span>
+                            <span class="social-input social-input-reddit">Enter Reddit Video URL</span>
+                            <span class="social-input social-input-instagram">Enter Instagram Reel URL</span>
+                            <span class="social-input social-input-facebook">Enter Facebook Video URL</span>
+                            <span class="social-input social-input-twitch">Enter Twitch Clip URL</span>
+                            <span class="social-input social-input-twitter">Enter Twitter/X Video URL</span>
                         </div>
                         <input type="text" id="video-url" class="input-field-url" placeholder="https://www.youtube.com/watch?v=example" required>
                     </div>
                     
                     <div class="converter-format-button">
                         <!-- Video Quality Select -->
-                        <div class="quality-video-select-box" style="display: none;">
-                            <div class="input-text" id="quality-video-input-text" style="display: none;">
+                        <div class="quality-video-select-box select-box-hidden">
+                            <div class="input-text hidden" id="quality-video-input-text">
                                 <span>Video Quality</span>
                             </div>
                             <div id="quality-video-select-display" class="select-display">
                                 <span id="quality-video-select-display-value">720p</span>
                                 <i class="fas fa-chevron-down dropdown-icon"></i>
                             </div>
-                            <div id="quality-video-select-list" class="select-list" style="display:none;">
+                            <div id="quality-video-select-list" class="select-list select-list-hidden">
                                 <div class="quality-video-select-options" data-quality="144">144p</div>
                                 <div class="quality-video-select-options" data-quality="360">360p</div>
                                 <div class="quality-video-select-options" data-quality="480">480p</div>
@@ -341,15 +337,15 @@
                         </div>
 
                         <!-- Audio Quality Select -->
-                        <div class="quality-audio-select-box" style="display: block;">
-                            <div class="input-text" id="quality-audio-input-text" style="display: block;">
+                        <div class="quality-audio-select-box">
+                            <div class="input-text" id="quality-audio-input-text">
                                 <span>Audio Bitrate</span>
                             </div>
                             <div id="quality-audio-select-display" class="select-display">
                                 <span id="quality-audio-select-display-value">128kb/s</span>
                                 <i class="fas fa-chevron-down dropdown-icon"></i>
                             </div>
-                            <div id="quality-audio-select-list" class="select-list" style="display:none;">
+                            <div id="quality-audio-select-list" class="select-list select-list-hidden">
                                 <div class="quality-audio-select-options" data-quality="96">96kb/s</div>
                                 <div class="quality-audio-select-options active" data-quality="128">128kb/s</div>
                                 <div class="quality-audio-select-options" data-quality="256">256kb/s</div>
@@ -366,7 +362,7 @@
                                 <span id="format-select-display-value">MP3</span>
                                 <i class="fas fa-chevron-down dropdown-icon"></i>
                             </div>
-                            <div id="format-select-list" class="select-list" style="display:none;">
+                            <div id="format-select-list" class="select-list select-list-hidden">
                                 <div class="format-select-options active" data-format="1">MP3 (Audio)</div>
                                 <div class="format-select-options" data-format="0">MP4 (Video)</div>
                             </div>
@@ -382,43 +378,42 @@
             </div>
 
             <!-- Advanced Options (Simplified) -->
-            <div class="per-download-row" style="margin-top:15px;">
-                <details style="width:100%;max-width:800px;margin:0 auto;">
-                    <summary style="cursor:pointer;padding:12px;background:var(--surface-color);border-radius:8px;font-weight:600;color:var(--text-primary);user-select:none;">
+            <div class="per-download-row per-download-row--mt">
+                <details class="details-wrapper">
+                    <summary class="details-summary">
                         ⚙️ Advanced Options (Optional)
                     </summary>
-                    <div style="padding:15px;background:var(--background-secondary);border-radius:8px;margin-top:10px;">
+                    <div class="details-panel">
                         <!-- Cookies Management -->
-                        <div class="per-download-controls" style="margin-bottom:15px;">
-                            <label style="display:block;font-weight:600;margin-bottom:8px;color:var(--text-primary);">
+                        <div class="per-download-controls per-download-controls--mb">
+                            <label class="label-block">
                                 🍪 Cookies (for age-restricted or private videos)
                             </label>
-                            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                            <div class="flex-row-gap-center-wrap">
                                 <button id="createCookiesBtn" class="c-btn c-btn--sm c-btn--secondary bw-btn" type="button">
                                     Manage Cookies
                                 </button>
-                                <span id="cookiesStatus" style="color:var(--text-secondary);font-size:0.9em;">
+                                <span id="cookiesStatus" class="cookies-status">
                                     No cookies configured
                                 </span>
                             </div>
-                            <small style="display:block;margin-top:8px;color:var(--text-secondary);">
+                            <small class="small-muted">
                                 <strong>Tip:</strong> Export cookies from your browser using "Get cookies.txt" extension, then upload here for age-restricted content.
                             </small>
                         </div>
                         
                         <!-- Proxy (Optional) -->
                         <div class="per-download-controls">
-                            <label for="perDownloadProxy" style="display:block;font-weight:600;margin-bottom:8px;color:var(--text-primary);">
+                            <label for="perDownloadProxy" class="label-block">
                                 🌐 Proxy (for blocked IPs)
                             </label>
                             <input 
                                 type="text" 
                                 id="perDownloadProxy" 
-                                class="input-field-url" 
+                                class="input-field-url per-download-proxy-input w-100" 
                                 placeholder="http://proxy.example.com:8080" 
-                                style="width:100%;max-width:600px;"
                             />
-                            <small style="display:block;margin-top:8px;color:var(--text-secondary);">
+                            <small class="small-muted">
                                 <strong>Optional:</strong> Use a proxy server if your IP is blocked. Leave empty for direct connection.
                             </small>
                         </div>
@@ -430,7 +425,7 @@
             </div>
 
             <!-- Loading Spinner -->
-            <div id="spinner" class="spinner-container" style="display:none;">
+            <div id="spinner" class="spinner-container hidden">
                 <div class="animation-box">
                     <div class="c-loading-spinner"></div>
                     <span id="spinner-text">Processing...</span>
@@ -438,9 +433,9 @@
             </div>
 
             <!-- Video Info/Results -->
-            <div class="video-info" id="video-info" style="display: none;">
+            <div class="video-info" id="video-info">
                 <h2 id="video-title">Your download is ready!</h2>
-                <p id="secondary-message" style="display: none;">Note: Videos longer than 3 hours may have limited availability.</p>
+                <p id="secondary-message" class="hidden">Note: Videos longer than 3 hours may have limited availability.</p>
                 <div class="button-row">
                     <button class="c-btn c-btn--tertiary bw-btn" id="download-btn">
                         <i class="fas fa-download"></i>
@@ -492,7 +487,7 @@
         <!-- Information Sections -->
         <div class="content-sections">
             <!-- YouTube Section -->
-            <section class="content-second content-second-youtube" style="display: block;" id="how-to-use">
+            <section class="content-second content-second-youtube content-second--visible" id="how-to-use">
                 <h2>Best Free YouTube to MP3 Converter Online</h2>
                 <p><strong>Convert YouTube videos to MP3 or MP4</strong> and download them with Convert The Spire. Our YouTube converter is the <em>fastest and safest</em> solution that supports high-quality audio up to <strong>320kbps</strong> and video up to <strong>1080p HD</strong>.</p>
                 <p>Convert The Spire is the ultimate <strong>YouTube to MP3 converter</strong> that allows you to download YouTube videos and convert them into audio or video format. Perfect for listening to music, podcasts, and educational content offline on any device. Our YouTube downloader works with regular videos, YouTube Shorts, and live streams.</p>
@@ -543,42 +538,42 @@
             </section>
 
             <!-- TikTok Section -->
-            <section class="content-second content-second-tiktok" style="display: none;">
+            <section class="content-second content-second-tiktok content-second--hidden">
                 <h2>Free TikTok Video Downloader - Download TikTok Videos Without Watermark</h2>
                 <p><strong>Download TikTok videos</strong> easily with Convert The Spire, the best free TikTok downloader. Simply copy any TikTok video URL, paste it into our converter, and download high-quality MP4 videos instantly. Our TikTok downloader removes watermarks and works with all TikTok content including trending videos and music clips.</p>
                 <p>Perfect for content creators, social media managers, and anyone who wants to save TikTok videos for offline viewing or repurposing.</p>
             </section>
 
             <!-- Reddit Section -->
-            <section class="content-second content-second-reddit" style="display: none;">
+            <section class="content-second content-second-reddit content-second--hidden">
                 <h2>Reddit Video Downloader - Save Reddit Videos and GIFs</h2>
                 <p><strong>Download Reddit videos and GIFs</strong> with Convert The Spire's free Reddit downloader. Save funny memes, educational content, and viral videos from any Reddit post. Our tool works with v.redd.it links and supports all Reddit video formats.</p>
                 <p>Great for archiving favorite Reddit content, creating compilations, or sharing Reddit videos outside the platform.</p>
             </section>
 
             <!-- Instagram Section -->
-            <section class="content-second content-second-instagram" style="display: none;">
+            <section class="content-second content-second-instagram content-second--hidden">
                 <h2>Instagram Reel Downloader - Download Instagram Videos and Reels</h2>
                 <p><strong>Download Instagram Reels and videos</strong> with Convert The Spire's Instagram downloader. Save your favorite Reels, IGTV videos, and Instagram stories to watch offline. Our Instagram video downloader maintains original quality and works with both public and private content you have access to.</p>
                 <p>Ideal for content creators looking to repurpose content or users who want to save memorable Instagram videos.</p>
             </section>
 
             <!-- Facebook Section -->
-            <section class="content-second content-second-facebook" style="display: none;">
+            <section class="content-second content-second-facebook content-second--hidden">
                 <h2>Facebook Video Downloader - Save Facebook Videos in HD</h2>
                 <p><strong>Download Facebook videos</strong> in HD quality with Convert The Spire's free Facebook downloader. Save videos from Facebook posts, pages, and groups. Our tool supports both public Facebook videos and Facebook Watch content.</p>
                 <p>Perfect for saving educational content, tutorials, entertainment videos, and memorable moments shared on Facebook.</p>
             </section>
 
             <!-- Twitch Section -->
-            <section class="content-second content-second-twitch" style="display: none;">
+            <section class="content-second content-second-twitch content-second--hidden">
                 <h2>Twitch Clip Downloader - Download Twitch Clips and Highlights</h2>
                 <p><strong>Download Twitch clips</strong> and gaming highlights with Convert The Spire's Twitch downloader. Save epic gaming moments, funny fails, and amazing plays from your favorite streamers. Our Twitch clip downloader works with all Twitch content including clips and VOD highlights.</p>
                 <p>Essential for gamers, content creators, and esports fans who want to create montages or save memorable gaming moments.</p>
             </section>
 
             <!-- Twitter Section -->
-            <section class="content-second content-second-twitter" style="display: none;">
+            <section class="content-second content-second-twitter content-second--hidden">
                 <h2>Twitter Video Downloader - Download Twitter/X Videos and GIFs</h2>
                 <p><strong>Download Twitter videos</strong> and GIFs with Convert The Spire's free Twitter downloader. Save viral videos, news clips, memes, and trending content from Twitter (now X). Our tool works with native Twitter videos and supports all video formats shared on the platform.</p>
                 <p>Great for journalists, social media managers, and users who want to archive important Twitter video content.</p>
@@ -680,7 +675,7 @@
                     Convert videos to MP3/MP4 with full metadata, album art, and artist info. 
                     No registration required, with high quality results.
                 </p>
-                <p class="c-footer__description" style="margin-top: 10px; font-weight: 600;">
+                <p class="c-footer__description footer-description-strong">
                     <strong>© 2025 Created, Owned & Operated by Oroka Conner</strong><br>
                     All rights reserved.
                 </p>
@@ -736,7 +731,7 @@
         </div>
         
         <!-- SEO Footer Links for Better Crawling -->
-        <div class="c-footer__seo-links" style="font-size: 0.8em; opacity: 0.7; text-align: center; padding: 10px;">
+        <div class="c-footer__seo-links inline">
             <a href="#" class="c-footer__seo-link">YouTube MP3 Converter</a> | 
             <a href="#" class="c-footer__seo-link">YouTube to MP4</a> | 
             <a href="#" class="c-footer__seo-link">TikTok Video Downloader</a> | 
@@ -753,40 +748,40 @@
     <script src="../js/donationProgress.js"></script>
 
     <!-- Cookies Modal -->
-    <div id="cookiesModal" class="c-modal" style="display:none;">
-        <div class="c-modal__content" style="max-width:760px;">
+    <div id="cookiesModal" class="c-modal hidden">
+        <div class="c-modal__content maxwidth-760">
             <span class="c-modal__close" id="cookiesModalClose">&times;</span>
             <h2>Provide cookies.txt (simple)</h2>
             <p>Paste the <strong>cookies.txt</strong> content here. This helps downloads that require login or age-restrictions. We store it only in your browser and upload it to the server for the current conversion.</p>
             <!-- Structured cookie inputs -->
-            <div class="cookies-form" style="display:flex;flex-direction:column;gap:8px;">
-                <div style="display:flex;flex-direction:column;gap:8px;">
-                    <div style="display:flex;gap:8px;align-items:center;">
-                        <label style="font-weight:600;min-width:120px;">Platform:</label>
-                        <select id="cookiesPlatform" class="input-field-url" style="flex:1;">
+            <div class="cookies-form cookies-form-inline">
+                <div class="flex-column-gap">
+                    <div class="flex-center-wrap align-center">
+                        <label class="label-block min-width-120">Platform:</label>
+                        <select id="cookiesPlatform" class="input-field-url flex-1">
                             <option value="youtube" selected>YouTube</option>
                             <option value="other" disabled>Other (coming soon)</option>
                         </select>
                     </div>
-                    <div style="display:flex;gap:8px;align-items:center;">
-                        <label style="font-weight:600;min-width:120px;">Method:</label>
-                        <div style="flex:1;color:var(--text-secondary);">Manual only paste a single cookie token and save.</div>
+                    <div class="flex-center-wrap align-center">
+                        <label class="label-block min-width-120">Method:</label>
+                        <div class="flex-1 muted-inline">Manual only paste a single cookie token and save.</div>
                     </div>
                 </div>
 
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div class="manual-grid">
                     <div id="domainDiv">
-                        <label style="display:block;font-weight:600;margin-bottom:4px;">Domain</label>
-                        <select id="cookiesDomain" class="input-field-url" style="width:100%;">
+                        <label class="label-block">Domain</label>
+                        <select id="cookiesDomain" class="input-field-url w-100">
                             <option value=".youtube.com">.youtube.com</option>
                             <option value="accounts.google.com">accounts.google.com</option>
                             <option value="other">Other (enter below)</option>
                         </select>
-                        <input id="cookiesDomainOther" class="input-field-url" placeholder="Custom domain (e.g. .example.com)" style="width:100%;margin-top:6px;display:none;" />
+                        <input id="cookiesDomainOther" class="input-field-url w-100 mt-6 display-none" placeholder="Custom domain (e.g. .example.com)" />
                     </div>
                     <div id="nameDiv">
-                        <label style="display:block;font-weight:600;margin-bottom:4px;">Cookie Name</label>
-                        <select id="cookiesNameSelect" class="input-field-url" style="width:100%;">
+                        <label class="label-block">Cookie Name</label>
+                        <select id="cookiesNameSelect" class="input-field-url w-100">
                             <option value="SID">SID</option>
                             <option value="HSID">HSID</option>
                             <option value="APISID">APISID</option>
@@ -795,20 +790,20 @@
                             <option value="YSC">YSC</option>
                             <option value="custom">Custom</option>
                         </select>
-                        <input id="cookiesNameCustom" class="input-field-url" placeholder="Custom cookie name" style="width:100%;margin-top:6px;display:none;" />
+                        <input id="cookiesNameCustom" class="input-field-url w-100 mt-6 display-none" placeholder="Custom cookie name" />
                     </div>
                 </div>
 
                 <div id="manualFields">
-                <div id="manualGrid" style="grid-template-columns:1fr 1fr;gap:8px;">
+                <div id="manualGrid" class="manual-grid">
                     <div>
-                        <label style="display:block;font-weight:600;margin-bottom:4px;">Cookie Value</label>
-                        <input id="cookiesValue" class="input-field-url" placeholder="Paste cookie token here (e.g. A1B2C3...)" style="width:100%;" />
-                        <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:6px;">Tip: use a browser extension to export cookies, then paste the single cookie token here.</div>
+                        <label class="label-block">Cookie Value</label>
+                        <input id="cookiesValue" class="input-field-url w-100" placeholder="Paste cookie token here (e.g. A1B2C3...)" />
+                        <div class="tip-text">Tip: use a browser extension to export cookies, then paste the single cookie token here.</div>
                     </div>
                     <div>
-                        <label style="display:block;font-weight:600;margin-bottom:4px;">Expiry</label>
-                        <select id="cookiesExpirySelect" class="input-field-url" style="width:100%;">
+                        <label class="label-block">Expiry</label>
+                        <select id="cookiesExpirySelect" class="input-field-url w-100">
                             <option value="session">Session (browser close)</option>
                             <option value="1h">1 hour</option>
                             <option value="1d">1 day</option>
@@ -817,19 +812,19 @@
                             <option value="1y">1 year</option>
                             <option value="custom">Custom (unix timestamp)</option>
                         </select>
-                        <input id="cookiesExpiryCustom" class="input-field-url" placeholder="Expiry unix timestamp (e.g. 1700000000)" style="width:100%;margin-top:6px;display:none;" />
+                        <input id="cookiesExpiryCustom" class="input-field-url w-100 mt-6 display-none" placeholder="Expiry unix timestamp (e.g. 1700000000)" />
                     </div>
                 </div>
-
-                <div style="margin-top:6px;color:var(--text-secondary);font-size:0.95rem;">Manual: paste a single cookie token (value) and save. The modal will generate a simple cookies.txt entry for you.</div>
-                <div style="margin-top:8px;font-size:0.9rem;color:var(--text-secondary);">
+                
+                <div class="manual-note">Manual: paste a single cookie token (value) and save. The modal will generate a simple cookies.txt entry for you.</div>
+                <div class="help-list-wrapper">
                     Need help exporting cookies? Try these browser extensions:
-                    <ul style="margin:6px 0 0 18px;color:var(--text-secondary);">
+                    <ul class="ul-inline-style">
                         <li><a href="https://chromewebstore.google.com/detail/cookie-editor/ookdjilphngeeeghgngjabigmpepanpl" target="_blank" rel="noopener">Cookie-Editor (Chrome)</a> export cookies.txt easily.</li>
                         <li><a href="https://addons.mozilla.org/firefox/addon/cookie-quick-manager/" target="_blank" rel="noopener">Cookie Quick Manager (Firefox)</a> export cookies.txt.</li>
                     </ul>
                 </div>
-                <div style="display:flex;gap:8px;margin-top:8px;align-items:center;justify-content:flex-end;">
+                <div class="flex-row-end">
                     <button id="cookiesModalClear" class="c-btn c-btn--tertiary">Clear saved</button>
                     <button id="cookiesModalCancel" class="c-btn c-btn--tertiary">Cancel</button>
                     <button id="cookiesModalSave" class="c-btn c-btn--primary">Save</button>
@@ -841,7 +836,7 @@
     <!-- Cookies modal behavior moved to ../js/converter.js -->
     
     <!-- Support the site -->
-    <div style="text-align: center; margin: 20px 0; opacity: 0.7;">
+    <div class="support-script-wrapper">
         <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="OrokaConner" data-color="#2c6fb8" data-emoji=""  data-font="Inter" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
     </div>
 </body>
