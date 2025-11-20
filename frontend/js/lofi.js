@@ -123,6 +123,28 @@ const openLofiDB = async () => {
     });
 };
 
+// Get all cached downloads from unified cache (same as converter.js)
+async function getAllCachedDownloads() {
+    try {
+        const db = await openLofiDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(window.CACHE_STORE_MEDIA || 'media_files', 'readonly');
+            const store = tx.objectStore(window.CACHE_STORE_MEDIA || 'media_files');
+            const req = store.getAll();
+            req.onsuccess = function(e) {
+                resolve(e.target.result || []);
+            };
+            req.onerror = function(e) {
+                console.error('❌ Error reading all cached downloads:', e);
+                reject(e.target ? e.target.error : e);
+            };
+        });
+    } catch (error) {
+        console.error('❌ Error accessing download cache:', error);
+        return [];
+    }
+}
+
 // Clean up titles that may contain percent-encoding or odd prefixes
 const prettyTitle = (s) => {
     if (!s || typeof s !== 'string') return s;
@@ -297,7 +319,10 @@ const syncCacheToPlaylist = async () => {
                                 title: item.title || item.filename || 'Unknown', // Prefer title (clean) over filename (.mp3)
                                 url: itemUrl,
                                 type: 'video',
-                                status: 'ready',
+                                blob: item.blob, // Store blob reference for checking if actually cached
+                                filename: item.filename,
+                                size: item.size,
+                                format: item.format,
                                 cachedAt: item.created || item.cachedAt || Date.now(),
                                 source: sourceType // 'converter', 'playlist', or 'lofi'
                             };
@@ -666,36 +691,36 @@ const playNextYouTube = () => {
 
 // Play next cached YouTube track (for local playback of cached items)
 const playNextCachedYouTube = () => {
-    if (!cachedYouTubePlaylist || cachedYouTubePlaylist.length === 0) {
+    // Only work with items that have blobs (actually cached)
+    const readySongs = cachedYouTubePlaylist.filter(item => item.blob);
+    
+    if (!readySongs || readySongs.length === 0) {
         console.log('No cached YouTube tracks available');
         return;
     }
     
-    // Find current playing item
-    const currentSrc = audioPlayer.src;
+    // Find current playing item in ready songs
     let currentIndex = -1;
-    
-    // Try to find by checking which item is currently selected or playing
     const songSelector = document.getElementById('song-selector');
     if (songSelector && songSelector.value) {
-        currentIndex = cachedYouTubePlaylist.findIndex(item => item.id === songSelector.value);
+        currentIndex = readySongs.findIndex(item => item.id === songSelector.value);
     }
     
     // Get next index based on shuffle mode
     let nextIndex;
     if (config.shuffle) {
         // Random next track (excluding current)
-        const availableIndices = cachedYouTubePlaylist
+        const availableIndices = readySongs
             .map((_, idx) => idx)
             .filter(idx => idx !== currentIndex);
         nextIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
     } else {
         // Sequential next track
-        nextIndex = (currentIndex + 1) % cachedYouTubePlaylist.length;
+        nextIndex = (currentIndex + 1) % readySongs.length;
     }
     
-    const nextItem = cachedYouTubePlaylist[nextIndex];
-    if (nextItem && nextItem.status === 'ready') {
+    const nextItem = readySongs[nextIndex];
+    if (nextItem) {
         console.log('\u25b6 Playing next cached YouTube:', nextItem.title);
         playCachedYouTubeItem(nextItem);
     }
@@ -703,26 +728,29 @@ const playNextCachedYouTube = () => {
 
 // Play previous cached YouTube track
 const playPreviousCachedYouTube = () => {
-    if (!cachedYouTubePlaylist || cachedYouTubePlaylist.length === 0) {
+    // Only work with items that have blobs (actually cached)
+    const readySongs = cachedYouTubePlaylist.filter(item => item.blob);
+    
+    if (!readySongs || readySongs.length === 0) {
         console.log('No cached YouTube tracks available');
         return;
     }
     
-    // Find current playing item
+    // Find current playing item in ready songs
     let currentIndex = -1;
     const songSelector = document.getElementById('song-selector');
     if (songSelector && songSelector.value) {
-        currentIndex = cachedYouTubePlaylist.findIndex(item => item.id === songSelector.value);
+        currentIndex = readySongs.findIndex(item => item.id === songSelector.value);
     }
     
     // Get previous index (no shuffle for previous)
     let prevIndex = currentIndex - 1;
     if (prevIndex < 0) {
-        prevIndex = cachedYouTubePlaylist.length - 1;
+        prevIndex = readySongs.length - 1;
     }
     
-    const prevItem = cachedYouTubePlaylist[prevIndex];
-    if (prevItem && prevItem.status === 'ready') {
+    const prevItem = readySongs[prevIndex];
+    if (prevItem) {
         console.log('\u23ee Playing previous cached YouTube:', prevItem.title);
         playCachedYouTubeItem(prevItem);
     }
@@ -2687,25 +2715,34 @@ const handleProgressBarClick = (e) => {
 };
 
 // Populate song selector dropdown
-const populateSongSelector = () => {
+const populateSongSelector = async () => {
     const songSelector = document.getElementById('song-selector');
     if (songSelector) {
-        console.log('🔄 Populating song selector. isYouTubeMode:', isYouTubeMode, 'YouTube playlist length:', cachedYouTubePlaylist?.length);
+        console.log('🔄 Populating song selector. isYouTubeMode:', isYouTubeMode);
         
         // Show YouTube playlist in YouTube mode, local songs in local mode
         if (isYouTubeMode) {
-            if (cachedYouTubePlaylist && cachedYouTubePlaylist.length > 0) {
-                songSelector.innerHTML = '<option value="">Select a YouTube song...</option>';
+            // Get ALL cached files directly from IndexedDB like converter.js does
+            try {
+                const cachedFiles = await getAllCachedDownloads();
                 
-                cachedYouTubePlaylist.forEach((item, index) => {
-                    const option = document.createElement('option');
-                    option.value = item.id; // Use ID as value
-                    option.textContent = prettyTitle(item.title);
-                    songSelector.appendChild(option);
-                });
-                console.log('📋 Song selector populated with', cachedYouTubePlaylist.length, 'YouTube songs');
-            } else {
-                songSelector.innerHTML = '<option value="">No YouTube songs cached...</option>';
+                if (cachedFiles && cachedFiles.length > 0) {
+                    songSelector.innerHTML = '<option value="">Select a YouTube song...</option>';
+                    
+                    cachedFiles.forEach((item, index) => {
+                        const option = document.createElement('option');
+                        option.value = item.videoId || item.id; // Use videoId or id as value
+                        option.textContent = prettyTitle(item.title || item.filename);
+                        songSelector.appendChild(option);
+                    });
+                    console.log('📋 Song selector populated with', cachedFiles.length, 'cached songs');
+                } else {
+                    songSelector.innerHTML = '<option value="">No YouTube songs cached...</option>';
+                    console.log('📋 No cached songs available');
+                }
+            } catch (error) {
+                console.error('Error loading cached songs:', error);
+                songSelector.innerHTML = '<option value="">Error loading songs...</option>';
             }
         } else {
             // Local mode - show local songs
