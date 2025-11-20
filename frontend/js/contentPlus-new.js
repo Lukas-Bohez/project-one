@@ -379,7 +379,7 @@
       <div class="article">
         <div class="article-header">
           <h2 class="article-title">${escapeHTML(article.title)}</h2>
-          ${article.__story ? `<p class="article-subtitle" style="margin-top:.5rem;opacity:.9">${escapeHTML(article.__story.name)}${Number.isFinite(article.story_order) ? ` — Chapter ${article.story_order + 1}` : ''}</p>` : ''}
+          ${article.__story ? `<p class="article-subtitle" style="margin-top:.5rem;opacity:.9">${escapeHTML(article.__story.name)}${Number.isFinite(article.story_order) ? `  Chapter ${article.story_order + 1}` : ''}</p>` : ''}
           <p class="article-intro">${escapeHTML(article.intro)}</p>
         </div>
         ${navigationHTML}

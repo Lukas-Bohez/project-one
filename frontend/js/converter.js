@@ -699,7 +699,7 @@ function showContinueControls(show) {
 }
 
 function cancelProcessing() {
-    // User cancelled — clear all and reset
+    // User cancelled  clear all and reset
     playlistQueue = [];
     frontendStorage = [];
     frontendStorageSize = 0;
@@ -1089,7 +1089,7 @@ async function processQueue() {
                     updatePlaylistStatusUI();
                     await flushFrontendStorageAsZip();
                     // After a zip part is created we intentionally pause, keep subtle spinner
-                    // and wait for user Continue before clearing storage — do not hide UI.
+                    // and wait for user Continue before clearing storage  do not hide UI.
                     // The flush function handles showing the Continue controls.
                     
                     // IMPORTANT: Stop processing here and return - user must click Continue
@@ -1132,7 +1132,7 @@ async function processQueue() {
             }
         }
 
-        // queue drained — flush remaining
+        // queue drained  flush remaining
         if (frontendStorageSize > 0) {
             updatePlaylistStatusUI({ currentTitle: `📦 All ${totalItems} songs processed! Creating final ZIP...` });
             await flushFrontendStorageAsZip();
@@ -2502,7 +2502,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             if (value.length < 4) {
-                if (statusSpan) statusSpan.textContent = 'Cookie value looks too short — check you pasted the right token';
+                if (statusSpan) statusSpan.textContent = 'Cookie value looks too short  check you pasted the right token';
                 return;
             }
             let expiry = '2147483647';
@@ -2863,7 +2863,7 @@ async function handleConversion(e) {
         }
     }
 
-    // If playlist UI is active, do not allow normal convert flow — playlists use frontend queue
+    // If playlist UI is active, do not allow normal convert flow  playlists use frontend queue
     if (playlistModeActive) {
         console.log('Playlist mode active: normal Convert is disabled. Use playlist controls.');
         // Visual hint already applied in showPlaylistUI; reset processing flag
@@ -3051,7 +3051,7 @@ function disableConvertButtonVisuals() {
         warn.className = 'error-message';
         warn.style.marginTop = '8px';
         warn.style.fontWeight = '600';
-        warn.textContent = "Please wait — conversion in progress. Repeated requests may be rate-limited.";
+        warn.textContent = "Please wait  conversion in progress. Repeated requests may be rate-limited.";
         if (formContainer) formContainer.appendChild(warn);
     }
 }
@@ -3263,7 +3263,7 @@ async function startConversion(url) {
         throw error;
     }
 
-    // startStatusPolling() will handle polling — see implementation below
+    // startStatusPolling() will handle polling  see implementation below
 }
 
 // Update progress display
@@ -3901,7 +3901,7 @@ async function handleConvertAgain() {
         if (continued) return;
     }
 
-    // Fallback: no active bulk to continue — reset UI for a fresh conversion
+    // Fallback: no active bulk to continue  reset UI for a fresh conversion
     // Keep this client-side so we don't hard reload unless necessary
     isProcessing = false;
     hideSpinner();

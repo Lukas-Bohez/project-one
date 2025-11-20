@@ -4,7 +4,7 @@
 
 **Published: October 28, 2025** | **Category: Opinion**
 
-The American Dream is dead. Buried under a mountain of debt, greed, and generational theft. While baby boomers hoarded wealth and politicians lined their pockets, millennials and Gen Z are being priced out of homeownership forever. The 2025 housing crash isn't coming—it's here, and it's wiping out what's left of the middle class.
+The American Dream is dead. Buried under a mountain of debt, greed, and generational theft. While baby boomers hoarded wealth and politicians lined their pockets, millennials and Gen Z are being priced out of homeownership forever. The 2025 housing crash isn't comingit's here, and it's wiping out what's left of the middle class.
 
 ## The Numbers That Will Make You Scream
 
@@ -24,7 +24,7 @@ These aren't predictions. These are the cold, hard facts from the National Assoc
 
 ![Baby Boomer Wealth Hoarding Housing Crisis](images/boomer-wealth-hoarding.jpg)
 
-The baby boomer generation didn't just live through the American Dream—they devoured it. Born into prosperity, educated by taxpayers, and enriched by skyrocketing home values, they now sit on $85 trillion in household wealth while younger generations scrape by.
+The baby boomer generation didn't just live through the American Dreamthey devoured it. Born into prosperity, educated by taxpayers, and enriched by skyrocketing home values, they now sit on $85 trillion in household wealth while younger generations scrape by.
 
 **The Boomer Theft:**
 - **Inherited $11 trillion** from previous generations (tax-free)
@@ -36,7 +36,7 @@ Your grandparents fought wars, built infrastructure, and created the prosperity 
 
 ## The Bankers' Great Heist
 
-Wall Street didn't just cause the 2008 crash—they learned from it. Instead of fixing the system, they weaponized it.
+Wall Street didn't just cause the 2008 crashthey learned from it. Instead of fixing the system, they weaponized it.
 
 **The 2025 Banking Cartel:**
 - **BlackRock**: Owns 8% of US single-family homes
@@ -48,7 +48,7 @@ Banks create money out of thin air through fractional reserve lending, then char
 
 ## Government: Corrupt and Complicit
 
-Politicians didn't create this crisis—they enabled it. Campaign donations from real estate lobbies ensure that "affordable housing" remains a punchline.
+Politicians didn't create this crisisthey enabled it. Campaign donations from real estate lobbies ensure that "affordable housing" remains a punchline.
 
 **Government Failures in 2025:**
 - **Federal housing budget**: $50 billion (0.1% of GDP)
@@ -106,17 +106,17 @@ Stop waiting for permission. Take action today.
 
 1. **Get organized**: Join local housing justice groups
 2. **Vote with your vote**: Support candidates who attack housing inequality
-3. **Vote with your wallet**: Don't buy overpriced homes—rent or live tiny
+3. **Vote with your wallet**: Don't buy overpriced homesrent or live tiny
 4. **Build community**: Create housing cooperatives and intentional communities
 5. **Demand rent strikes**: When rents rise 5%+, strike until they're rolled back
 6. **Run for office**: Local politics decides housing policy
 
 ## The Theft of a Generation
 
-The housing crisis isn't an accident—it's theft. Boomers stole your future, bankers engineered your poverty, and politicians sold you out. The American Dream was murdered, and we're left with the corpse.
+The housing crisis isn't an accidentit's theft. Boomers stole your future, bankers engineered your poverty, and politicians sold you out. The American Dream was murdered, and we're left with the corpse.
 
 Will you accept this inheritance of debt and despair, or will you fight for a world where everyone can have a place to call home?
 
-The choice is yours. But choose quickly—the crash is coming, and it's bringing hell with it.
+The choice is yours. But choose quicklythe crash is coming, and it's bringing hell with it.
 
 **Your home isn't just a building. It's your freedom. Fight for it.**

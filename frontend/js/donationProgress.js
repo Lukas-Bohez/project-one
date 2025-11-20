@@ -143,7 +143,7 @@
       state.goal = CONFIG.goal;
       state.currency = CONFIG.baseCurrency;
       state.updatedAt = new Date().toISOString();
-      // DO NOT call writeState(state) here — keep this non-destructive.
+      // DO NOT call writeState(state) here  keep this non-destructive.
     }
 
     // ensure shape (fallbacks)
@@ -164,7 +164,7 @@
       CONFIG.supportedCurrencies.forEach(({ code, symbol, name }) => {
         const opt = document.createElement('option');
         opt.value = code;
-        opt.textContent = `${code} — ${name}`;
+        opt.textContent = `${code}  ${name}`;
         curSelect.appendChild(opt);
       });
       // pick a sensible default using user locale

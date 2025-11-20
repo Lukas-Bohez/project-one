@@ -209,7 +209,7 @@ class SupportChatSystem {
             timestampDiv.textContent = formattedTs;
         }
 
-        // No debug logging here — use fallback timestamp extraction when fields are missing
+        // No debug logging here  use fallback timestamp extraction when fields are missing
 
         messageDiv.appendChild(usernameSpan);
         messageDiv.appendChild(contentDiv);
