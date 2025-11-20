@@ -862,11 +862,7 @@ body {
     max-height: 256px;
 }
 
-/* For responsive ads */
-ins.adsbygoogle[data-ad-format="auto"] {
-    display: block ;
-    width: 100% ;
-}
+
 
 /* Fix for potential parent container issues */
 .content-wrapper, .sidebar, .quality-content {
