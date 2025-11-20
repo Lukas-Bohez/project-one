@@ -39,6 +39,22 @@
     --shadow-light: rgba(44,76,124,0.06);
 }
 
+/* Ensure accent-blue class overrides page-level button styles for converter page */
+.accent-blue,
+.c-btn.accent-blue {
+    background-color: var(--primary-color) !important;
+    color: var(--text-inverse) !important;
+    border-color: rgba(0,0,0,0.06) !important;
+}
+
+[data-theme="dark"] .accent-blue,
+.theme-dark .accent-blue,
+.c-btn.accent-blue[data-theme="dark"] {
+    background-color: var(--primary-color) !important;
+    color: var(--text-inverse) !important;
+}
+
+
 /* Dark theme variables - same 60-30-10 principle but inverted */
 [data-theme="dark"] {
     --primary-color: #2c6fb8; /* keep primary blue */

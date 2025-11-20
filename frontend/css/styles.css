@@ -361,6 +361,49 @@ body * {
     box-shadow: 0 0 0 1px var(--primary-color), 0 4px 12px rgba(30, 58, 138, 0.15);
 }
 
+/* Black & White button utility for unimportant actions */
+.bw-btn,
+.c-btn--bw {
+    background-color: #fff;
+    color: #000;
+    border: 2px solid #000;
+}
+
+/* Dark mode variant: invert colors */
+[data-theme="dark"] .bw-btn,
+.theme-dark .bw-btn,
+[data-theme="dark"] .c-btn--bw,
+.theme-dark .c-btn--bw {
+    background-color: #000;
+    color: #fff;
+    border: 2px solid #fff;
+}
+
+/* Accent button (blue) for highlighted actions like Industrial Empire) */
+.accent-blue,
+.c-btn--accent {
+    background-color: var(--primary-color);
+    color: var(--text-inverse);
+    border: 2px solid rgba(0,0,0,0.06);
+}
+
+[data-theme="dark"] .accent-blue,
+.theme-dark .accent-blue,
+[data-theme="dark"] .c-btn--accent,
+.theme-dark .c-btn--accent {
+    background-color: var(--primary-color);
+    color: var(--text-inverse);
+    border: 2px solid rgba(255,255,255,0.06);
+}
+
+/* Make sure bw buttons have a subtle hover effect */
+.bw-btn:hover,
+.c-btn--bw:hover {
+    filter: brightness(0.98);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(24,24,24,0.06);
+}
+
 /* Dark mode button styles */
 [data-theme="dark"] .c-btn--primary,
 [data-theme="dark"] .c-btn--secondary,

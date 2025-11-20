@@ -922,14 +922,32 @@ html, body {
 
 .c-cta-buttons .c-btn--secondary,
 .c-cta-buttons .c-btn--tertiary {
-    background-color: transparent;
-    border: 2px solid white;
-    color: white;
+    /* Use B/W styling for unimportant CTA buttons (light mode) */
+    background-color: #fff;
+    color: #000;
+    border: 2px solid #000;
 }
 
 .c-cta-buttons .c-btn--secondary:hover,
 .c-cta-buttons .c-btn--tertiary:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(0,0,0,0.04);
+}
+
+/* Dark mode: invert CTA button appearance in this area */
+[data-theme="dark"] .c-cta-buttons .c-btn--secondary,
+.theme-dark .c-cta-buttons .c-btn--secondary,
+[data-theme="dark"] .c-cta-buttons .c-btn--tertiary,
+.theme-dark .c-cta-buttons .c-btn--tertiary {
+    background-color: transparent;
+    border: 2px solid #fff;
+    color: #fff;
+}
+
+[data-theme="dark"] .c-cta-buttons .c-btn--secondary:hover,
+.theme-dark .c-cta-buttons .c-btn--secondary:hover,
+[data-theme="dark"] .c-cta-buttons .c-btn--tertiary:hover,
+.theme-dark .c-cta-buttons .c-btn--tertiary:hover {
+    background-color: rgba(255,255,255,0.06);
 }
 
 /* Footer */
