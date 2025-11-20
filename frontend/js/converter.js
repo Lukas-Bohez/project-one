@@ -2066,6 +2066,7 @@ function showChunkReadyMessage(title, chunkIndex, totalParts, url, format, chunk
     hideSpinner();
     
     if (videoInfo) {
+        videoInfo.classList.remove('hidden');
         videoInfo.style.display = 'block';
     }
     
@@ -2131,6 +2132,7 @@ function showChunkCompleteMessage(title, chunkIndex, totalParts, isFinal) {
     hideSpinner();
     
     if (videoInfo) {
+        videoInfo.classList.remove('hidden');
         videoInfo.style.display = 'block';
     }
     
@@ -2843,6 +2845,15 @@ async function handleConversion(e) {
     console.log('🎯 Convert button clicked!');
     console.log('🔄 isProcessing:', isProcessing);
 
+    // Reset failure counter when starting new conversion
+    statusCheckFailures = 0;
+
+    // Hide video-info section when starting new conversion
+    if (videoInfo) {
+        videoInfo.classList.add('hidden');
+        videoInfo.style.display = 'none';
+    }
+
     // Prevent duplicate clicks immediately: if we're already processing, ignore.
     if (isProcessing) {
         console.log('⚠️ Already processing, ignoring click');
@@ -2958,19 +2969,6 @@ async function tryContinueBulkDownload() {
     }
 }
 
-// Show loading spinner
-function showSpinner() {
-    // Backwards compatible: default to modal behavior
-    showSpinner('modal');
-}
-
-// Hide spinner
-function hideSpinner() {
-    spinner.style.display = 'none';
-    formContainer.style.display = 'block';
-    convertButton.disabled = false;
-}
-
 // Enhanced showSpinner with mode: 'modal' (hide UI) or 'subtle' (keep UI visible)
 function showSpinner(mode = 'modal') {
     if (!spinner) return;
@@ -2988,11 +2986,16 @@ function showSpinner(mode = 'modal') {
     
     if (actualMode === 'modal') {
         if (formContainer) formContainer.style.display = 'none';
-        if (videoInfo) videoInfo.style.display = 'none';
+        if (videoInfo) {
+            videoInfo.classList.add('hidden');
+            videoInfo.style.display = 'none';
+        }
+        spinner.classList.remove('hidden');
         spinner.style.display = 'flex';
         if (convertButton) convertButton.disabled = true;
     } else if (actualMode === 'subtle') {
         // subtle spinner: keep UI visible, show small spinner indicator
+        spinner.classList.remove('hidden');
         spinner.style.display = 'flex';
         // don't hide form or video info, don't disable buttons
         // apply a 'subtle' class so CSS can make it less intrusive if available
@@ -3017,6 +3020,7 @@ function updateSpinnerText(message) {
 
 function hideSpinner(mode = 'modal') {
     if (!spinner) return;
+    spinner.classList.add('hidden');
     spinner.style.display = 'none';
     spinner.classList.remove('spinner-subtle');
     if (mode === 'modal') {
@@ -3024,14 +3028,8 @@ function hideSpinner(mode = 'modal') {
         if (convertButton) convertButton.disabled = false;
     }
     
-    // Hide progress and queue displays
-    const queueStatusDisplay = document.getElementById('queue-status-display');
-    if (queueStatusDisplay) {
-        queueStatusDisplay.style.display = 'none';
-    }
-    if (progressDisplay) {
-        progressDisplay.style.display = 'none';
-    }
+    // Note: We don't hide progress/queue displays here anymore
+    // They should be hidden explicitly when conversion completes
 }
 
 // Visual disable (and warning) when a conversion is initiated to prevent duplicate requests
@@ -3288,35 +3286,67 @@ function updateProgress(status) {
                 message = `Preparing bulk download...${retryInfo}`;
             }
         } else {
-            // Single video progress - show detailed status
-            if (status.status === 'downloading') {
-                if (progress > 0 && progress < 100) {
-                    message = `Downloading... ${progress}%${retryInfo}`;
+            // Single video progress - show detailed status with better context
+            const statusMsg = status.status || 'processing';
+            const currentStep = status.current_step || status.message || '';
+            
+            // Use current_step or message for more detailed info
+            if (currentStep) {
+                if (currentStep.includes('download')) {
+                    if (progress > 0 && progress < 100) {
+                        message = `Downloading video... ${progress}%${retryInfo}`;
+                    } else {
+                        message = `Downloading video from YouTube...${retryInfo}`;
+                    }
+                } else if (currentStep.includes('convert') || currentStep.includes('encoding')) {
+                    const format = status.format || 'MP3';
+                    if (progress > 0 && progress < 100) {
+                        message = `Converting to ${format}... ${progress}%${retryInfo}`;
+                    } else {
+                        message = `Converting to ${format}...${retryInfo}`;
+                    }
+                } else if (currentStep.includes('metadata') || currentStep.includes('thumbnail')) {
+                    message = `Adding metadata and artwork...${retryInfo}`;
+                } else if (currentStep.includes('extract')) {
+                    if (progress > 0 && progress < 100) {
+                        message = `Extracting audio... ${progress}%${retryInfo}`;
+                    } else {
+                        message = `Extracting audio...${retryInfo}`;
+                    }
                 } else {
-                    message = `Downloading from YouTube...${retryInfo}`;
+                    message = `${currentStep}${retryInfo}`;
                 }
-            } else if (status.status === 'converting') {
+            } else if (statusMsg === 'downloading') {
                 if (progress > 0 && progress < 100) {
-                    message = `Converting to ${status.format || 'MP3'}... ${progress}%${retryInfo}`;
+                    message = `Downloading video... ${progress}%${retryInfo}`;
                 } else {
-                    message = `Converting to ${status.format || 'MP3'}...${retryInfo}`;
+                    message = `Fetching video from YouTube...${retryInfo}`;
                 }
-            } else if (status.status === 'processing') {
+            } else if (statusMsg === 'converting' || statusMsg === 'encoding') {
+                const format = status.format || 'MP3';
                 if (progress > 0 && progress < 100) {
-                    message = `Processing... ${progress}%${retryInfo}`;
+                    message = `Converting to ${format}... ${progress}%${retryInfo}`;
                 } else {
-                    message = `Processing video...${retryInfo}`;
+                    message = `Converting to ${format}...${retryInfo}`;
                 }
+            } else if (statusMsg === 'processing') {
+                if (progress > 0 && progress < 100) {
+                    message = `Processing video... ${progress}%${retryInfo}`;
+                } else {
+                    message = `Processing your video...${retryInfo}`;
+                }
+            } else if (statusMsg === 'queued') {
+                message = `Waiting in queue...${retryInfo}`;
             } else if (progress > 0 && progress < 100) {
                 message = `Converting... ${progress}%${retryInfo}`;
             } else if (progress >= 100) {
-                message = 'Finalizing...';
+                message = 'Finalizing download...';
             } else if (retryInfo) {
                 message = `Processing${retryInfo}...`;
             }
         }
         
-        // Add specific status messages if available
+        // Add specific status indicators
         if (status.message) {
             if (status.message.includes('rotating user agent')) {
                 message += ' 🔄';
@@ -3328,6 +3358,7 @@ function updateProgress(status) {
         }
         
         progressText.textContent = message;
+        progressDisplay.classList.remove('hidden');
         progressDisplay.style.display = 'block';
     }
 }
@@ -3337,6 +3368,9 @@ function startStatusPolling() {
     if (statusCheckInterval) {
         clearInterval(statusCheckInterval);
     }
+    
+    // Reset failure counter when starting new polling
+    statusCheckFailures = 0;
 
     statusCheckInterval = setInterval(async () => {
         try {
@@ -3361,6 +3395,7 @@ function startStatusPolling() {
                 
                 // Show queue status in dedicated visible element
                 if (queueStatusDisplay && queueStatusText) {
+                    queueStatusDisplay.classList.remove('hidden');
                     queueStatusDisplay.style.display = 'block';
                     
                     if (position === 1 && activeConversions === 1) {
@@ -3377,6 +3412,7 @@ function startStatusPolling() {
             } else {
                 // Hide queue status when not available
                 if (queueStatusDisplay) {
+                    queueStatusDisplay.classList.add('hidden');
                     queueStatusDisplay.style.display = 'none';
                 }
             }
@@ -3384,17 +3420,43 @@ function startStatusPolling() {
             const response = await fetch(`${API_BASE_URL}/api/v1/video/status/${currentDownloadId}`);
             const status = await response.json();
             console.log('📈 Status response:', status);
+            
+            // Log detailed status for debugging
+            if (status.current_step) {
+                console.log('🔄 Current step:', status.current_step);
+            }
+            if (status.progress) {
+                console.log('📊 Progress:', status.progress + '%');
+            }
 
             if (!response.ok) {
                 throw new Error(status.error || 'Status check failed');
             }
+            
+            // Reset failure counter on successful status check
+            statusCheckFailures = 0;
 
             // Only update progress if not in queue or if processing
             if (!queueStatus.queue || !queueStatus.queue.in_queue || status.status !== 'queued') {
                 updateProgress(status);
+                
+                // Also update spinner text if visible
+                if (spinner && !spinner.classList.contains('hidden') && spinner.style.display !== 'none') {
+                    const progress = Math.round(status.progress || 0);
+                    if (status.current_step) {
+                        updateSpinnerText(status.current_step);
+                    } else if (status.status === 'downloading' && progress > 0) {
+                        updateSpinnerText(`Downloading... ${progress}%`);
+                    } else if (status.status === 'converting' && progress > 0) {
+                        updateSpinnerText(`Converting... ${progress}%`);
+                    }
+                }
             }
 
             if (status.status === 'completed') {
+                // Reset failure counter on successful completion
+                statusCheckFailures = 0;
+                
                 if (status.format && status.format.includes('Bulk')) {
                     const completed = status.completed_count || 0;
                     const total = status.total_videos || 0;
@@ -3489,7 +3551,12 @@ function startStatusPolling() {
             }
         } catch (error) {
             console.error('💥 Status check error:', error);
-            statusCheckFailures++;
+            
+            // Only count as failure if it's a network/fetch error (backend actually down)
+            // Not if it's just an application error from the backend
+            if (error.name === 'TypeError' || error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                statusCheckFailures++;
+            }
             
             // 🛡️ Check if backend is down
             if (statusCheckFailures >= MAX_STATUS_FAILURES) {
@@ -3605,8 +3672,8 @@ function startHealthChecks() {
         if (!healthy && !document.getElementById('backend-down-warning')) {
             console.warn('⚠️ Backend health check failed');
             
-            // If user has an active download, show warning
-            if (isProcessing) {
+            // Only show warning if user has an active download AND multiple failures
+            if (isProcessing && statusCheckFailures >= MAX_STATUS_FAILURES) {
                 showBackendDownWarning();
             }
         }
@@ -3640,9 +3707,22 @@ function generateMockTitle(url) {
 
 // Show success state
 function showSuccess(status = {}) {
+    spinner.classList.add('hidden');
     spinner.style.display = 'none';
+    videoInfo.classList.remove('hidden');
     videoInfo.style.display = 'block';
     convertButton.disabled = false;
+    
+    // Hide progress and queue displays since conversion is complete
+    const queueStatusDisplay = document.getElementById('queue-status-display');
+    if (queueStatusDisplay) {
+        queueStatusDisplay.classList.add('hidden');
+        queueStatusDisplay.style.display = 'none';
+    }
+    if (progressDisplay) {
+        progressDisplay.classList.add('hidden');
+        progressDisplay.style.display = 'none';
+    }
     
     // Update success message with actual video title
     const title = document.getElementById('video-title');
@@ -3674,9 +3754,21 @@ function showSuccess(status = {}) {
 
 // Show error state
 function showError(message) {
+    spinner.classList.add('hidden');
     spinner.style.display = 'none';
     formContainer.style.display = 'block';
     convertButton.disabled = false;
+    
+    // Hide progress and queue displays on error
+    const queueStatusDisplay = document.getElementById('queue-status-display');
+    if (queueStatusDisplay) {
+        queueStatusDisplay.classList.add('hidden');
+        queueStatusDisplay.style.display = 'none';
+    }
+    if (progressDisplay) {
+        progressDisplay.classList.add('hidden');
+        progressDisplay.style.display = 'none';
+    }
     
     // 🛡️ Enhanced error messages with helpful suggestions
     let suggestions = [];
@@ -3901,12 +3993,30 @@ async function handleConvertAgain() {
         if (continued) return;
     }
 
-    // Fallback: no active bulk to continue  reset UI for a fresh conversion
+    // Fallback: no active bulk to continue — reset UI for a fresh conversion
     // Keep this client-side so we don't hard reload unless necessary
     isProcessing = false;
     hideSpinner();
     enableBulkControls();
     enableConvertButtonVisuals();
+    
+    // Hide video-info section for fresh conversion
+    if (videoInfo) {
+        videoInfo.classList.add('hidden');
+        videoInfo.style.display = 'none';
+    }
+    
+    // Hide progress and queue displays
+    const queueStatusDisplay = document.getElementById('queue-status-display');
+    if (queueStatusDisplay) {
+        queueStatusDisplay.classList.add('hidden');
+        queueStatusDisplay.style.display = 'none';
+    }
+    if (progressDisplay) {
+        progressDisplay.classList.add('hidden');
+        progressDisplay.style.display = 'none';
+    }
+    
     // Optionally clear currentDownloadId so UI starts fresh
     currentDownloadId = null;
 }

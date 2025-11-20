@@ -2268,6 +2268,11 @@ html, body {
     border: 1px solid rgba(44, 111, 184, 0.3);
     display: none;
 }
+
+.queue-status-display-inline.hidden {
+    display: none !important;
+}
+
 .progress-display-inline {
     margin-top: 15px;
     padding: 12px 20px;
@@ -2275,6 +2280,10 @@ html, body {
     border-radius: 8px;
     border: 1px solid rgba(255, 193, 7, 0.4);
     display: none;
+}
+
+.progress-display-inline.hidden {
+    display: none !important;
 }
 .cache-manager-inline {
     margin-top: 15px;
@@ -2303,7 +2312,10 @@ html, body {
 #spinner.hidden { display: none; }
 
 /* Video info initial hidden state */
-#video-info.hidden { display: none; }
+#video-info.hidden,
+.video-info.hidden { 
+    display: none !important; 
+}
 
 /* Content section visibility */
 .content-second--hidden { display: none; }
