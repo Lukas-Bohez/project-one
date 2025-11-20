@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <title>Convert The Spire — YouTube Playlist Converter (Free)</title>
+    <title>Convert The Spire YouTube Playlist Converter (Free)</title>
     <meta name="description" content="Convert full YouTube playlists to MP3 or MP4 with metadata, album art and lyrics. Built for reliable playlist downloads and client-side ZIP chunking. Other platforms coming soon.">
     <meta name="keywords" content="youtube to mp3, youtube downloader, convert youtube to mp4, free video converter, tiktok downloader, instagram video download, social media converter, mp3 converter, video to audio, twitter video download, facebook video downloader, reddit video converter, twitch clip downloader, social media to mp3, online video converter, no registration video downloader, high quality mp3, 320kbps mp3, 1080p mp4, free online converter, mp3 with metadata, album art, cover art">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
@@ -32,7 +32,7 @@
     
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="Convert The Spire - Free YouTube to MP3 Converter with Metadata by Oroka Conner">
-    <meta property="og:description" content="🚀 Full YouTube playlist converter — convert entire playlists to MP3/MP4 with metadata and album art. Optimized for large playlists with client-side packaging. Other platforms coming soon.">
+    <meta property="og:description" content="🚀 Full YouTube playlist converter convert entire playlists to MP3/MP4 with metadata and album art. Optimized for large playlists with client-side packaging. Other platforms coming soon.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://quizthespire.com/frontend/html/converter.html">
     <meta property="og:image" content="https://quizthespire.com/frontend/img/converter-preview.jpg">
@@ -227,7 +227,7 @@
     <main class="o-container">
         <!-- Welcome Message -->
         <section class="c-welcome-message">
-                <h1>Full YouTube Playlist Converter — MP3 & MP4 with Metadata</h1>
+                <h1>Full YouTube Playlist Converter MP3 & MP4 with Metadata</h1>
             <p>Convert entire <strong>YouTube playlists</strong> to high-quality MP3 (up to 320kbps) or MP4 (up to 1080p). Includes metadata, album art, and lyrics when available. Client-side packaging minimizes server load and supports large playlists with 1GB per-part ZIP splitting.</p>
             <div class="c-note">
                 <span>🎵 <strong>Convert The Spire by Oroka Conner</strong> - The fastest and safest way to download your favorite videos and music with complete metadata. <a href="#how-to-use" target="_self"><strong>Learn how to use</strong></a></span>
@@ -241,7 +241,21 @@
             <div style="display: inline-block;">
                 <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="OrokaConner" data-color="#2c6fb8" data-emoji="" data-font="Inter" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00"></script>
             </div>
+            <!-- Boost Support: faster conversions incentive -->
+            <div class="support-boost" style="max-width:760px;margin:12px auto 0; text-align:center;">
+                <p style="margin:0 0 8px;color:var(--text-primary, #222);font-weight:600;">Want faster conversions? Help keep the servers fast.</p>
+                <p style="margin:0 0 12px;color:var(--text-secondary, #666);">Supporting the site helps fund convert the spire.</p>
+                <div style="display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;">
+                    <a href="https://www.buymeacoffee.com/OrokaConner" target="_blank" rel="noopener noreferrer" class="c-btn accent-blue" style="padding:8px 14px;">⭐ Support Faster Conversions</a>
+                </div>
+                <small style="display:block;margin-top:8px;color:var(--text-muted, #888);">Helps cover server time and bandwidth. Thank you!</small>
+            </div>
             
+            <!-- Support chat link (re-linked back into converter) -->
+            <div style="margin-top:18px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                <a href="../html/support.html" target="_blank" rel="noopener noreferrer" class="c-btn bw-btn" style="text-decoration:none; padding:8px 14px;">💬 Contact Support</a>
+            </div>
+
             <!-- Idle Game Link -->
             <div style="margin-top: 20px;">
                 <a href="../idleGame/idlegame.html" target="_blank" class="idle-game-link">
@@ -266,9 +280,9 @@
                     <h4 style="margin: 0; color: var(--text-primary, #333); font-size: 1em;">💾 Download Cache</h4>
                     <span id="cache-size-display" style="color: var(--text-secondary, #666); font-size: 0.85em;">0 MB used</span>
                     <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                        <button id="download-all-cache-btn" style="flex: 1 1 120px; padding: 8px 12px; background: rgba(40, 167, 69, 0.1); color: #28a745; border: 1px solid rgba(40, 167, 69, 0.3); border-radius: 6px; cursor: pointer; font-size: 0.8em; font-weight: 500; white-space: nowrap;">⬇️ Download All</button>
-                        <button id="clear-all-cache-btn" style="flex: 1 1 100px; padding: 8px 12px; background: rgba(220, 53, 69, 0.1); color: #dc3545; border: 1px solid rgba(220, 53, 69, 0.3); border-radius: 6px; cursor: pointer; font-size: 0.8em; font-weight: 500; white-space: nowrap;">Clear All</button>
-                        <button id="refresh-cache-btn" style="flex: 1 1 100px; padding: 8px 12px; background: rgba(44, 111, 184, 0.1); color: #2c6fb8; border: 1px solid rgba(44, 111, 184, 0.3); border-radius: 6px; cursor: pointer; font-size: 0.8em; font-weight: 500; white-space: nowrap;">🔄 Refresh</button>
+                        <button id="download-all-cache-btn" class="bw-btn" style="flex: 1 1 120px; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em; font-weight: 500; white-space: nowrap;">⬇️ Download All</button>
+                        <button id="clear-all-cache-btn" class="bw-btn" style="flex: 1 1 100px; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em; font-weight: 500; white-space: nowrap;">Clear All</button>
+                        <button id="refresh-cache-btn" class="bw-btn" style="flex: 1 1 100px; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em; font-weight: 500; white-space: nowrap;">🔄 Refresh</button>
                     </div>
                 </div>
                 <div id="cache-items-container" style="max-height: 400px; overflow-y: auto;">
@@ -346,7 +360,7 @@
                         </div>
 
                         <!-- Convert Button -->
-                        <button class="converter-button-container c-btn c-btn--primary" id="convert-button">
+                        <button class="converter-button-container c-btn c-btn--primary accent-blue" id="convert-button">
                             <i class="fas fa-exchange-alt"></i>
                             <span>Convert & Download</span>
                         </button>
@@ -367,7 +381,7 @@
                                 🍪 Cookies (for age-restricted or private videos)
                             </label>
                             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-                                <button id="createCookiesBtn" class="c-btn c-btn--sm c-btn--secondary" type="button">
+                                <button id="createCookiesBtn" class="c-btn c-btn--sm c-btn--secondary bw-btn" type="button">
                                     Manage Cookies
                                 </button>
                                 <span id="cookiesStatus" style="color:var(--text-secondary);font-size:0.9em;">
@@ -415,11 +429,11 @@
                 <h2 id="video-title">Your download is ready!</h2>
                 <p id="secondary-message" style="display: none;">Note: Videos longer than 3 hours may have limited availability.</p>
                 <div class="button-row">
-                    <button class="c-btn c-btn--tertiary" id="download-btn">
+                    <button class="c-btn c-btn--tertiary bw-btn" id="download-btn">
                         <i class="fas fa-download"></i>
                         Download File
                     </button>
-                    <button class="c-btn c-btn--secondary" id="convert-again-btn" onclick="handleConvertAgain()">
+                    <button class="c-btn c-btn--secondary bw-btn" id="convert-again-btn" onclick="handleConvertAgain()">
                         <i class="fas fa-exchange-alt"></i>
                         Convert Another
                     </button>
@@ -472,7 +486,7 @@
 
                 <!-- Prominent owner-only disclaimer -->
                 <div class="owner-notice">
-                    <strong>🚨 Important — Owner / Permission Notice</strong>
+                    <strong>🚨 Important Owner / Permission Notice</strong>
                     <p>Convert The Spire is intended only for converting videos that you personally own or for which you have explicit permission from the copyright holder. By using this service you confirm that you own the rights to the content or have been granted permission to convert and download it.</p>
                     <p>Do not use this service to download copyrighted content without authorization. For details, see our <a href="converter-terms.html">Terms of Service</a> and <a href="converter-privacy.html">Privacy Policy</a>.</p>
                 </div>
@@ -690,6 +704,7 @@
                     <li><a href="converter-privacy.html" class="c-footer__link">Privacy Policy</a></li>
                     <li><a href="converter-terms.html" class="c-footer__link">Terms of Service</a></li>
                     <li><a href="converter-about.html" class="c-footer__link">About Us</a></li>
+                    <li><a href="../html/support.html" target="_blank" rel="noopener noreferrer" class="c-footer__link">Support Chat</a></li>
                     <li><a href="converter-about.html#faq" class="c-footer__link">FAQ</a></li>
                     <li><a href="../sitemap.xml" class="c-footer__link">Sitemap</a></li>
                 </ul>
@@ -741,7 +756,7 @@
                     </div>
                     <div style="display:flex;gap:8px;align-items:center;">
                         <label style="font-weight:600;min-width:120px;">Method:</label>
-                        <div style="flex:1;color:var(--text-secondary);">Manual only — paste a single cookie token and save.</div>
+                        <div style="flex:1;color:var(--text-secondary);">Manual only paste a single cookie token and save.</div>
                     </div>
                 </div>
 
@@ -796,8 +811,8 @@
                 <div style="margin-top:8px;font-size:0.9rem;color:var(--text-secondary);">
                     Need help exporting cookies? Try these browser extensions:
                     <ul style="margin:6px 0 0 18px;color:var(--text-secondary);">
-                        <li><a href="https://chromewebstore.google.com/detail/cookie-editor/ookdjilphngeeeghgngjabigmpepanpl" target="_blank" rel="noopener">Cookie-Editor (Chrome)</a> — export cookies.txt easily.</li>
-                        <li><a href="https://addons.mozilla.org/firefox/addon/cookie-quick-manager/" target="_blank" rel="noopener">Cookie Quick Manager (Firefox)</a> — export cookies.txt.</li>
+                        <li><a href="https://chromewebstore.google.com/detail/cookie-editor/ookdjilphngeeeghgngjabigmpepanpl" target="_blank" rel="noopener">Cookie-Editor (Chrome)</a> export cookies.txt easily.</li>
+                        <li><a href="https://addons.mozilla.org/firefox/addon/cookie-quick-manager/" target="_blank" rel="noopener">Cookie Quick Manager (Firefox)</a> export cookies.txt.</li>
                     </ul>
                 </div>
                 <div style="display:flex;gap:8px;margin-top:8px;align-items:center;justify-content:flex-end;">
