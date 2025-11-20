@@ -18,9 +18,11 @@
   const CONFIG = {
     storageKey: 'convertTheSpire.donation',
     // starting total for a new month (set to 0 if you want to start from zero)
-    startingTotal: 320,
+    startingTotal: 114,
     // monthly goal displayed on the site (in baseCurrency)
-    goal: 1000,
+    goal: 150,
+    // Example: '2025-11'
+    currentMonth: '2025-11',
     // base currency used for storage and goal (server totals should be normalized to this)
     baseCurrency: 'USD',
     // supported display currencies and their symbols
@@ -49,6 +51,11 @@
       fetchOnInit: true,
       fetchInterval: 1000 * 60 * 60, // hourly
     }
+    ,
+    // Whether to always use the CONFIG values (`startingTotal`/`goal`) for display
+    // and overwrite stored month state on load. Set to `true` to force the
+    // configured values to be shown instead of any previously stored totals.
+    useConfigValues: true,
   };
 
   // --- internal helpers ---
@@ -94,21 +101,54 @@
   function ensureState() {
     let state = readState();
     const currentMonth = nowMonthKey();
+    // Determine initial starting total for this config
+    let initTotal = Number(CONFIG.startingTotal) || 0;
+    if (CONFIG.currentMonth && CONFIG.currentMonth !== currentMonth) {
+      initTotal = 0;
+    }
+
     if (!state || state.month !== currentMonth) {
       // new month -> reset
+      // Determine initial starting total. If CONFIG.currentMonth is set
+      // and it does not match the real current month then we default to 0
+      // (so the new month starts at zero raised). Otherwise use
+      // CONFIG.startingTotal which represents the current amount raised.
       state = {
         month: currentMonth,
         monthIndex: nowMonthIndex(), // 1-12 store for quick checking
-        total: CONFIG.startingTotal || 0,
+        total: initTotal,
         goal: CONFIG.goal,
         currency: CONFIG.baseCurrency,
         updatedAt: new Date().toISOString(),
       };
-      writeState(state);
+      // If the configured `currentMonth` doesn't match the real month we
+      // should only show 0 to the user but not overwrite stored values.
+      // So only persist the new-month state when the config indicates this
+      // config applies to the real current month (or when no config.month
+      // is set). This preserves last month's stored totals.
+      if (!CONFIG.currentMonth || CONFIG.currentMonth === currentMonth) {
+        writeState(state);
+      }
     }
-    // ensure shape
+    // If we have a stored state for the current month but the user wants the
+    // CONFIG values to be used for display, overwrite the stored values with
+    // the configured ones. This allows editing `startingTotal`/`goal` in the
+    // config to immediately reflect in the UI.
+    if (state.month === currentMonth && CONFIG.useConfigValues) {
+      // Overwrite only in-memory for display. Do not persist unless the
+      // config explicitly indicates the configured month equals the real
+      // month (handled above during init), because the user requested that
+      // manual edits control when storage changes.
+      state.total = initTotal;
+      state.goal = CONFIG.goal;
+      state.currency = CONFIG.baseCurrency;
+      state.updatedAt = new Date().toISOString();
+      // DO NOT call writeState(state) here — keep this non-destructive.
+    }
+
+    // ensure shape (fallbacks)
     state.goal = state.goal || CONFIG.goal;
-    state.currency = state.currency || CONFIG.currency;
+    state.currency = state.currency || CONFIG.baseCurrency;
     return state;
   }
 
@@ -242,11 +282,18 @@
       return state;
     },
     reset: function () {
+      const currentMonth = nowMonthKey();
+      let initTotal = Number(CONFIG.startingTotal) || 0;
+      if (CONFIG.currentMonth && CONFIG.currentMonth !== currentMonth) {
+        initTotal = 0;
+      }
+
       const state = {
-        month: nowMonthKey(),
-        total: CONFIG.startingTotal || 0,
+        month: currentMonth,
+        monthIndex: nowMonthIndex(),
+        total: initTotal,
         goal: CONFIG.goal,
-        currency: CONFIG.currency,
+        currency: CONFIG.baseCurrency,
         updatedAt: new Date().toISOString(),
       };
       writeState(state);
