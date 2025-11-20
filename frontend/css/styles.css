@@ -1000,3 +1000,57 @@ button[onclick*="idleGame/idlegame.html"]:hover {
         width: 100%;
     }
 }
+
+/* ---------------------------------------
+   Donation progress styling
+   Rounded bar with theme-aware black/white border
+   --------------------------------------- */
+.donation-block {
+    max-width: 420px;
+    margin: 0 auto 8px;
+    text-align: left;
+}
+.donation-block label {
+    display: block;
+    font-size: 0.8em;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+#donation-progress {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 12px;
+    border-radius: 999px;
+    background-color: rgba(0,0,0,0.06);
+    border: 2px solid #000; /* light-mode black border */
+    overflow: hidden;
+}
+/* WebKit: style the bar and the value */
+#donation-progress::-webkit-progress-bar {
+    background-color: transparent;
+    border-radius: 999px;
+}
+#donation-progress::-webkit-progress-value {
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    border-radius: 999px;
+}
+/* Firefox */
+#donation-progress::-moz-progress-bar {
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    border-radius: 999px;
+}
+
+/* Dark theme: white border and subtle inner background */
+[data-theme="dark"] #donation-progress,
+.theme-dark #donation-progress {
+    border: 2px solid #fff;
+    background-color: rgba(255,255,255,0.04);
+}
+[data-theme="dark"] #donation-progress::-webkit-progress-value,
+.theme-dark #donation-progress::-webkit-progress-value {
+    filter: brightness(1.02);
+}
+
+/* Make sure the donation button row keeps spacing on small screens */
+.donation-block .c-btn { min-height: 44px; }

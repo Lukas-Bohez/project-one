@@ -238,22 +238,35 @@
         <section class="support-section" style="text-align: center; margin: 30px 0; padding: 20px; background: var(--surface-color, rgba(255,255,255,0.05)); border-radius: 12px; border: 1px solid var(--border-color, rgba(255,255,255,0.1));">
             <h3 style="margin-bottom: 15px; color: var(--text-primary, #333); font-size: 1.2em;">Support Convert The Spire</h3>
             <p style="margin-bottom: 20px; color: var(--text-secondary, #666); font-size: 0.95em;">Enjoying the free converter? Consider supporting the development!</p>
-            <div style="display: inline-block;">
-                <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="OrokaConner" data-color="#2c6fb8" data-emoji="" data-font="Inter" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00"></script>
-            </div>
-            <!-- Boost Support: faster conversions incentive -->
-            <div class="support-boost" style="max-width:760px;margin:12px auto 0; text-align:center;">
-                <p style="margin:0 0 8px;color:var(--text-primary, #222);font-weight:600;">Want faster conversions? Help keep the servers fast.</p>
-                <p style="margin:0 0 12px;color:var(--text-secondary, #666);">Supporting the site helps fund convert the spire.</p>
-                <div style="display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;">
-                    <a href="https://www.buymeacoffee.com/OrokaConner" target="_blank" rel="noopener noreferrer" class="c-btn accent-blue" style="padding:8px 14px;">⭐ Support Faster Conversions</a>
+            <!-- Improved donation block: tiered quick-donate, main CTA, and optional progress -->
+            <div style="max-width:760px;margin:12px auto 0;text-align:center;">
+                <h3 style="margin-bottom:8px;color:var(--text-primary,#222);font-size:1.05em;">Help Keep Conversions Fast</h3>
+                <p style="margin:0 0 12px;color:var(--text-secondary,#666);font-size:0.95em;">
+                    Small donations pay for server time, bandwidth, and continued development. Even a few dollars help keep queue times short. Thank you!
+                </p>
+
+                <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:10px;">
+                    <a href="https://www.buymeacoffee.com/OrokaConner" target="_blank" rel="noopener noreferrer" class="c-btn accent-blue" aria-label="Donate (other amount)" onclick="window.dataLayer?.push?.({event:'donation_click',amount:'other'});">⭐ Support me (Buy Me A Coffee) ☕</a>
                 </div>
-                <small style="display:block;margin-top:8px;color:var(--text-muted, #888);">Helps cover server time and bandwidth. Thank you!</small>
+
+                <div class="donation-block" style="max-width:420px;margin:0 auto 8px;text-align:left;">
+                                        <label for="donation-progress" style="display:block;font-size:0.8em;color:var(--text-muted,#888);">This month: <strong id="donation-amount">320</strong> / <strong id="donation-goal">1000</strong> <span id="donation-base-currency">USD</span></label>
+                                        <progress id="donation-progress" value="320" max="1000" style="width:100%;height:10px;border-radius:6px;"></progress>
+                                        <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+                                            <label for="donation-currency-select" style="font-size:0.85em;color:var(--text-secondary);min-width:120px;">Show in:</label>
+                                            <select id="donation-currency-select" style="padding:6px 8px;border-radius:6px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);">
+                                                <!-- options populated by donationProgress.js -->
+                                            </select>
+                                        </div>
+                                        <div id="donation-conversions" style="margin-top:8px;line-height:1.2"></div>
+                </div>
+
+                <small style="display:block;color:var(--text-muted,#888);font-size:0.85em;">Secure payments via BuyMeACoffee. No personal data stored by this site.</small>
             </div>
-            
+
             <!-- Support chat link (re-linked back into converter) -->
             <div style="margin-top:18px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-                <a href="../html/support.html" target="_blank" rel="noopener noreferrer" class="c-btn bw-btn" style="text-decoration:none; padding:8px 14px;">💬 Contact Support</a>
+                <a href="../html/support.html" target="_blank" rel="noopener noreferrer" class="c-btn bw-btn" style="text-decoration:none; padding:8px 14px;" aria-label="Contact Support">💬 Contact Support</a>
             </div>
 
             <!-- Idle Game Link -->
@@ -737,6 +750,7 @@
     <script src="../js/converter.js"></script>
     <script src="../js/lofi.js"></script>
     <script src="../js/themeManager.js"></script>
+    <script src="../js/donationProgress.js"></script>
 
     <!-- Cookies Modal -->
     <div id="cookiesModal" class="c-modal" style="display:none;">
