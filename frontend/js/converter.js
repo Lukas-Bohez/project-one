@@ -994,7 +994,7 @@ async function processQueue() {
             console.warn('⚠️', limitCheck.message);
         }
         
-        const totalItems = playlistQueue.length + frontendStorage.length;
+        let totalItems = playlistQueue.length + frontendStorage.length;
         let processedCount = frontendStorage.length;
         
         while (playlistQueue.length > 0) {
@@ -1176,43 +1176,28 @@ async function processQueue() {
             } catch (errItem) {
                 console.error('❌ Error processing queue item', next, errItem);
                 
-                // Track retry count for this item
-                if (!next.retryCount) next.retryCount = 0;
-                next.retryCount++;
-                
-                // Max 3 retries per item
-                if (next.retryCount >= 3) {
-                    console.error('❌ Max retries reached for', next.title);
-                    updatePlaylistStatusUI({
-                        currentTitle: `❌ ${processedCount}/${totalItems} (${progressPercent}%) - Failed after 3 retries: ${next.title}. Skipping...`,
-                        processedCount: processedCount,
-                        totalItems: totalItems
-                    });
-                    await new Promise(r => setTimeout(r, 3000)); // Show error for 3 seconds
-                    continue; // Skip this item permanently
+                // Mark video as failed/uncachable in UI
+                const cacheIndicator = document.querySelector(`.cache-indicator[data-video-id="${next.id}"]`);
+                if (cacheIndicator) {
+                    cacheIndicator.textContent = '❌ Failed';
+                    cacheIndicator.style.color = '#ff6b6b';
+                    cacheIndicator.title = `Conversion failed: ${errItem.message || 'Unknown error'}`;
                 }
                 
-                // Show error message and wait 1 minute before retry
+                // Show error and continue with next item (no retries, no stopping)
                 const errorMsg = errItem.message || 'Unknown error';
+                const shortError = errorMsg.length > 80 ? errorMsg.substring(0, 80) + '...' : errorMsg;
+                
                 updatePlaylistStatusUI({
-                    currentTitle: `⚠️ ${processedCount}/${totalItems} (${progressPercent}%) - Error downloading ${next.title}: ${errorMsg}. Retry ${next.retryCount}/3 in 60s...`,
+                    currentTitle: `⚠️ ${processedCount}/${totalItems} (${progressPercent}%) - Failed: ${next.title} - ${shortError}`,
                     processedCount: processedCount,
                     totalItems: totalItems
                 });
                 
-                // Wait 60 seconds
-                await new Promise(r => setTimeout(r, 60000));
+                // Wait 2 seconds to show the error message
+                await new Promise(r => setTimeout(r, 2000));
                 
-                // Retry: put the failed item back at the front of the queue
-                playlistQueue.unshift(next);
-                totalItems++; // Adjust total to account for retry
-                
-                updatePlaylistStatusUI({
-                    currentTitle: `🔄 ${processedCount}/${totalItems} (${progressPercent}%) - Retrying (${next.retryCount}/3): ${next.title}`,
-                    processedCount: processedCount,
-                    totalItems: totalItems
-                });
-                
+                // Continue to next item without retrying
                 continue;
             }
         }
