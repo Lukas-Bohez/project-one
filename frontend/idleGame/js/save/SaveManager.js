@@ -31,43 +31,17 @@ class SaveManager {
 
     async register(username, password, email = '') {
         try {
-            // Backend requires email field
-            const registerEmail = email || `${username}@game.local`;
-
-            // Try to obtain the public IP with timeout
-            let clientIp = null;
-            try {
-                const ipController = new AbortController();
-                const ipTimeout = setTimeout(() => ipController.abort(), 2000); // 2 second timeout
-                
-                const ipResp = await fetch('https://api.ipify.org?format=json', {
-                    signal: ipController.signal
-                });
-                clearTimeout(ipTimeout);
-                
-                if (ipResp.ok) {
-                    const ipData = await ipResp.json();
-                    clientIp = ipData.ip;
-                }
-            } catch (err) {
-                console.warn('Could not fetch public IP for registration header:', err);
-            }
-
-            // Per-project decision: send registration to the primary register endpoint and
-            // store the user's email in the `first_name` field on the server.
-            const registerUrl = `${this.baseUrl}/api/v1/register`;
+            // Use game auth register endpoint
+            const registerUrl = `${this.baseUrl}${this.apiEndpoint}/auth/register`;
             console.log('📝 Attempting registration to:', registerUrl);
-
-            const headers = { 'Content-Type': 'application/json' };
-            if (clientIp) headers['x-forwarded-for'] = clientIp;
 
             const response = await fetch(registerUrl, {
                 method: 'POST',
-                headers,
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    first_name: registerEmail,
-                    last_name: username,
-                    password: password
+                    username: username,
+                    password: password,
+                    email: email || `${username}@game.local`
                 })
             });
 
