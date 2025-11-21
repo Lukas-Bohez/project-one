@@ -77,7 +77,21 @@
     <link rel="apple-touch-icon" href="../favicon.ico" sizes="192x192">
     
     <style>
-
+        .donation-thank-you {
+            margin: 12px 0;
+            padding: 16px;
+            background: rgba(103, 126, 234, 0.1);
+            border-left: 3px solid #667eea;
+            border-radius: 4px;
+            font-size: 0.95em;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+        .label-compact {
+            font-size: 1.1em;
+            margin-bottom: 8px;
+            display: block;
+        }
     </style>
     
     <!-- Structured Data for SEO -->
@@ -247,15 +261,9 @@
                 </div>
 
                 <div class="donation-block">
-                                        <label for="donation-progress" class="label-compact">This month: <strong id="donation-amount">320</strong> / <strong id="donation-goal">1000</strong> <span id="donation-base-currency">USD</span></label>
+                                        <label for="donation-progress" class="label-compact"><strong>💖 Funding Goal</strong></label>
+                                        <p class="donation-thank-you">Thank you to everybody for funding this project! Every dollar helps keep the servers running and conversions fast. Your support is truly appreciated! 🙏</p>
                                         <progress id="donation-progress" value="320" max="1000"></progress>
-                                        <div class="flex-row-center-gap">
-                                            <label for="donation-currency-select" class="donation-currency-label">Show in:</label>
-                                            <select id="donation-currency-select" class="donation-select">
-                                                <!-- options populated by donationProgress.js -->
-                                            </select>
-                                        </div>
-                                        <div id="donation-conversions" class="mt-8 donation-conversions"></div>
                 </div>
                 <small class="small-muted">Secure payments via BuyMeACoffee. No personal data stored by this site.</small>
             </div>
