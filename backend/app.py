@@ -6914,6 +6914,8 @@ from pydantic import BaseModel
 # Pydantic models for video converter
 class VideoUrlValidation(BaseModel):
     url: str
+    quality: int = 128
+    format: int = 1  # 1 = MP3, 0 = MP4
 
 class VideoConversionRequest(BaseModel):
     url: str
@@ -6991,7 +6993,7 @@ active_conversions_count = 0
 
 # Rate limiting for video downloads (prevent DDoS)
 video_download_rate_limit = {}  # {ip: {'count': int, 'reset_time': float}}
-MAX_CONCURRENT_DOWNLOADS_PER_IP = 8  # 🚀 OPTIMIZED: Increased from 5 to 8 for better throughput
+MAX_CONCURRENT_DOWNLOADS_PER_IP = 25  # 🚀 OPTIMIZED: Increased to 25 for bulk downloads from lofi player
 RATE_LIMIT_WINDOW = 60  # seconds
 
 # 🛡️ TIMEOUT PROTECTION: Maximum time for a single download
@@ -6999,14 +7001,14 @@ DOWNLOAD_TIMEOUT_SECONDS = 1200  # 20 minutes max per download (increased for la
 DOWNLOAD_STALL_TIMEOUT = 600  # 10 minutes with no progress = stalled (was 2 minutes)
 
 # 🎯 SIZE/DURATION LIMITS: Prevent crashes from massive files
-MAX_VIDEO_FILESIZE = 524_288_000  # 500MB max (to stay under 1GB IndexedDB limit)
-MAX_VIDEO_DURATION = 14400  # 4 hours max (14,400 seconds) - with chunking
+MAX_VIDEO_FILESIZE = 1_073_741_824  # 1GB max (increased for adaptive quality)
+MAX_VIDEO_DURATION = 14400  # 4 hours max (14,400 seconds)
 WARN_VIDEO_FILESIZE = 314_572_800  # Warn at 300MB
-WARN_VIDEO_DURATION = 300  # Warn at 5 minutes (triggers chunking)
 
-# 📦 CHUNKING SETTINGS: Split large videos into manageable parts
-CHUNK_DURATION = 300  # 5 minutes per chunk (in seconds) - prevents watchdog timeout
-ENABLE_AUTO_CHUNKING = True  # Auto-split videos approaching size limits
+# 📈 ADAPTIVE QUALITY SETTINGS: Reduce quality for large files
+ENABLE_ADAPTIVE_QUALITY = True  # Auto-reduce quality for large files
+QUALITY_REDUCTION_THRESHOLDS = [262144000, 524288000, 786432000, 1048576000]  # 250MB, 500MB, 750MB, 1GB
+MAX_QUALITY_REDUCTIONS = 4  # Max levels to reduce
 
 # 🔍 WATCHDOG: Monitor stuck downloads
 watchdog_thread = None
@@ -7347,6 +7349,63 @@ def cache_playlist_info(playlist_id: str, data: Dict[str, Any]):
         'timestamp': time.time()
     }
     video_logger.info(f"Cached playlist info for {playlist_id}")
+
+def estimate_file_size(duration: int, quality: int, format_type: str) -> int:
+    """Estimate file size based on duration, quality, and format
+    
+    Args:
+        duration: Duration in seconds
+        quality: Quality setting (bitrate for audio, height for video)
+        format_type: 'audio' or 'video'
+    
+    Returns:
+        Estimated size in bytes
+    """
+    if format_type == 'audio':
+        # Audio: bitrate in kbps * duration / 8 = bytes
+        bitrate_kbps = quality
+        return int((bitrate_kbps * 1000 * duration) / 8)
+    else:
+        # Video: rough estimation based on height
+        # These are approximate MB per minute
+        size_per_minute_mb = {
+            144: 15,
+            360: 30,
+            480: 50,
+            720: 100,
+            1080: 200
+        }.get(quality, 100)  # Default to 720p equivalent
+        
+        duration_minutes = duration / 60
+        return int(size_per_minute_mb * duration_minutes * 1024 * 1024)
+
+def get_reduced_quality(current_quality: int, format_type: str, reduction_level: int) -> int:
+    """Get reduced quality based on current quality and reduction level
+    
+    Args:
+        current_quality: Current quality setting
+        format_type: 'audio' or 'video'
+        reduction_level: How many levels to reduce (1-4)
+    
+    Returns:
+        New quality setting
+    """
+    if format_type == 'audio':
+        qualities = [320, 256, 192, 128, 96]
+    else:
+        qualities = [1080, 720, 480, 360, 144]
+    
+    try:
+        current_index = qualities.index(current_quality)
+        new_index = min(len(qualities) - 1, current_index + reduction_level)
+        return qualities[new_index]
+    except ValueError:
+        # If quality not in list, reduce proportionally
+        if format_type == 'audio':
+            return max(96, current_quality - reduction_level * 64)
+        else:
+            reduction_map = {1: 720, 2: 480, 3: 360, 4: 144}
+            return reduction_map.get(reduction_level, 144)
 
 def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restricted: bool = False, use_invidious: bool = False, invidious_instance: str = None) -> Dict[str, Any]:
     """Get yt-dlp options based on format and quality with metadata embedding
@@ -8373,6 +8432,7 @@ if VIDEO_CONVERTER_AVAILABLE:
         # Initialize cookiefile variable at function scope
         cookiefile = None
         temp_cookie_file = None
+        skip_normal_download = False  # Initialize flag to avoid UnboundLocalError
         
         try:
             # Update status with timeout tracking
@@ -8407,65 +8467,77 @@ if VIDEO_CONVERTER_AVAILABLE:
             filesize = info.get('filesize') or info.get('filesize_approx', 0)
             duration = info.get('duration', 0)
             
-            # 📦 CHUNKING: Check if this is a chunk request
+            # 📦 CHUNKING: Check if this is a chunk request (legacy support)
             is_chunk_request = chunk_start is not None and chunk_end is not None
             
             if is_chunk_request:
-                # Processing a specific time range chunk
+                # Processing a specific time range chunk (legacy)
                 video_logger.info(
                     f"📦 Processing chunk {chunk_index or '?'}: "
                     f"{chunk_start}s - {chunk_end}s ({(chunk_end - chunk_start)/60:.1f} minutes)"
                 )
-                needs_chunking = False  # Already chunked, process this segment
-                chunk_count = 0
+                needs_adaptive_quality = False
             else:
-                # 📦 CHUNKING DECISION: Should we tell frontend to split this video?
-                needs_chunking = False
-                chunk_count = 0
+                # 📈 ADAPTIVE QUALITY: Check if we need to reduce quality for large files
+                needs_adaptive_quality = False
+                original_quality = quality
+                quality_reductions = 0
                 
-                if ENABLE_AUTO_CHUNKING and duration > WARN_VIDEO_DURATION:
-                    # Video is long - calculate how many chunks frontend should request
-                    chunk_count = (duration // CHUNK_DURATION) + (1 if duration % CHUNK_DURATION > 0 else 0)
-                    needs_chunking = chunk_count > 1
+                if ENABLE_ADAPTIVE_QUALITY and filesize > 0:
+                    # Use actual filesize if available
+                    estimated_size = filesize
+                elif ENABLE_ADAPTIVE_QUALITY:
+                    # Estimate size if not available
+                    estimated_size = estimate_file_size(duration, quality, format_type)
+                
+                if ENABLE_ADAPTIVE_QUALITY and estimated_size > QUALITY_REDUCTION_THRESHOLDS[0]:
+                    # Find how many reductions needed
+                    for i, threshold in enumerate(QUALITY_REDUCTION_THRESHOLDS):
+                        if estimated_size > threshold:
+                            quality_reductions = i + 1
+                        else:
+                            break
                     
-                    if needs_chunking:
+                    quality_reductions = min(quality_reductions, MAX_QUALITY_REDUCTIONS)
+                    
+                    if quality_reductions > 0:
+                        new_quality = get_reduced_quality(quality, format_type, quality_reductions)
                         video_logger.info(
-                            f"📦 Video should be split into {chunk_count} parts "
-                            f"({CHUNK_DURATION/60:.0f} minutes each) - will send metadata to frontend"
+                            f"📈 Quality reduced from {quality} to {new_quality} "
+                            f"({quality_reductions} levels) for estimated size {estimated_size / (1024*1024):.1f}MB"
                         )
+                        quality = new_quality
+                        needs_adaptive_quality = True
+                        
+                        # Update the download info with the reduced quality
+                        with download_lock:
+                            if download_id in active_video_downloads:
+                                active_video_downloads[download_id]['quality'] = quality
             
-            # Hard limits - reject if too large (unless chunking will handle it or processing a chunk)
-            if not needs_chunking and not is_chunk_request and filesize > MAX_VIDEO_FILESIZE:
+            # Hard limits - reject if too large even after quality reduction
+            if filesize > MAX_VIDEO_FILESIZE:
                 size_mb = filesize / (1024 * 1024)
                 size_gb = filesize / (1024 * 1024 * 1024)
                 raise ValueError(
                     f"Video file size ({size_gb:.2f}GB / {size_mb:.0f}MB) exceeds maximum allowed size "
                     f"({MAX_VIDEO_FILESIZE / (1024 * 1024):.0f}MB). "
-                    f"Try a lower quality setting or shorter video. "
-                    f"Note: Videos over 5 minutes are automatically chunked to bypass this limit."
+                    f"Try a lower quality setting or shorter video."
                 )
             
-            if not needs_chunking and not is_chunk_request and duration > MAX_VIDEO_DURATION:
+            if duration > MAX_VIDEO_DURATION:
                 hours = duration / 3600
                 raise ValueError(
                     f"Video duration ({hours:.1f} hours) exceeds maximum allowed "
                     f"({MAX_VIDEO_DURATION / 3600:.0f} hours). "
-                    f"Even with automatic chunking, this video is too long. "
-                    f"Please try a shorter video or use a lower quality setting."
+                    f"Please try a shorter video."
                 )
             
             # Warnings - log if approaching limits
-            if not needs_chunking and filesize > WARN_VIDEO_FILESIZE:
+            if filesize > WARN_VIDEO_FILESIZE:
                 size_mb = filesize / (1024 * 1024)
                 video_logger.warning(
                     f"Large video detected: {size_mb:.1f}MB (duration: {duration/60:.1f}min). "
                     f"Download may be slow or fail."
-                )
-            
-            if not needs_chunking and duration > WARN_VIDEO_DURATION:
-                video_logger.warning(
-                    f"Long video detected: {duration/60:.1f} minutes. "
-                    f"Download may take a while or timeout."
                 )
 
             # Check if video is age-restricted and reconfigure if needed
@@ -8524,31 +8596,15 @@ if VIDEO_CONVERTER_AVAILABLE:
                 else:
                     video_logger.info("⚠️ Invidious failed, will try direct download with retries")
             
-            # 📦 CHUNKING: If video needs splitting, return metadata to frontend
-            if needs_chunking and chunk_count > 1:
+            # 📈 ADAPTIVE QUALITY: If quality was reduced, log it
+            if needs_adaptive_quality:
                 video_logger.info(
-                    f"📦 Video requires chunking: {chunk_count} parts. "
-                    f"Returning metadata to frontend for progressive download."
+                    f"📈 Adaptive quality applied: reduced to {quality} "
+                    f"from original {original_quality}"
                 )
-                
-                # Don't download anything - just return chunking info
-                with download_lock:
-                    if download_id in active_video_downloads:
-                        active_video_downloads[download_id]['status'] = 'needs_chunking'
-                        active_video_downloads[download_id]['chunk_count'] = chunk_count
-                        active_video_downloads[download_id]['chunk_duration'] = CHUNK_DURATION
-                        active_video_downloads[download_id]['total_duration'] = duration
-                        active_video_downloads[download_id]['progress'] = 0
-                        active_video_downloads[download_id]['title'] = title
-                        active_video_downloads[download_id]['format'] = 'mp4' if format_type == 'video' else 'mp3'
-                        active_video_downloads[download_id]['finished'] = True  # Mark as finished so watchdog doesn't kill it
-                
-                # Skip the download loop - frontend will request chunks individually
-                last_exception = None
-                skip_normal_download = True
             
-            # 📦 CHUNK REQUEST: Process specific time range
-            elif is_chunk_request:
+            # 📦 CHUNK REQUEST: Process specific time range (legacy support)
+            if is_chunk_request:
                 video_logger.info(f"📦 Processing chunk request: {chunk_start}s to {chunk_end}s")
                 
                 # Modify output path to include chunk index
@@ -8579,8 +8635,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                 
                 # Skip normal download logic
                 skip_normal_download = True
-            else:
-                skip_normal_download = False
+            # No else needed - skip_normal_download is already False
 
             attempt = 0
             last_exception = None
@@ -9315,18 +9370,30 @@ if VIDEO_CONVERTER_AVAILABLE:
                     # 🎯 Check size/duration limits
                     warnings = []
                     
-                    # Check if chunking will be needed
-                    will_chunk = ENABLE_AUTO_CHUNKING and duration > WARN_VIDEO_DURATION
-                    chunk_count = 0
-                    if will_chunk:
-                        chunk_count = (duration // CHUNK_DURATION) + (1 if duration % CHUNK_DURATION > 0 else 0)
+                    # Check if quality reduction will be needed
+                    will_reduce_quality = False
+                    quality_reductions = 0
+                    estimated_size = filesize
                     
-                    # Only reject for filesize if video won't be chunked
-                    if not will_chunk and filesize > MAX_VIDEO_FILESIZE:
+                    if ENABLE_ADAPTIVE_QUALITY and not filesize:
+                        # Estimate if no filesize available
+                        estimated_size = estimate_file_size(duration, request.quality, request.format)
+                    
+                    if ENABLE_ADAPTIVE_QUALITY and estimated_size > QUALITY_REDUCTION_THRESHOLDS[0]:
+                        for i, threshold in enumerate(QUALITY_REDUCTION_THRESHOLDS):
+                            if estimated_size > threshold:
+                                quality_reductions = i + 1
+                            else:
+                                break
+                        quality_reductions = min(quality_reductions, MAX_QUALITY_REDUCTIONS)
+                        will_reduce_quality = quality_reductions > 0
+                    
+                    # Only reject for filesize if quality won't be reduced
+                    if not will_reduce_quality and filesize > MAX_VIDEO_FILESIZE:
                         size_gb = filesize / (1024 * 1024 * 1024)
                         return {
                             "valid": False,
-                            "error": f"Video is too large ({size_gb:.2f}GB). Maximum allowed: {MAX_VIDEO_FILESIZE / (1024**3):.1f}GB. Try a video over 5 minutes for automatic chunking.",
+                            "error": f"Video is too large ({size_gb:.2f}GB). Maximum allowed: {MAX_VIDEO_FILESIZE / (1024**3):.1f}GB. Quality will be automatically reduced for large files.",
                             "size_limit_exceeded": True,
                             "filesize": filesize,
                             "duration": duration
@@ -9336,7 +9403,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                         hours = duration / 3600
                         return {
                             "valid": False,
-                            "error": f"Video is too long ({hours:.1f} hours). Maximum allowed: {MAX_VIDEO_DURATION / 3600:.0f} hours with chunking.",
+                            "error": f"Video is too long ({hours:.1f} hours). Maximum allowed: {MAX_VIDEO_DURATION / 3600:.0f} hours.",
                             "duration_limit_exceeded": True,
                             "filesize": filesize,
                             "duration": duration
@@ -9346,21 +9413,17 @@ if VIDEO_CONVERTER_AVAILABLE:
                     if filesize > WARN_VIDEO_FILESIZE:
                         size_mb = filesize / (1024 * 1024)
                         size_gb = filesize / (1024 * 1024 * 1024)
-                        if will_chunk:
-                            warnings.append(f"Large file: {size_gb:.2f}GB - will be split into chunks")
+                        if will_reduce_quality:
+                            warnings.append(f"Large file: {size_gb:.2f}GB - quality will be reduced by {quality_reductions} levels")
                         else:
                             warnings.append(f"Large file: {size_mb:.0f}MB - download may be slow")
                     
-                    if duration > WARN_VIDEO_DURATION:
-                        minutes = duration / 60
-                        hours = duration / 3600
-                        warnings.append(f"Long video: {hours:.1f} hours ({minutes:.0f} minutes)")
-                    
-                    # Add chunking info if applicable
-                    if will_chunk and chunk_count > 1:
+                    # Add quality reduction info if applicable
+                    if will_reduce_quality:
+                        new_quality = get_reduced_quality(request.quality, request.format, quality_reductions)
                         warnings.append(
-                            f"Video will be split into {chunk_count} parts (~{CHUNK_DURATION/60:.0f} min each) "
-                            f"that you can download one at a time"
+                            f"Quality will be reduced from {request.quality} to {new_quality} "
+                            f"to keep file size manageable"
                         )
                     
                     response = {
@@ -9370,8 +9433,8 @@ if VIDEO_CONVERTER_AVAILABLE:
                         "title": title,
                         "duration": duration,
                         "formats_available": True,
-                        "will_chunk": will_chunk,
-                        "chunk_count": chunk_count if will_chunk else 0
+                        "will_reduce_quality": will_reduce_quality,
+                        "quality_reductions": quality_reductions if will_reduce_quality else 0
                     }
                     
                     if filesize:
