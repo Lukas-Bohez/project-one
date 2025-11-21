@@ -215,6 +215,21 @@
     </script>
 </head>
 <body>
+    <!-- Admin Donation Update Interface (Hidden by default, click to expand) -->
+    <div class="donation-admin collapsed" id="donationAdmin">
+        <h4>
+            <span id="adminTitle">💰 Update Goal</span>
+            <button class="donation-admin-toggle" onclick="toggleDonationAdmin()">▼</button>
+        </h4>
+        <div class="donation-admin-content">
+            <input type="password" id="adminPassword" placeholder="UserServer Password" />
+            <input type="number" id="currentAmount" placeholder="Current Amount" step="0.01" />
+            <input type="number" id="goalAmount" placeholder="Goal Amount" step="0.01" />
+            <button onclick="updateDonationGoal()">Update Progress</button>
+            <div id="adminStatus" class="status-msg" style="display:none;"></div>
+        </div>
+    </div>
+    
     <header class="c-header">
         <button class="c-info-btn" onclick="openModal()">?</button>
         <a href="../index.html" class="c-header__link">
@@ -842,6 +857,97 @@
     </div>
     
     <!-- Cookies modal behavior moved to ../js/converter.js -->
+    
+    <!-- Admin Donation Update Script -->
+    <script>
+        // Toggle donation admin panel
+        function toggleDonationAdmin() {
+            const panel = document.getElementById('donationAdmin');
+            const isExpanded = panel.classList.contains('expanded');
+            
+            if (isExpanded) {
+                panel.classList.remove('expanded');
+                panel.classList.add('collapsed');
+            } else {
+                panel.classList.remove('collapsed');
+                panel.classList.add('expanded');
+                
+                // Load current values
+                loadCurrentDonationValues();
+            }
+        }
+        
+        // Load current donation values
+        async function loadCurrentDonationValues() {
+            if (window.DonationProgress) {
+                const progress = await window.DonationProgress.fetch();
+                document.getElementById('currentAmount').value = progress.currentAmount || 114;
+                document.getElementById('goalAmount').value = progress.goalAmount || 150;
+            }
+        }
+        
+        // Update donation goal
+        async function updateDonationGoal() {
+            const password = document.getElementById('adminPassword').value;
+            const currentAmount = document.getElementById('currentAmount').value;
+            const goalAmount = document.getElementById('goalAmount').value;
+            const statusDiv = document.getElementById('adminStatus');
+            
+            if (!password) {
+                showAdminStatus('Please enter password', 'error');
+                return;
+            }
+            
+            if (!currentAmount || !goalAmount) {
+                showAdminStatus('Please enter both amounts', 'error');
+                return;
+            }
+            
+            // Store password for future use
+            localStorage.setItem('donationAdminPassword', password);
+            
+            showAdminStatus('Updating...', 'success');
+            
+            // Wait for DonationProgress to be available
+            if (!window.DonationProgress) {
+                showAdminStatus('System not ready, try again', 'error');
+                return;
+            }
+            
+            const result = await window.DonationProgress.update(currentAmount, goalAmount);
+            
+            if (result.success) {
+                showAdminStatus('✅ Updated!', 'success');
+                
+                // Reload the page after 1.5 seconds to show new values
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showAdminStatus(`❌ ${result.message}`, 'error');
+            }
+        }
+        
+        // Show status message
+        function showAdminStatus(message, type) {
+            const statusDiv = document.getElementById('adminStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `status-msg ${type}`;
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Load saved password on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedPassword = localStorage.getItem('donationAdminPassword');
+            if (savedPassword) {
+                document.getElementById('adminPassword').value = savedPassword;
+            }
+        });
+    </script>
     
     <!-- Support the site -->
     <div class="support-script-wrapper">
