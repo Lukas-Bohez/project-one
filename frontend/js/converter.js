@@ -341,7 +341,11 @@ async function validateUrl() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ url })
+            body: JSON.stringify({ 
+                url,
+                quality: formatValue === 1 ? audioQuality : videoQuality,
+                format: formatValue
+            })
         });
         
         console.log('📨 Validation response status:', response.status);
@@ -359,14 +363,14 @@ async function validateUrl() {
             if (result.warnings && result.warnings.length > 0) {
                 const warningMsg = result.warnings.join('. ');
                 
-                // Add chunking info if video will be chunked
+                // Add quality reduction info if quality will be reduced
                 let fullWarning = warningMsg;
-                if (result.will_chunk && result.chunk_count) {
+                if (result.will_reduce_quality && result.quality_reductions) {
                     fullWarning = `${warningMsg}
                     
                     <div style="margin-top: 10px; padding: 12px; background: rgba(103, 126, 234, 0.1); border-left: 3px solid #667eea; border-radius: 4px;">
-                        <strong>📦 Multi-Part Download:</strong> This video will be split into ${result.chunk_count} parts (~5 minutes each).
-                        You'll download each part separately to avoid browser storage limits and server timeouts.
+                        <strong>📈 Adaptive Quality:</strong> Quality will be reduced by ${result.quality_reductions} levels to keep file size manageable.
+                        This ensures faster downloads and better compatibility.
                     </div>`;
                 }
                 
