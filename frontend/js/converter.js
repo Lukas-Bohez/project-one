@@ -91,9 +91,13 @@ function initializeEventListeners() {
     let validationTimeout;
     videoUrlInput.addEventListener('input', () => {
         clearTimeout(validationTimeout);
+        lastValidatedUrl = ''; // Reset when user types to allow re-validation
         validationTimeout = setTimeout(validateUrl, 500);
     });
-    videoUrlInput.addEventListener('paste', handleUrlPaste);
+    videoUrlInput.addEventListener('paste', (e) => {
+        lastValidatedUrl = ''; // Reset on paste to allow validation
+        handleUrlPaste(e);
+    });
     
     // Download button
     if (downloadBtn) {
@@ -304,17 +308,29 @@ function updateQualityOptions() {
     }
 }
 
+// Track validation state to prevent concurrent requests
+let isValidating = false;
+let lastValidatedUrl = '';
+
 // Validate URL input with backend
 async function validateUrl() {
     const url = videoUrlInput.value.trim();
     const errorContainer = getOrCreateErrorContainer();
     
+    // Prevent concurrent validation requests for the same URL
+    if (isValidating || url === lastValidatedUrl) {
+        return true;
+    }
+    
     // Clear previous errors
     clearValidationErrors();
     
     if (!url) {
+        lastValidatedUrl = '';
         return true; // Empty is okay
     }
+    
+    isValidating = true;
     
     try {
         console.log('🔍 Validating URL:', url);
@@ -369,6 +385,7 @@ async function validateUrl() {
             hidePlaylistUI();
             
             showValidationSuccess(result.message);
+            lastValidatedUrl = url;
             return true;
         } else {
             // Hide playlist UI on error
@@ -380,6 +397,7 @@ async function validateUrl() {
             } else {
                 showValidationError(result.error || 'Invalid URL');
             }
+            lastValidatedUrl = url;
             return false;
         }
     } catch (error) {
@@ -394,6 +412,8 @@ async function validateUrl() {
         }
         
         return true;
+    } finally {
+        isValidating = false;
     }
 }
 
@@ -525,8 +545,18 @@ function getOrCreateErrorContainer() {
 
 // Playlist UI functions
 let currentPlaylistData = null;
+let isFetchingPlaylist = false;
+let lastFetchedPlaylistId = '';
 
 async function showPlaylistUI(playlistId, playlistUrl) {
+    // Prevent concurrent playlist fetches for the same playlist
+    if (isFetchingPlaylist || playlistId === lastFetchedPlaylistId) {
+        console.log('⏭️ Skipping duplicate playlist fetch for:', playlistId);
+        return;
+    }
+    
+    isFetchingPlaylist = true;
+    
     try {
         console.log('📋 Fetching playlist info for:', playlistId);
 
@@ -571,6 +601,7 @@ async function showPlaylistUI(playlistId, playlistUrl) {
 
             renderPlaylistUI(result);
             showValidationSuccess(`Playlist loaded: ${result.video_count} videos`);
+            lastFetchedPlaylistId = playlistId;
             return true;
         } else {
             showValidationError(result.error || 'Failed to load playlist');
@@ -582,6 +613,8 @@ async function showPlaylistUI(playlistId, playlistUrl) {
         showValidationError('Failed to load playlist information');
         hidePlaylistUI();
         return false;
+    } finally {
+        isFetchingPlaylist = false;
     }
 }
 
@@ -591,6 +624,7 @@ function hidePlaylistUI() {
         playlistContainer.style.display = 'none';
     }
     currentPlaylistData = null;
+    lastFetchedPlaylistId = ''; // Reset to allow re-fetching if needed
 }
 
 function renderPlaylistUI(playlistData) {
@@ -987,27 +1021,26 @@ async function processQueue() {
                 if (alreadyCached) {
                     console.log('⏭️ Skipping already cached video:', next.title);
                     
-                    // Update spinner text to show skip
+                    // Update all UI elements to show skip
                     if (spinnerText) {
-                        spinnerText.textContent = `⏭️ Skipped (already cached) ${processedCount}/${totalItems} (${progressPercent}%)`;
+                        spinnerText.textContent = `⏭️ Skipped (cached) ${processedCount}/${totalItems} (${progressPercent}%)`;
                     }
                     
-                    // Update progress display
                     const progressDisplay = document.getElementById('progress-display');
                     const progressText = document.getElementById('progress-text');
                     if (progressDisplay && progressText) {
                         progressDisplay.style.display = 'block';
-                        progressText.textContent = `⏭️ ${processedCount}/${totalItems} (${progressPercent}%) - Skipped: ${next.title} (already cached)`;
+                        progressText.textContent = `⏭️ ${processedCount}/${totalItems} (${progressPercent}%) - ${next.title} (already cached)`;
                     }
                     
                     updatePlaylistStatusUI({
-                        currentTitle: `⏭️ ${processedCount}/${totalItems} (${progressPercent}%) - Skipped (already cached): ${next.title}`,
+                        currentTitle: `✅ ${processedCount}/${totalItems} (${progressPercent}%) - Already cached: ${next.title}`,
                         processedCount: processedCount,
                         totalItems: totalItems
                     });
                     
-                    // Longer delay so user can see the skip message clearly
-                    await new Promise(r => setTimeout(r, 2000));
+                    // Brief delay so user can see the skip message
+                    await new Promise(r => setTimeout(r, 1500));
                     continue; // Skip to next video
                 }
 
@@ -1019,8 +1052,9 @@ async function processQueue() {
                 });
 
                 if (!convertResp.ok) {
-                    console.warn('Failed to start conversion for', next.id, await convertResp.text());
-                    continue; // proceed to next
+                    const errorText = await convertResp.text();
+                    console.warn('Failed to start conversion for', next.id, errorText);
+                    throw new Error(`Conversion failed: ${errorText || 'Unknown error'}`);
                 }
 
                 convertResult = await convertResp.json();
@@ -1042,16 +1076,37 @@ async function processQueue() {
                     console.warn('Failed to upload cookie file for playlist item:', cookieErr);
                 }
                 const downloadId = convertResult.download_id;
+                
+                // Update all UI to show download progress
+                if (spinnerText) {
+                    spinnerText.textContent = `⏬ Downloading ${processedCount}/${totalItems} (${progressPercent}%)`;
+                }
+                
+                const progressDisplay = document.getElementById('progress-display');
+                const progressText = document.getElementById('progress-text');
+                if (progressDisplay && progressText) {
+                    progressDisplay.style.display = 'block';
+                    progressText.textContent = `⏬ ${processedCount}/${totalItems} (${progressPercent}%) - ${next.title}`;
+                }
+                
+                updatePlaylistStatusUI({
+                    currentTitle: `⏬ ${processedCount}/${totalItems} (${progressPercent}%) - Downloading: ${next.title}`,
+                    processedCount: processedCount,
+                    totalItems: totalItems
+                });
+                
                 const status = await pollStatusUntilReady(downloadId);
                 if (!status || status.status === 'error') {
-                    console.warn('Conversion failed for', next.id, status && status.error);
-                    continue;
+                    const errorMsg = status && status.error ? status.error : 'Unknown conversion error';
+                    console.warn('Conversion failed for', next.id, errorMsg);
+                    throw new Error(`Video conversion failed: ${errorMsg}`);
                 }
 
                 const downloadResp = await fetch(`${API_BASE_URL}/api/v1/video/download/${downloadId}`);
                 if (!downloadResp.ok) {
-                    console.warn('Failed to download converted file for', next.id, await downloadResp.text());
-                    continue;
+                    const errorText = await downloadResp.text();
+                    console.warn('Failed to download converted file for', next.id, errorText);
+                    throw new Error(`Download failed: ${errorText || 'Unknown error'}`);
                 }
 
                 const blob = await downloadResp.blob();
@@ -1064,26 +1119,22 @@ async function processQueue() {
                     filename = `${safe}${ext}`;
                 }
 
-                // Save to download cache immediately
+                // Add to frontend storage (this will save to IDB via addBlobToIDB)
+                addToFrontendStorage(filename, blob, {
+                    title: next.title || next.id,
+                    format: formatValue === 1 ? 'MP3' : 'MP4',
+                    platform: 'youtube',
+                    videoId: next.id  // Store the YouTube video ID for lofi.js lookup
+                });
+                
+                console.log('💾 Playlist item downloaded and cached:', filename);
+                
+                // Update cache indicators (don't reload entire cache manager during bulk download)
                 try {
-                    await saveDownloadedFile(downloadId, filename, blob, {
-                        title: next.title || next.id,
-                        format: formatValue === 1 ? 'MP3' : 'MP4',
-                        platform: 'youtube',
-                        type: 'playlist',
-                        videoId: next.id  // Store the YouTube video ID for lofi.js lookup
-                    });
-                    console.log('💾 Playlist item cached:', filename);
-                    // Refresh cache manager UI
-                    loadCacheManager();
-                    // Update playlist cached indicators immediately
                     await updateCachedIndicators();
                 } catch (cacheErr) {
-                    console.warn('Failed to cache playlist item:', cacheErr);
+                    console.warn('Failed to update cache UI:', cacheErr);
                 }
-
-
-                addToFrontendStorage(filename, blob);
 
                 if (frontendStorageSize >= FRONTEND_STORAGE_THRESHOLD) {
                     updatePlaylistStatusUI();
@@ -1106,8 +1157,10 @@ async function processQueue() {
                 const delayMs = 5000 + Math.random() * 5000; // 5-10 seconds
                 const delaySec = (delayMs / 1000).toFixed(1);
                 
+                // Update UI with completion status including file size
+                const fileSizeMB = (blob.size / 1024 / 1024).toFixed(2);
                 updatePlaylistStatusUI({
-                    currentTitle: `✅ ${processedCount}/${totalItems} (${progressPercent}%) - Completed: ${next.title} (waiting ${delaySec}s before next...)`,
+                    currentTitle: `✅ ${processedCount}/${totalItems} (${progressPercent}%) - Downloaded: ${next.title} (${fileSizeMB} MB) - Waiting ${delaySec}s...`,
                     processedCount: processedCount,
                     totalItems: totalItems
                 });
@@ -1121,13 +1174,45 @@ async function processQueue() {
                 });
 
             } catch (errItem) {
-                console.error('Error processing queue item', next, errItem);
-                // continue to next
+                console.error('❌ Error processing queue item', next, errItem);
+                
+                // Track retry count for this item
+                if (!next.retryCount) next.retryCount = 0;
+                next.retryCount++;
+                
+                // Max 3 retries per item
+                if (next.retryCount >= 3) {
+                    console.error('❌ Max retries reached for', next.title);
+                    updatePlaylistStatusUI({
+                        currentTitle: `❌ ${processedCount}/${totalItems} (${progressPercent}%) - Failed after 3 retries: ${next.title}. Skipping...`,
+                        processedCount: processedCount,
+                        totalItems: totalItems
+                    });
+                    await new Promise(r => setTimeout(r, 3000)); // Show error for 3 seconds
+                    continue; // Skip this item permanently
+                }
+                
+                // Show error message and wait 1 minute before retry
+                const errorMsg = errItem.message || 'Unknown error';
                 updatePlaylistStatusUI({
-                    currentTitle: `⚠️ ${processedCount}/${totalItems} (${progressPercent}%) - Error: ${next.title}`,
+                    currentTitle: `⚠️ ${processedCount}/${totalItems} (${progressPercent}%) - Error downloading ${next.title}: ${errorMsg}. Retry ${next.retryCount}/3 in 60s...`,
                     processedCount: processedCount,
                     totalItems: totalItems
                 });
+                
+                // Wait 60 seconds
+                await new Promise(r => setTimeout(r, 60000));
+                
+                // Retry: put the failed item back at the front of the queue
+                playlistQueue.unshift(next);
+                totalItems++; // Adjust total to account for retry
+                
+                updatePlaylistStatusUI({
+                    currentTitle: `🔄 ${processedCount}/${totalItems} (${progressPercent}%) - Retrying (${next.retryCount}/3): ${next.title}`,
+                    processedCount: processedCount,
+                    totalItems: totalItems
+                });
+                
                 continue;
             }
         }
@@ -1140,8 +1225,10 @@ async function processQueue() {
             updatePlaylistStatusUI({ currentTitle: `✅ All ${totalItems} songs downloaded and cached!` });
         }
         
-        // Refresh cache display to show all downloaded files
+        // Refresh cache display once to show all downloaded files
+        console.log('📊 Refreshing cache manager after playlist download...');
         loadCacheManager();
+        await updateCachedIndicators(true); // Force immediate update after completion
 
     } finally {
         // Re-enable controls and reset state
@@ -1179,29 +1266,41 @@ async function pollStatusUntilReady(downloadId, timeoutMs = 5 * 60 * 1000) {
     return null;
 }
 
-function addToFrontendStorage(filename, blob) {
+function addToFrontendStorage(filename, blob, metadata = {}) {
     const size = blob.size || 0;
     frontendStorage.push({ filename, blob, size });
     frontendStorageSize += size;
-    console.log(`Frontend storage: added ${filename} (${size} bytes). Total: ${frontendStorageSize} bytes.`);
+    console.log(`📦 Added to storage: ${filename} (${(size / 1024 / 1024).toFixed(2)} MB). Total: ${(frontendStorageSize / 1024 / 1024).toFixed(2)} MB`);
 
     // Persist to IndexedDB for resiliency across reloads
     try {
-        addBlobToIDB(filename, blob, size).catch(e => console.warn('IDB store failed', e));
+        addBlobToIDB(filename, blob, size, metadata).catch(e => console.warn('IDB store failed', e));
     } catch (e) {
         console.warn('IDB not available:', e);
-    }
-    // Update UI - refresh cache indicators to reflect new cached items
-    updatePlaylistStatusUI();
-    try { 
-        updateCachedIndicators();
-    } catch (e) { 
-        console.warn('updateCachedIndicators failed', e); 
     }
 }
 
 // Mark which playlist items are cached based on persisted IDB filenames
-async function updateCachedIndicators() {
+// Throttle updates during bulk operations to reduce spam
+let updateCacheIndicatorsTimeout = null;
+async function updateCachedIndicators(immediate = false) {
+    // If immediate update requested (e.g., after full download complete), clear throttle
+    if (immediate) {
+        clearTimeout(updateCacheIndicatorsTimeout);
+        return await _doUpdateCachedIndicators();
+    }
+    
+    // Otherwise, throttle to once per 2 seconds during bulk operations
+    return new Promise((resolve) => {
+        clearTimeout(updateCacheIndicatorsTimeout);
+        updateCacheIndicatorsTimeout = setTimeout(async () => {
+            await _doUpdateCachedIndicators();
+            resolve();
+        }, 2000);
+    });
+}
+
+async function _doUpdateCachedIndicators() {
     try {
         // Check both temporary playlist storage and permanent download cache
         const tempItems = await readAllBlobsFromIDB();
@@ -1363,6 +1462,20 @@ window.migrateOldCachesToUnified = migrateOldCachesToUnified;
 
 // Playlist storage now uses unified cache
 async function addBlobToIDB(filename, blob, size, metadata = {}) {
+    // Check if this videoId already exists in cache to prevent duplicates
+    if (metadata.videoId) {
+        try {
+            const allCached = await getAllCachedDownloads();
+            const existing = allCached.find(item => item.videoId === metadata.videoId && item.type === 'playlist');
+            if (existing) {
+                console.log('⏭️ Skipping duplicate cache save for videoId:', metadata.videoId, filename);
+                return true; // Already cached, no need to save again
+            }
+        } catch (e) {
+            console.warn('Could not check for existing cache entry:', e);
+        }
+    }
+    
     // Use unified cache with playlist type
     const id = `playlist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     return await saveDownloadedFile(id, filename, blob, {
@@ -1814,7 +1927,6 @@ async function loadCacheManager() {
             if (filename) seenFilenames.add(filename);
         }
         
-        console.log(`📊 Cache: ${cachedFiles.length} total files, ${uniqueFiles.length} unique after deduplication`);
         console.log(`📊 Cache: ${cachedFiles.length} total files, ${uniqueFiles.length} unique after deduplication`);
         
         let html = '<div style="display: flex; flex-direction: column; gap: 8px;">';
