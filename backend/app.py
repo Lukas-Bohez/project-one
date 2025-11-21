@@ -8388,24 +8388,50 @@ if VIDEO_CONVERTER_AVAILABLE:
                 if elapsed > DOWNLOAD_TIMEOUT_SECONDS:
                     raise TimeoutError(f"Download exceeded maximum time limit of {DOWNLOAD_TIMEOUT_SECONDS}s")
             
-            # Get yt-dlp options WITHOUT browser cookie extraction (do that separately)
-            ydl_opts = get_ydl_opts(format_type, quality, output_path, use_invidious=False, invidious_instance=None)
-            ydl_opts['progress_hooks'] = [progress_hook]
+            # 🚀 EARLY CHUNKING DETECTION: Extract metadata FIRST without downloading
+            # This prevents trying to download huge videos before we know they need chunking
+            lightweight_opts = {
+                'quiet': True,
+                'no_warnings': True,
+                'extract_flat': False,  # We need full info, not just playlist entries
+                'skip_download': True,  # Don't download anything yet
+                'socket_timeout': 30,
+                'retries': 3
+            }
             
-            # Safer extract_info + download flow with persistent retry loop on transient 403s
-            # 🛡️ Check timeout before starting
-            check_timeout()
+            # Get basic info to determine if chunking is needed
+            info = None
+            title = 'Unknown'
+            duration = 0
+            filesize = 0
             
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=False)
-            title = info.get('title', 'Unknown')
+            try:
+                video_logger.info(f"🔍 Extracting metadata for: {url}")
+                with yt_dlp.YoutubeDL(lightweight_opts) as ydl:
+                    info = ydl.extract_info(url, download=False)
+                
+                if info:
+                    title = info.get('title', 'Unknown')
+                    duration = info.get('duration', 0)
+                    filesize = info.get('filesize') or info.get('filesize_approx', 0)
+                    video_logger.info(f"📊 Video metadata: {title} | Duration: {duration}s ({duration/60:.1f}min) | Size: {filesize/(1024*1024):.1f}MB")
+                else:
+                    raise Exception("Failed to extract video information")
+            except Exception as meta_error:
+                video_logger.warning(f"⚠️ Could not extract metadata early: {meta_error}")
+                # If metadata extraction fails, we can't proceed - raise error
+                error_msg = f"Failed to extract video information: {str(meta_error)}"
+                with download_lock:
+                    if download_id in active_video_downloads:
+                        active_video_downloads[download_id].update({
+                            'status': 'error',
+                            'error': error_msg,
+                            'finished': True
+                        })
+                raise Exception(error_msg)
             
             # 🛡️ Check timeout after extraction
             check_timeout()
-            
-            # 🎯 SIZE/DURATION CHECKS: Prevent massive downloads
-            filesize = info.get('filesize') or info.get('filesize_approx', 0)
-            duration = info.get('duration', 0)
             
             # 📦 CHUNKING: Check if this is a chunk request
             is_chunk_request = chunk_start is not None and chunk_end is not None
@@ -8423,6 +8449,8 @@ if VIDEO_CONVERTER_AVAILABLE:
                 needs_chunking = False
                 chunk_count = 0
                 
+                # 🚀 CRITICAL: Check for chunking EARLY based on duration alone
+                # This prevents attempting to download massive videos before we know they need splitting
                 if ENABLE_AUTO_CHUNKING and duration > WARN_VIDEO_DURATION:
                     # Video is long - calculate how many chunks frontend should request
                     chunk_count = (duration // CHUNK_DURATION) + (1 if duration % CHUNK_DURATION > 0 else 0)
@@ -8430,8 +8458,9 @@ if VIDEO_CONVERTER_AVAILABLE:
                     
                     if needs_chunking:
                         video_logger.info(
-                            f"📦 Video should be split into {chunk_count} parts "
-                            f"({CHUNK_DURATION/60:.0f} minutes each) - will send metadata to frontend"
+                            f"📦 Large video detected! Will split into {chunk_count} parts "
+                            f"({CHUNK_DURATION/60:.0f} minutes each). Skipping full download - "
+                            f"frontend will request chunks individually."
                         )
             
             # Hard limits - reject if too large (unless chunking will handle it or processing a chunk)
@@ -8468,15 +8497,52 @@ if VIDEO_CONVERTER_AVAILABLE:
                     f"Download may take a while or timeout."
                 )
 
-            # Check if video is age-restricted and reconfigure if needed
-            if info.get('age_limit', 0) > 0:
-                is_age_restricted = True
-                ydl_opts = get_ydl_opts(format_type, quality, output_path, is_age_restricted)
-                ydl_opts['progress_hooks'] = [progress_hook]
-
+            # Update title in download info
             with download_lock:
                 if download_id in active_video_downloads:
                     active_video_downloads[download_id]['title'] = title
+            
+            # 📦 CRITICAL: If video needs splitting, return metadata IMMEDIATELY
+            # Do NOT continue to age-restriction checks, Invidious attempts, or download logic
+            if needs_chunking and chunk_count > 1:
+                video_logger.info(
+                    f"📦 Video requires chunking: {chunk_count} parts of {CHUNK_DURATION/60:.0f}min each. "
+                    f"Returning metadata to frontend WITHOUT downloading. "
+                    f"Frontend will make {chunk_count} separate chunk requests."
+                )
+                
+                # Don't download anything - just return chunking info
+                with download_lock:
+                    if download_id in active_video_downloads:
+                        active_video_downloads[download_id]['status'] = 'needs_chunking'
+                        active_video_downloads[download_id]['chunk_count'] = chunk_count
+                        active_video_downloads[download_id]['chunk_duration'] = CHUNK_DURATION
+                        active_video_downloads[download_id]['total_duration'] = duration
+                        active_video_downloads[download_id]['progress'] = 0
+                        active_video_downloads[download_id]['title'] = title
+                        active_video_downloads[download_id]['format'] = 'mp4' if format_type == 'video' else 'mp3'
+                        active_video_downloads[download_id]['finished'] = True  # Mark as finished so watchdog doesn't kill it
+                        active_video_downloads[download_id]['url'] = url  # Store URL for chunk requests
+                
+                # Mark as successful - no error occurred, we're just delegating to chunked workflow
+                video_logger.info(f"✅ Chunking metadata prepared for {download_id}. No download initiated.")
+                
+                # Decrement counters since we're not actually downloading
+                decrement_active_conversions()
+                if client_ip:
+                    decrement_video_rate_limit(client_ip)
+                
+                # Process next item in queue
+                process_next_in_queue()
+                
+                # Exit early - don't continue to download logic
+                return
+
+            # Check if video is age-restricted and reconfigure if needed (only if info exists and not chunking)
+            if info and info.get('age_limit', 0) > 0:
+                is_age_restricted = True
+                ydl_opts = get_ydl_opts(format_type, quality, output_path, is_age_restricted)
+                ydl_opts['progress_hooks'] = [progress_hook]
 
             # Prepare proxies list
             proxy_env = os.environ.get('YTDL_PROXY')
@@ -8524,58 +8590,110 @@ if VIDEO_CONVERTER_AVAILABLE:
                 else:
                     video_logger.info("⚠️ Invidious failed, will try direct download with retries")
             
-            # 📦 CHUNKING: If video needs splitting, return metadata to frontend
-            if needs_chunking and chunk_count > 1:
-                video_logger.info(
-                    f"📦 Video requires chunking: {chunk_count} parts. "
-                    f"Returning metadata to frontend for progressive download."
-                )
-                
-                # Don't download anything - just return chunking info
-                with download_lock:
-                    if download_id in active_video_downloads:
-                        active_video_downloads[download_id]['status'] = 'needs_chunking'
-                        active_video_downloads[download_id]['chunk_count'] = chunk_count
-                        active_video_downloads[download_id]['chunk_duration'] = CHUNK_DURATION
-                        active_video_downloads[download_id]['total_duration'] = duration
-                        active_video_downloads[download_id]['progress'] = 0
-                        active_video_downloads[download_id]['title'] = title
-                        active_video_downloads[download_id]['format'] = 'mp4' if format_type == 'video' else 'mp3'
-                        active_video_downloads[download_id]['finished'] = True  # Mark as finished so watchdog doesn't kill it
-                
-                # Skip the download loop - frontend will request chunks individually
-                last_exception = None
-                skip_normal_download = True
+            # Chunking check already handled above with early return
             
-            # 📦 CHUNK REQUEST: Process specific time range
+            # 📦 CHUNK REQUEST: Process specific time range efficiently
             elif is_chunk_request:
-                video_logger.info(f"📦 Processing chunk request: {chunk_start}s to {chunk_end}s")
+                video_logger.info(f"📦 Processing chunk {chunk_index}: {chunk_start}s to {chunk_end}s ({(chunk_end-chunk_start)/60:.1f}min)")
                 
                 # Modify output path to include chunk index
+                chunk_output = output_path
                 if chunk_index:
-                    output_path = output_path.replace('.%(ext)s', f'_part{chunk_index:02d}.%(ext)s')
+                    chunk_output = output_path.replace('.%(ext)s', f'_part{chunk_index:02d}.%(ext)s')
                 
-                # Configure yt-dlp with time range postprocessor
-                chunk_opts = get_ydl_opts(format_type, quality, output_path)
-                chunk_opts['postprocessor_args'] = [
+                # 🚀 STRATEGY: Download full video, then extract chunk with ffmpeg
+                # This is more reliable than trying to use yt-dlp's download_ranges (which has issues)
+                # But we'll use HTTP range requests when possible to avoid downloading entire file
+                
+                chunk_opts = get_ydl_opts(format_type, quality, chunk_output)
+                
+                # Try to use HTTP range requests to download only the needed portion
+                # This works for some formats but not all (depends on server support)
+                chunk_opts['external_downloader_args'] = [
                     '-ss', str(chunk_start),
                     '-to', str(chunk_end),
-                    '-c', 'copy'  # Copy codec (fast, no re-encoding)
                 ]
+                
                 if cookiefile and os.path.exists(cookiefile):
                     chunk_opts['cookiefile'] = cookiefile
                 
-                # Download the chunk
+                chunk_opts['progress_hooks'] = [progress_hook]
+                
+                # Add postprocessor to extract the time range AFTER download
+                # This ensures we get exactly the segment we want
+                if format_type == 'audio':
+                    # For audio, we need to extract and then convert
+                    chunk_opts['postprocessors'].insert(0, {
+                        'key': 'FFmpegVideoRemuxer',
+                        'preferedformat': 'mp4',  # Temporary format before audio extraction
+                    })
+                    chunk_opts['postprocessor_args'] = [
+                        '-ss', str(chunk_start),
+                        '-to', str(chunk_end),
+                        '-c', 'copy',  # Copy codec (no re-encoding)
+                    ]
+                else:
+                    # For video, just extract the segment
+                    chunk_opts['postprocessor_args'] = [
+                        '-ss', str(chunk_start),
+                        '-to', str(chunk_end),
+                        '-c', 'copy',  # Copy codec (no re-encoding)
+                    ]
+                
+                # Download and extract chunk
                 try:
+                    video_logger.info(f"🎬 Downloading and extracting segment: {chunk_start}s - {chunk_end}s")
                     with yt_dlp.YoutubeDL(chunk_opts) as ydl:
                         ydl.download([url])
                     
-                    video_logger.info(f"✅ Chunk {chunk_index} downloaded successfully")
+                    video_logger.info(f"✅ Chunk {chunk_index} completed successfully ({(chunk_end-chunk_start)/60:.1f}min segment)")
                     last_exception = None
                     
                 except Exception as chunk_error:
                     video_logger.error(f"❌ Chunk {chunk_index} failed: {chunk_error}")
-                    raise
+                    # Try fallback: download full video then extract with ffmpeg separately
+                    video_logger.info(f"⚠️ Trying fallback method for chunk {chunk_index}")
+                    try:
+                        # Download full video to temp location
+                        temp_output = chunk_output.replace(f'_part{chunk_index:02d}', '_temp_full')
+                        temp_opts = get_ydl_opts(format_type, quality, temp_output)
+                        temp_opts['progress_hooks'] = [progress_hook]
+                        if cookiefile and os.path.exists(cookiefile):
+                            temp_opts['cookiefile'] = cookiefile
+                        
+                        with yt_dlp.YoutubeDL(temp_opts) as ydl:
+                            ydl.download([url])
+                        
+                        # Find the downloaded file
+                        temp_base = temp_output.replace('.%(ext)s', '')
+                        temp_files = [f for f in os.listdir(VIDEO_DOWNLOAD_DIR) 
+                                     if f.startswith(os.path.basename(temp_base))]
+                        
+                        if temp_files:
+                            temp_file = os.path.join(VIDEO_DOWNLOAD_DIR, temp_files[0])
+                            
+                            # Extract chunk with ffmpeg
+                            chunk_file = chunk_output.replace('.%(ext)s', f'.{temp_files[0].split(".")[-1]}')
+                            import subprocess
+                            subprocess.run([
+                                'ffmpeg', '-i', temp_file,
+                                '-ss', str(chunk_start),
+                                '-to', str(chunk_end),
+                                '-c', 'copy',
+                                chunk_file
+                            ], check=True)
+                            
+                            # Remove temp file
+                            os.remove(temp_file)
+                            
+                            video_logger.info(f"✅ Chunk {chunk_index} extracted via fallback method")
+                            last_exception = None
+                        else:
+                            raise Exception("Could not find downloaded temp file")
+                            
+                    except Exception as fallback_error:
+                        video_logger.error(f"❌ Fallback method also failed: {fallback_error}")
+                        raise
                 
                 # Skip normal download logic
                 skip_normal_download = True

@@ -1998,11 +1998,15 @@ async function requestNextChunk(url, title, format, chunkIndex, totalParts, chun
         
         showSpinner(`Downloading part ${chunkIndex} of ${totalParts}... (${Math.floor(chunkStart/60)}m-${Math.floor(chunkEnd/60)}m)`);
         
+        // Determine format value and quality based on format string
+        const formatInt = format === 'mp3' ? 1 : 0;
+        const quality = formatInt === 1 ? audioQuality : videoQuality;
+        
         // Request this specific chunk from backend
         const requestData = {
             url: url,
-            format: format === 'mp3' ? 1 : 0,
-            quality: qualityValue || 128,
+            format: formatInt,
+            quality: quality,
             chunk_index: chunkIndex,
             chunk_start: chunkStart,
             chunk_end: chunkEnd
