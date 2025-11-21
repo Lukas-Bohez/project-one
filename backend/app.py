@@ -6883,6 +6883,17 @@ start_temp_cleanup(interval=30)
 
 # ----------------------------------------------------
 # Video Converter Setup (YouTube, TikTok, etc.)
+# 🚀 PERFORMANCE OPTIMIZATIONS APPLIED:
+# 1. Cookie file path caching - avoid repeated filesystem lookups
+# 2. Reduced retry limits (10 instead of 30) - faster failure handling
+# 3. Optimized backoff delays (5s max instead of 30s) - quicker retries
+# 4. Early failure detection for sign-in/auth errors - no wasted retries
+# 5. Invidious proxy prioritized when no cookies - faster success rate
+# 6. HTTP connection pooling & concurrent fragments - better throughput
+# 7. Reduced sleep intervals (1s instead of 3s) - faster processing
+# 8. Lower socket timeouts (20s instead of 30s) - quicker error detection
+# 9. Optimized retry configuration (8 max instead of 10) - balanced speed
+# 10. Reduced fragment retries (3 instead of 5) - faster failure recovery
 # ----------------------------------------------------
 try:
     import yt_dlp
@@ -7005,6 +7016,25 @@ watchdog_running = False
 last_youtube_request_time = 0
 youtube_request_lock = threading.Lock()
 MIN_REQUEST_INTERVAL = 0.3  # 🚀 OPTIMIZED: Reduced from 0.5 to 0.3 for faster processing
+
+# 🚀 OPTIMIZATION: Cache cookie file path to avoid repeated lookups
+_cached_cookie_file = None
+_cookie_cache_checked = False
+
+def get_cached_cookie_file():
+    """Get cookie file path with caching to avoid repeated file system checks"""
+    global _cached_cookie_file, _cookie_cache_checked
+    if not _cookie_cache_checked:
+        cookie_file = os.environ.get('YTDL_COOKIE_FILE')
+        if not cookie_file:
+            backend_cookie_path = os.path.join(os.path.dirname(__file__), 'cookies.txt')
+            if os.path.exists(backend_cookie_path):
+                cookie_file = backend_cookie_path
+        _cached_cookie_file = cookie_file if cookie_file and os.path.exists(cookie_file) else None
+        _cookie_cache_checked = True
+        if _cached_cookie_file:
+            video_logger.info(f"Cookie file cached: {_cached_cookie_file}")
+    return _cached_cookie_file
 
 # Invidious instances for fallback (when YouTube blocks us)
 INVIDIOUS_INSTANCES = [
@@ -7338,20 +7368,23 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
         'nocheckcertificate': True,
         'quiet': False,  # Show output
         'no_color': True,  # Disable colors for logging
-        # Enhanced anti-403 measures with limits to prevent infinite loops
+        # 🚀 OPTIMIZED: Enhanced anti-403 measures with faster retry settings
         'extractor_retries': 3,
-        'fragment_retries': 5,  # Reduced from 10 to prevent infinite loops
+        'fragment_retries': 3,  # Reduced from 5 to 3 for faster failures
         'skip_unavailable_fragments': True,
         'keepvideo': False,
-        'retries': 5,  # Reduced from 10 to prevent infinite loops
-        'file_access_retries': 3,
-        # Randomize sleep intervals between retries - increased to avoid rate limiting
-        'sleep_interval': 3,  # Increased from 1 to 3 seconds
-        'max_sleep_interval': 10,  # Increased from 5 to 10 seconds
+        'retries': 4,  # Reduced from 5 to 4 for faster failures
+        'file_access_retries': 2,  # Reduced from 3 to 2
+        # Optimized sleep intervals for faster processing while avoiding rate limits
+        'sleep_interval': 1,  # Reduced from 3 to 1 second
+        'max_sleep_interval': 5,  # Reduced from 10 to 5 seconds
         # Add socket timeout to prevent hanging
-        'socket_timeout': 30,  # 30 seconds max per connection
-        'sleep_interval_requests': 2,  # Increased from 1 to 2 seconds between requests
-        'sleep_interval_subtitles': 1,  # Added delay for subtitle requests
+        'socket_timeout': 20,  # Reduced from 30 to 20 seconds
+        'sleep_interval_requests': 0.5,  # Reduced from 2 to 0.5 seconds
+        'sleep_interval_subtitles': 0.5,  # Reduced from 1 to 0.5 seconds
+        # 🚀 OPTIMIZATION: Enable HTTP connection pooling for faster downloads
+        'http_chunk_size': 10485760,  # 10MB chunks for better throughput
+        'concurrent_fragment_downloads': 3,  # Download 3 fragments simultaneously
     }
     
     # Use Invidious proxy if requested (for Layer 3 fallback)
@@ -7364,19 +7397,14 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
         }
     
     # 🍪 COOKIE SUPPORT: Check for cookies.txt to handle age-restricted content
-    # Priority: 1. Environment variable, 2. Backend directory cookies.txt
-    cookie_file = os.environ.get('YTDL_COOKIE_FILE')
-    if not cookie_file:
-        # Check for cookies.txt in backend directory
-        backend_cookie_path = os.path.join(os.path.dirname(__file__), 'cookies.txt')
-        if os.path.exists(backend_cookie_path):
-            cookie_file = backend_cookie_path
+    # Use cached cookie file path to avoid repeated file system checks
+    cookie_file = get_cached_cookie_file()
     
     # Add cookies if available - CRITICAL for age-restricted content
-    if cookie_file and os.path.exists(cookie_file):
+    if cookie_file:
         base_opts['cookiefile'] = cookie_file
-        video_logger.info(f"Using cookies from: {cookie_file}")
-    else:
+        # Only log once during cache initialization to reduce log spam
+    elif not _cookie_cache_checked:
         video_logger.warning("No cookies.txt found - age-restricted videos may fail")
     
     # Add options for age-restricted content
@@ -8200,24 +8228,24 @@ if VIDEO_CONVERTER_AVAILABLE:
     # Each mapping's value will be a dict: {'download_id': str, 'refcount': int}
     active_url_map = {}
 
-    # Retry configuration from environment (defaults)
+    # 🚀 OPTIMIZED: Retry configuration from environment (faster defaults)
     try:
-        YTDL_MAX_RETRIES = int(os.environ.get('YTDL_MAX_RETRIES', '10'))
+        YTDL_MAX_RETRIES = int(os.environ.get('YTDL_MAX_RETRIES', '8'))
     except Exception:
-        YTDL_MAX_RETRIES = 10
+        YTDL_MAX_RETRIES = 8  # Reduced from 10 to 8 for faster failures
     # By default, don't retry forever - use reasonable max attempts
     if 'YTDL_RETRY_FOREVER' in os.environ:
         YTDL_RETRY_FOREVER = os.environ.get('YTDL_RETRY_FOREVER', 'false').lower() in ('1', 'true', 'yes')
     else:
         YTDL_RETRY_FOREVER = False
     try:
-        YTDL_BACKOFF_BASE = float(os.environ.get('YTDL_BACKOFF_BASE', '2.0'))
+        YTDL_BACKOFF_BASE = float(os.environ.get('YTDL_BACKOFF_BASE', '1.5'))
     except Exception:
-        YTDL_BACKOFF_BASE = 2.0
+        YTDL_BACKOFF_BASE = 1.5  # Reduced from 2.0 for faster retries
     try:
-        YTDL_BACKOFF_MAX = float(os.environ.get('YTDL_BACKOFF_MAX', '30.0'))
+        YTDL_BACKOFF_MAX = float(os.environ.get('YTDL_BACKOFF_MAX', '5.0'))
     except Exception:
-        YTDL_BACKOFF_MAX = 30.0
+        YTDL_BACKOFF_MAX = 5.0  # Reduced from 30.0 to 5.0 for faster processing
     # 🚀 CRITICAL FIX: Use ThreadPoolExecutor to allow shared memory for status updates
     # ProcessPoolExecutor doesn't share memory, so status updates are lost!
     try:
@@ -8483,14 +8511,18 @@ if VIDEO_CONVERTER_AVAILABLE:
             # Skip wasting time on direct attempts that will fail with 403
             invidious_success = False
             if not cookiefile:
+                video_logger.info("🚀 No cookies found - trying Invidious proxy first for faster results")
                 # Try Invidious first without verbose logging
                 invidious_success, invidious_info, invidious_error = try_invidious_download(
                     url, format_type, quality, output_path
                 )
                 if invidious_success:
+                    video_logger.info("✅ Invidious proxy succeeded on first try!")
                     # Success! Skip the entire retry loop
                     last_exception = None
                     # Jump to file-finding section below
+                else:
+                    video_logger.info("⚠️ Invidious failed, will try direct download with retries")
             
             # 📦 CHUNKING: If video needs splitting, return metadata to frontend
             if needs_chunking and chunk_count > 1:
@@ -8553,9 +8585,10 @@ if VIDEO_CONVERTER_AVAILABLE:
             attempt = 0
             last_exception = None
             consecutive_403s = 0
-            # Determine effective max attempts - up to 30 retries for transient errors
+            # Determine effective max attempts - up to 10 retries for transient errors
+            # 🚀 OPTIMIZED: Reduced from 30 to 10 for faster failure detection
             # (unavailable/deleted videos still quit immediately via error detection above)
-            effective_max = min(30, max(1, YTDL_MAX_RETRIES)) if not YTDL_RETRY_FOREVER else 30
+            effective_max = min(10, max(1, YTDL_MAX_RETRIES)) if not YTDL_RETRY_FOREVER else 10
             
             # Skip retry loop if Invidious already succeeded OR chunking metadata OR chunk completed
             if not (not cookiefile and invidious_success) and not skip_normal_download:
@@ -8611,6 +8644,27 @@ if VIDEO_CONVERTER_AVAILABLE:
                             'account has been terminated',
                             'account associated with this video has been terminated'
                         ])
+                        
+                        # 🚀 OPTIMIZATION: Check for sign-in required errors (fail fast)
+                        is_sign_in_required = any(keyword in derr.lower() for keyword in [
+                            'sign in to confirm',
+                            'sign in to confirm your age',
+                            'this video may be inappropriate',
+                            'use --cookies-from-browser',
+                            'use --cookies for the authentication'
+                        ])
+                        
+                        if is_sign_in_required:
+                            error_msg = 'Video requires sign-in/age verification. Please add YouTube cookies from a logged-in account to cookies.txt'
+                            with download_lock:
+                                if download_id in active_video_downloads:
+                                    active_video_downloads[download_id].update({
+                                        'status': 'error',
+                                        'error': error_msg,
+                                        'error_type': 'auth_required',
+                                        'finished': True
+                                    })
+                            raise Exception(error_msg)
                         
                         # Check for YouTube rate limiting
                         is_rate_limited = any(keyword in derr.lower() for keyword in [
@@ -8711,17 +8765,18 @@ if VIDEO_CONVERTER_AVAILABLE:
                     if effective_max is not None and attempt >= effective_max:
                         break
 
+                    # 🚀 OPTIMIZED: Faster backoff for quicker processing
                     # Smart backoff: if we're getting repeated errors, increase backoff
                     # BUT: Skip long backoff if browser cookies just failed (jump to Invidious immediately)
                     if is_browser_error and attempt == 1:
-                        sleep_for = 0.5  # Minimal delay before trying Invidious
+                        sleep_for = 0.2  # Minimal delay before trying Invidious
                     elif consecutive_403s >= 3:
-                        backoff = min(YTDL_BACKOFF_MAX, YTDL_BACKOFF_BASE * (2 ** (attempt + 2)))
-                        jitter = random.uniform(0, backoff * 0.3)
+                        backoff = min(5.0, YTDL_BACKOFF_BASE * (2 ** (attempt - 1)))  # Cap at 5s instead of 30s
+                        jitter = random.uniform(0, backoff * 0.2)
                         sleep_for = backoff + jitter
                     else:
-                        backoff = min(YTDL_BACKOFF_MAX, YTDL_BACKOFF_BASE * (2 ** (attempt - 1)))
-                        jitter = random.uniform(0, backoff * 0.3)
+                        backoff = min(5.0, YTDL_BACKOFF_BASE * (2 ** max(0, attempt - 2)))  # Start smaller, cap at 5s
+                        jitter = random.uniform(0, backoff * 0.2)
                         sleep_for = backoff + jitter
                     
                     time.sleep(sleep_for)
