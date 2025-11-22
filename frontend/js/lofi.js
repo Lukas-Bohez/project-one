@@ -7,21 +7,17 @@ const LOFI_API_BASE_URL = `https://${window.location.hostname}`;
 
 // Configuration
 const config = {
-    folder: '../lofi/', // Path from js/ to lofi/
-    volume: 0.01,
+    volume: 0.00005, // Extremely quiet default (0.005%)
     fadeDuration: 500, // Reduced from 1000ms to 500ms for faster transitions
     shuffle: true, // Default shuffle mode (true = random, false = sequential)
     repeat: false, // Repeat mode: false, 'one', or 'all'
     enableLofi: false, // Disable lofi player by default to prevent 404 errors
-    youtube: {
-        enabled: true,
-        apiKey: '', // Optional: YouTube API key for better metadata
-        defaultPlaylist: 'PLrAOxtLmTaTeiV0MD-Y0x6fgz5CH-YNGQ', // Default lofi playlist
-        embedDomain: 'https://www.youtube-nocookie.com'
-    },
+    mode: 'cache', // 'cache' or 'local' - cache uses IndexedDB, local scans folder
+    folder: 'https://quizthespire.com/lofi/', // Folder to scan for local MP3 files
+    disabled: false, // Whether music is disabled
     normalization: {
         enabled: true,
-        targetLoudness: -23, // LUFS (Loudness Units relative to Full Scale)
+        targetLoudness: -35, // Further reduced to -35 LUFS for much quieter playback
         analysisTime: 3000, // How long to analyze each track (ms)
         cache: true // Cache normalization data
     },
@@ -30,28 +26,8 @@ const config = {
         localStorageKey: 'lofiPlayerState',
         normalizationCacheKey: 'lofiNormalizationCache',
         playerEnabledKey: 'lofiPlayerEnabled',
-        youtubePlaylistKey: 'lofiYouTubePlaylist',
         volumeKey: 'lofiVolume',
         currentPlaylistKey: 'lofiCurrentPlaylist'
-    }
-};
-
-// Allowed pages for YouTube-related features (only these pages may load the YouTube API
-// or schedule YouTube downloads). Keep in sync with the converter/support pages where
-// the YouTube UI is intended to appear.
-const YT_ALLOWED_PAGES = [
-    'converter.html',
-    'converter-terms.html',
-    'converter-privacy.html',
-    'converter-about.html'
-];
-
-const isAllowedPage = () => {
-    try {
-        const p = window.location.pathname.split('/').pop();
-        return YT_ALLOWED_PAGES.includes(p);
-    } catch (e) {
-        return false;
     }
 };
 
@@ -59,6 +35,12 @@ const isAllowedPage = () => {
 const manualSongList = [
     // Example: 'my-song.mp3', 'another-track.wav', 'chill-beat.mp3'
     // Leave empty to try folder scanning first
+    // Default fallback song in case cache is empty
+    {
+        id: 'fallback-lofi',
+        title: 'Lofi Fallback Track',
+        filename: 'fallback-lofi.mp3'
+    }
 ];
 
 // Player elements
@@ -76,25 +58,16 @@ let currentPlaylistIndex = -1; // Current position in shuffled playlist (for shu
 let normalizationCache = new Map(); // Cache for normalization data
 let isTransitioning = false; // Prevent overlapping fades/loads
 
-// YouTube player variables
-let youtubePlayer = null;
-let youtubePlayerReady = false;
-let isYouTubeMode = false;
-let youtubePlaylist = [];
 let lofiActivated = false; // Track if user has activated the lofi player
-let youtubeProgressTimer = null; // Polling timer for YT progress updates
 
 // --- Persistence Variables ---
 let savedPlaybackState = null; // To hold state loaded from localStorage
-let cachedYouTubePlaylist = []; // Cached YouTube songs
 let cachedVolume = config.volume; // Cached volume setting
 let isPlayerEnabled = false; // Cached player enabled state
 
 // --- Unicode/URL helpers ---
 const isPercentEncoded = (s) => /%[0-9A-Fa-f]{2}/.test(s);
 const safeDecode = (s) => { try { return decodeURIComponent(s); } catch { return s; } };
-const toUrlFilename = (name) => isPercentEncoded(name) ? name : encodeURIComponent(name);
-const buildSongPath = (name) => `${config.folder}${toUrlFilename(name)}`;
 
 // Unified cache functions for lofi (using converter.js functions if available)
 const openLofiDB = async () => {
@@ -221,7 +194,6 @@ const saveCachedAudioBlob = async (videoId, blob, metadata = {}) => {
             size: blob.size,
             type: 'lofi',
             created: Date.now(),
-            platform: 'youtube',
             format: 'MP3',
             cachedAt: new Date().toISOString(),
             ...metadata
@@ -262,116 +234,125 @@ const listCachedAudioKeys = async () => {
     }
 };
 
+const scanFolderForMP3s = async () => {
+    try {
+        console.log('🔍 Scanning folder for audio files:', config.folder);
+
+        const response = await fetch(config.folder);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: Cannot access folder`);
+        }
+
+        const html = await response.text();
+
+        // Parse the directory listing HTML
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        // Look for audio file links in different formats
+        let audioLinks = [];
+
+        // Try common directory listing formats for both MP3 and WAV
+        const linkSelectors = [
+            'a[href$=".mp3"], a[href$=".wav"]', // Direct audio links
+            'a[href*=".mp3"], a[href*=".wav"]', // Contains audio extensions
+            'a[href$=".MP3"], a[href$=".WAV"]', // Uppercase
+            'a[href*=".MP3"], a[href*=".WAV"]' // Uppercase contains
+        ];
+
+        for (const selector of linkSelectors) {
+            const links = doc.querySelectorAll(selector);
+            if (links.length > 0) {
+                audioLinks = Array.from(links);
+                break;
+            }
+        }
+
+        // Extract filenames
+        const files = audioLinks.map((link) => {
+            let href = link.getAttribute('href');
+
+            // Clean up the href
+            if (href.startsWith('/')) {
+                href = href.substring(1);
+            }
+
+            // Get just the filename
+            const filename = safeDecode(href.split('/').pop().split('?')[0]);
+
+            return filename;
+        }).filter(filename => {
+            const lower = filename.toLowerCase();
+            return (lower.endsWith('.mp3') || lower.endsWith('.wav')) &&
+                filename !== '' &&
+                !filename.includes('..'); // Security: no parent directory access
+        });
+
+        console.log('🎵 Found audio files:', files);
+        return files;
+
+    } catch (error) {
+        console.warn('Folder scanning failed:', error.message);
+
+        // Try alternative method: attempt to load common index files
+        try {
+            const indexResponse = await fetch(config.folder + 'index.json');
+            if (indexResponse.ok) {
+                const indexData = await indexResponse.json();
+                if (Array.isArray(indexData)) {
+                    console.log('📋 Using index.json file list');
+                    return indexData.filter(f => {
+                        const lower = f.toLowerCase();
+                        return lower.endsWith('.mp3') || lower.endsWith('.wav');
+                    });
+                }
+            }
+        } catch (e) {
+            // Index.json doesn't exist, that's fine
+        }
+
+        throw error;
+    }
+};
+
 // Forcefully sync all cached items from IndexedDB to lofi playlist
 const syncCacheToPlaylist = async () => {
     try {
         console.log('🔄 Syncing IndexedDB cache to lofi playlist...');
-        const db = await openLofiDB();
-        const storeName = window.CACHE_STORE_MEDIA || 'media_files';
-        const transaction = db.transaction([storeName], 'readonly');
-        const store = transaction.objectStore(storeName);
+        const allCached = await getAllCachedDownloads();
+        console.log('All cached downloads:', allCached);
         
-        return new Promise((resolve, reject) => {
-            const allItems = [];
-            const request = store.openCursor();
+        let addedCount = 0;
+        for (const item of allCached) {
+            const title = item.metadata?.title || item.filename || 'Unknown';
+            const songPath = item.downloadId; // Use downloadId as identifier
             
-            request.onsuccess = (event) => {
-                const cursor = event.target.result;
-                if (cursor) {
-                    const item = cursor.value;
-                    
-                    // Check if this is an audio item (MP3 format) from any source
-                    const isAudioItem = (
-                        (item.format === 'MP3' || item.filename?.endsWith('.mp3')) &&
-                        (item.videoId || item.id) // Must have some ID
-                    );
-                    
-                    if (isAudioItem) {
-                        // Extract ID (videoId for YouTube, id for converter/other)
-                        const itemId = item.videoId || item.id;
-                        
-                        // Check if already in playlist (by any ID field)
-                        const existsInPlaylist = cachedYouTubePlaylist.some(
-                            x => x.id === itemId || x.id === item.id || x.id === item.videoId
-                        );
-                        
-                        if (!existsInPlaylist) {
-                            // Determine source type
-                            let sourceType = item.type || 'unknown';
-                            
-                            // Build URL based on source
-                            let itemUrl;
-                            if (item.videoId) {
-                                // YouTube video
-                                itemUrl = `https://www.youtube.com/watch?v=${item.videoId}`;
-                            } else if (item.url) {
-                                // Has URL stored
-                                itemUrl = item.url;
-                            } else {
-                                // Fallback - try to construct from ID
-                                itemUrl = `https://www.youtube.com/watch?v=${itemId}`;
-                            }
-                            
-                            // Add to playlist with proper structure
-                            const playlistItem = {
-                                id: itemId,
-                                videoId: item.videoId || itemId, // Preserve videoId for deduplication
-                                title: item.title || item.filename || 'Unknown', // Prefer title (clean) over filename (.mp3)
-                                url: itemUrl,
-                                type: 'video',
-                                blob: item.blob, // Store blob reference for checking if actually cached
-                                filename: item.filename,
-                                size: item.size,
-                                format: item.format,
-                                cachedAt: item.created || item.cachedAt || Date.now(),
-                                source: sourceType // 'converter', 'playlist', or 'lofi'
-                            };
-                            
-                            cachedYouTubePlaylist.push(playlistItem);
-                            allItems.push(playlistItem);
-                            console.log('➕ Added to playlist:', playlistItem.title, `(source: ${playlistItem.source}, type: ${item.type}, videoId: ${playlistItem.videoId})`);
-                        }
-                    }
-                    
-                    cursor.continue();
-                } else {
-                    // Done iterating - now deduplicate the entire playlist
-                    const originalLength = cachedYouTubePlaylist.length;
-                    cachedYouTubePlaylist = deduplicatePlaylist(cachedYouTubePlaylist);
-                    const removedCount = originalLength - cachedYouTubePlaylist.length;
-                    
-                    if (removedCount > 0) {
-                        console.log(`🧹 Removed ${removedCount} duplicate(s) from playlist`);
-                    }
-                    
-                    if (allItems.length > 0 || removedCount > 0) {
-                        console.log(`✅ Synced ${allItems.length} new items, removed ${removedCount} duplicates`);
-                        // Save to localStorage
-                        try {
-                            localStorage.setItem(
-                                config.persistence.youtubePlaylistKey,
-                                JSON.stringify(cachedYouTubePlaylist)
-                            );
-                        } catch (e) {
-                            console.warn('Failed to save playlist to localStorage:', e);
-                        }
-                        // Refresh UI
-                        refreshCachedYouTubeListUI();
-                    } else {
-                        console.log('ℹ️ No new items to sync and no duplicates found');
-                    }
-                    resolve(allItems);
-                }
-            };
-            
-            request.onerror = () => {
-                console.error('❌ Error syncing cache to playlist:', request.error);
-                reject(request.error);
-            };
-        });
+            // Check if already in songList
+            const exists = songList.some(song => song.id === item.downloadId);
+            if (!exists) {
+                songList.push({
+                    id: item.downloadId,
+                    title: prettyTitle(title),
+                    filename: item.filename,
+                    blob: item.blob,
+                    metadata: item.metadata
+                });
+                addedCount++;
+                console.log('➕ Added to playlist:', prettyTitle(title));
+            }
+        }
+        
+        if (addedCount > 0) {
+            console.log(`✅ Synced ${addedCount} new items from cache`);
+        } else {
+            console.log('ℹ️ No new items to sync from cache');
+        }
+        
+        return addedCount;
     } catch (error) {
         console.error('❌ Error in syncCacheToPlaylist:', error);
-        return [];
+        return 0;
     }
 };
 
@@ -431,7 +412,7 @@ const updateCachedAudioStatus = async (videoId, updates) => {
     }
 };
 
-// Load persisted simple settings early (enable flag, volume, YouTube list)
+// Load persisted simple settings early (enable flag, volume)
 const loadPersistentSettings = () => {
     try {
         if (!config.persistence?.enabled) return;
@@ -441,28 +422,29 @@ const loadPersistentSettings = () => {
         const volRaw = localStorage.getItem(config.persistence.volumeKey);
         if (volRaw !== null) {
             const v = parseFloat(volRaw);
-            if (Number.isFinite(v)) {
+            if (Number.isFinite(v) && v <= 0.0001) { // Only keep cached volume if it's already extremely quiet (<= 0.01%)
                 cachedVolume = Math.max(0, Math.min(1, v));
                 config.volume = cachedVolume; // sync config default for UI
+            } else {
+                // Reset louder cached volumes to the new quiet default
+                cachedVolume = config.volume;
+                localStorage.setItem(config.persistence.volumeKey, String(config.volume));
+                console.log('🔊 Reset cached volume to quiet default:', config.volume);
             }
         }
 
-        const ytRaw = localStorage.getItem(config.persistence.youtubePlaylistKey);
-        if (ytRaw) {
-            const list = JSON.parse(ytRaw);
-            if (Array.isArray(list)) {
-                cachedYouTubePlaylist = list;
-                console.log('Loaded YouTube playlist from cache:', cachedYouTubePlaylist.length, 'items');
-                // Migrate old schema items
-                migrateYouTubeCacheSchema();
-            }
-        } else {
-            console.log('No cached YouTube playlist found');
+        // Load disabled state
+        const disabledRaw = localStorage.getItem('lofi_disabled');
+        config.disabled = disabledRaw ? JSON.parse(disabledRaw) : false;
+
+        // Load mode preference
+        const modeRaw = localStorage.getItem('lofi_mode');
+        if (modeRaw && (modeRaw === 'cache' || modeRaw === 'local')) {
+            config.mode = modeRaw;
         }
     } catch (err) {
         console.warn('Failed to load persistent settings:', err);
         isPlayerEnabled = false;
-        cachedYouTubePlaylist = [];
         cachedVolume = config.volume;
     }
 };
@@ -525,18 +507,25 @@ const activateLofiPlayer = () => {
         loadNormalizationCache();
     }
 
-    // Initialize UI elements
-    createFloatingIcon();
-    createLofiModal();
+    // Initialize UI elements (only if not disabled)
+    if (!config.disabled) {
+        createFloatingIcon();
+        createLofiModal();
+    } else {
+        // Create enable button when disabled
+        createEnableButton();
+    }
 
-    // Apply cached volume now that DOM/UI exists
-    try {
-        audioPlayer.volume = Math.max(0, Math.min(1, cachedVolume));
-        const slider = document.getElementById('volume-slider');
-        const display = document.getElementById('volume-display');
-        if (slider) slider.value = cachedVolume;
-        if (display) display.textContent = `${Math.round(cachedVolume * 100)}%`;
-    } catch(_) {}
+    // Apply cached volume now that DOM/UI exists (if not disabled)
+    if (!config.disabled) {
+        try {
+            audioPlayer.volume = Math.max(0, Math.min(1, cachedVolume));
+            const slider = document.getElementById('volume-slider');
+            const display = document.getElementById('volume-display');
+            if (slider) slider.value = cachedVolume;
+            if (display) display.textContent = `${Math.round(cachedVolume * 100)}%`;
+        } catch(_) {}
+    }
 
     // Setup user interaction listeners for auto-start
     setupAutoStartListeners();
@@ -552,844 +541,45 @@ const activateLofiPlayer = () => {
     }, 10000);
 };
 
-// Load YouTube API
-const loadYouTubeAPI = () => {
-    if (!isAllowedPage()) {
-        console.log('YouTube API load blocked on this page (not a converter/support page)');
-        return;
-    }
 
-    if (window.YT) {
-        console.log('YouTube API already loaded');
-        return;
-    }
-    
-    const tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    const firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-    
-    // YouTube API callback
-    window.onYouTubeIframeAPIReady = () => {
-        console.log('YouTube API ready');
-        youtubePlayerReady = true;
-    };
-};
 
-// Extract video ID from YouTube URL
-const extractYouTubeId = (url) => {
-    const patterns = [
-        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
-        /youtube\.com\/playlist\?list=([^&\n?#]+)/
-    ];
-    
-    for (const pattern of patterns) {
-        const match = url.match(pattern);
-        if (match) return match[1];
-    }
-    return null;
-};
 
-// Create YouTube player
-const createYouTubePlayer = (containerId, videoId, isPlaylist = false) => {
-    if (!youtubePlayerReady) {
-        console.warn('YouTube API not ready');
-        return null;
-    }
-    
-    const playerVars = {
-        autoplay: 1,
-        controls: 1,
-        rel: 0,
-        showinfo: 0,
-        modestbranding: 1
-    };
-    
-    if (isPlaylist) {
-        playerVars.listType = 'playlist';
-        playerVars.list = videoId;
-    }
-    
-    return new YT.Player(containerId, {
-        height: '0',
-        width: '0',
-        videoId: isPlaylist ? undefined : videoId,
-        playerVars: playerVars,
-        events: {
-            onReady: onYouTubePlayerReady,
-            onStateChange: onYouTubePlayerStateChange
-        }
-    });
-};
 
-// YouTube player ready callback
-const onYouTubePlayerReady = (event) => {
-    console.log('YouTube player ready');
-    youtubePlayer = event.target;
-    // Apply saved or current volume (0-100 scale)
-    try {
-        let v = config.volume;
-        if (config.persistence?.enabled) {
-            const raw = localStorage.getItem(config.persistence.volumeKey);
-            if (raw != null) {
-                const parsed = parseFloat(raw);
-                if (Number.isFinite(parsed)) v = Math.max(0, Math.min(1, parsed));
-            }
-        }
-        youtubePlayer.setVolume(Math.round(v * 100));
-    } catch(_) {}
-};
 
-// YouTube player state change callback
-const onYouTubePlayerStateChange = (event) => {
-    switch(event.data) {
-        case YT.PlayerState.PLAYING:
-            isPlaying = true;
-            console.log('YouTube video playing');
-            startYouTubeProgressPolling();
-            break;
-        case YT.PlayerState.PAUSED:
-            isPlaying = false;
-            console.log('YouTube video paused');
-            stopYouTubeProgressPolling();
-            break;
-        case YT.PlayerState.ENDED:
-            console.log('YouTube video ended');
-            stopYouTubeProgressPolling();
-            if (config.repeat === 'one') {
-                // Repeat the current video
-                console.log('🔂 Repeating current YouTube video');
-                youtubePlayer.seekTo(0);
-                youtubePlayer.playVideo();
-            } else if (config.repeat === 'all') {
-                playNextYouTube();
-            }
-            break;
-    }
-};
 
-function startYouTubeProgressPolling() {
-    stopYouTubeProgressPolling();
-    youtubeProgressTimer = setInterval(() => {
-        updateProgressBar();
-    }, 250);
-}
 
-function stopYouTubeProgressPolling() {
-    if (youtubeProgressTimer) {
-        clearInterval(youtubeProgressTimer);
-        youtubeProgressTimer = null;
-    }
-}
 
-// Play next YouTube video
-const playNextYouTube = () => {
-    if (youtubePlayer && youtubePlaylist.length > 1) {
-        youtubePlayer.nextVideo();
-    }
-};
 
-// Play next cached YouTube track (for local playback of cached items)
-const playNextCachedYouTube = () => {
-    // Only work with items that have blobs (actually cached)
-    const readySongs = cachedYouTubePlaylist.filter(item => item.blob);
-    
-    if (!readySongs || readySongs.length === 0) {
-        console.log('No cached YouTube tracks available');
-        return;
-    }
-    
-    // Find current playing item in ready songs
-    let currentIndex = -1;
-    const songSelector = document.getElementById('song-selector');
-    if (songSelector && songSelector.value) {
-        currentIndex = readySongs.findIndex(item => item.id === songSelector.value);
-    }
-    
-    // Get next index based on shuffle mode
-    let nextIndex;
-    if (config.shuffle) {
-        // Random next track (excluding current)
-        const availableIndices = readySongs
-            .map((_, idx) => idx)
-            .filter(idx => idx !== currentIndex);
-        nextIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
-    } else {
-        // Sequential next track
-        nextIndex = (currentIndex + 1) % readySongs.length;
-    }
-    
-    const nextItem = readySongs[nextIndex];
-    if (nextItem) {
-        console.log('\u25b6 Playing next cached YouTube:', nextItem.title);
-        playCachedYouTubeItem(nextItem);
-    }
-};
 
-// Play previous cached YouTube track
-const playPreviousCachedYouTube = () => {
-    // Only work with items that have blobs (actually cached)
-    const readySongs = cachedYouTubePlaylist.filter(item => item.blob);
-    
-    if (!readySongs || readySongs.length === 0) {
-        console.log('No cached YouTube tracks available');
-        return;
-    }
-    
-    // Find current playing item in ready songs
-    let currentIndex = -1;
-    const songSelector = document.getElementById('song-selector');
-    if (songSelector && songSelector.value) {
-        currentIndex = readySongs.findIndex(item => item.id === songSelector.value);
-    }
-    
-    // Get previous index (no shuffle for previous)
-    let prevIndex = currentIndex - 1;
-    if (prevIndex < 0) {
-        prevIndex = readySongs.length - 1;
-    }
-    
-    const prevItem = readySongs[prevIndex];
-    if (prevItem) {
-        console.log('\u23ee Playing previous cached YouTube:', prevItem.title);
-        playCachedYouTubeItem(prevItem);
-    }
-};
 
-// Switch to YouTube mode
-const switchToYouTube = (url) => {
-    // Extra safety: do not allow entering YouTube mode on disallowed pages
-    if (!isAllowedPage()) {
-        console.warn('Attempt to switch to YouTube blocked: page not allowed for YouTube features');
-        return false;
-    }
-    // Strict mode separation: only play YouTube content in YouTube mode
-    if (!isYouTubeMode) {
-        console.log('MODE: In Local mode - YouTube playback blocked. Switch to YouTube mode first.');
-        return false;
-    }
-    
-    const videoId = extractYouTubeId(url);
-    if (!videoId) {
-        console.error('Invalid YouTube URL');
-        return false;
-    }
-    
-    // Stop local audio if playing (but we'll keep YouTube mode)
-    if (!audioPlayer.paused) {
-        audioPlayer.pause();
-    }
-    
-    // Create hidden container for YouTube player
-    let container = document.getElementById('youtube-player-container');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'youtube-player-container';
-        container.style.cssText = 'position: absolute; left: -9999px; width: 1px; height: 1px;';
-        document.body.appendChild(container);
-    }
-    
-    // Determine if it's a playlist
-    const isPlaylist = url.includes('playlist?list=');
-    
-    // Create YouTube player
-    if (youtubePlayerReady) {
-        youtubePlayer = createYouTubePlayer('youtube-player-container', videoId, isPlaylist);
-        isYouTubeMode = true;
-        return true;
-    } else {
-        console.warn('YouTube API not ready yet');
-        return false;
-    }
-};
 
-// --- YouTube persistence helpers ---
-const parseYouTubeInput = (input) => {
-    const normalizeVideoId = (id) => id && id.trim();
-    const normalizePlaylistId = (id) => id && id.trim();
-    try {
-        const u = new URL(input);
-        const host = u.hostname.replace('www.', '');
-        const list = u.searchParams.get('list');
-        const v = u.searchParams.get('v');
-        // Short URLs: youtu.be/<id>
-        if (host === 'youtu.be') {
-            const id = u.pathname.split('/').filter(Boolean)[0];
-            if (id) return { type: 'video', id: normalizeVideoId(id), url: `https://www.youtube.com/watch?v=${id}` };
-        }
-        // Shorts or embed
-        if (host.endsWith('youtube.com')) {
-            const path = u.pathname;
-            if (path.startsWith('/shorts/')) {
-                const id = path.split('/').filter(Boolean)[1];
-                if (id) return { type: 'video', id: normalizeVideoId(id), url: `https://www.youtube.com/watch?v=${id}` };
-            }
-            if (path.startsWith('/embed/')) {
-                const id = path.split('/').filter(Boolean)[1];
-                if (id) return { type: 'video', id: normalizeVideoId(id), url: `https://www.youtube.com/watch?v=${id}` };
-            }
-        }
-        if (list) return { type: 'playlist', id: normalizePlaylistId(list), url: `https://www.youtube.com/playlist?list=${list}` };
-        if (v) return { type: 'video', id: normalizeVideoId(v), url: `https://www.youtube.com/watch?v=${v}` };
-    } catch {
-        // Allow raw IDs (likely video)
-        if (/^[a-zA-Z0-9_-]{10,}$/.test(input)) return { type: 'video', id: input, url: `https://www.youtube.com/watch?v=${input}` };
-    }
-    return null;
-};
 
-const migrateYouTubeCacheSchema = () => {
-    // Migrate old schema items to new schema with status tracking
-    cachedYouTubePlaylist = cachedYouTubePlaylist.map(item => {
-        if (!item.status) {
-            // Add new fields to existing items
-            return {
-                ...item,
-                title: item.title || (item.type === 'video' ? `Video ${item.id}` : `Playlist ${item.id}`),
-                status: 'stream', // Default to streaming mode
-                hasBlob: false,
-                fileExt: 'mp3',
-                downloadId: null,
-                progress: 0,
-                addedAt: item.addedAt || new Date().toISOString()
-            };
-        }
-        return item;
-    });
-    
-    // Save migrated data
-    try {
-        localStorage.setItem(config.persistence.youtubePlaylistKey, JSON.stringify(cachedYouTubePlaylist));
-        console.log('YOUTUBE: Cache schema migrated successfully');
-    } catch (e) {
-        console.error('YOUTUBE: Migration save failed:', e);
-    }
-};
 
-const addYouTubeToCachedList = (input) => {
-    if (!config.persistence?.enabled) {
-        console.warn('Persistence not enabled, cannot cache YouTube item');
-        return false;
-    }
-    const parsedItem = parseYouTubeInput(input);
-    if (!parsedItem) {
-        console.warn('Could not parse YouTube input:', input);
-        return false;
-    }
-    console.log('Parsed YouTube item:', parsedItem);
-    
-    const exists = cachedYouTubePlaylist.some(x => x.id === parsedItem.id && x.type === parsedItem.type);
-    if (!exists) {
-        // Create full item with new schema
-        const item = {
-            ...parsedItem,
-            title: parsedItem.title || (parsedItem.type === 'video' ? `Video ${parsedItem.id}` : `Playlist ${parsedItem.id}`),
-            status: 'stream', // Start as streaming, will be updated when conversion starts
-            hasBlob: false,
-            fileExt: 'mp3',
-            downloadId: null,
-            progress: 0,
-            addedAt: new Date().toISOString()
-        };
-        
-        cachedYouTubePlaylist.push(item);
-        console.log('Added to cache, new list length:', cachedYouTubePlaylist.length);
-        try { 
-            localStorage.setItem(config.persistence.youtubePlaylistKey, JSON.stringify(cachedYouTubePlaylist)); 
-            console.log('Saved to localStorage successfully');
-        } catch (e) {
-            console.error('Failed to save to localStorage:', e);
-        }
-        refreshCachedYouTubeListUI();
-        
-        // Schedule download in background
-        scheduleYouTubeDownload(item);
-        return true;
-    } else {
-        console.log('Item already exists in cache');
-        // Still refresh UI in case status has changed
-        refreshCachedYouTubeListUI();
-    }
-    return false;
-};
 
-// Schedule YouTube video download and conversion
-const scheduleYouTubeDownload = async (item) => {
-    if (!isAllowedPage()) {
-        console.warn('YouTube downloads are disabled on this page; scheduleYouTubeDownload() blocked');
-        return;
-    }
-    if (!item || item.status === 'converting' || item.status === 'ready') {
-        return; // Skip if already in progress or ready
-    }
-    
-    try {
-        console.log('DOWNLOAD: Scheduling conversion for', item.id);
-        
-        // Update status to converting
-        item.status = 'converting';
-        item.progress = 0;
-        updateYouTubeItemInCache(item);
-        
-        // Start conversion via backend
-        const convertResponse = await fetch(`${LOFI_API_BASE_URL}/api/v1/video/convert`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                url: item.url,
-                format: 1, // MP3
-                quality: 128
-            })
-        });
-        
-        const convertResult = await convertResponse.json();
-        
-        if (!convertResponse.ok) {
-            throw new Error(convertResult.error || 'Conversion request failed');
-        }
-        
-        item.downloadId = convertResult.download_id;
-        updateYouTubeItemInCache(item);
-        console.log('DOWNLOAD: Conversion started with ID:', item.downloadId);
-        
-        // Start polling for completion
-        pollYouTubeConversion(item);
-        
-    } catch (error) {
-        console.error('DOWNLOAD: Failed to start conversion:', error);
-        item.status = 'error';
-        item.error = error.message;
-        updateYouTubeItemInCache(item);
-    }
-};
 
-// Poll conversion status and download when ready
-const pollYouTubeConversion = async (item) => {
-    if (!isAllowedPage()) {
-        console.warn('YouTube conversion polling disabled on this page');
-        return;
-    }
-    if (!item.downloadId) {
-        console.error('DOWNLOAD: No download ID for polling');
-        return;
-    }
-    
-    const pollInterval = setInterval(async () => {
-        try {
-            const statusResponse = await fetch(`${LOFI_API_BASE_URL}/api/v1/video/status/${item.downloadId}`);
-            const status = await statusResponse.json();
-            
-            if (!statusResponse.ok) {
-                throw new Error(status.error || 'Status check failed');
-            }
-            
-            // Update progress with retry info
-            item.progress = Math.round(status.progress || 0);
-            item.retryAttempt = status.retry_attempt || 0;
-            
-            if (status.status === 'completed') {
-                clearInterval(pollInterval);
-                console.log('DOWNLOAD: Conversion completed, downloading blob...');
-                
-                // Download the converted file
-                const downloadResponse = await fetch(`${LOFI_API_BASE_URL}/api/v1/video/download/${item.downloadId}`);
-                
-                if (!downloadResponse.ok) {
-                    throw new Error('Download failed');
-                }
-                
-                const blob = await downloadResponse.blob();
-                
-                // Extract title from response headers if available
-                const contentDisposition = downloadResponse.headers.get('content-disposition');
-                const titleMatch = contentDisposition?.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-                const extractedTitle = titleMatch ? titleMatch[1].replace(/['"]/g, '') : null;
-                
-                if (extractedTitle) {
-                    item.title = extractedTitle.replace(/\.(mp3|mp4)$/i, '');
-                }
-                
-                // Save blob to IndexedDB
-                await saveCachedAudioBlob(item.id, blob, {
-                    title: item.title,
-                    url: item.url,
-                    downloadId: item.downloadId
-                });
-                
-                // Update item status
-                item.status = 'ready';
-                item.hasBlob = true;
-                item.progress = 100;
-                updateYouTubeItemInCache(item);
-                
-                console.log('DOWNLOAD: Successfully cached audio for', item.title);
-                refreshCachedYouTubeListUI();
-                
-            } else if (status.status === 'error') {
-                clearInterval(pollInterval);
-                throw new Error(status.error || 'Conversion failed');
-            } else {
-                // Still processing, update UI
-                updateYouTubeItemInCache(item);
-            }
-            
-        } catch (error) {
-            clearInterval(pollInterval);
-            console.error('DOWNLOAD: Polling failed:', error);
-            item.status = 'error';
-            item.error = error.message;
-            updateYouTubeItemInCache(item);
-            refreshCachedYouTubeListUI();
-        }
-    }, 2000); // Poll every 2 seconds
-};
 
-// Update a YouTube item in the cache and persist
-const updateYouTubeItemInCache = (updatedItem) => {
-    const index = cachedYouTubePlaylist.findIndex(item => item.id === updatedItem.id);
-    if (index !== -1) {
-        cachedYouTubePlaylist[index] = { ...cachedYouTubePlaylist[index], ...updatedItem };
-        try {
-            localStorage.setItem(config.persistence.youtubePlaylistKey, JSON.stringify(cachedYouTubePlaylist));
-        } catch (e) {
-            console.error('Failed to update cache in localStorage:', e);
-        }
-    }
-};
 
-// Resume pending downloads on app start
-const resumePendingDownloads = async () => {
-    if (!isAllowedPage()) {
-        console.log('resumePendingDownloads skipped: YouTube features disabled on this page');
-        return;
-    }
-    const pendingItems = cachedYouTubePlaylist.filter(item => 
-        item.status === 'converting' || item.status === 'stream'
-    );
-    
-    console.log('DOWNLOAD: Resuming', pendingItems.length, 'pending downloads');
-    
-    for (const item of pendingItems) {
-        if (item.status === 'converting' && item.downloadId) {
-            // Resume polling existing conversion
-            pollYouTubeConversion(item);
-        } else if (item.status === 'stream') {
-            // Schedule new conversion
-            setTimeout(() => scheduleYouTubeDownload(item), Math.random() * 2000); // Stagger requests
-        }
-    }
-};
 
-const removeYouTubeCachedItem = (idx) => {
-    if (!Array.isArray(cachedYouTubePlaylist)) return false;
-    if (idx < 0 || idx >= cachedYouTubePlaylist.length) return false;
-    cachedYouTubePlaylist.splice(idx, 1);
-    try { localStorage.setItem(config.persistence.youtubePlaylistKey, JSON.stringify(cachedYouTubePlaylist)); } catch {}
-    refreshCachedYouTubeListUI();
-    return true;
-};
 
-const refreshCachedYouTubeListUI = () => {
-    const container = document.getElementById('youtube-playlist');
-    if (!container) {
-        console.log('YouTube playlist container not found, skipping UI refresh');
-        return;
-    }
-    container.innerHTML = '';
-    console.log('Refreshing YouTube list UI with', cachedYouTubePlaylist.length, 'items');
-    if (!Array.isArray(cachedYouTubePlaylist) || cachedYouTubePlaylist.length === 0) {
-        const empty = document.createElement('div');
-        empty.textContent = 'No saved items yet.';
-        empty.style.color = 'var(--light-color, #f4f8fc)';
-        empty.style.opacity = '0.8';
-        container.appendChild(empty);
-        return;
-    }
-    cachedYouTubePlaylist.forEach((item, idx) => {
-        const row = document.createElement('div');
-        row.style.display = 'flex';
-        row.style.alignItems = 'center';
-        row.style.justifyContent = 'space-between';
-        row.style.gap = '10px';
-        row.style.fontSize = '1rem';
-        row.style.flexWrap = 'wrap';
-        row.style.padding = '8px 0';
-        row.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
-        
-        // Title/URL container
-        const titleContainer = document.createElement('div');
-        titleContainer.style.flex = '1 1 auto';
-        titleContainer.style.minWidth = '200px';
-        
-    const title = document.createElement('div');
-    title.textContent = prettyTitle(item.title) || `${item.type === 'playlist' ? 'Playlist' : 'Video'} · ${item.id}`;
-        title.style.color = 'var(--light-color, #f4f8fc)';
-        title.style.fontWeight = '500';
-        title.style.wordBreak = 'break-word';
-        title.style.marginBottom = '4px';
-        
-        // Status badge
-        const statusBadge = document.createElement('span');
-        let badgeColor, badgeText;
-        
-        switch (item.status) {
-            case 'ready':
-                badgeColor = 'var(--success-color, #2e8b34)';
-                badgeText = '🎵 Cached';
-                break;
-            case 'converting':
-                badgeColor = 'var(--warning-color, #e65100)';
-                badgeText = `🔄 Converting ${item.progress || 0}%`;
-                break;
-            case 'error':
-                badgeColor = 'var(--danger-color, #d32f2f)';
-                badgeText = '❌ Error';
-                break;
-            default:
-                badgeColor = 'var(--info-color, #0d61aa)';
-                badgeText = '🌐 Stream';
-        }
-        
-        statusBadge.textContent = badgeText;
-        statusBadge.style.backgroundColor = badgeColor;
-        statusBadge.style.color = 'white';
-        statusBadge.style.padding = '2px 6px';
-        statusBadge.style.borderRadius = '12px';
-        statusBadge.style.fontSize = '0.75rem';
-        statusBadge.style.display = 'inline-block';
-        
-        titleContainer.appendChild(title);
-        titleContainer.appendChild(statusBadge);
-        
-        // Action buttons container
-        const actions = document.createElement('div');
-        actions.style.display = 'flex';
-        actions.style.gap = '6px';
-        actions.style.flexShrink = '0';
-        
-        // Play button (cached or stream)
-        const playBtn = document.createElement('button');
-        if (item.status === 'ready') {
-            playBtn.textContent = 'Play (Cached)';
-            playBtn.style.backgroundColor = 'var(--success-color, #2e8b34)';
-            playBtn.addEventListener('click', () => playCachedYouTubeItem(item));
-        } else {
-            playBtn.textContent = 'Play (Stream)';
-            playBtn.style.backgroundColor = 'var(--info-color, #0d61aa)';
-            playBtn.addEventListener('click', () => switchToYouTube(item.url));
-        }
-        playBtn.style.color = 'var(--light-color, #f4f8fc)';
-        playBtn.style.border = 'none';
-        playBtn.style.padding = '4px 8px';
-        playBtn.style.borderRadius = '4px';
-        playBtn.style.cursor = 'pointer';
-        playBtn.style.fontSize = '0.85rem';
-        
-        // Download/Retry button
-        const downloadBtn = document.createElement('button');
-        if (item.status === 'error') {
-            downloadBtn.textContent = 'Retry';
-            downloadBtn.style.backgroundColor = 'var(--warning-color, #e65100)';
-            downloadBtn.addEventListener('click', () => {
-                item.status = 'stream';
-                item.error = null;
-                updateYouTubeItemInCache(item);
-                scheduleYouTubeDownload(item);
-                refreshCachedYouTubeListUI();
-            });
-        } else if (item.status === 'ready') {
-            downloadBtn.textContent = 'Re-cache';
-            downloadBtn.style.backgroundColor = 'var(--secondary-color, #0c4061)';
-            downloadBtn.addEventListener('click', () => {
-                item.status = 'stream';
-                updateYouTubeItemInCache(item);
-                scheduleYouTubeDownload(item);
-                refreshCachedYouTubeListUI();
-            });
-        } else {
-            downloadBtn.textContent = item.status === 'converting' ? 'Converting...' : 'Cache';
-            downloadBtn.style.backgroundColor = 'var(--secondary-color, #0c4061)';
-            downloadBtn.disabled = item.status === 'converting';
-            downloadBtn.addEventListener('click', () => {
-                if (item.status === 'stream') {
-                    scheduleYouTubeDownload(item);
-                    refreshCachedYouTubeListUI();
-                }
-            });
-        }
-        downloadBtn.style.color = 'var(--light-color, #f4f8fc)';
-        downloadBtn.style.border = 'none';
-        downloadBtn.style.padding = '4px 8px';
-        downloadBtn.style.borderRadius = '4px';
-        downloadBtn.style.cursor = downloadBtn.disabled ? 'not-allowed' : 'pointer';
-        downloadBtn.style.fontSize = '0.85rem';
-        downloadBtn.style.opacity = downloadBtn.disabled ? '0.6' : '1';
-        
-        // Remove button
-        const removeBtn = document.createElement('button');
-        removeBtn.textContent = '✕';
-        removeBtn.style.backgroundColor = 'var(--danger-color, #d32f2f)';
-        removeBtn.style.color = 'var(--light-color, #f4f8fc)';
-        removeBtn.style.border = 'none';
-        removeBtn.style.padding = '4px 8px';
-        removeBtn.style.borderRadius = '4px';
-        removeBtn.style.cursor = 'pointer';
-        removeBtn.style.fontSize = '0.85rem';
-        removeBtn.addEventListener('click', () => removeYouTubeCachedItem(idx));
-        
-        actions.appendChild(playBtn);
-        actions.appendChild(downloadBtn);
-        actions.appendChild(removeBtn);
-        
-        row.appendChild(titleContainer);
-        row.appendChild(actions);
-        container.appendChild(row);
-    });
-};
 
-// Play cached YouTube item (stays in YouTube mode)
-const playCachedYouTubeItem = async (item) => {
-    if (!isAllowedPage()) {
-        console.warn('YouTube playback blocked: page not allowed for YouTube features');
-        return;
-    }
-    // Strict mode separation: only play YouTube content in YouTube mode
-    if (!isYouTubeMode) {
-        console.log('MODE: In Local mode - cached YouTube playback blocked. Switch to YouTube mode first.');
-        return;
-    }
-    
-    if (item.status !== 'ready') {
-        console.warn('Item not ready for cached playback:', item);
-        return;
-    }
-    
-    try {
-        console.log('CACHED PLAY: Loading cached audio for', item.title);
-        
-        // Get cached blob from IndexedDB
-        const cachedData = await getCachedAudioBlob(item.id);
-        if (!cachedData || !cachedData.blob) {
-            console.error('CACHED PLAY: No blob found for', item.id);
-            return;
-        }
-        
-        // Create object URL from blob
-        const objectUrl = URL.createObjectURL(cachedData.blob);
-        
-        // STAY in YouTube mode - don't switch to local mode
-        isYouTubeMode = true;
-        updateModeButtons();
-        
-        // Stop YouTube player if playing
-        if (youtubePlayer) {
-            try {
-                youtubePlayer.pauseVideo();
-            } catch (e) {
-                console.log('YouTube player not available for pause');
-            }
-        }
-        
-        // Stop YouTube progress polling
-        stopYouTubeProgressPolling();
-        
-        // Stop local audio if playing (but we'll use it for cached YouTube)
-        if (!audioPlayer.paused) {
-            audioPlayer.pause();
-        }
-        
-        // Load cached audio into the main audio player but stay in YouTube mode
-        audioPlayer.src = objectUrl;
-        audioPlayer.currentTime = 0;
-        audioPlayer.volume = config.volume;
-        
-        // Update now playing for YouTube mode
-    updateNowPlaying(`▶ ${prettyTitle(item.title)} (Cached)`);
-        
-        // Play the cached audio
-        const playPromise = audioPlayer.play();
-        if (playPromise !== undefined) {
-            playPromise.then(() => {
-                console.log('CACHED PLAY: Successfully started playback of', item.title);
-                isPlaying = true;
-                
-                // Update play/pause button to show playing state
-                const playPauseBtn = document.getElementById('play-pause-btn');
-                if (playPauseBtn) {
-                    playPauseBtn.innerHTML = '⏸️ Pause';
-                    playPauseBtn.setAttribute('aria-label', 'Pause');
-                    playPauseBtn.style.background = 'var(--success-color, #28a745)';
-                }
-                
-                // Update song selector to show current selection
-                const songSelector = document.getElementById('song-selector');
-                if (songSelector) {
-                    songSelector.value = item.id;
-                }
-                
-                // Set up ended listener for this cached track
-                audioPlayer.addEventListener('ended', () => {
-                    URL.revokeObjectURL(objectUrl);
-                    console.log('Cached YouTube track ended');
-                    
-                    // Handle repeat modes
-                    if (config.repeat === 'one') {
-                        // Repeat current track
-                        console.log('\ud83d\udd02 Repeating current cached YouTube track');
-                        playCachedYouTubeItem(item);
-                    } else if (config.repeat === 'all' || config.repeat === true) {
-                        // Play next YouTube track
-                        playNextCachedYouTube();
-                    } else {
-                        isPlaying = false;
-                        updateUIForStopped();
-                    }
-                }, { once: true });
-                
-            }).catch(error => {
-                console.error('CACHED PLAY: Failed to start playback:', error);
-                URL.revokeObjectURL(objectUrl);
-            });
-        }
-        
-        // Clean up object URL on error
-        audioPlayer.addEventListener('error', () => {
-            URL.revokeObjectURL(objectUrl);
-            isPlaying = false;
-            updateUIForStopped();
-        }, { once: true });
-        
-    } catch (error) {
-        console.error('CACHED PLAY: Failed to play cached item:', error);
-    }
-};
+
+
+
+
 
 // Initialize when DOM is ready (respect persisted activation)
 document.addEventListener('DOMContentLoaded', () => {
     loadPersistentSettings();
     console.log('Lofi player boot. Enabled in cache:', isPlayerEnabled);
 
-    // Forcefully sync IndexedDB cache to playlist (finds converter/playlist downloads)
-    setTimeout(async () => {
+    // Forcefully sync IndexedDB cache to playlist immediately (finds converter downloads)
+    (async () => {
         try {
             await syncCacheToPlaylist();
         } catch (e) {
             console.warn('Failed to sync cache to playlist:', e);
         }
-    }, 500);
-
-    if (config.youtube.enabled && isAllowedPage()) {
-        loadYouTubeAPI();
-        // Resume any pending downloads after a short delay
-        setTimeout(() => {
-            if (cachedYouTubePlaylist.length > 0) {
-                resumePendingDownloads();
-            }
-        }, 2000);
-    } else if (config.youtube.enabled && !isAllowedPage()) {
-        // Explicitly log that YouTube features are disabled on this page for safety
-        console.log('YouTube features disabled on this page by allowlist');
-    }
+    })();
 
     if (isPlayerEnabled || config.enableLofi) {
         // Auto-activate UI and logic; playback still waits for interaction
@@ -1409,20 +599,7 @@ const updateNowPlaying = (text) => {
 };
 
 // Update mode buttons (will be called from modal)
-const updateModeButtons = () => {
-    const localBtn = document.getElementById('local-mode-btn');
-    const youtubeBtn = document.getElementById('youtube-mode-btn');
-    
-    if (localBtn && youtubeBtn) {
-        if (isYouTubeMode) {
-            localBtn.style.background = 'var(--secondary-color, #0c4061)';
-            youtubeBtn.style.background = 'var(--primary-color, #2c4c7c)';
-        } else {
-            localBtn.style.background = 'var(--primary-color, #2c4c7c)';
-            youtubeBtn.style.background = 'var(--secondary-color, #0c4061)';
-        }
-    }
-};
+
 
 // Setup listeners for user interaction to enable autoplay
 const setupAutoStartListeners = () => {
@@ -1449,41 +626,79 @@ const setupAutoStartListeners = () => {
 // Initialize song list without starting playbook (for UI population)
 const initializeSongList = async () => {
     try {
-        console.log('🔄 Initializing song list...');
-        const files = await scanFolderForMP3s();
-        if (files && files.length > 0) {
-            songList = files;
-            console.log('📁 Song list loaded:', songList.length, 'songs');
-            
+        console.log('🔄 Initializing song list in', config.mode, 'mode...');
+        console.log('Current songList length:', songList ? songList.length : 'undefined');
+
+        // Check if songList has been populated already
+        if (songList && songList.length > 0) {
+            console.log('📁 Song list already loaded:', songList.length, 'songs');
+
             // Initialize playlist based on shuffle mode
             if (config.shuffle) {
                 createShuffledPlaylist();
             }
-            
+
             console.log('✅ Songs ready for playback');
             return songList;
-        } else if (manualSongList.length > 0) {
-            songList = [...manualSongList];
-            console.log('📝 Using manual song list:', songList.length, 'songs');
-            
-            if (config.shuffle) {
-                createShuffledPlaylist();
-            }
-            
-            console.log('✅ Manual songs ready for playback');
-            return songList;
-        } else {
-            console.log('❌ No songs found in folder or manual list');
-            throw new Error('No songs available');
         }
+
+        // Initialize based on current mode
+        if (config.mode === 'cache') {
+            // Sync from IndexedDB cache
+            console.log('🔄 Syncing from cache...');
+            try {
+                await syncCacheToPlaylist();
+            } catch (e) {
+                console.warn('Cache sync failed:', e);
+            }
+
+            if (songList && songList.length > 0) {
+                console.log('📁 Loaded from cache:', songList.length, 'songs');
+            } else {
+                console.log('⚠️ No cached songs found, falling back to manual list');
+                songList = [...manualSongList];
+            }
+        } else if (config.mode === 'local') {
+            // Scan local folder
+            console.log('🔄 Scanning local folder...');
+            try {
+                const files = await scanFolderForMP3s();
+                if (files && files.length > 0) {
+                    songList = files.map(filename => ({
+                        id: filename,
+                        title: prettyTitle(filename.replace(/\.(mp3|wav)$/i, '')),
+                        filename: filename,
+                        url: config.folder + filename
+                    }));
+                    console.log('📁 Loaded from folder:', songList.length, 'songs');
+                } else {
+                    console.log('⚠️ No local files found, falling back to manual list');
+                    songList = [...manualSongList];
+                }
+            } catch (e) {
+                console.warn('Folder scan failed:', e);
+                songList = [...manualSongList];
+            }
+        } else {
+            // Fallback to manual songs
+            console.log('📝 Using manual song list');
+            songList = [...manualSongList];
+        }
+
+        // Initialize playlist based on shuffle mode
+        if (config.shuffle) {
+            createShuffledPlaylist();
+        }
+
+        console.log('✅ Songs ready for playback, total:', songList.length);
+        return songList;
+
     } catch (error) {
         console.error('Failed to initialize song list:', error);
-        if (manualSongList.length > 0) {
-            songList = [...manualSongList];
-            console.log('📝 Fallback to manual song list');
-            return songList;
-        }
-        throw error;
+        // Ultimate fallback
+        songList = [...manualSongList];
+        console.log('📝 Emergency fallback to manual song list');
+        return songList;
     }
 };
 
@@ -1611,8 +826,8 @@ const analyzeAudioLoudness = (audioElement, duration = config.normalization.anal
                 const estimatedLUFS = 20 * Math.log10(avgRMS) - 23;
                 const targetGain = Math.pow(10, (config.normalization.targetLoudness - estimatedLUFS) / 20);
 
-                // Clamp gain to reasonable limits (0.1x to 3x)
-                const clampedGain = Math.max(0.1, Math.min(3.0, targetGain));
+                // Clamp gain to reasonable limits (0.1x to 2.0x) - reduced max gain for quieter playback
+                const clampedGain = Math.max(0.1, Math.min(2.0, targetGain));
 
                 console.log(`📊 Audio analysis: RMS=${avgRMS.toFixed(4)}, Est.LUFS=${estimatedLUFS.toFixed(1)}, Gain=${clampedGain.toFixed(2)}x`);
                 resolve(clampedGain);
@@ -1762,13 +977,7 @@ const getPreviousSong = () => {
 const startPlayback = () => {
     if (isPlaying && !savedPlaybackState) return; // Prevent multiple starts if already playing and not resuming
 
-    // Strict mode separation: only play local files in local mode
-    if (isYouTubeMode) {
-        console.log('MODE: In YouTube mode - local file playback blocked. Switch to Local mode first.');
-        return;
-    }
-
-    console.log('Starting local playback...');
+    console.log('Starting playback...');
 
     // Initialize audio context on user interaction
     initializeAudioContext();
@@ -1787,84 +996,32 @@ const startPlayback = () => {
         return;
     }
 
-    // Try folder scanning if songs not loaded yet
-    scanFolderForMP3s()
-        .then((files) => {
-            if (files && files.length > 0) {
-                songList = files;
-                console.log('📁 Scanned folder, found', songList.length, 'songs:', songList);
-                
-                // Initialize playlist based on shuffle mode
-                if (config.shuffle) {
-                    createShuffledPlaylist();
-                }
-                
-                handleInitialSongLoad();
-                isPlaying = true;
-            } else {
-                // Fallback to manual list
-                if (manualSongList.length > 0) {
-                    console.log('📝 Using manual song list:', manualSongList);
-                    songList = [...manualSongList];
-                    
-                    // Initialize playlist based on shuffle mode
-                    if (config.shuffle) {
-                        createShuffledPlaylist();
-                    }
-                    
-                    handleInitialSongLoad();
-                    isPlaying = true;
-                } else {
-                    console.log('❌ No songs found! Either:');
-                    console.log('1. Add MP3 or WAV files to the lofi/ folder, OR');
-                    console.log('2. Add filenames to the manualSongList array in the code');
-                    console.log('Current folder path:', config.folder);
-                }
-            }
-        })
-        .catch((error) => {
-            console.error('Folder scan failed:', error);
-
-            // Try manual list as fallback
-            if (manualSongList.length > 0) {
-                console.log('📝 Folder scan failed, using manual list');
-                songList = [...manualSongList];
-                
-                // Initialize playlist based on shuffle mode
-                if (config.shuffle) {
-                    createShuffledPlaylist();
-                }
-                
-                handleInitialSongLoad();
-                isPlaying = true;
-            } else {
-                console.error('❌ No fallback available. Add songs to manualSongList array.');
-            }
-        });
+    console.log('❌ No songs loaded from cache');
 };
 
 // Handles loading the first song, either from persistence or based on mode
 const handleInitialSongLoad = () => {
     if (config.persistence.enabled && savedPlaybackState && savedPlaybackState.currentSong) {
-    const savedSongName = safeDecode(savedPlaybackState.currentSong.split('/').pop().split('?')[0]);
+        const savedSongId = savedPlaybackState.currentSong;
         
-        // Validate that saved song still exists in current song list
-        if (songList.includes(savedSongName)) {
-            const fullSavedPath = buildSongPath(savedSongName);
-            console.log(`Attempting to load saved song: ${savedSongName} at ${savedPlaybackState.currentTime.toFixed(1)}s`);
+        // Find the saved song in songList
+        const savedSong = songList.find(song => song.id === savedSongId);
+        
+        if (savedSong) {
+            console.log(`Attempting to load saved song: ${savedSong.title} at ${savedPlaybackState.currentTime.toFixed(1)}s`);
             
             // Set current indices based on saved song
-            const savedIndex = songList.indexOf(savedSongName);
+            const savedIndex = songList.indexOf(savedSong);
             currentSongIndex = savedIndex;
             
             if (config.shuffle && shuffledPlaylist.length > 0) {
-                const shuffledIndex = shuffledPlaylist.indexOf(savedSongName);
+                const shuffledIndex = shuffledPlaylist.indexOf(savedSong);
                 if (shuffledIndex !== -1) {
                     currentPlaylistIndex = shuffledIndex + 1; // +1 because it will be used for next song
                 }
             }
             
-            loadAndPlay(fullSavedPath, savedSongName, savedPlaybackState.currentTime, savedPlaybackState.volume, savedPlaybackState.isPlaying);
+            loadAndPlayCached(savedSong, savedPlaybackState.currentTime, savedPlaybackState.volume, savedPlaybackState.isPlaying);
         } else {
             console.log('Saved song no longer available, starting fresh playlist');
             playNextSong();
@@ -1878,125 +1035,41 @@ const handleInitialSongLoad = () => {
 };
 
 // Scan folder for audio files (MP3 and WAV)
-const scanFolderForMP3s = async () => {
-    try {
-        console.log('🔍 Scanning folder for audio files:', config.folder);
 
-    const response = await fetch(config.folder);
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: Cannot access folder`);
-        }
-
-        const html = await response.text();
-
-        // Parse the directory listing HTML
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-
-        // Look for audio file links in different formats
-        let audioLinks = [];
-
-        // Try common directory listing formats for both MP3 and WAV
-        const linkSelectors = [
-            'a[href$=".mp3"], a[href$=".wav"]', // Direct audio links
-            'a[href*=".mp3"], a[href*=".wav"]', // Contains audio extensions
-            'a[href$=".MP3"], a[href$=".WAV"]', // Uppercase
-            'a[href*=".MP3"], a[href*=".WAV"]' // Uppercase contains
-        ];
-
-        for (const selector of linkSelectors) {
-            const links = doc.querySelectorAll(selector);
-            if (links.length > 0) {
-                audioLinks = Array.from(links);
-                break;
-            }
-        }
-
-        // Extract filenames
-        const files = audioLinks.map((link) => {
-            let href = link.getAttribute('href');
-
-            // Clean up the href
-            if (href.startsWith('/')) {
-                href = href.substring(1);
-            }
-
-            // Get just the filename
-            const filename = safeDecode(href.split('/').pop().split('?')[0]);
-
-            return filename;
-        }).filter(filename => {
-            const lower = filename.toLowerCase();
-            return (lower.endsWith('.mp3') || lower.endsWith('.wav')) &&
-                filename !== '' &&
-                !filename.includes('..'); // Security: no parent directory access
-        });
-
-        console.log('🎵 Found audio files:', files);
-        return files;
-
-    } catch (error) {
-        console.warn('Folder scanning failed:', error.message);
-
-        // Try alternative method: attempt to load common index files
-        try {
-            const indexResponse = await fetch(config.folder + 'index.json');
-            if (indexResponse.ok) {
-                const indexData = await indexResponse.json();
-                if (Array.isArray(indexData)) {
-                    console.log('📋 Using index.json file list');
-                    return indexData.filter(f => {
-                        const lower = f.toLowerCase();
-                        return lower.endsWith('.mp3') || lower.endsWith('.wav');
-                    });
-                }
-            }
-        } catch (e) {
-            // Index.json doesn't exist, that's fine
-        }
-
-        throw error;
-    }
-};
 
 // Play next song with mode awareness
 const playNextSong = (initiator = 'user') => {
-    // Strict mode separation: handle YouTube mode differently
-    if (isYouTubeMode) {
-        console.log('Next track in YouTube mode');
-        playNextCachedYouTube();
-        return;
-    }
-    
     if (songList.length === 0) {
-        console.log('No local songs available');
+        console.log('No songs available');
         return;
     }
 
     // Handle repeat one mode
     if (initiator === 'auto' && config.repeat === 'one' && audioPlayer.src) {
         // Repeat current song only for auto-advance
-    const currentSong = safeDecode(audioPlayer.src.split('/').pop().split('?')[0]);
         try {
             audioPlayer.currentTime = 0;
             // Ensure ended handler is attached again (the previous one was once-only)
             audioPlayer.addEventListener('ended', handleSongEnded, { once: true });
             audioPlayer.play().then(() => {
                 isPlaying = true;
-                updateUIForPlaying(decodeURIComponent(currentSong));
+                updateUIForPlaying(audioPlayer.currentSong ? audioPlayer.currentSong.title : 'Unknown');
                 console.log('🔂 Repeating current song (auto)');
             }).catch(err => {
                 console.warn('Repeat-one auto play() failed, reloading track:', err);
-                // Fallback: reload the same track via loadAndPlay
-                const songPath = buildSongPath(currentSong);
-                loadAndPlay(songPath, currentSong);
+                // Fallback: reload the same track
+                // Find current song object
+                const currentSongObj = songList.find(song => song.id === audioPlayer.currentSongId);
+                if (currentSongObj) {
+                    loadAndPlayCached(currentSongObj);
+                }
             });
         } catch (e) {
             console.warn('Repeat-one auto failed; trying reload:', e);
-            const currentSong = safeDecode(audioPlayer.src.split('/').pop().split('?')[0]);
-            const songPath = buildSongPath(currentSong);
-            loadAndPlay(songPath, currentSong);
+            const currentSongObj = songList.find(song => song.id === audioPlayer.currentSongId);
+            if (currentSongObj) {
+                loadAndPlayCached(currentSongObj);
+            }
         }
         return;
     }
@@ -2023,31 +1096,22 @@ const playNextSong = (initiator = 'user') => {
         return;
     }
 
-    const songPath = buildSongPath(nextSong);
-
-    console.log('▶ Playing:', nextSong, `(${config.shuffle ? 'shuffle' : 'sequential'} mode)`);
+    console.log('▶ Playing:', nextSong.title, `(${config.shuffle ? 'shuffle' : 'sequential'} mode)`);
 
     // Fade out current song if playing
     if (!audioPlayer.paused) {
         fadeOut(audioPlayer, () => {
-            loadAndPlay(songPath, nextSong);
+            loadAndPlayCached(nextSong);
         });
     } else {
-        loadAndPlay(songPath, nextSong);
+        loadAndPlayCached(nextSong);
     }
 };
 
 // Play previous song
 const playPreviousSong = () => {
-    // Strict mode separation: handle YouTube mode differently
-    if (isYouTubeMode) {
-        console.log('Previous track in YouTube mode');
-        playPreviousCachedYouTube();
-        return;
-    }
-    
     if (songList.length === 0) {
-        console.log('No local songs available');
+        console.log('No songs available');
         return;
     }
 
@@ -2065,17 +1129,15 @@ const playPreviousSong = () => {
         return;
     }
 
-    const songPath = buildSongPath(previousSong);
-
-    console.log('⏮ Previous:', previousSong, `(${config.shuffle ? 'shuffle' : 'sequential'} mode)`);
+    console.log('⏮ Previous:', previousSong.title, `(${config.shuffle ? 'shuffle' : 'sequential'} mode)`);
 
     // Fade out current song if playing
     if (!audioPlayer.paused) {
         fadeOut(audioPlayer, () => {
-            loadAndPlay(songPath, previousSong);
+            loadAndPlayCached(previousSong);
         });
     } else {
-        loadAndPlay(songPath, previousSong);
+        loadAndPlayCached(previousSong);
     }
 };
 
@@ -2084,21 +1146,32 @@ const playRandomSong = () => {
     playNextSong();
 };
 
-// Load and play new song with fade in and normalization
-const loadAndPlay = (songPath, songName, startTime = 0, initialVolume = 0, shouldPlay = true) => {
+// Load and play song (cached blob or local URL) with fade in and normalization
+const loadAndPlayCached = (songObj, startTime = 0, initialVolume = 0, shouldPlay = true) => {
     // Clean up any existing event listeners
     audioPlayer.removeEventListener('ended', handleSongEnded);
     
-    audioPlayer.src = songPath;
+    if (songObj.blob) {
+        // Cached song with blob
+        const objectUrl = URL.createObjectURL(songObj.blob);
+        audioPlayer.src = objectUrl;
+    } else if (songObj.url) {
+        // Local song with URL
+        audioPlayer.src = songObj.url;
+    } else {
+        console.error('No blob or URL for song:', songObj.title);
+        return;
+    }
+    
     audioPlayer.volume = initialVolume; // Start at 0 or the saved initialVolume for fade in
 
     // Check cache for normalization data
-    const cacheKey = songName;
+    const cacheKey = songObj.id;
     let cachedGain = null;
 
     if (config.normalization.cache && normalizationCache.has(cacheKey)) {
         cachedGain = normalizationCache.get(cacheKey);
-        console.log('📦 Using cached normalization for:', songName, `(${cachedGain.toFixed(2)}x)`);
+        console.log('📦 Using cached normalization for:', songObj.title, `(${cachedGain.toFixed(2)}x)`);
     }
 
     audioPlayer.currentTime = startTime; // Set playback position
@@ -2108,10 +1181,10 @@ const loadAndPlay = (songPath, songName, startTime = 0, initialVolume = 0, shoul
     if (shouldPlay) {
         audioPlayer.play()
             .then(() => {
-                console.log('🎵 Now playing:', songName);
+                console.log('🎵 Now playing:', songObj.title);
 
                 // Update UI immediately (moved here from event listener for quicker response)
-                updateUIForPlaying(songName);
+                updateUIForPlaying(songObj.title);
 
                 // Initialize Web Audio API if needed (only when actually playing)
                 if (config.normalization.enabled && !audioContext) {
@@ -2161,21 +1234,21 @@ const loadAndPlay = (songPath, songName, startTime = 0, initialVolume = 0, shoul
 
             })
             .catch((error) => {
-                console.error('❌ Playback promise failed for:', songName, error);
-                handleFailedSong(songName);
+                console.error('❌ Playback promise failed for:', songObj.title, error);
+                handleFailedSong(songObj.title);
                 isTransitioning = false;
             });
             
         // Also add a general error listener for the audio element
         audioPlayer.addEventListener('error', (e) => {
-            console.error('❌ Audio element error for:', songName, e);
-            handleFailedSong(songName);
+            console.error('❌ Audio element error for:', songObj.title, e);
+            handleFailedSong(songObj.title);
             isTransitioning = false;
         }, { once: true });
     } else {
         // If not supposed to play (e.g., loaded a paused state)
         audioPlayer.pause();
-        updateUIForPaused(songName);
+        updateUIForPaused(songObj.title);
         isTransitioning = false;
     }
 };
@@ -2507,11 +1580,6 @@ window.lofi = {
         config.volume = Math.max(0, Math.min(1, v));
         audioPlayer.volume = config.volume;
         try {
-            if (youtubePlayer && typeof youtubePlayer.setVolume === 'function') {
-                youtubePlayer.setVolume(Math.round(config.volume * 100));
-            }
-        } catch(_) {}
-        try {
             if (config.persistence?.enabled) {
                 localStorage.setItem(config.persistence.volumeKey, String(config.volume));
             }
@@ -2583,45 +1651,9 @@ console.log('🎧 Lofi Player with Normalization and Persistence loaded');
 console.log('Manual controls: lofi.skip(), lofi.stop(), lofi.volume(0.5), lofi.list(), lofi.clearHistory()');
 console.log('Normalization: lofi.toggleNormalization(), lofi.clearNormalizationCache(), lofi.setTargetLoudness(-23)');
 console.log('Persistence: lofi.togglePersistence()');
-console.log('YouTube Debug: lofi.debugYouTube()');
 console.log('📊 Current normalization target:', config.normalization.targetLoudness, 'LUFS');
 
-// Add debug helper
-window.lofi.debugYouTube = async () => {
-    console.log('=== YouTube Cache Debug ===');
-    console.log('Persistence enabled:', config.persistence?.enabled);
-    console.log('Cached playlist length:', cachedYouTubePlaylist.length);
-    console.log('Cached playlist:', cachedYouTubePlaylist.map(x => ({...x, title: prettyTitle(x.title)})));
-    console.log('LocalStorage key:', config.persistence.youtubePlaylistKey);
-    console.log('LocalStorage raw:', localStorage.getItem(config.persistence.youtubePlaylistKey));
-    console.log('UI container exists:', !!document.getElementById('youtube-playlist'));
-    
-    // IndexedDB debug info
-    try {
-        const dbKeys = await listCachedAudioKeys();
-        console.log('IndexedDB cached audio keys:', dbKeys);
-        
-        // Show detailed info for each cached item
-        for (const key of dbKeys) {
-            const cached = await getCachedAudioBlob(key);
-            console.log(`IndexedDB item ${key}:`, {
-                title: prettyTitle(cached?.title),
-                status: cached?.status,
-                blobSize: cached?.blob?.size,
-                cachedAt: cached?.cachedAt
-            });
-        }
-    } catch (error) {
-        console.error('IndexedDB debug error:', error);
-    }
-    
-    // Status summary
-    const statusCount = cachedYouTubePlaylist.reduce((acc, item) => {
-        acc[item.status || 'unknown'] = (acc[item.status || 'unknown'] || 0) + 1;
-        return acc;
-    }, {});
-    console.log('Status summary:', statusCount);
-};
+
 
 
 
@@ -2658,6 +1690,45 @@ const createFloatingIcon = () => {
     icon.addEventListener('click', toggleModal);
 };
 
+// Create the enable button when music is disabled
+const createEnableButton = () => {
+    const button = document.createElement('div');
+    button.id = 'lofi-enable-button';
+    button.style.position = 'fixed';
+    button.style.bottom = '20px';
+    button.style.left = '12px';
+    button.style.backgroundColor = 'var(--warning-color, #e65100)';
+    button.style.color = 'var(--light-color, #f4f8fc)';
+    button.style.borderRadius = '25px';
+    button.style.width = 'auto';
+    button.style.minWidth = '50px';
+    button.style.height = '50px';
+    button.style.display = 'flex';
+    button.style.justifyContent = 'center';
+    button.style.alignItems = 'center';
+    button.style.cursor = 'pointer';
+    button.style.zIndex = '1000';
+    button.style.fontFamily = 'monospace';
+    button.style.fontSize = '20px';
+    button.style.padding = '0 15px';
+    button.textContent = '🎵 Enable Music';
+    button.title = 'Re-enable Lofi Player';
+
+    document.body.appendChild(button);
+    button.addEventListener('click', () => {
+        if (confirm('Are you sure you want to re-enable music? The player will be restored.')) {
+            config.disabled = false;
+            localStorage.setItem('lofi_disabled', 'false');
+            // Remove enable button
+            button.remove();
+            // Create the normal icon and modal
+            createFloatingIcon();
+            createLofiModal();
+            // Removed annoying alert popup
+        }
+    });
+};
+
 // Update progress bar
 const updateProgressBar = () => {
     const progressBar = document.getElementById('progress-bar');
@@ -2667,12 +1738,7 @@ const updateProgressBar = () => {
     if (progressBar && currentTimeSpan && durationSpan) {
         let currentTime = 0;
         let duration = 0;
-        if (isYouTubeMode && youtubePlayer && typeof youtubePlayer.getDuration === 'function') {
-            try {
-                duration = youtubePlayer.getDuration() || 0;
-                currentTime = youtubePlayer.getCurrentTime() || 0;
-            } catch(_) {}
-        } else if (audioPlayer) {
+        if (audioPlayer) {
             currentTime = audioPlayer.currentTime || 0;
             duration = audioPlayer.duration || 0;
         }
@@ -2700,14 +1766,7 @@ const handleProgressBarClick = (e) => {
     const clickX = e.clientX - rect.left;
     const percentage = (clickX / rect.width) * 100;
     
-    if (isYouTubeMode && youtubePlayer && typeof youtubePlayer.getDuration === 'function') {
-        const dur = youtubePlayer.getDuration();
-        if (dur && dur > 0) {
-            const newTime = (percentage / 100) * dur;
-            try { youtubePlayer.seekTo(newTime, true); } catch(_) {}
-            progressBar.value = percentage;
-        }
-    } else if (audioPlayer && audioPlayer.duration) {
+    if (audioPlayer && audioPlayer.duration) {
         const newTime = (percentage / 100) * audioPlayer.duration;
         audioPlayer.currentTime = newTime;
         progressBar.value = percentage;
@@ -2718,155 +1777,69 @@ const handleProgressBarClick = (e) => {
 const populateSongSelector = async () => {
     const songSelector = document.getElementById('song-selector');
     if (songSelector) {
-        console.log('🔄 Populating song selector. isYouTubeMode:', isYouTubeMode);
+        console.log('🔄 Populating song selector');
         
-        // Show YouTube playlist in YouTube mode, local songs in local mode
-        if (isYouTubeMode) {
-            // Get ALL cached files directly from IndexedDB like converter.js does
-            try {
-                const cachedFiles = await getAllCachedDownloads();
-                
-                if (cachedFiles && cachedFiles.length > 0) {
-                    songSelector.innerHTML = '<option value="">Select a YouTube song...</option>';
-                    
-                    cachedFiles.forEach((item, index) => {
-                        const option = document.createElement('option');
-                        option.value = item.videoId || item.id; // Use videoId or id as value
-                        option.textContent = prettyTitle(item.title || item.filename);
-                        songSelector.appendChild(option);
-                    });
-                    console.log('📋 Song selector populated with', cachedFiles.length, 'cached songs');
-                } else {
-                    songSelector.innerHTML = '<option value="">No YouTube songs cached...</option>';
-                    console.log('📋 No cached songs available');
-                }
-            } catch (error) {
-                console.error('Error loading cached songs:', error);
-                songSelector.innerHTML = '<option value="">Error loading songs...</option>';
-            }
+        if (songList && songList.length > 0) {
+            songSelector.innerHTML = '<option value="">Select a song...</option>';
+            
+            songList.forEach((songObj, index) => {
+                const option = document.createElement('option');
+                option.value = songObj.id;
+                option.textContent = songObj.title;
+                songSelector.appendChild(option);
+            });
+            console.log('📋 Song selector populated with', songList.length, 'songs');
         } else {
-            // Local mode - show local songs
-            if (songList && songList.length > 0) {
-                songSelector.innerHTML = '<option value="">Select a song...</option>';
-                
-                songList.forEach((song, index) => {
-                    const option = document.createElement('option');
-                    option.value = song;
-                    option.textContent = safeDecode(song);
-                    songSelector.appendChild(option);
-                });
-                console.log('📋 Song selector populated with', songList.length, 'songs');
-            } else {
-                songSelector.innerHTML = '<option value="">Loading songs...</option>';
-                console.log('📋 Song selector shows loading state');
-            }
+            songSelector.innerHTML = '<option value="">Loading songs...</option>';
+            console.log('📋 Song selector shows loading state');
         }
     }
 };
 
 // Handle song selection from dropdown
-const handleSongSelection = (selectedSong) => {
+const handleSongSelection = (selectedSongId) => {
     if (isTransitioning) {
         console.log('⏳ Transition in progress, ignoring selection');
         return;
     }
     
-    if (!selectedSong) return;
+    if (!selectedSongId) return;
     
-    if (isYouTubeMode) {
-        // YouTube mode - find and play the selected YouTube item
-        const item = cachedYouTubePlaylist.find(x => x.id === selectedSong);
-        if (item && item.status === 'ready') {
-            playCachedYouTubeItem(item);
+    // Find the selected song object
+    const selectedSongObj = songList.find(song => song.id === selectedSongId);
+    if (selectedSongObj) {
+        // Update indices
+        currentSongIndex = songList.indexOf(selectedSongObj);
+        if (config.shuffle) {
+            createShuffledPlaylistAnchored(selectedSongObj);
+        } else {
+            currentPlaylistIndex = -1;
         }
-    } else {
-        // Local mode - play local song
-        if (songList.includes(selectedSong)) {
-            // Update indices
-            currentSongIndex = songList.indexOf(selectedSong);
-            if (config.shuffle) {
-                createShuffledPlaylistAnchored(selectedSong);
-            } else {
-                currentPlaylistIndex = -1;
-            }
-            const songPath = buildSongPath(selectedSong);
-            isTransitioning = true;
-            loadAndPlay(songPath, selectedSong, 0, 0, true);
-        }
+        isTransitioning = true;
+        loadAndPlayCached(selectedSongObj, 0, 0, true);
     }
 };
 
-// Toggle play/pause with strict mode separation
+// Toggle play/pause
 const togglePlayPause = () => {
-    if (isYouTubeMode) {
-        // YouTube mode: only control YouTube content
-        if (youtubePlayer) {
-            try {
-                const playerState = youtubePlayer.getPlayerState();
-                if (playerState === YT.PlayerState.PLAYING) {
-                    youtubePlayer.pauseVideo();
-                    isPlaying = false;
-                } else {
-                    youtubePlayer.playVideo();
-                    isPlaying = true;
-                }
-            } catch (e) {
-                console.log('YouTube player not ready, checking audio player for cached content');
-                // Handle cached YouTube content playing through audioPlayer
-                if (audioPlayer.paused) {
-                    if (audioPlayer.src) {
-                        audioPlayer.play().catch(err => console.error('Cached YouTube play failed:', err));
-                        isPlaying = true;
-                    } else {
-                        console.log('No YouTube content loaded - add a YouTube URL first');
-                    }
-                } else {
-                    audioPlayer.pause();
-                    isPlaying = false;
-                }
-            }
+    if (audioPlayer.paused) {
+        if (audioPlayer.src) {
+            audioPlayer.play().catch(err => console.error('Play failed:', err));
+            isPlaying = true;
         } else {
-            // Handle cached YouTube content playing through audioPlayer
-            if (audioPlayer.paused) {
-                if (audioPlayer.src) {
-                    audioPlayer.play().catch(err => console.error('Cached YouTube play failed:', err));
-                    isPlaying = true;
-                } else {
-                    console.log('No YouTube content loaded - add a YouTube URL first');
-                }
-            } else {
-                audioPlayer.pause();
-                isPlaying = false;
-            }
+            // No song loaded, start playback
+            startPlayback();
         }
-    } else {
-        // Local mode: only control local audio files
-        if (audioPlayer.paused) {
-            if (audioPlayer.src && !audioPlayer.src.startsWith('blob:')) {
-                // Only play if it's a local file, not a blob (cached YouTube)
-                audioPlayer.play().catch(err => console.error('Local play failed:', err));
-                isPlaying = true;
-            } else if (!audioPlayer.src) {
-                // No song loaded, start local playback
-                startPlayback();
-            } else {
-                console.log('Cached YouTube content detected in Local mode - switch to YouTube mode to play');
-            }
-        } else {
-            audioPlayer.pause();
-            isPlaying = false;
-        }
-    }
-};
-
-// Stop playback for both modes
-const stopPlayback = () => {
-    if (isYouTubeMode && youtubePlayer) {
-        youtubePlayer.stopVideo();
     } else {
         audioPlayer.pause();
-        audioPlayer.currentTime = 0;
+        isPlaying = false;
     }
+};
+
+// Stop playback
+const stopPlayback = () => {
+    audioPlayer.pause();
+    audioPlayer.currentTime = 0;
     isPlaying = false;
     updateNowPlaying('Stopped');
 };
@@ -3021,260 +1994,22 @@ const createLofiModal = () => {
     songSelector.addEventListener('change', (e) => handleSongSelection(e.target.value));
     songSearch.addEventListener('input', () => {
         const q = songSearch.value.toLowerCase();
-        // Rebuild options filtered by search query on decoded strings
+        // Rebuild options filtered by search query
         if (!songList || songList.length === 0) return;
         songSelector.innerHTML = '<option value="">Select a song...</option>';
         songList
-          .filter(s => safeDecode(s).toLowerCase().includes(q))
-          .forEach(s => {
+          .filter(songObj => songObj.title.toLowerCase().includes(q))
+          .forEach(songObj => {
             const opt = document.createElement('option');
-            opt.value = s;
-            opt.textContent = safeDecode(s);
+            opt.value = songObj.id;
+            opt.textContent = songObj.title;
             songSelector.appendChild(opt);
           });
     });
-
-    // YouTube URL Input (only in YouTube mode)
-    const youtubeDiv = document.createElement('div');
-    youtubeDiv.id = 'youtube-controls';
-    youtubeDiv.style.marginBottom = '10px';
-    youtubeDiv.style.display = 'none'; // Hidden by default (local mode)
-    youtubeDiv.innerHTML = `
-        <label style="display: block; margin-bottom: 5px; color: var(--light-color, #f4f8fc);">YouTube URL:</label>
-        <div style="display: flex; gap: 8px;">
-            <input type="text" id="youtube-url-input" placeholder="Paste YouTube video or playlist URL..." 
-                   style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid var(--primary-color, #2c4c7c); 
-                          background-color: var(--secondary-color, #0c4061); color: var(--light-color, #f4f8fc);">
-            <button id="youtube-play-btn" style="padding: 8px 12px; border: none; border-radius: 4px; 
-                                                 background: var(--tertiary-color, #0d9edb); color: white; cursor: pointer; font-weight: bold;">
-                Play
-            </button>
-        </div>
-    `;
-    modal.appendChild(youtubeDiv);
-
-    // YouTube controls
-    const youtubeInput = youtubeDiv.querySelector('#youtube-url-input');
-    const youtubePlayBtn = youtubeDiv.querySelector('#youtube-play-btn');
     
-    youtubePlayBtn.addEventListener('click', () => {
-        const url = youtubeInput.value.trim();
-        console.log('YOUTUBE: Play button clicked with URL:', url);
-        if (url) {
-            console.log('YOUTUBE: Adding to cache...');
-            try { 
-                const added = addYouTubeToCachedList(url);
-                console.log('YOUTUBE: Cache add result:', added);
-            } catch(e) { 
-                console.error('YOUTUBE: Cache add failed:', e);
-            }
-            if (switchToYouTube(url)) {
-                youtubeInput.value = '';
-                updateNowPlaying('YouTube: Loading...');
-                console.log('YOUTUBE: Successfully switched to YouTube');
-            } else {
-                console.error('YOUTUBE: Failed to switch to YouTube');
-                alert('Invalid YouTube URL or YouTube player not ready');
-            }
-        } else {
-            console.warn('YOUTUBE: No URL provided');
-            alert('Please enter a YouTube URL');
-        }
-    });
 
-    youtubeInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            youtubePlayBtn.click();
-        }
-    });
+    
 
-    // Cached YouTube list UI (only in YouTube mode)
-    const ytListHeader = document.createElement('div');
-    ytListHeader.id = 'youtube-list-header';
-    ytListHeader.style.margin = '8px 0 4px';
-    ytListHeader.style.fontSize = '0.9em';
-    ytListHeader.style.color = 'var(--light-color, #f4f8fc)';
-    ytListHeader.style.display = 'none'; // Hidden by default
-    ytListHeader.style.cssText += 'display: flex; justify-content: space-between; align-items: center;';
-    
-    const ytListTitle = document.createElement('span');
-    ytListTitle.textContent = 'Saved YouTube items:';
-    ytListHeader.appendChild(ytListTitle);
-    
-    const syncBtn = document.createElement('button');
-    syncBtn.textContent = '🔄 Sync Cache';
-    syncBtn.title = 'Sync downloaded videos from cache';
-    syncBtn.style.cssText = `
-        padding: 4px 8px;
-        background: var(--success-color, #2e8b34);
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 0.75em;
-    `;
-    syncBtn.addEventListener('click', async () => {
-        syncBtn.textContent = '⏳ Syncing...';
-        syncBtn.disabled = true;
-        try {
-            const added = await syncCacheToPlaylist();
-            syncBtn.textContent = added.length > 0 ? `✅ Added ${added.length}` : '✅ Up to date';
-            setTimeout(() => {
-                syncBtn.textContent = '🔄 Sync Cache';
-                syncBtn.disabled = false;
-            }, 2000);
-        } catch (e) {
-            console.error('Sync error:', e);
-            syncBtn.textContent = '❌ Error';
-            setTimeout(() => {
-                syncBtn.textContent = '🔄 Sync Cache';
-                syncBtn.disabled = false;
-            }, 2000);
-        }
-    });
-    ytListHeader.appendChild(syncBtn);
-    
-    modal.appendChild(ytListHeader);
-
-    const ytListContainer = document.createElement('div');
-    ytListContainer.id = 'youtube-playlist';
-    ytListContainer.style.display = 'none'; // Hidden by default
-    ytListContainer.style.flexDirection = 'column';
-    ytListContainer.style.gap = '12px';
-    ytListContainer.style.overflowY = 'auto';
-    ytListContainer.style.padding = '12px 8px';
-    ytListContainer.style.border = '1px solid var(--primary-color, #2c4c7c)';
-    ytListContainer.style.borderRadius = '8px';
-    ytListContainer.style.maxHeight = 'min(48vh, 420px)';
-    ytListContainer.style.minHeight = '100px';
-    ytListContainer.style.fontSize = '0.95rem';
-    ytListContainer.style.lineHeight = '1.35';
-    modal.appendChild(ytListContainer);
-
-    // Ensure we render any cached items when modal is created
-    console.log('Modal created, rendering cached YouTube items:', cachedYouTubePlaylist.length);
-    refreshCachedYouTubeListUI();
-
-    // Mode Toggle (Local Files vs YouTube)
-    const modeToggleDiv = document.createElement('div');
-    modeToggleDiv.style.marginBottom = '10px';
-    modeToggleDiv.innerHTML = `
-        <div style="display: flex; gap: 8px; align-items: center;">
-            <span style="color: var(--light-color, #f4f8fc); font-size: 0.9em;">Mode:</span>
-            <button id="local-mode-btn" style="padding: 6px 12px; border: none; border-radius: 4px; 
-                                             background: var(--primary-color, #2c4c7c); color: white; cursor: pointer; font-size: 0.8em;">
-                Local Files
-            </button>
-            <button id="youtube-mode-btn" style="padding: 6px 12px; border: none; border-radius: 4px; 
-                                               background: var(--secondary-color, #0c4061); color: white; cursor: pointer; font-size: 0.8em;">
-                YouTube
-            </button>
-        </div>
-    `;
-    modal.appendChild(modeToggleDiv);
-    // Only show the YouTube mode button on converter-related pages (converter and support pages).
-    // This prevents YouTube download controls from appearing on unrelated sites.
-    try {
-        const allowedFilenames = ['converter.html', 'converter-terms.html', 'converter-privacy.html', 'converter-about.html'];
-        const pathParts = (window.location && window.location.pathname) ? window.location.pathname.split('/') : [];
-        const currentFile = pathParts.length ? pathParts[pathParts.length - 1] : '';
-        const isAllowedPage = allowedFilenames.includes(currentFile);
-        const youtubeModeBtnCheck = modeToggleDiv.querySelector('#youtube-mode-btn');
-        if (youtubeModeBtnCheck && !isAllowedPage) {
-            // Hide and disable the YouTube button on non-converter pages
-            youtubeModeBtnCheck.style.display = 'none';
-            youtubeModeBtnCheck.disabled = true;
-            // Ensure YouTube controls are not shown
-            const youtubeControls = document.getElementById('youtube-controls');
-            if (youtubeControls) youtubeControls.style.display = 'none';
-        }
-    } catch (err) {
-        console.warn('lofi: failed to apply page restriction for YouTube button', err);
-    }
-
-    // Mode toggle functionality
-    const localModeBtn = modeToggleDiv.querySelector('#local-mode-btn');
-    const youtubeModeBtn = modeToggleDiv.querySelector('#youtube-mode-btn');
-    
-    const updateModeButtons = () => {
-        if (isYouTubeMode) {
-            localModeBtn.style.background = 'var(--secondary-color, #0c4061)';
-            youtubeModeBtn.style.background = 'var(--primary-color, #2c4c7c)';
-        } else {
-            localModeBtn.style.background = 'var(--primary-color, #2c4c7c)';
-            youtubeModeBtn.style.background = 'var(--secondary-color, #0c4061)';
-        }
-    };
-    
-    localModeBtn.addEventListener('click', () => {
-        console.log('MODE: Switching to local files mode');
-        
-        // Stop all YouTube playback (both streaming and cached)
-        if (youtubePlayer) {
-            try {
-                youtubePlayer.pauseVideo();
-            } catch (e) {
-                console.log('YouTube player not available');
-            }
-        }
-        
-        // Stop audio player if it was playing YouTube content
-        if (!audioPlayer.paused && isYouTubeMode) {
-            audioPlayer.pause();
-            audioPlayer.src = ''; // Clear source to prevent confusion
-        }
-        
-        // Stop YouTube progress polling
-        stopYouTubeProgressPolling();
-        
-        isYouTubeMode = false;
-        isPlaying = false;
-        updateModeButtons();
-        updateUIForStopped();
-        updateNowPlaying('Local mode - select a local song');
-        
-        // Update song selector to show local songs
-        populateSongSelector();
-        
-        // Hide YouTube controls
-        document.getElementById('youtube-controls').style.display = 'none';
-        document.getElementById('youtube-list-header').style.display = 'none';
-        document.getElementById('youtube-playlist').style.display = 'none';
-        
-        console.log('MODE: Now in local files mode - only local MP3s will play');
-    });
-    
-    youtubeModeBtn.addEventListener('click', () => {
-        console.log('MODE: Switching to YouTube mode');
-        
-        // Stop local audio playback 
-        if (!audioPlayer.paused && !isYouTubeMode) {
-            audioPlayer.pause();
-            audioPlayer.src = ''; // Clear source to prevent confusion
-        }
-        
-        isYouTubeMode = true;
-        isPlaying = false;
-        updateModeButtons();
-        updateUIForStopped();
-        updateNowPlaying('YouTube mode - play YouTube content');
-        
-        // Update song selector to show YouTube songs
-        populateSongSelector();
-        
-        // Show YouTube controls
-        document.getElementById('youtube-controls').style.display = 'block';
-        document.getElementById('youtube-list-header').style.display = 'block';
-        document.getElementById('youtube-playlist').style.display = 'flex';
-        
-        // Refresh the list when switching to YouTube mode
-        console.log('YOUTUBE: Refreshing UI on mode switch');
-        refreshCachedYouTubeListUI();
-        
-        console.log('MODE: Now in YouTube mode - only YouTube content will play');
-    });
-    
-    updateModeButtons();
 
     // Now Playing display
     const nowPlayingDiv = document.createElement('div');
@@ -3350,6 +2085,97 @@ const createLofiModal = () => {
     const repeatBtn = createButton('🔁 Repeat: Off', toggleRepeat, 'var(--primary-color, #2c4c7c)');
     repeatBtn.id = 'repeat-btn';
     additionalControls.appendChild(repeatBtn);
+
+    // Mode Controls
+    const modeControls = document.createElement('div');
+    modeControls.style.display = 'grid';
+    modeControls.style.gridTemplateColumns = '1fr 1fr';
+    modeControls.style.gap = '8px';
+    modeControls.style.marginBottom = '10px';
+    modal.appendChild(modeControls);
+
+    // Cache Mode Button
+    const cacheModeBtn = createButton('💾 Cache Mode', () => {
+        console.log('🔄 Switching to cache mode...');
+        const wasAlreadyCache = config.mode === 'cache';
+        config.mode = 'cache';
+        localStorage.setItem('lofi_mode', 'cache');
+        cacheModeBtn.style.backgroundColor = 'var(--success-color, #2e8b34)';
+        localModeBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
+        
+        // Stop current playback and reset player state
+        lofi.stop();
+        isPlaying = false;
+        currentSongIndex = -1;
+        currentPlaylistIndex = -1;
+        currentSong = null;
+        
+        // Show loading state in song selector
+        const songSelector = document.getElementById('song-selector');
+        if (songSelector) songSelector.innerHTML = '<option value="">Switching to cache...</option>';
+        
+        // Clear existing song list to force reload from new mode
+        songList = [];
+        initializeSongList().then(() => {
+            populateSongSelector();
+            startPlayback();
+            console.log('✅ Switched to cache mode');
+            // Removed annoying alert popup
+        }).catch(error => {
+            console.error('❌ Failed to switch to cache mode:', error);
+            if (songSelector) songSelector.innerHTML = '<option value="">Error loading songs</option>';
+        });
+    }, config.mode === 'cache' ? 'var(--success-color, #2e8b34)' : 'var(--primary-color, #2c4c7c)');
+    cacheModeBtn.id = 'cache-mode-btn';
+    modeControls.appendChild(cacheModeBtn);
+
+    // Local Mode Button
+    const localModeBtn = createButton('📁 Local Mode', () => {
+        console.log('🔄 Switching to local mode...');
+        const wasAlreadyLocal = config.mode === 'local';
+        config.mode = 'local';
+        localStorage.setItem('lofi_mode', 'local');
+        localModeBtn.style.backgroundColor = 'var(--success-color, #2e8b34)';
+        cacheModeBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
+        
+        // Stop current playback and reset player state
+        lofi.stop();
+        isPlaying = false;
+        currentSongIndex = -1;
+        currentPlaylistIndex = -1;
+        currentSong = null;
+        
+        // Show loading state in song selector
+        const songSelector = document.getElementById('song-selector');
+        if (songSelector) songSelector.innerHTML = '<option value="">Switching to local...</option>';
+        
+        // Clear existing song list to force reload from new mode
+        songList = [];
+        initializeSongList().then(() => {
+            populateSongSelector();
+            startPlayback();
+            console.log('✅ Switched to local mode');
+            // Removed annoying alert popup
+        }).catch(error => {
+            console.error('❌ Failed to switch to local mode:', error);
+            if (songSelector) songSelector.innerHTML = '<option value="">Error loading songs</option>';
+        });
+    }, config.mode === 'local' ? 'var(--success-color, #2e8b34)' : 'var(--primary-color, #2c4c7c)');
+    localModeBtn.id = 'local-mode-btn';
+    modeControls.appendChild(localModeBtn);
+
+    // Disable Music Button
+    const disableBtn = createButton('🔇 Disable Music', () => {
+        if (confirm('Are you sure you want to disable music? This will stop playback and hide the player.')) {
+            lofi.stop();
+            modal.style.display = 'none';
+            config.disabled = true;
+            localStorage.setItem('lofi_disabled', 'true');
+            // Removed annoying alert popup - user can see the enable button appears
+        }
+    }, 'var(--warning-color, #e65100)');
+    disableBtn.id = 'disable-music-btn';
+    modeControls.appendChild(disableBtn);
 
     // Volume Slider
     const volumeDiv = document.createElement('div');
@@ -3561,6 +2387,10 @@ const createLofiModal = () => {
         repeatBtn.textContent = '🔁 Repeat: Off';
         repeatBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
     }
+    
+    // Update mode buttons
+    cacheModeBtn.style.backgroundColor = config.mode === 'cache' ? 'var(--success-color, #2e8b34)' : 'var(--primary-color, #2c4c7c)';
+    localModeBtn.style.backgroundColor = config.mode === 'local' ? 'var(--success-color, #2e8b34)' : 'var(--primary-color, #2c4c7c)';
     
     volumeSlider.value = config.volume;
     volumeDisplay.textContent = `${Math.round(config.volume * 100)}%`;
