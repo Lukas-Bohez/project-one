@@ -27,7 +27,8 @@ const config = {
         normalizationCacheKey: 'lofiNormalizationCache',
         playerEnabledKey: 'lofiPlayerEnabled',
         volumeKey: 'lofiVolume',
-        currentPlaylistKey: 'lofiCurrentPlaylist'
+        currentPlaylistKey: 'lofiCurrentPlaylist',
+        targetLoudnessKey: 'lofiTargetLoudness'
     }
 };
 
@@ -55,6 +56,8 @@ let isPlaying = false; // Tracks if the player *should* be playing (can be pause
 let lastPlayedSongs = []; // Track recently played songs
 let currentSongIndex = -1; // Current position in playlist
 let currentPlaylistIndex = -1; // Current position in shuffled playlist (for shuffle mode)
+let currentSongId = null; // Current song ID for normalization adjustments
+
 let normalizationCache = new Map(); // Cache for normalization data
 let isTransitioning = false; // Prevent overlapping fades/loads
 
@@ -442,6 +445,15 @@ const loadPersistentSettings = () => {
         if (modeRaw && (modeRaw === 'cache' || modeRaw === 'local')) {
             config.mode = modeRaw;
         }
+
+        // Load target loudness
+        const targetRaw = localStorage.getItem(config.persistence.targetLoudnessKey);
+        if (targetRaw !== null) {
+            const t = parseFloat(targetRaw);
+            if (Number.isFinite(t)) {
+                config.normalization.targetLoudness = Math.max(-24, Math.min(24, t));
+            }
+        }
     } catch (err) {
         console.warn('Failed to load persistent settings:', err);
         isPlayerEnabled = false;
@@ -525,10 +537,10 @@ const activateLofiPlayer = () => {
             if (slider) slider.value = cachedVolume;
             if (display) display.textContent = `${Math.round(cachedVolume * 100)}%`;
         } catch(_) {}
-    }
 
-    // Setup user interaction listeners for auto-start
-    setupAutoStartListeners();
+        // Setup user interaction listeners for auto-start
+        setupAutoStartListeners();
+    }
 
     // Save state before leaving the page
     window.addEventListener('beforeunload', savePlayerState);
@@ -581,11 +593,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     })();
 
-    if (isPlayerEnabled || config.enableLofi) {
+    if (config.disabled) {
+        createEnableButton();
+    } else if (isPlayerEnabled || config.enableLofi) {
         // Auto-activate UI and logic; playback still waits for interaction
         activateLofiPlayer();
     } else {
-        // Show activation CTA only when disabled
+        // Show activation CTA only when not activated
         createActivationButton();
     }
 });
@@ -802,7 +816,7 @@ const calculateRMS = (audioBuffer) => {
 const analyzeAudioLoudness = (audioElement, duration = config.normalization.analysisTime) => {
     return new Promise((resolve) => {
         if (!config.normalization.enabled) {
-            resolve(1.0); // No normalization
+            resolve({ gain: 1.0, estLufs: 0 }); // No normalization
             return;
         }
 
@@ -815,7 +829,7 @@ const analyzeAudioLoudness = (audioElement, duration = config.normalization.anal
             if (audioElement.paused || audioElement.ended || sampleCount >= maxSamples) {
                 // Calculate average RMS
                 if (samples.length === 0) {
-                    resolve(1.0);
+                    resolve({ gain: 1.0, estLufs: 0 });
                     return;
                 }
 
@@ -830,7 +844,7 @@ const analyzeAudioLoudness = (audioElement, duration = config.normalization.anal
                 const clampedGain = Math.max(0.1, Math.min(2.0, targetGain));
 
                 console.log(`📊 Audio analysis: RMS=${avgRMS.toFixed(4)}, Est.LUFS=${estimatedLUFS.toFixed(1)}, Gain=${clampedGain.toFixed(2)}x`);
-                resolve(clampedGain);
+                resolve({ gain: clampedGain, estLufs: estimatedLUFS });
                 return;
             }
 
@@ -1167,11 +1181,12 @@ const loadAndPlayCached = (songObj, startTime = 0, initialVolume = 0, shouldPlay
 
     // Check cache for normalization data
     const cacheKey = songObj.id;
+    currentSongId = cacheKey; // Update current song ID
     let cachedGain = null;
 
     if (config.normalization.cache && normalizationCache.has(cacheKey)) {
         cachedGain = normalizationCache.get(cacheKey);
-        console.log('📦 Using cached normalization for:', songObj.title, `(${cachedGain.toFixed(2)}x)`);
+        console.log('📦 Using cached normalization for:', songObj.title, `(${cachedGain.gain.toFixed(2)}x)`);
     }
 
     audioPlayer.currentTime = startTime; // Set playback position
@@ -1193,7 +1208,7 @@ const loadAndPlayCached = (songObj, startTime = 0, initialVolume = 0, shouldPlay
 
                 if (cachedGain !== null && gainNode) {
                     // Use cached gain immediately
-                    gainNode.gain.setValueAtTime(cachedGain, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(cachedGain.gain, audioContext.currentTime);
                     fadeIn(audioPlayer);
                 } else {
                     // Start with default gain and analyze
@@ -1205,17 +1220,17 @@ const loadAndPlayCached = (songObj, startTime = 0, initialVolume = 0, shouldPlay
                     // Analyze and adjust gain
                     if (config.normalization.enabled && analyser) {
                         analyzeAudioLoudness(audioPlayer)
-                            .then((normalizedGain) => {
+                            .then((result) => {
                                 // Cache the result
                                 if (config.normalization.cache) {
-                                    normalizationCache.set(cacheKey, normalizedGain);
+                                    normalizationCache.set(cacheKey, result);
                                     saveNormalizationCache(); // Save cache after update
                                 }
 
                                 // Apply the gain gradually to avoid sudden volume changes
                                 if (gainNode) {
                                     gainNode.gain.exponentialRampToValueAtTime(
-                                        normalizedGain,
+                                        result.gain,
                                         audioContext.currentTime + 0.5
                                     );
                                 }
@@ -1488,11 +1503,21 @@ const loadNormalizationCache = () => {
         if (cachedData) {
             const cacheArray = JSON.parse(cachedData);
             // Validate cache entries
-            const validEntries = cacheArray.filter(([key, value]) => 
-                typeof key === 'string' && 
-                typeof value === 'number' && 
-                value > 0 && value <= 10 // Reasonable gain range
-            );
+            const validEntries = cacheArray.filter(([key, value]) => {
+                if (typeof value === 'number' && value > 0 && value <= 10) {
+                    // Backward compatibility: convert old number format to object
+                    return true;
+                } else if (typeof value === 'object' && value && typeof value.gain === 'number' && typeof value.estLufs === 'number') {
+                    return value.gain > 0 && value.gain <= 10;
+                }
+                return false;
+            }).map(([key, value]) => {
+                if (typeof value === 'number') {
+                    // Convert old format
+                    return [key, { gain: value, estLufs: 0 }];
+                }
+                return [key, value];
+            });
             normalizationCache = new Map(validEntries);
             console.log('✅ Normalization cache loaded with', normalizationCache.size, 'valid entries.');
             
@@ -1618,19 +1643,39 @@ window.lofi = {
         console.log('🗑️ Normalization cache cleared');
     },
     setTargetLoudness: (lufs) => {
-        config.normalization.targetLoudness = Math.max(-40, Math.min(-10, lufs));
+        config.normalization.targetLoudness = Math.max(-24, Math.min(24, lufs));
         console.log('🎯 Target loudness set to:', config.normalization.targetLoudness, 'LUFS');
+        // Persist the setting
+        try {
+            localStorage.setItem(config.persistence.targetLoudnessKey, String(config.normalization.targetLoudness));
+        } catch (e) { console.warn('Could not persist target loudness:', e); }
+
+        // Adjust current playback gain if normalization is enabled and we have cached data
+        if (config.normalization.enabled && gainNode && currentSongId && normalizationCache.has(currentSongId)) {
+            const cachedData = normalizationCache.get(currentSongId);
+            const newGain = Math.pow(10, (config.normalization.targetLoudness - cachedData.estLufs) / 20);
+            const clampedNewGain = Math.max(0.1, Math.min(2.0, newGain));
+            console.log('🔄 Adjusting current playback gain to:', clampedNewGain.toFixed(2), 'x');
+            gainNode.gain.exponentialRampToValueAtTime(clampedNewGain, audioContext.currentTime + 0.5);
+            // Update cache with new gain
+            cachedData.gain = clampedNewGain;
+            normalizationCache.set(currentSongId, cachedData);
+            saveNormalizationCache();
+        }
+
         // Update UI
-        const targetLufsInput = document.getElementById('target-lufs');
-        if (targetLufsInput) targetLufsInput.value = config.normalization.targetLoudness;
+        const targetLufsSlider = document.getElementById('target-lufs-slider');
+        const targetLufsDisplay = document.getElementById('target-lufs-display');
+        if (targetLufsSlider) targetLufsSlider.value = config.normalization.targetLoudness;
+        if (targetLufsDisplay) targetLufsDisplay.textContent = `${config.normalization.targetLoudness} LUFS`;
     },
     showNormalizationCache: () => {
         console.log('📊 Normalization cache:');
         if (normalizationCache.size === 0) {
             console.log('   (Cache is empty)');
         } else {
-            normalizationCache.forEach((gain, song) => {
-                console.log(`  ${song}: ${gain.toFixed(2)}x`);
+            normalizationCache.forEach((data, song) => {
+                console.log(`  ${song}: ${data.gain.toFixed(2)}x (${data.estLufs.toFixed(1)} LUFS)`);
             });
         }
     },
@@ -1900,6 +1945,10 @@ const toggleRepeat = () => {
 const createLofiModal = () => {
     const modal = document.createElement('div');
     modal.id = 'lofi-player-modal';
+    // ... existing styles ...
+
+    // Declare variables for UI elements we'll need to update later
+    let targetLufsSlider, targetLufsDisplay;
     modal.style.position = 'fixed';
     modal.style.bottom = '90px'; // Above the icon
     // Use tighter side offsets so the modal doesn't overflow on small/mobile screens
@@ -2089,19 +2138,18 @@ const createLofiModal = () => {
     // Mode Controls
     const modeControls = document.createElement('div');
     modeControls.style.display = 'grid';
-    modeControls.style.gridTemplateColumns = '1fr 1fr';
+    modeControls.style.gridTemplateColumns = '1fr';
     modeControls.style.gap = '8px';
     modeControls.style.marginBottom = '10px';
     modal.appendChild(modeControls);
 
-    // Cache Mode Button
-    const cacheModeBtn = createButton('💾 Cache Mode', () => {
-        console.log('🔄 Switching to cache mode...');
-        const wasAlreadyCache = config.mode === 'cache';
-        config.mode = 'cache';
-        localStorage.setItem('lofi_mode', 'cache');
-        cacheModeBtn.style.backgroundColor = 'var(--success-color, #2e8b34)';
-        localModeBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
+    // Mode Toggle Button
+    const modeToggleBtn = createButton(config.mode === 'cache' ? '📁 Local Mode' : '💾 Cache Mode', () => {
+        const newMode = config.mode === 'cache' ? 'local' : 'cache';
+        console.log('🔄 Switching to', newMode, 'mode...');
+        config.mode = newMode;
+        localStorage.setItem('lofi_mode', newMode);
+        modeToggleBtn.textContent = newMode === 'cache' ? '📁 Local Mode' : '💾 Cache Mode';
         
         // Stop current playback and reset player state
         lofi.stop();
@@ -2112,57 +2160,21 @@ const createLofiModal = () => {
         
         // Show loading state in song selector
         const songSelector = document.getElementById('song-selector');
-        if (songSelector) songSelector.innerHTML = '<option value="">Switching to cache...</option>';
+        if (songSelector) songSelector.innerHTML = '<option value="">Switching to ' + newMode + '...</option>';
         
         // Clear existing song list to force reload from new mode
         songList = [];
         initializeSongList().then(() => {
             populateSongSelector();
             startPlayback();
-            console.log('✅ Switched to cache mode');
-            // Removed annoying alert popup
+            console.log('✅ Switched to', newMode, 'mode');
         }).catch(error => {
-            console.error('❌ Failed to switch to cache mode:', error);
+            console.error('❌ Failed to switch to', newMode, 'mode:', error);
             if (songSelector) songSelector.innerHTML = '<option value="">Error loading songs</option>';
         });
-    }, config.mode === 'cache' ? 'var(--success-color, #2e8b34)' : 'var(--primary-color, #2c4c7c)');
-    cacheModeBtn.id = 'cache-mode-btn';
-    modeControls.appendChild(cacheModeBtn);
-
-    // Local Mode Button
-    const localModeBtn = createButton('📁 Local Mode', () => {
-        console.log('🔄 Switching to local mode...');
-        const wasAlreadyLocal = config.mode === 'local';
-        config.mode = 'local';
-        localStorage.setItem('lofi_mode', 'local');
-        localModeBtn.style.backgroundColor = 'var(--success-color, #2e8b34)';
-        cacheModeBtn.style.backgroundColor = 'var(--primary-color, #2c4c7c)';
-        
-        // Stop current playback and reset player state
-        lofi.stop();
-        isPlaying = false;
-        currentSongIndex = -1;
-        currentPlaylistIndex = -1;
-        currentSong = null;
-        
-        // Show loading state in song selector
-        const songSelector = document.getElementById('song-selector');
-        if (songSelector) songSelector.innerHTML = '<option value="">Switching to local...</option>';
-        
-        // Clear existing song list to force reload from new mode
-        songList = [];
-        initializeSongList().then(() => {
-            populateSongSelector();
-            startPlayback();
-            console.log('✅ Switched to local mode');
-            // Removed annoying alert popup
-        }).catch(error => {
-            console.error('❌ Failed to switch to local mode:', error);
-            if (songSelector) songSelector.innerHTML = '<option value="">Error loading songs</option>';
-        });
-    }, config.mode === 'local' ? 'var(--success-color, #2e8b34)' : 'var(--primary-color, #2c4c7c)');
-    localModeBtn.id = 'local-mode-btn';
-    modeControls.appendChild(localModeBtn);
+    }, 'var(--primary-color, #2c4c7c)');
+    modeToggleBtn.id = 'mode-toggle-btn';
+    modeControls.appendChild(modeToggleBtn);
 
     // Disable Music Button
     const disableBtn = createButton('🔇 Disable Music', () => {
@@ -2241,21 +2253,28 @@ const createLofiModal = () => {
         normStatus.style.color = config.normalization.enabled ? 'var(--success-color, #2e8b34)' : 'var(--warning-color, #e65100)';
     });
 
-    // Target Loudness Input
+    // Target Loudness Slider
     const targetLoudnessDiv = document.createElement('div');
     targetLoudnessDiv.style.display = 'flex';
     targetLoudnessDiv.style.alignItems = 'center';
-    targetLoudnessDiv.style.gap = '5px';
+    targetLoudnessDiv.style.gap = '10px';
     targetLoudnessDiv.innerHTML = `
-        <label for="target-lufs">Target LUFS:</label>
-        <input type="number" id="target-lufs" value="${config.normalization.targetLoudness}" min="-40" max="-10" step="1" style="width: 70px; padding: 5px; border-radius: 4px; border: 1px solid var(--primary-color, #2c4c7c); background-color: var(--secondary-color, #0c4061); color: var(--light-color, #f4f8fc);">
+        <label for="target-lufs-slider" style="white-space: nowrap;">Loudness:</label>
+        <input type="range" id="target-lufs-slider" min="-24" max="24" step="1" value="${config.normalization.targetLoudness}" style="width: 150px;">
+        <span id="target-lufs-display" style="font-size: 0.9em; color: var(--light-color, #f4f8fc); min-width: 40px; text-align: center;">${config.normalization.targetLoudness} LUFS</span>
     `;
     normalizationSection.appendChild(targetLoudnessDiv);
 
     targetLoudnessDiv.querySelector('label').style.color = 'var(--light-color, #f4f8fc)';
-    const targetLufsInput = targetLoudnessDiv.querySelector('#target-lufs');
-    targetLufsInput.addEventListener('change', (e) => {
-        lofi.setTargetLoudness(parseInt(e.target.value));
+    targetLufsSlider = targetLoudnessDiv.querySelector('#target-lufs-slider');
+    targetLufsDisplay = targetLoudnessDiv.querySelector('#target-lufs-display');
+    targetLufsSlider.style.accentColor = 'var(--tertiary-color, #0d9edb)';
+    targetLufsSlider.style.backgroundColor = 'var(--secondary-color, #0c4061)';
+
+    targetLufsSlider.addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        lofi.setTargetLoudness(value);
+        targetLufsDisplay.textContent = `${value} dB`;
     });
 
     // Logout and Clear Local Cache Button
@@ -2389,15 +2408,15 @@ const createLofiModal = () => {
     }
     
     // Update mode buttons
-    cacheModeBtn.style.backgroundColor = config.mode === 'cache' ? 'var(--success-color, #2e8b34)' : 'var(--primary-color, #2c4c7c)';
-    localModeBtn.style.backgroundColor = config.mode === 'local' ? 'var(--success-color, #2e8b34)' : 'var(--primary-color, #2c4c7c)';
+    // (Mode button colors are handled in the toggle button itself)
     
     volumeSlider.value = config.volume;
     volumeDisplay.textContent = `${Math.round(config.volume * 100)}%`;
     normToggle.checked = config.normalization.enabled;
     normStatus.textContent = `(${config.normalization.enabled ? 'On' : 'Off'})`;
     normStatus.style.color = config.normalization.enabled ? 'var(--success-color, #2e8b34)' : 'var(--warning-color, #e65100)';
-    targetLufsInput.value = config.normalization.targetLoudness;
+    if (targetLufsSlider) targetLufsSlider.value = config.normalization.targetLoudness;
+    if (targetLufsDisplay) targetLufsDisplay.textContent = `${config.normalization.targetLoudness} LUFS`;
 
     // Populate song selector initially (may be empty until songs load)
     populateSongSelector();
