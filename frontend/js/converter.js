@@ -893,11 +893,10 @@ async function downloadAllVideos() {
     // Warn user about time for large playlists
     if (videoCount > 20) {
         const proceed = confirm(
-            `⏱️ Rate Limit Protection Active\n\n` +
-            `Downloading ${videoCount} videos with 5-10 second delays between each to avoid YouTube rate limiting.\n\n` +
-            `Estimated time: ~${estimatedMinutes} minutes\n\n` +
-            `💡 Tip: Use YouTube cookies from a logged-in account to reduce rate limiting.\n\n` +
-            `Continue?`
+                `⏱️ Rate Limit Protection Active\n\n` +
+                `Downloading ${videoCount} videos with 5-10 second delays between each to avoid YouTube rate limiting.\n\n` +
+                `Estimated time: ~${estimatedMinutes} minutes\n\n` +
+                `Continue?`
         );
         if (!proceed) return;
     }
