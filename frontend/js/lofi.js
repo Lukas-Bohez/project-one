@@ -7,7 +7,7 @@ const LOFI_API_BASE_URL = `https://${window.location.hostname}`;
 
 // Configuration
 const config = {
-    volume: 0.00005, // Extremely quiet default (0.005%)
+    volume: 0.1, // Normal volume level
     fadeDuration: 500, // Reduced from 1000ms to 500ms for faster transitions
     shuffle: true, // Default shuffle mode (true = random, false = sequential)
     repeat: false, // Repeat mode: false, 'one', or 'all'
@@ -15,20 +15,12 @@ const config = {
     mode: 'cache', // 'cache' or 'local' - cache uses IndexedDB, local scans folder
     folder: 'https://quizthespire.com/lofi/', // Folder to scan for local MP3 files
     disabled: false, // Whether music is disabled
-    normalization: {
-        enabled: true,
-        targetLoudness: -35, // Further reduced to -35 LUFS for much quieter playback
-        analysisTime: 3000, // How long to analyze each track (ms)
-        cache: true // Cache normalization data
-    },
     persistence: { // Enhanced persistence configuration
         enabled: true,
         localStorageKey: 'lofiPlayerState',
-        normalizationCacheKey: 'lofiNormalizationCache',
         playerEnabledKey: 'lofiPlayerEnabled',
         volumeKey: 'lofiVolume',
-        currentPlaylistKey: 'lofiCurrentPlaylist',
-        targetLoudnessKey: 'lofiTargetLoudness'
+        currentPlaylistKey: 'lofiCurrentPlaylist'
     }
 };
 
@@ -47,18 +39,14 @@ const manualSongList = [
 // Player elements
 const audioPlayer = new Audio();
 let audioContext = null;
-let analyser = null;
-let source = null;
-let gainNode = null;
 let songList = [];
 let shuffledPlaylist = []; // For shuffle mode
 let isPlaying = false; // Tracks if the player *should* be playing (can be paused)
 let lastPlayedSongs = []; // Track recently played songs
 let currentSongIndex = -1; // Current position in playlist
 let currentPlaylistIndex = -1; // Current position in shuffled playlist (for shuffle mode)
-let currentSongId = null; // Current song ID for normalization adjustments
+let currentSongId = null; // Current song ID
 
-let normalizationCache = new Map(); // Cache for normalization data
 let isTransitioning = false; // Prevent overlapping fades/loads
 
 let lofiActivated = false; // Track if user has activated the lofi player
@@ -133,6 +121,32 @@ const prettyTitle = (s) => {
     // Collapse repeated whitespace
     t = t.replace(/\s{2,}/g, ' ').trim();
     return t;
+};
+
+// Prefer a human-friendly display title for a song object or id/string
+const getDisplayTitle = (song) => {
+    if (!song) return 'Unknown';
+    // If caller provided a plain string (could be an id, filename, or encoded URL)
+    if (typeof song === 'string') {
+        // Try to match to an entry in songList by id, filename, or title
+        const found = songList.find(s => s.id === song || s.filename === song || s.title === song || (s.url && s.url.split('/').pop() === song));
+        if (found) return prettyTitle(found.title || found.filename || found.id || found.url);
+        // If it looks like a filename or encoded value, decode and prettify
+        try {
+            const dec = safeDecode(song.split('/').pop().split('?')[0]);
+            return prettyTitle(dec);
+        } catch (_) {
+            return song;
+        }
+    }
+
+    // If it's an object, prefer explicit title, then metadata, then filename, then id
+    if (typeof song === 'object') {
+        const titleCandidate = song.title || song.metadata?.title || song.filename || song.url && song.url.split('/').pop() || song.id;
+        return prettyTitle(String(titleCandidate || 'Unknown'));
+    }
+
+    return 'Unknown';
 };
 
 const getCachedAudioBlob = async (videoId) => {
@@ -446,14 +460,6 @@ const loadPersistentSettings = () => {
             config.mode = modeRaw;
         }
 
-        // Load target loudness
-        const targetRaw = localStorage.getItem(config.persistence.targetLoudnessKey);
-        if (targetRaw !== null) {
-            const t = parseFloat(targetRaw);
-            if (Number.isFinite(t)) {
-                config.normalization.targetLoudness = Math.max(-24, Math.min(24, t));
-            }
-        }
     } catch (err) {
         console.warn('Failed to load persistent settings:', err);
         isPlayerEnabled = false;
@@ -516,7 +522,6 @@ const activateLofiPlayer = () => {
     // Load persisted state if persistence is enabled
     if (config.persistence.enabled) {
         loadPlayerState();
-        loadNormalizationCache();
     }
 
     // Initialize UI elements (only if not disabled)
@@ -762,115 +767,6 @@ const clearAllCaches = async () => {
     }
 };
 
-// Initialize Web Audio API
-const initializeAudioContext = () => {
-    if (!audioContext || audioContext.state === 'closed') {
-        try {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
-            // Create audio nodes
-            source = audioContext.createMediaElementSource(audioPlayer);
-            gainNode = audioContext.createGain();
-            analyser = audioContext.createAnalyser();
-
-            // Connect the audio graph
-            source.connect(gainNode);
-            gainNode.connect(analyser);
-            analyser.connect(audioContext.destination);
-
-            // Configure analyser
-            analyser.fftSize = 2048;
-            analyser.smoothingTimeConstant = 0.8;
-
-            console.log('🎛️ Audio normalization initialized');
-            
-            // Resume audio context if suspended (required for user interaction policy)
-            if (audioContext.state === 'suspended') {
-                audioContext.resume().then(() => {
-                    console.log('Audio context resumed');
-                }).catch(err => {
-                    console.warn('Failed to resume audio context:', err);
-                });
-            }
-        } catch (error) {
-            console.error('Failed to initialize audio context:', error);
-            // Disable normalization if Web Audio API fails
-            config.normalization.enabled = false;
-        }
-    }
-};
-
-// Calculate RMS (Root Mean Square) for loudness estimation
-const calculateRMS = (audioBuffer) => {
-    const channelData = audioBuffer.getChannelData(0);
-    let sum = 0;
-
-    for (let i = 0; i < channelData.length; i++) {
-        sum += channelData[i] * channelData[i];
-    }
-
-    return Math.sqrt(sum / channelData.length);
-};
-
-// Analyze audio loudness using Web Audio API
-const analyzeAudioLoudness = (audioElement, duration = config.normalization.analysisTime) => {
-    return new Promise((resolve) => {
-        if (!config.normalization.enabled) {
-            resolve({ gain: 1.0, estLufs: 0 }); // No normalization
-            return;
-        }
-
-        const dataArray = new Uint8Array(analyser.frequencyBinCount);
-        const samples = [];
-        let sampleCount = 0;
-        const maxSamples = Math.floor(duration / 50); // Sample every 50ms
-
-        const analyzeSample = () => {
-            if (audioElement.paused || audioElement.ended || sampleCount >= maxSamples) {
-                // Calculate average RMS
-                if (samples.length === 0) {
-                    resolve({ gain: 1.0, estLufs: 0 });
-                    return;
-                }
-
-                const avgRMS = samples.reduce((a, b) => a + b, 0) / samples.length;
-
-                // Convert to approximate LUFS and calculate gain
-                // This is a rough approximation. For precise LUFS, a dedicated library is better.
-                const estimatedLUFS = 20 * Math.log10(avgRMS) - 23;
-                const targetGain = Math.pow(10, (config.normalization.targetLoudness - estimatedLUFS) / 20);
-
-                // Clamp gain to reasonable limits (0.1x to 2.0x) - reduced max gain for quieter playback
-                const clampedGain = Math.max(0.1, Math.min(2.0, targetGain));
-
-                console.log(`📊 Audio analysis: RMS=${avgRMS.toFixed(4)}, Est.LUFS=${estimatedLUFS.toFixed(1)}, Gain=${clampedGain.toFixed(2)}x`);
-                resolve({ gain: clampedGain, estLufs: estimatedLUFS });
-                return;
-            }
-
-            analyser.getByteFrequencyData(dataArray);
-
-            // Convert to RMS
-            let sum = 0;
-            for (let i = 0; i < dataArray.length; i++) {
-                const normalized = dataArray[i] / 255.0; // Normalize byte to 0-1 range
-                sum += normalized * normalized;
-            }
-            const rms = Math.sqrt(sum / dataArray.length);
-
-            if (rms > 0.001) { // Only include non-silent samples
-                samples.push(rms);
-            }
-
-            sampleCount++;
-            setTimeout(analyzeSample, 50);
-        };
-
-        // Start analysis after a short delay to let audio start playing
-        setTimeout(analyzeSample, 100);
-    });
-};
-
 // Create shuffled playlist
 const createShuffledPlaylist = () => {
     shuffledPlaylist = [...songList];
@@ -993,9 +889,6 @@ const startPlayback = () => {
 
     console.log('Starting playback...');
 
-    // Initialize audio context on user interaction
-    initializeAudioContext();
-
     // Check if songs are already loaded
     if (songList.length > 0) {
         console.log('📁 Songs already loaded, starting playback with', songList.length, 'songs');
@@ -1017,30 +910,30 @@ const startPlayback = () => {
 const handleInitialSongLoad = () => {
     if (config.persistence.enabled && savedPlaybackState && savedPlaybackState.currentSong) {
         const savedSongId = savedPlaybackState.currentSong;
-        
+
         // Find the saved song in songList
-        const savedSong = songList.find(song => song.id === savedSongId);
-        
+        const savedSong = songList.find(song => song.id === savedSongId || song.filename === savedSongId || (song.url && song.url.split('/').pop() === savedSongId));
+
         if (savedSong) {
-            console.log(`Attempting to load saved song: ${savedSong.title} at ${savedPlaybackState.currentTime.toFixed(1)}s`);
-            
+            console.log(`Attempting to load saved song: ${getDisplayTitle(savedSong)} at ${savedPlaybackState.currentTime.toFixed(1)}s`);
+
             // Set current indices based on saved song
             const savedIndex = songList.indexOf(savedSong);
             currentSongIndex = savedIndex;
-            
+
             if (config.shuffle && shuffledPlaylist.length > 0) {
                 const shuffledIndex = shuffledPlaylist.indexOf(savedSong);
                 if (shuffledIndex !== -1) {
                     currentPlaylistIndex = shuffledIndex + 1; // +1 because it will be used for next song
                 }
             }
-            
+
             loadAndPlayCached(savedSong, savedPlaybackState.currentTime, savedPlaybackState.volume, savedPlaybackState.isPlaying);
         } else {
             console.log('Saved song no longer available, starting fresh playlist');
             playNextSong();
         }
-        
+
         // Clear saved state after attempting to load it
         savedPlaybackState = null;
     } else {
@@ -1067,7 +960,8 @@ const playNextSong = (initiator = 'user') => {
             audioPlayer.addEventListener('ended', handleSongEnded, { once: true });
             audioPlayer.play().then(() => {
                 isPlaying = true;
-                updateUIForPlaying(audioPlayer.currentSong ? audioPlayer.currentSong.title : 'Unknown');
+                const currentFilename = audioPlayer.src ? audioPlayer.src.split('/').pop().split('?')[0] : null;
+                updateUIForPlaying(currentFilename || 'Unknown');
                 console.log('🔂 Repeating current song (auto)');
             }).catch(err => {
                 console.warn('Repeat-one auto play() failed, reloading track:', err);
@@ -1110,7 +1004,7 @@ const playNextSong = (initiator = 'user') => {
         return;
     }
 
-    console.log('▶ Playing:', nextSong.title, `(${config.shuffle ? 'shuffle' : 'sequential'} mode)`);
+    console.log('▶ Playing:', getDisplayTitle(nextSong), `(${config.shuffle ? 'shuffle' : 'sequential'} mode)`);
 
     // Fade out current song if playing
     if (!audioPlayer.paused) {
@@ -1143,7 +1037,7 @@ const playPreviousSong = () => {
         return;
     }
 
-    console.log('⏮ Previous:', previousSong.title, `(${config.shuffle ? 'shuffle' : 'sequential'} mode)`);
+    console.log('⏮ Previous:', getDisplayTitle(previousSong), `(${config.shuffle ? 'shuffle' : 'sequential'} mode)`);
 
     // Fade out current song if playing
     if (!audioPlayer.paused) {
@@ -1160,7 +1054,7 @@ const playRandomSong = () => {
     playNextSong();
 };
 
-// Load and play song (cached blob or local URL) with fade in and normalization
+// Load and play song (cached blob or local URL) with fade in
 const loadAndPlayCached = (songObj, startTime = 0, initialVolume = 0, shouldPlay = true) => {
     // Clean up any existing event listeners
     audioPlayer.removeEventListener('ended', handleSongEnded);
@@ -1173,21 +1067,11 @@ const loadAndPlayCached = (songObj, startTime = 0, initialVolume = 0, shouldPlay
         // Local song with URL
         audioPlayer.src = songObj.url;
     } else {
-        console.error('No blob or URL for song:', songObj.title);
+        console.error('No blob or URL for song:', getDisplayTitle(songObj));
         return;
     }
     
     audioPlayer.volume = initialVolume; // Start at 0 or the saved initialVolume for fade in
-
-    // Check cache for normalization data
-    const cacheKey = songObj.id;
-    currentSongId = cacheKey; // Update current song ID
-    let cachedGain = null;
-
-    if (config.normalization.cache && normalizationCache.has(cacheKey)) {
-        cachedGain = normalizationCache.get(cacheKey);
-        console.log('📦 Using cached normalization for:', songObj.title, `(${cachedGain.gain.toFixed(2)}x)`);
-    }
 
     audioPlayer.currentTime = startTime; // Set playback position
     isPlaying = shouldPlay; // Update global state
@@ -1196,50 +1080,12 @@ const loadAndPlayCached = (songObj, startTime = 0, initialVolume = 0, shouldPlay
     if (shouldPlay) {
         audioPlayer.play()
             .then(() => {
-                console.log('🎵 Now playing:', songObj.title);
+                console.log('🎵 Now playing:', getDisplayTitle(songObj));
 
                 // Update UI immediately (moved here from event listener for quicker response)
-                updateUIForPlaying(songObj.title);
+                updateUIForPlaying(songObj);
 
-                // Initialize Web Audio API if needed (only when actually playing)
-                if (config.normalization.enabled && !audioContext) {
-                    initializeAudioContext();
-                }
-
-                if (cachedGain !== null && gainNode) {
-                    // Use cached gain immediately
-                    gainNode.gain.setValueAtTime(cachedGain.gain, audioContext.currentTime);
-                    fadeIn(audioPlayer);
-                } else {
-                    // Start with default gain and analyze
-                    if (gainNode) {
-                        gainNode.gain.setValueAtTime(1.0, audioContext.currentTime);
-                    }
-                    fadeIn(audioPlayer);
-
-                    // Analyze and adjust gain
-                    if (config.normalization.enabled && analyser) {
-                        analyzeAudioLoudness(audioPlayer)
-                            .then((result) => {
-                                // Cache the result
-                                if (config.normalization.cache) {
-                                    normalizationCache.set(cacheKey, result);
-                                    saveNormalizationCache(); // Save cache after update
-                                }
-
-                                // Apply the gain gradually to avoid sudden volume changes
-                                if (gainNode) {
-                                    gainNode.gain.exponentialRampToValueAtTime(
-                                        result.gain,
-                                        audioContext.currentTime + 0.5
-                                    );
-                                }
-                            })
-                            .catch(error => {
-                                console.warn('Normalization analysis failed:', error);
-                            });
-                    }
-                }
+                fadeIn(audioPlayer);
 
                 // Setup next song when current ends
                 audioPlayer.addEventListener('ended', handleSongEnded, { once: true });
@@ -1249,21 +1095,21 @@ const loadAndPlayCached = (songObj, startTime = 0, initialVolume = 0, shouldPlay
 
             })
             .catch((error) => {
-                console.error('❌ Playback promise failed for:', songObj.title, error);
-                handleFailedSong(songObj.title);
+                console.error('❌ Playback promise failed for:', getDisplayTitle(songObj), error);
+                handleFailedSong(songObj);
                 isTransitioning = false;
             });
             
         // Also add a general error listener for the audio element
         audioPlayer.addEventListener('error', (e) => {
-            console.error('❌ Audio element error for:', songObj.title, e);
-            handleFailedSong(songObj.title);
+            console.error('❌ Audio element error for:', getDisplayTitle(songObj), e);
+            handleFailedSong(songObj);
             isTransitioning = false;
         }, { once: true });
     } else {
         // If not supposed to play (e.g., loaded a paused state)
         audioPlayer.pause();
-        updateUIForPaused(songObj.title);
+        updateUIForPaused(songObj);
         isTransitioning = false;
     }
 };
@@ -1277,34 +1123,50 @@ const handleSongEnded = () => {
 
 // Helper function to handle failed songs
 const handleFailedSong = (songName) => {
+    // songName can be an object, id, or title. Normalize to the song object if possible.
+    const songRef = songName;
+    let failedObj = null;
+    if (!songRef) {
+        failedObj = null;
+    } else if (typeof songRef === 'object') {
+        failedObj = songRef;
+    } else {
+        // Try to find by id, filename, or title
+        failedObj = songList.find(s => s.id === songRef || s.filename === songRef || s.title === songRef || (s.url && s.url.split('/').pop() === songRef));
+    }
+
     // Update UI to reflect error
     const nowPlayingDiv = document.getElementById('now-playing');
-    if (nowPlayingDiv) nowPlayingDiv.textContent = `Error playing: ${songName}`;
+    if (nowPlayingDiv) nowPlayingDiv.textContent = `Error playing: ${getDisplayTitle(failedObj || songRef)}`;
 
     // Remove failed song and update indices properly
-    const originalIndex = songList.indexOf(songName);
-    songList = songList.filter(song => song !== songName);
-    
-    // Update current song index if the failed song was before current position
-    if (originalIndex !== -1 && originalIndex <= currentSongIndex) {
-        currentSongIndex = Math.max(0, currentSongIndex - 1);
-    }
-    
-    // Also remove from shuffled playlist
-    if (config.shuffle) {
-        const shuffledIndex = shuffledPlaylist.indexOf(songName);
-        shuffledPlaylist = shuffledPlaylist.filter(song => song !== songName);
-        
-        // Update playlist index if the failed song was before current position
-        if (shuffledIndex !== -1 && shuffledIndex < currentPlaylistIndex) {
-            currentPlaylistIndex = Math.max(0, currentPlaylistIndex - 1);
+    if (failedObj) {
+        const originalIndex = songList.indexOf(failedObj);
+        songList = songList.filter(song => song !== failedObj);
+
+        // Update current song index if the failed song was before current position
+        if (originalIndex !== -1 && originalIndex <= currentSongIndex) {
+            currentSongIndex = Math.max(0, currentSongIndex - 1);
         }
+
+        // Also remove from shuffled playlist
+        if (config.shuffle) {
+            const shuffledIndex = shuffledPlaylist.indexOf(failedObj);
+            shuffledPlaylist = shuffledPlaylist.filter(song => song !== failedObj);
+
+            // Update playlist index if the failed song was before current position
+            if (shuffledIndex !== -1 && shuffledIndex < currentPlaylistIndex) {
+                currentPlaylistIndex = Math.max(0, currentPlaylistIndex - 1);
+            }
+        }
+
+        console.log('Removed failed song, remaining:', songList.length);
+    } else {
+        // If we couldn't find the object, try removing by id/title as fallback
+        const before = songList.length;
+        songList = songList.filter(s => !(s.id === songRef || s.title === songRef || s.filename === songRef));
+        console.log('Removed failed song by fallback filter, remaining:', songList.length, `(removed ${before - songList.length})`);
     }
-    
-    // Remove from normalization cache
-    const cacheKey = songName;
-    normalizationCache.delete(cacheKey);
-    console.log('Removed failed song, remaining:', songList.length);
 
     if (songList.length > 0) {
         setTimeout(playNextSong, 200);
@@ -1316,10 +1178,15 @@ const handleFailedSong = (songName) => {
 };
 
 // Helper function to update UI for playing state
-const updateUIForPlaying = (songName) => {
+const updateUIForPlaying = (songRef) => {
+    // songRef may be an object or string id/filename/title
+    const songObj = (typeof songRef === 'object') ? songRef : songList.find(s => s.id === songRef || s.filename === songRef || s.title === songRef || (s.url && s.url.split('/').pop() === songRef));
+    const display = getDisplayTitle(songObj || songRef);
+    const id = songObj ? songObj.id : (typeof songRef === 'string' ? songRef : '');
+
     const nowPlayingDiv = document.getElementById('now-playing');
     if (nowPlayingDiv) {
-        nowPlayingDiv.textContent = `Now Playing: ${safeDecode(songName)}`;
+        nowPlayingDiv.textContent = `Now Playing: ${display}`;
     }
     const playPauseBtn = document.getElementById('play-pause-btn');
     if (playPauseBtn) {
@@ -1328,26 +1195,32 @@ const updateUIForPlaying = (songName) => {
         playPauseBtn.onmouseover = () => playPauseBtn.style.backgroundColor = 'var(--info-color, #0d61aa)';
         playPauseBtn.onmouseout = () => playPauseBtn.style.backgroundColor = 'var(--tertiary-color, #0d9edb)';
     }
-    
+
     // Update song selector - make sure it's populated first
     const songSelector = document.getElementById('song-selector');
     if (songSelector) {
-        // First ensure the song is in the selector options
-        const songOption = Array.from(songSelector.options).find(option => option.value === songName);
-        if (!songOption && songList.includes(songName)) {
-            // Repopulate the selector if the song isn't found
+        // Ensure the selector contains the id value; if not, repopulate
+        const songOption = Array.from(songSelector.options).find(option => option.value === id);
+        if (!songOption && songObj) {
             populateSongSelector();
         }
-        // Now set the value
-        songSelector.value = songName;
-        console.log('🎵 Updated song selector to:', songName);
+        // Now set the value (if we have an id)
+        try {
+            songSelector.value = id || '';
+            console.log('🎵 Updated song selector to:', id || display);
+        } catch (_) {
+            // ignore if setting value fails
+        }
     }
 };
 
 // Helper function to update UI for paused state
-const updateUIForPaused = (songName) => {
+const updateUIForPaused = (songRef) => {
+    const songObj = (typeof songRef === 'object') ? songRef : songList.find(s => s.id === songRef || s.filename === songRef || s.title === songRef || (s.url && s.url.split('/').pop() === songRef));
+    const display = getDisplayTitle(songObj || songRef);
+
     const nowPlayingDiv = document.getElementById('now-playing');
-    if (nowPlayingDiv) nowPlayingDiv.textContent = `Paused: ${safeDecode(songName)}`;
+    if (nowPlayingDiv) nowPlayingDiv.textContent = `Paused: ${display}`;
     const playPauseBtn = document.getElementById('play-pause-btn');
     if (playPauseBtn) {
         playPauseBtn.textContent = '▶ Play';
@@ -1425,8 +1298,6 @@ const savePlayerState = () => {
         repeat: config.repeat,
         currentSongIndex: currentSongIndex,
         currentPlaylistIndex: currentPlaylistIndex,
-        normalizationEnabled: config.normalization.enabled,
-        targetLoudness: config.normalization.targetLoudness,
         lastUpdated: new Date().toISOString() // Add timestamp for debugging
     };
     
@@ -1450,8 +1321,6 @@ const loadPlayerState = () => {
             config.repeat = savedPlaybackState.repeat !== undefined ? savedPlaybackState.repeat : config.repeat;
             currentSongIndex = savedPlaybackState.currentSongIndex || -1;
             currentPlaylistIndex = savedPlaybackState.currentPlaylistIndex || -1;
-            config.normalization.enabled = savedPlaybackState.normalizationEnabled !== undefined ? savedPlaybackState.normalizationEnabled : config.normalization.enabled;
-            config.normalization.targetLoudness = savedPlaybackState.targetLoudness || config.normalization.targetLoudness;
 
             audioPlayer.volume = savedPlaybackState.volume; // Apply initial volume
 
@@ -1461,80 +1330,6 @@ const loadPlayerState = () => {
     } catch (e) {
         console.error('Error loading player state from localStorage:', e);
         savedPlaybackState = null; // Clear corrupted state
-    }
-};
-
-const saveNormalizationCache = () => {
-    if (!config.persistence.enabled || !config.normalization.cache) return;
-    try {
-        // Limit cache size to prevent excessive localStorage usage
-        const maxCacheSize = 100; // Limit to 100 songs
-        if (normalizationCache.size > maxCacheSize) {
-            // Remove oldest entries
-            const entries = Array.from(normalizationCache.entries());
-            const keptEntries = entries.slice(-maxCacheSize);
-            normalizationCache = new Map(keptEntries);
-            console.log(`📦 Trimmed normalization cache to ${maxCacheSize} entries`);
-        }
-        
-        // Convert Map to array of [key, value] pairs for JSON stringification
-        const cacheArray = Array.from(normalizationCache.entries());
-        localStorage.setItem(config.persistence.normalizationCacheKey, JSON.stringify(cacheArray));
-        console.log('💾 Normalization cache saved with', normalizationCache.size, 'entries.');
-    } catch (e) {
-        console.error('Error saving normalization cache to localStorage:', e);
-        // If localStorage is full, clear some old data
-        if (e.name === 'QuotaExceededError') {
-            try {
-                normalizationCache.clear();
-                localStorage.setItem(config.persistence.normalizationCacheKey, JSON.stringify([]));
-                console.log('🗑️ Cleared normalization cache due to storage quota exceeded');
-            } catch (e2) {
-                console.error('Could not clear normalization cache:', e2);
-            }
-        }
-    }
-};
-
-const loadNormalizationCache = () => {
-    if (!config.persistence.enabled || !config.normalization.cache) return;
-    try {
-        const cachedData = localStorage.getItem(config.persistence.normalizationCacheKey);
-        if (cachedData) {
-            const cacheArray = JSON.parse(cachedData);
-            // Validate cache entries
-            const validEntries = cacheArray.filter(([key, value]) => {
-                if (typeof value === 'number' && value > 0 && value <= 10) {
-                    // Backward compatibility: convert old number format to object
-                    return true;
-                } else if (typeof value === 'object' && value && typeof value.gain === 'number' && typeof value.estLufs === 'number') {
-                    return value.gain > 0 && value.gain <= 10;
-                }
-                return false;
-            }).map(([key, value]) => {
-                if (typeof value === 'number') {
-                    // Convert old format
-                    return [key, { gain: value, estLufs: 0 }];
-                }
-                return [key, value];
-            });
-            normalizationCache = new Map(validEntries);
-            console.log('✅ Normalization cache loaded with', normalizationCache.size, 'valid entries.');
-            
-            // Save cleaned cache if we filtered out invalid entries
-            if (validEntries.length !== cacheArray.length) {
-                saveNormalizationCache();
-            }
-        }
-    } catch (e) {
-        console.error('Error loading normalization cache from localStorage:', e);
-        normalizationCache = new Map(); // Clear corrupted cache
-        // Clear the corrupted data
-        try {
-            localStorage.removeItem(config.persistence.normalizationCacheKey);
-        } catch (e2) {
-            console.error('Could not clear corrupted cache:', e2);
-        }
     }
 };
 
@@ -1624,79 +1419,22 @@ window.lofi = {
         lastPlayedSongs = [];
         console.log('🔄 Cleared play history');
     },
-    // New normalization controls
-    toggleNormalization: () => {
-        config.normalization.enabled = !config.normalization.enabled;
-        console.log('🎚️ Normalization:', config.normalization.enabled ? 'enabled' : 'disabled');
-        // Update UI
-        const normToggle = document.getElementById('normalization-toggle');
-        const normStatus = document.getElementById('norm-status');
-        if (normToggle) normToggle.checked = config.normalization.enabled;
-        if (normStatus) {
-            normStatus.textContent = `(${config.normalization.enabled ? 'On' : 'Off'})`;
-            normStatus.style.color = config.normalization.enabled ? 'var(--success-color, #2e8b34)' : 'var(--warning-color, #e65100)';
-        }
-    },
-    clearNormalizationCache: () => {
-        normalizationCache.clear();
-        saveNormalizationCache(); // Also save empty cache
-        console.log('🗑️ Normalization cache cleared');
-    },
-    setTargetLoudness: (lufs) => {
-        config.normalization.targetLoudness = Math.max(-24, Math.min(24, lufs));
-        console.log('🎯 Target loudness set to:', config.normalization.targetLoudness, 'LUFS');
-        // Persist the setting
-        try {
-            localStorage.setItem(config.persistence.targetLoudnessKey, String(config.normalization.targetLoudness));
-        } catch (e) { console.warn('Could not persist target loudness:', e); }
-
-        // Adjust current playback gain if normalization is enabled and we have cached data
-        if (config.normalization.enabled && gainNode && currentSongId && normalizationCache.has(currentSongId)) {
-            const cachedData = normalizationCache.get(currentSongId);
-            const newGain = Math.pow(10, (config.normalization.targetLoudness - cachedData.estLufs) / 20);
-            const clampedNewGain = Math.max(0.1, Math.min(2.0, newGain));
-            console.log('🔄 Adjusting current playback gain to:', clampedNewGain.toFixed(2), 'x');
-            gainNode.gain.exponentialRampToValueAtTime(clampedNewGain, audioContext.currentTime + 0.5);
-            // Update cache with new gain
-            cachedData.gain = clampedNewGain;
-            normalizationCache.set(currentSongId, cachedData);
-            saveNormalizationCache();
-        }
-
-        // Update UI
-        const targetLufsSlider = document.getElementById('target-lufs-slider');
-        const targetLufsDisplay = document.getElementById('target-lufs-display');
-        if (targetLufsSlider) targetLufsSlider.value = config.normalization.targetLoudness;
-        if (targetLufsDisplay) targetLufsDisplay.textContent = `${config.normalization.targetLoudness} LUFS`;
-    },
-    showNormalizationCache: () => {
-        console.log('📊 Normalization cache:');
-        if (normalizationCache.size === 0) {
-            console.log('   (Cache is empty)');
-        } else {
-            normalizationCache.forEach((data, song) => {
-                console.log(`  ${song}: ${data.gain.toFixed(2)}x (${data.estLufs.toFixed(1)} LUFS)`);
-            });
-        }
-    },
     // New persistence control
     togglePersistence: () => {
         config.persistence.enabled = !config.persistence.enabled;
         console.log('💾 Persistence:', config.persistence.enabled ? 'enabled' : 'disabled');
         if (!config.persistence.enabled) {
             localStorage.removeItem(config.persistence.localStorageKey);
-            localStorage.removeItem(config.persistence.normalizationCacheKey);
             console.log('🗑️ All player persistence data cleared from localStorage.');
         }
         // Update UI if a toggle button is added for persistence
     },
 };
 
-console.log('🎧 Lofi Player with Normalization and Persistence loaded');
+console.log('🎧 Lofi Player loaded');
 console.log('Manual controls: lofi.skip(), lofi.stop(), lofi.volume(0.5), lofi.list(), lofi.clearHistory()');
-console.log('Normalization: lofi.toggleNormalization(), lofi.clearNormalizationCache(), lofi.setTargetLoudness(-23)');
+
 console.log('Persistence: lofi.togglePersistence()');
-console.log('📊 Current normalization target:', config.normalization.targetLoudness, 'LUFS');
 
 
 
@@ -1948,7 +1686,6 @@ const createLofiModal = () => {
     // ... existing styles ...
 
     // Declare variables for UI elements we'll need to update later
-    let targetLufsSlider, targetLufsDisplay;
     modal.style.position = 'fixed';
     modal.style.bottom = '90px'; // Above the icon
     // Use tighter side offsets so the modal doesn't overflow on small/mobile screens
@@ -2219,64 +1956,6 @@ const createLofiModal = () => {
         } catch(_){}
     });
 
-    // Normalization Section
-    const normalizationSection = document.createElement('div');
-    normalizationSection.style.borderTop = '1px solid var(--primary-color, #2c4c7c)';
-    normalizationSection.style.paddingTop = '10px';
-    normalizationSection.style.marginTop = '10px';
-    normalizationSection.style.display = 'flex';
-    normalizationSection.style.flexDirection = 'column';
-    normalizationSection.style.gap = '8px';
-    modal.appendChild(normalizationSection);
-
-    // Normalization Toggle
-    const normToggleDiv = document.createElement('div');
-    normToggleDiv.style.display = 'flex';
-    normToggleDiv.style.alignItems = 'center';
-    normToggleDiv.style.gap = '5px';
-    normToggleDiv.innerHTML = `
-        <input type="checkbox" id="normalization-toggle" ${config.normalization.enabled ? 'checked' : ''}>
-        <label for="normalization-toggle">Normalize Audio</label>
-        <span id="norm-status" style="font-size: 0.8em; color: ${config.normalization.enabled ? 'var(--success-color, #2e8b34)' : 'var(--warning-color, #e65100)'};">(${config.normalization.enabled ? 'On' : 'Off'})</span>
-    `;
-    normalizationSection.appendChild(normToggleDiv);
-
-    const normToggle = normToggleDiv.querySelector('#normalization-toggle');
-    const normStatus = normToggleDiv.querySelector('#norm-status');
-    normToggle.style.accentColor = 'var(--tertiary-color, #0d9edb)';
-    normToggle.style.color = 'var(--light-color, #f4f8fc)';
-    normToggleDiv.querySelector('label').style.color = 'var(--light-color, #f4f8fc)';
-
-    normToggle.addEventListener('change', () => {
-        lofi.toggleNormalization();
-        normStatus.textContent = `(${config.normalization.enabled ? 'On' : 'Off'})`;
-        normStatus.style.color = config.normalization.enabled ? 'var(--success-color, #2e8b34)' : 'var(--warning-color, #e65100)';
-    });
-
-    // Target Loudness Slider
-    const targetLoudnessDiv = document.createElement('div');
-    targetLoudnessDiv.style.display = 'flex';
-    targetLoudnessDiv.style.alignItems = 'center';
-    targetLoudnessDiv.style.gap = '10px';
-    targetLoudnessDiv.innerHTML = `
-        <label for="target-lufs-slider" style="white-space: nowrap;">Loudness:</label>
-        <input type="range" id="target-lufs-slider" min="-24" max="24" step="1" value="${config.normalization.targetLoudness}" style="width: 150px;">
-        <span id="target-lufs-display" style="font-size: 0.9em; color: var(--light-color, #f4f8fc); min-width: 40px; text-align: center;">${config.normalization.targetLoudness} LUFS</span>
-    `;
-    normalizationSection.appendChild(targetLoudnessDiv);
-
-    targetLoudnessDiv.querySelector('label').style.color = 'var(--light-color, #f4f8fc)';
-    targetLufsSlider = targetLoudnessDiv.querySelector('#target-lufs-slider');
-    targetLufsDisplay = targetLoudnessDiv.querySelector('#target-lufs-display');
-    targetLufsSlider.style.accentColor = 'var(--tertiary-color, #0d9edb)';
-    targetLufsSlider.style.backgroundColor = 'var(--secondary-color, #0c4061)';
-
-    targetLufsSlider.addEventListener('input', (e) => {
-        const value = parseInt(e.target.value);
-        lofi.setTargetLoudness(value);
-        targetLufsDisplay.textContent = `${value} dB`;
-    });
-
     // Logout and Clear Local Cache Button
     const logoutClearCacheBtn = createButton('Log out of quiz user account', async () => {
         if (confirm('Are you sure you want to log out? This will clear ALL cached data and force a complete reload. This may take a moment.')) {
@@ -2338,7 +2017,7 @@ const createLofiModal = () => {
             }
         }
     }, 'var(--danger-color, #d32f2f)');
-    normalizationSection.appendChild(logoutClearCacheBtn);
+    modal.appendChild(logoutClearCacheBtn);
 
     document.body.appendChild(modal);
 
@@ -2412,11 +2091,6 @@ const createLofiModal = () => {
     
     volumeSlider.value = config.volume;
     volumeDisplay.textContent = `${Math.round(config.volume * 100)}%`;
-    normToggle.checked = config.normalization.enabled;
-    normStatus.textContent = `(${config.normalization.enabled ? 'On' : 'Off'})`;
-    normStatus.style.color = config.normalization.enabled ? 'var(--success-color, #2e8b34)' : 'var(--warning-color, #e65100)';
-    if (targetLufsSlider) targetLufsSlider.value = config.normalization.targetLoudness;
-    if (targetLufsDisplay) targetLufsDisplay.textContent = `${config.normalization.targetLoudness} LUFS`;
 
     // Populate song selector initially (may be empty until songs load)
     populateSongSelector();
