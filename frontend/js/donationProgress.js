@@ -20,40 +20,182 @@
 
   let cachedProgress = null;
 
+  // Retrieve or obtain an auth token.
+  // Preferred sources (in order):
+  // 1. `industrialEmpire_auth` (saved by SaveManager)
+  // 2. `gamePassword` (saved password) or `donationAdminPassword` -> perform login
+  async function getAuthToken() {
+    try {
+      // 1) Check for saved token object
+      const savedAuth = localStorage.getItem('industrialEmpire_auth');
+      if (savedAuth) {
+        try {
+          const parsed = JSON.parse(savedAuth);
+          if (parsed && parsed.token) {
+            // Check token expiry if it's a JWT
+            try {
+              const parts = parsed.token.split('.');
+              if (parts.length === 3) {
+                const payload = JSON.parse(atob(parts[1]));
+                if (payload.exp && payload.exp * 1000 < Date.now()) {
+                  console.log('🔐 getAuthToken: Saved token expired');
+                } else {
+                  console.log('🔐 getAuthToken: Using token from industrialEmpire_auth');
+                  return parsed.token;
+                }
+              } else {
+                console.log('🔐 getAuthToken: Using non-JWT token from industrialEmpire_auth');
+                return parsed.token;
+              }
+            } catch (e) {
+              console.warn('🔐 getAuthToken: Failed to parse token expiry, using token anyway');
+              return parsed.token;
+            }
+          }
+        } catch (e) {
+          // ignore parse errors
+        }
+      }
+
+      // 2) Check for token on any global SaveManager instance if present
+      try {
+        // Common instances may attach to window.app.gameEngine.saveManager
+        if (window.app && window.app.gameEngine && window.app.gameEngine.saveManager && window.app.gameEngine.saveManager.authToken) {
+          console.log('🔐 getAuthToken: Using token from window.app.gameEngine.saveManager');
+          return window.app.gameEngine.saveManager.authToken;
+        }
+
+        // Also check a few other possible globals
+        const candidates = [window.saveManager, window.SaveManagerInstance, window.saveManagerInstance];
+        for (const c of candidates) {
+          if (c && c.authToken) {
+            console.log('🔐 getAuthToken: Using token from SaveManager instance');
+            return c.authToken;
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      // 3) Try to login with a stored password
+      const password = localStorage.getItem('gamePassword') || localStorage.getItem('donationAdminPassword');
+      if (!password) {
+        return null;
+      }
+
+      // Prefer username from saved auth or explicit donationAdminUsername in localStorage
+      let username = CONFIG.adminUsername;
+      try {
+        const storedName = localStorage.getItem('donationAdminUsername');
+        if (storedName) username = storedName;
+        else if (savedAuth) {
+          const parsed = JSON.parse(savedAuth);
+          if (parsed && parsed.username) username = parsed.username;
+        }
+      } catch (e) { /* ignore */ }
+
+      const loginUrl = `${CONFIG.baseUrl}${CONFIG.apiEndpoint}/auth/login`;
+      console.log('🔐 getAuthToken: Attempting login for', username);
+      const resp = await fetch(loginUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username, password: password })
+      });
+
+      if (!resp.ok) {
+        console.warn('🔐 getAuthToken: Login failed with status', resp.status);
+        return null;
+      }
+
+      const data = await resp.json();
+      if (data && (data.access_token || data.token)) {
+        const token = data.access_token || data.token;
+        try {
+          localStorage.setItem('industrialEmpire_auth', JSON.stringify({ token: token, username: username, timestamp: Date.now() }));
+        } catch (e) {
+          // ignore storage errors
+        }
+        console.log('🔐 getAuthToken: Login succeeded, token saved');
+        return token;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('🔐 getAuthToken: Error obtaining token', error);
+      return null;
+    }
+  }
+
   // Fetch donation progress from idle game save data
   async function fetchDonationProgress() {
     try {
       console.log('🔍 FETCH: Starting donation progress fetch');
-      const loginUrl = `${CONFIG.baseUrl}${CONFIG.apiEndpoint}/auth/login`;
-      
-      // Get stored admin credentials
-      const adminPassword = localStorage.getItem('donationAdminPassword');
-      if (!adminPassword) {
-        console.warn('⚠️ FETCH: No admin password stored, using fallback values');
-        return { currentAmount: CONFIG.fallbackCurrent, goalAmount: CONFIG.fallbackGoal };
+      // First try the public, unauthenticated endpoint for the admin account
+      const publicUrl = `${CONFIG.baseUrl}/api/v1/donationprogress`;
+      console.log('🔍 FETCH: Attempting public load from', publicUrl);
+      try {
+        const controller = new AbortController();
+        const start = Date.now();
+        let warned = false;
+
+        // Warn at 10s if still pending
+        const warnTimer = setTimeout(() => {
+          warned = true;
+          console.warn('⏱️ FETCH: Public endpoint taking longer than 10s... still waiting:', publicUrl);
+        }, 10000);
+
+        // Abort at 30s to avoid hanging forever
+        const abortTimer = setTimeout(() => {
+          controller.abort();
+          console.error('⏳ FETCH: Public endpoint aborted after 30s:', publicUrl);
+        }, 30000);
+
+        const publicResp = await fetch(publicUrl, { method: 'GET', headers: { 'Content-Type': 'application/json' }, signal: controller.signal });
+
+        const elapsed = Date.now() - start;
+        clearTimeout(warnTimer);
+        clearTimeout(abortTimer);
+
+        console.log(`🔍 FETCH: Public endpoint response received in ${elapsed}ms, status:`, publicResp.status);
+
+        if (publicResp.ok) {
+          const publicBody = await publicResp.json().catch(() => null);
+          console.log('🔍 FETCH: Public endpoint returned:', publicBody);
+          const save = publicBody?.save_data || publicBody;
+          if (save) {
+            // parse custom_data if string
+            let custom = save.custom_data || save;
+            if (typeof custom === 'string') {
+              try { custom = JSON.parse(custom); } catch (e) { custom = null; }
+            }
+            if (custom && custom.donationProgress) {
+              cachedProgress = custom.donationProgress;
+              console.log('✅ FETCH: Using donationProgress from public endpoint:', cachedProgress);
+              return cachedProgress;
+            } else {
+              console.warn('⚠️ FETCH: Public endpoint returned save but no donationProgress');
+              // fall through to authenticated attempt
+            }
+          }
+        } else {
+          console.log('🔍 FETCH: Public endpoint responded with status', publicResp.status);
+        }
+      } catch (err) {
+        // Distinguish abort vs other errors
+        if (err && err.name === 'AbortError') {
+          console.error('❌ FETCH: Public endpoint fetch aborted (timeout)');
+        } else {
+          console.warn('⚠️ FETCH: Public endpoint request failed:', err);
+        }
+        // continue to authenticated flow
       }
 
-      console.log('🔍 FETCH: Attempting login to', loginUrl);
-      // Login as admin to fetch save data
-      const loginResponse = await fetch(loginUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: CONFIG.adminUsername,
-          password: adminPassword
-        })
-      });
-
-      console.log('🔍 FETCH: Login response status:', loginResponse.status);
-      if (!loginResponse.ok) {
-        const errorText = await loginResponse.text();
-        console.warn('⚠️ FETCH: Login failed with status', loginResponse.status, 'Response:', errorText);
+      // Fallback: Try to reuse an existing token (saved by SaveManager) or re-login with stored password
+      const authToken = await getAuthToken();
+      if (!authToken) {
+        console.warn('⚠️ FETCH: No auth token available, using fallback values');
         return { currentAmount: CONFIG.fallbackCurrent, goalAmount: CONFIG.fallbackGoal };
       }
-
-      const loginData = await loginResponse.json();
-      console.log('🔍 FETCH: Login successful, got token');
-      const authToken = loginData.access_token;
 
       // Load game save data (GET request to /save endpoint)
       const loadUrl = `${CONFIG.baseUrl}${CONFIG.apiEndpoint}/save`;
@@ -126,33 +268,24 @@
     try {
       console.log('💾 SAVE: Starting donation progress update');
       console.log('💾 SAVE: Current:', currentAmount, 'Goal:', goalAmount);
-      
-      const adminPassword = localStorage.getItem('donationAdminPassword');
-      if (!adminPassword) {
-        throw new Error('Admin password not set');
+      // Prefer using an existing SaveManager instance if available (it produces the same payload SaveManager uses)
+      let saveManagerUsed = null;
+      if (window.app && window.app.gameEngine && window.app.gameEngine.saveManager) {
+        saveManagerUsed = window.app.gameEngine.saveManager;
+        console.log('💾 SAVE: Using SaveManager instance for save (preferred path)');
       }
 
-      // Login
-      const loginUrl = `${CONFIG.baseUrl}${CONFIG.apiEndpoint}/auth/login`;
-      console.log('💾 SAVE: Logging in to', loginUrl);
-      const loginResponse = await fetch(loginUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: CONFIG.adminUsername,
-          password: adminPassword
-        })
-      });
-
-      console.log('💾 SAVE: Login status:', loginResponse.status);
-      if (!loginResponse.ok) {
-        const errorData = await loginResponse.json();
-        console.error('❌ SAVE: Login failed:', errorData);
-        throw new Error(errorData.detail || 'Login failed');
+      // Get a token (try SaveManager token, saved token, or login if needed)
+      let authToken = null;
+      if (saveManagerUsed && saveManagerUsed.authToken) {
+        authToken = saveManagerUsed.authToken;
+      } else {
+        authToken = await getAuthToken();
       }
 
-      const loginData = await loginResponse.json();
-      const authToken = loginData.access_token;
+      if (!authToken) {
+        throw new Error('Admin credentials not available for saving');
+      }
 
       // Load current save
       const loadUrl = `${CONFIG.baseUrl}${CONFIG.apiEndpoint}/save`;
@@ -209,11 +342,24 @@
         lastUpdated: new Date().toISOString()
       };
 
-      // Wrap for backend
-      const savePayload = {
-        save_data: saveData,
-        backup: false
-      };
+      // If we have a SaveManager, prefer to use its prepareSaveData() to match payload exactly
+      let savePayload = { save_data: saveData, backup: false };
+      if (saveManagerUsed && typeof saveManagerUsed.prepareSaveData === 'function') {
+        try {
+          const prepared = saveManagerUsed.prepareSaveData();
+          // Ensure we preserve existing prepared data but inject our donationProgress
+          if (!prepared.custom_data) prepared.custom_data = {};
+          prepared.custom_data.donationProgress = {
+            currentAmount: parseFloat(currentAmount),
+            goalAmount: parseFloat(goalAmount),
+            lastUpdated: new Date().toISOString()
+          };
+          savePayload = { save_data: prepared, backup: false };
+          console.log('💾 SAVE: Using SaveManager.prepareSaveData() payload (size:', JSON.stringify(savePayload).length, 'bytes)');
+        } catch (e) {
+          console.warn('💾 SAVE: Failed to use SaveManager.prepareSaveData(), falling back to manual payload', e);
+        }
+      }
 
       // Save updated data
       const saveUrl = `${CONFIG.baseUrl}${CONFIG.apiEndpoint}/save`;
@@ -226,21 +372,59 @@
         body: JSON.stringify(savePayload)
       });
 
+      console.log('💾 SAVE: Save response status:', saveResponse.status);
+      let saveRespBody = null;
+      try { saveRespBody = await saveResponse.json(); } catch (e) { /* ignore parse errors */ }
+      console.log('💾 SAVE: Save response body:', saveRespBody);
+
       if (!saveResponse.ok) {
         let errorMsg = 'Save failed';
-        try {
-          const errorData = await saveResponse.json();
-          errorMsg = errorData.detail || errorData.message || 'Save failed';
-        } catch (e) {
+        if (saveRespBody) {
+          errorMsg = saveRespBody.detail || saveRespBody.message || JSON.stringify(saveRespBody);
+        } else {
           errorMsg = `Save failed with status ${saveResponse.status}`;
         }
+        console.error('❌ SAVE: Error response:', errorMsg);
         throw new Error(errorMsg);
       }
 
-      cachedProgress = saveData.custom_data.donationProgress;
-      updateProgressBar(saveData.custom_data.donationProgress);
-      
-      return { success: true, message: 'Donation progress updated!' };
+      // Verify by reloading the saved data from server
+      try {
+        console.log('🔁 SAVE: Verifying saved data by reloading from server');
+        const verifyResp = await fetch(loadUrl, { method: 'GET', headers: { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' } });
+        const verifyBody = await verifyResp.json().catch(() => null);
+        console.log('🔁 SAVE: Verify response status:', verifyResp.status, 'body:', verifyBody);
+
+        let verifiedProgress = null;
+        const verifySave = verifyBody?.save_data || verifyBody;
+        if (verifySave && verifySave.custom_data) {
+          let cd = verifySave.custom_data;
+          if (typeof cd === 'string') {
+            try { cd = JSON.parse(cd); } catch (e) { cd = null; }
+          }
+          if (cd && cd.donationProgress) {
+            verifiedProgress = cd.donationProgress;
+          }
+        }
+
+        if (verifiedProgress) {
+          console.log('✅ SAVE: Verified donation progress on server:', verifiedProgress);
+          cachedProgress = verifiedProgress;
+          updateProgressBar(verifiedProgress);
+          return { success: true, message: 'Donation progress updated and verified!' };
+        } else {
+          console.warn('⚠️ SAVE: Could not verify donation progress after save. Server response:', verifyBody);
+          // Still update local cached value and UI so admin sees it
+          cachedProgress = saveData.custom_data.donationProgress;
+          updateProgressBar(saveData.custom_data.donationProgress);
+          return { success: true, message: 'Donation progress updated (verification failed)' };
+        }
+      } catch (err) {
+        console.error('❌ SAVE: Verification request failed:', err);
+        cachedProgress = saveData.custom_data.donationProgress;
+        updateProgressBar(saveData.custom_data.donationProgress);
+        return { success: true, message: 'Donation progress updated (verification request failed)' };
+      }
 
     } catch (error) {
       console.error('❌ Error updating donation progress:', error);
@@ -270,7 +454,19 @@
   window.DonationProgress = {
     fetch: fetchDonationProgress,
     update: updateDonationProgress,
-    getCached: () => cachedProgress
+    getCached: () => cachedProgress,
+    // Set admin credentials at runtime (stores in localStorage). Use this instead of hardcoding.
+    setAdminCredentials: (username, password) => {
+      try {
+        if (username) localStorage.setItem('donationAdminUsername', username);
+        if (password) localStorage.setItem('donationAdminPassword', password);
+        console.log('🔐 DonationProgress: Admin credentials stored in localStorage (use with caution)');
+        return { success: true };
+      } catch (e) {
+        console.error('🔐 DonationProgress: Failed to store credentials', e);
+        return { success: false, message: e.message };
+      }
+    }
   };
 
 })();

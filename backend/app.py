@@ -10178,6 +10178,40 @@ if JWT_AVAILABLE:
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to load save: {str(e)}")
 
+
+    # -----------------------------------------------------------------------------
+    # Public access endpoint (NO AUTH) - Return game save for a named user
+    # NOTE: This endpoint intentionally does not require authentication as requested,
+    # but exposing save data publicly is a security/privacy risk. Consider restricting
+    # access or adding a shared secret or rate limits in production.
+    # -----------------------------------------------------------------------------
+    @app.get(ENDPOINT + "/donationprogress", response_model=GameLoadResponse, tags=["Kingdom Quarry"])
+    def get_public_game_save():
+        """Return the latest game save for the UserServer account (user_id=648).
+
+        This endpoint is unauthenticated and hardcoded for donation progress reading.
+        """
+        try:
+            user_id = 648  # Hardcoded for UserServer
+            save_data = GameSaveRepository.get_save_by_user(user_id)
+
+            if save_data:
+                last_updated = save_data.get('last_updated')
+                if isinstance(last_updated, datetime):
+                    last_updated = last_updated.isoformat()
+
+                return GameLoadResponse(
+                    save_data=save_data.get('save_data'),
+                    last_updated=last_updated,
+                    total_play_time=save_data.get('total_play_time') if 'total_play_time' in save_data else None,
+                    has_save=True
+                )
+            else:
+                return GameLoadResponse(has_save=False)
+        except Exception as e:
+            quiz_logger.error(f"PUBLIC SAVE ENDPOINT: Error while loading save for user_id={user_id}: {e}")
+            raise HTTPException(status_code=500, detail=f"Failed to load save: {e}")
+
     @app.post(ENDPOINT + "/game/save", response_model=GameSaveResponse, tags=["Kingdom Quarry"])
     async def save_game_data(save_request: GameSaveRequest, current_user: dict = Depends(get_current_game_user)):
         """Save game data for authenticated user"""
