@@ -7002,7 +7002,7 @@ DOWNLOAD_STALL_TIMEOUT = 600  # 10 minutes with no progress = stalled (was 2 min
 
 # 🎯 SIZE/DURATION LIMITS: Prevent crashes from massive files
 MAX_VIDEO_FILESIZE = 1_073_741_824  # 1GB max (increased for adaptive quality)
-MAX_VIDEO_DURATION = 14400  # 4 hours max (14,400 seconds)
+MAX_VIDEO_DURATION = 900  # 15 minutes max (900 seconds)
 WARN_VIDEO_FILESIZE = 314_572_800  # Warn at 300MB
 
 # 📈 ADAPTIVE QUALITY SETTINGS: Reduce quality for large files
@@ -8525,10 +8525,10 @@ if VIDEO_CONVERTER_AVAILABLE:
                 )
             
             if duration > MAX_VIDEO_DURATION:
-                hours = duration / 3600
+                minutes = duration / 60
                 raise ValueError(
-                    f"Video duration ({hours:.1f} hours) exceeds maximum allowed "
-                    f"({MAX_VIDEO_DURATION / 3600:.0f} hours). "
+                    f"Video duration ({minutes:.1f} minutes) exceeds maximum allowed "
+                    f"({MAX_VIDEO_DURATION / 60:.0f} minutes). "
                     f"Please try a shorter video."
                 )
             
@@ -9400,10 +9400,10 @@ if VIDEO_CONVERTER_AVAILABLE:
                         }
                     
                     if duration > MAX_VIDEO_DURATION:
-                        hours = duration / 3600
+                        minutes = duration / 60
                         return {
                             "valid": False,
-                            "error": f"Video is too long ({hours:.1f} hours). Maximum allowed: {MAX_VIDEO_DURATION / 3600:.0f} hours.",
+                            "error": f"Video is too long ({minutes:.1f} minutes). Maximum allowed: {MAX_VIDEO_DURATION / 60:.0f} minutes.",
                             "duration_limit_exceeded": True,
                             "filesize": filesize,
                             "duration": duration

@@ -498,10 +498,9 @@ function showSizeLimitError(message, filesize, duration) {
         details += `File size: ${sizeMB}MB (${sizeGB}GB)`;
     }
     if (duration) {
-        const hours = (duration / 3600).toFixed(1);
         const minutes = (duration / 60).toFixed(0);
         if (details) details += ' • ';
-        details += `Duration: ${hours}h (${minutes} minutes)`;
+        details += `Duration: ${minutes} minutes`;
     }
     
     errorContainer.innerHTML = `
@@ -512,12 +511,12 @@ function showSizeLimitError(message, filesize, duration) {
                 ${details ? `<div style="font-size: 0.9em; opacity: 0.8; margin-bottom: 8px;">${details}</div>` : ''}
                 <div style="margin-top: 6px; font-size: 0.9em;">
                     <strong>💡 Why this limit?</strong>
-                    <p style="margin: 4px 0 8px 0;">Videos over 4 hours exceed browser storage limits. However, videos between 5 minutes and 4 hours will be automatically split into ~5 minute parts that you can download sequentially.</p>
+                    <p style="margin: 4px 0 8px 0;">Videos over 15 minutes are not supported to ensure fast conversions and prevent server overload.</p>
                     
                     <strong>Suggestions:</strong>
                     <ul style="margin: 4px 0 0 0; padding-left: 20px;">
-                        <li>Try downloading a shorter clip or segment</li>
-                        <li>Use a lower quality setting (e.g., 360p or 480p)</li>
+                        <li>Try downloading a shorter clip or segment under 15 minutes</li>
+                        <li>Use a lower quality setting (e.g., 128kb/s audio or 360p video)</li>
                         <li>Download audio only (MP3) instead of video</li>
                     </ul>
                 </div>
