@@ -55,7 +55,7 @@ class LightSensor:
         self.scenario_probability = 0.02  # Increased from 0.002 to 0.02 (10x more likely)
         self.phase_duration = 15  # Reduced from 60 seconds to 15 seconds (4x faster)
         
-        print("Running in simulation mode")
+        # print("Running in simulation mode")
 
     def _read_hardware_adc(self):
         """Read raw ADC value from hardware"""
