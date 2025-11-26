@@ -2537,6 +2537,43 @@ class PlayerAnswerRepository:
         result = Database.get_one_row(sql, params)
         return result['count'] if result else 0
 
+    @staticmethod
+    def get_player_global_stats(user_id):
+        """
+        Gets global statistics for a player across all sessions.
+        
+        Args:
+            user_id (int): The ID of the user/player.
+            
+        Returns:
+            Dict: Dictionary containing total_score, total_answers, correct_answers, sessions_played.
+        """
+        sql = """
+            SELECT 
+                SUM(pa.points_earned) as total_score,
+                COUNT(pa.id) as total_answers,
+                SUM(CASE WHEN pa.is_correct = 1 THEN 1 ELSE 0 END) as correct_answers,
+                COUNT(DISTINCT pa.sessionId) as sessions_played
+            FROM playerAnswers pa
+            WHERE pa.userId = %s
+        """
+        params = [user_id]
+        result = Database.get_one_row(sql, params)
+        
+        if result:
+            # Convert None values to 0
+            for key, value in result.items():
+                if value is None:
+                    result[key] = 0
+            return result
+        else:
+            return {
+                'total_score': 0,
+                'total_answers': 0,
+                'correct_answers': 0,
+                'sessions_played': 0
+            }
+
 
 class ArticlesRepository:
     """Repository class for managing articles in the database"""

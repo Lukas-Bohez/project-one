@@ -3751,7 +3751,7 @@ async def get_session_rankings(session_id: int):
 
 @app.get("/api/v1/rankings/global/")
 async def get_global_rankings(limit: int = 50):
-    """Get global player rankings - simplified version."""
+    """Get global player rankings - optimized version."""
     try:
         # Get all users
         user_repo = UserRepository()
@@ -3778,46 +3778,28 @@ async def get_global_rankings(limit: int = 50):
                     username = f"{first_name} {last_name}".strip() or f"User {user_id}"
                     display_name = username
                 
-                # Get sessions for this user using available methods
-                user_sessions = SessionPlayerRepository.get_player_sessions(user_id)
+                # Get global stats for this user in a single query
+                global_stats = PlayerAnswerRepository.get_player_global_stats(user_id)
                 
-                if not user_sessions:
-                    continue
-                    
-                total_score = 0
-                total_correct = 0
-                total_answers = 0
-                
-                # Calculate totals across all sessions
-                for session in user_sessions:
-                    session_id = session.get('sessionId') if isinstance(session, dict) else getattr(session, 'sessionId', None)
-                    if not session_id:
-                        continue
-                        
-                    try:
-                        score_details = calculate_player_score_detailed(session_id, user_id)
-                        total_score += score_details.get("total_score", 0)
-                        total_correct += score_details.get("correct_answers", 0) 
-                        total_answers += score_details.get("total_answers", 0)
-                    except Exception as e:
-                        print(f"Error calculating score for user {user_id}, session {session_id}: {e}")
-                        continue
+                total_score = global_stats.get('total_score', 0)
+                total_answers = global_stats.get('total_answers', 0)
+                correct_answers = global_stats.get('correct_answers', 0)
+                sessions_played = global_stats.get('sessions_played', 0)
                 
                 # Only include users with actual quiz activity
                 if total_answers > 0:
-                    accuracy = (total_correct / total_answers * 100) if total_answers > 0 else 0
-                    sessions_count = len(user_sessions)
+                    accuracy = (correct_answers / total_answers * 100) if total_answers > 0 else 0
                     
                     global_rankings.append({
                         "user_id": user_id,
                         "username": username,
                         "display_name": display_name or username,
                         "total_score": total_score,
-                        "sessions_played": sessions_count,
-                        "total_correct_answers": total_correct,
+                        "sessions_played": sessions_played,
+                        "total_correct_answers": correct_answers,
                         "total_answers": total_answers,
                         "overall_accuracy": round(accuracy, 1),
-                        "average_score_per_session": round(total_score / sessions_count, 1) if sessions_count > 0 else 0
+                        "average_score_per_session": round(total_score / sessions_played, 1) if sessions_played > 0 else 0
                     })
                     
             except Exception as e:
