@@ -47,7 +47,7 @@ class LCD1602A:
     def clear(self):
         """Simulate clear display"""
         self.display_content = ["", ""]
-        print("LCD: Cleared")
+        # print("LCD: Cleared")  # Removed for cleaner output
     
     def home(self):
         """Simulate return cursor home"""
@@ -68,7 +68,8 @@ class LCD1602A:
     def write_line(self, line, text):
         """Simulate write to specific line"""
         self.display_content[line] = text[:16].ljust(16)
-        print(f"LCD Line {line}: {self.display_content[line]}")
+        # safe_text = self.display_content[line].encode('ascii', 'ignore').decode('ascii')
+        # print(f"LCD Line {line}: {safe_text}")  # Removed for cleaner output
     
     def cleanup(self):
         """Simulate clean up resources"""
