@@ -1,4 +1,3 @@
-import spidev
 import time
 import random
 import math
@@ -28,12 +27,12 @@ class LightScenario(Enum):
     FOREST_FIRE = 20
 
 class LightSensor:
-    def __init__(self, bus=0, device=1, channel=0, simulate=False):
+    def __init__(self, bus=0, device=1, channel=0, simulate=True):  # Always simulate for Windows
         self.spi = None
         self.channel = channel
         self.max_adc = 1023
-        self.initialized = False
-        self.simulate = simulate
+        self.initialized = True  # Always initialized in simulation
+        self.simulate = True
         self.last_simulated_value = 500
         self.last_update = time.time()
         
@@ -56,27 +55,7 @@ class LightSensor:
         self.scenario_probability = 0.02  # Increased from 0.002 to 0.02 (10x more likely)
         self.phase_duration = 15  # Reduced from 60 seconds to 15 seconds (4x faster)
         
-        if not self.simulate:
-            try:
-                self.spi = spidev.SpiDev()
-                self.spi.open(bus, device)
-                self.spi.max_speed_hz = 1000000
-                self.spi.mode = 0
-                
-                # Test read to verify sensor is connected
-                test_value = self._read_hardware_adc()
-                if test_value == 0:  # Likely no sensor connected
-                    print("No sensor detected - switching to simulation mode")
-                    self.simulate = True
-                else:
-                    self.initialized = True
-                    print("Hardware sensor initialized successfully")
-                
-            except Exception as e:
-                print(f"Hardware initialization failed: {e}")
-                self.simulate = True
-        else:
-            print("Running in simulation mode by request")
+        print("Running in simulation mode")
 
     def _read_hardware_adc(self):
         """Read raw ADC value from hardware"""
@@ -387,11 +366,8 @@ class LightSensor:
         return self.adc_to_lux(self.read_adc())
 
     def cleanup(self):
-        if self.spi:
-            try:
-                self.spi.close()
-            except:
-                pass
+        # No hardware to clean up
+        pass
 
 if __name__ == "__main__":
     sensor = None
