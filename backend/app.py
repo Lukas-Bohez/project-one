@@ -75,10 +75,7 @@ video_logger = logging.getLogger('video_debug')
 video_logger.setLevel(logging.DEBUG)
 
 # Create file handler for video logs
-video_log_file = '/home/student/Project-one/backend/video_debug.log'
-# Fallback to project path if that doesn't exist
-if not os.path.exists('/home/student/Project-one'):
-    video_log_file = '/home/student/Project/project-one/backend/video_debug.log'
+video_log_file = os.path.join(os.path.dirname(__file__), 'video_debug.log')
 video_file_handler = logging.FileHandler(video_log_file, mode='a')
 video_file_handler.setLevel(logging.DEBUG)
 
@@ -98,7 +95,7 @@ video_logger.info("Video Logger Initialized")
 video_logger.info("="*50)
 
 # General quiz logger used across the application for quiz-related messages
-quiz_log_file = '/home/student/Project/project-one/backend/quiz_debug.log'
+quiz_log_file = os.path.join(os.path.dirname(__file__), 'quiz_debug.log')
 quiz_logger = logging.getLogger('quiz_debug')
 quiz_logger.setLevel(logging.INFO)
 quiz_file_handler = logging.FileHandler(quiz_log_file, mode='a')
