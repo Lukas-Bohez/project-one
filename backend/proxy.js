@@ -1,60 +1,57 @@
 const express = require('express');
-const https = require('https');
+const http = require('http');
 const httpProxy = require('http-proxy');
 const fs = require('fs');
 const path = require('path');
 
 const app = express();
-const proxy = httpProxy.createProxyServer({});
 
-// SSL options
-const sslOptions = {
-  key: fs.readFileSync(path.join(__dirname, 'key.pem')),
-  cert: fs.readFileSync(path.join(__dirname, 'cert.pem'))
-};
+// Create proxy
+const proxy = httpProxy.createProxyServer({
+  target: 'http://127.0.0.1:8000',
+  changeOrigin: true
+});
 
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
-// Proxy API requests to the HTTP backend
+// Handle proxy errors
+proxy.on('error', (err, req, res) => {
+  console.error('Proxy error:', err);
+  if (!res.headersSent) {
+    res.status(500).send('Proxy error');
+  }
+});
+
+// Proxy ALL /api requests
 app.use('/api', (req, res) => {
-  console.log(`[PROXY] API request: ${req.method} ${req.url}`);
   proxy.web(req, res, {
-    target: 'http://localhost:8000/api',
-    changeOrigin: true,
-    secure: false
+    target: 'http://127.0.0.1:8000/api'
   });
 });
 
 // Proxy Socket.IO requests
 app.use('/socket.io', (req, res) => {
-  console.log(`[PROXY] Socket.IO request: ${req.method} ${req.url}`);
   proxy.web(req, res, {
-    target: 'http://localhost:8000',
-    changeOrigin: true,
-    secure: false,
-    ws: true
+    target: 'http://127.0.0.1:8000'
   });
 });
 
-// Handle proxy errors
-proxy.on('error', (err, req, res) => {
-  console.error('Proxy error:', err);
-  res.status(500).send('Proxy error');
-});
+// Create HTTP server (no SSL)
+const server = http.createServer(app);
 
 // Handle WebSocket upgrades
-app.on('upgrade', (req, socket, head) => {
+server.on('upgrade', (req, socket, head) => {
   if (req.url.startsWith('/socket.io')) {
     proxy.ws(req, socket, head, {
-      target: 'http://localhost:8000'
+      target: 'http://127.0.0.1:8000'
     });
   }
 });
 
-// Start HTTPS server
-const PORT = 443;
-https.createServer(sslOptions, app).listen(PORT, () => {
-  console.log(`HTTPS server running on https://localhost`);
-  console.log('Serving frontend and proxying API to http://localhost:8000');
+// Start HTTP server on port 80 or 3000
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, '127.0.0.1', () => {
+  console.log(`HTTP server running on http://127.0.0.1:${PORT}`);
+  console.log('Proxying /api/* to http://127.0.0.1:8000/api/*');
 });
