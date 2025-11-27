@@ -59,3 +59,31 @@ logs/
 
 # Node modules (if you have any)
 node_modules/
+
+# CPython compiled files and artifacts (explicit)
+# Examples: .cpython-38.pyc, .cpython-310.pyc, .pyd, .pyo
+*.cpython-*.pyc
+*.pyo
+*.pyd
+*.pdb
+# Keep Python cache dir ignored (redundant but explicit)
+__pycache__/
+
+# npm / node artifact files and lockfiles
+# Don't commit node_modules or common npm/yarn/pnpm lock and debug files
+npm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.npm/
+.parcel-cache/
+.cache/
+/.turbo/
+
+# Common build/output dirs from JS toolchains
+dist/
+build/
+.next/
+.vite/
+.parcel/
+.eslintcache
