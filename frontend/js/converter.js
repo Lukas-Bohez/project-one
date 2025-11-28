@@ -3489,7 +3489,11 @@ function startStatusPolling() {
                 const queueInfo = queueStatus.queue;
                 const position = queueInfo.position || 1;
                 const queueLength = queueInfo.queue_length || 1;
-                const activeConversions = queueInfo.active_conversions || 0;
+                // Backend now reports separate short/long active counts.
+                // Prefer the explicit fields if present, otherwise fall back to legacy `active_conversions`.
+                const activeShort = (typeof queueInfo.active_conversions_short !== 'undefined') ? queueInfo.active_conversions_short : (queueInfo.active_conversions || 0);
+                const activeLong = (typeof queueInfo.active_conversions_long !== 'undefined') ? queueInfo.active_conversions_long : 0;
+                const activeConversions = (Number(activeShort) || 0) + (Number(activeLong) || 0);
                 const waitTime = Math.ceil(queueInfo.estimated_wait_seconds || 0);
                 
                 // Show queue status in dedicated visible element
@@ -3497,7 +3501,7 @@ function startStatusPolling() {
                     queueStatusDisplay.classList.remove('hidden');
                     queueStatusDisplay.style.display = 'block';
                     
-                    if (position === 1 && activeConversions === 1) {
+                    if (position === 1 && activeConversions > 0) {
                         queueStatusText.textContent = `🎬 Processing your video... (${activeConversions} active conversion${activeConversions > 1 ? 's' : ''})`;
                     } else if (position > 1) {
                         const minutes = Math.floor(waitTime / 60);

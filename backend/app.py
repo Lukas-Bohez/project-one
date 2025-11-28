@@ -195,6 +195,13 @@ async def lifespan(app: FastAPI):
                 print("[OK] Video process pool shutdown complete")
         except Exception as e:
             print(f"Error during video process pool shutdown: {e}")
+        try:
+            if VIDEO_CONVERTER_AVAILABLE and 'long_video_process_pool' in globals():
+                print("Shutting down long-video conversion process pool...")
+                long_video_process_pool.shutdown(wait=False, cancel_futures=True)
+                print("[OK] Long-video process pool shutdown complete")
+        except Exception as e:
+            print(f"Error during long-video process pool shutdown: {e}")
     except Exception as e:
         print(f"Error in shutdown: {e}")
 
@@ -6971,7 +6978,14 @@ download_lock = threading.Lock()
 video_conversion_queue = []  # List of {download_id, url, timestamp, client_ip}
 queue_lock = threading.Lock()
 MAX_CONCURRENT_CONVERSIONS = 3  # Maximum number of conversions running at once
+# Support long videos (>15 minutes) in a separate worker pool so they don't
+# compete with short downloads. Long videos are considered > MAX_VIDEO_DURATION.
+MAX_CONCURRENT_LONG_CONVERSIONS = int(os.environ.get('MAX_CONCURRENT_LONG_CONVERSIONS', '2'))
 active_conversions_count = 0
+active_long_conversions_count = 0
+# Lock to protect conversions counters and make reserve/check atomic
+conversions_lock = threading.Lock()
+active_long_conversions_count = 0
 
 # Rate limiting for video downloads (prevent DDoS)
 video_download_rate_limit = {}  # {ip: {'count': int, 'reset_time': float}}
@@ -6985,12 +6999,16 @@ DOWNLOAD_STALL_TIMEOUT = 600  # 10 minutes with no progress = stalled (was 2 min
 #  SIZE/DURATION LIMITS: Prevent crashes from massive files
 MAX_VIDEO_FILESIZE = 1_073_741_824  # 1GB max (increased for adaptive quality)
 MAX_VIDEO_DURATION = 900  # 15 minutes max (900 seconds)
+try:
+    MAX_ALLOWED_VIDEO_DURATION = int(os.environ.get('MAX_ALLOWED_VIDEO_DURATION', str(60 * 60 * 2)))
+except Exception:
+    MAX_ALLOWED_VIDEO_DURATION = 60 * 60 * 2  # 2 hours absolute cap
 WARN_VIDEO_FILESIZE = 314_572_800  # Warn at 300MB
 
-#  ADAPTIVE QUALITY SETTINGS: Reduce quality for large files
-ENABLE_ADAPTIVE_QUALITY = True  # Auto-reduce quality for large files
-QUALITY_REDUCTION_THRESHOLDS = [262144000, 524288000, 786432000, 1048576000]  # 250MB, 500MB, 750MB, 1GB
-MAX_QUALITY_REDUCTIONS = 4  # Max levels to reduce
+# Adaptive quality removed: automatic quality reductions are no longer used.
+# Quality reduction configuration has been removed to keep downloads at the
+# user-requested quality. If you need dynamic adjustments later, reintroduce
+# a controlled implementation.
 
 #  WATCHDOG: Monitor stuck downloads
 watchdog_thread = None
@@ -7134,7 +7152,7 @@ def decrement_video_rate_limit(client_ip: str):
 
 def get_queue_position(download_id: str) -> dict:
     """Get the position of a download in the queue and estimated wait time"""
-    global active_conversions_count
+    global active_conversions_count, active_long_conversions_count
     with queue_lock:
         # Find position in queue
         for idx, item in enumerate(video_conversion_queue):
@@ -7153,8 +7171,10 @@ def get_queue_position(download_id: str) -> dict:
                     'position': position,
                     'queue_length': len(video_conversion_queue),
                     'estimated_wait_seconds': estimated_wait,
-                    'active_conversions': active_slots_used,
-                    'max_concurrent': MAX_CONCURRENT_CONVERSIONS
+                    'active_conversions_short': active_conversions_count,
+                    'active_conversions_long': active_long_conversions_count,
+                    'max_concurrent_short': MAX_CONCURRENT_CONVERSIONS,
+                    'max_concurrent_long': MAX_CONCURRENT_LONG_CONVERSIONS
                 }
         
         # Not in queue, might be processing or completed
@@ -7163,18 +7183,21 @@ def get_queue_position(download_id: str) -> dict:
             'position': 0,
             'queue_length': len(video_conversion_queue),
             'estimated_wait_seconds': 0,
-            'active_conversions': active_conversions_count,
-            'max_concurrent': MAX_CONCURRENT_CONVERSIONS
+            'active_conversions_short': active_conversions_count,
+            'active_conversions_long': active_long_conversions_count,
+            'max_concurrent_short': MAX_CONCURRENT_CONVERSIONS,
+            'max_concurrent_long': MAX_CONCURRENT_LONG_CONVERSIONS
         }
 
-def add_to_queue(download_id: str, url: str, client_ip: str):
+def add_to_queue(download_id: str, url: str, client_ip: str, is_long: bool = False):
     """Add a download to the queue"""
     with queue_lock:
         video_conversion_queue.append({
             'download_id': download_id,
             'url': url,
             'client_ip': client_ip,
-            'timestamp': time.time()
+            'timestamp': time.time(),
+            'is_long': bool(is_long)
         })
         video_logger.info(f"Added download {download_id} to queue. Queue length: {len(video_conversion_queue)}")
 
@@ -7185,41 +7208,77 @@ def remove_from_queue(download_id: str):
         video_conversion_queue = [item for item in video_conversion_queue if item['download_id'] != download_id]
         video_logger.info(f"Removed download {download_id} from queue. Queue length: {len(video_conversion_queue)}")
 
-def can_start_conversion() -> bool:
-    """Check if we can start a new conversion based on concurrent limit"""
-    global active_conversions_count
+def can_start_conversion(is_long: bool = False) -> bool:
+    """Check if we can start a new conversion based on concurrent limit.
+
+    Use `is_long=True` for long-video capacity checks.
+    """
+    global active_conversions_count, active_long_conversions_count
+    if is_long:
+        return active_long_conversions_count < MAX_CONCURRENT_LONG_CONVERSIONS
     return active_conversions_count < MAX_CONCURRENT_CONVERSIONS
 
-def increment_active_conversions():
-    """Increment the count of active conversions"""
-    global active_conversions_count
-    active_conversions_count += 1
-    video_logger.info(f"Active conversions: {active_conversions_count}/{MAX_CONCURRENT_CONVERSIONS}")
+def increment_active_conversions(is_long: bool = False):
+    """Increment the count of active conversions. Pass `is_long=True` for long videos."""
+    global active_conversions_count, active_long_conversions_count
+    with conversions_lock:
+        if is_long:
+            active_long_conversions_count += 1
+            video_logger.info(f"Active long conversions: {active_long_conversions_count}/{MAX_CONCURRENT_LONG_CONVERSIONS}")
+        else:
+            active_conversions_count += 1
+            video_logger.info(f"Active short conversions: {active_conversions_count}/{MAX_CONCURRENT_CONVERSIONS}")
 
-def decrement_active_conversions():
-    """Decrement the count of active conversions"""
-    global active_conversions_count
-    if active_conversions_count > 0:
-        active_conversions_count -= 1
-    video_logger.info(f"Active conversions: {active_conversions_count}/{MAX_CONCURRENT_CONVERSIONS}")
+def decrement_active_conversions(is_long: bool = False):
+    """Decrement the count of active conversions. Pass `is_long=True` for long videos."""
+    global active_conversions_count, active_long_conversions_count
+    with conversions_lock:
+        if is_long:
+            if active_long_conversions_count > 0:
+                active_long_conversions_count -= 1
+            video_logger.info(f"Active long conversions: {active_long_conversions_count}/{MAX_CONCURRENT_LONG_CONVERSIONS}")
+        else:
+            if active_conversions_count > 0:
+                active_conversions_count -= 1
+            video_logger.info(f"Active short conversions: {active_conversions_count}/{MAX_CONCURRENT_CONVERSIONS}")
 
 def process_next_in_queue():
     """Process the next item in the queue if there's capacity"""
     try:
-        if not can_start_conversion():
-            video_logger.info("Cannot start new conversion - at max capacity")
+        # If no capacity for either short or long downloads, don't start anything
+        if not (can_start_conversion(False) or can_start_conversion(True)):
+            video_logger.info("Cannot start new conversion - at max capacity for both pools")
             return
         
         with queue_lock:
             if not video_conversion_queue:
                 video_logger.info("Queue is empty - no more conversions to process")
                 return
-            
-            # Get the first item in queue
-            next_item = video_conversion_queue[0]
+
+            # Prefer to start short videos when short capacity is available.
+            selected_index = None
+            if can_start_conversion(False):
+                for idx, item in enumerate(video_conversion_queue):
+                    if not item.get('is_long', False):
+                        selected_index = idx
+                        break
+
+            # If no short job found or short capacity exhausted, try long jobs
+            if selected_index is None and can_start_conversion(True):
+                for idx, item in enumerate(video_conversion_queue):
+                    if item.get('is_long', False):
+                        selected_index = idx
+                        break
+
+            if selected_index is None:
+                video_logger.info("No suitable queued job fits current capacity")
+                return
+
+            next_item = video_conversion_queue[selected_index]
             download_id = next_item['download_id']
             url = next_item['url']
             client_ip = next_item['client_ip']
+            is_long_job = bool(next_item.get('is_long', False))
         
         # Check if this download still exists
         with download_lock:
@@ -7237,22 +7296,38 @@ def process_next_in_queue():
             
             # Update status to starting
             download_info['status'] = 'starting'
-        
+
+        # Reserve a slot atomically under conversions_lock. If we cannot reserve,
+        # leave the item in the queue and return (will be retried later).
+        reserved = False
+        with conversions_lock:
+            if is_long_job:
+                if active_long_conversions_count < MAX_CONCURRENT_LONG_CONVERSIONS:
+                    active_long_conversions_count += 1
+                    video_logger.info(f"Active long conversions: {active_long_conversions_count}/{MAX_CONCURRENT_LONG_CONVERSIONS}")
+                    reserved = True
+            else:
+                if active_conversions_count < MAX_CONCURRENT_CONVERSIONS:
+                    active_conversions_count += 1
+                    video_logger.info(f"Active short conversions: {active_conversions_count}/{MAX_CONCURRENT_CONVERSIONS}")
+                    reserved = True
+
+        if not reserved:
+            video_logger.info(f"No capacity to start queued download {download_id} (long={is_long_job}); will retry later")
+            return
+
         # Remove from queue BEFORE starting (so position updates immediately)
         remove_from_queue(download_id)
-        
-        # Increment active conversions
-        increment_active_conversions()
-        
-        # Start the download
-        video_logger.info(f"Starting queued download {download_id}")
+
+        # Start the download using the appropriate pool
+        video_logger.info(f"Starting queued download {download_id} (long={is_long_job})")
         try:
-            # Submit to process pool instead of thread queue (prevents blocking)
-            future = video_process_pool.submit(
+            pool = long_video_process_pool if is_long_job else video_process_pool
+            future = pool.submit(
                 download_video_background,
                 download_id, url, format_type, quality, output_path, client_ip
             )
-            
+
             # Add completion callback
             def done_callback(fut):
                 try:
@@ -7260,15 +7335,15 @@ def process_next_in_queue():
                 except Exception as e:
                     video_logger.error(f"Download {download_id} error: {e}")
                 finally:
-                    decrement_active_conversions()
+                    decrement_active_conversions(is_long=is_long_job)
                     decrement_video_rate_limit(client_ip)
                     process_next_in_queue()
-            
+
             future.add_done_callback(done_callback)
             
         except Exception as e:
             video_logger.error(f"Failed to submit {download_id} to process pool: {e}")
-            decrement_active_conversions()
+            decrement_active_conversions(is_long=is_long_job)
             # Re-add to queue since submission failed (it was removed before trying)
             with queue_lock:
                 # Add back to front of queue since it should be processed next
@@ -7276,7 +7351,8 @@ def process_next_in_queue():
                     'download_id': download_id,
                     'url': url,
                     'client_ip': client_ip,
-                    'timestamp': time.time()
+                    'timestamp': time.time(),
+                    'is_long': is_long_job
                 })
             with download_lock:
                 if download_id in active_video_downloads:
@@ -7332,62 +7408,9 @@ def cache_playlist_info(playlist_id: str, data: Dict[str, Any]):
     }
     video_logger.info(f"Cached playlist info for {playlist_id}")
 
-def estimate_file_size(duration: int, quality: int, format_type: str) -> int:
-    """Estimate file size based on duration, quality, and format
-    
-    Args:
-        duration: Duration in seconds
-        quality: Quality setting (bitrate for audio, height for video)
-        format_type: 'audio' or 'video'
-    
-    Returns:
-        Estimated size in bytes
-    """
-    if format_type == 'audio':
-        # Audio: bitrate in kbps * duration / 8 = bytes
-        bitrate_kbps = quality
-        return int((bitrate_kbps * 1000 * duration) / 8)
-    else:
-        # Video: rough estimation based on height
-        # These are approximate MB per minute
-        size_per_minute_mb = {
-            144: 15,
-            360: 30,
-            480: 50,
-            720: 100,
-            1080: 200
-        }.get(quality, 100)  # Default to 720p equivalent
-        
-        duration_minutes = duration / 60
-        return int(size_per_minute_mb * duration_minutes * 1024 * 1024)
-
-def get_reduced_quality(current_quality: int, format_type: str, reduction_level: int) -> int:
-    """Get reduced quality based on current quality and reduction level
-    
-    Args:
-        current_quality: Current quality setting
-        format_type: 'audio' or 'video'
-        reduction_level: How many levels to reduce (1-4)
-    
-    Returns:
-        New quality setting
-    """
-    if format_type == 'audio':
-        qualities = [320, 256, 192, 128, 96]
-    else:
-        qualities = [1080, 720, 480, 360, 144]
-    
-    try:
-        current_index = qualities.index(current_quality)
-        new_index = min(len(qualities) - 1, current_index + reduction_level)
-        return qualities[new_index]
-    except ValueError:
-        # If quality not in list, reduce proportionally
-        if format_type == 'audio':
-            return max(96, current_quality - reduction_level * 64)
-        else:
-            reduction_map = {1: 720, 2: 480, 3: 360, 4: 144}
-            return reduction_map.get(reduction_level, 144)
+# Quality reduction helpers removed. Downloads will use the requested quality
+# without automatic reduction. If size estimation is needed in future, add
+# a targeted implementation.
 
 def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restricted: bool = False, use_invidious: bool = False, invidious_instance: str = None) -> Dict[str, Any]:
     """Get yt-dlp options based on format and quality with metadata embedding
@@ -8348,24 +8371,38 @@ if VIDEO_CONVERTER_AVAILABLE:
     # Start watchdog thread
     watchdog_thread = threading.Thread(target=watchdog_monitor, daemon=True, name='watchdog')
     watchdog_thread.start()
+
+    # Thread pool dedicated to long video conversions (separate capacity)
+    try:
+        LONG_WORKER_POOL_SIZE = int(os.environ.get('LONG_VIDEO_WORKER_POOL_SIZE', '2'))
+    except Exception:
+        LONG_WORKER_POOL_SIZE = 2
+
+    long_video_process_pool = ThreadPoolExecutor(
+        max_workers=LONG_WORKER_POOL_SIZE,
+        thread_name_prefix="video_long"
+    )
+    video_logger.info(f"[OK] Long-video conversion thread pool initialized with {LONG_WORKER_POOL_SIZE} workers")
     
     # Async wrapper to submit downloads to thread pool
     async def submit_video_download_async(download_id: str, url: str, format_type: str, quality: int, output_path: str, client_ip: str = None, chunk_index: int = None, chunk_start: int = None, chunk_end: int = None):
-        """Submit video download to process pool and handle completion asynchronously"""
+        """Submit video download to process pool and handle completion asynchronously
+
+        Note: accepts long/short job routing via `is_long` in kwargs when used.
+        """
         loop = asyncio.get_event_loop()
-        
-        def completion_callback(future):
+        def completion_callback(future, is_long=False):
             """Handle download completion in background thread"""
             try:
                 result = future.result()
                 video_logger.info(f"Download {download_id} completed: {result}")
-                decrement_active_conversions()
+                decrement_active_conversions(is_long=is_long)
                 decrement_video_rate_limit(client_ip)
                 # Process next in queue
                 process_next_in_queue()
             except Exception as e:
                 video_logger.error(f"Download {download_id} failed: {e}")
-                decrement_active_conversions()
+                decrement_active_conversions(is_long=is_long)
                 decrement_video_rate_limit(client_ip)
                 with download_lock:
                     if download_id in active_video_downloads:
@@ -8373,14 +8410,15 @@ if VIDEO_CONVERTER_AVAILABLE:
                         active_video_downloads[download_id]['error'] = str(e)
                 # Process next in queue even on error
                 process_next_in_queue()
-        
-        # Submit to process pool (non-blocking)
-        future = video_process_pool.submit(
+
+        # Submit to process pool (non-blocking) - default to short pool
+        fut = video_process_pool.submit(
             download_video_background,
             download_id, url, format_type, quality, output_path, client_ip, chunk_index, chunk_start, chunk_end
         )
-        future.add_done_callback(completion_callback)
-        return future
+        # Attach wrapper to call our completion with is_long=False
+        fut.add_done_callback(lambda f: completion_callback(f, is_long=False))
+        return fut
     
     # Helper function for background video download
     def download_video_background(download_id: str, url: str, format_type: str, quality: int, output_path: str, client_ip: str = None, chunk_index: int = None, chunk_start: int = None, chunk_end: int = None):
@@ -8460,41 +8498,9 @@ if VIDEO_CONVERTER_AVAILABLE:
                 )
                 needs_adaptive_quality = False
             else:
-                #  ADAPTIVE QUALITY: Check if we need to reduce quality for large files
+                # Adaptive quality removed: always keep the requested quality
                 needs_adaptive_quality = False
                 original_quality = quality
-                quality_reductions = 0
-                
-                if ENABLE_ADAPTIVE_QUALITY and filesize > 0:
-                    # Use actual filesize if available
-                    estimated_size = filesize
-                elif ENABLE_ADAPTIVE_QUALITY:
-                    # Estimate size if not available
-                    estimated_size = estimate_file_size(duration, quality, format_type)
-                
-                if ENABLE_ADAPTIVE_QUALITY and estimated_size > QUALITY_REDUCTION_THRESHOLDS[0]:
-                    # Find how many reductions needed
-                    for i, threshold in enumerate(QUALITY_REDUCTION_THRESHOLDS):
-                        if estimated_size > threshold:
-                            quality_reductions = i + 1
-                        else:
-                            break
-                    
-                    quality_reductions = min(quality_reductions, MAX_QUALITY_REDUCTIONS)
-                    
-                    if quality_reductions > 0:
-                        new_quality = get_reduced_quality(quality, format_type, quality_reductions)
-                        video_logger.info(
-                            f" Quality reduced from {quality} to {new_quality} "
-                            f"({quality_reductions} levels) for estimated size {estimated_size / (1024*1024):.1f}MB"
-                        )
-                        quality = new_quality
-                        needs_adaptive_quality = True
-                        
-                        # Update the download info with the reduced quality
-                        with download_lock:
-                            if download_id in active_video_downloads:
-                                active_video_downloads[download_id]['quality'] = quality
             
             # Hard limits - reject if too large even after quality reduction
             if filesize > MAX_VIDEO_FILESIZE:
@@ -8506,12 +8512,13 @@ if VIDEO_CONVERTER_AVAILABLE:
                     f"Try a lower quality setting or shorter video."
                 )
             
-            if duration > MAX_VIDEO_DURATION:
+            # Allow long videos to be routed to the long-video pool.
+            # Only reject videos that exceed an absolute cap (MAX_ALLOWED_VIDEO_DURATION).
+            if duration > MAX_ALLOWED_VIDEO_DURATION:
                 minutes = duration / 60
                 raise ValueError(
-                    f"Video duration ({minutes:.1f} minutes) exceeds maximum allowed "
-                    f"({MAX_VIDEO_DURATION / 60:.0f} minutes). "
-                    f"Please try a shorter video."
+                    f"Video duration ({minutes:.1f} minutes) exceeds absolute maximum allowed "
+                    f"({MAX_ALLOWED_VIDEO_DURATION / 60:.0f} minutes). Please try a shorter video."
                 )
             
             # Warnings - log if approaching limits
@@ -8622,9 +8629,12 @@ if VIDEO_CONVERTER_AVAILABLE:
             attempt = 0
             last_exception = None
             consecutive_403s = 0
+            unavailable_attempts = 0
+            VIDEO_UNAVAILABLE_RETRIES = int(os.environ.get('VIDEO_UNAVAILABLE_RETRIES', '3'))
             # Determine effective max attempts - up to 10 retries for transient errors
             #  OPTIMIZED: Reduced from 30 to 10 for faster failure detection
-            # (unavailable/deleted videos still quit immediately via error detection above)
+            # Previously unavailable/deleted videos quit immediately; now we retry a
+            # few times because yt-dlp can sometimes report false 'video unavailable' errors.
             effective_max = min(10, max(1, YTDL_MAX_RETRIES)) if not YTDL_RETRY_FOREVER else 10
             
             # Skip retry loop if Invidious already succeeded OR chunking metadata OR chunk completed
@@ -8725,7 +8735,20 @@ if VIDEO_CONVERTER_AVAILABLE:
                             raise Exception(error_msg)
                         
                         if is_unavailable:
-                            # Mark as error and exit immediately - don't waste time retrying
+                            # Sometimes yt-dlp returns transient 'video unavailable' errors.
+                            # Retry a few times before giving up to avoid false negatives.
+                            unavailable_attempts += 1
+                            if unavailable_attempts < VIDEO_UNAVAILABLE_RETRIES:
+                                video_logger.warning(
+                                    f"Transient 'video unavailable' detected for {download_id} (attempt {unavailable_attempts}/{VIDEO_UNAVAILABLE_RETRIES}). Retrying..."
+                                )
+                                try:
+                                    time.sleep(min(1 * attempt, 5))
+                                except Exception:
+                                    pass
+                                # Continue to next while iteration (retry)
+                                continue
+                            # Exhausted retries: mark as unavailable and exit
                             with download_lock:
                                 if download_id in active_video_downloads:
                                     active_video_downloads[download_id].update({
@@ -8734,7 +8757,6 @@ if VIDEO_CONVERTER_AVAILABLE:
                                         'error_type': 'unavailable',
                                         'finished': True
                                     })
-                            # Exit the retry loop immediately
                             raise Exception('Video is unavailable, private, or has been removed')
                         
                         # Detect browser cookie errors - stop trying browser extraction
@@ -8877,9 +8899,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                             'finished': True
                         })
                 
-                # Decrement active conversions (item already removed from queue when started)
-                decrement_active_conversions()
-                
+                # Success - caller's done_callback will decrement the appropriate counter
                 # Process next item in queue if any
                 process_next_in_queue()
                 
@@ -8899,9 +8919,8 @@ if VIDEO_CONVERTER_AVAILABLE:
                         'finished': True
                     })
             
-            # Decrement active conversions on error (item already removed from queue when started)
-            decrement_active_conversions()
-            
+            # Errors are handled by the caller's done_callback which will decrement
+            # the active conversion counter for the appropriate pool.
             # Process next item in queue if any
             process_next_in_queue()
         finally:
@@ -9351,31 +9370,13 @@ if VIDEO_CONVERTER_AVAILABLE:
                     
                     #  Check size/duration limits
                     warnings = []
-                    
-                    # Check if quality reduction will be needed
-                    will_reduce_quality = False
-                    quality_reductions = 0
-                    estimated_size = filesize
-                    
-                    if ENABLE_ADAPTIVE_QUALITY and not filesize:
-                        # Estimate if no filesize available
-                        estimated_size = estimate_file_size(duration, request.quality, request.format)
-                    
-                    if ENABLE_ADAPTIVE_QUALITY and estimated_size > QUALITY_REDUCTION_THRESHOLDS[0]:
-                        for i, threshold in enumerate(QUALITY_REDUCTION_THRESHOLDS):
-                            if estimated_size > threshold:
-                                quality_reductions = i + 1
-                            else:
-                                break
-                        quality_reductions = min(quality_reductions, MAX_QUALITY_REDUCTIONS)
-                        will_reduce_quality = quality_reductions > 0
-                    
-                    # Only reject for filesize if quality won't be reduced
-                    if not will_reduce_quality and filesize > MAX_VIDEO_FILESIZE:
+
+                    # Adaptive quality removed: reject videos larger than the configured max
+                    if filesize > MAX_VIDEO_FILESIZE:
                         size_gb = filesize / (1024 * 1024 * 1024)
                         return {
                             "valid": False,
-                            "error": f"Video is too large ({size_gb:.2f}GB). Maximum allowed: {MAX_VIDEO_FILESIZE / (1024**3):.1f}GB. Quality will be automatically reduced for large files.",
+                            "error": f"Video is too large ({size_gb:.2f}GB). Maximum allowed: {MAX_VIDEO_FILESIZE / (1024**3):.1f}GB.",
                             "size_limit_exceeded": True,
                             "filesize": filesize,
                             "duration": duration
@@ -9394,29 +9395,15 @@ if VIDEO_CONVERTER_AVAILABLE:
                     # Warnings for large but acceptable files
                     if filesize > WARN_VIDEO_FILESIZE:
                         size_mb = filesize / (1024 * 1024)
-                        size_gb = filesize / (1024 * 1024 * 1024)
-                        if will_reduce_quality:
-                            warnings.append(f"Large file: {size_gb:.2f}GB - quality will be reduced by {quality_reductions} levels")
-                        else:
-                            warnings.append(f"Large file: {size_mb:.0f}MB - download may be slow")
-                    
-                    # Add quality reduction info if applicable
-                    if will_reduce_quality:
-                        new_quality = get_reduced_quality(request.quality, request.format, quality_reductions)
-                        warnings.append(
-                            f"Quality will be reduced from {request.quality} to {new_quality} "
-                            f"to keep file size manageable"
-                        )
-                    
+                        warnings.append(f"Large file: {size_mb:.0f}MB - download may be slow")
+
                     response = {
                         "valid": True,
                         "platform": platform,
                         "is_playlist": False,
                         "title": title,
                         "duration": duration,
-                        "formats_available": True,
-                        "will_reduce_quality": will_reduce_quality,
-                        "quality_reductions": quality_reductions if will_reduce_quality else 0
+                        "formats_available": True
                     }
                     
                     if filesize:
@@ -9447,6 +9434,9 @@ if VIDEO_CONVERTER_AVAILABLE:
     @app.post("/api/v1/video/convert", response_model=VideoConversionResponse)
     async def convert_video(request: VideoConversionRequest, req: Request):
         """Start video conversion process with rate limiting"""
+        # Ensure we can modify the module-level counters when reserving slots
+        global active_conversions_count, active_long_conversions_count
+
         try:
             # Get client IP for rate limiting
             client_ip = get_client_ip(req)
@@ -9479,6 +9469,13 @@ if VIDEO_CONVERTER_AVAILABLE:
                 if existing:
                     # Increment refcount so we know multiple clients are waiting
                     existing['refcount'] = existing.get('refcount', 1) + 1
+                    # Also increment the waiter count on the active_video_downloads entry
+                    try:
+                        did = existing.get('download_id')
+                        if did and did in active_video_downloads:
+                            active_video_downloads[did]['waiters'] = active_video_downloads[did].get('waiters', 1) + 1
+                    except Exception:
+                        pass
                     video_logger.info(f"Coalescing request: returning existing download ID {existing['download_id']} for URL {normalized_url} (refcount={existing['refcount']})")
                     return VideoConversionResponse(
                         success=True,
@@ -9489,45 +9486,58 @@ if VIDEO_CONVERTER_AVAILABLE:
             # Increment rate limit counter (only for new downloads)
             increment_video_rate_limit(client_ip)
 
+            # Probe the URL for metadata (duration, filesize) so we can decide
+            # whether this is a long-video job and route it to the dedicated pool.
+            duration = 0
+            filesize = 0
+            try:
+                probe_opts = {'quiet': True, 'no_warnings': True}
+                with yt_dlp.YoutubeDL(probe_opts) as ydl:
+                    info = ydl.extract_info(request.url, download=False)
+                    duration = info.get('duration', 0) or 0
+                    filesize = info.get('filesize') or info.get('filesize_approx', 0) or 0
+            except Exception as probe_err:
+                video_logger.debug(f"Could not probe URL metadata for {request.url}: {probe_err}")
+
+            # Decide whether this is a long video (separate pool)
+            is_long = bool(duration and duration > MAX_VIDEO_DURATION)
+
             # Generate unique download ID
             download_id = str(uuid.uuid4())
-            
+
             # Determine format and quality
             format_type = 'audio' if request.format == 1 else 'video'
-            
+
             # Set up output filename
             timestamp = int(time.time())
-            if format_type == 'audio':
-                output_filename = f"{download_id}_{timestamp}.%(ext)s"
-            else:
-                output_filename = f"{download_id}_{timestamp}.%(ext)s"
-            
+            output_filename = f"{download_id}_{timestamp}.%(ext)s"
             output_path = os.path.join(VIDEO_DOWNLOAD_DIR, output_filename)
-            
+
             # Register normalized URL -> download_id for coalescing (with refcount)
             with download_lock:
                 active_url_map[normalized_url] = {'download_id': download_id, 'refcount': 1}
 
-            # Store download info
+            # Store download info (include duration + is_long flag)
             with download_lock:
                 active_video_downloads[download_id] = {
-                    'status': 'queued',  # Start as queued instead of starting
+                    'status': 'queued',
                     'progress': 0.0,
                     'platform': platform,
                     'format': 'MP3' if format_type == 'audio' else 'MP4',
                     'quality': request.quality,
                     'url': request.url,
                     'output_path': output_path,
+                    'duration': duration,
+                    'is_long': is_long,
                     'created_at': time.time(),
                     'title': None,
                     'error': None,
                     'finished': False,
-                    'waiters': 1,  # number of clients waiting for this download (coalesced)
+                    'waiters': 1,
                     'file_path': None,
                     'client_ip': client_ip
                 }
                 # If client provided a proxy parameter in the JSON body, accept it
-                # (FastAPI will ignore extra fields unless declared; accept via request json)
                 try:
                     body_json = await req.json()
                     proxy_param = body_json.get('proxy')
@@ -9538,49 +9548,63 @@ if VIDEO_CONVERTER_AVAILABLE:
                                 video_logger.info(f"Registered per-download proxy for {download_id}: {proxy_param}")
                 except Exception:
                     pass
-            
-            # Add to queue
-            add_to_queue(download_id, request.url, client_ip)
+
+            # Add to queue (include is_long flag so dispatcher can prefer short jobs)
+            add_to_queue(download_id, request.url, client_ip, is_long=is_long)
             
             # Get queue position for response
             queue_info = get_queue_position(download_id)
             
-            # Check if we can start immediately
-            if can_start_conversion():
+            # Check if we can start immediately (use is_long-aware check)
+            started_immediately = False
+            if can_start_conversion(is_long=is_long):
+                # Reserve a slot atomically and start (perform increment inline to avoid re-acquiring the lock)
+                with conversions_lock:
+                    if can_start_conversion(is_long=is_long):
+                        # Inline increment under lock to avoid deadlock (increment_active_conversions also locks)
+                        if is_long:
+                            active_long_conversions_count += 1
+                            video_logger.info(f"Active long conversions: {active_long_conversions_count}/{MAX_CONCURRENT_LONG_CONVERSIONS}")
+                        else:
+                            active_conversions_count += 1
+                            video_logger.info(f"Active short conversions: {active_conversions_count}/{MAX_CONCURRENT_CONVERSIONS}")
+                        started_immediately = True
+
+            if started_immediately:
                 # Remove from queue BEFORE starting (so it doesn't stay in queue forever)
                 remove_from_queue(download_id)
-                increment_active_conversions()
-                
+
                 # Set status to 'starting' BEFORE submitting to avoid race condition
                 with download_lock:
                     if download_id in active_video_downloads:
                         active_video_downloads[download_id]['status'] = 'starting'
-                
-                # Submit to process pool instead of thread queue
+
+                # Submit to appropriate process pool
                 try:
-                    future = video_process_pool.submit(
+                    pool = long_video_process_pool if is_long else video_process_pool
+                    future = pool.submit(
                         download_video_background,
                         download_id, request.url, format_type, request.quality, output_path, client_ip,
                         request.chunk_index, request.chunk_start, request.chunk_end
                     )
-                    
-                    # Add completion callback
-                    def done_callback(fut):
+
+                    # Add completion callback that honors is_long
+                    def done_callback(fut, is_long_flag=is_long):
                         try:
                             fut.result()
                         except Exception as e:
                             video_logger.error(f"Download {download_id} error: {e}")
                         finally:
-                            decrement_active_conversions()
+                            decrement_active_conversions(is_long=is_long_flag)
                             decrement_video_rate_limit(client_ip)
                             process_next_in_queue()
-                    
+
                     future.add_done_callback(done_callback)
-                            
+
                 except Exception as e:
                     video_logger.error(f"Failed to submit {download_id}: {e}")
-                    decrement_active_conversions()
-                    # Clean up coalescing entry and rate-limit increment since we couldn't start
+                    # Clean up reservation and bookkeeping since we couldn't start
+                    decrement_active_conversions(is_long=is_long)
                     with download_lock:
                         if active_url_map.get(normalized_url, {}).get('download_id') == download_id:
                             del active_url_map[normalized_url]
@@ -10362,13 +10386,19 @@ if __name__ == "__main__":
     
     # Enable auto-reload for development
     dev_reload = True
-    uvicorn.run(
-        "app:app",
-        host="0.0.0.0",
-        port=8000,  # Changed port to avoid conflicts
-        reload=False,  # Enable auto-reload for development
-        reload_dirs=["f:\\1school\\fswd\\projectOne\\project-one\\backend"]  # Watch backend directory
-    )
+    # Only start the Uvicorn server when this module is executed directly.
+    # This prevents accidental double-start when the module is imported by
+    # a process manager (for example: `uvicorn app:app`) which would otherwise
+    # re-import this file and call `uvicorn.run()` again causing bind errors.
+    if __name__ == "__main__":
+        uvicorn.run(
+            "app:app",
+            host="0.0.0.0",
+            port=int(os.getenv("PORT", 8001)),  # Allow overriding via PORT env var
+            reload=False,
+            # Use a portable path for reload watching (backend directory)
+            reload_dirs=[os.path.dirname(__file__)]
+        )
 
 
 

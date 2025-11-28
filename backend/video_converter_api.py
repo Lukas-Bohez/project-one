@@ -185,19 +185,57 @@ def download_video_worker(url, format_type, quality, output_path, download_id):
         logger.info(f"Worker process started for {download_id}")
         
         ydl_opts = get_ydl_opts(format_type, quality, output_path)
-        
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            
-            result = {
-                'status': 'completed',
-                'title': info.get('title', 'Downloaded Video'),
-                'duration': info.get('duration', 0),
-                'file_path': ydl.prepare_filename(info)
-            }
-            
-            logger.info(f"Worker process completed for {download_id}")
-            return result
+        # Some platforms (and yt-dlp) may occasionally return a transient
+        # "video unavailable" error even though the video exists. To reduce
+        # false negatives, retry a few times when that specific error occurs.
+        VIDEO_UNAVAILABLE_RETRIES = int(os.environ.get('VIDEO_UNAVAILABLE_RETRIES', '3'))
+
+        attempt = 0
+        last_exception = None
+        while attempt < VIDEO_UNAVAILABLE_RETRIES:
+            attempt += 1
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    info = ydl.extract_info(url, download=True)
+
+                    result = {
+                        'status': 'completed',
+                        'title': info.get('title', 'Downloaded Video'),
+                        'duration': info.get('duration', 0),
+                        'file_path': ydl.prepare_filename(info)
+                    }
+
+                    logger.info(f"Worker process completed for {download_id}")
+                    return result
+
+            except Exception as e:
+                last_exception = e
+                msg = str(e).lower()
+                # Detect common "video unavailable" phrasing from yt-dlp
+                if ('video unavailable' in msg) or ('this video is unavailable' in msg) or ('is unavailable' in msg and 'video' in msg):
+                    logger.warning(
+                        f"Attempt {attempt}/{VIDEO_UNAVAILABLE_RETRIES} for {download_id} failed with transient 'video unavailable' error: {e}. Retrying..."
+                    )
+                    # Backoff a bit before retrying (simple linear backoff)
+                    try:
+                        time.sleep(min(1 * attempt, 5))
+                    except Exception:
+                        pass
+                    continue
+                else:
+                    # Non-transient error: don't retry further
+                    logger.error(f"Worker process error for {download_id}: {e}")
+                    return {
+                        'status': 'error',
+                        'error': str(e)
+                    }
+
+        # If we exhausted retries, return the last exception as an error
+        logger.error(f"Worker process failed for {download_id} after {VIDEO_UNAVAILABLE_RETRIES} attempts: {last_exception}")
+        return {
+            'status': 'error',
+            'error': str(last_exception) if last_exception is not None else 'Unknown error'
+        }
             
     except Exception as e:
         logger.error(f"Worker process error for {download_id}: {e}")
