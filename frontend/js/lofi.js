@@ -12,7 +12,7 @@ const config = {
     shuffle: true, // Default shuffle mode (true = random, false = sequential)
     repeat: false, // Repeat mode: false, 'one', or 'all'
     enableLofi: false, // Disable lofi player by default to prevent 404 errors
-    mode: 'cache', // 'cache' or 'local' - cache uses IndexedDB, local scans folder
+    mode: 'local', // 'cache' or 'local' - cache uses IndexedDB, local scans folder
     folder: 'https://quizthespire.com/lofi/', // Folder to scan for local MP3 files
     disabled: false, // Whether music is disabled
     persistence: { // Enhanced persistence configuration
@@ -800,21 +800,38 @@ const createShuffledPlaylistAnchored = (currentSong) => {
 };
 
 // Get next song based on current mode
+// Respects `config.repeat` ('one' | 'all' | false) and `config.shuffle`.
 const getNextSong = () => {
     if (songList.length === 0) return null;
 
+    // If repeat === 'one', prefer to return the currently playing song
+    if (config.repeat === 'one') {
+        if (config.shuffle) {
+            if (shuffledPlaylist.length === 0) createShuffledPlaylist();
+            // Currently playing item is at currentPlaylistIndex - 1
+            const idx = (currentPlaylistIndex > 0) ? (currentPlaylistIndex - 1) : (shuffledPlaylist.length - 1);
+            return shuffledPlaylist[idx] || null;
+        } else {
+            if (currentSongIndex === -1) currentSongIndex = 0;
+            return songList[currentSongIndex];
+        }
+    }
+
     if (config.shuffle) {
         // Shuffle mode - use shuffled playlist
-        if (shuffledPlaylist.length === 0 || currentPlaylistIndex >= shuffledPlaylist.length) {
-            // Create new shuffled playlist or restart
-            if (config.repeat === 'all' || shuffledPlaylist.length === 0) {
+        if (shuffledPlaylist.length === 0) createShuffledPlaylist();
+
+        // If we've exhausted the shuffled list
+        if (currentPlaylistIndex >= shuffledPlaylist.length) {
+            if (config.repeat === 'all') {
+                // Recreate a fresh shuffle for repeat all
                 createShuffledPlaylist();
-            } else if (config.repeat === false) {
-                // End of playlist, no repeat
+            } else {
+                // No repeat -> end of playlist
                 return null;
             }
         }
-        
+
         if (currentPlaylistIndex < shuffledPlaylist.length) {
             const song = shuffledPlaylist[currentPlaylistIndex];
             currentPlaylistIndex++;
@@ -825,24 +842,22 @@ const getNextSong = () => {
         if (currentSongIndex === -1) {
             // First song
             currentSongIndex = 0;
-        } else {
-            currentSongIndex++;
-            
-            if (currentSongIndex >= songList.length) {
-                if (config.repeat === 'all') {
-                    currentSongIndex = 0; // Restart playlist
-                } else if (config.repeat === false) {
-                    // End of playlist
-                    return null;
-                } else {
-                    currentSongIndex = songList.length - 1; // Stay on last song for 'one' mode
-                }
+            return songList[currentSongIndex];
+        }
+
+        currentSongIndex++;
+        if (currentSongIndex >= songList.length) {
+            if (config.repeat === 'all') {
+                currentSongIndex = 0; // Restart playlist
+            } else {
+                // End of playlist
+                return null;
             }
         }
-        
+
         return songList[currentSongIndex];
     }
-    
+
     return null;
 };
 
