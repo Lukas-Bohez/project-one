@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-import RPi.GPIO as GPIO
 import time
-from spidev import SpiDev
 
 class HardcoreRFID:
     # RC_522 Command words
@@ -53,30 +51,7 @@ class HardcoreRFID:
  
     def __init__(self, dev='/dev/spidev0.0', spd=1000000):
         self.spi = None
-        try:
-            GPIO.setwarnings(False)
-            GPIO.setmode(GPIO.BCM)
-            GPIO.setup(22, GPIO.OUT)
-            GPIO.output(22, 1)
- 
-            # Setup SPI
-            self.spi = SpiDev()
-            bus, device_id = map(int, dev.replace('/dev/spidev', '').split('.'))
-            self.spi.open(bus, device_id)
-            self.spi.max_speed_hz = spd
- 
-            self.RC_522_Reset()
-            self.Write_RC_522(self.TModeReg, 0x8D)
-            self.Write_RC_522(self.TPrescalerReg, 0x3E)
-            self.Write_RC_522(self.TReloadRegL, 30)
-            self.Write_RC_522(self.TReloadRegH, 0)
-            self.Write_RC_522(self.TxAutoReg, 0x40)
-            self.Write_RC_522(self.ModeReg, 0x3D)
-            self.AntennaOn()
-        except:
-            pass
- 
-    def RC_522_Reset(self):
+        # No hardware initialization for Windows compatibility    def RC_522_Reset(self):
         try:
             self.Write_RC_522(self.CommandReg, self.PCD_RESETPHASE)
         except:
@@ -302,17 +277,12 @@ class HardcoreRFID:
             return None
  
     def cleanup(self):
-        try:
-            if self.spi:
-                self.spi.close()
-            GPIO.cleanup()
-        except:
-            pass
+        # No hardware to clean up
+        pass
 
 # Example usage with numeric UID output using the new read_card method
 if __name__ == "__main__":
     reader = HardcoreRFID()
-    reader.setup()
     print("Plaats een kaart tegen de lezer (druk Ctrl+C om te stoppen).")
         
     try:
