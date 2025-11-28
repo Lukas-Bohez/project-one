@@ -9491,11 +9491,19 @@ if VIDEO_CONVERTER_AVAILABLE:
             duration = 0
             filesize = 0
             try:
-                probe_opts = {'quiet': True, 'no_warnings': True}
-                with yt_dlp.YoutubeDL(probe_opts) as ydl:
-                    info = ydl.extract_info(request.url, download=False)
-                    duration = info.get('duration', 0) or 0
-                    filesize = info.get('filesize') or info.get('filesize_approx', 0) or 0
+                # Offload blocking yt-dlp probe to a thread to avoid blocking
+                # the main asyncio event loop. This prevents the health check
+                # and other endpoints from being starved when many probes run.
+                loop = asyncio.get_running_loop()
+
+                def blocking_probe(url):
+                    probe_opts = {'quiet': True, 'no_warnings': True}
+                    with yt_dlp.YoutubeDL(probe_opts) as ydl:
+                        return ydl.extract_info(url, download=False)
+
+                info = await loop.run_in_executor(None, blocking_probe, request.url)
+                duration = info.get('duration', 0) or 0
+                filesize = info.get('filesize') or info.get('filesize_approx', 0) or 0
             except Exception as probe_err:
                 video_logger.debug(f"Could not probe URL metadata for {request.url}: {probe_err}")
 
@@ -10387,12 +10395,13 @@ if __name__ == "__main__":
     # Enable auto-reload for development
     dev_reload = True
     # Only start the Uvicorn server when this module is executed directly.
-    # This prevents accidental double-start when the module is imported by
-    # a process manager (for example: `uvicorn app:app`) which would otherwise
-    # re-import this file and call `uvicorn.run()` again causing bind errors.
+    # Use the already-created `app` object instead of passing a string target
+    # to avoid uvicorn re-importing this module (which can cause duplicate
+    # side-effects and confusing bind errors). Keep `reload=False` here to
+    # avoid automatic reloading in long-running deployments.
     if __name__ == "__main__":
         uvicorn.run(
-            "app:app",
+            app,
             host="0.0.0.0",
             port=int(os.getenv("PORT", 8001)),  # Allow overriding via PORT env var
             reload=False,
