@@ -15,6 +15,7 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 import asyncio
 import socket
 import logging
+logging.getLogger('mysql.connector').setLevel(logging.WARNING)
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -75,10 +76,7 @@ video_logger = logging.getLogger('video_debug')
 video_logger.setLevel(logging.DEBUG)
 
 # Create file handler for video logs
-video_log_file = '/home/student/Project-one/backend/video_debug.log'
-# Fallback to project path if that doesn't exist
-if not os.path.exists('/home/student/Project-one'):
-    video_log_file = '/home/student/Project/project-one/backend/video_debug.log'
+video_log_file = os.path.join(os.path.dirname(__file__), 'video_debug.log')
 video_file_handler = logging.FileHandler(video_log_file, mode='a')
 video_file_handler.setLevel(logging.DEBUG)
 
@@ -98,7 +96,7 @@ video_logger.info("Video Logger Initialized")
 video_logger.info("="*50)
 
 # General quiz logger used across the application for quiz-related messages
-quiz_log_file = '/home/student/Project/project-one/backend/quiz_debug.log'
+quiz_log_file = os.path.join(os.path.dirname(__file__), 'quiz_debug.log')
 quiz_logger = logging.getLogger('quiz_debug')
 quiz_logger.setLevel(logging.INFO)
 quiz_file_handler = logging.FileHandler(quiz_log_file, mode='a')
@@ -152,7 +150,55 @@ def threadsafe_emit_message_sent(sio, session_id, loop):
 # App setup
 # ----------------------------------------------------
 
-app = FastAPI(title="Socket.IO Messaging Backend", version="1.0.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        global main_asyncio_loop
+        print("FastAPI app starting up...")
+
+        if RPI_COMPONENTS_AVAILABLE:
+            # Get the main asyncio event loop when FastAPI starts.
+            # This is the loop on which Socket.IO emits will be scheduled.
+            main_asyncio_loop = asyncio.get_running_loop()
+            print(f"Main asyncio loop obtained: {main_asyncio_loop}")
+
+            # Start the Raspberry Pi script in a new thread
+            # Pass the sio instance and the main_asyncio_loop to the thread
+            pi_thread = Thread(
+                target=raspberry_pi_main_thread,
+                args=(stop_thread_event, sio, main_asyncio_loop), # <--- MODIFIED ARGS HERE
+                daemon=True
+            )
+            pi_thread.start()
+            print("Raspberry Pi script thread started.")
+        else:
+            print("Raspberry Pi thread will not be started due to import errors.")
+
+        print("Server started - Socket.IO backend is ready!")
+    except Exception as e:
+        print(f"Error in startup: {e}")
+        raise
+    yield
+    try:
+        print("FastAPI app shutting down...")
+        # Signal the background thread to stop
+        stop_thread_event.set()
+        # Give the thread a moment to clean up (optional, as it's a daemon thread)
+        # If the thread is not a daemon, you'd want to join it: pi_thread.join(timeout=5)
+        print("Shutdown signal sent to Raspberry Pi thread.")
+        
+        # Shutdown video conversion process pool gracefully
+        try:
+            if VIDEO_CONVERTER_AVAILABLE and 'video_process_pool' in globals():
+                print("Shutting down video conversion process pool...")
+                video_process_pool.shutdown(wait=False, cancel_futures=True)
+                print("[OK] Video process pool shutdown complete")
+        except Exception as e:
+            print(f"Error during video process pool shutdown: {e}")
+    except Exception as e:
+        print(f"Error in shutdown: {e}")
+
+app = FastAPI(title="Socket.IO Messaging Backend", version="1.0.0", lifespan=lifespan)
 
 # CORS middleware for FastAPI
 app.add_middleware(
@@ -2379,11 +2425,11 @@ def generate_kawaii_string(user_credentials):
     # Mixed emotion phrases with emojis (kawaii, kowai, excited, etc.)
     emotion_strings = [
         # Kawaii/happy themes
-        f"✨ {user_credentials.first_name}-chan! Ready for adventure? (´｡• ω •｡`)",
-        f"★~(◠‿◕✿) Greetings {user_credentials.first_name}-san! Let's go!",
+        f" {user_credentials.first_name}-chan! Ready for adventure? (´｡• ω •｡`)",
+        f"~(◠‿◕) Greetings {user_credentials.first_name}-san! Let's go!",
         f"ヾ(●ω●)ノ {user_credentials.first_name}-tan appears! What's the plan?",
-        f"ヽ(>∀<☆)ノ {user_credentials.first_name}-sama brings good vibes!",
-        f"(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ {user_credentials.first_name}-kun spotted! Hello~",
+        f"ヽ(>∀<)ノ {user_credentials.first_name}-sama brings good vibes!",
+        f"(ﾉ◕ヮ◕)ﾉ*:･ﾟ {user_credentials.first_name}-kun spotted! Hello~",
         
         # Kowai/scary themes
         f"⋋| ◉ ͟ʖ ◉ |⋌ {user_credentials.first_name}-san... the shadows watch...",
@@ -2393,9 +2439,9 @@ def generate_kawaii_string(user_credentials):
         f"(◣_◢) {user_credentials.first_name}-kun... something approaches...",
         
         # Excited/hyper themes
-        f"✧ﾟ･: *ヽ(◕ヮ◕ヽ) {user_credentials.first_name}-chan! Let's party! *:･ﾟ✧",
+        f"ﾟ･: *ヽ(◕ヮ◕ヽ) {user_credentials.first_name}-chan! Let's party! *:･ﾟ",
         f"ᕙ(^▿^-ᕙ) {user_credentials.first_name}-senpai! Power up!",
-        f"ヽ(★ω★)ノ {user_credentials.first_name}-nyan! Maximum energy!",
+        f"ヽ(ω)ノ {user_credentials.first_name}-nyan! Maximum energy!",
         f"ᕕ( ᐛ )ᕗ {user_credentials.first_name}-dash! Zoom zoom!",
         
         # Chill/relaxed themes
@@ -3705,7 +3751,7 @@ async def get_session_rankings(session_id: int):
 
 @app.get("/api/v1/rankings/global/")
 async def get_global_rankings(limit: int = 50):
-    """Get global player rankings - simplified version."""
+    """Get global player rankings - optimized version."""
     try:
         # Get all users
         user_repo = UserRepository()
@@ -3732,46 +3778,28 @@ async def get_global_rankings(limit: int = 50):
                     username = f"{first_name} {last_name}".strip() or f"User {user_id}"
                     display_name = username
                 
-                # Get sessions for this user using available methods
-                user_sessions = SessionPlayerRepository.get_player_sessions(user_id)
+                # Get global stats for this user in a single query
+                global_stats = PlayerAnswerRepository.get_player_global_stats(user_id)
                 
-                if not user_sessions:
-                    continue
-                    
-                total_score = 0
-                total_correct = 0
-                total_answers = 0
-                
-                # Calculate totals across all sessions
-                for session in user_sessions:
-                    session_id = session.get('sessionId') if isinstance(session, dict) else getattr(session, 'sessionId', None)
-                    if not session_id:
-                        continue
-                        
-                    try:
-                        score_details = calculate_player_score_detailed(session_id, user_id)
-                        total_score += score_details.get("total_score", 0)
-                        total_correct += score_details.get("correct_answers", 0) 
-                        total_answers += score_details.get("total_answers", 0)
-                    except Exception as e:
-                        print(f"Error calculating score for user {user_id}, session {session_id}: {e}")
-                        continue
+                total_score = global_stats.get('total_score', 0)
+                total_answers = global_stats.get('total_answers', 0)
+                correct_answers = global_stats.get('correct_answers', 0)
+                sessions_played = global_stats.get('sessions_played', 0)
                 
                 # Only include users with actual quiz activity
                 if total_answers > 0:
-                    accuracy = (total_correct / total_answers * 100) if total_answers > 0 else 0
-                    sessions_count = len(user_sessions)
+                    accuracy = (correct_answers / total_answers * 100) if total_answers > 0 else 0
                     
                     global_rankings.append({
                         "user_id": user_id,
                         "username": username,
                         "display_name": display_name or username,
                         "total_score": total_score,
-                        "sessions_played": sessions_count,
-                        "total_correct_answers": total_correct,
+                        "sessions_played": sessions_played,
+                        "total_correct_answers": correct_answers,
                         "total_answers": total_answers,
                         "overall_accuracy": round(accuracy, 1),
-                        "average_score_per_session": round(total_score / sessions_count, 1) if sessions_count > 0 else 0
+                        "average_score_per_session": round(total_score / sessions_played, 1) if sessions_played > 0 else 0
                     })
                     
             except Exception as e:
@@ -4303,7 +4331,7 @@ def rfid_reader_thread(rfid_sensor, rfid_queue, stop_event):
         rfid_queue (queue.Queue): The queue to place scanned UIDs into.
         stop_event (threading.Event): The event to signal when the thread should stop.
     """
-    print("RFID reader thread started.")
+    # print("RFID reader thread started.")
     while not stop_event.is_set():
         try:
             # This is a blocking call, but it's now in its own thread.
@@ -4432,28 +4460,26 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
                         emit_sensor_data(sensor_data, sio, loop)
 
                 except Exception as e:
-                    print(f"Sensor read/display error: {e}")
+                    print("Sensor read/display error")
                     if lcd:
                         lcd.write_line(1, "Sensor Error")
-                    last_refresh = current_time
+                    last_refresh = current_time            # --- Step 3: Handle Quiz Session Specific Logic ---
+                try:
+                    if get_active_session_id():
+                        # Logic specific to an active quiz can be placed here
+                        # For example, logging sensor data to the quiz session
+                        if should_update_quiz_session(current_time):
+                            session_id = get_active_session_id()
+                            sensor_data = read_sensor_data(temp_sensor, light_sensor, servo)
+                            log_quiz_sensor_data(session_id, sensor_data)
+                            emit_theme_selection_if_needed(sio, loop)
+                    else:
+                        # Logic for when no quiz is active
+                        # This could involve processing servo commands from a queue, etc.
+                        pass # Most of the "normal" logic is already handled above
 
-            # --- Step 3: Handle Quiz Session Specific Logic ---
-            try:
-                if get_active_session_id():
-                    # Logic specific to an active quiz can be placed here
-                    # For example, logging sensor data to the quiz session
-                    if should_update_quiz_session(current_time):
-                        session_id = get_active_session_id()
-                        sensor_data = read_sensor_data(temp_sensor, light_sensor, servo)
-                        log_quiz_sensor_data(session_id, sensor_data)
-                        emit_theme_selection_if_needed(sio, loop)
-                else:
-                    # Logic for when no quiz is active
-                    # This could involve processing servo commands from a queue, etc.
-                    pass # Most of the "normal" logic is already handled above
-
-            except Exception as e:
-                print(f"Error in quiz session logic block: {e}")
+                except Exception as e:
+                    print(f"Error in quiz session logic block: {e}")
 
             time.sleep(0.05) # Main loop delay
 
@@ -4541,50 +4567,6 @@ async def trigger_servo():
 
 
 # --- FastAPI Application Lifecycle Events ---
-
-@app.on_event("startup")
-async def startup_event():
-    global main_asyncio_loop # Declare that you're using the global variable
-    print("FastAPI app starting up...")
-
-    if RPI_COMPONENTS_AVAILABLE:
-        # Get the main asyncio event loop when FastAPI starts.
-        # This is the loop on which Socket.IO emits will be scheduled.
-        main_asyncio_loop = asyncio.get_running_loop()
-        print(f"Main asyncio loop obtained: {main_asyncio_loop}")
-
-        # Start the Raspberry Pi script in a new thread
-        # Pass the sio instance and the main_asyncio_loop to the thread
-        pi_thread = Thread(
-            target=raspberry_pi_main_thread,
-            args=(stop_thread_event, sio, main_asyncio_loop), # <--- MODIFIED ARGS HERE
-            daemon=True
-        )
-        pi_thread.start()
-        print("Raspberry Pi script thread started.")
-    else:
-        print("Raspberry Pi thread will not be started due to import errors.")
-
-    print("Server started - Socket.IO backend is ready!")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    print("FastAPI app shutting down...")
-    # Signal the background thread to stop
-    stop_thread_event.set()
-    # Give the thread a moment to clean up (optional, as it's a daemon thread)
-    # If the thread is not a daemon, you'd want to join it: pi_thread.join(timeout=5)
-    print("Shutdown signal sent to Raspberry Pi thread.")
-    
-    # Shutdown video conversion process pool gracefully
-    try:
-        if VIDEO_CONVERTER_AVAILABLE and 'video_process_pool' in globals():
-            print("Shutting down video conversion process pool...")
-            video_process_pool.shutdown(wait=False, cancel_futures=True)
-            print("✅ Video process pool shutdown complete")
-    except Exception as e:
-        print(f"Error during video process pool shutdown: {e}")
 
 
 # --- FastAPI Endpoints ---
@@ -4715,7 +4697,7 @@ def emit_sensor_data(sensor_data, sio, loop):
                 loop
             )
     except Exception as e:
-        print(f"Error emitting sensor_data from thread: {e}")
+        print("Error emitting sensor_data from thread")
 
 
 
@@ -5680,7 +5662,7 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
                     # First failure - give a warning
                     ChatLogRepository.create_chat_message(
                         session_id=session_id,
-                        message_text=f"⚠️ WARNING! Team score: {total_score:.0f}/{required_score:.0f} points - TOO LOW! One more strike and it's GAME OVER! 🚨",
+                        message_text=f"️ WARNING! Team score: {total_score:.0f}/{required_score:.0f} points - TOO LOW! One more strike and it's GAME OVER! ",
                         user_id=1,
                         message_type='system',
                         reply_to_id=1
@@ -5691,7 +5673,7 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
                     print(f"Ending quiz - two consecutive score failures")
                     ChatLogRepository.create_chat_message(
                         session_id=session_id,
-                        message_text=f"💀 GAME OVER! Team score: {total_score:.0f}/{required_score:.0f} points. Two strikes - you're out! Better luck next time! 😢",
+                        message_text=f" GAME OVER! Team score: {total_score:.0f}/{required_score:.0f} points. Two strikes - you're out! Better luck next time! ",
                         user_id=1,
                         message_type='system',
                         reply_to_id=1
@@ -5713,42 +5695,42 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
                 if score_margin > 50:
                     # Crushing it! (>50% ahead)
                     messages = [
-                        f"🔥 CRUSHING IT! Team score: {total_score:.0f}/{required_score:.0f} points! Absolutely unstoppable! 🚀",
-                        f"⭐ LEGENDARY! Team score: {total_score:.0f}/{required_score:.0f} points! You're on fire! 🔥",
-                        f"💪 DOMINATING! Team score: {total_score:.0f}/{required_score:.0f} points! Keep this energy! ✨",
-                        f"🎯 PERFECT! Team score: {total_score:.0f}/{required_score:.0f} points! Mind = Blown! 🤯"
+                        f" CRUSHING IT! Team score: {total_score:.0f}/{required_score:.0f} points! Absolutely unstoppable! ",
+                        f"⭐ LEGENDARY! Team score: {total_score:.0f}/{required_score:.0f} points! You're on fire! ",
+                        f" DOMINATING! Team score: {total_score:.0f}/{required_score:.0f} points! Keep this energy! ",
+                        f" PERFECT! Team score: {total_score:.0f}/{required_score:.0f} points! Mind = Blown! "
                     ]
                 elif score_margin > 25:
                     # Doing great! (25-50% ahead)
                     messages = [
-                        f"🌟 Excellent work! Team score: {total_score:.0f}/{required_score:.0f} points! Looking good! 😊",
-                        f"✨ Great job! Team score: {total_score:.0f}/{required_score:.0f} points! Keep it up! 🎉",
-                        f"🎊 Fantastic! Team score: {total_score:.0f}/{required_score:.0f} points! You got this! 💫",
-                        f"🏆 Impressive! Team score: {total_score:.0f}/{required_score:.0f} points! Stay strong! 💪"
+                        f" Excellent work! Team score: {total_score:.0f}/{required_score:.0f} points! Looking good! ",
+                        f" Great job! Team score: {total_score:.0f}/{required_score:.0f} points! Keep it up! ",
+                        f" Fantastic! Team score: {total_score:.0f}/{required_score:.0f} points! You got this! ",
+                        f" Impressive! Team score: {total_score:.0f}/{required_score:.0f} points! Stay strong! "
                     ]
                 elif score_margin > 10:
                     # Pretty good (10-25% ahead)
                     messages = [
-                        f"👍 Nice! Team score: {total_score:.0f}/{required_score:.0f} points. Solid progress! 😄",
-                        f"✓ Good job! Team score: {total_score:.0f}/{required_score:.0f} points. Keep going! 🎯",
-                        f"👌 Well done! Team score: {total_score:.0f}/{required_score:.0f} points. Stay focused! 💡",
-                        f"😊 Looking good! Team score: {total_score:.0f}/{required_score:.0f} points. Nice work! ✨"
+                        f" Nice! Team score: {total_score:.0f}/{required_score:.0f} points. Solid progress! ",
+                        f" Good job! Team score: {total_score:.0f}/{required_score:.0f} points. Keep going! ",
+                        f" Well done! Team score: {total_score:.0f}/{required_score:.0f} points. Stay focused! ",
+                        f" Looking good! Team score: {total_score:.0f}/{required_score:.0f} points. Nice work! "
                     ]
                 elif score_margin > 5:
                     # Getting close (<10% ahead)
                     messages = [
-                        f"😅 Close one! Team score: {total_score:.0f}/{required_score:.0f} points. Need to step it up! 📈",
-                        f"⚠️ Careful! Team score: {total_score:.0f}/{required_score:.0f} points. Focus up! 🎯",
-                        f"😬 Cutting it close! Team score: {total_score:.0f}/{required_score:.0f} points. Push harder! 💪",
-                        f"🤞 Hanging in there! Team score: {total_score:.0f}/{required_score:.0f} points. Don't slip! 🔥"
+                        f" Close one! Team score: {total_score:.0f}/{required_score:.0f} points. Need to step it up! ",
+                        f"️ Careful! Team score: {total_score:.0f}/{required_score:.0f} points. Focus up! ",
+                        f" Cutting it close! Team score: {total_score:.0f}/{required_score:.0f} points. Push harder! ",
+                        f" Hanging in there! Team score: {total_score:.0f}/{required_score:.0f} points. Don't slip! "
                     ]
                 else:
                     # Barely passing (<5% ahead)
                     messages = [
-                        f"😰 BARELY MADE IT! Team score: {total_score:.0f}/{required_score:.0f} points. DANGER ZONE! ⚠️",
-                        f"🚨 TOO CLOSE! Team score: {total_score:.0f}/{required_score:.0f} points. Step up NOW! 💥",
-                        f"😱 BY THE SKIN OF YOUR TEETH! Team score: {total_score:.0f}/{required_score:.0f} points. FOCUS! 🎯",
-                        f"⚡ CRITICAL! Team score: {total_score:.0f}/{required_score:.0f} points. Do better! 💪"
+                        f" BARELY MADE IT! Team score: {total_score:.0f}/{required_score:.0f} points. DANGER ZONE! ️",
+                        f" TOO CLOSE! Team score: {total_score:.0f}/{required_score:.0f} points. Step up NOW! ",
+                        f" BY THE SKIN OF YOUR TEETH! Team score: {total_score:.0f}/{required_score:.0f} points. FOCUS! ",
+                        f" CRITICAL! Team score: {total_score:.0f}/{required_score:.0f} points. Do better! "
                     ]
                 
                 chosen_message = random.choice(messages)
@@ -6883,7 +6865,7 @@ start_temp_cleanup(interval=30)
 
 # ----------------------------------------------------
 # Video Converter Setup (YouTube, TikTok, etc.)
-# 🚀 PERFORMANCE OPTIMIZATIONS APPLIED:
+#  PERFORMANCE OPTIMIZATIONS APPLIED:
 # 1. Cookie file path caching - avoid repeated filesystem lookups
 # 2. Reduced retry limits (10 instead of 30) - faster failure handling
 # 3. Optimized backoff delays (5s max instead of 30s) - quicker retries
@@ -6993,33 +6975,33 @@ active_conversions_count = 0
 
 # Rate limiting for video downloads (prevent DDoS)
 video_download_rate_limit = {}  # {ip: {'count': int, 'reset_time': float}}
-MAX_CONCURRENT_DOWNLOADS_PER_IP = 25  # 🚀 OPTIMIZED: Increased to 25 for bulk downloads from lofi player
+MAX_CONCURRENT_DOWNLOADS_PER_IP = 25  #  OPTIMIZED: Increased to 25 for bulk downloads from lofi player
 RATE_LIMIT_WINDOW = 60  # seconds
 
-# 🛡️ TIMEOUT PROTECTION: Maximum time for a single download
+# ️ TIMEOUT PROTECTION: Maximum time for a single download
 DOWNLOAD_TIMEOUT_SECONDS = 1200  # 20 minutes max per download (increased for large files)
 DOWNLOAD_STALL_TIMEOUT = 600  # 10 minutes with no progress = stalled (was 2 minutes)
 
-# 🎯 SIZE/DURATION LIMITS: Prevent crashes from massive files
+#  SIZE/DURATION LIMITS: Prevent crashes from massive files
 MAX_VIDEO_FILESIZE = 1_073_741_824  # 1GB max (increased for adaptive quality)
 MAX_VIDEO_DURATION = 900  # 15 minutes max (900 seconds)
 WARN_VIDEO_FILESIZE = 314_572_800  # Warn at 300MB
 
-# 📈 ADAPTIVE QUALITY SETTINGS: Reduce quality for large files
+#  ADAPTIVE QUALITY SETTINGS: Reduce quality for large files
 ENABLE_ADAPTIVE_QUALITY = True  # Auto-reduce quality for large files
 QUALITY_REDUCTION_THRESHOLDS = [262144000, 524288000, 786432000, 1048576000]  # 250MB, 500MB, 750MB, 1GB
 MAX_QUALITY_REDUCTIONS = 4  # Max levels to reduce
 
-# 🔍 WATCHDOG: Monitor stuck downloads
+#  WATCHDOG: Monitor stuck downloads
 watchdog_thread = None
 watchdog_running = False
 
 # Global request throttling to avoid overwhelming YouTube
 last_youtube_request_time = 0
 youtube_request_lock = threading.Lock()
-MIN_REQUEST_INTERVAL = 0.3  # 🚀 OPTIMIZED: Reduced from 0.5 to 0.3 for faster processing
+MIN_REQUEST_INTERVAL = 0.3  #  OPTIMIZED: Reduced from 0.5 to 0.3 for faster processing
 
-# 🚀 OPTIMIZATION: Cache cookie file path to avoid repeated lookups
+#  OPTIMIZATION: Cache cookie file path to avoid repeated lookups
 _cached_cookie_file = None
 _cookie_cache_checked = False
 
@@ -7050,7 +7032,7 @@ INVIDIOUS_INSTANCES = [
 current_invidious_index = 0
 invidious_lock = threading.Lock()
 
-# 🚀 OPTIMIZATION: Track Invidious instance health for smarter fallback
+#  OPTIMIZATION: Track Invidious instance health for smarter fallback
 invidious_health = {}  # {instance_url: {'success_count': int, 'fail_count': int, 'last_success': float, 'last_fail': float}}
 invidious_health_lock = threading.Lock()
 
@@ -7427,7 +7409,7 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
         'nocheckcertificate': True,
         'quiet': False,  # Show output
         'no_color': True,  # Disable colors for logging
-        # 🚀 OPTIMIZED: Enhanced anti-403 measures with faster retry settings
+        #  OPTIMIZED: Enhanced anti-403 measures with faster retry settings
         'extractor_retries': 3,
         'fragment_retries': 3,  # Reduced from 5 to 3 for faster failures
         'skip_unavailable_fragments': True,
@@ -7441,7 +7423,7 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
         'socket_timeout': 20,  # Reduced from 30 to 20 seconds
         'sleep_interval_requests': 0.5,  # Reduced from 2 to 0.5 seconds
         'sleep_interval_subtitles': 0.5,  # Reduced from 1 to 0.5 seconds
-        # 🚀 OPTIMIZATION: Enable HTTP connection pooling for faster downloads
+        #  OPTIMIZATION: Enable HTTP connection pooling for faster downloads
         'http_chunk_size': 10485760,  # 10MB chunks for better throughput
         'concurrent_fragment_downloads': 3,  # Download 3 fragments simultaneously
     }
@@ -7455,7 +7437,7 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
             }
         }
     
-    # 🍪 COOKIE SUPPORT: Check for cookies.txt to handle age-restricted content
+    #  COOKIE SUPPORT: Check for cookies.txt to handle age-restricted content
     # Use cached cookie file path to avoid repeated file system checks
     cookie_file = get_cached_cookie_file()
     
@@ -8287,7 +8269,7 @@ if VIDEO_CONVERTER_AVAILABLE:
     # Each mapping's value will be a dict: {'download_id': str, 'refcount': int}
     active_url_map = {}
 
-    # 🚀 OPTIMIZED: Retry configuration from environment (faster defaults)
+    #  OPTIMIZED: Retry configuration from environment (faster defaults)
     try:
         YTDL_MAX_RETRIES = int(os.environ.get('YTDL_MAX_RETRIES', '8'))
     except Exception:
@@ -8305,7 +8287,7 @@ if VIDEO_CONVERTER_AVAILABLE:
         YTDL_BACKOFF_MAX = float(os.environ.get('YTDL_BACKOFF_MAX', '5.0'))
     except Exception:
         YTDL_BACKOFF_MAX = 5.0  # Reduced from 30.0 to 5.0 for faster processing
-    # 🚀 CRITICAL FIX: Use ThreadPoolExecutor to allow shared memory for status updates
+    #  CRITICAL FIX: Use ThreadPoolExecutor to allow shared memory for status updates
     # ProcessPoolExecutor doesn't share memory, so status updates are lost!
     try:
         WORKER_POOL_SIZE = int(os.environ.get('YTDL_WORKER_POOL_SIZE', '12'))  # Threads can handle more concurrent downloads
@@ -8318,14 +8300,14 @@ if VIDEO_CONVERTER_AVAILABLE:
         max_workers=WORKER_POOL_SIZE,
         thread_name_prefix="video_download"
     )
-    video_logger.info(f"✅ Video conversion thread pool initialized with {WORKER_POOL_SIZE} workers")
+    video_logger.info(f"[OK] Video conversion thread pool initialized with {WORKER_POOL_SIZE} workers")
     
-    # 🔍 WATCHDOG: Monitor and kill stuck downloads
+    #  WATCHDOG: Monitor and kill stuck downloads
     def watchdog_monitor():
         """Background thread that monitors downloads for timeouts and stalls"""
         global watchdog_running
         watchdog_running = True
-        video_logger.info("🔍 Watchdog monitor started")
+        video_logger.info("Watchdog monitor started")
         
         while watchdog_running:
             try:
@@ -8351,7 +8333,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                     
                     # Kill stuck downloads
                     for download_id, reason, duration in stuck_downloads:
-                        video_logger.warning(f"🚨 Watchdog killing stuck download {download_id}: {reason} ({duration:.0f}s)")
+                        video_logger.warning(f" Watchdog killing stuck download {download_id}: {reason} ({duration:.0f}s)")
                         entry = active_video_downloads.get(download_id)
                         if entry:
                             entry['status'] = 'error'
@@ -8361,7 +8343,7 @@ if VIDEO_CONVERTER_AVAILABLE:
             except Exception as e:
                 video_logger.error(f"Watchdog error: {e}")
         
-        video_logger.info("🔍 Watchdog monitor stopped")
+        video_logger.info(" Watchdog monitor stopped")
     
     # Start watchdog thread
     watchdog_thread = threading.Thread(target=watchdog_monitor, daemon=True, name='watchdog')
@@ -8442,7 +8424,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                     active_video_downloads[download_id]['start_time'] = start_time
                     active_video_downloads[download_id]['last_progress_update'] = start_time
             
-            # 🛡️ TIMEOUT CHECK: Abort if download takes too long
+            # ️ TIMEOUT CHECK: Abort if download takes too long
             def check_timeout():
                 elapsed = time.time() - start_time
                 if elapsed > DOWNLOAD_TIMEOUT_SECONDS:
@@ -8453,32 +8435,32 @@ if VIDEO_CONVERTER_AVAILABLE:
             ydl_opts['progress_hooks'] = [progress_hook]
             
             # Safer extract_info + download flow with persistent retry loop on transient 403s
-            # 🛡️ Check timeout before starting
+            # ️ Check timeout before starting
             check_timeout()
             
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
             title = info.get('title', 'Unknown')
             
-            # 🛡️ Check timeout after extraction
+            # ️ Check timeout after extraction
             check_timeout()
             
-            # 🎯 SIZE/DURATION CHECKS: Prevent massive downloads
+            #  SIZE/DURATION CHECKS: Prevent massive downloads
             filesize = info.get('filesize') or info.get('filesize_approx', 0)
             duration = info.get('duration', 0)
             
-            # 📦 CHUNKING: Check if this is a chunk request (legacy support)
+            #  CHUNKING: Check if this is a chunk request (legacy support)
             is_chunk_request = chunk_start is not None and chunk_end is not None
             
             if is_chunk_request:
                 # Processing a specific time range chunk (legacy)
                 video_logger.info(
-                    f"📦 Processing chunk {chunk_index or '?'}: "
+                    f" Processing chunk {chunk_index or '?'}: "
                     f"{chunk_start}s - {chunk_end}s ({(chunk_end - chunk_start)/60:.1f} minutes)"
                 )
                 needs_adaptive_quality = False
             else:
-                # 📈 ADAPTIVE QUALITY: Check if we need to reduce quality for large files
+                #  ADAPTIVE QUALITY: Check if we need to reduce quality for large files
                 needs_adaptive_quality = False
                 original_quality = quality
                 quality_reductions = 0
@@ -8503,7 +8485,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                     if quality_reductions > 0:
                         new_quality = get_reduced_quality(quality, format_type, quality_reductions)
                         video_logger.info(
-                            f"📈 Quality reduced from {quality} to {new_quality} "
+                            f" Quality reduced from {quality} to {new_quality} "
                             f"({quality_reductions} levels) for estimated size {estimated_size / (1024*1024):.1f}MB"
                         )
                         quality = new_quality
@@ -8579,33 +8561,33 @@ if VIDEO_CONVERTER_AVAILABLE:
             elif cookiefile and not os.path.exists(cookiefile):
                 cookiefile = None
             
-            # 🚀 OPTIMIZATION: Try Invidious FIRST if no cookies - it works reliably!
+            #  OPTIMIZATION: Try Invidious FIRST if no cookies - it works reliably!
             # Skip wasting time on direct attempts that will fail with 403
             invidious_success = False
             if not cookiefile:
-                video_logger.info("🚀 No cookies found - trying Invidious proxy first for faster results")
+                video_logger.info(" No cookies found - trying Invidious proxy first for faster results")
                 # Try Invidious first without verbose logging
                 invidious_success, invidious_info, invidious_error = try_invidious_download(
                     url, format_type, quality, output_path
                 )
                 if invidious_success:
-                    video_logger.info("✅ Invidious proxy succeeded on first try!")
+                    video_logger.info(" Invidious proxy succeeded on first try!")
                     # Success! Skip the entire retry loop
                     last_exception = None
                     # Jump to file-finding section below
                 else:
-                    video_logger.info("⚠️ Invidious failed, will try direct download with retries")
+                    video_logger.info("️ Invidious failed, will try direct download with retries")
             
-            # 📈 ADAPTIVE QUALITY: If quality was reduced, log it
+            #  ADAPTIVE QUALITY: If quality was reduced, log it
             if needs_adaptive_quality:
                 video_logger.info(
-                    f"📈 Adaptive quality applied: reduced to {quality} "
+                    f" Adaptive quality applied: reduced to {quality} "
                     f"from original {original_quality}"
                 )
             
-            # 📦 CHUNK REQUEST: Process specific time range (legacy support)
+            #  CHUNK REQUEST: Process specific time range (legacy support)
             if is_chunk_request:
-                video_logger.info(f"📦 Processing chunk request: {chunk_start}s to {chunk_end}s")
+                video_logger.info(f" Processing chunk request: {chunk_start}s to {chunk_end}s")
                 
                 # Modify output path to include chunk index
                 if chunk_index:
@@ -8626,11 +8608,11 @@ if VIDEO_CONVERTER_AVAILABLE:
                     with yt_dlp.YoutubeDL(chunk_opts) as ydl:
                         ydl.download([url])
                     
-                    video_logger.info(f"✅ Chunk {chunk_index} downloaded successfully")
+                    video_logger.info(f" Chunk {chunk_index} downloaded successfully")
                     last_exception = None
                     
                 except Exception as chunk_error:
-                    video_logger.error(f"❌ Chunk {chunk_index} failed: {chunk_error}")
+                    video_logger.error(f" Chunk {chunk_index} failed: {chunk_error}")
                     raise
                 
                 # Skip normal download logic
@@ -8641,7 +8623,7 @@ if VIDEO_CONVERTER_AVAILABLE:
             last_exception = None
             consecutive_403s = 0
             # Determine effective max attempts - up to 10 retries for transient errors
-            # 🚀 OPTIMIZED: Reduced from 30 to 10 for faster failure detection
+            #  OPTIMIZED: Reduced from 30 to 10 for faster failure detection
             # (unavailable/deleted videos still quit immediately via error detection above)
             effective_max = min(10, max(1, YTDL_MAX_RETRIES)) if not YTDL_RETRY_FOREVER else 10
             
@@ -8655,7 +8637,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                         break
                     
                     try:
-                        # 🛡️ Check timeout before each retry attempt
+                        # ️ Check timeout before each retry attempt
                         check_timeout()
                         
                         # Throttle requests to avoid overwhelming YouTube
@@ -8665,7 +8647,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                         ydl_opts = get_ydl_opts(format_type, quality, output_path)
                         ydl_opts['progress_hooks'] = [progress_hook]
                         
-                        # 🚀 OPTIMIZATION: Skip browser cookie extraction entirely
+                        #  OPTIMIZATION: Skip browser cookie extraction entirely
                         # It's slow, unreliable, and Invidious works better
                         # Only use if explicitly provided via cookiefile
                         
@@ -8683,7 +8665,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                         derr = str(de)
                         last_exception = de
                         
-                        # 🚨 CRITICAL: Check for UNRECOVERABLE errors - quit immediately
+                        #  CRITICAL: Check for UNRECOVERABLE errors - quit immediately
                         is_unavailable = any(keyword in derr.lower() for keyword in [
                             'video unavailable',
                             'this video is unavailable',
@@ -8700,7 +8682,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                             'account associated with this video has been terminated'
                         ])
                         
-                        # 🚀 OPTIMIZATION: Check for sign-in required errors (fail fast)
+                        #  OPTIMIZATION: Check for sign-in required errors (fail fast)
                         is_sign_in_required = any(keyword in derr.lower() for keyword in [
                             'sign in to confirm',
                             'sign in to confirm your age',
@@ -8820,7 +8802,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                     if effective_max is not None and attempt >= effective_max:
                         break
 
-                    # 🚀 OPTIMIZED: Faster backoff for quicker processing
+                    #  OPTIMIZED: Faster backoff for quicker processing
                     # Smart backoff: if we're getting repeated errors, increase backoff
                     # BUT: Skip long backoff if browser cookies just failed (jump to Invidious immediately)
                     if is_browser_error and attempt == 1:
@@ -9191,7 +9173,7 @@ if VIDEO_CONVERTER_AVAILABLE:
             
             video_logger.info(f"Extracted playlist ID: {playlist_id}")
             
-            # 🚀 CHECK CACHE FIRST - avoid redundant API calls
+            #  CHECK CACHE FIRST - avoid redundant API calls
             cached_info = get_cached_playlist_info(playlist_id)
             if cached_info:
                 video_logger.info(f"Returning cached playlist info for {playlist_id}")
@@ -9206,7 +9188,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                 'skip_unavailable_fragments': True,
             }
             
-            # 🍪 ADD COOKIES for age-restricted playlists
+            #  ADD COOKIES for age-restricted playlists
             cookie_file = os.environ.get('YTDL_COOKIE_FILE')
             if not cookie_file:
                 backend_cookie_path = os.path.join(os.path.dirname(__file__), 'cookies.txt')
@@ -9274,7 +9256,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                         is_private=False
                     )
                     
-                    # 💾 CACHE THE RESULT to avoid redundant API calls
+                    #  CACHE THE RESULT to avoid redundant API calls
                     cache_playlist_info(playlist_id, response)
                     
                     return response
@@ -9367,7 +9349,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                     duration = info.get('duration', 0)
                     filesize = info.get('filesize') or info.get('filesize_approx', 0)
                     
-                    # 🎯 Check size/duration limits
+                    #  Check size/duration limits
                     warnings = []
                     
                     # Check if quality reduction will be needed
@@ -10150,21 +10132,21 @@ if JWT_AVAILABLE:
         """Load game save data for authenticated user"""
         try:
             user_id = current_user['user_id']
-            print(f"🔍 BACKEND LOAD: user_id = {user_id}")
+            print(f" BACKEND LOAD: user_id = {user_id}")
             
             save_data = GameSaveRepository.get_save_by_user(user_id)
-            print(f"🔍 BACKEND LOAD: save_data exists = {save_data is not None}")
+            print(f" BACKEND LOAD: save_data exists = {save_data is not None}")
             
             if save_data:
-                print(f"🔍 BACKEND LOAD: save_data keys = {save_data.keys() if save_data else None}")
-                print(f"🔍 BACKEND LOAD: save_data['save_data'] type = {type(save_data.get('save_data'))}")
+                print(f" BACKEND LOAD: save_data keys = {save_data.keys() if save_data else None}")
+                print(f" BACKEND LOAD: save_data['save_data'] type = {type(save_data.get('save_data'))}")
                 
                 # Convert datetime to ISO string if it's a datetime object
                 last_updated = save_data['last_updated']
                 if isinstance(last_updated, datetime):
                     last_updated = last_updated.isoformat()
                 
-                print(f"🔍 BACKEND LOAD: Returning has_save=True")
+                print(f" BACKEND LOAD: Returning has_save=True")
                 return GameLoadResponse(
                     save_data=save_data['save_data'],
                     last_updated=last_updated,
@@ -10172,7 +10154,7 @@ if JWT_AVAILABLE:
                     has_save=True
                 )
             else:
-                print(f"🔍 BACKEND LOAD: No save found, returning has_save=False")
+                print(f" BACKEND LOAD: No save found, returning has_save=False")
                 return GameLoadResponse(has_save=False)
                 
         except Exception as e:
@@ -10217,9 +10199,9 @@ if JWT_AVAILABLE:
         """Save game data for authenticated user"""
         try:
             user_id = current_user['user_id']
-            print(f"💾 BACKEND SAVE: user_id = {user_id}")
-            print(f"💾 BACKEND SAVE: game_version = {save_request.save_data.game_version}")
-            print(f"💾 BACKEND SAVE: resources = {save_request.save_data.resources}")
+            print(f" BACKEND SAVE: user_id = {user_id}")
+            print(f" BACKEND SAVE: game_version = {save_request.save_data.game_version}")
+            print(f" BACKEND SAVE: resources = {save_request.save_data.resources}")
             
             # Create backup if requested
             backup_id = None
@@ -10231,8 +10213,8 @@ if JWT_AVAILABLE:
             # Convert Pydantic model to dict (Pydantic v2 uses model_dump())
             save_data_dict = save_request.save_data.model_dump() if hasattr(save_request.save_data, 'model_dump') else save_request.save_data.dict()
             
-            print(f"💾 BACKEND SAVE: save_data_dict keys = {save_data_dict.keys()}")
-            print(f"💾 BACKEND SAVE: save_data_dict size = {len(str(save_data_dict))} chars")
+            print(f" BACKEND SAVE: save_data_dict keys = {save_data_dict.keys()}")
+            print(f" BACKEND SAVE: save_data_dict size = {len(str(save_data_dict))} chars")
             
             # Save game data
             save_id = GameSaveRepository.create_save(
@@ -10241,7 +10223,7 @@ if JWT_AVAILABLE:
                 save_request.save_data.game_version
             )
             
-            print(f"💾 BACKEND SAVE: save_id = {save_id}")
+            print(f" BACKEND SAVE: save_id = {save_id}")
             
             if not save_id:
                 raise HTTPException(status_code=500, detail="Failed to save game data")
@@ -10333,38 +10315,38 @@ if __name__ == "__main__":
     has_proxy = proxy or proxy_list
     
     print("\n" + "="*80)
-    print("🚀 YouTube Download System - Triple-Layer Fallback Initialized")
+    print("YouTube Download System - Triple-Layer Fallback Initialized")
     print("="*80)
-    print("\n📋 Active Protection Layers:")
-    print("  ✅ LAYER 1: Browser Cookie Auto-Extraction (Chrome/Firefox)")
-    print("  ✅ LAYER 2: Proxy Rotation (if configured)")
-    print(f"  ✅ LAYER 3: Invidious Fallback ({len(INVIDIOUS_INSTANCES)} instances)")
-    print("\n🔧 Configuration Status:")
+    print("\nActive Protection Layers:")
+    print("  [OK] LAYER 1: Browser Cookie Auto-Extraction (Chrome/Firefox)")
+    print("  [OK] LAYER 2: Proxy Rotation (if configured)")
+    print(f"  [OK] LAYER 3: Invidious Fallback ({len(INVIDIOUS_INSTANCES)} instances)")
+    print("\n Configuration Status:")
     
     if has_cookies:
-        print(f"  ✅ Global cookies: {cookie_file}")
+        print(f"   Global cookies: {cookie_file}")
     else:
-        print("  ⚠️  No global cookies (will try browser extraction)")
+        print("  [INFO] No global cookies (will try browser extraction)")
     
     if has_proxy:
         if proxy:
-            print(f"  ✅ Proxy configured: {proxy}")
+            print(f"   Proxy configured: {proxy}")
         if proxy_list:
             proxy_count = len(proxy_list.split(','))
-            print(f"  ✅ Proxy rotation: {proxy_count} proxies")
+            print(f"   Proxy rotation: {proxy_count} proxies")
     else:
-        print("  ℹ️  No proxy configured (optional)")
+        print("  [INFO] No proxy configured (optional)")
     
-    print("\n💡 Tips:")
-    print("  • System will try browser cookies if Chrome/Firefox is logged in")
-    print("  • Invidious instances provide fallback when YouTube blocks")
-    print("  • Users can upload cookies via frontend UI for authentication")
-    print("  • Proxy rotation helps avoid IP-based blocking")
+    print("\n Tips:")
+    print("  - System will try browser cookies if Chrome/Firefox is logged in")
+    print("  - Invidious instances provide fallback when YouTube blocks")
+    print("  - Users can upload cookies via frontend UI for authentication")
+    print("  - Proxy rotation helps avoid IP-based blocking")
     print("="*80 + "\n")
     
     # Show recommendations based on config
     if not has_cookies and not has_proxy:
-        print("💡 RECOMMENDED: Configure at least one authentication method:")
+        print(" RECOMMENDED: Configure at least one authentication method:")
         print("  1. Log into YouTube in Chrome/Firefox on this server (easiest)")
         print("  2. Or set: YTDL_PROXY=http://proxy.example.com:8080")
         print("  3. Or set: YTDL_COOKIE_FILE=/path/to/cookies.txt")
@@ -10372,20 +10354,20 @@ if __name__ == "__main__":
         print()
     
     elif not has_cookies:
-        print("\nℹ️  No global cookies - relying on browser extraction and proxies")
+        print("\n[INFO] No global cookies - relying on browser extraction and proxies")
     elif not has_proxy:
-        print("\nℹ️  No proxy - using direct connection with cookies")
+        print("\n[INFO] No proxy - using direct connection with cookies")
     else:
-        print("\n✅ Optimal config: Both cookies and proxy configured!")
+        print("\n Optimal config: Both cookies and proxy configured!")
     
     # Enable auto-reload for development
     dev_reload = True
     uvicorn.run(
         "app:app",
         host="0.0.0.0",
-        port=8001,  # Changed port to avoid conflicts
-        reload=True,  # Enable auto-reload for development
-        reload_dirs=["/home/student/Project/project-one/backend"]  # Watch backend directory
+        port=8000,  # Changed port to avoid conflicts
+        reload=False,  # Enable auto-reload for development
+        reload_dirs=["f:\\1school\\fswd\\projectOne\\project-one\\backend"]  # Watch backend directory
     )
 
 
