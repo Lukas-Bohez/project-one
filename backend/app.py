@@ -6977,6 +6977,10 @@ download_lock = threading.Lock()
 # Queue system for managing concurrent downloads
 video_conversion_queue = []  # List of {download_id, url, timestamp, client_ip}
 queue_lock = threading.Lock()
+# Event and dispatcher thread for reliably waking queue processing
+dispatcher_event = Event()
+dispatcher_thread = None
+
 MAX_CONCURRENT_CONVERSIONS = 3  # Maximum number of conversions running at once
 # Support long videos (>15 minutes) in a separate worker pool so they don't
 # compete with short downloads. Long videos are considered > MAX_VIDEO_DURATION.
@@ -7200,6 +7204,12 @@ def add_to_queue(download_id: str, url: str, client_ip: str, is_long: bool = Fal
             'is_long': bool(is_long)
         })
         video_logger.info(f"Added download {download_id} to queue. Queue length: {len(video_conversion_queue)}")
+    # Notify dispatcher to wake up and process queued items
+    try:
+        dispatcher_event.set()
+        video_logger.debug(f"Dispatcher event set after enqueueing {download_id}")
+    except Exception as e:
+        video_logger.warning(f"Failed to set dispatcher event for {download_id}: {e}")
 
 def remove_from_queue(download_id: str):
     """Remove a download from the queue"""
@@ -7245,6 +7255,9 @@ def decrement_active_conversions(is_long: bool = False):
 def process_next_in_queue():
     """Process the next item in the queue if there's capacity"""
     try:
+        # Ensure we can modify module-level counters
+        global active_conversions_count, active_long_conversions_count
+        video_logger.debug("process_next_in_queue invoked")
         # If no capacity for either short or long downloads, don't start anything
         if not (can_start_conversion(False) or can_start_conversion(True)):
             video_logger.info("Cannot start new conversion - at max capacity for both pools")
@@ -8383,6 +8396,47 @@ if VIDEO_CONVERTER_AVAILABLE:
         thread_name_prefix="video_long"
     )
     video_logger.info(f"[OK] Long-video conversion thread pool initialized with {LONG_WORKER_POOL_SIZE} workers")
+    # Queue dispatcher: waits for an event and calls process_next_in_queue while capacity exists
+    def queue_dispatcher():
+        video_logger.info("Queue dispatcher thread running")
+        while True:
+            try:
+                # Wait until there's work to do
+                dispatcher_event.wait()
+                video_logger.debug("Dispatcher event received; scanning queue")
+                # Attempt to process queued items while capacity and items exist
+                while True:
+                    with queue_lock:
+                        if not video_conversion_queue:
+                            break
+                    if not (can_start_conversion(False) or can_start_conversion(True)):
+                        break
+                    try:
+                        process_next_in_queue()
+                    except Exception as e:
+                        video_logger.error(f"queue_dispatcher error calling process_next_in_queue: {e}")
+                        break
+                    # small pause to yield
+                    time.sleep(0.05)
+            except Exception as e:
+                video_logger.error(f"Queue dispatcher encountered error: {e}")
+            finally:
+                try:
+                    dispatcher_event.clear()
+                except Exception:
+                    pass
+            # prevent tight loop
+            time.sleep(0.1)
+
+    # Start dispatcher thread once
+    try:
+        dispatcher_thread = threading.Thread(target=queue_dispatcher, daemon=True, name='queue_dispatcher')
+        dispatcher_thread.start()
+        video_logger.info("Queue dispatcher thread initialized")
+        # Trigger initial scan in case there are pre-existing queued items
+        dispatcher_event.set()
+    except Exception as e:
+        video_logger.warning(f"Failed to start queue dispatcher: {e}")
     
     # Async wrapper to submit downloads to thread pool
     async def submit_video_download_async(download_id: str, url: str, format_type: str, quality: int, output_path: str, client_ip: str = None, chunk_index: int = None, chunk_start: int = None, chunk_end: int = None):
