@@ -13,6 +13,8 @@ let videoQuality = 720;
 let isProcessing = false;
 let currentDownloadId = null;
 let statusCheckInterval = null;
+// If user inputs a playlist URL, temporarily disable convert/download UI until playlist info loads
+let playlistUrlDetected = false;
 // Frontend playlist/queue storage for chunked downloads
 let playlistModeActive = false;
 let playlistQueue = []; // array of {id,title}
@@ -92,11 +94,41 @@ function initializeEventListeners() {
     videoUrlInput.addEventListener('input', () => {
         clearTimeout(validationTimeout);
         lastValidatedUrl = ''; // Reset when user types to allow re-validation
+
+        // Immediate playlist detection: if the user typed a playlist URL (contains list= and youtube host),
+        // disable convert/download buttons so they don't click while the app fetches playlist info.
+        const val = (videoUrlInput.value || '').trim();
+        if (isPlaylistUrl(val)) {
+            if (!playlistUrlDetected) {
+                playlistUrlDetected = true;
+                tempDisableConvertAndDownload('Playlist URL detected — fetching playlist info');
+            }
+            // still schedule validation (optional) but keep buttons disabled until API responds
+            validationTimeout = setTimeout(validateUrl, 800);
+            return;
+        }
+
+        // If we previously thought it was a playlist but now changed, re-enable UI
+        if (playlistUrlDetected) {
+            playlistUrlDetected = false;
+            clearValidationErrors();
+            tempEnableConvertAndDownload();
+        }
+
         validationTimeout = setTimeout(validateUrl, 500);
     });
     videoUrlInput.addEventListener('paste', (e) => {
         lastValidatedUrl = ''; // Reset on paste to allow validation
-        handleUrlPaste(e);
+        // handleUrlPaste uses a small timeout to allow pasted content to appear; hook into that
+        setTimeout(() => {
+            handleUrlPaste(e);
+            // also run immediate playlist detection after paste
+            const val = (videoUrlInput.value || '').trim();
+            if (isPlaylistUrl(val)) {
+                playlistUrlDetected = true;
+                tempDisableConvertAndDownload('Playlist URL detected — fetching playlist info');
+            }
+        }, 60);
     });
     
     // Download button
@@ -442,6 +474,54 @@ function detectPlatformFromUrl(url) {
             break;
         }
     }
+}
+
+// Simple heuristic: treat URLs that contain a `list=` param and youtube domain as playlist URLs
+function isPlaylistUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+    const u = url.toLowerCase();
+    return (u.includes('list=') && (u.includes('youtube.com') || u.includes('youtu.be')));
+}
+
+// Temporarily disable convert and download buttons (visual grey-out)
+function tempDisableConvertAndDownload(title) {
+    try {
+        if (convertButton) {
+            convertButton.disabled = true;
+            convertButton.setAttribute('aria-disabled', 'true');
+            convertButton.style.opacity = '0.6';
+            convertButton.style.pointerEvents = 'none';
+            if (title) convertButton.title = title;
+        }
+        if (downloadBtn) {
+            downloadBtn.disabled = true;
+            downloadBtn.setAttribute('aria-disabled', 'true');
+            downloadBtn.style.opacity = '0.6';
+            downloadBtn.style.pointerEvents = 'none';
+            if (title) downloadBtn.title = title;
+        }
+    } catch (e) { console.warn('tempDisableConvertAndDownload failed', e); }
+}
+
+// Re-enable convert/download buttons (if not currently processing)
+function tempEnableConvertAndDownload() {
+    try {
+        if (isProcessing) return; // keep disabled while an actual conversion is running
+        if (convertButton) {
+            convertButton.disabled = false;
+            convertButton.removeAttribute('aria-disabled');
+            convertButton.style.opacity = '';
+            convertButton.style.pointerEvents = '';
+            convertButton.title = '';
+        }
+        if (downloadBtn) {
+            downloadBtn.disabled = false;
+            downloadBtn.removeAttribute('aria-disabled');
+            downloadBtn.style.opacity = '';
+            downloadBtn.style.pointerEvents = '';
+            downloadBtn.title = '';
+        }
+    } catch (e) { console.warn('tempEnableConvertAndDownload failed', e); }
 }
 
 // Show validation error
