@@ -10458,7 +10458,7 @@ if __name__ == "__main__":
             app,
             host="0.0.0.0",
             port=int(os.getenv("PORT", 8001)),  # Allow overriding via PORT env var
-            reload=False,
+            reload=True,
             # Use a portable path for reload watching (backend directory)
             reload_dirs=[os.path.dirname(__file__)]
         )
