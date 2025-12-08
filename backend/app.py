@@ -10446,8 +10446,8 @@ if __name__ == "__main__":
     else:
         print("\n Optimal config: Both cookies and proxy configured!")
     
-    # Enable auto-reload for development
-    dev_reload = True
+    # Enable auto-reload for development (toggle via env var)
+    dev_reload = os.getenv("DEV_RELOAD", "false").lower() in ("1", "true", "yes")
     # Only start the Uvicorn server when this module is executed directly.
     # Use the already-created `app` object instead of passing a string target
     # to avoid uvicorn re-importing this module (which can cause duplicate
@@ -10458,9 +10458,9 @@ if __name__ == "__main__":
             app,
             host="0.0.0.0",
             port=int(os.getenv("PORT", 8001)),  # Allow overriding via PORT env var
-            reload=True,
+            reload=dev_reload,
             # Use a portable path for reload watching (backend directory)
-            reload_dirs=[os.path.dirname(__file__)]
+            reload_dirs=[os.path.dirname(__file__)] if dev_reload else None
         )
 
 
