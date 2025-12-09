@@ -385,7 +385,6 @@ renderAnswerBoxes(options, container, questionType) {
                 <span class="button-label">${config.label}</span>
                 <div class="answer-content">${this.getOptionText(option, questionType)}</div>
             </div>
-            <div class="box-decoration ${config.key}"></div>
         `;
        
         // Store answer metadata
@@ -474,21 +473,6 @@ injectAnswerBoxStyles() {
         .answer-box:nth-child(2) .button-label { bottom: 4px; right: 4px; }
         .answer-box:nth-child(3) .button-label { bottom: 4px; left: 4px; }
         .answer-box:nth-child(4) .button-label { top: 4px; left: 4px; }
-       
-        /* Decorative corners - smaller and more subtle */
-        .box-decoration {
-            position: absolute;
-            width: 20px; /* Reduced from 30px */
-            height: 20px;
-            background: white;
-            opacity: 0.1; /* Reduced from 0.2 */
-            border-radius: 3px;
-        }
-        
-        .answer-box:nth-child(1) .box-decoration { top: 0; left: 0; }
-        .answer-box:nth-child(2) .box-decoration { top: 0; right: 0; }
-        .answer-box:nth-child(3) .box-decoration { bottom: 0; left: 0; }
-        .answer-box:nth-child(4) .box-decoration { bottom: 0; right: 0; }
     `;
     document.head.appendChild(style);
 }
