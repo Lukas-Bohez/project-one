@@ -104,6 +104,34 @@ quiz_file_handler.setLevel(logging.INFO)
 quiz_file_handler.setFormatter(video_formatter)
 if not any(isinstance(h, logging.FileHandler) and getattr(h, 'baseFilename', None) == quiz_file_handler.baseFilename for h in quiz_logger.handlers):
     quiz_logger.addHandler(quiz_file_handler)
+# Socket.IO / Engine.IO and Uvicorn logging setup
+# Write socket-related logs to `socket.log` for debugging client connection errors
+socket_log_file = os.path.join(os.path.dirname(__file__), 'socket.log')
+socket_logger = logging.getLogger('socketio')
+socket_logger.setLevel(logging.DEBUG)
+socket_file_handler = logging.FileHandler(socket_log_file, mode='a')
+socket_file_handler.setLevel(logging.DEBUG)
+socket_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+socket_file_handler.setFormatter(socket_formatter)
+if not any(isinstance(h, logging.FileHandler) and getattr(h, 'baseFilename', None) == socket_file_handler.baseFilename for h in socket_logger.handlers):
+    socket_logger.addHandler(socket_file_handler)
+
+engineio_logger = logging.getLogger('engineio')
+engineio_logger.setLevel(logging.DEBUG)
+if not any(isinstance(h, logging.FileHandler) and getattr(h, 'baseFilename', None) == socket_file_handler.baseFilename for h in engineio_logger.handlers):
+    engineio_logger.addHandler(socket_file_handler)
+
+# Also capture uvicorn error/access logs to the same file to correlate failures
+uvicorn_error_logger = logging.getLogger('uvicorn.error')
+uvicorn_error_logger.setLevel(logging.DEBUG)
+if not any(isinstance(h, logging.FileHandler) and getattr(h, 'baseFilename', None) == socket_file_handler.baseFilename for h in uvicorn_error_logger.handlers):
+    uvicorn_error_logger.addHandler(socket_file_handler)
+
+uvicorn_access_logger = logging.getLogger('uvicorn.access')
+uvicorn_access_logger.setLevel(logging.INFO)
+if not any(isinstance(h, logging.FileHandler) and getattr(h, 'baseFilename', None) == socket_file_handler.baseFilename for h in uvicorn_access_logger.handlers):
+    uvicorn_access_logger.addHandler(socket_file_handler)
+
 quiz_logger.propagate = False
 quiz_logger.info("="*50)
 quiz_logger.info("Quiz Logger Initialized")
@@ -207,6 +235,68 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Socket.IO Messaging Backend", version="1.0.0", lifespan=lifespan)
 
+# Middleware to log incoming HTTP requests (path, query, headers) to socket.log
+@app.middleware("http")
+async def log_incoming_requests(request, call_next):
+    try:
+        sock_logger = logging.getLogger('socketio')
+        info = {
+            'method': request.method,
+            'path': request.url.path,
+            'query': str(request.url.query),
+            'origin': request.headers.get('origin'),
+            'upgrade': request.headers.get('upgrade'),
+            'connection': request.headers.get('connection')
+        }
+        # Log request plus full headers at DEBUG level for socket.io polling paths
+        sock_logger.debug(f"Incoming HTTP request: {info}")
+        if request.url.path.startswith('/socket.io'):
+            # Log all headers for additional context
+            headers_dict = {k: v for k, v in request.headers.items()}
+            sock_logger.debug(f"Socket.IO request headers: {headers_dict}")
+    except Exception:
+        logging.exception("Failed to log incoming request")
+    response = await call_next(request)
+    try:
+        if request.url.path.startswith('/socket.io'):
+            # Attempt to read response body for debugging. Some responses are streaming,
+            # so we handle both direct body and iterator cases. If we consume the
+            # iterator, we recreate the Response so the client still receives it.
+            body_bytes = None
+            try:
+                if hasattr(response, 'body') and response.body is not None:
+                    body_bytes = response.body
+                else:
+                    # For streaming responses, gather the chunks
+                    body_chunks = []
+                    async for chunk in response.body_iterator:
+                        body_chunks.append(chunk)
+                    body_bytes = b"".join(body_chunks)
+                    # Recreate Response so it's still sent to the client
+                    from starlette.responses import Response as StarletteResponse
+                    new_resp = StarletteResponse(content=body_bytes, status_code=response.status_code, headers=dict(response.headers), media_type=getattr(response, 'media_type', None))
+                    response = new_resp
+            except Exception:
+                logging.exception("Failed to extract socket.io response body")
+
+            try:
+                decoded = None
+                if body_bytes is not None:
+                    try:
+                        decoded = body_bytes.decode('utf-8')
+                    except Exception:
+                        decoded = repr(body_bytes)
+                sock_logger.debug({
+                    'status_code': response.status_code,
+                    'response_headers': dict(response.headers),
+                    'body': decoded
+                })
+            except Exception:
+                logging.exception("Failed to log socket.io response metadata")
+    except Exception:
+        logging.exception("Failed to log socket.io response metadata")
+    return response
+
 # CORS middleware for FastAPI
 app.add_middleware(
     CORSMiddleware,
@@ -226,7 +316,8 @@ app.add_middleware(SlowAPIMiddleware)
 sio = socketio.AsyncServer(
     cors_allowed_origins="*",
     async_mode='asgi',
-    logger=False
+    logger=True,
+    engineio_logger=True
 )
 
 ENDPOINT = "/api/v1"  # API base endpoint
@@ -421,8 +512,10 @@ def is_quiz_session_active(session_id):
         print(f"Error checking quiz session activity: {e}")
         return True  # Assume active if we can't check
 
-# Mount Socket.IO on the same app
-app.mount("/socket.io", socketio.ASGIApp(sio, app))
+# Create a top-level ASGI application that delegates socket.io paths
+# to the Socket.IO ASGI app and forwards other requests to the FastAPI app.
+# Use this `asgi_app` when running Uvicorn to avoid recursive mounting.
+asgi_app = socketio.ASGIApp(sio, app, socketio_path='socket.io')
 
 newClient = None
 # ----------------------------------------------------
@@ -10454,8 +10547,9 @@ if __name__ == "__main__":
     # side-effects and confusing bind errors). Keep `reload=False` here to
     # avoid automatic reloading in long-running deployments.
     if __name__ == "__main__":
+        # Run the top-level ASGI app that includes Socket.IO and FastAPI
         uvicorn.run(
-            app,
+            asgi_app,
             host="0.0.0.0",
             port=int(os.getenv("PORT", 8001)),  # Allow overriding via PORT env var
             reload=dev_reload,
