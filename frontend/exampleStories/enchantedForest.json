@@ -1,0 +1,86 @@
+{
+  "meta": {
+    "title": "The Enchanted Forest",
+    "startScene": "start",
+    "version": "1.0",
+    "created": "2025-12-09T00:00:00.000Z"
+  },
+  "variables": {
+    "health": { "type": "number", "value": 100, "min": 0, "max": 100 },
+    "courage": { "type": "number", "value": 50, "min": 0, "max": 100 },
+    "hasMap": { "type": "boolean", "value": false },
+    "gold": { "type": "number", "value": 25, "min": 0, "max": 999 }
+  },
+  "scenes": {
+    "start": {
+      "id": "start",
+      "title": "The Forest's Edge",
+      "text": "You stand at the edge of a mysterious forest. Ancient trees tower above you, their branches intertwined to form a canopy so thick that only scattered beams of sunlight reach the forest floor. A worn path disappears into the shadows ahead, while to your left, you notice strange glowing flowers that seem to pulse with their own inner light.",
+      "choices": [
+        {
+          "id": "choice_1",
+          "text": "Follow the worn path deeper into the forest",
+          "target": "deep_forest",
+          "conditions": [],
+          "effects": [{ "variable": "courage", "operation": "add", "value": 5 }]
+        },
+        {
+          "id": "choice_2",
+          "text": "Investigate the glowing flowers",
+          "target": "magic_flowers",
+          "conditions": [],
+          "effects": [{ "variable": "health", "operation": "add", "value": 10 }]
+        },
+        {
+          "id": "choice_3",
+          "text": "Turn back - this place feels too dangerous",
+          "target": "safe_retreat",
+          "conditions": [],
+          "effects": [{ "variable": "courage", "operation": "subtract", "value": 10 }]
+        }
+      ]
+    },
+    "deep_forest": {
+      "id": "deep_forest",
+      "title": "Into the Heart of Mystery",
+      "text": "The path winds deeper into the forest, and you notice the air growing cooler and more mysterious. Strange sounds echo from the darkness between the trees. Suddenly, you come across a fork in the path - one way leads to what looks like ruins of an ancient temple, while the other descends toward the sound of running water.",
+      "choices": [
+        {
+          "id": "choice_4",
+          "text": "Explore the ancient temple ruins",
+          "target": "temple_ruins",
+          "conditions": [{ "variable": "courage", "operator": ">=", "value": 40 }],
+          "effects": [{ "variable": "gold", "operation": "add", "value": 50 }]
+        },
+        {
+          "id": "choice_5",
+          "text": "Follow the path to the water source",
+          "target": "hidden_spring",
+          "conditions": [],
+          "effects": [{ "variable": "health", "operation": "set", "value": 100 }]
+        }
+      ]
+    },
+    "magic_flowers": {
+      "id": "magic_flowers",
+      "title": "The Enchanted Garden",
+      "text": "As you approach the glowing flowers, you feel a warm, tingling sensation. These are healing blossoms - rare magical plants that can restore vitality. You carefully pick a few, feeling your strength renewed. But as you do, you hear a gentle voice warning you that taking too much magic from the forest comes with a price.",
+      "choices": [
+        {
+          "id": "choice_6",
+          "text": "Take only what you need and continue respectfully",
+          "target": "wise_path",
+          "conditions": [],
+          "effects": [{ "variable": "hasMap", "operation": "set", "value": true }]
+        },
+        {
+          "id": "choice_7",
+          "text": "Gather as many flowers as possible",
+          "target": "greedy_path",
+          "conditions": [],
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 20 }]
+        }
+      ]
+    }
+  }
+}
