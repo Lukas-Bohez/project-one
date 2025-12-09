@@ -37,48 +37,710 @@
           "target": "safe_retreat",
           "conditions": [],
           "effects": [{ "variable": "courage", "operation": "subtract", "value": 10 }]
-        }
-      ]
-    },
-    "deep_forest": {
-      "id": "deep_forest",
-      "title": "Into the Heart of Mystery",
-      "text": "The path winds deeper into the forest, and you notice the air growing cooler and more mysterious. Strange sounds echo from the darkness between the trees. Suddenly, you come across a fork in the path - one way leads to what looks like ruins of an ancient temple, while the other descends toward the sound of running water.",
-      "choices": [
+        },
         {
           "id": "choice_4",
-          "text": "Explore the ancient temple ruins",
-          "target": "temple_ruins",
-          "conditions": [{ "variable": "courage", "operator": ">=", "value": 40 }],
-          "effects": [{ "variable": "gold", "operation": "add", "value": 50 }]
-        },
-        {
-          "id": "choice_5",
-          "text": "Follow the path to the water source",
-          "target": "hidden_spring",
+          "text": "Walk towards the cliff edge",
+          "target": "cliff_edge",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "set", "value": 100 }]
+          "effects": []
         }
       ]
     },
-    "magic_flowers": {
-      "id": "magic_flowers",
-      "title": "The Enchanted Garden",
-      "text": "As you approach the glowing flowers, you feel a warm, tingling sensation. These are healing blossoms - rare magical plants that can restore vitality. You carefully pick a few, feeling your strength renewed. But as you do, you hear a gentle voice warning you that taking too much magic from the forest comes with a price.",
+
+    "deep_forest": {
+      "id": "deep_forest",
+      "title": "Deep in the Forest",
+      "text": "You venture deeper into the forest. The trees grow denser, and you hear strange noises. Ahead, you see a cave entrance and a wooden path.",
       "choices": [
         {
-          "id": "choice_6",
-          "text": "Take only what you need and continue respectfully",
-          "target": "wise_path",
+          "id": "choice_cave",
+          "text": "Enter the cave",
+          "target": "cave_entrance",
           "conditions": [],
-          "effects": [{ "variable": "hasMap", "operation": "set", "value": true }]
+          "effects": []
         },
         {
-          "id": "choice_7",
-          "text": "Gather as many flowers as possible",
-          "target": "greedy_path",
+          "id": "choice_wooden",
+          "text": "Take the wooden path",
+          "target": "wooden_path",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+
+    "magic_flowers": {
+      "id": "magic_flowers",
+      "title": "The Glowing Flowers",
+      "text": "The flowers glow brightly. As you approach, you feel a surge of energy. You gain health.",
+      "choices": [
+        {
+          "id": "choice_back",
+          "text": "Go back to the start",
+          "target": "start",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+
+    "safe_retreat": {
+      "id": "safe_retreat",
+      "title": "Safe Retreat",
+      "text": "You decide it's too dangerous and turn back. You leave the forest safely.",
+      "choices": [
+        {
+          "id": "choice_restart",
+          "text": "Restart",
+          "target": "start",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+
+    "cliff_edge": {
+      "id": "cliff_edge",
+      "title": "The Cliff Edge",
+      "text": "The cliff. I walk off the cliff, I fall. I see my leg, and it's bone sticking through it, a rock is in me, down there. This is so embarrassing.",
+      "choices": [
+        {
+          "id": "choice_suffer",
+          "text": "Suffer through the pain",
+          "target": "cliff_suffer",
+          "conditions": [],
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 50 }]
+        },
+        {
+          "id": "choice_call_help",
+          "text": "Call for help",
+          "target": "cliff_help",
+          "conditions": [],
+          "effects": [{ "variable": "courage", "operation": "add", "value": 20 }]
+        }
+      ]
+    },
+    "cliff_suffer": {
+      "id": "cliff_suffer",
+      "title": "Agonizing Pain",
+      "text": "I'm bleeding a lot, this hurts so much, oh lord, end the pain. (Health -50)",
+      "choices": [
+        {
+          "id": "choice_endure",
+          "text": "Try to endure",
+          "target": "cliff_endure",
+          "conditions": [],
+          "effects": []
+        },
+        {
+          "id": "choice_give_up",
+          "text": "Give up",
+          "target": "death_cliff1",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "cliff_endure": {
+      "id": "cliff_endure",
+      "title": "Enduring the Fall",
+      "text": "You crawl painfully, but the cliff is steep. You slip further.",
+      "choices": [
+        {
+          "id": "choice_climb",
+          "text": "Try to climb back",
+          "target": "cliff_climb",
+          "conditions": [],
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 30 }]
+        }
+      ]
+    },
+    "cliff_climb": {
+      "id": "cliff_climb",
+      "title": "Climbing Back",
+      "text": "You grab rocks, but they crumble. You fall again, harder.",
+      "choices": [
+        {
+          "id": "choice_fall_again",
+          "text": "Fall deeper",
+          "target": "death_cliff1",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "death_cliff1": {
+      "id": "death_cliff1",
+      "title": "Death by Fall",
+      "text": "You hit the ground hard. Bones shatter, organs rupture. Blood pools around you as you gasp your last breath. Embarrassing end.",
+      "choices": [
+        {
+          "id": "choice_restart",
+          "text": "Restart",
+          "target": "start",
+          "conditions": [],
+          "effects": [{ "variable": "health", "operation": "set", "value": 100 }, { "variable": "courage", "operation": "set", "value": 50 }, { "variable": "gold", "operation": "set", "value": 25 }, { "variable": "hasMap", "operation": "set", "value": false }]
+        }
+      ]
+    },
+    "cliff_help": {
+      "id": "cliff_help",
+      "title": "Calling for Help",
+      "text": "You shout for help. A shadowy figure appears above.",
+      "choices": [
+        {
+          "id": "choice_plead",
+          "text": "Plead for rescue",
+          "target": "cliff_plead",
+          "conditions": [],
+          "effects": []
+        },
+        {
+          "id": "choice_throw_rope",
+          "text": "Ask for a rope",
+          "target": "cliff_rope",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "cliff_plead": {
+      "id": "cliff_plead",
+      "title": "Pleading",
+      "text": "The figure laughs and pushes a boulder. It rolls towards you.",
+      "choices": [
+        {
+          "id": "choice_dodge",
+          "text": "Dodge the boulder",
+          "target": "cliff_dodge",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "cliff_dodge": {
+      "id": "cliff_dodge",
+      "title": "Dodging",
+      "text": "You dodge, but slip and fall further into a pit of spikes.",
+      "choices": [
+        {
+          "id": "choice_impaled",
+          "text": "Get impaled",
+          "target": "death_cliff2",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "cliff_rope": {
+      "id": "cliff_rope",
+      "title": "The Rope",
+      "text": "The figure throws a rope, but it's too short. You grab it, swing, and crash into rocks.",
+      "choices": [
+        {
+          "id": "choice_swing",
+          "text": "Swing wildly",
+          "target": "cliff_swing",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "cliff_swing": {
+      "id": "cliff_swing",
+      "title": "Swinging",
+      "text": "You swing into a tree, branches pierce your body.",
+      "choices": [
+        {
+          "id": "choice_pierced",
+          "text": "Suffer the piercing",
+          "target": "death_cliff2",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "death_cliff2": {
+      "id": "death_cliff2",
+      "title": "Brutal Cliff Death",
+      "text": "Spikes and branches tear through you. Blood sprays, intestines spill out. You scream as vultures peck at your exposed guts while you're still alive, slowly eating you from the inside out. Agony lasts hours until your heart finally stops. Horrific.",
+      "choices": [
+        {
+          "id": "choice_restart",
+          "text": "Restart",
+          "target": "start",
+          "conditions": [],
+          "effects": [{ "variable": "health", "operation": "set", "value": 100 }, { "variable": "courage", "operation": "set", "value": 50 }, { "variable": "gold", "operation": "set", "value": 25 }, { "variable": "hasMap", "operation": "set", "value": false }]
+        }
+      ]
+    },
+    "cave_entrance": {
+      "id": "cave_entrance",
+      "title": "The Cave Entrance",
+      "text": "I walk into the big scary cave, it's fleshy and scary. The first hallway is a mouthlike carving of teeth, the other a wet sounding room, and the third a spider infested chamber with big sounding noises.",
+      "choices": [
+        {
+          "id": "choice_teeth",
+          "text": "Enter the mouthlike hallway",
+          "target": "teeth_hallway",
+          "conditions": [],
+          "effects": [{ "variable": "courage", "operation": "subtract", "value": 15 }]
+        },
+        {
+          "id": "choice_wet",
+          "text": "Go to the wet sounding room",
+          "target": "wet_room",
+          "conditions": [],
+          "effects": [{ "variable": "health", "operation": "add", "value": 20 }]
+        },
+        {
+          "id": "choice_spider",
+          "text": "Venture into the spider chamber",
+          "target": "spider_chamber",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "teeth_hallway": {
+      "id": "teeth_hallway",
+      "title": "The Teeth Hallway",
+      "text": "The walls seem alive, teeth-like protrusions snap at you.",
+      "choices": [
+        {
+          "id": "choice_run",
+          "text": "Run through",
+          "target": "teeth_run",
           "conditions": [],
           "effects": [{ "variable": "health", "operation": "subtract", "value": 20 }]
+        },
+        {
+          "id": "choice_crawl",
+          "text": "Crawl carefully",
+          "target": "teeth_crawl",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "teeth_run": {
+      "id": "teeth_run",
+      "title": "Running Through Teeth",
+      "text": "Teeth bite chunks out of you as you run.",
+      "choices": [
+        {
+          "id": "choice_escape",
+          "text": "Escape to the next room",
+          "target": "teeth_escape",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "teeth_escape": {
+      "id": "teeth_escape",
+      "title": "Teeth Escape",
+      "text": "You make it, but bleeding heavily. A giant mouth awaits.",
+      "choices": [
+        {
+          "id": "choice_enter_mouth",
+          "text": "Enter the giant mouth",
+          "target": "death_teeth",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "teeth_crawl": {
+      "id": "teeth_crawl",
+      "title": "Crawling Through",
+      "text": "You crawl, avoiding most bites, but one gets your arm.",
+      "choices": [
+        {
+          "id": "choice_continue_crawl",
+          "text": "Continue",
+          "target": "teeth_continue",
+          "conditions": [],
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 40 }]
+        }
+      ]
+    },
+    "teeth_continue": {
+      "id": "teeth_continue",
+      "title": "Deeper Crawl",
+      "text": "The hallway narrows, teeth close in.",
+      "choices": [
+        {
+          "id": "choice_squeeze",
+          "text": "Squeeze through",
+          "target": "death_teeth",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "death_teeth": {
+      "id": "death_teeth",
+      "title": "Death by Teeth",
+      "text": "The giant mouth swallows you whole. Teeth grind slowly, crushing bones one by one. You feel your ribs snap, spine shatter, blood filling your lungs. The digestive acids burn your skin off layer by layer over days, melting flesh while you scream internally. Eventually, nothing left but digested remains. Grotesque and prolonged.",
+      "choices": [
+        {
+          "id": "choice_restart",
+          "text": "Restart",
+          "target": "start",
+          "conditions": [],
+          "effects": [{ "variable": "health", "operation": "set", "value": 100 }, { "variable": "courage", "operation": "set", "value": 50 }, { "variable": "gold", "operation": "set", "value": 25 }, { "variable": "hasMap", "operation": "set", "value": false }]
+        }
+      ]
+    },
+    "wet_room": {
+      "id": "wet_room",
+      "title": "The Wet Room",
+      "text": "This room is filled with healing waters. You feel rejuvenated. (Health +20)",
+      "choices": [
+        {
+          "id": "choice_drink",
+          "text": "Drink the water",
+          "target": "wet_drink",
+          "conditions": [],
+          "effects": [{ "variable": "health", "operation": "set", "value": 100 }]
+        },
+        {
+          "id": "choice_swim",
+          "text": "Swim deeper",
+          "target": "wet_swim",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "wet_drink": {
+      "id": "wet_drink",
+      "title": "Drinking the Water",
+      "text": "The water tastes sweet, but you feel strange.",
+      "choices": [
+        {
+          "id": "choice_more_drink",
+          "text": "Drink more",
+          "target": "wet_more",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "wet_more": {
+      "id": "wet_more",
+      "title": "Drinking More",
+      "text": "Your body swells, skin stretches.",
+      "choices": [
+        {
+          "id": "choice_burst",
+          "text": "Feel the burst",
+          "target": "death_wet",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "wet_swim": {
+      "id": "wet_swim",
+      "title": "Swimming Deeper",
+      "text": "The water gets warmer, then boiling.",
+      "choices": [
+        {
+          "id": "choice_surface",
+          "text": "Try to surface",
+          "target": "wet_surface",
+          "conditions": [],
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 50 }]
+        }
+      ]
+    },
+    "wet_surface": {
+      "id": "wet_surface",
+      "title": "Surfacing",
+      "text": "You burn, skin peeling off.",
+      "choices": [
+        {
+          "id": "choice_burn",
+          "text": "Suffer the burns",
+          "target": "death_wet",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "death_wet": {
+      "id": "death_wet",
+      "title": "Death by Water",
+      "text": "Your body explodes from swelling or boils in acid water. Skin melts, eyes burst, muscles dissolve. You float in agony as parasites enter your orifices, laying eggs that hatch and eat you from within. Days of writhing in pain, feeling larvae crawl through veins, bursting out in fountains of blood. Utterly disgusting and eternal suffering.",
+      "choices": [
+        {
+          "id": "choice_restart",
+          "text": "Restart",
+          "target": "start",
+          "conditions": [],
+          "effects": [{ "variable": "health", "operation": "set", "value": 100 }, { "variable": "courage", "operation": "set", "value": 50 }, { "variable": "gold", "operation": "set", "value": 25 }, { "variable": "hasMap", "operation": "set", "value": false }]
+        }
+      ]
+    },
+    "spider_chamber": {
+      "id": "spider_chamber",
+      "title": "The Spider Chamber",
+      "text": "Giant spiders attack!",
+      "choices": [
+        {
+          "id": "choice_fight",
+          "text": "Fight back",
+          "target": "spider_fight",
+          "conditions": [],
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 30 }]
+        },
+        {
+          "id": "choice_run_away",
+          "text": "Run away",
+          "target": "spider_run",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "spider_fight": {
+      "id": "spider_fight",
+      "title": "Fighting Spiders",
+      "text": "You kill some, but more come. Venom burns.",
+      "choices": [
+        {
+          "id": "choice_keep_fighting",
+          "text": "Keep fighting",
+          "target": "spider_keep",
+          "conditions": [],
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 40 }]
+        }
+      ]
+    },
+    "spider_keep": {
+      "id": "spider_keep",
+      "title": "Continuing Fight",
+      "text": "Exhausted, spiders overwhelm you.",
+      "choices": [
+        {
+          "id": "choice_overwhelmed",
+          "text": "Get overwhelmed",
+          "target": "death_spider",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "spider_run": {
+      "id": "spider_run",
+      "title": "Running from Spiders",
+      "text": "You run into a web trap.",
+      "choices": [
+        {
+          "id": "choice_struggle",
+          "text": "Struggle in the web",
+          "target": "spider_struggle",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "spider_struggle": {
+      "id": "spider_struggle",
+      "title": "Struggling",
+      "text": "Spiders approach, wrapping you.",
+      "choices": [
+        {
+          "id": "choice_wrapped",
+          "text": "Get wrapped",
+          "target": "death_spider",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "death_spider": {
+      "id": "death_spider",
+      "title": "Death by Spiders",
+      "text": "Spiders cocoon you in silk, inject paralyzing venom. You feel fangs pierce skin, venom coursing through veins, numbing yet burning. They start eating you alive, legs first, then arms, torso. You watch helplessly as they devour your flesh, organs exposed, heart beating as they nibble. Hours turn to days, consciousness fading slowly in excruciating pain. Nightmare fuel.",
+      "choices": [
+        {
+          "id": "choice_restart",
+          "text": "Restart",
+          "target": "start",
+          "conditions": [],
+          "effects": [{ "variable": "health", "operation": "set", "value": 100 }, { "variable": "courage", "operation": "set", "value": 50 }, { "variable": "gold", "operation": "set", "value": 25 }, { "variable": "hasMap", "operation": "set", "value": false }]
+        }
+      ]
+    },
+    "wooden_path": {
+      "id": "wooden_path",
+      "title": "The Wooden Path",
+      "text": "The path is sturdy and leads to a peaceful glade. You find some gold coins. (Gold +15)",
+      "choices": [
+        {
+          "id": "choice_rest",
+          "text": "Rest here",
+          "target": "glade_rest",
+          "conditions": [],
+          "effects": [{ "variable": "health", "operation": "add", "value": 10 }]
+        },
+        {
+          "id": "choice_continue_path",
+          "text": "Continue along the path",
+          "target": "path_continue",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "glade_rest": {
+      "id": "glade_rest",
+      "title": "Peaceful Rest",
+      "text": "You rest and regain strength. (Health +10)",
+      "choices": [
+        {
+          "id": "choice_relax",
+          "text": "Relax more",
+          "target": "glade_relax",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "glade_relax": {
+      "id": "glade_relax",
+      "title": "Relaxing",
+      "text": "A snake bites you while you sleep.",
+      "choices": [
+        {
+          "id": "choice_wake",
+          "text": "Wake up",
+          "target": "glade_wake",
+          "conditions": [],
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 60 }]
+        }
+      ]
+    },
+    "glade_wake": {
+      "id": "glade_wake",
+      "title": "Waking Up",
+      "text": "Poison spreads, body convulsing.",
+      "choices": [
+        {
+          "id": "choice_convulse",
+          "text": "Convulse",
+          "target": "death_glade",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "death_glade": {
+      "id": "death_glade",
+      "title": "Death by Poison",
+      "text": "Venom paralyzes muscles, you can't breathe. Foam at mouth, eyes bulging. Internal organs liquefy, blood clots. Seizures rack your body for hours, bones cracking from spasms. Finally, heart explodes in chest. Painful and humiliating.",
+      "choices": [
+        {
+          "id": "choice_restart",
+          "text": "Restart",
+          "target": "start",
+          "conditions": [],
+          "effects": [{ "variable": "health", "operation": "set", "value": 100 }, { "variable": "courage", "operation": "set", "value": 50 }, { "variable": "gold", "operation": "set", "value": 25 }, { "variable": "hasMap", "operation": "set", "value": false }]
+        }
+      ]
+    },
+    "path_continue": {
+      "id": "path_continue",
+      "title": "Deeper Woods",
+      "text": "The path leads to a mysterious ruin. You find ancient artifacts. (Gold +25)",
+      "choices": [
+        {
+          "id": "choice_investigate",
+          "text": "Investigate the ruins",
+          "target": "ruins_investigate",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "ruins_investigate": {
+      "id": "ruins_investigate",
+      "title": "Ancient Ruins",
+      "text": "You enter the ruins. Traps activate.",
+      "choices": [
+        {
+          "id": "choice_touch_artifact",
+          "text": "Touch the artifact",
+          "target": "ruins_touch",
+          "conditions": [],
+          "effects": []
+        },
+        {
+          "id": "choice_read_inscription",
+          "text": "Read the inscription",
+          "target": "ruins_read",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "ruins_touch": {
+      "id": "ruins_touch",
+      "title": "Touching Artifact",
+      "text": "It curses you, body withers.",
+      "choices": [
+        {
+          "id": "choice_wither",
+          "text": "Wither",
+          "target": "death_ruins",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "ruins_read": {
+      "id": "ruins_read",
+      "title": "Reading Inscription",
+      "text": "It summons demons.",
+      "choices": [
+        {
+          "id": "choice_summon",
+          "text": "Face the demons",
+          "target": "ruins_demons",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "ruins_demons": {
+      "id": "ruins_demons",
+      "title": "Facing Demons",
+      "text": "Demons tear you apart.",
+      "choices": [
+        {
+          "id": "choice_torn",
+          "text": "Get torn",
+          "target": "death_ruins",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "death_ruins": {
+      "id": "death_ruins",
+      "title": "Death by Curse/Demons",
+      "text": "Cursed flesh rots off bones while alive, or demons flay skin in strips, pour molten metal into wounds. Screams echo as nerves fire endlessly. Weeks of torment, body a husk of pain, soul trapped in agony forever. Beyond brutal, cosmic horror.",
+      "choices": [
+        {
+          "id": "choice_restart",
+          "text": "Restart",
+          "target": "start",
+          "conditions": [],
+          "effects": [{ "variable": "health", "operation": "set", "value": 100 }, { "variable": "courage", "operation": "set", "value": 50 }, { "variable": "gold", "operation": "set", "value": 25 }, { "variable": "hasMap", "operation": "set", "value": false }]
         }
       ]
     }
