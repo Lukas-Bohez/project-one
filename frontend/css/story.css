@@ -175,6 +175,12 @@ body {
     background-clip: text;
 }
 
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 .header-actions {
     display: flex;
     align-items: center;
@@ -1111,6 +1117,7 @@ body {
     padding: 24px;
     box-shadow: var(--shadow-md);
     border: 1px solid var(--border);
+    margin-bottom: 24px;
 }
 
 .settings-card h3 {
