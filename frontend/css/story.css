@@ -1242,6 +1242,29 @@ body {
     margin-left: 60px;
 }
 
+/* Compact variables on larger displays */
+@media (min-width: 1024px) {
+    .variable-item {
+        gap: 8px;
+        padding: 8px 12px;
+    }
+
+    .variable-info {
+        flex-direction: row;
+        gap: 8px;
+        align-items: center;
+        min-width: 80px;
+    }
+
+    .variable-value-input {
+        width: 80px;
+    }
+
+    .variables-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 /* Toast Notifications */
 @keyframes slideInUp {
     from {
