@@ -22,27 +22,6 @@
                     <span>◁</span>
                 </button>
             </div>
-            <div class="header-actions">
-                <button id="exportBtn" class="btn btn-secondary">
-                    <span>💾</span> Export
-                </button>
-                <label for="importFile" class="btn btn-secondary">
-                    <span>📥</span> Import
-                </label>
-                <input type="file" id="importFile" accept=".json" style="display: none;" aria-label="Import story file">
-                <select id="exampleSelect" class="form-select" style="margin-left: 8px; width: 220px; display:none;">
-                    <option value="" disabled selected>Load Example...</option>
-                </select>
-                <button id="loadExampleBtn" class="btn btn-secondary" disabled style="display:none;">
-                    <span>📚</span> Load Example
-                </button>
-                <button id="resetExampleBtn" class="btn btn-secondary" title="Reset current story and load example" style="display:none;">
-                    <span>♻️</span> Reset to Example
-                </button>
-                <button id="theme-toggle" class="btn btn-secondary" aria-label="Toggle dark mode">
-                    🌙
-                </button>
-            </div>
         </div>
     </header>
 
@@ -75,6 +54,30 @@
                     <span class="nav-text">Settings</span>
                 </li>
             </ul>
+            <div class="sidebar-section">
+                <h3 class="sidebar-section-title">Actions</h3>
+                <div class="sidebar-actions">
+                    <button id="exportBtn" class="btn btn-secondary">
+                        <span>💾</span> Export
+                    </button>
+                    <label for="importFile" class="btn btn-secondary">
+                        <span>📥</span> Import
+                    </label>
+                    <input type="file" id="importFile" accept=".json" style="display: none;" aria-label="Import story file">
+                    <select id="exampleSelect" class="form-select">
+                        <option value="" disabled selected>Load Example...</option>
+                    </select>
+                    <button id="loadExampleBtn" class="btn btn-secondary" disabled>
+                        <span>📚</span> Load Example
+                    </button>
+                    <button id="resetExampleBtn" class="btn btn-secondary" title="Reset current story and load example">
+                        <span>♻️</span> Reset to Example
+                    </button>
+                    <button id="theme-toggle" class="btn btn-secondary" aria-label="Toggle dark mode">
+                        🌙
+                    </button>
+                </div>
+            </div>
         </nav>
 
         <!-- Main Content -->
