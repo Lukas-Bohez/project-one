@@ -356,7 +356,7 @@ const syncCacheToPlaylist = async () => {
                     metadata: item.metadata
                 });
                 addedCount++;
-                console.log('➕ Added to playlist:', prettyTitle(title));
+                console.log('+ Added to playlist:', prettyTitle(title));
             }
         }
         

@@ -101,7 +101,7 @@ function initializeEventListeners() {
         if (isPlaylistUrl(val)) {
             if (!playlistUrlDetected) {
                 playlistUrlDetected = true;
-                tempDisableConvertAndDownload('Playlist URL detected — fetching playlist info');
+                tempDisableConvertAndDownload('Playlist URL detected  fetching playlist info');
             }
             // still schedule validation (optional) but keep buttons disabled until API responds
             validationTimeout = setTimeout(validateUrl, 800);
@@ -126,7 +126,7 @@ function initializeEventListeners() {
             const val = (videoUrlInput.value || '').trim();
             if (isPlaylistUrl(val)) {
                 playlistUrlDetected = true;
-                tempDisableConvertAndDownload('Playlist URL detected — fetching playlist info');
+                tempDisableConvertAndDownload('Playlist URL detected  fetching playlist info');
             }
         }, 60);
     });
@@ -4176,7 +4176,7 @@ async function handleConvertAgain() {
         if (continued) return;
     }
 
-    // Fallback: no active bulk to continue — reset UI for a fresh conversion
+    // Fallback: no active bulk to continue  reset UI for a fresh conversion
     // Keep this client-side so we don't hard reload unless necessary
     isProcessing = false;
     hideSpinner();
