@@ -66,7 +66,7 @@ class LightSensor:
 
 if __name__ == "__main__":
     sensor = LightSensor(device=1, simulate=True)
-    print("Light sensor demo — press Ctrl+C to stop")
+    print("Light sensor demo  press Ctrl+C to stop")
     print("--------------------------------------")
     print()
 

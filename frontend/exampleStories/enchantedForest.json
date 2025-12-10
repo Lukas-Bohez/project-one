@@ -15,7 +15,7 @@
     "start": {
       "id": "start",
       "title": "The Forest's Edge",
-      "text": "My legs feel heavy as I stand at the forest's edge. The trees ahead look wrong—too tall, their branches twisted together like arthritic fingers reaching for something that isn't there. Barely any light makes it through. There's a path, I guess, worn down by... something. And these flowers to my left, they're glowing. Actually glowing. Pulsing like they're breathing. I can feel my heart pounding in my chest. Should I really be here?",
+      "text": "My legs feel heavy as I stand at the forest's edge. The trees ahead look wrongtoo tall, their branches twisted together like arthritic fingers reaching for something that isn't there. Barely any light makes it through. There's a path, I guess, worn down by... something. And these flowers to my left, they're glowing. Actually glowing. Pulsing like they're breathing. I can feel my heart pounding in my chest. Should I really be here?",
       "choices": [
         {
           "id": "choice_1",
@@ -58,7 +58,7 @@
     "deep_forest": {
       "id": "deep_forest",
       "title": "Deep in the Forest",
-      "text": "I'm in too deep now. The trees press in from all sides, and I swear I can hear breathing that isn't mine. There's a cave up ahead—its entrance looks like a throat, dark and wet. Something about it makes my skin crawl. The wooden path off to the side looks safer, but... safer doesn't always mean better, does it? My hands are shaking.",
+      "text": "I'm in too deep now. The trees press in from all sides, and I swear I can hear breathing that isn't mine. There's a cave up aheadits entrance looks like a throat, dark and wet. Something about it makes my skin crawl. The wooden path off to the side looks safer, but... safer doesn't always mean better, does it? My hands are shaking.",
       "choices": [
         {
           "id": "choice_cave",
@@ -94,7 +94,7 @@
     "magic_flowers": {
       "id": "magic_flowers",
       "title": "The Glowing Flowers",
-      "text": "The flowers pulse with this weird bioluminescent light—blue, then purple, then back again. As I get closer, I feel warmth spreading through my chest. It's not painful, more like... relief? Like when you finally exhale after holding your breath too long. My wounds ache less. I can feel my heartbeat slowing down to something almost normal.",
+      "text": "The flowers pulse with this weird bioluminescent lightblue, then purple, then back again. As I get closer, I feel warmth spreading through my chest. It's not painful, more like... relief? Like when you finally exhale after holding your breath too long. My wounds ache less. I can feel my heartbeat slowing down to something almost normal.",
       "choices": [
         {
           "id": "choice_back",
@@ -105,7 +105,7 @@
         },
         {
           "id": "choice_pick_flowers",
-          "text": "[HEALTHY] Pick some flowers—might need them later",
+          "text": "[HEALTHY] Pick some flowersmight need them later",
           "target": "deep_forest",
           "conditions": [{ "variable": "health", "comparison": "greater_than", "value": 80 }],
           "effects": [{ "variable": "courage", "operation": "add", "value": 10 }, { "variable": "health", "operation": "add", "value": 20 }]
@@ -131,7 +131,7 @@
     "cliff_edge": {
       "id": "cliff_edge",
       "title": "The Cliff Edge",
-      "text": "I wasn't paying attention. One second I'm walking, the next—nothing under my feet. The fall feels like it lasts forever. Then impact. God, the impact. I can't breathe. Can't think. When I finally look down, I wish I hadn't. My leg is bent the wrong way, white bone jutting through the skin, blood pooling around a jagged rock that's... that's inside me. In my side. I can feel it. Every breath makes it worse. This is how I die, isn't it? Not in some heroic way. Just... stupid. So stupidly.",
+      "text": "I wasn't paying attention. One second I'm walking, the nextnothing under my feet. The fall feels like it lasts forever. Then impact. God, the impact. I can't breathe. Can't think. When I finally look down, I wish I hadn't. My leg is bent the wrong way, white bone jutting through the skin, blood pooling around a jagged rock that's... that's inside me. In my side. I can feel it. Every breath makes it worse. This is how I die, isn't it? Not in some heroic way. Just... stupid. So stupidly.",
       "choices": [
         {
           "id": "choice_suffer",
@@ -142,7 +142,7 @@
         },
         {
           "id": "choice_call_help",
-          "text": "Scream for help—I don't care about pride anymore",
+          "text": "Scream for helpI don't care about pride anymore",
           "target": "cliff_help",
           "conditions": [],
           "effects": [{ "variable": "health", "operation": "subtract", "value": 30 }, { "variable": "courage", "operation": "subtract", "value": 10 }]
@@ -215,7 +215,7 @@
     "death_cliff1": {
       "id": "death_cliff1",
       "title": "Death by Fall",
-      "text": "My body hits something—another ledge maybe. I feel my ribs cave in with this wet crunch. Can't breathe. Trying to breathe. Blood fills my throat, I'm choking on it, drowning in my own blood. My vision's narrowing, just a pinpoint now. I can feel my heart hammering, frantic, then... slower. Slower. This wasn't supposed to happen. I didn't want—I didn't—everything's fading. The last thing I feel is my own blood, still warm, spreading beneath me. Then nothing.",
+      "text": "My body hits somethinganother ledge maybe. I feel my ribs cave in with this wet crunch. Can't breathe. Trying to breathe. Blood fills my throat, I'm choking on it, drowning in my own blood. My vision's narrowing, just a pinpoint now. I can feel my heart hammering, frantic, then... slower. Slower. This wasn't supposed to happen. I didn't wantI didn'teverything's fading. The last thing I feel is my own blood, still warm, spreading beneath me. Then nothing.",
       "choices": [
         {
           "id": "choice_restart",
@@ -320,32 +320,32 @@
     "cave_entrance": {
       "id": "cave_entrance",
       "title": "The Cave Entrance",
-      "text": "The cave walls aren't stone—they're organic, pulsing. Flesh-like. I can feel warmth radiating from them and my stomach turns. Three passages branch off. The left one has what looks like teeth carved into the walls, jutting inward. The middle passage... I can hear dripping, wet sounds echoing from deep inside. And the right—chittering. Clicking. The unmistakable sound of too many legs moving across stone. Something about this whole place feels like a trap. Like I've walked into something's mouth.",
+      "text": "The cave walls aren't stonethey're organic, pulsing. Flesh-like. I can feel warmth radiating from them and my stomach turns. Three passages branch off. The left one has what looks like teeth carved into the walls, jutting inward. The middle passage... I can hear dripping, wet sounds echoing from deep inside. And the rightchittering. Clicking. The unmistakable sound of too many legs moving across stone. Something about this whole place feels like a trap. Like I've walked into something's mouth.",
       "choices": [
         {
           "id": "choice_teeth",
-          "text": "[REQUIRES COURAGE: 55] The teeth hallway—maybe they're just carvings",
+          "text": "[REQUIRES COURAGE: 55] The teeth hallwaymaybe they're just carvings",
           "target": "teeth_hallway",
           "conditions": [{ "variable": "courage", "comparison": "greater_than", "value": 55 }],
           "effects": [{ "variable": "courage", "operation": "add", "value": 10 }]
         },
         {
           "id": "choice_wet",
-          "text": "The wet room—water might mean a way out",
+          "text": "The wet roomwater might mean a way out",
           "target": "wet_room",
           "conditions": [],
           "effects": [{ "variable": "courage", "operation": "add", "value": 5 }]
         },
         {
           "id": "choice_spider",
-          "text": "[REQUIRES COURAGE: 70] The spider chamber—face it head-on",
+          "text": "[REQUIRES COURAGE: 70] The spider chamberface it head-on",
           "target": "spider_chamber",
           "conditions": [{ "variable": "courage", "comparison": "greater_than", "value": 70 }],
           "effects": [{ "variable": "courage", "operation": "add", "value": 15 }]
         },
         {
           "id": "choice_leave_cave",
-          "text": "Back out of the cave—this was a mistake",
+          "text": "Back out of the cavethis was a mistake",
           "target": "deep_forest",
           "conditions": [],
           "effects": [{ "variable": "courage", "operation": "subtract", "value": 10 }]
@@ -355,7 +355,7 @@
     "teeth_hallway": {
       "id": "teeth_hallway",
       "title": "The Teeth Hallway",
-      "text": "The teeth aren't carvings. They're real. I can see them flexing, grinding against each other with this horrible scraping sound. The walls pulse rhythmically—breathing. The whole corridor is breathing. One of the teeth snaps at me as I pass and I jerk back, feeling the air move past my face. If I'd been an inch closer...",
+      "text": "The teeth aren't carvings. They're real. I can see them flexing, grinding against each other with this horrible scraping sound. The walls pulse rhythmicallybreathing. The whole corridor is breathing. One of the teeth snaps at me as I pass and I jerk back, feeling the air move past my face. If I'd been an inch closer...",
       "choices": [
         {
           "id": "choice_run",
@@ -383,7 +383,7 @@
     "teeth_run": {
       "id": "teeth_run",
       "title": "Running Through Teeth",
-      "text": "I run. God, I run. But they're fast. One catches my shoulder—rips through my jacket, through skin, takes a chunk of muscle with it. Another clips my thigh. I feel hot blood running down my leg. Keep moving. Don't stop. Don't think about the pain. Just keep—there! An opening ahead!",
+      "text": "I run. God, I run. But they're fast. One catches my shoulderrips through my jacket, through skin, takes a chunk of muscle with it. Another clips my thigh. I feel hot blood running down my leg. Keep moving. Don't stop. Don't think about the pain. Just keepthere! An opening ahead!",
       "choices": [
         {
           "id": "choice_escape",
@@ -397,7 +397,7 @@
     "teeth_escape": {
       "id": "teeth_escape",
       "title": "Teeth Escape",
-      "text": "I made it through, but I'm leaving a blood trail. My hands are shaking so badly I can barely stand. And then I see it. Ahead. A mouth. Not teeth-lined walls—an actual mouth. Massive. Open. Waiting. The throat disappears into darkness that seems to move, to writhe. I can smell it from here—rotting meat and bile. This is what the hallway was feeding into. This is what it wanted to deliver me to.",
+      "text": "I made it through, but I'm leaving a blood trail. My hands are shaking so badly I can barely stand. And then I see it. Ahead. A mouth. Not teeth-lined wallsan actual mouth. Massive. Open. Waiting. The throat disappears into darkness that seems to move, to writhe. I can smell it from hererotting meat and bile. This is what the hallway was feeding into. This is what it wanted to deliver me to.",
       "choices": [
         {
           "id": "choice_enter_mouth",
@@ -439,7 +439,7 @@
     "death_teeth": {
       "id": "death_teeth",
       "title": "Death by Teeth",
-      "text": "The mouth doesn't swallow quickly—it savors. I feel myself sliding down the throat, walls of muscle contracting around me, squeezing. The teeth start their work slowly. Methodical. First, I feel my ribs crack, one by one, like someone snapping dry twigs. Then my spine—that's worse. So much worse. I can't move my legs. Can't move anything below my neck but I can still feel it. All of it. The digestive acid starts seeping in, burning through my clothes first, then skin. It's not quick. My nerve endings are still firing, sending signals of agony that my brain can't process fast enough. I'm being dissolved. Melted. I can feel my flesh liquefying, sloughing off bones that are themselves beginning to soften, to dissolve. Days pass. Or hours. Or minutes. Time has no meaning in this darkness, this pain. I'm still conscious. Still aware. Still feeling every moment as my body stops being a body and becomes nothing but scattered molecules in digestive fluid. This is dying. Truly dying. Not the quick snap of the neck or fade to black. This is being unmade, piece by piece, cell by cell, while something in me that should have died hours ago stubbornly refuses to let go.",
+      "text": "The mouth doesn't swallow quicklyit savors. I feel myself sliding down the throat, walls of muscle contracting around me, squeezing. The teeth start their work slowly. Methodical. First, I feel my ribs crack, one by one, like someone snapping dry twigs. Then my spinethat's worse. So much worse. I can't move my legs. Can't move anything below my neck but I can still feel it. All of it. The digestive acid starts seeping in, burning through my clothes first, then skin. It's not quick. My nerve endings are still firing, sending signals of agony that my brain can't process fast enough. I'm being dissolved. Melted. I can feel my flesh liquefying, sloughing off bones that are themselves beginning to soften, to dissolve. Days pass. Or hours. Or minutes. Time has no meaning in this darkness, this pain. I'm still conscious. Still aware. Still feeling every moment as my body stops being a body and becomes nothing but scattered molecules in digestive fluid. This is dying. Truly dying. Not the quick snap of the neck or fade to black. This is being unmade, piece by piece, cell by cell, while something in me that should have died hours ago stubbornly refuses to let go.",
       "choices": [
         {
           "id": "choice_restart",
@@ -453,7 +453,7 @@
     "wet_room": {
       "id": "wet_room",
       "title": "The Wet Room",
-      "text": "Water. Actual water. The cavern opens into a natural pool, clear and still. I can see my reflection on the surface—I look worse than I thought. The water looks inviting. Cold. Clean. Maybe it could help with the wounds. But something about it feels off. Too still. Too clear. Nothing grows in it. No algae, no plants, nothing.",
+      "text": "Water. Actual water. The cavern opens into a natural pool, clear and still. I can see my reflection on the surfaceI look worse than I thought. The water looks inviting. Cold. Clean. Maybe it could help with the wounds. But something about it feels off. Too still. Too clear. Nothing grows in it. No algae, no plants, nothing.",
       "choices": [
         {
           "id": "choice_drink",
@@ -464,14 +464,14 @@
         },
         {
           "id": "choice_swim",
-          "text": "Wade in deeper—maybe there's an exit underwater",
+          "text": "Wade in deepermaybe there's an exit underwater",
           "target": "wet_swim",
           "conditions": [],
           "effects": [{ "variable": "courage", "operation": "add", "value": 10 }]
         },
         {
           "id": "choice_leave_water",
-          "text": "Back away from the water—trust my instincts",
+          "text": "Back away from the watertrust my instincts",
           "target": "cave_entrance",
           "conditions": [],
           "effects": [{ "variable": "courage", "operation": "add", "value": 5 }]
@@ -481,7 +481,7 @@
     "wet_drink": {
       "id": "wet_drink",
       "title": "Drinking the Water",
-      "text": "It tastes amazing. Sweet, almost honey-like. I feel energy coursing through me immediately, wounds tingling as they start to close. But then—something else. A pressure in my stomach. Growing. My skin feels tight. Too tight.",
+      "text": "It tastes amazing. Sweet, almost honey-like. I feel energy coursing through me immediately, wounds tingling as they start to close. But thensomething else. A pressure in my stomach. Growing. My skin feels tight. Too tight.",
       "choices": [
         {
           "id": "choice_more_drink",
@@ -516,7 +516,7 @@
     "wet_swim": {
       "id": "wet_swim",
       "title": "Swimming Deeper",
-      "text": "The water's temperature changes as I go deeper. Warm. Warmer. Hot. Oh god, it's getting hot. It's boiling. My skin—I can feel blisters forming, bursting. The pain is instant and all-consuming.",
+      "text": "The water's temperature changes as I go deeper. Warm. Warmer. Hot. Oh god, it's getting hot. It's boiling. My skinI can feel blisters forming, bursting. The pain is instant and all-consuming.",
       "choices": [
         {
           "id": "choice_surface",
@@ -544,7 +544,7 @@
     "death_wet": {
       "id": "death_wet",
       "title": "Death by Water",
-      "text": "My body swells like a balloon. I can feel my skin stretching, stretching, hear it creaking. Then the first rupture—a small tear that becomes a gaping split. Blood and fluids spray out. Or the boiling water peels my skin away in sheets, exposing raw red muscle that immediately blisters white. I try to swim up but I can't tell which way is up anymore. My eyes boil in their sockets. I feel them burst. I'm still conscious, still aware when I feel the first wriggling thing enter my mouth. Parasites. The water is full of them. They pour into me through every orifice, every wound. I can feel them moving. Inside me. Laying eggs in my intestines, my stomach, burrowing through soft tissue. The eggs hatch. Larvae. Hundreds of them. Thousands. Eating me from the inside out. I can feel each one. Feel them crawling through my veins, my arteries, bursting out through my skin in eruptions of blood and writhing white bodies. I should be dead. Why am I not dead? Why can I still feel this? Days pass. My consciousness shouldn't exist anymore but it does, trapped in this dissolving meat, feeling every larvae tunnel, every bite, every—",
+      "text": "My body swells like a balloon. I can feel my skin stretching, stretching, hear it creaking. Then the first rupturea small tear that becomes a gaping split. Blood and fluids spray out. Or the boiling water peels my skin away in sheets, exposing raw red muscle that immediately blisters white. I try to swim up but I can't tell which way is up anymore. My eyes boil in their sockets. I feel them burst. I'm still conscious, still aware when I feel the first wriggling thing enter my mouth. Parasites. The water is full of them. They pour into me through every orifice, every wound. I can feel them moving. Inside me. Laying eggs in my intestines, my stomach, burrowing through soft tissue. The eggs hatch. Larvae. Hundreds of them. Thousands. Eating me from the inside out. I can feel each one. Feel them crawling through my veins, my arteries, bursting out through my skin in eruptions of blood and writhing white bodies. I should be dead. Why am I not dead? Why can I still feel this? Days pass. My consciousness shouldn't exist anymore but it does, trapped in this dissolving meat, feeling every larvae tunnel, every bite, every",
       "choices": [
         {
           "id": "choice_restart",
@@ -558,11 +558,11 @@
     "spider_chamber": {
       "id": "spider_chamber",
       "title": "The Spider Chamber",
-      "text": "The clicking stops the moment I enter. That's worse. The silence is so much worse. Then movement—in the corners, on the ceiling, dropping from above. Spiders. But not normal ones. These are massive, each one the size of a large dog, maybe bigger. Their eyes reflect my torch light—too many eyes, all focused on me. Mandibles clicking. I can see the hairs on their legs, thick as needles. One of them hisses. I didn't know spiders could hiss.",
+      "text": "The clicking stops the moment I enter. That's worse. The silence is so much worse. Then movementin the corners, on the ceiling, dropping from above. Spiders. But not normal ones. These are massive, each one the size of a large dog, maybe bigger. Their eyes reflect my torch lighttoo many eyes, all focused on me. Mandibles clicking. I can see the hairs on their legs, thick as needles. One of them hisses. I didn't know spiders could hiss.",
       "choices": [
         {
           "id": "choice_fight",
-          "text": "[REQUIRES COURAGE: 75] Fight—I won't die without trying",
+          "text": "[REQUIRES COURAGE: 75] FightI won't die without trying",
           "target": "spider_fight",
           "conditions": [{ "variable": "courage", "comparison": "greater_than", "value": 75 }, { "variable": "health", "comparison": "greater_than", "value": 40 }],
           "effects": [{ "variable": "health", "operation": "subtract", "value": 25 }, { "variable": "courage", "operation": "add", "value": 15 }]
@@ -576,7 +576,7 @@
         },
         {
           "id": "choice_too_scared",
-          "text": "I can't move. My legs won't work. I can't—",
+          "text": "I can't move. My legs won't work. I can't",
           "target": "death_spider",
           "conditions": [{ "variable": "courage", "comparison": "less_than", "value": 50 }],
           "effects": [{ "variable": "courage", "operation": "set", "value": 0 }]
@@ -586,7 +586,7 @@
     "spider_fight": {
       "id": "spider_fight",
       "title": "Fighting Spiders",
-      "text": "I swing wildly, connecting with one. It splits open, spraying green ichor. But there are so many more. I feel a sting on my leg—fangs. Venom pumps into me. It burns like liquid fire traveling up my veins. Another sting. Another. They're everywhere.",
+      "text": "I swing wildly, connecting with one. It splits open, spraying green ichor. But there are so many more. I feel a sting on my legfangs. Venom pumps into me. It burns like liquid fire traveling up my veins. Another sting. Another. They're everywhere.",
       "choices": [
         {
           "id": "choice_keep_fighting",
@@ -649,7 +649,7 @@
     "death_spider": {
       "id": "death_spider",
       "title": "Death by Spiders",
-      "text": "The webbing is sticky, impossibly strong. More of it wraps around me with each passing second until I'm completely encased. I can't move. Can't even blink. Then the paralytic venom—I feel the fangs sink deep into my neck. The poison spreads fast. My body goes numb but—oh god—I can still feel. I can feel everything, I just can't move, can't scream, can't do anything but lie here and experience what comes next. They start with my legs. I watch—because I can't close my eyes—as they inject digestive enzymes. My flesh begins to liquefy from the inside out. They slurp it up. The sounds. Those horrible slurping, sucking sounds. They move up my body. Patient. Methodical. My arms next. Then my torso. I can feel my organs turning to liquid, being sucked out through holes they pierce in my skin. My heart's still beating. I can feel it hammering in my chest, pumping blood that just leaks out into their waiting maws. Hours. This goes on for hours. Days maybe. Time stops meaning anything. All that exists is the sensation of being eaten alive, unable to scream, unable to die, just... consumed. Piece by piece. Sip by sip. Until there's nothing left that could be called human.",
+      "text": "The webbing is sticky, impossibly strong. More of it wraps around me with each passing second until I'm completely encased. I can't move. Can't even blink. Then the paralytic venomI feel the fangs sink deep into my neck. The poison spreads fast. My body goes numb butoh godI can still feel. I can feel everything, I just can't move, can't scream, can't do anything but lie here and experience what comes next. They start with my legs. I watchbecause I can't close my eyesas they inject digestive enzymes. My flesh begins to liquefy from the inside out. They slurp it up. The sounds. Those horrible slurping, sucking sounds. They move up my body. Patient. Methodical. My arms next. Then my torso. I can feel my organs turning to liquid, being sucked out through holes they pierce in my skin. My heart's still beating. I can feel it hammering in my chest, pumping blood that just leaks out into their waiting maws. Hours. This goes on for hours. Days maybe. Time stops meaning anything. All that exists is the sensation of being eaten alive, unable to scream, unable to die, just... consumed. Piece by piece. Sip by sip. Until there's nothing left that could be called human.",
       "choices": [
         {
           "id": "choice_restart",
@@ -695,7 +695,7 @@
       "choices": [
         {
           "id": "choice_relax",
-          "text": "Let myself fully relax—just for a moment",
+          "text": "Let myself fully relaxjust for a moment",
           "target": "glade_relax",
           "conditions": [],
           "effects": [{ "variable": "health", "operation": "add", "value": 10 }]
@@ -719,7 +719,7 @@
     "glade_relax": {
       "id": "glade_relax",
       "title": "Relaxing",
-      "text": "I close my eyes. Just for a second. That's all I need, just one second of——pain. Sharp, burning pain in my calf. My eyes snap open and I see it coiled there, a snake, fangs still embedded in my flesh. Its eyes are cold, reptilian. It doesn't let go. Just keeps pumping venom into me.",
+      "text": "I close my eyes. Just for a second. That's all I need, just one second ofpain. Sharp, burning pain in my calf. My eyes snap open and I see it coiled there, a snake, fangs still embedded in my flesh. Its eyes are cold, reptilian. It doesn't let go. Just keeps pumping venom into me.",
       "choices": [
         {
           "id": "choice_wake",
@@ -747,7 +747,7 @@
     "death_glade": {
       "id": "death_glade",
       "title": "Death by Poison",
-      "text": "The neurotoxin paralyzes my diaphragm. I'm suffocating, drowning in air I can't breathe. My eyes bulge from the pressure. Blood vessels burst—in my eyes, my nose, my ears. I can feel my internal organs shutting down one by one. Liver first, then kidneys. My blood stops clotting properly, starts pooling internally. The seizures continue even as my brain begins to shut down from lack of oxygen. Each convulsion breaks another bone—I hear my ribs snap, my arm, my collarbone. The pain is astronomical but I can't even scream. Then my heart. I feel it stutter, skip a beat. Skip two. Try to restart and fail. Try again. The muscle fibers tear themselves apart trying to beat with no coordination. And finally, mercifully, it just... stops. Everything stops. Except my consciousness, which lingers for seconds, minutes, hours in the void, still processing the phantom sensations of a body that's no longer functioning.",
+      "text": "The neurotoxin paralyzes my diaphragm. I'm suffocating, drowning in air I can't breathe. My eyes bulge from the pressure. Blood vessels burstin my eyes, my nose, my ears. I can feel my internal organs shutting down one by one. Liver first, then kidneys. My blood stops clotting properly, starts pooling internally. The seizures continue even as my brain begins to shut down from lack of oxygen. Each convulsion breaks another boneI hear my ribs snap, my arm, my collarbone. The pain is astronomical but I can't even scream. Then my heart. I feel it stutter, skip a beat. Skip two. Try to restart and fail. Try again. The muscle fibers tear themselves apart trying to beat with no coordination. And finally, mercifully, it just... stops. Everything stops. Except my consciousness, which lingers for seconds, minutes, hours in the void, still processing the phantom sensations of a body that's no longer functioning.",
       "choices": [
         {
           "id": "choice_restart",
@@ -761,11 +761,11 @@
     "path_continue": {
       "id": "path_continue",
       "title": "Deeper Woods",
-      "text": "The path leads to ruins. Old. Really old. The stones are covered in moss and carvings I don't recognize. In the center, something glints—gold? Artifacts? The whole place has this aura of forbidden knowledge, of things that were buried for a reason.",
+      "text": "The path leads to ruins. Old. Really old. The stones are covered in moss and carvings I don't recognize. In the center, something glintsgold? Artifacts? The whole place has this aura of forbidden knowledge, of things that were buried for a reason.",
       "choices": [
         {
           "id": "choice_investigate",
-          "text": "Search the ruins—fortune favors the bold",
+          "text": "Search the ruinsfortune favors the bold",
           "target": "ruins_investigate",
           "conditions": [],
           "effects": [{ "variable": "gold", "operation": "add", "value": 25 }, { "variable": "courage", "operation": "add", "value": 10 }]
@@ -782,11 +782,11 @@
     "ruins_investigate": {
       "id": "ruins_investigate",
       "title": "Ancient Ruins",
-      "text": "I step inside and immediately hear clicking—mechanical. Traps. Of course there are traps. In the far corner sits a chest, ancient but intact. On the walls, inscriptions in a language that hurts to look at. The letters seem to writhe, to whisper. And that artifact on the pedestal—it's pulsing with a sickly green light.",
+      "text": "I step inside and immediately hear clickingmechanical. Traps. Of course there are traps. In the far corner sits a chest, ancient but intact. On the walls, inscriptions in a language that hurts to look at. The letters seem to writhe, to whisper. And that artifact on the pedestalit's pulsing with a sickly green light.",
       "choices": [
         {
           "id": "choice_touch_artifact",
-          "text": "Touch the artifact—maybe it's valuable",
+          "text": "Touch the artifactmaybe it's valuable",
           "target": "ruins_touch",
           "conditions": [],
           "effects": [{ "variable": "health", "operation": "subtract", "value": 30 }]
@@ -807,7 +807,7 @@
         },
         {
           "id": "choice_leave_ruins",
-          "text": "Leave the ruins—this feels wrong",
+          "text": "Leave the ruinsthis feels wrong",
           "target": "path_continue",
           "conditions": [],
           "effects": [{ "variable": "courage", "operation": "subtract", "value": 5 }]
@@ -859,7 +859,7 @@
     "death_ruins": {
       "id": "death_ruins",
       "title": "Death by Curse/Demons",
-      "text": "The curse takes hold immediately. I watch in horror as my skin begins to necrotize, turning black and sloughing off in wet chunks. But I don't die. The curse won't let me die. I remain conscious, aware, trapped in this rotting meat prison as my flesh peels away to reveal bone, as my organs liquefy and leak out. Or the demons—they're real, they're so horribly real. Claws like razors flay my skin in surgical strips. They're methodical, keeping me alive, keeping me aware. They pour molten metal into the wounds and the pain—the pain transcends anything physical. It's agony given form, stretched across an eternity. My screams echo through dimensions I can't comprehend. Days become weeks become years. Time loses all meaning. My body is nothing but a husk of suffering, but my consciousness remains, trapped, experiencing every second of torment, unable to die, unable to escape. This is worse than death. This is forever.",
+      "text": "The curse takes hold immediately. I watch in horror as my skin begins to necrotize, turning black and sloughing off in wet chunks. But I don't die. The curse won't let me die. I remain conscious, aware, trapped in this rotting meat prison as my flesh peels away to reveal bone, as my organs liquefy and leak out. Or the demonsthey're real, they're so horribly real. Claws like razors flay my skin in surgical strips. They're methodical, keeping me alive, keeping me aware. They pour molten metal into the wounds and the painthe pain transcends anything physical. It's agony given form, stretched across an eternity. My screams echo through dimensions I can't comprehend. Days become weeks become years. Time loses all meaning. My body is nothing but a husk of suffering, but my consciousness remains, trapped, experiencing every second of torment, unable to die, unable to escape. This is worse than death. This is forever.",
       "choices": [
         {
           "id": "choice_restart",

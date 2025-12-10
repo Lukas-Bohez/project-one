@@ -3,7 +3,7 @@
 
 class StoryWeaver {
     constructor() {
-        // Minimal placeholder story — the full example story is loaded from the JSON file
+        // Minimal placeholder story  the full example story is loaded from the JSON file
         this.story = {
             meta: {
                 title: "Untitled Story",
@@ -1273,7 +1273,7 @@ class StoryWeaver {
                     <h3>🚀 Quick Actions</h3>
                     <div class="quick-actions">
                         <button class="btn btn-secondary" onclick="app.createScene()">
-                            <span>➕</span> Add Scene
+                            <span>+</span> Add Scene
                         </button>
                         <button class="btn btn-secondary" onclick="app.exportStory()">
                             <span>💾</span> Export Story
@@ -1331,7 +1331,7 @@ class StoryWeaver {
                 <p>Manage your story scenes and their connections.</p>
                 <div class="view-actions">
                     <button class="btn btn-primary" onclick="app.createScene()">
-                        <span>➕</span> Add Scene
+                        <span>+</span> Add Scene
                     </button>
                 </div>
             </div>
@@ -1364,7 +1364,7 @@ class StoryWeaver {
                             <div class="section-header">
                                 <h3>Choices</h3>
                                 <button class="btn btn-secondary btn-sm" onclick="app.addChoice()" title="Add a new choice (Ctrl+Enter)">
-                                    <span>➕</span> Add Choice
+                                    <span>+</span> Add Choice
                                 </button>
                             </div>
                             <div id="choicesContainer">
@@ -1457,7 +1457,7 @@ class StoryWeaver {
                 <p>Manage story variables that track player choices and state.</p>
                 <div class="view-actions">
                     <button class="btn btn-primary" onclick="app.addVariable()">
-                        <span>➕</span> Add Variable
+                        <span>+</span> Add Variable
                     </button>
                 </div>
             </div>
@@ -1717,7 +1717,7 @@ class StoryWeaver {
                     </select>
                     <input type="text" id="newConditionValue" class="form-input" style="width: 80px;" placeholder="Value">
                     <button class="btn btn-primary btn-sm" onclick="app.addCondition('${choiceId}')">
-                        <span>➕</span> Add
+                        <span>+</span> Add
                     </button>
                 </div>
             </div>
@@ -1891,7 +1891,7 @@ class StoryWeaver {
                     </select>
                     <input type="text" id="newEffectValue" class="form-input" style="width: 80px;" placeholder="Value">
                     <button class="btn btn-primary btn-sm" onclick="app.addEffect('${choiceId}')">
-                        <span>➕</span> Add
+                        <span>+</span> Add
                     </button>
                 </div>
             </div>
