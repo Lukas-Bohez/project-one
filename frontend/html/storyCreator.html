@@ -14,9 +14,14 @@
     <!-- Header -->
     <header class="header">
         <div class="header-content">
-            <a href="../index.html" class="logo-link">
-                <div class="logo">Story Weaver</div>    
-            </a>
+            <div class="logo-container">
+                <a href="../index.html" class="logo-link">
+                    <div class="logo">Story Weaver</div>    
+                </a>
+                <button id="sidebarToggle" class="btn btn-secondary" aria-label="Toggle sidebar" aria-expanded="true">
+                    <span>◁</span>
+                </button>
+            </div>
             <div class="header-actions">
                 <button id="exportBtn" class="btn btn-secondary">
                     <span>💾</span> Export
@@ -33,9 +38,6 @@
                 </button>
                 <button id="resetExampleBtn" class="btn btn-secondary" title="Reset current story and load example" style="display:none;">
                     <span>♻️</span> Reset to Example
-                </button>
-                <button id="sidebarToggle" class="btn btn-secondary" aria-label="Toggle sidebar">
-                    <span>◁</span>
                 </button>
                 <button id="theme-toggle" class="btn btn-secondary" aria-label="Toggle dark mode">
                     🌙

@@ -1244,7 +1244,7 @@ class StoryWeaver {
                     <button class="btn btn-primary" onclick="app.switchView('scenes')">
                         <span>📝</span> Start Creating
                     </button>
-                    <button class="btn btn-secondary" onclick="app.startNewGame()">
+                    <button class="btn btn-secondary" onclick="app.switchView('play')">
                         <span>▶️</span> Play Story
                     </button>
                 </div>
