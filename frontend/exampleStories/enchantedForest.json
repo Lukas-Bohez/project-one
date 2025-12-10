@@ -7,7 +7,7 @@
   },
   "variables": {
     "health": { "type": "number", "value": 100, "min": 0, "max": 100 },
-    "courage": { "type": "number", "value": 50, "min": 0, "max": 100 },
+    "courage": { "type": "number", "value": 60, "min": 0, "max": 100 },
     "hasMap": { "type": "boolean", "value": false },
     "gold": { "type": "number", "value": 25, "min": 0, "max": 999 }
   },
@@ -15,7 +15,7 @@
     "start": {
       "id": "start",
       "title": "The Forest's Edge",
-      "text": "You stand at the edge of a mysterious forest. Ancient trees tower above you, their branches intertwined to form a canopy so thick that only scattered beams of sunlight reach the forest floor. A worn path disappears into the shadows ahead, while to your left, you notice strange glowing flowers that seem to pulse with their own inner light.",
+      "text": "My legs feel heavy as I stand at the forest's edge. The trees ahead look wrong—too tall, their branches twisted together like arthritic fingers reaching for something that isn't there. Barely any light makes it through. There's a path, I guess, worn down by... something. And these flowers to my left, they're glowing. Actually glowing. Pulsing like they're breathing. I can feel my heart pounding in my chest. Should I really be here?",
       "choices": [
         {
           "id": "choice_1",
@@ -28,14 +28,21 @@
           "id": "choice_2",
           "text": "Investigate the glowing flowers",
           "target": "magic_flowers",
-          "conditions": [],
-          "effects": [{ "variable": "health", "operation": "add", "value": 10 }]
+          "conditions": [{ "variable": "courage", "comparison": "less_than", "value": 80 }],
+          "effects": [{ "variable": "courage", "operation": "add", "value": 11 }]
+        },
+        {
+          "id": "choice_brave",
+          "text": "[BRAVE] Charge straight into the darkest part of the forest",
+          "target": "deep_forest",
+          "conditions": [{ "variable": "courage", "comparison": "greater_than", "value": 70 }],
+          "effects": [{ "variable": "courage", "operation": "add", "value": 15 }]
         },
         {
           "id": "choice_3",
           "text": "Turn back - this place feels too dangerous",
           "target": "safe_retreat",
-          "conditions": [],
+          "conditions": [{ "variable": "courage", "comparison": "less_than", "value": 30 }],
           "effects": [{ "variable": "courage", "operation": "subtract", "value": 10 }]
         },
         {
@@ -51,21 +58,35 @@
     "deep_forest": {
       "id": "deep_forest",
       "title": "Deep in the Forest",
-      "text": "You venture deeper into the forest. The trees grow denser, and you hear strange noises. Ahead, you see a cave entrance and a wooden path.",
+      "text": "I'm in too deep now. The trees press in from all sides, and I swear I can hear breathing that isn't mine. There's a cave up ahead—its entrance looks like a throat, dark and wet. Something about it makes my skin crawl. The wooden path off to the side looks safer, but... safer doesn't always mean better, does it? My hands are shaking.",
       "choices": [
         {
           "id": "choice_cave",
-          "text": "Enter the cave",
+          "text": "[REQUIRES COURAGE: 50] Enter the cave despite every instinct screaming no",
           "target": "cave_entrance",
-          "conditions": [],
-          "effects": []
+          "conditions": [{ "variable": "courage", "comparison": "greater_than", "value": 50 }],
+          "effects": [{ "variable": "courage", "operation": "add", "value": 10 }]
         },
         {
           "id": "choice_wooden",
-          "text": "Take the wooden path",
+          "text": "Take the wooden path (safer option)",
           "target": "wooden_path",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "courage", "operation": "subtract", "value": 5 }]
+        },
+        {
+          "id": "choice_back_to_start",
+          "text": "Go back to the forest edge while I still can",
+          "target": "start",
+          "conditions": [],
+          "effects": [{ "variable": "courage", "operation": "subtract", "value": 5 }]
+        },
+        {
+          "id": "choice_coward",
+          "text": "Panic and flee completely",
+          "target": "safe_retreat",
+          "conditions": [{ "variable": "courage", "comparison": "less_than", "value": 30 }],
+          "effects": [{ "variable": "courage", "operation": "subtract", "value": 15 }]
         }
       ]
     },
@@ -73,14 +94,21 @@
     "magic_flowers": {
       "id": "magic_flowers",
       "title": "The Glowing Flowers",
-      "text": "The flowers glow brightly. As you approach, you feel a surge of energy. You gain health.",
+      "text": "The flowers pulse with this weird bioluminescent light—blue, then purple, then back again. As I get closer, I feel warmth spreading through my chest. It's not painful, more like... relief? Like when you finally exhale after holding your breath too long. My wounds ache less. I can feel my heartbeat slowing down to something almost normal.",
       "choices": [
         {
           "id": "choice_back",
-          "text": "Go back to the start",
+          "text": "Go back to the forest edge",
           "target": "start",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "courage", "operation": "add", "value": 5 }]
+        },
+        {
+          "id": "choice_pick_flowers",
+          "text": "[HEALTHY] Pick some flowers—might need them later",
+          "target": "deep_forest",
+          "conditions": [{ "variable": "health", "comparison": "greater_than", "value": 80 }],
+          "effects": [{ "variable": "courage", "operation": "add", "value": 10 }, { "variable": "health", "operation": "add", "value": 20 }]
         }
       ]
     },
@@ -95,7 +123,7 @@
           "text": "Restart",
           "target": "start",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "health", "operation": "set", "value": 100 }, { "variable": "courage", "operation": "set", "value": 50 }, { "variable": "gold", "operation": "set", "value": 25 }]
         }
       ]
     },
@@ -103,42 +131,56 @@
     "cliff_edge": {
       "id": "cliff_edge",
       "title": "The Cliff Edge",
-      "text": "The cliff. I walk off the cliff, I fall. I see my leg, and it's bone sticking through it, a rock is in me, down there. This is so embarrassing.",
+      "text": "I wasn't paying attention. One second I'm walking, the next—nothing under my feet. The fall feels like it lasts forever. Then impact. God, the impact. I can't breathe. Can't think. When I finally look down, I wish I hadn't. My leg is bent the wrong way, white bone jutting through the skin, blood pooling around a jagged rock that's... that's inside me. In my side. I can feel it. Every breath makes it worse. This is how I die, isn't it? Not in some heroic way. Just... stupid. So stupidly.",
       "choices": [
         {
           "id": "choice_suffer",
-          "text": "Suffer through the pain",
+          "text": "[REQUIRES COURAGE: 60] Bite down and try to pull myself together",
           "target": "cliff_suffer",
-          "conditions": [],
-          "effects": [{ "variable": "health", "operation": "subtract", "value": 50 }]
+          "conditions": [{ "variable": "courage", "comparison": "greater_than", "value": 60 }, { "variable": "health", "comparison": "greater_than", "value": 50 }],
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 50 }, { "variable": "courage", "operation": "add", "value": 15 }]
         },
         {
           "id": "choice_call_help",
-          "text": "Call for help",
+          "text": "Scream for help—I don't care about pride anymore",
           "target": "cliff_help",
           "conditions": [],
-          "effects": [{ "variable": "courage", "operation": "add", "value": 20 }]
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 30 }, { "variable": "courage", "operation": "subtract", "value": 10 }]
+        },
+        {
+          "id": "choice_too_weak",
+          "text": "Everything's going dark... I can't...",
+          "target": "death_cliff1",
+          "conditions": [{ "variable": "health", "comparison": "less_than", "value": 40 }],
+          "effects": [{ "variable": "health", "operation": "set", "value": 0 }]
         }
       ]
     },
     "cliff_suffer": {
       "id": "cliff_suffer",
       "title": "Agonizing Pain",
-      "text": "I'm bleeding a lot, this hurts so much, oh lord, end the pain. (Health -50)",
+      "text": "There's so much blood. It's warm, sticky, spreading across the rocks. Every time I try to move, the rock shifts inside me and I taste copper in my mouth. I think I'm crying but I can't tell if it's tears or sweat. The pain is white-hot, consuming everything. Please. Please just make it stop. I've never felt anything like this. Never imagined I could hurt this much and still be conscious.",
       "choices": [
         {
           "id": "choice_endure",
-          "text": "Try to endure",
+          "text": "[REQUIRES COURAGE: 70] Force myself to move, to climb",
           "target": "cliff_endure",
-          "conditions": [],
-          "effects": []
+          "conditions": [{ "variable": "courage", "comparison": "greater_than", "value": 70 }],
+          "effects": [{ "variable": "courage", "operation": "add", "value": 10 }]
         },
         {
           "id": "choice_give_up",
-          "text": "Give up",
+          "text": "Just... let it happen",
           "target": "death_cliff1",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "courage", "operation": "subtract", "value": 20 }]
+        },
+        {
+          "id": "choice_too_hurt",
+          "text": "I'm losing too much blood... getting cold...",
+          "target": "death_cliff1",
+          "conditions": [{ "variable": "health", "comparison": "less_than", "value": 20 }],
+          "effects": [{ "variable": "health", "operation": "set", "value": 0 }]
         }
       ]
     },
@@ -152,7 +194,7 @@
           "text": "Try to climb back",
           "target": "cliff_climb",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "subtract", "value": 30 }]
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 30 }, { "variable": "courage", "operation": "add", "value": 5 }]
         }
       ]
     },
@@ -166,14 +208,14 @@
           "text": "Fall deeper",
           "target": "death_cliff1",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 20 }]
         }
       ]
     },
     "death_cliff1": {
       "id": "death_cliff1",
       "title": "Death by Fall",
-      "text": "You hit the ground hard. Bones shatter, organs rupture. Blood pools around you as you gasp your last breath. Embarrassing end.",
+      "text": "My body hits something—another ledge maybe. I feel my ribs cave in with this wet crunch. Can't breathe. Trying to breathe. Blood fills my throat, I'm choking on it, drowning in my own blood. My vision's narrowing, just a pinpoint now. I can feel my heart hammering, frantic, then... slower. Slower. This wasn't supposed to happen. I didn't want—I didn't—everything's fading. The last thing I feel is my own blood, still warm, spreading beneath me. Then nothing.",
       "choices": [
         {
           "id": "choice_restart",
@@ -194,14 +236,14 @@
           "text": "Plead for rescue",
           "target": "cliff_plead",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "courage", "operation": "subtract", "value": 5 }]
         },
         {
           "id": "choice_throw_rope",
           "text": "Ask for a rope",
           "target": "cliff_rope",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "courage", "operation": "add", "value": 5 }]
         }
       ]
     },
@@ -215,7 +257,7 @@
           "text": "Dodge the boulder",
           "target": "cliff_dodge",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 15 }]
         }
       ]
     },
@@ -229,7 +271,7 @@
           "text": "Get impaled",
           "target": "death_cliff2",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 50 }]
         }
       ]
     },
@@ -243,7 +285,7 @@
           "text": "Swing wildly",
           "target": "cliff_swing",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 25 }]
         }
       ]
     },
@@ -257,7 +299,7 @@
           "text": "Suffer the piercing",
           "target": "death_cliff2",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 40 }]
         }
       ]
     },
@@ -278,91 +320,105 @@
     "cave_entrance": {
       "id": "cave_entrance",
       "title": "The Cave Entrance",
-      "text": "I walk into the big scary cave, it's fleshy and scary. The first hallway is a mouthlike carving of teeth, the other a wet sounding room, and the third a spider infested chamber with big sounding noises.",
+      "text": "The cave walls aren't stone—they're organic, pulsing. Flesh-like. I can feel warmth radiating from them and my stomach turns. Three passages branch off. The left one has what looks like teeth carved into the walls, jutting inward. The middle passage... I can hear dripping, wet sounds echoing from deep inside. And the right—chittering. Clicking. The unmistakable sound of too many legs moving across stone. Something about this whole place feels like a trap. Like I've walked into something's mouth.",
       "choices": [
         {
           "id": "choice_teeth",
-          "text": "Enter the mouthlike hallway",
+          "text": "[REQUIRES COURAGE: 55] The teeth hallway—maybe they're just carvings",
           "target": "teeth_hallway",
-          "conditions": [],
-          "effects": [{ "variable": "courage", "operation": "subtract", "value": 15 }]
+          "conditions": [{ "variable": "courage", "comparison": "greater_than", "value": 55 }],
+          "effects": [{ "variable": "courage", "operation": "add", "value": 10 }]
         },
         {
           "id": "choice_wet",
-          "text": "Go to the wet sounding room",
+          "text": "The wet room—water might mean a way out",
           "target": "wet_room",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "add", "value": 20 }]
+          "effects": [{ "variable": "courage", "operation": "add", "value": 5 }]
         },
         {
           "id": "choice_spider",
-          "text": "Venture into the spider chamber",
+          "text": "[REQUIRES COURAGE: 70] The spider chamber—face it head-on",
           "target": "spider_chamber",
+          "conditions": [{ "variable": "courage", "comparison": "greater_than", "value": 70 }],
+          "effects": [{ "variable": "courage", "operation": "add", "value": 15 }]
+        },
+        {
+          "id": "choice_leave_cave",
+          "text": "Back out of the cave—this was a mistake",
+          "target": "deep_forest",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "courage", "operation": "subtract", "value": 10 }]
         }
       ]
     },
     "teeth_hallway": {
       "id": "teeth_hallway",
       "title": "The Teeth Hallway",
-      "text": "The walls seem alive, teeth-like protrusions snap at you.",
+      "text": "The teeth aren't carvings. They're real. I can see them flexing, grinding against each other with this horrible scraping sound. The walls pulse rhythmically—breathing. The whole corridor is breathing. One of the teeth snaps at me as I pass and I jerk back, feeling the air move past my face. If I'd been an inch closer...",
       "choices": [
         {
           "id": "choice_run",
-          "text": "Run through",
+          "text": "[REQUIRES COURAGE: 65] Sprint through before they close",
           "target": "teeth_run",
-          "conditions": [],
-          "effects": [{ "variable": "health", "operation": "subtract", "value": 20 }]
+          "conditions": [{ "variable": "courage", "comparison": "greater_than", "value": 65 }],
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 20 }, { "variable": "courage", "operation": "add", "value": 10 }]
         },
         {
           "id": "choice_crawl",
-          "text": "Crawl carefully",
+          "text": "Crawl through slowly, carefully",
           "target": "teeth_crawl",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 5 }]
+        },
+        {
+          "id": "choice_back_cave",
+          "text": "Back away to the cave entrance",
+          "target": "cave_entrance",
+          "conditions": [],
+          "effects": [{ "variable": "courage", "operation": "subtract", "value": 5 }]
         }
       ]
     },
     "teeth_run": {
       "id": "teeth_run",
       "title": "Running Through Teeth",
-      "text": "Teeth bite chunks out of you as you run.",
+      "text": "I run. God, I run. But they're fast. One catches my shoulder—rips through my jacket, through skin, takes a chunk of muscle with it. Another clips my thigh. I feel hot blood running down my leg. Keep moving. Don't stop. Don't think about the pain. Just keep—there! An opening ahead!",
       "choices": [
         {
           "id": "choice_escape",
           "text": "Escape to the next room",
           "target": "teeth_escape",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 15 }]
         }
       ]
     },
     "teeth_escape": {
       "id": "teeth_escape",
       "title": "Teeth Escape",
-      "text": "You make it, but bleeding heavily. A giant mouth awaits.",
+      "text": "I made it through, but I'm leaving a blood trail. My hands are shaking so badly I can barely stand. And then I see it. Ahead. A mouth. Not teeth-lined walls—an actual mouth. Massive. Open. Waiting. The throat disappears into darkness that seems to move, to writhe. I can smell it from here—rotting meat and bile. This is what the hallway was feeding into. This is what it wanted to deliver me to.",
       "choices": [
         {
           "id": "choice_enter_mouth",
           "text": "Enter the giant mouth",
           "target": "death_teeth",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 30 }, { "variable": "courage", "operation": "subtract", "value": 10 }]
         }
       ]
     },
     "teeth_crawl": {
       "id": "teeth_crawl",
       "title": "Crawling Through",
-      "text": "You crawl, avoiding most bites, but one gets your arm.",
+      "text": "Slow. Stay low. I press myself against the fleshy floor, trying not to think about how warm it is, how it yields slightly under my weight. Most of the teeth miss me. Most. One catches my arm, punctures straight through. I bite my lip so hard I taste blood, trying not to scream. If I scream, I'll attract attention. If I attract attention...",
       "choices": [
         {
           "id": "choice_continue_crawl",
           "text": "Continue",
           "target": "teeth_continue",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "subtract", "value": 40 }]
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 25 }, { "variable": "courage", "operation": "add", "value": 5 }]
         }
       ]
     },
@@ -376,14 +432,14 @@
           "text": "Squeeze through",
           "target": "death_teeth",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 35 }]
         }
       ]
     },
     "death_teeth": {
       "id": "death_teeth",
       "title": "Death by Teeth",
-      "text": "The giant mouth swallows you whole. Teeth grind slowly, crushing bones one by one. You feel your ribs snap, spine shatter, blood filling your lungs. The digestive acids burn your skin off layer by layer over days, melting flesh while you scream internally. Eventually, nothing left but digested remains. Grotesque and prolonged.",
+      "text": "The mouth doesn't swallow quickly—it savors. I feel myself sliding down the throat, walls of muscle contracting around me, squeezing. The teeth start their work slowly. Methodical. First, I feel my ribs crack, one by one, like someone snapping dry twigs. Then my spine—that's worse. So much worse. I can't move my legs. Can't move anything below my neck but I can still feel it. All of it. The digestive acid starts seeping in, burning through my clothes first, then skin. It's not quick. My nerve endings are still firing, sending signals of agony that my brain can't process fast enough. I'm being dissolved. Melted. I can feel my flesh liquefying, sloughing off bones that are themselves beginning to soften, to dissolve. Days pass. Or hours. Or minutes. Time has no meaning in this darkness, this pain. I'm still conscious. Still aware. Still feeling every moment as my body stops being a body and becomes nothing but scattered molecules in digestive fluid. This is dying. Truly dying. Not the quick snap of the neck or fade to black. This is being unmade, piece by piece, cell by cell, while something in me that should have died hours ago stubbornly refuses to let go.",
       "choices": [
         {
           "id": "choice_restart",
@@ -397,35 +453,49 @@
     "wet_room": {
       "id": "wet_room",
       "title": "The Wet Room",
-      "text": "This room is filled with healing waters. You feel rejuvenated. (Health +20)",
+      "text": "Water. Actual water. The cavern opens into a natural pool, clear and still. I can see my reflection on the surface—I look worse than I thought. The water looks inviting. Cold. Clean. Maybe it could help with the wounds. But something about it feels off. Too still. Too clear. Nothing grows in it. No algae, no plants, nothing.",
       "choices": [
         {
           "id": "choice_drink",
-          "text": "Drink the water",
+          "text": "Cup some in my hands and drink",
           "target": "wet_drink",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "set", "value": 100 }]
+          "effects": [{ "variable": "health", "operation": "add", "value": 30 }]
         },
         {
           "id": "choice_swim",
-          "text": "Swim deeper",
+          "text": "Wade in deeper—maybe there's an exit underwater",
           "target": "wet_swim",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "courage", "operation": "add", "value": 10 }]
+        },
+        {
+          "id": "choice_leave_water",
+          "text": "Back away from the water—trust my instincts",
+          "target": "cave_entrance",
+          "conditions": [],
+          "effects": [{ "variable": "courage", "operation": "add", "value": 5 }]
         }
       ]
     },
     "wet_drink": {
       "id": "wet_drink",
       "title": "Drinking the Water",
-      "text": "The water tastes sweet, but you feel strange.",
+      "text": "It tastes amazing. Sweet, almost honey-like. I feel energy coursing through me immediately, wounds tingling as they start to close. But then—something else. A pressure in my stomach. Growing. My skin feels tight. Too tight.",
       "choices": [
         {
           "id": "choice_more_drink",
-          "text": "Drink more",
+          "text": "[REQUIRES HEALTH: 60] Drink more greedily",
           "target": "wet_more",
+          "conditions": [{ "variable": "health", "comparison": "greater_than", "value": 60 }],
+          "effects": [{ "variable": "health", "operation": "add", "value": 20 }]
+        },
+        {
+          "id": "choice_stop_drinking",
+          "text": "Stop drinking - something feels wrong",
+          "target": "wet_room",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "courage", "operation": "add", "value": 5 }]
         }
       ]
     },
@@ -439,14 +509,14 @@
           "text": "Feel the burst",
           "target": "death_wet",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 90 }]
         }
       ]
     },
     "wet_swim": {
       "id": "wet_swim",
       "title": "Swimming Deeper",
-      "text": "The water gets warmer, then boiling.",
+      "text": "The water's temperature changes as I go deeper. Warm. Warmer. Hot. Oh god, it's getting hot. It's boiling. My skin—I can feel blisters forming, bursting. The pain is instant and all-consuming.",
       "choices": [
         {
           "id": "choice_surface",
@@ -467,14 +537,14 @@
           "text": "Suffer the burns",
           "target": "death_wet",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 30 }]
         }
       ]
     },
     "death_wet": {
       "id": "death_wet",
       "title": "Death by Water",
-      "text": "Your body explodes from swelling or boils in acid water. Skin melts, eyes burst, muscles dissolve. You float in agony as parasites enter your orifices, laying eggs that hatch and eat you from within. Days of writhing in pain, feeling larvae crawl through veins, bursting out in fountains of blood. Utterly disgusting and eternal suffering.",
+      "text": "My body swells like a balloon. I can feel my skin stretching, stretching, hear it creaking. Then the first rupture—a small tear that becomes a gaping split. Blood and fluids spray out. Or the boiling water peels my skin away in sheets, exposing raw red muscle that immediately blisters white. I try to swim up but I can't tell which way is up anymore. My eyes boil in their sockets. I feel them burst. I'm still conscious, still aware when I feel the first wriggling thing enter my mouth. Parasites. The water is full of them. They pour into me through every orifice, every wound. I can feel them moving. Inside me. Laying eggs in my intestines, my stomach, burrowing through soft tissue. The eggs hatch. Larvae. Hundreds of them. Thousands. Eating me from the inside out. I can feel each one. Feel them crawling through my veins, my arteries, bursting out through my skin in eruptions of blood and writhing white bodies. I should be dead. Why am I not dead? Why can I still feel this? Days pass. My consciousness shouldn't exist anymore but it does, trapped in this dissolving meat, feeling every larvae tunnel, every bite, every—",
       "choices": [
         {
           "id": "choice_restart",
@@ -488,35 +558,49 @@
     "spider_chamber": {
       "id": "spider_chamber",
       "title": "The Spider Chamber",
-      "text": "Giant spiders attack!",
+      "text": "The clicking stops the moment I enter. That's worse. The silence is so much worse. Then movement—in the corners, on the ceiling, dropping from above. Spiders. But not normal ones. These are massive, each one the size of a large dog, maybe bigger. Their eyes reflect my torch light—too many eyes, all focused on me. Mandibles clicking. I can see the hairs on their legs, thick as needles. One of them hisses. I didn't know spiders could hiss.",
       "choices": [
         {
           "id": "choice_fight",
-          "text": "Fight back",
+          "text": "[REQUIRES COURAGE: 75] Fight—I won't die without trying",
           "target": "spider_fight",
-          "conditions": [],
-          "effects": [{ "variable": "health", "operation": "subtract", "value": 30 }]
+          "conditions": [{ "variable": "courage", "comparison": "greater_than", "value": 75 }, { "variable": "health", "comparison": "greater_than", "value": 40 }],
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 25 }, { "variable": "courage", "operation": "add", "value": 15 }]
         },
         {
           "id": "choice_run_away",
-          "text": "Run away",
+          "text": "Run back to the cave entrance",
           "target": "spider_run",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "courage", "operation": "subtract", "value": 15 }]
+        },
+        {
+          "id": "choice_too_scared",
+          "text": "I can't move. My legs won't work. I can't—",
+          "target": "death_spider",
+          "conditions": [{ "variable": "courage", "comparison": "less_than", "value": 50 }],
+          "effects": [{ "variable": "courage", "operation": "set", "value": 0 }]
         }
       ]
     },
     "spider_fight": {
       "id": "spider_fight",
       "title": "Fighting Spiders",
-      "text": "You kill some, but more come. Venom burns.",
+      "text": "I swing wildly, connecting with one. It splits open, spraying green ichor. But there are so many more. I feel a sting on my leg—fangs. Venom pumps into me. It burns like liquid fire traveling up my veins. Another sting. Another. They're everywhere.",
       "choices": [
         {
           "id": "choice_keep_fighting",
-          "text": "Keep fighting",
+          "text": "[REQUIRES COURAGE: 80] Keep fighting heroically",
           "target": "spider_keep",
+          "conditions": [{ "variable": "courage", "comparison": "greater_than", "value": 80 }, { "variable": "health", "comparison": "greater_than", "value": 35 }],
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 35 }, { "variable": "courage", "operation": "add", "value": 10 }]
+        },
+        {
+          "id": "choice_retreat",
+          "text": "Retreat while you still can",
+          "target": "spider_run",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "subtract", "value": 40 }]
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 15 }, { "variable": "courage", "operation": "subtract", "value": 10 }]
         }
       ]
     },
@@ -530,7 +614,7 @@
           "text": "Get overwhelmed",
           "target": "death_spider",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 30 }]
         }
       ]
     },
@@ -544,7 +628,7 @@
           "text": "Struggle in the web",
           "target": "spider_struggle",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 20 }]
         }
       ]
     },
@@ -558,14 +642,14 @@
           "text": "Get wrapped",
           "target": "death_spider",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 40 }]
         }
       ]
     },
     "death_spider": {
       "id": "death_spider",
       "title": "Death by Spiders",
-      "text": "Spiders cocoon you in silk, inject paralyzing venom. You feel fangs pierce skin, venom coursing through veins, numbing yet burning. They start eating you alive, legs first, then arms, torso. You watch helplessly as they devour your flesh, organs exposed, heart beating as they nibble. Hours turn to days, consciousness fading slowly in excruciating pain. Nightmare fuel.",
+      "text": "The webbing is sticky, impossibly strong. More of it wraps around me with each passing second until I'm completely encased. I can't move. Can't even blink. Then the paralytic venom—I feel the fangs sink deep into my neck. The poison spreads fast. My body goes numb but—oh god—I can still feel. I can feel everything, I just can't move, can't scream, can't do anything but lie here and experience what comes next. They start with my legs. I watch—because I can't close my eyes—as they inject digestive enzymes. My flesh begins to liquefy from the inside out. They slurp it up. The sounds. Those horrible slurping, sucking sounds. They move up my body. Patient. Methodical. My arms next. Then my torso. I can feel my organs turning to liquid, being sucked out through holes they pierce in my skin. My heart's still beating. I can feel it hammering in my chest, pumping blood that just leaks out into their waiting maws. Hours. This goes on for hours. Days maybe. Time stops meaning anything. All that exists is the sensation of being eaten alive, unable to scream, unable to die, just... consumed. Piece by piece. Sip by sip. Until there's nothing left that could be called human.",
       "choices": [
         {
           "id": "choice_restart",
@@ -579,33 +663,54 @@
     "wooden_path": {
       "id": "wooden_path",
       "title": "The Wooden Path",
-      "text": "The path is sturdy and leads to a peaceful glade. You find some gold coins. (Gold +15)",
+      "text": "The path is sturdy and leads to a peaceful glade. You find some gold coins. A traveling merchant offers to guide you safely for 30 gold.",
       "choices": [
         {
           "id": "choice_rest",
-          "text": "Rest here",
+          "text": "Rest here and gather strength",
           "target": "glade_rest",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "add", "value": 10 }]
+          "effects": [{ "variable": "health", "operation": "add", "value": 15 }, { "variable": "gold", "operation": "add", "value": 10 }]
         },
         {
           "id": "choice_continue_path",
           "text": "Continue along the path",
           "target": "path_continue",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "gold", "operation": "add", "value": 15 }, { "variable": "courage", "operation": "add", "value": 5 }]
+        },
+        {
+          "id": "choice_hire_guide",
+          "text": "[REQUIRES GOLD: 30] Hire the merchant as guide",
+          "target": "safe_victory",
+          "conditions": [{ "variable": "gold", "comparison": "greater_than", "value": 30 }],
+          "effects": [{ "variable": "gold", "operation": "subtract", "value": 30 }, { "variable": "health", "operation": "set", "value": 100 }]
         }
       ]
     },
     "glade_rest": {
       "id": "glade_rest",
       "title": "Peaceful Rest",
-      "text": "You rest and regain strength. (Health +10)",
+      "text": "For the first time since entering this nightmare forest, I feel almost safe. The glade is quiet. Genuinely quiet, not that oppressive silence that makes you think something's watching. I can hear birds. Normal birds. My body aches, begging me to rest.",
       "choices": [
         {
           "id": "choice_relax",
-          "text": "Relax more",
+          "text": "Let myself fully relax—just for a moment",
           "target": "glade_relax",
+          "conditions": [],
+          "effects": [{ "variable": "health", "operation": "add", "value": 10 }]
+        },
+        {
+          "id": "choice_leave_rested",
+          "text": "[HEALTHY] Get up and keep moving while I still can",
+          "target": "path_continue",
+          "conditions": [{ "variable": "health", "comparison": "greater_than", "value": 70 }],
+          "effects": [{ "variable": "courage", "operation": "add", "value": 10 }]
+        },
+        {
+          "id": "choice_back_wooden",
+          "text": "Head back down the wooden path",
+          "target": "wooden_path",
           "conditions": [],
           "effects": []
         }
@@ -614,35 +719,35 @@
     "glade_relax": {
       "id": "glade_relax",
       "title": "Relaxing",
-      "text": "A snake bites you while you sleep.",
+      "text": "I close my eyes. Just for a second. That's all I need, just one second of——pain. Sharp, burning pain in my calf. My eyes snap open and I see it coiled there, a snake, fangs still embedded in my flesh. Its eyes are cold, reptilian. It doesn't let go. Just keeps pumping venom into me.",
       "choices": [
         {
           "id": "choice_wake",
           "text": "Wake up",
           "target": "glade_wake",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "subtract", "value": 60 }]
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 50 }, { "variable": "courage", "operation": "subtract", "value": 10 }]
         }
       ]
     },
     "glade_wake": {
       "id": "glade_wake",
       "title": "Waking Up",
-      "text": "Poison spreads, body convulsing.",
+      "text": "The poison works fast. My muscles start seizing. I can't control my own body anymore. Convulsions rack through me, so violent I feel bones crack. Foam bubbles from my mouth. I bite my tongue nearly in half. Blood everywhere. Can't breathe right. Can't breathe at all.",
       "choices": [
         {
           "id": "choice_convulse",
           "text": "Convulse",
           "target": "death_glade",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 40 }]
         }
       ]
     },
     "death_glade": {
       "id": "death_glade",
       "title": "Death by Poison",
-      "text": "Venom paralyzes muscles, you can't breathe. Foam at mouth, eyes bulging. Internal organs liquefy, blood clots. Seizures rack your body for hours, bones cracking from spasms. Finally, heart explodes in chest. Painful and humiliating.",
+      "text": "The neurotoxin paralyzes my diaphragm. I'm suffocating, drowning in air I can't breathe. My eyes bulge from the pressure. Blood vessels burst—in my eyes, my nose, my ears. I can feel my internal organs shutting down one by one. Liver first, then kidneys. My blood stops clotting properly, starts pooling internally. The seizures continue even as my brain begins to shut down from lack of oxygen. Each convulsion breaks another bone—I hear my ribs snap, my arm, my collarbone. The pain is astronomical but I can't even scream. Then my heart. I feel it stutter, skip a beat. Skip two. Try to restart and fail. Try again. The muscle fibers tear themselves apart trying to beat with no coordination. And finally, mercifully, it just... stops. Everything stops. Except my consciousness, which lingers for seconds, minutes, hours in the void, still processing the phantom sensations of a body that's no longer functioning.",
       "choices": [
         {
           "id": "choice_restart",
@@ -656,12 +761,19 @@
     "path_continue": {
       "id": "path_continue",
       "title": "Deeper Woods",
-      "text": "The path leads to a mysterious ruin. You find ancient artifacts. (Gold +25)",
+      "text": "The path leads to ruins. Old. Really old. The stones are covered in moss and carvings I don't recognize. In the center, something glints—gold? Artifacts? The whole place has this aura of forbidden knowledge, of things that were buried for a reason.",
       "choices": [
         {
           "id": "choice_investigate",
-          "text": "Investigate the ruins",
+          "text": "Search the ruins—fortune favors the bold",
           "target": "ruins_investigate",
+          "conditions": [],
+          "effects": [{ "variable": "gold", "operation": "add", "value": 25 }, { "variable": "courage", "operation": "add", "value": 10 }]
+        },
+        {
+          "id": "choice_back_to_glade",
+          "text": "Return to the peaceful glade",
+          "target": "glade_rest",
           "conditions": [],
           "effects": []
         }
@@ -670,21 +782,35 @@
     "ruins_investigate": {
       "id": "ruins_investigate",
       "title": "Ancient Ruins",
-      "text": "You enter the ruins. Traps activate.",
+      "text": "I step inside and immediately hear clicking—mechanical. Traps. Of course there are traps. In the far corner sits a chest, ancient but intact. On the walls, inscriptions in a language that hurts to look at. The letters seem to writhe, to whisper. And that artifact on the pedestal—it's pulsing with a sickly green light.",
       "choices": [
         {
           "id": "choice_touch_artifact",
-          "text": "Touch the artifact",
+          "text": "Touch the artifact—maybe it's valuable",
           "target": "ruins_touch",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 30 }]
         },
         {
           "id": "choice_read_inscription",
-          "text": "Read the inscription",
+          "text": "[REQUIRES COURAGE: 85] Read the inscription aloud",
           "target": "ruins_read",
+          "conditions": [{ "variable": "courage", "comparison": "greater_than", "value": 85 }],
+          "effects": [{ "variable": "courage", "operation": "subtract", "value": 15 }]
+        },
+        {
+          "id": "choice_take_treasure",
+          "text": "[BRAVE] Grab the treasure chest and run",
+          "target": "safe_victory",
+          "conditions": [{ "variable": "courage", "comparison": "greater_than", "value": 90 }],
+          "effects": [{ "variable": "gold", "operation": "add", "value": 100 }]
+        },
+        {
+          "id": "choice_leave_ruins",
+          "text": "Leave the ruins—this feels wrong",
+          "target": "path_continue",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "courage", "operation": "subtract", "value": 5 }]
         }
       ]
     },
@@ -698,7 +824,7 @@
           "text": "Wither",
           "target": "death_ruins",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 60 }]
         }
       ]
     },
@@ -712,7 +838,7 @@
           "text": "Face the demons",
           "target": "ruins_demons",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "courage", "operation": "add", "value": 20 }, { "variable": "health", "operation": "subtract", "value": 20 }]
         }
       ]
     },
@@ -726,18 +852,32 @@
           "text": "Get torn",
           "target": "death_ruins",
           "conditions": [],
-          "effects": []
+          "effects": [{ "variable": "health", "operation": "subtract", "value": 70 }]
         }
       ]
     },
     "death_ruins": {
       "id": "death_ruins",
       "title": "Death by Curse/Demons",
-      "text": "Cursed flesh rots off bones while alive, or demons flay skin in strips, pour molten metal into wounds. Screams echo as nerves fire endlessly. Weeks of torment, body a husk of pain, soul trapped in agony forever. Beyond brutal, cosmic horror.",
+      "text": "The curse takes hold immediately. I watch in horror as my skin begins to necrotize, turning black and sloughing off in wet chunks. But I don't die. The curse won't let me die. I remain conscious, aware, trapped in this rotting meat prison as my flesh peels away to reveal bone, as my organs liquefy and leak out. Or the demons—they're real, they're so horribly real. Claws like razors flay my skin in surgical strips. They're methodical, keeping me alive, keeping me aware. They pour molten metal into the wounds and the pain—the pain transcends anything physical. It's agony given form, stretched across an eternity. My screams echo through dimensions I can't comprehend. Days become weeks become years. Time loses all meaning. My body is nothing but a husk of suffering, but my consciousness remains, trapped, experiencing every second of torment, unable to die, unable to escape. This is worse than death. This is forever.",
       "choices": [
         {
           "id": "choice_restart",
           "text": "Restart",
+          "target": "start",
+          "conditions": [],
+          "effects": [{ "variable": "health", "operation": "set", "value": 100 }, { "variable": "courage", "operation": "set", "value": 50 }, { "variable": "gold", "operation": "set", "value": 25 }, { "variable": "hasMap", "operation": "set", "value": false }]
+        }
+      ]
+    },
+    "safe_victory": {
+      "id": "safe_victory",
+      "title": "Victorious Escape!",
+      "text": "Through your courage, cunning, and resourcefulness, you've managed to escape the Enchanted Forest alive! Your bravery will be remembered in legends. Gold: {gold}, Courage: {courage}, Health: {health}",
+      "choices": [
+        {
+          "id": "choice_play_again",
+          "text": "Play Again",
           "target": "start",
           "conditions": [],
           "effects": [{ "variable": "health", "operation": "set", "value": 100 }, { "variable": "courage", "operation": "set", "value": 50 }, { "variable": "gold", "operation": "set", "value": 25 }, { "variable": "hasMap", "operation": "set", "value": false }]

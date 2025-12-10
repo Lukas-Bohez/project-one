@@ -411,6 +411,13 @@ class StoryWeaver {
         scene.choices.forEach((choice, index) => {
             const choiceItem = document.createElement('div');
             choiceItem.className = 'choice-item';
+            
+            // Check if conditions or effects exist
+            const hasConditions = choice.conditions && choice.conditions.length > 0;
+            const hasEffects = choice.effects && choice.effects.length > 0;
+            const conditionsBadge = hasConditions ? ` <span style="background: var(--primary); color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600;">${choice.conditions.length}</span>` : '';
+            const effectsBadge = hasEffects ? ` <span style="background: var(--success); color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600;">${choice.effects.length}</span>` : '';
+            
             choiceItem.innerHTML = `
                 <div class="choice-header">
                     <div class="choice-number">${index + 1}</div>
@@ -430,10 +437,10 @@ class StoryWeaver {
                 </div>
                 <div class="choice-actions">
                     <button class="btn btn-secondary btn-sm" onclick="app.editChoiceConditions('${choice.id}')">
-                        <span>🎯</span> Conditions
+                        <span>🎯</span> Conditions${conditionsBadge}
                     </button>
                     <button class="btn btn-secondary btn-sm" onclick="app.editChoiceEffects('${choice.id}')">
-                        <span>⚡</span> Effects
+                        <span>⚡</span> Effects${effectsBadge}
                     </button>
                     <button class="btn btn-danger btn-sm" onclick="app.deleteChoice('${scene.id}', '${choice.id}')">
                         <span>🗑️</span> Delete
@@ -570,7 +577,22 @@ class StoryWeaver {
             const value = this.gameState.variables[condition.variable];
             if (value === undefined) return false;
             
-            switch (condition.operator) {
+            // Support both 'operator' (symbol) and 'comparison' (string) formats
+            let operator = condition.operator;
+            if (!operator && condition.comparison) {
+                // Convert comparison string to operator symbol
+                const comparisonMap = {
+                    'equals': '==',
+                    'not_equals': '!=',
+                    'greater_than': '>',
+                    'less_than': '<',
+                    'greater_or_equal': '>=',
+                    'less_or_equal': '<='
+                };
+                operator = comparisonMap[condition.comparison] || '==';
+            }
+            
+            switch (operator) {
                 case '==': return value == condition.value;
                 case '!=': return value != condition.value;
                 case '>': return value > condition.value;
@@ -1626,24 +1648,43 @@ class StoryWeaver {
         
         if (!choice.conditions) choice.conditions = [];
         
-        const conditionsHTML = choice.conditions.map((cond, index) => `
+        // Helper function to get operator value (supports both formats)
+        const getOperator = (cond) => {
+            if (cond.operator) return cond.operator;
+            if (cond.comparison) {
+                const comparisonMap = {
+                    'equals': '==',
+                    'not_equals': '!=',
+                    'greater_than': '>',
+                    'less_than': '<',
+                    'greater_or_equal': '>=',
+                    'less_or_equal': '<='
+                };
+                return comparisonMap[cond.comparison] || '==';
+            }
+            return '==';
+        };
+        
+        const conditionsHTML = choice.conditions.map((cond, index) => {
+            const currentOp = getOperator(cond);
+            return `
             <div class="choice-item" style="margin-bottom: 12px; padding: 12px; background: var(--surface-hover); border-radius: var(--radius-md);">
                 <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                    <select class="form-select" style="flex: 1;" data-index="${index}" data-field="variable">
+                    <select class="form-select" style="flex: 1;" data-index="${index}" data-field="variable" onchange="app.updateConditionField('${choiceId}', ${index}, 'variable', this.value)">
                         ${Object.keys(this.story.variables).map(varName => 
                             `<option value="${varName}" ${varName === cond.variable ? 'selected' : ''}>${varName}</option>`
                         ).join('')}
                     </select>
-                    <select class="form-select" style="width: 120px;" data-index="${index}" data-field="operator">
-                        <option value="==" ${cond.operator === '==' ? 'selected' : ''}>Equals</option>
-                        <option value="!=" ${cond.operator === '!=' ? 'selected' : ''}>Not Equals</option>
-                        <option value=">" ${cond.operator === '>' ? 'selected' : ''}>Greater Than</option>
-                        <option value="<" ${cond.operator === '<' ? 'selected' : ''}>Less Than</option>
-                        <option value=">=" ${cond.operator === '>=' ? 'selected' : ''}>Greater or Equal</option>
-                        <option value="<=" ${cond.operator === '<=' ? 'selected' : ''}>Less or Equal</option>
+                    <select class="form-select" style="width: 140px;" data-index="${index}" data-field="operator" onchange="app.updateConditionField('${choiceId}', ${index}, 'operator', this.value)">
+                        <option value="==" ${currentOp === '==' ? 'selected' : ''}>Equals</option>
+                        <option value="!=" ${currentOp === '!=' ? 'selected' : ''}>Not Equals</option>
+                        <option value=">" ${currentOp === '>' ? 'selected' : ''}>Greater Than</option>
+                        <option value="<" ${currentOp === '<' ? 'selected' : ''}>Less Than</option>
+                        <option value=">=" ${currentOp === '>=' ? 'selected' : ''}>Greater or Equal</option>
+                        <option value="<=" ${currentOp === '<=' ? 'selected' : ''}>Less or Equal</option>
                     </select>
                     <input type="text" class="form-input" style="width: 80px;" data-index="${index}" data-field="value" 
-                            value="${cond.value}" placeholder="Value">
+                            value="${cond.value}" placeholder="Value" onchange="app.updateConditionField('${choiceId}', ${index}, 'value', this.value)">
                 </div>
                 <div style="display: flex; justify-content: flex-end;">
                     <button class="btn btn-danger btn-sm" onclick="app.removeCondition('${choiceId}', ${index})">
@@ -1651,7 +1692,7 @@ class StoryWeaver {
                     </button>
                 </div>
             </div>
-        `).join('') || '<p style="color: var(--text-secondary); text-align: center;">No conditions yet</p>';
+        `}).join('') || '<p style="color: var(--text-secondary); text-align: center;">No conditions yet</p>';
         
         const content = `
             <div style="margin-bottom: 16px;">
@@ -1715,14 +1756,65 @@ class StoryWeaver {
             parsedValue = value.toLowerCase() === 'true';
         }
         
+        // Convert operator to comparison string format (to match JSON structure)
+        const operatorToComparison = {
+            '==': 'equals',
+            '!=': 'not_equals',
+            '>': 'greater_than',
+            '<': 'less_than',
+            '>=': 'greater_or_equal',
+            '<=': 'less_or_equal'
+        };
+        
         choice.conditions.push({
             variable,
-            operator,
+            comparison: operatorToComparison[operator] || 'equals',
             value: parsedValue
         });
         
         this.saveToStorage();
         this.editChoiceConditions(choiceId); // Refresh the modal
+    }
+
+    updateConditionField(choiceId, index, field, value) {
+        if (!this.currentEditingScene) return;
+        
+        const scene = this.story.scenes[this.currentEditingScene];
+        if (!scene) return;
+        
+        const choice = scene.choices.find(c => c.id === choiceId);
+        if (!choice || !choice.conditions || !choice.conditions[index]) return;
+        
+        const condition = choice.conditions[index];
+        
+        if (field === 'variable') {
+            condition.variable = value;
+        } else if (field === 'operator') {
+            // Convert operator symbol to comparison string
+            const operatorToComparison = {
+                '==': 'equals',
+                '!=': 'not_equals',
+                '>': 'greater_than',
+                '<': 'less_than',
+                '>=': 'greater_or_equal',
+                '<=': 'less_or_equal'
+            };
+            // Remove old operator field if exists and set comparison
+            delete condition.operator;
+            condition.comparison = operatorToComparison[value] || 'equals';
+        } else if (field === 'value') {
+            // Parse value based on variable type
+            const variable = this.story.variables[condition.variable];
+            if (variable && variable.type === 'number') {
+                condition.value = parseFloat(value);
+            } else if (variable && variable.type === 'boolean') {
+                condition.value = value === 'true';
+            } else {
+                condition.value = value;
+            }
+        }
+        
+        this.saveToStorage();
     }
 
     removeCondition(choiceId, index) {
