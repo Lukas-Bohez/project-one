@@ -54,6 +54,41 @@ class StoryWeaver {
                 sidebarCollapseBtn.textContent = isCollapsed ? '⯈' : '⯇';
             }
         } catch(e) {}
+
+        // Update sidebar toggle button based on current state
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        if (sidebarToggle) {
+            const dashboardContainer = document.querySelector('.dashboard-container');
+            if (window.innerWidth <= 768) {
+                const isOpen = dashboardContainer.classList.contains('sidebar-open');
+                sidebarToggle.innerHTML = isOpen ? '<span>✕</span>' : '<span>☰</span>';
+                sidebarToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            } else {
+                const isCollapsed = dashboardContainer.classList.contains('sidebar-collapsed');
+                sidebarToggle.innerHTML = isCollapsed ? '<span>▷</span>' : '<span>◁</span>';
+                sidebarToggle.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+            }
+        }
+
+        // Handle window resize to update toggle
+        window.addEventListener('resize', () => {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            if (sidebarToggle) {
+                const dashboardContainer = document.querySelector('.dashboard-container');
+                if (window.innerWidth <= 768) {
+                    // If switching to small screen, ensure sidebar is closed
+                    dashboardContainer.classList.remove('sidebar-open');
+                    sidebarToggle.innerHTML = '<span>☰</span>';
+                    sidebarToggle.setAttribute('aria-expanded', 'false');
+                } else {
+                    // If switching to large screen, remove open class
+                    dashboardContainer.classList.remove('sidebar-open');
+                    const isCollapsed = dashboardContainer.classList.contains('sidebar-collapsed');
+                    sidebarToggle.innerHTML = isCollapsed ? '<span>▷</span>' : '<span>◁</span>';
+                    sidebarToggle.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+                }
+            }
+        });
     }
 
     loadExamplesManifest(path = '../exampleStories/manifest.json') {
@@ -974,16 +1009,22 @@ class StoryWeaver {
         if (sidebarToggle) {
             sidebarToggle.addEventListener('click', () => {
                 const dashboardContainer = document.querySelector('.dashboard-container');
-                const isCollapsed = dashboardContainer.classList.toggle('sidebar-collapsed');
-                sidebarToggle.innerHTML = isCollapsed ? '<span>▷</span>' : '<span>◁</span>';
-                sidebarToggle.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
-                localStorage.setItem('storyweaver-sidebar-collapsed', isCollapsed ? '1' : '0');
+                if (window.innerWidth <= 768) {
+                    const isOpen = dashboardContainer.classList.toggle('sidebar-open');
+                    sidebarToggle.innerHTML = isOpen ? '<span>✕</span>' : '<span>☰</span>';
+                    sidebarToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                } else {
+                    const isCollapsed = dashboardContainer.classList.toggle('sidebar-collapsed');
+                    sidebarToggle.innerHTML = isCollapsed ? '<span>▷</span>' : '<span>◁</span>';
+                    sidebarToggle.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+                    localStorage.setItem('storyweaver-sidebar-collapsed', isCollapsed ? '1' : '0');
+                }
             });
         }
 
         // Load sidebar collapse state
         const sidebarCollapsed = localStorage.getItem('storyweaver-sidebar-collapsed') === '1';
-        if (sidebarCollapsed) {
+        if (sidebarCollapsed && window.innerWidth > 768) {
             const dashboardContainer = document.querySelector('.dashboard-container');
             const sidebarToggle = document.getElementById('sidebarToggle');
             dashboardContainer.classList.add('sidebar-collapsed');
