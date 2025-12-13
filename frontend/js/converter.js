@@ -1245,10 +1245,23 @@ async function processQueue() {
                 }
 
                 // Start server conversion
+                const requestPayload = {
+                    url: videoUrl,
+                    format: formatValue,
+                    quality: formatValue === 1 ? audioQuality : videoQuality,
+                    proxy: (document.getElementById('perDownloadProxy') && document.getElementById('perDownloadProxy').value.trim()) || undefined
+                };
+                console.log(`🎵 Converting video ${processedCount}/${totalItems}:`, {
+                    title: next.title,
+                    format: formatValue === 1 ? 'MP3 (Audio)' : 'MP4 (Video)',
+                    quality: requestPayload.quality,
+                    url: videoUrl
+                });
+                
                 const convertResp = await fetch(`${API_BASE_URL}/api/v1/video/convert`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: videoUrl, format: formatValue, quality: formatValue === 1 ? audioQuality : videoQuality, proxy: (document.getElementById('perDownloadProxy') && document.getElementById('perDownloadProxy').value.trim()) || undefined })
+                    body: JSON.stringify(requestPayload)
                 });
 
                 if (!convertResp.ok) {
@@ -1317,6 +1330,12 @@ async function processQueue() {
                     const ext = (formatValue === 1) ? '.mp3' : '.mp4';
                     const safe = (next.title || next.id).replace(/[<>:"/\\|?*\x00-\x1f]/g, '').substring(0,50).trim();
                     filename = `${safe}${ext}`;
+                }
+                
+                // 🛡️ VALIDATION: Reject thumbnail/image files (.webp, .jpg, .png)
+                if (filename && /\.(webp|jpg|jpeg|png|gif)$/i.test(filename)) {
+                    console.error('❌ Received image file instead of video/audio:', filename);
+                    throw new Error(`Backend returned an image file (.webp/${filename.split('.').pop()}) instead of video/audio. This usually means the format/quality parameters were not received correctly or YouTube blocked the download. Please try again or use different settings.`);
                 }
 
                 // Add to frontend storage (this will save to IDB via addBlobToIDB)
