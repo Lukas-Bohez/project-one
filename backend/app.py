@@ -7029,6 +7029,7 @@ class ConversionStatus(BaseModel):
 
 class PlaylistInfoRequest(BaseModel):
     url: str
+    page: int = 1  # Page number (1-indexed), each page = 100 videos
 
 class PlaylistVideoInfo(BaseModel):
     id: str
@@ -7044,6 +7045,9 @@ class PlaylistInfoResponse(BaseModel):
     videos: List[PlaylistVideoInfo]
     is_private: bool = False
     error: Optional[str] = None
+    page: int = 1
+    page_size: int = 100
+    has_more: bool = False  # True if there might be more videos on next page
 
 class BulkDownloadRequest(BaseModel):
     playlist_url: str
@@ -9557,8 +9561,8 @@ if VIDEO_CONVERTER_AVAILABLE:
 
     @app.post("/api/v1/video/playlist-info", response_model=PlaylistInfoResponse)
     async def get_playlist_info(request: PlaylistInfoRequest):
-        """Get information about a YouTube playlist with caching"""
-        video_logger.info(f"Getting playlist info for URL: {request.url}")
+        """Get information about a YouTube playlist with caching and pagination"""
+        video_logger.info(f"Getting playlist info for URL: {request.url} (page {request.page})")
         try:
             if not is_playlist_url(request.url):
                 video_logger.warning(f"Invalid playlist URL provided: {request.url}")
@@ -9571,20 +9575,44 @@ if VIDEO_CONVERTER_AVAILABLE:
             
             video_logger.info(f"Extracted playlist ID: {playlist_id}")
             
-            #  CHECK CACHE FIRST - avoid redundant API calls
-            cached_info = get_cached_playlist_info(playlist_id)
-            if cached_info:
-                video_logger.info(f"Returning cached playlist info for {playlist_id}")
-                return cached_info
+            # Cache the full playlist data (all videos extracted)
+            cache_key_full = f"{playlist_id}_full"
             
-            # yt-dlp options for playlist extraction with cookie support
+            #  CHECK CACHE FIRST - avoid redundant API calls
+            cached_full_data = get_cached_playlist_info(cache_key_full)
+            
+            page_size = 100
+            
+            if cached_full_data:
+                video_logger.info(f"Using cached full playlist data for {playlist_id}, serving page {request.page}")
+                # Serve paginated results from cached full data
+                all_videos = cached_full_data.get('videos', [])
+                total_count = cached_full_data.get('total_count', len(all_videos))
+                playlist_title = cached_full_data.get('title', f'Playlist {playlist_id}')
+                
+                start_index = (request.page - 1) * page_size
+                end_index = start_index + page_size
+                paginated_videos = all_videos[start_index:end_index]
+                # Check against total_count, not just extracted videos
+                has_more = (request.page * page_size) < total_count
+                
+                return PlaylistInfoResponse(
+                    success=True,
+                    playlist_id=playlist_id,
+                    title=playlist_title,
+                    video_count=total_count,
+                    videos=paginated_videos,
+                    is_private=False,
+                    page=request.page,
+                    page_size=page_size,
+                    has_more=has_more
+                )
             ydl_opts = {
                 'quiet': True,
                 'no_warnings': True,
-                'extract_flat': 'in_playlist',  # Extract basic info for playlist items
+                'extract_flat': 'in_playlist',  # Extract basic info only (faster)
                 'ignoreerrors': True,  # Continue even if some videos fail
                 'skip_unavailable_fragments': True,
-                'playlistend': None,  # No limit - fetch ALL videos in playlist (default is 100)
             }
             
             #  ADD COOKIES for age-restricted playlists
@@ -9623,6 +9651,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                         return response
                     
                     playlist_title = info.get('title', f'Playlist {playlist_id}')
+                    playlist_count = info.get('playlist_count', 0)  # Total videos in playlist
                     entries = info.get('entries', [])
                     
                     videos = []
@@ -9645,18 +9674,37 @@ if VIDEO_CONVERTER_AVAILABLE:
                     if skipped_count > 0:
                         video_logger.info(f"Skipped {skipped_count} unavailable/private videos in playlist {playlist_id}")
                     
-                    video_logger.info(f"Successfully extracted playlist info: {playlist_title} with {len(videos)} videos")
+                    # Paginate the extracted videos in memory
+                    start_index = (request.page - 1) * page_size
+                    end_index = start_index + page_size
+                    paginated_videos = videos[start_index:end_index]
+                    
+                    # Determine if there are more videos based on total count from playlist
+                    total_videos = playlist_count if playlist_count > 0 else len(videos)
+                    # has_more should check against total_videos, not just extracted videos
+                    has_more = (request.page * page_size) < total_videos
+                    
+                    video_logger.info(f"Successfully extracted playlist info: {playlist_title} with {len(paginated_videos)} videos on page {request.page} (total: {total_videos})")
+                    
+                    #  CACHE THE FULL DATA (all videos) to avoid redundant API calls
+                    full_data = {
+                        'videos': videos,  # All extracted videos
+                        'total_count': total_videos,
+                        'title': playlist_title
+                    }
+                    cache_playlist_info(cache_key_full, full_data)
+                    
                     response = PlaylistInfoResponse(
                         success=True,
                         playlist_id=playlist_id,
                         title=playlist_title,
-                        video_count=len(videos),
-                        videos=videos,
-                        is_private=False
+                        video_count=total_videos,  # Total count, not just this page
+                        videos=paginated_videos,  # Only videos for this page
+                        is_private=False,
+                        page=request.page,
+                        page_size=page_size,
+                        has_more=has_more
                     )
-                    
-                    #  CACHE THE RESULT to avoid redundant API calls
-                    cache_playlist_info(playlist_id, response)
                     
                     return response
                         
