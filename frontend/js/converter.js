@@ -630,25 +630,29 @@ function getOrCreateErrorContainer() {
 let currentPlaylistData = null;
 let isFetchingPlaylist = false;
 let lastFetchedPlaylistId = '';
+let currentPlaylistPage = 1;
+let currentPlaylistUrl = '';
 
-async function showPlaylistUI(playlistId, playlistUrl) {
-    // Prevent concurrent playlist fetches for the same playlist
-    if (isFetchingPlaylist || playlistId === lastFetchedPlaylistId) {
-        console.log('⏭️ Skipping duplicate playlist fetch for:', playlistId);
+async function showPlaylistUI(playlistId, playlistUrl, page = 1) {
+    // Prevent concurrent playlist fetches
+    if (isFetchingPlaylist) {
+        console.log('⏭️ Already fetching playlist, please wait');
         return;
     }
     
     isFetchingPlaylist = true;
+    currentPlaylistPage = page;
+    currentPlaylistUrl = playlistUrl;
     
     try {
-        console.log('📋 Fetching playlist info for:', playlistId);
+        console.log('📋 Fetching playlist info for:', playlistId, 'page:', page);
 
         const response = await fetch(`${API_BASE_URL}/api/v1/video/playlist-info`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ url: playlistUrl })
+            body: JSON.stringify({ url: playlistUrl, page: page })
         });
 
         const result = await response.json();
@@ -682,7 +686,7 @@ async function showPlaylistUI(playlistId, playlistUrl) {
                 return false;
             }
 
-            renderPlaylistUI(result);
+            renderPlaylistUI(result, page, playlistId, playlistUrl);
             showValidationSuccess(`Playlist loaded: ${result.video_count} videos`);
             lastFetchedPlaylistId = playlistId;
             return true;
@@ -710,8 +714,17 @@ function hidePlaylistUI() {
     lastFetchedPlaylistId = ''; // Reset to allow re-fetching if needed
 }
 
-function renderPlaylistUI(playlistData) {
+function renderPlaylistUI(playlistData, page = 1, playlistId = null, playlistUrl = null) {
     let playlistContainer = document.getElementById('playlist-container');
+    
+    // Extract playlist_id from playlistData if not provided
+    if (!playlistId && playlistData.playlist_id) {
+        playlistId = playlistData.playlist_id;
+    }
+    // Use currentPlaylistUrl if playlistUrl not provided
+    if (!playlistUrl) {
+        playlistUrl = currentPlaylistUrl;
+    }
     
     if (!playlistContainer) {
         playlistContainer = document.createElement('div');
@@ -729,6 +742,17 @@ function renderPlaylistUI(playlistData) {
             <p>${playlistData.video_count} videos in playlist</p>
             <div id="playlist-status" class="playlist-status" style="margin-top:8px;font-size:0.95em;color:#bcd;">
                 <span id="playlist-status-text">Idle</span>
+            </div>
+            <div class="playlist-pagination" style="display:flex;align-items:center;justify-content:center;gap:16px;margin:16px 0;padding:12px;background:rgba(30,30,50,0.5);border-radius:8px;">
+                <button id="prev-page-btn" class="c-btn c-btn--tertiary" ${page === 1 ? 'disabled' : ''}>
+                    <i class="fas fa-chevron-left"></i> Previous
+                </button>
+                <span style="color:#bcd;font-size:0.95em;">
+                    Page ${page} • Videos ${(page - 1) * 100 + 1}-${(page - 1) * 100 + playlistData.videos.length} ${playlistData.has_more ? '• More Available' : '• Last Page'}
+                </span>
+                <button id="next-page-btn" class="c-btn c-btn--tertiary" ${!playlistData.has_more ? 'disabled' : ''}>
+                    Next <i class="fas fa-chevron-right"></i>
+                </button>
             </div>
             <div class="playlist-actions c-cta-buttons">
                 <button id="download-all-btn" class="c-btn c-btn--primary download-all-btn">
@@ -789,7 +813,7 @@ function renderPlaylistUI(playlistData) {
     playlistContainer.style.display = 'block';
     
     // Add event listeners
-    setupPlaylistEventListeners();
+    setupPlaylistEventListeners(playlistId, playlistUrl, page);
     // Update cached indicators based on persisted IDB entries
     try { updateCachedIndicators(); } catch (e) { console.warn('updateCachedIndicators failed', e); }
     // Cancel handler
@@ -855,13 +879,15 @@ function updatePlaylistStatusUI(opts = {}) {
     } catch (e) { console.warn('updatePlaylistStatusUI failed', e); }
 }
 
-function setupPlaylistEventListeners() {
+function setupPlaylistEventListeners(playlistId, playlistUrl, currentPage) {
     const downloadAllBtn = document.getElementById('download-all-btn');
     const selectVideosBtn = document.getElementById('select-videos-btn');
     const selectAllBtn = document.getElementById('select-all-btn');
     const deselectAllBtn = document.getElementById('deselect-all-btn');
     const downloadSelectedBtn = document.getElementById('download-selected-btn');
     const playlistVideos = document.getElementById('playlist-videos');
+    const prevPageBtn = document.getElementById('prev-page-btn');
+    const nextPageBtn = document.getElementById('next-page-btn');
     
     if (downloadAllBtn) {
         downloadAllBtn.addEventListener('click', () => downloadAllVideos());
@@ -919,6 +945,23 @@ function setupPlaylistEventListeners() {
     }
     if (clearCacheBtn) {
         clearCacheBtn.addEventListener('click', () => clearCachedSongs());
+    }
+    
+    // Pagination button handlers
+    if (prevPageBtn) {
+        prevPageBtn.addEventListener('click', () => {
+            if (prevPageBtn.disabled) return;
+            console.log('⬅️ Previous page clicked, current:', currentPlaylistPage, 'going to:', currentPlaylistPage - 1);
+            showPlaylistUI(playlistId, currentPlaylistUrl, currentPlaylistPage - 1);
+        });
+    }
+    
+    if (nextPageBtn) {
+        nextPageBtn.addEventListener('click', () => {
+            if (nextPageBtn.disabled) return;
+            console.log('➡️ Next page clicked, current:', currentPlaylistPage, 'going to:', currentPlaylistPage + 1);
+            showPlaylistUI(playlistId, currentPlaylistUrl, currentPlaylistPage + 1);
+        });
     }
     
     // Update download button when checkboxes change
