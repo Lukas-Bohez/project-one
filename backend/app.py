@@ -7713,11 +7713,14 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
     
     if format_type == 'audio':
         base_opts.update({
-            'format': 'bestaudio[ext=m4a]/bestaudio/best',
+            'format': 'bestaudio/best[ext=m4a]/best[ext=mp3]/best',  # More flexible format selection
             # Download thumbnail and try to embed it into the final audio file
-            'writethumbnail': True,
+            'writethumbnail': False,  # Disable thumbnail download by default
             'embedthumbnail': True,
             'addmetadata': True,
+            # Download and embed lyrics
+            'writelyrics': True,
+            'embedlyrics': True,
             # Prefer ffmpeg for postprocessing
             'prefer_ffmpeg': True,
             'postprocessors': [
@@ -7745,9 +7748,11 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
     else:  # video
         # Add thumbnail and metadata options for video
         base_opts.update({
-            'writethumbnail': True,  # Download thumbnail for album art
+            'writethumbnail': False,  # Disable thumbnail download by default
             'embedthumbnail': True,  # Embed thumbnail as album art
             'addmetadata': True,     # Add metadata to file
+            'writelyrics': True,     # Download lyrics
+            'embedlyrics': True,     # Embed lyrics into video file
             'prefer_ffmpeg': True,
             # Skip automatic subtitle downloads to avoid 429 errors; subtitles
             # can be fetched separately when required.
@@ -7755,13 +7760,13 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
             'writeautomaticsub': False,
         })
         quality_map = {
-            144: 'worst[height<=144]',
-            360: 'best[height<=360]',
-            480: 'best[height<=480]',
-            720: 'best[height<=720]', 
-            1080: 'best[height<=1080]'
+            144: 'best[height<=144]/worst[height<=144]',
+            360: 'best[height<=360]/best[height<=480]',
+            480: 'best[height<=480]/best[height<=720]',
+            720: 'best[height<=720]/best[height<=1080]', 
+            1080: 'best[height<=1080]/best'
         }
-        base_opts['format'] = quality_map.get(quality, 'best[height<=720]')
+        base_opts['format'] = quality_map.get(quality, 'best[height<=720]/best')
         base_opts.update({
             'postprocessors': [
                 {
@@ -7881,9 +7886,20 @@ def try_invidious_download(url: str, format_type: str, quality: int, output_path
             
             # Try download with Invidious
             ydl_opts = get_ydl_opts(format_type, quality, output_path, use_invidious=True, invidious_instance=instance)
+            # Disable thumbnail downloads for Invidious fallback (embedding not supported)
+            ydl_opts['writethumbnail'] = False
+            ydl_opts['embedthumbnail'] = False
+            # Note: Lyrics and thumbnail embedding not supported with Invidious proxy
             
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(invidious_url, download=True)
+                
+                # Validate that we actually downloaded valid media files
+                valid_files = get_valid_downloaded_files(output_path, format_type)
+                if not valid_files:
+                    # No valid media files found - Invidious returned error page
+                    update_invidious_health(instance, success=False)
+                    continue
                 
                 # Update health tracking on success
                 update_invidious_health(instance, success=True)
@@ -7906,6 +7922,38 @@ try:
     MUTAGEN_AVAILABLE = True
 except Exception:
     MUTAGEN_AVAILABLE = False
+
+
+def is_valid_media_file(file_path: str) -> bool:
+    """Check if file is actually a media file by examining its content header"""
+    try:
+        with open(file_path, 'rb') as f:
+            header = f.read(64)  # Read first 64 bytes
+        
+        # Check for HTML content (error pages)
+        header_str = header.decode('utf-8', errors='ignore').lower()
+        if '<!doctype' in header_str or '<html' in header_str or '<head' in header_str:
+            return False
+        
+        # Check for media file signatures
+        # MP4: ftyp
+        # MP3: ID3 or ÿû (FF FB)
+        # WebM: 
+        # M4A: ftyp
+        # MKV: 
+        if header.startswith(b'ftyp'):  # MP4, M4A
+            return True
+        if header.startswith(b'ID3'):  # MP3 with ID3 tag
+            return True
+        if header.startswith(b'\xff\xfb') or header.startswith(b'\xff\xf3') or header.startswith(b'\xff\xf2'):  # MP3 frame sync
+            return True
+        if header.startswith(b'\x1a\x45\xdf\xa3'):  # WebM/MKV
+            return True
+        
+        # If we can't identify it as media or HTML, assume it's invalid
+        return False
+    except Exception:
+        return False
 
 
 def apply_metadata(file_path: str, info: Dict[str, Any], base_pattern: str, format_type: str = 'audio'):
@@ -8880,28 +8928,13 @@ if VIDEO_CONVERTER_AVAILABLE:
             elif cookiefile and not os.path.exists(cookiefile):
                 cookiefile = None
             
-            #  OPTIMIZATION: Try Invidious FIRST if no cookies - it works reliably!
-            # Skip wasting time on direct attempts that will fail with 403
+            #  OPTIMIZATION: Try direct download first, use Invidious as fallback
+            # This avoids issues with Invidious returning error pages
             invidious_success = False
             if not cookiefile:
-                video_logger.info(" No cookies found - trying Invidious proxy first for faster results")
-                # Apply anti-bot throttling before Invidious attempt
-                throttle_youtube_request()
-                # Try Invidious first without verbose logging
-                invidious_success, invidious_info, invidious_error = try_invidious_download(
-                    url, format_type, quality, output_path
-                )
-                if invidious_success:
-                    video_logger.info(" Invidious proxy succeeded on first try!")
-                    with session_state_lock:
-                        request_session_state['success_count'] += 1
-                    # Success! Skip the entire retry loop
-                    last_exception = None
-                    # Jump to file-finding section below
-                else:
-                    video_logger.info("️ Invidious failed, will try direct download with retries")
-                    with session_state_lock:
-                        request_session_state['error_count'] += 1
+                video_logger.info(" No cookies found - will try direct download first, Invidious as fallback")
+            else:
+                video_logger.info(" Cookies available - trying direct download")
             
             #  ADAPTIVE QUALITY: If quality was reduced, log it
             if needs_adaptive_quality:
@@ -8956,6 +8989,50 @@ if VIDEO_CONVERTER_AVAILABLE:
             effective_max = min(10, max(1, YTDL_MAX_RETRIES)) if not YTDL_RETRY_FOREVER else 10
             
             # Skip retry loop if Invidious already succeeded OR chunking metadata OR chunk completed
+            def get_valid_downloaded_files(output_path: str, format_type: str) -> list[str]:
+                """Get list of valid downloaded media files, filtering out HTML error pages and temp files"""
+                base_pattern = os.path.basename(output_path.replace('.%(ext)s', ''))
+                temp_dir = os.path.dirname(output_path)
+                
+                # Skip these extensions (temporary/metadata files)
+                skip_extensions = ('.ytdl', '.part', '.temp', '.tmp', '.download', '.aria2', '.f')
+                # Skip HTML/MHTML files (error pages from YouTube)
+                html_extensions = ('.html', '.mhtml', '.htm')
+                
+                valid_files = []
+                try:
+                    all_files = os.listdir(temp_dir)
+                except:
+                    return []
+                
+                for filename in all_files:
+                    if not filename.startswith(base_pattern):
+                        continue
+                    
+                    # Skip temporary and metadata files
+                    if any(filename.endswith(ext) for ext in skip_extensions):
+                        continue
+                    
+                    # Skip HTML files
+                    if any(filename.endswith(ext) for ext in html_extensions):
+                        continue
+                    
+                    # Skip files smaller than 1KB
+                    file_path = os.path.join(temp_dir, filename)
+                    try:
+                        if os.path.getsize(file_path) < 1024:
+                            continue
+                    except:
+                        continue
+                    
+                    # Validate content
+                    if not is_valid_media_file(file_path):
+                        continue
+                    
+                    valid_files.append(file_path)
+                
+                return valid_files
+
             if not (not cookiefile and invidious_success) and not skip_normal_download:
                 while True:
                     attempt += 1
@@ -8989,7 +9066,14 @@ if VIDEO_CONVERTER_AVAILABLE:
                             result = ydl.download([url])
                             video_logger.info(f"yt-dlp download result: {result}")
                         
-                        # Success
+                        # Validate that actual media files were downloaded (not HTML error pages)
+                        valid_files = get_valid_downloaded_files(output_path, format_type)
+                        if not valid_files:
+                            video_logger.error(f"Download attempt {attempt} failed: yt-dlp reported success but no valid media files found (likely HTML error page)")
+                            # Continue to next retry attempt
+                            continue
+                        
+                        # Success - valid media files found
                         video_logger.info(f"Download attempt {attempt} succeeded")
                         last_exception = None
                         break
@@ -9219,8 +9303,12 @@ if VIDEO_CONVERTER_AVAILABLE:
                     except:
                         continue
                     
-                    candidates.append(file_path)
-                    video_logger.info(f"Found candidate: {filename}")
+            # Validate file content - check if it's actually a media file, not HTML
+            if not is_valid_media_file(file_path):
+                video_logger.warning(f"Skipping invalid media file (likely HTML error page): {filename}")
+            else:
+                candidates.append(file_path)
+                video_logger.info(f"Found candidate: {filename}")
 
             # Prefer actual audio/video files over thumbnails (e.g., .webp)
             if candidates:
@@ -9230,7 +9318,6 @@ if VIDEO_CONVERTER_AVAILABLE:
                 else:
                     priority_exts = ['.mp4', '.mkv', '.webm', '.mov', '.flv']
 
-                # Try to find the best candidate by priority
                 chosen = None
                 for ext in priority_exts:
                     for path in candidates:
@@ -9241,7 +9328,20 @@ if VIDEO_CONVERTER_AVAILABLE:
                         break
 
                 # Fallback to any candidate if no prioritized ext matched
-                downloaded_file = chosen or candidates[0]
+                if not chosen:
+                    # If we only have image files, this is a failed download
+                    image_files = [p for p in candidates if p.lower().endswith(('.jpg', '.jpeg', '.png', '.webp', '.gif'))]
+                    if len(image_files) == len(candidates):
+                        # All candidates are images - this means the download failed
+                        video_logger.error(f"Download failed - only image/thumbnail files found: {candidates}")
+                        raise ValueError(
+                            "Download failed - YouTube blocked the download and only thumbnails were retrieved. "
+                            "This usually means your IP is rate-limited or requires authentication. "
+                            "Try: 1) Adding browser cookies from YouTube, 2) Waiting 10-15 minutes, 3) Using a VPN"
+                        )
+                    chosen = candidates[0]
+                
+                downloaded_file = chosen
                 video_logger.info(f"Selected file: {downloaded_file}")
             else:
                 # Check if HTML files exist (error case)
@@ -9370,6 +9470,11 @@ if VIDEO_CONVERTER_AVAILABLE:
             ydl_opts['playliststart'] = start_index
             if end_index:
                 ydl_opts['playlistend'] = end_index
+            # Disable thumbnail downloads for bulk operations to avoid clutter
+            ydl_opts['writethumbnail'] = False
+            ydl_opts['embedthumbnail'] = True
+            ydl_opts['writelyrics'] = True
+            ydl_opts['embedlyrics'] = True
             
             # Add cookies if available
             cookie_file = os.environ.get('YTDL_COOKIE_FILE')
@@ -9504,6 +9609,11 @@ if VIDEO_CONVERTER_AVAILABLE:
                     
                     # Download this video
                     ydl_opts = get_ydl_opts(format_type, quality, output_path)
+                    # Disable thumbnail downloads for bulk operations
+                    ydl_opts['writethumbnail'] = False
+                    ydl_opts['embedthumbnail'] = True
+                    ydl_opts['writelyrics'] = True
+                    ydl_opts['embedlyrics'] = True
                     
                     def progress_hook(d):
                         if d['status'] == 'finished':
