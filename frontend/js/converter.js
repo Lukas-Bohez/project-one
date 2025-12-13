@@ -3655,6 +3655,14 @@ function startStatusPolling() {
                 console.log('📊 Progress:', status.progress + '%');
             }
 
+            // 🎯 Handle "Download ID not found" - this is normal after successful completion/caching
+            if (status.detail && status.detail.includes('Download ID not found')) {
+                console.log('✅ Download ID cleaned up (already completed and cached)');
+                clearInterval(statusCheckInterval);
+                isProcessing = false;
+                return; // Exit gracefully - download already succeeded
+            }
+
             if (!response.ok) {
                 throw new Error(status.error || 'Status check failed');
             }
@@ -3683,6 +3691,10 @@ function startStatusPolling() {
                 // Reset failure counter on successful completion
                 statusCheckFailures = 0;
                 
+                // 🎯 CRITICAL: Clear interval IMMEDIATELY to prevent race condition
+                // Must happen before any async operations that might take time
+                clearInterval(statusCheckInterval);
+                
                 if (status.format && status.format.includes('Bulk')) {
                     const completed = status.completed_count || 0;
                     const total = status.total_videos || 0;
@@ -3693,16 +3705,14 @@ function startStatusPolling() {
                     enableConvertButtonVisuals();
 
                     if (!(completed >= total && partsRemaining === 0)) {
-                        // keep polling
+                        // keep polling for bulk operations
                     } else {
-                        clearInterval(statusCheckInterval);
                         isProcessing = false;
                     }
                 } else if (status.parts && status.parts.length > 1) {
                     // 📦 CHUNKED DOWNLOAD: Multiple parts detected
                     console.log(`📦 Chunked download completed: ${status.parts.length} parts`);
                     
-                    clearInterval(statusCheckInterval);
                     isProcessing = false;
                     enableBulkControls();
                     enableConvertButtonVisuals();
@@ -3719,7 +3729,6 @@ function startStatusPolling() {
                         progressDisplay.style.display = 'none';
                     }
                 } else {
-                    clearInterval(statusCheckInterval);
                     isProcessing = false;
                     enableBulkControls();
                     enableConvertButtonVisuals();

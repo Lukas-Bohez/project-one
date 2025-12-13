@@ -9004,6 +9004,16 @@ if VIDEO_CONVERTER_AVAILABLE:
                             'account associated with this video has been terminated'
                         ])
                         
+                        # Check if we need cookies (403/age-restricted)
+                        needs_cookies = any(keyword in derr.lower() for keyword in [
+                            '403', 'forbidden', 'age-restricted', 'sign in'
+                        ])
+                        if needs_cookies and not cookiefile:
+                            video_logger.warning(
+                                "🍪 Download blocked - browser cookies recommended! "
+                                "Export cookies.txt from your browser while logged into YouTube."
+                            )
+                        
                         #  OPTIMIZATION: Check for sign-in required errors (fail fast)
                         is_sign_in_required = any(keyword in derr.lower() for keyword in [
                             'sign in to confirm',
@@ -9173,9 +9183,32 @@ if VIDEO_CONVERTER_AVAILABLE:
                 video_logger.error(f"Error listing directory: {list_err}")
                 all_files = []
             
+            # Skip these extensions (temporary/metadata files)
+            skip_extensions = ('.ytdl', '.part', '.temp', '.tmp', '.download', '.aria2', '.f')
+            # Skip HTML/MHTML files (error pages from YouTube)
+            html_extensions = ('.html', '.mhtml', '.htm')
+            
             for filename in all_files:
                 if filename.startswith(os.path.basename(base_pattern)):
-                    candidates.append(os.path.join(VIDEO_DOWNLOAD_DIR, filename))
+                    # Skip temporary and metadata files
+                    if any(filename.endswith(ext) for ext in skip_extensions):
+                        video_logger.debug(f"Skipping temporary/metadata file: {filename}")
+                        continue
+                    # Skip HTML files (these are error pages, not media)
+                    if any(filename.endswith(ext) for ext in html_extensions):
+                        video_logger.warning(f"Skipping HTML error page: {filename}")
+                        continue
+                    # Skip files smaller than 1KB (likely corrupted)
+                    file_path = os.path.join(VIDEO_DOWNLOAD_DIR, filename)
+                    try:
+                        file_size = os.path.getsize(file_path)
+                        if file_size < 1024:
+                            video_logger.warning(f"Skipping tiny file {filename} ({file_size} bytes)")
+                            continue
+                    except:
+                        continue
+                    
+                    candidates.append(file_path)
                     video_logger.info(f"Found candidate: {filename}")
 
             # Prefer actual audio/video files over thumbnails (e.g., .webp)
@@ -9200,7 +9233,16 @@ if VIDEO_CONVERTER_AVAILABLE:
                 downloaded_file = chosen or candidates[0]
                 video_logger.info(f"Selected file: {downloaded_file}")
             else:
-                video_logger.error(f"No candidates found! Expected pattern: {os.path.basename(base_pattern)}")
+                # Check if HTML files exist (error case)
+                html_files = [f for f in all_files if f.startswith(os.path.basename(base_pattern)) and any(f.endswith(ext) for ext in ('.html', '.mhtml', '.htm'))]
+                if html_files:
+                    video_logger.error(f"Download failed - received HTML error page: {html_files[0]}")
+                    raise ValueError(
+                        "YouTube blocked the download (received HTML error page). "
+                        "This means your IP may be rate-limited. "
+                        "Solutions: 1) Wait 10-15 minutes, 2) Add browser cookies, 3) Use VPN/proxy"
+                    )
+                video_logger.error(f"No valid candidates found! Expected pattern: {os.path.basename(base_pattern)}")
             
             if downloaded_file and os.path.exists(downloaded_file):
                 # Try to apply metadata (cover art, artist, lyrics) if possible
