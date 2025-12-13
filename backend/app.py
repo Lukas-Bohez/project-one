@@ -7114,7 +7114,16 @@ watchdog_running = False
 # Global request throttling to avoid overwhelming YouTube
 last_youtube_request_time = 0
 youtube_request_lock = threading.Lock()
-MIN_REQUEST_INTERVAL = 0.3  #  OPTIMIZED: Reduced from 0.5 to 0.3 for faster processing
+MIN_REQUEST_INTERVAL = 0.8  #  ANTI-BOT: Increased to 0.8s to appear more human-like
+
+# Session state tracking for more realistic request patterns
+request_session_state = {
+    'consecutive_requests': 0,
+    'last_reset': time.time(),
+    'error_count': 0,
+    'success_count': 0,
+}
+session_state_lock = threading.Lock()
 
 #  OPTIMIZATION: Cache cookie file path to avoid repeated lookups
 _cached_cookie_file = None
@@ -7208,14 +7217,51 @@ def get_healthy_invidious_instances() -> list:
         return [inst for inst, score in scored_instances]
 
 def throttle_youtube_request():
-    """Ensure minimum time between YouTube requests to avoid rate limiting"""
-    global last_youtube_request_time
+    """Ensure minimum time between YouTube requests with sophisticated human-like patterns"""
+    global last_youtube_request_time, request_session_state
+    
     with youtube_request_lock:
         current_time = time.time()
         time_since_last = current_time - last_youtube_request_time
-        if time_since_last < MIN_REQUEST_INTERVAL:
-            sleep_time = MIN_REQUEST_INTERVAL - time_since_last
+        
+        # Update session state
+        with session_state_lock:
+            # Reset counters every 5 minutes for fresh pattern
+            if current_time - request_session_state['last_reset'] > 300:
+                request_session_state['consecutive_requests'] = 0
+                request_session_state['last_reset'] = current_time
+            
+            request_session_state['consecutive_requests'] += 1
+            consecutive = request_session_state['consecutive_requests']
+        
+        # Base interval with random variance (±30%)
+        variance = random.uniform(-0.3, 0.3)
+        varied_interval = MIN_REQUEST_INTERVAL * (1 + variance)
+        
+        # Exponential backoff after many consecutive requests (looks more human)
+        if consecutive > 10:
+            # Add progressive delay: more requests = longer pauses
+            backoff_factor = min((consecutive - 10) / 10.0, 2.0)  # Cap at 2x
+            varied_interval *= (1 + backoff_factor)
+            video_logger.debug(f"Applied backoff factor {backoff_factor:.2f} after {consecutive} requests")
+        
+        # Apply minimum delay
+        if time_since_last < varied_interval:
+            sleep_time = varied_interval - time_since_last
             time.sleep(sleep_time)
+        
+        # Smart pausing: increase probability with consecutive requests
+        pause_probability = min(0.05 + (consecutive * 0.01), 0.20)  # 5%-20% chance
+        if random.random() < pause_probability:
+            # Longer pauses for burst behavior
+            pause_duration = random.uniform(1.0, 4.0)
+            video_logger.debug(f"Human-like pause: {pause_duration:.1f}s")
+            time.sleep(pause_duration)
+        
+        # Occasionally add micro-jitter (very human-like)
+        if random.random() < 0.3:
+            time.sleep(random.uniform(0.05, 0.15))
+        
         last_youtube_request_time = time.time()
 
 def check_video_rate_limit(client_ip: str) -> bool:
@@ -7538,23 +7584,25 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
         'nocheckcertificate': True,
         'quiet': False,  # Show output
         'no_color': True,  # Disable colors for logging
-        #  OPTIMIZED: Enhanced anti-403 measures with faster retry settings
-        'extractor_retries': 3,
-        'fragment_retries': 3,  # Reduced from 5 to 3 for faster failures
+        #  ENHANCED: More aggressive anti-bot retry settings
+        'extractor_retries': 5,  # Increased for better success rate
+        'fragment_retries': 5,  # Increased for transient errors
         'skip_unavailable_fragments': True,
         'keepvideo': False,
-        'retries': 4,  # Reduced from 5 to 4 for faster failures
-        'file_access_retries': 2,  # Reduced from 3 to 2
-        # Optimized sleep intervals for faster processing while avoiding rate limits
-        'sleep_interval': 1,  # Reduced from 3 to 1 second
-        'max_sleep_interval': 5,  # Reduced from 10 to 5 seconds
-        # Add socket timeout to prevent hanging
-        'socket_timeout': 20,  # Reduced from 30 to 20 seconds
-        'sleep_interval_requests': 0.5,  # Reduced from 2 to 0.5 seconds
-        'sleep_interval_subtitles': 0.5,  # Reduced from 1 to 0.5 seconds
-        #  OPTIMIZATION: Enable HTTP connection pooling for faster downloads
-        'http_chunk_size': 10485760,  # 10MB chunks for better throughput
-        'concurrent_fragment_downloads': 3,  # Download 3 fragments simultaneously
+        'retries': 8,  # Increased retry attempts
+        'file_access_retries': 3,  # Restored for reliability
+        # Slower intervals to avoid triggering rate limits
+        'sleep_interval': 2,  # Increased to appear more human-like
+        'max_sleep_interval': 8,  # Increased delay ceiling
+        # Reasonable timeout to detect real failures
+        'socket_timeout': 30,  # Restored to avoid premature timeouts
+        'sleep_interval_requests': 1.0,  # Slower request pacing
+        'sleep_interval_subtitles': 1.0,  # Slower subtitle fetches
+        #  ANTI-BOT: Moderate chunk size and concurrent downloads
+        'http_chunk_size': 10485760,  # 10MB chunks
+        'concurrent_fragment_downloads': 2,  # Reduced to 2 for less aggressive behavior
+        #  CRITICAL: Force IPv4 to avoid IPv6 detection patterns
+        'source_address': '0.0.0.0',  # Bind to IPv4
     }
     
     # Use Invidious proxy if requested (for Layer 3 fallback)
@@ -7583,28 +7631,73 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
             'age_limit': 18,  # Allow adult content
         })
     
-    # Always try to handle age-restricted content with robust headers
+    # Always try to handle age-restricted content with robust, browser-like headers
+    # These headers are critical for avoiding bot detection on YouTube
+    
+    # Generate browser-consistent header combinations
+    user_agent = get_random_user_agent()
+    is_chrome = 'Chrome' in user_agent and 'Edg' not in user_agent
+    is_firefox = 'Firefox' in user_agent
+    is_safari = 'Safari' in user_agent and 'Chrome' not in user_agent
+    is_mobile = 'Mobile' in user_agent or 'Android' in user_agent
+    
+    # Build headers that match the user agent
+    headers = {
+        'User-Agent': user_agent,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+        'Accept-Language': get_random_accept_language(),
+        'Accept-Encoding': 'gzip, deflate, br' if not is_safari else 'gzip, deflate, br, zstd',
+        'DNT': '1',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Cache-Control': 'max-age=0',
+    }
+    
+    # Add browser-specific headers for better fingerprint consistency
+    if is_chrome:
+        headers.update({
+            'Sec-Ch-Ua': '"Chromium";v="131", "Not_A Brand";v="24"',
+            'Sec-Ch-Ua-Mobile': '?1' if is_mobile else '?0',
+            'Sec-Ch-Ua-Platform': '"Android"' if is_mobile else '"Windows"',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none' if random.random() > 0.5 else 'same-origin',
+            'Sec-Fetch-User': '?1',
+        })
+    elif is_firefox:
+        # Firefox doesn't send Sec-Ch-Ua headers
+        headers['Sec-Fetch-Dest'] = 'document'
+        headers['Sec-Fetch-Mode'] = 'navigate'
+        headers['Sec-Fetch-Site'] = 'none'
+        headers['Sec-Fetch-User'] = '?1'
+    
+    # Randomly include or exclude referer/origin (more realistic)
+    if random.random() > 0.3:  # 70% chance to include
+        headers['Referer'] = 'https://www.youtube.com/'
+    if random.random() > 0.5:  # 50% chance to include
+        headers['Origin'] = 'https://www.youtube.com'
+    
     base_opts.update({
         'age_limit': 18,  # Allow adult content
         'geo_bypass': True,  # Bypass geo-restrictions
-        'geo_bypass_country': 'US',  # Use US as default country
-        # Provide common headers to avoid simple 403 responses - rotate user agents
-        'http_headers': {
-            'User-Agent': get_random_user_agent(),
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Accept-Encoding': 'gzip, deflate',
-            'DNT': '1',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
-            'Referer': 'https://www.youtube.com/',
-            'Sec-Fetch-Dest': 'document',
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'none',
-            'Cache-Control': 'max-age=0',
-        },
-        # disable persistent cache to avoid stale/resolved issues
+        'geo_bypass_country': 'BE',  # Use Belgium as default country
+        'http_headers': headers,
+        # Disable persistent cache to avoid stale/resolved issues
         'cachedir': False,
+        #  CRITICAL: Use multiple player clients and bypass techniques
+        'extractor_args': {
+            'youtube': {
+                # Try multiple player clients for better success rate
+                'player_client': ['android', 'ios', 'web'],
+                # Skip methods that might trigger additional verification
+                'player_skip': ['webpage'],
+                # Bypass age gate and geo-restrictions
+                'skip': ['dash'],  # Prefer standard formats over adaptive
+            }
+        },
+        #  ANTI-BOT: Add random delay variance at extraction level
+        'sleep_interval_subtitles': random.uniform(0.5, 2.0),
+        'sleep_interval_requests': random.uniform(0.8, 2.5),
     })
     
     if format_type == 'audio':
@@ -7673,20 +7766,74 @@ def get_ydl_opts(format_type: str, quality: int, output_path: str, is_age_restri
     return base_opts
 
 
-# User agent rotation to avoid detection
+# Enhanced user agent rotation with more realistic, up-to-date browser signatures
+# Updated regularly to match current browser versions and avoid bot detection
 USER_AGENTS = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    # Chrome on Windows (latest versions)
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+    
+    # Chrome on macOS
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+    
+    # Safari on macOS (latest)
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15',
+    
+    # Firefox on Windows (latest)
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0',
+    
+    # Edge on Windows
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0',
+    
+    # Chrome on Linux
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+    
+    # Firefox on macOS
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:133.0) Gecko/20100101 Firefox/133.0',
+    
+    # Mobile user agents (YouTube treats mobile differently, sometimes better)
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1',
+    'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.135 Mobile Safari/537.36',
 ]
 
+# Additional accept-language options for diversity
+ACCEPT_LANGUAGES = [
+    'en-US,en;q=0.9',
+    'en-GB,en;q=0.9',
+    'en-US,en;q=0.9,es;q=0.8',
+    'en-US,en;q=0.9,fr;q=0.8',
+    'en-CA,en;q=0.9',
+]
+
+import random
+
 def get_random_user_agent() -> str:
-    """Get a random user agent to avoid detection"""
-    import random
-    return random.choice(USER_AGENTS)
+    """Get a random user agent to avoid detection with weighted selection"""
+    # Weight towards more common browsers (Chrome > Firefox > Safari > Edge)
+    weights = [0.35, 0.35, 0.30] + [0.25, 0.25] + [0.20, 0.20] + [0.15, 0.15] + [0.15] + [0.15, 0.15] + [0.10] + [0.08, 0.08]
+    return random.choices(USER_AGENTS, weights=weights)[0]
+
+def get_random_accept_language() -> str:
+    """Get a random accept-language header for diversity"""
+    return random.choice(ACCEPT_LANGUAGES)
+
+def add_random_delay():
+    """Add random delay between requests to mimic human behavior (0.5-2.5 seconds)"""
+    delay = random.uniform(0.5, 2.5)
+    time.sleep(delay)
+
+def get_exponential_backoff_delay(attempt: int, base_delay: float = 1.0, max_delay: float = 30.0) -> float:
+    """Calculate exponential backoff delay with jitter for retry attempts"""
+    # Exponential: 1s, 2s, 4s, 8s, 16s, 30s (capped)
+    delay = min(base_delay * (2 ** attempt), max_delay)
+    # Add jitter (±25%) to prevent thundering herd
+    jitter = delay * random.uniform(-0.25, 0.25)
+    return delay + jitter
 
 
 def get_next_invidious_instance() -> str:
@@ -8571,6 +8718,10 @@ if VIDEO_CONVERTER_AVAILABLE:
     def download_video_background(download_id: str, url: str, format_type: str, quality: int, output_path: str, client_ip: str = None, chunk_index: int = None, chunk_start: int = None, chunk_end: int = None):
         """Background function to download and convert video - includes rate limit cleanup and timeout protection"""
         video_logger.info(f"IP: {client_ip or 'Unknown'} | Starting: {url}")
+        
+        # Apply throttling and random delay to mimic human behavior (anti-bot measure)
+        throttle_youtube_request()
+        
         start_time = time.time()
         
         def progress_hook(d):
@@ -8622,6 +8773,9 @@ if VIDEO_CONVERTER_AVAILABLE:
             # Safer extract_info + download flow with persistent retry loop on transient 403s
             # ️ Check timeout before starting
             check_timeout()
+            
+            # Apply human-like timing before extraction (additional anti-bot measure)
+            throttle_youtube_request()
             
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
@@ -8720,17 +8874,23 @@ if VIDEO_CONVERTER_AVAILABLE:
             invidious_success = False
             if not cookiefile:
                 video_logger.info(" No cookies found - trying Invidious proxy first for faster results")
+                # Apply anti-bot throttling before Invidious attempt
+                throttle_youtube_request()
                 # Try Invidious first without verbose logging
                 invidious_success, invidious_info, invidious_error = try_invidious_download(
                     url, format_type, quality, output_path
                 )
                 if invidious_success:
                     video_logger.info(" Invidious proxy succeeded on first try!")
+                    with session_state_lock:
+                        request_session_state['success_count'] += 1
                     # Success! Skip the entire retry loop
                     last_exception = None
                     # Jump to file-finding section below
                 else:
                     video_logger.info("️ Invidious failed, will try direct download with retries")
+                    with session_state_lock:
+                        request_session_state['error_count'] += 1
             
             #  ADAPTIVE QUALITY: If quality was reduced, log it
             if needs_adaptive_quality:
@@ -8812,15 +8972,20 @@ if VIDEO_CONVERTER_AVAILABLE:
                         if cookiefile and os.path.exists(cookiefile):
                             ydl_opts['cookiefile'] = cookiefile
                         
+                        video_logger.info(f"Attempt {attempt}/{effective_max} for {url}")
+                        
                         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                            ydl.download([url])
+                            result = ydl.download([url])
+                            video_logger.info(f"yt-dlp download result: {result}")
                         
                         # Success
+                        video_logger.info(f"Download attempt {attempt} succeeded")
                         last_exception = None
                         break
                     except Exception as de:
                         derr = str(de)
                         last_exception = de
+                        video_logger.error(f"Download attempt {attempt} failed: {derr}")
                         
                         #  CRITICAL: Check for UNRECOVERABLE errors - quit immediately
                         is_unavailable = any(keyword in derr.lower() for keyword in [
@@ -8998,9 +9163,20 @@ if VIDEO_CONVERTER_AVAILABLE:
 
             # Collect candidates that start with the base pattern
             candidates = []
-            for filename in os.listdir(VIDEO_DOWNLOAD_DIR):
+            video_logger.info(f"Looking for downloaded file in {VIDEO_DOWNLOAD_DIR}")
+            video_logger.info(f"Base pattern: {os.path.basename(base_pattern)}")
+            
+            try:
+                all_files = os.listdir(VIDEO_DOWNLOAD_DIR)
+                video_logger.info(f"Files in directory: {all_files}")
+            except Exception as list_err:
+                video_logger.error(f"Error listing directory: {list_err}")
+                all_files = []
+            
+            for filename in all_files:
                 if filename.startswith(os.path.basename(base_pattern)):
                     candidates.append(os.path.join(VIDEO_DOWNLOAD_DIR, filename))
+                    video_logger.info(f"Found candidate: {filename}")
 
             # Prefer actual audio/video files over thumbnails (e.g., .webp)
             if candidates:
@@ -9022,6 +9198,9 @@ if VIDEO_CONVERTER_AVAILABLE:
 
                 # Fallback to any candidate if no prioritized ext matched
                 downloaded_file = chosen or candidates[0]
+                video_logger.info(f"Selected file: {downloaded_file}")
+            else:
+                video_logger.error(f"No candidates found! Expected pattern: {os.path.basename(base_pattern)}")
             
             if downloaded_file and os.path.exists(downloaded_file):
                 # Try to apply metadata (cover art, artist, lyrics) if possible
@@ -9051,12 +9230,23 @@ if VIDEO_CONVERTER_AVAILABLE:
                 process_next_in_queue()
                 
             else:
-                raise Exception("Downloaded file not found")
+                error_details = f"Downloaded file not found. Candidates: {len(candidates)}, Base pattern: {os.path.basename(base_pattern)}"
+                video_logger.error(error_details)
+                
+                # Check if this might be a YouTube block
+                if last_exception:
+                    error_details += f" | Last exception: {str(last_exception)}"
+                
+                raise Exception(error_details)
                 
         except Exception as e:
-            # Error occurred - Log simplified error
+            # Error occurred - Log detailed error for debugging
             error_msg = str(e)
             video_logger.error(f"IP: {client_ip or 'Unknown'} | {locals().get('title', url)} | FAILED: {error_msg}")
+            
+            # Log additional context if available
+            if 'last_exception' in locals() and last_exception:
+                video_logger.error(f"Root cause: {str(last_exception)}")
             
             with download_lock:
                 if download_id in active_video_downloads:

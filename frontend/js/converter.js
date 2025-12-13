@@ -3377,32 +3377,70 @@ async function startConversion(url) {
             }
         }
         
-        // Start conversion
+        // Start conversion with retry logic and jitter
         console.log('🚀 Starting conversion...');
         console.log('📡 Convert endpoint:', `${API_BASE_URL}/api/v1/video/convert`);
-        console.log('📦 Payload:', {
+        
+        const payload = {
             url: url,
             format: formatValue,
-            quality: formatValue === 1 ? audioQuality : videoQuality
-        });
+            quality: formatValue === 1 ? audioQuality : videoQuality,
+            proxy: (document.getElementById('perDownloadProxy') && document.getElementById('perDownloadProxy').value.trim()) || undefined
+        };
+        console.log('📦 Payload:', payload);
         
-        // All conversions now go through the server for reliability
-        const response = await fetch(`${API_BASE_URL}/api/v1/video/convert`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                url: url,
-                format: formatValue,
-                quality: formatValue === 1 ? audioQuality : videoQuality,
-                proxy: (document.getElementById('perDownloadProxy') && document.getElementById('perDownloadProxy').value.trim()) || undefined
-            })
-        });
+        // Add small random delay before request (50-200ms) to mimic human interaction
+        await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 150));
         
-        console.log('📨 Convert response status:', response.status);
-    const result = await response.json();
-        console.log('📋 Convert result:', result);
+        // Retry logic with exponential backoff
+        let response, result;
+        let retryCount = 0;
+        const maxRetries = 3;
+        
+        while (retryCount <= maxRetries) {
+            try {
+                // All conversions now go through the server for reliability
+                response = await fetch(`${API_BASE_URL}/api/v1/video/convert`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Add subtle variation to requests
+                        'X-Request-ID': `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                console.log('📨 Convert response status:', response.status);
+                result = await response.json();
+                console.log('📋 Convert result:', result);
+                
+                if (response.ok) {
+                    break; // Success
+                }
+                
+                // Check if error is retryable
+                if (response.status === 429 || response.status >= 500) {
+                    throw new Error('RETRYABLE: ' + (result.error || 'Server error'));
+                }
+                
+                // Non-retryable error
+                throw new Error(result.error || 'Conversion failed');
+                
+            } catch (error) {
+                if (retryCount >= maxRetries || !error.message.includes('RETRYABLE')) {
+                    throw error;
+                }
+                
+                // Calculate exponential backoff with jitter
+                const backoffMs = Math.min(1000 * Math.pow(2, retryCount), 8000); // Max 8s
+                const jitter = backoffMs * (Math.random() * 0.5); // Add 0-50% jitter
+                const delayMs = backoffMs + jitter;
+                
+                console.log(`🔄 Retry ${retryCount + 1}/${maxRetries} after ${Math.round(delayMs)}ms...`);
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+                retryCount++;
+            }
+        }
         
         if (!response.ok) {
             throw new Error(result.error || 'Conversion failed');
@@ -3550,8 +3588,13 @@ function startStatusPolling() {
     
     // Reset failure counter when starting new polling
     statusCheckFailures = 0;
+    let pollAttempt = 0;
+    let lastPollTime = Date.now();
 
-    statusCheckInterval = setInterval(async () => {
+    const pollWithJitter = async () => {
+        pollAttempt++;
+        const timeSinceLastPoll = Date.now() - lastPollTime;
+        lastPollTime = Date.now();
         try {
             console.log('📊 Checking status for download ID:', currentDownloadId);
             
@@ -3758,7 +3801,31 @@ function startStatusPolling() {
                 showBackendDownWarning();
             }
         }
-    }, 2000);
+        
+        // Schedule next poll with jitter to avoid pattern detection
+        scheduleNextPoll();
+    };
+    
+    // Function to schedule next poll with exponential backoff and jitter
+    const scheduleNextPoll = () => {
+        let baseInterval = 2000; // Base 2 seconds
+        
+        // Add jitter (±20%) to prevent request patterns
+        const jitter = baseInterval * (Math.random() * 0.4 - 0.2); // -20% to +20%
+        const jitteredInterval = Math.max(1500, baseInterval + jitter); // Minimum 1.5s
+        
+        // Apply exponential backoff for long-running conversions (more human-like)
+        if (pollAttempt > 20) {
+            const backoffFactor = Math.min(1 + (pollAttempt - 20) / 30, 1.5); // Max 1.5x slower
+            const finalInterval = jitteredInterval * backoffFactor;
+            statusCheckInterval = setTimeout(pollWithJitter, finalInterval);
+        } else {
+            statusCheckInterval = setTimeout(pollWithJitter, jitteredInterval);
+        }
+    };
+    
+    // Start first poll immediately
+    pollWithJitter();
 }
 
 // 🛡️ Show backend down warning
