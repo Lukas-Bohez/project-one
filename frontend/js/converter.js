@@ -1086,6 +1086,21 @@ async function processQueue() {
             const progressPercent = Math.round((processedCount / totalItems) * 100);
 
             try {
+                // 🛡️ ANTI-BOT: Add delay BEFORE each request (except first)
+                // This prevents rapid-fire requests that trigger YouTube's bot detection
+                if (processedCount > 1) {
+                    const preDelayMs = 8000 + Math.random() * 7000; // 8-15 seconds between requests
+                    const preDelaySec = (preDelayMs / 1000).toFixed(1);
+                    
+                    updatePlaylistStatusUI({
+                        currentTitle: `⏳ Waiting ${preDelaySec}s before next request to avoid bot detection...`,
+                        processedCount: processedCount - 1,
+                        totalItems: totalItems
+                    });
+                    
+                    await new Promise(r => setTimeout(r, preDelayMs));
+                }
+                
                 isProcessing = true;
                 // Use a subtle spinner during long-running playlist processing
                 showSpinner('subtle');
@@ -1234,23 +1249,10 @@ async function processQueue() {
                     return; // Exit the loop, wait for user to continue
                 }
 
-                // Add delay between downloads to avoid YouTube rate limiting
-                // Use 5-10 second random delay to mimic human behavior
-                const delayMs = 5000 + Math.random() * 5000; // 5-10 seconds
-                const delaySec = (delayMs / 1000).toFixed(1);
-                
                 // Update UI with completion status including file size
                 const fileSizeMB = (blob.size / 1024 / 1024).toFixed(2);
                 updatePlaylistStatusUI({
-                    currentTitle: `✅ ${processedCount}/${totalItems} (${progressPercent}%) - Downloaded: ${next.title} (${fileSizeMB} MB) - Waiting ${delaySec}s...`,
-                    processedCount: processedCount,
-                    totalItems: totalItems
-                });
-                
-                await new Promise(r => setTimeout(r, delayMs));
-                
-                updatePlaylistStatusUI({
-                    currentTitle: `🎵 ${processedCount}/${totalItems} (${progressPercent}%) - Ready for next video`,
+                    currentTitle: `✅ ${processedCount}/${totalItems} (${progressPercent}%) - Downloaded: ${next.title} (${fileSizeMB} MB)`,
                     processedCount: processedCount,
                     totalItems: totalItems
                 });
@@ -1276,8 +1278,18 @@ async function processQueue() {
                     totalItems: totalItems
                 });
                 
-                // Wait 2 seconds to show the error message
-                await new Promise(r => setTimeout(r, 2000));
+                // 🛡️ ANTI-BOT: Longer delay after errors (15-25 seconds) to cool down
+                // Bot detection often escalates after failures
+                const errorDelayMs = 15000 + Math.random() * 10000;
+                const errorDelaySec = (errorDelayMs / 1000).toFixed(1);
+                
+                updatePlaylistStatusUI({
+                    currentTitle: `⏳ Error cooldown: waiting ${errorDelaySec}s before continuing...`,
+                    processedCount: processedCount,
+                    totalItems: totalItems
+                });
+                
+                await new Promise(r => setTimeout(r, errorDelayMs));
                 
                 // Continue to next item without retrying
                 continue;

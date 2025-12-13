@@ -9584,6 +9584,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                 'extract_flat': 'in_playlist',  # Extract basic info for playlist items
                 'ignoreerrors': True,  # Continue even if some videos fail
                 'skip_unavailable_fragments': True,
+                'playlistend': None,  # No limit - fetch ALL videos in playlist (default is 100)
             }
             
             #  ADD COOKIES for age-restricted playlists
