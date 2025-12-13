@@ -1323,6 +1323,13 @@ async function pollStatusUntilReady(downloadId, timeoutMs = 5 * 60 * 1000) {
                 continue;
             }
             const s = await resp.json();
+            
+            // 🎯 Handle "Download ID not found" - may happen if backend already cleaned up
+            if (s.detail && s.detail.includes('Download ID not found')) {
+                console.log('✅ Download ID cleaned up (already completed)');
+                return { status: 'completed' }; // Treat as success
+            }
+            
             if (s.status === 'completed') return s;
             if (s.status === 'error') return s;
         } catch (e) {
