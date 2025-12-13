@@ -7055,6 +7055,13 @@ class BulkDownloadRequest(BaseModel):
     format: int = 1  # 1 = MP3, 0 = MP4
     quality: int = 128
 
+class FullPlaylistDownloadRequest(BaseModel):
+    playlist_url: str  # Full playlist URL
+    format: int = 1  # 1 = MP3, 0 = MP4
+    quality: int = 128
+    start_index: int = 1  # Optional: start from video N (1-indexed)
+    end_index: Optional[int] = None  # Optional: end at video N (inclusive)
+
 # URL patterns for platform validation
 URL_PATTERNS = {
     # YouTube: supports watch, shorts, embed, share links (youtu.be), and playlist URLs
@@ -9340,6 +9347,131 @@ if VIDEO_CONVERTER_AVAILABLE:
             except Exception:
                 pass
 
+    def full_playlist_download_background(download_id: str, playlist_url: str, format_type: str, quality: int, start_index: int, end_index: Optional[int], zip_path: str, client_ip: str = None):
+        """Download ALL videos from a playlist directly using yt-dlp's playlist support"""
+        video_logger.info(f"Starting full playlist download for {download_id}")
+        video_logger.info(f"Playlist URL: {playlist_url}, Range: {start_index}-{end_index or 'end'}")
+        
+        try:
+            with download_lock:
+                if download_id in active_video_downloads:
+                    active_video_downloads[download_id]['status'] = 'downloading'
+            
+            # Create temporary directory for downloads
+            bulk_dir = os.path.join(VIDEO_DOWNLOAD_DIR, f"fullplaylist_{download_id}")
+            os.makedirs(bulk_dir, exist_ok=True)
+            
+            extension = 'mp3' if format_type == 'audio' else 'mp4'
+            output_template = os.path.join(bulk_dir, f"%(playlist_index)s_%(title)s_%(id)s.%(ext)s")
+            
+            # Configure yt-dlp to download the FULL playlist
+            ydl_opts = get_ydl_opts(format_type, quality, output_template)
+            ydl_opts['ignoreerrors'] = True  # Continue if some videos fail
+            ydl_opts['playliststart'] = start_index
+            if end_index:
+                ydl_opts['playlistend'] = end_index
+            
+            # Add cookies if available
+            cookie_file = os.environ.get('YTDL_COOKIE_FILE')
+            if not cookie_file:
+                backend_cookie_path = os.path.join(os.path.dirname(__file__), 'cookies.txt')
+                if os.path.exists(backend_cookie_path):
+                    cookie_file = backend_cookie_path
+            if cookie_file and os.path.exists(cookie_file):
+                ydl_opts['cookiefile'] = cookie_file
+            
+            completed_files = []
+            total_videos = 0
+            
+            def progress_hook(d):
+                if d['status'] == 'finished':
+                    completed_files.append(d.get('filename'))
+                    if total_videos > 0:
+                        progress = (len(completed_files) / total_videos) * 90  # Reserve 10% for zipping
+                        with download_lock:
+                            if download_id in active_video_downloads:
+                                active_video_downloads[download_id]['progress'] = min(progress, 90.0)
+                                active_video_downloads[download_id]['completed_count'] = len(completed_files)
+                                active_video_downloads[download_id]['total_videos'] = total_videos
+            
+            ydl_opts['progress_hooks'] = [progress_hook]
+            
+            video_logger.info(f"Starting yt-dlp playlist download with playliststart={start_index}")
+            
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                # Extract playlist info first to get total count
+                try:
+                    info = ydl.extract_info(playlist_url, download=False)
+                    if info and 'entries' in info:
+                        # Count actual entries (excluding None/unavailable)
+                        valid_entries = [e for e in info['entries'] if e]
+                        total_videos = len(valid_entries)
+                        video_logger.info(f"Playlist contains {total_videos} downloadable videos")
+                        
+                        with download_lock:
+                            if download_id in active_video_downloads:
+                                active_video_downloads[download_id]['total_videos'] = total_videos
+                                active_video_downloads[download_id]['title'] = info.get('title', 'Full Playlist Download')
+                except Exception as e:
+                    video_logger.warning(f"Could not extract playlist info: {e}, proceeding with download anyway")
+                
+                # Now download all videos
+                ydl.download([playlist_url])
+            
+            # Get all downloaded files
+            downloaded_files = [os.path.join(bulk_dir, f) for f in os.listdir(bulk_dir) if os.path.isfile(os.path.join(bulk_dir, f))]
+            video_logger.info(f"Downloaded {len(downloaded_files)} files, creating ZIP...")
+            
+            with download_lock:
+                if download_id in active_video_downloads:
+                    active_video_downloads[download_id]['status'] = 'zipping'
+                    active_video_downloads[download_id]['progress'] = 90.0
+            
+            # Create ZIP file
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                for file_path in downloaded_files:
+                    arcname = os.path.basename(file_path)
+                    zipf.write(file_path, arcname=arcname)
+                    video_logger.debug(f"Added to ZIP: {arcname}")
+            
+            zip_size = os.path.getsize(zip_path)
+            video_logger.info(f"Created ZIP file: {zip_path} ({zip_size / 1024 / 1024:.1f} MB)")
+            
+            # Cleanup individual files
+            try:
+                shutil.rmtree(bulk_dir)
+                video_logger.info(f"Cleaned up temp directory: {bulk_dir}")
+            except Exception as e:
+                video_logger.warning(f"Failed to cleanup temp directory: {e}")
+            
+            # Mark as completed
+            with download_lock:
+                if download_id in active_video_downloads:
+                    active_video_downloads[download_id].update({
+                        'status': 'completed',
+                        'progress': 100.0,
+                        'finished': True,
+                        'file_path': zip_path,
+                        'completed_count': len(downloaded_files)
+                    })
+            
+            video_logger.info(f"Full playlist download completed: {download_id}")
+            
+        except Exception as e:
+            error_msg = str(e)
+            video_logger.error(f"Full playlist download failed for {download_id}: {error_msg}")
+            
+            with download_lock:
+                if download_id in active_video_downloads:
+                    active_video_downloads[download_id].update({
+                        'status': 'error',
+                        'error': error_msg,
+                        'finished': True
+                    })
+        finally:
+            if client_ip:
+                decrement_video_rate_limit(client_ip)
+
     def bulk_download_background(download_id: str, video_ids: List[str], format_type: str, quality: int, bulk_dir: str, zip_path: str, client_ip: str = None):
         """Background function to download multiple videos and create ZIP file"""
         video_logger.info(f"Starting bulk download background process for {download_id}")
@@ -9588,13 +9720,14 @@ if VIDEO_CONVERTER_AVAILABLE:
                 # Serve paginated results from cached full data
                 all_videos = cached_full_data.get('videos', [])
                 total_count = cached_full_data.get('total_count', len(all_videos))
+                extracted_count = cached_full_data.get('extracted_count', len(all_videos))
                 playlist_title = cached_full_data.get('title', f'Playlist {playlist_id}')
                 
                 start_index = (request.page - 1) * page_size
                 end_index = start_index + page_size
                 paginated_videos = all_videos[start_index:end_index]
-                # Check against total_count, not just extracted videos
-                has_more = (request.page * page_size) < total_count
+                # has_more based on extracted videos (not total, since we can only extract ~100)
+                has_more = end_index < extracted_count
                 
                 return PlaylistInfoResponse(
                     success=True,
@@ -9679,17 +9812,20 @@ if VIDEO_CONVERTER_AVAILABLE:
                     end_index = start_index + page_size
                     paginated_videos = videos[start_index:end_index]
                     
-                    # Determine if there are more videos based on total count from playlist
+                    # Use the actual playlist_count from YouTube metadata (shows real total)
+                    # Note: extract_flat can only extract ~100 videos, but playlist_count shows the true total
                     total_videos = playlist_count if playlist_count > 0 else len(videos)
-                    # has_more should check against total_videos, not just extracted videos
-                    has_more = (request.page * page_size) < total_videos
+                    extracted_count = len(videos)  # How many we actually got
+                    # has_more: true if there are more videos in the actual playlist
+                    has_more = end_index < extracted_count
                     
-                    video_logger.info(f"Successfully extracted playlist info: {playlist_title} with {len(paginated_videos)} videos on page {request.page} (total: {total_videos})")
+                    video_logger.info(f"Successfully extracted playlist info: {playlist_title} with {len(paginated_videos)} videos on page {request.page} (extracted: {extracted_count}, total in playlist: {total_videos})")
                     
                     #  CACHE THE FULL DATA (all videos) to avoid redundant API calls
                     full_data = {
-                        'videos': videos,  # All extracted videos
-                        'total_count': total_videos,
+                        'videos': videos,  # All extracted videos (~100 max)
+                        'total_count': total_videos,  # Actual playlist total from metadata
+                        'extracted_count': extracted_count,  # How many we actually got
                         'title': playlist_title
                     }
                     cache_playlist_info(cache_key_full, full_data)
@@ -10172,6 +10308,95 @@ if VIDEO_CONVERTER_AVAILABLE:
             raise
         except Exception as e:
             video_logger.error(f"Unexpected error in bulk_download_playlist: {str(e)}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post("/api/v1/video/full-playlist-download", response_model=VideoConversionResponse)
+    async def full_playlist_download(request: FullPlaylistDownloadRequest, req: Request):
+        """Download ALL videos from a playlist (bypasses 100-video UI limit)"""
+        video_logger.info(f"Starting full playlist download: {request.playlist_url}")
+        video_logger.info(f"Range: {request.start_index} to {request.end_index or 'end'}")
+        try:
+            # Get client IP for rate limiting
+            client_ip = get_client_ip(req)
+            
+            # Check rate limit
+            if not check_video_rate_limit(client_ip):
+                video_logger.warning(f"Rate limit exceeded for IP {client_ip}")
+                raise HTTPException(
+                    status_code=429,
+                    detail=f"Rate limit exceeded. Maximum {MAX_CONCURRENT_DOWNLOADS_PER_IP} concurrent downloads per IP. Please wait."
+                )
+            
+            if not is_playlist_url(request.playlist_url):
+                raise HTTPException(status_code=400, detail="URL is not a valid playlist")
+            
+            # Generate unique download ID
+            download_id = str(uuid.uuid4())
+            video_logger.info(f"Generated download ID for full playlist: {download_id}")
+            
+            # Determine format
+            format_type = 'audio' if request.format == 1 else 'video'
+            extension = 'mp3' if format_type == 'audio' else 'mp4'
+            
+            # Create output path
+            zip_filename = f"full_playlist_{int(time.time())}.zip"
+            zip_path = os.path.join(VIDEO_DOWNLOAD_DIR, zip_filename)
+            
+            # Store download info
+            with download_lock:
+                active_video_downloads[download_id] = {
+                    'status': 'starting',
+                    'progress': 0.0,
+                    'platform': 'youtube',
+                    'format': f'Full Playlist {format_type.title()}',
+                    'quality': request.quality,
+                    'url': request.playlist_url,
+                    'output_path': zip_path,
+                    'created_at': time.time(),
+                    'title': f'Full Playlist Download',
+                    'error': None,
+                    'finished': False,
+                    'file_path': None
+                }
+            
+            # Increment rate limit counter
+            increment_video_rate_limit(client_ip)
+            
+            # Submit to process pool
+            video_logger.info(f"Submitting full playlist download task for {download_id}")
+            try:
+                future = video_process_pool.submit(
+                    full_playlist_download_background,
+                    download_id, request.playlist_url, format_type, request.quality, 
+                    request.start_index, request.end_index, zip_path, client_ip
+                )
+                
+                def done_callback(fut):
+                    try:
+                        fut.result()
+                    except Exception as e:
+                        video_logger.error(f"Full playlist download {download_id} error: {e}")
+                
+                future.add_done_callback(done_callback)
+            except Exception as e:
+                video_logger.error(f"Failed to submit full playlist download: {e}")
+                with download_lock:
+                    if download_id in active_video_downloads:
+                        del active_video_downloads[download_id]
+                decrement_video_rate_limit(client_ip)
+                raise HTTPException(status_code=429, detail="Server busy. Try again shortly.")
+            
+            video_logger.info(f"Full playlist download started: {download_id}")
+            return VideoConversionResponse(
+                success=True,
+                download_id=download_id,
+                message=f"Started downloading full playlist (this may take a while for large playlists)"
+            )
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            video_logger.error(f"Unexpected error in full_playlist_download: {str(e)}")
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.post('/api/v1/video/upload-cookies/{download_id}')
