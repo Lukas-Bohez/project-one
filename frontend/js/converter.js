@@ -743,20 +743,18 @@ function renderPlaylistUI(playlistData, page = 1, playlistId = null, playlistUrl
             <div id="playlist-status" class="playlist-status" style="margin-top:8px;font-size:0.95em;color:#bcd;">
                 <span id="playlist-status-text">Idle</span>
             </div>
-            <div class="playlist-pagination" style="display:flex;align-items:center;justify-content:center;gap:16px;margin:16px 0;padding:12px;background:rgba(30,30,50,0.5);border-radius:8px;">
-                <button id="prev-page-btn" class="c-btn c-btn--tertiary" ${page === 1 ? 'disabled' : ''}>
-                    <i class="fas fa-chevron-left"></i> Previous
-                </button>
-                <span style="color:#bcd;font-size:0.95em;">
-                    Page ${page} • Videos ${(page - 1) * 100 + 1}-${(page - 1) * 100 + playlistData.videos.length} ${playlistData.has_more ? '• More Available' : '• Last Page'}
-                </span>
-                <button id="next-page-btn" class="c-btn c-btn--tertiary" ${!playlistData.has_more ? 'disabled' : ''}>
-                    Next <i class="fas fa-chevron-right"></i>
-                </button>
+            <div style="background:rgba(50,80,120,0.2);padding:12px;border-radius:8px;margin:12px 0;border-left:3px solid #667eea;">
+                <p style="margin:0;color:#bcd;font-size:0.9em;">
+                    <i class="fas fa-info-circle"></i> <strong>Showing ${playlistData.videos.length} of ${playlistData.video_count} total videos</strong><br>
+                    <span style="font-size:0.85em;color:#999;">Due to YouTube API limits, only ~100 videos can be listed. Use "Download FULL Playlist" or "Download Specific Range" below to get all ${playlistData.video_count} videos.</span>
+                </p>
             </div>
             <div class="playlist-actions c-cta-buttons">
-                <button id="download-all-btn" class="c-btn c-btn--primary download-all-btn">
-                    <i class="fas fa-download"></i> Download All (${playlistData.video_count} videos)
+                <button id="download-full-playlist-btn" class="c-btn c-btn--primary" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <i class="fas fa-cloud-download-alt"></i> Download FULL Playlist (ALL ${playlistData.video_count} videos)
+                </button>
+                <button id="download-all-btn" class="c-btn c-btn--primary download-all-btn" style="margin-left:8px;">
+                    <i class="fas fa-download"></i> Download Visible (${playlistData.videos.length} videos)
                 </button>
                 <button id="download-up-to-now-btn" class="c-btn c-btn--tertiary download-up-to-now-btn" style="margin-left:8px;">
                     <i class="fas fa-save"></i> Download Up To Now
@@ -770,6 +768,19 @@ function renderPlaylistUI(playlistData, page = 1, playlistId = null, playlistUrl
                 <button id="cancel-btn" class="c-btn c-btn--tertiary" style="display:none;margin-left:8px;">
                     <i class="fas fa-times"></i> Cancel
                 </button>
+            </div>
+            <div class="playlist-range-download" style="margin-top:16px;padding:16px;background:rgba(50,50,80,0.3);border-radius:8px;">
+                <h4 style="margin:0 0 12px 0;color:#bcd;font-size:1em;">📊 Download Specific Range (from full playlist)</h4>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                    <label style="color:#bcd;font-size:0.95em;">From video #</label>
+                    <input id="full-playlist-start" type="number" min="1" max="${playlistData.video_count}" value="1" style="width:80px;padding:6px;border:1px solid #555;border-radius:4px;background:#2a2a3e;color:#fff;" />
+                    <label style="color:#bcd;font-size:0.95em;">to #</label>
+                    <input id="full-playlist-end" type="number" min="1" max="${playlistData.video_count}" value="${playlistData.video_count}" style="width:80px;padding:6px;border:1px solid #555;border-radius:4px;background:#2a2a3e;color:#fff;" />
+                    <button id="download-range-btn" class="c-btn c-btn--tertiary" style="white-space:nowrap;">
+                        <i class="fas fa-download"></i> Download Range
+                    </button>
+                    <span style="color:#999;font-size:0.85em;margin-left:8px;">Example: 200 to 401 downloads videos 200-401</span>
+                </div>
             </div>
         </div>
         <div id="playlist-videos" class="playlist-videos" style="display: none;">
@@ -794,18 +805,6 @@ function renderPlaylistUI(playlistData, page = 1, playlistId = null, playlistUrl
                         </div>
                     </div>
                 `).join('')}
-            </div>
-            <div class="playlist-range-inputs" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-                <label for="download-from-index-input" style="font-size:0.95em;color:#bcd;">From cache (start):</label>
-                <input id="download-from-index-input" type="number" min="1" value="1" class="playlist-range-input" />
-                <label for="download-from-index-end" style="font-size:0.95em;color:#bcd;">to (optional):</label>
-                <input id="download-from-index-end" type="number" min="1" placeholder="end" class="playlist-range-input" />
-            </div>
-            <div class="playlist-range-actions" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-                <button id="select-range-btn" class="c-btn c-btn--sm c-btn--tertiary" style="white-space:nowrap;">Select Range</button>
-                <button id="download-from-index-btn" class="c-btn c-btn--sm c-btn--tertiary download-from-index-btn" style="white-space:nowrap;">
-                    <i class="fas fa-download"></i> Download From Cache
-                </button>
             </div>
         </div>
     `;
@@ -880,6 +879,7 @@ function updatePlaylistStatusUI(opts = {}) {
 }
 
 function setupPlaylistEventListeners(playlistId, playlistUrl, currentPage) {
+    const downloadFullPlaylistBtn = document.getElementById('download-full-playlist-btn');
     const downloadAllBtn = document.getElementById('download-all-btn');
     const selectVideosBtn = document.getElementById('select-videos-btn');
     const selectAllBtn = document.getElementById('select-all-btn');
@@ -888,6 +888,10 @@ function setupPlaylistEventListeners(playlistId, playlistUrl, currentPage) {
     const playlistVideos = document.getElementById('playlist-videos');
     const prevPageBtn = document.getElementById('prev-page-btn');
     const nextPageBtn = document.getElementById('next-page-btn');
+    
+    if (downloadFullPlaylistBtn) {
+        downloadFullPlaylistBtn.addEventListener('click', () => downloadFullPlaylist(playlistUrl));
+    }
     
     if (downloadAllBtn) {
         downloadAllBtn.addEventListener('click', () => downloadAllVideos());
@@ -917,31 +921,31 @@ function setupPlaylistEventListeners(playlistId, playlistUrl, currentPage) {
         downloadSelectedBtn.addEventListener('click', () => downloadSelectedVideos());
     }
     const downloadUpToNowBtn = document.getElementById('download-up-to-now-btn');
-    const downloadFromIndexBtn = document.getElementById('download-from-index-btn');
-    const downloadFromIndexInput = document.getElementById('download-from-index-input');
-    const downloadFromIndexEnd = document.getElementById('download-from-index-end');
-    const selectRangeBtn = document.getElementById('select-range-btn');
     const clearCacheBtn = document.getElementById('clear-cache-btn');
-    if (downloadUpToNowBtn) {
-        downloadUpToNowBtn.addEventListener('click', () => downloadUpToNow());
-    }
-    if (downloadFromIndexBtn) {
-        downloadFromIndexBtn.addEventListener('click', () => {
-            const raw = parseInt(downloadFromIndexInput.value, 10);
-            if (!raw || raw < 1) {
-                alert('Please enter a valid start index (1-based)');
+    const downloadRangeBtn = document.getElementById('download-range-btn');
+    const fullPlaylistStartInput = document.getElementById('full-playlist-start');
+    const fullPlaylistEndInput = document.getElementById('full-playlist-end');
+    
+    if (downloadRangeBtn) {
+        downloadRangeBtn.addEventListener('click', () => {
+            const startIndex = parseInt(fullPlaylistStartInput.value, 10);
+            const endIndex = parseInt(fullPlaylistEndInput.value, 10);
+            
+            if (!startIndex || startIndex < 1) {
+                alert('Please enter a valid start index (1 or greater)');
                 return;
             }
-            const rawEnd = parseInt(downloadFromIndexEnd.value, 10);
-            if (rawEnd && rawEnd >= raw) {
-                downloadFromIndexRange(raw, rawEnd);
-            } else {
-                downloadFromIndex(raw);
+            if (!endIndex || endIndex < startIndex) {
+                alert('End index must be greater than or equal to start index');
+                return;
             }
+            
+            downloadFullPlaylist(playlistUrl, startIndex, endIndex);
         });
     }
-    if (selectRangeBtn) {
-        selectRangeBtn.addEventListener('click', () => selectRange());
+    
+    if (downloadUpToNowBtn) {
+        downloadUpToNowBtn.addEventListener('click', () => downloadUpToNow());
     }
     if (clearCacheBtn) {
         clearCacheBtn.addEventListener('click', () => clearCachedSongs());
@@ -1005,6 +1009,62 @@ function enableBulkControls() {
             el.style.pointerEvents = '';
         }
     });
+}
+
+async function downloadFullPlaylist(playlistUrl, startIndex = 1, endIndex = null) {
+    const totalVideos = endIndex ? (endIndex - startIndex + 1) : (currentPlaylistData?.video_count || 100);
+    const estimatedMinutes = Math.ceil((totalVideos * 8) / 60); // Estimate 8 seconds per video
+    
+    const rangeText = endIndex ? `videos ${startIndex}-${endIndex} (${totalVideos} videos)` : `ALL videos (${totalVideos} total)`;
+    
+    const proceed = confirm(
+        `🚀 Download Playlist Range\n\n` +
+        `Downloading ${rangeText}\n\n` +
+        `⏱️ Estimated time: ${estimatedMinutes}-${estimatedMinutes * 2} minutes\n` +
+        `📦 Result: Single ZIP file with all selected videos\n\n` +
+        `This uses anti-bot measures but may still take a while.\n\n` +
+        `Continue?`
+    );
+    
+    if (!proceed) return;
+    
+    try {
+        showSpinner();
+        if (spinnerText) spinnerText.textContent = `Starting download of videos ${startIndex}-${endIndex || 'end'}...`;
+        
+        const requestBody = {
+            playlist_url: playlistUrl,
+            format: formatValue,
+            quality: formatValue === 1 ? audioQuality : videoQuality,
+            start_index: startIndex
+        };
+        
+        if (endIndex) {
+            requestBody.end_index = endIndex;
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/api/v1/video/full-playlist-download`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.download_id) {
+            console.log('✅ Full playlist download started:', result.download_id);
+            hideSpinner();
+            await pollStatusUntilReady(result.download_id);
+        } else {
+            throw new Error(result.message || 'Failed to start full playlist download');
+        }
+    } catch (error) {
+        console.error('❌ Full playlist download error:', error);
+        hideSpinner();
+        showValidationError(`Failed to start full playlist download: ${error.message}`);
+    }
 }
 
 async function downloadAllVideos() {
