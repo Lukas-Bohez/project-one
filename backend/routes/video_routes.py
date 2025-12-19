@@ -53,7 +53,7 @@ from utils.shared import (
 )
 
 # Import video converter functions
-from video_converter import (
+from core.video_converter import (
     get_ydl_opts,
     try_invidious_download,
     apply_metadata,
@@ -124,7 +124,7 @@ from typing import Dict, Any, Optional
 from pydantic import BaseModel
 
 # Import video converter module
-from video_converter import (
+from core.video_converter import (
     get_ydl_opts,
     try_invidious_download,
     apply_metadata,
