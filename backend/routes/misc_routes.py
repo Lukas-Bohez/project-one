@@ -9,7 +9,8 @@ from datetime import datetime
 
 from database.datarepository import (
     SensorDataRepository, ChatLogRepository,
-    QuizSessionRepository
+    QuizSessionRepository, SessionPlayerRepository,
+    PlayerAnswerRepository
 )
 from models.models import BroadcastMessage
 
@@ -26,18 +27,130 @@ async def root():
 # Sensor Data Routes
 @router.get("/v1/sensor-data")
 async def get_multi_session_sensor_data(
+    session_id: Optional[int] = None,
     session_ids: Optional[str] = None,
+    include_chat: bool = False,
+    include_answers: bool = False,
     limit: int = 100
 ):
-    """Get sensor data for multiple sessions"""
+    """Get sensor data for sessions with optional chat and answers"""
     try:
-        if session_ids:
-            ids = [int(id.strip()) for id in session_ids.split(',')]
-            data = SensorDataRepository.get_sensor_data_for_sessions(ids, limit=limit)
-        else:
-            data = SensorDataRepository.get_recent_sensor_data(limit=limit)
+        result = {}
         
-        return {"sensor_data": data}
+        # Handle single session_id or multiple session_ids
+        if session_id:
+            # Single session - also get available sessions for navigation
+            recent_sessions = QuizSessionRepository.get_recent_sessions(limit=50)
+            sensor_data = SensorDataRepository.get_sensor_data_for_sessions([session_id], limit=limit)
+            
+            # Transform sensor data into the format frontend expects
+            temperatures = [{"timestamp": d["timestamp"], "value": d.get("temperature (°C)")} for d in sensor_data]
+            light_intensities = [{"timestamp": d["timestamp"], "value": d.get("lightIntensity (lux)")} for d in sensor_data]
+            servo_positions = [{"timestamp": d["timestamp"], "value": d.get("servoPosition (°)")} for d in sensor_data]
+            
+            result["sessions"] = [{
+                "session_id": session_id,
+                "session_name": f"Session {session_id}",
+                "sensor_data": sensor_data,
+                "temperatures": temperatures,
+                "light_intensities": light_intensities,
+                "servo_positions": servo_positions
+            }]
+            result["current_session_id"] = session_id
+            result["available_sessions"] = recent_sessions
+            result["total_sessions"] = len(recent_sessions)
+            
+            # Add chat messages if requested
+            if include_chat:
+                chat_messages = ChatLogRepository.get_session_messages(session_id, limit=100)
+                result["sessions"][0]["chat_messages"] = chat_messages
+            
+            # Add answers if requested
+            if include_answers:
+                # Get all players in this session
+                session_players = SessionPlayerRepository.get_session_players(session_id)
+                all_answers = []
+                if session_players:
+                    for player in session_players:
+                        answers = PlayerAnswerRepository.get_player_answers_by_session_and_user(
+                            session_id, player['userId']
+                        )
+                        if answers:
+                            all_answers.extend(answers)
+                result["sessions"][0]["player_answers"] = all_answers
+                
+        elif session_ids:
+            # Multiple sessions
+            ids = [int(id.strip()) for id in session_ids.split(',')]
+            result["sessions"] = []
+            for sid in ids:
+                sensor_data = SensorDataRepository.get_sensor_data_for_sessions([sid], limit=limit)
+                session_data = {
+                    "session_id": sid,
+                    "sensor_data": sensor_data
+                }
+                if include_chat:
+                    session_data["chat_messages"] = ChatLogRepository.get_session_messages(sid, limit=100)
+                if include_answers:
+                    session_players = SessionPlayerRepository.get_session_players(sid)
+                    all_answers = []
+                    if session_players:
+                        for player in session_players:
+                            answers = PlayerAnswerRepository.get_player_answers_by_session_and_user(sid, player['userId'])
+                            if answers:
+                                all_answers.extend(answers)
+                    session_data["player_answers"] = all_answers
+                result["sessions"].append(session_data)
+            result["current_session_id"] = ids[0] if ids else None
+            result["total_sessions"] = len(ids)
+        else:
+            # No session specified - get most recent session with data
+            recent_sessions = QuizSessionRepository.get_recent_sessions(limit=50)
+            result["available_sessions"] = recent_sessions
+            
+            if recent_sessions:
+                # Get data for the most recent session
+                first_session_id = recent_sessions[0]['id']
+                sensor_data = SensorDataRepository.get_sensor_data_for_sessions([first_session_id], limit=limit)
+                
+                # Transform sensor data
+                temperatures = [{"timestamp": d["timestamp"], "value": d.get("temperature (°C)")} for d in sensor_data]
+                light_intensities = [{"timestamp": d["timestamp"], "value": d.get("lightIntensity (lux)")} for d in sensor_data]
+                servo_positions = [{"timestamp": d["timestamp"], "value": d.get("servoPosition (°)")} for d in sensor_data]
+                
+                result["sessions"] = [{
+                    "session_id": first_session_id,
+                    "session_name": f"Session {first_session_id}",
+                    "sensor_data": sensor_data,
+                    "temperatures": temperatures,
+                    "light_intensities": light_intensities,
+                    "servo_positions": servo_positions
+                }]
+                
+                if include_chat:
+                    chat_messages = ChatLogRepository.get_session_messages(first_session_id, limit=100)
+                    result["sessions"][0]["chat_messages"] = chat_messages
+                
+                if include_answers:
+                    session_players = SessionPlayerRepository.get_session_players(first_session_id)
+                    all_answers = []
+                    if session_players:
+                        for player in session_players:
+                            answers = PlayerAnswerRepository.get_player_answers_by_session_and_user(
+                                first_session_id, player['userId']
+                            )
+                            if answers:
+                                all_answers.extend(answers)
+                    result["sessions"][0]["player_answers"] = all_answers
+                
+                result["current_session_id"] = first_session_id
+            else:
+                result["sessions"] = []
+                result["current_session_id"] = None
+            
+            result["total_sessions"] = len(recent_sessions)
+        
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

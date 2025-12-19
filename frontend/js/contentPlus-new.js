@@ -81,7 +81,7 @@
 
   async function fetchFreshStories() {
     const data = await apiGet('/stories/');
-    return Array.isArray(data) ? data : [];
+    return Array.isArray(data) ? data : (data.stories || []);
   }
 
   async function fetchStories() {

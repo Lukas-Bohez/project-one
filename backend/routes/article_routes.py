@@ -20,6 +20,12 @@ def _slugify(value: str) -> str:
 
 
 # Story Routes
+@router.options("/stories/")
+def options_stories():
+    """Handle CORS preflight for stories endpoint"""
+    return {}
+
+
 @router.get("/stories/")
 def list_stories():
     """Get all stories (legacy endpoint)"""
@@ -56,6 +62,12 @@ def create_story_if_not_exists(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.options("/v1/stories/")
+async def options_v1_stories():
+    """Handle CORS preflight for v1 stories endpoint"""
+    return {}
+
+
 @router.get("/v1/stories/")
 async def list_stories():
     """Get all stories"""
@@ -77,12 +89,34 @@ async def get_articles_by_story(story_id: int, active_only: bool = True):
 
 
 # Article Routes (Legacy)
+@router.options("/articles/by-story/{story_id}/")
+def options_articles_by_story(story_id: int):
+    """Handle CORS preflight for articles by story endpoint"""
+    return {}
+
+
 @router.get("/articles/by-story/{story_id}/")
 def get_articles_by_story(story_id: int, active_only: bool = False):
     """Get articles by story ID (legacy endpoint)"""
     try:
         articles = ArticlesRepository.get_articles_by_story(story_id, active_only=active_only)
         return {"articles": articles}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.options("/v1/articles/by-story/{story_id}/")
+async def options_v1_articles_by_story(story_id: int):
+    """Handle CORS preflight for v1 articles by story endpoint"""
+    return {}
+
+
+@router.get("/v1/articles/by-story/{story_id}/")
+async def get_v1_articles_by_story(story_id: int, active_only: bool = False):
+    """Get articles by story ID (v1 endpoint)"""
+    try:
+        articles = ArticlesRepository.get_articles_by_story(story_id, active_only=active_only)
+        return articles if isinstance(articles, list) else []
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

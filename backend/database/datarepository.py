@@ -90,6 +90,13 @@ class QuestionRepository:
     def get_active_questions():
         return QuestionRepository.get_all_questions(active_only=True)
     
+    @staticmethod
+    def get_active_question_count():
+        """Get count of active questions"""
+        sql = "SELECT COUNT(*) as count FROM questions WHERE is_active = TRUE"
+        result = Database.get_one_row(sql)
+        return result['count'] if result else 0
+    
     # UPDATE operations
     @staticmethod
     def update_question(question_id, question_text=None, themeId=None, difficultyLevelId=None, 
@@ -499,6 +506,14 @@ class ThemeRepository:
             Database.execute_sql("ROLLBACK", [])
             raise e
     
+    @staticmethod
+    def get_theme_question_count(theme_id: int) -> int:
+        """Get the count of questions for a theme"""
+        sql = "SELECT COUNT(*) as count FROM questions WHERE themeId = %s"
+        params = [theme_id]
+        result = Database.get_one_row(sql, params)
+        return result['count'] if result else 0
+    
 
 class UserRepository:
 
@@ -513,10 +528,12 @@ class UserRepository:
     @staticmethod
     def verify_password(password: str, hashed_password: str, salt: str) -> bool:
         """Verifies a plaintext password against a hashed password and salt."""
-        # Ensure that the salt is combined correctly if it was stored separately
-        # If the original hash_password combines them like (hashed_password + salt)
-        # then this check should reflect that. Otherwise, it's just bcrypt.checkpw(password.encode(), hashed_password.encode())
-        return bcrypt.checkpw(password.encode('utf-8'), (hashed_password + salt).encode('utf-8'))
+        # bcrypt hashes already include the salt, so we just verify against the hash
+        try:
+            return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
+        except (ValueError, TypeError):
+            # If hash is invalid, return False
+            return False
 
     # --- CRUD Operations ---
 
@@ -549,6 +566,17 @@ class UserRepository:
         sql = "SELECT id, last_name, first_name, email, rfid_code, userRoleId, soul_points, limb_points, last_active, session_expires_at, updated_by FROM users"
         # Use get_rows which correctly handles fetching multiple dictionary rows
         return Database.get_rows(sql)
+    
+    @staticmethod
+    def get_active_user_count() -> int:
+        """Get count of active users (users who have logged in recently)"""
+        sql = """
+        SELECT COUNT(*) as count 
+        FROM users 
+        WHERE last_active >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+        """
+        result = Database.get_one_row(sql)
+        return result['count'] if result else 0
 
     @staticmethod
     def get_user_by_id(user_id: int) -> Optional[Dict[str, Any]]:
@@ -614,6 +642,17 @@ class UserRepository:
         sql = "SELECT id, last_name, first_name, password_hash, salt, rfid_code, userRoleId, soul_points, limb_points, last_active, session_expires_at, updated_by FROM users WHERE rfid_code = %s"
         params = [rfid_code]
         return Database.get_one_row(sql, params)
+    
+    @staticmethod
+    def get_user_by_username(username: str) -> Optional[Dict[str, Any]]:
+        """Fetches a user by username (concat of first_name and last_name)."""
+        sql = """
+            SELECT id, last_name, first_name, email, password_hash, salt, rfid_code, userRoleId, soul_points, limb_points, last_active, session_expires_at, updated_by 
+            FROM users 
+            WHERE CONCAT(first_name, ' ', last_name) = %s
+        """
+        params = [username]
+        return Database.get_one_row(sql, params)
 
     @staticmethod
     def set_user_active_status(user_id: int, is_active: bool) -> bool:
@@ -650,15 +689,6 @@ class UserRepository:
         salt = bcrypt.gensalt()
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
         return {"password_hash": hashed_password, "salt": salt.decode('utf-8')}
-
-    @staticmethod
-    def verify_password(password_hash: str, salt: str, provided_password: str) -> bool:
-        """Verifies a provided password against a stored hash and salt."""
-        try:
-            return bcrypt.checkpw(provided_password.encode('utf-8'), password_hash.encode('utf-8'))
-        except ValueError:
-            # Hash or salt might be malformed
-            return False
 
     @staticmethod
     def get_user_by_name(first_name: str, last_name: str) -> Optional[Dict[str, Any]]:
@@ -1102,6 +1132,22 @@ class QuizSessionRepository:
         Fetches all currently active quiz sessions (sessionStatusId = 2).
         """
         return QuizSessionRepository.get_sessions_by_status(2) # 2 is active
+    
+    @staticmethod
+    def get_recent_sessions(limit: int = 50) -> List[Dict[str, Any]]:
+        """
+        Fetches recent quiz sessions ordered by start time, regardless of status.
+        """
+        sql = """
+        SELECT id, session_date, name, description, sessionStatusId, themeId, 
+               hostUserId, start_time, end_time
+        FROM quizSessions
+        ORDER BY start_time DESC, id DESC
+        LIMIT %s
+        """
+        params = [limit]
+        result = Database.get_rows(sql, params)
+        return result if result else []
 
     @staticmethod
     def update_session(
@@ -1234,6 +1280,25 @@ class SensorDataRepository:
         # The problem lies in what data is actually stored in 'sensorData' for 'sessionId'.
         rows = Database.get_rows(sql, params)
         
+        return rows if rows else []
+    
+    @staticmethod
+    def get_recent_sensor_data(limit=100):
+        """Get most recent sensor data across all sessions"""
+        sql = "SELECT * FROM sensorData ORDER BY id DESC LIMIT %s"
+        params = [min(limit, 1000)]
+        rows = Database.get_rows(sql, params)
+        return rows if rows else []
+    
+    @staticmethod
+    def get_sensor_data_for_sessions(session_ids, limit=100):
+        """Get sensor data for multiple sessions"""
+        if not session_ids:
+            return []
+        placeholders = ','.join(['%s'] * len(session_ids))
+        sql = f"SELECT * FROM sensorData WHERE sessionId IN ({placeholders}) ORDER BY id DESC LIMIT %s"
+        params = session_ids + [min(limit, 1000)]
+        rows = Database.get_rows(sql, params)
         return rows if rows else []
         
     
@@ -1695,6 +1760,30 @@ class ChatLogRepository:
         """
         params = [session_id, limit]
         return Database.get_rows(sql, params)
+    
+    @staticmethod
+    def get_session_messages(session_id: int, limit: int = 100) -> List[Dict[str, Any]]:
+        """Alias for get_chat_messages_by_session for compatibility."""
+        return ChatLogRepository.get_chat_messages_by_session(session_id, limit)
+    
+    @staticmethod
+    def get_session_chat_stats(session_id: int) -> Dict[str, Any]:
+        """Get chat statistics for a session"""
+        sql = """
+        SELECT 
+            COUNT(*) as total_messages,
+            COUNT(DISTINCT user_id) as unique_users,
+            COUNT(CASE WHEN message_type = 'user' THEN 1 END) as user_messages,
+            COUNT(CASE WHEN message_type = 'system' THEN 1 END) as system_messages,
+            COUNT(CASE WHEN message_type = 'support' THEN 1 END) as support_messages,
+            MIN(timestamp) as first_message_time,
+            MAX(timestamp) as last_message_time
+        FROM chat_log
+        WHERE session_id = %s
+        """
+        params = [session_id]
+        result = Database.get_one_row(sql, params)
+        return result if result else {}
 
     @staticmethod
     def flag_message(
@@ -1916,7 +2005,12 @@ class SessionPlayerRepository:
     @staticmethod
     def get_session_players(session_id: int):
         try:
-            sql = "SELECT userId FROM sessionPlayers WHERE sessionId = %s"
+            sql = """
+            SELECT sp.userId, CONCAT(u.first_name, ' ', u.last_name) as username
+            FROM sessionPlayers sp
+            LEFT JOIN users u ON sp.userId = u.id
+            WHERE sp.sessionId = %s
+            """
             params = [session_id]
             results = Database.get_rows(sql, params)
             return results if results else None
@@ -2184,6 +2278,56 @@ class PlayerAnswerRepository:
         params = [session_id, user_id]
         result = Database.get_one_row(sql, params)
         return result['total_points'] if result and result['total_points'] is not None else 0
+    
+    @staticmethod
+    def get_global_rankings(limit=50):
+        """Get global rankings across all sessions"""
+        sql = """
+            SELECT 
+                pa.userId as user_id,
+                CONCAT(u.first_name, ' ', u.last_name) as username,
+                COUNT(DISTINCT pa.sessionId) as sessions_played,
+                COUNT(*) as total_answers,
+                SUM(CASE WHEN pa.is_correct = TRUE THEN 1 ELSE 0 END) as correct_answers,
+                SUM(pa.points_earned) as total_points,
+                ROUND(AVG(CASE WHEN pa.is_correct = TRUE THEN 1 ELSE 0 END) * 100, 2) as accuracy
+            FROM playerAnswers pa
+            LEFT JOIN users u ON pa.userId = u.id
+            GROUP BY pa.userId, u.first_name, u.last_name
+            ORDER BY total_points DESC, accuracy DESC
+            LIMIT %s
+        """
+        params = [min(limit, 100)]
+        rows = Database.get_rows(sql, params)
+        return rows if rows else []
+    
+    @staticmethod
+    def get_player_answers_by_session_and_user(session_id: int, user_id: int) -> List[Dict[str, Any]]:
+        """Get all player answers for a specific session and user"""
+        sql = """
+        SELECT pa.*, q.question_text, a.answer_text
+        FROM playerAnswers pa
+        LEFT JOIN questions q ON pa.questionId = q.id
+        LEFT JOIN answers a ON pa.answerId = a.id
+        WHERE pa.sessionId = %s AND pa.userId = %s
+        ORDER BY pa.answered_at ASC
+        """
+        params = [session_id, user_id]
+        return Database.get_rows(sql, params)
+    
+    @staticmethod
+    def get_correct_answer_percentage() -> Dict[str, Any]:
+        """Get correct answer percentage statistics across all sessions"""
+        sql = """
+        SELECT 
+            COUNT(*) as total_answers,
+            COUNT(CASE WHEN is_correct = TRUE THEN 1 END) as correct_answers,
+            COUNT(CASE WHEN is_correct = FALSE THEN 1 END) as incorrect_answers,
+            ROUND(COUNT(CASE WHEN is_correct = TRUE THEN 1 END) * 100.0 / COUNT(*), 2) as percentage
+        FROM playerAnswers
+        """
+        result = Database.get_one_row(sql)
+        return result if result else {}
 
     # UPDATE operations
     @staticmethod
@@ -2799,6 +2943,28 @@ class ArticlesRepository:
         params = [article_id]
         result = Database.execute_sql(sql, params)
         return result is not None and result > 0
+    
+    @staticmethod
+    def get_articles_by_story(story_id: int, active_only: bool = True) -> List[Dict[str, Any]]:
+        """Alias for get_articles_by_story_id for compatibility"""
+        return ArticlesRepository.get_articles_by_story_id(story_id, active_only)
+    
+    @staticmethod
+    def get_article_statistics() -> Dict[str, Any]:
+        """Get statistics about articles"""
+        sql = """
+        SELECT 
+            COUNT(*) as total_articles,
+            COUNT(CASE WHEN is_active = TRUE THEN 1 END) as active_articles,
+            COUNT(CASE WHEN is_featured = TRUE THEN 1 END) as featured_articles,
+            COUNT(DISTINCT author) as unique_authors,
+            COUNT(DISTINCT category) as unique_categories,
+            SUM(view_count) as total_views,
+            AVG(word_count) as avg_word_count
+        FROM articles
+        """
+        result = Database.get_one_row(sql)
+        return result if result else {}
 
 
 class StoriesRepository:
@@ -2826,9 +2992,19 @@ class StoriesRepository:
         return Database.get_one_row(sql, params)
 
     @staticmethod
+    def get_story_by_title(title: str) -> Optional[Dict[str, Any]]:
+        """Alias for get_story_by_name for consistency"""
+        return StoriesRepository.get_story_by_name(title)
+
+    @staticmethod
     def list_stories() -> List[Dict[str, Any]]:
         sql = "SELECT * FROM stories ORDER BY name ASC"
         return Database.get_rows(sql)
+
+    @staticmethod
+    def get_all_stories() -> List[Dict[str, Any]]:
+        """Alias for list_stories for consistency"""
+        return StoriesRepository.list_stories()
 
     @staticmethod
     def delete_story(story_id: int) -> bool:

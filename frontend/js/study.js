@@ -171,21 +171,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!questionsResponse.ok) {
             throw new Error(`HTTP error fetching questions! Status: ${questionsResponse.status}`);
         }
-        const questions = await questionsResponse.json();
+        const responseData = await questionsResponse.json();
+        const questions = responseData.questions || responseData;
 
-        // Fetch themes
-        const uniqueThemeIds = [...new Set(questions.map(q => q.themeId).filter(id => id))];
-        const themePromises = uniqueThemeIds.map(async id => {
-            try {
-                const themeUrl = `${themesBaseEndpoint}${id}/`;
-                const response = await fetch(themeUrl);
-                return response.ok ? await response.json() : { id, name: 'Unknown Theme' };
-            } catch (error) {
-                console.warn(`Failed to fetch theme ${id}:`, error);
-                return { id, name: 'Unknown Theme' };
-            }
-        });
-        const themes = await Promise.all(themePromises);
+        // Fetch all themes at once
+        const themesResponse = await fetch(`${lanIP}/api/v1/themes/`);
+        const themes = themesResponse.ok ? await themesResponse.json() : [];
         const themeMap = themes.reduce((map, theme) => {
             map[theme.id] = theme;
             return map;

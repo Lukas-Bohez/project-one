@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head><title>Clear Cache</title></head>
+<body>
+<h1>Clear Graphs Cache</h1>
+<button onclick="clearCache()">Clear Cache</button>
+<pre id="output"></pre>
+<script>
+function clearCache() {
+    const output = document.getElementById('output');
+    const keys = Object.keys(localStorage);
+    const graphKeys = keys.filter(k => k.startsWith('graphs_'));
+    
+    graphKeys.forEach(key => {
+        localStorage.removeItem(key);
+        output.textContent += `Removed: ${key}\n`;
+    });
+    
+    output.textContent += `\n✓ Cleared ${graphKeys.length} cache entries.\n`;
+    output.textContent += `\nNow refresh your main page: Ctrl+Shift+R`;
+}
+</script>
+</body>
+</html>

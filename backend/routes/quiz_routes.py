@@ -9,7 +9,8 @@ from datetime import datetime
 
 from database.datarepository import (
     QuestionRepository, AnswerRepository, ThemeRepository,
-    QuizSessionRepository, PlayerAnswerRepository, AuditLogRepository
+    QuizSessionRepository, PlayerAnswerRepository, AuditLogRepository,
+    SessionPlayerRepository
 )
 from models.models import (
     QuestionCreate, QuestionUpdate, QuestionResponse,
@@ -93,7 +94,39 @@ async def get_active_questions_count():
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
-@router.post("/v1/questions")
+@router.options("/v1/questions/")
+async def options_questions():
+    """Handle CORS preflight for questions endpoint"""
+    return {}
+
+
+@router.get("/v1/questions/")
+async def get_questions(active_only: bool = True):
+    """Get all questions, optionally filtered by active status"""
+    try:
+        questions = QuestionRepository.get_all_questions(active_only=active_only)
+        return {"questions": questions, "count": len(questions)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch questions: {str(e)}")
+
+
+@router.options("/v1/questions/{question_id}/answers")
+async def options_question_answers(question_id: int):
+    """Handle CORS preflight for question answers endpoint"""
+    return {}
+
+
+@router.get("/v1/questions/{question_id}/answers")
+async def get_question_answers(question_id: int):
+    """Get all answers for a specific question"""
+    try:
+        answers = AnswerRepository.get_all_answers_for_question(question_id)
+        return {"answers": answers, "count": len(answers)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch answers: {str(e)}")
+
+
+@router.post("/v1/questions/")
 async def create_question_endpoint(
     question_data: QuestionInput,
     request: Request,
@@ -202,6 +235,22 @@ async def delete_question_endpoint(
 
 
 # Theme Routes
+@router.options("/v1/themes/")
+async def options_themes():
+    """Handle CORS preflight for themes endpoint"""
+    return {}
+
+
+@router.get("/v1/themes/")
+async def get_themes():
+    """Get all themes"""
+    try:
+        themes = ThemeRepository.get_all_themes()
+        return themes
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch themes: {str(e)}")
+
+
 @router.post("/v1/themes")
 async def create_theme_endpoint(
     theme_data: ThemeInput,
@@ -316,18 +365,20 @@ async def get_session_rankings(session_id: int):
     """Get rankings for a specific session"""
     try:
         # Get all players in session
-        players = QuizSessionRepository.get_session_players(session_id)
+        players = SessionPlayerRepository.get_session_players(session_id)
         
         rankings = []
-        for player in players:
-            user_id = player.get('user_id')
-            score_data = calculate_player_score_detailed(session_id, user_id)
-            
-            rankings.append({
-                'user_id': user_id,
-                'username': player.get('username'),
-                **score_data
-            })
+        if players:
+            for player in players:
+                user_id = player.get('userId') or player.get('user_id')
+                if user_id:
+                    score_data = calculate_player_score_detailed(session_id, user_id)
+                    
+                    rankings.append({
+                        'user_id': user_id,
+                        'username': player.get('username'),
+                        **score_data
+                    })
         
         # Sort by score
         rankings.sort(key=lambda x: x['total_score'], reverse=True)

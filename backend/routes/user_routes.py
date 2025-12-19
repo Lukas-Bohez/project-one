@@ -60,7 +60,8 @@ def verify_user(user_id: int, rfid_code: str, client_ip: str = None) -> str:
 
 def generate_kawaii_string(user_credentials):
     """Generate a hashed authentication token"""
-    raw_string = f"{user_credentials.username}:{user_credentials.password}"
+    username = f"{user_credentials.first_name} {user_credentials.last_name}"
+    raw_string = f"{username}:{user_credentials.password}"
     hashed = hashlib.sha256(raw_string.encode()).hexdigest()
     return hashed
 
@@ -289,17 +290,22 @@ async def register_user(user_credentials: UserCredentials, request: Request):
     try:
         client_ip = get_client_ip(request)
         
+        # Create username from first_name + last_name
+        username = f"{user_credentials.first_name} {user_credentials.last_name}"
+        
         # Check if user exists
-        existing = UserRepository.get_user_by_username(user_credentials.username)
+        existing = UserRepository.get_user_by_username(username)
         if existing:
             raise HTTPException(status_code=400, detail="Username already exists")
         
         # Create user
-        user_id = UserRepository.create_user(
-            username=user_credentials.username,
-            password_hash=generate_kawaii_string(user_credentials),
-            rfid_code=user_credentials.rfid_code if hasattr(user_credentials, 'rfid_code') else None
-        )
+        user_id = UserRepository.create_user({
+            'first_name': user_credentials.first_name,
+            'last_name': user_credentials.last_name,
+            'password': user_credentials.password,
+            'rfid_code': getattr(user_credentials, 'rfid_code', None),
+            'userRoleId': 1
+        })
         
         # Log IP
         log_user_ip_address(user_id, client_ip)
@@ -307,7 +313,7 @@ async def register_user(user_credentials: UserCredentials, request: Request):
         # Log audit
         AuditLogRepository.log_action(
             action_type='user_register',
-            details=f'User {user_credentials.username} registered',
+            details=f'User {username} registered',
             ip_address=client_ip
         )
         
@@ -328,14 +334,21 @@ async def login_user(user_credentials: UserCredentials, request: Request):
     try:
         client_ip = get_client_ip(request)
         
+        # Create username from first_name + last_name
+        username = f"{user_credentials.first_name} {user_credentials.last_name}"
+        
         # Verify credentials
-        user = UserRepository.get_user_by_username(user_credentials.username)
+        user = UserRepository.get_user_by_username(username)
         if not user:
             raise HTTPException(status_code=401, detail="Invalid credentials")
         
-        # Verify password
-        expected_hash = generate_kawaii_string(user_credentials)
-        if user.get('password_hash') != expected_hash:
+        # Verify password using bcrypt
+        password_valid = UserRepository.verify_password(
+            user_credentials.password,
+            user.get('password_hash'),
+            user.get('salt', '')
+        )
+        if not password_valid:
             raise HTTPException(status_code=401, detail="Invalid credentials")
         
         # Log IP
@@ -344,7 +357,9 @@ async def login_user(user_credentials: UserCredentials, request: Request):
         return {
             "success": True,
             "user_id": user['id'],
-            "username": user['username']
+            "username": username,
+            "first_name": user.get('first_name'),
+            "last_name": user.get('last_name')
         }
     
     except HTTPException:
@@ -359,17 +374,32 @@ async def support_login_user(user_credentials: UserCredentials, request: Request
     try:
         client_ip = get_client_ip(request)
         
-        user = UserRepository.get_user_by_username(user_credentials.username)
+        # Create username from first_name + last_name
+        username = f"{user_credentials.first_name} {user_credentials.last_name}"
+        
+        user = UserRepository.get_user_by_username(username)
         if not user:
             raise HTTPException(status_code=401, detail="Invalid credentials")
         
-        expected_hash = generate_kawaii_string(user_credentials)
-        if user.get('password_hash') != expected_hash:
+        # Verify password using bcrypt
+        password_valid = UserRepository.verify_password(
+            user_credentials.password,
+            user.get('password_hash'),
+            user.get('salt', '')
+        )
+        if not password_valid:
             raise HTTPException(status_code=401, detail="Invalid credentials")
         
         log_user_ip_address(user['id'], client_ip)
         
-        return {"success": True, "user": user}
+        return {
+            "success": True,
+            "user_id": user['id'],
+            "username": username,
+            "first_name": user.get('first_name'),
+            "last_name": user.get('last_name'),
+            "user": user
+        }
     
     except HTTPException:
         raise
@@ -383,14 +413,19 @@ async def support_register_user(user_credentials: UserCredentials, request: Requ
     try:
         client_ip = get_client_ip(request)
         
-        existing = UserRepository.get_user_by_username(user_credentials.username)
+        # Create username from first_name + last_name
+        username = f"{user_credentials.first_name} {user_credentials.last_name}"
+        
+        existing = UserRepository.get_user_by_username(username)
         if existing:
             raise HTTPException(status_code=400, detail="Username already exists")
         
-        user_id = UserRepository.create_user(
-            username=user_credentials.username,
-            password_hash=generate_kawaii_string(user_credentials)
-        )
+        user_id = UserRepository.create_user({
+            'first_name': user_credentials.first_name,
+            'last_name': user_credentials.last_name,
+            'password': user_credentials.password,
+            'userRoleId': 1
+        })
         
         log_user_ip_address(user_id, client_ip)
         

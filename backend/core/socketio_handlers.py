@@ -93,30 +93,51 @@ def register_handlers():
     
     @sio.on('join')
     async def handle_join(sid, data):
-        """Handle quiz session join"""
+        """Handle quiz session join - supports both string room names and dict format"""
+        print(f"[JOIN] Received join from {sid}, data: {data}")
         try:
-            session_id = data.get('session_id')
-            user_id = data.get('user_id')
-            
-            if session_id and user_id:
-                room = f"session_{session_id}"
+            # Support both formats: string room name or dict with session_id/user_id
+            if isinstance(data, str):
+                # Old format: just a room name string like "quiz_session_999999"
+                room = data
                 sio.enter_room(sid, room)
+                print(f"[JOIN] {sid} joined room {room}")
+                await sio.emit('joined_room', {'room': room}, room=sid)
+                # Return value is sent to callback
+                return {'status': 'success', 'room': room}
+            elif isinstance(data, dict):
+                # New format: dict with session_id and user_id
+                session_id = data.get('session_id')
+                user_id = data.get('user_id')
                 
-                # Add player to session
-                SessionPlayerRepository.add_player_to_session(session_id, user_id)
-                
-                await sio.emit('joined_session', {
-                    'session_id': session_id,
-                    'user_id': user_id
-                }, room=sid)
-                
-                # Notify others
-                await sio.emit('player_joined', {
-                    'user_id': user_id
-                }, room=room, skip_sid=sid)
+                if session_id and user_id:
+                    room = f"session_{session_id}"
+                    sio.enter_room(sid, room)
+                    
+                    # Add player to session
+                    SessionPlayerRepository.add_player_to_session(session_id, user_id)
+                    
+                    await sio.emit('joined_session', {
+                        'session_id': session_id,
+                        'user_id': user_id
+                    }, room=sid)
+                    
+                    # Notify others
+                    await sio.emit('player_joined', {
+                        'user_id': user_id
+                    }, room=room, skip_sid=sid)
+                    
+                    # Return value is sent to callback
+                    return {'status': 'success', 'session_id': session_id}
+                else:
+                    return {'status': 'error', 'message': 'Missing session_id or user_id'}
+            else:
+                await sio.emit('error', {'message': 'Invalid data format for join event'}, room=sid)
+                return {'status': 'error', 'message': 'Invalid data format for join event'}
         
         except Exception as e:
             await sio.emit('error', {'message': str(e)}, room=sid)
+            return {'status': 'error', 'message': str(e)}
     
     
     @sio.on('submit_answer')
@@ -155,6 +176,46 @@ def register_handlers():
         
         except Exception as e:
             await sio.emit('error', {'message': str(e)}, room=sid)
+    
+    
+    @sio.on('leave')
+    async def handle_leave(sid, data):
+        """Handle leaving a room - supports both string room names and dict format"""
+        try:
+            if isinstance(data, str):
+                # String format: just a room name
+                room = data
+                sio.leave_room(sid, room)
+                await sio.emit('left_room', {'room': room}, room=sid)
+                return {'status': 'success', 'room': room}
+            elif isinstance(data, dict):
+                room_name = data.get('room')
+                if room_name:
+                    sio.leave_room(sid, room_name)
+                    await sio.emit('left_room', {'room': room_name}, room=sid)
+                    return {'status': 'success', 'room': room_name}
+        except Exception as e:
+            await sio.emit('error', {'message': str(e)}, room=sid)
+            return {'status': 'error', 'message': str(e)}
+    
+    
+    @sio.on('get_connection_info')
+    async def handle_get_connection_info(sid):
+        """Handle connection info requests"""
+        try:
+            await sio.emit('connection_info', {
+                'sid': sid,
+                'connected': True,
+                'timestamp': datetime.now().isoformat()
+            }, room=sid)
+        except Exception as e:
+            await sio.emit('error', {'message': str(e)}, room=sid)
+    
+    
+    @sio.on('ping')
+    async def handle_ping(sid):
+        """Handle ping requests"""
+        await sio.emit('pong', {'timestamp': datetime.now().isoformat()}, room=sid)
     
     
     @sio.on('theme_selected')

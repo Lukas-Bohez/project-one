@@ -383,7 +383,7 @@ const createSessionSelector = (availableSessions, currentSessionId) => {
 
     const options = sanitizedSessions.map(session => 
         `<option value="${session.id}" ${session.id === currentSessionId ? 'selected' : ''}>
-            ${session.name}
+            Session ${session.id}${session.name && session.name !== 'Auto Session' ? ' - ' + session.name : ''}
         </option>`
     ).join('');
 
@@ -745,7 +745,7 @@ const fetchSessionRankings = async (sessionId) => {
         }
         const data = await response.json();
         console.log(`Session rankings data received:`, data);
-        return data || [];
+        return data.rankings || [];
     } catch (error) {
         console.error('Failed to fetch session rankings:', error);
         return [];
@@ -764,7 +764,7 @@ const fetchGlobalRankings = async (limit = 50) => {
         }
         const data = await response.json();
         console.log(`Global rankings data received:`, data);
-        return data || [];
+        return data.rankings || [];
     } catch (error) {
         console.error('Failed to fetch global rankings:', error);
         return [];
@@ -812,10 +812,10 @@ const createPodium = (rankings, isGlobal = false) => {
                 return `
                     <div class="podium-position ${position}">
                         ${crown ? `<div class="podium-crown">${crown}</div>` : ''}
-                        <div class="podium-rank">#${player.rank}</div>
-                        <div class="podium-name">${escapeHTML(player.display_name)}</div>
-                        <div class="podium-score">${player.total_score || 0} pts</div>
-                        <div class="podium-accuracy">${player.accuracy || player.overall_accuracy || 0}% accuracy</div>
+                        <div class="podium-rank">#${index + 1}</div>
+                        <div class="podium-name">${escapeHTML(player.username || 'Unknown')}</div>
+                        <div class="podium-score">${player.total_points || 0} pts</div>
+                        <div class="podium-accuracy">${player.accuracy || 0}% accuracy</div>
                         ${isGlobal ? `<div class="podium-accuracy">${player.sessions_played || 0} sessions</div>` : ''}
                     </div>
                 `;
@@ -848,32 +848,34 @@ const createRankingsTable = (rankings, isGlobal = false) => {
                     </tr>
                 </thead>
                 <tbody>
-                    ${rankings.map(player => {
-                        const rankClass = player.rank <= 3 ? `rank-${player.rank}` : '';
-                        const accuracyClass = getAccuracyClass(player.accuracy || player.overall_accuracy || 0);
+                    ${rankings.map((player, idx) => {
+                        const rank = idx + 1;
+                        const rankClass = rank <= 3 ? `rank-${rank}` : '';
+                        const accuracyClass = getAccuracyClass(player.accuracy || 0);
+                        const avgScore = player.sessions_played > 0 ? Math.round(player.total_points / player.sessions_played) : 0;
                         
                         if (isGlobal) {
                             return `
                                 <tr>
-                                    <td class="rank-cell ${rankClass}">#${player.rank}</td>
+                                    <td class="rank-cell ${rankClass}">#${rank}</td>
                                     <td class="player-name-cell">
-                                        <div>${escapeHTML(player.display_name)}</div>
+                                        <div>${escapeHTML(player.username || 'Unknown')}</div>
                                     </td>
-                                    <td class="score-cell">${player.total_score || 0}</td>
+                                    <td class="score-cell">${player.total_points || 0}</td>
                                     <td>${player.sessions_played || 0}</td>
-                                    <td>${player.average_score_per_session || 0}</td>
-                                    <td><span class="accuracy-badge ${accuracyClass}">${player.overall_accuracy || 0}%</span></td>
+                                    <td>${avgScore}</td>
+                                    <td><span class="accuracy-badge ${accuracyClass}">${player.accuracy || 0}%</span></td>
                                     <td>${player.total_answers || 0}</td>
                                 </tr>
                             `;
                         } else {
                             return `
                                 <tr>
-                                    <td class="rank-cell ${rankClass}">#${player.rank}</td>
+                                    <td class="rank-cell ${rankClass}">#${rank}</td>
                                     <td class="player-name-cell">
-                                        <div>${escapeHTML(player.display_name)}</div>
+                                        <div>${escapeHTML(player.username || 'Unknown')}</div>
                                     </td>
-                                    <td class="score-cell">${player.total_score || 0}</td>
+                                    <td class="score-cell">${player.total_points || 0}</td>
                                     <td>${player.correct_answers || 0}</td>
                                     <td>${player.total_answers || 0}</td>
                                     <td><span class="accuracy-badge ${accuracyClass}">${player.accuracy || 0}%</span></td>
@@ -898,8 +900,8 @@ const createGlobalStats = (rankings) => {
     
     const totalPlayers = rankings.length;
     const totalSessions = rankings.reduce((sum, player) => sum + (player.sessions_played || 0), 0);
-    const avgAccuracy = rankings.reduce((sum, player) => sum + (player.overall_accuracy || 0), 0) / totalPlayers;
-    const topScore = rankings[0]?.total_score || 0;
+    const avgAccuracy = rankings.reduce((sum, player) => sum + (player.accuracy || 0), 0) / totalPlayers;
+    const topScore = rankings[0]?.total_points || 0;
     
     return `
         <div class="rankings-stats">
