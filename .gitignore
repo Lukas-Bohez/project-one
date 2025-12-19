@@ -47,6 +47,15 @@ Thumbs.db
 # Logs
 *.log
 logs/
+backend/logs/
+
+# Temporary directories
+temp_uploads/
+temp_converted/
+temp_video_downloads/
+backend/temp_uploads/
+backend/temp_converted/
+backend/temp_video_downloads/
 
 # Environment variables
 .env
