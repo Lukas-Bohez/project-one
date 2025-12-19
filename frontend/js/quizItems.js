@@ -94,8 +94,18 @@ document.addEventListener('userAuthenticated', (event) => {
     console.log("🔄 Loading items for authenticated user");
     loadPlayerItems();
     
-    // Start auto-refresh interval (every 2 seconds to reduce flashing)
-    startItemAutoRefresh();
+    // Listen for item updates via Socket.IO
+    setTimeout(() => {
+        if (window.chatSystemInstance && window.chatSystemInstance.socket) {
+            window.chatSystemInstance.socket.on('item_updated', (data) => {
+                console.log('🔄 Item updated:', data);
+                if (currentUser && currentUser.id === data.user_id) {
+                    loadPlayerItems();
+                }
+            });
+            console.log('✅ Item listener registered');
+        }
+    }, 2000);
 });
 
 // Function to start auto-refresh of items
@@ -105,14 +115,14 @@ const startItemAutoRefresh = () => {
         clearInterval(itemUpdateInterval);
     }
     
-    console.log("⏰ Starting item auto-refresh (2 second interval)");
+    console.log("⏰ Starting item auto-refresh (30 second interval)");
     
-    // Set up new interval to refresh every 2 seconds
+    // Set up new interval to refresh every 30 seconds
     itemUpdateInterval = setInterval(() => {
         if (currentUser && currentUser.id && !isLoadingItems) {
             loadPlayerItems();
         }
-    }, 2000);
+    }, 30000);
 };
 
 // Function to stop auto-refresh

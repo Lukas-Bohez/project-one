@@ -76,6 +76,8 @@ from routes.article_routes import router as article_router
 from routes.user_routes import router as user_router
 from routes.game_routes import router as game_router
 from routes.misc_routes import router as misc_router
+from routes.session_routes import router as session_router
+from routes.theme_selection_routes import router as theme_selection_router
 
 app.include_router(video_router)
 app.include_router(quiz_router)
@@ -83,6 +85,8 @@ app.include_router(article_router)
 app.include_router(user_router)
 app.include_router(game_router)
 app.include_router(misc_router)
+app.include_router(session_router)
+app.include_router(theme_selection_router)
 
 # Register request logging middleware
 app.middleware("http")(log_incoming_requests)
@@ -115,3 +119,12 @@ sio = socketio.AsyncServer(
 
 # Wrap FastAPI app with Socket.IO
 asgi_app = socketio.ASGIApp(sio, app)
+
+# Register Socket.IO handlers
+from core.socketio_handlers import init_socketio
+init_socketio(sio, asyncio.get_event_loop())
+
+# Run server when executed directly
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(asgi_app, host="0.0.0.0", port=8001, log_level="info")

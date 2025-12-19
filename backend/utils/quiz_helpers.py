@@ -118,5 +118,9 @@ def calculate_impact(sensorData):
 # It will be defined in quiz_timer_system.py
 def emit_theme_selection_if_needed(sio, loop):
     """Placeholder - actual implementation in quiz_timer_system.py"""
-    from utils.quiz_timer_system import emit_theme_selection_if_needed as real_func
-    return real_func(sio, loop)
+    try:
+        from utils.quiz_timer_system import emit_theme_selection_if_needed as real_func
+        return real_func(sio, loop)
+    except ImportError as e:
+        print(f"quiz_timer_system.py import failed: {e}")
+        return None

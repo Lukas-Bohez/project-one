@@ -129,6 +129,9 @@ class ChatSystem {
 
             if (data.session_id === this.sessionId) {
                 console.log('ChatSystem: Reloading chat messages for current session');
+                // Reload immediately
+                this.loadChatMessages();
+                console.log('ChatSystem: Reloading chat messages for current session');
                 // Small delay to ensure the message is in the database
                 setTimeout(() => {
                     this.loadChatMessages();
@@ -338,7 +341,9 @@ class ChatSystem {
             chatMessages.innerHTML = '';
 
             messages.reverse().forEach(msg => {
-                this.addChatMessage(msg.username, msg.message, msg.is_flagged, msg.flagged_by, msg.flagged_reason);
+                const messageText = msg.message_text || msg.message || '';
+                const username = msg.username || msg.user_name || msg.firstName || 'Anonymous';
+                this.addChatMessage(username, messageText, msg.is_flagged, msg.flagged_by, msg.flagged_reason);
             });
 
             this.lastMessageCount = messages.length;

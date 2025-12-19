@@ -83,7 +83,7 @@ const handleIpStatus = async (ipAddress) => {
     }
 
     try {
-        const url = `${lanIP}/api/v1/ip-status`;
+        const url = `/api/v1/ip-status`;
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -102,7 +102,7 @@ const handleIpStatus = async (ipAddress) => {
 
         if (result.is_banned) {
             console.warn(`IP Address ${ipAddress} is banned! Kicking user...`);
-            window.location.href = `${lanIP}/banned`;
+            window.location.href = `/banned`;
             return true;
         } else {
             console.log(`IP Address ${ipAddress} is not banned. Welcome!`);

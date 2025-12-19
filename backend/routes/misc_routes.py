@@ -160,39 +160,77 @@ async def get_multi_session_sensor_data(
 async def send_chat_message(
     session_id: int = Body(...),
     user_id: int = Body(...),
-    message: str = Body(...),
+    message_text: str = Body(...),
+    message_type: str = Body(default='chat'),
+    reply_to_id: int = Body(default=None),
     request: Request = None
 ):
     """Send a chat message"""
     try:
-        message_id = ChatLogRepository.create_message(
+        message_id = ChatLogRepository.create_chat_message(
             session_id=session_id,
             user_id=user_id,
-            message=message
+            message_text=message_text
         )
+        
+        print(f"[CHAT] Message created: ID={message_id}, session={session_id}, user={user_id}")
+        
+        # Emit Socket.IO event to notify all users in the session
+        from core.socketio_handlers import sio as socketio_server
+        if socketio_server:
+            room_name = f'quiz_session_{session_id}'
+            emit_data = {
+                'message_id': message_id,
+                'session_id': session_id,
+                'user_id': user_id
+            }
+            print(f"[CHAT] Emitting 'message_sent' to room '{room_name}' with data: {emit_data}")
+            await socketio_server.emit('message_sent', emit_data, room=room_name)
+            print(f"[CHAT] Socket.IO emit completed")
+        else:
+            print(f"[CHAT] WARNING: socketio_server is None, cannot emit event!")
         
         return {
             "message_id": message_id,
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
+        print(f"[CHAT] ERROR: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/v1/chat/support/messages")
 async def send_support_message(
+    session_id: int = Body(...),
+    message_text: str = Body(...),
     user_id: int = Body(...),
-    message: str = Body(...),
+    message_type: str = Body('chat'),
+    reply_to_id: int = Body(None),
     request: Request = None
 ):
     """Send a support chat message"""
     try:
-        message_id = ChatLogRepository.create_support_message(
+        message_id = ChatLogRepository.create_chat_message(
+            session_id=session_id,
+            message_text=message_text,
             user_id=user_id,
-            message=message
+            message_type=message_type,
+            reply_to_id=reply_to_id
         )
         
-        return {"message_id": message_id}
+        # Emit Socket.IO event to notify all users in the support room
+        from core.socketio_handlers import sio as socketio_server
+        if socketio_server:
+            await socketio_server.emit('message_sent', {
+                'message_id': message_id,
+                'session_id': session_id,
+                'user_id': user_id
+            }, room=f'quiz_session_{session_id}')
+        
+        return {
+            "message_id": message_id,
+            "timestamp": datetime.now().isoformat()
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -228,9 +266,11 @@ async def send_system_message(
 ):
     """Send a system message"""
     try:
-        message_id = ChatLogRepository.create_system_message(
+        message_id = ChatLogRepository.create_chat_message(
             session_id=session_id,
-            message=message
+            message_text=message,
+            user_id=None,
+            message_type='system'
         )
         
         return {"message_id": message_id}
@@ -244,7 +284,14 @@ async def get_active_sessions():
     """Get all active quiz sessions"""
     try:
         sessions = QuizSessionRepository.get_active_sessions()
-        return {"sessions": sessions}
+        # Handle both tuple and dict formats
+        session_ids = []
+        for s in sessions:
+            if isinstance(s, dict):
+                session_ids.append(s.get('id') or s.get('session_id'))
+            elif isinstance(s, tuple) and len(s) > 0:
+                session_ids.append(s[0])  # First element is usually the ID
+        return {"active_session_ids": session_ids, "sessions": sessions}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

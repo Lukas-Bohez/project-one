@@ -31,7 +31,7 @@ async def get_player_items(user_id: int):
     """Get items owned by a player"""
     try:
         items = PlayerItemRepository.get_player_items(user_id)
-        return {"user_id": user_id, "items": items}
+        return {"success": True, "user_id": user_id, "items": items}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

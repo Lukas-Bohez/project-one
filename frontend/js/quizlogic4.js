@@ -628,15 +628,36 @@ handleAnswerClick(boxElement) {
             return;
         }
 
+        // Get session ID from current question or chat system
+        const sessionId = this.currentQuestion?.session_id || 
+                         window.chatSystemInstance?.sessionId || 
+                         window.quizAutoSession?.sessionId || 
+                         1000167;
+
         const emissionData = {
             userId: userId,
             themeId: themeId,
             themeName: String(selectedOption.name || selectedOption.title || ""),
+            session_id: sessionId,
             request_user_data: true
         };
 
         console.log("Emitting theme_selected:", emissionData);
-        this.socket.emit('theme_selected', emissionData);
+        
+        // USE THE CHAT SOCKET - it's the one that's actually connected to backend
+        const activeSocket = window.chatSystemInstance?.socket || this.socket;
+        console.log("Using socket:", activeSocket?.id);
+        console.log("Socket connected?:", activeSocket?.connected);
+        
+        if (!activeSocket || !activeSocket.connected) {
+            console.error("❌ Socket not connected! Cannot emit theme_selected");
+            this.handleErrorDisplay("Connection error - please refresh");
+            this.enableAnswerBoxes();
+            return;
+        }
+        
+        activeSocket.emit('theme_selected', emissionData);
+        console.log("✅ theme_selected emitted successfully via", activeSocket.id);
     } else {
         const emissionData = {
             userId: userId,

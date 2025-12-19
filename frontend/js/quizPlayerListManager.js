@@ -679,10 +679,10 @@ document.addEventListener('userAuthenticated', (event) => {
         // Try multiple ways to access the socket
         const socket = window.socket || 
                       window.quizSocket || 
-                      window.io ||
+                      (window.chatSystemInstance && window.chatSystemInstance.socket) ||
                       (window.socketInstance && window.socketInstance.socket);
         
-        if (socket && (socket.connected || socket.readyState === 'open')) {
+        if (socket && typeof socket.on === 'function' && (socket.connected || socket.readyState === 'open')) {
             console.log("Socket found and connected:", socket);
             const playersManager = initializePlayersListManager(socket, user);
             if (playersManager) {
@@ -690,14 +690,18 @@ document.addEventListener('userAuthenticated', (event) => {
             }
         } else if (socket) {
             console.log("Socket found but not connected, waiting...");
-            // Wait for socket to connect
-            socket.on('connect', () => {
-                console.log("Socket connected, initializing PlayersListManager");
-                const playersManager = initializePlayersListManager(socket, user);
-                if (playersManager) {
-                    console.log("PlayersListManager successfully initialized after connection");
-                }
-            });
+            // Wait for socket to connect - check if it's a valid socket.io client
+            if (typeof socket.on === 'function') {
+                socket.on('connect', () => {
+                    console.log("Socket connected, initializing PlayersListManager");
+                    const playersManager = initializePlayersListManager(socket, user);
+                    if (playersManager) {
+                        console.log("PlayersListManager successfully initialized after connection");
+                    }
+                });
+            } else {
+                console.warn("Socket object doesn't have .on method, skipping socket listener setup");
+            }
         } else {
             console.log("Socket not found, retrying in 500ms...");
             setTimeout(initializeWhenReady, 500);

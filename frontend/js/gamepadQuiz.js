@@ -36,9 +36,10 @@ class QuizGamepadNavigator {
 
     // This method now sets the storage keys.
     setupStorageKeys() {
-        localStorage.setItem(this.STORAGE_KEYS.USER.FIRST_NAME, 'gamepad');
-        localStorage.setItem(this.STORAGE_KEYS.USER.LAST_NAME, 'user');
-        localStorage.setItem(this.STORAGE_KEYS.USER.PASSWORD, 'gamepaduser');
+        // Directly use key names since STORAGE_KEYS is not defined in this class
+        localStorage.setItem('quizUserFirstName', 'gamepad');
+        localStorage.setItem('quizUserLastName', 'user');
+        localStorage.setItem('quizUserPassword', 'gamepaduser');
         console.log('Local Storage credentials updated for Gamepad Navigator.');
     }
 

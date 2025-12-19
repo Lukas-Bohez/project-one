@@ -27,6 +27,7 @@ def init_socketio(socketio_instance, event_loop):
 
 def register_handlers():
     """Register all Socket.IO event handlers"""
+    print("🔧 ====== REGISTERING SOCKET.IO HANDLERS ======")
     
     @sio.event
     async def connect(sid, environ):
@@ -96,13 +97,40 @@ def register_handlers():
         """Handle quiz session join - supports both string room names and dict format"""
         print(f"[JOIN] Received join from {sid}, data: {data}")
         try:
+            from database.datarepository import ThemeRepository
+            import random
+            
             # Support both formats: string room name or dict with session_id/user_id
             if isinstance(data, str):
                 # Old format: just a room name string like "quiz_session_999999"
                 room = data
-                sio.enter_room(sid, room)
+                await sio.enter_room(sid, room)
                 print(f"[JOIN] {sid} joined room {room}")
                 await sio.emit('joined_room', {'room': room}, room=sid)
+                
+                # AUTO-START: Extract session_id from room name and send theme selection
+                if room.startswith('quiz_session_'):
+                    try:
+                        session_id = int(room.replace('quiz_session_', ''))
+                        print(f"[AUTO-START] Sending theme selection to {sid} for session {session_id}")
+                        
+                        # Get 4 random themes
+                        all_themes = ThemeRepository.get_active_themes() or ThemeRepository.get_all_themes()
+                        if all_themes and len(all_themes) > 0:
+                            selected_themes = random.sample(all_themes, min(4, len(all_themes)))
+                            
+                            # Send theme_selection to this user only (not broadcast)
+                            await sio.emit('theme_selection', {
+                                'type': 'theme_selection',
+                                'question': 'Select a theme for the quiz:',
+                                'themes': selected_themes,
+                                'session_id': session_id
+                            }, room=sid)
+                            
+                            print(f"[AUTO-START] Theme selection sent to {sid}")
+                    except ValueError:
+                        print(f"[AUTO-START] Could not extract session_id from room: {room}")
+                
                 # Return value is sent to callback
                 return {'status': 'success', 'room': room}
             elif isinstance(data, dict):
@@ -112,7 +140,9 @@ def register_handlers():
                 
                 if session_id and user_id:
                     room = f"session_{session_id}"
-                    sio.enter_room(sid, room)
+                    quiz_room = f"quiz_session_{session_id}"
+                    await sio.enter_room(sid, room)
+                    await sio.enter_room(sid, quiz_room)
                     
                     # Add player to session
                     SessionPlayerRepository.add_player_to_session(session_id, user_id)
@@ -126,6 +156,24 @@ def register_handlers():
                     await sio.emit('player_joined', {
                         'user_id': user_id
                     }, room=room, skip_sid=sid)
+                    
+                    # AUTO-START: Send theme selection automatically (backend-controlled, secure)
+                    print(f"[AUTO-START] Sending theme selection to {sid} for session {session_id}")
+                    
+                    # Get 4 random themes
+                    all_themes = ThemeRepository.get_active_themes() or ThemeRepository.get_all_themes()
+                    if all_themes and len(all_themes) > 0:
+                        selected_themes = random.sample(all_themes, min(4, len(all_themes)))
+                        
+                        # Send theme_selection to this user only (not broadcast)
+                        await sio.emit('theme_selection', {
+                            'type': 'theme_selection',
+                            'question': 'Select a theme for the quiz:',
+                            'themes': selected_themes,
+                            'session_id': session_id
+                        }, room=sid)
+                        
+                        print(f"[AUTO-START] Theme selection sent to {sid}")
                     
                     # Return value is sent to callback
                     return {'status': 'success', 'session_id': session_id}
@@ -144,37 +192,63 @@ def register_handlers():
     async def handle_submit_answer(sid, data):
         """Handle quiz answer submission"""
         try:
+            from database.datarepository import AnswerRepository
+            
             session_id = data.get('session_id')
-            user_id = data.get('user_id')
-            question_id = data.get('question_id')
-            answer_id = data.get('answer_id')
+            user_id = data.get('userId') or data.get('user_id')
+            question_id = data.get('questionId') or data.get('question_id')
+            answer_id = data.get('answerId') or data.get('answer_id')
             time_taken = data.get('time_taken', 0)
             
-            # Record the answer
-            is_correct = PlayerAnswerRepository.submit_answer(
+            print(f"[ANSWER] Session {session_id}, User {user_id}, Question {question_id}, Answer {answer_id}")
+            
+            # Check if answer is correct
+            answer = AnswerRepository.get_answer_by_id(answer_id)
+            is_correct = answer.get('is_correct', False) if answer else False
+            
+            # Calculate points (base 100 points for correct answer)
+            points = 100 if is_correct else 0
+            
+            # Record the player's answer
+            PlayerAnswerRepository.create_player_answer(
                 session_id=session_id,
                 user_id=user_id,
                 question_id=question_id,
                 answer_id=answer_id,
+                is_correct=is_correct,
+                points_earned=points,
                 time_taken=time_taken
             )
             
-            # Calculate points
-            points = 100 if is_correct else 0
+            # Update session player score
+            SessionPlayerRepository.update_player_score(
+                session_id=session_id,
+                user_id=user_id,
+                points_to_add=points,
+                is_correct=is_correct
+            )
             
-            await sio.emit('answer_result', {
+            # Send response to the player who answered
+            await sio.emit('answer_response', {
                 'is_correct': is_correct,
-                'points': points
+                'points': points,
+                'correct_answer': answer.get('answer_text') if not is_correct and answer else None
             }, room=sid)
             
-            # Update leaderboard
-            room = f"session_{session_id}"
-            await sio.emit('leaderboard_update', {
+            print(f"[ANSWER] Result: {'✅ Correct' if is_correct else '❌ Wrong'}, Points: {points}")
+            
+            # Broadcast to room for leaderboard updates
+            room = f"quiz_session_{session_id}"
+            await sio.emit('player_answered', {
                 'user_id': user_id,
+                'is_correct': is_correct,
                 'points': points
             }, room=room)
         
         except Exception as e:
+            print(f"[ERROR] Answer submission failed: {e}")
+            import traceback
+            traceback.print_exc()
             await sio.emit('error', {'message': str(e)}, room=sid)
     
     
@@ -220,19 +294,59 @@ def register_handlers():
     
     @sio.on('theme_selected')
     async def handle_theme_selected(sid, data):
-        """Handle theme selection for quiz"""
+        """Handle theme voting - delegates to quiz_timer_system"""
+        from utils.quiz_timer_system import handle_theme_vote
+        await handle_theme_vote(sio, sid, data)
+
+
+    
+    
+    @sio.on('request_question')
+    async def handle_request_question(sid, data):
+        """Handle request for next question - broadcasts to entire session"""
         try:
+            from database.datarepository import QuestionRepository, AnswerRepository
+            import random
+            
             session_id = data.get('session_id')
             theme_id = data.get('theme_id')
             
-            if session_id and theme_id:
-                # Update session with selected theme
-                QuizSessionRepository.set_session_theme(session_id, theme_id)
-                
-                room = f"session_{session_id}"
-                await sio.emit('theme_set', {
-                    'theme_id': theme_id
-                }, room=room)
+            if not session_id:
+                await sio.emit('error', {'message': 'Session ID required'}, room=sid)
+                return
+            
+            # Get all active questions
+            questions = QuestionRepository.get_all_questions()
+            active_questions = [q for q in questions if q.get('isActive') or q.get('is_active')]
+            
+            # Filter by theme if specified
+            if theme_id:
+                active_questions = [q for q in active_questions if q.get('themeId') == theme_id or q.get('theme_id') == theme_id]
+            
+            if not active_questions:
+                await sio.emit('error', {'message': 'No active questions found'}, room=sid)
+                return
+            
+            # Pick a random question
+            question = random.choice(active_questions)
+            question_id = question.get('id')
+            
+            # Get answers for this question
+            answers = AnswerRepository.get_all_answers_for_question(question_id)
+            
+            # Broadcast to all players in the session
+            room = f"quiz_session_{session_id}"
+            await sio.emit('new_question', {
+                'session_id': session_id,
+                'question': question,
+                'answers': answers
+            }, room=room)
+            
+            print(f"[QUESTION] Broadcast question {question_id} to room {room}")
         
         except Exception as e:
+            print(f"[ERROR] Failed to broadcast question: {e}")
             await sio.emit('error', {'message': str(e)}, room=sid)
+    
+    print("✅ ALL SOCKET.IO HANDLERS REGISTERED")
+    print("📋 Events: connect, disconnect, join, ping, theme_selected, request_question")

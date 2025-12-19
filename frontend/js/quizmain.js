@@ -21,6 +21,7 @@ class QuizApp {
         
         // Initialize all systems
         this.chatSystem = new ChatSystem();
+        window.chatSystemInstance = this.chatSystem;  // Make globally available
         this.authSystem = new AuthSystem();
         
         // Use existing instance if available, otherwise create new one

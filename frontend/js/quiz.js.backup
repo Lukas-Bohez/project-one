@@ -213,17 +213,12 @@ document.addEventListener('userAuthenticated', (event) => {
     };
     
     waitForSocket();
-});
+});});
 
 // Listen for questions from auto-session system
 document.addEventListener('quizQuestionReceived', (event) => {
     console.log('🎯 Received question from auto-session:', event.detail);
     if (window.quizLogicInstance && window.quizLogicInstance.questionHandler) {
-        // Ensure user is set before loading question
-        if (window.quizLogicInstance.currentUser && !window.quizLogicInstance.questionHandler.currentUser) {
-            console.log('🔧 Setting user on questionHandler before loading question');
-            window.quizLogicInstance.questionHandler.setCurrentUser(window.quizLogicInstance.currentUser);
-        }
         window.quizLogicInstance.questionHandler.loadQuestion(event.detail);
     } else {
         console.warn('⚠️ QuizLogic or questionHandler not ready for question');
