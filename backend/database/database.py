@@ -1,5 +1,5 @@
 from mysql import connector
-from config import db_config
+from config.config import db_config
 from typing import List, Dict, Any, Optional
 import threading
 
