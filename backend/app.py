@@ -185,20 +185,24 @@ async def lifespan(app: FastAPI):
         print("FastAPI app starting up...")
 
         if RPI_COMPONENTS_AVAILABLE:
-            # Get the main asyncio event loop when FastAPI starts.
-            # This is the loop on which Socket.IO emits will be scheduled.
-            main_asyncio_loop = asyncio.get_running_loop()
-            print(f"Main asyncio loop obtained: {main_asyncio_loop}")
+            try:
+                # Get the main asyncio event loop when FastAPI starts.
+                # This is the loop on which Socket.IO emits will be scheduled.
+                main_asyncio_loop = asyncio.get_running_loop()
+                print(f"Main asyncio loop obtained: {main_asyncio_loop}")
 
-            # Start the Raspberry Pi script in a new thread
-            # Pass the sio instance and the main_asyncio_loop to the thread
-            pi_thread = Thread(
-                target=raspberry_pi_main_thread,
-                args=(stop_thread_event, sio, main_asyncio_loop), # <--- MODIFIED ARGS HERE
-                daemon=True
-            )
-            pi_thread.start()
-            print("Raspberry Pi script thread started.")
+                # Start the Raspberry Pi script in a new thread
+                # Pass the sio instance and the main_asyncio_loop to the thread
+                pi_thread = Thread(
+                    target=raspberry_pi_main_thread,
+                    args=(stop_thread_event, sio, main_asyncio_loop), # <--- MODIFIED ARGS HERE
+                    daemon=True
+                )
+                pi_thread.start()
+                print("Raspberry Pi script thread started.")
+            except Exception as e:
+                print(f"Failed to start Raspberry Pi thread: {e}")
+                print("Continuing without Pi components.")
         else:
             print("Raspberry Pi thread will not be started due to import errors.")
 
