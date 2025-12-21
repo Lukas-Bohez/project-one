@@ -333,67 +333,11 @@ const scanFolderForMP3s = async () => {
     }
 };
 
-// Forcefully sync all cached items from IndexedDB to lofi playlist
-const syncCacheToPlaylist = async () => {
-    try {
-        console.log('🔄 Syncing IndexedDB cache to lofi playlist...');
-        const allCached = await getAllCachedDownloads();
-        console.log('All cached downloads:', allCached);
-        
-        let addedCount = 0;
-        for (const item of allCached) {
-            const title = item.metadata?.title || item.filename || 'Unknown';
-            const songPath = item.downloadId; // Use downloadId as identifier
-            
-            // Check if already in songList
-            const exists = songList.some(song => song.id === item.downloadId);
-            if (!exists) {
-                songList.push({
-                    id: item.downloadId,
-                    title: prettyTitle(title),
-                    filename: item.filename,
-                    blob: item.blob,
-                    metadata: item.metadata
-                });
-                addedCount++;
-                console.log('+ Added to playlist:', prettyTitle(title));
-            }
-        }
-        
-        if (addedCount > 0) {
-            console.log(`✅ Synced ${addedCount} new items from cache`);
-        } else {
-            console.log('ℹ️ No new items to sync from cache');
-        }
-        
-        return addedCount;
-    } catch (error) {
-        console.error('❌ Error in syncCacheToPlaylist:', error);
-        return 0;
-    }
-};
+// Sync function removed
 
-// Deduplicate playlist - if title has .mp3 extension, skip it
-const deduplicatePlaylist = (playlist) => {
-    const result = [];
-    
-    for (const item of playlist) {
-        const hasExtension = /\.(mp3|mp4|webm)$/i.test(item.title || '');
-        
-        if (hasExtension) {
-            console.log('⏭️ Skipping file with extension:', item.title);
-            continue;
-        }
-        
-        result.push(item);
-    }
-    
-    console.log(`📊 Deduplication: ${playlist.length} → ${result.length} items (removed ${playlist.length - result.length} with extensions)`);
-    return result;
-};
+// Deduplicate function removed
 
-// Expose for manual triggering from console
-window.syncCacheToPlaylist = syncCacheToPlaylist;
+// Expose removed
 
 const updateCachedAudioStatus = async (videoId, updates) => {
     try {
@@ -589,14 +533,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadPersistentSettings();
     console.log('Lofi player boot. Enabled in cache:', isPlayerEnabled);
 
-    // Forcefully sync IndexedDB cache to playlist immediately (finds converter downloads)
-    (async () => {
-        try {
-            await syncCacheToPlaylist();
-        } catch (e) {
-            console.warn('Failed to sync cache to playlist:', e);
-        }
-    })();
+    // Sync removed
 
     if (config.disabled) {
         createEnableButton();
@@ -663,13 +600,7 @@ const initializeSongList = async () => {
 
         // Initialize based on current mode
         if (config.mode === 'cache') {
-            // Sync from IndexedDB cache
-            console.log('🔄 Syncing from cache...');
-            try {
-                await syncCacheToPlaylist();
-            } catch (e) {
-                console.warn('Cache sync failed:', e);
-            }
+            // Cache mode removed
 
             if (songList && songList.length > 0) {
                 console.log('📁 Loaded from cache:', songList.length, 'songs');

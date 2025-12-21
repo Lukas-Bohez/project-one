@@ -3,7 +3,7 @@
         "@type": "WebApplication",
         "name": "Convert The Spire - Free Video Converter",
         "alternateName": "Convert The Spire",
-        "description": "Free YouTube to MP3/MP4 converter supporting multiple social media platforms including YouTube, TikTok, Instagram, Reddit, Facebook, Twitch, and Twitter. No registration required.",
+        "description": "Kindly support Convert The Spire by donating to bring it back.",
     "url": "https://quizthespire.com/frontend/html/converter.html",
         "applicationCategory": "MultimediaApplication",
         "operatingSystem": ["Windows", "macOS", "Linux", "Android", "iOS"],
@@ -29,13 +29,13 @@
             "validFrom": "2025-09-27"
         },
         "featureList": [
-            "YouTube playlist converter - Convert entire playlists to MP3 or MP4",
+            "Support Convert The Spire by donating to bring it back",
             "Client-side packaging with 1GB part-splitting for large playlists",
             "Embedded metadata & album art when available",
             "Reliable sequential conversion with resume/continue support",
             "Download up to now / Download from cache features",
             "No registration required - Use instantly",
-            "Fast conversion speeds for YouTube content",
+            "Support our development work",
             "Mobile-friendly interface",
             "Other platform support (TikTok, Instagram, Reddit, Facebook, Twitch, Twitter) - Coming soon"
         ],
@@ -54,7 +54,7 @@
                 "name": "Tech User"
             },
             } "datePublished": "2025-09-27",
-            "reviewBody": "Excellent free video converter. Works perfectly with YouTube, TikTok, and Instagram. No registration needed!",
+            "reviewBody": "Great project! Kindly support Convert The Spire by donating to bring it back.",
             "reviewRating": {
                 "@type": "Rating",
                 "bestRating": "5",
@@ -78,8 +78,8 @@
     {
         "@context": "https://schema.org",
         "@type": "HowTo",
-        "name": "How to Convert YouTube Videos to MP3",
-        "description": "Step-by-step guide to convert YouTube videos to MP3 using Convert The Spire",
+        "name": "How to Support Convert The Spire",
+        "description": "Learn how to support Convert The Spire by donating to bring it back",
     "image": "https://quizthespire.com/frontend/img/converter-preview.jpg",
         "totalTime": "PT2M",
         "estimatedCost": {
@@ -89,7 +89,7 @@
         },
         "supply": [{
             "@type": "HowToSupply",
-            "name": "YouTube video URL"
+            "name": "Video URL"
         }],
         "tool": [{
             "@type": "HowToTool",
@@ -97,7 +97,7 @@
         }],
         "step": [{
             "@type": "HowToStep",
-            "text": "Copy the YouTube video URL from your browser",
+            "text": "Support Convert The Spire by donating to bring it back",
             "image": "https://quizthespire.com/frontend/img/step1.jpg"
         }, {
             "@type": "HowToStep",
