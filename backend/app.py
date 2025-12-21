@@ -71,37 +71,15 @@ except ImportError as e:
 # ----------------------------------------------------
 # Logging Setup
 # ----------------------------------------------------
-# Create a logger for video conversion debugging
-video_logger = logging.getLogger('video_debug')
-video_logger.setLevel(logging.DEBUG)
-
-# Create file handler for video logs
-video_log_file = os.path.join(os.path.dirname(__file__), 'video_debug.log')
-video_file_handler = logging.FileHandler(video_log_file, mode='a')
-video_file_handler.setLevel(logging.DEBUG)
-
-# Create formatter
-video_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-video_file_handler.setFormatter(video_formatter)
-
-# Avoid adding duplicate handlers when module is reloaded
-if not any(isinstance(h, logging.FileHandler) and getattr(h, 'baseFilename', None) == video_file_handler.baseFilename for h in video_logger.handlers):
-    video_logger.addHandler(video_file_handler)
-
-# Prevent propagation to root logger to avoid duplicate outputs
-video_logger.propagate = False
-
-video_logger.info("="*50)
-video_logger.info("Video Logger Initialized")
-video_logger.info("="*50)
-
-# General quiz logger used across the application for quiz-related messages
 quiz_log_file = os.path.join(os.path.dirname(__file__), 'quiz_debug.log')
 quiz_logger = logging.getLogger('quiz_debug')
 quiz_logger.setLevel(logging.INFO)
 quiz_file_handler = logging.FileHandler(quiz_log_file, mode='a')
 quiz_file_handler.setLevel(logging.INFO)
-quiz_file_handler.setFormatter(video_formatter)
+
+# Create formatter for quiz logs
+quiz_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+quiz_file_handler.setFormatter(quiz_formatter)
 if not any(isinstance(h, logging.FileHandler) and getattr(h, 'baseFilename', None) == quiz_file_handler.baseFilename for h in quiz_logger.handlers):
     quiz_logger.addHandler(quiz_file_handler)
 # Socket.IO / Engine.IO and Uvicorn logging setup
@@ -6980,14 +6958,9 @@ start_temp_cleanup(interval=30)
 # 8. Lower socket timeouts (20s instead of 30s) - quicker error detection
 # 9. Optimized retry configuration (8 max instead of 10) - balanced speed
 # 10. Reduced fragment retries (3 instead of 5) - faster failure recovery
-# ----------------------------------------------------
-try:
-    import yt_dlp
-    VIDEO_CONVERTER_AVAILABLE = True
-    print("Video converter enabled with yt-dlp")
-except ImportError as e:
-    VIDEO_CONVERTER_AVAILABLE = False
-    print(f"Warning: yt-dlp not installed ({e}). Video converter endpoints will be disabled.")
+# Video converter is taken down
+VIDEO_CONVERTER_AVAILABLE = False
+print("Kindly support Convert The Spire by donating to bring it back.")
 
 import uuid
 import threading
@@ -6997,152 +6970,7 @@ from urllib.parse import urlparse
 from typing import Dict, Any, Optional
 from pydantic import BaseModel
 
-# Pydantic models for video converter
-class VideoUrlValidation(BaseModel):
-    url: str
-    quality: int = 128
-    format: int = 1  # 1 = MP3, 0 = MP4
-
-class VideoConversionRequest(BaseModel):
-    url: str
-    format: int = 1  # 1 = MP3, 0 = MP4
-    quality: int = 128
-    chunk_index: Optional[int] = None  # For chunked downloads: which part (1-indexed)
-    chunk_start: Optional[int] = None  # Start time in seconds
-    chunk_end: Optional[int] = None    # End time in seconds
-
-class VideoConversionResponse(BaseModel):
-    success: bool
-    download_id: str
-    message: str
-
-class ConversionStatus(BaseModel):
-    status: str
-    progress: float
-    platform: str
-    format: str
-    quality: int
-    title: Optional[str] = None
-    error: Optional[str] = None
-    completed_count: Optional[int] = None
-    parts_remaining: Optional[int] = None
-    total_videos: Optional[int] = None
-    chunk_count: Optional[int] = None
-    chunk_duration: Optional[int] = None
-    total_duration: Optional[int] = None
-
-class PlaylistInfoRequest(BaseModel):
-    url: str
-    page: int = 1  # Page number (1-indexed), each page = 100 videos
-
-class PlaylistVideoInfo(BaseModel):
-    id: str
-    title: str
-    duration: Optional[int] = None
-    url: str
-
-class PlaylistInfoResponse(BaseModel):
-    success: bool
-    playlist_id: str
-    title: str
-    video_count: int
-    videos: List[PlaylistVideoInfo]
-    is_private: bool = False
-    error: Optional[str] = None
-    page: int = 1
-    page_size: int = 100
-    has_more: bool = False  # True if there might be more videos on next page
-
-class BulkDownloadRequest(BaseModel):
-    playlist_url: str
-    video_ids: List[str]  # List of video IDs to download
-    format: int = 1  # 1 = MP3, 0 = MP4
-    quality: int = 128
-
-class FullPlaylistDownloadRequest(BaseModel):
-    playlist_url: str  # Full playlist URL
-    format: int = 1  # 1 = MP3, 0 = MP4
-    quality: int = 128
-    start_index: int = 1  # Optional: start from video N (1-indexed)
-    end_index: Optional[int] = None  # Optional: end at video N (inclusive)
-
-# URL patterns for platform validation
-URL_PATTERNS = {
-    # YouTube: supports watch, shorts, embed, share links (youtu.be), and playlist URLs
-    'youtube': r'(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|embed|watch|shorts)\/|(?:watch)?\?(?:.*&)?v=|playlist\?(?:.*&)?list=)|youtu\.be\/)',
-    'tiktok': r'(?:tiktok\.com\/@[\w.-]+\/video\/|vm\.tiktok\.com\/|vt\.tiktok\.com\/)[\w.-]+',
-    'instagram': r'(?:instagram\.com\/(?:p|reel|tv)\/[\w-]+)',
-    'reddit': r'(?:reddit\.com\/r\/[\w]+\/comments\/[\w]+\/|v\.redd\.it\/[\w]+)',
-    'facebook': r'(?:facebook\.com\/(?:[\w.-]+\/videos\/|watch\/?\?v=)|fb\.watch\/)[\w.-]+',
-    'twitch': r'(?:twitch\.tv\/[\w]+\/clip\/[\w-]+|clips\.twitch\.tv\/[\w-]+)',
-    'twitter': r'(?:twitter\.com\/[\w]+\/status\/\d+|x\.com\/[\w]+\/status\/\d+)'
-}
-
-# Active downloads tracking
-active_video_downloads: Dict[str, Dict[str, Any]] = {}
-download_lock = threading.Lock()
-
-# Queue system for managing concurrent downloads
-video_conversion_queue = []  # List of {download_id, url, timestamp, client_ip}
-queue_lock = threading.Lock()
-# Event and dispatcher thread for reliably waking queue processing
-dispatcher_event = Event()
-dispatcher_thread = None
-
-MAX_CONCURRENT_CONVERSIONS = 3  # Maximum number of conversions running at once
-# Support long videos (>15 minutes) in a separate worker pool so they don't
-# compete with short downloads. Long videos are considered > MAX_VIDEO_DURATION.
-MAX_CONCURRENT_LONG_CONVERSIONS = int(os.environ.get('MAX_CONCURRENT_LONG_CONVERSIONS', '2'))
-active_conversions_count = 0
-active_long_conversions_count = 0
-# Lock to protect conversions counters and make reserve/check atomic
-conversions_lock = threading.Lock()
-active_long_conversions_count = 0
-
-# Rate limiting for video downloads (prevent DDoS)
-video_download_rate_limit = {}  # {ip: {'count': int, 'reset_time': float}}
-MAX_CONCURRENT_DOWNLOADS_PER_IP = 25  #  OPTIMIZED: Increased to 25 for bulk downloads from lofi player
-RATE_LIMIT_WINDOW = 60  # seconds
-
-# ️ TIMEOUT PROTECTION: Maximum time for a single download
-DOWNLOAD_TIMEOUT_SECONDS = 1200  # 20 minutes max per download (increased for large files)
-DOWNLOAD_STALL_TIMEOUT = 600  # 10 minutes with no progress = stalled (was 2 minutes)
-
-#  SIZE/DURATION LIMITS: Prevent crashes from massive files
-MAX_VIDEO_FILESIZE = 1_073_741_824  # 1GB max (increased for adaptive quality)
-MAX_VIDEO_DURATION = 900  # 15 minutes max (900 seconds)
-try:
-    MAX_ALLOWED_VIDEO_DURATION = int(os.environ.get('MAX_ALLOWED_VIDEO_DURATION', str(60 * 60 * 2)))
-except Exception:
-    MAX_ALLOWED_VIDEO_DURATION = 60 * 60 * 2  # 2 hours absolute cap
-WARN_VIDEO_FILESIZE = 314_572_800  # Warn at 300MB
-
-# Adaptive quality removed: automatic quality reductions are no longer used.
-# Quality reduction configuration has been removed to keep downloads at the
-# user-requested quality. If you need dynamic adjustments later, reintroduce
-# a controlled implementation.
-
-#  WATCHDOG: Monitor stuck downloads
-watchdog_thread = None
-watchdog_running = False
-
-# Global request throttling to avoid overwhelming YouTube
-last_youtube_request_time = 0
-youtube_request_lock = threading.Lock()
-MIN_REQUEST_INTERVAL = 0.8  #  ANTI-BOT: Increased to 0.8s to appear more human-like
-
-# Session state tracking for more realistic request patterns
-request_session_state = {
-    'consecutive_requests': 0,
-    'last_reset': time.time(),
-    'error_count': 0,
-    'success_count': 0,
-}
-session_state_lock = threading.Lock()
-
-#  OPTIMIZATION: Cache cookie file path to avoid repeated lookups
-_cached_cookie_file = None
-_cookie_cache_checked = False
+# Video converter code removed
 
 def get_cached_cookie_file():
     """Get cookie file path with caching to avoid repeated file system checks"""
@@ -10538,37 +10366,6 @@ if VIDEO_CONVERTER_AVAILABLE:
             video_logger.error(f"Failed to upload cookiefile for {download_id}: {e}")
             raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/v1/video/status/{download_id}", response_model=ConversionStatus)
-async def get_conversion_status(download_id: str):
-    """Get status of video conversion"""
-    with download_lock:
-        if download_id not in active_video_downloads:
-            raise HTTPException(status_code=404, detail="Download ID not found")
-        
-        download_info = active_video_downloads[download_id].copy()
-    
-    # Build response
-    status_response = ConversionStatus(
-        status=download_info['status'],
-        progress=download_info['progress'],
-        platform=download_info['platform'],
-        format=download_info['format'],
-        quality=download_info['quality'],
-        title=download_info.get('title'),
-        error=download_info.get('error'),
-        completed_count=download_info.get('completed_count', 0),
-        parts_remaining=(len(download_info.get('parts') or []) if download_info.get('parts') else 0),
-        total_videos=download_info.get('total_videos')
-    )
-    
-    # Add chunking metadata if needed
-    if download_info['status'] == 'needs_chunking':
-        status_response.chunk_count = download_info.get('chunk_count', 0)
-        status_response.chunk_duration = download_info.get('chunk_duration', 0)
-        status_response.total_duration = download_info.get('total_duration', 0)
-    
-    return status_response
-
 @app.get("/api/v1/health")
 async def health_check():
     """Health check endpoint for frontend to verify backend is running"""
@@ -10809,12 +10606,12 @@ async def download_converted_file(request: Request, download_id: str):
 # Video converter placeholder endpoints (if yt-dlp not available)
 if not VIDEO_CONVERTER_AVAILABLE:
     @app.post("/api/v1/video/validate", response_model=Dict[str, Any])
-    async def validate_video_url_unavailable(request: VideoUrlValidation):
-        raise HTTPException(status_code=503, detail="Video converter not available. Please install yt-dlp.")
+    async def validate_video_url_unavailable(request: Dict[str, Any]):
+        raise HTTPException(status_code=503, detail="Kindly support Convert The Spire by donating to bring it back.")
     
     @app.post("/api/v1/video/convert", response_model=Dict[str, Any])
-    async def convert_video_unavailable(request: VideoConversionRequest):
-        raise HTTPException(status_code=503, detail="Video converter not available. Please install yt-dlp.")
+    async def convert_video_unavailable(request: Dict[str, Any]):
+        raise HTTPException(status_code=503, detail="Kindly support Convert The Spire by donating to bring it back.")
 
 # ----------------------------------------------------
 # Run the app

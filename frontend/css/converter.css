@@ -780,114 +780,6 @@ html, body {
     align-items: center;
 }
 
-/* Social Platforms Section */
-.social-platforms {
-    margin-bottom: var(--spacing-xl);
-    background-color: var(--bg-secondary);
-    padding: var(--spacing-xl);
-    border-radius: var(--border-radius-lg);
-    border: 1px solid var(--border-color);
-    box-shadow: 0 4px 12px var(--shadow-light);
-}
-
-.social-platforms h2 {
-    text-align: center;
-    margin-bottom: var(--spacing-lg);
-    color: var(--text-primary);
-    font-size: var(--font-size-xl);
-}
-
-.social-buttons-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--spacing-sm);
-}
-
-.social-button-container {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-    padding: var(--spacing-md) var(--spacing-lg);
-    border: 2px solid var(--border-color);
-    border-radius: var(--border-radius);
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 500;
-}
-
-.social-button-container:hover {
-    border-color: var(--border-focus);
-    background-color: var(--hover-bg);
-    transform: translateY(-1px);
-}
-
-.social-button-container.active {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    color: var(--text-inverse);
-    border-color: var(--primary-color);
-    box-shadow: 0 4px 12px var(--shadow-medium);
-}
-
-.social-button-container i {
-    font-size: var(--font-size-lg);
-    width: 24px;
-    text-align: center;
-}
-
-/* Coming soon state for platform buttons */
-.social-button-container.coming-soon {
-    opacity: 0.55;
-    cursor: default;
-    filter: grayscale(40%);
-}
-
-.social-button-container.coming-soon span {
-    font-style: italic;
-}
-
-/* Small badge to indicate cached items in playlist */
-.cache-indicator {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: rgba(44,76,124,0.12);
-    color: var(--primary-color);
-    font-size: 0.75rem;
-    font-weight: 700;
-    margin-left: auto;
-}
-
-/* Platform-specific colors */
-.social-button-container.youtube.active {
-    background: linear-gradient(135deg, #ff0000, #cc0000);
-}
-
-.social-button-container.tiktok.active {
-    background: linear-gradient(135deg, #000000, #ff0050);
-}
-
-.social-button-container.instagram.active {
-    background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
-}
-
-.social-button-container.reddit.active {
-    background: linear-gradient(135deg, #ff4500, #cc3300);
-}
-
-.social-button-container.facebook.active {
-    background: linear-gradient(135deg, #1877f2, #0d47a1);
-}
-
-.social-button-container.twitch.active {
-    background: linear-gradient(135deg, #9146ff, #6441a4);
-}
-
-.social-button-container.twitter.active {
-    background: linear-gradient(135deg, #1da1f2, #0d8bd9);
-}
-
 /* Content Sections */
 .content-sections {
     margin-top: var(--spacing-xl);
@@ -2203,15 +2095,6 @@ html, body {
     flex-wrap: wrap;
 }
 
-.cache-indicator {
-    background: rgba(255,255,255,0.03);
-    padding: 4px 8px;
-    border-radius: 12px;
-    color: #d0d0d0;
-    font-size: 0.85em;
-    white-space: nowrap;
-}
-
 .playlist-range-controls input[type="number"] {
     padding: 6px 8px;
     border: 1px solid var(--border-color);
@@ -2419,13 +2302,6 @@ html, body {
 .progress-display-inline.hidden {
     display: none !important;
 }
-.cache-manager-inline {
-    margin-top: 15px;
-    padding: 12px 15px;
-    background: rgba(44, 111, 184, 0.05);
-    border-radius: 8px;
-    border: 1px solid rgba(44, 111, 184, 0.2);
-}
 
 /* Converter form inline states */
 .social-input { display: none; }
@@ -2483,13 +2359,7 @@ html, body {
 .queue-status-text { color: var(--text-primary, #333); font-size: 0.95em; font-weight: 500; text-align: center; }
 .progress-text { color: var(--text-primary, #333); font-size: 0.95em; font-weight: 600; text-align: center; }
 .flex-column-gap { display:flex; flex-direction:column; gap:10px; margin-bottom:12px; }
-.cache-title { margin:0; color: var(--text-primary, #333); font-size: 1em; }
-.cache-size-display { color: var(--text-secondary, #666); font-size: 0.85em; }
 .flex-wrap-gap { display:flex; flex-wrap:wrap; gap:8px; }
-.cache-btn-styled { flex: 1 1 120px; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em; font-weight: 500; white-space: nowrap; }
-.cache-btn-styled.small { flex: 1 1 100px; }
-.cache-items-container { max-height: 400px; overflow-y: auto; }
-.cache-empty-text { color: var(--text-secondary, #666); font-size: 0.9em; text-align: center; margin: 20px 0; }
 .select-box-hidden { display:none; }
 .details-wrapper { width:100%; max-width:800px; margin:0 auto; }
 .per-download-controls--mb { margin-bottom:15px; }
@@ -2545,13 +2415,6 @@ html, body {
 
     #donation-progress { width: 100%; }
 
-    /* Make action buttons full width so they don't overflow */
-    .cache-btn-styled,
-    .cache-btn-styled.small {
-        flex: 1 1 100%;
-        width: 100%;
-    }
-
     /* Ensure the support/contact area doesn't overflow horizontally */
     .support-inner { padding-left: 8px; padding-right: 8px; }
 
@@ -2577,7 +2440,7 @@ html, body {
 
 /* Accessibility: ensure long text wraps instead of causing horizontal scroll */
 @media (max-width: 600px) {
-    .donation-block, .support-inner, .cache-items-container, .c-footer__seo-links.inline {
+    .donation-block, .support-inner, .c-footer__seo-links.inline {
         word-wrap: break-word;
         overflow-wrap: break-word;
     }
