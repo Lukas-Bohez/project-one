@@ -8049,6 +8049,10 @@ async def convert_file_backend(input_path: str, target_format: str, original_fil
             print(f"Calling convert_audio_format for audio conversion")
             return await convert_audio_format(input_path, output_path, target_format)
         
+        elif target_format.lower() in ['mp4'] and file_extension in ['.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a']:
+            # Audio to Video conversion
+            return await convert_audio_to_video(input_path, output_path, target_format)
+        
         elif target_format.lower() in ['mp3', 'wav', 'ogg'] and file_extension in ['.mp4', '.avi', '.mov', '.mkv', '.wmv', '.webm']:
             # Video to Audio conversion
             return await convert_video_to_audio(input_path, output_path, target_format)
@@ -8120,6 +8124,7 @@ async def convert_video_to_audio(input_path: str, output_path: str, format: str)
         
         cmd = [
             'ffmpeg', '-i', input_path, 
+            '-map_metadata', '0',  # Copy metadata from input
             '-vn',  # No video
             '-acodec', codec,
             '-y',  # Overwrite output
@@ -8137,6 +8142,111 @@ async def convert_video_to_audio(input_path: str, output_path: str, format: str)
         if result.returncode == 0 and os.path.exists(output_path):
             output_size = os.path.getsize(output_path)
             quiz_logger.info(f"Video to audio conversion successful: {output_path} ({output_size} bytes)")
+            
+            # Try to extract and embed thumbnail from video/audio
+            if format.lower() in ['mp3', 'wav'] and MUTAGEN_AVAILABLE:
+                try:
+                    # First, try to extract cover art from input file metadata
+                    cover_art = None
+                    
+                    # Check MP4 files
+                    if input_path.lower().endswith(('.mp4', '.m4v')):
+                        try:
+                            from mutagen.mp4 import MP4
+                            mp4 = MP4(input_path)
+                            if 'covr' in mp4 and mp4['covr']:
+                                cover_art = mp4['covr'][0]
+                                quiz_logger.info(f"Found cover art in MP4 metadata for {input_path}")
+                        except Exception as e:
+                            quiz_logger.debug(f"No cover art in MP4 metadata: {e}")
+                    
+                    # Check MP3 files
+                    elif input_path.lower().endswith('.mp3'):
+                        try:
+                            from mutagen.id3 import ID3, APIC
+                            audio = ID3(input_path)
+                            for tag in audio.getall('APIC'):
+                                if tag.type == 3:  # Cover (front)
+                                    cover_art = tag.data
+                                    quiz_logger.info(f"Found cover art in MP3 metadata for {input_path}")
+                                    break
+                        except Exception as e:
+                            quiz_logger.debug(f"No cover art in MP3 metadata: {e}")
+                    
+                    if cover_art:
+                        # Embed the cover art in the output file
+                        if format.lower() == 'mp3':
+                            from mutagen.id3 import ID3, APIC
+                            audio = ID3(output_path)
+                            audio.add(APIC(encoding=3, mime='image/jpeg', type=3, desc='Cover', data=cover_art))
+                            audio.save(v2_version=3)  # Force ID3v2.3 for better Windows compatibility
+                        elif format.lower() == 'wav':
+                            # WAV files can have ID3 tags too
+                            from mutagen.id3 import ID3, APIC
+                            audio = ID3(output_path)
+                            audio.add(APIC(encoding=3, mime='image/jpeg', type=3, desc='Cover', data=cover_art))
+                            audio.save(v2_version=3)
+                        
+                        quiz_logger.info(f"Embedded cover art in {format.upper()}: {output_path}")
+                    else:
+                        # Fallback: extract a frame from video files
+                        if input_path.lower().endswith(('.mp4', '.m4v', '.avi', '.mov', '.mkv', '.wmv', '.webm')):
+                            thumbnail_path = output_path + '_thumb.jpg'
+                            
+                            # Get video duration to seek to a better position
+                            duration_cmd = [
+                                'ffprobe', '-i', input_path,
+                                '-show_entries', 'format=duration',
+                                '-v', 'quiet', '-of', 'csv=p=0'
+                            ]
+                            duration_result = subprocess.run(duration_cmd, capture_output=True, text=True, timeout=10)
+                            seek_time = '00:00:10'  # Default 10 seconds
+                            if duration_result.returncode == 0 and duration_result.stdout.strip():
+                                try:
+                                    duration = float(duration_result.stdout.strip())
+                                    seek_time = f'00:00:{min(30, max(5, int(duration * 0.1)))}'  # 10% of duration, min 5s, max 30s
+                                except:
+                                    pass
+                            
+                            thumb_cmd = [
+                                'ffmpeg', '-i', input_path,
+                                '-ss', seek_time,
+                                '-vframes', '1',
+                                '-q:v', '2',
+                                '-vf', 'scale=640:360:force_original_aspect_ratio=decrease,pad=640:360:(ow-iw)/2:(oh-ih)/2',
+                                '-y',
+                                thumbnail_path
+                            ]
+                            thumb_result = subprocess.run(thumb_cmd, capture_output=True, text=True, timeout=30)
+                            
+                            if thumb_result.returncode == 0 and os.path.exists(thumbnail_path) and os.path.getsize(thumbnail_path) > 1000:
+                                # Embed the extracted thumbnail
+                                if format.lower() == 'mp3':
+                                    from mutagen.id3 import ID3, APIC
+                                    audio = ID3(output_path)
+                                    with open(thumbnail_path, 'rb') as img_file:
+                                        img_data = img_file.read()
+                                    audio.add(APIC(encoding=3, mime='image/jpeg', type=3, desc='Cover', data=img_data))
+                                    audio.save(v2_version=3)  # Force ID3v2.3
+                                elif format.lower() == 'wav':
+                                    from mutagen.id3 import ID3, APIC
+                                    audio = ID3(output_path)
+                                    with open(thumbnail_path, 'rb') as img_file:
+                                        img_data = img_file.read()
+                                    audio.add(APIC(encoding=3, mime='image/jpeg', type=3, desc='Cover', data=img_data))
+                                    audio.save(v2_version=3)
+                                
+                                quiz_logger.info(f"Embedded extracted thumbnail in {format.upper()}: {output_path}")
+                            else:
+                                quiz_logger.warning(f"Failed to extract thumbnail from video: returncode={thumb_result.returncode}, exists={os.path.exists(thumbnail_path)}")
+                            
+                            # Clean up thumbnail file
+                            if os.path.exists(thumbnail_path):
+                                os.remove(thumbnail_path)
+                        
+                except Exception as e:
+                    quiz_logger.warning(f"Thumbnail extraction/embedding failed: {e}")
+            
             return output_path
         else:
             quiz_logger.error(f"FFmpeg failed with return code: {result.returncode}")
@@ -8152,6 +8262,67 @@ async def convert_video_to_audio(input_path: str, output_path: str, format: str)
         raise Exception("FFmpeg not found - video conversion not available")
     except Exception as e:
         quiz_logger.error(f"Video to audio conversion error: {e}")
+        raise
+
+async def convert_audio_to_video(input_path: str, output_path: str, format: str) -> str:
+    """Convert audio to video using ffmpeg (creates video with black background)"""
+    try:
+        # Check if input file exists
+        if not os.path.exists(input_path):
+            quiz_logger.error(f"Input audio file does not exist: {input_path}")
+            raise Exception(f"Input audio file does not exist: {input_path}")
+        
+        # Check file size
+        file_size = os.path.getsize(input_path)
+        if file_size == 0:
+            quiz_logger.error(f"Input audio file is empty: {input_path}")
+            raise Exception(f"Input audio file is empty: {input_path}")
+        
+        quiz_logger.info(f"Converting audio file: {input_path} ({file_size} bytes) to {format}")
+        
+        # Validate that this is actually an audio file by checking with ffmpeg
+        probe_cmd = ['ffmpeg', '-i', input_path, '-f', 'null', '-']
+        probe_result = subprocess.run(probe_cmd, capture_output=True, text=True, timeout=30)
+        if probe_result.returncode != 0:
+            stderr_lower = probe_result.stderr.lower()
+            if 'audio' not in stderr_lower:
+                quiz_logger.error(f"Input file does not appear to be an audio file: {input_path}")
+                raise Exception(f"Input file does not appear to be a valid audio file: {input_path}")
+        
+        # Create video from audio with black background
+        # Use a very low resolution and framerate to keep file size reasonable
+        cmd = [
+            'ffmpeg', '-i', input_path,
+            '-map_metadata', '0',  # Copy metadata from input
+            '-f', 'lavfi', '-i', 'color=black:size=640x360:rate=1',  # Black background video
+            '-c:v', 'libx264',  # Video codec
+            '-c:a', 'aac',      # Audio codec
+            '-shortest',        # End when shortest input ends
+            '-y',               # Overwrite output
+            output_path
+        ]
+        
+        quiz_logger.info(f"FFmpeg command: {' '.join(cmd)}")
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)  # Longer timeout for video conversion
+        
+        if result.returncode == 0 and os.path.exists(output_path):
+            output_size = os.path.getsize(output_path)
+            quiz_logger.info(f"Audio to video conversion successful: {output_path} ({output_size} bytes)")
+            return output_path
+        else:
+            quiz_logger.error(f"FFmpeg failed with return code: {result.returncode}")
+            quiz_logger.error(f"FFmpeg stdout: {result.stdout}")
+            quiz_logger.error(f"FFmpeg stderr: {result.stderr}")
+            raise Exception(f"Audio to video conversion failed: ffmpeg returned {result.returncode}")
+            
+    except subprocess.TimeoutExpired:
+        quiz_logger.error("Audio to video conversion timeout (10 minutes)")
+        raise Exception("Audio to video conversion timeout (10 minutes)")
+    except FileNotFoundError:
+        quiz_logger.error("FFmpeg not found - audio to video conversion not available")
+        raise Exception("FFmpeg not found - audio to video conversion not available")
+    except Exception as e:
+        quiz_logger.error(f"Audio to video conversion error: {e}")
         raise
 
 async def convert_audio_format(input_path: str, output_path: str, format: str) -> str:
@@ -8194,6 +8365,7 @@ async def convert_audio_format(input_path: str, output_path: str, format: str) -
         # Build ffmpeg command for audio conversion
         cmd = [
             'ffmpeg', '-i', input_path,
+            '-map_metadata', '0',  # Copy metadata from input
             '-acodec', codec,
             '-y',  # Overwrite output
             output_path
@@ -8231,6 +8403,55 @@ async def convert_audio_format(input_path: str, output_path: str, format: str) -
         
         if result.returncode == 0 and os.path.exists(output_path):
             print(f"Audio conversion successful: {output_path}")
+            
+            # Try to preserve cover art from input to output
+            if format.lower() in ['mp3', 'wav'] and MUTAGEN_AVAILABLE:
+                try:
+                    cover_art = None
+                    
+                    # Extract cover art from input file
+                    if input_path.lower().endswith('.mp3'):
+                        try:
+                            from mutagen.id3 import ID3, APIC
+                            audio = ID3(input_path)
+                            for tag in audio.getall('APIC'):
+                                if tag.type == 3:  # Cover (front)
+                                    cover_art = tag.data
+                                    print(f"Found cover art in input MP3: {input_path}")
+                                    break
+                        except Exception as e:
+                            print(f"No cover art in input MP3: {e}")
+                    
+                    elif input_path.lower().endswith('.wav'):
+                        try:
+                            from mutagen.id3 import ID3, APIC
+                            audio = ID3(input_path)
+                            for tag in audio.getall('APIC'):
+                                if tag.type == 3:  # Cover (front)
+                                    cover_art = tag.data
+                                    print(f"Found cover art in input WAV: {input_path}")
+                                    break
+                        except Exception as e:
+                            print(f"No cover art in input WAV: {e}")
+                    
+                    if cover_art:
+                        # Embed the cover art in the output file
+                        if format.lower() == 'mp3':
+                            from mutagen.id3 import ID3, APIC
+                            audio = ID3(output_path)
+                            audio.add(APIC(encoding=3, mime='image/jpeg', type=3, desc='Cover', data=cover_art))
+                            audio.save(v2_version=3)  # Force ID3v2.3 for better Windows compatibility
+                        elif format.lower() == 'wav':
+                            from mutagen.id3 import ID3, APIC
+                            audio = ID3(output_path)
+                            audio.add(APIC(encoding=3, mime='image/jpeg', type=3, desc='Cover', data=cover_art))
+                            audio.save(v2_version=3)
+                        
+                        print(f"Embedded cover art in {format.upper()}: {output_path}")
+                        
+                except Exception as e:
+                    print(f"Cover art preservation failed: {e}")
+            
             return output_path
         else:
             error_msg = f"FFmpeg failed with return code {result.returncode}"
