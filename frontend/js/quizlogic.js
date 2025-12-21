@@ -1,10 +1,126 @@
+// Quiz Timer Handler Object
+const QuizTimerHandler = {
+    timerDisplay: null,
+    maxTime: 15,
+    currentTime: 0,
+    timerInterval: null,
+    isRunning: false,
+
+    initialize() {
+        // Find timer display element
+        this.timerDisplay = document.getElementById('quiz-timer') || 
+                           document.querySelector('.quiz-timer') ||
+                           this.createTimerDisplay();
+        console.log("QuizTimerHandler initialized, display element:", this.timerDisplay);
+    },
+
+    createTimerDisplay() {
+        // Create timer display if it doesn't exist
+        const timerDiv = document.createElement('div');
+        timerDiv.id = 'quiz-timer';
+        timerDiv.className = 'quiz-timer';
+        timerDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, rgba(0,0,0,0.9), rgba(20,20,20,0.9));
+            color: white;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-size: 20px;
+            font-weight: bold;
+            z-index: 1000;
+            border: 2px solid rgba(255,255,255,0.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            min-width: 80px;
+        `;
+        document.body.appendChild(timerDiv);
+        return timerDiv;
+    },
+
+    updateTimerDisplay(data) {
+        if (!this.timerDisplay) {
+            this.initialize();
+        }
+        
+        if (data && data.time_remaining !== undefined) {
+            this.currentTime = data.time_remaining;
+            this.maxTime = data.max_time || 15;
+        }
+        
+        if (this.timerDisplay) {
+            this.timerDisplay.textContent = `${this.currentTime}s`;
+            
+            // Color coding based on time remaining
+            if (this.currentTime <= 5) {
+                this.timerDisplay.style.color = '#ff4444';
+                this.timerDisplay.style.background = 'linear-gradient(135deg, rgba(139,0,0,0.9), rgba(100,0,0,0.9))';
+                this.timerDisplay.style.animation = 'pulse 0.5s infinite alternate';
+            } else if (this.currentTime <= 10) {
+                this.timerDisplay.style.color = '#ffaa00';
+                this.timerDisplay.style.background = 'linear-gradient(135deg, rgba(139,69,19,0.9), rgba(100,50,0,0.9))';
+            } else {
+                this.timerDisplay.style.color = '#44ff44';
+                this.timerDisplay.style.background = 'linear-gradient(135deg, rgba(0,100,0,0.9), rgba(0,50,0,0.9))';
+                this.timerDisplay.style.animation = 'none';
+            }
+            
+            console.log(`Timer updated: ${this.currentTime}/${this.maxTime}s`);
+        }
+    },
+
+    startTimer(duration = 15) {
+        console.log(`🔍 Starting timer with duration: ${duration}s`);
+        this.maxTime = duration;
+        this.currentTime = duration;
+        this.isRunning = true;
+        
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+        }
+        
+        this.updateTimerDisplay();
+        
+        this.timerInterval = setInterval(() => {
+            this.currentTime--;
+            this.updateTimerDisplay();
+            
+            if (this.currentTime <= 0) {
+                this.stopTimer();
+            }
+        }, 1000);
+    },
+
+    stopTimer() {
+        console.log("🔍 Stopping timer");
+        this.isRunning = false;
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+    },
+
+    resetTimer() {
+        this.stopTimer();
+        this.currentTime = this.maxTime;
+        this.updateTimerDisplay();
+    }
+};
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', () => {
+    QuizTimerHandler.initialize();
+});
+
 // quiz-socket-handler.js
 class QuizSocketHandler {
     constructor(socket, questionHandler) {
+        console.log("🔍 QuizSocketHandler constructor called with socket:", socket, "questionHandler:", questionHandler);
         this.socket = socket;
         this.questionHandler = questionHandler;
         this.initializeListeners();
-        this.QuizTimerHandler = new QuizTimerHandler(); // Initialize first!
     }
 
     initializeListeners() {
@@ -20,7 +136,7 @@ class QuizSocketHandler {
         if (!this.socket || this.socket._quizLogicListenersInitialized) {
             return;
         }
-        console.log("Initializing all socket listeners...");
+        console.log("🔍 Initializing all socket listeners...");
 
         // Player/User data updates
         this.socket.on('all_users_data_updated', (data) => this.handleAllUsersDataUpdate(data));
@@ -90,11 +206,17 @@ this.socket.on('quiz_timer', (data) => {
   Object.assign(window.globalTimerData, data);
   
   // Directly call the display function
-    this.QuizTimerHandler.updateTimerDisplay (); // Now safe
+  QuizTimerHandler.updateTimerDisplay(data);
+});
+
+this.socket.on('timer_update', (data) => {
+  // Update voting timer display
+  QuizTimerHandler.updateTimerDisplay({time_remaining: data.time, max_time: 20});
 });
 
     this.socket.on('quiz_timer_finished', () => {
         this.questionHandler.handleTimerFinished();
+        QuizTimerHandler.stopTimer();
     });
 
         // ---- QUESTION DATA LISTENERS ----
@@ -109,6 +231,9 @@ this.socket.on('quiz_timer', (data) => {
         this.socket.on('new_question', (data) => {
             console.log("✅ Received 'new_question':", data);
             this.questionHandler.loadQuestion(data);
+            // Start the question timer
+            QuizTimerHandler.startTimer(15);
+            console.log("🔍 Timer started for new question");
         });
 
         // ---- THEME SELECTION LISTENERS ----
@@ -202,6 +327,7 @@ this.socket.on('quiz_timer', (data) => {
     }
 
     handleAllUsersDataUpdate(data) {
+        console.log("🔍 handleAllUsersDataUpdate called with data:", data);
         if (!data || !Array.isArray(data.players)) {
             console.warn("Invalid player data format:", data);
             return;
@@ -209,6 +335,8 @@ this.socket.on('quiz_timer', (data) => {
 
         const allPlayers = data.players;
         const currentUserId = localStorage.getItem('user_user_id');
+        console.log("🔍 Current user ID from localStorage:", currentUserId);
+        console.log("🔍 All players received:", allPlayers);
 
         this.questionHandler.players = allPlayers;
 
@@ -227,13 +355,17 @@ this.socket.on('quiz_timer', (data) => {
             }
         }
         
+        console.log("🔍 About to call updatePlayersDisplay with players:", this.questionHandler.players);
         this.questionHandler.updatePlayersDisplay();
     }
 
     handleAnswerResponse(responseData) {
         console.log("Processing answer/theme response:", responseData);
         
-        if (responseData.success) {
+        // Check for success - either explicit success flag or presence of is_correct indicates a valid response
+        const isSuccess = responseData.success || responseData.is_correct !== undefined;
+        
+        if (isSuccess) {
             console.log("Submission successful");
             
             if (responseData.feedback) {
@@ -247,9 +379,9 @@ this.socket.on('quiz_timer', (data) => {
             }
             
             // Check if this was a regular answer
-            if (responseData.correct !== undefined) {
-                const message = responseData.correct ? "Correct!" : "Incorrect";
-                this.questionHandler.showFeedback(message, !responseData.correct);
+            if (responseData.is_correct !== undefined) {
+                const message = responseData.is_correct ? "Correct!" : "Incorrect";
+                this.questionHandler.showFeedback(message, !responseData.is_correct);
             }
             
         } else {
@@ -259,9 +391,11 @@ this.socket.on('quiz_timer', (data) => {
     }
 
     handlePlayerUpdate(playerData) {
+        console.log("🔍 handlePlayerUpdate called with data:", playerData);
         if (!playerData || !playerData.user_id) return;
         
         const playerIndex = this.questionHandler.players.findIndex(p => p.user_id === playerData.user_id);
+        console.log("🔍 Player index found:", playerIndex);
 
         if (playerIndex !== -1) {
             this.questionHandler.players[playerIndex] = { ...this.questionHandler.players[playerIndex], ...playerData };
@@ -270,6 +404,7 @@ this.socket.on('quiz_timer', (data) => {
         }
 
         this.questionHandler.players.sort((a, b) => (b.session_score || 0) - (a.session_score || 0));
+        console.log("🔍 Players after update:", this.questionHandler.players);
         this.questionHandler.updatePlayersDisplay();
     }
 

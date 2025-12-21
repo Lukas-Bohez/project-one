@@ -63,16 +63,8 @@ UPLOAD_RETENTION = 300  # 5 minutes
 CONVERTED_RETENTION = 300  # 5 minutes
 VIDEO_RETENTION = 180  # 3 minutes
 
-# URL patterns for platform validation
-URL_PATTERNS = {
-    'youtube': r'(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|embed|watch|shorts)\/|(?:watch)?\?(?:.*&)?v=|playlist\?(?:.*&)?list=)|youtu\.be\/)',
-    'tiktok': r'(?:tiktok\.com\/@[\w.-]+\/video\/|vm\.tiktok\.com\/|vt\.tiktok\.com\/)[\w.-]+',
-    'instagram': r'(?:instagram\.com\/(?:p|reel|tv)\/[\w-]+)',
-    'reddit': r'(?:reddit\.com\/r\/[\w]+\/comments\/[\w]+\/|v\.redd\.it\/[\w]+)',
-    'facebook': r'(?:facebook\.com\/(?:[\w.-]+\/videos\/|watch\/?\?v=)|fb\.watch\/)[\w.-]+',
-    'twitch': r'(?:twitch\.tv\/[\w]+\/clip\/[\w-]+|clips\.twitch\.tv\/[\w-]+)',
-    'twitter': r'(?:twitter\.com\/[\w]+\/status\/\d+|x\.com\/[\w]+\/status\/\d+)'
-}
+# URL patterns for platform validation - DISABLED: All converters shutdown
+URL_PATTERNS = {}
 
 # ----------------------------------------------------
 # Logging Configuration

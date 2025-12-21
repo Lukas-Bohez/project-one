@@ -7,7 +7,6 @@ let isLoadingItems = false; // Prevent concurrent loads
 // Scan folder for SVG files
 const scanFolderForSVGs = async () => {
     try {
-        console.log('🔍 Scanning folder for SVG files:', '/svg/');
         const response = await fetch('/svg/');
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: Cannot access SVG folder`);
@@ -52,7 +51,6 @@ const scanFolderForSVGs = async () => {
                 !filename.includes('..'); // Security: no parent directory access
         });
         
-        console.log('🖼️ Found SVG files:', files);
         return files;
     } catch (error) {
         console.warn('SVG folder scanning failed:', error.message);
@@ -62,7 +60,6 @@ const scanFolderForSVGs = async () => {
             if (indexResponse.ok) {
                 const indexData = await indexResponse.json();
                 if (Array.isArray(indexData)) {
-                    console.log('📋 Using SVG index.json file list');
                     return indexData.filter(f => {
                         const lower = f.toLowerCase();
                         return lower.endsWith('.svg');
@@ -79,9 +76,7 @@ const scanFolderForSVGs = async () => {
 
 // Listen for user authentication
 document.addEventListener('userAuthenticated', (event) => {
-    console.log("🔐 User authenticated event received");
     const user = event.detail?.user;
-    console.log("User data:", user);
     
     if (!user || !user.id) {
         console.error("❌ Invalid user data received:", user);
@@ -91,19 +86,16 @@ document.addEventListener('userAuthenticated', (event) => {
     currentUser = user;
     
     // Load player items when user is authenticated
-    console.log("🔄 Loading items for authenticated user");
     loadPlayerItems();
     
     // Listen for item updates via Socket.IO
     setTimeout(() => {
         if (window.chatSystemInstance && window.chatSystemInstance.socket) {
             window.chatSystemInstance.socket.on('item_updated', (data) => {
-                console.log('🔄 Item updated:', data);
                 if (currentUser && currentUser.id === data.user_id) {
                     loadPlayerItems();
                 }
             });
-            console.log('✅ Item listener registered');
         }
     }, 2000);
 });
@@ -115,7 +107,6 @@ const startItemAutoRefresh = () => {
         clearInterval(itemUpdateInterval);
     }
     
-    console.log("⏰ Starting item auto-refresh (30 second interval)");
     
     // Set up new interval to refresh every 30 seconds
     itemUpdateInterval = setInterval(() => {
@@ -130,26 +121,22 @@ const stopItemAutoRefresh = () => {
     if (itemUpdateInterval) {
         clearInterval(itemUpdateInterval);
         itemUpdateInterval = null;
-        console.log("⏹️ Stopped item auto-refresh");
     }
 };
 
 // Function to load and display player items
 const loadPlayerItems = async () => {
     if (!currentUser || !currentUser.id) {
-        console.log("❌ No user authenticated - clearing slots");
         clearAllItemSlots();
         return;
     }
 
     if (isLoadingItems) {
-        console.log("⏳ Items already loading, skipping");
         return;
     }
 
     try {
         isLoadingItems = true;
-        console.log("📦 Loading items for user:", currentUser.id);
         
         const response = await fetch(`/api/player/${currentUser.id}/items`);
         
@@ -158,10 +145,8 @@ const loadPlayerItems = async () => {
         }
         
         const data = await response.json();
-        console.log("📊 Items API response:", data);
         
         if (data.success) {
-            console.log("✅ Items loaded successfully:", data.items);
             
             // Validate items array
             if (!Array.isArray(data.items)) {
@@ -185,7 +170,6 @@ const loadPlayerItems = async () => {
 
 // Function to display items in the 3 slots (supports stacks and total cap = 3)
 const displayPlayerItems = (items) => {
-    console.log("🎮 Displaying items:", items);
 
     // Validate input
     if (!Array.isArray(items)) {
@@ -211,7 +195,7 @@ const displayPlayerItems = (items) => {
     }
 
     // If there are fewer than 3 physical slots filled, we'll leave the remainder empty
-    console.log(`📋 Slots to show: ${slots.length}, remainingCapacity: ${remainingCapacity}`, slots);
+    
 
     // Process each visual slot (3 fixed slots in the UI)
     for (let slotIndex = 0; slotIndex < maxSlots; slotIndex++) {
@@ -239,26 +223,21 @@ const displayPlayerItems = (items) => {
                 const itemWithDisplay = { ...newItem, displayQuantity: slotData.displayQuantity };
                 try {
                     populateItemSlot(slotElement, itemWithDisplay, slotNumber);
-                    console.log(`✅ Updated slot ${slotNumber} with item`, itemWithDisplay);
                 } catch (error) {
                     console.error(`💥 Error updating slot ${slotNumber}:`, error);
                 }
             } else {
                 // Clear empty slot
                 clearItemSlot(slotElement);
-                console.log(`🧹 Cleared empty slot ${slotNumber}`);
             }
         } else {
-            console.log(`⏭️ Slot ${slotNumber} unchanged, skipping update`);
         }
     }
 
-    console.log("🏁 Finished displaying all items");
 };
 
 // Function to populate an individual item slot
 const populateItemSlot = (slotElement, item, slotNumber) => {
-    console.log(`🔧 populateItemSlot called for slot ${slotNumber}:`, item);
     
     // Validate inputs
     if (!slotElement) {
@@ -274,11 +253,6 @@ const populateItemSlot = (slotElement, item, slotNumber) => {
     const itemId = item.itemId || item.id;
     const itemName = item.name || 'Unknown Item';
     
-    console.log(`📝 Setting up slot ${slotNumber} with:`, {
-        id: itemId,
-        name: itemName,
-        rarity: item.rarity
-    });
     
     try {
         // Add item data attributes
@@ -308,7 +282,6 @@ const populateItemSlot = (slotElement, item, slotNumber) => {
         // Setup click event listener
         setupItemClickHandler(slotElement, item);
         
-        console.log(`✅ Successfully populated slot ${slotNumber} with click handler`);
         
     } catch (error) {
         console.error(`💥 Error in populateItemSlot for slot ${slotNumber}:`, error);
@@ -382,7 +355,6 @@ const setupItemIcon = (slotElement, item, slotNumber) => {
     
     // Use logoUrl if available
     if (item.logoUrl) {
-        console.log(`🖼️ Using logoUrl for slot ${slotNumber}:`, item.logoUrl);
         iconElement.src = item.logoUrl;
         
         iconElement.onerror = () => {
@@ -392,7 +364,6 @@ const setupItemIcon = (slotElement, item, slotNumber) => {
         };
         
         iconElement.onload = () => {
-            console.log(`✅ logoUrl loaded for ${itemName}`);
         };
     } else {
         // Try to find matching SVG
@@ -432,19 +403,16 @@ const setupItemQuantityDisplay = (slotElement, quantity) => {
         `;
         
         slotElement.appendChild(quantityElement);
-        console.log(`📊 Added quantity display: ${quantity}`);
     }
 };
 
 // Helper function to try setting SVG icon
 const trySetSVGIcon = (iconElement, itemName, slotNumber) => {
     if (itemName && availableSVGs.length > 0) {
-        console.log(`🔍 Looking for SVG for item: "${itemName}"`);
         
         const matchingSVG = findMatchingSVG(itemName, availableSVGs);
         
         if (matchingSVG) {
-            console.log(`✅ Found matching SVG for "${itemName}": ${matchingSVG}`);
             iconElement.src = `/svg/${matchingSVG}`;
             iconElement.style.display = 'block';
             
@@ -455,7 +423,6 @@ const trySetSVGIcon = (iconElement, itemName, slotNumber) => {
             };
             
             iconElement.onload = () => {
-                console.log(`✅ SVG loaded successfully for "${itemName}": ${matchingSVG}`);
             };
         } else {
             console.warn(`❌ No matching SVG found for item: "${itemName}"`);
@@ -463,8 +430,6 @@ const trySetSVGIcon = (iconElement, itemName, slotNumber) => {
             iconElement.style.display = 'none';
         }
     } else {
-        console.log(`ℹ️ No SVG search possible for slot ${slotNumber} (no name or no SVGs available)`);
-        iconElement.style.display = 'none';
     }
 };
 
@@ -545,7 +510,6 @@ const findMatchingSVG = (itemName, availableSVGs) => {
 // Single-click: use/activate the item
 // Double-click (two taps/clicks within SHORT_CLICK_MS): discard without activating
 const setupItemClickHandler = (slotElement, item) => {
-    console.log("🖱️ Setting up click handler for item:", item.name);
 
     // Remove any existing event listeners by cloning the element
     const newSlotElement = slotElement.cloneNode(true);
@@ -559,7 +523,6 @@ const setupItemClickHandler = (slotElement, item) => {
     const itemName = item.name || 'Unknown Item';
 
     const doUse = () => {
-        console.log(`🎯 Single-click detected for ${itemName} (${itemId}) - using item`);
         // small press animation
         newSlotElement.style.transform = 'scale(0.95)';
         setTimeout(() => { newSlotElement.style.transform = 'scale(1)'; }, 100);
@@ -567,7 +530,6 @@ const setupItemClickHandler = (slotElement, item) => {
     };
 
     const doDiscard = () => {
-        console.log(`🗑️ Double-click detected for ${itemName} (${itemId}) - discarding item without activating`);
         // discard animation
         newSlotElement.style.transform = 'scale(0.9)';
         setTimeout(() => { newSlotElement.style.transform = 'scale(1)'; }, 120);
@@ -622,11 +584,9 @@ const setupItemClickHandler = (slotElement, item) => {
 // inventory without executing its effect.
 const useItem = async (itemId, itemName, discard = false) => {
     if (!currentUser || !currentUser.id) {
-        console.log("❌ No user authenticated for item use");
         return;
     }
     
-    console.log(`🎮 ${discard ? 'Discarding' : 'Using'} item: ${itemName} (${itemId})`);
     
     try {
         const url = `/api/player/${currentUser.id}/items/${itemId}/use` + (discard ? '?discard=true' : '');
@@ -643,10 +603,8 @@ const useItem = async (itemId, itemName, discard = false) => {
         
         if (data.success) {
             if (discard) {
-                console.log(`✅ Successfully discarded item: ${itemName}`);
                 showItemFeedback(`Discarded ${itemName}`, 'info');
             } else {
-                console.log(`✅ Successfully used item: ${itemName}`);
                 showItemFeedback(`Used ${itemName}!`, 'success');
             }
             
@@ -664,7 +622,6 @@ const useItem = async (itemId, itemName, discard = false) => {
 
 // Function to clear all item slots
 const clearAllItemSlots = () => {
-    console.log("🧹 Clearing all item slots");
     for (let i = 1; i <= 3; i++) {
         const slotElement = document.getElementById(`item${i}`);
         if (slotElement) {
@@ -678,7 +635,6 @@ const clearAllItemSlots = () => {
 
 // Function to show feedback messages
 const showItemFeedback = (message, type = 'info') => {
-    console.log(`💬 Showing feedback: ${message} (${type})`);
     
     // Create a simple toast notification
     const toast = document.createElement('div');
@@ -728,28 +684,22 @@ const showItemFeedback = (message, type = 'info') => {
 
 // Function to manually refresh items (you can call this from anywhere)
 const refreshPlayerItems = () => {
-    console.log("🔄 Manual refresh requested");
     loadPlayerItems();
 };
 
 // Initialize items when page loads (in case user is already authenticated)
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🚀 DOM Content Loaded - Initializing items system");
     
     // Initialize SVG cache first
     scanFolderForSVGs().then(svgs => {
         availableSVGs = svgs;
-        console.log('✅ SVG cache initialized with', svgs.length, 'files');
         
         // Small delay to ensure other scripts have loaded
         setTimeout(() => {
-            console.log("⏰ Checking for existing authenticated user");
             if (currentUser && currentUser.id) {
-                console.log("👤 Found existing user, loading items");
                 loadPlayerItems();
                 startItemAutoRefresh();
             } else {
-                console.log("👤 No existing user found, waiting for authentication");
             }
         }, 500);
     }).catch(error => {
@@ -758,13 +708,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Still proceed with item loading even if SVG scanning fails
         setTimeout(() => {
-            console.log("⏰ Checking for existing authenticated user (no SVG cache)");
             if (currentUser && currentUser.id) {
-                console.log("👤 Found existing user, loading items");
                 loadPlayerItems();
                 startItemAutoRefresh();
             } else {
-                console.log("👤 No existing user found, waiting for authentication");
             }
         }, 500);
     });
@@ -772,7 +719,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Clean up interval when page is unloaded
 window.addEventListener('beforeunload', () => {
-    console.log("👋 Page unloading, cleaning up");
     stopItemAutoRefresh();
 });
 

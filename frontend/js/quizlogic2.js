@@ -1,4 +1,9 @@
-// quiz-timer-handler.js
+// QuizTimerHandler class removed to avoid conflict with object in quizlogic.js
+// The object version in quizlogic.js is used instead
+
+// Entire class commented out to prevent duplicate identifier error
+
+/*
 class QuizTimerHandler {
     constructor() {
         this.maxTime = 60; // Default will be overridden by server
@@ -443,3 +448,4 @@ class QuizTimerHandler {
 
 // Ensure global availability
 window.QuizTimerHandler = QuizTimerHandler;
+*/

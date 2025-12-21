@@ -47,7 +47,7 @@ class QuizLogic {
         this.socketHandler = new QuizSocketHandler(this.socket, this.questionHandler);
         
         // Rest of initialization
-        this.timerHandler = new QuizTimerHandler();
+        this.timerHandler = QuizTimerHandler; // Assign the global object directly
         this.playerHandler = new QuizPlayerHandler(this);
         
         console.log("All quiz modules initialized with proper references");

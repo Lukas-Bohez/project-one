@@ -78,20 +78,20 @@ async def handle_theme_vote(sio, sid, data):
 
 
 async def run_voting_timer(sio, session_id, total_players):
-    """Countdown timer for theme voting"""
-    timer = 30
+    """Countdown timer for theme voting (minimum 5 seconds)"""
+    timer = 20  # Start with 20 seconds
     room = f"quiz_session_{session_id}"
     
-    print(f"[TIMER] Countdown started for session {session_id}")
+    print(f"[TIMER] Countdown started for session {session_id} (20s, min 5s)")
     
     while timer > 0 and session_id in active_timers:
         await asyncio.sleep(1)
         timer -= 1
         
-        # Check if all voted (early exit)
+        # Check if all voted (early exit only after minimum 5 seconds)
         vote_count = len(theme_votes.get(session_id, {}))
-        if vote_count >= total_players:
-            print(f"[TIMER] All voted, stopping early at {timer}s")
+        if vote_count >= total_players and timer <= 15:  # 20-5=15, so wait at least 5 seconds
+            print(f"[TIMER] All voted and minimum time passed, ending early at {timer}s")
             break
         
         # Broadcast timer every 5 seconds or last 5 seconds
@@ -102,7 +102,7 @@ async def run_voting_timer(sio, session_id, total_players):
     # Timer expired or all voted
     if session_id in active_timers:
         del active_timers[session_id]
-        print(f"[TIMER] Time's up for session {session_id}")
+        print(f"[TIMER] Voting ended for session {session_id}")
         await end_voting_and_start_quiz(sio, session_id)
 
 
@@ -172,7 +172,33 @@ async def end_voting_and_start_quiz(sio, session_id):
         'type': 'question'
     }, room=room)
     
+    # Start question timer (15 seconds)
+    asyncio.create_task(run_question_timer(sio, session_id, room))
+    
     print(f"[QUIZ] Quiz started for session {session_id}")
+
+
+async def run_question_timer(sio, session_id, room):
+    """Countdown timer for question answering (15 seconds)"""
+    timer = 15
+    
+    print(f"[QUESTION TIMER] Started 15s countdown for session {session_id}")
+    
+    while timer > 0:
+        await asyncio.sleep(1)
+        timer -= 1
+        
+        # Send timer update every second
+        await sio.emit('quiz_timer', {
+            'time_remaining': timer,
+            'max_time': 15
+        }, room=room)
+        
+        print(f"[QUESTION TIMER] Session {session_id}: {timer}s remaining")
+    
+    # Timer finished
+    await sio.emit('quiz_timer_finished', {}, room=room)
+    print(f"[QUESTION TIMER] Time's up for session {session_id}")
 
 
 def emit_theme_selection_if_needed(sio, loop):

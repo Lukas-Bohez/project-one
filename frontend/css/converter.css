@@ -859,34 +859,7 @@ html, body {
     margin-left: auto;
 }
 
-/* Platform-specific colors */
-.social-button-container.youtube.active {
-    background: linear-gradient(135deg, #ff0000, #cc0000);
-}
-
-.social-button-container.tiktok.active {
-    background: linear-gradient(135deg, #000000, #ff0050);
-}
-
-.social-button-container.instagram.active {
-    background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
-}
-
-.social-button-container.reddit.active {
-    background: linear-gradient(135deg, #ff4500, #cc3300);
-}
-
-.social-button-container.facebook.active {
-    background: linear-gradient(135deg, #1877f2, #0d47a1);
-}
-
-.social-button-container.twitch.active {
-    background: linear-gradient(135deg, #9146ff, #6441a4);
-}
-
-.social-button-container.twitter.active {
-    background: linear-gradient(135deg, #1da1f2, #0d8bd9);
-}
+/* Platform-specific colors - DISABLED: All converters shutdown */
 
 /* Content Sections */
 .content-sections {

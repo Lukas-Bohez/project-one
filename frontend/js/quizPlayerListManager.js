@@ -109,8 +109,14 @@ class PlayersListManager {
             return;
         }
 
+        // Get session ID from chat system
+        const sessionId = window.chatSystemInstance?.sessionId || 
+                         window.quizAutoSession?.sessionId || 
+                         1000167; // fallback
+
         const requestData = {
-            user_id: userId
+            user_id: userId,
+            session_id: sessionId
         };
 
         console.log("Requesting player data:", requestData);

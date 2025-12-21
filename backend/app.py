@@ -54,8 +54,7 @@ async def lifespan(app: FastAPI):
     
     try:
         # Shutdown
-        from routes.video_routes import VIDEO_CONVERTER_AVAILABLE, video_process_pool, long_video_process_pool
-        await lifespan_shutdown(VIDEO_CONVERTER_AVAILABLE, video_process_pool, long_video_process_pool)
+        await lifespan_shutdown()
     except Exception as e:
         print(f"Error in shutdown: {e}")
 
@@ -70,7 +69,6 @@ app = FastAPI(
 )
 
 # Register route modules
-from routes.video_routes import router as video_router
 from routes.quiz_routes import router as quiz_router
 from routes.article_routes import router as article_router
 from routes.user_routes import router as user_router
@@ -79,7 +77,6 @@ from routes.misc_routes import router as misc_router
 from routes.session_routes import router as session_router
 from routes.theme_selection_routes import router as theme_selection_router
 
-app.include_router(video_router)
 app.include_router(quiz_router)
 app.include_router(article_router)
 app.include_router(user_router)

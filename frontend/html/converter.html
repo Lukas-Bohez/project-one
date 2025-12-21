@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <title>Convert The Spire YouTube Playlist Converter (Free)</title>
-    <meta name="description" content="Convert full YouTube playlists to MP3 or MP4 with metadata, album art and lyrics. Built for reliable playlist downloads and client-side ZIP chunking. Other platforms coming soon.">
+    <title>Convert The Spire - All Converters Shutdown</title>
+    <meta name="description" content="All social media converters (YouTube, TikTok, Instagram, etc.) have been shutdown due to platform API restrictions. Support development to bring them back!">
     <meta name="keywords" content="youtube to mp3, youtube downloader, convert youtube to mp4, free video converter, tiktok downloader, instagram video download, social media converter, mp3 converter, video to audio, twitter video download, facebook video downloader, reddit video converter, twitch clip downloader, social media to mp3, online video converter, no registration video downloader, high quality mp3, 320kbps mp3, 1080p mp4, free online converter, mp3 with metadata, album art, cover art">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <meta name="author" content="Oroka Conner">
@@ -251,39 +251,39 @@
 
 
     <main class="o-container">
-        <!-- Welcome Message -->
+        <!-- Shutdown Message -->
         <section class="c-welcome-message">
-                <h1>Full YouTube Playlist Converter MP3 & MP4 with Metadata</h1>
-            <p>Convert entire <strong>YouTube playlists</strong> to high-quality MP3 (up to 320kbps) or MP4 (up to 1080p). Includes metadata, album art, and lyrics when available. Client-side packaging minimizes server load and supports large playlists with 1GB per-part ZIP splitting.</p>
+            <h1>🎵 Convert The Spire - All Converters Shutdown</h1>
+            <p><strong>All social media converters have been permanently shutdown</strong> due to YouTube, TikTok, Instagram, and other platforms' API restrictions and changes. We apologize for any inconvenience this may cause.</p>
             <div class="c-note">
-                <span>🎵 <strong>Convert The Spire by Oroka Conner</strong> - The fastest and safest way to download your favorite videos and music with complete metadata. <a href="#how-to-use" target="_self"><strong>Learn how to use</strong></a></span>
+                <span>❌ <strong>Platform Restrictions</strong> - All major social media platforms have implemented stricter API controls that make third-party converters impossible to maintain.</span>
             </div>
         </section>
 
         <!-- Support Section -->
         <section class="support-section support-section--inline">
-            <h3 class="support-cta-title">Support Convert The Spire</h3>
-            <p class="muted-small">Enjoying the free converter? Consider supporting the development!</p>
+            <h3 class="support-cta-title">Help Bring Convert The Spire Back</h3>
+            <p class="muted-small">Your support can help us develop new solutions and bring the converters back online!</p>
             <!-- Improved donation block: tiered quick-donate, main CTA, and optional progress -->
             <div class="support-inner">
-                <h3 class="support-cta-title">Help Keep Conversions Fast</h3>
+                <h3 class="support-cta-title">Support Development & Bring Back Converters</h3>
                 <p class="muted-small">
-                    Small donations pay for server time, bandwidth, and continued development. </br> Even a few dollars help keep queue times short. Thank you!
+                    Donations help fund research into new conversion methods, server costs, and development of alternative solutions. </br> Your support keeps the dream of free media conversion alive!
                 </p>
 
                 <div class="flex-center-wrap">
-                    <a href="https://www.buymeacoffee.com/OrokaConner" target="_blank" rel="noopener noreferrer" class="c-btn accent-blue" aria-label="Donate (other amount)" onclick="window.dataLayer?.push?.({event:'donation_click',amount:'other'});">⭐ Support me (Buy Me A Coffee) ☕</a>
+                    <a href="https://www.buymeacoffee.com/OrokaConner" target="_blank" rel="noopener noreferrer" class="c-btn accent-blue" aria-label="Donate to bring back converters" onclick="window.dataLayer?.push?.({event:'donation_click',amount:'other'});">⭐ Support Development (Buy Me A Coffee) ☕</a>
                 </div>
 
                 <div class="donation-block">
-                                        <label for="donation-progress" class="label-compact"><strong>💖 Funding Goal</strong></label>
-                                        <p>Support for 2+ hour videos, enhanced downloads, and faster conversions</p>
-                                        <progress id="donation-progress" value="320" max="1000"></progress>
+                    <label for="donation-progress" class="label-compact"><strong>🎯 Development Goal</strong></label>
+                    <p>Support for researching new conversion technologies and bringing back full functionality</p>
+                    <progress id="donation-progress" value="320" max="1000"></progress>
                 </div>
                 <small class="small-muted">Secure payments via BuyMeACoffee. No personal data stored by this site.</small>
             </div>
 
-            <!-- Support chat link (re-linked back into converter) -->
+            <!-- Support chat link -->
             <div class="flex-center-wrap mt-20">
                 <a href="../html/support.html" target="_blank" rel="noopener noreferrer" class="c-btn bw-btn btn-no-underline" aria-label="Contact Support">💬 Contact Support</a>
             </div>
@@ -292,272 +292,10 @@
             <div class="mt-20">
                 <a href="../idleGame/idlegame.html" target="_blank" class="idle-game-link">
                     <span class="idle-game-icon">🎮</span>
-                    <span class="idle-game-text">Or play Industrial Empire while you wait for conversions!</span>
+                    <span class="idle-game-text">Or play Industrial Empire while we work on bringing converters back!</span>
                 </a>
             </div>
-            
-            <!-- Queue Status Display (Always Visible) -->
-            <div id="queue-status-display" class="queue-status-display-inline hidden">
-                <div id="queue-status-text" class="queue-status-text"></div>
-            </div>
-
-            <!-- Progress Display (Separate from Queue Status) -->
-            <div id="progress-display" class="progress-display-inline hidden">
-                <div id="progress-text" class="progress-text"></div>
-            </div>
-            
-            <!-- IndexedDB Cache Manager -->
-            <div id="cache-manager" class="cache-manager-inline">
-                <div class="flex-column-gap">
-                    <h4 class="cache-title">💾 Download Cache</h4>
-                    <span id="cache-size-display" class="cache-size-display">0 MB used</span>
-                    <div class="flex-wrap-gap">
-                        <button id="download-all-cache-btn" class="bw-btn cache-btn-styled">⬇️ Download All</button>
-                        <button id="clear-all-cache-btn" class="bw-btn cache-btn-styled small">Clear All</button>
-                        <button id="refresh-cache-btn" class="bw-btn cache-btn-styled small">🔄 Refresh</button>
-                    </div>
-                </div>
-                <div id="cache-items-container" class="cache-items-container">
-                    <p class="cache-empty-text">No cached downloads yet</p>
-                </div>
-            </div>
         </section>
-
-        <!-- Converter Section -->
-        <section class="converter-section" id="converter-section">
-            <div id="form-container" class="converter-box">
-                <div id="converter-form" class="converter-input-box">
-                    <div class="converter-input">
-                        <div class="input-text">
-                            <span class="social-input social-input-youtube show">Enter YouTube Video or Shorts URL</span>
-                            <span class="social-input social-input-tiktok">Enter TikTok URL</span>
-                            <span class="social-input social-input-reddit">Enter Reddit Video URL</span>
-                            <span class="social-input social-input-instagram">Enter Instagram Reel URL</span>
-                            <span class="social-input social-input-facebook">Enter Facebook Video URL</span>
-                            <span class="social-input social-input-twitch">Enter Twitch Clip URL</span>
-                            <span class="social-input social-input-twitter">Enter Twitter/X Video URL</span>
-                        </div>
-                        <input type="text" id="video-url" class="input-field-url" placeholder="https://www.youtube.com/watch?v=example" required>
-                    </div>
-                    
-                    <div class="converter-format-button">
-                        <!-- Video Quality Select -->
-                        <div class="quality-video-select-box select-box-hidden">
-                            <div class="input-text hidden" id="quality-video-input-text">
-                                <span>Video Quality</span>
-                            </div>
-                            <div id="quality-video-select-display" class="select-display">
-                                <span id="quality-video-select-display-value">720p</span>
-                                <i class="fas fa-chevron-down dropdown-icon"></i>
-                            </div>
-                            <div id="quality-video-select-list" class="select-list select-list-hidden">
-                                <div class="quality-video-select-options" data-quality="144">144p</div>
-                                <div class="quality-video-select-options" data-quality="360">360p</div>
-                                <div class="quality-video-select-options" data-quality="480">480p</div>
-                                <div class="quality-video-select-options active" data-quality="720">720p</div>
-                                <div class="quality-video-select-options" data-quality="1080">1080p</div>
-                            </div>
-                        </div>
-
-                        <!-- Audio Quality Select -->
-                        <div class="quality-audio-select-box">
-                            <div class="input-text" id="quality-audio-input-text">
-                                <span>Audio Bitrate</span>
-                            </div>
-                            <div id="quality-audio-select-display" class="select-display">
-                                <span id="quality-audio-select-display-value">128kb/s</span>
-                                <i class="fas fa-chevron-down dropdown-icon"></i>
-                            </div>
-                            <div id="quality-audio-select-list" class="select-list select-list-hidden">
-                                <div class="quality-audio-select-options" data-quality="96">96kb/s</div>
-                                <div class="quality-audio-select-options active" data-quality="128">128kb/s</div>
-                                <div class="quality-audio-select-options" data-quality="256">256kb/s</div>
-                                <div class="quality-audio-select-options" data-quality="320">320kb/s</div>
-                            </div>
-                        </div>
-
-                        <!-- Format Select -->
-                        <div class="format-select-box">
-                            <div class="input-text">
-                                <span>Output Format</span>
-                            </div>
-                            <div id="format-select-display" class="select-display">
-                                <span id="format-select-display-value">MP3</span>
-                                <i class="fas fa-chevron-down dropdown-icon"></i>
-                            </div>
-                            <div id="format-select-list" class="select-list select-list-hidden">
-                                <div class="format-select-options active" data-format="1">MP3 (Audio)</div>
-                                <div class="format-select-options" data-format="0">MP4 (Video)</div>
-                            </div>
-                        </div>
-
-                        <!-- Convert Button -->
-                        <button class="converter-button-container c-btn c-btn--primary accent-blue" id="convert-button">
-                            <i class="fas fa-exchange-alt"></i>
-                            <span>Convert & Download</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-                    
-    
-
-            <!-- Loading Spinner -->
-            <div id="spinner" class="spinner-container hidden">
-                <div class="animation-box">
-                    <div class="c-loading-spinner"></div>
-                    <span id="spinner-text">Processing...</span>
-                </div>
-            </div>
-
-            <!-- Video Info/Results -->
-            <div class="video-info hidden" id="video-info">
-                <h2 id="video-title">Your download is ready!</h2>
-                <p id="secondary-message" class="hidden">Note: Videos longer than 3 hours may have limited availability.</p>
-                <div class="button-row">
-                    <button class="c-btn c-btn--tertiary bw-btn" id="download-btn">
-                        <i class="fas fa-download"></i>
-                        Download File
-                    </button>
-                    <button class="c-btn c-btn--secondary bw-btn" id="convert-again-btn" onclick="handleConvertAgain()">
-                        <i class="fas fa-exchange-alt"></i>
-                        Convert Another
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- Social Platforms -->
-        <section class="social-platforms">
-            <h2>Supported Social Media Platforms for Video Download</h2>
-            <div class="social-buttons-grid">
-                <button class="social-button-container youtube active" data-platform="youtube">
-                    <i class="fab fa-youtube"></i>
-                    <span>YouTube Videos & Shorts</span>
-                </button>
-                <button class="social-button-container tiktok coming-soon" data-platform="tiktok" disabled title="Coming soon">
-                    <i class="fab fa-tiktok"></i>
-                    <span>TikTok (Coming soon)</span>
-                </button>
-                <button class="social-button-container reddit coming-soon" data-platform="reddit" disabled title="Coming soon">
-                    <i class="fab fa-reddit-alien"></i>
-                    <span>Reddit (Coming soon)</span>
-                </button>
-                <button class="social-button-container instagram coming-soon" data-platform="instagram" disabled title="Coming soon">
-                    <i class="fab fa-instagram"></i>
-                    <span>Instagram (Coming soon)</span>
-                </button>
-                <button class="social-button-container facebook coming-soon" data-platform="facebook" disabled title="Coming soon">
-                    <i class="fab fa-facebook"></i>
-                    <span>Facebook (Coming soon)</span>
-                </button>
-                <button class="social-button-container twitch coming-soon" data-platform="twitch" disabled title="Coming soon">
-                    <i class="fab fa-twitch"></i>
-                    <span>Twitch (Coming soon)</span>
-                </button>
-                <button class="social-button-container twitter coming-soon" data-platform="twitter" disabled title="Coming soon">
-                    <i class="fab fa-twitter"></i>
-                    <span>Twitter/X (Coming soon)</span>
-                </button>
-            </div>
-        </section>
-
-        <!-- Information Sections -->
-        <div class="content-sections">
-            <!-- YouTube Section -->
-            <section class="content-second content-second-youtube content-second--visible" id="how-to-use">
-                <h2>Best Free YouTube to MP3 Converter Online</h2>
-                <p><strong>Convert YouTube videos to MP3 or MP4</strong> and download them with Convert The Spire. Our YouTube converter is the <em>fastest and safest</em> solution that supports high-quality audio up to <strong>320kbps</strong> and video up to <strong>1080p HD</strong>.</p>
-                <p>Convert The Spire is the ultimate <strong>YouTube to MP3 converter</strong> that allows you to download YouTube videos and convert them into audio or video format. Perfect for listening to music, podcasts, and educational content offline on any device. Our YouTube downloader works with regular videos, YouTube Shorts, and live streams.</p>
-
-                <!-- Prominent owner-only disclaimer -->
-                <div class="owner-notice">
-                    <strong>🚨 Important Owner / Permission Notice</strong>
-                    <p>Convert The Spire is intended only for converting videos that you personally own or for which you have explicit permission from the copyright holder. By using this service you confirm that you own the rights to the content or have been granted permission to convert and download it.</p>
-                    <p>Do not use this service to download copyrighted content without authorization. For details, see our <a href="converter-terms.html">Terms of Service</a> and <a href="converter-privacy.html">Privacy Policy</a>.</p>
-                </div>
-
-                <h3>How to Convert YouTube Videos to MP3/MP4 - Step by Step</h3>
-                <ol>
-                    <li>Go to YouTube and find the video you want to convert and download.</li>
-                    <li>Copy the video URL from the browser bar or YouTube's share button.</li>
-                    <li>Paste the URL into our converter and choose your preferred format (MP3 or MP4).</li>
-                    <li>Select your desired quality settings for the best experience.</li>
-                    <li>Click "Convert & Download" to start the conversion process.</li>
-                    <li>Download the converted file when the process is complete.</li>
-                </ol>
-
-                <h3>Why Convert The Spire is the Best YouTube to MP3 Converter</h3>
-                <ul>
-                    <li>🛡️ Now <strong>100% ad-free</strong> for a better user experience!</li>
-                    <li>⚡ <strong>Lightning Fast Conversion:</strong> Convert YouTube to MP3 in seconds</li>
-                    <li>🔒 <strong>Safe & Secure:</strong> No malware, viruses, or data collection</li>
-                    <li>🎵 <strong>High Quality Downloads:</strong> Up to 320kbps MP3 audio and 1080p MP4 video</li>
-                    <li>📱 <strong>Mobile & Desktop Compatible:</strong> Works on iPhone, Android, PC, Mac</li>
-                    <li>🆓 <strong>Completely Free Forever:</strong> No registration, limits, or hidden fees</li>
-                    <li>� <strong>Multiple Formats:</strong> Download as MP3, MP4, or other formats</li>
-                    <li>⏱️ <strong>No Time Limits:</strong> Convert videos up to 3 hours long</li>
-                </ul>
-                
-                <h3>Frequently Asked Questions about YouTube to MP3 Conversion</h3>
-                <div class="faq-section">
-                    <h4>Is it legal to convert YouTube videos to MP3?</h4>
-                    <p>Converting YouTube videos for personal use is generally acceptable, but always respect copyright laws and content creator rights.</p>
-                    
-                    <h4>What's the maximum quality for YouTube to MP3 conversion?</h4>
-                    <p>Our converter supports up to 320kbps MP3 quality, which is the highest standard for MP3 audio files.</p>
-                    
-                    <h4>Do I need to install software to convert YouTube to MP3?</h4>
-                    <p>No! Convert The Spire is a web-based converter that works directly in your browser without any downloads or installations.</p>
-                    
-                    <h4>Can I convert YouTube Shorts to MP3?</h4>
-                    <p>Yes! Our converter supports regular YouTube videos, YouTube Shorts, and YouTube Music.</p>
-                </div>
-            </section>
-
-            <!-- TikTok Section -->
-            <section class="content-second content-second-tiktok content-second--hidden">
-                <h2>Free TikTok Video Downloader - Download TikTok Videos Without Watermark</h2>
-                <p><strong>Download TikTok videos</strong> easily with Convert The Spire, the best free TikTok downloader. Simply copy any TikTok video URL, paste it into our converter, and download high-quality MP4 videos instantly. Our TikTok downloader removes watermarks and works with all TikTok content including trending videos and music clips.</p>
-                <p>Perfect for content creators, social media managers, and anyone who wants to save TikTok videos for offline viewing or repurposing.</p>
-            </section>
-
-            <!-- Reddit Section -->
-            <section class="content-second content-second-reddit content-second--hidden">
-                <h2>Reddit Video Downloader - Save Reddit Videos and GIFs</h2>
-                <p><strong>Download Reddit videos and GIFs</strong> with Convert The Spire's free Reddit downloader. Save funny memes, educational content, and viral videos from any Reddit post. Our tool works with v.redd.it links and supports all Reddit video formats.</p>
-                <p>Great for archiving favorite Reddit content, creating compilations, or sharing Reddit videos outside the platform.</p>
-            </section>
-
-            <!-- Instagram Section -->
-            <section class="content-second content-second-instagram content-second--hidden">
-                <h2>Instagram Reel Downloader - Download Instagram Videos and Reels</h2>
-                <p><strong>Download Instagram Reels and videos</strong> with Convert The Spire's Instagram downloader. Save your favorite Reels, IGTV videos, and Instagram stories to watch offline. Our Instagram video downloader maintains original quality and works with both public and private content you have access to.</p>
-                <p>Ideal for content creators looking to repurpose content or users who want to save memorable Instagram videos.</p>
-            </section>
-
-            <!-- Facebook Section -->
-            <section class="content-second content-second-facebook content-second--hidden">
-                <h2>Facebook Video Downloader - Save Facebook Videos in HD</h2>
-                <p><strong>Download Facebook videos</strong> in HD quality with Convert The Spire's free Facebook downloader. Save videos from Facebook posts, pages, and groups. Our tool supports both public Facebook videos and Facebook Watch content.</p>
-                <p>Perfect for saving educational content, tutorials, entertainment videos, and memorable moments shared on Facebook.</p>
-            </section>
-
-            <!-- Twitch Section -->
-            <section class="content-second content-second-twitch content-second--hidden">
-                <h2>Twitch Clip Downloader - Download Twitch Clips and Highlights</h2>
-                <p><strong>Download Twitch clips</strong> and gaming highlights with Convert The Spire's Twitch downloader. Save epic gaming moments, funny fails, and amazing plays from your favorite streamers. Our Twitch clip downloader works with all Twitch content including clips and VOD highlights.</p>
-                <p>Essential for gamers, content creators, and esports fans who want to create montages or save memorable gaming moments.</p>
-            </section>
-
-            <!-- Twitter Section -->
-            <section class="content-second content-second-twitter content-second--hidden">
-                <h2>Twitter Video Downloader - Download Twitter/X Videos and GIFs</h2>
-                <p><strong>Download Twitter videos</strong> and GIFs with Convert The Spire's free Twitter downloader. Save viral videos, news clips, memes, and trending content from Twitter (now X). Our tool works with native Twitter videos and supports all video formats shared on the platform.</p>
-                <p>Great for journalists, social media managers, and users who want to archive important Twitter video content.</p>
-            </section>
-        </div>
     </main>
 
     <script>
@@ -602,45 +340,12 @@
         })();
     </script>
 
-    <!-- Info Modal -->
-    <div id="infoModal" class="c-modal">
+    <!-- Info Modal - REMOVED: Converters shutdown -->
+    <div id="infoModal" class="c-modal hidden">
         <div class="c-modal__content">
             <span class="c-modal__close" onclick="closeModal()">&times;</span>
-            <h2>Convert The Spire - Media Converter</h2>
-            
-            <div class="c-info-section">
-                <h3 class="c-info-section__title">Features</h3>
-                <ul class="c-items-list">
-                    <li class="c-items-list__item">Convert videos from multiple social media platforms</li>
-                    <li class="c-items-list__item">Download as MP3 (audio) or MP4 (video)</li>
-                    <li class="c-items-list__item">Multiple quality options available</li>
-                    <li class="c-items-list__item">No registration required</li>
-                </ul>
-            </div>
-
-            <div class="c-info-section">
-                <h3 class="c-info-section__title">Supported Platforms</h3>
-                <ul class="c-items-list">
-                    <li class="c-items-list__item">YouTube (Videos & Shorts)</li>
-                    <li class="c-items-list__item">TikTok</li>
-                    <li class="c-items-list__item">Instagram Reels</li>
-                    <li class="c-items-list__item">Reddit Videos</li>
-                    <li class="c-items-list__item">Facebook Videos</li>
-                    <li class="c-items-list__item">Twitch Clips</li>
-                    <li class="c-items-list__item">Twitter/X Videos</li>
-                </ul>
-            </div>
-
-            <div class="c-info-section">
-                <h3 class="c-info-section__title">How to Use</h3>
-                <ul class="c-items-list">
-                    <li class="c-items-list__item">Select your desired platform</li>
-                    <li class="c-items-list__item">Paste the video URL</li>
-                    <li class="c-items-list__item">Choose format and quality</li>
-                    <li class="c-items-list__item">Click Convert & Download</li>
-                    <li class="c-items-list__item">Enjoy your downloaded content!</li>
-                </ul>
-            </div>
+            <h2>Convert The Spire - All Converters Shutdown</h2>
+            <p>All social media converters have been shutdown due to platform API restrictions. Your support helps us research new solutions!</p>
         </div>
     </div>
 
@@ -650,9 +355,8 @@
             <div class="c-footer__section">
                 <h3 class="c-footer__title">Convert The Spire</h3>
                 <p class="c-footer__description">
-                    The ultimate free video converter for YouTube, TikTok, Instagram, and more. 
-                    Convert videos to MP3/MP4 with full metadata, album art, and artist info. 
-                    No registration required, with high quality results.
+                    All social media converters have been shutdown due to platform API restrictions.
+                    Your support helps us research new solutions to bring them back!
                 </p>
                 <p class="c-footer__description footer-description-strong">
                     <strong>© 2025 Created, Owned & Operated by Oroka Conner</strong><br>
@@ -663,37 +367,32 @@
             </div>
             
             <div class="c-footer__section">
-                <h4 class="c-footer__subtitle">Supported Platforms</h4>
+                <h4 class="c-footer__subtitle">Service Status</h4>
                 <ul class="c-footer__list">
-                    <li><a href="#youtube" class="c-footer__link">YouTube to MP3 with Metadata</a></li>
-                    <li><a href="#tiktok" class="c-footer__link">TikTok Downloader</a></li>
-                    <li><a href="#instagram" class="c-footer__link">Instagram Video Download</a></li>
-                    <li><a href="#reddit" class="c-footer__link">Reddit Video Downloader</a></li>
-                    <li><a href="#facebook" class="c-footer__link">Facebook Video Download</a></li>
-                    <li><a href="#twitter" class="c-footer__link">Twitter Video Downloader</a></li>
+                    <li>❌ All Converters Shutdown</li>
+                    <li>📱 Due to Platform Restrictions</li>
+                    <li>💰 Support Development</li>
+                    <li>🎮 Play Industrial Empire</li>
                 </ul>
             </div>
             
             <div class="c-footer__section">
-                <h4 class="c-footer__subtitle">Features</h4>
+                <h4 class="c-footer__subtitle">Future Plans</h4>
                 <ul class="c-footer__list">
-                    <li>High Quality MP3 (320kbps)</li>
-                    <li>HD Video Downloads (1080p)</li>
-                    <li>No Registration Required</li>
-                    <li>100% Free Forever</li>
-                    <li>Mobile & Desktop Compatible</li>
+                    <li>🔄 Researching New Methods</li>
+                    <li>💡 Alternative Solutions</li>
+                    <li>🚀 Community Support</li>
+                    <li>⏳ Stay Tuned for Updates</li>
                 </ul>
             </div>
             
             <div class="c-footer__section">
-                <h4 class="c-footer__subtitle">Legal & Support</h4>
+                <h4 class="c-footer__subtitle">Support & Contact</h4>
                 <ul class="c-footer__list">
-                    <li><a href="converter-privacy.html" class="c-footer__link">Privacy Policy</a></li>
-                    <li><a href="converter-terms.html" class="c-footer__link">Terms of Service</a></li>
-                    <li><a href="converter-about.html" class="c-footer__link">About Us</a></li>
-                    <li><a href="../html/support.html" target="_blank" rel="noopener noreferrer" class="c-footer__link">Support Chat</a></li>
-                    <li><a href="converter-about.html#faq" class="c-footer__link">FAQ</a></li>
-                    <li><a href="../sitemap.xml" class="c-footer__link">Sitemap</a></li>
+                    <li><a href="../html/support.html" target="_blank" rel="noopener noreferrer" class="c-footer__link">💬 Support Chat</a></li>
+                    <li><a href="https://www.buymeacoffee.com/OrokaConner" target="_blank" rel="noopener noreferrer" class="c-footer__link">☕ Donate to Development</a></li>
+                    <li><a href="../idleGame/idlegame.html" target="_blank" rel="noopener noreferrer" class="c-footer__link">🎮 Industrial Empire Game</a></li>
+                    <li><a href="../index.html" class="c-footer__link">🏠 Back to Quiz The Spire</a></li>
                 </ul>
             </div>
         </div>
@@ -702,26 +401,23 @@
             <div class="c-footer__container">
                 <div class="c-footer__disclaimer">
                     <p><small>
-                        Convert The Spire is a free service for personal use. Users are responsible for ensuring they have the right to download content. 
-                        We respect copyright and intellectual property rights.
+                        Convert The Spire converters have been shutdown due to platform API restrictions. 
+                        Your support helps us research new solutions to bring them back. Thank you!
                     </small></p>
                 </div>
             </div>
         </div>
         
-        <!-- SEO Footer Links for Better Crawling -->
+        <!-- Updated Footer Links -->
         <div class="c-footer__seo-links inline">
-            <a href="#" class="c-footer__seo-link">YouTube MP3 Converter</a> | 
-            <a href="#" class="c-footer__seo-link">YouTube to MP4</a> | 
-            <a href="#" class="c-footer__seo-link">TikTok Video Downloader</a> | 
-            <a href="#" class="c-footer__seo-link">Instagram Downloader</a> | 
-            <a href="#" class="c-footer__seo-link">Free Video Converter</a> | 
-            <a href="#" class="c-footer__seo-link">Social Media Downloader</a>
+            <a href="../idleGame/idlegame.html" class="c-footer__seo-link">🎮 Industrial Empire Game</a> |
+            <a href="https://www.buymeacoffee.com/OrokaConner" class="c-footer__seo-link">☕ Support Development</a> |
+            <a href="../html/support.html" class="c-footer__seo-link">💬 Contact Support</a> |
+            <a href="../index.html" class="c-footer__seo-link">🏠 Quiz The Spire</a>
         </div>
     </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="../js/converter.js"></script>
     <script src="../js/lofi.js"></script>
     <script src="../js/themeManager.js"></script>
     <script src="../js/donationProgress.js"></script>

@@ -14,14 +14,14 @@ class QuizQuestionHandler {
                 console.log("=== ANSWER RESPONSE FROM SERVER ===");
                 console.log("Response data:", JSON.stringify(responseData, null, 2));
                 
-                if (responseData.success) {
+                if (responseData.success !== false && (responseData.is_correct !== undefined || responseData.points !== undefined)) {
                     console.log("✅ Answer submitted successfully!");
                     console.log("Is correct:", responseData.is_correct);
-                    console.log("Points earned:", responseData.points_earned);
+                    console.log("Points earned:", responseData.points);
                 } else {
                     console.error("❌ Answer submission failed:", responseData.error);
                     if (this.handleErrorDisplay) {
-                        this.handleErrorDisplay(responseData.error);
+                        this.handleErrorDisplay(responseData.error || "Unknown error");
                     }
                 }
             });
@@ -105,6 +105,9 @@ class QuizQuestionHandler {
             console.warn('[DEBUG] Failed to read questionData diagnostic fields:', e);
         }
         this.currentQuestion = questionData;
+
+        // Disable answering initially to prevent too fast answers
+        this.answeringEnabled = false;
 
         // Clear the question load timeout since we got a question
         if (this.questionLoadTimeout) {
@@ -261,7 +264,7 @@ clearExplanations() {
             if (questionData.type === 'theme_selection') {
                 questionType = questionData.question || 'Select a theme for the next round:';
             } else {
-                questionType = questionData.question || 'No question text provided.';
+                questionType = questionData.question?.question_text || 'No question text provided.';
             }
             questionText.textContent = questionType;
         }
@@ -509,6 +512,12 @@ bindAnswerEvents() {
     });
 
     console.log("Bound events to", answerBoxes.length, "answer boxes (active handler: true )");
+
+    // Enable answering after 5 seconds to prevent too fast answers
+    setTimeout(() => {
+        this.answeringEnabled = true;
+        console.log("Answering now enabled");
+    }, 5000);
 }
 
 handleAnswerClick(boxElement) {
@@ -520,6 +529,12 @@ handleAnswerClick(boxElement) {
     console.log("Current question:", this.currentQuestion);
     console.log("Current user:", this.currentUser);
     console.log("Socket connected:", this.socket && this.socket.connected);
+
+    // Check if answering is enabled (allow theme selection immediately)
+    if (!this.answeringEnabled && this.currentQuestion?.type !== 'theme_selection') {
+        console.log("Answering not enabled yet - too fast!");
+        return;
+    }
 
     // Check if question is still loading - if so, reload the page
     const questionText = document.getElementById('questionText');
@@ -661,7 +676,7 @@ handleAnswerClick(boxElement) {
     } else {
         const emissionData = {
             userId: userId,
-            questionId: this.currentQuestion.id,
+            questionId: this.currentQuestion.question.id,
             answerIndex: answerIndex, // Keep this if your backend expects it
             answerText: selectedOption.answer_text || selectedOption.text || selectedOption.name || selectedOption,
             isCorrect: boxElement.dataset.isCorrect === "1",

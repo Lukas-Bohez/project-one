@@ -7,11 +7,22 @@ import socketio
 import asyncio
 from typing import Dict, Any
 from datetime import datetime
+import logging
 
 from database.datarepository import (
     QuizSessionRepository, ChatLogRepository,
     SessionPlayerRepository, PlayerAnswerRepository
 )
+
+# Get the existing quiz logger
+logger = logging.getLogger('quiz_debug')
+
+# Test log to verify logging is working
+logger.info("Socket.IO handlers module loaded")
+
+# This will be set by app.py
+sio = None
+main_asyncio_loop = None
 
 # This will be set by app.py
 sio = None
@@ -77,18 +88,92 @@ def register_handlers():
     
     @sio.on('request_user_data')
     async def handle_user_data_request(sid, data):
-        """Handle user data requests"""
+        """Handle user data requests - send session players data"""
+        logger.info(f"[USER_DATA_REQUEST] Received from {sid}: {data}")
         try:
+            from database.datarepository import SessionPlayerRepository
+            
             user_id = data.get('user_id')
+            session_id = data.get('session_id')
+            
+            logger.info(f"[USER_DATA_REQUEST] user_id: {user_id}, session_id: {session_id}")
+            
             if not user_id:
                 await sio.emit('error', {'message': 'User ID required'}, room=sid)
                 return
             
-            # Fetch user data (implement based on your needs)
-            user_data = {'user_id': user_id, 'status': 'active'}
-            await sio.emit('user_data', user_data, room=sid)
+            # If session_id not provided, try to find from active rooms
+            if not session_id:
+                for room_name in sio.rooms(sid):
+                    if room_name.startswith('quiz_session_'):
+                        session_id = int(room_name.replace('quiz_session_', ''))
+                        break
+            
+            logger.info(f"[USER_DATA_REQUEST] final session_id: {session_id}")
+            
+            if not session_id:
+                await sio.emit('error', {'message': 'Session ID required'}, room=sid)
+                return
+            
+            # Get all players in the session
+            players = SessionPlayerRepository.get_session_players(session_id) or []
+            logger.info(f"[USER_DATA_REQUEST] existing players: {players}")
+            
+            # If no players in session, add the requesting user
+            if not players and user_id:
+                logger.info(f"[USER_DATA_REQUEST] Adding user {user_id} to session {session_id}")
+                insert_result = SessionPlayerRepository.add_player_to_session(session_id, user_id)
+                logger.info(f"[USER_DATA_REQUEST] Insert result: {insert_result}")
+                
+                if insert_result:
+                    # Insert succeeded, get players again
+                    players = SessionPlayerRepository.get_session_players(session_id) or []
+                    logger.info(f"[USER_DATA_REQUEST] players after successful add: {players}")
+                else:
+                    logger.error(f"[USER_DATA_REQUEST] Failed to add user {user_id} to session {session_id}")
+                    # Try to get user info from database for fallback
+                    from database.datarepository import UserRepository
+                    user_info = UserRepository.get_user_by_id(user_id)
+                    if user_info:
+                        user_name = f"{user_info.get('first_name', '')} {user_info.get('last_name', '')}".strip()
+                        if not user_name:
+                            user_name = user_info.get('username', f'Player {user_id}')
+                    else:
+                        user_name = f'Player {user_id}'
+                    
+                    players = [{
+                        'userId': user_id,
+                        'userName': user_name,
+                        'totalScore': 0
+                    }]
+                    logger.info(f"[USER_DATA_REQUEST] Using fallback player data with real name: {players}")
+            
+            players_data = []
+            for player in players:
+                player_dict = {
+                    'id': player.get('userId') or player.get('id'),
+                    'name': player.get('userName') or f'Player {player.get("userId")}',
+                    'score': player.get('totalScore', 0),
+                    'is_online': True
+                }
+                players_data.append(player_dict)
+                logger.debug(f"[USER_DATA_REQUEST] Added player: {player_dict}")
+            
+            logger.info(f"[USER_DATA_REQUEST] sending players_data: {players_data}")
+            
+            # Broadcast to all players in the session room
+            room = f"quiz_session_{session_id}"
+            logger.info(f"[USER_DATA_REQUEST] Emitting to room {room}, sid {sid}")
+            await sio.emit('all_users_data_updated', {
+                'players': players_data,
+                'session_id': session_id
+            }, room=sid)
+            logger.info(f"[USER_DATA_REQUEST] Emitted to {sid}")
         
         except Exception as e:
+            print(f"[ERROR] User data request failed: {e}")
+            import traceback
+            traceback.print_exc()
             await sio.emit('error', {'message': str(e)}, room=sid)
     
     
@@ -230,12 +315,24 @@ def register_handlers():
             
             # Send response to the player who answered
             await sio.emit('answer_response', {
+                'success': True,
                 'is_correct': is_correct,
                 'points': points,
                 'correct_answer': answer.get('answer_text') if not is_correct and answer else None
             }, room=sid)
             
             print(f"[ANSWER] Result: {'✅ Correct' if is_correct else '❌ Wrong'}, Points: {points}")
+            
+            # Check if quiz should end early due to low collective points
+            total_score = PlayerAnswerRepository.get_total_score_for_session(session_id)
+            # Count distinct questions asked in this session
+            questions_asked = PlayerAnswerRepository.get_distinct_question_count_for_session(session_id)
+            
+            # End quiz if total score is below 500 points after 3+ questions
+            if questions_asked >= 3 and total_score < 500:
+                print(f"[QUIZ END] Low collective score ({total_score}) after {questions_asked} questions - ending quiz")
+                await end_quiz_session(session_id, "Low collective performance - quiz ended early")
+                return
             
             # Broadcast to room for leaderboard updates
             room = f"quiz_session_{session_id}"
@@ -347,6 +444,29 @@ def register_handlers():
         except Exception as e:
             print(f"[ERROR] Failed to broadcast question: {e}")
             await sio.emit('error', {'message': str(e)}, room=sid)
+
+
+async def end_quiz_session(session_id, reason="Quiz ended"):
+    """End a quiz session and notify all players"""
+    try:
+        from database.datarepository import QuizSessionRepository
+        
+        # Update session status to ended
+        QuizSessionRepository.update_session_status(session_id, 3)  # 3 = ended
+        
+        # Broadcast quiz end to all players
+        room = f"quiz_session_{session_id}"
+        await sio.emit('quiz_end', {
+            'session_id': session_id,
+            'reason': reason,
+            'final_scores': True
+        }, room=room)
+        
+        print(f"[QUIZ END] Session {session_id} ended: {reason}")
     
+    except Exception as e:
+        print(f"[ERROR] Failed to end quiz session {session_id}: {e}")
+
+
     print("✅ ALL SOCKET.IO HANDLERS REGISTERED")
     print("📋 Events: connect, disconnect, join, ping, theme_selected, request_question")

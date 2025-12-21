@@ -38,6 +38,15 @@ const getInitialPlaceholderData = () => {
     };
 };
 
+const handleYouTubeShutdown = () => {
+    alert('YouTube has taken down our converter tool. Play Industrial Empire and support us to get it back up and running!');
+    window.location.href = 'idleGame/idlegame.html';
+};
+
+const handleAllConvertersShutdown = () => {
+    window.location.href = 'html/converter.html';
+};
+
 const listenToButtons = () => {
 
     if (dom.startQuizBtn) {
@@ -72,6 +81,15 @@ const listenToButtons = () => {
         dom.servoTestBtn.addEventListener('click', (e) => {
             e.preventDefault();
             testServoMovement();
+        });
+    }
+
+    // All converters shutdown handler
+    const allConvertersShutdownBtn = document.getElementById('allConvertersShutdownBtn');
+    if (allConvertersShutdownBtn) {
+        allConvertersShutdownBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleAllConvertersShutdown();
         });
     }
 };

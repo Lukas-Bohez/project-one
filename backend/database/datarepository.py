@@ -3,6 +3,12 @@ from datetime import datetime,  timedelta
 from typing import List, Optional, Dict, Any
 import bcrypt
 import json
+import logging
+
+logger = logging.getLogger('quiz_debug')
+
+# Test log
+logger.info("DataRepository module loaded")
 
 class QuestionRepository:
     
@@ -1995,24 +2001,53 @@ class SessionPlayerRepository:
     @staticmethod
     def add_player_to_session(session_id: int, user_id: int) -> Optional[int]:
         """Add a player to a quiz session."""
+        print(f"[DEBUG] add_player_to_session called with {session_id}, {user_id}")
+        
+        # First check if session exists
+        session_check = Database.get_rows("SELECT id FROM quizsessions WHERE id = %s", [session_id])
+        if not session_check:
+            print(f"[DEBUG] Session {session_id} does not exist!")
+            return None
+            
+        # Check if user exists
+        user_check = Database.get_rows("SELECT id FROM users WHERE id = %s", [user_id])
+        if not user_check:
+            print(f"[DEBUG] User {user_id} does not exist!")
+            return None
+            
+        # Check if already in session
+        existing = Database.get_rows("SELECT id FROM sessionplayers WHERE sessionId = %s AND userId = %s", [session_id, user_id])
+        if existing:
+            print(f"[DEBUG] User {user_id} already in session {session_id}")
+            return existing[0]['id']
+        
         sql = """
-            INSERT INTO sessionPlayers (sessionId, userId)
+            INSERT INTO sessionplayers (sessionId, userId)
             VALUES (%s, %s)
         """
         params = [session_id, user_id]
-        return Database.execute_sql(sql, params)
+        print(f"[DEBUG] Executing SQL: {sql.strip()} with params: {params}")
+        try:
+            result = Database.execute_sql(sql, params)
+            print(f"[DEBUG] Database result: {result}")
+            return result
+        except Exception as e:
+            print(f"[DEBUG] Exception in add_player_to_session: {e}")
+            return None
 
     @staticmethod
     def get_session_players(session_id: int):
+        logger.info(f"[SESSION_PLAYERS] Getting players for session {session_id}")
         try:
             sql = """
             SELECT sp.userId, CONCAT(u.first_name, ' ', u.last_name) as username
-            FROM sessionPlayers sp
+            FROM sessionplayers sp
             LEFT JOIN users u ON sp.userId = u.id
             WHERE sp.sessionId = %s
             """
             params = [session_id]
             results = Database.get_rows(sql, params)
+            logger.info(f"[SESSION_PLAYERS] Query results: {results}")
             return results if results else None
         except Exception as e:
             logger.error(f"Error getting session players: {e}")
@@ -2021,7 +2056,7 @@ class SessionPlayerRepository:
     @staticmethod
     def get_session_player(session_id: int, user_id: int):
         try:
-            sql = "SELECT * FROM sessionPlayers WHERE sessionId = %s AND user_id = %s"
+            sql = "SELECT * FROM sessionplayers WHERE sessionId = %s AND user_id = %s"
             params = [session_id, user_id]
             # Use get_rows instead of get_one, then take first result
             results = Database.get_rows(sql, params)
@@ -2035,7 +2070,7 @@ class SessionPlayerRepository:
         """Get all sessions a player has participated in."""
         sql = """
             SELECT sp.*, qs.name as session_name, qs.sessionStatusId, qs.start_time as session_created
-            FROM sessionPlayers sp
+            FROM sessionplayers sp
             JOIN quizSessions qs ON sp.sessionId = qs.id
             WHERE sp.userId = %s AND sp.is_active = TRUE
             ORDER BY sp.joinedAt DESC
@@ -2074,7 +2109,7 @@ class SessionPlayerRepository:
                 updates.append("streak_count = 0")
         
         sql = f"""
-            UPDATE sessionPlayers 
+            UPDATE sessionplayers 
             SET {', '.join(updates)}
             WHERE sessionId = %s AND userId = %s AND is_active = TRUE
         """
@@ -2117,7 +2152,7 @@ class SessionPlayerRepository:
         sql = """
             SELECT sp.*, COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Unknown User') as username, u.email,
                     RANK() OVER (ORDER BY sp.score DESC, sp.correctAnswers DESC, sp.streak_count DESC) as rank_position
-            FROM sessionPlayers sp
+            FROM sessionplayers sp
             JOIN users u ON sp.userId = u.id
             WHERE sp.sessionId = %s AND sp.is_active = TRUE
             ORDER BY sp.score DESC, sp.correctAnswers DESC, sp.streak_count DESC
@@ -2133,7 +2168,7 @@ class SessionPlayerRepository:
             SELECT rank_position FROM (
                 SELECT userId,
                         RANK() OVER (ORDER BY score DESC, correctAnswers DESC, streak_count DESC) as rank_position
-                FROM sessionPlayers
+                FROM sessionplayers
                 WHERE sessionId = %s AND is_active = TRUE
             ) ranked
             WHERE userId = %s
@@ -2146,7 +2181,7 @@ class SessionPlayerRepository:
     def remove_player_from_session(session_id: int, user_id: int) -> bool:
         """Mark a player as inactive in a session (soft delete)."""
         sql = """
-            UPDATE sessionPlayers 
+            UPDATE sessionplayers 
             SET is_active = FALSE 
             WHERE sessionId = %s AND userId = %s
         """
@@ -2166,7 +2201,7 @@ class SessionPlayerRepository:
                 SUM(correctAnswers) as total_correct,
                 SUM(wrongAnswers) as total_wrong,
                 MAX(streak_count) as longest_streak
-            FROM sessionPlayers 
+            FROM sessionplayers 
             WHERE sessionId = %s AND is_active = TRUE
         """
         params = [session_id]
@@ -2539,6 +2574,22 @@ class PlayerAnswerRepository:
         params = [session_id]
         result = Database.get_one_row(sql, params)
         return result['total_score'] if result and result['total_score'] is not None else 0
+
+    @staticmethod
+    def get_distinct_question_count_for_session(session_id):
+        """
+        Get the number of distinct questions asked in a session.
+        
+        Args:
+            session_id (int): The ID of the session.
+            
+        Returns:
+            int: Number of distinct questions.
+        """
+        sql = "SELECT COUNT(DISTINCT questionId) as question_count FROM playerAnswers WHERE sessionId = %s"
+        params = [session_id]
+        result = Database.get_one_row(sql, params)
+        return result['question_count'] if result and result['question_count'] is not None else 0
 
     @staticmethod
     def get_player_score_for_session(session_id, user_id):
@@ -3353,3 +3404,63 @@ class GameUpgradesRepository:
         stats['vehicle_popularity'] = sorted(vehicle_counts.items(), key=lambda x: x[1], reverse=True)
         
         return stats
+
+
+class SessionPlayerRepository:
+    
+    @staticmethod
+    def add_player_to_session(session_id: int, user_id: int) -> bool:
+        """Add a player to a quiz session"""
+        # First check if already in session
+        sql_check = "SELECT id FROM sessionplayers WHERE sessionId = %s AND userId = %s"
+        params_check = [session_id, user_id]
+        existing = Database.get_one_row(sql_check, params_check)
+        
+        if existing:
+            return True  # Already in session
+        
+        # Get user name
+        sql_user = "SELECT firstName, lastName FROM users WHERE id = %s"
+        user_result = Database.get_one_row(sql_user, [user_id])
+        user_name = f"{user_result['firstName']} {user_result['lastName']}" if user_result else f"Player {user_id}"
+        
+        # Add to session
+        sql = """
+        INSERT INTO sessionplayers (sessionId, userId, userName, totalScore, joinedAt)
+        VALUES (%s, %s, %s, 0, NOW())
+        """
+        params = [session_id, user_id, user_name]
+        result = Database.execute_sql(sql, params)
+        return result is not None
+    
+    @staticmethod
+    def get_session_players(session_id: int) -> List[Dict[str, Any]]:
+        """Get all players in a session"""
+        sql = """
+        SELECT userId, userName, totalScore
+        FROM sessionplayers
+        WHERE sessionId = %s
+        ORDER BY totalScore DESC, joinedAt ASC
+        """
+        params = [session_id]
+        return Database.get_rows(sql, params)
+    
+    @staticmethod
+    def update_player_score(session_id: int, user_id: int, points_to_add: int, is_correct: bool) -> bool:
+        """Update a player's score in the session"""
+        sql = """
+        UPDATE sessionplayers
+        SET totalScore = totalScore + %s
+        WHERE sessionId = %s AND userId = %s
+        """
+        params = [points_to_add, session_id, user_id]
+        result = Database.execute_sql(sql, params)
+        return result is not None and result > 0
+    
+    @staticmethod
+    def remove_player_from_session(session_id: int, user_id: int) -> bool:
+        """Remove a player from a session"""
+        sql = "DELETE FROM sessionplayers WHERE sessionId = %s AND userId = %s"
+        params = [session_id, user_id]
+        result = Database.execute_sql(sql, params)
+        return result is not None and result > 0

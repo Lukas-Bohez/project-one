@@ -42,27 +42,10 @@ async def lifespan_startup(app, sio, RPI_COMPONENTS_AVAILABLE):
     print("Server started - Socket.IO backend is ready!")
 
 
-async def lifespan_shutdown(VIDEO_CONVERTER_AVAILABLE=False, video_process_pool=None, long_video_process_pool=None):
+async def lifespan_shutdown():
     """Handle application shutdown"""
     print("FastAPI app shutting down...")
     
     # Signal the background thread to stop
     stop_thread_event.set()
     print("Shutdown signal sent to Raspberry Pi thread.")
-    
-    # Shutdown video conversion process pool gracefully
-    try:
-        if VIDEO_CONVERTER_AVAILABLE and video_process_pool:
-            print("Shutting down video conversion process pool...")
-            video_process_pool.shutdown(wait=False, cancel_futures=True)
-            print("[OK] Video process pool shutdown complete")
-    except Exception as e:
-        print(f"Error during video process pool shutdown: {e}")
-    
-    try:
-        if VIDEO_CONVERTER_AVAILABLE and long_video_process_pool:
-            print("Shutting down long-video conversion process pool...")
-            long_video_process_pool.shutdown(wait=False, cancel_futures=True)
-            print("[OK] Long-video process pool shutdown complete")
-    except Exception as e:
-        print(f"Error during long-video process pool shutdown: {e}")
