@@ -205,3 +205,26 @@ async def auto_start_session(user_id: int = 1):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/v1/sessions/active")
+async def get_active_sessions():
+    """Get all active quiz sessions"""
+    try:
+        active_sessions = QuizSessionRepository.get_active_sessions()
+        active_session_ids = []
+        if active_sessions:
+            for session in active_sessions:
+                if isinstance(session, dict):
+                    session_id = session.get('id')
+                else:
+                    session_id = session[0] if len(session) > 0 else None
+                if session_id:
+                    active_session_ids.append(session_id)
+        
+        return {
+            "active_session_ids": active_session_ids
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

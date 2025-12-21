@@ -98,16 +98,16 @@ const handleIpStatus = async (ipAddress) => {
         }
 
         const result = await response.json();
-        console.log("IP Status Check Result:", result);
+        // console.log("IP Status Check Result:", result);
 
         if (result.is_banned) {
             console.warn(`IP Address ${ipAddress} is banned! Kicking user...`);
             window.location.href = `/banned`;
             return true;
         } else {
-            console.log(`IP Address ${ipAddress} is not banned. Welcome!`);
+            // console.log(`IP Address ${ipAddress} is not banned. Welcome!`);
             const storedIP = sessionStorage.getItem(STORAGE_IP.IP.IP);
-            console.log('Stored IP:', storedIP);
+            // console.log('Stored IP:', storedIP);
             return false;
         }
     } catch (error) {
@@ -118,7 +118,7 @@ const handleIpStatus = async (ipAddress) => {
 
 // DOM Content Loaded event
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log("DOM Content Loaded. Initiating IP check...");
+    // console.log("DOM Content Loaded. Initiating IP check...");
 
     const clientIp = await getClientIpAddress();
 

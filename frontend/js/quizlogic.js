@@ -11,7 +11,7 @@ const QuizTimerHandler = {
         this.timerDisplay = document.getElementById('quiz-timer') || 
                            document.querySelector('.quiz-timer') ||
                            this.createTimerDisplay();
-        console.log("QuizTimerHandler initialized, display element:", this.timerDisplay);
+        // console.log("QuizTimerHandler initialized, display element:", this.timerDisplay);
     },
 
     createTimerDisplay() {
@@ -67,12 +67,12 @@ const QuizTimerHandler = {
                 this.timerDisplay.style.animation = 'none';
             }
             
-            console.log(`Timer updated: ${this.currentTime}/${this.maxTime}s`);
+            // console.log(`Timer updated: ${this.currentTime}/${this.maxTime}s`);
         }
     },
 
     startTimer(duration = 15) {
-        console.log(`🔍 Starting timer with duration: ${duration}s`);
+        // console.log(`🔍 Starting timer with duration: ${duration}s`);
         this.maxTime = duration;
         this.currentTime = duration;
         this.isRunning = true;
@@ -94,7 +94,7 @@ const QuizTimerHandler = {
     },
 
     stopTimer() {
-        console.log("🔍 Stopping timer");
+        // console.log("🔍 Stopping timer");
         this.isRunning = false;
         if (this.timerInterval) {
             clearInterval(this.timerInterval);
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // quiz-socket-handler.js
 class QuizSocketHandler {
     constructor(socket, questionHandler) {
-        console.log("🔍 QuizSocketHandler constructor called with socket:", socket, "questionHandler:", questionHandler);
+        // console.log("🔍 QuizSocketHandler constructor called with socket:", socket, "questionHandler:", questionHandler);
         this.socket = socket;
         this.questionHandler = questionHandler;
         this.initializeListeners();
@@ -128,7 +128,7 @@ class QuizSocketHandler {
         const advertFlood = new CompliantAdSystem()
         // Listen for the B2F_addItem event and automatically activate the flood
         this.socket.on('B2F_addItem', () => {
-            console.log('📢📢📢 Initiating the Anti-Adblocker Scream Flood! 📢📢📢');
+            // console.log('📢📢📢 Initiating the Anti-Adblocker Scream Flood! 📢📢📢');
             advertFlood.activate(15); // Fixed 18-second duration for the scream flood
         });
 
@@ -136,7 +136,7 @@ class QuizSocketHandler {
         if (!this.socket || this.socket._quizLogicListenersInitialized) {
             return;
         }
-        console.log("🔍 Initializing all socket listeners...");
+        // console.log("🔍 Initializing all socket listeners...");
 
         // Player/User data updates
         this.socket.on('all_users_data_updated', (data) => this.handleAllUsersDataUpdate(data));
@@ -146,7 +146,7 @@ class QuizSocketHandler {
 
         // Vote count updates
         this.socket.on('theme_votes_update', (data) => {
-            console.log("✅ Received 'theme_votes_update':", data);
+            // console.log("✅ Received 'theme_votes_update':", data);
             // Dispatch event for vote count updates
             document.dispatchEvent(new CustomEvent('votesUpdated', { detail: data.votes }));
         });
@@ -155,13 +155,13 @@ class QuizSocketHandler {
         
         // Listen for the start of any major phase
         this.socket.on('phase_started', (data) => {
-            console.log(`✅ Phase Started: ${data.phase}`, data);
+            // console.log(`✅ Phase Started: ${data.phase}`, data);
             this.questionHandler.handlePhaseChange(data);
         });
 
         // In quiz-socket-handler.js - explanation listener
         this.socket.on('explanation_started', (data) => {
-            console.log("✅ Explanation Started:", data);
+            // console.log("✅ Explanation Started:", data);
             if (typeof this.questionHandler.showExplanation === 'function') {
                 this.questionHandler.showExplanation(data);
             } else {
@@ -172,19 +172,19 @@ class QuizSocketHandler {
 
         // Listen for the end of the entire quiz
         this.socket.on('quiz_finished', (data) => {
-            console.log("✅ Quiz Finished:", data);
+            // console.log("✅ Quiz Finished:", data);
             this.questionHandler.showQuizEnd(data);
         });
 
         // Listen for quiz results
         this.socket.on('quiz_results', (data) => {
-            console.log("✅ Quiz Results:", data);
+            // console.log("✅ Quiz Results:", data);
             this.handleQuizResults(data);
         });
 
         // Listen for individual question results
         this.socket.on('question_result', (data) => {
-            console.log("✅ Question Result:", data);
+            // console.log("✅ Question Result:", data);
             this.handleQuestionResult(data);
         });
 
@@ -223,30 +223,30 @@ this.socket.on('timer_update', (data) => {
         
         // Question data
         this.socket.on('questionData', (data) => {
-            console.log("✅ Received 'questionData':", data);
+            // console.log("✅ Received 'questionData':", data);
             this.questionHandler.loadQuestion(data);
         });
 
         // New question event
         this.socket.on('new_question', (data) => {
-            console.log("✅ Received 'new_question':", data);
+            // console.log("✅ Received 'new_question':", data);
             this.questionHandler.loadQuestion(data);
             // Start the question timer
             QuizTimerHandler.startTimer(15);
-            console.log("🔍 Timer started for new question");
+            // console.log("🔍 Timer started for new question");
         });
 
         // ---- THEME SELECTION LISTENERS ----
 
         // Theme selection confirmation
         this.socket.on('theme_selected_confirmation', (data) => {
-            console.log("✅ Theme Selected Confirmation:", data);
+            // console.log("✅ Theme Selected Confirmation:", data);
             this.handleThemeSelectedConfirmation(data);
         });
 
         // Theme display phase
         this.socket.on('theme_display', (data) => {
-            console.log("✅ Theme Display:", data);
+            // console.log("✅ Theme Display:", data);
             this.handleThemeDisplay(data);
         });
 
@@ -266,7 +266,7 @@ this.socket.on('timer_update', (data) => {
 
         // Reconnection
         this.socket.on('reconnect', (attemptNumber) => {
-            console.log("✅ Reconnected after", attemptNumber, "attempts");
+            // console.log("✅ Reconnected after", attemptNumber, "attempts");
             this.questionHandler.showFeedback("Reconnected successfully!");
         });
 
@@ -280,19 +280,19 @@ this.socket.on('timer_update', (data) => {
 
         // Individual player updates
         this.socket.on('player_updated', (data) => {
-            console.log("✅ Player Updated:", data);
+            // console.log("✅ Player Updated:", data);
             this.handlePlayerUpdate(data);
         });
 
         // Player joined
         this.socket.on('player_joined', (data) => {
-            console.log("✅ Player Joined:", data);
+            // console.log("✅ Player Joined:", data);
             this.questionHandler.showFeedback(`${data.name || data.username} joined the game!`);
         });
 
         // Player left
         this.socket.on('player_left', (data) => {
-            console.log("✅ Player Left:", data);
+            // console.log("✅ Player Left:", data);
             this.questionHandler.showFeedback(`${data.name || data.username} left the game`);
         });
 
@@ -300,34 +300,34 @@ this.socket.on('timer_update', (data) => {
 
         // Game state updates
         this.socket.on('game_state_update', (data) => {
-            console.log("✅ Game State Update:", data);
+            // console.log("✅ Game State Update:", data);
             this.handleGameStateUpdate(data);
         });
 
         // Quiz started
         this.socket.on('quiz_started', (data) => {
-            console.log("✅ Quiz Started:", data);
+            // console.log("✅ Quiz Started:", data);
             this.questionHandler.showFeedback("Quiz is starting!");
         });
 
         // Quiz paused
         this.socket.on('quiz_paused', (data) => {
-            console.log("✅ Quiz Paused:", data);
+            // console.log("✅ Quiz Paused:", data);
             this.questionHandler.showFeedback("Quiz paused");
         });
 
         // Quiz resumed
         this.socket.on('quiz_resumed', (data) => {
-            console.log("✅ Quiz Resumed:", data);
+            // console.log("✅ Quiz Resumed:", data);
             this.questionHandler.showFeedback("Quiz resumed");
         });
 
         this.socket._quizLogicListenersInitialized = true;
-        console.log("Socket listeners initialized successfully.");
+        // console.log("Socket listeners initialized successfully.");
     }
 
     handleAllUsersDataUpdate(data) {
-        console.log("🔍 handleAllUsersDataUpdate called with data:", data);
+        // console.log("🔍 handleAllUsersDataUpdate called with data:", data);
         if (!data || !Array.isArray(data.players)) {
             console.warn("Invalid player data format:", data);
             return;
@@ -335,16 +335,16 @@ this.socket.on('timer_update', (data) => {
 
         const allPlayers = data.players;
         const currentUserId = localStorage.getItem('user_user_id');
-        console.log("🔍 Current user ID from localStorage:", currentUserId);
-        console.log("🔍 All players received:", allPlayers);
+        // console.log("🔍 Current user ID from localStorage:", currentUserId);
+        // console.log("🔍 All players received:", allPlayers);
 
         this.questionHandler.players = allPlayers;
 
         if (currentUserId) {
-            const currentUserData = allPlayers.find(p => String(p.user_id) === String(currentUserId));
+            const currentUserData = allPlayers.find(p => String(p.userId) === String(currentUserId));
             if (currentUserData) {
                 this.questionHandler.currentUser = { ...this.questionHandler.currentUser, ...currentUserData };
-                console.log("Updated current user:", this.questionHandler.currentUser);
+                // console.log("Updated current user:", this.questionHandler.currentUser);
                 
                 document.dispatchEvent(new CustomEvent('currentUserUpdated', {
                     detail: this.questionHandler.currentUser
@@ -355,18 +355,18 @@ this.socket.on('timer_update', (data) => {
             }
         }
         
-        console.log("🔍 About to call updatePlayersDisplay with players:", this.questionHandler.players);
+        // console.log("🔍 About to call updatePlayersDisplay with players:", this.questionHandler.players);
         this.questionHandler.updatePlayersDisplay();
     }
 
     handleAnswerResponse(responseData) {
-        console.log("Processing answer/theme response:", responseData);
+        // console.log("Processing answer/theme response:", responseData);
         
         // Check for success - either explicit success flag or presence of is_correct indicates a valid response
         const isSuccess = responseData.success || responseData.is_correct !== undefined;
         
         if (isSuccess) {
-            console.log("Submission successful");
+            // console.log("Submission successful");
             
             if (responseData.feedback) {
                 this.questionHandler.showFeedback(responseData.feedback);
@@ -374,7 +374,7 @@ this.socket.on('timer_update', (data) => {
             
             // Check if this was a theme selection
             if (responseData.theme_name) {
-                console.log("Theme selected:", responseData.theme_name);
+                // console.log("Theme selected:", responseData.theme_name);
                 this.questionHandler.showFeedback(`Theme selected: ${responseData.theme_name}`);
             }
             
@@ -391,11 +391,11 @@ this.socket.on('timer_update', (data) => {
     }
 
     handlePlayerUpdate(playerData) {
-        console.log("🔍 handlePlayerUpdate called with data:", playerData);
+        // console.log("🔍 handlePlayerUpdate called with data:", playerData);
         if (!playerData || !playerData.user_id) return;
         
         const playerIndex = this.questionHandler.players.findIndex(p => p.user_id === playerData.user_id);
-        console.log("🔍 Player index found:", playerIndex);
+        // console.log("🔍 Player index found:", playerIndex);
 
         if (playerIndex !== -1) {
             this.questionHandler.players[playerIndex] = { ...this.questionHandler.players[playerIndex], ...playerData };
@@ -404,12 +404,12 @@ this.socket.on('timer_update', (data) => {
         }
 
         this.questionHandler.players.sort((a, b) => (b.session_score || 0) - (a.session_score || 0));
-        console.log("🔍 Players after update:", this.questionHandler.players);
+        // console.log("🔍 Players after update:", this.questionHandler.players);
         this.questionHandler.updatePlayersDisplay();
     }
 
     handleQuizResults(data) {
-        console.log("Handling quiz results:", data);
+        // console.log("Handling quiz results:", data);
         
         if (data.final_scores) {
             this.questionHandler.displayFinalScores(data.final_scores);
@@ -421,14 +421,14 @@ this.socket.on('timer_update', (data) => {
     }
 
     handleQuestionResult(data) {
-        console.log("Handling question result:", data);
+        // console.log("Handling question result:", data);
         
         if (data.correct_answer) {
             this.questionHandler.showFeedback(`Correct answer: ${data.correct_answer}`);
         }
         
         if (data.explanation) {
-            this.showExplanation({
+            this.questionHandler.showExplanation({
                 explanation: data.explanation,
                 question: data.question || this.questionHandler.currentQuestion
             });
@@ -436,12 +436,12 @@ this.socket.on('timer_update', (data) => {
     }
 
     handleThemeSelectedConfirmation(data) {
-        console.log("Theme selection confirmed:", data);
+        // console.log("Theme selection confirmed:", data);
         this.questionHandler.showFeedback(`Theme "${data.theme_name}" selected successfully!`);
     }
 
     handleThemeDisplay(data) {
-        console.log("Theme display phase:", data);
+        // console.log("Theme display phase:", data);
         
         if (data.theme_data) {
             // Send the theme data to questionHandler for display
@@ -458,7 +458,7 @@ this.socket.on('timer_update', (data) => {
     }
 
     handleGameStateUpdate(data) {
-        console.log("Game state update:", data);
+        // console.log("Game state update:", data);
         
         if (data.phase) {
             this.questionHandler.handlePhaseChange(data);
@@ -475,22 +475,22 @@ this.socket.on('timer_update', (data) => {
 
     // Method to emit events to the server
     emitThemeSelection(themeData) {
-        console.log("Emitting theme selection:", themeData);
+        // console.log("Emitting theme selection:", themeData);
         this.socket.emit('theme_selected', themeData);
     }
 
     emitAnswer(answerData) {
-        console.log("Emitting answer:", answerData);
+        // console.log("Emitting answer:", answerData);
         this.socket.emit('submit_answer', answerData);
     }
 
     emitJoinQuiz(userData) {
-        console.log("Emitting join quiz:", userData);
+        // console.log("Emitting join quiz:", userData);
         this.socket.emit('join_quiz', userData);
     }
 
     emitLeaveQuiz(userData) {
-        console.log("Emitting leave quiz:", userData);
+        // console.log("Emitting leave quiz:", userData);
         this.socket.emit('leave_quiz', userData);
     }
 
@@ -499,7 +499,7 @@ this.socket.on('timer_update', (data) => {
         if (this.socket) {
             this.socket.removeAllListeners();
             this.socket._quizLogicListenersInitialized = false;
-            console.log("Socket listeners cleaned up");
+            // console.log("Socket listeners cleaned up");
         }
     }
 

@@ -50,12 +50,12 @@ class QuizLogic {
         this.timerHandler = QuizTimerHandler; // Assign the global object directly
         this.playerHandler = new QuizPlayerHandler(this);
         
-        console.log("All quiz modules initialized with proper references");
+        // console.log("All quiz modules initialized with proper references");
     }
 
     // FIXED: Main methods that delegate to modules
     setCurrentUser(user) {
-        console.log("QuizLogic: Setting current user:", user);
+        // console.log("QuizLogic: Setting current user:", user);
         this.currentUser = user;
         
         // Make sure the question handler also knows the user with correct field mapping
@@ -66,7 +66,7 @@ class QuizLogic {
                 user_id: user.id || user.user_id, // Ensure user_id is available
                 id: user.id || user.user_id       // Ensure id is available
             };
-            console.log("QuizLogic: Passing user to question handler:", userForHandler);
+            // console.log("QuizLogic: Passing user to question handler:", userForHandler);
             this.questionHandler.setCurrentUser(userForHandler);
         }
         
@@ -84,7 +84,7 @@ class QuizLogic {
 // In quizLogic.js
 // 3. In quizLogic.js
 updateTimer = (timerData) => {  // Arrow function maintains 'this'
-  console.log("DATA IN QUIZLOGIC:", timerData);
+  // console.log("DATA IN QUIZLOGIC:", timerData);
   
   // Fallback to global data if needed
   const finalData = window.timerData || timerData;
@@ -115,7 +115,7 @@ updateTimer = (timerData) => {  // Arrow function maintains 'this'
     }
 
     loadQuestion(questionData) {
-        console.log("QuizLogic: Loading question:", questionData);
+        // console.log("QuizLogic: Loading question:", questionData);
         this.currentQuestion = questionData;
         
         if (this.questionHandler) {
@@ -141,7 +141,7 @@ updateTimer = (timerData) => {  // Arrow function maintains 'this'
     }
 
     showExplanation(data) {
-        console.log("QuizLogic: Delegating explanation to question handler");
+        // console.log("QuizLogic: Delegating explanation to question handler");
         if (this.questionHandler && this.questionHandler.showExplanation) {
             this.questionHandler.showExplanation(data);
         } else {
@@ -178,20 +178,20 @@ window.QuizLogic = QuizLogic;
 
 // FIXED: Proper user authentication handler
 document.addEventListener('userAuthenticated', (event) => {
-    console.log("User authenticated event received");
+    // console.log("User authenticated event received");
     const user = event.detail.user;
-    console.log("User data from event:", user);
+    // console.log("User data from event:", user);
     
     // Get or create QuizLogic instance
     if (!window.quizLogicInstance) {
-        console.log("Creating new QuizLogic instance");
+        // console.log("Creating new QuizLogic instance");
         window.quizLogicInstance = new QuizLogic();
     }
     
     // Set the user on the QuizLogic instance
     if (window.quizLogicInstance) {
         window.quizLogicInstance.setCurrentUser(user);
-        console.log("User set on QuizLogic instance");
+        // console.log("User set on QuizLogic instance");
     } else {
         console.error("Failed to create or access QuizLogic instance");
     }
@@ -199,15 +199,15 @@ document.addEventListener('userAuthenticated', (event) => {
     // Also initialize the players list manager
     const waitForSocket = () => {
         if (window.sharedSocket) {
-            console.log("Socket available, initializing players list manager");
+            // console.log("Socket available, initializing players list manager");
             if (typeof initializePlayersListManager === 'function') {
                 const playersManager = initializePlayersListManager(window.sharedSocket, user);
-                console.log("Players list manager initialized:", playersManager);
+                // console.log("Players list manager initialized:", playersManager);
             } else {
                 console.warn("initializePlayersListManager function not found");
             }
         } else {
-            console.log("Waiting for socket...");
+            // console.log("Waiting for socket...");
             setTimeout(waitForSocket, 100);
         }
     };
@@ -217,11 +217,11 @@ document.addEventListener('userAuthenticated', (event) => {
 
 // Listen for questions from auto-session system
 document.addEventListener('quizQuestionReceived', (event) => {
-    console.log('🎯 Received question from auto-session:', event.detail);
+    // console.log('🎯 Received question from auto-session:', event.detail);
     if (window.quizLogicInstance && window.quizLogicInstance.questionHandler) {
         // Ensure user is set before loading question
         if (window.quizLogicInstance.currentUser && !window.quizLogicInstance.questionHandler.currentUser) {
-            console.log('🔧 Setting user on questionHandler before loading question');
+            // console.log('🔧 Setting user on questionHandler before loading question');
             window.quizLogicInstance.questionHandler.setCurrentUser(window.quizLogicInstance.currentUser);
         }
         window.quizLogicInstance.questionHandler.loadQuestion(event.detail);
@@ -230,4 +230,4 @@ document.addEventListener('quizQuestionReceived', (event) => {
     }
 });
 
-console.log('✅ Quiz auto-session question listener registered');
+// console.log('✅ Quiz auto-session question listener registered');

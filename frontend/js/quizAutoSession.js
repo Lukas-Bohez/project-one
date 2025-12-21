@@ -16,7 +16,7 @@ class QuizAutoSession {
      * Initialize auto-session with user ID
      */
     async init(userId, socket) {
-        console.log('🎮 QuizAutoSession: Initializing with user:', userId);
+        // console.log('🎮 QuizAutoSession: Initializing with user:', userId);
         this.userId = userId;
         this.socket = socket;
 
@@ -27,8 +27,8 @@ class QuizAutoSession {
         this.setupSocketListeners();
 
         // Backend will auto-start quiz when user joins session
-        console.log('💡 QuizAutoSession: Session ready. Backend will auto-start quiz flow.');
-        console.log('ℹ️ QuizAutoSession: Waiting for backend to send theme selection...');
+        // console.log('💡 QuizAutoSession: Session ready. Backend will auto-start quiz flow.');
+        // console.log('ℹ️ QuizAutoSession: Waiting for backend to send theme selection...');
     }
     
     /**
@@ -39,13 +39,13 @@ class QuizAutoSession {
             // Ensure lanIP includes protocol
             const baseUrl = this.lanIP.startsWith('http') ? this.lanIP : `http://${this.lanIP}`;
             const url = `${baseUrl}/api/v1/sessions/${this.sessionId}/question`;
-            console.log('📡 QuizAutoSession: Fetching from URL:', url);
+            // console.log('📡 QuizAutoSession: Fetching from URL:', url);
             
             const response = await fetch(url);
             const data = await response.json();
             
             if (data.success !== false && data.question) {
-                console.log('✅ QuizAutoSession: Question fetched via HTTP:', data.question.id);
+                // console.log('✅ QuizAutoSession: Question fetched via HTTP:', data.question.id);
                 
                 // Dispatch as event for quiz logic to handle
                 document.dispatchEvent(new CustomEvent('quizQuestionReceived', {
@@ -69,7 +69,7 @@ class QuizAutoSession {
             while (attempts < 20) {  // Wait up to 2 seconds
                 if (window.chatSystemInstance && window.chatSystemInstance.sessionId) {
                     this.sessionId = window.chatSystemInstance.sessionId;
-                    console.log(`✅ QuizAutoSession: Using existing session ID from chat: ${this.sessionId}`);
+                    // console.log(`✅ QuizAutoSession: Using existing session ID from chat: ${this.sessionId}`);
                     
                     // Dispatch event for other components
                     document.dispatchEvent(new CustomEvent('quizSessionReady', {
@@ -82,7 +82,7 @@ class QuizAutoSession {
                 attempts++;
             }
             
-            console.log('⚠️ Chat system not ready, trying API...');
+            // console.log('⚠️ Chat system not ready, trying API...');
             
             // Try to fetch or create a session
             const response = await fetch(`${this.lanIP}/api/v1/sessions/auto-start?user_id=${this.userId}`, {
@@ -100,12 +100,12 @@ class QuizAutoSession {
             
             if (data.success) {
                 this.sessionId = data.session_id;
-                console.log(`✅ QuizAutoSession: ${data.status} - Session ID: ${this.sessionId}`);
+                // console.log(`✅ QuizAutoSession: ${data.status} - Session ID: ${this.sessionId}`);
                 
                 // Join the socket.io room for this session
                 if (this.socket) {
                     this.socket.emit('join', `quiz_session_${this.sessionId}`, (response) => {
-                        console.log('✅ Joined quiz session room:', response);
+                        // console.log('✅ Joined quiz session room:', response);
                     });
                 }
 
@@ -150,7 +150,7 @@ class QuizAutoSession {
 
         // Listen for new questions
         this.socket.on('new_question', (data) => {
-            console.log('📝 QuizAutoSession: Received new question:', data);
+            // console.log('📝 QuizAutoSession: Received new question:', data);
             
             // Dispatch event for quiz logic to handle
             document.dispatchEvent(new CustomEvent('quizQuestionReceived', {
@@ -163,7 +163,7 @@ class QuizAutoSession {
             console.error('❌ QuizAutoSession: Socket error:', data);
         });
 
-        console.log('✅ QuizAutoSession: Socket listeners set up');
+        // console.log('✅ QuizAutoSession: Socket listeners set up');
     }
 
     /**
@@ -175,7 +175,7 @@ class QuizAutoSession {
             return;
         }
 
-        console.log('📤 QuizAutoSession: Requesting question for session:', this.sessionId);
+        // console.log('📤 QuizAutoSession: Requesting question for session:', this.sessionId);
         
         this.socket.emit('request_question', {
             session_id: this.sessionId
@@ -189,10 +189,10 @@ class QuizAutoSession {
     startAutoQuestionRequest() {
         // DISABLED: Quiz requires theme selection first
         // The quiz flow is: theme_selection → theme_description → questions from that theme
-        console.log('ℹ️ QuizAutoSession: Auto-questions disabled - quiz is theme-driven');
-        console.log('ℹ️ QuizAutoSession: Questions will be received via Socket.IO "new_question" events');
+        // console.log('ℹ️ QuizAutoSession: Auto-questions disabled - quiz is theme-driven');
+        // console.log('ℹ️ QuizAutoSession: Questions will be received via Socket.IO "new_question" events');
         // this.questionRequestInterval = setInterval(async () => {
-        //     console.log('⏰ QuizAutoSession: Auto-requesting next question');
+        //     // console.log('⏰ QuizAutoSession: Auto-requesting next question');
         //     await this.fetchQuestionHTTP();
         // }, 60000); // 60 seconds
     }
@@ -204,7 +204,7 @@ class QuizAutoSession {
         if (this.questionRequestInterval) {
             clearInterval(this.questionRequestInterval);
             this.questionRequestInterval = null;
-            console.log('⏹️ QuizAutoSession: Auto-question request stopped');
+            // console.log('⏹️ QuizAutoSession: Auto-question request stopped');
         }
     }
 
@@ -230,7 +230,7 @@ class QuizAutoSession {
         if (this.socket && this.sessionId) {
             this.socket.emit('leave', `quiz_session_${this.sessionId}`);
         }
-        console.log('🧹 QuizAutoSession: Cleaned up');
+        // console.log('🧹 QuizAutoSession: Cleaned up');
     }
 }
 
@@ -262,7 +262,7 @@ document.addEventListener('userAuthenticated', async (event) => {
         window.quizAutoSession = new QuizAutoSession();
         await window.quizAutoSession.init(user.id, socket);
         
-        console.log('✅ Quiz auto-session fully initialized');
+        // console.log('✅ Quiz auto-session fully initialized');
     } catch (error) {
         console.error('❌ Failed to initialize quiz auto-session:', error);
     }
@@ -277,15 +277,15 @@ window.requestNextQuestion = () => {
     }
 };
 
-console.log('📦 QuizAutoSession module loaded');
+// console.log('📦 QuizAutoSession module loaded');
 
 // Start quiz - automatically join active session or create new one
 window.startQuizWithThemes = async () => {
-    console.log('🎮 Starting quiz...');
+    // console.log('🎮 Starting quiz...');
     
     // Check if already in a session with a question loaded
     if (window.quizLogicInstance?.questionHandler?.currentQuestion) {
-        console.log('✅ Already in active quiz session');
+        // console.log('✅ Already in active quiz session');
         return;
     }
     
@@ -303,13 +303,13 @@ window.startQuizWithThemes = async () => {
         lanIP = `https://${lanIP}`;
     }
     
-    console.log(`🎮 Joining/creating session ${sessionId}...`);
-    console.log(`📡 Using backend URL: ${lanIP}`);
+    // console.log(`🎮 Joining/creating session ${sessionId}...`);
+    // console.log(`📡 Using backend URL: ${lanIP}`);
     
     try {
         // Fetch all themes for selection
         const themesUrl = `${lanIP}/api/v1/themes/`;
-        console.log(`🔍 Fetching themes from: ${themesUrl}`);
+        // console.log(`🔍 Fetching themes from: ${themesUrl}`);
         const response = await fetch(themesUrl);
         
         if (!response.ok) {
@@ -323,8 +323,8 @@ window.startQuizWithThemes = async () => {
             const shuffled = themes.sort(() => 0.5 - Math.random());
             const selectedThemes = shuffled.slice(0, Math.min(4, themes.length));
             
-            console.log('✅ Theme selection started');
-            console.log('📋 Available themes:', selectedThemes.map(t => t.name || t[1]).join(', '));
+            // console.log('✅ Theme selection started');
+            // console.log('📋 Available themes:', selectedThemes.map(t => t.name || t[1]).join(', '));
             
             // Format as theme_selection question
             const themeSelectionData = {
@@ -351,4 +351,4 @@ window.startQuizWithThemes = async () => {
 // Alias for the "Get Question" button
 window.testQuizQuestion = window.startQuizWithThemes;
 
-console.log('🎮 Quiz will auto-start when you join the session');
+// console.log('🎮 Quiz will auto-start when you join the session');

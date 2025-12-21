@@ -17,7 +17,7 @@ class QuizApp {
     }
 
     initializeApp() {
-        console.log('Initializing Quiz Application...');
+        // console.log('Initializing Quiz Application...');
         
         // Initialize all systems
         this.chatSystem = new ChatSystem();
@@ -26,10 +26,10 @@ class QuizApp {
         
         // Use existing instance if available, otherwise create new one
         if (window.quizLogicInstance) {
-            console.log('Using existing QuizLogic instance');
+            // console.log('Using existing QuizLogic instance');
             this.quizLogic = window.quizLogicInstance;
         } else {
-            console.log('Creating new QuizLogic instance');
+            // console.log('Creating new QuizLogic instance');
             this.quizLogic = new QuizLogic();
             window.quizLogicInstance = this.quizLogic;
         }
@@ -37,7 +37,7 @@ class QuizApp {
         // Set up cross-system communication
         this.setupCrossSystemEvents();
 
-        console.log('Quiz Application initialized successfully');
+        // console.log('Quiz Application initialized successfully');
     }
 
     setupCrossSystemEvents() {
@@ -49,19 +49,19 @@ class QuizApp {
 
         // Listen for score updates to potentially update chat or other systems
         document.addEventListener('scoreUpdated', (event) => {
-            console.log('Score updated:', event.detail);
+            // console.log('Score updated:', event.detail);
             // Add any cross-system score update logic here
         });
 
         // Listen for messages sent to potentially update other systems
         document.addEventListener('messageSent', (event) => {
-            console.log('Message sent:', event.detail);
+            // console.log('Message sent:', event.detail);
             // Add any cross-system message logic here
         });
 
         // Listen for user registration to update chat
         document.addEventListener('userRegistered', (event) => {
-            console.log('User registered:', event.detail);
+            // console.log('User registered:', event.detail);
             // Chat system already handles this, but you can add more logic here
         });
     }
@@ -134,7 +134,7 @@ let quizApp;
 // Initialize the application when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     const storedIP = sessionStorage.getItem('IP');
-    console.log('Stored IP:', storedIP);
+    // console.log('Stored IP:', storedIP);
     
     quizApp = new QuizApp();
 });

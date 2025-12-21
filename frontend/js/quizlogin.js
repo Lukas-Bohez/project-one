@@ -36,7 +36,7 @@ class AuthSystem {
         const password = localStorage.getItem(STORAGE_KEYS.USER.PASSWORD);
 
         if (firstName && lastName && password) {
-            console.log('Attempting auto-login for:', firstName, lastName);
+            // console.log('Attempting auto-login for:', firstName, lastName);
             
             const formData = { firstName, lastName, password };
 
@@ -45,7 +45,7 @@ class AuthSystem {
                 
                 if (result && result.user_id) {
                     this.loginUser(formData, result.user_id);
-                    console.log('Auto-login successful');
+                    // console.log('Auto-login successful');
                     return true;
                 } else {
                     console.warn('Auto-login failed: Invalid response from server');
@@ -59,7 +59,7 @@ class AuthSystem {
                 return false;
             }
         } else {
-            console.log('No stored credentials found for auto-login');
+            // console.log('No stored credentials found for auto-login');
             return false;
         }
     }
@@ -293,7 +293,7 @@ class AuthSystem {
 
         this.showLoading(registerBtn);
         loginBtn.disabled = true;
-        console.log(formData)
+        // console.log(formData)
         try {
             const result = await this.sendAuthenticationRequest('register', formData.firstName, formData.lastName, formData.password);
             
@@ -435,18 +435,18 @@ class AuthSystem {
         
         // If we reloaded less than 30 seconds ago, skip any reload attempts
         if (lastReloadTime && (now - parseInt(lastReloadTime)) < 30000) {
-            console.log('Recent reload detected, skipping reload check to prevent reload loop');
+            // console.log('Recent reload detected, skipping reload check to prevent reload loop');
             return;
         }
         
         // Single check after giving systems time to initialize
         setTimeout(() => {
-            console.log('Performing single quiz state check...');
+            // console.log('Performing single quiz state check...');
             
             // Only check for the most critical issue: stuck on session 2
             const sessionSelector = document.querySelector('select');
             if (sessionSelector && sessionSelector.value === '2') {
-                console.log('Detected stuck on session 2, performing ONE reload...');
+                // console.log('Detected stuck on session 2, performing ONE reload...');
                 
                 // Mark that we're about to reload
                 sessionStorage.setItem(reloadKey, now.toString());
@@ -455,7 +455,7 @@ class AuthSystem {
                     window.location.reload();
                 }, 1000);
             } else {
-                console.log('Quiz session appears to be working correctly, no reload needed.');
+                // console.log('Quiz session appears to be working correctly, no reload needed.');
             }
         }, 2000); // Give more time for systems to initialize
     }
@@ -466,9 +466,9 @@ class AuthSystem {
         // 1. Check if chat system has a session ID
         if (window.chatSystemInstance) {
             const chatSessionId = window.chatSystemInstance.getSessionId();
-            console.log('Chat session ID:', chatSessionId);
+            // console.log('Chat session ID:', chatSessionId);
             if (!chatSessionId || chatSessionId === 2) {
-                console.log('Chat system has no valid session ID, needs reload');
+                // console.log('Chat system has no valid session ID, needs reload');
                 return true;
             }
         }
@@ -476,40 +476,40 @@ class AuthSystem {
         // 2. Check if we're stuck on session 2 (common issue) 
         const sessionSelector = document.querySelector('select');
         if (sessionSelector && sessionSelector.value === '2') {
-            console.log('Detected stuck on session 2, needs reload');
+            // console.log('Detected stuck on session 2, needs reload');
             return true;
         }
         
         // 3. Check if QuizApp is properly initialized
         if (!window.quizApp) {
-            console.log('QuizApp not found, needs reload');
+            // console.log('QuizApp not found, needs reload');
             return true;
         }
         
         // 4. Check if current user is properly set in QuizApp
         const quizAppUser = window.quizApp.getCurrentUser();
         if (!quizAppUser || !quizAppUser.id) {
-            console.log('QuizApp has no current user, needs reload');
+            // console.log('QuizApp has no current user, needs reload');
             return true;
         }
         
         // 5. Check if socket connection exists and is connected
         if (window.socket && !window.socket.connected) {
-            console.log('Socket not connected, needs reload');
+            // console.log('Socket not connected, needs reload');
             return true;
         }
         
         // 6. Check for critical quiz elements (but be less strict)
         const quizContainer = document.querySelector('.c-quiz-container, #quiz-container, [data-quiz-container]');
         if (!quizContainer) {
-            console.log('No quiz container found, needs reload');
+            // console.log('No quiz container found, needs reload');
             return true;
         }
         
         // 7. Check for active session in chat system
         if (window.chatSystemInstance && typeof window.chatSystemInstance.canChat === 'function') {
             if (!window.chatSystemInstance.canChat()) {
-                console.log('Chat system cannot chat (user not properly set), needs reload');
+                // console.log('Chat system cannot chat (user not properly set), needs reload');
                 return true;
             }
         }

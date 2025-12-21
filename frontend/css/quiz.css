@@ -123,15 +123,17 @@ html, body {
 .c-servo-visual {
     width: 100px;
     height: 20px;
-    background-color: var(--quiz-accent);
+    background-color: #cccccc; /* Grey background */
     border-radius: 10px;
     overflow: hidden;
 }
 
-#servoVisual {
-    transition: width 0.5s ease, background-color 0.5s ease;
-    border-radius: 20px 0 0 20px;
-    background: linear-gradient(135deg, var(--primary-color), var(--quiz-accent));
+.c-servo-bar {
+    height: 100%;
+    width: 100%; /* Start full width */
+    background-color: #44ff44; /* Green bar */
+    border-radius: 10px;
+    transition: width 1s ease, background-color 0.5s ease;
 }
 
 .c-time-remaining {
@@ -140,10 +142,47 @@ html, body {
     color: var(--text-primary);
 }
 
+.c-time-remaining.timer-warning {
+    color: var(--danger-color);
+    animation: pulse 0.5s infinite alternate;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    100% { opacity: 0.5; }
+}
+
 .c-score-display {
     font-size: var(--font-size-lg);
     font-weight: 600;
     color: var(--text-secondary);
+}
+
+/* Theme display within timer container */
+.theme-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: var(--spacing-sm);
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    text-align: center;
+}
+
+.theme-title {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.theme-description {
+    font-size: var(--font-size-md);
+    color: var(--text-secondary);
+    line-height: 1.4;
+    max-width: 300px;
 }
 
 .c-question-container {
@@ -569,4 +608,99 @@ input[type="password"].error:focus {
     background-color: #dc2626;
     border-color: rgba(220, 38, 38, 0.5);
     box-shadow: 0 4px 6px rgba(220, 38, 38, 0.3);
+}
+
+/* Theme Voting Styles */
+.theme-voting-content {
+    text-align: center;
+}
+
+.theme-voting-content h3 {
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-lg);
+    font-size: var(--font-size-xl);
+}
+
+.theme-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-md);
+}
+
+.theme-vote-btn {
+    padding: var(--spacing-md);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.theme-vote-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px var(--shadow-medium);
+    border-color: var(--quiz-accent);
+    background-color: var(--hover-bg);
+}
+
+.theme-vote-btn.selected {
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+    color: white;
+    transform: scale(1.05);
+}
+
+.theme-vote-btn.voted {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.theme-vote-btn .theme-name {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+}
+
+.theme-vote-btn .theme-description {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* Selected theme display */
+.theme-selected-content {
+    text-align: center;
+    padding: var(--spacing-lg);
+}
+
+.theme-selected-content h3 {
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-lg);
+}
+
+.theme-selected-content .theme-name {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--quiz-accent);
+    margin-bottom: var(--spacing-md);
+}
+
+.theme-selected-content .theme-description {
+    font-size: var(--font-size-base);
+    color: var(--text-secondary);
+    line-height: 1.6;
+    max-width: 600px;
+    margin: 0 auto;
 }

@@ -11,7 +11,7 @@ class ChatSystem {
         this.retryAttempts = 0;
         this.maxRetryAttempts = 10; // Maximum retry attempts
 
-        console.log('ChatSystem: Constructor called. Fetching active session ID...');
+        // console.log('ChatSystem: Constructor called. Fetching active session ID...');
         this.fetchActiveSessionId().then(() => {
             if (typeof io !== 'undefined') {
                 this.socket = window.createCompatibleSocket ? 
@@ -40,7 +40,7 @@ class ChatSystem {
                 this.initializeSocketListeners();
                 // IMPORTANT: Make the socket instance available globally for other classes
                 window.sharedSocket = this.socket;
-                console.log('ChatSystem: Socket initialized and made available on window.sharedSocket.');
+                // console.log('ChatSystem: Socket initialized and made available on window.sharedSocket.');
             } else {
                 console.warn('ChatSystem: Socket.IO not available. Chat will work without real-time updates.');
                 this.socket = null;
@@ -51,16 +51,16 @@ class ChatSystem {
     }
 
     init() {
-        console.log('ChatSystem: init() started.');
+        // console.log('ChatSystem: init() started.');
         this.bindChatEvents();
         this.listenForUserEvents();
         this.loadChatMessages();
-        console.log('ChatSystem: init() completed.');
+        // console.log('ChatSystem: init() completed.');
     }
 
     // Start periodic sessionId updates
     startSessionIdUpdater() {
-        console.log('ChatSystem: Starting periodic sessionId updater...');
+        // console.log('ChatSystem: Starting periodic sessionId updater...');
         this.sessionUpdateInterval = setInterval(() => {
             this.fetchActiveSessionId();
         }, 1000); // Update every second
@@ -71,7 +71,7 @@ class ChatSystem {
         if (this.sessionUpdateInterval) {
             clearInterval(this.sessionUpdateInterval);
             this.sessionUpdateInterval = null;
-            console.log('ChatSystem: Stopped periodic sessionId updater');
+            // console.log('ChatSystem: Stopped periodic sessionId updater');
         }
     }
 
@@ -108,13 +108,13 @@ class ChatSystem {
             return;
         }
 
-        console.log('ChatSystem: Initializing Socket.IO listeners...');
+        // console.log('ChatSystem: Initializing Socket.IO listeners...');
         this.socket.on('connect', () => {
-            console.log('ChatSystem: Connected to server with ID:', this.socket.id);
+            // console.log('ChatSystem: Connected to server with ID:', this.socket.id);
             if (this.sessionId) {
                 this.socket.emit('join', `quiz_session_${this.sessionId}`, (response) => {
                     if (response && response.status === 'success') {
-                        console.log(`ChatSystem: Successfully joined room: quiz_session_${this.sessionId}`);
+                        // console.log(`ChatSystem: Successfully joined room: quiz_session_${this.sessionId}`);
                     } else {
                         console.error(`ChatSystem: Failed to join room: quiz_session_${this.sessionId}`, response);
                     }
@@ -125,13 +125,13 @@ class ChatSystem {
         });
 
         this.socket.on('message_sent', (data) => {
-            console.log('ChatSystem: Received message_sent event via Socket.IO:', data);
+            // console.log('ChatSystem: Received message_sent event via Socket.IO:', data);
 
             if (data.session_id === this.sessionId) {
-                console.log('ChatSystem: Reloading chat messages for current session');
+                // console.log('ChatSystem: Reloading chat messages for current session');
                 // Reload immediately
                 this.loadChatMessages();
-                console.log('ChatSystem: Reloading chat messages for current session');
+                // console.log('ChatSystem: Reloading chat messages for current session');
                 // Small delay to ensure the message is in the database
                 setTimeout(() => {
                     this.loadChatMessages();
@@ -140,13 +140,13 @@ class ChatSystem {
         });
 
         this.socket.on('disconnect', (reason) => {
-            console.log('ChatSystem: Disconnected:', reason);
+            // console.log('ChatSystem: Disconnected:', reason);
         });
 
         this.socket.on('error', (error) => {
             console.error('ChatSystem: Socket.IO error:', error);
         });
-        console.log('ChatSystem: Socket.IO listeners initialized.');
+        // console.log('ChatSystem: Socket.IO listeners initialized.');
     }
 
     async fetchActiveSessionId() {
@@ -168,27 +168,27 @@ class ChatSystem {
                 if (this.sessionId !== newSessionId) {
                     const oldSessionId = this.sessionId;
                     this.sessionId = newSessionId;
-                    console.log(`ChatSystem: Session ID updated from ${oldSessionId} to ${newSessionId}`);
+                    // console.log(`ChatSystem: Session ID updated from ${oldSessionId} to ${newSessionId}`);
                     
                     // Update socket room - socket.io will queue if not connected
                     if (this.socket) {
                         if (oldSessionId) {
                             this.socket.emit('leave', `quiz_session_${oldSessionId}`);
-                            console.log(`ChatSystem: Emitted leave for room: quiz_session_${oldSessionId}`);
+                            // console.log(`ChatSystem: Emitted leave for room: quiz_session_${oldSessionId}`);
                         }
                         this.socket.emit('join', `quiz_session_${this.sessionId}`, (response) => {
                             if (response && response.status === 'success') {
-                                console.log(`ChatSystem: Successfully joined room: quiz_session_${this.sessionId}`);
+                                // console.log(`ChatSystem: Successfully joined room: quiz_session_${this.sessionId}`);
                             } else {
                                 console.error(`ChatSystem: Failed to join room: quiz_session_${this.sessionId}`, response);
                             }
                         });
-                        console.log(`ChatSystem: Emitted join for room: quiz_session_${this.sessionId}`);
+                        // console.log(`ChatSystem: Emitted join for room: quiz_session_${this.sessionId}`);
                     }
                     
                     // Retry pending message if we have one
                     if (this.pendingMessage) {
-                        console.log('ChatSystem: Retrying pending message with new sessionId');
+                        // console.log('ChatSystem: Retrying pending message with new sessionId');
                         this.retryPendingMessage();
                     }
                 }
@@ -210,16 +210,16 @@ class ChatSystem {
     // Get user from localStorage as fallback
     getUserFromLocalStorage() {
         try {
-            console.log('chatdebugconsolelog: Attempting to get user from localStorage...');
+            // console.log('chatdebugconsolelog: Attempting to get user from localStorage...');
             
             const userId = localStorage.getItem('user_user_id');
             const firstName = localStorage.getItem('user_first_name');
             const lastName = localStorage.getItem('user_last_name');
 
-            console.log('chatdebugconsolelog: localStorage values:');
-            console.log('chatdebugconsolelog: userId:', userId);
-            console.log('chatdebugconsolelog: firstName:', firstName);
-            console.log('chatdebugconsolelog: lastName:', lastName);
+            // console.log('chatdebugconsolelog: localStorage values:');
+            // console.log('chatdebugconsolelog: userId:', userId);
+            // console.log('chatdebugconsolelog: firstName:', firstName);
+            // console.log('chatdebugconsolelog: lastName:', lastName);
 
             if (userId && firstName && lastName) {
                 const userFromStorage = {
@@ -228,10 +228,10 @@ class ChatSystem {
                     firstName: firstName,
                     lastName: lastName
                 };
-                console.log('chatdebugconsolelog: Successfully created user from localStorage:', userFromStorage);
+                // console.log('chatdebugconsolelog: Successfully created user from localStorage:', userFromStorage);
                 return userFromStorage;
             } else {
-                console.log('chatdebugconsolelog: Missing required localStorage values, returning null');
+                // console.log('chatdebugconsolelog: Missing required localStorage values, returning null');
                 return null;
             }
         } catch (error) {
@@ -242,46 +242,46 @@ class ChatSystem {
 
     // Get current user with localStorage fallback
     getCurrentUserWithFallback() {
-        console.log('chatdebugconsolelog: getCurrentUserWithFallback called');
-        console.log('chatdebugconsolelog: this.currentUser:', this.currentUser);
+        // console.log('chatdebugconsolelog: getCurrentUserWithFallback called');
+        // console.log('chatdebugconsolelog: this.currentUser:', this.currentUser);
         
         if (this.currentUser) {
-            console.log('chatdebugconsolelog: Using this.currentUser:', this.currentUser);
+            // console.log('chatdebugconsolelog: Using this.currentUser:', this.currentUser);
             return this.currentUser;
         }
 
         // Try localStorage as fallback
-        console.log('chatdebugconsolelog: this.currentUser is null, trying localStorage fallback...');
+        // console.log('chatdebugconsolelog: this.currentUser is null, trying localStorage fallback...');
         const userFromStorage = this.getUserFromLocalStorage();
         if (userFromStorage) {
-            console.log('chatdebugconsolelog: Using user data from localStorage as fallback:', userFromStorage);
+            // console.log('chatdebugconsolelog: Using user data from localStorage as fallback:', userFromStorage);
             return userFromStorage;
         }
 
-        console.log('chatdebugconsolelog: No user found in currentUser or localStorage, returning null');
+        // console.log('chatdebugconsolelog: No user found in currentUser or localStorage, returning null');
         return null;
     }
 
     listenForUserEvents() {
         document.addEventListener('userAuthenticated', (event) => {
-            console.log('chatdebugconsolelog: userAuthenticated event received');
-            console.log('chatdebugconsolelog: event.detail:', event.detail);
+            // console.log('chatdebugconsolelog: userAuthenticated event received');
+            // console.log('chatdebugconsolelog: event.detail:', event.detail);
             this.currentUser = event.detail.user;
-            console.log('chatdebugconsolelog: this.currentUser set to:', this.currentUser);
+            // console.log('chatdebugconsolelog: this.currentUser set to:', this.currentUser);
             this.loadChatMessages();
         });
 
         document.addEventListener('userRegistered', (event) => {
-            console.log('chatdebugconsolelog: userRegistered event received');
+            // console.log('chatdebugconsolelog: userRegistered event received');
             const user = event.detail.user;
-            console.log('chatdebugconsolelog: registered user:', user);
+            // console.log('chatdebugconsolelog: registered user:', user);
             this.addChatMessage('System', `${user.fullName} has joined the quiz!`);
         });
 
         document.addEventListener('userLoggedOut', () => {
-            console.log('chatdebugconsolelog: userLoggedOut event received');
+            // console.log('chatdebugconsolelog: userLoggedOut event received');
             this.currentUser = null;
-            console.log('chatdebugconsolelog: this.currentUser set to null');
+            // console.log('chatdebugconsolelog: this.currentUser set to null');
         });
     }
 
@@ -330,7 +330,7 @@ class ChatSystem {
 
             const data = await response.json();
             const messages = data.messages || [];
-            console.log('ChatSystem: Loaded messages:', messages);
+            // console.log('ChatSystem: Loaded messages:', messages);
 
             const chatMessages = document.getElementById('chatMessages');
             if (!chatMessages) return;
@@ -360,7 +360,7 @@ class ChatSystem {
     async retryPendingMessage() {
         if (!this.pendingMessage) return;
 
-        console.log(`ChatSystem: Retrying pending message (attempt ${this.retryAttempts + 1}/${this.maxRetryAttempts})`);
+        // console.log(`ChatSystem: Retrying pending message (attempt ${this.retryAttempts + 1}/${this.maxRetryAttempts})`);
         
         try {
             const response = await fetch(`${this.lanIP}/api/v1/chat/messages`, {
@@ -376,7 +376,7 @@ class ChatSystem {
 
             if (response.ok) {
                 const result = await response.json();
-                console.log('ChatSystem: Pending message sent successfully:', result);
+                // console.log('ChatSystem: Pending message sent successfully:', result);
                 
                 // Clear pending message and reset retry counter
                 this.pendingMessage = null;
@@ -415,7 +415,7 @@ class ChatSystem {
     }
 
     async sendChatMessage() {
-        console.log('chatdebugconsolelog: sendChatMessage called');
+        // console.log('chatdebugconsolelog: sendChatMessage called');
         
         const chatInput = document.getElementById('chatInput');
         let message = chatInput.value.trim();
@@ -423,29 +423,29 @@ class ChatSystem {
         // If no message provided, use a random greeting
         if (!message) {
             message = this.getRandomGreeting();
-            console.log('chatdebugconsolelog: No message provided, using random greeting:', message);
+            // console.log('chatdebugconsolelog: No message provided, using random greeting:', message);
         }
 
-        console.log('chatdebugconsolelog: Message to send:', message);
+        // console.log('chatdebugconsolelog: Message to send:', message);
 
         // Try to get user with localStorage fallback
         const user = this.getCurrentUserWithFallback();
-        console.log('chatdebugconsolelog: User from getCurrentUserWithFallback:', user);
+        // console.log('chatdebugconsolelog: User from getCurrentUserWithFallback:', user);
         
         if (!user) {
-            console.log('chatdebugconsolelog: No user found, showing login error');
+            // console.log('chatdebugconsolelog: No user found, showing login error');
             this.showChatError('Please log in to chat.');
             return;
         }
 
         if (!this.sessionId) {
-            console.log('chatdebugconsolelog: No sessionId, showing session error');
+            // console.log('chatdebugconsolelog: No sessionId, showing session error');
             this.showChatError('Chat session not initialized. Please wait or refresh.');
             console.error('ChatSystem: sendChatMessage: sessionId is not set.');
             return;
         }
 
-        console.log('chatdebugconsolelog: All checks passed, sending message with user:', user, 'sessionId:', this.sessionId);
+        // console.log('chatdebugconsolelog: All checks passed, sending message with user:', user, 'sessionId:', this.sessionId);
 
         chatInput.value = '';
 
@@ -458,7 +458,7 @@ class ChatSystem {
                 reply_to_id: null
             };
             
-            console.log('chatdebugconsolelog: Sending payload:', payload);
+            // console.log('chatdebugconsolelog: Sending payload:', payload);
 
             const response = await fetch(`${this.lanIP}/api/v1/chat/messages`, {
                 method: 'POST',
@@ -470,7 +470,7 @@ class ChatSystem {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                console.log('chatdebugconsolelog: Server error response:', errorData);
+                // console.log('chatdebugconsolelog: Server error response:', errorData);
                 
                 // If it's a session-related error, set up for retry
                 if (errorData.detail && (
@@ -479,7 +479,7 @@ class ChatSystem {
                     errorData.detail.includes('not found') ||
                     response.status === 404
                 )) {
-                    console.log('ChatSystem: Session-related error detected, setting up retry mechanism');
+                    // console.log('ChatSystem: Session-related error detected, setting up retry mechanism');
                     this.pendingMessage = {
                         ...payload,
                         fullName: user.fullName
@@ -499,10 +499,10 @@ class ChatSystem {
             }
 
             const result = await response.json();
-            console.log('chatdebugconsolelog: Message sent successfully:', result);
+            // console.log('chatdebugconsolelog: Message sent successfully:', result);
 
             if (!this.socket) {
-                console.log('chatdebugconsolelog: No socket, dispatching messageSent event');
+                // console.log('chatdebugconsolelog: No socket, dispatching messageSent event');
                 document.dispatchEvent(new CustomEvent('messageSent', {
                     detail: {
                         sender: user.fullName,
@@ -604,10 +604,10 @@ class ChatSystem {
         if (this.socket && this.socket.connected) {
             if (oldSessionId && oldSessionId !== this.sessionId) {
                 this.socket.emit('leave', `quiz_session_${oldSessionId}`);
-                console.log(`ChatSystem: Left old room: quiz_session_${oldSessionId}`);
+                // console.log(`ChatSystem: Left old room: quiz_session_${oldSessionId}`);
             }
             this.socket.emit('join', `quiz_session_${this.sessionId}`);
-            console.log(`ChatSystem: Switched to room: quiz_session_${this.sessionId}`);
+            // console.log(`ChatSystem: Switched to room: quiz_session_${this.sessionId}`);
         }
 
         this.lastMessageCount = 0;
@@ -629,14 +629,14 @@ class ChatSystem {
     canChat() {
         // Check both currentUser and localStorage fallback
         const user = this.getCurrentUserWithFallback();
-        console.log('chatdebugconsolelog: canChat() called, user:', user);
+        // console.log('chatdebugconsolelog: canChat() called, user:', user);
         return user !== null;
     }
 
     getCurrentUser() {
         // Return current user with localStorage fallback
         const user = this.getCurrentUserWithFallback();
-        console.log('chatdebugconsolelog: getCurrentUser() called, returning:', user);
+        // console.log('chatdebugconsolelog: getCurrentUser() called, returning:', user);
         return user;
     }
 
@@ -650,17 +650,17 @@ class ChatSystem {
 }
 
 document.addEventListener('userAuthenticated', (event) => {
-    console.log("chatdebugconsolelog: Global userAuthenticated event received");
+    // console.log("chatdebugconsolelog: Global userAuthenticated event received");
     const user = event.detail.user;
-    console.log("chatdebugconsolelog: Global event user data:", user);
+    // console.log("chatdebugconsolelog: Global event user data:", user);
     // This should set the instance's currentUser, not the class property
     if (window.chatSystemInstance) {
-        console.log("chatdebugconsolelog: Setting chatSystemInstance.currentUser");
+        // console.log("chatdebugconsolelog: Setting chatSystemInstance.currentUser");
         window.chatSystemInstance.currentUser = user;
-        console.log("chatdebugconsolelog: chatSystemInstance.currentUser set to:", window.chatSystemInstance.currentUser);
+        // console.log("chatdebugconsolelog: chatSystemInstance.currentUser set to:", window.chatSystemInstance.currentUser);
         window.chatSystemInstance.fetchActiveSessionId();
     } else {
-        console.log("chatdebugconsolelog: window.chatSystemInstance not found");
+        // console.log("chatdebugconsolelog: window.chatSystemInstance not found");
     }
 });
 

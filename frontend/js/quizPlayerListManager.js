@@ -17,7 +17,7 @@ class PlayersListManager {
         // Bind the socket listener
         this.setupSocketListener();
         
-        console.log("PlayersListManager initialized with user:", this.currentUser);
+        // console.log("PlayersListManager initialized with user:", this.currentUser);
     }
 
     // Set up the socket listener for player data updates
@@ -27,10 +27,10 @@ class PlayersListManager {
             return;
         }
 
-        console.log("Setting up socket listener for 'all_users_data_updated'");
+        // console.log("Setting up socket listener for 'all_users_data_updated'");
         
         this.socket.on('all_users_data_updated', (data) => {
-            console.log("Received all_users_data_updated:", data);
+            // console.log("Received all_users_data_updated:", data);
             this.updatePlayersDisplay(data);
         });
 
@@ -63,7 +63,7 @@ class PlayersListManager {
             }
         }, 5000);
 
-        console.log("Players list auto-update started");
+        // console.log("Players list auto-update started");
     }
 
     // Stop the auto-update interval
@@ -73,7 +73,7 @@ class PlayersListManager {
             this.updateInterval = null;
         }
         this.isActive = false;
-        console.log("Players list auto-update stopped");
+        // console.log("Players list auto-update stopped");
     }
 
     // Get current user ID with multiple fallback options
@@ -90,7 +90,7 @@ class PlayersListManager {
                       this.currentUser.ID;
         
         if (!userId) {
-            console.warn("Could not determine user ID from:", this.currentUser);
+            console.warn("🔍 [QUIZ_PLAYER_LIST] Could not determine user ID from:", this.currentUser);
         }
         
         return userId;
@@ -105,31 +105,53 @@ class PlayersListManager {
 
         const userId = this.getCurrentUserId();
         if (!userId) {
-            console.warn("No valid user ID available, cannot request player data");
+            console.warn("🔍 [QUIZ_PLAYER_LIST] No valid user ID available, cannot request player data");
             return;
         }
 
-        // Get session ID from chat system
-        const sessionId = window.chatSystemInstance?.sessionId || 
-                         window.quizAutoSession?.sessionId || 
-                         1000167; // fallback
+        // Get session ID from chat system, wait if not available
+        const getSessionId = () => {
+            return window.chatSystemInstance?.sessionId || 
+                   window.quizAutoSession?.sessionId || 
+                   2; // fallback to 2 like chat system
+        };
 
+        let sessionId = getSessionId();
+        if (!sessionId) {
+            // Wait for session ID to be available
+            let attempts = 0;
+            const waitForSessionId = () => {
+                sessionId = getSessionId();
+                if (sessionId || attempts >= 50) { // Wait up to 5 seconds
+                    this.doRequestPlayerData(userId, sessionId);
+                } else {
+                    attempts++;
+                    setTimeout(waitForSessionId, 100);
+                }
+            };
+            waitForSessionId();
+        } else {
+            this.doRequestPlayerData(userId, sessionId);
+        }
+    }
+
+    doRequestPlayerData(userId, sessionId) {
         const requestData = {
             user_id: userId,
             session_id: sessionId
         };
 
-        console.log("Requesting player data:", requestData);
+        // console.log("Requesting player data:", requestData);
         this.socket.emit('request_user_data', requestData);
     }
 
     // Update the players display with received data
     updatePlayersDisplay(data) {
-        console.log("Updating players display with data:", data);
+        // console.log("Updating players display with data:", data);
         
         // Handle different possible response structures
         if (!data) {
-            console.warn("No data received");
+            console.warn("🔍 [QUIZ_PLAYER_LIST] No data received");
             this.showNoDataMessage();
             return;
         }
@@ -144,7 +166,7 @@ class PlayersListManager {
         }
 
         if (players.length === 0) {
-            console.log("No players in session");
+            // console.log("No players in session");
             this.showNoPlayersMessage(data.session_name);
             return;
         }
@@ -164,7 +186,7 @@ class PlayersListManager {
         // Update the container
         if (this.playersContainer) {
             this.playersContainer.innerHTML = playersHTML;
-            console.log(`Updated players list with ${players.length} players`);
+            // console.log(`Updated players list with ${players.length} players`);
         } else {
             console.warn("Players container element not found");
             // Try to find container with alternative selectors
@@ -174,7 +196,7 @@ class PlayersListManager {
             if (alternativeContainer) {
                 alternativeContainer.innerHTML = playersHTML;
                 this.playersContainer = alternativeContainer;
-                console.log("Found alternative players container");
+                // console.log("Found alternative players container");
             }
         }
 
@@ -193,6 +215,10 @@ class PlayersListManager {
 
     // Get player name with fallback options
     getPlayerName(player) {
+        if (player.userName && player.userName.trim()) {
+            return player.userName.trim();
+        }
+        
         if (player.username && player.username.trim()) {
             return player.username.trim();
         }
@@ -201,13 +227,13 @@ class PlayersListManager {
         const lastName = player.last_name || player.lastName || '';
         const fullName = `${firstName} ${lastName}`.trim();
         
-        return fullName || player.name || `Player ${player.user_id || player.id}`;
+        return fullName || player.name || `Player ${player.userId || player.id}`;
     }
 
     // Check if player is current user
     isCurrentUser(player) {
         const currentUserId = this.getCurrentUserId();
-        const playerUserId = player.user_id || player.id || player.userId;
+        const playerUserId = player.userId || player.id || player.user_id;
         
         return currentUserId && playerUserId && 
                String(currentUserId) === String(playerUserId);
@@ -216,7 +242,6 @@ class PlayersListManager {
     // Generate HTML for a single player
     generatePlayerHTML(player, index) {
         const isCurrentUser = this.isCurrentUser(player);
-        const playerName = this.getPlayerName(player);
         const sessionScore = this.getPlayerScore(player);
         const questionsAnswered = player.total_questions_answered || 
                                  player.questions_answered || 
@@ -224,10 +249,10 @@ class PlayersListManager {
                                  0;
         
         return `
-            <div class=" gamepad c-player-item ${isCurrentUser ? 'current-user' : ''}" data-user-id="${player.user_id || player.id}">
+            <div class=" gamepad c-player-item ${isCurrentUser ? 'current-user' : ''}" data-user-id="${player.userId || player.id}">
                 <div class="player-rank">#${index + 1}</div>
                 <div class="player-info">
-                    <div class="player-name">${playerName}</div>
+                    <div class="player-name">${player.userName || `Player ${player.userId || player.id}`}</div>
                     <div class="player-stats">
                         <span class="session-score">${sessionScore} pts</span>
                         <span class="questions-answered">${questionsAnswered} answered</span>
@@ -286,7 +311,7 @@ class PlayersListManager {
     // Update current user reference
     setCurrentUser(user) {
         this.currentUser = user;
-        console.log("Current user updated:", user);
+        // console.log("Current user updated:", user);
         
         // If we're currently running, restart to use new user data
         if (this.isActive) {
@@ -301,7 +326,7 @@ class PlayersListManager {
 
     // Manually refresh data
     refresh() {
-        console.log("Manually refreshing player data");
+        // console.log("Manually refreshing player data");
         this.requestPlayerData();
     }
 
@@ -312,7 +337,7 @@ class PlayersListManager {
             this.socket.off('all_users_data_updated');
             this.socket.off('error');
         }
-        console.log("PlayersListManager destroyed");
+        // console.log("PlayersListManager destroyed");
     }
 }
 
@@ -642,18 +667,19 @@ if (!document.querySelector('#players-list-styles')) {
 
 // Initialize function with better error handling
 function initializePlayersListManager(socket, currentUser) {
-    console.log("Initializing PlayersListManager with:", { 
-        socketConnected: socket?.connected, 
-        currentUser: currentUser 
-    });
+
+    // console.log("Initializing PlayersListManager with:", { 
+    //     socketConnected: socket?.connected, 
+    //     currentUser: currentUser 
+    // });
     
     if (!socket) {
-        console.error("Cannot initialize PlayersListManager: socket is undefined");
+        console.error("🔍 [QUIZ_PLAYER_LIST] Cannot initialize PlayersListManager: socket is undefined");
         return null;
     }
     
     if (!currentUser) {
-        console.error("Cannot initialize PlayersListManager: currentUser is undefined");
+        console.error("🔍 [QUIZ_PLAYER_LIST] Cannot initialize PlayersListManager: currentUser is undefined");
         return null;
     }
     
@@ -666,7 +692,7 @@ function initializePlayersListManager(socket, currentUser) {
         // Store reference globally so you can control it
         window.playersListManager = playersManager;
         
-        console.log("PlayersListManager successfully initialized");
+        // console.log("PlayersListManager successfully initialized");
         return playersManager;
     } catch (error) {
         console.error("Error initializing PlayersListManager:", error);
@@ -676,9 +702,9 @@ function initializePlayersListManager(socket, currentUser) {
 
 // Improved event listener with better socket handling
 document.addEventListener('userAuthenticated', (event) => {
-    console.log("User authenticated event received");
+    // console.log("User authenticated event received");
     const user = event.detail.user;
-    console.log("User data:", user);
+    // console.log("User data:", user);
     
     // Function to initialize when socket is ready
     const initializeWhenReady = () => {
@@ -689,27 +715,27 @@ document.addEventListener('userAuthenticated', (event) => {
                       (window.socketInstance && window.socketInstance.socket);
         
         if (socket && typeof socket.on === 'function' && (socket.connected || socket.readyState === 'open')) {
-            console.log("Socket found and connected:", socket);
+            // console.log("Socket found and connected:", socket);
             const playersManager = initializePlayersListManager(socket, user);
             if (playersManager) {
-                console.log("PlayersListManager successfully initialized");
+                // console.log("PlayersListManager successfully initialized");
             }
         } else if (socket) {
-            console.log("Socket found but not connected, waiting...");
+            // console.log("Socket found but not connected, waiting...");
             // Wait for socket to connect - check if it's a valid socket.io client
             if (typeof socket.on === 'function') {
                 socket.on('connect', () => {
-                    console.log("Socket connected, initializing PlayersListManager");
+                    // console.log("Socket connected, initializing PlayersListManager");
                     const playersManager = initializePlayersListManager(socket, user);
                     if (playersManager) {
-                        console.log("PlayersListManager successfully initialized after connection");
+                        // console.log("PlayersListManager successfully initialized after connection");
                     }
                 });
             } else {
                 console.warn("Socket object doesn't have .on method, skipping socket listener setup");
             }
         } else {
-            console.log("Socket not found, retrying in 500ms...");
+            // console.log("Socket not found, retrying in 500ms...");
             setTimeout(initializeWhenReady, 500);
         }
     };

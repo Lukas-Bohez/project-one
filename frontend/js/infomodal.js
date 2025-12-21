@@ -361,7 +361,7 @@
             }
         });
         
-        console.log('Info button created successfully at top: 16px');
+        // console.log('Info button created successfully at top: 16px');
     };
     
     // Initialize

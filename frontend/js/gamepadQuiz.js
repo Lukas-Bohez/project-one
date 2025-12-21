@@ -40,7 +40,7 @@ class QuizGamepadNavigator {
         localStorage.setItem('quizUserFirstName', 'gamepad');
         localStorage.setItem('quizUserLastName', 'user');
         localStorage.setItem('quizUserPassword', 'gamepaduser');
-        console.log('Local Storage credentials updated for Gamepad Navigator.');
+        // console.log('Local Storage credentials updated for Gamepad Navigator.');
     }
 
     addStyles() {
@@ -73,7 +73,7 @@ class QuizGamepadNavigator {
 
     setupGamepadDetection() {
         const handleGamepadConnected = (e) => {
-            console.log('Gamepad connected:', e.gamepad);
+            // console.log('Gamepad connected:', e.gamepad);
             if (this.gamepadIndex === null) {
                 this.gamepadIndex = e.gamepad.index;
                 document.body.classList.add('gamepad-active');
@@ -82,7 +82,7 @@ class QuizGamepadNavigator {
         };
 
         const handleGamepadDisconnected = (e) => {
-            console.log('Gamepad disconnected');
+            // console.log('Gamepad disconnected');
             if (this.gamepadIndex === e.gamepad.index) {
                 this.gamepadIndex = null;
                 
@@ -91,7 +91,7 @@ class QuizGamepadNavigator {
                 for (let i = 0; i < gamepads.length; i++) {
                     if (gamepads[i] && gamepads[i].connected) {
                         this.gamepadIndex = gamepads[i].index;
-                        console.log('Switched to another connected gamepad:', gamepads[i]);
+                        // console.log('Switched to another connected gamepad:', gamepads[i]);
                         break;
                     }
                 }
@@ -113,7 +113,7 @@ class QuizGamepadNavigator {
             if (initialGamepads[i] && initialGamepads[i].connected) {
                 this.gamepadIndex = initialGamepads[i].index;
                 document.body.classList.add('gamepad-active');
-                console.log('Initially connected gamepad:', initialGamepads[i]);
+                // console.log('Initially connected gamepad:', initialGamepads[i]);
                 this.updateSelection();
                 break;
             }
@@ -272,7 +272,7 @@ handleGamepadInput(gamepad) {
         if (itemSlots[index]) {
             // Direct click on the item slot element
             itemSlots[index].click();
-            console.log(`Clicked item slot ${index + 1}`);
+            // console.log(`Clicked item slot ${index + 1}`);
         }
     }
 
@@ -286,7 +286,7 @@ handleGamepadInput(gamepad) {
                 const button = box.querySelector('.snes-button');
                 if (button) {
                     button.click();
-                    console.log(`${buttonLetter} button pressed - clicked answer:`, button);
+                    // console.log(`${buttonLetter} button pressed - clicked answer:`, button);
                     break;
                 }
             }
@@ -295,13 +295,13 @@ handleGamepadInput(gamepad) {
 
     handleSelect() {
         // Emergency exit - always go back to index.html
-        console.log('Select button pressed - emergency exit to index.html');
+        // console.log('Select button pressed - emergency exit to index.html');
         window.location.href = '/index.html';
     }
 
     handleStart() {
         // Refresh the page
-        console.log('Start button pressed - reloading page...');
+        // console.log('Start button pressed - reloading page...');
         location.reload();
     }
 
@@ -389,7 +389,7 @@ handleGamepadInput(gamepad) {
 document.addEventListener('DOMContentLoaded', () => {
     if (!window.quizGamepadNavigator) {
         window.quizGamepadNavigator = new QuizGamepadNavigator();
-        console.log('Quiz Gamepad Navigator initialized. Connect a gamepad to start navigating!');
+        // console.log('Quiz Gamepad Navigator initialized. Connect a gamepad to start navigating!');
     }
 });
 
@@ -397,6 +397,6 @@ document.addEventListener('DOMContentLoaded', () => {
 if (document.readyState !== 'loading') {
     if (!window.quizGamepadNavigator) {
         window.quizGamepadNavigator = new QuizGamepadNavigator();
-        console.log('Quiz Gamepad Navigator initialized. Connect a gamepad to start navigating!');
+        // console.log('Quiz Gamepad Navigator initialized. Connect a gamepad to start navigating!');
     }
 }

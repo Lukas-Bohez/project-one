@@ -253,7 +253,7 @@ const listCachedAudioKeys = async () => {
 
 const scanFolderForMP3s = async () => {
     try {
-        console.log('🔍 Scanning folder for audio files:', config.folder);
+        // console.log('🔍 Scanning folder for audio files:', config.folder);
 
         const response = await fetch(config.folder);
 
@@ -306,7 +306,7 @@ const scanFolderForMP3s = async () => {
                 !filename.includes('..'); // Security: no parent directory access
         });
 
-        console.log('🎵 Found audio files:', files);
+        // console.log('🎵 Found audio files:', files);
         return files;
 
     } catch (error) {
@@ -318,7 +318,7 @@ const scanFolderForMP3s = async () => {
             if (indexResponse.ok) {
                 const indexData = await indexResponse.json();
                 if (Array.isArray(indexData)) {
-                    console.log('📋 Using index.json file list');
+                    // console.log('📋 Using index.json file list');
                     return indexData.filter(f => {
                         const lower = f.toLowerCase();
                         return lower.endsWith('.mp3') || lower.endsWith('.wav');
@@ -336,9 +336,9 @@ const scanFolderForMP3s = async () => {
 // Forcefully sync all cached items from IndexedDB to lofi playlist
 const syncCacheToPlaylist = async () => {
     try {
-        console.log('🔄 Syncing IndexedDB cache to lofi playlist...');
+        // console.log('🔄 Syncing IndexedDB cache to lofi playlist...');
         const allCached = await getAllCachedDownloads();
-        console.log('All cached downloads:', allCached);
+        // console.log('All cached downloads:', allCached);
         
         let addedCount = 0;
         for (const item of allCached) {
@@ -356,14 +356,14 @@ const syncCacheToPlaylist = async () => {
                     metadata: item.metadata
                 });
                 addedCount++;
-                console.log('+ Added to playlist:', prettyTitle(title));
+                // console.log('+ Added to playlist:', prettyTitle(title));
             }
         }
         
         if (addedCount > 0) {
-            console.log(`✅ Synced ${addedCount} new items from cache`);
+            // console.log(`✅ Synced ${addedCount} new items from cache`);
         } else {
-            console.log('ℹ️ No new items to sync from cache');
+            // console.log('ℹ️ No new items to sync from cache');
         }
         
         return addedCount;
@@ -381,14 +381,14 @@ const deduplicatePlaylist = (playlist) => {
         const hasExtension = /\.(mp3|mp4|webm)$/i.test(item.title || '');
         
         if (hasExtension) {
-            console.log('⏭️ Skipping file with extension:', item.title);
+            // console.log('⏭️ Skipping file with extension:', item.title);
             continue;
         }
         
         result.push(item);
     }
     
-    console.log(`📊 Deduplication: ${playlist.length} → ${result.length} items (removed ${playlist.length - result.length} with extensions)`);
+    // console.log(`📊 Deduplication: ${playlist.length} → ${result.length} items (removed ${playlist.length - result.length} with extensions)`);
     return result;
 };
 
@@ -446,7 +446,7 @@ const loadPersistentSettings = () => {
                 // Reset louder cached volumes to the new quiet default
                 cachedVolume = config.volume;
                 localStorage.setItem(config.persistence.volumeKey, String(config.volume));
-                console.log('🔊 Reset cached volume to quiet default:', config.volume);
+                // console.log('🔊 Reset cached volume to quiet default:', config.volume);
             }
         }
 
@@ -511,7 +511,7 @@ const createActivationButton = () => {
 // Activate the lofi player
 const activateLofiPlayer = () => {
     lofiActivated = true;
-    console.log('Lofi player activated by user');
+    // console.log('Lofi player activated by user');
     try {
         if (config.persistence?.enabled) {
             localStorage.setItem(config.persistence.playerEnabledKey, 'true');
@@ -587,7 +587,7 @@ const activateLofiPlayer = () => {
 // Initialize when DOM is ready (respect persisted activation)
 document.addEventListener('DOMContentLoaded', () => {
     loadPersistentSettings();
-    console.log('Lofi player boot. Enabled in cache:', isPlayerEnabled);
+    // console.log('Lofi player boot. Enabled in cache:', isPlayerEnabled);
 
     // Forcefully sync IndexedDB cache to playlist immediately (finds converter downloads)
     (async () => {
@@ -623,7 +623,7 @@ const updateNowPlaying = (text) => {
 // Setup listeners for user interaction to enable autoplay
 const setupAutoStartListeners = () => {
     const startOnInteraction = () => {
-        console.log('User interaction detected - starting playback');
+        // console.log('User interaction detected - starting playback');
         startPlayback();
         // Remove listeners after first interaction
         document.removeEventListener('click', startOnInteraction);
@@ -636,7 +636,7 @@ const setupAutoStartListeners = () => {
     document.addEventListener('keydown', startOnInteraction, { once: true });
     document.addEventListener('touchstart', startOnInteraction, { once: true });
     
-    console.log('Waiting for user interaction to start playback...');
+    // console.log('Waiting for user interaction to start playback...');
     
     // Also try to initialize song list immediately for UI display
     initializeSongList();
@@ -645,26 +645,26 @@ const setupAutoStartListeners = () => {
 // Initialize song list without starting playbook (for UI population)
 const initializeSongList = async () => {
     try {
-        console.log('🔄 Initializing song list in', config.mode, 'mode...');
-        console.log('Current songList length:', songList ? songList.length : 'undefined');
+        // console.log('🔄 Initializing song list in', config.mode, 'mode...');
+        // console.log('Current songList length:', songList ? songList.length : 'undefined');
 
         // Check if songList has been populated already
         if (songList && songList.length > 0) {
-            console.log('📁 Song list already loaded:', songList.length, 'songs');
+            // console.log('📁 Song list already loaded:', songList.length, 'songs');
 
             // Initialize playlist based on shuffle mode
             if (config.shuffle) {
                 createShuffledPlaylist();
             }
 
-            console.log('✅ Songs ready for playback');
+            // console.log('✅ Songs ready for playback');
             return songList;
         }
 
         // Initialize based on current mode
         if (config.mode === 'cache') {
             // Sync from IndexedDB cache
-            console.log('🔄 Syncing from cache...');
+            // console.log('🔄 Syncing from cache...');
             try {
                 await syncCacheToPlaylist();
             } catch (e) {
@@ -672,14 +672,14 @@ const initializeSongList = async () => {
             }
 
             if (songList && songList.length > 0) {
-                console.log('📁 Loaded from cache:', songList.length, 'songs');
+                // console.log('📁 Loaded from cache:', songList.length, 'songs');
             } else {
-                console.log('⚠️ No cached songs found, falling back to manual list');
+                // console.log('⚠️ No cached songs found, falling back to manual list');
                 songList = [...manualSongList];
             }
         } else if (config.mode === 'local') {
             // Scan local folder
-            console.log('🔄 Scanning local folder...');
+            // console.log('🔄 Scanning local folder...');
             try {
                 const files = await scanFolderForMP3s();
                 if (files && files.length > 0) {
@@ -689,9 +689,9 @@ const initializeSongList = async () => {
                         filename: filename,
                         url: config.folder + filename
                     }));
-                    console.log('📁 Loaded from folder:', songList.length, 'songs');
+                    // console.log('📁 Loaded from folder:', songList.length, 'songs');
                 } else {
-                    console.log('⚠️ No local files found, falling back to manual list');
+                    // console.log('⚠️ No local files found, falling back to manual list');
                     songList = [...manualSongList];
                 }
             } catch (e) {
@@ -700,7 +700,7 @@ const initializeSongList = async () => {
             }
         } else {
             // Fallback to manual songs
-            console.log('📝 Using manual song list');
+            // console.log('📝 Using manual song list');
             songList = [...manualSongList];
         }
 
@@ -709,14 +709,14 @@ const initializeSongList = async () => {
             createShuffledPlaylist();
         }
 
-        console.log('✅ Songs ready for playback, total:', songList.length);
+        // console.log('✅ Songs ready for playback, total:', songList.length);
         return songList;
 
     } catch (error) {
         console.error('Failed to initialize song list:', error);
         // Ultimate fallback
         songList = [...manualSongList];
-        console.log('📝 Emergency fallback to manual song list');
+        // console.log('📝 Emergency fallback to manual song list');
         return songList;
     }
 };
@@ -759,7 +759,7 @@ const clearAllCaches = async () => {
             document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.${window.location.hostname}`;
         });
 
-        console.log('All caches and storage cleared successfully');
+        // console.log('All caches and storage cleared successfully');
         return true;
     } catch (error) {
         console.error('Error clearing caches:', error);
@@ -778,7 +778,7 @@ const createShuffledPlaylist = () => {
     }
     
     currentPlaylistIndex = 0;
-    console.log('🔀 Created shuffled playlist:', shuffledPlaylist);
+    // console.log('🔀 Created shuffled playlist:', shuffledPlaylist);
 };
 
 // Create a shuffled playlist where the provided currentSong stays at position 0,
@@ -796,7 +796,7 @@ const createShuffledPlaylistAnchored = (currentSong) => {
     shuffledPlaylist = [currentSong, ...others];
     // Since currentSong (index 0) is already playing, the next to return is index 1
     currentPlaylistIndex = 1;
-    console.log('🔀 Created anchored shuffled playlist:', shuffledPlaylist);
+    // console.log('🔀 Created anchored shuffled playlist:', shuffledPlaylist);
 };
 
 // Get next song based on current mode
@@ -902,11 +902,11 @@ const getPreviousSong = () => {
 const startPlayback = () => {
     if (isPlaying && !savedPlaybackState) return; // Prevent multiple starts if already playing and not resuming
 
-    console.log('Starting playback...');
+    // console.log('Starting playback...');
 
     // Check if songs are already loaded
     if (songList.length > 0) {
-        console.log('📁 Songs already loaded, starting playback with', songList.length, 'songs');
+        // console.log('📁 Songs already loaded, starting playback with', songList.length, 'songs');
         
         // Ensure playlist is initialized
         if (config.shuffle && shuffledPlaylist.length === 0) {
@@ -918,7 +918,7 @@ const startPlayback = () => {
         return;
     }
 
-    console.log('❌ No songs loaded from cache');
+    // console.log('❌ No songs loaded from cache');
 };
 
 // Handles loading the first song, either from persistence or based on mode
@@ -930,7 +930,7 @@ const handleInitialSongLoad = () => {
         const savedSong = songList.find(song => song.id === savedSongId || song.filename === savedSongId || (song.url && song.url.split('/').pop() === savedSongId));
 
         if (savedSong) {
-            console.log(`Attempting to load saved song: ${getDisplayTitle(savedSong)} at ${savedPlaybackState.currentTime.toFixed(1)}s`);
+            // console.log(`Attempting to load saved song: ${getDisplayTitle(savedSong)} at ${savedPlaybackState.currentTime.toFixed(1)}s`);
 
             // Set current indices based on saved song
             const savedIndex = songList.indexOf(savedSong);
@@ -945,7 +945,7 @@ const handleInitialSongLoad = () => {
 
             loadAndPlayCached(savedSong, savedPlaybackState.currentTime, savedPlaybackState.volume, savedPlaybackState.isPlaying);
         } else {
-            console.log('Saved song no longer available, starting fresh playlist');
+            // console.log('Saved song no longer available, starting fresh playlist');
             playNextSong();
         }
 
@@ -962,7 +962,7 @@ const handleInitialSongLoad = () => {
 // Play next song with mode awareness
 const playNextSong = (initiator = 'user') => {
     if (songList.length === 0) {
-        console.log('No songs available');
+        // console.log('No songs available');
         return;
     }
 
@@ -977,7 +977,7 @@ const playNextSong = (initiator = 'user') => {
                 isPlaying = true;
                 const currentFilename = audioPlayer.src ? audioPlayer.src.split('/').pop().split('?')[0] : null;
                 updateUIForPlaying(currentFilename || 'Unknown');
-                console.log('🔂 Repeating current song (auto)');
+                // console.log('🔂 Repeating current song (auto)');
             }).catch(err => {
                 console.warn('Repeat-one auto play() failed, reloading track:', err);
                 // Fallback: reload the same track
@@ -998,7 +998,7 @@ const playNextSong = (initiator = 'user') => {
     }
 
     if (isTransitioning) {
-        console.log('⏳ Transition in progress, ignoring next');
+        // console.log('⏳ Transition in progress, ignoring next');
         return;
     }
     isTransitioning = true;
@@ -1006,7 +1006,7 @@ const playNextSong = (initiator = 'user') => {
     const nextSong = getNextSong();
     
     if (!nextSong) {
-        console.log('📻 End of playlist reached');
+        // console.log('📻 End of playlist reached');
         isPlaying = false;
         // Update UI
         const nowPlayingDiv = document.getElementById('now-playing');
@@ -1019,7 +1019,7 @@ const playNextSong = (initiator = 'user') => {
         return;
     }
 
-    console.log('▶ Playing:', getDisplayTitle(nextSong), `(${config.shuffle ? 'shuffle' : 'sequential'} mode)`);
+    // console.log('▶ Playing:', getDisplayTitle(nextSong), `(${config.shuffle ? 'shuffle' : 'sequential'} mode)`);
 
     // Fade out current song if playing
     if (!audioPlayer.paused) {
@@ -1034,12 +1034,12 @@ const playNextSong = (initiator = 'user') => {
 // Play previous song
 const playPreviousSong = () => {
     if (songList.length === 0) {
-        console.log('No songs available');
+        // console.log('No songs available');
         return;
     }
 
     if (isTransitioning) {
-        console.log('⏳ Transition in progress, ignoring previous');
+        // console.log('⏳ Transition in progress, ignoring previous');
         return;
     }
     isTransitioning = true;
@@ -1047,12 +1047,12 @@ const playPreviousSong = () => {
     const previousSong = getPreviousSong();
     
     if (!previousSong) {
-        console.log('📻 At beginning of playlist');
+        // console.log('📻 At beginning of playlist');
         isTransitioning = false;
         return;
     }
 
-    console.log('⏮ Previous:', getDisplayTitle(previousSong), `(${config.shuffle ? 'shuffle' : 'sequential'} mode)`);
+    // console.log('⏮ Previous:', getDisplayTitle(previousSong), `(${config.shuffle ? 'shuffle' : 'sequential'} mode)`);
 
     // Fade out current song if playing
     if (!audioPlayer.paused) {
@@ -1095,7 +1095,7 @@ const loadAndPlayCached = (songObj, startTime = 0, initialVolume = 0, shouldPlay
     if (shouldPlay) {
         audioPlayer.play()
             .then(() => {
-                console.log('🎵 Now playing:', getDisplayTitle(songObj));
+                // console.log('🎵 Now playing:', getDisplayTitle(songObj));
 
                 // Update UI immediately (moved here from event listener for quicker response)
                 updateUIForPlaying(songObj);
@@ -1131,7 +1131,7 @@ const loadAndPlayCached = (songObj, startTime = 0, initialVolume = 0, shouldPlay
 
 // Helper function for 'ended' event listener
 const handleSongEnded = () => {
-    console.log('Song ended, playing next...');
+    // console.log('Song ended, playing next...');
     // Reduced delay from 500ms to 100ms for much faster transitions
     setTimeout(() => playNextSong('auto'), 100);
 };
@@ -1175,12 +1175,12 @@ const handleFailedSong = (songName) => {
             }
         }
 
-        console.log('Removed failed song, remaining:', songList.length);
+        // console.log('Removed failed song, remaining:', songList.length);
     } else {
         // If we couldn't find the object, try removing by id/title as fallback
         const before = songList.length;
         songList = songList.filter(s => !(s.id === songRef || s.title === songRef || s.filename === songRef));
-        console.log('Removed failed song by fallback filter, remaining:', songList.length, `(removed ${before - songList.length})`);
+        // console.log('Removed failed song by fallback filter, remaining:', songList.length, `(removed ${before - songList.length})`);
     }
 
     if (songList.length > 0) {
@@ -1222,7 +1222,7 @@ const updateUIForPlaying = (songRef) => {
         // Now set the value (if we have an id)
         try {
             songSelector.value = id || '';
-            console.log('🎵 Updated song selector to:', id || display);
+            // console.log('🎵 Updated song selector to:', id || display);
         } catch (_) {
             // ignore if setting value fails
         }
@@ -1318,7 +1318,7 @@ const savePlayerState = () => {
     
     try {
         localStorage.setItem(config.persistence.localStorageKey, JSON.stringify(state));
-        console.log('💾 Player state saved:', state);
+        // console.log('💾 Player state saved:', state);
     } catch (e) {
         console.error('Error saving player state to localStorage:', e);
     }
@@ -1340,7 +1340,7 @@ const loadPlayerState = () => {
             audioPlayer.volume = savedPlaybackState.volume; // Apply initial volume
 
             // Update UI elements from loaded config will be handled by modal script
-            console.log('✅ Player state loaded:', savedPlaybackState);
+            // console.log('✅ Player state loaded:', savedPlaybackState);
         }
     } catch (e) {
         console.error('Error loading player state from localStorage:', e);
@@ -1357,17 +1357,17 @@ window.lofi = {
     initSongs: initializeSongList,
     // Debug function to get current state
     debug: () => {
-        console.log('🔍 Debug Info:');
-        console.log('Songs loaded:', songList.length);
-        console.log('Songs:', songList);
-        console.log('Is playing:', isPlaying);
-        console.log('Audio source:', audioPlayer.src);
-        console.log('Audio paused:', audioPlayer.paused);
+        // console.log('🔍 Debug Info:');
+        // console.log('Songs loaded:', songList.length);
+        // console.log('Songs:', songList);
+        // console.log('Is playing:', isPlaying);
+        // console.log('Audio source:', audioPlayer.src);
+        // console.log('Audio paused:', audioPlayer.paused);
     },
     stop: () => {
         audioPlayer.pause();
         isPlaying = false; // Player is intentionally paused
-        console.log('⏹ Stopped');
+        // console.log('⏹ Stopped');
         // Update UI
         const nowPlayingDiv = document.getElementById('now-playing');
         if (nowPlayingDiv) nowPlayingDiv.textContent = 'Paused.';
@@ -1385,7 +1385,7 @@ window.lofi = {
             audioPlayer.play()
                 .then(() => {
                     isPlaying = true;
-                    console.log('▶ Resumed playback');
+                    // console.log('▶ Resumed playback');
                     // Update UI
                     const nowPlayingDiv = document.getElementById('now-playing');
                     if (nowPlayingDiv) {
@@ -1419,7 +1419,7 @@ window.lofi = {
                 localStorage.setItem(config.persistence.volumeKey, String(config.volume));
             }
         } catch(_) {}
-        console.log('🔊 Volume set to:', Math.round(config.volume * 100) + '%');
+        // console.log('🔊 Volume set to:', Math.round(config.volume * 100) + '%');
         // Update UI
         const volumeSlider = document.getElementById('volume-slider');
         const volumeDisplay = document.getElementById('volume-display');
@@ -1427,29 +1427,29 @@ window.lofi = {
         if (volumeDisplay) volumeDisplay.textContent = `${Math.round(config.volume * 100)}%`;
     },
     list: () => {
-        console.log('Current playlist:', songList);
-        console.log('Recently played:', lastPlayedSongs);
+        // console.log('Current playlist:', songList);
+        // console.log('Recently played:', lastPlayedSongs);
     },
     clearHistory: () => {
         lastPlayedSongs = [];
-        console.log('🔄 Cleared play history');
+        // console.log('🔄 Cleared play history');
     },
     // New persistence control
     togglePersistence: () => {
         config.persistence.enabled = !config.persistence.enabled;
-        console.log('💾 Persistence:', config.persistence.enabled ? 'enabled' : 'disabled');
+        // console.log('💾 Persistence:', config.persistence.enabled ? 'enabled' : 'disabled');
         if (!config.persistence.enabled) {
             localStorage.removeItem(config.persistence.localStorageKey);
-            console.log('🗑️ All player persistence data cleared from localStorage.');
+            // console.log('🗑️ All player persistence data cleared from localStorage.');
         }
         // Update UI if a toggle button is added for persistence
     },
 };
 
-console.log('🎧 Lofi Player loaded');
-console.log('Manual controls: lofi.skip(), lofi.stop(), lofi.volume(0.5), lofi.list(), lofi.clearHistory()');
+// console.log('🎧 Lofi Player loaded');
+// console.log('Manual controls: lofi.skip(), lofi.stop(), lofi.volume(0.5), lofi.list(), lofi.clearHistory()');
 
-console.log('Persistence: lofi.togglePersistence()');
+// console.log('Persistence: lofi.togglePersistence()');
 
 
 
@@ -1575,7 +1575,7 @@ const handleProgressBarClick = (e) => {
 const populateSongSelector = async () => {
     const songSelector = document.getElementById('song-selector');
     if (songSelector) {
-        console.log('🔄 Populating song selector');
+        // console.log('🔄 Populating song selector');
         
         if (songList && songList.length > 0) {
             songSelector.innerHTML = '<option value="">Select a song...</option>';
@@ -1586,10 +1586,10 @@ const populateSongSelector = async () => {
                 option.textContent = songObj.title;
                 songSelector.appendChild(option);
             });
-            console.log('📋 Song selector populated with', songList.length, 'songs');
+            // console.log('📋 Song selector populated with', songList.length, 'songs');
         } else {
             songSelector.innerHTML = '<option value="">Loading songs...</option>';
-            console.log('📋 Song selector shows loading state');
+            // console.log('📋 Song selector shows loading state');
         }
     }
 };
@@ -1597,7 +1597,7 @@ const populateSongSelector = async () => {
 // Handle song selection from dropdown
 const handleSongSelection = (selectedSongId) => {
     if (isTransitioning) {
-        console.log('⏳ Transition in progress, ignoring selection');
+        // console.log('⏳ Transition in progress, ignoring selection');
         return;
     }
     
@@ -1898,7 +1898,7 @@ const createLofiModal = () => {
     // Mode Toggle Button
     const modeToggleBtn = createButton(config.mode === 'cache' ? '📁 Local Mode' : '💾 Cache Mode', () => {
         const newMode = config.mode === 'cache' ? 'local' : 'cache';
-        console.log('🔄 Switching to', newMode, 'mode...');
+        // console.log('🔄 Switching to', newMode, 'mode...');
         config.mode = newMode;
         localStorage.setItem('lofi_mode', newMode);
         modeToggleBtn.textContent = newMode === 'cache' ? '📁 Local Mode' : '💾 Cache Mode';
@@ -1919,7 +1919,7 @@ const createLofiModal = () => {
         initializeSongList().then(() => {
             populateSongSelector();
             startPlayback();
-            console.log('✅ Switched to', newMode, 'mode');
+            // console.log('✅ Switched to', newMode, 'mode');
         }).catch(error => {
             console.error('❌ Failed to switch to', newMode, 'mode:', error);
             if (songSelector) songSelector.innerHTML = '<option value="">Error loading songs</option>';
@@ -2112,9 +2112,9 @@ const createLofiModal = () => {
     
     // If songs aren't loaded yet, try to initialize them
     if (songList.length === 0) {
-        console.log('🔄 Songs not loaded, initializing...');
+        // console.log('🔄 Songs not loaded, initializing...');
         initializeSongList().then(() => {
-            console.log('🎵 Songs loaded, updating UI...');
+            // console.log('🎵 Songs loaded, updating UI...');
             // Repopulate selector once songs are loaded
             populateSongSelector();
         }).catch(error => {

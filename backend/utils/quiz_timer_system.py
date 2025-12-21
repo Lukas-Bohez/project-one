@@ -179,10 +179,10 @@ async def end_voting_and_start_quiz(sio, session_id):
 
 
 async def run_question_timer(sio, session_id, room):
-    """Countdown timer for question answering (15 seconds)"""
-    timer = 15
+    """Countdown timer for question answering (37 seconds average)"""
+    timer = 37  # Average of 30-45 range
     
-    print(f"[QUESTION TIMER] Started 15s countdown for session {session_id}")
+    print(f"[QUESTION TIMER] Started 37s countdown for session {session_id}")
     
     while timer > 0:
         await asyncio.sleep(1)

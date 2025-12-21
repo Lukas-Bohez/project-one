@@ -11,13 +11,13 @@ class QuizQuestionHandler {
         // Listen for answer responses from server
         if (this.socket) {
             this.socket.on('answer_response', (responseData) => {
-                console.log("=== ANSWER RESPONSE FROM SERVER ===");
-                console.log("Response data:", JSON.stringify(responseData, null, 2));
+                // console.log("=== ANSWER RESPONSE FROM SERVER ===");
+                // console.log("Response data:", JSON.stringify(responseData, null, 2));
                 
                 if (responseData.success !== false && (responseData.is_correct !== undefined || responseData.points !== undefined)) {
-                    console.log("✅ Answer submitted successfully!");
-                    console.log("Is correct:", responseData.is_correct);
-                    console.log("Points earned:", responseData.points);
+                    // console.log("✅ Answer submitted successfully!");
+                    // console.log("Is correct:", responseData.is_correct);
+                    // console.log("Points earned:", responseData.points);
                 } else {
                     console.error("❌ Answer submission failed:", responseData.error);
                     if (this.handleErrorDisplay) {
@@ -28,19 +28,25 @@ class QuizQuestionHandler {
 
             // Listen for theme selection data
             this.socket.on('theme_selection', (data) => {
-                console.log("✅ Received 'theme_selection':", data);
+                // console.log("✅ Received 'theme_selection':", data);
                 this.loadQuestion(data);
+            });
+
+            // Listen for theme selected (voting complete)
+            this.socket.on('theme_selected', (data) => {
+                console.log("🎯 THEME SELECTED - VOTING COMPLETE:", data);
+                this.displaySelectedTheme(data);
             });
 
             // Listen for question data
             this.socket.on('questionData', (data) => {
-                console.log("✅ Received 'questionData':", data);
+                // console.log("✅ Received 'questionData':", data);
                 this.loadQuestion(data);
             });
 
             // Listen for explanation started
             this.socket.on('explanation_started', (data) => {
-                console.log("✅ Explanation Started:", data);
+                // console.log("✅ Explanation Started:", data);
                 if (typeof this.showExplanation === 'function') {
                     this.showExplanation(data);
                 } else {
@@ -48,12 +54,12 @@ class QuizQuestionHandler {
                 }
             });
             
-            console.log("Socket event listeners set up for answer responses");
+            // console.log("Socket event listeners set up for answer responses");
         }
     }
 
     setCurrentUser(user) {
-        console.log("QuizQuestionHandler: Setting current user:", user);
+        // console.log("QuizQuestionHandler: Setting current user:", user);
         this.currentUser = user;
         
         // Ensure both id and user_id are available for compatibility
@@ -64,7 +70,7 @@ class QuizQuestionHandler {
             this.currentUser.id = this.currentUser.user_id;
         }
         
-        console.log("QuizQuestionHandler: Current user after processing:", this.currentUser);
+        // console.log("QuizQuestionHandler: Current user after processing:", this.currentUser);
 
         // Start timeout for question loading - show reload button if no question loads within 2 seconds
         this.startQuestionLoadTimeout();
@@ -82,7 +88,7 @@ class QuizQuestionHandler {
             this.questionLoadTimeout = setTimeout(() => {
                 // Check if we have a current question
                 if (!this.currentQuestion || document.getElementById('questionText').textContent === 'Loading question...') {
-                    console.log("No question loaded within 2 seconds, marking reload attempted and reloading page");
+                    // console.log("No question loaded within 2 seconds, marking reload attempted and reloading page");
                     sessionStorage.setItem('questionReloadAttempted', 'true');
                     window.location.reload();
                 }
@@ -96,11 +102,22 @@ class QuizQuestionHandler {
     }
 
     loadQuestion(questionData) {
-        console.log("Loading question:", questionData);
+        console.log("🔍 LOADING QUESTION:", questionData);
+        
+        // Check if this is a theme selection
+        if (questionData.type === 'theme_selection') {
+            console.log("🎯 THEME SELECTION DETECTED - DISPLAYING IN QUESTION CONTAINER");
+            // Clear any previous content first
+            this.clearQuestion();
+            this.displayTheme(questionData);
+            return; // Don't process as regular question
+        }
+        
+        // console.log("Loading question:", questionData);
         try {
-            console.log("[DEBUG] questionData.type:", questionData.type);
-            console.log("[DEBUG] questionData.answers.length:", questionData.answers ? questionData.answers.length : 'N/A');
-            console.log("[DEBUG] questionData.themes.length:", questionData.themes ? questionData.themes.length : 'N/A');
+            // console.log("[DEBUG] questionData.type:", questionData.type);
+            // console.log("[DEBUG] questionData.answers.length:", questionData.answers ? questionData.answers.length : 'N/A');
+            // console.log("[DEBUG] questionData.themes.length:", questionData.themes ? questionData.themes.length : 'N/A');
         } catch (e) {
             console.warn('[DEBUG] Failed to read questionData diagnostic fields:', e);
         }
@@ -121,6 +138,9 @@ class QuizQuestionHandler {
         // Clean up any existing explanation displays
         this.clearExplanations();
 
+        // Restore timer container if it was showing theme
+        this.restoreTimerContainer();
+
         // Clear previous question
         this.clearQuestion();
 
@@ -128,11 +148,11 @@ class QuizQuestionHandler {
         try {
             const existingThemeModal = document.getElementById('themeModal');
             if (existingThemeModal) {
-                console.log('[DEBUG] Removing #themeModal fallback overlay');
+                // console.log('[DEBUG] Removing #themeModal fallback overlay');
                 existingThemeModal.remove();
             }
             if (this.currentThemeModal && this.currentThemeModal.parentNode) {
-                console.log('[DEBUG] Removing this.currentThemeModal fallback overlay');
+                // console.log('[DEBUG] Removing this.currentThemeModal fallback overlay');
                 this.currentThemeModal.parentNode.removeChild(this.currentThemeModal);
             }
             this.currentThemeModal = null;
@@ -143,7 +163,7 @@ class QuizQuestionHandler {
         try {
             // Remove any theme modal overlays by class
             const overlays = document.querySelectorAll('.theme-modal-overlay, .theme-modal-backdrop, .theme-overlay');
-            if (overlays && overlays.length) console.log('[DEBUG] Removing overlays:', overlays.length);
+            if (overlays && overlays.length) // console.log('[DEBUG] Removing overlays:', overlays.length);
             overlays.forEach(o => {
                 try { o.remove(); } catch (e) { console.warn('Failed to remove overlay element', e); }
             });
@@ -156,7 +176,7 @@ class QuizQuestionHandler {
             if (questionImageEl) questionImageEl.style.display = '';
             if (answerContainer) answerContainer.style.display = '';
 
-            console.log('[DEBUG] Question/answer containers forced visible');
+            // console.log('[DEBUG] Question/answer containers forced visible');
 
             // Ensure answer buttons are visible and enabled
             const answerButtons = document.querySelectorAll('.c-answer-btn, .answer-box, .snes-button');
@@ -167,7 +187,7 @@ class QuizQuestionHandler {
                     btn.classList.remove('disabled');
                 } catch (e) { console.warn('Error restoring answer button', e); }
             });
-            console.log('[DEBUG] Restored answer buttons visibility/state count=', answerButtons.length);
+            // console.log('[DEBUG] Restored answer buttons visibility/state count=', answerButtons.length);
         } catch (e) {
             console.warn('Error during strong UI fallback for question view:', e);
         }
@@ -229,6 +249,38 @@ clearExplanations() {
         // Reset disabled state (will be properly set when new question loads)
         button.disabled = false;
     });
+}
+
+restoreTimerContainer() {
+    console.log("🔄 RESTORING TIMER CONTAINER - ENSURING TIMER IS VISIBLE");
+    console.log("🔄 Current timer container content:", document.querySelector('.c-timer-container')?.innerHTML);
+    
+    // Restore the timer container from theme display back to timer/progress bar
+    const timerContainer = document.querySelector('.c-timer-container');
+    console.log("📍 Timer container found:", !!timerContainer);
+    console.log("📍 Timer container element:", timerContainer);
+    console.log("📍 Timer container class:", timerContainer?.className);
+    
+    if (!timerContainer) {
+        console.error("❌ Timer container not found!");
+        return;
+    }
+
+    console.log("🧹 Clearing timer container content");
+    // Clear any theme display content
+    timerContainer.innerHTML = '';
+
+    // Restore the timer HTML structure
+    timerContainer.innerHTML = `
+        <div class="c-servo-visual" id="servoVisual">
+            <div class="c-servo-bar"></div>
+        </div>
+        <span class="c-time-remaining" id="timeRemaining">60</span>
+    `;
+    
+    console.log("✅ TIMER CONTAINER RESTORED WITH PROGRESS BAR");
+    console.log("📍 New timer container HTML:", timerContainer.innerHTML);
+    console.log("🎯 TIMER SHOULD NOW BE VISIBLE IN TIMER CONTAINER");
 }
 
     clearQuestion() {
@@ -313,7 +365,7 @@ setupAnswerOptions(questionData) {
         return;
     }
 
-    console.log('[DEBUG] setupAnswerOptions: questionType=', questionData.type, 'options.length=', options.length);
+    // console.log('[DEBUG] setupAnswerOptions: questionType=', questionData.type, 'options.length=', options.length);
 
     // 3. Prepare Container - DON'T replace the class, ADD to it
     const container = document.querySelector('.c-answers-container');
@@ -398,7 +450,7 @@ renderAnswerBoxes(options, container, questionType) {
        
         container.appendChild(box);
     });
-    console.log('[DEBUG] renderAnswerBoxes: appended', options.length, 'boxes to container');
+    // console.log('[DEBUG] renderAnswerBoxes: appended', options.length, 'boxes to container');
 }
 
 // ========================
@@ -491,7 +543,7 @@ bindAnswerEvents() {
 
     // Always set this instance as the active handler
     window.activeQuizHandler = this;
-    console.log("Setting active quiz handler to:", this);
+    // console.log("Setting active quiz handler to:", this);
 
     answerBoxes.forEach((box) => {
         // Remove ALL existing listeners to prevent conflicts
@@ -504,42 +556,42 @@ bindAnswerEvents() {
         const newClickListener = (event) => {
             // Prevent other handlers from processing this click
             event.stopImmediatePropagation();
-            console.log("Answer clicked by active handler:", this);
+            // console.log("Answer clicked by active handler:", this);
             this.handleAnswerClick(box);
         };
         box.addEventListener('click', newClickListener, { capture: true });
         box.__quizAnswerListener = newClickListener;
     });
 
-    console.log("Bound events to", answerBoxes.length, "answer boxes (active handler: true )");
+    // console.log("Bound events to", answerBoxes.length, "answer boxes (active handler: true )");
 
     // Enable answering after 5 seconds to prevent too fast answers
     setTimeout(() => {
         this.answeringEnabled = true;
-        console.log("Answering now enabled");
+        // console.log("Answering now enabled");
     }, 5000);
 }
 
 handleAnswerClick(boxElement) {
-    console.log("=== ANSWER CLICK DEBUG ===");
-    console.log("Handler instance:", this);
-    console.log("Active handler:", window.activeQuizHandler);
-    console.log("Is active:", window.activeQuizHandler === this);
-    console.log("Box element:", boxElement);
-    console.log("Current question:", this.currentQuestion);
-    console.log("Current user:", this.currentUser);
-    console.log("Socket connected:", this.socket && this.socket.connected);
+    // console.log("=== ANSWER CLICK DEBUG ===");
+    // console.log("Handler instance:", this);
+    // console.log("Active handler:", window.activeQuizHandler);
+    // console.log("Is active:", window.activeQuizHandler === this);
+    // console.log("Box element:", boxElement);
+    // console.log("Current question:", this.currentQuestion);
+    // console.log("Current user:", this.currentUser);
+    // console.log("Socket connected:", this.socket && this.socket.connected);
 
     // Check if answering is enabled (allow theme selection immediately)
     if (!this.answeringEnabled && this.currentQuestion?.type !== 'theme_selection') {
-        console.log("Answering not enabled yet - too fast!");
+        // console.log("Answering not enabled yet - too fast!");
         return;
     }
 
     // Check if question is still loading - if so, reload the page
     const questionText = document.getElementById('questionText');
     if (!this.currentQuestion || (questionText && questionText.textContent === 'Loading question...')) {
-        console.log("Question still loading, reloading page");
+        // console.log("Question still loading, reloading page");
         window.location.reload();
         return;
     }
@@ -612,9 +664,9 @@ handleAnswerClick(boxElement) {
 
     const userId = this.getCurrentUserId();
 
-    console.log("=== USER ID DEBUG ===");
-    console.log("Current user object:", this.currentUser);
-    console.log("Extracted user ID:", userId);
+    // console.log("=== USER ID DEBUG ===");
+    // console.log("Current user object:", this.currentUser);
+    // console.log("Extracted user ID:", userId);
 
     if (!userId) {
         console.error("No current user ID available");
@@ -629,10 +681,10 @@ handleAnswerClick(boxElement) {
     boxElement.classList.add('selected');
 
     // Debug logging
-    console.log("=== SELECTION DEBUG ===");
-    console.log("Selected text:", selectedText);
-    console.log("Found option:", selectedOption);
-    console.log("Answer index:", answerIndex);
+    // console.log("=== SELECTION DEBUG ===");
+    // console.log("Selected text:", selectedText);
+    // console.log("Found option:", selectedOption);
+    // console.log("Answer index:", answerIndex);
 
     if (questionType === 'theme_selection') {
         const themeId = Number(selectedOption.id);
@@ -657,12 +709,12 @@ handleAnswerClick(boxElement) {
             request_user_data: true
         };
 
-        console.log("Emitting theme_selected:", emissionData);
+        // console.log("Emitting theme_selected:", emissionData);
         
         // USE THE CHAT SOCKET - it's the one that's actually connected to backend
         const activeSocket = window.chatSystemInstance?.socket || this.socket;
-        console.log("Using socket:", activeSocket?.id);
-        console.log("Socket connected?:", activeSocket?.connected);
+        // console.log("Using socket:", activeSocket?.id);
+        // console.log("Socket connected?:", activeSocket?.connected);
         
         if (!activeSocket || !activeSocket.connected) {
             console.error("❌ Socket not connected! Cannot emit theme_selected");
@@ -672,7 +724,7 @@ handleAnswerClick(boxElement) {
         }
         
         activeSocket.emit('theme_selected', emissionData);
-        console.log("✅ theme_selected emitted successfully via", activeSocket.id);
+        // console.log("✅ theme_selected emitted successfully via", activeSocket.id);
     } else {
         const emissionData = {
             userId: userId,
@@ -684,19 +736,19 @@ handleAnswerClick(boxElement) {
             request_user_data: true
         };
 
-        console.log("=== EMITTING ANSWER ===");
-        console.log("Full emission data:", JSON.stringify(emissionData, null, 2));
-        console.log("Required backend fields:");
-        console.log("- userId:", emissionData.userId, "(type:", typeof emissionData.userId, ")");
-        console.log("- questionId:", emissionData.questionId, "(type:", typeof emissionData.questionId, ")");
-        console.log("- answerIndex:", emissionData.answerIndex, "(type:", typeof emissionData.answerIndex, ")");
-        console.log("Socket state:", this.socket.connected ? 'connected' : 'disconnected');
-        console.log("Socket ID:", this.socket.id);
+        // console.log("=== EMITTING ANSWER ===");
+        // console.log("Full emission data:", JSON.stringify(emissionData, null, 2));
+        // console.log("Required backend fields:");
+        // console.log("- userId:", emissionData.userId, "(type:", typeof emissionData.userId, ")");
+        // console.log("- questionId:", emissionData.questionId, "(type:", typeof emissionData.questionId, ")");
+        // console.log("- answerIndex:", emissionData.answerIndex, "(type:", typeof emissionData.answerIndex, ")");
+        // console.log("Socket state:", this.socket.connected ? 'connected' : 'disconnected');
+        // console.log("Socket ID:", this.socket.id);
         
         try {
             this.socket.emit('submit_answer', emissionData);
-            console.log("✅ Answer successfully emitted to server");
-            console.log("Waiting for answer_response event from server...");
+            // console.log("✅ Answer successfully emitted to server");
+            // console.log("Waiting for answer_response event from server...");
         } catch (error) {
             console.error("❌ Failed to emit answer:", error);
             this.handleErrorDisplay("Failed to submit answer");
@@ -727,7 +779,12 @@ getCurrentUserId() {
 }
 
 showExplanation(data) {
-    console.log("Showing explanation for question", data.question_id || 'unknown', data);
+    console.log("🎯 SHOWING EXPLANATION - ENSURING TIMER CONTAINER IS READY");
+    
+    // First, restore timer container to show timer instead of theme
+    this.restoreTimerContainer();
+    
+    // console.log("Showing explanation for question", data.question_id || 'unknown', data);
     
     // Highlight correct answers before showing explanation
     this.highlightCorrectAnswer(data);
@@ -781,72 +838,116 @@ highlightCorrectAnswer() {
     }
 }
 
+showExplanation(data) {
+    // console.log("Showing explanation:", data);
+    this.displayExplanation(data);
+}
+
 displayExplanation(explanationData) {
-    console.log("Displaying explanation in existing question area", explanationData);
-    
+    console.log("🔍 DISPLAYING EXPLANATION - WHERE AM I PLACING IT?");
+    console.log("Explanation data:", explanationData);
+
     // Extract data from the explanation object
     const explanationText = explanationData?.explanation_text || 'No explanation provided';
     const duration = explanationData?.duration || 5;
     const questionId = explanationData?.question_id;
-    
-    // Try to find existing containers first
-    let questionTextEl = document.getElementById('questionText');
-    let answerContainer = document.getElementById('answerContainer');
-    
-    // If core containers don't exist, try to find or create them
-    if (!questionTextEl || !answerContainer) {
-        console.warn("Core containers missing, attempting to find or create them");
-        
-        // Try to find alternative containers that might exist
-        const quizContainer = document.querySelector('.quiz-container') || 
-                             document.querySelector('#quizContainer') ||
-                             document.querySelector('.c-quiz-area') ||
-                             document.querySelector('main') ||
-                             document.body;
-        
-        if (!quizContainer) {
-            console.error("No suitable container found for explanation display");
-            // Fallback: create a modal-style overlay
-            this.createExplanationModal(explanationText);
-            return;
-        }
-        
-        // Create the missing elements if they don't exist
-        if (!questionTextEl) {
-            questionTextEl = document.createElement('div');
-            questionTextEl.id = 'questionText';
-            questionTextEl.className = 'question-text';
-            quizContainer.appendChild(questionTextEl);
-        }
-        
-        if (!answerContainer) {
-            answerContainer = document.createElement('div');
-            answerContainer.id = 'answerContainer';
-            answerContainer.className = 'answer-container';
-            quizContainer.appendChild(answerContainer);
-        }
+
+    // Use the existing question container
+    const questionContainer = document.querySelector('.c-question-container');
+    const questionTextEl = document.getElementById('questionText');
+
+    console.log("📍 Question container found:", !!questionContainer);
+    console.log("📍 Question text element found:", !!questionTextEl);
+    console.log("📍 Question container element:", questionContainer);
+    console.log("📍 Question text element:", questionTextEl);
+    console.log("📍 Question container class:", questionContainer?.className);
+    console.log("📍 Question text element tag:", questionTextEl?.tagName);
+
+    if (!questionContainer || !questionTextEl) {
+        console.error("❌ Question container or question text element not found - FALLBACK TO MODAL");
+        // Fallback to modal
+        this.createExplanationModal(explanationText);
+        return;
     }
-    
-    // Now display the explanation
+
+    console.log("✅ CONFIRMED: USING QUESTION CONTAINER (.c-question-container) FOR EXPLANATION");
+    console.log("✅ CONFIRMED: USING QUESTION TEXT ELEMENT (#questionText) FOR EXPLANATION CONTENT");
+
+    if (!questionContainer || !questionTextEl) {
+        console.error("❌ Question container or question text element not found - FALLBACK TO MODAL");
+        // Fallback to modal
+        this.createExplanationModal(explanationText);
+        return;
+    }
+
+    console.log("✅ USING QUESTION CONTAINER FOR EXPLANATION");
+    console.log("📝 Original question content:", questionTextEl.innerHTML);
+
+    // Store the current question content to restore later
+    this.originalQuestionContent = questionTextEl.innerHTML;
+
+    // Display the explanation in the question area
     questionTextEl.innerHTML = `
         <div class="explanation-content">
             <h3>Explanation</h3>
             <p style="white-space: pre-line;">${explanationText}</p>
         </div>
     `;
-    
-    // We keep the answer buttons visible but disabled with correct ones highlighted
-    answerContainer.style.display = 'block';
-    
+
+    console.log("✨ EXPLANATION PLACED IN QUESTION CONTAINER");
+
+    // Hide answer buttons during explanation
+    const answersContainer = document.querySelector('.c-answers-container');
+    if (answersContainer) {
+        answersContainer.style.display = 'none';
+        console.log("👁️ Answer buttons hidden during explanation");
+    }
+
     // Emit custom event for other parts of the app
     document.dispatchEvent(new CustomEvent('explanationDisplayed', {
         detail: { explanationText, duration, questionId }
     }));
+
+    // Auto-hide explanation after duration (5-20 seconds based on content length)
+    const displayDuration = Math.min(Math.max(duration * 1000, 5000), 20000); // 5-20 seconds
+    setTimeout(() => {
+        this.hideExplanation();
+    }, displayDuration);
+}
+
+hideExplanation() {
+    console.log("🙈 HIDING EXPLANATION - WHERE WAS IT PLACED?");
+    // Restore the original question content
+    const questionTextEl = document.getElementById('questionText');
+    console.log("📍 Question text element found:", !!questionTextEl);
+    console.log("📍 Question text element:", questionTextEl);
+    
+    if (questionTextEl && this.originalQuestionContent) {
+        console.log("🔄 Restoring original question content");
+        questionTextEl.innerHTML = this.originalQuestionContent;
+        console.log("✅ Question content restored");
+    }
+
+    // Show answer buttons again
+    const answersContainer = document.querySelector('.c-answers-container');
+    console.log("📍 Answers container found:", !!answersContainer);
+    if (answersContainer) {
+        answersContainer.style.display = 'block';
+        console.log("👁️ Answer buttons shown again");
+    }
+
+    // Clear stored content
+    this.originalQuestionContent = null;
+    console.log("🧹 Cleared stored question content");
+
+    // Emit custom event
+    document.dispatchEvent(new CustomEvent('explanationHidden'));
+    console.log("📢 Emitted explanationHidden event");
 }
 
     // Fallback method to create a modal-style explanation display
     createExplanationModal(explanationText) {
-        console.log("Creating explanation modal as fallback");
+        // console.log("Creating explanation modal as fallback");
         
         // Remove any existing explanation modal
         const existingModal = document.getElementById('explanationModal');
@@ -915,75 +1016,164 @@ displayExplanation(explanationData) {
         }));
     }
     showThemeDisplay(themeData) {
-    console.log("Showing theme display", themeData);
+    // console.log("Showing theme display", themeData);
     this.displayTheme(themeData);
 }
 
 displayTheme(themeData) {
-    console.log("Displaying theme in existing question area", themeData);
-    
-    // Extract data from the theme object
-    const themeName = themeData?.name || 'Unknown Theme';
-    const themeDescription = themeData?.description || 'No description provided';
-    
-    // Try to find existing containers first (same as explanation display)
-    let questionTextEl = document.getElementById('questionText');
-    let answerContainer = document.getElementById('answerContainer');
-    
-    // If core containers don't exist, try to find or create them
-    if (!questionTextEl || !answerContainer) {
-        console.warn("Core containers missing, attempting to find or create them");
-        
-        const quizContainer = document.querySelector('.quiz-container') || 
-                             document.querySelector('#quizContainer') ||
-                             document.querySelector('.c-quiz-area') ||
-                             document.querySelector('main') ||
-                             document.body;
-        
-        if (!quizContainer) {
-            console.error("No suitable container found for theme display");
-            // Fallback: create a modal-style overlay
-            this.createThemeModal(themeName, themeDescription);
-            return;
-        }
-        
-        // Create the missing elements if they don't exist
-        if (!questionTextEl) {
-            questionTextEl = document.createElement('div');
-            questionTextEl.id = 'questionText';
-            questionTextEl.className = 'question-text';
-            quizContainer.appendChild(questionTextEl);
-        }
-        
-        if (!answerContainer) {
-            answerContainer = document.createElement('div');
-            answerContainer.id = 'answerContainer';
-            answerContainer.className = 'answer-container';
-            quizContainer.appendChild(answerContainer);
-        }
+    console.log("🎯 DISPLAYING THEME - CHECKING TYPE:", themeData);
+
+    // Use the question container for theme display (not timer container)
+    const questionContainer = document.querySelector('.c-question-container');
+    const questionTextEl = document.getElementById('questionText');
+
+    console.log("📍 Theme display - Question container found:", !!questionContainer);
+    console.log("📍 Theme display - Question text element found:", !!questionTextEl);
+
+    if (!questionContainer || !questionTextEl) {
+        console.warn("Question container not found, falling back to modal");
+        this.createThemeModal(themeData?.name || 'Unknown Theme', themeData?.description || 'No description provided');
+        return;
     }
-    
-    // Now display the theme
-    questionTextEl.innerHTML = `
-        <div class="theme-content">
-            <h3>Theme: ${themeName}</h3>
-            <p style="white-space: pre-line;">${themeDescription}</p>
-        </div>
-    `;
-    
-    // Clear answers
-    answerContainer.innerHTML = '';
-    answerContainer.style.display = 'none';
-    
-    // Emit custom event for other parts of the app
-    document.dispatchEvent(new CustomEvent('themeDisplayed', {
-        detail: { themeName, themeDescription }
-    }));
+
+    // Store original content to restore later
+    this.originalQuestionContent = questionTextEl.innerHTML;
+
+    // Check if this is theme selection (multiple themes to vote on)
+    if (themeData.type === 'theme_selection' && themeData.themes) {
+        console.log("🗳️ THEME SELECTION - SHOWING VOTING OPTIONS");
+        this.displayThemeVoting(themeData);
+    } else {
+        // Single theme display (selected theme)
+        console.log("📋 SINGLE THEME DISPLAY");
+        this.displaySelectedTheme(themeData);
+    }
+
+    // Make sure timer container shows timer (not theme)
+    this.restoreTimerContainer();
 }
 
-// Fallback method to create a modal-style theme display
+displayThemeVoting(themeData) {
+    console.log("🗳️ DISPLAYING THEME VOTING OPTIONS:", themeData.themes);
+    console.log("📊 NUMBER OF THEMES TO DISPLAY:", themeData.themes?.length || 0);
+
+    const questionTextEl = document.getElementById('questionText');
+    const question = themeData.question || 'Select a theme for the quiz:';
+    const themes = themeData.themes || [];
+
+    console.log("🎯 RENDERING ALL THEMES:");
+    themes.forEach((theme, index) => {
+        console.log(`  ${index + 1}. ${theme.name} (${theme.description || 'no desc'})`);
+    });
+
+    // Display voting options
+    questionTextEl.innerHTML = `
+        <div class="theme-voting-content">
+            <h3>${question}</h3>
+            <div class="theme-options">
+                ${themes.map((theme, index) => `
+                    <button class="theme-vote-btn" data-theme-id="${theme.id || index}" data-theme-name="${theme.name}">
+                        <div class="theme-name">${theme.name}</div>
+                        <div class="theme-description">${theme.description || ''}</div>
+                    </button>
+                `).join('')}
+            </div>
+        </div>
+    `;
+
+    console.log("✅ ALL THEME VOTING OPTIONS DISPLAYED - TOTAL:", themes.length);
+
+    // Hide answer buttons during theme voting (since we're using custom buttons)
+    const answersContainer = document.querySelector('.c-answers-container');
+    if (answersContainer) {
+        answersContainer.style.display = 'none';
+        console.log("👁️ Answer buttons hidden during theme voting");
+    }
+
+    // Set up voting event listeners
+    this.setupThemeVoting();
+}
+
+displaySelectedTheme(themeData) {
+    console.log("📋 DISPLAYING SELECTED THEME:", themeData);
+
+    const questionTextEl = document.getElementById('questionText');
+    const themeName = themeData?.name || 'Unknown Theme';
+    const themeDescription = themeData?.description || 'No description provided';
+
+    // Display selected theme
+    questionTextEl.innerHTML = `
+        <div class="theme-selected-content">
+            <h3>🎯 Selected Theme</h3>
+            <div class="theme-name">${themeName}</div>
+            <div class="theme-description">${themeDescription}</div>
+        </div>
+    `;
+
+    console.log("✅ SELECTED THEME DISPLAYED");
+
+    // Hide answer buttons during theme display
+    const answersContainer = document.querySelector('.c-answers-container');
+    if (answersContainer) {
+        answersContainer.style.display = 'none';
+        console.log("👁️ Answer buttons hidden during theme display");
+    }
+}
+
+setupThemeVoting() {
+    console.log("🎯 SETTING UP THEME VOTING EVENT LISTENERS");
+
+    const voteButtons = document.querySelectorAll('.theme-vote-btn');
+    console.log("📍 Found vote buttons:", voteButtons.length);
+
+    voteButtons.forEach((button, index) => {
+        const themeName = button.dataset.themeName;
+        console.log(`  Button ${index + 1}: ${themeName}`);
+
+        button.addEventListener('click', (e) => {
+            const themeId = e.currentTarget.dataset.themeId;
+            const themeName = e.currentTarget.dataset.themeName;
+
+            console.log("🗳️ USER VOTED FOR THEME:", themeName, "ID:", themeId);
+
+            // Disable all buttons after vote
+            voteButtons.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.add('voted');
+            });
+
+            // Highlight selected button
+            e.currentTarget.classList.add('selected');
+
+            // Send vote to server
+            if (this.socket) {
+                this.socket.emit('theme_vote', {
+                    theme_id: themeId,
+                    theme_name: themeName,
+                    user_id: this.getCurrentUserId()
+                });
+                console.log("📤 SENT THEME VOTE TO SERVER");
+            }
+        });
+    });
+
+    console.log("✅ ALL THEME VOTING LISTENERS SET UP");
+}
+
+    // Restore timer container to its original state
+    restoreTimerContainer() {
+        const timerContainer = document.querySelector('.c-timer-container');
+        if (timerContainer && timerContainer.dataset.showingTheme === 'true') {
+            // Restore original content
+            if (timerContainer.dataset.originalContent) {
+                timerContainer.innerHTML = timerContainer.dataset.originalContent;
+                delete timerContainer.dataset.originalContent;
+            }
+            delete timerContainer.dataset.showingTheme;
+        }
+    }
 createThemeModal(themeName, themeDescription) {
-    console.log("Creating theme modal as fallback");
+    // console.log("Creating theme modal as fallback");
     
     // Remove any existing theme modal
     const existingModal = document.getElementById('themeModal');
@@ -1056,7 +1246,7 @@ createThemeModal(themeName, themeDescription) {
 }
     // Method to handle the end of the quiz
     showQuizEnd(data) {
-        console.log("Handling quiz end:", data);
+        // console.log("Handling quiz end:", data);
         this.displayFinalScreen("Quiz Finished!", data.message || "Thanks for playing!");
         
         // Optionally show final scores
@@ -1350,7 +1540,7 @@ displayFinalScreen(title, message) {
 
     // Method to handle phase changes
     handlePhaseChange(data) {
-        console.log(`Handling phase change to ${data.phase}`);
+        // console.log(`Handling phase change to ${data.phase}`);
         let message = "";
         
         switch (data.phase) {
@@ -1385,20 +1575,54 @@ displayFinalScreen(title, message) {
 
     // Method to update timer display
     updateTimer(timeRemaining) {
+        console.log("⏰ UPDATING TIMER - WHERE IS IT PLACED?", timeRemaining);
         this.timeRemaining = timeRemaining;
-        const timerElement = document.getElementById('timerDisplay');
         
-        if (timerElement) {
-            timerElement.textContent = `Time: ${timeRemaining}s`;
+    // Update the time remaining text
+    const timeElement = document.getElementById('timeRemaining');
+    console.log("⏰ TIMER UPDATE - TIME ELEMENT:", timeElement);
+    console.log("⏰ TIMER UPDATE - TIME ELEMENT PARENT:", timeElement?.parentElement);
+    console.log("⏰ TIMER UPDATE - TIME ELEMENT PARENT CLASS:", timeElement?.parentElement?.className);
+    if (timeElement) {
+        timeElement.textContent = timeRemaining;
+        console.log("✅ Updated time text to:", timeRemaining, "in element:", timeElement);
+        
+        // Add visual warning for low time
+        if (timeRemaining <= 5) {
+            timeElement.classList.add('timer-warning');
+            console.log("⚠️ Added timer warning class");
+        } else {
+            timeElement.classList.remove('timer-warning');
+            console.log("✅ Removed timer warning class");
+        }
+    }
+
+    // Update the progress bar (servo visual)
+    const servoBar = document.querySelector('.c-servo-bar');
+    console.log("⏰ TIMER UPDATE - SERVO BAR:", servoBar);
+    console.log("⏰ TIMER UPDATE - SERVO BAR PARENT:", servoBar?.parentElement);
+    console.log("⏰ TIMER UPDATE - SERVO BAR PARENT CLASS:", servoBar?.parentElement?.className);
+    if (servoBar) {
+            // Assuming timer starts at 60 seconds, calculate percentage
+            const maxTime = 60;
+            const percentage = Math.max(0, (timeRemaining / maxTime) * 100);
+            servoBar.style.width = `${percentage}%`;
+            console.log("✅ Updated servo bar width to:", `${percentage}%`);
             
-            // Add visual warning for low time
-            if (timeRemaining <= 5) {
-                timerElement.classList.add('timer-warning');
+            // Change color when time is low
+            if (timeRemaining <= 10) {
+                servoBar.style.backgroundColor = '#ff4444'; // Red for urgency
+                console.log("🔴 Changed servo bar to RED");
+            } else if (timeRemaining <= 20) {
+                servoBar.style.backgroundColor = '#ffaa44'; // Orange for warning
+                console.log("🟠 Changed servo bar to ORANGE");
             } else {
-                timerElement.classList.remove('timer-warning');
+                servoBar.style.backgroundColor = '#44ff44'; // Green for normal
+                console.log("🟢 Changed servo bar to GREEN");
             }
         }
 
+        console.log("🎯 TIMER UPDATE COMPLETE - SHOULD BE IN TIMER CONTAINER");
         // Emit custom event
         document.dispatchEvent(new CustomEvent('timerUpdate', {
             detail: { timeRemaining }
@@ -1407,7 +1631,7 @@ displayFinalScreen(title, message) {
 
     // Method to handle timer finished
     handleTimerFinished() {
-        console.log("Timer finished");
+        // console.log("Timer finished");
         
         // Disable all answer buttons
         const answerButtons = document.querySelectorAll('.c-answer-btn');
@@ -1424,7 +1648,7 @@ displayFinalScreen(title, message) {
 
     // Method to show feedback messages
     showFeedback(message, isError = false) {
-        console.log(`Feedback: ${message}`, isError ? '(Error)' : '');
+        // console.log(`Feedback: ${message}`, isError ? '(Error)' : '');
         
         // Create or get feedback element
         let feedbackElement = document.getElementById('feedbackDisplay');
@@ -1532,7 +1756,7 @@ displayFinalScreen(title, message) {
         if (explanationContainer) explanationContainer.style.display = 'none';
         if (finalContainer) finalContainer.style.display = 'none';
         
-        console.log("Quiz handler reset");
+        // console.log("Quiz handler reset");
     }
 }
 

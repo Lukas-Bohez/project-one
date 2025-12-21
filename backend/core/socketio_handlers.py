@@ -28,6 +28,9 @@ main_asyncio_loop = None
 sio = None
 main_asyncio_loop = None
 
+# Global storage for skip votes
+skip_votes = {}  # question_id: set of user_ids
+
 def init_socketio(socketio_instance, event_loop):
     """Initialize Socket.IO handlers with the server instance"""
     global sio, main_asyncio_loop
@@ -122,7 +125,7 @@ def register_handlers():
             # If no players in session, add the requesting user
             if not players and user_id:
                 logger.info(f"[USER_DATA_REQUEST] Adding user {user_id} to session {session_id}")
-                insert_result = SessionPlayerRepository.add_player_to_session(session_id, user_id)
+                insert_result = SessionPlayerRepository.add_player_to_session(session_id, int(user_id))
                 logger.info(f"[USER_DATA_REQUEST] Insert result: {insert_result}")
                 
                 if insert_result:
@@ -133,7 +136,7 @@ def register_handlers():
                     logger.error(f"[USER_DATA_REQUEST] Failed to add user {user_id} to session {session_id}")
                     # Try to get user info from database for fallback
                     from database.datarepository import UserRepository
-                    user_info = UserRepository.get_user_by_id(user_id)
+                    user_info = UserRepository.get_user_by_id(int(user_id))
                     if user_info:
                         user_name = f"{user_info.get('first_name', '')} {user_info.get('last_name', '')}".strip()
                         if not user_name:
@@ -142,22 +145,49 @@ def register_handlers():
                         user_name = f'Player {user_id}'
                     
                     players = [{
-                        'userId': user_id,
-                        'userName': user_name,
-                        'totalScore': 0
+                        'user_id': user_id,
+                        'user_name': user_name,
+                        'total_score': 0
                     }]
                     logger.info(f"[USER_DATA_REQUEST] Using fallback player data with real name: {players}")
             
             players_data = []
             for player in players:
                 player_dict = {
-                    'id': player.get('userId') or player.get('id'),
-                    'name': player.get('userName') or f'Player {player.get("userId")}',
-                    'score': player.get('totalScore', 0),
+                    'user_id': player.get('userId') or player.get('id'),
+                    'user_name': player.get('userName') or player.get('name') or f'Player {player.get("userId", player.get("id"))}',
+                    'total_score': player.get('totalScore', 0) or player.get('score', 0),
                     'is_online': True
                 }
                 players_data.append(player_dict)
                 logger.debug(f"[USER_DATA_REQUEST] Added player: {player_dict}")
+            
+            # Ensure the requesting user is in the players list
+            user_id_int = int(user_id) if user_id.isdigit() else user_id
+            user_in_list = any(p['user_id'] == user_id_int for p in players_data)
+            if not user_in_list:
+                logger.info(f"[USER_DATA_REQUEST] User {user_id} not in players list, adding them")
+                # Try to add to session
+                insert_result = SessionPlayerRepository.add_player_to_session(session_id, user_id_int)
+                if insert_result:
+                    # Get user info for the new player
+                    from database.datarepository import UserRepository
+                    user_info = UserRepository.get_user_by_id(user_id_int)
+                    if user_info:
+                        user_name = f"{user_info.get('first_name', '')} {user_info.get('last_name', '')}".strip()
+                        if not user_name:
+                            user_name = user_info.get('username', f'Player {user_id}')
+                        players_data.append({
+                            'user_id': int(user_id),
+                            'user_name': user_name,
+                            'total_score': 0,
+                            'is_online': True
+                        })
+                        logger.info(f"[USER_DATA_REQUEST] Added user {user_id} to players_data")
+                    else:
+                        logger.error(f"[USER_DATA_REQUEST] Could not get user info for {user_id}")
+                else:
+                    logger.error(f"[USER_DATA_REQUEST] Failed to add user {user_id} to session {session_id}")
             
             logger.info(f"[USER_DATA_REQUEST] sending players_data: {players_data}")
             
@@ -167,8 +197,8 @@ def register_handlers():
             await sio.emit('all_users_data_updated', {
                 'players': players_data,
                 'session_id': session_id
-            }, room=sid)
-            logger.info(f"[USER_DATA_REQUEST] Emitted to {sid}")
+            }, room=room)
+            logger.info(f"[USER_DATA_REQUEST] Emitted to {room}")
         
         except Exception as e:
             print(f"[ERROR] User data request failed: {e}")
@@ -313,13 +343,35 @@ def register_handlers():
                 is_correct=is_correct
             )
             
+            # Get the correct answer for the question
+            correct_answer_text = None
+            if answer and not is_correct:
+                correct_answer_text = answer.get('answer_text')
+            elif not answer or not is_correct:
+                # For timeout or if answer is None, get the correct answer from question answers
+                answers = AnswerRepository.get_all_answers_for_question(question_id)
+                for ans in answers:
+                    if ans.get('is_correct'):
+                        correct_answer_text = ans.get('answer_text')
+                        break
+            
             # Send response to the player who answered
             await sio.emit('answer_response', {
                 'success': True,
                 'is_correct': is_correct,
                 'points': points,
-                'correct_answer': answer.get('answer_text') if not is_correct and answer else None
+                'correct_answer': correct_answer_text if not is_correct else None
             }, room=sid)
+            
+            # Send question result with explanation
+            from database.datarepository import QuestionRepository
+            question = QuestionRepository.get_question_by_id(question_id)
+            if question:
+                await sio.emit('question_result', {
+                    'question': question,
+                    'explanation': question.get('explanation', ''),
+                    'correct_answer': correct_answer_text
+                }, room=sid)
             
             print(f"[ANSWER] Result: {'✅ Correct' if is_correct else '❌ Wrong'}, Points: {points}")
             
@@ -421,7 +473,22 @@ def register_handlers():
                 active_questions = [q for q in active_questions if q.get('themeId') == theme_id or q.get('theme_id') == theme_id]
             
             if not active_questions:
-                await sio.emit('error', {'message': 'No active questions found'}, room=sid)
+                # No questions left in current theme, send theme selection
+                print(f"[QUESTION] No questions left in theme {theme_id}, sending theme selection")
+                from database.datarepository import ThemeRepository
+                themes = ThemeRepository.get_all_active_themes()
+                
+                if themes:
+                    room = f"quiz_session_{session_id}"
+                    await sio.emit('theme_selection', {
+                        'type': 'theme_selection',
+                        'question': 'Select a theme for the quiz:',
+                        'themes': themes,
+                        'session_id': session_id
+                    }, room=room)
+                    print(f"[THEME SELECTION] Sent theme selection to room {room}")
+                else:
+                    await sio.emit('error', {'message': 'No themes available'}, room=sid)
                 return
             
             # Pick a random question
@@ -436,7 +503,8 @@ def register_handlers():
             await sio.emit('new_question', {
                 'session_id': session_id,
                 'question': question,
-                'answers': answers
+                'answers': answers,
+                'type': 'question'
             }, room=room)
             
             print(f"[QUESTION] Broadcast question {question_id} to room {room}")
@@ -444,6 +512,48 @@ def register_handlers():
         except Exception as e:
             print(f"[ERROR] Failed to broadcast question: {e}")
             await sio.emit('error', {'message': str(e)}, room=sid)
+
+
+    @sio.on('vote_skip')
+    async def handle_vote_skip(sid, data):
+        """Handle skip vote for current question"""
+        try:
+            from database.datarepository import SessionPlayerRepository
+            
+            user_id = data.get('userId') or data.get('user_id')
+            question_id = data.get('questionId') or data.get('question_id')
+            session_id = data.get('session_id')
+            
+            print(f"[VOTE SKIP] User {user_id}, Question {question_id}, Session {session_id}")
+            
+            # Initialize votes for this question if not exists
+            if question_id not in skip_votes:
+                skip_votes[question_id] = set()
+            
+            # Add vote if not already voted
+            if user_id not in skip_votes[question_id]:
+                skip_votes[question_id].add(user_id)
+            
+            # Get total players in session
+            players = SessionPlayerRepository.get_players_by_session_id(session_id)
+            total_players = len(players) if players else 1  # fallback to 1
+            
+            votes_count = len(skip_votes[question_id])
+            
+            # Calculate speed: 1 + (votes / total_players)
+            speed = 1 + (votes_count / total_players)
+            
+            print(f"[VOTE SKIP] Votes: {votes_count}/{total_players}, Speed: {speed}")
+            
+            # Emit updates to all players in the room
+            room = f"quiz_session_{session_id}"
+            await sio.emit('timer_speed_update', {'speed': speed}, room=room)
+            await sio.emit('skip_votes_update', {'votes': votes_count, 'total_players': total_players}, room=room)
+            
+        except Exception as e:
+            print(f"[ERROR] Vote skip failed: {e}")
+            import traceback
+            traceback.print_exc()
 
 
 async def end_quiz_session(session_id, reason="Quiz ended"):

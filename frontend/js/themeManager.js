@@ -50,12 +50,12 @@
             }
             
             // Debug info
-            console.log('Theme Manager initialized:', {
-                currentTheme: this.currentTheme,
-                effectiveTheme: this.getEffectiveTheme(),
-                toggleFunctionExists: typeof window.toggleTheme,
-                documentReady: document.readyState
-            });
+            // console.log('Theme Manager initialized:', {
+            //     currentTheme: this.currentTheme,
+            //     effectiveTheme: this.getEffectiveTheme(),
+            //     toggleFunctionExists: typeof window.toggleTheme,
+            //     documentReady: document.readyState
+            // });
         }
         
         getStoredTheme() {
@@ -96,7 +96,7 @@
             
             // Prevent unnecessary theme applications
             if (this.lastAppliedTheme === effectiveTheme) {
-                console.log('Theme already applied, skipping:', effectiveTheme);
+                // console.log('Theme already applied, skipping:', effectiveTheme);
                 return;
             }
             this.lastAppliedTheme = effectiveTheme;
@@ -104,7 +104,7 @@
             const html = document.documentElement;
             const body = document.body;
             
-            console.log('Applying theme:', { theme, effectiveTheme });
+            // console.log('Applying theme:', { theme, effectiveTheme });
             
             // Safely remove existing theme classes and attributes
             if (html) {
@@ -122,7 +122,7 @@
                     body.setAttribute('data-theme', 'dark');
                     body.classList.add('theme-dark');
                 }
-                console.log('Applied dark theme to html and body');
+                // console.log('Applied dark theme to html and body');
                 
                 // Also apply to main content areas for admin
                 const adminContainer = document.querySelector('.c-admin-container');
@@ -136,7 +136,7 @@
                     body.setAttribute('data-theme', 'light');
                     body.classList.add('theme-light');
                 }
-                console.log('Applied light theme to html and body');
+                // console.log('Applied light theme to html and body');
                 
                 // Also apply to main content areas for admin
                 const adminContainer = document.querySelector('.c-admin-container');
@@ -161,10 +161,10 @@
                 this.loadSpireBackgrounds();
             }
             
-            console.log('Theme application complete. Current data-theme attributes:', {
-                html: html ? html.getAttribute('data-theme') : null,
-                body: body ? body.getAttribute('data-theme') : null
-            });
+            // console.log('Theme application complete. Current data-theme attributes:', {
+            //     html: html ? html.getAttribute('data-theme') : null,
+            //     body: body ? body.getAttribute('data-theme') : null
+            // });
         }
         
         loadSpireBackgrounds() {
@@ -188,15 +188,15 @@
         }
         
         toggleTheme() {
-            console.log('=== THEME TOGGLE CALLED ===');
+            // console.log('=== THEME TOGGLE CALLED ===');
             // Simple toggle: light <-> dark (no system mode)
             let newTheme;
             const effectiveTheme = this.getEffectiveTheme();
             
-            console.log('toggleTheme method called:', {
-                currentTheme: this.currentTheme,
-                effectiveTheme: effectiveTheme
-            });
+            // console.log('toggleTheme method called:', {
+            //     currentTheme: this.currentTheme,
+            //     effectiveTheme: effectiveTheme
+            // });
             
             if (effectiveTheme === THEMES.DARK) {
                 newTheme = THEMES.LIGHT;
@@ -204,7 +204,7 @@
                 newTheme = THEMES.DARK;
             }
             
-            console.log('Setting new theme to:', newTheme);
+            // console.log('Setting new theme to:', newTheme);
             this.setTheme(newTheme);
         }
         
@@ -225,11 +225,11 @@
             ].filter(btn => btn !== null);
             
             if (toggleBtns.length === 0) {
-                console.log('No theme toggle buttons found');
+                // console.log('No theme toggle buttons found');
                 return;
             }
             
-            console.log('Found theme toggle buttons:', toggleBtns.map(btn => btn.id));
+            // console.log('Found theme toggle buttons:', toggleBtns.map(btn => btn.id));
             
             // Update all buttons
             toggleBtns.forEach(btn => {
@@ -238,16 +238,16 @@
                 // If the button doesn't have an onclick handler, add our event listener
                 if (!btn.onclick) {
                     btn.addEventListener('click', (e) => {
-                        console.log('Theme toggle button clicked (event listener):', btn.id);
+                        // console.log('Theme toggle button clicked (event listener):', btn.id);
                         this.toggleTheme();
                     });
-                    console.log('Added event listener to theme toggle button:', btn.id);
+                    // console.log('Added event listener to theme toggle button:', btn.id);
                 } else {
-                    console.log('Theme toggle button already has onclick handler:', btn.id);
+                    // console.log('Theme toggle button already has onclick handler:', btn.id);
                 }
             });
             
-            console.log('Theme toggle buttons initialized successfully');
+            // console.log('Theme toggle buttons initialized successfully');
         }
         
         updateToggleButton(specificBtn = null) {
@@ -290,7 +290,7 @@
         // Force apply current theme to newly created elements
         applyThemeToNewElements(container = document) {
             const currentEffectiveTheme = this.getEffectiveTheme();
-            console.log('Applying theme to new elements:', currentEffectiveTheme);
+            // console.log('Applying theme to new elements:', currentEffectiveTheme);
             
             // Ensure the container and all its children have the correct theme applied
             if (container !== document) {
@@ -313,7 +313,7 @@
     // Expose theme control functions globally for backwards compatibility
     window.setTheme = (theme) => window.themeManager.setTheme(theme);
     window.toggleTheme = () => {
-        console.log('toggleTheme called globally - checking if themeManager exists:', !!window.themeManager);
+        // console.log('toggleTheme called globally - checking if themeManager exists:', !!window.themeManager);
         if (window.themeManager) {
             return window.themeManager.toggleTheme();
         } else {
