@@ -137,6 +137,10 @@ function extractPlaylistVideos(data) {
 function extractSingleVideo(data) {
   try {
     const videoDetails = data?.videoDetails || data?.microformat?.playerMicroformatRenderer;
+    const streamingData = data?.streamingData;
+
+    // Extract streaming URLs
+    const streams = extractStreamingUrls(streamingData);
 
     if (videoDetails) {
       return {
@@ -146,7 +150,8 @@ function extractSingleVideo(data) {
         thumbnail: extractBestThumbnail(videoDetails.thumbnail?.thumbnails),
         duration: formatDuration(videoDetails.lengthSeconds),
         url: window.location.href,
-        isShort: window.location.href.includes('/shorts/')
+        isShort: window.location.href.includes('/shorts/'),
+        streams: streams
       };
     }
 
@@ -162,7 +167,8 @@ function extractSingleVideo(data) {
       thumbnail: thumbnailEl?.poster || extractThumbnailFromMeta(),
       duration: 'Unknown',
       url: window.location.href,
-      isShort: window.location.href.includes('/shorts/')
+      isShort: window.location.href.includes('/shorts/'),
+      streams: { video: [], audio: [] }
     };
 
   } catch (error) {
@@ -214,14 +220,86 @@ function extractChannelVideos(data) {
   return videos.slice(0, 20); // Limit to 20 videos
 }
 
-function extractBestThumbnail(thumbnails) {
-  if (!thumbnails || !Array.isArray(thumbnails)) {
-    return extractThumbnailFromMeta();
+function extractStreamingUrls(streamingData) {
+  const streams = {
+    video: [],
+    audio: []
+  };
+
+  if (!streamingData) return streams;
+
+  try {
+    // Extract progressive streams (combined video+audio)
+    if (streamingData.formats) {
+      for (const format of streamingData.formats) {
+        if (format.url || format.signatureCipher) {
+          streams.video.push({
+            url: format.url || decodeSignatureCipher(format.signatureCipher),
+            quality: format.qualityLabel || `${format.height}p`,
+            type: 'progressive',
+            container: format.mimeType?.split(';')[0]?.split('/')[1] || 'mp4',
+            bitrate: format.bitrate,
+            contentLength: format.contentLength,
+            hasAudio: true,
+            hasVideo: true
+          });
+        }
+      }
+    }
+
+    // Extract adaptive streams (separate video/audio)
+    if (streamingData.adaptiveFormats) {
+      for (const format of streamingData.adaptiveFormats) {
+        if (format.url || format.signatureCipher) {
+          const isAudio = format.mimeType?.includes('audio') || false;
+          const streamType = isAudio ? 'audio' : 'video';
+
+          streams[streamType].push({
+            url: format.url || decodeSignatureCipher(format.signatureCipher),
+            quality: format.qualityLabel || (isAudio ? `${format.bitrate}kbps` : `${format.height}p`),
+            type: 'adaptive',
+            container: format.mimeType?.split(';')[0]?.split('/')[1] || (isAudio ? 'mp4' : 'mp4'),
+            bitrate: format.bitrate,
+            contentLength: format.contentLength,
+            hasAudio: isAudio,
+            hasVideo: !isAudio,
+            fps: format.fps
+          });
+        }
+      }
+    }
+
+    // Sort by quality (best first)
+    streams.video.sort((a, b) => {
+      const aQuality = parseInt(a.quality) || 0;
+      const bQuality = parseInt(b.quality) || 0;
+      return bQuality - aQuality;
+    });
+
+    streams.audio.sort((a, b) => {
+      const aBitrate = parseInt(a.bitrate) || 0;
+      const bBitrate = parseInt(b.bitrate) || 0;
+      return bBitrate - aBitrate;
+    });
+
+  } catch (error) {
+    console.error('Error extracting streaming URLs:', error);
   }
 
-  // Sort by quality and return the best one
-  const sorted = thumbnails.sort((a, b) => (b.width * b.height) - (a.width * a.height));
-  return sorted[0]?.url || extractThumbnailFromMeta();
+  return streams;
+}
+
+function decodeSignatureCipher(cipher) {
+  // This is a simplified implementation - in reality, YouTube's signature cipher
+  // is much more complex and changes frequently. For a production extension,
+  // you'd need to implement proper cipher decoding or use a backend service.
+  try {
+    const params = new URLSearchParams(cipher);
+    return params.get('url') || '';
+  } catch (error) {
+    console.error('Error decoding signature cipher:', error);
+    return '';
+  }
 }
 
 function extractThumbnailFromMeta() {
