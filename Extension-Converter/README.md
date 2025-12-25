@@ -17,12 +17,17 @@ A powerful Chrome extension to convert YouTube videos and playlists to MP3/MP4 w
 - **Retry Logic**: Automatic retry on failures with configurable settings
 - **Settings Persistence**: Save preferences across browser sessions
 - **Queue Management**: Visual queue display with status indicators
+- **Tabbed Interface**: Organized Main, Debug Logs, and Settings tabs
+- **Comprehensive Logging**: Detailed debug logging with export functionality
+- **Shorts Support**: Full support for YouTube Shorts with metadata extraction
+- **Enhanced Reliability**: Local YouTube data extraction instead of external APIs
 
 ### Reliability Features
 - **Error Handling**: Comprehensive error handling with user-friendly messages
 - **Retry Mechanism**: Configurable retry attempts and delays
 - **Status Monitoring**: Real-time status updates during conversion
 - **Conflict Resolution**: Automatic filename uniquification
+- **Debug Logging**: Extensive logging for troubleshooting and development
 
 ## Installation
 
@@ -111,6 +116,21 @@ Extension-Converter/
 - Queue status persists across browser sessions
 
 ## Version History
+
+### Version 2.2
+- **Complete UI Redesign**: Tabbed interface with Main, Debug Logs, and Settings tabs
+- **Comprehensive Debug Logging**: Extensive logging throughout the extension with export functionality
+- **Enhanced YouTube Support**: Full Shorts support with proper metadata extraction
+- **Improved Reliability**: Local YouTube data extraction instead of external APIs
+- **Better Error Handling**: Enhanced retry logic and error recovery
+- **Thumbnail Display**: Visual video selection with thumbnail previews
+- **Export Logs**: Ability to export debug logs for troubleshooting
+
+### Version 2.1
+- Added comprehensive debug logging system
+- Enhanced YouTube data extraction
+- Improved error handling
+- Added Shorts support
 
 ### Version 2.0
 - Complete UI redesign with modern interface
