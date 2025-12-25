@@ -4,3 +4,29 @@
 2025-12-21 22:36:28,796 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1766352983.277795_Eponas Song Zelda OoT  Amy Turk.mp3 (3345662 bytes)
 2025-12-21 22:36:29,020 - INFO - Found cover art in MP4 metadata for /tmp/project-one/temp_uploads/1766352983.225659_Eponas Song Zelda OoT  Amy Turk.mp4
 2025-12-21 22:36:29,281 - INFO - Embedded cover art in MP3: /tmp/project-one/temp_converted/1766352983.277795_Eponas Song Zelda OoT  Amy Turk.mp3
+2025-12-24 11:38:17,810 - INFO - [LOGIN] Created new session 1000174 with status=2 (active)
+2025-12-24 11:38:27,211 - INFO - start_generic_timer: Created and starting timer thread for session 1000174
+2025-12-24 11:38:27,221 - INFO - Timer thread started for session 1000174, phase: voting
+2025-12-24 11:38:44,351 - INFO - handle_theme_display_phase: starting quiz timer for session 1000174
+2025-12-24 11:38:44,356 - INFO - start_generic_timer: Timer already exists for session 1000174, returning False
+2025-12-24 11:38:44,361 - INFO - Timer thread ending, removing from active_timers for session 1000174
+2025-12-24 11:38:45,164 - INFO - Main loop check - quiz phase, no timer. Session 1000174
+2025-12-24 11:38:45,169 - INFO - Room check: quiz_session_1000174 has 1 participants
+2025-12-24 11:38:45,174 - INFO - Main loop: About to check available questions and start timer
+2025-12-24 11:38:45,195 - INFO - Main loop: Calling start_generic_timer for session 1000174
+2025-12-24 11:38:45,200 - INFO - start_generic_timer: Created and starting timer thread for session 1000174
+2025-12-24 11:38:45,221 - INFO - Timer thread started for session 1000174, phase: quiz
+2025-12-24 11:38:45,221 - INFO - Main loop: start_generic_timer returned True
+2025-12-24 11:38:45,221 - INFO - ========== HANDLE_QUIZ_PHASE CALLED for session 1000174 ==========
+2025-12-24 11:38:45,288 - INFO - Found 1 total questions for theme 41
+2025-12-24 11:38:45,314 - INFO - Already answered questions: []
+2025-12-24 11:38:45,330 - INFO - Available questions: 1
+2025-12-24 11:38:45,361 - INFO - Total players: 1
+2025-12-24 11:38:45,366 - INFO - Room check: quiz_session_1000174 has 1 participants
+2025-12-24 11:38:45,372 - INFO - Is quiz session active (Socket.IO room check): True
+2025-12-24 11:38:45,377 - INFO - About to send 'Preparing question 1' message
+2025-12-24 11:38:45,443 - INFO - ENTERING WHILE LOOP: available_questions=1, quiz_ended_early=False
+2025-12-24 11:38:45,448 - INFO - INSIDE WHILE LOOP - selecting question
+2025-12-24 11:39:15,770 - INFO - Current theme exhausted but other themes remain for session 1000174; reopening voting
+2025-12-24 11:39:15,843 - INFO - start_generic_timer: Timer already exists for session 1000174, returning False
+2025-12-24 11:39:15,848 - INFO - Timer thread ending, removing from active_timers for session 1000174
