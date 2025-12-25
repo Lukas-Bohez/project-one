@@ -1,0 +1,33 @@
+{
+  "version": "2.2",
+  "name": "Convert the Spire",
+  "description": "YouTube Video Converter Extension",
+  "changelog": {
+    "2.2": [
+      "Complete UI redesign with tabbed interface (Main, Debug Logs, Settings)",
+      "Enhanced debug logging system with export functionality",
+      "Improved error handling and retry logic",
+      "Better YouTube data extraction with comprehensive logging",
+      "Added Shorts support with proper metadata extraction",
+      "Enhanced thumbnail display and video selection interface",
+      "Comprehensive logging throughout popup.js and content.js",
+      "Fixed extension failing instantly issues",
+      "Local YouTube data extraction instead of external APIs",
+      "Added settings for max retries and retry delay"
+    ],
+    "2.1": [
+      "Added comprehensive debug logging system",
+      "Enhanced YouTube data extraction",
+      "Improved error handling",
+      "Added Shorts support"
+    ],
+    "2.0": [
+      "Complete rewrite using local YouTube data extraction",
+      "Added thumbnail display and video selection",
+      "Enhanced UI with better progress tracking",
+      "Improved reliability and performance"
+    ]
+  },
+  "last_updated": "2024-01-15",
+  "author": "Convert the Spire Team"
+}
