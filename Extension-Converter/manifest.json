@@ -1,17 +1,19 @@
 {
   "manifest_version": 3,
-  "name": "YouTube Video Converter",
-  "version": "1.0",
-  "description": "Convert YouTube videos and playlists to MP3/MP4 with variable quality",
+  "name": "Convert the Spire",
+  "version": "2.0",
+  "description": "Convert YouTube videos and playlists to MP3/MP4 with automatic batch processing",
   "permissions": [
     "activeTab",
     "cookies",
     "tabs",
     "storage",
-    "downloads"
+    "downloads",
+    "downloads.shelf"
   ],
   "host_permissions": [
-    "https://api.y2mate.com/*"
+    "https://api.y2mate.com/*",
+    "https://www.youtube.com/*"
   ],
   "background": {
     "service_worker": "background.js"

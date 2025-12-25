@@ -1,47 +1,220 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>YouTube Converter</title>
+  <title>Convert the Spire</title>
   <style>
-    body { width: 300px; padding: 10px; font-family: Arial, sans-serif; }
-    .container { display: flex; flex-direction: column; gap: 10px; }
-    .url-display { font-size: 12px; color: #666; word-break: break-all; }
-    .controls { display: flex; flex-direction: column; gap: 8px; }
-    select, button { padding: 8px; }
-    button { background: #ff0000; color: white; border: none; cursor: pointer; }
-    button:hover { background: #cc0000; }
-    button:disabled { background: #ccc; cursor: not-allowed; }
-    .status { font-size: 12px; color: #666; }
-    .error { color: red; }
-    .success { color: green; }
+    body {
+      width: 400px;
+      padding: 15px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      background: #f5f5f5;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .header h3 {
+      margin: 0;
+      color: #2c4c7c;
+      font-size: 18px;
+    }
+    .url-display {
+      font-size: 12px;
+      color: #666;
+      word-break: break-all;
+      background: white;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: white;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+    }
+    .control-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .control-row label {
+      min-width: 60px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    select, input {
+      padding: 6px 8px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      flex: 1;
+    }
+    button {
+      padding: 8px 16px;
+      background: #2c4c7c;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    button:hover:not(:disabled) {
+      background: #1f3a5f;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .convert-btn {
+      background: #ff4444;
+      font-size: 14px;
+      padding: 10px;
+    }
+    .convert-btn:hover:not(:disabled) {
+      background: #cc3333;
+    }
+    .status {
+      font-size: 12px;
+      padding: 8px;
+      border-radius: 4px;
+      min-height: 20px;
+    }
+    .status.info { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
+    .status.success { background: #e8f5e8; color: #2e7d32; border: 1px solid #c8e6c9; }
+    .status.error { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+    .status.warning { background: #fff3e0; color: #ef6c00; border: 1px solid #ffcc02; }
+
+    .progress-container {
+      display: none;
+      background: white;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #eee;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 8px 0;
+    }
+    .progress-fill {
+      height: 100%;
+      background: #2c4c7c;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    .queue-list {
+      max-height: 150px;
+      overflow-y: auto;
+      font-size: 11px;
+    }
+    .queue-item {
+      padding: 4px 8px;
+      margin: 2px 0;
+      border-radius: 3px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .queue-item.pending { background: #fff3e0; color: #ef6c00; }
+    .queue-item.processing { background: #e3f2fd; color: #1565c0; }
+    .queue-item.completed { background: #e8f5e8; color: #2e7d32; }
+    .queue-item.failed { background: #ffebee; color: #c62828; }
+
+    .settings {
+      background: white;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      margin-top: 8px;
+    }
+    .settings-toggle {
+      width: 100%;
+      background: #666;
+      margin-bottom: 8px;
+    }
+    .settings-content {
+      display: none;
+    }
+    .settings-content.show {
+      display: block;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h3>YouTube Converter</h3>
-    <div id="url-display" class="url-display"></div>
-    
-    <div class="controls">
-      <select id="format">
-        <option value="mp4">MP4 (Video)</option>
-        <option value="mp3">MP3 (Audio)</option>
-      </select>
-      
-      <select id="quality">
-        <option value="best">Best Quality</option>
-        <option value="1080p">1080p</option>
-        <option value="720p">720p</option>
-        <option value="480p">480p</option>
-        <option value="360p">360p</option>
-        <option value="worst">Worst Quality</option>
-      </select>
-      
-      <button id="convert-btn">Convert & Download</button>
+    <div class="header">
+      <h3>Convert the Spire</h3>
     </div>
-    
+
+    <div id="url-display" class="url-display"></div>
+
+    <div class="controls">
+      <div class="control-row">
+        <label for="format">Format:</label>
+        <select id="format">
+          <option value="mp4">MP4 (Video)</option>
+          <option value="mp3">MP3 (Audio)</option>
+        </select>
+      </div>
+
+      <div class="control-row">
+        <label for="quality">Quality:</label>
+        <select id="quality">
+          <option value="best">Best Quality</option>
+          <option value="1080p">1080p</option>
+          <option value="720p">720p</option>
+          <option value="480p">480p</option>
+          <option value="360p">360p</option>
+          <option value="worst">Worst Quality</option>
+        </select>
+      </div>
+
+      <div class="control-row">
+        <label for="download-dir">Save to:</label>
+        <input type="text" id="download-dir" placeholder="Downloads/ConvertTheSpire" value="Downloads/ConvertTheSpire">
+      </div>
+
+      <button id="convert-btn" class="convert-btn">Convert & Download</button>
+    </div>
+
+    <div class="progress-container" id="progress-container">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <div id="progress-text">Initializing...</div>
+      <div class="queue-list" id="queue-list"></div>
+    </div>
+
     <div id="status" class="status"></div>
+
+    <button class="settings-toggle" id="settings-toggle">⚙️ Settings</button>
+    <div class="settings" id="settings">
+      <div class="settings-content" id="settings-content">
+        <div class="control-row">
+          <label for="max-retries">Max Retries:</label>
+          <input type="number" id="max-retries" value="3" min="1" max="10">
+        </div>
+        <div class="control-row">
+          <label for="retry-delay">Retry Delay (s):</label>
+          <input type="number" id="retry-delay" value="5" min="1" max="60">
+        </div>
+        <button id="save-settings">Save Settings</button>
+      </div>
+    </div>
   </div>
-  
+
   <script src="popup.js"></script>
 </body>
 </html>
