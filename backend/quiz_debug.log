@@ -30,3 +30,6 @@
 2025-12-24 11:39:15,770 - INFO - Current theme exhausted but other themes remain for session 1000174; reopening voting
 2025-12-24 11:39:15,843 - INFO - start_generic_timer: Timer already exists for session 1000174, returning False
 2025-12-24 11:39:15,848 - INFO - Timer thread ending, removing from active_timers for session 1000174
+2025-12-25 13:46:41,142 - INFO - ==================================================
+2025-12-25 13:46:41,142 - INFO - Quiz Logger Initialized
+2025-12-25 13:46:41,142 - INFO - ==================================================

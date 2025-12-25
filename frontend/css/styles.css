@@ -302,12 +302,15 @@ body * {
 
 .c-welcome-message {
     background-color: var(--bg-secondary);
-    padding: var(--spacing-xl);
+    padding: var(--spacing-xl) 2rem;
     border-radius: var(--border-radius);
     margin-bottom: var(--spacing-xl);
     border: 1px solid var(--border-color);
     box-shadow: 0 4px 6px var(--shadow-light);
     text-align: center;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .c-btn {
