@@ -798,6 +798,7 @@ html, body {
     color: var(--primary-color);
     margin-bottom: var(--spacing-lg);
     font-size: var(--font-size-xl);
+    text-align: center;
 }
 
 .content-second h3 {
@@ -805,24 +806,35 @@ html, body {
     margin-top: var(--spacing-lg);
     margin-bottom: var(--spacing-md);
     font-size: var(--font-size-lg);
+    text-align: center;
 }
 
 .content-second p {
     color: var(--text-secondary);
     margin-bottom: var(--spacing-md);
     line-height: 1.7;
+    text-align: center;
 }
 
 .content-second ol,
 .content-second ul {
     margin-left: var(--spacing-lg);
     margin-bottom: var(--spacing-md);
+    text-align: left;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 600px;
+}
+
+.content-second ol {
+    list-style-type: none;
 }
 
 .content-second li {
     color: var(--text-secondary);
     margin-bottom: var(--spacing-xs);
     line-height: 1.6;
+    text-align: center;
 }
 
 .content-second ul li {
@@ -1001,6 +1013,7 @@ html, body {
     margin-top: var(--spacing-lg);
     border-top: 1px solid var(--border-color);
     padding-top: var(--spacing-lg);
+    text-align: center;
 }
 
 .faq-section h4 {
@@ -1351,6 +1364,7 @@ html, body {
     font-size: 1.8rem;
     font-weight: 600;
     position: relative;
+    text-align: center;
 }
 
 .legal-page h3,
@@ -1360,6 +1374,7 @@ html, body {
     margin-bottom: 1rem;
     font-size: 1.4rem;
     font-weight: 600;
+    text-align: center;
 }
 
 .legal-page h4,
@@ -1369,6 +1384,7 @@ html, body {
     margin-bottom: 0.75rem;
     font-size: 1.1rem;
     font-weight: 500;
+    text-align: center;
 }
 
 /* Content Styling */
@@ -1377,6 +1393,7 @@ html, body {
     margin-bottom: 1.25rem;
     color: var(--text-primary);
     line-height: 1.7;
+    text-align: center;
 }
 
 .legal-page ul,
@@ -1386,12 +1403,22 @@ html, body {
     margin-bottom: 1.25rem;
     padding-left: 2rem;
     color: var(--text-primary);
+    text-align: left;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 600px;
+}
+
+.legal-page ol,
+.about-page ol {
+    list-style-type: none;
 }
 
 .legal-page li,
 .about-page li {
     margin-bottom: 0.5rem;
     line-height: 1.6;
+    text-align: center;
 }
 
 .legal-page strong,
@@ -1964,6 +1991,7 @@ html, body {
     border-left: 4px solid var(--primary-color);
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    text-align: center;
 }
 
 .terms-feature:hover {
@@ -1986,6 +2014,7 @@ html, body {
     margin: 1.5rem 0;
     border-left: 4px solid var(--border-warning, #ffc107);
     box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);
+    text-align: center;
 }
 
 .success-box {
@@ -1997,6 +2026,83 @@ html, body {
     margin: 1.5rem 0;
     border-left: 4px solid var(--border-success, #28a745);
     box-shadow: 0 2px 8px rgba(40, 167, 69, 0.1);
+    text-align: center;
+}
+
+/* Privacy Policy Specific Styles */
+.privacy-section {
+    background: var(--bg-secondary);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    margin: 2rem 0;
+    border-left: 4px solid var(--primary-color);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.privacy-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.privacy-section h2 {
+    color: var(--primary-color);
+    margin-top: 0;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--primary-color);
+    font-size: 1.6rem;
+    font-weight: 600;
+}
+
+.privacy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.privacy-card {
+    background: var(--bg-secondary);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    border-left: 3px solid var(--primary-color);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.privacy-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.privacy-card h3 {
+    color: var(--primary-color);
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.privacy-feature {
+    background: var(--bg-secondary);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    margin: 1rem 0;
+    border-left: 3px solid var(--primary-color);
+    transition: all 0.3s ease;
+}
+
+.privacy-feature:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.privacy-feature h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    font-weight: 500;
 }
 
 /* Dark theme overrides for special boxes */

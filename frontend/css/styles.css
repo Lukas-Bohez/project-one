@@ -307,6 +307,7 @@ body * {
     margin-bottom: var(--spacing-xl);
     border: 1px solid var(--border-color);
     box-shadow: 0 4px 6px var(--shadow-light);
+    text-align: center;
 }
 
 .c-btn {
