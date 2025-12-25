@@ -13,7 +13,12 @@
   ],
   "host_permissions": [
     "https://api.y2mate.com/*",
-    "https://www.youtube.com/*"
+    "https://api.y2meta.com/*",
+    "https://api.yt1s.com/*",
+    "https://api.yt5s.com/*",
+    "https://api.ytmp3.cc/*",
+    "https://www.youtube.com/*",
+    "https://*.googlevideo.com/*"
   ],
   "background": {
     "service_worker": "background.js"

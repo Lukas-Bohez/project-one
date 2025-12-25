@@ -242,17 +242,17 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function extractPlaylistId(url) {
-    const match = url.match(/[?&]list=([^#\&\?]*)/);
+    const match = url.match(new RegExp('[?&]list=([^#&?]*)'));
     return match ? match[1] : null;
   }
 
   function extractVideoId(url) {
     // Handle various YouTube URL formats
     const patterns = [
-      /[?&]v=([^#\&\?]*)/,  // Standard format
-      /youtu\.be\/([^\/\?]+)/,  // Shortened format
-      /youtube\.com\/embed\/([^\/\?]+)/,  // Embed format
-      /youtube\.com\/shorts\/([^\/\?]+)/  // Shorts format
+      new RegExp('[?&]v=([^#&?]*)'),  // Standard format
+      new RegExp('youtu\\.be/([^/?]+)'),  // Shortened format
+      new RegExp('youtube\\.com/embed/([^/?]+)'),  // Embed format
+      new RegExp('youtube\\.com/shorts/([^/?]+)')  // Shorts format
     ];
 
     for (const pattern of patterns) {
@@ -419,7 +419,7 @@ document.addEventListener('DOMContentLoaded', function() {
     while (retries <= maxRetries) {
       try {
         addLog('debug', `Attempt ${retries + 1}/${maxRetries + 1} for video: ${item.title || item.id}`);
-        const downloadUrl = await findDownloadUrl(item.url, format, quality);
+        const downloadUrl = await findDownloadUrl(item.url, format, quality, item);
 
         if (!downloadUrl) {
           throw new Error('Could not find download URL');
@@ -428,7 +428,7 @@ document.addEventListener('DOMContentLoaded', function() {
         addLog('debug', 'Download URL obtained, starting download', { url: downloadUrl.substring(0, 50) + '...' });
 
         // Download with custom directory
-        const sanitizedTitle = item.title.replace(/[<>:"/\\|?*]/g, '_').replace(/\s+/g, ' ').trim();
+        const sanitizedTitle = item.title.replace(/[<>:\"\/\\|?*]/g, '_').replace(/\s+/g, ' ').trim();
         const filename = `${downloadDir}/${sanitizedTitle}.${format}`;
 
         addLog('debug', 'Starting download', { filename });
@@ -456,10 +456,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  async function findDownloadUrl(videoUrl, format, quality) {
+  async function findDownloadUrl(videoUrl, format, quality, videoData = null) {
     addLog('debug', 'Finding download URL', { videoUrl: videoUrl.substring(0, 50) + '...', format, quality });
 
-    // Try multiple services in order of preference
+    // First try to use streaming URLs extracted from YouTube directly
+    if (videoData && videoData.streams) {
+      addLog('debug', 'Trying direct YouTube streaming URLs');
+      const directUrl = await tryDirectYouTubeStreams(videoData.streams, format, quality);
+      if (directUrl) {
+        addLog('success', 'Direct YouTube streaming succeeded');
+        return directUrl;
+      }
+      addLog('warning', 'Direct YouTube streaming failed, trying external services');
+    }
+
+    // Fallback to external services
     const services = [
       { name: 'y2meta', url: 'https://api.y2meta.com' },
       { name: 'yt1s', url: 'https://api.yt1s.com' },
@@ -498,8 +509,8 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
 
-    addLog('error', 'All download services failed');
-    throw new Error('All download services are currently unavailable. Please try again later or check your internet connection.');
+    addLog('error', 'All download methods failed');
+    throw new Error('Unable to find a working download method. All services are currently unavailable.');
   }
 
   async function fetchWithTimeout(url, options = {}, timeout = 10000) {
@@ -521,6 +532,66 @@ document.addEventListener('DOMContentLoaded', function() {
       throw error;
     }
   }
+
+  async function tryDirectYouTubeStreams(streams, format, quality) {
+    try {
+      addLog('debug', 'Selecting stream', { format, quality, availableVideo: streams.video.length, availableAudio: streams.audio.length });
+
+      let selectedStream = null;
+
+      if (format === 'mp3' || format === 'audio') {
+        // For audio, prefer adaptive audio streams, fallback to progressive
+        if (streams.audio.length > 0) {
+          // Select best quality audio
+          selectedStream = streams.audio[0];
+          addLog('debug', 'Selected adaptive audio stream', { quality: selectedStream.quality, bitrate: selectedStream.bitrate });
+        } else if (streams.video.length > 0) {
+          // Fallback to progressive streams (which include audio)
+          selectedStream = streams.video.find(s => s.hasAudio) || streams.video[0];
+          addLog('debug', 'Selected progressive stream for audio', { quality: selectedStream.quality });
+        }
+      } else {
+        // For video, prefer progressive streams, fallback to adaptive
+        if (streams.video.length > 0) {
+          // Select quality
+          if (quality === 'best') {
+            selectedStream = streams.video[0]; // Already sorted by quality
+          } else {
+            // Find specific quality
+            const targetHeight = quality.replace('p', '');
+            selectedStream = streams.video.find(s => s.quality.includes(targetHeight)) || streams.video[0];
+          }
+          addLog('debug', 'Selected video stream', { quality: selectedStream.quality, type: selectedStream.type });
+        }
+      }
+
+      if (!selectedStream || !selectedStream.url) {
+        addLog('warning', 'No suitable stream found');
+        return null;
+      }
+
+      // Test if the URL is accessible
+      try {
+        const testResponse = await fetchWithTimeout(selectedStream.url, { method: 'HEAD' }, 5000);
+        if (testResponse.ok) {
+          addLog('debug', 'Stream URL is accessible');
+          return selectedStream.url;
+        } else {
+          addLog('warning', 'Stream URL returned status:', testResponse.status);
+          return null;
+        }
+      } catch (error) {
+        addLog('warning', 'Stream URL test failed:', error.message);
+        return null;
+      }
+
+    } catch (error) {
+      addLog('debug', 'Direct YouTube streaming error:', error.message);
+      return null;
+    }
+  }
+
+  async function tryY2Meta(baseUrl, videoUrl, format, quality) {
     addLog('debug', 'Analyzing video with y2meta');
 
     try {
@@ -784,3 +855,4 @@ document.addEventListener('DOMContentLoaded', function() {
       throw error;
     }
   }
+});
