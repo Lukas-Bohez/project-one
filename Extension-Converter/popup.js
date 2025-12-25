@@ -461,8 +461,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Try multiple services in order of preference
     const services = [
+      { name: 'y2meta', url: 'https://api.y2meta.com' },
+      { name: 'yt1s', url: 'https://api.yt1s.com' },
       { name: 'y2mate', url: 'https://api.y2mate.com/v2' },
-      // Add more services here as fallbacks
+      { name: 'yt5s', url: 'https://api.yt5s.com' },
+      { name: 'ytmp3', url: 'https://api.ytmp3.cc' },
     ];
 
     for (const service of services) {
@@ -470,6 +473,22 @@ document.addEventListener('DOMContentLoaded', function() {
         addLog('debug', `Trying service: ${service.name}`);
         if (service.name === 'y2mate') {
           const url = await tryY2Mate(service.url, videoUrl, format, quality);
+          addLog('success', `Service ${service.name} succeeded`);
+          return url;
+        } else if (service.name === 'y2meta') {
+          const url = await tryY2Meta(service.url, videoUrl, format, quality);
+          addLog('success', `Service ${service.name} succeeded`);
+          return url;
+        } else if (service.name === 'yt1s') {
+          const url = await tryYt1s(service.url, videoUrl, format, quality);
+          addLog('success', `Service ${service.name} succeeded`);
+          return url;
+        } else if (service.name === 'yt5s') {
+          const url = await tryYt5s(service.url, videoUrl, format, quality);
+          addLog('success', `Service ${service.name} succeeded`);
+          return url;
+        } else if (service.name === 'ytmp3') {
+          const url = await tryYtmp3(service.url, videoUrl, format, quality);
           addLog('success', `Service ${service.name} succeeded`);
           return url;
         }
@@ -480,71 +499,288 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     addLog('error', 'All download services failed');
-    throw new Error('All download services failed');
+    throw new Error('All download services are currently unavailable. Please try again later or check your internet connection.');
+  }
+
+  async function fetchWithTimeout(url, options = {}, timeout = 10000) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout');
+      }
+      throw error;
+    }
+  }
+    addLog('debug', 'Analyzing video with y2meta');
+
+    try {
+      // y2meta API structure
+      const analyzeResponse = await fetchWithTimeout(`${baseUrl}/api/analyze`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: videoUrl,
+          format: format,
+          quality: quality
+        })
+      });
+
+      if (!analyzeResponse.ok) {
+        throw new Error(`HTTP ${analyzeResponse.ok}`);
+      }
+
+      const analyzeData = await analyzeResponse.json();
+      addLog('debug', 'y2meta analyze response', { status: analyzeData.status });
+
+      if (analyzeData.status === 'success' && analyzeData.download_url) {
+        return analyzeData.download_url;
+      } else if (analyzeData.status === 'success' && analyzeData.convert_url) {
+        // Need to convert first
+        const convertResponse = await fetchWithTimeout(analyzeData.convert_url);
+        const convertData = await convertResponse.json();
+
+        if (convertData.status === 'success' && convertData.download_url) {
+          return convertData.download_url;
+        }
+      }
+
+      throw new Error(analyzeData.message || 'Analysis failed');
+    } catch (error) {
+      addLog('debug', `y2meta error: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async function tryYt1s(baseUrl, videoUrl, format, quality) {
+    addLog('debug', 'Analyzing video with yt1s');
+
+    try {
+      // yt1s API structure
+      const response = await fetchWithTimeout(`${baseUrl}/api/convert`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: videoUrl,
+          format: format,
+          quality: quality
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      addLog('debug', 'yt1s convert response', { status: data.status });
+
+      if (data.status === 'success' && data.download_url) {
+        return data.download_url;
+      } else {
+        throw new Error(data.message || 'Conversion failed');
+      }
+    } catch (error) {
+      addLog('debug', `yt1s error: ${error.message}`);
+      throw error;
+    }
   }
 
   async function tryY2Mate(baseUrl, videoUrl, format, quality) {
     addLog('debug', 'Analyzing video with y2mate');
 
-    // Get cookies for the video URL
-    const cookies = await chrome.cookies.getAll({ url: videoUrl });
-    const cookieString = cookies.map(c => `${c.name}=${c.value}`).join('; ');
-    addLog('debug', `Retrieved ${cookies.length} cookies`);
+    try {
+      // Get cookies for the video URL
+      const cookies = await chrome.cookies.getAll({ url: videoUrl });
+      const cookieString = cookies.map(c => `${c.name}=${c.value}`).join('; ');
+      addLog('debug', `Retrieved ${cookies.length} cookies`);
 
-    // Analyze video
-    const analyzeResponse = await fetch(`${baseUrl}/analyze`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Cookie': cookieString
-      },
-      body: JSON.stringify({ url: videoUrl })
-    });
+      // Try the v2 API first
+      let analyzeUrl = `${baseUrl}/analyze`;
+      let analyzeBody = { url: videoUrl };
 
-    const analyzeData = await analyzeResponse.json();
-    addLog('debug', 'Analyze response received', { status: analyzeData.status, vid: analyzeData.vid });
+      let analyzeResponse = await fetchWithTimeout(analyzeUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': cookieString
+        },
+        body: JSON.stringify(analyzeBody)
+      });
 
-    if (analyzeData.status !== 'ok') {
-      throw new Error('Failed to analyze video');
-    }
+      // If v2 fails, try alternative endpoints
+      if (!analyzeResponse.ok) {
+        addLog('debug', 'v2 API failed, trying alternative endpoint');
+        analyzeUrl = 'https://www.y2mate.com/mates/analyzeV2';
+        analyzeResponse = await fetchWithTimeout(analyzeUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Cookie': cookieString
+          },
+          body: `url=${encodeURIComponent(videoUrl)}`
+        });
+      }
 
-    // Choose format
-    const isAudio = format === 'mp3';
-    const formats = isAudio ? analyzeData.a : analyzeData.v;
-    addLog('debug', `Available ${isAudio ? 'audio' : 'video'} formats: ${formats?.length || 0}`);
+      if (!analyzeResponse.ok) {
+        throw new Error(`HTTP ${analyzeResponse.status}: ${analyzeResponse.statusText}`);
+      }
 
-    if (!formats || formats.length === 0) {
-      throw new Error('No formats available');
-    }
+      const analyzeData = await analyzeResponse.json();
+      addLog('debug', 'Analyze response received', { status: analyzeData.status, vid: analyzeData.vid });
 
-    // Choose quality
-    let selectedFormat = formats[0];
-    if (quality !== 'best') {
-      selectedFormat = formats.find(f => f.q && f.q.includes(quality)) || formats[0];
-    }
-    addLog('debug', 'Selected format', { quality: selectedFormat.q, size: selectedFormat.size });
+      if (analyzeData.status !== 'ok' && analyzeData.status !== 'success') {
+        throw new Error(`Analysis failed: ${analyzeData.message || 'Unknown error'}`);
+      }
 
-    // Convert
-    const convertResponse = await fetch(`${baseUrl}/convert`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Cookie': cookieString
-      },
-      body: JSON.stringify({
+      // Choose format
+      const isAudio = format === 'mp3';
+      const formats = isAudio ? (analyzeData.a || analyzeData.audio) : (analyzeData.v || analyzeData.video);
+      addLog('debug', `Available ${isAudio ? 'audio' : 'video'} formats: ${formats?.length || 0}`);
+
+      if (!formats || formats.length === 0) {
+        throw new Error('No formats available');
+      }
+
+      // Choose quality
+      let selectedFormat = formats[0];
+      if (quality !== 'best') {
+        selectedFormat = formats.find(f => f.q && f.q.includes(quality)) || formats[0];
+      }
+      addLog('debug', 'Selected format', { quality: selectedFormat.q, size: selectedFormat.size });
+
+      // Convert
+      let convertUrl = `${baseUrl}/convert`;
+      let convertBody = {
         vid: analyzeData.vid,
         k: selectedFormat.k
-      })
-    });
+      };
 
-    const convertData = await convertResponse.json();
-    addLog('debug', 'Convert response received', { status: convertData.status });
+      let convertResponse = await fetchWithTimeout(convertUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': cookieString
+        },
+        body: JSON.stringify(convertBody)
+      });
 
-    if (convertData.status !== 'ok') {
-      throw new Error('Conversion failed');
+      // If convert fails, try alternative
+      if (!convertResponse.ok) {
+        addLog('debug', 'Convert API failed, trying alternative');
+        convertUrl = 'https://www.y2mate.com/mates/convertV2';
+        convertResponse = await fetchWithTimeout(convertUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Cookie': cookieString
+          },
+          body: `vid=${analyzeData.vid}&k=${selectedFormat.k}`
+        });
+      }
+
+      if (!convertResponse.ok) {
+        throw new Error(`Convert HTTP ${convertResponse.status}: ${convertResponse.statusText}`);
+      }
+
+      const convertData = await convertResponse.json();
+      addLog('debug', 'Convert response received', { status: convertData.status });
+
+      if (convertData.status !== 'ok' && convertData.status !== 'success') {
+        throw new Error(`Conversion failed: ${convertData.message || 'Unknown error'}`);
+      }
+
+      if (!convertData.dlink && !convertData.download_url) {
+        throw new Error('No download link in response');
+      }
+
+      addLog('debug', 'Download URL obtained');
+      return convertData.dlink || convertData.download_url;
+
+    } catch (error) {
+      addLog('debug', `y2mate error: ${error.message}`);
+      throw error;
     }
-
-    addLog('debug', 'Download URL obtained');
-    return convertData.dlink;
   }
-});
+
+  async function tryYt5s(baseUrl, videoUrl, format, quality) {
+    addLog('debug', 'Analyzing video with yt5s');
+
+    try {
+      // yt5s uses a different API structure
+      const response = await fetchWithTimeout(`${baseUrl}/api/analyze`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: videoUrl,
+          format: format,
+          quality: quality
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      addLog('debug', 'yt5s analyze response', { status: data.status });
+
+      if (data.status === 'success' && data.download_url) {
+        return data.download_url;
+      } else {
+        throw new Error(data.message || 'Analysis failed');
+      }
+    } catch (error) {
+      addLog('debug', `yt5s error: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async function tryYtmp3(baseUrl, videoUrl, format, quality) {
+    addLog('debug', 'Analyzing video with ytmp3');
+
+    try {
+      // ytmp3.cc API
+      const response = await fetchWithTimeout(`${baseUrl}/api/convert`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: videoUrl,
+          format: format,
+          quality: quality
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      addLog('debug', 'ytmp3 convert response', { status: data.status });
+
+      if (data.status === 'success' && data.download_url) {
+        return data.download_url;
+      } else {
+        throw new Error(data.message || 'Conversion failed');
+      }
+    } catch (error) {
+      addLog('debug', `ytmp3 error: ${error.message}`);
+      throw error;
+    }
+  }
