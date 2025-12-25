@@ -96,8 +96,52 @@ function extractPlaylistVideos(data) {
   const videos = [];
 
   try {
-    // Navigate YouTube's data structure for playlists
-    const contents = data?.contents?.twoColumnBrowseResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents?.[0]?.itemSectionRenderer?.contents?.[0]?.playlistVideoListRenderer?.contents;
+    // Try multiple possible paths for playlist data
+    let contents = null;
+
+    // Path 1: Original path
+    contents = data?.contents?.twoColumnBrowseResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents?.[0]?.itemSectionRenderer?.contents?.[0]?.playlistVideoListRenderer?.contents;
+
+    // Path 2: Alternative path
+    if (!contents) {
+      contents = data?.contents?.twoColumnBrowseResultsRenderer?.tabs?.[1]?.tabRenderer?.content?.sectionListRenderer?.contents?.[0]?.itemSectionRenderer?.contents?.[0]?.playlistVideoListRenderer?.contents;
+    }
+
+    // Path 3: Another alternative
+    if (!contents) {
+      const tabs = data?.contents?.twoColumnBrowseResultsRenderer?.tabs;
+      if (tabs) {
+        for (const tab of tabs) {
+          if (tab?.tabRenderer?.content?.sectionListRenderer?.contents) {
+            const sectionContents = tab.tabRenderer.content.sectionListRenderer.contents;
+            for (const section of sectionContents) {
+              if (section?.itemSectionRenderer?.contents?.[0]?.playlistVideoListRenderer?.contents) {
+                contents = section.itemSectionRenderer.contents[0].playlistVideoListRenderer.contents;
+                break;
+              }
+            }
+            if (contents) break;
+          }
+        }
+      }
+    }
+
+    // Path 4: Try to find any playlistVideoListRenderer
+    if (!contents) {
+      const findPlaylistContents = (obj) => {
+        if (obj && typeof obj === 'object') {
+          if (obj.playlistVideoListRenderer && obj.playlistVideoListRenderer.contents) {
+            return obj.playlistVideoListRenderer.contents;
+          }
+          for (const key in obj) {
+            const result = findPlaylistContents(obj[key]);
+            if (result) return result;
+          }
+        }
+        return null;
+      };
+      contents = findPlaylistContents(data);
+    }
 
     if (contents) {
       console.log('[Content Script] Found playlist contents:', contents.length, 'items');
@@ -106,10 +150,10 @@ function extractPlaylistVideos(data) {
         if (video) {
           const videoData = {
             id: video.videoId,
-            title: video.title?.runs?.[0]?.text || 'Unknown Title',
+            title: video.title?.runs?.[0]?.text || video.title?.simpleText || 'Unknown Title',
             author: video.shortBylineText?.runs?.[0]?.text || video.longBylineText?.runs?.[0]?.text || 'Unknown Author',
             thumbnail: extractBestThumbnail(video.thumbnail?.thumbnails),
-            duration: video.lengthText?.simpleText || '',
+            duration: video.lengthText?.simpleText || video.lengthSeconds ? formatDuration(video.lengthSeconds) : '',
             url: `https://www.youtube.com/watch?v=${video.videoId}`,
             isShort: false
           };
@@ -118,12 +162,7 @@ function extractPlaylistVideos(data) {
         }
       }
     } else {
-      console.log('[Content Script] No playlist contents found, trying alternative structure');
-      // If no videos found, try alternative structure
-      const sidebar = data?.sidebar?.playlistSidebarRenderer?.items?.[0]?.playlistSidebarPrimaryInfoRenderer;
-      if (sidebar) {
-        console.log('[Content Script] Found alternative playlist structure');
-      }
+      console.log('[Content Script] No playlist contents found');
     }
 
     console.log('[Content Script] Playlist extraction complete:', videos.length, 'videos');
@@ -136,7 +175,31 @@ function extractPlaylistVideos(data) {
 
 function extractSingleVideo(data) {
   try {
-    const videoDetails = data?.videoDetails || data?.microformat?.playerMicroformatRenderer;
+    // Try multiple ways to get video details
+    let videoDetails = data?.videoDetails || data?.microformat?.playerMicroformatRenderer;
+
+    // Alternative paths for video details
+    if (!videoDetails) {
+      videoDetails = data?.contents?.twoColumnWatchNextResults?.results?.results?.contents?.[0]?.videoPrimaryInfoRenderer;
+    }
+
+    if (!videoDetails) {
+      // Try to find videoDetails anywhere in the data
+      const findVideoDetails = (obj) => {
+        if (obj && typeof obj === 'object') {
+          if (obj.videoId && obj.title) {
+            return obj;
+          }
+          for (const key in obj) {
+            const result = findVideoDetails(obj[key]);
+            if (result) return result;
+          }
+        }
+        return null;
+      };
+      videoDetails = findVideoDetails(data);
+    }
+
     const streamingData = data?.streamingData;
 
     // Extract streaming URLs
@@ -146,9 +209,9 @@ function extractSingleVideo(data) {
       return {
         id: videoDetails.videoId,
         title: videoDetails.title || 'Unknown Title',
-        author: videoDetails.author || 'Unknown Author',
+        author: videoDetails.author || videoDetails.ownerChannelName || 'Unknown Author',
         thumbnail: extractBestThumbnail(videoDetails.thumbnail?.thumbnails),
-        duration: formatDuration(videoDetails.lengthSeconds),
+        duration: videoDetails.lengthSeconds ? formatDuration(videoDetails.lengthSeconds) : '',
         url: window.location.href,
         isShort: window.location.href.includes('/shorts/'),
         streams: streams
@@ -156,8 +219,8 @@ function extractSingleVideo(data) {
     }
 
     // Fallback: try to extract from page elements
-    const titleEl = document.querySelector('h1.ytd-video-primary-info-renderer yt-formatted-string');
-    const authorEl = document.querySelector('yt-formatted-string#text.ytd-channel-name');
+    const titleEl = document.querySelector('h1.ytd-video-primary-info-renderer yt-formatted-string, h1.ytd-watch-metadata yt-formatted-string');
+    const authorEl = document.querySelector('yt-formatted-string#text.ytd-channel-name, a.yt-simple-endpoint.ytd-video-owner-renderer');
     const thumbnailEl = document.querySelector('video');
 
     return {
@@ -302,10 +365,19 @@ function decodeSignatureCipher(cipher) {
   }
 }
 
-function extractThumbnailFromMeta() {
-  // Fallback to meta tags
-  const metaThumbnail = document.querySelector('meta[property="og:image"]');
-  return metaThumbnail?.content || 'https://via.placeholder.com/480x360?text=No+Thumbnail';
+function extractBestThumbnail(thumbnails) {
+  if (!thumbnails || thumbnails.length === 0) {
+    return 'https://via.placeholder.com/480x360?text=No+Thumbnail';
+  }
+
+  // Sort by resolution (width * height), highest first
+  const sorted = thumbnails.sort((a, b) => {
+    const aRes = (a.width || 0) * (a.height || 0);
+    const bRes = (b.width || 0) * (b.height || 0);
+    return bRes - aRes;
+  });
+
+  return sorted[0].url;
 }
 
 function extractVideoId(url) {
@@ -356,5 +428,5 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 window.addEventListener('load', () => {
   setTimeout(() => {
     extractYouTubeData();
-  }, 2000); // Wait for YouTube to load its data
+  }, 3000); // Wait for YouTube to load its data
 });

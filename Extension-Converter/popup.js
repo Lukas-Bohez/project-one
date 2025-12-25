@@ -472,11 +472,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Fallback to external services
     const services = [
-      { name: 'y2meta', url: 'https://api.y2meta.com' },
-      { name: 'yt1s', url: 'https://api.yt1s.com' },
-      { name: 'y2mate', url: 'https://api.y2mate.com/v2' },
-      { name: 'yt5s', url: 'https://api.yt5s.com' },
       { name: 'ytmp3', url: 'https://api.ytmp3.cc' },
+      { name: 'y2mate', url: 'https://api.y2mate.is' },
+      { name: 'yt1s', url: 'https://api.yt1s.com' },
+      { name: 'y2meta', url: 'https://api.y2meta.com' },
+      { name: 'yt5s', url: 'https://api.yt5s.com' },
     ];
 
     for (const service of services) {
@@ -855,4 +855,5 @@ document.addEventListener('DOMContentLoaded', function() {
       throw error;
     }
   }
+
 });
