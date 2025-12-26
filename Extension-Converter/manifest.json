@@ -16,7 +16,7 @@
     "https://api.yt1s.com/*",
     "https://api.yt5s.com/*",
     "https://api.ytmp3.cc/*",
-    "https://www.youtube.com/*",
+    "*://*.youtube.com/*",
     "https://*.googlevideo.com/*"
   ],
   "background": {
@@ -28,7 +28,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.youtube.com/*"],
+      "matches": ["*://*.youtube.com/*"],
       "js": ["content.js"]
     }
   ],

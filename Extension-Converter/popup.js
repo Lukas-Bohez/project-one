@@ -184,7 +184,27 @@ document.addEventListener('DOMContentLoaded', function() {
         convertBtn.disabled = true;
 
         // Extract data from the YouTube page
-        const response = await chrome.tabs.sendMessage(currentTab.id, { action: 'extractYouTubeData' });
+        let response = null;
+        try {
+          response = await chrome.tabs.sendMessage(currentTab.id, { action: 'extractYouTubeData' });
+        } catch (err) {
+          // If there is no receiver, try injecting the content script then retry
+          addLog('warning', 'No content script listener, attempting to inject content script', { error: err.message });
+          try {
+            if (chrome.scripting && chrome.scripting.executeScript) {
+              await chrome.scripting.executeScript({
+                target: { tabId: currentTab.id },
+                files: ['content.js']
+              });
+              // Retry
+              response = await chrome.tabs.sendMessage(currentTab.id, { action: 'extractYouTubeData' });
+            } else {
+              addLog('error', 'chrome.scripting API unavailable; cannot inject content script');
+            }
+          } catch (injectErr) {
+            addLog('error', 'Failed to inject content script', { message: injectErr.message });
+          }
+        }
 
         if (response && response.success && response.data) {
           const youtubeData = response.data;
