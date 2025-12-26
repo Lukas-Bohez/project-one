@@ -417,11 +417,51 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   if (request.action === 'extractYouTubeData') {
     const data = extractYouTubeData();
-    console.log('[Content Script] Sending response:', { success: !!data, type: data?.type, videoCount: data?.videos?.length });
-    sendResponse({ success: true, data: data });
+
+    // Log detailed info for debugging: cookies (document), videos, thumbnails, authors
+    console.log('[Content Script] document.cookie:', document.cookie);
+
+    if (data && data.videos) {
+      console.log('[Content Script] Found videos:', data.videos.length);
+      data.videos.forEach((v, i) => {
+        console.log(`[Content Script] Video ${i + 1}: id=${v.id} title="${v.title}" author="${v.author}" thumbnail=${v.thumbnail} url=${v.url} isShort=${v.isShort}`);
+        if (v.streams) {
+          console.log(`[Content Script] Video ${i + 1} streams: video=${v.streams.video.length} audio=${v.streams.audio.length}`);
+          // Log top stream urls (truncated)
+          v.streams.video.slice(0,3).forEach((s, si) => console.log(`[Content Script] Video ${i + 1} stream ${si+1}: ${s.url ? s.url.substring(0,120) : 'no-url'}`));
+          v.streams.audio.slice(0,3).forEach((s, si) => console.log(`[Content Script] Video ${i + 1} audio ${si+1}: ${s.url ? s.url.substring(0,120) : 'no-url'}`));
+        }
+      });
+    } else {
+      console.log('[Content Script] No videos found in extracted data');
+    }
+
+    // Ask background for cookies for this URL (background has cookie permission)
+    try {
+      chrome.runtime.sendMessage({ action: 'getCookies', url: window.location.href }, (resp) => {
+        if (chrome.runtime.lastError) {
+          console.warn('[Content Script] getCookies runtime error', chrome.runtime.lastError.message);
+          sendResponse({ success: true, data: data, cookies: null });
+          return;
+        }
+
+        if (resp && resp.success) {
+          console.log('[Content Script] Retrieved cookies from background:', resp.cookies);
+          sendResponse({ success: true, data: data, cookies: resp.cookies });
+        } else {
+          console.log('[Content Script] Background returned no cookies:', resp);
+          sendResponse({ success: true, data: data, cookies: null });
+        }
+      });
+    } catch (err) {
+      console.error('[Content Script] Error requesting cookies from background:', err);
+      sendResponse({ success: true, data: data, cookies: null });
+    }
+
+    return true; // keep channel open for async sendResponse
   }
 
-  return true; // Keep message channel open for async response
+  return false;
 });
 
 // Auto-extract data when page loads
