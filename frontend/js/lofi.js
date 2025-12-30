@@ -1671,11 +1671,11 @@ window.lofi = {
                 .then(() => {
                     isPlaying = true;
                     console.log('▶ Resumed playback');
-                    // Update UI
+                    // Update UI using the tracked currentSongId (prefer this over object URLs)
                     const nowPlayingDiv = document.getElementById('now-playing');
                     if (nowPlayingDiv) {
-                        const currentSong = safeDecode(audioPlayer.src.split('/').pop());
-                        nowPlayingDiv.textContent = `Now Playing: ${safeDecode(currentSong)}`;
+                        const songTitle = getDisplayTitle(currentSongId || audioPlayer.currentSongId || audioPlayer.src.split('/').pop().split('?')[0]);
+                        nowPlayingDiv.textContent = `Now Playing: ${songTitle}`;
                     }
                     const playPauseBtn = document.getElementById('play-pause-btn');
                     if (playPauseBtn) {
@@ -2496,18 +2496,18 @@ const createLofiModal = () => {
 
     // Update UI based on audio player events - use proper cleanup
     const handlePlayingEvent = () => {
-        const currentSong = audioPlayer.src.split('/').pop().split('?')[0];
-        updateUIForPlaying(decodeURIComponent(currentSong));
+        // Prefer the canonical tracked id (set when loading songs) to avoid showing blob/object URLs
+        const trackedId = audioPlayer.currentSongId || currentSongId;
+        const displayTarget = trackedId || (audioPlayer.src ? audioPlayer.src.split('/').pop().split('?')[0] : null);
+        updateUIForPlaying(displayTarget);
         isPlaying = true;
     };
 
     const handlePauseEvent = () => {
-        if (audioPlayer.src) {
-            const currentSong = audioPlayer.src.split('/').pop().split('?')[0];
-            updateUIForPaused(decodeURIComponent(currentSong));
-        } else {
-            updateUIForStopped();
-        }
+        const trackedId = audioPlayer.currentSongId || currentSongId;
+        const displayTarget = trackedId || (audioPlayer.src ? audioPlayer.src.split('/').pop().split('?')[0] : null);
+        if (displayTarget) updateUIForPaused(displayTarget);
+        else updateUIForStopped();
         isPlaying = false;
     };
 
