@@ -1,6 +1,13 @@
 // Content script for YouTube pages - extracts video and playlist data
 let youtubeData = null;
 
+// Notify background that content script loaded (helps detect listener presence)
+try {
+  chrome.runtime.sendMessage({ action: 'contentScriptLoaded', url: window.location.href }, () => {});
+} catch (e) {
+  console.warn('[Content Script] Could not notify background of load:', e && e.message);
+}
+
 async function extractYouTubeData() {
   try {
     console.log('[Content Script] Starting YouTube data extraction');
@@ -202,6 +209,27 @@ async function extractSingleVideo(data) {
 
     let streamingData = data?.streamingData;
 
+    // Attempt to discover player JS URL from known locations or script tags
+    let playerJs = null;
+    try {
+      if (data?.assets?.js) playerJs = data.assets.js;
+      else if (data?.js) playerJs = data.js;
+      else if (window.ytplayer && window.ytplayer.config && window.ytplayer.config.assets && window.ytplayer.config.assets.js) playerJs = window.ytplayer.config.assets.js;
+      else {
+        const scripts = Array.from(document.scripts || []);
+        for (const s of scripts) {
+          try {
+            if (!s.src) continue;
+            const src = s.src;
+            if (src.includes('player') && src.endsWith('.js')) {
+              playerJs = src;
+              break;
+            }
+          } catch (e) { continue; }
+        }
+      }
+    } catch (e) { playerJs = null; }
+
     // If streamingData missing, try common alternate locations
     if (!streamingData) {
       streamingData = data?.playerResponse?.streamingData || data?.player_response?.streamingData || (data?.args?.player_response ? JSON.parse(data.args.player_response).streamingData : null) || null;
@@ -220,6 +248,19 @@ async function extractSingleVideo(data) {
       }
     }
 
+    // Send diagnostic message to background with playerJs and streamingData info to aid debugging
+    try {
+      chrome.runtime.sendMessage({
+        action: 'contentExtractionInfo',
+        url: window.location.href,
+        videoId: (videoDetails && (videoDetails.videoId || videoDetails.video_id)) || null,
+        playerJs: playerJs || null,
+        hasStreamingData: !!streamingData
+      }, () => {});
+    } catch (e) {
+      console.warn('[Content Script] Could not send extraction diagnostics to background:', e && e.message);
+    }
+
     // Extract streaming URLs
     const streams = extractStreamingUrls(streamingData);
 
@@ -232,7 +273,8 @@ async function extractSingleVideo(data) {
         duration: videoDetails.lengthSeconds ? formatDuration(videoDetails.lengthSeconds) : '',
         url: window.location.href,
         isShort: window.location.href.includes('/shorts/'),
-        streams: streams
+        streams: streams,
+        playerJs: playerJs
       };
     }
 

@@ -192,12 +192,99 @@ document.addEventListener('DOMContentLoaded', function() {
           addLog('warning', 'No content script listener, attempting to inject content script', { error: err.message });
           try {
             if (chrome.scripting && chrome.scripting.executeScript) {
-              await chrome.scripting.executeScript({
-                target: { tabId: currentTab.id },
-                files: ['content.js']
-              });
-              // Retry
-              response = await chrome.tabs.sendMessage(currentTab.id, { action: 'extractYouTubeData' });
+              // Try injection up to 6 times with increasing delay to account for timing and SPA navigation
+              for (let attempt = 1; attempt <= 6; attempt++) {
+                try {
+                  await chrome.scripting.executeScript({ target: { tabId: currentTab.id }, files: ['content.js'] });
+                  addLog('debug', `executeScript invoked attempt ${attempt}`);
+                } catch (e) {
+                  addLog('warning', `Content script executeScript attempt ${attempt} threw`, { message: e.message });
+                }
+
+                // incremental backoff delay
+                await new Promise(r => setTimeout(r, 200 * attempt));
+
+                try {
+                  response = await chrome.tabs.sendMessage(currentTab.id, { action: 'extractYouTubeData' });
+                  if (response) {
+                    addLog('debug', `Received response after injection attempt ${attempt}`);
+                    break;
+                  }
+                } catch (e) {
+                  addLog('debug', `No listener after injection attempt ${attempt}`, { message: e.message });
+                }
+              }
+
+              if (!response) addLog('error', 'Content script injection attempts exhausted, no listener present');
+              // As a last resort, try executing a script in the page's main world to read page variables directly
+              if (!response && chrome.scripting && chrome.scripting.executeScript) {
+                addLog('info', 'Attempting main-world extraction via chrome.scripting.executeScript');
+                try {
+                  const results = await chrome.scripting.executeScript({
+                    target: { tabId: currentTab.id },
+                    world: 'MAIN',
+                    func: () => {
+                      try {
+                        const url = location.href;
+                        const playerResp = window.ytInitialPlayerResponse || (window.ytplayer && window.ytplayer.config && (window.ytplayer.config.player_response || window.ytplayer.config.args && window.ytplayer.config.args.player_response) ) || null;
+                        let parsedPlayer = null;
+                        try { parsedPlayer = typeof playerResp === 'string' ? JSON.parse(playerResp) : playerResp; } catch(e) { parsedPlayer = playerResp; }
+
+                        const videoDetails = parsedPlayer && parsedPlayer.videoDetails ? parsedPlayer.videoDetails : null;
+                        const streamingData = parsedPlayer && parsedPlayer.streamingData ? parsedPlayer.streamingData : null;
+                        const playerJs = (window.ytplayer && window.ytplayer.config && window.ytplayer.config.assets && window.ytplayer.config.assets.js) || null;
+                        const title = (videoDetails && (videoDetails.title)) || (document.querySelector('h1') && document.querySelector('h1').innerText) || document.title;
+                        const id = (videoDetails && videoDetails.videoId) || (new URLSearchParams(location.search)).get('v') || null;
+                        const thumbnail = videoDetails && videoDetails.thumbnail && videoDetails.thumbnail.thumbnails ? videoDetails.thumbnail.thumbnails.slice(-1)[0].url : null;
+
+                        const videoObj = {
+                          id: id,
+                          title: title,
+                          author: (videoDetails && videoDetails.author) || null,
+                          thumbnail: thumbnail,
+                          duration: (videoDetails && videoDetails.lengthSeconds) || '',
+                          url: url,
+                          isShort: url.includes('/shorts/'),
+                          streams: streamingData || null,
+                          playerJs: playerJs,
+                          rawPlayerResponse: parsedPlayer || null
+                        };
+
+                        return { success: true, data: { type: 'single', videos: [videoObj] } };
+                      } catch (e) { return { success: false, message: e.message }; }
+                    }
+                  });
+
+                  if (results && results[0] && results[0].result && results[0].result.success) {
+                    response = results[0].result;
+                    addLog('success', 'Main-world extraction succeeded', { source: 'executeScript' });
+                  } else {
+                    addLog('warning', 'Main-world extraction returned no data', { result: results && results[0] && results[0].result });
+                  }
+                } catch (mwErr) {
+                  addLog('error', 'Main-world executeScript failed', { message: mwErr.message });
+                }
+              }
+              // Final fallback: attempt to inject content script explicitly into the top frame (frameId 0)
+              if (!response) {
+                addLog('info', 'Attempting targeted top-frame injection of content script (frameId 0)');
+                try {
+                  await chrome.scripting.executeScript({
+                    target: { tabId: currentTab.id, frameIds: [0] },
+                    files: ['content.js']
+                  });
+                  // small delay to allow listener registration
+                  await new Promise(r => setTimeout(r, 300));
+                  try {
+                    response = await chrome.tabs.sendMessage(currentTab.id, { action: 'extractYouTubeData' });
+                    if (response) addLog('debug', 'Received response after top-frame injection');
+                  } catch (e) {
+                    addLog('debug', 'No listener after top-frame injection', { message: e.message });
+                  }
+                } catch (e) {
+                  addLog('warning', 'Top-frame injection attempt failed', { message: e.message });
+                }
+              }
             } else {
               addLog('error', 'chrome.scripting API unavailable; cannot inject content script');
             }
@@ -448,9 +535,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (resp.success) {
           addLog('success', `Background download started (id: ${resp.downloadId || 'unknown'}) for ${item.title || item.id}`);
+          if (resp.diagnostics) {
+            console.debug('[Popup] Background diagnostics (success):', resp.diagnostics);
+            addLog('debug', 'Background diagnostics (success)', resp.diagnostics);
+          }
           resolve(resp);
         } else {
           addLog('error', `Background conversion failed for ${item.title || item.id}`, { message: resp.message });
+          if (resp.diagnostics) {
+            console.debug('[Popup] Background diagnostics (failure):', resp.diagnostics);
+            addLog('debug', 'Background diagnostics (failure)', resp.diagnostics);
+          }
           reject(new Error(resp.message || 'Background conversion failed'));
         }
       });
