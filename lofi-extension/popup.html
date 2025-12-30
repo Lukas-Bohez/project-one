@@ -1,0 +1,66 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Lofi Cached Player</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div id="lofi-popup-root">
+    <header class="lp-header">
+      <h3 class="lp-title">Lofi Cached Player</h3>
+      <div id="status" class="lp-status">Loading tracks...</div>
+    </header>
+
+    <main class="lp-main">
+      <section id="track-list" class="lp-track-list"></section>
+
+      <div class="lp-controls">
+        <div class="lp-row">
+          <button id="prev" class="lp-btn">⏮</button>
+          <button id="play" class="lp-btn">Play</button>
+          <button id="next" class="lp-btn">⏭</button>
+        </div>
+
+        <div class="lp-row lp-row-condensed">
+          <button id="shuffle" class="lp-toggle">Shuffle: Off</button>
+          <button id="repeat" class="lp-toggle">Repeat: Off</button>
+          <label class="lp-persist">Persist
+            <input type="checkbox" id="persist" />
+          </label>
+        </div>
+
+        <div class="lp-volume">
+          <span class="lp-now" id="now-playing"></span>
+          <input type="range" id="volume" min="0" max="1" step="0.01" value="0.8">
+        </div>
+      </div>
+
+      <div class="lp-note">Mode: <strong>Cached-only</strong> — add MP3/OGG files to <em>assets/</em> and update <em>assets/tracks.json</em></div>
+    </main>
+  </div>
+  <div class="controls">
+    <button id="prev">Prev</button>
+    <button id="play">Play</button>
+    <button id="next">Next</button>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+    <button id="shuffle">Shuffle: Off</button>
+    <button id="repeat">Repeat: Off</button>
+    <label style="margin-left:auto;display:flex;align-items:center;gap:6px;">Persist
+      <input type="checkbox" id="persist" />
+    </label>
+  </div>
+  <div id="now-playing" style="margin-top:8px;font-size:13px;color:#333"></div>
+  <div>
+    <label>Volume</label>
+    <input type="range" id="volume" min="0" max="1" step="0.01" value="0.8">
+  </div>
+  <div style="margin-top:8px; font-size:12px; color:#666">Mode: <strong>Cached-only</strong> — add MP3/OGG files to <em>assets/</em> and update <em>assets/tracks.json</em></div>
+
+  <script src="popup.js"></script>
+  <!-- Removed heavy overlay lofi.js to avoid page-specific globals (Mojo errors). 
+       The popup uses `popup.js` which implements the player for the extension UI. -->
+</body>
+</html>

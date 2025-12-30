@@ -1,0 +1,38 @@
+/* Lofi popup styles inspired by frontend lofi modal */
+:root{
+  --bg: #0e1827;
+  --panel: #0f2436;
+  --accent: linear-gradient(135deg,#6366f1,#8b5cf6);
+  --text: #e6eef8;
+  --muted: #9fb3c9;
+}
+
+html,body{margin:0;padding:0;font-family:Inter,Arial,Helvetica,sans-serif;background:transparent;color:var(--text);}
+#lofi-popup-root{width:360px;padding:12px;background:rgba(255,255,255,0.02);box-sizing:border-box;border-radius:8px}
+.lp-header{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.lp-title{margin:0;font-size:16px;color:var(--text)}
+.lp-status{font-size:12px;color:var(--muted)}
+
+.lp-main{display:flex;flex-direction:column;gap:10px}
+.lp-track-list{max-height:220px;overflow:auto;background:transparent;padding:4px;border-radius:6px}
+.track{display:flex;gap:8px;align-items:center;padding:8px;border-radius:6px;margin-bottom:6px;background:rgba(255,255,255,0.02)}
+.track .title{flex:1;font-size:13px;color:var(--text)}
+.track .meta{font-size:12px;color:var(--muted)}
+.track.active{background:linear-gradient(90deg, rgba(99,102,241,0.12), rgba(139,92,246,0.06));box-shadow:0 4px 10px rgba(0,0,0,0.2)}
+
+.lp-controls{display:flex;flex-direction:column;gap:8px}
+.lp-row{display:flex;gap:8px;align-items:center}
+.lp-row-condensed{align-items:center}
+.lp-btn{padding:8px 12px;border-radius:8px;border:none;background:var(--panel);color:var(--text);cursor:pointer}
+.lp-toggle{padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);cursor:pointer}
+.lp-persist{margin-left:auto;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+
+.lp-volume{display:flex;flex-direction:column;gap:6px}
+.lp-now{font-size:13px;color:var(--text);}
+#volume{width:100%}
+
+.lp-note{font-size:12px;color:var(--muted)}
+
+/* scrollbar tweaks */
+.lp-track-list::-webkit-scrollbar{height:8px;width:8px}
+.lp-track-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.06);border-radius:4px}
