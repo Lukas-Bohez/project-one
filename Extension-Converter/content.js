@@ -1,7 +1,7 @@
 // Content script for YouTube pages - extracts video and playlist data
 let youtubeData = null;
 
-function extractYouTubeData() {
+async function extractYouTubeData() {
   try {
     console.log('[Content Script] Starting YouTube data extraction');
 
@@ -46,7 +46,7 @@ function extractYouTubeData() {
     if (data) {
       console.log('[Content Script] Data extraction successful');
       youtubeData = data;
-      return processYouTubeData(data);
+      return await processYouTubeData(data);
     }
 
     console.log('[Content Script] No YouTube data found');
@@ -57,7 +57,7 @@ function extractYouTubeData() {
   }
 }
 
-function processYouTubeData(data) {
+async function processYouTubeData(data) {
   const url = window.location.href;
   console.log('[Content Script] Processing YouTube data for URL:', url);
 
@@ -66,7 +66,7 @@ function processYouTubeData(data) {
     videos: []
   };
 
-  try {
+    try {
     if (url.includes('/playlist?')) {
       console.log('[Content Script] Detected playlist URL');
       result.type = 'playlist';
@@ -74,7 +74,7 @@ function processYouTubeData(data) {
     } else if (url.includes('/watch?') || url.includes('/shorts/')) {
       console.log('[Content Script] Detected single video URL');
       result.type = 'single';
-      result.videos = [extractSingleVideo(data)];
+      result.videos = [await extractSingleVideo(data)];
     } else if (url.includes('/channel/') || url.includes('/c/') || url.includes('/user/')) {
       console.log('[Content Script] Detected channel URL');
       result.type = 'channel';
@@ -173,7 +173,7 @@ function extractPlaylistVideos(data) {
   return videos;
 }
 
-function extractSingleVideo(data) {
+async function extractSingleVideo(data) {
   try {
     // Try multiple ways to get video details
     let videoDetails = data?.videoDetails || data?.microformat?.playerMicroformatRenderer;
@@ -200,7 +200,25 @@ function extractSingleVideo(data) {
       videoDetails = findVideoDetails(data);
     }
 
-    const streamingData = data?.streamingData;
+    let streamingData = data?.streamingData;
+
+    // If streamingData missing, try common alternate locations
+    if (!streamingData) {
+      streamingData = data?.playerResponse?.streamingData || data?.player_response?.streamingData || (data?.args?.player_response ? JSON.parse(data.args.player_response).streamingData : null) || null;
+    }
+
+    // If still missing, attempt to fetch get_video_info endpoint to retrieve player_response
+    if (!streamingData) {
+      const vid = extractVideoId(window.location.href) || (data?.videoDetails && data.videoDetails.videoId) || null;
+      if (vid) {
+        try {
+          const gr = await getPlayerResponseFromGetInfo(vid);
+          if (gr && gr.streamingData) streamingData = gr.streamingData;
+        } catch (e) {
+          console.warn('[Content Script] get_video_info failed', e.message);
+        }
+      }
+    }
 
     // Extract streaming URLs
     const streams = extractStreamingUrls(streamingData);
@@ -411,57 +429,75 @@ function formatDuration(seconds) {
   }
 }
 
+// Attempt to fetch player_response via get_video_info for a video id
+async function getPlayerResponseFromGetInfo(videoId) {
+  try {
+    const url = `https://www.youtube.com/get_video_info?video_id=${encodeURIComponent(videoId)}&el=detailpage&hl=en`;
+    const resp = await fetch(url, { method: 'GET', credentials: 'include' });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const text = await resp.text();
+    const params = new URLSearchParams(text);
+    const player_response = params.get('player_response') || params.get('playerResponse') || null;
+    if (!player_response) throw new Error('No player_response in get_video_info');
+    return JSON.parse(player_response);
+  } catch (err) {
+    console.warn('[Content Script] getPlayerResponseFromGetInfo error', err.message);
+    throw err;
+  }
+}
+
 // Listen for messages from popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log('[Content Script] Received message:', request);
+  (async () => {
+    console.log('[Content Script] Received message:', request);
 
-  if (request.action === 'extractYouTubeData') {
-    const data = extractYouTubeData();
+    if (request.action === 'extractYouTubeData') {
+      const data = await extractYouTubeData();
 
-    // Log detailed info for debugging: cookies (document), videos, thumbnails, authors
-    console.log('[Content Script] document.cookie:', document.cookie);
+      // Log detailed info for debugging: cookies (document), videos, thumbnails, authors
+      console.log('[Content Script] document.cookie:', document.cookie);
 
-    if (data && data.videos) {
-      console.log('[Content Script] Found videos:', data.videos.length);
-      data.videos.forEach((v, i) => {
-        console.log(`[Content Script] Video ${i + 1}: id=${v.id} title="${v.title}" author="${v.author}" thumbnail=${v.thumbnail} url=${v.url} isShort=${v.isShort}`);
-        if (v.streams) {
-          console.log(`[Content Script] Video ${i + 1} streams: video=${v.streams.video.length} audio=${v.streams.audio.length}`);
-          // Log top stream urls (truncated)
-          v.streams.video.slice(0,3).forEach((s, si) => console.log(`[Content Script] Video ${i + 1} stream ${si+1}: ${s.url ? s.url.substring(0,120) : 'no-url'}`));
-          v.streams.audio.slice(0,3).forEach((s, si) => console.log(`[Content Script] Video ${i + 1} audio ${si+1}: ${s.url ? s.url.substring(0,120) : 'no-url'}`));
-        }
-      });
-    } else {
-      console.log('[Content Script] No videos found in extracted data');
+      if (data && data.videos) {
+        console.log('[Content Script] Found videos:', data.videos.length);
+        data.videos.forEach((v, i) => {
+          console.log(`[Content Script] Video ${i + 1}: id=${v.id} title="${v.title}" author="${v.author}" thumbnail=${v.thumbnail} url=${v.url} isShort=${v.isShort}`);
+          if (v.streams) {
+            console.log(`[Content Script] Video ${i + 1} streams: video=${v.streams.video.length} audio=${v.streams.audio.length}`);
+            // Log top stream urls (truncated)
+            v.streams.video.slice(0,3).forEach((s, si) => console.log(`[Content Script] Video ${i + 1} stream ${si+1}: ${s.url ? s.url.substring(0,120) : 'no-url'}`));
+            v.streams.audio.slice(0,3).forEach((s, si) => console.log(`[Content Script] Video ${i + 1} audio ${si+1}: ${s.url ? s.url.substring(0,120) : 'no-url'}`));
+          }
+        });
+      } else {
+        console.log('[Content Script] No videos found in extracted data');
+      }
+
+      // Ask background for cookies for this URL (background has cookie permission)
+      try {
+        chrome.runtime.sendMessage({ action: 'getCookies', url: window.location.href }, (resp) => {
+          if (chrome.runtime.lastError) {
+            console.warn('[Content Script] getCookies runtime error', chrome.runtime.lastError.message);
+            sendResponse({ success: true, data: data, cookies: null });
+            return;
+          }
+
+          if (resp && resp.success) {
+            console.log('[Content Script] Retrieved cookies from background:', resp.cookies);
+            sendResponse({ success: true, data: data, cookies: resp.cookies });
+          } else {
+            console.log('[Content Script] Background returned no cookies:', resp);
+            sendResponse({ success: true, data: data, cookies: null });
+          }
+        });
+      } catch (err) {
+        console.error('[Content Script] Error requesting cookies from background:', err);
+        sendResponse({ success: true, data: data, cookies: null });
+      }
+
     }
+  })();
 
-    // Ask background for cookies for this URL (background has cookie permission)
-    try {
-      chrome.runtime.sendMessage({ action: 'getCookies', url: window.location.href }, (resp) => {
-        if (chrome.runtime.lastError) {
-          console.warn('[Content Script] getCookies runtime error', chrome.runtime.lastError.message);
-          sendResponse({ success: true, data: data, cookies: null });
-          return;
-        }
-
-        if (resp && resp.success) {
-          console.log('[Content Script] Retrieved cookies from background:', resp.cookies);
-          sendResponse({ success: true, data: data, cookies: resp.cookies });
-        } else {
-          console.log('[Content Script] Background returned no cookies:', resp);
-          sendResponse({ success: true, data: data, cookies: null });
-        }
-      });
-    } catch (err) {
-      console.error('[Content Script] Error requesting cookies from background:', err);
-      sendResponse({ success: true, data: data, cookies: null });
-    }
-
-    return true; // keep channel open for async sendResponse
-  }
-
-  return false;
+  return true; // keep channel open for async sendResponse
 });
 
 // Auto-extract data when page loads
