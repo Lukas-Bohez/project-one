@@ -431,49 +431,30 @@ document.addEventListener('DOMContentLoaded', function() {
     const quality = qualitySelect.value;
     const downloadDir = downloadDirInput.value || 'Downloads/ConvertTheSpire';
 
-    addLog('debug', `Converting video: ${item.title || item.id}`, { format, quality, downloadDir });
+    addLog('debug', `Requesting background conversion: ${item.title || item.id}`, { format, quality, downloadDir });
 
-    let retries = 0;
-    const maxRetries = settings.maxRetries;
-
-    while (retries <= maxRetries) {
-      try {
-        addLog('debug', `Attempt ${retries + 1}/${maxRetries + 1} for video: ${item.title || item.id}`);
-        const downloadUrl = await findDownloadUrl(item.url, format, quality, item);
-
-        if (!downloadUrl) {
-          throw new Error('Could not find download URL');
+    return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({ action: 'startConversion', item, format, quality, downloadDir }, (resp) => {
+        if (chrome.runtime.lastError) {
+          addLog('error', 'Background conversion runtime error', { message: chrome.runtime.lastError.message });
+          reject(new Error(chrome.runtime.lastError.message));
+          return;
+        }
+        if (!resp) {
+          addLog('error', 'No response from background conversion');
+          reject(new Error('No response from background'));
+          return;
         }
 
-        addLog('debug', 'Download URL obtained, starting download', { url: downloadUrl.substring(0, 50) + '...' });
-
-        // Download with custom directory
-        const sanitizedTitle = item.title.replace(/[<>:\"\/\\|?*]/g, '_').replace(/\s+/g, ' ').trim();
-        const filename = `${downloadDir}/${sanitizedTitle}.${format}`;
-
-        addLog('debug', 'Starting download', { filename });
-        await chrome.downloads.download({
-          url: downloadUrl,
-          filename: filename,
-          conflictAction: 'uniquify'
-        });
-
-        addLog('success', `Download started for: ${item.title || item.id}`);
-        return; // Success
-
-      } catch (error) {
-        retries++;
-        addLog('warning', `Attempt ${retries} failed for ${item.title || item.id}: ${error.message}`);
-        if (retries <= maxRetries) {
-          const delay = settings.retryDelay;
-          addLog('info', `Retrying in ${delay} seconds...`);
-          await new Promise(resolve => setTimeout(resolve, delay * 1000));
+        if (resp.success) {
+          addLog('success', `Background download started (id: ${resp.downloadId || 'unknown'}) for ${item.title || item.id}`);
+          resolve(resp);
         } else {
-          addLog('error', `All retry attempts failed for ${item.title || item.id}`);
-          throw error;
+          addLog('error', `Background conversion failed for ${item.title || item.id}`, { message: resp.message });
+          reject(new Error(resp.message || 'Background conversion failed'));
         }
-      }
-    }
+      });
+    });
   }
 
   async function findDownloadUrl(videoUrl, format, quality, videoData = null) {
@@ -534,6 +515,51 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   async function fetchWithTimeout(url, options = {}, timeout = 10000) {
+    // Use background proxy to avoid CORS issues from the popup
+    if (chrome.runtime && chrome.runtime.sendMessage) {
+      return new Promise((resolve, reject) => {
+        try {
+          chrome.runtime.sendMessage({ action: 'proxyFetch', url, options, timeout }, (resp) => {
+            if (chrome.runtime.lastError) {
+              reject(new Error(chrome.runtime.lastError.message));
+              return;
+            }
+            if (!resp) {
+              reject(new Error('No response from background proxy'));
+              return;
+            }
+            if (!resp.success) {
+              reject(new Error(resp.message || 'proxyFetch failed'));
+              return;
+            }
+
+            // Build a Response-like object with minimal properties used by callers
+            const fakeResponse = {
+              ok: resp.ok,
+              status: resp.status,
+              statusText: resp.statusText,
+              headers: resp.headers,
+              text: async () => resp.text,
+              json: async () => {
+                  try { return JSON.parse(resp.text); } catch (e) {
+                    const snippet = (resp.text || '').substring(0, 1000).replace(/\n/g, ' ');
+                    const msg = `Invalid JSON response: ${snippet}`;
+                    const err = new Error(msg);
+                    err.raw = resp.text;
+                    throw err;
+                  }
+                }
+            };
+
+            resolve(fakeResponse);
+          });
+        } catch (err) {
+          reject(err);
+        }
+      });
+    }
+
+    // Fallback to direct fetch if runtime messaging not available
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
