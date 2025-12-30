@@ -50,6 +50,26 @@ let currentSongId = null; // Current song ID
 let isTransitioning = false; // Prevent overlapping fades/loads
 
 let lofiActivated = false; // Track if user has activated the lofi player
+let userInteracted = false; // whether the user has interacted (for file picker permission)
+let deferredPromptScheduled = false; // avoid scheduling multiple deferred folder prompts
+
+// Selected folder files when user chooses a local folder in cache mode
+let selectedFolderFiles = null;
+// Keep track of created object URLs so we can revoke them on unload
+let _createdObjectUrls = [];
+// Map file key -> object URL so we reuse URLs instead of creating many
+const _fileUrlMap = {};
+
+// Debounce helper for savePlayerState to avoid frequent writes
+const debounce = (fn, wait) => {
+    let t = null;
+    return (...args) => {
+        if (t) clearTimeout(t);
+        t = setTimeout(() => fn(...args), wait);
+    };
+};
+// Debounced save (will be initialized later once savePlayerState is defined)
+let debouncedSavePlayerState = null;
 
 // --- Persistence Variables ---
 let savedPlaybackState = null; // To hold state loaded from localStorage
@@ -492,12 +512,21 @@ const activateLofiPlayer = () => {
     }
 
     // Save state before leaving the page
-    window.addEventListener('beforeunload', savePlayerState);
-    
-    // Periodic state saving for better persistence
+    // Save state before leaving the page
+    window.addEventListener('beforeunload', () => {
+        // Ensure immediate final save
+        try { savePlayerState(); } catch(_) {}
+        // Revoke created object URLs
+        Object.values(_fileUrlMap).forEach(u => { try { URL.revokeObjectURL(u); } catch(_) {} });
+    });
+
+    // Initialize debounced save function (2s debounce)
+    try { debouncedSavePlayerState = debounce(savePlayerState, 2000); } catch(_) {}
+
+    // Periodic state saving for better persistence (uses debounced save)
     setInterval(() => {
         if (isPlaying && !audioPlayer.paused) {
-            savePlayerState();
+            try { if (debouncedSavePlayerState) debouncedSavePlayerState(); else savePlayerState(); } catch(_) {}
         }
     }, 10000);
 };
@@ -561,6 +590,8 @@ const updateNowPlaying = (text) => {
 const setupAutoStartListeners = () => {
     const startOnInteraction = () => {
         console.log('User interaction detected - starting playback');
+        // Mark that the user interacted so we can show file pickers/prompts
+        try { userInteracted = true; } catch (_) {}
         startPlayback();
         // Remove listeners after first interaction
         document.removeEventListener('click', startOnInteraction);
@@ -600,13 +631,106 @@ const initializeSongList = async () => {
 
         // Initialize based on current mode
         if (config.mode === 'cache') {
-            // Cache mode removed
-
-            if (songList && songList.length > 0) {
-                console.log('📁 Loaded from cache:', songList.length, 'songs');
+            // Cache mode: prefer user-selected folder (via the modal file input) when available
+            if (selectedFolderFiles && selectedFolderFiles.length > 0) {
+                songList = selectedFolderFiles.map(file => {
+                    const key = `${file.name}-${file.size}-${file.lastModified}`;
+                    let url = _fileUrlMap[key];
+                    if (!url) {
+                        url = URL.createObjectURL(file);
+                        _fileUrlMap[key] = url;
+                        _createdObjectUrls.push(url);
+                    }
+                    return {
+                        id: file.name,
+                        title: prettyTitle(file.name.replace(/\.(mp3|wav)$/i, '')),
+                        filename: file.name,
+                        fileObj: file,
+                        url: url
+                    };
+                });
+                console.log('📁 Loaded from selected folder:', songList.length, 'songs');
             } else {
-                console.log('⚠️ No cached songs found, falling back to manual list');
-                songList = [...manualSongList];
+                // No folder selected: try persisted directory handle first (File System Access API),
+                // then unified cache (IndexedDB), then fallback to manual list.
+                try {
+                    const persistedLoaded = await tryLoadPersistedFolder();
+                    if (persistedLoaded) {
+                        console.log('📁 Using persisted folder for cache mode');
+                    } else {
+                        const cached = await getAllCachedDownloads();
+                    if (cached && cached.length > 0) {
+                        songList = cached.map(entry => {
+                            const id = entry.id || entry.videoId || entry.filename || entry.key || (`cached-${Math.random().toString(36).slice(2,8)}`);
+                            // If entry contains a blob, create/reuse an object URL
+                            let url = null;
+                            if (entry.blob) {
+                                const key = `${id}-${entry.blob.size || 0}-${entry.created || ''}`;
+                                url = _fileUrlMap[key];
+                                if (!url) {
+                                    try {
+                                        url = URL.createObjectURL(entry.blob);
+                                        _fileUrlMap[key] = url;
+                                        _createdObjectUrls.push(url);
+                                    } catch (_) { url = null; }
+                                }
+                            }
+                            return {
+                                id: id,
+                                title: prettyTitle(entry.title || entry.metadata?.title || entry.filename || id),
+                                filename: entry.filename || entry.key || null,
+                                blob: entry.blob || null,
+                                url: url || entry.url || null,
+                                metadata: entry.metadata || null
+                            };
+                        });
+                        console.log('📦 Loaded from unified cache:', songList.length, 'songs');
+                        } else {
+                            // No cached downloads found. If we have a saved playback state,
+                            // prompt the user to select the folder so we can resume the last song.
+                            if (savedPlaybackState && savedPlaybackState.currentSong) {
+                                console.log('🔔 Need to prompt user to select folder to resume saved playback...');
+                                if (!userInteracted) {
+                                    if (deferredPromptScheduled) {
+                                        console.log('🔔 Deferred folder prompt already scheduled');
+                                    } else {
+                                        deferredPromptScheduled = true;
+                                        console.log('🔔 Will prompt after first user interaction');
+                                        const deferredHandler = async () => {
+                                            deferredPromptScheduled = false;
+                                        try {
+                                            const prompted = await promptUserToSelectFolder();
+                                            if (!prompted) {
+                                                console.log('⚠️ User did not provide folder; falling back to manual list');
+                                                songList = [...manualSongList];
+                                            } else {
+                                                // If folder provided, try to resume
+                                                const savedId = savedPlaybackState.currentSong;
+                                                const match = songList.find(s => s.id === savedId || s.filename === savedId || (s.url && s.url.split('/').pop() === savedId));
+                                                if (match) loadAndPlayCached(match, savedPlaybackState.currentTime || 0, savedPlaybackState.volume || config.volume, !!savedPlaybackState.isPlaying);
+                                            }
+                                        } catch (e) { console.warn('Deferred prompt handler failed:', e); }
+                                        };
+                                        document.addEventListener('click', deferredHandler, { once: true });
+                                        document.addEventListener('keydown', deferredHandler, { once: true });
+                                    }
+                                } else {
+                                    const prompted = await promptUserToSelectFolder();
+                                    if (!prompted) {
+                                        console.log('⚠️ User did not provide folder; falling back to manual list');
+                                        songList = [...manualSongList];
+                                    }
+                                }
+                            } else {
+                                console.log('⚠️ No cached downloads found, falling back to manual list');
+                                songList = [...manualSongList];
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Error reading unified cache:', e);
+                    songList = [...manualSongList];
+                }
             }
         } else if (config.mode === 'local') {
             // Scan local folder
@@ -1016,6 +1140,12 @@ const loadAndPlayCached = (songObj, startTime = 0, initialVolume = 0, shouldPlay
         console.error('No blob or URL for song:', getDisplayTitle(songObj));
         return;
     }
+
+    // Track currently playing song id for persistence (avoid saving blob URLs)
+    try {
+        audioPlayer.currentSongId = songObj.id || songObj.filename || null;
+        currentSongId = audioPlayer.currentSongId;
+    } catch (_) {}
     
     audioPlayer.volume = initialVolume; // Start at 0 or the saved initialVolume for fade in
 
@@ -1126,8 +1256,35 @@ const handleFailedSong = (songName) => {
 // Helper function to update UI for playing state
 const updateUIForPlaying = (songRef) => {
     // songRef may be an object or string id/filename/title
-    const songObj = (typeof songRef === 'object') ? songRef : songList.find(s => s.id === songRef || s.filename === songRef || s.title === songRef || (s.url && s.url.split('/').pop() === songRef));
-    const display = getDisplayTitle(songObj || songRef);
+    let songObj = (typeof songRef === 'object') ? songRef : songList.find(s => s.id === songRef || s.filename === songRef || s.title === songRef || (s.url && s.url.split('/').pop() === songRef));
+
+    // If no direct match, try looser matching strategies to resolve titles
+    if (!songObj && typeof songRef === 'string') {
+        const ref = songRef;
+        // 1) match by filename (with/without extension)
+        songObj = songList.find(s => s.filename === ref || s.filename === ref + '.mp3' || s.filename === ref + '.wav' || (s.filename && s.filename.split('/').pop() === ref));
+        // 2) match by title exact or contains
+        if (!songObj) songObj = songList.find(s => s.title === ref || (s.title && s.title.includes(ref)));
+        // 3) match by metadata fields
+        if (!songObj) songObj = songList.find(s => s.metadata && (s.metadata.title === ref || (s.metadata.title && s.metadata.title.includes(ref)) || s.metadata.videoId === ref));
+        // 4) match by url basename
+        if (!songObj) songObj = songList.find(s => s.url && s.url.split('/').pop() === ref);
+        // 5) match by id if id looks like uuid or opaque
+        if (!songObj && /^[0-9a-f-]{8,}$/i.test(ref)) {
+            songObj = songList.find(s => s.id === ref || s.metadata && (s.metadata.videoId === ref || s.metadata.id === ref || s.metadata.key === ref));
+        }
+    }
+
+    let display = getDisplayTitle(songObj || songRef);
+    // If display looks like a UUID or opaque id, try to prefer filename or metadata title if available
+    const uuidLike = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (uuidLike.test(String(display))) {
+        if (songObj) {
+            if (songObj.filename) display = prettyTitle(songObj.filename);
+            else if (songObj.metadata && songObj.metadata.title) display = prettyTitle(songObj.metadata.title);
+            else display = 'Cached Track';
+        }
+    }
     const id = songObj ? songObj.id : (typeof songRef === 'string' ? songRef : '');
 
     const nowPlayingDiv = document.getElementById('now-playing');
@@ -1233,9 +1390,21 @@ const fadeIn = (audio) => {
 
 const savePlayerState = () => {
     if (!config.persistence.enabled) return;
+    // Save a lightweight representation: prefer song id/filename instead of blob/object URL
+    let savedSong = null;
+    try {
+        if (currentSongId) savedSong = currentSongId;
+        else if (audioPlayer && audioPlayer.src) {
+            // Try to match the audio src to a song entry
+            const src = audioPlayer.src;
+            const matched = songList.find(s => s.url === src || (s.url && src.includes(s.url)) || s.id === src || s.filename === src.split('/').pop());
+            if (matched) savedSong = matched.id || matched.filename;
+            else savedSong = src.split('/').pop().split('?')[0];
+        }
+    } catch(_) { savedSong = null; }
 
     const state = {
-        currentSong: audioPlayer.src,
+        currentSong: savedSong,
         currentTime: audioPlayer.currentTime,
         volume: audioPlayer.volume,
         isPlaying: isPlaying,
@@ -1270,6 +1439,12 @@ const loadPlayerState = () => {
 
             audioPlayer.volume = savedPlaybackState.volume; // Apply initial volume
 
+            // Normalize saved currentSong: if it's a blob/object URL stored previously, extract filename
+            if (savedPlaybackState.currentSong && typeof savedPlaybackState.currentSong === 'string') {
+                const maybe = savedPlaybackState.currentSong.split('/').pop().split('?')[0];
+                savedPlaybackState.currentSong = maybe;
+            }
+
             // Update UI elements from loaded config will be handled by modal script
             console.log('✅ Player state loaded:', savedPlaybackState);
         }
@@ -1277,6 +1452,185 @@ const loadPlayerState = () => {
         console.error('Error loading player state from localStorage:', e);
         savedPlaybackState = null; // Clear corrupted state
     }
+};
+
+// --- Persisted Directory Handle Helpers ---
+const openHandlesDB = () => {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open('lofi_handles_v1', 1);
+        req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('handles')) db.createObjectStore('handles', { keyPath: 'name' });
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+};
+
+const saveDirectoryHandle = async (handle) => {
+    try {
+        const db = await openHandlesDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(['handles'], 'readwrite');
+            const store = tx.objectStore('handles');
+            const putReq = store.put({ name: 'cacheDir', handle });
+            putReq.onsuccess = () => resolve(true);
+            putReq.onerror = () => reject(putReq.error);
+        });
+    } catch (e) { console.warn('Failed to save directory handle:', e); return false; }
+};
+
+const getSavedDirectoryHandle = async () => {
+    try {
+        const db = await openHandlesDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(['handles'], 'readonly');
+            const store = tx.objectStore('handles');
+            const getReq = store.get('cacheDir');
+            getReq.onsuccess = () => resolve(getReq.result ? getReq.result.handle : null);
+            getReq.onerror = () => reject(getReq.error);
+        });
+    } catch (e) { console.warn('Failed to read saved directory handle:', e); return null; }
+};
+
+const clearSavedDirectoryHandle = async () => {
+    try {
+        const db = await openHandlesDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(['handles'], 'readwrite');
+            const store = tx.objectStore('handles');
+            const del = store.delete('cacheDir');
+            del.onsuccess = () => resolve(true);
+            del.onerror = () => reject(del.error);
+        });
+    } catch (e) { console.warn('Failed to clear saved handle:', e); return false; }
+};
+
+// Try to load files from a persisted directory handle (File System Access API)
+const tryLoadPersistedFolder = async () => {
+    if (!('showDirectoryPicker' in window) && !('getDirectory' in window)) return false;
+    try {
+        const handle = await getSavedDirectoryHandle();
+        if (!handle) return false;
+
+        // Check permissions
+        const permission = await (async () => {
+            try {
+                const q = await handle.queryPermission({ mode: 'read' });
+                if (q === 'granted') return 'granted';
+                const r = await handle.requestPermission({ mode: 'read' });
+                return r;
+            } catch (_) { return null; }
+        })();
+
+        if (permission !== 'granted') {
+            console.log('Persisted folder found but no read permission');
+            return false;
+        }
+
+        const files = [];
+        for await (const entry of handle.values()) {
+            try {
+                if (entry.kind === 'file' && /\.(mp3|wav)$/i.test(entry.name)) {
+                    const f = await entry.getFile();
+                    files.push(f);
+                }
+            } catch (e) { /* ignore individual file errors */ }
+        }
+
+        if (files.length === 0) return false;
+
+        selectedFolderFiles = files;
+        // Build songList similarly to folder input handler
+        songList = files.map(file => {
+            const key = `${file.name}-${file.size}-${file.lastModified}`;
+            let url = _fileUrlMap[key];
+            if (!url) {
+                url = URL.createObjectURL(file);
+                _fileUrlMap[key] = url;
+                _createdObjectUrls.push(url);
+            }
+            return {
+                id: file.name,
+                title: prettyTitle(file.name.replace(/\.(mp3|wav)$/i, '')),
+                filename: file.name,
+                fileObj: file,
+                url: url
+            };
+        });
+
+        console.log('📁 Loaded from persisted folder:', songList.length, 'songs');
+        return true;
+    } catch (e) {
+        console.warn('Error loading persisted folder:', e);
+        return false;
+    }
+};
+
+// Prompt user to select a folder (tries FS Access API, falls back to temporary input)
+const promptUserToSelectFolder = async () => {
+    // First try showDirectoryPicker if available
+    try {
+        if ('showDirectoryPicker' in window) {
+            const handle = await window.showDirectoryPicker();
+            if (!handle) return false;
+            // Optionally save handle permission temporarily; do not auto-save without explicit remember
+            const files = [];
+            for await (const entry of handle.values()) {
+                try {
+                    if (entry.kind === 'file' && /\.(mp3|wav)$/i.test(entry.name)) {
+                        const f = await entry.getFile();
+                        files.push(f);
+                    }
+                } catch (e) {}
+            }
+            if (files.length === 0) return false;
+            // Process files similarly to folder input handler
+            Object.values(_fileUrlMap).forEach(u => { try { URL.revokeObjectURL(u); } catch(_) {} });
+            Object.keys(_fileUrlMap).forEach(k => delete _fileUrlMap[k]);
+            _createdObjectUrls = [];
+            selectedFolderFiles = files;
+            songList = files.map(file => {
+                const key = `${file.name}-${file.size}-${file.lastModified}`;
+                let url = _fileUrlMap[key];
+                if (!url) { url = URL.createObjectURL(file); _fileUrlMap[key] = url; _createdObjectUrls.push(url); }
+                return { id: file.name, title: prettyTitle(file.name.replace(/\.(mp3|wav)$/i, '')), filename: file.name, fileObj: file, url };
+            });
+            try { localStorage.setItem('lofi_saved_folder_files', JSON.stringify(songList.map(s => s.filename))); } catch(_) {}
+            createShuffledPlaylist(); populateSongSelector();
+            return true;
+        }
+    } catch (e) { console.warn('Directory picker failed:', e); }
+
+    // Fallback: create temporary input element with webkitdirectory
+    return new Promise((resolve) => {
+        try {
+            const tmp = document.createElement('input');
+            tmp.type = 'file'; tmp.multiple = true; tmp.accept = '.mp3,.wav';
+            try { tmp.setAttribute('webkitdirectory', ''); } catch (_) {}
+            tmp.style.display = 'none';
+            document.body.appendChild(tmp);
+            tmp.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files || []).filter(f => /\.(mp3|wav)$/i.test(f.name));
+                if (!files || files.length === 0) { document.body.removeChild(tmp); return resolve(false); }
+                Object.values(_fileUrlMap).forEach(u => { try { URL.revokeObjectURL(u); } catch(_) {} });
+                Object.keys(_fileUrlMap).forEach(k => delete _fileUrlMap[k]);
+                _createdObjectUrls = [];
+                selectedFolderFiles = files;
+                songList = files.map(file => {
+                    const key = `${file.name}-${file.size}-${file.lastModified}`;
+                    let url = _fileUrlMap[key];
+                    if (!url) { url = URL.createObjectURL(file); _fileUrlMap[key] = url; _createdObjectUrls.push(url); }
+                    return { id: file.name, title: prettyTitle(file.name.replace(/\.(mp3|wav)$/i, '')), filename: file.name, fileObj: file, url };
+                });
+                try { localStorage.setItem('lofi_saved_folder_files', JSON.stringify(songList.map(s => s.filename))); } catch(_) {}
+                createShuffledPlaylist(); populateSongSelector();
+                document.body.removeChild(tmp);
+                resolve(true);
+            }, { once: true });
+            tmp.click();
+        } catch (e) { console.warn('Prompt fallback failed:', e); resolve(false); }
+    });
 };
 
 // Manual controls
@@ -1833,20 +2187,30 @@ const createLofiModal = () => {
         config.mode = newMode;
         localStorage.setItem('lofi_mode', newMode);
         modeToggleBtn.textContent = newMode === 'cache' ? '📁 Local Mode' : '💾 Cache Mode';
-        
+
         // Stop current playback and reset player state
         lofi.stop();
         isPlaying = false;
         currentSongIndex = -1;
         currentPlaylistIndex = -1;
-        currentSong = null;
-        
+        currentSongId = null;
+
         // Show loading state in song selector
         const songSelector = document.getElementById('song-selector');
         if (songSelector) songSelector.innerHTML = '<option value="">Switching to ' + newMode + '...</option>';
-        
+
         // Clear existing song list to force reload from new mode
         songList = [];
+
+        // If switching away from cache mode, revoke object URLs and clear selection
+        if (newMode !== 'cache') {
+            if (folderSelectorDiv.parentNode) folderSelectorDiv.parentNode.removeChild(folderSelectorDiv);
+            Object.values(_fileUrlMap).forEach(u => { try { URL.revokeObjectURL(u); } catch(_) {} });
+            Object.keys(_fileUrlMap).forEach(k => delete _fileUrlMap[k]);
+            _createdObjectUrls = [];
+            selectedFolderFiles = null;
+        }
+
         initializeSongList().then(() => {
             populateSongSelector();
             startPlayback();
@@ -1855,9 +2219,165 @@ const createLofiModal = () => {
             console.error('❌ Failed to switch to', newMode, 'mode:', error);
             if (songSelector) songSelector.innerHTML = '<option value="">Error loading songs</option>';
         });
+
+        // If switching to cache mode, show the selector (if not already) and prompt the user to choose a folder/files
+        if (newMode === 'cache') {
+            if (!folderSelectorDiv.parentNode) modeControls.appendChild(folderSelectorDiv);
+            try { folderInput.click(); } catch(_) {}
+        }
     }, 'var(--primary-color, #2c4c7c)');
     modeToggleBtn.id = 'mode-toggle-btn';
     modeControls.appendChild(modeToggleBtn);
+
+    // Cache folder selector (for cache mode)
+    const folderSelectorDiv = document.createElement('div');
+    folderSelectorDiv.style.display = 'flex';
+    folderSelectorDiv.style.flexDirection = 'column';
+    folderSelectorDiv.style.gap = '6px';
+    folderSelectorDiv.innerHTML = `
+        <label style="color: var(--light-color, #f4f8fc);">Cache Mode: Choose a local folder of MP3/WAV files (optional):</label>
+    `;
+    const folderInput = document.createElement('input');
+    folderInput.type = 'file';
+    folderInput.id = 'cache-folder-input';
+    folderInput.multiple = true;
+    // Allow selecting a directory in browsers that support webkitdirectory
+    try { folderInput.setAttribute('webkitdirectory', ''); } catch(_) {}
+    folderInput.accept = '.mp3,.wav';
+    folderInput.style.background = 'transparent';
+    folderInput.style.color = 'var(--light-color, #f4f8fc)';
+    folderSelectorDiv.appendChild(folderInput);
+    // Persist / Remember folder buttons (File System Access API)
+    const rememberBtn = createButton('💾 Remember Folder', async () => {
+        if (!('showDirectoryPicker' in window)) {
+            alert('Directory persistence not supported in this browser.');
+            return;
+        }
+        try {
+            const handle = await window.showDirectoryPicker();
+            const saved = await saveDirectoryHandle(handle);
+            if (saved) {
+                alert('Folder saved for future visits.');
+            } else {
+                alert('Failed to save folder.');
+            }
+        } catch (e) {
+            console.warn('Remember folder cancelled or failed:', e);
+        }
+    }, 'var(--primary-color, #2c4c7c)');
+
+    const clearRememberedBtn = createButton('🧹 Clear Remembered Folder', async () => {
+        const ok = confirm('Clear the remembered folder? This will remove the saved directory handle.');
+        if (!ok) return;
+        const cleared = await clearSavedDirectoryHandle();
+        if (cleared) alert('Remembered folder cleared.');
+        else alert('Failed to clear remembered folder.');
+    }, 'var(--danger-color, #d32f2f)');
+
+    // Append remember controls next to input
+    const persistControls = document.createElement('div');
+    persistControls.style.display = 'flex';
+    persistControls.style.gap = '8px';
+    persistControls.appendChild(rememberBtn);
+    persistControls.appendChild(clearRememberedBtn);
+    folderSelectorDiv.appendChild(persistControls);
+    // Only show the folder selector UI when the player is in cache mode to avoid
+    // exposing the file selector while in local mode (less buggy UX).
+    if (config.mode === 'cache') {
+        modeControls.appendChild(folderSelectorDiv);
+    }
+
+    // Clear Folder Button
+    const clearFolderBtn = createButton('🗑️ Clear Folder', () => {
+        if (!selectedFolderFiles || selectedFolderFiles.length === 0) {
+            alert('No folder selected.');
+            return;
+        }
+        if (!confirm('Clear selected folder and revoke temporary object URLs?')) return;
+
+        // Revoke and clear
+        Object.values(_fileUrlMap).forEach(u => { try { URL.revokeObjectURL(u); } catch(_) {} });
+        Object.keys(_fileUrlMap).forEach(k => delete _fileUrlMap[k]);
+        _createdObjectUrls = [];
+        selectedFolderFiles = null;
+        songList = [];
+        // Repopulate song list from current mode (likely fallback/manual or local)
+        initializeSongList().then(() => {
+            populateSongSelector();
+            updateNowPlaying('Cleared folder');
+        });
+    }, 'var(--danger-color, #d32f2f)');
+    // Put the clear button inside the folder selector UI so it only appears
+    // when the folder selector is visible (i.e., in cache mode).
+    folderSelectorDiv.appendChild(clearFolderBtn);
+
+    // Handle folder/file selection for cache mode
+    folderInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files || []).filter(f => /\.(mp3|wav)$/i.test(f.name));
+        if (!files || files.length === 0) {
+            alert('No audio files found in the selected folder. Please choose a folder with .mp3 or .wav files.');
+            return;
+        }
+        // Revoke old URLs and clear mapping
+        Object.values(_fileUrlMap).forEach(u => { try { URL.revokeObjectURL(u); } catch(_) {} });
+        Object.keys(_fileUrlMap).forEach(k => delete _fileUrlMap[k]);
+        _createdObjectUrls = [];
+
+        selectedFolderFiles = files;
+        // Reset playback indices so the new folder becomes the active playlist
+        currentSongIndex = -1;
+        currentPlaylistIndex = -1;
+        currentSongId = null;
+        // Do not clear savedPlaybackState here; we may want to resume the saved song/time
+        isTransitioning = false;
+
+        songList = files.map(file => {
+            const key = `${file.name}-${file.size}-${file.lastModified}`;
+            let url = _fileUrlMap[key];
+            if (!url) {
+                url = URL.createObjectURL(file);
+                _fileUrlMap[key] = url;
+                _createdObjectUrls.push(url);
+            }
+            return {
+                id: file.name,
+                title: prettyTitle(file.name.replace(/\.(mp3|wav)$/i, '')),
+                filename: file.name,
+                fileObj: file,
+                url: url
+            };
+        });
+
+        console.log('📁 Loaded from selected folder:', songList.length, 'songs');
+        // Persist simple filename list to localStorage so we can prompt to restore if handle persistence fails
+        try { localStorage.setItem('lofi_saved_folder_files', JSON.stringify(songList.map(s => s.filename))); } catch(_) {}
+        createShuffledPlaylist();
+        populateSongSelector();
+        // If there's a saved playback state, try to resume the saved song/time
+        if (config.mode === 'cache') {
+            if (savedPlaybackState && savedPlaybackState.currentSong) {
+                const savedId = savedPlaybackState.currentSong;
+                const match = songList.find(s => s.id === savedId || s.filename === savedId || (s.url && s.url.split('/').pop() === savedId));
+                if (match) {
+                    console.log('Resuming saved song from selected folder:', savedId);
+                    currentSongIndex = songList.indexOf(match);
+                    loadAndPlayCached(match, savedPlaybackState.currentTime || 0, savedPlaybackState.volume || config.volume, !!savedPlaybackState.isPlaying);
+                } else {
+                    // No match: start fresh
+                    playNextSong('user');
+                }
+            } else {
+                // No saved state: start fresh
+                playNextSong('user');
+            }
+        }
+        // Revoke created object URLs on unload to avoid memory leaks (redundant safe-guard)
+        try {
+            window.addEventListener('beforeunload', () => {
+                Object.values(_fileUrlMap).forEach(u => { try { URL.revokeObjectURL(u); } catch(_) {} });
+            });
+        } catch (_) {}
+    });
 
     // Disable Music Button
     const disableBtn = createButton('🔇 Disable Music', () => {
