@@ -8,7 +8,8 @@
     "cookies",
     "tabs",
     "storage",
-    "downloads"
+    "downloads",
+    "scripting"
   ],
   "host_permissions": [
     "https://api.y2mate.com/*",
