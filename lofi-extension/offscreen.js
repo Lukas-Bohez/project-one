@@ -202,10 +202,12 @@ async function playSong(song, resumePosition = 0) {
         }
 
         // Fetch and decode audio
+        let audioBuffer = null;
         try {
             const response = await fetch(url);
+            if (!response.ok) throw new Error('Fetch failed: ' + response.status + ' ' + response.statusText);
             const arrayBuffer = await response.arrayBuffer();
-            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
             // continue with playback
         } catch (err) {
             console.error('Play failed:', err);
