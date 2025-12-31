@@ -4,14 +4,46 @@
   "version": "0.1",
   "description": "Play local/cached lofi tracks bundled with the extension (cached-only mode).",
   "permissions": [
-    "storage"
+    "storage",
+    "activeTab",
+    "offscreen",
+    "windows"
   ],
   "action": {
-    "default_popup": "popup.html",
     "default_title": "Lofi Cached Player"
   },
   "background": {
     "service_worker": "background.js"
+  },
+  "commands": {
+    "play-pause": {
+      "suggested_key": {
+        "default": "Alt+P",
+        "mac": "Alt+P"
+      },
+      "description": "Play/Pause music"
+    },
+    "next-track": {
+      "suggested_key": {
+        "default": "Alt+N",
+        "mac": "Alt+N"
+      },
+      "description": "Next track"
+    },
+    "prev-track": {
+      "suggested_key": {
+        "default": "Alt+B",
+        "mac": "Alt+B"
+      },
+      "description": "Previous track"
+    },
+    "stop-music": {
+      "suggested_key": {
+        "default": "Alt+S",
+        "mac": "Alt+S"
+      },
+      "description": "Stop music"
+    }
   },
   "icons": {
     "16": "icons/icon16.png",
@@ -20,7 +52,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["assets/*", "lofi/*"],
+      "resources": ["assets/*", "lofi/*", "offscreen.html"],
       "matches": ["<all_urls>"]
     }
   ]
