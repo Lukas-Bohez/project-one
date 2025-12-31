@@ -8,59 +8,104 @@
 </head>
 <body>
   <div id="lofi-popup-root">
-    <header class="lp-header">
-      <h3 class="lp-title">Lofi Cached Player</h3>
-      <div id="status" class="lp-status">Loading tracks...</div>
-    </header>
-
-    <main class="lp-main">
-      <section id="track-list" class="lp-track-list"></section>
-
-      <div class="lp-controls">
-        <div class="lp-row">
-          <button id="prev" class="lp-btn">⏮</button>
-          <button id="play" class="lp-btn">Play</button>
-          <button id="next" class="lp-btn">⏭</button>
+    <!-- Adapted from lofi.js createLofiModal -->
+    <div id="lofi-player-modal" style="display: block; position: static; width: 100%; height: auto; margin: 0; background: transparent; border: none; box-shadow: none;">
+      <div id="lofi-modal-content" style="background: var(--bg-secondary); color: var(--text-primary); border-radius: var(--border-radius); padding: var(--spacing-lg); border: 1px solid var(--border-color); box-shadow: 0 4px 6px var(--shadow-light);">
+        
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg);">
+          <h2 style="margin: 0; color: var(--primary-color);">🎵 Lofi Player</h2>
+          <button id="lofi-close-btn" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">×</button>
         </div>
 
-        <div class="lp-row lp-row-condensed">
-          <button id="shuffle" class="lp-toggle">Shuffle: Off</button>
-          <button id="repeat" class="lp-toggle">Repeat: Off</button>
-          <label class="lp-persist">Persist
-            <input type="checkbox" id="persist" />
-          </label>
+        <!-- Now Playing -->
+        <div id="now-playing" style="text-align: center; font-size: var(--font-size-lg); font-weight: 500; margin-bottom: var(--spacing-md); color: var(--text-primary);">
+          Select a track to start playing
         </div>
 
-        <div class="lp-volume">
-          <span class="lp-now" id="now-playing"></span>
-          <input type="range" id="volume" min="0" max="1" step="0.01" value="0.8">
+        <!-- Thumbnail -->
+        <div id="thumbnail-container" style="text-align: center; margin-bottom: var(--spacing-md);">
+          <img id="track-thumbnail" src="" alt="" style="max-width: 120px; max-height: 120px; border-radius: var(--border-radius-sm); display: none; box-shadow: 0 2px 4px var(--shadow-light);">
         </div>
+
+        <!-- Progress Bar -->
+        <div style="margin-bottom: var(--spacing-md);">
+          <div id="progress-container" style="position: relative; height: 8px; background: var(--bg-30); border-radius: 4px; cursor: pointer;">
+            <div id="progress-bar" style="height: 100%; background: linear-gradient(90deg, var(--primary-color), var(--secondary-color)); border-radius: 4px; width: 0%;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: var(--font-size-sm); color: var(--text-muted); margin-top: var(--spacing-xs);">
+            <span id="current-time">0:00</span>
+            <span id="duration">0:00</span>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div style="display: flex; justify-content: center; gap: var(--spacing-sm); margin-bottom: var(--spacing-lg);">
+          <button id="prev-btn" class="lp-btn">⏮</button>
+          <button id="play-pause-btn" class="lp-btn">▶</button>
+          <button id="next-btn" class="lp-btn">⏭</button>
+        </div>
+
+        <!-- Volume -->
+        <div style="margin-bottom: var(--spacing-lg);">
+          <label style="display: block; font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-xs);">Volume</label>
+          <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.1" style="width: 100%;">
+          <div id="volume-display" style="text-align: center; font-size: var(--font-size-sm); color: var(--text-muted); margin-top: var(--spacing-xs);">10%</div>
+        </div>
+
+        <!-- Mode Toggles -->
+        <div style="display: flex; justify-content: space-between; margin-bottom: var(--spacing-lg);">
+          <button id="shuffle-btn" class="lp-toggle">Shuffle: On</button>
+          <button id="repeat-btn" class="lp-toggle">Repeat: Off</button>
+        </div>
+
+        <!-- Mode Toggle -->
+        <div style="margin-bottom: var(--spacing-lg);">
+          <label style="display: block; font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-xs);">Mode</label>
+          <select id="mode-selector" style="width: 100%; padding: var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); background: var(--bg-primary); color: var(--text-primary);">
+            <option value="bundled">Bundled Tracks</option>
+            <option value="cached">User Files</option>
+          </select>
+        </div>
+
+        <!-- Song Selector -->
+        <div id="song-selector-container" style="margin-bottom: var(--spacing-lg);">
+          <label style="display: block; font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-xs);">Select Song</label>
+          <div id="song-selector" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); background: var(--bg-primary); padding: var(--spacing-sm);"></div>
+        </div>
+
+        <!-- File Input for Cached Mode -->
+        <div id="file-input-container" style="margin-bottom: var(--spacing-lg); display: none;">
+          <label style="display: block; font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-xs);">Upload Audio Files</label>
+          <input type="file" id="file-input" multiple accept="audio/*" style="width: 100%; padding: var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); background: var(--bg-primary); color: var(--text-primary);">
+          <div style="margin-top: var(--spacing-xs);">
+            <button id="folder-button" style="width: 100%; padding: var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); background: var(--bg-primary); color: var(--text-primary); cursor: pointer;">Select Folder</button>
+            <button id="unload-button" style="width: 100%; padding: var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); background: var(--bg-secondary); color: var(--text-primary); cursor: pointer; margin-top: var(--spacing-xs);">Unload Folder</button>
+            <small style="color: var(--text-muted); font-size: var(--font-size-xs);">Select entire folder to load audio files</small>
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div id="lofi-status" style="text-align: center; font-size: var(--font-size-sm); color: var(--text-muted);">
+          Ready to play cached tracks
+        </div>
+
+        <!-- Keyboard Shortcuts -->
+        <div style="margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--border-color);">
+          <div style="font-size: var(--font-size-xs); color: var(--text-muted); text-align: center;">
+            <strong>Keyboard Shortcuts:</strong><br>
+            <kbd style="background: var(--bg-30); padding: 2px 4px; border-radius: 3px; margin: 0 2px;">Alt+P</kbd> Play/Pause •
+            <kbd style="background: var(--bg-30); padding: 2px 4px; border-radius: 3px; margin: 0 2px;">Alt+N</kbd> Next •
+            <kbd style="background: var(--bg-30); padding: 2px 4px; border-radius: 3px; margin: 0 2px;">Alt+B</kbd> Previous •
+            <kbd style="background: var(--bg-30); padding: 2px 4px; border-radius: 3px; margin: 0 2px;">Alt+S</kbd> Stop
+          </div>
+        </div>
+
       </div>
-
-      <div class="lp-note">Mode: <strong>Cached-only</strong> — add MP3/OGG files to <em>assets/</em> and update <em>assets/tracks.json</em></div>
-    </main>
+    </div>
   </div>
-  <div class="controls">
-    <button id="prev">Prev</button>
-    <button id="play">Play</button>
-    <button id="next">Next</button>
-  </div>
-  <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
-    <button id="shuffle">Shuffle: Off</button>
-    <button id="repeat">Repeat: Off</button>
-    <label style="margin-left:auto;display:flex;align-items:center;gap:6px;">Persist
-      <input type="checkbox" id="persist" />
-    </label>
-  </div>
-  <div id="now-playing" style="margin-top:8px;font-size:13px;color:#333"></div>
-  <div>
-    <label>Volume</label>
-    <input type="range" id="volume" min="0" max="1" step="0.01" value="0.8">
-  </div>
-  <div style="margin-top:8px; font-size:12px; color:#666">Mode: <strong>Cached-only</strong> — add MP3/OGG files to <em>assets/</em> and update <em>assets/tracks.json</em></div>
-
+  <script src="js/jsmediatags.js"></script>
   <script src="popup.js"></script>
-  <!-- Removed heavy overlay lofi.js to avoid page-specific globals (Mojo errors). 
-       The popup uses `popup.js` which implements the player for the extension UI. -->
+  <!-- Adapted lofi.js player logic for extension popup context -->
 </body>
 </html>
