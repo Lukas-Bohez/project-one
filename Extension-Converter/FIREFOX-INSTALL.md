@@ -1,8 +1,8 @@
-# Convert the Spire - Firefox Installation Guide
+# Convert the Spire - Installation Guide
 
-## ⚠️ Firefox Exclusive Extension
+## ⚠️ Browser Compatibility
 
-This extension **only works on Firefox** due to Chrome's Manifest V3 restrictions that prevent downloading YouTube content.
+This extension works on browsers with Manifest V2 support due to Chrome's Manifest V3 restrictions that prevent downloading YouTube content.
 
 ## Quick Start
 
