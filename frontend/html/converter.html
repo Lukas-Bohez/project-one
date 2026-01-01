@@ -269,44 +269,46 @@
 
         <!-- Convert the Spire Section -->
         <section class="content-second content-second-youtube content-second--visible" id="chrome-extension">
-            <h2>Convert the Spire</h2>
-            <p>Download Convert the Spire to enhance your browsing experience with powerful new features!</p>
+            <h2>Convert the Spire (Firefox Only)</h2>
+            <p><strong>⚠️ Firefox Exclusive:</strong> Due to Chrome's Manifest V3 restrictions on downloading YouTube content, this extension only works on Firefox.</p>
+            <p>Download Convert the Spire to download and convert YouTube videos and playlists directly from Firefox!</p>
             
             <h3>Benefits</h3>
             <ul>
-                <li>🚀 <strong>Easy Installation:</strong> Simple setup with clear instructions</li>
-                <li>🔧 <strong>Powerful Features:</strong> Adds useful functionality to your browser</li>
-                <li>🔒 <strong>Secure:</strong> Built with privacy and security in mind</li>
-                <li>⚡ <strong>Fast:</strong> Lightweight and optimized for performance</li>
+                <li>🎵 <strong>YouTube Conversion:</strong> Convert videos to MP3 or MP4</li>
+                <li>📋 <strong>Playlist Support:</strong> Batch process entire playlists</li>
+                <li>⚙️ <strong>Quality Options:</strong> Choose format and quality</li>
+                <li>📊 <strong>Progress Tracking:</strong> Monitor downloads in real-time</li>
             </ul>
             
             <div class="button-row">
                 <a href="../downloads/ConvertTheSpire.zip" download class="c-btn c-btn--primary">
-                    <span>📥 Download Extension</span>
+                    <span>🦊 Download for Firefox</span>
                 </a>
             </div>
             
-            <h3>Installation</h3>
+            <h3>Installation (Firefox Only)</h3>
             <ol>
                 <li>Click the download button above</li>
-                <li>Unzip the downloaded file</li>
-                <li>Open Chrome and go to <code>chrome://extensions/</code></li>
-                <li>Enable "Developer mode" (top right)</li>
-                <li>Click "Load unpacked" and select the unzipped folder</li>
-                <li>The extension is now installed!</li>
+                <li>Unzip the downloaded file to a permanent location</li>
+                <li>Open Firefox and go to <code>about:debugging#/runtime/this-firefox</code></li>
+                <li>Click "Load Temporary Add-on..."</li>
+                <li>Navigate to the extracted folder and select <code>manifest.json</code></li>
+                <li>The extension is now loaded - visit YouTube to start converting!</li>
+                <li><strong>Note:</strong> Reload the extension after each Firefox restart</li>
             </ol>
             
             <h3>Updates</h3>
             <p>When updates are available, return here to download the latest version. To update:</p>
             <ol>
                 <li>Download the new version</li>
-                <li>Unzip to a new folder</li>
-                <li>In <code>chrome://extensions/</code>, click "Remove" on the old extension</li>
-                <li>Click "Load unpacked" with the new folder</li>
+                <li>Extract to the same location (overwrite old files)</li>
+                <li>In <code>about:debugging</code>, click "Reload" next to the extension</li>
+                <li>Or remove and re-add using the installation steps above</li>
             </ol>
             
             <div class="c-note">
-                <strong>Note:</strong> This is a local extension. For automatic updates, I'm considering publishing it to the Chrome Web Store.
+                <strong>Why Firefox Only?</strong> Chrome's Manifest V3 severely restricts downloading YouTube content. This extension uses Firefox's Manifest V2 which still allows the necessary permissions for YouTube downloads.
             </div>
         </section>
 

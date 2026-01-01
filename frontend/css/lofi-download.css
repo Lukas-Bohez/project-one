@@ -33,16 +33,22 @@
 
 .download-section .button-row {
     margin-top: 30px;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .download-section .c-btn {
-    font-size: 1.2em;
-    padding: 15px 40px;
+    font-size: 1.1em;
+    padding: 15px 35px;
     background: white;
     color: var(--primary-color);
     font-weight: 600;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
 }
 
 .download-section .c-btn:hover {
