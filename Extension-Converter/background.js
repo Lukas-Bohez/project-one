@@ -1,10 +1,13 @@
 // Background script: handle requests from content scripts (e.g., fetch cookies)
+// Firefox-only extension using Manifest V2 due to download restrictions in Chrome's Manifest V3
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
+
+browserAPI.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	if (request && request.action === 'getCookies') {
 		const url = request.url || (sender.tab && sender.tab.url) || '';
 		try {
-			chrome.cookies.getAll({ url }, (cookies) => {
+			browserAPI.cookies.getAll({ url }, (cookies) => {
 				sendResponse({ success: true, cookies });
 			});
 			return true; // indicate async response
@@ -69,10 +72,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 				const sanitizedTitle = (item.title || item.id || 'video').replace(/[<>:\"\/\\|?*]/g, '_').replace(/\s+/g, ' ').trim();
 				const filename = `${downloadDir}/${sanitizedTitle}.${format}`;
 
-				chrome.downloads.download({ url: downloadUrl, filename, conflictAction: 'uniquify' }, (downloadId) => {
-					if (chrome.runtime.lastError) {
-						console.error('[Background] download error', chrome.runtime.lastError.message);
-						sendResponse({ success: false, message: chrome.runtime.lastError.message });
+				browserAPI.downloads.download({ url: downloadUrl, filename, conflictAction: 'uniquify' }, (downloadId) => {
+					if (browserAPI.runtime.lastError) {
+						console.error('[Background] download error', browserAPI.runtime.lastError.message);
+						sendResponse({ success: false, message: browserAPI.runtime.lastError.message });
 					} else {
 						console.log('[Background] download started', downloadId);
 						// track mapping from downloadId -> item
@@ -95,7 +98,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // Track downloads and notify popup of progress
 const downloadMap = new Map();
 
-chrome.downloads.onChanged.addListener((delta) => {
+browserAPI.downloads.onChanged.addListener((delta) => {
 	try {
 		const info = downloadMap.get(delta.id);
 		const msg = { action: 'downloadProgress', downloadId: delta.id };
@@ -109,7 +112,7 @@ chrome.downloads.onChanged.addListener((delta) => {
 		if (info && info.itemId) msg.itemId = info.itemId;
 
 		// Broadcast to all extension contexts (popup will receive it if open)
-		chrome.runtime.sendMessage(msg);
+		browserAPI.runtime.sendMessage(msg);
 
 		if (msg.state === 'complete' || msg.state === 'interrupted') {
 			// cleanup mapping after finished
@@ -399,7 +402,7 @@ async function decipherSignature(s, playerJsUrl) {
 
 async function tryY2Mate(baseUrl, videoUrl, format, quality) {
 	try {
-		const cookies = await new Promise((resolve) => chrome.cookies.getAll({ url: videoUrl }, (c) => resolve(c)));
+		const cookies = await new Promise((resolve) => browserAPI.cookies.getAll({ url: videoUrl }, (c) => resolve(c)));
 		const cookieString = (cookies || []).map(c => `${c.name}=${c.value}`).join('; ');
 
 		let analyzeUrl = `${baseUrl}/analyze`;

@@ -1,8 +1,16 @@
 {
-  "version": "2.2",
-  "name": "Convert the Spire",
-  "description": "YouTube Video Converter Extension",
+  "version": "2.2.0",
+  "name": "Convert the Spire (Firefox Only)",
+  "description": "YouTube Video Converter Extension - Firefox Exclusive",
+  "browser": "Firefox",
+  "manifestVersion": 2,
   "changelog": {
+    "2.2.0": [
+      "FIREFOX ONLY: Converted to Manifest V2 (Chrome MV3 blocks YouTube downloads)",
+      "Updated all browser API calls for Firefox compatibility",
+      "Added Firefox-specific installation documentation",
+      "Extension now Firefox-exclusive due to Chrome Manifest V3 restrictions"
+    ],
     "2.2": [
       "Complete UI redesign with tabbed interface (Main, Debug Logs, Settings)",
       "Enhanced debug logging system with export functionality",
