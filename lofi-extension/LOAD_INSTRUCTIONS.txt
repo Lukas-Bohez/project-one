@@ -1,0 +1,46 @@
+====================================
+LOFI PLAYER - INSTALLATION GUIDE
+====================================
+
+The extension is now FIXED and ready to use!
+
+WHAT WAS FIXED:
+- Fixed syntax errors in player.js (escaped backticks in template literals)
+- All JavaScript files now have proper syntax
+- Extension tested with no errors
+
+HOW TO LOAD THE EXTENSION:
+1. Open Chrome/Chromium browser
+2. Navigate to: chrome://extensions
+3. Enable "Developer mode" (toggle in top-right corner)
+4. Click "Load unpacked"
+5. Select this folder: /home/student/Project/project-one/lofi-extension
+6. The extension should load successfully
+
+HOW TO USE:
+1. Click the extension icon in the toolbar
+2. A standalone window will open (400x650px)
+3. Default mode is "Bundled Tracks" (29 lofi songs)
+4. Click any track to start playing
+5. Use controls: Play/Pause, Next, Previous
+6. Adjust volume, enable shuffle/repeat
+7. Switch to "Upload Music Files" to load your own audio/video files
+
+FEATURES:
+✓ Standalone window (keeps playing when you switch tabs)
+✓ MP4/WebM video support (inline video player)
+✓ Album art extraction (shows thumbnails from MP3/M4A/AAC files)
+✓ Multiple audio formats (MP3, WAV, OGG, M4A, AAC, FLAC)
+✓ Folder loading (select entire music folders)
+✓ Shuffle and repeat modes
+✓ Volume control
+✓ Progress bar with seeking
+✓ Track metadata display
+
+TROUBLESHOOTING:
+- If you see errors, click "Reload" on chrome://extensions
+- Check the browser console for any error messages
+- Make sure you selected the correct folder when loading
+- Ensure audio files are in the lofi/ directory
+
+Ready to test!

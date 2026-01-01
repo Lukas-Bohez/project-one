@@ -72,15 +72,44 @@ html, body {
     transition: all 0.3s ease;
     min-height: 100vh;
     position: relative;
+    overflow-x: hidden;
+}
+
+* {
+    box-sizing: border-box;
 }
 
 #lofi-popup-root {
-    width: 360px;
+    width: 100%;
+    max-width: 800px;
+    min-width: 300px;
     padding: var(--spacing-md);
     background: var(--bg-secondary);
     border-radius: var(--border-radius);
     border: 1px solid var(--border-color);
     box-shadow: 0 4px 6px var(--shadow-light);
+}
+
+/* Responsive design */
+@media (max-width: 400px) {
+    #lofi-popup-root {
+        padding: var(--spacing-sm);
+    }
+    
+    .lp-btn {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: var(--font-size-xs);
+    }
+    
+    #song-selector {
+        max-height: 150px !important;
+    }
+}
+
+@media (min-width: 500px) {
+    #song-selector {
+        max-height: 300px !important;
+    }
 }
 
 .lp-header {
@@ -185,6 +214,18 @@ html, body {
     background-color: var(--hover-bg);
     border-color: var(--primary-color);
     color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px var(--shadow-light);
+}
+
+.lp-btn:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.lp-btn:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
 }
 
 .lp-toggle {
@@ -278,17 +319,26 @@ html, body {
     margin-bottom: var(--spacing-xs);
     border-radius: var(--border-radius-sm);
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
     background: var(--bg-tertiary);
+    border: 1px solid transparent;
 }
 
 .song-item:hover {
     background: var(--hover-bg);
+    transform: translateX(2px);
+    border-color: var(--border-color);
 }
 
 .song-item.selected {
     background: var(--active-bg);
     border: 1px solid var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(44, 111, 184, 0.1);
+}
+
+.song-item:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
 }
 
 .song-thumbnail {
@@ -322,4 +372,38 @@ html, body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* Smooth scrolling */
+#song-selector {
+    scroll-behavior: smooth;
+}
+
+/* Focus styles for better accessibility */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Improve video player responsiveness */
+#video-player {
+    max-height: 250px;
+}
+
+@media (min-width: 500px) {
+    #video-player {
+        max-height: 350px;
+    }
+}
+
+/* Loading animation */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.loading {
+    animation: pulse 1.5s ease-in-out infinite;
 }

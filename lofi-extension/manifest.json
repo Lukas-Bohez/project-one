@@ -1,15 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Lofi Player",
-  "version": "0.2",
-  "description": "Simple lofi music player - load a folder of music files to play",
+  "version": "0.3.0",
+  "description": "Play lofi music and videos in a standalone window with video support, album art, and full keyboard controls",
   "permissions": [
-    "storage",
-    "offscreen"
+    "storage"
   ],
   "action": {
-    "default_title": "Lofi Player",
-    "default_popup": "popup.html"
+    "default_title": "Lofi Player"
   },
   "background": {
     "service_worker": "background.js"
@@ -21,7 +19,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["offscreen.html"],
+      "resources": ["player.html", "assets/tracks.json", "lofi/*.mp3", "lofi/*.mp4"],
       "matches": ["<all_urls>"]
     }
   ]
