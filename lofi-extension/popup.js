@@ -14,8 +14,11 @@ const durationEl = document.getElementById('duration');
 const nowPlayingEl = document.getElementById('now-playing');
 const shuffleBtn = document.getElementById('shuffle-btn');
 const repeatBtn = document.getElementById('repeat-btn');
-const folderButton = document.getElementById('folder-button');
+const modeSelector = document.getElementById('mode-selector');
+const fileInput = document.getElementById('file-input');
+const folderInput = document.getElementById('folder-input');
 const unloadButton = document.getElementById('unload-button');
+const fileControls = document.getElementById('file-controls');
 const closeBtn = document.getElementById('lofi-close-btn');
 const thumbnailEl = document.getElementById('track-thumbnail');
 const thumbnailContainer = document.getElementById('thumbnail-container');
@@ -26,6 +29,7 @@ let currentIndex = 0;
 let isPlaying = false;
 let shuffle = false;
 let repeat = 'off'; // 'off', 'one', 'all'
+let currentMode = 'bundled'; // 'bundled', 'files'
 let duration = 0;
 let directoryHandle = null;
 
@@ -44,6 +48,17 @@ async function init() {
     
     // Load saved state
     loadState();
+    
+    // Set default mode to bundled
+    if (modeSelector) modeSelector.value = 'bundled';
+    if (fileControls) fileControls.style.display = 'none';
+    
+    // Load bundled tracks by default (but don't auto-play)
+    await loadBundledTracks();
+    
+    // Reset playback state
+    isPlaying = false;
+    currentIndex = 0;
     
     updateUI();
 }
@@ -75,59 +90,104 @@ function loadState() {
     });
 }
 
-// Load folder tracks
-async function loadFolder() {
+// Load bundled tracks
+async function loadBundledTracks() {
     try {
-        directoryHandle = await window.showDirectoryPicker();
+        const response = await fetch(chrome.runtime.getURL('assets/tracks.json'));
+        const trackData = await response.json();
         
-        // Send to background/offscreen
-        await chrome.runtime.sendMessage({ action: 'setDirectoryHandle', handle: directoryHandle });
-        
-        // Scan for audio files
-        tracks = [];
-        for await (const [name, handle] of directoryHandle.entries()) {
-            if (handle.kind === 'file' && /\.(mp3|wav|ogg|m4a|flac)$/i.test(name)) {
-                tracks.push({
-                    file: name,
-                    title: name.replace(/\.[^/.]+$/, ''),
-                    artist: '',
-                    id: name
-                });
-            }
-        }
-        
-        if (tracks.length === 0) {
-            statusEl.textContent = 'No audio files found in folder';
-            return;
-        }
-        
-        // Send track list to background
-        await chrome.runtime.sendMessage({ action: 'setTrackList', trackList: tracks, index: 0 });
+        tracks = trackData.map(track => ({
+            file: track.file,
+            title: track.title || track.file.replace(/\.[^/.]+$/, ''),
+            artist: track.artist || '',
+            url: chrome.runtime.getURL(`lofi/${track.file}`),
+            id: track.file
+        }));
         
         currentIndex = 0;
         renderTrackList();
         updateUI();
-        statusEl.textContent = `Loaded ${tracks.length} tracks`;
+        statusEl.textContent = `Loaded ${tracks.length} bundled tracks`;
+        
+        // Send track list to background
+        await chrome.runtime.sendMessage({ action: 'setTrackList', trackList: tracks, index: 0 });
         
     } catch (err) {
-        if (err.name !== 'AbortError') {
-            console.error('Failed to load folder:', err);
-            statusEl.textContent = 'Failed to load folder';
-        }
+        console.error('Failed to load bundled tracks:', err);
+        statusEl.textContent = 'Failed to load bundled tracks';
     }
 }
+
+// Load user-selected files
+function loadFiles(files) {
+    try {
+        console.log('Loading', files.length, 'files...');
+        
+        // Filter for audio files
+        const audioFiles = files.filter(file => {
+            const ext = file.name.toLowerCase().split('.').pop();
+            return ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac'].includes(ext);
+        });
+        
+        console.log('Found', audioFiles.length, 'audio files');
+        
+        if (audioFiles.length === 0) {
+            statusEl.textContent = 'No audio files found in selection';
+            tracks = [];
+            renderTrackList();
+            updateUI();
+            return;
+        }
+        
+        // Sort files alphabetically
+        audioFiles.sort((a, b) => a.name.localeCompare(b.name));
+        
+        // Create track objects from files
+        tracks = audioFiles.map((file, index) => ({
+            file: file.name,
+            title: file.name.replace(/\.[^/.]+$/, ''),
+            artist: '',
+            url: URL.createObjectURL(file),
+            id: `user_${index}_${file.name}`,
+            fileObject: file
+        }));
+        
+        currentIndex = 0;
+        isPlaying = false;
+        renderTrackList();
+        updateUI();
+        statusEl.textContent = `✓ Loaded ${tracks.length} audio file${tracks.length !== 1 ? 's' : ''} - Click to play`;
+        
+        // Send track list to background
+        chrome.runtime.sendMessage({ action: 'setTrackList', trackList: tracks, index: 0 });
+        
+    } catch (err) {
+        console.error('Failed to load files:', err);
+        statusEl.textContent = 'Failed to load files: ' + err.message;
+        tracks = [];
+        renderTrackList();
+        updateUI();
+    }
+}
+
+// Load folder (handled by folder input with webkitdirectory)
+// This function is kept for compatibility but folder loading now happens via input element
 
 // Unload folder
 function unloadFolder() {
     chrome.runtime.sendMessage({ action: 'stop' });
-    chrome.runtime.sendMessage({ action: 'clearDirectoryHandle' });
     tracks = [];
     directoryHandle = null;
     currentIndex = 0;
     isPlaying = false;
+    
+    // Clear file inputs
+    if (fileInput) fileInput.value = '';
+    if (folderInput) folderInput.value = '';
+    
     renderTrackList();
     updateUI();
-    statusEl.textContent = 'Select a folder to start';
+    statusEl.textContent = currentMode === 'bundled' ? 'Switched to bundled mode' : 'Files cleared - Select files or folder';
 }
 
 // Render track list
@@ -165,6 +225,15 @@ function updateTrackSelection() {
     });
 }
 
+// Update song selector with new tracks
+function updateSongSelector(trackList) {
+    tracks = trackList;
+    currentIndex = 0;
+    isPlaying = false;
+    renderTrackList();
+    updateUI();
+}
+
 // Play a specific track
 async function playTrack(index) {
     if (index < 0 || index >= tracks.length) return;
@@ -173,20 +242,28 @@ async function playTrack(index) {
     
     currentIndex = index;
     
-    // Send play command with full track list
-    const response = await chrome.runtime.sendMessage({ 
-        action: 'play', 
-        index: index,
-        trackList: tracks
-    });
-    
-    if (response && response.ok) {
-        isPlaying = true;
+    try {
+        // Send play command with full track list
+        const response = await chrome.runtime.sendMessage({ 
+            action: 'play', 
+            index: index,
+            trackList: tracks
+        });
+        
+        if (response && response.ok) {
+            isPlaying = true;
+            updateUI();
+            updateTrackSelection();
+        } else {
+            console.error('Play failed:', response);
+            statusEl.textContent = 'Failed to play track';
+            isPlaying = false;
+        }
+    } catch (err) {
+        console.error('Error playing track:', err);
+        statusEl.textContent = 'Error: ' + err.message;
+        isPlaying = false;
         updateUI();
-        updateTrackSelection();
-    } else {
-        console.error('Play failed:', response);
-        statusEl.textContent = 'Failed to play track';
     }
 }
 
@@ -288,19 +365,27 @@ function updateUI() {
     
     // Now playing
     if (nowPlayingEl) {
-        if (tracks.length > 0 && currentIndex >= 0) {
+        if (tracks.length > 0 && currentIndex >= 0 && currentIndex < tracks.length) {
             const track = tracks[currentIndex];
             nowPlayingEl.textContent = track ? (track.title || track.file) : 'Select a track';
+        } else if (tracks.length > 0) {
+            nowPlayingEl.textContent = 'Click a track to play';
         } else {
-            nowPlayingEl.textContent = 'Select a folder to start';
+            nowPlayingEl.textContent = currentMode === 'bundled' ? 'Loading tracks...' : 'Select files or folder';
         }
     }
     
     // Status
-    if (statusEl && tracks.length > 0) {
-        const track = tracks[currentIndex];
-        if (track) {
-            statusEl.textContent = `${isPlaying ? 'Playing' : 'Paused'}: ${track.title || track.file}`;
+    if (statusEl) {
+        if (tracks.length > 0 && currentIndex >= 0 && currentIndex < tracks.length) {
+            const track = tracks[currentIndex];
+            if (track) {
+                statusEl.textContent = `${isPlaying ? 'Playing' : 'Ready'}: ${track.title || track.file}`;
+            }
+        } else if (tracks.length > 0) {
+            statusEl.textContent = `${tracks.length} tracks loaded - Click to play`;
+        } else {
+            statusEl.textContent = currentMode === 'bundled' ? 'Loading bundled tracks...' : 'Select files or folder';
         }
     }
 }
@@ -360,8 +445,40 @@ if (volumeEl) volumeEl.addEventListener('input', setVolume);
 if (progressContainer) progressContainer.addEventListener('click', seek);
 if (shuffleBtn) shuffleBtn.addEventListener('click', toggleShuffle);
 if (repeatBtn) repeatBtn.addEventListener('click', toggleRepeat);
-if (folderButton) folderButton.addEventListener('click', loadFolder);
 if (unloadButton) unloadButton.addEventListener('click', unloadFolder);
+
+// Folder input handler
+if (folderInput) folderInput.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+        loadFiles(files);
+    }
+});
+
+// Mode selector
+if (modeSelector) modeSelector.addEventListener('change', async (e) => {
+    const mode = e.target.value;
+    currentMode = mode;
+    if (mode === 'bundled') {
+        fileControls.style.display = 'none';
+        await loadBundledTracks();
+    } else if (mode === 'files') {
+        fileControls.style.display = 'block';
+        // Clear current tracks when switching to files mode
+        chrome.runtime.sendMessage({ action: 'stop' });
+        chrome.runtime.sendMessage({ action: 'clearTracks' });
+        updateSongSelector([]);
+        statusEl.textContent = 'Select files or folder to load tracks';
+    }
+});
+
+// File input
+if (fileInput) fileInput.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+        loadFiles(files);
+    }
+});
 
 // Close button - STOP playback when closing
 if (closeBtn) {

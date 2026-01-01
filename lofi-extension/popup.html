@@ -19,7 +19,7 @@
 
         <!-- Now Playing -->
         <div id="now-playing" style="text-align: center; font-size: var(--font-size-lg); font-weight: 500; margin-bottom: var(--spacing-md); color: var(--text-primary);">
-          Select a folder to start
+          Select a mode to start
         </div>
 
         <!-- Thumbnail -->
@@ -58,10 +58,26 @@
           <button id="repeat-btn" class="lp-toggle">Repeat: off</button>
         </div>
 
-        <!-- Folder Controls -->
+        <!-- Mode Selector -->
         <div style="margin-bottom: var(--spacing-lg);">
-          <button id="folder-button" style="width: 100%; padding: var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); background: var(--primary-color); color: white; cursor: pointer; font-weight: bold;">📁 Select Folder</button>
-          <button id="unload-button" style="width: 100%; padding: var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); background: var(--bg-secondary); color: var(--text-primary); cursor: pointer; margin-top: var(--spacing-xs);">Unload Folder</button>
+          <label style="display: block; font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-xs);">Mode</label>
+          <select id="mode-selector" style="width: 100%; padding: var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); background: var(--bg-primary); color: var(--text-primary);">
+            <option value="bundled">Bundled Lofi Tracks</option>
+            <option value="files">Upload Music Files</option>
+          </select>
+        </div>
+
+        <!-- File Controls -->
+        <div id="file-controls" style="margin-bottom: var(--spacing-lg); display: none;">
+          <div style="margin-bottom: var(--spacing-xs);">
+            <label style="display: block; font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-xs);">Select Files</label>
+            <input type="file" id="file-input" multiple accept="audio/*" style="width: 100%; padding: var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); background: var(--bg-primary); color: var(--text-primary);">
+          </div>
+          <div style="margin-bottom: var(--spacing-xs);">
+            <label style="display: block; font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-xs);">Select Folder</label>
+            <input type="file" id="folder-input" webkitdirectory directory multiple style="width: 100%; padding: var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); background: var(--bg-primary); color: var(--text-primary);">
+          </div>
+          <button id="unload-button" style="width: 100%; padding: var(--spacing-sm); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); background: var(--bg-secondary); color: var(--text-primary); cursor: pointer;">Clear Files</button>
         </div>
 
         <!-- Song Selector -->
@@ -72,7 +88,7 @@
 
         <!-- Status -->
         <div id="lofi-status" style="text-align: center; font-size: var(--font-size-sm); color: var(--text-muted);">
-          Select a folder to load tracks
+          Select a mode to load tracks
         </div>
 
       </div>

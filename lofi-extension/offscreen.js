@@ -11,7 +11,7 @@ let currentSongId = null;
 let updateInterval = null;
 
 // Directory handle for file access
-let directoryHandle = null;
+// Not needed since tracks contain their own entries
 
 async function initAudio() {
     if (!audioContext) {
@@ -52,13 +52,11 @@ async function playSong(song, resumeFrom = 0) {
     // Get audio data
     let arrayBuffer;
     try {
-        if (song.arrayBuffer) {
-            // Direct array buffer provided
-            arrayBuffer = song.arrayBuffer;
-        } else if (directoryHandle && song.file) {
-            // Get file from directory handle
-            const fileHandle = await directoryHandle.getFileHandle(song.file);
-            const file = await fileHandle.getFile();
+        if (song.entry) {
+            // Use the FileEntry directly
+            const file = await new Promise((resolve, reject) => {
+                song.entry.file(resolve, reject);
+            });
             arrayBuffer = await file.arrayBuffer();
         } else if (song.url) {
             // Fetch from URL
@@ -232,9 +230,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             sendResponse({ ok: true });
             break;
             
-        case 'setDirectoryHandle':
-            directoryHandle = message.handle;
-            console.log('Received directory handle');
+        case 'setDirectoryEntry':
+            // Not needed since tracks contain their own entries
             sendResponse({ ok: true });
             break;
             
