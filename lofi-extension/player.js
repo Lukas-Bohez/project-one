@@ -397,10 +397,6 @@ function updateTrackSelection() {
     const items = listEl.querySelectorAll('.song-item');
     items.forEach((item, i) => {
         item.classList.toggle('selected', i === currentIndex);
-        // Scroll selected item into view
-        if (i === currentIndex) {
-            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
     });
 }
 
