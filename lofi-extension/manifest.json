@@ -1,49 +1,18 @@
 {
   "manifest_version": 3,
-  "name": "Lofi Cached Player",
-  "version": "0.1",
-  "description": "Play local/cached lofi tracks bundled with the extension (cached-only mode).",
+  "name": "Lofi Player",
+  "version": "0.2",
+  "description": "Simple lofi music player - load a folder of music files to play",
   "permissions": [
     "storage",
-    "activeTab",
-    "offscreen",
-    "windows"
+    "offscreen"
   ],
   "action": {
-    "default_title": "Lofi Cached Player"
+    "default_title": "Lofi Player",
+    "default_popup": "popup.html"
   },
   "background": {
     "service_worker": "background.js"
-  },
-  "commands": {
-    "play-pause": {
-      "suggested_key": {
-        "default": "Alt+P",
-        "mac": "Alt+P"
-      },
-      "description": "Play/Pause music"
-    },
-    "next-track": {
-      "suggested_key": {
-        "default": "Alt+N",
-        "mac": "Alt+N"
-      },
-      "description": "Next track"
-    },
-    "prev-track": {
-      "suggested_key": {
-        "default": "Alt+B",
-        "mac": "Alt+B"
-      },
-      "description": "Previous track"
-    },
-    "stop-music": {
-      "suggested_key": {
-        "default": "Alt+S",
-        "mac": "Alt+S"
-      },
-      "description": "Stop music"
-    }
   },
   "icons": {
     "16": "icons/icon16.png",
@@ -52,7 +21,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["assets/*", "lofi/*", "offscreen.html"],
+      "resources": ["offscreen.html"],
       "matches": ["<all_urls>"]
     }
   ]
