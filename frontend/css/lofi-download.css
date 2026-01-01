@@ -1,0 +1,260 @@
+/*---------------------------------------
+ # LOFI DOWNLOAD PAGE STYLES
+---------------------------------------*/
+
+/* Ad containers */
+.ad-container {
+    text-align: center;
+    margin: 30px 0;
+    padding: 20px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+}
+
+/* Download section styling */
+.download-section {
+    text-align: center;
+    margin-top: 40px;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.download-section h2 {
+    color: white;
+    margin-bottom: 15px;
+}
+
+.download-section p {
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 30px;
+}
+
+.download-section .button-row {
+    margin-top: 30px;
+}
+
+.download-section .c-btn {
+    font-size: 1.2em;
+    padding: 15px 40px;
+    background: white;
+    color: var(--primary-color);
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.download-section .c-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.download-section .c-note {
+    background: rgba(255, 255, 255, 0.1);
+    border-left-color: rgba(255, 255, 255, 0.5);
+    color: white;
+    margin-top: 20px;
+    padding: 12px 16px;
+    margin-bottom: 0;
+}
+
+.download-section .c-note p {
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Code styling in instructions */
+code {
+    background: var(--bg-secondary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    color: var(--accent-color);
+    border: 1px solid var(--border-color);
+}
+
+/* Modal styling - properly positioned and styled */
+.c-modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+}
+
+.c-modal__content {
+    position: relative;
+    background-color: var(--bg-primary);
+    margin: 5% auto;
+    padding: 30px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.close-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    color: var(--text-secondary);
+    font-size: 32px;
+    font-weight: 300;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+    color: var(--text-primary);
+    background: var(--bg-secondary);
+    transform: rotate(90deg);
+}
+
+.modal-title {
+    margin: 0 0 25px 0;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 1.8em;
+    font-weight: 600;
+}
+
+.info-section {
+    margin-bottom: 25px;
+}
+
+.info-section:last-child {
+    margin-bottom: 0;
+}
+
+.section-title {
+    color: var(--accent-color);
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-bottom: 12px;
+    margin-top: 0;
+}
+
+.info-section p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.info-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.info-list li {
+    padding: 8px 0;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.info-list li strong {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+/* Dark theme modal adjustments */
+[data-theme="dark"] .c-modal__content {
+    background-color: #0f1724;
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] .modal-title {
+    color: #e6eef9;
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .section-title {
+    color: #93c5fd;
+}
+
+[data-theme="dark"] .info-section p,
+[data-theme="dark"] .info-list li {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .info-list li strong {
+    color: #93c5fd;
+}
+
+[data-theme="dark"] .close-btn {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .close-btn:hover {
+    color: #e6eef9;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .c-modal__content {
+        margin: 10% auto;
+        padding: 25px;
+        width: 95%;
+    }
+
+    .modal-title {
+        font-size: 1.5em;
+    }
+
+    .download-section .c-btn {
+        font-size: 1em;
+        padding: 12px 30px;
+    }
+}
+
+@media (max-width: 480px) {
+    .c-modal__content {
+        margin: 15% auto;
+        padding: 20px;
+    }
+
+    .close-btn {
+        top: 10px;
+        right: 15px;
+        font-size: 28px;
+    }
+
+    .modal-title {
+        font-size: 1.3em;
+        padding-right: 35px;
+    }
+}
