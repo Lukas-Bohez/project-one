@@ -1,7 +1,7 @@
 {
   "version": "2.2.0",
-  "name": "Convert the Spire (Firefox Only)",
-  "description": "YouTube Video Converter Extension - Firefox Exclusive",
+  "name": "Convert the Spire",
+  "description": "YouTube Video Converter Extension",
   "browser": "Firefox",
   "manifestVersion": 2,
   "changelog": {

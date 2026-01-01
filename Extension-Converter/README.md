@@ -1,6 +1,6 @@
-# Convert the Spire - YouTube Converter Extension (Firefox Only)
+# Convert the Spire - YouTube Converter Extension
 
-**⚠️ Firefox Only** - This extension works exclusively on Firefox due to Chrome's Manifest V3 restrictions on downloading YouTube content.
+**⚠️ Browser Compatibility** - This extension requires a browser with Manifest V2 support due to Manifest V3 restrictions on downloading YouTube content.
 
 A powerful Firefox extension to convert YouTube videos and playlists to MP3/MP4 with automatic batch processing and user-selectable storage locations.
 
