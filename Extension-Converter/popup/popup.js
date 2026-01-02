@@ -117,6 +117,34 @@ function ShowLinks(r) {
   r = JSON.parse(r);
   videoTitle = r.videoTitle;
   proKey = r.key;
+  
+  console.log("Received data:", r);
+  
+  // Display video metadata
+  if (r.thumbnail) {
+    console.log("Setting thumbnail:", r.thumbnail);
+    $('#videoThumbnail').attr('src', r.thumbnail);
+    $('.video-info').show();
+  } else {
+    console.log("No thumbnail in data");
+  }
+  
+  if (r.author) {
+    console.log("Setting author:", r.author);
+    $('#channelName').text(r.author);
+    // Set first letter as channel icon
+    const firstLetter = r.author.charAt(0).toUpperCase();
+    $('#channelIcon').text(firstLetter);
+    $('.video-info').show();
+  } else {
+    console.log("No author in data");
+  }
+  
+  if (videoTitle) {
+    $('#videoTitleText').text(videoTitle);
+    $('.video-info').show();
+  }
+  
   $(".VideoTitle").text(videoTitle);
   var downloadCodeList = r.VideoData;
 
