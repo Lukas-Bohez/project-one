@@ -1,4 +1,6 @@
 // Content script for YouTube pages - extracts video and playlist data
+console.log('[Content Script] Content script loaded at', new Date().toISOString());
+
 let youtubeData = null;
 
 // Browser API compatibility layer
@@ -6,36 +8,102 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
 // Inject the page-context script to access YouTube's data
 function injectPageScript() {
-  const script = document.createElement('script');
-  script.src = browserAPI.runtime.getURL('injected.js');
-  script.onload = function() {
-    this.remove();
-  };
-  (document.head || document.documentElement).appendChild(script);
-  console.log('[Content Script] Injected page script');
-}
+  try {
+    console.log('[Content Script] Starting injection process');
+    
+    // Try to get the URL
+    const scriptUrl = browserAPI.runtime.getURL('injected.js');
+    console.log('[Content Script] Script URL:', scriptUrl);
 
-// Request YouTube data from the injected script
-function requestYouTubeData() {
-  return new Promise((resolve) => {
-    const timeout = setTimeout(() => {
-      console.warn('[Content Script] No response from injected script after 5s');
-      resolve(null);
-    }, 5000);
-
-    const handler = (event) => {
-      if (event.source !== window) return;
-      if (event.data && event.data.type === 'YOUTUBE_DATA_RESPONSE') {
-        clearTimeout(timeout);
-        window.removeEventListener('message', handler);
-        console.log('[Content Script] Received YouTube data from injected script', event.data.data);
-        resolve(event.data.data);
+    // Method 1: Try injecting immediately (works if DOM ready)
+    const injectNow = () => {
+      try {
+        const script = document.createElement('script');
+        script.src = scriptUrl;
+        script.type = 'text/javascript';
+        script.onerror = function() {
+          console.error('[Content Script] Script load error');
+        };
+        script.onload = function() {
+          console.log('[Content Script] Injected script loaded');
+          this.remove();
+        };
+        
+        // Try head first, fallback to documentElement
+        const target = document.head || document.documentElement;
+        if (target) {
+          target.appendChild(script);
+          console.log('[Content Script] Script appended to', target.tagName);
+          return true;
+        }
+        return false;
+      } catch (e) {
+        console.error('[Content Script] Injection error:', e);
+        return false;
       }
     };
 
-    window.addEventListener('message', handler);
-    console.log('[Content Script] Requesting YouTube data from injected script');
-    window.postMessage({ type: 'GET_YOUTUBE_DATA' }, '*');
+    // Try immediate injection
+    if (!injectNow()) {
+      // If DOM not ready, wait for it
+      console.log('[Content Script] DOM not ready, waiting...');
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          console.log('[Content Script] DOM ready, injecting now');
+          injectNow();
+        });
+      } else {
+        // Fallback: use setTimeout
+        setTimeout(() => {
+          console.log('[Content Script] Using setTimeout, injecting now');
+          injectNow();
+        }, 100);
+      }
+    }
+  } catch (e) {
+    console.error('[Content Script] Fatal injection error:', e);
+  }
+}
+
+// Request YouTube data from the injected script using Custom Events
+function requestYouTubeData() {
+  return new Promise((resolve) => {
+    console.log('[Content Script] Requesting YouTube data via Custom Event');
+    
+    let receivedData = false;
+    const timeout = setTimeout(() => {
+      if (!receivedData) {
+        console.warn('[Content Script] Timeout waiting for YouTube data');
+        document.removeEventListener('__YouTubeExtractResponse', handleResponse);
+        resolve(null);
+      }
+    }, 10000); // 10 second timeout
+    
+    // Listen for the response event
+    const handleResponse = (event) => {
+      if (event.detail && !receivedData) {
+        receivedData = true;
+        clearTimeout(timeout);
+        document.removeEventListener('__YouTubeExtractResponse', handleResponse);
+        console.log('[Content Script] Received YouTube data via Custom Event');
+        console.log('[Content Script] Data details:', {
+          success: event.detail.success,
+          hasVideoStreams: event.detail.streams?.video?.length > 0,
+          hasAudioStreams: event.detail.streams?.audio?.length > 0,
+          hasVideoDetails: !!event.detail.videoDetails,
+          videoCount: event.detail.streams?.video?.length,
+          audioCount: event.detail.streams?.audio?.length
+        });
+        resolve(event.detail);
+      }
+    };
+    
+    document.addEventListener('__YouTubeExtractResponse', handleResponse);
+    
+    // Request the data from injected script
+    console.log('[Content Script] Dispatching extraction request to injected script');
+    const event = new CustomEvent('__YouTubeExtractRequest');
+    window.dispatchEvent(event);
   });
 }
 
@@ -188,7 +256,13 @@ async function processYouTubeData(data) {
     } else if (url.includes('/watch?') || url.includes('/shorts/')) {
       console.log('[Content Script] Detected single video URL');
       result.type = 'single';
-      result.videos = [await extractSingleVideo(data)];
+      const singleVideo = await extractSingleVideo(data);
+      // If data has streams from injected script (via passed-through video object), use those
+      if (data.videos && data.videos[0] && data.videos[0].streams) {
+        console.log('[Content Script] Using streams from injected script data');
+        singleVideo.streams = data.videos[0].streams;
+      }
+      result.videos = [singleVideo];
     } else if (url.includes('/channel/') || url.includes('/c/') || url.includes('/user/')) {
       console.log('[Content Script] Detected channel URL');
       result.type = 'channel';
@@ -417,12 +491,57 @@ async function extractSingleVideo(data) {
     const titleEl = document.querySelector('h1.ytd-video-primary-info-renderer yt-formatted-string, h1.ytd-watch-metadata yt-formatted-string');
     const authorEl = document.querySelector('yt-formatted-string#text.ytd-channel-name, a.yt-simple-endpoint.ytd-video-owner-renderer');
     const thumbnailEl = document.querySelector('video');
+    
+    // Extract thumbnail from meta tag or video element
+    let thumbnail = '';
+    if (thumbnailEl?.poster) {
+      thumbnail = thumbnailEl.poster;
+    } else {
+      const ogImage = document.querySelector('meta[property="og:image"]');
+      if (ogImage) {
+        thumbnail = ogImage.getAttribute('content');
+      }
+    }
+    
+    // Try to get author from videoDetails first, then from ytInitialData
+    let author = 'Unknown Author';
+    if (videoDetails?.author) {
+      author = videoDetails.author;
+    } else if (videoDetails?.ownerChannelName) {
+      author = videoDetails.ownerChannelName;
+    } else if (window.ytInitialData) {
+      // Try to extract author from ytInitialData
+      try {
+        // Path 1: Two column watch next results
+        let channelName = window.ytInitialData?.contents?.twoColumnWatchNextResults?.results?.results?.contents?.find(c => c.videoPrimaryInfoRenderer)?.videoPrimaryInfoRenderer?.subtitle?.runs?.find(r => r.navigationEndpoint)?.text;
+        
+        // Path 2: Search for channel name in results
+        if (!channelName) {
+          channelName = window.ytInitialData?.contents?.twoColumnWatchNextResults?.secondaryResults?.secondaryResults?.results?.[0]?.compactVideoRenderer?.longBylineText?.simpleText ||
+                       window.ytInitialData?.contents?.twoColumnWatchNextResults?.results?.results?.contents?.find(c => c.videoSecondaryInfoRenderer)?.videoSecondaryInfoRenderer?.owner?.videoOwnerRenderer?.title?.runs?.[0]?.text;
+        }
+        
+        if (channelName) {
+          author = channelName;
+        }
+      } catch (e) {
+        // Use fallback
+      }
+    }
+    
+    // Final fallback: try DOM
+    if (author === 'Unknown Author') {
+      const authorEl = document.querySelector('yt-formatted-string#text.ytd-channel-name, a.yt-simple-endpoint.ytd-video-owner-renderer');
+      if (authorEl) {
+        author = authorEl.textContent?.trim() || 'Unknown Author';
+      }
+    }
 
     return {
       id: extractVideoId(window.location.href),
       title: titleEl?.textContent?.trim() || 'Unknown Title',
-      author: authorEl?.textContent?.trim() || 'Unknown Author',
-      thumbnail: thumbnailEl?.poster || extractThumbnailFromMeta(),
+      author: author,
+      thumbnail: thumbnail,
       duration: 'Unknown',
       url: window.location.href,
       isShort: window.location.href.includes('/shorts/'),
