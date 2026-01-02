@@ -512,7 +512,7 @@ async function findDownloadUrl(videoUrl, format, quality, videoData = null) {
 
 		const diagnostics = [];
 
-		// Try streams provided by the page first
+		// Try streams provided by the page first (should have decrypted URLs from injected script)
 		if (videoData && videoData.streams) {
 				diagnostics.push({ method: 'page_streams', videoCount: (videoData.streams.video||[]).length, audioCount: (videoData.streams.audio||[]).length });
 				const direct = await tryDirectYouTubeStreams(videoData.streams, format, quality);
