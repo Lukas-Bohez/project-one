@@ -269,9 +269,9 @@
 
         <!-- Convert the Spire Section -->
         <section class="content-second content-second-youtube content-second--visible" id="chrome-extension">
-            <h2>Convert the Spire (Firefox Only)</h2>
-            <p><strong>⚠️ Firefox Exclusive:</strong> Due to Chrome's Manifest V3 restrictions on downloading YouTube content, this extension only works on Firefox.</p>
-            <p>Download Convert the Spire to download and convert YouTube videos and playlists directly from Firefox!</p>
+            <h2>Convert the Spire (Chrome + Firefox)</h2>
+            <p><strong>⚠️ Chrome now supported:</strong> Side-load the MV2 build to keep YouTube downloads working. The Firefox build remains available.</p>
+            <p>Download Convert the Spire to download and convert YouTube videos and playlists directly from your browser.</p>
             
             <h3>Benefits</h3>
             <ul>
@@ -282,14 +282,25 @@
             </ul>
             
             <div class="button-row">
+                <a href="../downloads/ConvertTheSpire-Chrome.zip" download class="c-btn c-btn--primary">
+                    <span>🧭 Download for Chrome</span>
+                </a>
                 <a href="../downloads/ConvertTheSpire.zip" download class="c-btn c-btn--primary">
                     <span>🦊 Download for Firefox</span>
                 </a>
             </div>
             
-            <h3>Installation (Firefox Only)</h3>
+            <h3>Installation (Chrome)</h3>
             <ol>
-                <li>Click the download button above</li>
+                <li>Download and unzip the Chrome build above</li>
+                <li>Open <code>chrome://extensions</code> and enable <strong>Developer mode</strong></li>
+                <li>Click <strong>Load unpacked</strong> and select the extracted folder (where <code>manifest.json</code> lives)</li>
+                <li>Pin the extension and refresh YouTube</li>
+            </ol>
+
+            <h3>Installation (Firefox)</h3>
+            <ol>
+                <li>Click the Firefox download button above</li>
                 <li>Unzip the downloaded file to a permanent location</li>
                 <li>Open Firefox and go to <code>about:debugging#/runtime/this-firefox</code></li>
                 <li>Click "Load Temporary Add-on..."</li>
@@ -308,7 +319,7 @@
             </ol>
             
             <div class="c-note">
-                <strong>Why Firefox Only?</strong> Chrome's Manifest V3 severely restricts downloading YouTube content. This extension uses Firefox's Manifest V2 which still allows the necessary permissions for YouTube downloads.
+                <strong>Why side-loaded?</strong> Chrome's Manifest V3 blocks reliable YouTube downloads. The Chrome build ships as an unpacked Manifest V2 extension, while the Firefox build continues to work as a temporary add-on.
             </div>
         </section>
 

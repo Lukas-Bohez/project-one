@@ -1,848 +1,347 @@
-// Content script for YouTube pages - extracts video and playlist data
-console.log('[Content Script] Content script loaded at', new Date().toISOString());
+// Content script - runs on YouTube pages
+// Based on Chrome_youtube_Video_Downloader_19.1 working extension
 
-let youtubeData = null;
+console.log('[Content Script] YouTube Downloader loaded');
 
-// Browser API compatibility layer
 const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
-// Inject the page-context script to access YouTube's data
-function injectPageScript() {
-  try {
-    console.log('[Content Script] Starting injection process');
-    
-    // Try to get the URL
-    const scriptUrl = browserAPI.runtime.getURL('injected.js');
-    console.log('[Content Script] Script URL:', scriptUrl);
+// Parse query string (from working extension)
+const parseQueryString = (queryString) =>
+  Object.assign(
+    {},
+    ...queryString.split("&").map((kvp) => {
+      const kva = kvp.split("=").map(decodeURIComponent);
+      return {
+        [kva[0]]: kva[1],
+      };
+    })
+  );
 
-    // Method 1: Try injecting immediately (works if DOM ready)
-    const injectNow = () => {
-      try {
-        const script = document.createElement('script');
-        script.src = scriptUrl;
-        script.type = 'text/javascript';
-        script.onerror = function() {
-          console.error('[Content Script] Script load error');
-        };
-        script.onload = function() {
-          console.log('[Content Script] Injected script loaded');
-          this.remove();
-        };
-        
-        // Try head first, fallback to documentElement
-        const target = document.head || document.documentElement;
-        if (target) {
-          target.appendChild(script);
-          console.log('[Content Script] Script appended to', target.tagName);
-          return true;
-        }
-        return false;
-      } catch (e) {
-        console.error('[Content Script] Injection error:', e);
-        return false;
-      }
-    };
-
-    // Try immediate injection
-    if (!injectNow()) {
-      // If DOM not ready, wait for it
-      console.log('[Content Script] DOM not ready, waiting...');
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-          console.log('[Content Script] DOM ready, injecting now');
-          injectNow();
-        });
-      } else {
-        // Fallback: use setTimeout
-        setTimeout(() => {
-          console.log('[Content Script] Using setTimeout, injecting now');
-          injectNow();
-        }, 100);
-      }
-    }
-  } catch (e) {
-    console.error('[Content Script] Fatal injection error:', e);
-  }
+// Inject script into page context (from working extension)
+function injectScript(code) {
+  const script = document.createElement("script");
+  script.type = "application/javascript";
+  script.textContent = code;
+  (document.head || document.documentElement).appendChild(script);
+  script.remove();
 }
 
-// Request YouTube data from the injected script using Custom Events
-function requestYouTubeData() {
-  return new Promise((resolve) => {
-    console.log('[Content Script] Requesting YouTube data via Custom Event');
-    
-    let receivedData = false;
-    const timeout = setTimeout(() => {
-      if (!receivedData) {
-        console.warn('[Content Script] Timeout waiting for YouTube data');
-        document.removeEventListener('__YouTubeExtractResponse', handleResponse);
-        resolve(null);
-      }
-    }, 10000); // 10 second timeout
-    
-    // Listen for the response event
-    const handleResponse = (event) => {
-      if (event.detail && !receivedData) {
-        receivedData = true;
-        clearTimeout(timeout);
-        document.removeEventListener('__YouTubeExtractResponse', handleResponse);
-        console.log('[Content Script] Received YouTube data via Custom Event');
-        console.log('[Content Script] Data details:', {
-          success: event.detail.success,
-          hasVideoStreams: event.detail.streams?.video?.length > 0,
-          hasAudioStreams: event.detail.streams?.audio?.length > 0,
-          hasVideoDetails: !!event.detail.videoDetails,
-          videoCount: event.detail.streams?.video?.length,
-          audioCount: event.detail.streams?.audio?.length
-        });
-        resolve(event.detail);
-      }
-    };
-    
-    document.addEventListener('__YouTubeExtractResponse', handleResponse);
-    
-    // Request the data from injected script
-    console.log('[Content Script] Dispatching extraction request to injected script');
-    const event = new CustomEvent('__YouTubeExtractRequest');
-    window.dispatchEvent(event);
-  });
+// Get raw player data from page (from working extension)
+async function getRawPageData() {
+  console.log('[Content Script] Getting raw page data from ytplayer...');
+  
+  injectScript(`
+    var storage = window.localStorage;
+    const videoPage = window?.ytplayer?.config?.args?.raw_player_response;
+    storage.setItem('videoPage', JSON.stringify(videoPage));
+    const $ = (s, x = document) => x.querySelector(s);
+    const basejs = (typeof ytplayer !== 'undefined' && 'config' in ytplayer && ytplayer.config.assets
+      ? 'https://' + location.host + ytplayer.config.assets.js
+      : 'web_player_context_config' in ytplayer
+      ? 'https://' + location.host + ytplayer.web_player_context_config.jsUrl
+      : null) || $('script[src$="base.js"]')?.src;
+    storage.setItem('basejs', basejs);
+  `);
+
+  const videoPage = window.localStorage.getItem("videoPage");
+  console.log('[Content Script] Retrieved player data from localStorage:', videoPage ? 'Found' : 'Not found');
+  return videoPage;
 }
 
-// Notify background that content script loaded (helps detect listener presence)
-try {
-  browserAPI.runtime.sendMessage({ action: 'contentScriptLoaded', url: window.location.href }, () => {});
-} catch (e) {
-  console.warn('[Content Script] Could not notify background of load:', e && e.message);
-}
-
-async function extractYouTubeData() {
-  try {
-    console.log('[Content Script] Starting YouTube data extraction');
-
-    // First, inject the page script if not already done
-    if (!window.__YouTubeScriptInjected) {
-      injectPageScript();
-      window.__YouTubeScriptInjected = true;
-    }
-
-    // Request data from the injected page script
-    const injectedData = await requestYouTubeData();
-    
-    if (injectedData && injectedData.success) {
-      console.log('[Content Script] Got streaming data from injected script');
-      const videoDetails = injectedData.videoDetails;
-      
-      if (videoDetails && injectedData.streams) {
-        const video = {
-          id: videoDetails.videoId,
-          title: videoDetails.title || 'Unknown Title',
-          author: videoDetails.author || videoDetails.ownerChannelName || 'Unknown Author',
-          thumbnail: videoDetails.thumbnail?.thumbnails?.[videoDetails.thumbnail.thumbnails.length - 1]?.url || '',
-          duration: videoDetails.lengthSeconds ? formatDuration(videoDetails.lengthSeconds) : '',
-          url: window.location.href,
-          isShort: window.location.href.includes('/shorts/'),
-          streams: injectedData.streams,
-          playerJs: null,
-          _debug: {
-            source: 'injected_script',
-            hasStreamingData: true,
-            extractedVideoStreams: injectedData.streams.video?.length || 0,
-            extractedAudioStreams: injectedData.streams.audio?.length || 0
-          }
-        };
-        
-        console.log('[Content Script] Returning video data with streams', {
-          video: injectedData.streams.video?.length || 0,
-          audio: injectedData.streams.audio?.length || 0
-        });
-        
-        return await processYouTubeData({
-          videos: [video],
-          type: 'single',
-          diagnostics: {
-            hasYtInitialData: false,
-            hasYtInitialPlayerResponse: true,
-            urlType: 'video',
-            source: 'injected_script'
-          }
-        });
-      }
-    }
-
-    console.warn('[Content Script] Injected script did not return valid data');
-    
-    // Fallback: try the old method (may not work)
-    let data = null;
-
-    // Wait for ytInitialData to be available (YouTube SPA loads this asynchronously)
-    const maxWaitTime = 3000; // 3 seconds max for fallback
-    const checkInterval = 200; // Check every 200ms
-    let waited = 0;
-    
-    while (!window.ytInitialData && !window.ytInitialPlayerResponse && waited < maxWaitTime) {
-      await new Promise(resolve => setTimeout(resolve, checkInterval));
-      waited += checkInterval;
-    }
-
-    // Try to get data from ytInitialData (most common)
-    if (window.ytInitialData) {
-      console.log('[Content Script] Found ytInitialData');
-      data = window.ytInitialData;
-    }
-
-    // Try ytInitialPlayerResponse for video data
-    if (window.ytInitialPlayerResponse) {
-      console.log('[Content Script] Found ytInitialPlayerResponse');
-      data = { ...data, ...window.ytInitialPlayerResponse };
-    }
-
-    // Try to find data in script tags
-    if (!data) {
-      console.log('[Content Script] Searching script tags for data');
-      const scripts = document.querySelectorAll('script');
-      for (const script of scripts) {
-        const content = script.textContent;
-        if (content.includes('ytInitialData') || content.includes('var ytInitialData')) {
-          try {
-            // Extract JSON from script content
-            const jsonMatch = content.match(/ytInitialData\s*=\s*({.+?});/);
-            if (jsonMatch) {
-              console.log('[Content Script] Found ytInitialData in script tag');
-              data = JSON.parse(jsonMatch[1]);
-              break;
-            }
-          } catch (e) {
-            console.log('[Content Script] Failed to parse script data:', e.message);
-            continue;
-          }
-        }
-      }
-    }
-
-    if (data) {
-      console.log('[Content Script] Data extraction successful');
-      youtubeData = data;
-      return await processYouTubeData(data);
-    }
-
-    console.log('[Content Script] No YouTube data found');
-    return null;
-  } catch (error) {
-    console.error('[Content Script] Error extracting YouTube data:', error);
-    return null;
-  }
-}
-
-async function processYouTubeData(data) {
-  const url = window.location.href;
-  console.log('[Content Script] Processing YouTube data for URL:', url);
-
-  const result = {
-    type: null,
-    videos: [],
-    diagnostics: {
-      hasYtInitialData: !!window.ytInitialData,
-      hasYtInitialPlayerResponse: !!window.ytInitialPlayerResponse,
-      urlType: url.includes('/playlist?') ? 'playlist' : 
-               url.includes('/watch?') || url.includes('/shorts/') ? 'video' :
-               url.includes('/channel/') || url.includes('/c/') || url.includes('/user/') ? 'channel' : 'unknown'
+// Get video data using InnerTube API (from working extension)
+async function getInnerApijson(videoId, clientName, isAgeRestricted) {
+  const clients = {
+    "WEB": {
+      clientDetails: {
+        clientName: "WEB",
+        clientVersion: "2.20201021.00.00",
+        hl: "en",
+        timeZone: "UTC",
+        utcOffsetMinutes: 0
+      },
+      apiKey: "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
+    },
+    "IOS": {
+      clientDetails: {
+        clientName: "IOS",
+        clientVersion: "19.09.3",
+        deviceModel: "iPhone14,3",
+        userAgent: "com.google.ios.youtube/19.09.3 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)",
+        hl: "en",
+        timeZone: "UTC",
+        utcOffsetMinutes: 0
+      },
+      apiKey: "AIzaSyB-63vPrdThhKuerbB2N_l7Kwwcxj6yUAc"
+    },
+    "IOS_CREATOR": {
+      clientDetails: {
+        clientName: "IOS_CREATOR",
+        clientVersion: "22.33.101",
+        deviceModel: "iPhone14,3",
+        userAgent: "com.google.ios.ytcreator/22.33.101 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)",
+        hl: "en",
+        timeZone: "UTC",
+        utcOffsetMinutes: 0
+      },
+      apiKey: "AIzaSyA8eiZmM1FaDVjRy-dfKTyQ_vz_yYM39w"
     }
   };
 
-    try {
-    if (url.includes('/playlist?')) {
-      console.log('[Content Script] Detected playlist URL');
-      result.type = 'playlist';
-      result.videos = extractPlaylistVideos(data);
-    } else if (url.includes('/watch?') || url.includes('/shorts/')) {
-      console.log('[Content Script] Detected single video URL');
-      result.type = 'single';
-      const singleVideo = await extractSingleVideo(data);
-      // If data has streams from injected script (via passed-through video object), use those
-      if (data.videos && data.videos[0] && data.videos[0].streams) {
-        console.log('[Content Script] Using streams from injected script data');
-        singleVideo.streams = data.videos[0].streams;
-      }
-      result.videos = [singleVideo];
-    } else if (url.includes('/channel/') || url.includes('/c/') || url.includes('/user/')) {
-      console.log('[Content Script] Detected channel URL');
-      result.type = 'channel';
-      result.videos = extractChannelVideos(data);
-    } else {
-      console.log('[Content Script] Unknown URL type');
-    }
+  const { clientDetails, apiKey } = clients[clientName] || clients["WEB"];
+  
+  const clientInfo = { ...clientDetails };
+  if (isAgeRestricted) {
+    clientInfo.clientVersion = clientDetails.clientVersion + "_restricted";
+    clientInfo.clientScreen = "EMBED";
+  }
 
-    console.log('[Content Script] Processing complete:', { type: result.type, videoCount: result.videos.length });
-    return result;
+  const requestBody = {
+    context: { client: clientInfo },
+    videoId: videoId,
+    playbackContext: {
+      contentPlaybackContext: {
+        html5Preference: "HTML5_PREF_WANTS"
+      }
+    },
+    contentCheckOk: true,
+    racyCheckOk: true
+  };
+
+  const requestOptions = {
+    method: "POST",
+    headers: {
+      Accept: "application/json, text/plain, */*",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(requestBody)
+  };
+
+  const url = `https://youtubei.googleapis.com/youtubei/v1/player?key=${apiKey}`;
+
+  try {
+    console.log(`[Content Script] Fetching from InnerTube API (${clientName})...`);
+    const response = await fetch(url, requestOptions);
+    if (!response.ok) {
+      console.warn(`[Content Script] API returned ${response.status}`);
+      return null;
+    }
+    const data = await response.json();
+    console.log('[Content Script] ✓ API returned data');
+    return data;
   } catch (error) {
-    console.error('[Content Script] Error processing YouTube data:', error);
+    console.error("[Content Script] API fetch failed:", error);
     return null;
   }
 }
 
-function extractPlaylistVideos(data) {
-  console.log('[Content Script] Extracting playlist videos');
-  const videos = [];
+// Main function to parse video details (from working extension)
+async function parseDetails(url) {
+  console.log('[Content Script] parseDetails called for:', url);
 
-  try {
-    // Try multiple possible paths for playlist data
-    let contents = null;
-
-    // Path 1: Original path
-    contents = data?.contents?.twoColumnBrowseResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents?.[0]?.itemSectionRenderer?.contents?.[0]?.playlistVideoListRenderer?.contents;
-
-    // Path 2: Alternative path
-    if (!contents) {
-      contents = data?.contents?.twoColumnBrowseResultsRenderer?.tabs?.[1]?.tabRenderer?.content?.sectionListRenderer?.contents?.[0]?.itemSectionRenderer?.contents?.[0]?.playlistVideoListRenderer?.contents;
-    }
-
-    // Path 3: Another alternative
-    if (!contents) {
-      const tabs = data?.contents?.twoColumnBrowseResultsRenderer?.tabs;
-      if (tabs) {
-        for (const tab of tabs) {
-          if (tab?.tabRenderer?.content?.sectionListRenderer?.contents) {
-            const sectionContents = tab.tabRenderer.content.sectionListRenderer.contents;
-            for (const section of sectionContents) {
-              if (section?.itemSectionRenderer?.contents?.[0]?.playlistVideoListRenderer?.contents) {
-                contents = section.itemSectionRenderer.contents[0].playlistVideoListRenderer.contents;
-                break;
-              }
-            }
-            if (contents) break;
-          }
-        }
-      }
-    }
-
-    // Path 4: Try to find any playlistVideoListRenderer
-    if (!contents) {
-      const findPlaylistContents = (obj) => {
-        if (obj && typeof obj === 'object') {
-          if (obj.playlistVideoListRenderer && obj.playlistVideoListRenderer.contents) {
-            return obj.playlistVideoListRenderer.contents;
-          }
-          for (const key in obj) {
-            const result = findPlaylistContents(obj[key]);
-            if (result) return result;
-          }
-        }
-        return null;
-      };
-      contents = findPlaylistContents(data);
-    }
-
-    if (contents) {
-      console.log('[Content Script] Found playlist contents:', contents.length, 'items');
-      for (const item of contents) {
-        const video = item.playlistVideoRenderer;
-        if (video) {
-          const videoData = {
-            id: video.videoId,
-            title: video.title?.runs?.[0]?.text || video.title?.simpleText || 'Unknown Title',
-            author: video.shortBylineText?.runs?.[0]?.text || video.longBylineText?.runs?.[0]?.text || 'Unknown Author',
-            thumbnail: extractBestThumbnail(video.thumbnail?.thumbnails),
-            duration: video.lengthText?.simpleText || video.lengthSeconds ? formatDuration(video.lengthSeconds) : '',
-            url: `https://www.youtube.com/watch?v=${video.videoId}`,
-            isShort: false
-          };
-          videos.push(videoData);
-          console.log('[Content Script] Extracted playlist video:', videoData.title);
-        }
-      }
-    } else {
-      console.log('[Content Script] No playlist contents found');
-    }
-
-    console.log('[Content Script] Playlist extraction complete:', videos.length, 'videos');
-  } catch (error) {
-    console.error('[Content Script] Error extracting playlist videos:', error);
+  if (!url || !url.includes('watch?v=')) {
+    console.log('[Content Script] Not a video page');
+    return;
   }
 
-  return videos;
-}
-
-async function extractSingleVideo(data) {
-  try {
-    // Try multiple ways to get video details
-    let videoDetails = data?.videoDetails || data?.microformat?.playerMicroformatRenderer;
-
-    // Alternative paths for video details
-    if (!videoDetails) {
-      videoDetails = data?.contents?.twoColumnWatchNextResults?.results?.results?.contents?.[0]?.videoPrimaryInfoRenderer;
-    }
-
-    if (!videoDetails) {
-      // Try to find videoDetails anywhere in the data
-      const findVideoDetails = (obj) => {
-        if (obj && typeof obj === 'object') {
-          if (obj.videoId && obj.title) {
-            return obj;
-          }
-          for (const key in obj) {
-            const result = findVideoDetails(obj[key]);
-            if (result) return result;
-          }
-        }
-        return null;
-      };
-      videoDetails = findVideoDetails(data);
-    }
-
-    let streamingData = data?.streamingData;
-
-    // If data has ytInitialPlayerResponse merged, try that first
-    if (!streamingData && window.ytInitialPlayerResponse) {
-      console.log('[Content Script] Trying ytInitialPlayerResponse.streamingData');
-      streamingData = window.ytInitialPlayerResponse.streamingData;
-    }
-
-    // Attempt to discover player JS URL from known locations or script tags
-    let playerJs = null;
-    try {
-      if (data?.assets?.js) playerJs = data.assets.js;
-      else if (data?.js) playerJs = data.js;
-      else if (window.ytplayer && window.ytplayer.config && window.ytplayer.config.assets && window.ytplayer.config.assets.js) playerJs = window.ytplayer.config.assets.js;
-      else {
-        const scripts = Array.from(document.scripts || []);
-        for (const s of scripts) {
-          try {
-            if (!s.src) continue;
-            const src = s.src;
-            if (src.includes('player') && src.endsWith('.js')) {
-              playerJs = src;
-              break;
-            }
-          } catch (e) { continue; }
-        }
-      }
-    } catch (e) { playerJs = null; }
-
-    // If streamingData missing, try common alternate locations
-    if (!streamingData) {
-      streamingData = data?.playerResponse?.streamingData || data?.player_response?.streamingData || (data?.args?.player_response ? JSON.parse(data.args.player_response).streamingData : null) || null;
-    }
-
-    // If still missing, attempt to fetch get_video_info endpoint to retrieve player_response
-    if (!streamingData) {
-      const vid = extractVideoId(window.location.href) || (data?.videoDetails && data.videoDetails.videoId) || null;
-      if (vid) {
-        try {
-          const gr = await getPlayerResponseFromGetInfo(vid);
-          if (gr && gr.streamingData) streamingData = gr.streamingData;
-        } catch (e) {
-          console.warn('[Content Script] get_video_info failed', e.message);
-        }
-      }
-    }
-
-    // Send diagnostic message to background with playerJs and streamingData info to aid debugging
-    try {
-      browserAPI.runtime.sendMessage({
-        action: 'contentExtractionInfo',
-        url: window.location.href,
-        videoId: (videoDetails && (videoDetails.videoId || videoDetails.video_id)) || null,
-        playerJs: playerJs || null,
-        hasStreamingData: !!streamingData,
-        streamingDataKeys: streamingData ? Object.keys(streamingData) : []
-      }, () => {});
-    } catch (e) {
-      console.warn('[Content Script] Could not send extraction diagnostics to background:', e && e.message);
-    }
-
-    console.log('[Content Script] streamingData status:', {
-      found: !!streamingData,
-      hasFormats: !!(streamingData && streamingData.formats),
-      hasAdaptiveFormats: !!(streamingData && streamingData.adaptiveFormats),
-      formatsCount: streamingData && streamingData.formats ? streamingData.formats.length : 0,
-      adaptiveCount: streamingData && streamingData.adaptiveFormats ? streamingData.adaptiveFormats.length : 0
-    });
-
-    // Extract streaming URLs
-    const streams = extractStreamingUrls(streamingData);
-    
-    console.log('[Content Script] Extracted streams:', {
-      videoCount: streams.video.length,
-      audioCount: streams.audio.length
-    });
-
-    if (videoDetails) {
-      return {
-        id: videoDetails.videoId,
-        title: videoDetails.title || 'Unknown Title',
-        author: videoDetails.author || videoDetails.ownerChannelName || 'Unknown Author',
-        thumbnail: extractBestThumbnail(videoDetails.thumbnail?.thumbnails),
-        duration: videoDetails.lengthSeconds ? formatDuration(videoDetails.lengthSeconds) : '',
-        url: window.location.href,
-        isShort: window.location.href.includes('/shorts/'),
-        streams: streams,
-        playerJs: playerJs,
-        _debug: {
-          hasStreamingData: !!streamingData,
-          streamingDataKeys: streamingData ? Object.keys(streamingData) : [],
-          formatsCount: streamingData && streamingData.formats ? streamingData.formats.length : 0,
-          adaptiveCount: streamingData && streamingData.adaptiveFormats ? streamingData.adaptiveFormats.length : 0,
-          extractedVideoStreams: streams.video.length,
-          extractedAudioStreams: streams.audio.length
-        }
-      };
-    }
-
-    // Fallback: try to extract from page elements
-    const titleEl = document.querySelector('h1.ytd-video-primary-info-renderer yt-formatted-string, h1.ytd-watch-metadata yt-formatted-string');
-    const authorEl = document.querySelector('yt-formatted-string#text.ytd-channel-name, a.yt-simple-endpoint.ytd-video-owner-renderer');
-    const thumbnailEl = document.querySelector('video');
-    
-    // Extract thumbnail from meta tag or video element
-    let thumbnail = '';
-    if (thumbnailEl?.poster) {
-      thumbnail = thumbnailEl.poster;
-    } else {
-      const ogImage = document.querySelector('meta[property="og:image"]');
-      if (ogImage) {
-        thumbnail = ogImage.getAttribute('content');
-      }
-    }
-    
-    // Try to get author from videoDetails first, then from ytInitialData
-    let author = 'Unknown Author';
-    if (videoDetails?.author) {
-      author = videoDetails.author;
-    } else if (videoDetails?.ownerChannelName) {
-      author = videoDetails.ownerChannelName;
-    } else if (window.ytInitialData) {
-      // Try to extract author from ytInitialData
-      try {
-        // Path 1: Two column watch next results
-        let channelName = window.ytInitialData?.contents?.twoColumnWatchNextResults?.results?.results?.contents?.find(c => c.videoPrimaryInfoRenderer)?.videoPrimaryInfoRenderer?.subtitle?.runs?.find(r => r.navigationEndpoint)?.text;
-        
-        // Path 2: Search for channel name in results
-        if (!channelName) {
-          channelName = window.ytInitialData?.contents?.twoColumnWatchNextResults?.secondaryResults?.secondaryResults?.results?.[0]?.compactVideoRenderer?.longBylineText?.simpleText ||
-                       window.ytInitialData?.contents?.twoColumnWatchNextResults?.results?.results?.contents?.find(c => c.videoSecondaryInfoRenderer)?.videoSecondaryInfoRenderer?.owner?.videoOwnerRenderer?.title?.runs?.[0]?.text;
-        }
-        
-        if (channelName) {
-          author = channelName;
-        }
-      } catch (e) {
-        // Use fallback
-      }
-    }
-    
-    // Final fallback: try DOM
-    if (author === 'Unknown Author') {
-      const authorEl = document.querySelector('yt-formatted-string#text.ytd-channel-name, a.yt-simple-endpoint.ytd-video-owner-renderer');
-      if (authorEl) {
-        author = authorEl.textContent?.trim() || 'Unknown Author';
-      }
-    }
-
-    return {
-      id: extractVideoId(window.location.href),
-      title: titleEl?.textContent?.trim() || 'Unknown Title',
-      author: author,
-      thumbnail: thumbnail,
-      duration: 'Unknown',
-      url: window.location.href,
-      isShort: window.location.href.includes('/shorts/'),
-      streams: { video: [], audio: [] }
-    };
-
-  } catch (error) {
-    console.error('Error extracting single video:', error);
-    return null;
-  }
-}
-
-function extractChannelVideos(data) {
-  const videos = [];
-
-  try {
-    // Try to find recent videos on channel page
-    const tabs = data?.contents?.twoColumnBrowseResultsRenderer?.tabs;
-
-    if (tabs) {
-      for (const tab of tabs) {
-        if (tab.tabRenderer?.title === 'Videos' || tab.tabRenderer?.title === 'Home') {
-          const contents = tab.tabRenderer?.content?.sectionListRenderer?.contents;
-
-          if (contents) {
-            for (const section of contents) {
-              const items = section.itemSectionRenderer?.contents || [];
-
-              for (const item of items) {
-                const videoRenderer = item.videoRenderer || item.compactVideoRenderer;
-                if (videoRenderer) {
-                  videos.push({
-                    id: videoRenderer.videoId,
-                    title: videoRenderer.title?.runs?.[0]?.text || 'Unknown Title',
-                    author: videoRenderer.ownerText?.runs?.[0]?.text || videoRenderer.shortBylineText?.runs?.[0]?.text || 'Unknown Author',
-                    thumbnail: extractBestThumbnail(videoRenderer.thumbnail?.thumbnails),
-                    duration: videoRenderer.lengthText?.simpleText || '',
-                    url: `https://www.youtube.com/watch?v=${videoRenderer.videoId}`,
-                    isShort: false
-                  });
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-  } catch (error) {
-    console.error('Error extracting channel videos:', error);
+  let videoId;
+  if (window.location.href.indexOf("shorts/") > -1) {
+    videoId = window.location.href.split("shorts/")[1];
+    console.log('[Content Script] Shorts video detected:', videoId);
+  } else {
+    const query = parseQueryString(url.split("?")[1]);
+    videoId = query["v"];
   }
 
-  return videos.slice(0, 20); // Limit to 20 videos
-}
+  if (!videoId) {
+    console.log('[Content Script] No video ID found');
+    return;
+  }
 
-function extractStreamingUrls(streamingData) {
+  console.log('[Content Script] Processing video ID:', videoId);
+
+  // Step 1: Try InnerTube API with IOS_CREATOR
+  let videoPage = await getInnerApijson(videoId, "IOS_CREATOR", false);
+
+  // Step 2: If no streaming data, try age-gated
+  if (!videoPage?.streamingData) {
+    console.log('[Content Script] No streaming data, trying age-gated...');
+    videoPage = await getInnerApijson(videoId, "IOS_CREATOR", true);
+  }
+
+  // Step 3: If still fails, try getting from page
+  if (!videoPage?.streamingData) {
+    console.log('[Content Script] API failed, getting data from page...');
+    const rawData = await getRawPageData();
+    if (rawData && rawData !== 'null') {
+      videoPage = JSON.parse(rawData);
+    }
+  }
+
+  // Step 4: Try WEB client as final fallback
+  if (!videoPage?.streamingData) {
+    console.log('[Content Script] Trying WEB client...');
+    videoPage = await getInnerApijson(videoId, "WEB", false);
+  }
+
+  if (!videoPage?.streamingData) {
+    console.error('[Content Script] No streaming data available from any source');
+    return;
+  }
+
+  console.log('[Content Script] ✓ Got streaming data!');
+
+  // Extract formats (matching working extension logic)
+  const formats = videoPage.streamingData.formats || [];
+  const adaptiveFormats = videoPage.streamingData.adaptiveFormats || [];
+
+  console.log(`[Content Script] Found ${formats.length} progressive formats, ${adaptiveFormats.length} adaptive formats`);
+  
+  // Debug: Log first format to see structure
+  if (formats.length > 0) {
+    console.log('[Content Script] Sample progressive format:', JSON.stringify(formats[0], null, 2));
+  }
+  if (adaptiveFormats.length > 0) {
+    console.log('[Content Script] Sample adaptive format:', JSON.stringify(adaptiveFormats[0], null, 2));
+  }
+
+  // Build streams data structure
   const streams = {
+    progressive: [],
     video: [],
     audio: []
   };
 
-  if (!streamingData) {
-    console.warn('[Content Script] No streamingData provided to extractStreamingUrls');
-    return streams;
+  // Process progressive formats
+  for (const format of formats) {
+    let url = format.url;
+    
+    // If no direct URL but has cipher, extract URL from cipher
+    const cipher = format.signatureCipher || format.cipher;
+    if (!url && cipher) {
+      const components = parseQueryString(cipher);
+      // Use the URL from cipher - it should work with ratebypass=yes
+      url = components.url;
+      // If signature is needed, append it (sp is usually 'sig')
+      if (components.s && components.sp) {
+        url += `&${components.sp}=${encodeURIComponent(components.s)}`;
+      }
+    }
+
+    if (url) {
+      streams.progressive.push({
+        itag: format.itag,
+        quality: format.qualityLabel || format.quality || 'unknown',
+        mimeType: format.mimeType,
+        url: url,
+        hasAudio: true,
+        hasVideo: true
+      });
+    } else {
+      console.log('[Content Script] Progressive format missing URL:', format.itag, 'hasCipher:', !!cipher);
+    }
   }
 
-  console.log('[Content Script] Extracting streams from streamingData', {
-    hasFormats: !!streamingData.formats,
-    formatsLength: streamingData.formats?.length || 0,
-    hasAdaptiveFormats: !!streamingData.adaptiveFormats,
-    adaptiveLength: streamingData.adaptiveFormats?.length || 0
+  // Process adaptive formats
+  for (const format of adaptiveFormats) {
+    let url = format.url;
+    
+    const cipher = format.signatureCipher || format.cipher;
+    if (cipher && !url) {
+      const components = parseQueryString(cipher);
+      url = components.url;
+    }
+
+    if (url) {
+      const mimeType = format.mimeType || '';
+      const isVideo = mimeType.startsWith('video/');
+      const isAudio = mimeType.startsWith('audio/');
+
+      const stream = {
+        itag: format.itag,
+        quality: format.qualityLabel || format.quality || 'unknown',
+        mimeType: format.mimeType,
+        url: url,
+        bitrate: format.bitrate,
+        hasAudio: isAudio,
+        hasVideo: isVideo
+      };
+
+      if (isVideo) {
+        streams.video.push(stream);
+      } else if (isAudio) {
+        streams.audio.push(stream);
+      }
+    } else {
+      console.log('[Content Script] Adaptive format missing URL:', format.itag, 'mimeType:', format.mimeType, 'hasCipher:', !!cipher);
+    }
+  }
+
+  console.log(`[Content Script] Extracted ${streams.progressive.length} progressive, ${streams.video.length} video, ${streams.audio.length} audio streams`);
+
+  // Build video object
+  const videoObject = {
+    id: videoId,
+    title: videoPage.videoDetails?.title || document.title.replace(' - YouTube', ''),
+    author: videoPage.videoDetails?.author || 'Unknown',
+    lengthSeconds: videoPage.videoDetails?.lengthSeconds || 0,
+    thumbnail: videoPage.videoDetails?.thumbnail?.thumbnails?.[0]?.url || '',
+    url: window.location.href,
+    isShort: window.location.href.includes('/shorts/'),
+    streams: streams
+  };
+
+  // Build final data structure (format expected by popup)
+  const data = {
+    type: 'single',
+    videos: [videoObject]
+  };
+
+  // Send to background script
+  browserAPI.runtime.sendMessage({
+    type: 'YOUTUBE_DATA',
+    data: data
+  }).then(() => {
+    console.log('[Content Script] Data sent to background script');
+  }).catch(err => {
+    console.error('[Content Script] Error sending to background:', err);
   });
-
-  try {
-    // Extract progressive streams (combined video+audio) - these work best
-    if (streamingData.formats && Array.isArray(streamingData.formats)) {
-      for (const format of streamingData.formats) {
-        let url = format.url;
-        
-        // If no direct URL, try to extract from signatureCipher
-        if (!url && format.signatureCipher) {
-          url = decodeSignatureCipher(format.signatureCipher);
-        }
-        
-        if (url) {
-          streams.video.push({
-            url: url,
-            quality: format.qualityLabel || `${format.height}p` || 'unknown',
-            type: 'progressive',
-            container: format.mimeType?.split(';')[0]?.split('/')[1] || 'mp4',
-            bitrate: format.bitrate,
-            contentLength: format.contentLength,
-            hasAudio: true,
-            hasVideo: true
-          });
-          console.log(`[Content Script] Added progressive stream: ${format.qualityLabel || format.height}p`);
-        }
-      }
-    }
-
-    // Extract adaptive streams (separate video/audio)
-    if (streamingData.adaptiveFormats && Array.isArray(streamingData.adaptiveFormats)) {
-      for (const format of streamingData.adaptiveFormats) {
-        let url = format.url;
-        
-        // If no direct URL, try to extract from signatureCipher
-        if (!url && format.signatureCipher) {
-          url = decodeSignatureCipher(format.signatureCipher);
-        }
-        
-        if (url) {
-          const isAudio = format.mimeType?.includes('audio') || false;
-          const streamType = isAudio ? 'audio' : 'video';
-
-          streams[streamType].push({
-            url: url,
-            quality: format.qualityLabel || (isAudio ? `${Math.round(format.bitrate/1000)}kbps` : `${format.height}p`) || 'unknown',
-            type: 'adaptive',
-            container: format.mimeType?.split(';')[0]?.split('/')[1] || (isAudio ? 'mp4' : 'mp4'),
-            bitrate: format.bitrate,
-            contentLength: format.contentLength,
-            hasAudio: isAudio,
-            hasVideo: !isAudio,
-            fps: format.fps
-          });
-          console.log(`[Content Script] Added ${streamType} stream: ${format.qualityLabel || format.height || format.bitrate}`);
-        }
-      }
-    }
-
-    // Sort by quality (best first)
-    streams.video.sort((a, b) => {
-      const aQuality = parseInt(a.quality) || 0;
-      const bQuality = parseInt(b.quality) || 0;
-      return bQuality - aQuality;
-    });
-
-    streams.audio.sort((a, b) => {
-      const aBitrate = parseInt(a.bitrate) || 0;
-      const bBitrate = parseInt(b.bitrate) || 0;
-      return bBitrate - aBitrate;
-    });
-
-  } catch (error) {
-    console.error('Error extracting streaming URLs:', error);
-  }
-
-  return streams;
 }
 
-function decodeSignatureCipher(cipher) {
-  try {
-    const params = new URLSearchParams(cipher);
-    const url = params.get('url');
-    const s = params.get('s'); // encrypted signature
-    const sp = params.get('sp') || 'signature'; // signature parameter name
-    
-    if (!url) {
-      console.warn('[Content Script] No URL in signatureCipher');
-      return '';
-    }
-    
-    // If there's no signature to decrypt, return the URL as-is
-    if (!s) {
-      return url;
-    }
-    
-    // For now, return the URL without signature (may not work for all videos)
-    // A full implementation would need to decrypt the signature using YouTube's player JS
-    console.warn('[Content Script] Video uses encrypted signatures - direct download may not work');
-    console.warn('[Content Script] Encrypted signature:', s.substring(0, 50) + '...');
-    
-    // Try to append the signature anyway (won't work if it needs decryption)
-    const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}${sp}=${encodeURIComponent(s)}`;
-  } catch (error) {
-    console.error('[Content Script] Error decoding signature cipher:', error);
-    return '';
-  }
-}
-
-function extractBestThumbnail(thumbnails) {
-  if (!thumbnails || thumbnails.length === 0) {
-    return 'https://via.placeholder.com/480x360?text=No+Thumbnail';
-  }
-
-  // Sort by resolution (width * height), highest first
-  const sorted = thumbnails.sort((a, b) => {
-    const aRes = (a.width || 0) * (a.height || 0);
-    const bRes = (b.width || 0) * (b.height || 0);
-    return bRes - aRes;
-  });
-
-  return sorted[0].url;
-}
-
-function extractVideoId(url) {
-  const patterns = [
-    /[?&]v=([^#\&\?]*)/,
-    /youtu\.be\/([^\/\?]+)/,
-    /youtube\.com\/embed\/([^\/\?]+)/,
-    /youtube\.com\/shorts\/([^\/\?]+)/
-  ];
-
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match && match[1]) {
-      return match[1];
-    }
-  }
-  return null;
-}
-
-function formatDuration(seconds) {
-  if (!seconds) return 'Unknown';
-
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
-
-  if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  } else {
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
-  }
-}
-
-// Attempt to fetch player_response via get_video_info for a video id
-async function getPlayerResponseFromGetInfo(videoId) {
-  try {
-    const url = `https://www.youtube.com/get_video_info?video_id=${encodeURIComponent(videoId)}&el=detailpage&hl=en`;
-    const resp = await fetch(url, { method: 'GET', credentials: 'include' });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const text = await resp.text();
-    const params = new URLSearchParams(text);
-    const player_response = params.get('player_response') || params.get('playerResponse') || null;
-    if (!player_response) throw new Error('No player_response in get_video_info');
-    return JSON.parse(player_response);
-  } catch (err) {
-    console.warn('[Content Script] getPlayerResponseFromGetInfo error', err.message);
-    throw err;
-  }
-}
-
-// Listen for messages from popup
-browserAPI.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  (async () => {
-    console.log('[Content Script] Received message:', request);
-
-    if (request.action === 'extractYouTubeData') {
-      const data = await extractYouTubeData();
-
-      // Log detailed info for debugging: cookies (document), videos, thumbnails, authors
-      console.log('[Content Script] document.cookie:', document.cookie);
-
-      if (data && data.videos) {
-        console.log('[Content Script] Found videos:', data.videos.length);
-        data.videos.forEach((v, i) => {
-          console.log(`[Content Script] Video ${i + 1}: id=${v.id} title="${v.title}" author="${v.author}" thumbnail=${v.thumbnail} url=${v.url} isShort=${v.isShort}`);
-          if (v.streams) {
-            console.log(`[Content Script] Video ${i + 1} streams: video=${v.streams.video.length} audio=${v.streams.audio.length}`);
-            // Log top stream urls (truncated)
-            v.streams.video.slice(0,3).forEach((s, si) => console.log(`[Content Script] Video ${i + 1} stream ${si+1}: ${s.url ? s.url.substring(0,120) : 'no-url'}`));
-            v.streams.audio.slice(0,3).forEach((s, si) => console.log(`[Content Script] Video ${i + 1} audio ${si+1}: ${s.url ? s.url.substring(0,120) : 'no-url'}`));
-          }
-        });
-      } else {
-        console.log('[Content Script] No videos found in extracted data');
-      }
-
-      // Ask background for cookies for this URL (background has cookie permission)
-      try {
-        browserAPI.runtime.sendMessage({ action: 'getCookies', url: window.location.href }, (resp) => {
-          if (browserAPI.runtime.lastError) {
-            console.warn('[Content Script] getCookies runtime error', browserAPI.runtime.lastError.message);
-            sendResponse({ success: true, data: data, cookies: null });
-            return;
-          }
-
-          if (resp && resp.success) {
-            console.log('[Content Script] Retrieved cookies from background:', resp.cookies);
-            sendResponse({ success: true, data: data, cookies: resp.cookies });
-          } else {
-            console.log('[Content Script] Background returned no cookies:', resp);
-            sendResponse({ success: true, data: data, cookies: null });
-          }
-        });
-      } catch (err) {
-        console.error('[Content Script] Error requesting cookies from background:', err);
-        sendResponse({ success: true, data: data, cookies: null });
-      }
-
-    }
-  })();
-
-  return true; // keep channel open for async sendResponse
-});
-
-// Auto-extract data when page loads
-window.addEventListener('load', () => {
+// Listen for YouTube SPA navigation (from working extension)
+window.addEventListener("yt-page-data-updated", (event) => {
+  console.log('[Content Script] yt-page-data-updated event');
+  // Wait a bit for page to stabilize
   setTimeout(() => {
-    extractYouTubeData();
-  }, 3000); // Wait for YouTube to load its data
+    parseDetails(window.location.href);
+  }, 1000);
 });
+
+// Initial load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('[Content Script] DOM loaded');
+    setTimeout(() => parseDetails(window.location.href), 1500);
+  });
+} else {
+  console.log('[Content Script] Already loaded');
+  setTimeout(() => parseDetails(window.location.href), 1500);
+}
+
+// Message listener for popup
+browserAPI.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log('[Content Script] Message received:', request);
+  
+  if (request.action === 'extractYouTubeData') {
+    // Trigger extraction and respond
+    parseDetails(window.location.href).then(() => {
+      sendResponse({ success: true, message: 'Extraction triggered' });
+    }).catch(err => {
+      sendResponse({ success: false, message: err.message });
+    });
+    return true; // Keep channel open for async response
+  }
+  
+  return false;
+});
+
+console.log('[Content Script] Initialization complete');

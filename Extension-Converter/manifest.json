@@ -9,6 +9,7 @@
     "tabs",
     "storage",
     "downloads",
+    "https://youtubei.googleapis.com/*",
     "https://api.y2mate.com/*",
     "https://api.y2meta.com/*",
     "https://api.yt1s.com/*",
@@ -16,9 +17,6 @@
     "https://api.ytmp3.cc/*",
     "*://*.youtube.com/*",
     "https://*.googlevideo.com/*"
-  ],
-  "web_accessible_resources": [
-    "injected.js"
   ],
   "background": {
     "scripts": ["background.js"]
