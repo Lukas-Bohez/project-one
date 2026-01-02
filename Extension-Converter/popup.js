@@ -1,3 +1,6 @@
+// Browser API compatibility layer
+const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
+
 document.addEventListener('DOMContentLoaded', function() {
   // DOM elements
   const urlDisplay = document.getElementById('url-display');
@@ -83,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Load settings from storage
   let settingsLoaded = false;
-  chrome.storage.sync.get(['maxRetries', 'retryDelay', 'downloadDir'], function(result) {
+  browserAPI.storage.sync.get(['maxRetries', 'retryDelay', 'downloadDir'], function(result) {
     settings.maxRetries = result.maxRetries || 3;
     settings.retryDelay = result.retryDelay || 5;
     maxRetriesInput.value = settings.maxRetries;
@@ -150,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
     settings.maxRetries = parseInt(maxRetriesInput.value);
     settings.retryDelay = parseInt(retryDelayInput.value);
 
-    chrome.storage.sync.set({
+    browserAPI.storage.sync.set({
       maxRetries: settings.maxRetries,
       retryDelay: settings.retryDelay,
       downloadDir: downloadDirInput.value
@@ -176,7 +179,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   async function initializePopup() {
     try {
-      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tabs = await browserAPI.tabs.query({ active: true, currentWindow: true });
       currentTab = tabs[0];
 
       if (currentTab.url && currentTab.url.includes('youtube.com')) {
@@ -186,16 +189,16 @@ document.addEventListener('DOMContentLoaded', function() {
         // Extract data from the YouTube page
         let response = null;
         try {
-          response = await chrome.tabs.sendMessage(currentTab.id, { action: 'extractYouTubeData' });
+          response = await browserAPI.tabs.sendMessage(currentTab.id, { action: 'extractYouTubeData' });
         } catch (err) {
           // If there is no receiver, try injecting the content script then retry
           addLog('warning', 'No content script listener, attempting to inject content script', { error: err.message });
           try {
-            if (chrome.scripting && chrome.scripting.executeScript) {
+            if (browserAPI.scripting && browserAPI.scripting.executeScript) {
               // Try injection up to 6 times with increasing delay to account for timing and SPA navigation
               for (let attempt = 1; attempt <= 6; attempt++) {
                 try {
-                  await chrome.scripting.executeScript({ target: { tabId: currentTab.id }, files: ['content.js'] });
+                  await browserAPI.scripting.executeScript({ target: { tabId: currentTab.id }, files: ['content.js'] });
                   addLog('debug', `executeScript invoked attempt ${attempt}`);
                 } catch (e) {
                   addLog('warning', `Content script executeScript attempt ${attempt} threw`, { message: e.message });
@@ -205,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 await new Promise(r => setTimeout(r, 200 * attempt));
 
                 try {
-                  response = await chrome.tabs.sendMessage(currentTab.id, { action: 'extractYouTubeData' });
+                  response = await browserAPI.tabs.sendMessage(currentTab.id, { action: 'extractYouTubeData' });
                   if (response) {
                     addLog('debug', `Received response after injection attempt ${attempt}`);
                     break;
@@ -217,10 +220,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
               if (!response) addLog('error', 'Content script injection attempts exhausted, no listener present');
               // As a last resort, try executing a script in the page's main world to read page variables directly
-              if (!response && chrome.scripting && chrome.scripting.executeScript) {
-                addLog('info', 'Attempting main-world extraction via chrome.scripting.executeScript');
+              if (!response && browserAPI.scripting && browserAPI.scripting.executeScript) {
+                addLog('info', 'Attempting main-world extraction via browserAPI.scripting.executeScript');
                 try {
-                  const results = await chrome.scripting.executeScript({
+                  const results = await browserAPI.scripting.executeScript({
                     target: { tabId: currentTab.id },
                     world: 'MAIN',
                     func: () => {
@@ -269,14 +272,14 @@ document.addEventListener('DOMContentLoaded', function() {
               if (!response) {
                 addLog('info', 'Attempting targeted top-frame injection of content script (frameId 0)');
                 try {
-                  await chrome.scripting.executeScript({
+                  await browserAPI.scripting.executeScript({
                     target: { tabId: currentTab.id, frameIds: [0] },
                     files: ['content.js']
                   });
                   // small delay to allow listener registration
                   await new Promise(r => setTimeout(r, 300));
                   try {
-                    response = await chrome.tabs.sendMessage(currentTab.id, { action: 'extractYouTubeData' });
+                    response = await browserAPI.tabs.sendMessage(currentTab.id, { action: 'extractYouTubeData' });
                     if (response) addLog('debug', 'Received response after top-frame injection');
                   } catch (e) {
                     addLog('debug', 'No listener after top-frame injection', { message: e.message });
@@ -286,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
               }
             } else {
-              addLog('error', 'chrome.scripting API unavailable; cannot inject content script');
+              addLog('error', 'browserAPI.scripting API unavailable; cannot inject content script');
             }
           } catch (injectErr) {
             addLog('error', 'Failed to inject content script', { message: injectErr.message });
@@ -296,6 +299,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (response && response.success && response.data) {
           const youtubeData = response.data;
 
+          // Log diagnostics if available
+          if (youtubeData.diagnostics) {
+            addLog('debug', 'Content script diagnostics', youtubeData.diagnostics);
+          }
+
           if (youtubeData.type === 'playlist') {
             urlDisplay.textContent = `Playlist detected with ${youtubeData.videos.length} videos`;
             conversionQueue = youtubeData.videos.map(video => ({
@@ -304,6 +312,10 @@ document.addEventListener('DOMContentLoaded', function() {
               selected: true
             }));
           } else if (youtubeData.type === 'single') {
+            const video = youtubeData.videos[0];
+            if (video && video._debug) {
+              addLog('debug', 'Single video extraction debug', video._debug);
+            }
             urlDisplay.textContent = `Single video: ${youtubeData.videos[0].title}`;
             conversionQueue = youtubeData.videos.map(video => ({
               ...video,
@@ -518,13 +530,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const quality = qualitySelect.value;
     const downloadDir = downloadDirInput.value || 'Downloads/ConvertTheSpire';
 
-    addLog('debug', `Requesting background conversion: ${item.title || item.id}`, { format, quality, downloadDir });
+    addLog('debug', `Requesting conversion for: ${item.title || item.id}`, { 
+      format, 
+      quality, 
+      downloadDir,
+      hasStreams: !!(item.streams && (item.streams.video?.length > 0 || item.streams.audio?.length > 0)),
+      streamCounts: item.streams ? { video: item.streams.video?.length || 0, audio: item.streams.audio?.length || 0 } : null
+    });
 
     return new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage({ action: 'startConversion', item, format, quality, downloadDir }, (resp) => {
-        if (chrome.runtime.lastError) {
-          addLog('error', 'Background conversion runtime error', { message: chrome.runtime.lastError.message });
-          reject(new Error(chrome.runtime.lastError.message));
+      browserAPI.runtime.sendMessage({ action: 'startConversion', item, format, quality, downloadDir }, (resp) => {
+        if (browserAPI.runtime.lastError) {
+          addLog('error', 'Background conversion runtime error', { message: browserAPI.runtime.lastError.message });
+          reject(new Error(browserAPI.runtime.lastError.message));
           return;
         }
         if (!resp) {
@@ -611,12 +629,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
   async function fetchWithTimeout(url, options = {}, timeout = 10000) {
     // Use background proxy to avoid CORS issues from the popup
-    if (chrome.runtime && chrome.runtime.sendMessage) {
+    if (browserAPI.runtime && browserAPI.runtime.sendMessage) {
       return new Promise((resolve, reject) => {
         try {
-          chrome.runtime.sendMessage({ action: 'proxyFetch', url, options, timeout }, (resp) => {
-            if (chrome.runtime.lastError) {
-              reject(new Error(chrome.runtime.lastError.message));
+          browserAPI.runtime.sendMessage({ action: 'proxyFetch', url, options, timeout }, (resp) => {
+            if (browserAPI.runtime.lastError) {
+              reject(new Error(browserAPI.runtime.lastError.message));
               return;
             }
             if (!resp) {
@@ -815,7 +833,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     try {
       // Get cookies for the video URL
-      const cookies = await chrome.cookies.getAll({ url: videoUrl });
+      const cookies = await browserAPI.cookies.getAll({ url: videoUrl });
       const cookieString = cookies.map(c => `${c.name}=${c.value}`).join('; ');
       addLog('debug', `Retrieved ${cookies.length} cookies`);
 

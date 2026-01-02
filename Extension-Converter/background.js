@@ -61,6 +61,10 @@ browserAPI.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		(async () => {
 			try {
 				console.log('[Background] startConversion for', item && (item.id || item.url));
+				console.log('[Background] item streams?', item && item.streams ? {
+					video: item.streams.video?.length || 0,
+					audio: item.streams.audio?.length || 0
+				} : 'NO STREAMS');
 
 				const downloadUrl = await findDownloadUrl(item.url, format, quality, item);
 

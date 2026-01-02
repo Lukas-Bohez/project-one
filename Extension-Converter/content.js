@@ -1,9 +1,47 @@
 // Content script for YouTube pages - extracts video and playlist data
 let youtubeData = null;
 
+// Browser API compatibility layer
+const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
+
+// Inject the page-context script to access YouTube's data
+function injectPageScript() {
+  const script = document.createElement('script');
+  script.src = browserAPI.runtime.getURL('injected.js');
+  script.onload = function() {
+    this.remove();
+  };
+  (document.head || document.documentElement).appendChild(script);
+  console.log('[Content Script] Injected page script');
+}
+
+// Request YouTube data from the injected script
+function requestYouTubeData() {
+  return new Promise((resolve) => {
+    const timeout = setTimeout(() => {
+      console.warn('[Content Script] No response from injected script after 5s');
+      resolve(null);
+    }, 5000);
+
+    const handler = (event) => {
+      if (event.source !== window) return;
+      if (event.data && event.data.type === 'YOUTUBE_DATA_RESPONSE') {
+        clearTimeout(timeout);
+        window.removeEventListener('message', handler);
+        console.log('[Content Script] Received YouTube data from injected script', event.data.data);
+        resolve(event.data.data);
+      }
+    };
+
+    window.addEventListener('message', handler);
+    console.log('[Content Script] Requesting YouTube data from injected script');
+    window.postMessage({ type: 'GET_YOUTUBE_DATA' }, '*');
+  });
+}
+
 // Notify background that content script loaded (helps detect listener presence)
 try {
-  chrome.runtime.sendMessage({ action: 'contentScriptLoaded', url: window.location.href }, () => {});
+  browserAPI.runtime.sendMessage({ action: 'contentScriptLoaded', url: window.location.href }, () => {});
 } catch (e) {
   console.warn('[Content Script] Could not notify background of load:', e && e.message);
 }
@@ -12,8 +50,70 @@ async function extractYouTubeData() {
   try {
     console.log('[Content Script] Starting YouTube data extraction');
 
-    // YouTube stores data in various places, let's check them all
+    // First, inject the page script if not already done
+    if (!window.__YouTubeScriptInjected) {
+      injectPageScript();
+      window.__YouTubeScriptInjected = true;
+    }
+
+    // Request data from the injected page script
+    const injectedData = await requestYouTubeData();
+    
+    if (injectedData && injectedData.success) {
+      console.log('[Content Script] Got streaming data from injected script');
+      const videoDetails = injectedData.videoDetails;
+      
+      if (videoDetails && injectedData.streams) {
+        const video = {
+          id: videoDetails.videoId,
+          title: videoDetails.title || 'Unknown Title',
+          author: videoDetails.author || videoDetails.ownerChannelName || 'Unknown Author',
+          thumbnail: videoDetails.thumbnail?.thumbnails?.[videoDetails.thumbnail.thumbnails.length - 1]?.url || '',
+          duration: videoDetails.lengthSeconds ? formatDuration(videoDetails.lengthSeconds) : '',
+          url: window.location.href,
+          isShort: window.location.href.includes('/shorts/'),
+          streams: injectedData.streams,
+          playerJs: null,
+          _debug: {
+            source: 'injected_script',
+            hasStreamingData: true,
+            extractedVideoStreams: injectedData.streams.video?.length || 0,
+            extractedAudioStreams: injectedData.streams.audio?.length || 0
+          }
+        };
+        
+        console.log('[Content Script] Returning video data with streams', {
+          video: injectedData.streams.video?.length || 0,
+          audio: injectedData.streams.audio?.length || 0
+        });
+        
+        return await processYouTubeData({
+          videos: [video],
+          type: 'single',
+          diagnostics: {
+            hasYtInitialData: false,
+            hasYtInitialPlayerResponse: true,
+            urlType: 'video',
+            source: 'injected_script'
+          }
+        });
+      }
+    }
+
+    console.warn('[Content Script] Injected script did not return valid data');
+    
+    // Fallback: try the old method (may not work)
     let data = null;
+
+    // Wait for ytInitialData to be available (YouTube SPA loads this asynchronously)
+    const maxWaitTime = 3000; // 3 seconds max for fallback
+    const checkInterval = 200; // Check every 200ms
+    let waited = 0;
+    
+    while (!window.ytInitialData && !window.ytInitialPlayerResponse && waited < maxWaitTime) {
+      await new Promise(resolve => setTimeout(resolve, checkInterval));
+      waited += checkInterval;
+    }
 
     // Try to get data from ytInitialData (most common)
     if (window.ytInitialData) {
@@ -70,7 +170,14 @@ async function processYouTubeData(data) {
 
   const result = {
     type: null,
-    videos: []
+    videos: [],
+    diagnostics: {
+      hasYtInitialData: !!window.ytInitialData,
+      hasYtInitialPlayerResponse: !!window.ytInitialPlayerResponse,
+      urlType: url.includes('/playlist?') ? 'playlist' : 
+               url.includes('/watch?') || url.includes('/shorts/') ? 'video' :
+               url.includes('/channel/') || url.includes('/c/') || url.includes('/user/') ? 'channel' : 'unknown'
+    }
   };
 
     try {
@@ -209,6 +316,12 @@ async function extractSingleVideo(data) {
 
     let streamingData = data?.streamingData;
 
+    // If data has ytInitialPlayerResponse merged, try that first
+    if (!streamingData && window.ytInitialPlayerResponse) {
+      console.log('[Content Script] Trying ytInitialPlayerResponse.streamingData');
+      streamingData = window.ytInitialPlayerResponse.streamingData;
+    }
+
     // Attempt to discover player JS URL from known locations or script tags
     let playerJs = null;
     try {
@@ -250,19 +363,33 @@ async function extractSingleVideo(data) {
 
     // Send diagnostic message to background with playerJs and streamingData info to aid debugging
     try {
-      chrome.runtime.sendMessage({
+      browserAPI.runtime.sendMessage({
         action: 'contentExtractionInfo',
         url: window.location.href,
         videoId: (videoDetails && (videoDetails.videoId || videoDetails.video_id)) || null,
         playerJs: playerJs || null,
-        hasStreamingData: !!streamingData
+        hasStreamingData: !!streamingData,
+        streamingDataKeys: streamingData ? Object.keys(streamingData) : []
       }, () => {});
     } catch (e) {
       console.warn('[Content Script] Could not send extraction diagnostics to background:', e && e.message);
     }
 
+    console.log('[Content Script] streamingData status:', {
+      found: !!streamingData,
+      hasFormats: !!(streamingData && streamingData.formats),
+      hasAdaptiveFormats: !!(streamingData && streamingData.adaptiveFormats),
+      formatsCount: streamingData && streamingData.formats ? streamingData.formats.length : 0,
+      adaptiveCount: streamingData && streamingData.adaptiveFormats ? streamingData.adaptiveFormats.length : 0
+    });
+
     // Extract streaming URLs
     const streams = extractStreamingUrls(streamingData);
+    
+    console.log('[Content Script] Extracted streams:', {
+      videoCount: streams.video.length,
+      audioCount: streams.audio.length
+    });
 
     if (videoDetails) {
       return {
@@ -274,7 +401,15 @@ async function extractSingleVideo(data) {
         url: window.location.href,
         isShort: window.location.href.includes('/shorts/'),
         streams: streams,
-        playerJs: playerJs
+        playerJs: playerJs,
+        _debug: {
+          hasStreamingData: !!streamingData,
+          streamingDataKeys: streamingData ? Object.keys(streamingData) : [],
+          formatsCount: streamingData && streamingData.formats ? streamingData.formats.length : 0,
+          adaptiveCount: streamingData && streamingData.adaptiveFormats ? streamingData.adaptiveFormats.length : 0,
+          extractedVideoStreams: streams.video.length,
+          extractedAudioStreams: streams.audio.length
+        }
       };
     }
 
@@ -349,16 +484,33 @@ function extractStreamingUrls(streamingData) {
     audio: []
   };
 
-  if (!streamingData) return streams;
+  if (!streamingData) {
+    console.warn('[Content Script] No streamingData provided to extractStreamingUrls');
+    return streams;
+  }
+
+  console.log('[Content Script] Extracting streams from streamingData', {
+    hasFormats: !!streamingData.formats,
+    formatsLength: streamingData.formats?.length || 0,
+    hasAdaptiveFormats: !!streamingData.adaptiveFormats,
+    adaptiveLength: streamingData.adaptiveFormats?.length || 0
+  });
 
   try {
-    // Extract progressive streams (combined video+audio)
-    if (streamingData.formats) {
+    // Extract progressive streams (combined video+audio) - these work best
+    if (streamingData.formats && Array.isArray(streamingData.formats)) {
       for (const format of streamingData.formats) {
-        if (format.url || format.signatureCipher) {
+        let url = format.url;
+        
+        // If no direct URL, try to extract from signatureCipher
+        if (!url && format.signatureCipher) {
+          url = decodeSignatureCipher(format.signatureCipher);
+        }
+        
+        if (url) {
           streams.video.push({
-            url: format.url || decodeSignatureCipher(format.signatureCipher),
-            quality: format.qualityLabel || `${format.height}p`,
+            url: url,
+            quality: format.qualityLabel || `${format.height}p` || 'unknown',
             type: 'progressive',
             container: format.mimeType?.split(';')[0]?.split('/')[1] || 'mp4',
             bitrate: format.bitrate,
@@ -366,20 +518,28 @@ function extractStreamingUrls(streamingData) {
             hasAudio: true,
             hasVideo: true
           });
+          console.log(`[Content Script] Added progressive stream: ${format.qualityLabel || format.height}p`);
         }
       }
     }
 
     // Extract adaptive streams (separate video/audio)
-    if (streamingData.adaptiveFormats) {
+    if (streamingData.adaptiveFormats && Array.isArray(streamingData.adaptiveFormats)) {
       for (const format of streamingData.adaptiveFormats) {
-        if (format.url || format.signatureCipher) {
+        let url = format.url;
+        
+        // If no direct URL, try to extract from signatureCipher
+        if (!url && format.signatureCipher) {
+          url = decodeSignatureCipher(format.signatureCipher);
+        }
+        
+        if (url) {
           const isAudio = format.mimeType?.includes('audio') || false;
           const streamType = isAudio ? 'audio' : 'video';
 
           streams[streamType].push({
-            url: format.url || decodeSignatureCipher(format.signatureCipher),
-            quality: format.qualityLabel || (isAudio ? `${format.bitrate}kbps` : `${format.height}p`),
+            url: url,
+            quality: format.qualityLabel || (isAudio ? `${Math.round(format.bitrate/1000)}kbps` : `${format.height}p`) || 'unknown',
             type: 'adaptive',
             container: format.mimeType?.split(';')[0]?.split('/')[1] || (isAudio ? 'mp4' : 'mp4'),
             bitrate: format.bitrate,
@@ -388,6 +548,7 @@ function extractStreamingUrls(streamingData) {
             hasVideo: !isAudio,
             fps: format.fps
           });
+          console.log(`[Content Script] Added ${streamType} stream: ${format.qualityLabel || format.height || format.bitrate}`);
         }
       }
     }
@@ -413,14 +574,32 @@ function extractStreamingUrls(streamingData) {
 }
 
 function decodeSignatureCipher(cipher) {
-  // This is a simplified implementation - in reality, YouTube's signature cipher
-  // is much more complex and changes frequently. For a production extension,
-  // you'd need to implement proper cipher decoding or use a backend service.
   try {
     const params = new URLSearchParams(cipher);
-    return params.get('url') || '';
+    const url = params.get('url');
+    const s = params.get('s'); // encrypted signature
+    const sp = params.get('sp') || 'signature'; // signature parameter name
+    
+    if (!url) {
+      console.warn('[Content Script] No URL in signatureCipher');
+      return '';
+    }
+    
+    // If there's no signature to decrypt, return the URL as-is
+    if (!s) {
+      return url;
+    }
+    
+    // For now, return the URL without signature (may not work for all videos)
+    // A full implementation would need to decrypt the signature using YouTube's player JS
+    console.warn('[Content Script] Video uses encrypted signatures - direct download may not work');
+    console.warn('[Content Script] Encrypted signature:', s.substring(0, 50) + '...');
+    
+    // Try to append the signature anyway (won't work if it needs decryption)
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}${sp}=${encodeURIComponent(s)}`;
   } catch (error) {
-    console.error('Error decoding signature cipher:', error);
+    console.error('[Content Script] Error decoding signature cipher:', error);
     return '';
   }
 }
@@ -489,7 +668,7 @@ async function getPlayerResponseFromGetInfo(videoId) {
 }
 
 // Listen for messages from popup
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+browserAPI.runtime.onMessage.addListener((request, sender, sendResponse) => {
   (async () => {
     console.log('[Content Script] Received message:', request);
 
@@ -516,9 +695,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
       // Ask background for cookies for this URL (background has cookie permission)
       try {
-        chrome.runtime.sendMessage({ action: 'getCookies', url: window.location.href }, (resp) => {
-          if (chrome.runtime.lastError) {
-            console.warn('[Content Script] getCookies runtime error', chrome.runtime.lastError.message);
+        browserAPI.runtime.sendMessage({ action: 'getCookies', url: window.location.href }, (resp) => {
+          if (browserAPI.runtime.lastError) {
+            console.warn('[Content Script] getCookies runtime error', browserAPI.runtime.lastError.message);
             sendResponse({ success: true, data: data, cookies: null });
             return;
           }
