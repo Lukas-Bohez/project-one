@@ -7,8 +7,7 @@
     "storage"
   ],
   "browser_action": {
-    "default_title": "Lofi Player",
-    "default_popup": "popup.html"
+    "default_title": "Lofi Player"
   },
   "background": {
     "scripts": ["background.js"]
