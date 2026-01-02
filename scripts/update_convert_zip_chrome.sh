@@ -8,7 +8,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-DEFAULT_SRC="$ROOT_DIR/Extension-Converter-Chrome"
+DEFAULT_SRC="$ROOT_DIR/Extension-Converter"
 DEFAULT_OUT_DIR="$ROOT_DIR/frontend/downloads"
 DEFAULT_OUT="$DEFAULT_OUT_DIR/ConvertTheSpire-Chrome.zip"
 
