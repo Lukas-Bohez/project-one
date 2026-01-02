@@ -3,7 +3,32 @@
 
 const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
+// Store YouTube data from content scripts
+const youtubeDataStore = new Map();
+
 browserAPI.runtime.onMessage.addListener((request, sender, sendResponse) => {
+	// Handle YouTube data from content script
+	if (request && request.type === 'YOUTUBE_DATA') {
+		console.log('[Background] Received YouTube data from content script');
+		const tabId = sender.tab ? sender.tab.id : 'unknown';
+		youtubeDataStore.set(tabId, request.data);
+		sendResponse({ success: true });
+		return false;
+	}
+
+	// Handle request for YouTube data from popup
+	if (request && request.action === 'getYouTubeData') {
+		console.log('[Background] Popup requesting YouTube data');
+		const tabId = request.tabId;
+		const data = youtubeDataStore.get(tabId);
+		if (data) {
+			sendResponse({ success: true, data: data });
+		} else {
+			sendResponse({ success: false, message: 'No data available' });
+		}
+		return false;
+	}
+
 	if (request && request.action === 'getCookies') {
 		const url = request.url || (sender.tab && sender.tab.url) || '';
 		try {
@@ -62,6 +87,7 @@ browserAPI.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			try {
 				console.log('[Background] startConversion for', item && (item.id || item.url));
 				console.log('[Background] item streams?', item && item.streams ? {
+					progressive: item.streams.progressive?.length || 0,
 					video: item.streams.video?.length || 0,
 					audio: item.streams.audio?.length || 0
 				} : 'NO STREAMS');
@@ -146,14 +172,30 @@ async function tryDirectYouTubeStreams(streams, format, quality) {
 		if (!streams) return null;
 		const availableVideo = (streams.video || []).length;
 		const availableAudio = (streams.audio || []).length;
-		console.log('[Background] Selecting stream', { format, quality, availableVideo, availableAudio });
+		const availableProgressive = (streams.progressive || []).length;
+		console.log('[Background] Selecting stream', { format, quality, availableVideo, availableAudio, availableProgressive });
 
 		let selectedStream = null;
 		if (format === 'mp3' || format === 'audio') {
 			if (availableAudio > 0) selectedStream = streams.audio[0];
+			else if (availableProgressive > 0) selectedStream = streams.progressive[0]; // Progressive has audio
 			else if (availableVideo > 0) selectedStream = streams.video.find(s => s.hasAudio) || streams.video[0];
 		} else {
-			if (availableVideo > 0) {
+			// For video formats (mp4, etc.), prefer progressive (has video+audio)
+			if (availableProgressive > 0) {
+				if (quality === 'best') {
+					// Sort by quality, highest first
+					const sorted = [...streams.progressive].sort((a, b) => {
+						const aHeight = parseInt((a.quality || '0p').replace('p', ''));
+						const bHeight = parseInt((b.quality || '0p').replace('p', ''));
+						return bHeight - aHeight;
+					});
+					selectedStream = sorted[0];
+				} else {
+					const targetHeight = quality.replace('p', '');
+					selectedStream = streams.progressive.find(s => (s.quality || '').includes(targetHeight)) || streams.progressive[0];
+				}
+			} else if (availableVideo > 0) {
 				if (quality === 'best') selectedStream = streams.video[0];
 				else {
 					const targetHeight = quality.replace('p', '');
@@ -162,11 +204,20 @@ async function tryDirectYouTubeStreams(streams, format, quality) {
 			}
 		}
 
-		if (!selectedStream || !selectedStream.url) return null;
+		if (!selectedStream || !selectedStream.url) {
+			console.log('[Background] No selected stream or URL:', selectedStream ? 'has stream but no URL' : 'no stream');
+			return null;
+		}
+		
+		console.log('[Background] Testing stream URL:', selectedStream.url.substring(0, 100) + '...');
 
 		try {
 			const test = await fetchWithTimeout(selectedStream.url, { method: 'HEAD' }, 5000);
-			if (test.ok) return selectedStream.url;
+			if (test.ok) {
+				console.log('[Background] ✓ Stream URL works!');
+				return selectedStream.url;
+			}
+			console.warn('[Background] Stream URL returned status:', test.status);
 			return null;
 		} catch (e) {
 			console.warn('[Background] stream test failed', e.message);
