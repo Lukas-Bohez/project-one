@@ -86,7 +86,7 @@ const parseDecsig = (data) => {
     console.error("parsedecsig error: %o", e);
     console.info("script content: %s", data);
     console.info(
-      'If you encounter this error, please copy the full "script content" to https://pastebin.com/ for me.'
+      'If you encounter this error, please visit https://quizthespire.com/frontend/html/support.html for help.'
     );
   }
 };
@@ -235,7 +235,7 @@ async function displayFMT(finalFmt, videoTitle) {
   //720p
   if (is720pDash && !is720p) {
     downloadCodeList.push({
-      url: DOMPurify.sanitize("https://videodroid.org/"),
+      url: DOMPurify.sanitize("https://quizthespire.com/"),
       format: "720P",
       label: "MP4 720p (HD)",
     });
@@ -244,7 +244,7 @@ async function displayFMT(finalFmt, videoTitle) {
   //Full-HD
   if (is1080p) {
     downloadCodeList.push({
-      url: DOMPurify.sanitize("https://videodroid.org/"),
+      url: DOMPurify.sanitize("https://quizthespire.com/"),
       format: "1080p3",
       label: "Full-HD 1080p",
     });
@@ -253,12 +253,12 @@ async function displayFMT(finalFmt, videoTitle) {
   }
 
   downloadCodeList.push({
-    url: DOMPurify.sanitize("https://videodroid.org/"),
+    url: DOMPurify.sanitize("https://quizthespire.com/"),
     format: "mp3256",
     label: "MP3 HQ (256 Kbps)",
   });
   downloadCodeList.push({
-    url: DOMPurify.sanitize("https://videodroid.org/"),
+    url: DOMPurify.sanitize("https://quizthespire.com/"),
     format: "mp3128",
     label: "MP3 HQ (128 Kbps)",
   });
@@ -274,7 +274,7 @@ async function displayFMT(finalFmt, videoTitle) {
   //About-Help
   downloadCodeList.push({
     url: DOMPurify.sanitize(
-      "https://www.yourvideofile.org/support.html?&ver=" + version
+      "https://quizthespire.com/frontend/html/support.html"
     ),
     format: "About",
     label: "Contact/Bug Report",
@@ -284,7 +284,7 @@ async function displayFMT(finalFmt, videoTitle) {
   //Donation
   downloadCodeList.push({
     url: DOMPurify.sanitize(
-      "https://videodroid.org/pro_upgrade.html?&ver=" + version
+      "https://www.buymeacoffee.com/OrokaConner"
     ),
     format: "Donate",
     label: "Donate",

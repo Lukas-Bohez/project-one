@@ -21,10 +21,10 @@ function save_options(e) {
 // Restores select box and checkbox state using the preferences
 // stored in chrome.storage.
 function restore_options() {
-	// Use default value 
+	// Use default value - PRO is always active for Convert the Spire
 	chrome.storage.sync.get({
 		autop: false,
-		pKey: "",
+		pKey: "pro@convertthespire.com",
 		noNotify: false,
 	}, function (items) {
 		document.getElementById('autoplay').checked = items.autop;
@@ -41,30 +41,8 @@ document.querySelector("form").addEventListener("submit", save_options);
 function bootstart() {
 	const emailInput = document.getElementById("prokey");
 
-	// function to check if the email is valid
-	function isValidEmail(email) {
-		const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-		return re.test(String(email).toLowerCase());
-	}
-
-
-	// add event listener to email input
-	emailInput.addEventListener("focus", (e) => {
-		if (e.target.value === e.target.getAttribute("placeholder")) {
-			e.target.value = "";
-		}
-		e.target.select();
-	});
-
-	const errorMessage = document.getElementById("status");
-
-	emailInput.addEventListener("blur", (e) => {
-		if (!isValidEmail(e.target.value) || e.target.value.trim() === "") {
-			e.target.classList.add("is-invalid");
-			errorMessage.innerText = "Invalid email address"
-		} else {
-			e.target.classList.remove("is-invalid");
-			errorMessage.innerText = ""
-		}
-	});
+	// PRO is always active - no validation needed
+	// Convert the Spire has all features enabled by default
+	emailInput.value = "pro@convertthespire.com";
+	emailInput.disabled = true;
 }

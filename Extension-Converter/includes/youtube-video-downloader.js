@@ -168,7 +168,42 @@ async function parseDetails(url) {
   //console.info(videoId);
   //console.info(videoTitle);
   //console.info(downloadCodeList);
-  let data = { VideoData: downloadCodeList, videoTitle: videoTitle, key: proKey };
+  
+  // Extract thumbnail and author metadata
+  console.log("VideoPage details:", videoPage.videoDetails);
+  let thumbnail = null;
+  let author = "Unknown";
+  
+  // Try multiple paths to get thumbnail
+  if (videoPage.videoDetails?.thumbnail?.thumbnails) {
+    const thumbs = videoPage.videoDetails.thumbnail.thumbnails;
+    thumbnail = thumbs[thumbs.length - 1]?.url || thumbs[0]?.url;
+  }
+  // Fallback to standard YouTube thumbnail
+  if (!thumbnail) {
+    thumbnail = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+  }
+  
+  // Try multiple paths to get author/channel
+  if (videoPage.videoDetails?.author) {
+    author = videoPage.videoDetails.author;
+  } else if (videoPage.videoDetails?.channelId) {
+    author = videoPage.videoDetails.channelId;
+  } else if (videoPage.microformat?.playerMicroformatRenderer?.ownerChannelName) {
+    author = videoPage.microformat.playerMicroformatRenderer.ownerChannelName;
+  }
+  
+  console.log("Thumbnail:", thumbnail);
+  console.log("Author:", author);
+  
+  let data = { 
+    VideoData: downloadCodeList, 
+    videoTitle: videoTitle, 
+    key: proKey,
+    thumbnail: thumbnail,
+    author: author,
+    videoId: videoId
+  };
   sessionStorage.setItem("dList_" + videoId, JSON.stringify(data));
   //let r = sessionStorage.getItem("dList_" + videoId);
   //console.log(r);
@@ -278,11 +313,8 @@ async function parseDetails(url) {
           if (frm_div) {
             frm_div.parentElement.removeChild(frm_div);
           }
-          var mp3_clean_url =
-            "https://videodroid.org/v3/authenticate.php?vid=" +
-            videoId +
-            "&stoken=" +
-            proKey +
+          // Direct download - no external authentication needed
+          console.log("Convert the Spire: Direct download");
             "&format=" +
             FORMAT_LABEL[getF] +
             "&title=" +
