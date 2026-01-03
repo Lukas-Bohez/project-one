@@ -1,20 +1,20 @@
 # Convert the Spire - YouTube Downloader Extension
 
-A Chrome extension for downloading YouTube videos in various formats, branded for Convert the Spire.
+A Chrome extension for downloading YouTube videos in various formats, branded for Quiz the Spire.
 
 ## Features
 
 - 🎥 Download YouTube videos in multiple formats (MP4, WebM)
 - 🎵 Extract audio as MP3
 - ⚡ One-click downloads
-- 🎨 Convert the Spire themed UI
+- 🎨 Quiz the Spire themed UI
 - 📱 Support for regular videos and Shorts
 
 ## Installation
 
 ### Chrome/Chromium/Edge
 
-1. Download `ConvertTheSpire-Chrome.zip` from `/frontend/downloads/`
+1. Download `ConvertTheSpire-Chrome.zip` from [Quiz the Spire Downloads](https://quizthespire.com/frontend/downloads/)
 2. Unzip the file
 3. Open Chrome and navigate to `chrome://extensions/`
 4. Enable "Developer mode" (toggle in top right)
@@ -35,7 +35,7 @@ A Chrome extension for downloading YouTube videos in various formats, branded fo
 
 - Manifest V2 (Chrome Extension)
 - JavaScript ES6+
-- Bootstrap 4 (UI framework)
+- Bootstrap 5 (UI framework)
 - jQuery (DOM manipulation)
 
 ## Files Structure
@@ -43,7 +43,7 @@ A Chrome extension for downloading YouTube videos in various formats, branded fo
 ```
 Extension-Converter/
 ├── manifest.json          # Extension configuration
-├── icons/                 # Convert the Spire branded icons
+├── icons/                 # Quiz the Spire branded icons
 ├── includes/              # Core functionality
 │   ├── background.js      # Download handler
 │   ├── youtube-video-downloader.js  # Stream extraction
@@ -67,9 +67,13 @@ To rebuild the distributable zip:
 
 Output: `/frontend/downloads/ConvertTheSpire-Chrome.zip`
 
+## Support
+
+For questions or support, visit [Quiz the Spire Support](https://quizthespire.com/html/support.html)
+
 ## Version
 
-19.1 - Based on proven YouTube downloader with Convert the Spire branding
+19.1 - Quiz the Spire branded YouTube downloader
 
 ## Notes
 
@@ -77,3 +81,9 @@ Output: `/frontend/downloads/ConvertTheSpire-Chrome.zip`
 - Requires Developer mode for installation
 - Content scripts inject on YouTube pages only
 - Downloads handled through Chrome's native download API
+- All features are free to use
+
+## Author
+
+Oroka Conner - Quiz the Spire
+

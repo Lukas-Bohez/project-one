@@ -288,6 +288,12 @@
                 </a>
             </div>
             
+            <div class="button-row" style="margin-top: 15px;">
+                <button onclick="clearExtensionCacheInstructions()" class="c-btn c-btn--secondary" style="background: #dc3545; border-color: #dc3545;">
+                    <span>🗑️ Clear Extension Cache (If Issues)</span>
+                </button>
+            </div>
+            
             <h3>Installation Instructions</h3>
             <ol>
                 <li>Download and unzip the Firefox extension above</li>
@@ -842,6 +848,17 @@
             setTimeout(() => {
                 statusDiv.style.display = 'none';
             }, 5000);
+        }
+        
+        // Clear extension cache instructions
+        function clearExtensionCacheInstructions() {
+            alert('To clear the extension cache:\n\n' +
+                  '1. Go to about:addons in Firefox\n' +
+                  '2. Find "Convert the Spire" extension\n' +
+                  '3. Click "Remove" (completely uninstall it)\n' +
+                  '4. Restart Firefox\n' +
+                  '5. Re-download and reinstall the extension from this page\n\n' +
+                  'This will ensure you have the latest version with all updates!');
         }
         
         // Load saved password on page load
