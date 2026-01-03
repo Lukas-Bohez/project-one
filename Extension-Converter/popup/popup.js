@@ -26,21 +26,32 @@ const parseQueryString = (queryString) =>
   );
 
 function notifyExtension(e) {
+  console.log('[Convert the Spire] POPUP - Download clicked');
   var elem = e.currentTarget;
   var fileSaveName = elem.getAttribute("download");
+  console.log('[Convert the Spire] POPUP - Raw filename:', fileSaveName);
   fileSaveName = fileSaveName.replace(/[/\\?%*:|"<>]/g, '-');
   fileSaveName = fileSaveName.replace(/[\u200B-\u200D\uFEFF]/g, '-');//Mitigate zero width joiner filename issue
+  console.log('[Convert the Spire] POPUP - Cleaned filename:', fileSaveName);
   e.returnValue = false;
 
   if (e.preventDefault) {
     e.preventDefault();
   }
   var loop = elem.getAttribute("loop");
+  console.log('[Convert the Spire] POPUP - Loop value:', loop);
+  console.log('[Convert the Spire] POPUP - href:', elem.getAttribute("href"));
+  
   if (loop) {
+    console.log('[Convert the Spire] POPUP - Sending download message...');
     chrome.runtime.sendMessage({
       url: elem.getAttribute("href"),
       filename: fileSaveName,
+    }, function(response) {
+      console.log('[Convert the Spire] POPUP - Download message sent, response:', response);
     });
+  } else {
+    console.log('[Convert the Spire] POPUP - Loop not set, not sending message');
   }
   return false;
 }
@@ -114,11 +125,25 @@ $(document).ready(function () {
 });
 
 function ShowLinks(r) {
+  console.log('=================================================');
+  console.log('[Convert the Spire] POPUP - ShowLinks called');
+  console.log('[Convert the Spire] POPUP - Raw data:', r);
+  
+  // Handle null/missing data
+  if (!r) {
+    console.error('[Convert the Spire] POPUP - No data received from content script');
+    $(".Loading").hide();
+    $(".notYoutube").html("<p style='padding: 20px; color: #f44336;'><strong>Extension not ready</strong><br>Please refresh this YouTube page (F5 or Ctrl+R) and try again.<br><br>If the problem persists, the video may not have downloadable streams available.</p>").show();
+    return;
+  }
+  
   r = JSON.parse(r);
   videoTitle = r.videoTitle;
   proKey = r.key;
   
-  console.log("Received data:", r);
+  console.log('[Convert the Spire] POPUP - Parsed data:', r);
+  console.log('[Convert the Spire] POPUP - Video title:', videoTitle);
+  console.log('[Convert the Spire] POPUP - VideoData array length:', r.VideoData ? r.VideoData.length : 'MISSING');
   
   // Display video metadata
   if (r.thumbnail) {
@@ -148,10 +173,13 @@ function ShowLinks(r) {
   $(".VideoTitle").text(videoTitle);
   var downloadCodeList = r.VideoData;
 
+  console.log('[Convert the Spire] POPUP - Building link list...');
   //console.log("downloadCodeList = " + downloadCodeList);
   var links = '';
   for (let i = 0; i < downloadCodeList.length; i++) {
     var getF = downloadCodeList[i].format;
+    console.log(`[Convert the Spire] POPUP - Link ${i}: format="${getF}", label="${downloadCodeList[i].label}", url="${downloadCodeList[i].url}"`);
+    
     if (FORMAT_LABEL[getF]) {
       let dLink = document.createElement("a");
       let url = downloadCodeList[i].url;
@@ -169,7 +197,6 @@ function ShowLinks(r) {
           dLink.setAttribute("download", downloadCodeList[i].download);
         }
       } else { //The iframe links
-        //dLink.setAttribute("href", "#");
         dLink.addEventListener("click", loadFrame, false);
       }
       links += dLink;
@@ -177,5 +204,55 @@ function ShowLinks(r) {
       //console.log(dLink);
     }
   }
+  
+  console.log('[Convert the Spire] POPUP - Total links added to UI:', downloadCodeList.length);
+  console.log('[Convert the Spire] POPUP - Links in DOM:', $('.LinkContainer a').length);
+  
+  // LOG ALL FINAL LINKS IN THE UI
+  $('.LinkContainer a').each(function(i, link) {
+    console.log(`[Convert the Spire] POPUP - Final link ${i}: text="${$(link).text()}" href="${$(link).attr('href')}"`);
+  });
+  
+  console.log('=================================================');
+  
   $('.Loading').hide();
 };
+
+// Clear extension cache function
+function clearExtensionCache() {
+  console.log("[Convert the Spire] Clearing extension cache...");
+  
+  // Clear all extension storage
+  if (chrome.storage && chrome.storage.local) {
+    chrome.storage.local.clear(() => {
+      console.log("[Convert the Spire] Local storage cleared");
+    });
+  }
+  
+  if (chrome.storage && chrome.storage.sync) {
+    chrome.storage.sync.clear(() => {
+      console.log("[Convert the Spire] Sync storage cleared");
+    });
+  }
+  
+  // Reload the extension
+  if (chrome.runtime && chrome.runtime.reload) {
+    console.log("[Convert the Spire] Reloading extension...");
+    setTimeout(() => {
+      chrome.runtime.reload();
+    }, 500);
+  } else {
+    // Fallback: just close and alert user
+    alert("Cache cleared! Please manually reload the extension from about:addons");
+    window.close();
+  }
+}
+
+// Attach event listener when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  const clearCacheBtn = document.getElementById('clearCacheBtn');
+  if (clearCacheBtn) {
+    clearCacheBtn.addEventListener('click', clearExtensionCache);
+    console.log('[Convert the Spire] Clear cache button event listener attached');
+  }
+});

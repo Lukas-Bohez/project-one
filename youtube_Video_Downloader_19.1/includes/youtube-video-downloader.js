@@ -1,7 +1,4 @@
-﻿console.log('[Convert the Spire] Content script loaded');
-
-addEventListener("yt-page-data-updated", (event) => {
-  console.log('[Convert the Spire] yt-page-data-updated event fired');
+﻿addEventListener("yt-page-data-updated", (event) => {
 
   restoreOptions();
   parseDetails(window.location.href);
@@ -30,32 +27,24 @@ const parseQueryString = (queryString) =>
  * Respond to the request
  */
 async function parseDetails(url) {
-  console.log('[Convert the Spire] parseDetails called with URL:', url);
 
   if (window.location.href.indexOf("shorts/") > -1) {
     let msgCont = "Youtube Shorts video uses a different UI and to download these videos you can use the Download menu provided via the Browser toolbar button.";
     showPopup("", msgCont, true);
     videoId = window.location.href.split("shorts/")[1];
-    console.log('[Convert the Spire] Shorts video detected, videoId:', videoId);
   } else {
     const query = parseQueryString(url.split("?")[1]);
     videoId = query["v"];
-    console.log('[Convert the Spire] Regular video, videoId:', videoId);
   };
 
 
 
-  console.log('[Convert the Spire] Fetching video data for videoId:', videoId);
-
-  // ORIGINAL WORKING ORDER: Try API first, page data as fallback
   let videoPage = await getInnerApijson(videoId, "IOS_CREATOR", false);
-  console.log('[Convert the Spire] Initial API response:', videoPage ? 'received' : 'NULL');
   //console.log("Not Age Gated");
   //console.log("Not Age Gated :" + JSON.stringify(videoPage));
 
-  if (!videoPage || !videoPage.streamingData) {
+  if (!videoPage.streamingData) {
     //Seems age gated video, refetch data
-    console.log('[Convert the Spire] No streamingData, trying age-gated API...');
     videoPage = await getInnerApijson(videoId, "IOS_CREATOR", true);
     console.log("Using Age gated Android");
     // console.log("Using Age gated Android :" + JSON.stringify(videoPage));
@@ -64,8 +53,7 @@ async function parseDetails(url) {
 
 
   //If it still fails, try using page data
-  if (!videoPage || !videoPage.streamingData) {
-    console.log('[Convert the Spire] API failed, trying page data extraction...');
+  if (!videoPage.streamingData) {
     videoPage = await getRawPageData();
     videoPage = JSON.parse(videoPage);
 
@@ -83,13 +71,12 @@ async function parseDetails(url) {
   }
 
   //we still have a failure, display error
-  if (!videoPage || !videoPage.streamingData) {
-    console.error('[Convert the Spire] FATAL: No streamingData available');
+  if (!videoPage.streamingData.formats) {
     let msgCont = "Error!!";
     //this could be a live video check and inform
     if (
-      videoPage?.videoDetails?.isLive ||
-      videoPage?.playabilityStatus?.reason == "This live event has ended."
+      videoPage.videoDetails.isLive ||
+      videoPage.playabilityStatus.reason == "This live event has ended."
     ) {
       msgCont =
         "<p>This is either an ongoing or recently finished Live stream, it can take upto 12-72 hours to generate download links for such videos, pls. try later after 12-72 hours and the links should be availble by then.</p>";
@@ -99,10 +86,7 @@ async function parseDetails(url) {
         "<p>We were not able to parse the download links from this page, try a page refresh. If this happens with all videos do report this to us.";
       showPopup("", msgCont, true);
     }
-    return; // Exit early if we can't get data
   }
-  
-  console.log('[Convert the Spire] Successfully got streamingData');
 
   //console.log(videoPage);
 
@@ -128,7 +112,7 @@ async function parseDetails(url) {
 
       //decode signature
       //const sig = applyActions(extractActions(jsPlayer), components.s);
-      const sig = decsig ? decsig(components.s) : components.s;
+      const sig = decsig(components.s);
       url =
         components.url +
         `&${encodeURIComponent(components.sp)}=${encodeURIComponent(sig)}`;
@@ -162,7 +146,7 @@ async function parseDetails(url) {
 
         //decode signature
         //const sig = applyActions(extractActions(jsPlayer), components.s);
-        const sig = decsig ? decsig(components.s) : components.s;
+        const sig = decsig(components.s);
         url =
           components.url +
           `&${encodeURIComponent(components.sp)}=${encodeURIComponent(sig)}`;
@@ -184,56 +168,8 @@ async function parseDetails(url) {
   //console.info(videoId);
   //console.info(videoTitle);
   //console.info(downloadCodeList);
-  
-  // Extract thumbnail and author metadata
-  console.log("VideoPage details:", videoPage.videoDetails);
-  let thumbnail = null;
-  let author = "Unknown";
-  
-  // Try multiple paths to get thumbnail
-  if (videoPage.videoDetails?.thumbnail?.thumbnails) {
-    const thumbs = videoPage.videoDetails.thumbnail.thumbnails;
-    thumbnail = thumbs[thumbs.length - 1]?.url || thumbs[0]?.url;
-  }
-  // Fallback to standard YouTube thumbnail
-  if (!thumbnail) {
-    thumbnail = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
-  }
-  
-  // Try multiple paths to get author/channel
-  if (videoPage.videoDetails?.author) {
-    author = videoPage.videoDetails.author;
-  } else if (videoPage.videoDetails?.channelId) {
-    author = videoPage.videoDetails.channelId;
-  } else if (videoPage.microformat?.playerMicroformatRenderer?.ownerChannelName) {
-    author = videoPage.microformat.playerMicroformatRenderer.ownerChannelName;
-  }
-  
-  console.log("Thumbnail:", thumbnail);
-  console.log("Author:", author);
-  
-  console.log('%c[YOUTUBE-VIDEO-DOWNLOADER] ABOUT TO STORE IN SESSIONSTORE', 'color: #f0f; font-weight: bold; font-size: 14px;');
-  console.log('[YOUTUBE-VIDEO-DOWNLOADER] downloadCodeList array:');
-  downloadCodeList.forEach((item, idx) => {
-    console.log(`  [${idx}] format="${item.format}" label="${item.label}" url="${item.url}"`);
-  });
-  
-  let data = { 
-    VideoData: downloadCodeList, 
-    videoTitle: videoTitle, 
-    key: proKey,
-    thumbnail: thumbnail,
-    author: author,
-    videoId: videoId
-  };
-  
-  console.log('%c[YOUTUBE-VIDEO-DOWNLOADER] FULL DATA OBJECT ABOUT TO STORE:', 'color: #f0f; font-weight: bold;');
-  console.log(JSON.stringify(data, null, 2));
-  
-  console.log('[Convert the Spire] Storing data in sessionStorage for videoId:', videoId);
-  console.log('[Convert the Spire] Data contains', downloadCodeList.length, 'download options');
+  let data = { VideoData: downloadCodeList, videoTitle: videoTitle, key: proKey };
   sessionStorage.setItem("dList_" + videoId, JSON.stringify(data));
-  console.log('[Convert the Spire] Data stored successfully');
   //let r = sessionStorage.getItem("dList_" + videoId);
   //console.log(r);
 
@@ -287,7 +223,7 @@ async function parseDetails(url) {
     //We still do not have a place to attach, ask user to report
     doNotAutoclosePopup = true;
     let msgCont =
-      "<p>Unable to attach the download button to the original location on the page. This seems to be a code/layout change by YouTube. For now, you can use the button on the Browser Toolbar to download.<br><br>For support, visit <a href='https://quizthespire.com/html/support.html' target='_blank'>Convert the Spire Support</a>.<br><br>";
+      "<p>Oops, unable to attach button to the original location on the page - this seems to be some code/layout change by Youtube, for the time-being you can use the button on the Browser Toolbar to download. Once this design is finalised and pushed to all by Youtube, an updated addon version will place the button to usual location.<br><br>You can read more about this <a href='https://bit.ly/YoutubeNewCode' target='_blank'>here.</a><br><br>";
     showPopup("", msgCont, true);
     parentElement = document.getElementById("notificationPopup");
     parentElement.childNodes[2].appendChild(dButton);
@@ -298,7 +234,7 @@ async function parseDetails(url) {
   if (!parentElement) {
     //We still do not have a place to attach, ask user to report
     let msgCont =
-      "<p>Unable to attach the download button to the original location on the page. This seems to be a code/layout change by YouTube. For now, you can use the button below.<br><br>For support, visit <a href='https://quizthespire.com/html/support.html' target='_blank'>Convert the Spire Support</a>.<br><br>";
+      "<p>Oops, unable to attach button to the original location on the page - this seems to be some code/layout change by Youtube, for the time-being you can use the button below. Once this design is finalised and pushed to all by Youtube, an updated addon version will place the button to usual location.<br><br>You can read more about this <a href='https://bit.ly/YoutubeNewCode' target='_blank'>here.</a><br><br>";
     showPopup("", msgCont, true);
     parentElement = document.getElementById("notificationPopup");
     parentElement.childNodes[2].appendChild(dButton);
@@ -342,8 +278,11 @@ async function parseDetails(url) {
           if (frm_div) {
             frm_div.parentElement.removeChild(frm_div);
           }
-          // Direct download - no external authentication needed
-          console.log("Convert the Spire: Direct download");
+          var mp3_clean_url =
+            "https://videodroid.org/v3/authenticate.php?vid=" +
+            videoId +
+            "&stoken=" +
+            proKey +
             "&format=" +
             FORMAT_LABEL[getF] +
             "&title=" +

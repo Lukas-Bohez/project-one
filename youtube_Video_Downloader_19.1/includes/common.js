@@ -34,7 +34,7 @@ var FORMAT_TYPE = {
   299: "mp4",
 };
 
-const version = 20.0;
+const version = 19.1;
 const browser = chrome || browser;
 var proKey;
 var noNotify;
@@ -86,7 +86,7 @@ const parseDecsig = (data) => {
     console.error("parsedecsig error: %o", e);
     console.info("script content: %s", data);
     console.info(
-      'If you encounter this error, please visit https://quizthespire.com/frontend/html/support.html for help.'
+      'If you encounter this error, please copy the full "script content" to https://pastebin.com/ for me.'
     );
   }
 };
@@ -199,11 +199,6 @@ async function getInnerApijson(videoId, clientName, isAgeRestricted) {
 
 
 async function displayFMT(finalFmt, videoTitle) {
-  console.log('%c[DISPLAYFMT] FUNCTION CALLED', 'color: #0f0; font-weight: bold; font-size: 14px;');
-  console.log('[DISPLAYFMT] finalFmt array length:', finalFmt ? finalFmt.length : 'NULL');
-  console.log('[DISPLAYFMT] videoTitle:', videoTitle);
-  console.log('[DISPLAYFMT] finalFmt contents:', JSON.stringify(finalFmt.slice(0, 3)));
-  
   let jsonData = {};
   let downloadCodeList = [];
 
@@ -236,14 +231,11 @@ async function displayFMT(finalFmt, videoTitle) {
     }
   });
 
-  console.log('[DISPLAYFMT] After fmtMap1, downloadCodeList length:', downloadCodeList.length);
-
   //Add addtional buttons to the list
   //720p
   if (is720pDash && !is720p) {
-    console.log('[DISPLAYFMT] Adding 720P option');
     downloadCodeList.push({
-      url: DOMPurify.sanitize("https://quizthespire.com/"),
+      url: DOMPurify.sanitize("https://videodroid.org/"),
       format: "720P",
       label: "MP4 720p (HD)",
     });
@@ -251,9 +243,8 @@ async function displayFMT(finalFmt, videoTitle) {
 
   //Full-HD
   if (is1080p) {
-    console.log('[DISPLAYFMT] Adding 1080p option');
     downloadCodeList.push({
-      url: DOMPurify.sanitize("https://quizthespire.com/"),
+      url: DOMPurify.sanitize("https://videodroid.org/"),
       format: "1080p3",
       label: "Full-HD 1080p",
     });
@@ -261,60 +252,44 @@ async function displayFMT(finalFmt, videoTitle) {
     is1080p = false;
   }
 
-  console.log('[DISPLAYFMT] Adding MP3 options');
   downloadCodeList.push({
-    url: DOMPurify.sanitize("https://quizthespire.com/"),
+    url: DOMPurify.sanitize("https://videodroid.org/"),
     format: "mp3256",
     label: "MP3 HQ (256 Kbps)",
   });
   downloadCodeList.push({
-    url: DOMPurify.sanitize("https://quizthespire.com/"),
+    url: DOMPurify.sanitize("https://videodroid.org/"),
     format: "mp3128",
     label: "MP3 HQ (128 Kbps)",
   });
 
   //Options
   let lnk = browser.runtime.getURL("options/options.html");
-  console.log('[DISPLAYFMT] Settings link:', lnk);
   downloadCodeList.push({
-    url: "chrome-internal:settings",
+    url: lnk,
     format: "Settings",
     label: "Settings",
     external: true,
   });
-  
   //About-Help
-  const aboutUrl = DOMPurify.sanitize("https://quizthespire.com/html/support.html");
-  console.log('[DISPLAYFMT] ABOUT URL HARDCODED AS:', aboutUrl);
   downloadCodeList.push({
-    url: aboutUrl,
+    url: DOMPurify.sanitize(
+      "https://www.yourvideofile.org/support.html?&ver=" + version
+    ),
     format: "About",
     label: "Contact/Bug Report",
     external: true,
-    download: false
   });
 
   //Donation
-  const donateUrl = DOMPurify.sanitize("https://buymeacoffee.com/orokaconner");
-  console.log('[DISPLAYFMT] DONATE URL HARDCODED AS:', donateUrl);
   downloadCodeList.push({
-    url: donateUrl,
+    url: DOMPurify.sanitize(
+      "https://videodroid.org/pro_upgrade.html?&ver=" + version
+    ),
     format: "Donate",
-    label: "☕ Buy Me a Coffee",
+    label: "Donate",
     external: true,
-    download: false
   });
-
-  console.log('%c[DISPLAYFMT] FINAL DOWNLOAD LIST:', 'color: #ff0; font-weight: bold;');
-  downloadCodeList.forEach((item, idx) => {
-    console.log(`  [${idx}] format="${item.format}" label="${item.label}" url="${item.url}"`);
-  });
-
-  console.log('[DISPLAYFMT] Generated', downloadCodeList.length, 'download options');
-  console.log('[DISPLAYFMT] Support link:', downloadCodeList[downloadCodeList.length - 1].url);
-  console.log('[DISPLAYFMT] Contact link:', downloadCodeList[downloadCodeList.length - 2].url);
-  console.log('%c[DISPLAYFMT] RETURNING:', 'color: #0f0; font-weight: bold;');
-  console.log(JSON.stringify(downloadCodeList, null, 2));
 
   return downloadCodeList;
 }
@@ -394,7 +369,7 @@ function findMatch(text, regexp) {
 function restoreOptions() {
   function getAutoplayChoice(result) {
     //console.log(result.autop);
-    if (result && result.autop) {
+    if (result.autop) {
       //TRUE
       injectScript(
         `var myplayer = document.getElementById("movie_player");if (myplayer) {myplayer.pauseVideo()}`
@@ -403,14 +378,14 @@ function restoreOptions() {
   }
 
   function getProKey(result) {
-    if (result && result.pKey) {
+    if (result.pKey) {
       proKey = result.pKey;
       proKey = encodeURIComponent(window.btoa(proKey)); //Safe transport
     }
   }
 
   function getNotify(result) {
-    if (result && result.noNotify) {
+    if (result.noNotify) {
       noNotify = result.noNotify;
     }
   }
