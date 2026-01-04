@@ -5,7 +5,7 @@ import os
 import zipfile
 from datetime import datetime,timedelta
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, status, Body, Header, File, Form, UploadFile
+from fastapi import FastAPI, HTTPException, status, Body, Header, File, Form, UploadFile, Request
 from fastapi.middleware.cors import CORSMiddleware
 import time
 import traceback
@@ -11134,6 +11134,22 @@ def init_sentle_tables():
     try:
         from database.database import Database
         
+        # Create sessions table for tracking plays and device info
+        # (Uses quiz's users table, not a separate sentle_users table)
+        Database.execute_sql("""
+            CREATE TABLE IF NOT EXISTS sentle_sessions (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                session_token VARCHAR(255) NOT NULL UNIQUE,
+                ip_address VARCHAR(45),
+                user_agent TEXT,
+                date DATE NOT NULL,
+                played BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        """)
+        
         # Create sentences table
         Database.execute_sql("""
             CREATE TABLE IF NOT EXISTS sentle_sentences (
@@ -11150,13 +11166,15 @@ def init_sentle_tables():
         Database.execute_sql("""
             CREATE TABLE IF NOT EXISTS sentle_scores (
                 id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
                 sentence_id INT NOT NULL,
-                player_name VARCHAR(100) NOT NULL,
                 score INT NOT NULL,
-                guesses INT NOT NULL,
+                attempts INT NOT NULL,
                 date DATE NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (sentence_id) REFERENCES sentle_sentences(id) ON DELETE CASCADE
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (sentence_id) REFERENCES sentle_sentences(id) ON DELETE CASCADE,
+                UNIQUE KEY unique_user_sentence_date (user_id, sentence_id, date)
             )
         """)
         
@@ -11166,6 +11184,145 @@ def init_sentle_tables():
 
 # Initialize tables on startup
 init_sentle_tables()
+
+# Sentle Admin Password (stored in environment variable for security)
+SENTLE_ADMIN_PASSWORD = os.getenv("SENTLE_ADMIN_PASSWORD", "sentle6967god")
+
+import secrets
+import bcrypt
+
+def generate_session_token() -> str:
+    """Generate secure random session token"""
+    return secrets.token_urlsafe(32)
+
+def get_client_info(request) -> tuple:
+    """Extract IP and User-Agent from request"""
+    ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+    return ip, user_agent
+
+def verify_quiz_password(password: str, hashed_password: str, salt: str) -> bool:
+    """Verify password against quiz user bcrypt hash (first try hash-only, then hash+salt fallback)."""
+    try:
+        if hashed_password:
+            if bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8')):
+                return True
+        if hashed_password and salt:
+            combined = (hashed_password + salt).encode('utf-8')
+            return bcrypt.checkpw(password.encode('utf-8'), combined)
+    except Exception:
+        return False
+    return False
+
+@app.post("/api/sentle/register", tags=["Sentle Auth"])
+async def sentle_register(payload: Dict[str, Any] = Body(...)):
+    """Register a new Quiz user account (first + last name + password) for Sentle."""
+    try:
+        from database.datarepository import UserRepository
+
+        first_name = payload.get('first_name', '').strip()
+        last_name = payload.get('last_name', '').strip()
+        password = payload.get('password', '').strip()
+
+        if not first_name or not last_name or not password:
+            raise HTTPException(status_code=400, detail="First name, last name, and password are required")
+
+        if len(password) < 6:
+            raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+
+        # Prevent duplicate names
+        existing = UserRepository.get_user_by_name(first_name, last_name)
+        if existing:
+            raise HTTPException(status_code=409, detail="A user with this name already exists. Please login instead.")
+
+        hashed_info = UserRepository.hash_password(password)
+        user_data = {
+            'first_name': first_name,
+            'last_name': last_name,
+            'password_hash': hashed_info['password_hash'],
+            'salt': hashed_info['salt'],
+            'userRoleId': 1,
+            'soul_points': 4,
+            'limb_points': 4,
+            'updated_by': 1
+        }
+
+        user_id = UserRepository.create_user_with_password(user_data)
+        if not user_id:
+            raise HTTPException(status_code=500, detail="Could not create user")
+
+        return {"success": True, "message": "Account created. Please login."}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Registration error: {str(e)}")
+
+@app.post("/api/sentle/login", tags=["Sentle Auth"])
+async def sentle_login(payload: Dict[str, Any] = Body(...), request: Request = None):
+    """Login with Quiz user account (first name + last name + password)."""
+    try:
+        from database.database import Database
+        
+        first_name = payload.get('first_name', '').strip()
+        last_name = payload.get('last_name', '').strip()
+        password = payload.get('password', '').strip()
+        
+        if not first_name or not last_name or not password:
+            raise HTTPException(status_code=400, detail="First name, last name, and password are required")
+        
+        # Fetch quiz user by first/last name
+        user = Database.get_one_row(
+            "SELECT id, first_name, last_name, password_hash, salt FROM users WHERE first_name = %s AND last_name = %s",
+            (first_name, last_name)
+        )
+        
+        if not user:
+            raise HTTPException(status_code=401, detail="Quiz account not found. Please use your Quiz credentials.")
+        
+        # Verify password
+        if not verify_quiz_password(password, user['password_hash'], user.get('salt', '')):
+            raise HTTPException(status_code=401, detail="Invalid password")
+        
+        # Check if already played today
+        today = datetime.now().date()
+        today_session = Database.get_one_row(
+            "SELECT id, played FROM sentle_sessions WHERE user_id = %s AND date = %s",
+            (user['id'], today)
+        )
+        
+        if today_session and today_session['played']:
+            raise HTTPException(status_code=403, detail="You've already played today. Try again tomorrow!")
+        
+        # Create session
+        session_token = generate_session_token()
+        ip, user_agent = get_client_info(request)
+        
+        if today_session:
+            # Update existing session for today
+            Database.execute_sql(
+                "UPDATE sentle_sessions SET session_token = %s, ip_address = %s, user_agent = %s WHERE id = %s",
+                (session_token, ip, user_agent, today_session['id'])
+            )
+        else:
+            # Create new session for today
+            Database.execute_sql(
+                "INSERT INTO sentle_sessions (user_id, session_token, ip_address, user_agent, date) VALUES (%s, %s, %s, %s, %s)",
+                (user['id'], session_token, ip, user_agent, today)
+            )
+        
+        username = f"{user['first_name']} {user['last_name']}".strip()
+        return {
+            "success": True,
+            "session_token": session_token,
+            "username": username,
+            "message": "Login successful"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Login error: {str(e)}")
 
 @app.get("/api/sentle/daily", tags=["Sentle"])
 async def get_daily_sentence():
@@ -11202,55 +11359,103 @@ async def get_daily_sentence():
 
 @app.post("/api/sentle/score", tags=["Sentle"])
 async def submit_score(payload: Dict[str, Any] = Body(...)):
-    """Submit a Sentle game score"""
+    """Submit a Sentle game score (only the current day's sentence is eligible)."""
     try:
         from database.database import Database
         
-        player_name = payload.get('playerName', 'Anonymous')[:100]
+        session_token = payload.get('session_token')
         score = int(payload.get('score', 0))
-        guesses = int(payload.get('guesses', 0))
+        attempts = int(payload.get('attempts', 0))
         sentence_id = payload.get('sentenceId')
         date = payload.get('date')
         
-        if not sentence_id or not date:
+        if not session_token or not sentence_id or not date:
             raise HTTPException(status_code=400, detail="Missing required fields")
+        
+        # Verify session token (only for today's session)
+        today = datetime.now().date()
+        session = Database.get_one_row(
+            "SELECT user_id, played FROM sentle_sessions WHERE session_token = %s AND date = %s",
+            (session_token, today)
+        )
+        
+        if not session:
+            raise HTTPException(status_code=401, detail="Invalid session. Please log in again.")
+        
+        if session['played']:
+            raise HTTPException(status_code=403, detail="You have already submitted a score today!")
+        
+        user_id = session['user_id']
+
+        # Ensure the score is for today's sentence only (archived sentences do not award points)
+        today_sentence = Database.get_one_row(
+            "SELECT id, date FROM sentle_sentences WHERE date = %s",
+            (today,)
+        )
+
+        if not today_sentence or not today_sentence.get("id"):
+            raise HTTPException(status_code=400, detail="No active sentence for today")
+
+        if int(sentence_id) != int(today_sentence['id']) or str(date) != str(today_sentence['date']):
+            raise HTTPException(status_code=403, detail="Scores can only be submitted for today's sentence")
+        
+        # Check for duplicate (shouldn't happen but be safe)
+        existing = Database.get_one_row(
+            "SELECT id FROM sentle_scores WHERE user_id = %s AND sentence_id = %s AND date = %s",
+            (user_id, sentence_id, date)
+        )
+        
+        if existing:
+            raise HTTPException(status_code=403, detail="Score already submitted for today!")
         
         # Insert score
         Database.execute_sql(
             """INSERT INTO sentle_scores 
-               (sentence_id, player_name, score, guesses, date) 
+               (user_id, sentence_id, score, attempts, date) 
                VALUES (%s, %s, %s, %s, %s)""",
-            (sentence_id, player_name, score, guesses, date)
+            (user_id, sentence_id, score, attempts, date)
+        )
+        
+        # Mark session as played
+        Database.execute_sql(
+            "UPDATE sentle_sessions SET played = TRUE WHERE session_token = %s",
+            (session_token,)
         )
         
         return {"success": True, "message": "Score submitted successfully"}
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error submitting score: {str(e)}")
 
 @app.get("/api/sentle/leaderboard", tags=["Sentle"])
 async def get_leaderboard():
-    """Get today's Sentle leaderboard"""
+    """Get cumulative Sentle leaderboard (all-time scores, top 100)"""
     try:
         from database.database import Database
         
-        today = datetime.now().date()
-        
-        # Get top scores for today
+        # Get cumulative scores per quiz user (all sentences)
         results = Database.get_rows(
-            """SELECT player_name, score, guesses 
-               FROM sentle_scores 
-               WHERE date = %s 
-               ORDER BY score DESC, guesses ASC, created_at ASC 
-               LIMIT 100""",
-            (today,)
+            """SELECT 
+                    CONCAT(u.first_name, ' ', u.last_name) AS player_name,
+                    SUM(s.score) AS total_score,
+                    SUM(s.attempts) AS total_attempts,
+                    COUNT(*) AS games_played,
+                    MAX(s.date) AS last_played
+               FROM sentle_scores s
+               JOIN users u ON s.user_id = u.id
+               GROUP BY s.user_id, u.first_name, u.last_name
+               ORDER BY total_score DESC, total_attempts ASC, last_played ASC
+               LIMIT 100"""
         )
         
         leaderboard = [
             {
                 "playerName": row['player_name'],
-                "score": row['score'],
-                "guesses": row['guesses']
+                "score": row['total_score'],
+                "attempts": row['total_attempts'],
+                "gamesPlayed": row['games_played'],
             }
             for row in (results or [])
         ]
@@ -11259,6 +11464,42 @@ async def get_leaderboard():
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error loading leaderboard: {str(e)}")
+
+
+@app.get("/api/sentle/leaderboard/daily", tags=["Sentle"])
+async def get_daily_leaderboard():
+    """Get today's Sentle leaderboard (per-day scores, top 100)"""
+    try:
+        from database.database import Database
+
+        today = datetime.now().date()
+        results = Database.get_rows(
+            """SELECT 
+                    CONCAT(u.first_name, ' ', u.last_name) AS player_name,
+                    s.score,
+                    s.attempts,
+                    s.date
+               FROM sentle_scores s
+               JOIN users u ON s.user_id = u.id
+               WHERE s.date = %s
+               ORDER BY s.score DESC, s.attempts ASC, s.id ASC
+               LIMIT 100""",
+            (today,)
+        )
+
+        leaderboard = [
+            {
+                "playerName": row["player_name"],
+                "score": row["score"],
+                "attempts": row["attempts"],
+            }
+            for row in (results or [])
+        ]
+
+        return {"date": str(today), "leaderboard": leaderboard}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error loading today's leaderboard: {str(e)}")
 
 @app.get("/api/sentle/archive", tags=["Sentle"])
 async def get_archive():
