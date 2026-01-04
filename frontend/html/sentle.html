@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sentle - Guess the daily sentence word-by-word! A unique twist on Wordle by Quiz The Spire.">
+    <title>Sentle - Guess The Sentence • Quiz The Spire</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="author" content="Oroka Conner">
+    <meta name="keywords" content="sentle, word game, sentence puzzle, wordle, quiz game, daily puzzle">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Sentle - Guess The Sentence">
+    <meta property="og:description" content="Guess the daily sentence word-by-word in 5 attempts each! Then arrange them in order.">
+    <meta property="og:url" content="https://quizthespire.com/html/sentle.html">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://quizthespire.com/html/sentle.html">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="../favicon.ico" type="image/x-icon">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/sentle.css">
+    <script src="../js/themeManager.js"></script>
+    
+    <!-- AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+    <header class="sentle-header">
+        <div class="sentle-nav">
+            <button id="helpBtn" class="icon-btn" title="How to play">
+                <span>❓</span>
+            </button>
+            <h1>SENTLE</h1>
+            <div class="header-icons">
+                <button id="statsBtn" class="icon-btn" title="Statistics">
+                    <span>📊</span>
+                </button>
+                <button id="settingsBtn" class="icon-btn" title="Settings">
+                    <span>⚙️</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="sentle-container">
+        <!-- Game Progress -->
+        <div class="game-progress">
+            <div id="progressBar" class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+            <div id="progressText" class="progress-text">Word 1 of 0</div>
+        </div>
+
+        <!-- Current Word Display -->
+        <div class="current-word-section">
+            <h2 id="wordNumber">Word 1</h2>
+            <p id="wordHint" class="word-hint">5 attempts remaining</p>
+        </div>
+
+        <!-- Game Board (Word-by-word) -->
+        <div id="gameBoard" class="game-board">
+            <!-- Guesses will be added dynamically -->
+        </div>
+
+        <!-- Message Display -->
+        <div id="message" class="message"></div>
+
+        <!-- Word Arrangement Stage (shown when all words guessed) -->
+        <div id="arrangementStage" class="arrangement-stage" style="display: none;">
+            <h2>📝 Arrange the words in order!</h2>
+            <div id="availableWords" class="available-words">
+                <!-- Words will be added here -->
+            </div>
+            <div id="sentenceBuilder" class="sentence-builder">
+                <!-- User drags words here -->
+            </div>
+            <button id="submitArrangementBtn" class="btn-submit">Submit Sentence</button>
+        </div>
+
+        <!-- Virtual Keyboard -->
+        <div id="keyboard" class="keyboard">
+            <div class="keyboard-row">
+                <button class="key" data-key="Q">Q</button>
+                <button class="key" data-key="W">W</button>
+                <button class="key" data-key="E">E</button>
+                <button class="key" data-key="R">R</button>
+                <button class="key" data-key="T">T</button>
+                <button class="key" data-key="Y">Y</button>
+                <button class="key" data-key="U">U</button>
+                <button class="key" data-key="I">I</button>
+                <button class="key" data-key="O">O</button>
+                <button class="key" data-key="P">P</button>
+            </div>
+            <div class="keyboard-row">
+                <button class="key" data-key="A">A</button>
+                <button class="key" data-key="S">S</button>
+                <button class="key" data-key="D">D</button>
+                <button class="key" data-key="F">F</button>
+                <button class="key" data-key="G">G</button>
+                <button class="key" data-key="H">H</button>
+                <button class="key" data-key="J">J</button>
+                <button class="key" data-key="K">K</button>
+                <button class="key" data-key="L">L</button>
+            </div>
+            <div class="keyboard-row">
+                <button class="key key-special" data-key="SPACE">SPACE</button>
+                <button class="key" data-key="Z">Z</button>
+                <button class="key" data-key="X">X</button>
+                <button class="key" data-key="C">C</button>
+                <button class="key" data-key="V">V</button>
+                <button class="key" data-key="B">B</button>
+                <button class="key" data-key="N">N</button>
+                <button class="key" data-key="M">M</button>
+                <button class="key key-special" data-key="BACKSPACE">⌫</button>
+            </div>
+            <div class="keyboard-row">
+                <button class="key key-enter" data-key="ENTER">ENTER</button>
+            </div>
+        </div>
+
+        <!-- Leaderboard Section -->
+        <div class="leaderboard-section">
+            <h2>🏆 Top Players</h2>
+            <div id="leaderboard" class="leaderboard">
+                <div class="loading">Loading leaderboard...</div>
+            </div>
+        </div>
+
+        <!-- Archive Link -->
+        <div class="archive-link">
+            <a href="sentle-archive.html" class="btn-link">📅 View Past Sentences</a>
+            <a href="sentle-admin.html" class="btn-link">🔐 Admin Panel</a>
+            <a href="../index.html" class="btn-link">← Back to Quiz The Spire</a>
+        </div>
+    </main>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>How to Play Sentle</h2>
+            <p>A unique twist on Wordle! Guess each word of the daily sentence in 5 tries, then arrange them in order!</p>
+            
+            <h3>Stage 1: Word-by-Word Guessing</h3>
+            <ul>
+                <li>You'll see one word at a time</li>
+                <li>You have 5 attempts to guess each word (just like Wordle!)</li>
+                <li>After each guess, letters change color:
+                    <ul>
+                        <li><strong class="correct">🟩 Green</strong>: Letter in correct position</li>
+                        <li><strong class="present">🟨 Yellow</strong>: Letter in word but wrong position</li>
+                        <li><strong class="absent">⬜ Gray</strong>: Letter not in word</li>
+                    </ul>
+                </li>
+                <li>Guess all words to move to the next stage</li>
+            </ul>
+            
+            <h3>Stage 2: Arrange the Sentence</h3>
+            <ul>
+                <li>You'll see all the guessed words scrambled</li>
+                <li>Drag and drop them into the correct order</li>
+                <li>Submit to complete the game!</li>
+            </ul>
+            
+            <p><strong>Scoring:</strong></p>
+            <ul>
+                <li>Base: 500 points</li>
+                <li>Bonus: 100 points per unused attempt across all words</li>
+                <li>Perfect game (all 1st tries): 1000+ points!</li>
+            </ul>
+            <p>A new sentence is available each day at midnight!</p>
+        </div>
+    </div>
+
+    <!-- Stats Modal -->
+    <div id="statsModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Your Statistics</h2>
+            <div id="statsContent" class="stats-content">
+                <div class="stat-item">
+                    <div class="stat-value" id="gamesPlayed">0</div>
+                    <div class="stat-label">Played</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="winRate">0</div>
+                    <div class="stat-label">Win %</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="currentStreak">0</div>
+                    <div class="stat-label">Current Streak</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="maxStreak">0</div>
+                    <div class="stat-label">Max Streak</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalScore">0</div>
+                    <div class="stat-label">Total Score</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Settings</h2>
+            <div class="settings-content">
+                <div class="setting-item">
+                    <label for="playerName">Your Name:</label>
+                    <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+                    <button id="saveNameBtn" class="btn">Save Name</button>
+                </div>
+                <div class="setting-item">
+                    <label>Theme:</label>
+                    <button id="themeToggle" class="btn">Toggle Theme</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="sentle-footer">
+        <p>&copy; 2025 Quiz The Spire • Created by Oroka Conner</p>
+        <p>
+            <a href="../html/privacy.html">Privacy Policy</a> |
+            <a href="../html/terms.html">Terms of Service</a> |
+            <a href="../html/contact.html">Contact</a>
+        </p>
+    </footer>
+
+    <script src="../js/sentle.js"></script>
+</body>
+</html>

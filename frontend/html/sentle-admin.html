@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentle Admin Panel</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/sentle.css">
+    <script src="../js/themeManager.js"></script>
+    <style>
+        .admin-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .admin-form {
+            background: var(--sentle-bg);
+            border: 1px solid var(--sentle-border);
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--sentle-text);
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--sentle-border);
+            border-radius: 4px;
+            font-size: 1rem;
+            background: var(--sentle-bg);
+            color: var(--sentle-text);
+            box-sizing: border-box;
+        }
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: #1976d2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-primary:hover {
+            background: #1565c0;
+        }
+        .sentence-list {
+            background: var(--sentle-bg);
+            border: 1px solid var(--sentle-border);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .sentence-item {
+            padding: 15px;
+            border-bottom: 1px solid var(--sentle-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sentence-item:last-child {
+            border-bottom: none;
+        }
+        .sentence-date {
+            font-weight: 600;
+            color: #1976d2;
+        }
+        .sentence-text {
+            flex: 1;
+            margin: 0 15px;
+            color: var(--sentle-text);
+        }
+        .alert {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <h1>Sentle Admin Panel</h1>
+        <a href="sentle.html" class="btn-link" style="display: inline-block; margin-bottom: 20px;">← Back to Game</a>
+        
+        <div id="alert" style="display: none;"></div>
+        
+        <div class="admin-form">
+            <h2>Add New Sentence</h2>
+            <form id="addSentenceForm">
+                <div class="form-group">
+                    <label for="adminPassword">Admin Password:</label>
+                    <input type="password" id="adminPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="sentenceDate">Date:</label>
+                    <input type="date" id="sentenceDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="sentenceText">Sentence:</label>
+                    <textarea id="sentenceText" placeholder="Enter the sentence (2-15 words)" required></textarea>
+                    <small style="color: var(--sentle-text);">Tip: Use clear English sentences with 2-15 words.</small>
+                </div>
+                <button type="submit" class="btn-primary">Add Sentence</button>
+            </form>
+        </div>
+        
+        <div class="sentence-list">
+            <h2>Scheduled Sentences</h2>
+            <div id="sentenceList">
+                <div class="loading">Loading sentences...</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('addSentenceForm');
+            const sentenceList = document.getElementById('sentenceList');
+            const alert = document.getElementById('alert');
+            
+            // Set default date to tomorrow
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('sentenceDate').value = tomorrow.toISOString().split('T')[0];
+            
+            // Load sentences
+            loadSentences();
+            
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const password = document.getElementById('adminPassword').value;
+                const date = document.getElementById('sentenceDate').value;
+                const sentence = document.getElementById('sentenceText').value;
+                
+                try {
+                    const response = await fetch('/api/sentle/admin/add', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            password, 
+                            date, 
+                            sentence
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        showAlert('Sentence added successfully!', 'success');
+                        form.reset();
+                        const tomorrow = new Date();
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        document.getElementById('sentenceDate').value = tomorrow.toISOString().split('T')[0];
+                        loadSentences();
+                    } else {
+                        showAlert(data.detail || data.message || 'Error adding sentence', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showAlert('Network error. Please try again.', 'error');
+                }
+            });
+            
+            async function loadSentences() {
+                try {
+                    const response = await fetch('/api/sentle/admin/list');
+                    const data = await response.json();
+                    
+                    if (data.sentences && data.sentences.length > 0) {
+                        sentenceList.innerHTML = data.sentences.map(s => `
+                            <div class="sentence-item">
+                                <span class="sentence-date">${s.date}</span>
+                                <span class="sentence-text">${escapeHtml(s.sentence)}</span>
+                                <span>${s.used ? '✓ Used' : '⏳ Pending'}</span>
+                            </div>
+                        `).join('');
+                    } else {
+                        sentenceList.innerHTML = '<p style="text-align: center; color: var(--sentle-text);">No sentences scheduled yet.</p>';
+                    }
+                } catch (error) {
+                    sentenceList.innerHTML = '<p style="text-align: center; color: #e06c75;">Error loading sentences.</p>';
+                }
+            }
+            
+            function showAlert(message, type) {
+                alert.textContent = message;
+                alert.className = `alert alert-${type}`;
+                alert.style.display = 'block';
+                
+                setTimeout(() => {
+                    alert.style.display = 'none';
+                }, 5000);
+            }
+            
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        });
+    </script>
+</body>
+</html>

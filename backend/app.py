@@ -11121,6 +11121,267 @@ else:
 # END KINGDOM QUARRY GAME API ENDPOINTS
 # =============================================================================
 
+# =============================================================================
+# SENTLE GAME API ENDPOINTS
+# =============================================================================
+
+# Sentle Admin Password (stored in environment variable for security)
+SENTLE_ADMIN_PASSWORD = os.getenv("SENTLE_ADMIN_PASSWORD", "sentle6967god")
+
+# Initialize Sentle database tables
+def init_sentle_tables():
+    """Initialize Sentle game database tables"""
+    try:
+        from database.database import Database
+        
+        # Create sentences table
+        Database.execute_sql("""
+            CREATE TABLE IF NOT EXISTS sentle_sentences (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                date DATE NOT NULL UNIQUE,
+                sentence VARCHAR(500) NOT NULL,
+                word_count INT NOT NULL,
+                used BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Create scores table
+        Database.execute_sql("""
+            CREATE TABLE IF NOT EXISTS sentle_scores (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                sentence_id INT NOT NULL,
+                player_name VARCHAR(100) NOT NULL,
+                score INT NOT NULL,
+                guesses INT NOT NULL,
+                date DATE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (sentence_id) REFERENCES sentle_sentences(id) ON DELETE CASCADE
+            )
+        """)
+        
+        print("✓ Sentle database tables initialized")
+    except Exception as e:
+        print(f"Warning: Could not initialize Sentle tables: {e}")
+
+# Initialize tables on startup
+init_sentle_tables()
+
+@app.get("/api/sentle/daily", tags=["Sentle"])
+async def get_daily_sentence():
+    """Get the daily Sentle sentence"""
+    try:
+        from database.database import Database
+        
+        today = datetime.now().date()
+        
+        # Get today's sentence
+        result = Database.get_one_row(
+            "SELECT id, sentence, date FROM sentle_sentences WHERE date = %s",
+            (today,)
+        )
+        
+        if result:
+            # Mark as used
+            Database.execute_sql(
+                "UPDATE sentle_sentences SET used = TRUE WHERE id = %s",
+                (result['id'],)
+            )
+            
+            return {
+                "id": result['id'],
+                "sentence": result['sentence'],
+                "date": str(result['date'])
+            }
+        else:
+            # No sentence for today
+            return {"sentence": None, "date": str(today), "id": None}
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error loading sentence: {str(e)}")
+
+@app.post("/api/sentle/score", tags=["Sentle"])
+async def submit_score(payload: Dict[str, Any] = Body(...)):
+    """Submit a Sentle game score"""
+    try:
+        from database.database import Database
+        
+        player_name = payload.get('playerName', 'Anonymous')[:100]
+        score = int(payload.get('score', 0))
+        guesses = int(payload.get('guesses', 0))
+        sentence_id = payload.get('sentenceId')
+        date = payload.get('date')
+        
+        if not sentence_id or not date:
+            raise HTTPException(status_code=400, detail="Missing required fields")
+        
+        # Insert score
+        Database.execute_sql(
+            """INSERT INTO sentle_scores 
+               (sentence_id, player_name, score, guesses, date) 
+               VALUES (%s, %s, %s, %s, %s)""",
+            (sentence_id, player_name, score, guesses, date)
+        )
+        
+        return {"success": True, "message": "Score submitted successfully"}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error submitting score: {str(e)}")
+
+@app.get("/api/sentle/leaderboard", tags=["Sentle"])
+async def get_leaderboard():
+    """Get today's Sentle leaderboard"""
+    try:
+        from database.database import Database
+        
+        today = datetime.now().date()
+        
+        # Get top scores for today
+        results = Database.get_rows(
+            """SELECT player_name, score, guesses 
+               FROM sentle_scores 
+               WHERE date = %s 
+               ORDER BY score DESC, guesses ASC, created_at ASC 
+               LIMIT 100""",
+            (today,)
+        )
+        
+        leaderboard = [
+            {
+                "playerName": row['player_name'],
+                "score": row['score'],
+                "guesses": row['guesses']
+            }
+            for row in (results or [])
+        ]
+        
+        return {"leaderboard": leaderboard}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error loading leaderboard: {str(e)}")
+
+@app.get("/api/sentle/archive", tags=["Sentle"])
+async def get_archive():
+    """Get archive of past sentences with stats"""
+    try:
+        from database.database import Database
+        
+        today = datetime.now().date()
+        
+        # Get past sentences with stats
+        results = Database.get_rows(
+            """SELECT 
+                s.id, s.date, s.sentence,
+                COUNT(DISTINCT sc.id) as plays,
+                MAX(sc.score) as best_score
+               FROM sentle_sentences s
+               LEFT JOIN sentle_scores sc ON s.id = sc.sentence_id
+               WHERE s.date < %s
+               GROUP BY s.id, s.date, s.sentence
+               ORDER BY s.date DESC
+               LIMIT 100""",
+            (today,)
+        )
+        
+        archive = [
+            {
+                "id": row['id'],
+                "date": str(row['date']),
+                "sentence": row['sentence'],
+                "plays": row['plays'] or 0,
+                "bestScore": row['best_score'] or 0
+            }
+            for row in (results or [])
+        ]
+        
+        return {"archive": archive}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error loading archive: {str(e)}")
+
+@app.post("/api/sentle/admin/add", tags=["Sentle"])
+async def admin_add_sentence(payload: Dict[str, Any] = Body(...)):
+    """Admin endpoint to add a new sentence for a specific day"""
+    try:
+        from database.database import Database
+        
+        password = payload.get('password')
+        date = payload.get('date')
+        sentence = payload.get('sentence', '').strip()
+        
+        # Verify admin password
+        if password != SENTLE_ADMIN_PASSWORD:
+            raise HTTPException(status_code=401, detail="Invalid admin password")
+        
+        if not date or not sentence:
+            raise HTTPException(status_code=400, detail="Date and sentence are required")
+        
+        # Validate sentence
+        words = sentence.split()
+        word_count = len(words)
+        
+        if word_count < 2 or word_count > 15:
+            raise HTTPException(
+                status_code=400, 
+                detail="Sentence must be between 2 and 15 words"
+            )
+        
+        # Insert sentence
+        try:
+            Database.execute_sql(
+                """INSERT INTO sentle_sentences (date, sentence, word_count) 
+                   VALUES (%s, %s, %s)""",
+                (date, sentence, word_count)
+            )
+            
+            return {"success": True, "message": "Sentence added successfully"}
+            
+        except Exception as e:
+            if "Duplicate entry" in str(e):
+                raise HTTPException(
+                    status_code=400, 
+                    detail="A sentence already exists for this date"
+                )
+            raise
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error adding sentence: {str(e)}")
+
+@app.get("/api/sentle/admin/list", tags=["Sentle"])
+async def admin_list_sentences():
+    """List all scheduled sentences (no auth required for viewing)"""
+    try:
+        from database.database import Database
+        
+        # Get all future and recent sentences
+        results = Database.get_rows(
+            """SELECT id, date, sentence, used 
+               FROM sentle_sentences 
+               ORDER BY date DESC 
+               LIMIT 50"""
+        )
+        
+        sentences = [
+            {
+                "id": row['id'],
+                "date": str(row['date']),
+                "sentence": row['sentence'],
+                "used": bool(row['used'])
+            }
+            for row in (results or [])
+        ]
+        
+        return {"sentences": sentences}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error listing sentences: {str(e)}")
+
+# =============================================================================
+# END SENTLE GAME API ENDPOINTS
+# =============================================================================
+
 if __name__ == "__main__":
     # System startup info - Triple-layer fallback system
     import sys
