@@ -40,9 +40,6 @@
             </button>
             <h1>SENTLE</h1>
             <div class="header-icons">
-                <button id="statsBtn" class="icon-btn" title="Statistics">
-                    <span>📊</span>
-                </button>
                 <button id="themeToggleBtn" class="icon-btn" title="Toggle theme">
                     <span>🌓</span>
                 </button>
@@ -64,7 +61,9 @@
             <p class="auth-subtitle">Guess the daily sentence word-by-word</p>
             
             <div id="loginForm" class="auth-form">
-                <h2>Login</h2>                <div id=\"loginError\" class=\"auth-error\" style=\"display: none;\"></div>                <input type="text" id="loginFirst" class="auth-input" placeholder="First name">
+                <h2>Login</h2>
+                <div id="loginError" class="auth-error" style="display: none;"></div>
+                <input type="text" id="loginFirst" class="auth-input" placeholder="First name">
                 <input type="text" id="loginLast" class="auth-input" placeholder="Last name">
                 <input type="password" id="loginPassword" class="auth-input" placeholder="Password">
                 <button class="auth-btn" onclick="loginUser()">Login</button>
@@ -235,36 +234,6 @@
                 <li>Perfect game (all 1st tries): 1000+ points!</li>
             </ul>
             <p>A new sentence is available each day at midnight!</p>
-        </div>
-    </div>
-
-    <!-- Stats Modal -->
-    <div id="statsModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Your Statistics</h2>
-            <div id="statsContent" class="stats-content">
-                <div class="stat-item">
-                    <div class="stat-value" id="gamesPlayed">0</div>
-                    <div class="stat-label">Played</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="winRate">0</div>
-                    <div class="stat-label">Win %</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="currentStreak">0</div>
-                    <div class="stat-label">Current Streak</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="maxStreak">0</div>
-                    <div class="stat-label">Max Streak</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="totalScore">0</div>
-                    <div class="stat-label">Total Score</div>
-                </div>
-            </div>
         </div>
     </div>
 

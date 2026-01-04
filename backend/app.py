@@ -82,6 +82,18 @@ quiz_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 quiz_file_handler.setFormatter(quiz_formatter)
 if not any(isinstance(h, logging.FileHandler) and getattr(h, 'baseFilename', None) == quiz_file_handler.baseFilename for h in quiz_logger.handlers):
     quiz_logger.addHandler(quiz_file_handler)
+
+# Dedicated Sentle logger so gameplay/auth events land in a file the user can share
+sentle_log_file = os.path.join(os.path.dirname(__file__), 'sentle.log')
+sentle_logger = logging.getLogger('sentle')
+sentle_logger.setLevel(logging.DEBUG)
+sentle_file_handler = logging.FileHandler(sentle_log_file, mode='a')
+sentle_file_handler.setLevel(logging.DEBUG)
+sentle_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+sentle_file_handler.setFormatter(sentle_formatter)
+if not any(isinstance(h, logging.FileHandler) and getattr(h, 'baseFilename', None) == sentle_file_handler.baseFilename for h in sentle_logger.handlers):
+    sentle_logger.addHandler(sentle_file_handler)
+
 # Socket.IO / Engine.IO and Uvicorn logging setup
 # Write socket-related logs to `socket.log` for debugging client connection errors
 socket_log_file = os.path.join(os.path.dirname(__file__), 'socket.log')
@@ -111,9 +123,28 @@ if not any(isinstance(h, logging.FileHandler) and getattr(h, 'baseFilename', Non
     uvicorn_access_logger.addHandler(socket_file_handler)
 
 quiz_logger.propagate = False
+sentle_logger.propagate = False
 quiz_logger.info("="*50)
 quiz_logger.info("Quiz Logger Initialized")
 quiz_logger.info("="*50)
+
+# Cache of sentle_scores columns to align inserts with whatever schema exists in the DB
+_sentle_scores_columns_cache = None
+
+def get_sentle_scores_columns():
+    """Detect sentle_scores table columns once and cache them."""
+    global _sentle_scores_columns_cache
+    if _sentle_scores_columns_cache is not None:
+        return _sentle_scores_columns_cache
+    try:
+        from database.database import Database
+        cols = Database.get_rows("SHOW COLUMNS FROM sentle_scores")
+        _sentle_scores_columns_cache = [c.get('Field') for c in cols] if cols else []
+        sentle_logger.info(f"Sentle scores columns detected: {_sentle_scores_columns_cache}")
+    except Exception as e:
+        sentle_logger.error(f"Failed to detect sentle_scores columns: {e}")
+        _sentle_scores_columns_cache = []
+    return _sentle_scores_columns_cache
 
 # Global variable for temperature effects
 virtualTemperature = 0
@@ -11287,37 +11318,61 @@ async def sentle_login(payload: Dict[str, Any] = Body(...), request: Request = N
         # Check if already played today
         today = datetime.now().date()
         today_session = Database.get_one_row(
-            "SELECT id, played FROM sentle_sessions WHERE user_id = %s AND date = %s",
+            "SELECT id, played, session_token FROM sentle_sessions WHERE user_id = %s AND date = %s",
             (user['id'], today)
         )
-        
-        if today_session and today_session['played']:
-            raise HTTPException(status_code=403, detail="You've already played today. Try again tomorrow!")
-        
-        # Create session
-        session_token = generate_session_token()
+
+        cols = get_sentle_scores_columns()
+        has_user_id = 'user_id' in cols
+        has_player_name = 'player_name' in cols
+        player_name = f"{user['first_name']} {user['last_name']}".strip()
+
+        already_scored = None
+        if has_user_id:
+            already_scored = Database.get_one_row(
+                "SELECT id FROM sentle_scores WHERE user_id = %s AND date = %s",
+                (user['id'], today)
+            )
+        elif has_player_name:
+            already_scored = Database.get_one_row(
+                "SELECT id FROM sentle_scores WHERE player_name = %s AND date = %s",
+                (player_name, today)
+            )
+
         ip, user_agent = get_client_info(request)
-        
+        # Ensure there is a session row/token for today
+        session_token = today_session['session_token'] if today_session and today_session.get('session_token') else generate_session_token()
+
         if today_session:
-            # Update existing session for today
             Database.execute_sql(
-                "UPDATE sentle_sessions SET session_token = %s, ip_address = %s, user_agent = %s WHERE id = %s",
-                (session_token, ip, user_agent, today_session['id'])
+                "UPDATE sentle_sessions SET session_token = %s, ip_address = %s, user_agent = %s, played = %s WHERE id = %s",
+                (session_token, ip, user_agent, bool(already_scored), today_session['id'])
             )
         else:
-            # Create new session for today
             Database.execute_sql(
-                "INSERT INTO sentle_sessions (user_id, session_token, ip_address, user_agent, date) VALUES (%s, %s, %s, %s, %s)",
-                (user['id'], session_token, ip, user_agent, today)
+                "INSERT INTO sentle_sessions (user_id, session_token, ip_address, user_agent, date, played) VALUES (%s, %s, %s, %s, %s, %s)",
+                (user['id'], session_token, ip, user_agent, today, bool(already_scored))
             )
         
         username = f"{user['first_name']} {user['last_name']}".strip()
-        return {
-            "success": True,
-            "session_token": session_token,
-            "username": username,
-            "message": "Login successful"
-        }
+        if already_scored:
+            return {
+                "success": True,
+                "session_token": session_token,
+                "user_id": user['id'],
+                "username": username,
+                "played_today": True,
+                "message": "You already played today. You can view stats or play archives."
+            }
+        else:
+            return {
+                "success": True,
+                "session_token": session_token,
+                "user_id": user['id'],
+                "username": username,
+                "played_today": False,
+                "message": "Login successful"
+            }
         
     except HTTPException:
         raise
@@ -11364,33 +11419,70 @@ async def submit_score(payload: Dict[str, Any] = Body(...)):
         from database.database import Database
         
         session_token = payload.get('session_token')
+        incoming_user_id = payload.get('user_id')
         score = int(payload.get('score', 0))
         attempts = int(payload.get('attempts', 0))
         sentence_id = payload.get('sentenceId')
         date = payload.get('date')
         
-        print(f"\n[SENTLE] Score submission attempt: user_sentence={sentence_id}, date={date}, score={score}, attempts={attempts}")
+        sentle_logger.info(f"Score submission attempt: user_sentence={sentence_id}, date={date}, score={score}, attempts={attempts}")
         
         if not session_token or not sentence_id or not date:
             raise HTTPException(status_code=400, detail="Missing required fields")
         
-        # Verify session token (only for today's session)
+        # Verify session token (date-agnostic). Only allow one score per user per day.
         today = datetime.now().date()
         session = Database.get_one_row(
-            "SELECT user_id, played FROM sentle_sessions WHERE session_token = %s AND date = %s",
-            (session_token, today)
+            "SELECT id, user_id, date FROM sentle_sessions WHERE session_token = %s",
+            (session_token,)
         )
-        
-        print(f"[SENTLE] Session lookup: token found={session is not None}, today={today}")
-        
+
+        sentle_logger.info(f"Session lookup: token found={session is not None}, today={today}")
+
         if not session:
-            raise HTTPException(status_code=401, detail="Invalid session. Please log in again.")
-        
-        if session['played']:
-            print(f"[SENTLE] User {session['user_id']} already played today")
-            raise HTTPException(status_code=403, detail="You have already submitted a score today!")
-        
+            if incoming_user_id:
+                # Try to reuse today's session row by user_id
+                session = Database.get_one_row(
+                    "SELECT id, user_id, date FROM sentle_sessions WHERE user_id = %s AND date = %s",
+                    (incoming_user_id, today)
+                )
+                if session:
+                    try:
+                        Database.execute_sql(
+                            "UPDATE sentle_sessions SET session_token = %s WHERE id = %s",
+                            (session_token, session['id'])
+                        )
+                        sentle_logger.info(f"Rebound session token for user {incoming_user_id} on {today}")
+                    except Exception as upd_err:
+                        sentle_logger.error(f"Failed to update session token: {upd_err}")
+                        raise HTTPException(status_code=401, detail="Invalid session. Please log in again.")
+                else:
+                    # Create fresh session row
+                    try:
+                        Database.execute_sql(
+                            "INSERT INTO sentle_sessions (user_id, session_token, date, played) VALUES (%s, %s, %s, FALSE)",
+                            (incoming_user_id, session_token, today)
+                        )
+                        session = {"user_id": incoming_user_id, "date": today}
+                        sentle_logger.info(f"Recreated session for user {incoming_user_id} on {today}")
+                    except Exception as recreate_err:
+                        sentle_logger.error(f"Failed to recreate session: {recreate_err}")
+                        raise HTTPException(status_code=401, detail="Invalid session. Please log in again.")
+            else:
+                sentle_logger.warning(f"Session token not found and no user_id provided; token={session_token}")
+                raise HTTPException(status_code=401, detail="Invalid session. Please log in again.")
+
         user_id = session['user_id']
+
+        # Enforce one score per day per user via scores table (not session row)
+        already_played = Database.get_one_row(
+            "SELECT id FROM sentle_scores WHERE user_id = %s AND date = %s",
+            (user_id, today)
+        )
+
+        if already_played:
+            sentle_logger.info(f"User {user_id} already played today")
+            raise HTTPException(status_code=403, detail="You have already submitted a score today!")
 
         # Ensure the score is for today's sentence only (archived sentences do not award points)
         today_sentence = Database.get_one_row(
@@ -11398,49 +11490,102 @@ async def submit_score(payload: Dict[str, Any] = Body(...)):
             (today,)
         )
         
-        print(f"[SENTLE] Today's sentence: {today_sentence}")
+        sentle_logger.info(f"Today's sentence: {today_sentence}")
 
         if not today_sentence or not today_sentence.get("id"):
             raise HTTPException(status_code=400, detail="No active sentence for today")
 
         if int(sentence_id) != int(today_sentence['id']) or str(date) != str(today_sentence['date']):
-            print(f"[SENTLE] Sentence mismatch: submitted_id={sentence_id}, today_id={today_sentence['id']}, submitted_date={date}, today_date={today_sentence['date']}")
+            sentle_logger.warning(f"Sentence mismatch: submitted_id={sentence_id}, today_id={today_sentence['id']}, submitted_date={date}, today_date={today_sentence['date']}")
             raise HTTPException(status_code=403, detail="Scores can only be submitted for today's sentence")
         
-        # Check for duplicate (shouldn't happen but be safe)
-        existing = Database.get_one_row(
-            "SELECT id FROM sentle_scores WHERE user_id = %s AND sentence_id = %s AND date = %s",
-            (user_id, sentence_id, date)
-        )
-        
+        # Check for duplicate (schema-aware)
+        existing = None
+        if supports_user_id:
+            existing = Database.get_one_row(
+                "SELECT id FROM sentle_scores WHERE user_id = %s AND date = %s",
+                (user_id, date)
+            )
+        elif supports_player_name:
+            existing = Database.get_one_row(
+                "SELECT id FROM sentle_scores WHERE player_name = %s AND date = %s",
+                (player_name, date)
+            )
         if existing:
             raise HTTPException(status_code=403, detail="Score already submitted for today!")
         
-        # Insert score
+        # Insert score using detected schema (supports player_name/guesses or user_id/attempts)
+        player_name = "Anonymous"
         try:
-            Database.execute_sql(
-                """INSERT INTO sentle_scores 
-                   (user_id, sentence_id, score, attempts, date) 
-                   VALUES (%s, %s, %s, %s, %s)""",
-                (user_id, sentence_id, score, attempts, date)
+            user_row = Database.get_one_row(
+                "SELECT first_name, last_name FROM users WHERE id = %s",
+                (user_id,)
             )
-            print(f"[SENTLE] ✓ Score inserted: user_id={user_id}, sentence_id={sentence_id}, score={score}, date={date}")
+            if user_row:
+                player_name = f"{user_row.get('first_name','').strip()} {user_row.get('last_name','').strip()}".strip() or "Anonymous"
+        except Exception as name_err:
+            sentle_logger.warning(f"Could not fetch player name for user {user_id}: {name_err}")
+
+        cols = get_sentle_scores_columns()
+        supports_user_id = 'user_id' in cols
+        supports_player_name = 'player_name' in cols
+        supports_attempts = 'attempts' in cols
+        supports_guesses = 'guesses' in cols
+        supports_date = 'date' in cols
+
+        insert_cols = []
+        insert_vals = []
+        if supports_user_id:
+            insert_cols.append('user_id')
+            insert_vals.append(user_id)
+        insert_cols.append('sentence_id')
+        insert_vals.append(sentence_id)
+        if supports_player_name:
+            insert_cols.append('player_name')
+            insert_vals.append(player_name)
+        insert_cols.append('score')
+        insert_vals.append(score)
+        if supports_attempts:
+            insert_cols.append('attempts')
+            insert_vals.append(attempts)
+        elif supports_guesses:
+            insert_cols.append('guesses')
+            insert_vals.append(attempts)
+        if supports_date:
+            insert_cols.append('date')
+            insert_vals.append(date)
+
+        if not insert_cols:
+            sentle_logger.error("sentle_scores schema not detected; cannot insert score")
+            raise HTTPException(status_code=500, detail="Score table unavailable")
+
+        placeholders = ', '.join(['%s'] * len(insert_cols))
+        sql = f"INSERT INTO sentle_scores ({', '.join(insert_cols)}) VALUES ({placeholders})"
+
+        try:
+            Database.execute_sql(sql, tuple(insert_vals))
+            # Mark session as played for today
+            try:
+                Database.execute_sql(
+                    "UPDATE sentle_sessions SET played = TRUE WHERE user_id = %s AND date = %s",
+                    (user_id, today)
+                )
+            except Exception as played_err:
+                sentle_logger.warning(f"Failed to mark session played for user {user_id}: {played_err}")
+
+            sentle_logger.info(
+                f"Score inserted using columns {insert_cols}: user_id={user_id}, player_name={player_name}, sentence_id={sentence_id}, score={score}, attempts={attempts}, date={date}"
+            )
         except Exception as insert_err:
-            print(f"[SENTLE] ✗ Failed to insert score: {insert_err}")
+            sentle_logger.error(f"Failed to insert score with columns {insert_cols}: {insert_err}")
             raise HTTPException(status_code=500, detail=f"Failed to save score: {str(insert_err)}")
-        
-        # Mark session as played
-        Database.execute_sql(
-            "UPDATE sentle_sessions SET played = TRUE WHERE session_token = %s",
-            (session_token,)
-        )
         
         return {"success": True, "message": "Score submitted successfully"}
         
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[SENTLE] Error submitting score: {str(e)}")
+        sentle_logger.error(f"Error submitting score: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error submitting score: {str(e)}")
 
 @app.get("/api/sentle/stats", tags=["Sentle"])
@@ -11462,29 +11607,79 @@ async def get_user_stats(request: Request):
         if not session_token:
             raise HTTPException(status_code=401, detail="Session token required")
         
-        # Get user from session
-        today = datetime.now().date()
+        # Get user from session (date-agnostic). If missing (e.g., table cleared) but user_id provided, return empty stats.
         session = Database.get_one_row(
-            "SELECT user_id FROM sentle_sessions WHERE session_token = %s AND date = %s",
-            (session_token, today)
+            "SELECT user_id FROM sentle_sessions WHERE session_token = %s",
+            (session_token,)
         )
-        
+
         if not session:
-            raise HTTPException(status_code=401, detail="Invalid session")
-        
+            return {
+                "gamesPlayed": 0,
+                "gamesWon": 0,
+                "currentStreak": 0,
+                "maxStreak": 0,
+                "totalScore": 0,
+                "playedToday": False,
+            }
+
         user_id = session['user_id']
         
         # Calculate stats from sentle_scores table
-        stats_result = Database.get_one_row(
-            """SELECT 
-                COUNT(*) AS games_played,
-                SUM(CASE WHEN score > 0 THEN 1 ELSE 0 END) AS games_won,
-                COALESCE(SUM(score), 0) AS total_score,
-                COALESCE(SUM(attempts), 0) AS total_attempts
-               FROM sentle_scores
-               WHERE user_id = %s""",
-            (user_id,)
-        )
+        cols = get_sentle_scores_columns()
+        has_attempts = 'attempts' in cols
+        has_guesses = 'guesses' in cols
+        has_user_id = 'user_id' in cols
+        has_player_name = 'player_name' in cols
+        today = datetime.now().date()
+
+        if not has_user_id and has_player_name:
+            # Fallback: use player_name matching this user
+            user_row = Database.get_one_row(
+                "SELECT first_name, last_name FROM users WHERE id = %s",
+                (user_id,)
+            )
+            player_name = None
+            if user_row:
+                player_name = f"{user_row.get('first_name','').strip()} {user_row.get('last_name','').strip()}".strip()
+            if not player_name:
+                sentle_logger.warning("sentle_scores has no user_id column and player name missing; returning empty stats")
+                stats_result = None
+            else:
+                stats_result = Database.get_one_row(
+                    """SELECT 
+                        COUNT(*) AS games_played,
+                        SUM(CASE WHEN score > 0 THEN 1 ELSE 0 END) AS games_won,
+                        COALESCE(SUM(score), 0) AS total_score,
+                        COALESCE(SUM({attempt_col}), 0) AS total_attempts
+                       FROM sentle_scores
+                       WHERE player_name = %s""".format(attempt_col='attempts' if has_attempts else ('guesses' if has_guesses else 'score')),
+                    (player_name,)
+                )
+        elif has_attempts:
+            stats_result = Database.get_one_row(
+                """SELECT 
+                    COUNT(*) AS games_played,
+                    SUM(CASE WHEN score > 0 THEN 1 ELSE 0 END) AS games_won,
+                    COALESCE(SUM(score), 0) AS total_score,
+                    COALESCE(SUM(attempts), 0) AS total_attempts
+                   FROM sentle_scores
+                   WHERE user_id = %s""",
+                (user_id,)
+            )
+        elif has_guesses:
+            stats_result = Database.get_one_row(
+                """SELECT 
+                    COUNT(*) AS games_played,
+                    SUM(CASE WHEN score > 0 THEN 1 ELSE 0 END) AS games_won,
+                    COALESCE(SUM(score), 0) AS total_score,
+                    COALESCE(SUM(guesses), 0) AS total_attempts
+                   FROM sentle_scores
+                   WHERE user_id = %s""",
+                (user_id,)
+            )
+        else:
+            stats_result = None
         
         if not stats_result:
             stats_result = {
@@ -11493,12 +11688,34 @@ async def get_user_stats(request: Request):
                 'total_score': 0,
                 'total_attempts': 0
             }
+
+        # Determine if the user already played today (schema-aware)
+        played_today = False
+        if has_user_id:
+            played_today = Database.get_one_row(
+                "SELECT id FROM sentle_scores WHERE user_id = %s AND date = %s",
+                (user_id, today)
+            ) is not None
+        elif has_player_name:
+            user_row = Database.get_one_row(
+                "SELECT first_name, last_name FROM users WHERE id = %s",
+                (user_id,)
+            )
+            player_name = None
+            if user_row:
+                player_name = f"{user_row.get('first_name','').strip()} {user_row.get('last_name','').strip()}".strip()
+            if player_name:
+                played_today = Database.get_one_row(
+                    "SELECT id FROM sentle_scores WHERE player_name = %s AND date = %s",
+                    (player_name, today)
+                ) is not None
         
         return {
             "gamesPlayed": stats_result['games_played'] or 0,
             "gamesWon": stats_result['games_won'] or 0,
             "totalScore": stats_result['total_score'] or 0,
             "totalAttempts": stats_result['total_attempts'] or 0,
+            "playedToday": played_today,
             "currentStreak": 0,  # Would need more complex logic to calculate
             "maxStreak": 0       # Would need more complex logic to calculate
         }
@@ -11506,7 +11723,7 @@ async def get_user_stats(request: Request):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[SENTLE] Error getting user stats: {str(e)}")
+        sentle_logger.error(f"Error getting user stats: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error loading stats: {str(e)}")
 
 
@@ -11540,7 +11757,7 @@ async def debug_scores():
         }
         
     except Exception as e:
-        print(f"[SENTLE] Error in debug/scores: {str(e)}")
+        sentle_logger.error(f"Error in debug/scores: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -11550,19 +11767,39 @@ async def get_leaderboard():
     try:
         from database.database import Database
         
-        # Simple version - just get all scores grouped by user
-        results = Database.get_rows(
-            """SELECT 
-                    u.id,
-                    CONCAT(u.first_name, ' ', u.last_name) AS player_name,
-                    COUNT(*) AS games_played,
-                    SUM(s.score) AS total_score
-               FROM sentle_scores s
-               INNER JOIN users u ON s.user_id = u.id
-               GROUP BY u.id
-               ORDER BY total_score DESC
-               LIMIT 100"""
-        )
+        cols = get_sentle_scores_columns()
+        has_player_name = 'player_name' in cols
+        has_user_id = 'user_id' in cols
+
+        if has_player_name and not has_user_id:
+            # Schema with player_name/guesses only
+            results = Database.get_rows(
+                """SELECT t.player_name, t.games_played, t.total_score
+                   FROM (
+                        SELECT 
+                            COALESCE(player_name, 'Anonymous') AS player_name,
+                            COUNT(*) AS games_played,
+                            SUM(score) AS total_score
+                        FROM sentle_scores
+                        GROUP BY COALESCE(player_name, 'Anonymous')
+                   ) t
+                   ORDER BY t.total_score DESC
+                   LIMIT 100"""
+            )
+        else:
+            # Default schema with user_id (may also have player_name)
+            results = Database.get_rows(
+                """SELECT 
+                        u.id,
+                        COALESCE(s.player_name, CONCAT(u.first_name, ' ', u.last_name)) AS player_name,
+                        COUNT(*) AS games_played,
+                        SUM(s.score) AS total_score
+                   FROM sentle_scores s
+                   INNER JOIN users u ON s.user_id = u.id
+                   GROUP BY u.id, player_name
+                   ORDER BY total_score DESC
+                   LIMIT 100"""
+            )
         
         leaderboard = []
         if results:
@@ -11571,12 +11808,14 @@ async def get_leaderboard():
                     "playerName": row.get('player_name', 'Unknown'),
                     "score": int(row.get('total_score', 0))
                 })
-        
-        print(f"[SENTLE] Leaderboard query returned {len(leaderboard)} entries")
+        else:
+            sentle_logger.warning("Leaderboard query returned no rows (results empty or error)")
+
+        sentle_logger.info(f"Leaderboard query returned {len(leaderboard)} entries")
         return {"leaderboard": leaderboard}
         
     except Exception as e:
-        print(f"[SENTLE] Leaderboard error: {str(e)}")
+        sentle_logger.error(f"Leaderboard error: {str(e)}")
         import traceback
         traceback.print_exc()
         return {"leaderboard": []}
@@ -11589,18 +11828,34 @@ async def get_daily_leaderboard():
         from database.database import Database
 
         today = datetime.now().date()
-        results = Database.get_rows(
-            """SELECT 
-                    u.id,
-                    CONCAT(u.first_name, ' ', u.last_name) AS player_name,
-                    s.score
-               FROM sentle_scores s
-               INNER JOIN users u ON s.user_id = u.id
-               WHERE s.date = %s
-               ORDER BY s.score DESC
-               LIMIT 100""",
-            (today,)
-        )
+        cols = get_sentle_scores_columns()
+        has_player_name = 'player_name' in cols
+        has_user_id = 'user_id' in cols
+
+        if has_player_name and not has_user_id:
+            results = Database.get_rows(
+                """SELECT t.player_name, t.score FROM (
+                        SELECT COALESCE(player_name, 'Anonymous') AS player_name, score
+                        FROM sentle_scores
+                        WHERE date = %s
+                   ) t
+                   ORDER BY t.score DESC
+                   LIMIT 100""",
+                (today,)
+            )
+        else:
+            results = Database.get_rows(
+                """SELECT 
+                        u.id,
+                        COALESCE(s.player_name, CONCAT(u.first_name, ' ', u.last_name)) AS player_name,
+                        s.score
+                   FROM sentle_scores s
+                   INNER JOIN users u ON s.user_id = u.id
+                   WHERE s.date = %s
+                   ORDER BY s.score DESC
+                   LIMIT 100""",
+                (today,)
+            )
 
         leaderboard = []
         if results:
@@ -11610,11 +11865,11 @@ async def get_daily_leaderboard():
                     "score": int(row.get('score', 0))
                 })
 
-        print(f"[SENTLE] Daily leaderboard returned {len(leaderboard)} entries for {today}")
+        sentle_logger.info(f"Daily leaderboard returned {len(leaderboard)} entries for {today}")
         return {"date": str(today), "leaderboard": leaderboard}
 
     except Exception as e:
-        print(f"[SENTLE] Daily leaderboard error: {str(e)}")
+        sentle_logger.error(f"Daily leaderboard error: {str(e)}")
         import traceback
         traceback.print_exc()
         return {"date": str(datetime.now().date()), "leaderboard": []}
