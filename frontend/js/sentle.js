@@ -536,6 +536,14 @@ class SentleGame {
             return;
         }
         try {
+            console.log('Submitting score:', {
+                score,
+                attempts: attemptsUsed,
+                sentenceId: this.sentenceId,
+                date: this.targetDate,
+                sessionToken: this.sessionToken
+            });
+
             const response = await fetch('/api/sentle/score', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -549,6 +557,8 @@ class SentleGame {
             });
 
             const data = await response.json();
+            console.log('Score submission response:', { status: response.status, data });
+            
             if (response.ok) {
                 this.scoreSubmitted = true;
                 this.completed = true;
@@ -584,9 +594,11 @@ class SentleGame {
             const globalRes = await fetch('/api/sentle/leaderboard', { cache: 'no-store' });
             if (!globalRes.ok) {
                 const errorMsg = `Unable to load leaderboard (status ${globalRes.status})`;
+                console.error('Global leaderboard error:', errorMsg);
                 if (globalBoard) globalBoard.innerHTML = `<div class="loading">${errorMsg}</div>`;
             } else {
                 const globalData = await globalRes.json();
+                console.log('Global leaderboard data:', globalData);
                 this.renderLeaderboardList(
                     globalBoard,
                     globalData?.leaderboard,
@@ -602,9 +614,11 @@ class SentleGame {
             const dailyRes = await fetch('/api/sentle/leaderboard/daily', { cache: 'no-store' });
             if (!dailyRes.ok) {
                 const errorMsg = `Unable to load today\'s scores (status ${dailyRes.status})`;
+                console.error('Daily leaderboard error:', errorMsg);
                 if (dailyBoard) dailyBoard.innerHTML = `<div class="loading">${errorMsg}</div>`;
             } else {
                 const dailyData = await dailyRes.json();
+                console.log('Daily leaderboard data:', dailyData);
                 const dailyEmpty = dailyData?.date
                     ? `No scores yet for ${dailyData.date}.`
                     : 'No scores yet for today.';
