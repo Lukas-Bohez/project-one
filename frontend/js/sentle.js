@@ -12,7 +12,6 @@ class SentleGame {
         this.guessedWords = [];
         this.totalAttemptsUsed = 0;
         this.username = localStorage.getItem('sentle_username') || '';
-        this.displayName = localStorage.getItem('sentle_displayName') || this.username;
         this.sessionToken = localStorage.getItem('sentle_session') || '';
         this.stats = this.loadStats();
         this.keyboardState = {};
@@ -21,6 +20,7 @@ class SentleGame {
         this.restoreStateDone = false;
         this.completed = false;
         this.scoreSubmitted = false;
+        this.modalsSetup = false;
 
         this.init();
     }
@@ -50,6 +50,9 @@ class SentleGame {
     }
 
     init() {
+        // Always wire modal buttons even if game fails to load
+        this.setupModals();
+
         if (this.sessionToken && this.username) {
             this.hideLoginScreen();
             this.startGame();
@@ -245,7 +248,6 @@ class SentleGame {
             ?.addEventListener('click', () => this.submitArrangement());
 
         this.setupModals();
-        document.getElementById('logout')?.addEventListener('click', () => this.logout());
     }
 
     handleKeyPress(e) {
@@ -579,27 +581,37 @@ class SentleGame {
         }
 
         try {
-            const [globalRes, dailyRes] = await Promise.all([
-                fetch('/api/sentle/leaderboard'),
-                fetch('/api/sentle/leaderboard/daily'),
-            ]);
-
-            const [globalData, dailyData] = await Promise.all([globalRes.json(), dailyRes.json()]);
-
-            this.renderLeaderboardList(
-                globalBoard,
-                globalData?.leaderboard,
-                'No scores yet. Be the first!'
-            );
-
-            const dailyEmpty = dailyData?.date
-                ? `No scores yet for ${dailyData.date}.`
-                : 'No scores yet for today.';
-
-            this.renderLeaderboardList(dailyBoard, dailyData?.leaderboard, dailyEmpty);
+            const globalRes = await fetch('/api/sentle/leaderboard', { cache: 'no-store' });
+            if (!globalRes.ok) {
+                const errorMsg = `Unable to load leaderboard (status ${globalRes.status})`;
+                if (globalBoard) globalBoard.innerHTML = `<div class="loading">${errorMsg}</div>`;
+            } else {
+                const globalData = await globalRes.json();
+                this.renderLeaderboardList(
+                    globalBoard,
+                    globalData?.leaderboard,
+                    'No scores yet. Be the first!'
+                );
+            }
         } catch (err) {
-            console.error('Error loading leaderboard:', err);
+            console.error('Error loading global leaderboard:', err);
             if (globalBoard) globalBoard.innerHTML = '<div class="loading">Unable to load leaderboard.</div>';
+        }
+
+        try {
+            const dailyRes = await fetch('/api/sentle/leaderboard/daily', { cache: 'no-store' });
+            if (!dailyRes.ok) {
+                const errorMsg = `Unable to load today\'s scores (status ${dailyRes.status})`;
+                if (dailyBoard) dailyBoard.innerHTML = `<div class="loading">${errorMsg}</div>`;
+            } else {
+                const dailyData = await dailyRes.json();
+                const dailyEmpty = dailyData?.date
+                    ? `No scores yet for ${dailyData.date}.`
+                    : 'No scores yet for today.';
+                this.renderLeaderboardList(dailyBoard, dailyData?.leaderboard, dailyEmpty);
+            }
+        } catch (err) {
+            console.error('Error loading daily leaderboard:', err);
             if (dailyBoard) dailyBoard.innerHTML = '<div class="loading">Unable to load today\'s scores.</div>';
         }
     }
@@ -629,27 +641,6 @@ class SentleGame {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
-    }
-
-    saveDisplayName() {
-        const nameInput = document.getElementById('playerName');
-        if (!nameInput) return;
-
-        const name = nameInput.value.trim();
-        if (!name) {
-            this.showMessage('Please enter a name', 'error');
-            return;
-        }
-
-        this.displayName = name;
-        localStorage.setItem('sentle_displayName', name);
-        this.showMessage('Name saved for this device', 'success');
-    }
-
-    toggleThemePreference() {
-        if (typeof window.toggleTheme === 'function') {
-            window.toggleTheme();
-        }
     }
 
     showMessage(text, type = 'info') {
@@ -740,14 +731,15 @@ class SentleGame {
     }
 
     setupModals() {
+        if (this.modalsSetup) return;
+
         const helpBtn = document.getElementById('helpBtn');
         const statsBtn = document.getElementById('statsBtn');
-        const settingsBtn = document.getElementById('settingsBtn');
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const logoutBtn = document.getElementById('logout');
 
         const helpModal = document.getElementById('helpModal');
         const statsModal = document.getElementById('statsModal');
-        const settingsModal = document.getElementById('settingsModal');
-        const playerNameInput = document.getElementById('playerName');
 
         helpBtn?.addEventListener('click', () => {
             helpModal.style.display = 'block';
@@ -755,15 +747,12 @@ class SentleGame {
         statsBtn?.addEventListener('click', () => {
             this.showStatsModal();
         });
-        settingsBtn?.addEventListener('click', () => {
-            if (playerNameInput) {
-                playerNameInput.value = this.displayName || '';
+        themeToggleBtn?.addEventListener('click', () => {
+            if (typeof window.toggleTheme === 'function') {
+                window.toggleTheme();
             }
-            if (settingsModal) settingsModal.style.display = 'block';
         });
-
-        document.getElementById('saveNameBtn')?.addEventListener('click', () => this.saveDisplayName());
-        document.getElementById('themeToggle')?.addEventListener('click', () => this.toggleThemePreference());
+        logoutBtn?.addEventListener('click', () => this.logout());
 
         document.querySelectorAll('.close').forEach((closeBtn) => {
             closeBtn.addEventListener('click', (e) => {
@@ -776,6 +765,8 @@ class SentleGame {
                 e.target.style.display = 'none';
             }
         });
+
+        this.modalsSetup = true;
     }
 
     showStatsModal() {
