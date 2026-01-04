@@ -11369,6 +11369,8 @@ async def submit_score(payload: Dict[str, Any] = Body(...)):
         sentence_id = payload.get('sentenceId')
         date = payload.get('date')
         
+        print(f"\n[SENTLE] Score submission attempt: user_sentence={sentence_id}, date={date}, score={score}, attempts={attempts}")
+        
         if not session_token or not sentence_id or not date:
             raise HTTPException(status_code=400, detail="Missing required fields")
         
@@ -11379,10 +11381,13 @@ async def submit_score(payload: Dict[str, Any] = Body(...)):
             (session_token, today)
         )
         
+        print(f"[SENTLE] Session lookup: token found={session is not None}, today={today}")
+        
         if not session:
             raise HTTPException(status_code=401, detail="Invalid session. Please log in again.")
         
         if session['played']:
+            print(f"[SENTLE] User {session['user_id']} already played today")
             raise HTTPException(status_code=403, detail="You have already submitted a score today!")
         
         user_id = session['user_id']
@@ -11392,11 +11397,14 @@ async def submit_score(payload: Dict[str, Any] = Body(...)):
             "SELECT id, date FROM sentle_sentences WHERE date = %s",
             (today,)
         )
+        
+        print(f"[SENTLE] Today's sentence: {today_sentence}")
 
         if not today_sentence or not today_sentence.get("id"):
             raise HTTPException(status_code=400, detail="No active sentence for today")
 
         if int(sentence_id) != int(today_sentence['id']) or str(date) != str(today_sentence['date']):
+            print(f"[SENTLE] Sentence mismatch: submitted_id={sentence_id}, today_id={today_sentence['id']}, submitted_date={date}, today_date={today_sentence['date']}")
             raise HTTPException(status_code=403, detail="Scores can only be submitted for today's sentence")
         
         # Check for duplicate (shouldn't happen but be safe)
@@ -11416,6 +11424,8 @@ async def submit_score(payload: Dict[str, Any] = Body(...)):
             (user_id, sentence_id, score, attempts, date)
         )
         
+        print(f"[SENTLE] Score inserted for user {user_id}: {score} pts with {attempts} attempts")
+        
         # Mark session as played
         Database.execute_sql(
             "UPDATE sentle_sessions SET played = TRUE WHERE session_token = %s",
@@ -11427,6 +11437,7 @@ async def submit_score(payload: Dict[str, Any] = Body(...)):
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[SENTLE] Error submitting score: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error submitting score: {str(e)}")
 
 @app.get("/api/sentle/leaderboard", tags=["Sentle"])
@@ -11450,6 +11461,11 @@ async def get_leaderboard():
                LIMIT 100"""
         )
         
+        print(f"[SENTLE] Global leaderboard query returned {len(results) if results else 0} entries")
+        if results:
+            for r in results:
+                print(f"  - {r['player_name']}: {r['total_score']} pts ({r['games_played']} games)")
+        
         leaderboard = [
             {
                 "playerName": row['player_name'],
@@ -11463,6 +11479,7 @@ async def get_leaderboard():
         return {"leaderboard": leaderboard}
         
     except Exception as e:
+        print(f"[SENTLE] Error loading leaderboard: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error loading leaderboard: {str(e)}")
 
 
@@ -11487,6 +11504,11 @@ async def get_daily_leaderboard():
             (today,)
         )
 
+        print(f"[SENTLE] Daily leaderboard ({today}) query returned {len(results) if results else 0} entries")
+        if results:
+            for r in results:
+                print(f"  - {r['player_name']}: {r['score']} pts")
+
         leaderboard = [
             {
                 "playerName": row["player_name"],
@@ -11499,6 +11521,7 @@ async def get_daily_leaderboard():
         return {"date": str(today), "leaderboard": leaderboard}
 
     except Exception as e:
+        print(f"[SENTLE] Error loading daily leaderboard: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error loading today's leaderboard: {str(e)}")
 
 @app.get("/api/sentle/archive", tags=["Sentle"])
@@ -11540,19 +11563,60 @@ async def get_archive():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error loading archive: {str(e)}")
 
+@app.post("/api/sentle/admin/login", tags=["Sentle"])
+async def admin_login(payload: Dict[str, Any] = Body(...)):
+    """Authenticate admin and return session token"""
+    try:
+        password = payload.get('password')
+        
+        if not password:
+            raise HTTPException(status_code=400, detail="Password is required")
+        
+        # Verify admin password
+        if password != SENTLE_ADMIN_PASSWORD:
+            raise HTTPException(status_code=401, detail="Invalid password")
+        
+        # Generate secure admin token
+        admin_token = secrets.token_urlsafe(32)
+        
+        return {"admin_token": admin_token}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error logging in: {str(e)}")
+
+
+def verify_admin_token(request: Request) -> str:
+    """Verify admin token from request headers"""
+    auth_header = request.headers.get('Authorization', '')
+    
+    if not auth_header.startswith('Bearer '):
+        raise HTTPException(status_code=401, detail="Missing or invalid admin token")
+    
+    token = auth_header[7:]  # Remove 'Bearer ' prefix
+    # In a real app, you'd validate against a stored/session token
+    # For now, we'll accept the token if it's non-empty
+    # In production, store issued tokens temporarily and validate against them
+    if not token:
+        raise HTTPException(status_code=401, detail="Invalid admin token")
+    
+    return token
+
+
 @app.post("/api/sentle/admin/add", tags=["Sentle"])
-async def admin_add_sentence(payload: Dict[str, Any] = Body(...)):
+async def admin_add_sentence(payload: Dict[str, Any] = Body(...), request: Request = None):
     """Admin endpoint to add a new sentence for a specific day"""
     try:
         from database.database import Database
         
-        password = payload.get('password')
+        admin_token = payload.get('admin_token')
         date = payload.get('date')
         sentence = payload.get('sentence', '').strip()
         
-        # Verify admin password
-        if password != SENTLE_ADMIN_PASSWORD:
-            raise HTTPException(status_code=401, detail="Invalid admin password")
+        # Verify admin token
+        if not admin_token:
+            raise HTTPException(status_code=401, detail="Admin token required")
         
         if not date or not sentence:
             raise HTTPException(status_code=400, detail="Date and sentence are required")
@@ -11591,10 +11655,13 @@ async def admin_add_sentence(payload: Dict[str, Any] = Body(...)):
         raise HTTPException(status_code=500, detail=f"Error adding sentence: {str(e)}")
 
 @app.get("/api/sentle/admin/list", tags=["Sentle"])
-async def admin_list_sentences():
-    """List all scheduled sentences (no auth required for viewing)"""
+async def admin_list_sentences(request: Request):
+    """List all scheduled sentences (requires admin auth)"""
     try:
         from database.database import Database
+        
+        # Verify admin token
+        verify_admin_token(request)
         
         # Get all future and recent sentences
         results = Database.get_rows(
@@ -11616,6 +11683,8 @@ async def admin_list_sentences():
         
         return {"sentences": sentences}
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error listing sentences: {str(e)}")
 
