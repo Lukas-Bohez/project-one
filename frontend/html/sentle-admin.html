@@ -384,7 +384,6 @@
 
             setupPanel() {
                 const form = document.getElementById('addSentenceForm');
-                const themeToggleBtn = document.getElementById('themeToggleBtn');
                 const logoutBtn = document.getElementById('logoutBtn');
                 
                 // Set default date to tomorrow
@@ -399,13 +398,6 @@
                 form?.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     await this.submitSentence();
-                });
-
-                // Theme toggle
-                themeToggleBtn?.addEventListener('click', () => {
-                    if (typeof window.toggleTheme === 'function') {
-                        window.toggleTheme();
-                    }
                 });
 
                 // Logout

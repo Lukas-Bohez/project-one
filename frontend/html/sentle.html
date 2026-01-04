@@ -64,8 +64,7 @@
             <p class="auth-subtitle">Guess the daily sentence word-by-word</p>
             
             <div id="loginForm" class="auth-form">
-                <h2>Login</h2>
-                <input type="text" id="loginFirst" class="auth-input" placeholder="First name">
+                <h2>Login</h2>                <div id=\"loginError\" class=\"auth-error\" style=\"display: none;\"></div>                <input type="text" id="loginFirst" class="auth-input" placeholder="First name">
                 <input type="text" id="loginLast" class="auth-input" placeholder="Last name">
                 <input type="password" id="loginPassword" class="auth-input" placeholder="Password">
                 <button class="auth-btn" onclick="loginUser()">Login</button>
@@ -74,6 +73,7 @@
             
             <div id="regForm" class="auth-form" style="display: none;">
                 <h2>Create Quiz Account</h2>
+                <div id="regError" class="auth-error" style="display: none;"></div>
                 <input type="text" id="regFirst" class="auth-input" placeholder="First name">
                 <input type="text" id="regLast" class="auth-input" placeholder="Last name">
                 <input type="password" id="regPassword" class="auth-input" placeholder="Password (6+ chars)">

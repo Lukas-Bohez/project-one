@@ -16,16 +16,16 @@
         constructor() {
             this.currentTheme = this.getStoredTheme();
             this.lastAppliedTheme = null;
+            this.toggleButtonInitialized = false;
+            this.boundToggle = null;
             this.init();
         }
         
         init() {
-            // Set initial theme
-            this.applyTheme(this.currentTheme);
-            
-            // Initialize toggle button when DOM is ready
+            // Initialize when DOM is ready
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', () => {
+                    this.applyTheme(this.currentTheme);
                     this.initToggleButton();
                     // Load spire backgrounds after DOM is ready
                     if (window.imageProvider) {
@@ -40,6 +40,8 @@
                     }
                 });
             } else {
+                // DOM already loaded
+                this.applyTheme(this.currentTheme);
                 this.initToggleButton();
                 // Load backgrounds immediately if DOM is already ready
                 setTimeout(() => {
@@ -94,9 +96,7 @@
         applyTheme(theme) {
             const effectiveTheme = this.getEffectiveTheme(theme);
             
-            // Prevent unnecessary theme applications
             if (this.lastAppliedTheme === effectiveTheme) {
-                console.log('Theme already applied, skipping:', effectiveTheme);
                 return;
             }
             this.lastAppliedTheme = effectiveTheme;
@@ -104,67 +104,34 @@
             const html = document.documentElement;
             const body = document.body;
             
-            console.log('Applying theme:', { theme, effectiveTheme });
-            
-            // Safely remove existing theme classes and attributes
-            if (html) {
-                html.removeAttribute('data-theme');
-            }
-            if (body) {
-                body.removeAttribute('data-theme');
-                body.classList.remove('theme-light', 'theme-dark');
-            }
-            
-            // Apply new theme with maximum coverage
             if (effectiveTheme === THEMES.DARK) {
-                if (html) html.setAttribute('data-theme', 'dark');
-                if (body) {
-                    body.setAttribute('data-theme', 'dark');
-                    body.classList.add('theme-dark');
-                }
-                console.log('Applied dark theme to html and body');
-                
-                // Also apply to main content areas for admin
-                const adminContainer = document.querySelector('.c-admin-container');
-                const adminContent = document.querySelector('.c-admin-content');
-                if (adminContainer) adminContainer.setAttribute('data-theme', 'dark');
-                if (adminContent) adminContent.setAttribute('data-theme', 'dark');
-                
+                html.style.setProperty('--sentle-bg', '#121213');
+                html.style.setProperty('--sentle-text', '#ffffff');
+                html.style.setProperty('--sentle-border', '#3a3a3c');
+                html.style.setProperty('--sentle-key-bg', '#818384');
+                html.style.setProperty('--sentle-key-text', '#ffffff');
+                html.style.setProperty('--color-input-bg', '#1e1e1e');
+                console.log('✓ Dark theme applied');
             } else {
-                if (html) html.setAttribute('data-theme', 'light');
-                if (body) {
-                    body.setAttribute('data-theme', 'light');
-                    body.classList.add('theme-light');
-                }
-                console.log('Applied light theme to html and body');
-                
-                // Also apply to main content areas for admin
-                const adminContainer = document.querySelector('.c-admin-container');
-                const adminContent = document.querySelector('.c-admin-content');
-                if (adminContainer) adminContainer.setAttribute('data-theme', 'light');
-                if (adminContent) adminContent.setAttribute('data-theme', 'light');
+                html.style.setProperty('--sentle-bg', '#ffffff');
+                html.style.setProperty('--sentle-text', '#1a1a1b');
+                html.style.setProperty('--sentle-border', '#d3d6da');
+                html.style.setProperty('--sentle-key-bg', '#d3d6da');
+                html.style.setProperty('--sentle-key-text', '#1a1a1b');
+                html.style.setProperty('--color-input-bg', '#ffffff');
+                console.log('✓ Light theme applied');
             }
             
-            // Force a style recalculation
-            if (document.body) document.body.offsetHeight;
-            
-            // Update button text if it exists
+            if (body) void body.offsetHeight;
             this.updateToggleButton();
             
-            // Dispatch theme change event for other scripts
             window.dispatchEvent(new CustomEvent('themeChanged', {
-                detail: { theme: effectiveTheme, preference: theme }
+                detail: { theme: effectiveTheme }
             }));
             
-            // Trigger spire background image loading if imageProvider is available
             if (window.imageProvider) {
                 this.loadSpireBackgrounds();
             }
-            
-            console.log('Theme application complete. Current data-theme attributes:', {
-                html: html ? html.getAttribute('data-theme') : null,
-                body: body ? body.getAttribute('data-theme') : null
-            });
         }
         
         loadSpireBackgrounds() {
@@ -217,37 +184,35 @@
         // System theme change handler removed - no longer needed
         
         initToggleButton() {
+            // Guard against multiple initializations
+            if (this.toggleButtonInitialized) return;
+            this.toggleButtonInitialized = true;
+            
             // Find all theme toggle buttons
             const toggleBtns = [
                 document.getElementById('servoTestBtn'),
                 document.getElementById('servoTestBtn-mobile'),
-                document.getElementById('theme-toggle')
+                document.getElementById('theme-toggle'),
+                document.getElementById('themeToggleBtn')
             ].filter(btn => btn !== null);
             
             if (toggleBtns.length === 0) {
-                console.log('No theme toggle buttons found');
                 return;
             }
-            
-            console.log('Found theme toggle buttons:', toggleBtns.map(btn => btn.id));
             
             // Update all buttons
             toggleBtns.forEach(btn => {
                 this.updateToggleButton(btn);
                 
-                // If the button doesn't have an onclick handler, add our event listener
-                if (!btn.onclick) {
-                    btn.addEventListener('click', (e) => {
-                        console.log('Theme toggle button clicked (event listener):', btn.id);
-                        this.toggleTheme();
-                    });
-                    console.log('Added event listener to theme toggle button:', btn.id);
-                } else {
-                    console.log('Theme toggle button already has onclick handler:', btn.id);
-                }
+                // Add single click listener
+                btn.removeEventListener('click', this.boundToggle);
+                this.boundToggle = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.toggleTheme();
+                };
+                btn.addEventListener('click', this.boundToggle);
             });
-            
-            console.log('Theme toggle buttons initialized successfully');
         }
         
         updateToggleButton(specificBtn = null) {
@@ -258,23 +223,16 @@
             if (!toggleBtn) return;
             
             const effectiveTheme = this.getEffectiveTheme();
-            let text, title, emoji;
+            let title;
             
             if (effectiveTheme === THEMES.DARK) {
-                text = 'Dark Mode';
-                emoji = '🌙';
                 title = 'Dark mode active. Click to switch to light mode.';
             } else {
-                text = 'Light Mode';
-                emoji = '🌓';
                 title = 'Light mode active. Click to switch to dark mode.';
             }
             
-            // Update button text content for buttons that display text
-            toggleBtn.textContent = text;
+            // Only update title and aria-label, don't change the button content (keeps emoji)
             toggleBtn.title = title;
-            
-            // Add accessibility attributes
             toggleBtn.setAttribute('aria-label', title);
         }
         
