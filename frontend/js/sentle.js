@@ -7,18 +7,21 @@ class SentleGame {
         this.currentWord = '';
         this.currentGuess = '';
         this.wordGuesses = [];
-        this.maxAttemptsPerWord = 5;
+        // Allow generous attempts; rows are added dynamically as you guess
+        this.maxAttemptsPerWord = 50;
         this.gameStage = 'login'; // login | guessing | arranging | ended
         this.guessedWords = [];
         this.totalAttemptsUsed = 0;
         this.username = localStorage.getItem('sentle_username') || '';
         this.sessionToken = localStorage.getItem('sentle_session') || '';
+        this.userId = localStorage.getItem('sentle_user_id') || '';
         this.stats = {
             gamesPlayed: 0,
             gamesWon: 0,
             currentStreak: 0,
             maxStreak: 0,
             totalScore: 0,
+            playedToday: false,
         };
         this.keyboardState = {};
         this.sentenceId = null;
@@ -27,7 +30,6 @@ class SentleGame {
         this.completed = false;
         this.scoreSubmitted = false;
         this.modalsSetup = false;
-
         this.init();
     }
 
@@ -42,10 +44,11 @@ class SentleGame {
         this.restoreStateDone = false;
         this.completed = false;
         this.scoreSubmitted = false;
-        if (clearStorage) {
-            localStorage.removeItem('sentle_gameState');
-        }
+        this.keyboardState = {};
         this.resetKeyboard();
+        if (clearStorage) {
+            this.clearSavedState();
+        }
     }
 
     resetKeyboard() {
@@ -59,12 +62,34 @@ class SentleGame {
         // Always wire modal buttons even if game fails to load
         this.setupModals();
 
-        // Load stats from database
-        this.stats = await this.loadStats();
+        // Load stats from database (or fallback) and validate session
+        const { stats, validSession } = await this.loadStats();
+        this.stats = stats;
+
+        // Local safeguard: if we have stored a played-today flag for this user/date, honor it
+        const localPlayed = this.hasLocalPlayedToday();
+        if (localPlayed) this.stats.playedToday = true;
+
+        // If stored token is invalid, clear and show login instead of auto-starting a broken session
+        if (!validSession) {
+            this.clearSessionAuth();
+            this.showLoginScreen();
+            return;
+        }
 
         if (this.sessionToken && this.username) {
             this.hideLoginScreen();
-            this.startGame();
+            // If already played, just show stats/leaderboards; otherwise start game
+            if (this.stats.playedToday) {
+                this.completed = true;
+                this.scoreSubmitted = true;
+                this.showMessage('You already played today. Come back tomorrow or view your stats/archives.', 'info');
+                this.hideGameplayUI();
+                this.loadLeaderboard();
+                this.showStatsModal();
+            } else {
+                this.startGame();
+            }
         } else {
             this.showLoginScreen();
         }
@@ -185,6 +210,8 @@ class SentleGame {
         const password = document.getElementById('loginPassword').value.trim();
         const errorDiv = document.getElementById('loginError');
 
+        console.log('Login attempt started');
+
         // Clear previous errors
         if (errorDiv) {
             errorDiv.style.display = 'none';
@@ -207,23 +234,64 @@ class SentleGame {
                 body: JSON.stringify({ first_name: firstName, last_name: lastName, password }),
             });
 
-            const data = await response.json();
+            let data = {};
+            try {
+                data = await response.json();
+            } catch (e) {
+                // Non-JSON response; keep data empty
+            }
+
+            console.log('Login response:', { status: response.status, body: data });
 
             if (response.ok) {
+                if (!data.session_token) {
+                    const message = 'Login failed: missing session token from server';
+                    if (errorDiv) {
+                        errorDiv.textContent = message;
+                        errorDiv.style.display = 'block';
+                    }
+                    this.showMessage(message, 'error');
+                    console.error('Login failed: missing session_token in response');
+                    return;
+                }
+
                 this.sessionToken = data.session_token;
                 this.username = data.username;
+                this.userId = data.user_id;
                 localStorage.setItem('sentle_session', this.sessionToken);
                 localStorage.setItem('sentle_username', this.username);
+                if (this.userId) localStorage.setItem('sentle_user_id', this.userId);
                 // Reload stats from database
-                this.stats = await this.loadStats();
+                const { stats } = await this.loadStats();
+                this.stats = stats;
                 this.hideLoginScreen();
+
+                // If the server says we already played today, skip straight to stats/info
+                const playedToday = data.played_today || (this.stats && this.stats.playedToday);
+                if (playedToday) {
+                    this.completed = true;
+                    this.scoreSubmitted = true;
+                    this.showMessage('You already played today. Come back tomorrow or view your stats/archives.', 'info');
+                    const keyboard = document.getElementById('keyboard');
+                    const arrangementStage = document.getElementById('arrangementStage');
+                    if (keyboard) keyboard.style.display = 'none';
+                    if (arrangementStage) arrangementStage.style.display = 'none';
+                    this.rememberPlayedToday(new Date().toISOString().slice(0, 10));
+                    this.loadLeaderboard();
+                    this.showStatsModal();
+                    return;
+                }
+
                 this.startGame();
             } else {
-                const message = data.detail || 'Login failed';
+                const message = data.detail || data.message || response.statusText || 'Login failed';
                 if (errorDiv) {
                     errorDiv.textContent = message;
                     errorDiv.style.display = 'block';
                 }
+                // Also surface error in the main message area so it's visible even if the auth error div is hidden
+                this.showMessage(message, 'error');
+                console.error('Login failed:', { status: response.status, body: data });
             }
         } catch (err) {
             const message = 'Login error: ' + err.message;
@@ -231,20 +299,43 @@ class SentleGame {
                 errorDiv.textContent = message;
                 errorDiv.style.display = 'block';
             }
+            this.showMessage(message, 'error');
+            console.error('Login error:', err);
         }
     }
 
     async startGame() {
         this.gameStage = 'guessing';
+        // If the backend reports the user already played today, block starting a new game
+        if (this.stats && this.stats.playedToday) {
+            this.completed = true;
+            this.scoreSubmitted = true;
+            this.showMessage('You have already played today. Come back tomorrow!', 'info');
+            const keyboard = document.getElementById('keyboard');
+            const arrangementStage = document.getElementById('arrangementStage');
+            if (keyboard) keyboard.style.display = 'none';
+            if (arrangementStage) arrangementStage.style.display = 'none';
+            this.rememberPlayedToday(new Date().toISOString().slice(0, 10));
+            this.loadLeaderboard();
+            this.showStatsModal();
+            return;
+        }
         await this.loadDailySentence();
         if (!this.sentence) return;
 
-        if (this.completed || this.gameStage === 'ended') {
-            this.handleCompletedRestore();
-            return;
-        }
+        // Try to restore saved state for this date; otherwise fresh
+        this.checkGameState();
+        // Validate restore; if not a clean guessing state, start fresh
+        const validRestore =
+            this.restoreStateDone &&
+            this.gameStage === 'guessing' &&
+            this.currentWordIndex < this.words.length &&
+            this.guessedWords.length < this.words.length &&
+            this.currentWord;
 
-        if (!this.restoreStateDone) {
+        if (!validRestore) {
+            this.resetState(true);
+            this.currentWordIndex = 0;
             this.currentWord = this.words[0];
             this.currentGuess = '';
             this.wordGuesses = [];
@@ -254,6 +345,18 @@ class SentleGame {
         this.setupEventListeners();
         this.updateProgress();
         this.loadLeaderboard();
+
+        // Ensure the guessing UI is visible
+        document.getElementById('gameBoard').style.display = 'block';
+        document.getElementById('keyboard').style.display = 'block';
+        const progress = document.querySelector('.game-progress');
+        const currentWordSection = document.querySelector('.current-word-section');
+        if (progress) progress.style.display = 'block';
+        if (currentWordSection) currentWordSection.style.display = 'block';
+
+        // Hide arrangement until the guessing stage is done
+        const arrangementStage = document.getElementById('arrangementStage');
+        if (arrangementStage) arrangementStage.style.display = 'none';
     }
 
     async loadDailySentence() {
@@ -267,7 +370,6 @@ class SentleGame {
                 this.currentWord = this.words[0];
                 this.sentenceId = data.id;
                 this.targetDate = data.date;
-                this.checkGameState();
             } else {
                 this.showMessage('No sentence available today. Check back tomorrow!', 'error');
             }
@@ -281,7 +383,9 @@ class SentleGame {
         const board = document.getElementById('gameBoard');
         board.innerHTML = '';
 
-        for (let i = 0; i < this.maxAttemptsPerWord; i++) {
+        // Always show at least 5 rows, then grow as needed
+        const rowsNeeded = Math.max(this.wordGuesses.length + 1, 5);
+        for (let i = 0; i < rowsNeeded; i++) {
             const row = document.createElement('div');
             row.className = 'guess-row';
             row.id = `row-${i}`;
@@ -295,6 +399,24 @@ class SentleGame {
 
             board.appendChild(row);
         }
+    }
+
+    ensureNextRow() {
+        const board = document.getElementById('gameBoard');
+        const currentRows = board.querySelectorAll('.guess-row').length;
+        const needed = Math.max(this.wordGuesses.length + 1, 5);
+        if (needed <= currentRows) return;
+
+        const row = document.createElement('div');
+        row.className = 'guess-row';
+        row.id = `row-${currentRows}`;
+        for (let j = 0; j < this.currentWord.length; j++) {
+            const box = document.createElement('div');
+            box.className = 'letter-box';
+            box.id = `box-${currentRows}-${j}`;
+            row.appendChild(box);
+        }
+        board.appendChild(row);
     }
 
     setupEventListeners() {
@@ -353,6 +475,7 @@ class SentleGame {
 
     updateCurrentRow() {
         const currentAttempt = this.wordGuesses.length;
+        this.ensureNextRow();
         const row = document.getElementById(`row-${currentAttempt}`);
         if (!row) return;
         const boxes = row.querySelectorAll('.letter-box');
@@ -368,13 +491,16 @@ class SentleGame {
             return;
         }
 
+        // Count every submitted attempt
+        this.totalAttemptsUsed += 1;
+
         this.wordGuesses.push(this.currentGuess);
         const guessIndex = this.wordGuesses.length - 1;
         this.evaluateGuess(guessIndex);
+        this.saveGameState();
 
         if (this.currentGuess === this.currentWord) {
             this.guessedWords.push(this.currentWord);
-            this.totalAttemptsUsed += this.wordGuesses.length;
             this.showMessage(`✓ Word ${this.currentWordIndex + 1} correct!`, 'success');
 
             if (this.currentWordIndex < this.words.length - 1) {
@@ -395,34 +521,14 @@ class SentleGame {
                     this.saveGameState();
                 }, 800);
             }
-        } else if (this.wordGuesses.length >= this.maxAttemptsPerWord) {
-            this.totalAttemptsUsed += this.maxAttemptsPerWord;
-            this.showMessage(`✗ Word skipped. The word was: ${this.currentWord}`, 'info');
-            
-            if (this.currentWordIndex < this.words.length - 1) {
-                setTimeout(() => {
-                    this.currentWordIndex += 1;
-                    this.currentWord = this.words[this.currentWordIndex];
-                    this.currentGuess = '';
-                    this.wordGuesses = [];
-                    this.resetKeyboard();
-                    this.createBoard();
-                    this.updateProgress();
-                    this.showMessage(`Guess Word ${this.currentWordIndex + 1}!`, 'info');
-                    this.saveGameState();
-                }, 800);
-            } else {
-                setTimeout(() => {
-                    this.moveToArrangementStage();
-                    this.saveGameState();
-                }, 800);
-            }
         } else {
-            this.showMessage(`${this.maxAttemptsPerWord - this.wordGuesses.length} attempts left`, 'info');
+            const attemptNum = this.wordGuesses.length;
+            this.showMessage(`Keep trying (attempt ${attemptNum})`, 'info');
             this.currentGuess = '';
+            this.ensureNextRow();
+            this.updateProgress();
+            this.saveGameState();
         }
-
-        this.saveGameState();
     }
 
     evaluateGuess(guessIndex) {
@@ -476,7 +582,7 @@ class SentleGame {
         if (progressFill) progressFill.style.width = `${progress}%`;
         if (progressText) progressText.textContent = `Word ${this.currentWordIndex + 1} of ${this.words.length}`;
         if (wordNumber) wordNumber.textContent = `Word ${this.currentWordIndex + 1}`;
-        if (wordHint) wordHint.textContent = `${this.maxAttemptsPerWord - this.wordGuesses.length} attempts remaining`;
+        if (wordHint) wordHint.textContent = `Attempts so far: ${this.wordGuesses.length}`;
     }
 
     moveToArrangementStage() {
@@ -519,6 +625,7 @@ class SentleGame {
         });
 
         this.showMessage('Arrange the words to form the complete sentence!', 'info');
+        this.saveGameState();
     }
 
     addWordToSentence(word) {
@@ -579,7 +686,9 @@ class SentleGame {
     }
 
     calculateScore() {
-        const totalAttemptsAvailable = this.words.length * this.maxAttemptsPerWord;
+        // Scoring: cap attempts considered at 10 per word to keep scores finite
+        const scoringCapPerWord = 10;
+        const totalAttemptsAvailable = this.words.length * scoringCapPerWord;
         const unusedAttempts = Math.max(0, totalAttemptsAvailable - this.totalAttemptsUsed);
         return 500 + unusedAttempts * 100;
     }
@@ -609,8 +718,6 @@ class SentleGame {
             this.updateStats(false, 0);
         }
 
-        this.saveGameState();
-
         setTimeout(() => this.showStatsModal(), 1200);
     }
 
@@ -619,13 +726,20 @@ class SentleGame {
             this.showMessage('Score already submitted for today.', 'info');
             return;
         }
+
+        // Require a valid session before submitting to backend
+        if (!this.sessionToken) {
+            this.showMessage('Please log in before submitting your score.', 'error');
+            return;
+        }
         try {
             console.log('Submitting score:', {
                 score,
                 attempts: attemptsUsed,
                 sentenceId: this.sentenceId,
                 date: this.targetDate,
-                sessionToken: this.sessionToken
+                sessionToken: this.sessionToken,
+                userId: this.userId
             });
 
             const response = await fetch('/api/sentle/score', {
@@ -637,6 +751,7 @@ class SentleGame {
                     attempts: attemptsUsed,
                     sentenceId: this.sentenceId,
                     date: this.targetDate,
+                    user_id: this.userId,
                 }),
             });
 
@@ -646,14 +761,29 @@ class SentleGame {
             if (response.ok) {
                 this.scoreSubmitted = true;
                 this.completed = true;
-                this.saveGameState();
                 this.showMessage('Score saved to leaderboard!', 'success');
+                // Remember locally to prevent auto-login replay today
+                this.rememberPlayedToday(this.targetDate);
+                // Refresh stats from backend now that score is stored
+                const { stats } = await this.loadStats();
+                this.stats = stats;
                 this.loadLeaderboard();
             } else {
+                // Handle auth issues by forcing re-login
+                if (response.status === 401) {
+                    this.showMessage('Session expired. Please log in again to submit your score.', 'error');
+                    localStorage.removeItem('sentle_session');
+                    localStorage.removeItem('sentle_username');
+                    localStorage.removeItem('sentle_user_id');
+                    this.sessionToken = '';
+                    this.username = '';
+                    this.userId = '';
+                }
+
                 if (response.status === 403) {
+                    // Duplicate submit: treat as submitted so user isn’t blocked
                     this.scoreSubmitted = true;
                     this.completed = true;
-                    this.saveGameState();
                 }
                 this.showMessage(data.detail || 'Score submission failed', 'error');
                 console.error('Score submission error:', data.detail);
@@ -713,8 +843,10 @@ class SentleGame {
                 const rankClass = index === 0 ? 'top1' : index === 1 ? 'top2' : index === 2 ? 'top3' : '';
                 item.innerHTML = `
                     <span class="leaderboard-rank ${rankClass}">#${index + 1}</span>
-                    <span class="leaderboard-name">${this.escapeHtml(entry.playerName)}</span>
-                    <span class="leaderboard-score">${entry.score} pts</span>
+                    <div class="leaderboard-text">
+                        <span class="leaderboard-name">${this.escapeHtml(entry.playerName)}</span>
+                        <span class="leaderboard-score">${entry.score} pts</span>
+                    </div>
                 `;
                 container.appendChild(item);
             });
@@ -740,6 +872,113 @@ class SentleGame {
         }, 2500);
     }
 
+    rememberPlayedToday(dateStr) {
+        if (!dateStr) return;
+        const payload = {
+            date: dateStr,
+            userId: this.userId || null,
+            username: this.username || null,
+        };
+        localStorage.setItem('sentle_played_today', JSON.stringify(payload));
+    }
+
+    hasLocalPlayedToday() {
+        const raw = localStorage.getItem('sentle_played_today');
+        if (!raw) return false;
+        try {
+            const saved = JSON.parse(raw);
+            const today = new Date().toISOString().slice(0, 10);
+            if (saved.date !== today) return false;
+            if (saved.userId && this.userId && String(saved.userId) !== String(this.userId)) return false;
+            if (!saved.userId && saved.username && this.username && saved.username !== this.username) return false;
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    clearSavedState() {
+        localStorage.removeItem('sentle_gameState');
+    }
+
+    clearSessionAuth() {
+        this.sessionToken = '';
+        this.username = '';
+        this.userId = '';
+        localStorage.removeItem('sentle_session');
+        localStorage.removeItem('sentle_username');
+        localStorage.removeItem('sentle_user_id');
+    }
+
+    saveGameState() {
+        if (!this.targetDate) return;
+        const state = {
+            date: this.targetDate,
+            sentence: this.sentence,
+            sentenceId: this.sentenceId,
+            currentWordIndex: this.currentWordIndex,
+            guessedWords: this.guessedWords,
+            wordGuesses: this.wordGuesses,
+            currentGuess: this.currentGuess,
+            gameStage: this.gameStage,
+            totalAttemptsUsed: this.totalAttemptsUsed,
+            keyboardState: this.keyboardState,
+            completed: this.completed,
+            scoreSubmitted: this.scoreSubmitted,
+            userId: this.userId || null,
+        };
+        localStorage.setItem('sentle_gameState', JSON.stringify(state));
+    }
+
+    checkGameState() {
+        const saved = localStorage.getItem('sentle_gameState');
+        if (!saved) return;
+
+        const state = JSON.parse(saved);
+        if (state.date !== this.targetDate) return;
+
+        // If saved state belongs to another user, skip restore
+        if (state.userId && this.userId && String(state.userId) !== String(this.userId)) return;
+        // Validate indices and stage; if invalid, clear and bail
+        const invalidIndex = state.currentWordIndex >= this.words.length || state.currentWordIndex < 0;
+        const invalidStage = state.gameStage && !['guessing', 'arranging'].includes(state.gameStage);
+        const endedState = state.completed || state.scoreSubmitted;
+        if (invalidIndex || invalidStage || endedState) {
+            this.clearSavedState();
+            return;
+        }
+
+        this.sentenceId = state.sentenceId || this.sentenceId;
+        this.sentence = state.sentence || this.sentence;
+        this.words = this.sentence ? this.sentence.split(' ') : this.words;
+
+        this.currentWordIndex = state.currentWordIndex || 0;
+        this.guessedWords = state.guessedWords || [];
+        this.wordGuesses = state.wordGuesses || [];
+        this.currentGuess = state.currentGuess || '';
+        this.gameStage = state.gameStage || 'guessing';
+        this.totalAttemptsUsed = state.totalAttemptsUsed || 0;
+        this.keyboardState = state.keyboardState || {};
+        this.completed = state.completed || false;
+        this.scoreSubmitted = state.scoreSubmitted || false;
+        this.currentWord = this.words[this.currentWordIndex] || '';
+        this.restoreStateDone = true;
+
+        // Recreate board and replay guesses to restore colors
+        this.createBoard();
+        for (let i = 0; i < this.wordGuesses.length; i++) {
+            this.evaluateGuess(i);
+        }
+        this.updateCurrentRow();
+        this.updateProgress();
+
+        if (this.gameStage === 'arranging') {
+            this.moveToArrangementStage();
+        } else if (this.gameStage === 'ended' || this.completed) {
+            this.handleCompletedRestore();
+        }
+    }
+
     async loadStats() {
         const defaultStats = {
             gamesPlayed: 0,
@@ -747,16 +986,14 @@ class SentleGame {
             currentStreak: 0,
             maxStreak: 0,
             totalScore: 0,
+            playedToday: false,
         };
-        
+
+        if (!this.sessionToken) {
+            return { stats: defaultStats, validSession: false };
+        }
+
         try {
-            // Try to fetch from API first
-            if (!this.sessionToken) {
-                console.warn('⚠ No session token, using localStorage fallback');
-                const stats = JSON.parse(localStorage.getItem('sentle_stats')) || defaultStats;
-                return stats;
-            }
-            
             const response = await fetch('/api/sentle/stats', {
                 method: 'GET',
                 headers: {
@@ -764,32 +1001,34 @@ class SentleGame {
                     'Content-Type': 'application/json'
                 }
             });
-            
+
+            if (response.status === 401) {
+                console.warn('Session expired while loading stats.');
+                return { stats: defaultStats, validSession: false };
+            }
+
             if (response.ok) {
                 const statsData = await response.json();
                 console.log('✓ Stats loaded from database:', statsData);
                 console.log('  Source: MySQL database sentle_scores table');
-                
-                const stats = {
-                    gamesPlayed: statsData.gamesPlayed || 0,
-                    gamesWon: statsData.gamesWon || 0,
-                    currentStreak: statsData.currentStreak || 0,
-                    maxStreak: statsData.maxStreak || 0,
-                    totalScore: statsData.totalScore || 0,
+
+                return {
+                    stats: {
+                        gamesPlayed: statsData.gamesPlayed || 0,
+                        gamesWon: statsData.gamesWon || 0,
+                        currentStreak: statsData.currentStreak || 0,
+                        maxStreak: statsData.maxStreak || 0,
+                        totalScore: statsData.totalScore || 0,
+                        playedToday: !!statsData.playedToday,
+                    },
+                    validSession: true,
                 };
-                
-                // Update localStorage as backup
-                localStorage.setItem('sentle_stats', JSON.stringify(stats));
-                return stats;
-            } else {
-                throw new Error(`API returned ${response.status}`);
             }
+
+            throw new Error(`API returned ${response.status}`);
         } catch (error) {
             console.error('⚠ Error loading stats from API:', error);
-            // Fallback to localStorage
-            const stats = JSON.parse(localStorage.getItem('sentle_stats')) || defaultStats;
-            console.log('✓ Using localStorage fallback:', stats);
-            return stats;
+            return { stats: defaultStats, validSession: false };
         }
     }
 
@@ -804,83 +1043,24 @@ class SentleGame {
             this.stats.currentStreak = 0;
         }
         
-        // Always update localStorage backup
-        localStorage.setItem('sentle_stats', JSON.stringify(this.stats));
-        console.log('✓ Stats updated:', this.stats);
+        console.log('✓ Stats updated (in-memory only):', this.stats);
         console.log('  Database will be updated via score submission endpoint');
         
         // Stats will be recalculated from database on next loadStats() call
         // The submitScore() endpoint stores the game to sentle_scores
     }
 
-    saveGameState() {
-        const state = {
-            date: this.targetDate,
-            currentWordIndex: this.currentWordIndex,
-            guessedWords: this.guessedWords,
-            wordGuesses: this.wordGuesses,
-            currentGuess: this.currentGuess,
-            gameStage: this.gameStage,
-            totalAttemptsUsed: this.totalAttemptsUsed,
-            completed: this.completed,
-            scoreSubmitted: this.scoreSubmitted,
-            keyboardState: this.keyboardState,
-        };
-        localStorage.setItem('sentle_gameState', JSON.stringify(state));
-    }
-
-    checkGameState() {
-        const saved = localStorage.getItem('sentle_gameState');
-        if (!saved) return;
-
-        const state = JSON.parse(saved);
-        if (state.date !== this.targetDate) {
-            // Different day -> clear old state
-            localStorage.removeItem('sentle_gameState');
-            return;
-        }
-
-        this.currentWordIndex = state.currentWordIndex;
-        this.guessedWords = state.guessedWords || [];
-        this.wordGuesses = state.wordGuesses || [];
-        this.gameStage = state.gameStage || 'guessing';
-        this.totalAttemptsUsed = state.totalAttemptsUsed || 0;
-        this.currentGuess = state.currentGuess || '';
-        this.currentWord = this.words[this.currentWordIndex];
-        this.restoreStateDone = true;
-        this.completed = state.completed || false;
-        this.scoreSubmitted = state.scoreSubmitted || false;
-        this.keyboardState = state.keyboardState || {};
-
-        if (this.gameStage === 'guessing') {
-            this.createBoard();
-            for (let i = 0; i < this.wordGuesses.length; i++) {
-                this.evaluateGuess(i);
-            }
-            this.updateCurrentRow();
-            this.updateProgress();
-        } else if (this.gameStage === 'arranging') {
-            this.moveToArrangementStage();
-        } else if (this.gameStage === 'ended' || this.completed) {
-            this.handleCompletedRestore();
-        }
-    }
+    // Game state persistence removed to avoid local cache conflicts
 
     setupModals() {
         if (this.modalsSetup) return;
 
         const helpBtn = document.getElementById('helpBtn');
-        const statsBtn = document.getElementById('statsBtn');
         const logoutBtn = document.getElementById('logout');
 
         const helpModal = document.getElementById('helpModal');
-        const statsModal = document.getElementById('statsModal');
-
         helpBtn?.addEventListener('click', () => {
             helpModal.style.display = 'block';
-        });
-        statsBtn?.addEventListener('click', () => {
-            this.showStatsModal();
         });
         logoutBtn?.addEventListener('click', () => this.logout());
 
@@ -901,14 +1081,27 @@ class SentleGame {
 
     async showStatsModal() {
         const modal = document.getElementById('statsModal');
+        if (!modal) return;
         // Reload stats from database before showing
-        this.stats = await this.loadStats();
-        document.getElementById('gamesPlayed').textContent = this.stats.gamesPlayed;
-        document.getElementById('winRate').textContent =
-            this.stats.gamesPlayed > 0 ? Math.round((this.stats.gamesWon / this.stats.gamesPlayed) * 100) : 0;
-        document.getElementById('currentStreak').textContent = this.stats.currentStreak;
-        document.getElementById('maxStreak').textContent = this.stats.maxStreak;
-        document.getElementById('totalScore').textContent = this.stats.totalScore;
+        const { stats } = await this.loadStats();
+        this.stats = stats;
+
+        const gp = document.getElementById('gamesPlayed');
+        const wr = document.getElementById('winRate');
+        const cs = document.getElementById('currentStreak');
+        const ms = document.getElementById('maxStreak');
+        const ts = document.getElementById('totalScore');
+
+        if (gp && wr && cs && ms && ts) {
+            gp.textContent = this.stats.gamesPlayed;
+            wr.textContent = this.stats.gamesPlayed > 0
+                ? Math.round((this.stats.gamesWon / this.stats.gamesPlayed) * 100)
+                : 0;
+            cs.textContent = this.stats.currentStreak;
+            ms.textContent = this.stats.maxStreak;
+            ts.textContent = this.stats.totalScore;
+        }
+
         modal.style.display = 'block';
     }
 
@@ -932,12 +1125,27 @@ class SentleGame {
         this.loadLeaderboard();
     }
 
+    hideGameplayUI() {
+        const gameBoard = document.getElementById('gameBoard');
+        const keyboard = document.getElementById('keyboard');
+        const arrangementStage = document.getElementById('arrangementStage');
+        const progress = document.querySelector('.game-progress');
+        const currentWordSection = document.querySelector('.current-word-section');
+
+        if (gameBoard) gameBoard.style.display = 'none';
+        if (keyboard) keyboard.style.display = 'none';
+        if (arrangementStage) arrangementStage.style.display = 'none';
+        if (progress) progress.style.display = 'none';
+        if (currentWordSection) currentWordSection.style.display = 'none';
+    }
+
     logout() {
         localStorage.removeItem('sentle_session');
         localStorage.removeItem('sentle_username');
+        localStorage.removeItem('sentle_user_id');
         this.sessionToken = '';
         this.username = '';
-        // Keep game state so progress can't be reset by logout/login
+        this.userId = '';
         location.reload();
     }
 }

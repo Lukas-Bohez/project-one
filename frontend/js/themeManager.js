@@ -103,6 +103,10 @@
             
             const html = document.documentElement;
             const body = document.body;
+
+            // Drive the global theme selectors used across the site
+            if (html) html.setAttribute('data-theme', effectiveTheme);
+            if (body) body.setAttribute('data-theme', effectiveTheme);
             
             if (effectiveTheme === THEMES.DARK) {
                 html.style.setProperty('--sentle-bg', '#121213');
