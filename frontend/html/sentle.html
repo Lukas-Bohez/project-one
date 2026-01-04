@@ -46,11 +46,45 @@
                 <button id="settingsBtn" class="icon-btn" title="Settings">
                     <span>⚙️</span>
                 </button>
+                <button id="logout" class="icon-btn" title="Logout">
+                    <span>🚪</span>
+                </button>
             </div>
         </div>
     </header>
 
-    <main class="sentle-container">
+    <!-- Login/Register Screen -->
+    <div id="loginScreen" class="auth-screen">
+        <div class="auth-container">
+            <div class="auth-tabs">
+                <button id="tabLogin" class="auth-tab active" onclick="toggleLogin(); return false;">Login</button>
+                <button id="tabRegister" class="auth-tab" onclick="toggleRegister(); return false;">Register</button>
+            </div>
+            <h1 class="auth-title">SENTLE</h1>
+            <p class="auth-subtitle">Guess the daily sentence word-by-word</p>
+            
+            <div id="loginForm" class="auth-form">
+                <h2>Login</h2>
+                <input type="text" id="loginFirst" class="auth-input" placeholder="First name">
+                <input type="text" id="loginLast" class="auth-input" placeholder="Last name">
+                <input type="password" id="loginPassword" class="auth-input" placeholder="Password">
+                <button class="auth-btn" onclick="loginUser()">Login</button>
+                <p class="auth-toggle">Use your Quiz account (first & last name + password)</p>
+            </div>
+            
+            <div id="regForm" class="auth-form" style="display: none;">
+                <h2>Create Quiz Account</h2>
+                <input type="text" id="regFirst" class="auth-input" placeholder="First name">
+                <input type="text" id="regLast" class="auth-input" placeholder="Last name">
+                <input type="password" id="regPassword" class="auth-input" placeholder="Password (6+ chars)">
+                <input type="password" id="regPassword2" class="auth-input" placeholder="Confirm Password">
+                <button class="auth-btn" onclick="registerUser()">Register</button>
+                <p class="auth-toggle">Already have an account? <a href="#" onclick="toggleLogin(); return false;">Back to Login</a></p>
+            </div>
+        </div>
+    </div>
+
+    <main class="sentle-container" id="gameContainer">
         <!-- Game Progress -->
         <div class="game-progress">
             <div id="progressBar" class="progress-bar">
@@ -129,8 +163,19 @@
         <!-- Leaderboard Section -->
         <div class="leaderboard-section">
             <h2>🏆 Top Players</h2>
-            <div id="leaderboard" class="leaderboard">
-                <div class="loading">Loading leaderboard...</div>
+
+            <div class="leaderboard-card">
+                <h3>All-Time Leaders</h3>
+                <div id="leaderboard-global" class="leaderboard">
+                    <div class="loading">Loading leaderboard...</div>
+                </div>
+            </div>
+
+            <div class="leaderboard-card">
+                <h3>Today&apos;s Leaders</h3>
+                <div id="leaderboard-daily" class="leaderboard">
+                    <div class="loading">Loading today&apos;s scores...</div>
+                </div>
             </div>
         </div>
 
@@ -141,6 +186,19 @@
             <a href="../index.html" class="btn-link">← Back to Quiz The Spire</a>
         </div>
     </main>
+
+    <!-- Completion Modal -->
+    <div id="completionModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="document.getElementById('completionModal').style.display='none'">&times;</span>
+            <h2>All Done!</h2>
+            <p>You completed today9;s Sentle. Great job!</p>
+            <div class="completion-actions">
+                <a class="btn-submit" href="/html/past-sentences.html">Go to Archive</a>
+                <button class="btn-secondary" onclick="document.getElementById('completionModal').style.display='none'">Close</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Help Modal -->
     <div id="helpModal" class="modal">
