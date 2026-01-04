@@ -74,7 +74,8 @@ html, body {
     --info-color: #0d61aa;
 }
 
-/* Dark theme - activated by .theme-dark class */
+/* Dark theme - activated by data-theme attribute on html element */
+html[data-theme="dark"],
 [data-theme="dark"],
 .theme-dark {
     /* Primary brand color (10%) - keep blue */

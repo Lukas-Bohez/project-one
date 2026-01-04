@@ -13,7 +13,13 @@ class SentleGame {
         this.totalAttemptsUsed = 0;
         this.username = localStorage.getItem('sentle_username') || '';
         this.sessionToken = localStorage.getItem('sentle_session') || '';
-        this.stats = this.loadStats();
+        this.stats = {
+            gamesPlayed: 0,
+            gamesWon: 0,
+            currentStreak: 0,
+            maxStreak: 0,
+            totalScore: 0,
+        };
         this.keyboardState = {};
         this.sentenceId = null;
         this.targetDate = null;
@@ -49,9 +55,12 @@ class SentleGame {
         });
     }
 
-    init() {
+    async init() {
         // Always wire modal buttons even if game fails to load
         this.setupModals();
+
+        // Load stats from database
+        this.stats = await this.loadStats();
 
         if (this.sessionToken && this.username) {
             this.hideLoginScreen();
@@ -100,19 +109,38 @@ class SentleGame {
         const lastName = document.getElementById('regLast').value.trim();
         const password = document.getElementById('regPassword').value.trim();
         const password2 = document.getElementById('regPassword2').value.trim();
+        const errorDiv = document.getElementById('regError');
+
+        // Clear previous errors
+        if (errorDiv) {
+            errorDiv.style.display = 'none';
+            errorDiv.textContent = '';
+        }
 
         if (!firstName || !lastName || !password || !password2) {
-            this.showMessage('All fields are required', 'error');
+            const message = 'All fields are required';
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
             return;
         }
 
         if (password !== password2) {
-            this.showMessage('Passwords do not match', 'error');
+            const message = 'Passwords do not match';
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
             return;
         }
 
         if (password.length < 6) {
-            this.showMessage('Password must be at least 6 characters', 'error');
+            const message = 'Password must be at least 6 characters';
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
             return;
         }
 
@@ -126,13 +154,28 @@ class SentleGame {
             const data = await response.json();
 
             if (response.ok) {
-                this.showMessage('Account created. Please login.', 'success');
-                this.toggleForms('login');
+                const successDiv = errorDiv;
+                if (successDiv) {
+                    successDiv.textContent = 'Account created. Please login.';
+                    successDiv.style.display = 'block';
+                    successDiv.style.background = '#d4edda';
+                    successDiv.style.color = '#155724';
+                    successDiv.style.borderColor = '#c3e6cb';
+                }
+                setTimeout(() => this.toggleForms('login'), 2000);
             } else {
-                this.showMessage(data.detail || 'Registration failed', 'error');
+                const message = data.detail || 'Registration failed';
+                if (errorDiv) {
+                    errorDiv.textContent = message;
+                    errorDiv.style.display = 'block';
+                }
             }
         } catch (err) {
-            this.showMessage('Registration error', 'error');
+            const message = 'Registration error: ' + err.message;
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
         }
     }
 
@@ -140,9 +183,20 @@ class SentleGame {
         const firstName = document.getElementById('loginFirst').value.trim();
         const lastName = document.getElementById('loginLast').value.trim();
         const password = document.getElementById('loginPassword').value.trim();
+        const errorDiv = document.getElementById('loginError');
+
+        // Clear previous errors
+        if (errorDiv) {
+            errorDiv.style.display = 'none';
+            errorDiv.textContent = '';
+        }
 
         if (!firstName || !lastName || !password) {
-            this.showMessage('First name, last name, and password are required', 'error');
+            const message = 'First name, last name, and password are required';
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
             return;
         }
 
@@ -160,13 +214,23 @@ class SentleGame {
                 this.username = data.username;
                 localStorage.setItem('sentle_session', this.sessionToken);
                 localStorage.setItem('sentle_username', this.username);
+                // Reload stats from database
+                this.stats = await this.loadStats();
                 this.hideLoginScreen();
                 this.startGame();
             } else {
-                this.showMessage(data.detail || 'Login failed', 'error');
+                const message = data.detail || 'Login failed';
+                if (errorDiv) {
+                    errorDiv.textContent = message;
+                    errorDiv.style.display = 'block';
+                }
             }
         } catch (err) {
-            this.showMessage('Login error', 'error');
+            const message = 'Login error: ' + err.message;
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
         }
     }
 
@@ -332,8 +396,27 @@ class SentleGame {
                 }, 800);
             }
         } else if (this.wordGuesses.length >= this.maxAttemptsPerWord) {
-            this.showMessage(`Game Over! The word was: ${this.currentWord}`, 'error');
-            this.endGame(false);
+            this.totalAttemptsUsed += this.maxAttemptsPerWord;
+            this.showMessage(`✗ Word skipped. The word was: ${this.currentWord}`, 'info');
+            
+            if (this.currentWordIndex < this.words.length - 1) {
+                setTimeout(() => {
+                    this.currentWordIndex += 1;
+                    this.currentWord = this.words[this.currentWordIndex];
+                    this.currentGuess = '';
+                    this.wordGuesses = [];
+                    this.resetKeyboard();
+                    this.createBoard();
+                    this.updateProgress();
+                    this.showMessage(`Guess Word ${this.currentWordIndex + 1}!`, 'info');
+                    this.saveGameState();
+                }, 800);
+            } else {
+                setTimeout(() => {
+                    this.moveToArrangementStage();
+                    this.saveGameState();
+                }, 800);
+            }
         } else {
             this.showMessage(`${this.maxAttemptsPerWord - this.wordGuesses.length} attempts left`, 'info');
             this.currentGuess = '';
@@ -398,6 +481,7 @@ class SentleGame {
 
     moveToArrangementStage() {
         this.gameStage = 'arranging';
+        this.resetKeyboard();
         document.getElementById('gameBoard').style.display = 'none';
         document.getElementById('keyboard').style.display = 'none';
         document.querySelector('.game-progress').style.display = 'none';
@@ -592,19 +676,13 @@ class SentleGame {
 
         try {
             const globalRes = await fetch('/api/sentle/leaderboard', { cache: 'no-store' });
-            if (!globalRes.ok) {
-                const errorMsg = `Unable to load leaderboard (status ${globalRes.status})`;
-                console.error('Global leaderboard error:', errorMsg);
-                if (globalBoard) globalBoard.innerHTML = `<div class="loading">${errorMsg}</div>`;
-            } else {
-                const globalData = await globalRes.json();
-                console.log('Global leaderboard data:', globalData);
-                this.renderLeaderboardList(
-                    globalBoard,
-                    globalData?.leaderboard,
-                    'No scores yet. Be the first!'
-                );
-            }
+            const globalData = await globalRes.json();
+            
+            this.renderLeaderboardList(
+                globalBoard,
+                globalData?.leaderboard,
+                'No scores yet. Be the first!'
+            );
         } catch (err) {
             console.error('Error loading global leaderboard:', err);
             if (globalBoard) globalBoard.innerHTML = '<div class="loading">Unable to load leaderboard.</div>';
@@ -612,18 +690,12 @@ class SentleGame {
 
         try {
             const dailyRes = await fetch('/api/sentle/leaderboard/daily', { cache: 'no-store' });
-            if (!dailyRes.ok) {
-                const errorMsg = `Unable to load today\'s scores (status ${dailyRes.status})`;
-                console.error('Daily leaderboard error:', errorMsg);
-                if (dailyBoard) dailyBoard.innerHTML = `<div class="loading">${errorMsg}</div>`;
-            } else {
-                const dailyData = await dailyRes.json();
-                console.log('Daily leaderboard data:', dailyData);
-                const dailyEmpty = dailyData?.date
-                    ? `No scores yet for ${dailyData.date}.`
-                    : 'No scores yet for today.';
-                this.renderLeaderboardList(dailyBoard, dailyData?.leaderboard, dailyEmpty);
-            }
+            const dailyData = await dailyRes.json();
+            const dailyEmpty = dailyData?.date
+                ? `No scores yet for ${dailyData.date}.`
+                : 'No scores yet for today.';
+            
+            this.renderLeaderboardList(dailyBoard, dailyData?.leaderboard, dailyEmpty);
         } catch (err) {
             console.error('Error loading daily leaderboard:', err);
             if (dailyBoard) dailyBoard.innerHTML = '<div class="loading">Unable to load today\'s scores.</div>';
@@ -668,7 +740,7 @@ class SentleGame {
         }, 2500);
     }
 
-    loadStats() {
+    async loadStats() {
         const defaultStats = {
             gamesPlayed: 0,
             gamesWon: 0,
@@ -676,11 +748,52 @@ class SentleGame {
             maxStreak: 0,
             totalScore: 0,
         };
-        const saved = localStorage.getItem('sentle_stats');
-        return saved ? JSON.parse(saved) : defaultStats;
+        
+        try {
+            // Try to fetch from API first
+            if (!this.sessionToken) {
+                console.warn('⚠ No session token, using localStorage fallback');
+                const stats = JSON.parse(localStorage.getItem('sentle_stats')) || defaultStats;
+                return stats;
+            }
+            
+            const response = await fetch('/api/sentle/stats', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${this.sessionToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const statsData = await response.json();
+                console.log('✓ Stats loaded from database:', statsData);
+                console.log('  Source: MySQL database sentle_scores table');
+                
+                const stats = {
+                    gamesPlayed: statsData.gamesPlayed || 0,
+                    gamesWon: statsData.gamesWon || 0,
+                    currentStreak: statsData.currentStreak || 0,
+                    maxStreak: statsData.maxStreak || 0,
+                    totalScore: statsData.totalScore || 0,
+                };
+                
+                // Update localStorage as backup
+                localStorage.setItem('sentle_stats', JSON.stringify(stats));
+                return stats;
+            } else {
+                throw new Error(`API returned ${response.status}`);
+            }
+        } catch (error) {
+            console.error('⚠ Error loading stats from API:', error);
+            // Fallback to localStorage
+            const stats = JSON.parse(localStorage.getItem('sentle_stats')) || defaultStats;
+            console.log('✓ Using localStorage fallback:', stats);
+            return stats;
+        }
     }
 
-    updateStats(won, score) {
+    async updateStats(won, score) {
         this.stats.gamesPlayed += 1;
         if (won) {
             this.stats.gamesWon += 1;
@@ -690,7 +803,14 @@ class SentleGame {
         } else {
             this.stats.currentStreak = 0;
         }
+        
+        // Always update localStorage backup
         localStorage.setItem('sentle_stats', JSON.stringify(this.stats));
+        console.log('✓ Stats updated:', this.stats);
+        console.log('  Database will be updated via score submission endpoint');
+        
+        // Stats will be recalculated from database on next loadStats() call
+        // The submitScore() endpoint stores the game to sentle_scores
     }
 
     saveGameState() {
@@ -704,6 +824,7 @@ class SentleGame {
             totalAttemptsUsed: this.totalAttemptsUsed,
             completed: this.completed,
             scoreSubmitted: this.scoreSubmitted,
+            keyboardState: this.keyboardState,
         };
         localStorage.setItem('sentle_gameState', JSON.stringify(state));
     }
@@ -729,6 +850,7 @@ class SentleGame {
         this.restoreStateDone = true;
         this.completed = state.completed || false;
         this.scoreSubmitted = state.scoreSubmitted || false;
+        this.keyboardState = state.keyboardState || {};
 
         if (this.gameStage === 'guessing') {
             this.createBoard();
@@ -749,7 +871,6 @@ class SentleGame {
 
         const helpBtn = document.getElementById('helpBtn');
         const statsBtn = document.getElementById('statsBtn');
-        const themeToggleBtn = document.getElementById('themeToggleBtn');
         const logoutBtn = document.getElementById('logout');
 
         const helpModal = document.getElementById('helpModal');
@@ -760,11 +881,6 @@ class SentleGame {
         });
         statsBtn?.addEventListener('click', () => {
             this.showStatsModal();
-        });
-        themeToggleBtn?.addEventListener('click', () => {
-            if (typeof window.toggleTheme === 'function') {
-                window.toggleTheme();
-            }
         });
         logoutBtn?.addEventListener('click', () => this.logout());
 
@@ -783,8 +899,10 @@ class SentleGame {
         this.modalsSetup = true;
     }
 
-    showStatsModal() {
+    async showStatsModal() {
         const modal = document.getElementById('statsModal');
+        // Reload stats from database before showing
+        this.stats = await this.loadStats();
         document.getElementById('gamesPlayed').textContent = this.stats.gamesPlayed;
         document.getElementById('winRate').textContent =
             this.stats.gamesPlayed > 0 ? Math.round((this.stats.gamesWon / this.stats.gamesPlayed) * 100) : 0;

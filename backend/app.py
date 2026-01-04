@@ -11417,14 +11417,17 @@ async def submit_score(payload: Dict[str, Any] = Body(...)):
             raise HTTPException(status_code=403, detail="Score already submitted for today!")
         
         # Insert score
-        Database.execute_sql(
-            """INSERT INTO sentle_scores 
-               (user_id, sentence_id, score, attempts, date) 
-               VALUES (%s, %s, %s, %s, %s)""",
-            (user_id, sentence_id, score, attempts, date)
-        )
-        
-        print(f"[SENTLE] Score inserted for user {user_id}: {score} pts with {attempts} attempts")
+        try:
+            Database.execute_sql(
+                """INSERT INTO sentle_scores 
+                   (user_id, sentence_id, score, attempts, date) 
+                   VALUES (%s, %s, %s, %s, %s)""",
+                (user_id, sentence_id, score, attempts, date)
+            )
+            print(f"[SENTLE] ✓ Score inserted: user_id={user_id}, sentence_id={sentence_id}, score={score}, date={date}")
+        except Exception as insert_err:
+            print(f"[SENTLE] ✗ Failed to insert score: {insert_err}")
+            raise HTTPException(status_code=500, detail=f"Failed to save score: {str(insert_err)}")
         
         # Mark session as played
         Database.execute_sql(
@@ -11440,47 +11443,143 @@ async def submit_score(payload: Dict[str, Any] = Body(...)):
         print(f"[SENTLE] Error submitting score: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error submitting score: {str(e)}")
 
+@app.get("/api/sentle/stats", tags=["Sentle"])
+async def get_user_stats(request: Request):
+    """Get user stats calculated from sentle_scores table"""
+    try:
+        from database.database import Database
+        
+        # Get session token from request
+        session_token = None
+        auth_header = request.headers.get('Authorization', '')
+        if auth_header.startswith('Bearer '):
+            session_token = auth_header[7:]
+        
+        if not session_token:
+            # Try getting from query or body
+            session_token = request.query_params.get('session_token')
+        
+        if not session_token:
+            raise HTTPException(status_code=401, detail="Session token required")
+        
+        # Get user from session
+        today = datetime.now().date()
+        session = Database.get_one_row(
+            "SELECT user_id FROM sentle_sessions WHERE session_token = %s AND date = %s",
+            (session_token, today)
+        )
+        
+        if not session:
+            raise HTTPException(status_code=401, detail="Invalid session")
+        
+        user_id = session['user_id']
+        
+        # Calculate stats from sentle_scores table
+        stats_result = Database.get_one_row(
+            """SELECT 
+                COUNT(*) AS games_played,
+                SUM(CASE WHEN score > 0 THEN 1 ELSE 0 END) AS games_won,
+                COALESCE(SUM(score), 0) AS total_score,
+                COALESCE(SUM(attempts), 0) AS total_attempts
+               FROM sentle_scores
+               WHERE user_id = %s""",
+            (user_id,)
+        )
+        
+        if not stats_result:
+            stats_result = {
+                'games_played': 0,
+                'games_won': 0,
+                'total_score': 0,
+                'total_attempts': 0
+            }
+        
+        return {
+            "gamesPlayed": stats_result['games_played'] or 0,
+            "gamesWon": stats_result['games_won'] or 0,
+            "totalScore": stats_result['total_score'] or 0,
+            "totalAttempts": stats_result['total_attempts'] or 0,
+            "currentStreak": 0,  # Would need more complex logic to calculate
+            "maxStreak": 0       # Would need more complex logic to calculate
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[SENTLE] Error getting user stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error loading stats: {str(e)}")
+
+
+@app.get("/api/sentle/debug/scores", tags=["Sentle"])
+async def debug_scores():
+    """Debug endpoint: Show all sentle_scores in database"""
+    try:
+        from database.database import Database
+        
+        scores = Database.get_rows("""
+            SELECT 
+                s.id,
+                s.user_id,
+                u.first_name,
+                u.last_name,
+                s.sentence_id,
+                s.score,
+                s.attempts,
+                s.date
+            FROM sentle_scores s
+            LEFT JOIN users u ON s.user_id = u.id
+            ORDER BY s.date DESC, s.id DESC
+        """)
+        
+        if not scores:
+            return {"message": "No scores in database", "scores": []}
+        
+        return {
+            "totalScores": len(scores),
+            "scores": scores
+        }
+        
+    except Exception as e:
+        print(f"[SENTLE] Error in debug/scores: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/sentle/leaderboard", tags=["Sentle"])
 async def get_leaderboard():
     """Get cumulative Sentle leaderboard (all-time scores, top 100)"""
     try:
         from database.database import Database
         
-        # Get cumulative scores per quiz user (all sentences)
+        # Simple version - just get all scores grouped by user
         results = Database.get_rows(
             """SELECT 
+                    u.id,
                     CONCAT(u.first_name, ' ', u.last_name) AS player_name,
-                    SUM(s.score) AS total_score,
-                    SUM(s.attempts) AS total_attempts,
                     COUNT(*) AS games_played,
-                    MAX(s.date) AS last_played
+                    SUM(s.score) AS total_score
                FROM sentle_scores s
-               JOIN users u ON s.user_id = u.id
-               GROUP BY s.user_id, u.first_name, u.last_name
-               ORDER BY total_score DESC, total_attempts ASC, last_played ASC
+               INNER JOIN users u ON s.user_id = u.id
+               GROUP BY u.id
+               ORDER BY total_score DESC
                LIMIT 100"""
         )
         
-        print(f"[SENTLE] Global leaderboard query returned {len(results) if results else 0} entries")
+        leaderboard = []
         if results:
-            for r in results:
-                print(f"  - {r['player_name']}: {r['total_score']} pts ({r['games_played']} games)")
+            for row in results:
+                leaderboard.append({
+                    "playerName": row.get('player_name', 'Unknown'),
+                    "score": int(row.get('total_score', 0))
+                })
         
-        leaderboard = [
-            {
-                "playerName": row['player_name'],
-                "score": row['total_score'],
-                "attempts": row['total_attempts'],
-                "gamesPlayed": row['games_played'],
-            }
-            for row in (results or [])
-        ]
-        
+        print(f"[SENTLE] Leaderboard query returned {len(leaderboard)} entries")
         return {"leaderboard": leaderboard}
         
     except Exception as e:
-        print(f"[SENTLE] Error loading leaderboard: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error loading leaderboard: {str(e)}")
+        print(f"[SENTLE] Leaderboard error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {"leaderboard": []}
 
 
 @app.get("/api/sentle/leaderboard/daily", tags=["Sentle"])
@@ -11492,37 +11591,33 @@ async def get_daily_leaderboard():
         today = datetime.now().date()
         results = Database.get_rows(
             """SELECT 
+                    u.id,
                     CONCAT(u.first_name, ' ', u.last_name) AS player_name,
-                    s.score,
-                    s.attempts,
-                    s.date
+                    s.score
                FROM sentle_scores s
-               JOIN users u ON s.user_id = u.id
+               INNER JOIN users u ON s.user_id = u.id
                WHERE s.date = %s
-               ORDER BY s.score DESC, s.attempts ASC, s.id ASC
+               ORDER BY s.score DESC
                LIMIT 100""",
             (today,)
         )
 
-        print(f"[SENTLE] Daily leaderboard ({today}) query returned {len(results) if results else 0} entries")
+        leaderboard = []
         if results:
-            for r in results:
-                print(f"  - {r['player_name']}: {r['score']} pts")
+            for row in results:
+                leaderboard.append({
+                    "playerName": row.get('player_name', 'Unknown'),
+                    "score": int(row.get('score', 0))
+                })
 
-        leaderboard = [
-            {
-                "playerName": row["player_name"],
-                "score": row["score"],
-                "attempts": row["attempts"],
-            }
-            for row in (results or [])
-        ]
-
+        print(f"[SENTLE] Daily leaderboard returned {len(leaderboard)} entries for {today}")
         return {"date": str(today), "leaderboard": leaderboard}
 
     except Exception as e:
-        print(f"[SENTLE] Error loading daily leaderboard: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error loading today's leaderboard: {str(e)}")
+        print(f"[SENTLE] Daily leaderboard error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {"date": str(datetime.now().date()), "leaderboard": []}
 
 @app.get("/api/sentle/archive", tags=["Sentle"])
 async def get_archive():
@@ -11562,6 +11657,55 @@ async def get_archive():
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error loading archive: {str(e)}")
+
+@app.get("/api/sentle/debug/scores", tags=["Sentle"])
+async def debug_get_all_scores():
+    """DEBUG ENDPOINT: Get ALL sentle_scores rows (for troubleshooting)"""
+    try:
+        from database.database import Database
+        
+        # Raw count
+        count_result = Database.get_one_row("SELECT COUNT(*) as total FROM sentle_scores")
+        total_count = count_result['total'] if count_result else 0
+        
+        # Get all scores with user names
+        results = Database.get_rows(
+            """SELECT 
+                    ss.id,
+                    ss.user_id,
+                    u.first_name,
+                    u.last_name,
+                    ss.sentence_id,
+                    ss.score,
+                    ss.attempts,
+                    ss.date
+               FROM sentle_scores ss
+               LEFT JOIN users u ON ss.user_id = u.id
+               ORDER BY ss.date DESC, ss.id DESC
+               LIMIT 50"""
+        )
+        
+        scores = [
+            {
+                "id": row['id'],
+                "user_id": row['user_id'],
+                "player_name": f"{row['first_name']} {row['last_name']}" if row['first_name'] else "Unknown",
+                "sentence_id": row['sentence_id'],
+                "score": row['score'],
+                "attempts": row['attempts'],
+                "date": str(row['date'])
+            }
+            for row in (results or [])
+        ]
+        
+        return {
+            "total_scores_in_db": total_count,
+            "last_50_scores": scores,
+            "debug_info": "If this returns empty but you've submitted scores, check: (1) Are INSERT queries actually executing? (2) Is the user_id valid in users table?"
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching scores: {str(e)}")
 
 @app.post("/api/sentle/admin/login", tags=["Sentle"])
 async def admin_login(payload: Dict[str, Any] = Body(...)):
