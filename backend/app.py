@@ -11499,7 +11499,24 @@ async def submit_score(payload: Dict[str, Any] = Body(...)):
             sentle_logger.warning(f"Sentence mismatch: submitted_id={sentence_id}, today_id={today_sentence['id']}, submitted_date={date}, today_date={today_sentence['date']}")
             raise HTTPException(status_code=403, detail="Scores can only be submitted for today's sentence")
         
-        # Check for duplicate (schema-aware)
+        # Detect schema columns FIRST before using them
+        cols = get_sentle_scores_columns()
+        supports_user_id = 'user_id' in cols
+        supports_player_name = 'player_name' in cols
+        
+        # Get player name for insertion
+        player_name = "Anonymous"
+        try:
+            user_row = Database.get_one_row(
+                "SELECT first_name, last_name FROM users WHERE id = %s",
+                (user_id,)
+            )
+            if user_row:
+                player_name = f"{user_row.get('first_name','').strip()} {user_row.get('last_name','').strip()}".strip() or "Anonymous"
+        except Exception as name_err:
+            sentle_logger.warning(f"Could not fetch player name for user {user_id}: {name_err}")
+        
+        # Check for duplicate (schema-aware) - now variables are defined
         existing = None
         if supports_user_id:
             existing = Database.get_one_row(
@@ -11515,20 +11532,6 @@ async def submit_score(payload: Dict[str, Any] = Body(...)):
             raise HTTPException(status_code=403, detail="Score already submitted for today!")
         
         # Insert score using detected schema (supports player_name/guesses or user_id/attempts)
-        player_name = "Anonymous"
-        try:
-            user_row = Database.get_one_row(
-                "SELECT first_name, last_name FROM users WHERE id = %s",
-                (user_id,)
-            )
-            if user_row:
-                player_name = f"{user_row.get('first_name','').strip()} {user_row.get('last_name','').strip()}".strip() or "Anonymous"
-        except Exception as name_err:
-            sentle_logger.warning(f"Could not fetch player name for user {user_id}: {name_err}")
-
-        cols = get_sentle_scores_columns()
-        supports_user_id = 'user_id' in cols
-        supports_player_name = 'player_name' in cols
         supports_attempts = 'attempts' in cols
         supports_guesses = 'guesses' in cols
         supports_date = 'date' in cols

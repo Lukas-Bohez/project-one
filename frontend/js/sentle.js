@@ -30,6 +30,14 @@ class SentleGame {
         this.completed = false;
         this.scoreSubmitted = false;
         this.modalsSetup = false;
+        this.originalWords = [];
+        this.wordOrder = [];
+        this.practiceMode = false;
+        this.practicePayload = null;
+        // Letter reveal mechanic (20% of total letters)
+        this.maxReveals = 0;
+        this.revealsUsed = 0;
+        this.revealedLetters = {}; // {wordIndex: {letterIndex: true}}
         this.init();
     }
 
@@ -45,6 +53,12 @@ class SentleGame {
         this.completed = false;
         this.scoreSubmitted = false;
         this.keyboardState = {};
+        this.wordOrder = [];
+        this.originalWords = [];
+        this.practiceMode = false;
+        this.practicePayload = null;
+        this.revealsUsed = 0;
+        this.revealedLetters = {};
         this.resetKeyboard();
         if (clearStorage) {
             this.clearSavedState();
@@ -62,6 +76,19 @@ class SentleGame {
         // Always wire modal buttons even if game fails to load
         this.setupModals();
 
+        // Check if a replay/practice payload was stored (e.g., from archive)
+        const replayRaw = localStorage.getItem('sentle_replay_payload');
+        if (replayRaw) {
+            try {
+                this.practicePayload = JSON.parse(replayRaw);
+                this.practiceMode = true;
+                // Clear the payload so it does not persist beyond this session
+                localStorage.removeItem('sentle_replay_payload');
+            } catch (e) {
+                console.warn('Invalid replay payload; ignoring');
+            }
+        }
+
         // Load stats from database (or fallback) and validate session
         const { stats, validSession } = await this.loadStats();
         this.stats = stats;
@@ -71,9 +98,15 @@ class SentleGame {
         if (localPlayed) this.stats.playedToday = true;
 
         // If stored token is invalid, clear and show login instead of auto-starting a broken session
-        if (!validSession) {
+        if (!validSession && !this.practiceMode) {
             this.clearSessionAuth();
             this.showLoginScreen();
+            return;
+        }
+
+        if (this.practiceMode) {
+            this.hideLoginScreen();
+            this.startPracticeGame();
             return;
         }
 
@@ -359,6 +392,51 @@ class SentleGame {
         if (arrangementStage) arrangementStage.style.display = 'none';
     }
 
+    async startPracticeGame() {
+        // Practice mode: use provided sentence payload, skip score submission
+        this.gameStage = 'guessing';
+        this.completed = false;
+        this.scoreSubmitted = false;
+        this.stats.playedToday = false;
+
+        if (!this.practicePayload || !this.practicePayload.sentence) {
+            this.showMessage('Practice sentence unavailable.', 'error');
+            return;
+        }
+
+        // Load practice sentence
+        this.sentence = this.practicePayload.sentence.toUpperCase();
+        this.originalWords = this.sentence.split(' ');
+        this.wordOrder = this.generateWordOrder(this.originalWords.length, this.practicePayload.wordOrder);
+        this.words = this.wordOrder.map((idx) => this.originalWords[idx]);
+        this.currentWord = this.words[0];
+        this.sentenceId = this.practicePayload.id || null;
+        this.targetDate = this.practicePayload.date || 'practice';
+
+        // Reveals
+        const totalLetters = this.sentence.replace(/\s/g, '').length;
+        this.maxReveals = Math.floor(totalLetters * 0.2);
+        this.updateRevealsDisplay();
+
+        this.resetKeyboard();
+        this.createBoard();
+        this.setupEventListeners();
+        this.updateProgress();
+
+        // Show UI
+        document.getElementById('gameBoard').style.display = 'block';
+        document.getElementById('keyboard').style.display = 'block';
+        const progress = document.querySelector('.game-progress');
+        const currentWordSection = document.querySelector('.current-word-section');
+        if (progress) progress.style.display = 'block';
+        if (currentWordSection) currentWordSection.style.display = 'block';
+
+        const arrangementStage = document.getElementById('arrangementStage');
+        if (arrangementStage) arrangementStage.style.display = 'none';
+
+        this.showMessage('Practice mode: scores won\'t submit.', 'info');
+    }
+
     async loadDailySentence() {
         try {
             const response = await fetch('/api/sentle/daily');
@@ -366,10 +444,16 @@ class SentleGame {
 
             if (data && data.sentence) {
                 this.sentence = data.sentence.toUpperCase();
-                this.words = this.sentence.split(' ');
+                this.originalWords = this.sentence.split(' ');
+                this.wordOrder = this.generateWordOrder(this.originalWords.length);
+                this.words = this.wordOrder.map((idx) => this.originalWords[idx]);
                 this.currentWord = this.words[0];
                 this.sentenceId = data.id;
                 this.targetDate = data.date;
+                // Calculate max reveals: 20% of total letters
+                const totalLetters = this.sentence.replace(/\s/g, '').length;
+                this.maxReveals = Math.floor(totalLetters * 0.20);
+                this.updateRevealsDisplay();
             } else {
                 this.showMessage('No sentence available today. Check back tomorrow!', 'error');
             }
@@ -377,6 +461,18 @@ class SentleGame {
             console.error('Error loading sentence:', err);
             this.showMessage('Error loading game. Please try again.', 'error');
         }
+    }
+
+    generateWordOrder(length, existingOrder = null) {
+        if (existingOrder && Array.isArray(existingOrder) && existingOrder.length === length) {
+            return existingOrder;
+        }
+        const order = Array.from({ length }, (_, i) => i);
+        for (let i = order.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [order[i], order[j]] = [order[j], order[i]];
+        }
+        return order;
     }
 
     createBoard() {
@@ -394,6 +490,20 @@ class SentleGame {
                 const box = document.createElement('div');
                 box.className = 'letter-box';
                 box.id = `box-${i}-${j}`;
+                box.dataset.letterIndex = j;
+                
+                // If this is the current row and letter is revealed, show it
+                if (i === this.wordGuesses.length && this.isLetterRevealed(this.currentWordIndex, j)) {
+                    box.textContent = this.currentWord[j];
+                    box.classList.add('revealed');
+                }
+                
+                // Make current empty row boxes clickable for reveals
+                if (i === this.wordGuesses.length && this.revealsUsed < this.maxReveals) {
+                    box.style.cursor = 'pointer';
+                    box.addEventListener('click', () => this.revealLetter(j));
+                }
+                
                 row.appendChild(box);
             }
 
@@ -414,6 +524,20 @@ class SentleGame {
             const box = document.createElement('div');
             box.className = 'letter-box';
             box.id = `box-${currentRows}-${j}`;
+            box.dataset.letterIndex = j;
+            
+            // If letter is revealed, show it
+            if (this.isLetterRevealed(this.currentWordIndex, j)) {
+                box.textContent = this.currentWord[j];
+                box.classList.add('revealed');
+            }
+            
+            // Make clickable for reveals if we have reveals left
+            if (this.revealsUsed < this.maxReveals) {
+                box.style.cursor = 'pointer';
+                box.addEventListener('click', () => this.revealLetter(j));
+            }
+            
             row.appendChild(box);
         }
         board.appendChild(row);
@@ -460,7 +584,15 @@ class SentleGame {
     }
 
     addLetter(letter) {
-        if (this.currentGuess.length < this.currentWord.length) {
+        // Count non-revealed positions
+        let nonRevealedCount = 0;
+        for (let i = 0; i < this.currentWord.length; i++) {
+            if (!this.isLetterRevealed(this.currentWordIndex, i)) {
+                nonRevealedCount++;
+            }
+        }
+        
+        if (this.currentGuess.length < nonRevealedCount) {
             this.currentGuess += letter;
             this.updateCurrentRow();
         }
@@ -479,17 +611,41 @@ class SentleGame {
         const row = document.getElementById(`row-${currentAttempt}`);
         if (!row) return;
         const boxes = row.querySelectorAll('.letter-box');
+        
+        // Build display string by merging revealed letters and current guess
+        let guessIdx = 0;
         boxes.forEach((box, idx) => {
-            box.textContent = this.currentGuess[idx] || '';
-            box.classList.toggle('active', !!this.currentGuess[idx]);
+            if (this.isLetterRevealed(this.currentWordIndex, idx)) {
+                // Always show revealed letter
+                box.textContent = this.currentWord[idx];
+                box.classList.add('revealed');
+            } else {
+                // Show letter from current guess
+                box.textContent = this.currentGuess[guessIdx] || '';
+                box.classList.toggle('active', !!this.currentGuess[guessIdx]);
+                guessIdx++;
+            }
         });
     }
 
     submitGuess() {
-        if (this.currentGuess.length !== this.currentWord.length) {
+        // Auto-fill revealed letters into current guess
+        let finalGuess = '';
+        for (let i = 0; i < this.currentWord.length; i++) {
+            if (this.isLetterRevealed(this.currentWordIndex, i)) {
+                finalGuess += this.currentWord[i];
+            } else {
+                finalGuess += this.currentGuess[i] || '';
+            }
+        }
+        
+        if (finalGuess.length !== this.currentWord.length) {
             this.showMessage('Not enough letters!', 'error');
             return;
         }
+
+        // Update currentGuess to include revealed letters
+        this.currentGuess = finalGuess;
 
         // Count every submitted attempt
         this.totalAttemptsUsed += 1;
@@ -690,7 +846,10 @@ class SentleGame {
         const scoringCapPerWord = 10;
         const totalAttemptsAvailable = this.words.length * scoringCapPerWord;
         const unusedAttempts = Math.max(0, totalAttemptsAvailable - this.totalAttemptsUsed);
-        return 500 + unusedAttempts * 100;
+        let score = 500 + unusedAttempts * 100;
+        // Deduct 100 points per reveal used
+        score -= this.revealsUsed * 100;
+        return Math.max(0, score); // Never go negative
     }
 
     showCompletionModal() {
@@ -722,6 +881,10 @@ class SentleGame {
     }
 
     async submitScore(score, attemptsUsed) {
+        if (this.practiceMode) {
+            this.showMessage('Practice mode: score not submitted.', 'info');
+            return;
+        }
         if (this.scoreSubmitted) {
             this.showMessage('Score already submitted for today.', 'info');
             return;
@@ -872,6 +1035,54 @@ class SentleGame {
         }, 2500);
     }
 
+    isLetterRevealed(wordIndex, letterIndex) {
+        return this.revealedLetters[wordIndex]?.[letterIndex] || false;
+    }
+
+    revealLetter(letterIndex) {
+        if (this.gameStage !== 'guessing') return;
+        if (this.revealsUsed >= this.maxReveals) {
+            this.showMessage('No reveals left!', 'error');
+            return;
+        }
+        
+        // Don't reveal if already revealed
+        if (this.isLetterRevealed(this.currentWordIndex, letterIndex)) {
+            return;
+        }
+        
+        // Mark as revealed
+        if (!this.revealedLetters[this.currentWordIndex]) {
+            this.revealedLetters[this.currentWordIndex] = {};
+        }
+        this.revealedLetters[this.currentWordIndex][letterIndex] = true;
+        this.revealsUsed++;
+        
+        // Update UI
+        const currentRow = this.wordGuesses.length;
+        const box = document.getElementById(`box-${currentRow}-${letterIndex}`);
+        if (box) {
+            box.textContent = this.currentWord[letterIndex];
+            box.classList.add('revealed');
+            box.style.cursor = 'default';
+        }
+        
+        this.updateRevealsDisplay();
+        this.saveGameState();
+        this.showMessage(`Letter revealed! ${this.maxReveals - this.revealsUsed} reveals left`, 'info');
+    }
+
+    updateRevealsDisplay() {
+        const revealsDisplay = document.getElementById('revealsCounter');
+        if (revealsDisplay) {
+            const remaining = this.maxReveals - this.revealsUsed;
+            revealsDisplay.textContent = `💡 Reveals: ${remaining}/${this.maxReveals}`;
+            if (remaining === 0) {
+                revealsDisplay.style.opacity = '0.5';
+            }
+        }
+    }
+
     rememberPlayedToday(dateStr) {
         if (!dateStr) return;
         const payload = {
@@ -926,6 +1137,11 @@ class SentleGame {
             completed: this.completed,
             scoreSubmitted: this.scoreSubmitted,
             userId: this.userId || null,
+            revealsUsed: this.revealsUsed,
+            revealedLetters: this.revealedLetters,
+            wordOrder: this.wordOrder,
+            originalWords: this.originalWords,
+            practiceMode: this.practiceMode,
         };
         localStorage.setItem('sentle_gameState', JSON.stringify(state));
     }
@@ -950,7 +1166,9 @@ class SentleGame {
 
         this.sentenceId = state.sentenceId || this.sentenceId;
         this.sentence = state.sentence || this.sentence;
-        this.words = this.sentence ? this.sentence.split(' ') : this.words;
+        this.originalWords = state.originalWords || (this.sentence ? this.sentence.split(' ') : []);
+        this.wordOrder = this.generateWordOrder(this.originalWords.length, state.wordOrder);
+        this.words = this.wordOrder.map((idx) => this.originalWords[idx]);
 
         this.currentWordIndex = state.currentWordIndex || 0;
         this.guessedWords = state.guessedWords || [];
@@ -961,6 +1179,13 @@ class SentleGame {
         this.keyboardState = state.keyboardState || {};
         this.completed = state.completed || false;
         this.scoreSubmitted = state.scoreSubmitted || false;
+        this.practiceMode = state.practiceMode || false;
+        this.revealsUsed = state.revealsUsed || 0;
+        this.revealedLetters = state.revealedLetters || {};
+        if (!this.maxReveals) {
+            const totalLetters = (this.sentence || '').replace(/\s/g, '').length;
+            this.maxReveals = Math.floor(totalLetters * 0.2);
+        }
         this.currentWord = this.words[this.currentWordIndex] || '';
         this.restoreStateDone = true;
 
@@ -971,6 +1196,7 @@ class SentleGame {
         }
         this.updateCurrentRow();
         this.updateProgress();
+        this.updateRevealsDisplay();
 
         if (this.gameStage === 'arranging') {
             this.moveToArrangementStage();

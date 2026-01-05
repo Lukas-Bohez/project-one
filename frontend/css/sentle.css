@@ -145,6 +145,13 @@ body {
     font-size: 0.95rem;
 }
 
+.reveals-counter {
+    margin: 8px 0 0 0;
+    color: #1976d2;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
 .game-board {
     display: flex;
     flex-direction: column;
@@ -195,6 +202,13 @@ body {
     background: var(--sentle-absent);
     border-color: var(--sentle-absent);
     color: white;
+}
+
+.letter-box.revealed {
+    background: #1976d2;
+    border-color: #1976d2;
+    color: white;
+    cursor: default !important;
 }
 
 @keyframes pulse {
