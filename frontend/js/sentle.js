@@ -55,14 +55,10 @@ class SentleGame {
         this.keyboardState = {};
         this.wordOrder = [];
         this.originalWords = [];
-        this.practiceMode = false;
-        this.practicePayload = null;
         this.revealsUsed = 0;
         this.revealedLetters = {};
         this.resetKeyboard();
-        if (clearStorage) {
-            this.clearSavedState();
-        }
+        if (clearStorage) this.clearSavedState();
     }
 
     resetKeyboard() {
@@ -620,7 +616,7 @@ class SentleGame {
                 box.textContent = this.currentWord[idx];
                 box.classList.add('revealed');
             } else {
-                // Show letter from current guess
+                // Show letter from current guess in order of unrevealed slots
                 box.textContent = this.currentGuess[guessIdx] || '';
                 box.classList.toggle('active', !!this.currentGuess[guessIdx]);
                 guessIdx++;
@@ -628,23 +624,48 @@ class SentleGame {
         });
     }
 
-    submitGuess() {
-        // Auto-fill revealed letters into current guess
-        let finalGuess = '';
+    buildFinalGuess() {
+        const unrevealed = [];
         for (let i = 0; i < this.currentWord.length; i++) {
-            if (this.isLetterRevealed(this.currentWordIndex, i)) {
-                finalGuess += this.currentWord[i];
-            } else {
-                finalGuess += this.currentGuess[i] || '';
+            if (!this.isLetterRevealed(this.currentWordIndex, i)) {
+                unrevealed.push(i);
             }
         }
-        
-        if (finalGuess.length !== this.currentWord.length) {
+
+        // Require letters for all unrevealed positions
+        if (this.currentGuess.length < unrevealed.length) {
+            return null;
+        }
+
+        const full = Array.from(this.currentWord).map(() => '');
+
+        // Place revealed letters
+        for (let i = 0; i < this.currentWord.length; i++) {
+            if (this.isLetterRevealed(this.currentWordIndex, i)) {
+                full[i] = this.currentWord[i];
+            }
+        }
+
+        // Fill unrevealed slots in order with currentGuess characters
+        for (let idx = 0; idx < unrevealed.length; idx++) {
+            const pos = unrevealed[idx];
+            full[pos] = this.currentGuess[idx] || '';
+        }
+
+        // If any slot empty, not enough letters
+        if (full.some((ch) => ch === '')) return null;
+
+        return full.join('');
+    }
+
+    submitGuess() {
+        const finalGuess = this.buildFinalGuess();
+        if (!finalGuess) {
             this.showMessage('Not enough letters!', 'error');
             return;
         }
 
-        // Update currentGuess to include revealed letters
+        // Update currentGuess to include revealed letters merged
         this.currentGuess = finalGuess;
 
         // Count every submitted attempt
