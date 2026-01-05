@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Lofi Player",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "Play lofi music and videos in a standalone window with video support, album art, and full keyboard controls",
   "permissions": [
     "storage"

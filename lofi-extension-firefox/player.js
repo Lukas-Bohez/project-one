@@ -28,6 +28,12 @@ const mediaContainer = document.getElementById('media-container');
 const helpBtn = document.getElementById('help-btn');
 const helpOverlay = document.getElementById('help-overlay');
 const helpCloseBtn = document.getElementById('help-close-btn');
+const fullscreenBtn = document.getElementById('fullscreen-btn');
+const popupRoot = document.getElementById('lofi-popup-root');
+const filterAllBtn = document.getElementById('filter-all');
+const filterSongsBtn = document.getElementById('filter-songs');
+const filterVideosBtn = document.getElementById('filter-videos');
+const trackCountLabel = document.getElementById('track-count-label');
 
 // Current media element (audio or video)
 let currentMedia = audioPlayer;
@@ -39,6 +45,8 @@ let isPlaying = false;
 let shuffle = false;
 let repeat = 'off'; // 'off', 'one', 'all'
 let currentMode = 'bundled'; // 'bundled', 'files'
+let currentFilter = 'all'; // 'all', 'songs', 'videos'
+let isFullscreen = false;
 
 // Initialize
 async function init() {
@@ -346,50 +354,119 @@ function unloadFolder() {
 function renderTrackList() {
     listEl.innerHTML = '';
     
-    tracks.forEach((track, index) => {
-        const div = document.createElement('div');
-        div.className = 'song-item' + (index === currentIndex ? ' selected' : '');
-        div.dataset.index = index;
-        div.style.display = 'flex';
-        div.style.alignItems = 'center';
-        
-        // Add thumbnail if available
-        if (track.thumbnail) {
-            const thumb = document.createElement('img');
-            thumb.src = track.thumbnail;
-            thumb.style.cssText = 'width: 40px; height: 40px; border-radius: 4px; margin-right: 8px; object-fit: cover; flex-shrink: 0;';
-            div.appendChild(thumb);
-        } else if (track.isVideo) {
-            const videoIcon = document.createElement('span');
-            videoIcon.textContent = '🎬';
-            videoIcon.style.cssText = 'font-size: 32px; margin-right: 8px; flex-shrink: 0;';
-            div.appendChild(videoIcon);
+    // Filter tracks based on current filter
+    let filteredTracks = tracks;
+    if (currentFilter === 'songs') {
+        filteredTracks = tracks.filter(t => !t.isVideo);
+    } else if (currentFilter === 'videos') {
+        filteredTracks = tracks.filter(t => t.isVideo);
+    }
+    
+    // Update track count label
+    if (trackCountLabel) {
+        const songCount = tracks.filter(t => !t.isVideo).length;
+        const videoCount = tracks.filter(t => t.isVideo).length;
+        if (currentFilter === 'all') {
+            trackCountLabel.textContent = `${tracks.length} Tracks (${songCount} songs, ${videoCount} videos)`;
+        } else if (currentFilter === 'songs') {
+            trackCountLabel.textContent = `${songCount} Songs`;
+        } else {
+            trackCountLabel.textContent = `${videoCount} Videos`;
         }
+    }
+    
+    filteredTracks.forEach((track, displayIndex) => {
+        const actualIndex = tracks.indexOf(track);
+        const div = document.createElement('div');
         
-        const info = document.createElement('div');
-        info.className = 'song-info';
-        info.style.flex = '1';
-        info.style.minWidth = '0';
-        
-        const titleDiv = document.createElement('div');
-        titleDiv.className = 'song-title';
-        titleDiv.textContent = (track.title || track.file) + (track.isVideo ? ' (Video)' : '');
-        
-        const artistDiv = document.createElement('div');
-        artistDiv.className = 'song-artist';
-        artistDiv.textContent = track.artist || '';
-        
-        info.appendChild(titleDiv);
-        info.appendChild(artistDiv);
-        div.appendChild(info);
+        // Apply different styling for songs vs videos
+        if (track.isVideo) {
+            // YouTube-like video item
+            div.className = 'song-item video-item' + (actualIndex === currentIndex ? ' selected' : '');
+            div.dataset.index = actualIndex;
+            
+            // Video thumbnail wrapper
+            const thumbWrapper = document.createElement('div');
+            thumbWrapper.className = 'video-thumbnail-wrapper';
+            
+            if (track.thumbnail) {
+                const thumb = document.createElement('img');
+                thumb.src = track.thumbnail;
+                thumbWrapper.appendChild(thumb);
+            }
+            
+            div.appendChild(thumbWrapper);
+            
+            // Video info
+            const info = document.createElement('div');
+            info.className = 'video-info';
+            
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'video-title';
+            titleDiv.textContent = track.title || track.file;
+            
+            const metaDiv = document.createElement('div');
+            metaDiv.className = 'video-meta';
+            metaDiv.textContent = track.artist || 'Video';
+            
+            info.appendChild(titleDiv);
+            info.appendChild(metaDiv);
+            div.appendChild(info);
+        } else {
+            // Spotify-like audio item
+            div.className = 'song-item audio-item' + (actualIndex === currentIndex ? ' selected' : '');
+            div.dataset.index = actualIndex;
+            div.style.display = 'flex';
+            div.style.alignItems = 'center';
+            div.style.paddingLeft = '28px'; // Space for play icon
+            
+            // Add thumbnail if available
+            if (track.thumbnail) {
+                const thumb = document.createElement('img');
+                thumb.src = track.thumbnail;
+                thumb.className = 'song-thumbnail';
+                thumb.style.cssText = 'width: 48px; height: 48px; border-radius: 4px; margin-right: 12px; object-fit: cover; flex-shrink: 0;';
+                div.appendChild(thumb);
+            } else {
+                const musicIcon = document.createElement('span');
+                musicIcon.textContent = '🎵';
+                musicIcon.style.cssText = 'font-size: 32px; margin-right: 12px; flex-shrink: 0; width: 48px; text-align: center;';
+                div.appendChild(musicIcon);
+            }
+            
+            const info = document.createElement('div');
+            info.className = 'song-info';
+            info.style.flex = '1';
+            info.style.minWidth = '0';
+            
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'song-title';
+            titleDiv.textContent = track.title || track.file;
+            
+            const artistDiv = document.createElement('div');
+            artistDiv.className = 'song-artist';
+            artistDiv.textContent = track.artist || 'Unknown Artist';
+            
+            info.appendChild(titleDiv);
+            info.appendChild(artistDiv);
+            div.appendChild(info);
+        }
         
         div.addEventListener('click', (e) => {
             e.preventDefault();
-            playTrack(index);
+            playTrack(actualIndex);
         });
         
         listEl.appendChild(div);
     });
+    
+    // Show message if no tracks match filter
+    if (filteredTracks.length === 0 && tracks.length > 0) {
+        const emptyMsg = document.createElement('div');
+        emptyMsg.style.cssText = 'text-align: center; padding: 40px 20px; color: var(--text-muted);';
+        emptyMsg.textContent = currentFilter === 'songs' ? '📭 No songs in library' : '📭 No videos in library';
+        listEl.appendChild(emptyMsg);
+    }
 }
 
 // Update track list selection
@@ -630,6 +707,12 @@ if (progressContainer) progressContainer.addEventListener('click', seek);
 if (shuffleBtn) shuffleBtn.addEventListener('click', toggleShuffle);
 if (repeatBtn) repeatBtn.addEventListener('click', toggleRepeat);
 if (unloadButton) unloadButton.addEventListener('click', unloadFolder);
+if (fullscreenBtn) fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+// Filter buttons
+if (filterAllBtn) filterAllBtn.addEventListener('click', () => setFilter('all'));
+if (filterSongsBtn) filterSongsBtn.addEventListener('click', () => setFilter('songs'));
+if (filterVideosBtn) filterVideosBtn.addEventListener('click', () => setFilter('videos'));
 
 // Folder input handler
 if (folderInput) folderInput.addEventListener('change', (e) => {
@@ -764,8 +847,45 @@ function setupKeyboardShortcuts() {
                 e.preventDefault();
                 toggleRepeat();
                 break;
+            case 'f':
+            case 'F':
+                e.preventDefault();
+                toggleFullscreen();
+                break;
         }
     });
+}
+
+// Toggle fullscreen
+function toggleFullscreen() {
+    isFullscreen = !isFullscreen;
+    if (popupRoot) {
+        popupRoot.classList.toggle('fullscreen', isFullscreen);
+    }
+    if (fullscreenBtn) {
+        fullscreenBtn.textContent = isFullscreen ? '⛶' : '⛶';
+        fullscreenBtn.title = isFullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)';
+    }
+}
+
+// Set filter
+function setFilter(filter) {
+    currentFilter = filter;
+    
+    // Update filter button states
+    document.querySelectorAll('.filter-tab').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    if (filter === 'all' && filterAllBtn) {
+        filterAllBtn.classList.add('active');
+    } else if (filter === 'songs' && filterSongsBtn) {
+        filterSongsBtn.classList.add('active');
+    } else if (filter === 'videos' && filterVideosBtn) {
+        filterVideosBtn.classList.add('active');
+    }
+    
+    renderTrackList();
 }
 
 // Initialize
