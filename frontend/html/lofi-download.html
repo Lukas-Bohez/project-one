@@ -57,6 +57,17 @@
             </div>
         </section>
 
+        <!-- Firefox Extension Section -->
+        <section class="content-second content-second--visible">
+            <h2>🎉 Official Firefox Extension Available!</h2>
+            <p>We recommend using Firefox for the best experience. Install the official Lofi Player extension from the Firefox Add-ons store:</p>
+            <div style="text-align: center; margin: 20px 0;">
+                <a href="https://addons.mozilla.org/nl/firefox/addon/lofi-player/?utm_source=addons.mozilla.org&utm_medium=referral&utm_content=search" class="c-btn c-btn--primary accent-blue" target="_blank" rel="noopener noreferrer">
+                    🦊 Install for Firefox (Recommended)
+                </a>
+            </div>
+        </section>
+
         <!-- Ad Section Top -->
         <div class="ad-container">
             <!-- add flood item quiz the spire -->
@@ -107,36 +118,26 @@
             
             <h3>Installation Steps</h3>
             
-            <h4>For Chrome / Edge:</h4>
+            <h4>For Chromium-based Browsers (Chrome, Edge, Brave, Opera, Vivaldi, Arc, etc.):</h4>
             <ol>
-                <li><strong>Download:</strong> Click the "Chrome / Edge" button below to download LofiExtension.zip</li>
+                <li><strong>Download:</strong> Click the "Chromium Browsers" button below to download LofiExtension.zip</li>
                 <li><strong>Extract:</strong> Unzip the file to a location on your computer</li>
-                <li><strong>Open Extensions:</strong> Navigate to <code>chrome://extensions/</code> or <code>edge://extensions/</code></li>
+                <li><strong>Open Extensions:</strong> Navigate to <code>chrome://extensions/</code> (works for all Chromium browsers)</li>
                 <li><strong>Enable Developer Mode:</strong> Toggle the "Developer mode" switch in the top right corner</li>
                 <li><strong>Load Extension:</strong> Click "Load unpacked" and select the extracted folder</li>
                 <li><strong>Done!</strong> The extension icon will appear in your toolbar</li>
             </ol>
 
             <h4>For Firefox:</h4>
-            <div class="c-note" style="background: rgba(255, 193, 7, 0.1); border-left-color: #ffc107; margin-bottom: 15px;">
-                <p><strong>⚠️ Important:</strong> Firefox requires extensions to be signed by Mozilla. For personal use, you can load it as a temporary add-on.</p>
-            </div>
+            <p>The Lofi Extension is now available on the official Firefox Add-ons store for easy installation:</p>
             <ol>
-                <li><strong>Download:</strong> Click the "Firefox" button below to download LofiExtension-Firefox.zip</li>
-                <li><strong>Extract:</strong> Unzip the file to a permanent location on your computer (don't delete this folder!)</li>
-                <li><strong>Open Debugging:</strong> Type <code>about:debugging#/runtime/this-firefox</code> in Firefox's address bar and press Enter</li>
-                <li><strong>Load Temporary Add-on:</strong> Click the "Load Temporary Add-on..." button</li>
-                <li><strong>Select File:</strong> Navigate to the extracted folder and select the <code>manifest.json</code> file</li>
-                <li><strong>Extension Loaded:</strong> The Lofi Player icon will appear in your toolbar - click it to open the player</li>
-                <li><strong>⚠️ Note:</strong> Temporary add-ons are removed when Firefox closes. You'll need to reload it each time you restart Firefox using the same steps.</li>
+                <li><strong>Install:</strong> Click the "Install for Firefox" button at the top of this page</li>
+                <li><strong>Follow Prompts:</strong> Follow the prompts to add the extension to Firefox</li>
+                <li><strong>Done!</strong> The extension icon will appear in your toolbar</li>
             </ol>
-            
-            <div class="c-note" style="margin-top: 15px;">
-                <p><strong>Tip:</strong> For permanent installation in Firefox Developer Edition or Nightly, you can disable signature verification in <code>about:config</code> by setting <code>xpinstall.signatures.required</code> to <code>false</code>. This is not recommended for regular browsing.</p>
-            </div>
 
             <div class="c-note">
-                <p><strong>Note:</strong> This is a manual installation. The extension is not yet available on browser stores. Keep the extracted folder; don't delete it after installation.</p>
+                <p><strong>Note:</strong> For Chromium-based browsers, manual installation is required as shown above. Firefox users can install from the official store. Keep the extracted folder for Chromium browser installations; don't delete it after installation.</p>
             </div>
         </section>
 
@@ -146,13 +147,10 @@
             
             <h3>Common Issues</h3>
             <ul>
-                <li><strong>"Extension not verified" (Firefox):</strong> This is expected! Firefox requires all permanent extensions to be signed by Mozilla. Load it as a temporary add-on instead (see installation steps above).</li>
-                <li><strong>"Add-on could not be installed" (Firefox):</strong> Make sure you're using "Load Temporary Add-on" from <code>about:debugging</code>, not trying to install the .zip directly.</li>
-                <li><strong>Extension disappears after restart (Firefox):</strong> Temporary add-ons in Firefox need to be reloaded after each browser restart. This is normal behavior for unsigned extensions. Keep the extracted folder and reload using the same steps.</li>
-                <li><strong>Extension doesn't load:</strong> Make sure you've extracted the ZIP file completely and selected the manifest.json file</li>
+                <li><strong>Extension doesn't load:</strong> Make sure you've extracted the ZIP file completely and selected the manifest.json file (for manual installation)</li>
                 <li><strong>Music doesn't play:</strong> Check your browser's audio permissions and ensure your volume is not muted</li>
-                <li><strong>Can't find Developer Mode (Chrome/Edge):</strong> Look in the top-right corner of the extensions page</li>
-                <li><strong>Wrong version downloaded:</strong> Chrome/Edge use LofiExtension.zip, Firefox uses LofiExtension-Firefox.zip</li>
+                <li><strong>Can't find Developer Mode (Chromium browsers):</strong> Look in the top-right corner of the extensions page</li>
+                <li><strong>Wrong version downloaded:</strong> Chromium browsers use LofiExtension.zip, Firefox uses LofiExtension-Firefox.zip</li>
             </ul>
 
             <h3>Need More Help?</h3>
@@ -180,7 +178,7 @@
             
             <div class="button-row" style="gap: 15px; flex-wrap: wrap; justify-content: center;">
                 <a href="../downloads/LofiExtension.zip" download class="c-btn c-btn--primary accent-blue">
-                    🌐 Chrome / Edge
+                    🌐 Chromium Browsers
                 </a>
                 <a href="../downloads/LofiExtension-Firefox.zip" download class="c-btn c-btn--primary accent-blue">
                     🦊 Firefox
@@ -225,10 +223,9 @@
             <div class="info-section">
                 <h3 class="section-title">How do I install?</h3>
                 <ul class="info-list">
-                    <li><strong>Step 1:</strong> Download the ZIP file from the bottom of this page</li>
-                    <li><strong>Step 2:</strong> Extract the ZIP file to your computer</li>
-                    <li><strong>Step 3:</strong> Load it in your browser's extension settings</li>
-                    <li><strong>Step 4:</strong> Start enjoying lo-fi music!</li>
+                    <li><strong>For Firefox (Recommended):</strong> Click the "Install for Firefox" button at the top of this page</li>
+                    <li><strong>For Chromium browsers:</strong> Download the ZIP file from the bottom of this page, extract it, and load as unpacked extension</li>
+                    <li><strong>Step 3:</strong> Start enjoying lo-fi music!</li>
                 </ul>
             </div>
             <div class="info-section">
