@@ -13,13 +13,9 @@ def main():
         # Activate virtual environment
         venv_python = "/home/student/Project/.venv/bin/python"
         
-        # Start uvicorn
+        # Start the server using python3 app.py (which runs the ASGI app with Socket.IO)
         cmd = [
-            venv_python, "-m", "uvicorn", 
-            "app:app", 
-            "--host", "0.0.0.0", 
-            "--port", "8001", 
-            "--reload"
+            venv_python, "app.py"
         ]
         
         print("Starting backend server...")
