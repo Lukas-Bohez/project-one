@@ -297,3 +297,76 @@ body {
         width: 100%;
     }
 }
+
+/* Dark mode styles */
+[data-theme="dark"] .support-header {
+    background: linear-gradient(135deg, #2d1b69 0%, #11998e 100%);
+}
+
+[data-theme="dark"] .chat-info {
+    background: #2d3748;
+    border-color: #4a5568;
+}
+
+[data-theme="dark"] .chat-info h3 {
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .chat-info p {
+    color: #a0aec0;
+}
+
+[data-theme="dark"] #chatBox {
+    background: #1a202c;
+    border-color: #4a5568;
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .chat-message {
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .chat-message .message-header {
+    color: #63b3ed;
+}
+
+[data-theme="dark"] .input-area {
+    background: #2d3748;
+    border-color: #4a5568;
+}
+
+[data-theme="dark"] #messageInput {
+    background: #1a202c;
+    border-color: #4a5568;
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] #messageInput::placeholder {
+    color: #a0aec0;
+}
+
+[data-theme="dark"] #sendButton {
+    background: #3182ce;
+    border-color: #3182ce;
+    color: white;
+}
+
+[data-theme="dark"] #sendButton:hover {
+    background: #2c5282;
+}
+
+[data-theme="dark"] .status-indicator {
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .status-dot.disconnected {
+    background: #fc8181;
+}
+
+[data-theme="dark"] .status-dot.connected {
+    background: #68d391;
+}
+
+[data-theme="dark"] .user-greeting {
+    color: #e2e8f0;
+}
