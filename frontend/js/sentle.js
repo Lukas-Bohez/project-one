@@ -34,10 +34,11 @@ class SentleGame {
         this.wordOrder = [];
         this.practiceMode = false;
         this.practicePayload = null;
-        // Letter reveal mechanic (20% of total letters)
+        // Letter reveal mechanic (server-validated)
         this.maxReveals = 0;
         this.revealsUsed = 0;
         this.revealedLetters = {}; // {wordIndex: {letterIndex: true}}
+        this.gameSessionId = null; // Server-side game session tracking
         this.init();
     }
 
@@ -92,6 +93,9 @@ class SentleGame {
         // Local safeguard: if we have stored a played-today flag for this user/date, honor it
         const localPlayed = this.hasLocalPlayedToday();
         if (localPlayed) this.stats.playedToday = true;
+
+        // Always load leaderboards (public information)
+        this.loadLeaderboard();
 
         // If stored token is invalid, clear and show login instead of auto-starting a broken session
         if (!validSession && !this.practiceMode) {
@@ -350,7 +354,27 @@ class SentleGame {
             return;
         }
         await this.loadDailySentence();
-        if (!this.sentence) return;
+        if (!this.sentence) {
+            console.error('Failed to load daily sentence');
+            return;
+        }
+        
+        // CRITICAL: Verify words array is populated
+        if (!this.words || this.words.length === 0) {
+            console.error('CRITICAL: words array is empty after loadDailySentence', {
+                sentence: this.sentence,
+                originalWords: this.originalWords,
+                words: this.words,
+                wordOrder: this.wordOrder
+            });
+            this.showMessage('Failed to initialize game - please refresh', 'error');
+            return;
+        }
+        
+        console.log('✓ Sentence loaded:', {
+            wordCount: this.words.length,
+            words: this.words.map(w => w.length) // Log word lengths instead of actual words
+        });
 
         // Try to restore saved state for this date; otherwise fresh
         this.checkGameState();
@@ -369,7 +393,64 @@ class SentleGame {
             this.currentGuess = '';
             this.wordGuesses = [];
         }
+        
+        console.log('Before session init:', {
+            currentWordIndex: this.currentWordIndex,
+            currentWord: this.currentWord,
+            wordsLength: this.words.length
+        });
 
+        // Initialize game session on server (secure tracking)
+        if (!this.practiceMode) {
+            await this.initializeGameSession();
+        }
+        
+        // CRITICAL: Validate words array before using it
+        console.log('After session init, validating words array:', {
+            wordsIsArray: Array.isArray(this.words),
+            wordsLength: this.words?.length,
+            currentWordIndex: this.currentWordIndex,
+            words: this.words
+        });
+        
+        if (!Array.isArray(this.words) || this.words.length === 0) {
+            console.error('CRITICAL: words is not a valid array after session init!', this.words);
+            this.showMessage('Game initialization failed - please refresh', 'error');
+            return;
+        }
+        
+        // Ensure currentWordIndex is valid
+        if (this.currentWordIndex < 0 || this.currentWordIndex >= this.words.length) {
+            console.warn('Invalid currentWordIndex, resetting to 0');
+            this.currentWordIndex = 0;
+        }
+        
+        // Directly set currentWord from validated array
+        this.currentWord = this.words[this.currentWordIndex];
+        
+        console.log('Set currentWord:', {
+            type: typeof this.currentWord,
+            isString: typeof this.currentWord === 'string',
+            length: this.currentWord?.length
+        });
+        
+        // FINAL safety check - if still undefined, something is very wrong
+        if (!this.currentWord || typeof this.currentWord !== 'string') {
+            console.error('CRITICAL: currentWord is STILL not a valid string!', {
+                currentWord: this.currentWord,
+                words: this.words,
+                currentWordIndex: this.currentWordIndex,
+                wordsAtIndex: this.words[this.currentWordIndex]
+            });
+            this.showMessage('Critical error: Cannot start game. Please refresh the page.', 'error');
+            return;
+        }
+        
+        console.log('✓ Ready to create board:', {
+            currentWordLength: this.currentWord?.length,
+            currentWordIndex: this.currentWordIndex
+        });
+        
         this.createBoard();
         this.setupEventListeners();
         this.updateProgress();
@@ -411,7 +492,7 @@ class SentleGame {
 
         // Reveals
         const totalLetters = this.sentence.replace(/\s/g, '').length;
-        this.maxReveals = Math.floor(totalLetters * 0.2);
+        this.maxReveals = 0;  // Start with 0 reveals, gain 1 per failed guess
         this.updateRevealsDisplay();
 
         this.resetKeyboard();
@@ -433,6 +514,63 @@ class SentleGame {
         this.showMessage('Practice mode: scores won\'t submit.', 'info');
     }
 
+    async initializeGameSession() {
+        if (this.practiceMode) {
+            console.log('Practice mode: skipping game session initialization');
+            return; // No server tracking for practice
+        }
+
+        console.log('Initializing game session...', {
+            sessionToken: this.sessionToken ? 'present' : 'missing',
+            sentenceId: this.sentenceId,
+            targetDate: this.targetDate
+        });
+
+        try {
+            const response = await fetch('/api/sentle/game/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    session_token: this.sessionToken,
+                    sentenceId: this.sentenceId,
+                    date: this.targetDate
+                })
+            });
+
+            const data = await response.json();
+            console.log('Game session response:', { status: response.status, data });
+            
+            if (response.ok) {
+                this.gameSessionId = data.game_session_id;
+                this.currentWordIndex = data.current_word_index;
+                this.totalAttemptsUsed = data.total_attempts;
+                this.revealsUsed = data.reveals_used;
+                this.completed = data.completed;
+
+                console.log('✓ Game session initialized:', {
+                    gameSessionId: this.gameSessionId,
+                    currentWordIndex: this.currentWordIndex,
+                    totalAttempts: this.totalAttemptsUsed
+                });
+
+                this.updateRevealsDisplay();
+                this.showMessage('Game session initialized', 'info');
+            } else {
+                console.error('Failed to initialize game session:', data);
+                // GRACEFUL DEGRADATION: Don't block gameplay, just disable server validation
+                this.gameSessionId = null;
+                console.warn('Playing without server-side validation (session init failed)');
+                this.showMessage('Playing in offline mode', 'info');
+            }
+        } catch (err) {
+            console.error('Error initializing game session:', err);
+            // GRACEFUL DEGRADATION: Allow play without server tracking
+            this.gameSessionId = null;
+            console.warn('Playing without server-side validation (network error)');
+            this.showMessage('Playing in offline mode', 'info');
+        }
+    }
+
     async loadDailySentence() {
         try {
             const response = await fetch('/api/sentle/daily');
@@ -446,9 +584,9 @@ class SentleGame {
                 this.currentWord = this.words[0];
                 this.sentenceId = data.id;
                 this.targetDate = data.date;
-                // Calculate max reveals: 20% of total letters
+                // Calculate max reveals: start with 0, gain 1 per failed guess
                 const totalLetters = this.sentence.replace(/\s/g, '').length;
-                this.maxReveals = Math.floor(totalLetters * 0.20);
+                this.maxReveals = 0;
                 this.updateRevealsDisplay();
             } else {
                 this.showMessage('No sentence available today. Check back tomorrow!', 'error');
@@ -526,12 +664,6 @@ class SentleGame {
             if (this.isLetterRevealed(this.currentWordIndex, j)) {
                 box.textContent = this.currentWord[j];
                 box.classList.add('revealed');
-            }
-            
-            // Make clickable for reveals if we have reveals left
-            if (this.revealsUsed < this.maxReveals) {
-                box.style.cursor = 'pointer';
-                box.addEventListener('click', () => this.revealLetter(j));
             }
             
             row.appendChild(box);
@@ -622,6 +754,25 @@ class SentleGame {
                 guessIdx++;
             }
         });
+
+        // Update click listeners for reveals
+        boxes.forEach((box, j) => {
+            if (!this.isLetterRevealed(this.currentWordIndex, j) && this.revealsUsed < this.maxReveals) {
+                box.style.cursor = 'pointer';
+                // Remove existing listener to avoid duplicates
+                if (box._revealHandler) {
+                    box.removeEventListener('click', box._revealHandler);
+                }
+                box._revealHandler = () => this.revealLetter(j);
+                box.addEventListener('click', box._revealHandler);
+            } else {
+                box.style.cursor = '';
+                if (box._revealHandler) {
+                    box.removeEventListener('click', box._revealHandler);
+                    delete box._revealHandler;
+                }
+            }
+        });
     }
 
     buildFinalGuess() {
@@ -658,7 +809,7 @@ class SentleGame {
         return full.join('');
     }
 
-    submitGuess() {
+    async submitGuess() {
         const finalGuess = this.buildFinalGuess();
         if (!finalGuess) {
             this.showMessage('Not enough letters!', 'error');
@@ -668,43 +819,162 @@ class SentleGame {
         // Update currentGuess to include revealed letters merged
         this.currentGuess = finalGuess;
 
-        // Count every submitted attempt
-        this.totalAttemptsUsed += 1;
-
         this.wordGuesses.push(this.currentGuess);
         const guessIndex = this.wordGuesses.length - 1;
-        this.evaluateGuess(guessIndex);
-        this.saveGameState();
-
-        if (this.currentGuess === this.currentWord) {
-            this.guessedWords.push(this.currentWord);
-            this.showMessage(`✓ Word ${this.currentWordIndex + 1} correct!`, 'success');
-
-            if (this.currentWordIndex < this.words.length - 1) {
-                setTimeout(() => {
-                    this.currentWordIndex += 1;
-                    this.currentWord = this.words[this.currentWordIndex];
-                    this.currentGuess = '';
-                    this.wordGuesses = [];
-                    this.resetKeyboard();
-                    this.createBoard();
-                    this.updateProgress();
-                    this.showMessage(`Guess Word ${this.currentWordIndex + 1}!`, 'info');
-                    this.saveGameState();
-                }, 800);
-            } else {
-                setTimeout(() => {
-                    this.moveToArrangementStage();
-                    this.saveGameState();
-                }, 800);
+        
+        // Submit to server for validation (unless practice mode)
+        if (!this.practiceMode && this.gameSessionId) {
+            try {
+                const response = await fetch('/api/sentle/guess', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_token: this.sessionToken,
+                        game_session_id: this.gameSessionId,
+                        word_index: this.currentWordIndex,
+                        guess: this.currentGuess,
+                        target_word: this.currentWord
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    // Use server-validated feedback
+                    this.evaluateGuessFromServer(guessIndex, data.feedback);
+                    this.totalAttemptsUsed = data.total_attempts;
+                    
+                    // Check if correct
+                    if (data.is_correct) {
+                        this.handleCorrectGuess();
+                    } else {
+                        this.handleIncorrectGuess(data.attempt_number);
+                    }
+                } else {
+                    this.showMessage(data.detail || 'Guess validation failed', 'error');
+                    this.wordGuesses.pop(); // Remove failed guess
+                    return;
+                }
+            } catch (err) {
+                console.error('Error submitting guess:', err);
+                this.showMessage('Error submitting guess', 'error');
+                this.wordGuesses.pop();
+                return;
             }
         } else {
-            const attemptNum = this.wordGuesses.length;
-            this.showMessage(`Keep trying (attempt ${attemptNum})`, 'info');
-            this.currentGuess = '';
-            this.ensureNextRow();
-            this.updateProgress();
-            this.saveGameState();
+            // Practice mode or no session: use client-side validation
+            this.totalAttemptsUsed += 1;
+            this.evaluateGuess(guessIndex);
+            
+            if (this.currentGuess === this.currentWord) {
+                this.handleCorrectGuess();
+            } else {
+                if (this.wordGuesses.length >= this.maxAttemptsPerWord) {
+                    // Failed this word, move to next
+                    this.showMessage(`Out of attempts for "${this.currentWord}". Moving to next word.`, 'warning');
+                    this.currentWordIndex += 1;
+                    if (this.currentWordIndex < this.words.length) {
+                        this.currentWord = this.words[this.currentWordIndex];
+                        this.currentGuess = '';
+                        this.wordGuesses = [];
+                        this.maxReveals = 0;  // Reset reveals for new word
+                        this.revealsUsed = 0;
+                        this.updateRevealsDisplay();
+                        this.resetKeyboard();
+                        this.createBoard();
+                        this.updateProgress();
+                        this.showMessage(`Guess Word ${this.currentWordIndex + 1}!`, 'info');
+                        this.saveGameState();
+                    } else {
+                        this.moveToArrangementStage();
+                        this.saveGameState();
+                    }
+                } else {
+                    this.handleIncorrectGuess(this.wordGuesses.length);
+                }
+            }
+        }
+        
+        this.saveGameState();
+    }
+    
+    handleCorrectGuess() {
+        this.guessedWords.push(this.currentWord);
+        this.showMessage(`✓ Word ${this.currentWordIndex + 1} correct!`, 'success');
+
+        if (this.currentWordIndex < this.words.length - 1) {
+            setTimeout(async () => {
+                // Notify server word is complete
+                await this.completeWordOnServer();
+                
+                this.currentWordIndex += 1;
+                this.currentWord = this.words[this.currentWordIndex];
+                this.currentGuess = '';
+                this.wordGuesses = [];
+                this.maxReveals = 0;  // Reset reveals for new word
+                this.revealsUsed = 0;
+                this.updateRevealsDisplay();
+                this.resetKeyboard();
+                this.createBoard();
+                this.updateProgress();
+                this.showMessage(`Guess Word ${this.currentWordIndex + 1}!`, 'info');
+                this.saveGameState();
+            }, 800);
+        } else {
+            setTimeout(() => {
+                this.moveToArrangementStage();
+                this.saveGameState();
+            }, 800);
+        }
+    }
+    
+    handleIncorrectGuess(attemptNum) {
+        this.showMessage(`Keep trying (attempt ${attemptNum})`, 'info');
+        this.currentGuess = '';
+        this.maxReveals += 1;  // Gain 1 reveal per failed guess
+        this.updateRevealsDisplay();
+        this.ensureNextRow();
+        this.updateCurrentRow();  // Refresh listeners for new reveals
+        this.updateProgress();
+    }
+
+    async completeWordOnServer() {
+        if (this.practiceMode) return;
+
+        try {
+            await fetch('/api/sentle/word/complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    session_token: this.sessionToken,
+                    game_session_id: this.gameSessionId,
+                    word_index: this.currentWordIndex
+                })
+            });
+        } catch (err) {
+            console.error('Error completing word on server:', err);
+        }
+    }
+
+    evaluateGuessFromServer(guessIndex, feedback) {
+        const row = document.getElementById(`row-${guessIndex}`);
+        const boxes = row.querySelectorAll('.letter-box');
+        const guess = this.wordGuesses[guessIndex];
+
+        // Apply server-provided feedback
+        for (let i = 0; i < boxes.length; i++) {
+            const state = feedback[i];
+            boxes[i].classList.add(state);
+            if (state === 'correct') {
+                this.updateKeyboardKey(guess[i], 'correct');
+            } else if (state === 'present') {
+                if (this.keyboardState[guess[i]] !== 'correct') {
+                    this.updateKeyboardKey(guess[i], 'present');
+                }
+            } else if (state === 'absent') {
+                if (!this.keyboardState[guess[i]]) {
+                    this.updateKeyboardKey(guess[i], 'absent');
+                }
+            }
         }
     }
 
@@ -916,10 +1186,10 @@ class SentleGame {
             this.showMessage('Please log in before submitting your score.', 'error');
             return;
         }
+
         try {
             console.log('Submitting score:', {
-                score,
-                attempts: attemptsUsed,
+                game_session_id: this.gameSessionId,
                 sentenceId: this.sentenceId,
                 date: this.targetDate,
                 sessionToken: this.sessionToken,
@@ -931,11 +1201,12 @@ class SentleGame {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     session_token: this.sessionToken,
-                    score,
-                    attempts: attemptsUsed,
+                    game_session_id: this.gameSessionId,
                     sentenceId: this.sentenceId,
                     date: this.targetDate,
                     user_id: this.userId,
+                    score: score,
+                    guesses: attemptsUsed,
                 }),
             });
 
@@ -945,7 +1216,7 @@ class SentleGame {
             if (response.ok) {
                 this.scoreSubmitted = true;
                 this.completed = true;
-                this.showMessage('Score saved to leaderboard!', 'success');
+                this.showMessage(`Score saved: ${data.score} points!`, 'success');
                 // Remember locally to prevent auto-login replay today
                 this.rememberPlayedToday(this.targetDate);
                 // Refresh stats from backend now that score is stored
@@ -977,7 +1248,8 @@ class SentleGame {
         }
     }
 
-    async loadLeaderboard() {
+    async loadLeaderboard(targetDate = null) {
+        console.log('🔄 loadLeaderboard called with targetDate:', targetDate);
         const globalBoard = document.getElementById('leaderboard-global');
         const dailyBoard = document.getElementById('leaderboard-daily');
 
@@ -985,12 +1257,16 @@ class SentleGame {
             globalBoard.innerHTML = '<div class="loading">Loading leaderboard...</div>';
         }
         if (dailyBoard) {
-            dailyBoard.innerHTML = '<div class="loading">Loading today\'s scores...</div>';
+            const dateText = targetDate ? `Loading scores for ${targetDate}...` : 'Loading today\'s scores...';
+            dailyBoard.innerHTML = `<div class="loading">${dateText}</div>`;
         }
 
         try {
+            console.log('📡 Fetching global leaderboard...');
             const globalRes = await fetch('/api/sentle/leaderboard', { cache: 'no-store' });
+            console.log('📡 Global leaderboard response:', globalRes.status, globalRes.statusText);
             const globalData = await globalRes.json();
+            console.log('📊 Global leaderboard data:', globalData);
             
             this.renderLeaderboardList(
                 globalBoard,
@@ -998,21 +1274,27 @@ class SentleGame {
                 'No scores yet. Be the first!'
             );
         } catch (err) {
-            console.error('Error loading global leaderboard:', err);
+            console.error('❌ Error loading global leaderboard:', err);
             if (globalBoard) globalBoard.innerHTML = '<div class="loading">Unable to load leaderboard.</div>';
         }
 
         try {
-            const dailyRes = await fetch('/api/sentle/leaderboard/daily', { cache: 'no-store' });
+            const dailyUrl = targetDate 
+                ? `/api/sentle/leaderboard/daily?date=${encodeURIComponent(targetDate)}`
+                : '/api/sentle/leaderboard/daily';
+            console.log('📡 Fetching daily leaderboard:', dailyUrl);
+            const dailyRes = await fetch(dailyUrl, { cache: 'no-store' });
+            console.log('📡 Daily leaderboard response:', dailyRes.status, dailyRes.statusText);
             const dailyData = await dailyRes.json();
-            const dailyEmpty = dailyData?.date
-                ? `No scores yet for ${dailyData.date}.`
-                : 'No scores yet for today.';
+            console.log('📊 Daily leaderboard data:', dailyData);
+            const dateStr = dailyData?.date || targetDate || 'today';
+            const dailyEmpty = `No scores yet for ${dateStr}.`;
             
             this.renderLeaderboardList(dailyBoard, dailyData?.leaderboard, dailyEmpty);
         } catch (err) {
-            console.error('Error loading daily leaderboard:', err);
-            if (dailyBoard) dailyBoard.innerHTML = '<div class="loading">Unable to load today\'s scores.</div>';
+            console.error('❌ Error loading daily leaderboard:', err);
+            const dateText = targetDate ? `Unable to load scores for ${targetDate}.` : 'Unable to load today\'s scores.';
+            if (dailyBoard) dailyBoard.innerHTML = `<div class="loading">${dateText}</div>`;
         }
     }
 
@@ -1060,37 +1342,72 @@ class SentleGame {
         return this.revealedLetters[wordIndex]?.[letterIndex] || false;
     }
 
-    revealLetter(letterIndex) {
+    async revealLetter(letterIndex) {
         if (this.gameStage !== 'guessing') return;
-        if (this.revealsUsed >= this.maxReveals) {
-            this.showMessage('No reveals left!', 'error');
-            return;
-        }
         
         // Don't reveal if already revealed
         if (this.isLetterRevealed(this.currentWordIndex, letterIndex)) {
             return;
         }
         
+        // Submit to server for validation (unless practice mode)
+        if (!this.practiceMode && this.gameSessionId) {
+            try {
+                const response = await fetch('/api/sentle/reveal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_token: this.sessionToken,
+                        game_session_id: this.gameSessionId,
+                        word_index: this.currentWordIndex,
+                        letter_index: letterIndex,
+                        target_word: this.currentWord
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    // Server validated and returned the letter
+                    this.applyReveal(letterIndex, data.letter);
+                    this.revealsUsed = data.reveals_used;
+                    this.showMessage(`Letter revealed! ${data.reveals_available} reveals left`, 'info');
+                } else {
+                    this.showMessage(data.detail || 'Cannot reveal letter', 'error');
+                }
+            } catch (err) {
+                console.error('Error revealing letter:', err);
+                this.showMessage('Error revealing letter', 'error');
+            }
+        } else {
+            // Practice mode: client-side reveal (insecure but acceptable for practice)
+            if (this.revealsUsed >= this.maxReveals) {
+                this.showMessage('No reveals left!', 'error');
+                return;
+            }
+            this.applyReveal(letterIndex, this.currentWord[letterIndex]);
+            this.revealsUsed++;
+            this.showMessage(`Letter revealed! ${this.maxReveals - this.revealsUsed} reveals left`, 'info');
+        }
+        
+        this.updateRevealsDisplay();
+        this.saveGameState();
+    }
+    
+    applyReveal(letterIndex, letter) {
         // Mark as revealed
         if (!this.revealedLetters[this.currentWordIndex]) {
             this.revealedLetters[this.currentWordIndex] = {};
         }
         this.revealedLetters[this.currentWordIndex][letterIndex] = true;
-        this.revealsUsed++;
         
         // Update UI
         const currentRow = this.wordGuesses.length;
         const box = document.getElementById(`box-${currentRow}-${letterIndex}`);
         if (box) {
-            box.textContent = this.currentWord[letterIndex];
+            box.textContent = letter;
             box.classList.add('revealed');
             box.style.cursor = 'default';
         }
-        
-        this.updateRevealsDisplay();
-        this.saveGameState();
-        this.showMessage(`Letter revealed! ${this.maxReveals - this.revealsUsed} reveals left`, 'info');
     }
 
     updateRevealsDisplay() {
@@ -1169,27 +1486,62 @@ class SentleGame {
 
     checkGameState() {
         const saved = localStorage.getItem('sentle_gameState');
-        if (!saved) return;
+        if (!saved) {
+            console.log('No saved game state found');
+            return;
+        }
 
         const state = JSON.parse(saved);
-        if (state.date !== this.targetDate) return;
+        console.log('Checking saved game state:', {
+            savedDate: state.date,
+            targetDate: this.targetDate,
+            matches: state.date === this.targetDate,
+            savedState: state
+        });
+        
+        if (state.date !== this.targetDate) {
+            console.log('Saved state is for different date, ignoring');
+            return;
+        }
 
         // If saved state belongs to another user, skip restore
-        if (state.userId && this.userId && String(state.userId) !== String(this.userId)) return;
+        if (state.userId && this.userId && String(state.userId) !== String(this.userId)) {
+            console.log('Saved state belongs to different user, ignoring');
+            return;
+        }
+        
         // Validate indices and stage; if invalid, clear and bail
         const invalidIndex = state.currentWordIndex >= this.words.length || state.currentWordIndex < 0;
         const invalidStage = state.gameStage && !['guessing', 'arranging'].includes(state.gameStage);
         const endedState = state.completed || state.scoreSubmitted;
+        
+        console.log('State validation:', {
+            invalidIndex,
+            invalidStage,
+            endedState,
+            savedWordIndex: state.currentWordIndex,
+            currentWordsLength: this.words.length
+        });
+        
         if (invalidIndex || invalidStage || endedState) {
+            console.log('Saved state is invalid, clearing it');
             this.clearSavedState();
             return;
         }
 
+        console.log('BEFORE restore - current words:', this.words);
+
         this.sentenceId = state.sentenceId || this.sentenceId;
         this.sentence = state.sentence || this.sentence;
-        this.originalWords = state.originalWords || (this.sentence ? this.sentence.split(' ') : []);
-        this.wordOrder = this.generateWordOrder(this.originalWords.length, state.wordOrder);
+        this.originalWords = (state.originalWords && state.originalWords.length > 0) ? state.originalWords : (this.sentence ? this.sentence.split(' ') : []);
+        this.wordOrder = (state.wordOrder && state.wordOrder.length > 0) ? state.wordOrder : this.generateWordOrder(this.originalWords.length);
         this.words = this.wordOrder.map((idx) => this.originalWords[idx]);
+        
+        console.log('AFTER restore - words regenerated:', {
+            wordOrder: this.wordOrder,
+            originalWords: this.originalWords,
+            words: this.words
+        });
 
         this.currentWordIndex = state.currentWordIndex || 0;
         this.guessedWords = state.guessedWords || [];

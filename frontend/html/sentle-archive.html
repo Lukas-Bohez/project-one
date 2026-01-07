@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/sentle.css">
     <script src="../js/themeManager.js"></script>
+    <script src="../js/sentle.js"></script>
     <style>
         .archive-container {
             max-width: 900px;
@@ -41,12 +42,72 @@
             color: var(--sentle-text);
             min-height: 60px;
         }
-        .archive-stats {
+        .leaderboard-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .leaderboard-modal-content {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            max-width: 800px;
+            margin: 0 auto;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .leaderboard-modal-header {
             display: flex;
             justify-content: space-between;
-            font-size: 0.9rem;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .leaderboard-modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--sentle-bg);
+            border: 1px solid var(--sentle-border);
+            border-radius: 6px;
+        }
+        .leaderboard-entry .rank {
+            font-weight: bold;
+            min-width: 60px;
+        }
+        .leaderboard-entry .player {
+            flex: 1;
+            text-align: center;
+        }
+        .leaderboard-entry .score {
+            font-weight: bold;
             color: var(--sentle-text);
-            opacity: 0.8;
+        }
+        .leaderboard-empty {
+            text-align: center;
+            padding: 20px;
+            color: var(--sentle-text);
+            opacity: 0.7;
         }
     </style>
 </head>
@@ -61,6 +122,19 @@
         
         <div id="archiveGrid" class="archive-grid">
             <div class="loading">Loading archive...</div>
+        </div>
+    </div>
+    
+    <!-- Leaderboard Modal -->
+    <div id="leaderboardModal" class="leaderboard-modal">
+        <div class="leaderboard-modal-content">
+            <div class="leaderboard-modal-header">
+                <h2 id="leaderboardTitle">Leaderboard</h2>
+                <button id="leaderboardModalClose" class="leaderboard-modal-close">&times;</button>
+            </div>
+            <div id="modalLeaderboardContent">
+                <div class="loading">Loading leaderboard...</div>
+            </div>
         </div>
     </div>
     
@@ -92,6 +166,7 @@
                             </div>
                             <div style="display:flex; gap:8px; margin-top:12px; flex-wrap: wrap;">
                                 <button class="btn-submit archive-replay" data-idx="${idx}" style="flex:1; min-width:140px;">Replay</button>
+                                <button class="btn-link archive-leaderboard" data-idx="${idx}" style="flex:1; min-width:140px; border: 1px solid var(--sentle-border);">🏆 Leaderboard</button>
                             </div>
                         </div>
                     `).join('');
@@ -104,6 +179,15 @@
                             const idx = parseInt(btn.getAttribute('data-idx'), 10);
                             const picked = archiveItems[idx];
                             replaySentence(picked);
+                        });
+                    });
+                    
+                    // Bind leaderboard buttons
+                    archiveGrid.querySelectorAll('.archive-leaderboard').forEach((btn) => {
+                        btn.addEventListener('click', () => {
+                            const idx = parseInt(btn.getAttribute('data-idx'), 10);
+                            const picked = archiveItems[idx];
+                            showLeaderboardModal(picked.date);
                         });
                     });
                 } else {
@@ -120,6 +204,59 @@
                 }
             } catch (error) {
                 archiveGrid.innerHTML = '<p style="text-align: center; color: #e06c75; grid-column: 1/-1;">Error loading archive.</p>';
+            }
+                
+                // Modal close functionality
+                const modalClose = document.getElementById('leaderboardModalClose');
+                if (modalClose) {
+                    modalClose.onclick = () => {
+                        document.getElementById('leaderboardModal').style.display = 'none';
+                    };
+                }
+                
+                // Close modal when clicking outside
+                window.onclick = (event) => {
+                    const modal = document.getElementById('leaderboardModal');
+                    if (event.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                };
+            
+            async function showLeaderboardModal(date) {
+                modalTitle.textContent = `Leaderboard for ${formatDate(date)}`;
+                modalContent.innerHTML = '<div class="loading">Loading leaderboard...</div>';
+                modal.style.display = 'block';
+                
+                try {
+                    const dailyUrl = `/api/sentle/leaderboard/daily?date=${encodeURIComponent(date)}`;
+                    const dailyRes = await fetch(dailyUrl, { cache: 'no-store' });
+                    const dailyData = await dailyRes.json();
+                    
+                    if (dailyData?.leaderboard && dailyData.leaderboard.length > 0) {
+                        modalContent.innerHTML = renderLeaderboard(dailyData.leaderboard);
+                    } else {
+                        modalContent.innerHTML = '<p style="text-align: center; color: var(--sentle-text);">No scores for this date yet.</p>';
+                    }
+                } catch (err) {
+                    console.error('Error loading leaderboard:', err);
+                    modalContent.innerHTML = '<p style="text-align: center; color: #e06c75;">Error loading leaderboard.</p>';
+                }
+            }
+            
+            function renderLeaderboard(scores) {
+                return `
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        ${scores.map((score, idx) => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--sentle-border);">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <span style="font-weight: 600; min-width: 24px;">#${idx + 1}</span>
+                                    <span style="color: var(--sentle-text);">${escapeHtml(score.username || 'Anonymous')}</span>
+                                </div>
+                                <span style="font-weight: 600; color: #1976d2;">${score.score} pts</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
             }
             
             function formatDate(dateStr) {
@@ -149,6 +286,76 @@
                 };
                 localStorage.setItem('sentle_replay_payload', JSON.stringify(payload));
                 window.location.href = 'sentle.html';
+            }
+
+            // Leaderboard functions for archive page
+            async function showLeaderboardModal(targetDate) {
+                const modal = document.getElementById('leaderboardModal');
+                const content = document.getElementById('modalLeaderboardContent');
+                const title = document.getElementById('leaderboardTitle');
+                
+                if (!modal || !content || !title) return;
+                
+                title.textContent = `Leaderboard - ${formatDate(targetDate)}`;
+                content.innerHTML = '<div class="loading">Loading leaderboard...</div>';
+                modal.style.display = 'block';
+                
+                try {
+                    // Load both global and daily leaderboards
+                    const [globalRes, dailyRes] = await Promise.all([
+                        fetch('/api/sentle/leaderboard', { cache: 'no-store' }),
+                        fetch(`/api/sentle/leaderboard/daily?date=${encodeURIComponent(targetDate)}`, { cache: 'no-store' })
+                    ]);
+                    
+                    const [globalData, dailyData] = await Promise.all([
+                        globalRes.json(),
+                        dailyRes.json()
+                    ]);
+                    
+                    // Render the leaderboards
+                    let html = '<div style="display: flex; gap: 20px; flex-wrap: wrap;">';
+                    
+                    // Global leaderboard
+                    html += '<div style="flex: 1; min-width: 300px;">';
+                    html += '<h3>All-Time Leaders</h3>';
+                    html += renderLeaderboard(globalData?.leaderboard, 'No scores yet.');
+                    html += '</div>';
+                    
+                    // Daily leaderboard for the selected date
+                    html += '<div style="flex: 1; min-width: 300px;">';
+                    html += `<h3>Leaders for ${formatDate(targetDate)}</h3>`;
+                    const dailyEmpty = `No scores yet for ${formatDate(targetDate)}.`;
+                    html += renderLeaderboard(dailyData?.leaderboard, dailyEmpty);
+                    html += '</div>';
+                    
+                    html += '</div>';
+                    content.innerHTML = html;
+                    
+                } catch (err) {
+                    console.error('Error loading leaderboard:', err);
+                    content.innerHTML = '<div class="loading">Unable to load leaderboard.</div>';
+                }
+            }
+            
+            function renderLeaderboard(entries, emptyText) {
+                if (!entries || entries.length === 0) {
+                    return `<div class="leaderboard-empty">${emptyText}</div>`;
+                }
+                
+                let html = '<div class="leaderboard-list">';
+                entries.forEach((entry, index) => {
+                    const rank = index + 1;
+                    const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '🏅';
+                    html += `
+                        <div class="leaderboard-entry">
+                            <span class="rank">${medal} ${rank}</span>
+                            <span class="player">${escapeHtml(entry.playerName || 'Anonymous')}</span>
+                            <span class="score">${entry.score} pts</span>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                return html;
             }
         });
     </script>
