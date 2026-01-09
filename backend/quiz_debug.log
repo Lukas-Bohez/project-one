@@ -510,3 +510,60 @@
 2026-01-07 12:29:20,184 - INFO - ==================================================
 2026-01-07 12:29:20,185 - INFO - Quiz Logger Initialized
 2026-01-07 12:29:20,185 - INFO - ==================================================
+2026-01-07 22:51:18,879 - INFO - [REGISTER] Created new session 1000175 with status=2 (active)
+2026-01-07 22:51:24,004 - INFO - [LOGIN] Created new session 1000176 with status=2 (active)
+2026-01-07 22:51:38,294 - INFO - start_generic_timer: Created and starting timer thread for session 1000176
+2026-01-07 22:51:38,304 - INFO - Timer thread started for session 1000176, phase: voting
+2026-01-07 22:51:55,515 - INFO - handle_theme_display_phase: starting quiz timer for session 1000176
+2026-01-07 22:51:55,521 - INFO - start_generic_timer: Timer already exists for session 1000176, returning False
+2026-01-07 22:51:55,526 - INFO - Timer thread ending, removing from active_timers for session 1000176
+2026-01-07 22:51:56,460 - INFO - Main loop check - quiz phase, no timer. Session 1000176
+2026-01-07 22:51:56,465 - INFO - Room check: quiz_session_1000176 has 1 participants
+2026-01-07 22:51:56,470 - INFO - Main loop: About to check available questions and start timer
+2026-01-07 22:51:56,497 - INFO - Main loop: Calling start_generic_timer for session 1000176
+2026-01-07 22:51:56,502 - INFO - start_generic_timer: Created and starting timer thread for session 1000176
+2026-01-07 22:51:56,508 - INFO - Timer thread started for session 1000176, phase: quiz
+2026-01-07 22:51:56,513 - INFO - ========== HANDLE_QUIZ_PHASE CALLED for session 1000176 ==========
+2026-01-07 22:51:56,513 - INFO - Main loop: start_generic_timer returned True
+2026-01-07 22:51:56,570 - INFO - Found 55 total questions for theme 19
+2026-01-07 22:51:56,586 - INFO - Already answered questions: []
+2026-01-07 22:51:56,654 - INFO - Available questions: 55
+2026-01-07 22:51:56,670 - INFO - Total players: 1
+2026-01-07 22:51:56,675 - INFO - Room check: quiz_session_1000176 has 1 participants
+2026-01-07 22:51:56,680 - INFO - Is quiz session active (Socket.IO room check): True
+2026-01-07 22:51:56,685 - INFO - About to send 'Preparing question 1' message
+2026-01-07 22:51:56,768 - INFO - ENTERING WHILE LOOP: available_questions=55, quiz_ended_early=False
+2026-01-07 22:51:56,773 - INFO - INSIDE WHILE LOOP - selecting question
+2026-01-07 22:52:25,557 - INFO - INSIDE WHILE LOOP - selecting question
+2026-01-07 22:53:11,154 - INFO - INSIDE WHILE LOOP - selecting question
+2026-01-07 22:53:59,768 - INFO - ENDING QUIZ: Normal completion for session 1000176
+2026-01-07 22:53:59,805 - INFO - handle_quiz_phase ENDING: session 1000176 played=[19], active_ids=[41, 1, 24, 43, 42, 21, 19], remaining_available_questions=52
+2026-01-07 22:54:00,006 - INFO - Timer thread ending, removing from active_timers for session 1000176
+2026-01-07 22:54:10,394 - INFO - [LOGIN] Created new session 1000177 with status=2 (active)
+2026-01-08 18:30:27,591 - INFO - ==================================================
+2026-01-08 18:30:27,592 - INFO - Quiz Logger Initialized
+2026-01-08 18:30:27,592 - INFO - ==================================================
+2026-01-08 18:30:27,593 - INFO - ==================================================
+2026-01-08 18:30:27,593 - INFO - Quiz Logger Initialized
+2026-01-08 18:30:27,593 - INFO - ==================================================
+2026-01-08 18:30:30,639 - INFO - ==================================================
+2026-01-08 18:30:30,639 - INFO - Quiz Logger Initialized
+2026-01-08 18:30:30,639 - INFO - ==================================================
+2026-01-08 18:30:32,115 - INFO - ==================================================
+2026-01-08 18:30:32,115 - INFO - Quiz Logger Initialized
+2026-01-08 18:30:32,115 - INFO - ==================================================
+2026-01-08 18:30:33,689 - INFO - ==================================================
+2026-01-08 18:30:33,689 - INFO - Quiz Logger Initialized
+2026-01-08 18:30:33,689 - INFO - ==================================================
+2026-01-08 18:30:35,301 - INFO - ==================================================
+2026-01-08 18:30:35,301 - INFO - Quiz Logger Initialized
+2026-01-08 18:30:35,301 - INFO - ==================================================
+2026-01-08 18:30:36,809 - INFO - ==================================================
+2026-01-08 18:30:36,809 - INFO - Quiz Logger Initialized
+2026-01-08 18:30:36,810 - INFO - ==================================================
+2026-01-08 19:28:40,166 - INFO - ==================================================
+2026-01-08 19:28:40,166 - INFO - ==================================================
+2026-01-08 19:28:40,212 - INFO - Quiz Logger Initialized
+2026-01-08 19:28:40,212 - INFO - Quiz Logger Initialized
+2026-01-08 19:28:40,212 - INFO - ==================================================
+2026-01-08 19:28:40,212 - INFO - ==================================================
