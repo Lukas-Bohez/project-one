@@ -424,17 +424,6 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // Theme toggle binding (optional convenience)
-  function bindThemeToggle() {
-    const btn = document.getElementById('servoTestBtn');
-    if (!btn) return;
-    btn.addEventListener('click', () => {
-      const root = document.documentElement;
-      const current = root.getAttribute('data-theme');
-      root.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
-    });
-  }
-
   // Clear articles cache
   function clearArticlesCache() {
     try {
@@ -456,7 +445,6 @@
 
   // Auto-init on DOM ready
   document.addEventListener('DOMContentLoaded', () => {
-    bindThemeToggle();
     initializeArticleSelector();
   });
 
