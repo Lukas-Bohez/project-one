@@ -38,6 +38,32 @@ const getInitialPlaceholderData = () => {
     };
 };
 
+const showSection = (sectionName) => {
+    // Hide all sections
+    const sections = document.querySelectorAll('.section');
+    sections.forEach(section => {
+        section.classList.remove('active');
+    });
+
+    // Remove active class from all nav buttons
+    const navBtns = document.querySelectorAll('.c-nav-btn');
+    navBtns.forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    // Show the selected section
+    const activeSection = document.getElementById(`${sectionName}-section`);
+    if (activeSection) {
+        activeSection.classList.add('active');
+    }
+
+    // Add active class to the clicked nav button
+    const activeBtn = document.querySelector(`.c-nav-btn[data-section="${sectionName}"]`);
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+    }
+};
+
 const listenToButtons = () => {
 
     if (dom.startQuizBtn) {
@@ -68,12 +94,14 @@ const listenToButtons = () => {
         });
     }
 
-    if (dom.servoTestBtn && dom.servoVisual) {
-        dom.servoTestBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            testServoMovement();
+    // Navigation functionality
+    const navBtns = document.querySelectorAll('.c-nav-btn');
+    navBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const section = e.target.dataset.section;
+            showSection(section);
         });
-    }
+    });
 };
 
 const testServoMovement = async () => {

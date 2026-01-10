@@ -58,35 +58,61 @@
             </p>
         </div>
 
+        <!-- Navigation -->
+        <nav class="c-nav">
+            <button class="c-nav-btn active" data-section="games">Quiz & Games</button>
+            <button class="c-nav-btn" data-section="tools">Tools & Content</button>
+            <button class="c-nav-btn" data-section="support">Support</button>
+        </nav>
         
-        <div class="o-button-group">
-            <button id="viewGraphsBtn" class="c-btn c-btn--tertiary bw-btn gamepad">View Graphs</button>
-            <button id="startQuizBtn" class="c-btn c-btn--tertiary bw-btn gamepad">Start or join Quiz</button>
-            <button id="manageQuizBtn" class="c-btn c-btn--tertiary bw-btn">Manage Quiz</button>
-            <!-- Buy Me a Coffee moved to footer top to avoid visual clutter -->
-        </div>
-        <div class="c-servo-test">
-            <div class="o-servo-buttons">
-                <button id="servoTestBtn" class="c-btn c-btn--tertiary bw-btn gamepad">Toggle Theme</button>
-                <button id="conversionBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='html/conversion.html'">File Converter</button>
+        <!-- Quiz & Games Section -->
+        <div id="games-section" class="section active">
+            <div class="o-button-group">
+                <button id="startQuizBtn" class="c-btn c-btn--tertiary bw-btn gamepad">Start or join Quiz</button>
                 <button id="studyQuizBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='html/study.html'">Study quiz questions</button>
-                <button id="lofiExtensionBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='html/lofi-download.html'">🎵 Lofi Extension</button>
-                <button id="articleTheSpireBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='html/content.html'">Article the spire</button>
-                <button id="storyCreatorBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='html/storyCreator.html'">Story Creator</button>
+            </div>
+            <div class="o-button-group u-mt-2" style="margin-top: 1.5rem;">
+                <button id="sentleBtn" class="c-btn c-btn--primary bw-btn" onclick="window.location.href='html/sentle.html';" style="background: linear-gradient(135deg, #6aaa64, #c9b458); color: white; border: 2px solid #6aaa64; font-weight: 700; font-size: 1.1rem; padding: 1.2rem 2rem;">
+                    🎯 SENTLE - Guess The Sentence!
+                </button>
+            </div>
+            <div class="o-button-group u-mt-2">
+                <button id="kingdomQuarryBtn" class="c-btn c-btn--primary c-btn--sm accent-blue" onclick="window.location.href='idleGame/idlegame.html';">⛏️ Industrial Empire</button>
             </div>
         </div>
-        <!-- Compact action row: New Articles, Industrial Empire and Contact Support -->
-        <div class="o-button-group compact-button-row u-mt-2">
-            <button id="articlesHubBtn" class="c-btn c-btn--tertiary c-btn--sm bw-btn" onclick="window.location.href='articles/articlepagenew.html'">📰 New Articles</button>
-            <button id="kingdomQuarryBtn" class="c-btn c-btn--primary c-btn--sm accent-blue" onclick="window.location.href='idleGame/idlegame.html';">⛏️ Industrial Empire</button>
-            <button id="supportBtn" class="c-btn c-btn--primary c-btn--sm bw-btn" onclick="window.open('html/support.html','_blank');">💬 Contact Support</button>
+        
+        <!-- Tools & Content Section -->
+        <div id="tools-section" class="section">
+            <div class="o-button-group">
+                <button id="viewGraphsBtn" class="c-btn c-btn--tertiary bw-btn gamepad">View Graphs</button>
+                <button id="conversionBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='html/conversion.html'">File Converter</button>
+            </div>
+            <div class="o-button-group u-mt-2">
+                <button id="storyCreatorBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='html/storyCreator.html'">Story Creator</button>
+            </div>
+            <div class="o-button-group u-mt-2">
+                <button id="servoTestBtn" class="c-btn c-btn--tertiary bw-btn gamepad">Toggle Theme</button>
+                <button id="articleTheSpireBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='html/content.html'">Stories</button>
+            </div>
+            <div class="o-button-group u-mt-2">
+                <button id="articlesHubBtn" class="c-btn c-btn--tertiary c-btn--sm bw-btn" onclick="window.location.href='articles/articlepagenew.html'">📰 Articles</button>
+            </div>
         </div>
         
-        <!-- Sentle Game Button -->
-        <div class="o-button-group u-mt-2" style="margin-top: 1.5rem;">
-            <button id="sentleBtn" class="c-btn c-btn--primary bw-btn" onclick="window.location.href='html/sentle.html';" style="background: linear-gradient(135deg, #6aaa64, #c9b458); color: white; border: 2px solid #6aaa64; font-weight: 700; font-size: 1.1rem; padding: 1.2rem 2rem;">
-                🎯 SENTLE - Guess The Sentence!
-            </button>
+        <!-- Support Section -->
+        <div id="support-section" class="section">
+            <div class="o-button-group">
+                <button id="supportBtn" class="c-btn c-btn--primary c-btn--sm bw-btn" onclick="window.open('html/support.html','_blank');">💬 Contact Support</button>
+                <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='html/about.html'">About Me</button>
+            </div>
+            <div class="o-button-group u-mt-2">
+                <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='html/privacy.html'">Privacy Policy</button>
+                <button id="manageQuizBtn" class="c-btn c-btn--tertiary bw-btn">Manage Quiz</button>
+            </div>
+            <div class="o-button-group u-mt-2">
+                <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='html/terms.html'">Terms of Service</button>
+                <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='html/contact.html'">Contact Us</button>
+            </div>
         </div>
     
     </main>
