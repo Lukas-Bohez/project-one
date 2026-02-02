@@ -567,3 +567,78 @@
 2026-01-08 19:28:40,212 - INFO - Quiz Logger Initialized
 2026-01-08 19:28:40,212 - INFO - ==================================================
 2026-01-08 19:28:40,212 - INFO - ==================================================
+2026-01-11 15:46:14,723 - INFO - [REGISTER] Created new session 1000178 with status=2 (active)
+2026-01-11 15:46:17,984 - INFO - [LOGIN] Created new session 1000179 with status=2 (active)
+2026-01-13 14:55:09,025 - INFO - [LOGIN] Created new session 1000180 with status=2 (active)
+2026-01-25 17:06:24,462 - INFO - Converting video file: /tmp/project-one/temp_uploads/1769357184.295766_ScreenRecording_01-25-2026 18-57-18_1.mov (128594588 bytes) to mp3
+2026-01-25 17:06:54,531 - ERROR - Video to audio conversion timeout (5 minutes)
+2026-01-25 17:09:20,348 - INFO - Converting video file: /tmp/project-one/temp_uploads/1769357360.208921_ScreenRecording_01-25-2026 18-57-18_1.mov (128594588 bytes) to mp3
+2026-01-25 17:09:50,395 - ERROR - Video to audio conversion timeout (5 minutes)
+2026-01-25 17:15:27,354 - INFO - Converting video file: /tmp/project-one/temp_uploads/1769357727.187338_video-output-10C58960-F638-466C-BE73-2A9B5C904708-1.MP4 (145607005 bytes) to mp3
+2026-01-25 17:15:50,207 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1769357727.187338_video-output-10C58960-F638-466C-BE73-2A9B5C904708-1.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1769357727.338888_video-output-10C58960-F638-466C-BE73-2A9B5C904708-1.mp3
+2026-01-25 17:15:54,017 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1769357727.338888_video-output-10C58960-F638-466C-BE73-2A9B5C904708-1.mp3 (4141110 bytes)
+2026-01-25 17:15:57,788 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1769357727.338888_video-output-10C58960-F638-466C-BE73-2A9B5C904708-1.mp3
+2026-01-27 12:42:18,734 - INFO - Converting video file: /tmp/project-one/temp_uploads/1769514138.589124_Betty Get Money.MP4 (112690013 bytes) to mp3
+2026-01-27 12:42:35,712 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1769514138.589124_Betty Get Money.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1769514138.724444_Betty (Get Money).mp3
+2026-01-27 12:42:39,107 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1769514138.724444_Betty (Get Money).mp3 (3492229 bytes)
+2026-01-27 12:42:43,454 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1769514138.724444_Betty (Get Money).mp3
+2026-01-27 12:45:06,903 - INFO - Converting video file: /tmp/project-one/temp_uploads/1769514306.761336_FTCU.MP4 (105237020 bytes) to mp3
+2026-01-27 12:45:23,960 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1769514306.761336_FTCU.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1769514306.898131_FTCU.mp3
+2026-01-27 12:45:27,710 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1769514306.898131_FTCU.mp3 (4141110 bytes)
+2026-01-27 12:45:32,203 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1769514306.898131_FTCU.mp3
+2026-01-27 12:47:23,362 - INFO - Converting video file: /tmp/project-one/temp_uploads/1769514443.231428_Get It.MP4 (82330208 bytes) to mp3
+2026-01-27 12:47:38,205 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1769514443.231428_Get It.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1769514443.352061_Get It.mp3
+2026-01-27 12:47:42,120 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1769514443.352061_Get It.mp3 (4165561 bytes)
+2026-01-27 12:47:46,249 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1769514443.352061_Get It.mp3
+2026-01-27 12:49:58,715 - INFO - Converting video file: /tmp/project-one/temp_uploads/1769514598.571504_Started - Iggy Azalea ft Cadi B ft Nicki Minaj.MP4 (117170223 bytes) to mp3
+2026-01-27 12:50:19,774 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1769514598.571504_Started - Iggy Azalea ft Cadi B ft Nicki Minaj.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1769514598.71055_Started - Iggy Azalea ft Cadi B ft Nicki Minaj.mp3
+2026-01-27 12:50:26,153 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1769514598.71055_Started - Iggy Azalea ft Cadi B ft Nicki Minaj.mp3 (7031298 bytes)
+2026-01-27 12:50:32,316 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1769514598.71055_Started - Iggy Azalea ft Cadi B ft Nicki Minaj.mp3
+2026-01-27 12:51:52,063 - INFO - Converting video file: /tmp/project-one/temp_uploads/1769514711.932914_take off everything kendrick x radiohead.MP4 (84589785 bytes) to mp3
+2026-01-27 12:52:07,376 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1769514711.932914_take off everything kendrick x radiohead.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1769514712.057971_take off everything (kendrick x radiohead).mp3
+2026-01-27 12:52:11,517 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1769514712.057971_take off everything (kendrick x radiohead).mp3 (4502854 bytes)
+2026-01-27 12:52:15,854 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1769514712.057971_take off everything (kendrick x radiohead).mp3
+2026-01-27 12:55:35,992 - INFO - Converting video file: /tmp/project-one/temp_uploads/1769514935.797121_Not Like Us.MP4 (181286424 bytes) to mp3
+2026-01-27 12:56:04,316 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1769514935.797121_Not Like Us.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1769514935.987491_Not Like Us.mp3
+2026-01-27 12:56:10,365 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1769514935.987491_Not Like Us.mp3 (6605607 bytes)
+2026-01-27 12:56:17,081 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1769514935.987491_Not Like Us.mp3
+2026-01-27 12:57:42,860 - INFO - Converting video file: /tmp/project-one/temp_uploads/1769515062.747357_DENIAL IS A RIVER.MP4 (75398248 bytes) to mp3
+2026-01-27 12:57:56,478 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1769515062.747357_DENIAL IS A RIVER.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1769515062.855763_DENIAL IS A RIVER.mp3
+2026-01-27 12:57:59,917 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1769515062.855763_DENIAL IS A RIVER.mp3 (3837672 bytes)
+2026-01-27 12:58:03,843 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1769515062.855763_DENIAL IS A RIVER.mp3
+2026-01-27 12:59:45,665 - INFO - Converting video file: /tmp/project-one/temp_uploads/1769515185.555321_tv off.MP4 (78075684 bytes) to mp3
+2026-01-27 13:00:01,094 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1769515185.555321_tv off.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1769515185.660041_tv off.mp3
+2026-01-27 13:00:05,886 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1769515185.660041_tv off.mp3 (5309724 bytes)
+2026-01-27 13:00:10,996 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1769515185.660041_tv off.mp3
+2026-01-27 13:01:31,108 - INFO - Converting video file: /tmp/project-one/temp_uploads/1769515290.991734_Doechii - BOILED PEANUTS.MP4 (57984455 bytes) to mp3
+2026-01-27 13:01:41,567 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1769515290.991734_Doechii - BOILED PEANUTS.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1769515291.098359_Doechii - BOILED PEANUTS.mp3
+2026-01-27 13:01:44,270 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1769515291.098359_Doechii - BOILED PEANUTS.mp3 (2951807 bytes)
+2026-01-27 13:01:47,511 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1769515291.098359_Doechii - BOILED PEANUTS.mp3
+2026-01-27 13:02:58,545 - INFO - Converting video file: /tmp/project-one/temp_uploads/1769515378.442158_squabble up.MP4 (55849604 bytes) to mp3
+2026-01-27 13:03:09,618 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1769515378.442158_squabble up.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1769515378.540481_squabble up.mp3
+2026-01-27 13:03:13,106 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1769515378.540481_squabble up.mp3 (3805698 bytes)
+2026-01-27 13:03:16,498 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1769515378.540481_squabble up.mp3
+2026-01-27 13:06:59,175 - INFO - Converting video file: /tmp/project-one/temp_uploads/1769515619.003184_PARTYOF2 - FRIENDLY FIRE.MP4 (165816904 bytes) to mp3
+2026-01-27 13:07:23,566 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1769515619.003184_PARTYOF2 - FRIENDLY FIRE.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1769515619.165562_PARTYOF2 - FRIENDLY FIRE.mp3
+2026-01-27 13:07:27,644 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1769515619.165562_PARTYOF2 - FRIENDLY FIRE.mp3 (4615076 bytes)
+2026-01-27 13:07:33,022 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1769515619.165562_PARTYOF2 - FRIENDLY FIRE.mp3
+2026-01-27 13:10:29,515 - INFO - Converting video file: /tmp/project-one/temp_uploads/1769515829.381704_PARTYOF2 - poser.MP4 (105694006 bytes) to mp3
+2026-01-27 13:10:45,305 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1769515829.381704_PARTYOF2 - poser.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1769515829.509918_PARTYOF2 - poser.mp3
+2026-01-27 13:10:48,546 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1769515829.509918_PARTYOF2 - poser.mp3 (3452105 bytes)
+2026-01-27 13:10:52,466 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1769515829.509918_PARTYOF2 - poser.mp3
+2026-01-27 13:14:00,548 - INFO - Converting video file: /tmp/project-one/temp_uploads/1769516040.387119_PARTYOF2 - OUT OF BODY.MP4 (148238769 bytes) to mp3
+2026-01-27 13:14:22,390 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1769516040.387119_PARTYOF2 - OUT OF BODY.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1769516040.543245_PARTYOF2 - OUT OF BODY.mp3
+2026-01-27 13:14:26,131 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1769516040.543245_PARTYOF2 - OUT OF BODY.mp3 (4120421 bytes)
+2026-01-27 13:14:31,058 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1769516040.543245_PARTYOF2 - OUT OF BODY.mp3
+2026-01-27 13:16:55,870 - INFO - Converting video file: /tmp/project-one/temp_uploads/1769516215.75178_Doechii - CATFISH.MP4 (63382389 bytes) to mp3
+2026-01-27 13:17:07,344 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1769516215.75178_Doechii - CATFISH.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1769516215.865585_Doechii - CATFISH.mp3
+2026-01-27 13:17:10,281 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1769516215.865585_Doechii - CATFISH.mp3 (3233930 bytes)
+2026-01-27 13:17:13,627 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1769516215.865585_Doechii - CATFISH.mp3
+2026-01-27 13:19:33,258 - INFO - Converting video file: /tmp/project-one/temp_uploads/1769516373.109906_Kendrick Lamar - N95.MP4 (112447365 bytes) to mp3
+2026-01-27 13:19:52,314 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1769516373.109906_Kendrick Lamar - N95.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1769516373.253092_Kendrick Lamar - N95.mp3
+2026-01-27 13:19:56,856 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1769516373.253092_Kendrick Lamar - N95.mp3 (4951115 bytes)
+2026-01-27 13:20:01,973 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1769516373.253092_Kendrick Lamar - N95.mp3
+2026-01-27 13:21:16,757 - INFO - Converting video file: /tmp/project-one/temp_uploads/1769516476.657158_peekaboo.MP4 (55148645 bytes) to mp3
+2026-01-27 13:21:27,659 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1769516476.657158_peekaboo.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1769516476.752067_peekaboo.mp3
+2026-01-27 13:21:31,075 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1769516476.752067_peekaboo.mp3 (3753662 bytes)
+2026-01-27 13:21:35,010 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1769516476.752067_peekaboo.mp3
