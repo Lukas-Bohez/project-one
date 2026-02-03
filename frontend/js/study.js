@@ -773,6 +773,9 @@ document.addEventListener('DOMContentLoaded', function() {
             allQuestions = questions;
             console.log(`Loaded ${allQuestions.length} questions`);
             
+            // Always setup basic event listeners even if no questions loaded
+            setupEventListeners();
+            
             if (allQuestions.length === 0) {
                 console.warn('No questions loaded from API');
                 if (dom.questionDisplay) {
@@ -805,7 +808,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Populate UI
             populateFilters(themesWithCounts);
             populateIndividualQuestionSelector(allQuestions);
-            setupEventListeners();
             setupFilterListeners();
             
             console.log('Practice hub initialized successfully');
