@@ -109,6 +109,16 @@
             color: var(--sentle-text);
             opacity: 0.7;
         }
+        .reused-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #ff9800;
+            color: white;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-left: 8px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -157,9 +167,11 @@
                 
                 const archiveItems = data.archive || [];
 
-                const renderCards = (items) => items.map((item, idx) => `
+                const renderCards = (items) => items.map((item, idx) => {
+                    const reusedBadge = item.reused ? '<span class="reused-badge">♻️ REUSED</span>' : '';
+                    return `
                         <div class="archive-card">
-                            <div class="archive-date">${formatDate(item.date)}</div>
+                            <div class="archive-date">${formatDate(item.date)}${reusedBadge}</div>
                             <div class="archive-stats">
                                 <span>🎮 ${item.plays || 0} plays</span>
                                 <span>✨ Best: ${item.bestScore || 0} pts</span>
@@ -169,7 +181,8 @@
                                 <button class="btn-link archive-leaderboard" data-idx="${idx}" style="flex:1; min-width:140px; border: 1px solid var(--sentle-border);">🏆 Leaderboard</button>
                             </div>
                         </div>
-                    `).join('');
+                    `;
+                }).join('');
 
                 if (archiveItems.length > 0) {
                     archiveGrid.innerHTML = renderCards(archiveItems);

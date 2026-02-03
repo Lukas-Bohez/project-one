@@ -65,7 +65,10 @@
     <main class="o-container">
         <div class="c-welcome-message">
             <div class="c-download-panel">
-                <a id="conversionDownloadBtn" class="c-btn c-btn--primary bw-btn" href="downloads/ConversionTheSpireReborn.zip" download>⬇️ Download ConversionTheSpireReborn.zip</a>
+                <button id="conversionDownloadBtn" class="c-btn c-btn--primary bw-btn" onclick="handleConversionDownload(event)">⬇️ Download ConversionTheSpireReborn.zip</button>
+                <div id="conversionStatus" style="display:none; margin-top:0.75rem; padding:0.75rem; background:#f0f4f8; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9rem; color:#334155;">
+                    <p id="statusText" style="margin:0;"></p>
+                </div>
                 <p class="c-download-note">After downloading, you will see clear setup steps. Please consider viewing ads on other parts of the website to support Convert the Spire Reborn’s development so features like automatic updates can be added.</p>
             </div>
         </div>
@@ -73,14 +76,20 @@
         <div id="conversionDownloadModal" class="c-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="conversionDownloadTitle">
             <div class="c-modal__content" role="document">
                 <div class="c-modal__header">
-                    <h2 id="conversionDownloadTitle" class="modal-title">Download instructions</h2>
+                    <h2 id="conversionDownloadTitle" class="modal-title">Download instructions & limits</h2>
                     <button type="button" class="c-modal__close" aria-label="Close instructions">×</button>
                 </div>
-                <ol class="c-modal__list">
-                    <li>Unzip ConversionTheSpireReborn.zip.</li>
-                    <li>Open the unzipped folder.</li>
-                    <li>Run run_app.py in the root of that folder.</li>
-                </ol>
+                <div style="margin-bottom:1rem;">
+                    <h3 style="margin:0.5rem 0; font-size:1rem; color:#1f2937;">How to use:</h3>
+                    <ol class="c-modal__list">
+                        <li>Unzip ConversionTheSpireReborn.zip.</li>
+                        <li>Open the unzipped folder.</li>
+                        <li>Run run_app.py in the root of that folder.</li>
+                    </ol>
+                </div>
+                <div style="background:#fff3cd; padding:0.75rem; border-left:3px solid #ffc107; border-radius:4px; margin-bottom:1rem;">
+                    <p style="margin:0; font-size:0.9rem; color:#664d03;"><strong>Download limits:</strong> 10 downloads per month per IP. File is throttled to 2 MB/s to manage server bandwidth.</p>
+                </div>
                 <p class="c-modal__note">Please consider viewing ads on other parts of the website to support Convert the Spire Reborn’s development so features like automatic updates can be added.</p>
             </div>
         </div>
@@ -176,17 +185,76 @@
     <script src="js/radar.js" defer></script>
     <script src="js/infomodal.js" defer></script>
     <script>
+    // Download management for ConversionTheSpireReborn
+    async function handleConversionDownload(event) {
+        event.preventDefault();
+        const modal = document.getElementById('conversionDownloadModal');
+        const statusDiv = document.getElementById('conversionStatus');
+        const statusText = document.getElementById('statusText');
+        const btn = document.getElementById('conversionDownloadBtn');
+        
+        try {
+            // Check if download is allowed
+            const response = await fetch('/api/v1/download/conversion/check', { method: 'POST' });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                statusText.textContent = '❌ ' + error.detail;
+                statusDiv.style.display = 'block';
+                statusDiv.style.background = '#fee2e2';
+                statusDiv.style.borderLeftColor = '#ef4444';
+                return;
+            }
+            
+            // Get status info
+            const status = await fetch('/api/v1/download/conversion/status').then(r => r.json());
+            statusText.innerHTML = `✓ Downloads this month: ${status.downloads_this_month}/${status.max_downloads_per_month}<br>File size: ${status.file_size_gb} GB<br>Speed: ${status.download_speed_mbps || 2} MB/s`;
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = '#dbeafe';
+            statusDiv.style.borderLeftColor = '#3b82f6';
+            
+            // Show modal with instructions
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+            
+            // Trigger actual download after brief delay
+            setTimeout(() => {
+                window.location.href = '/api/v1/download/conversion';
+            }, 500);
+            
+        } catch (error) {
+            console.error('Download error:', error);
+            statusText.textContent = '❌ Error: ' + error.message;
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = '#fee2e2';
+            statusDiv.style.borderLeftColor = '#ef4444';
+        }
+    }
+    
+    // Modal controls
     (function(){
-        const downloadBtn=document.getElementById('conversionDownloadBtn');
-        const modal=document.getElementById('conversionDownloadModal');
-        if(!downloadBtn||!modal){return;}
-        const closeBtn=modal.querySelector('.c-modal__close');
-        const openModal=()=>{modal.classList.add('is-open');modal.setAttribute('aria-hidden','false');};
-        const closeModal=()=>{modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');};
-        downloadBtn.addEventListener('click',()=>{openModal();});
-        closeBtn.addEventListener('click',closeModal);
-        modal.addEventListener('click',(e)=>{if(e.target===modal){closeModal();}});
-        document.addEventListener('keydown',(e)=>{if(e.key==='Escape'){closeModal();}});
+        const modal = document.getElementById('conversionDownloadModal');
+        if (!modal) return;
+        
+        const closeBtn = modal.querySelector('.c-modal__close');
+        const openModal = () => {
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+        };
+        const closeModal = () => {
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+        };
+        
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeModal);
+        }
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
     })();
     </script>
     

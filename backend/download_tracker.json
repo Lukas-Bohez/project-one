@@ -1,0 +1,83 @@
+{
+  "monthly_limit_gb": 1024,
+  "per_ip_monthly_limit": 10,
+  "download_speed_mbps": 2,
+  "concurrent_per_ip": 4,
+  "ips": {
+    "109.137.130.57": {
+      "count": 1,
+      "bandwidth_gb": 1.446158679202199,
+      "active_downloads": 2,
+      "last_download": "2026-02-02T15:30:22.075855"
+    },
+    "45.190.31.150": {
+      "count": 1,
+      "bandwidth_gb": 1.446158679202199,
+      "active_downloads": 0,
+      "last_download": "2026-02-02T17:04:04.292251"
+    },
+    "170.247.239.161": {
+      "count": 1,
+      "bandwidth_gb": 1.446158679202199,
+      "active_downloads": 0,
+      "last_download": "2026-02-02T17:05:14.257321"
+    },
+    "74.125.182.98": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 1,
+      "last_download": null
+    },
+    "74.125.182.14": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 1,
+      "last_download": null
+    },
+    "66.102.6.7": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 1,
+      "last_download": null
+    },
+    "66.102.6.5": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 1,
+      "last_download": null
+    },
+    "74.125.114.9": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 1,
+      "last_download": null
+    },
+    "74.125.114.2": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 1,
+      "last_download": null
+    },
+    "66.249.83.12": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 1,
+      "last_download": null
+    },
+    "85.29.28.119": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 1,
+      "last_download": null
+    },
+    "172.56.117.138": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 1,
+      "last_download": null
+    }
+  },
+  "last_reset_month": "2026-02",
+  "total_monthly_bandwidth_gb": 4.338476037606597,
+  "file_size_gb": 1.5
+}

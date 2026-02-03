@@ -448,6 +448,147 @@ def log_user_ip_address(user_id: int, ip_address: str):
     except Exception as e:
         print(f"Error logging user IP address: {e}")
 
+# ====================================================
+# Download Management System for ConversionTheSpireReborn.zip
+# ====================================================
+import json
+from datetime import datetime
+from pathlib import Path
+
+DOWNLOAD_TRACKER_FILE = os.path.join(os.path.dirname(__file__), 'download_tracker.json')
+CONVERSION_FILE_PATH = os.path.join(os.path.dirname(__file__), '../frontend/downloads/ConversionTheSpireReborn.zip')
+
+def load_download_tracker():
+    """Load download tracking data from JSON file."""
+    try:
+        if os.path.exists(DOWNLOAD_TRACKER_FILE):
+            with open(DOWNLOAD_TRACKER_FILE, 'r') as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"Error loading download tracker: {e}")
+    
+    # Return defaults if file doesn't exist
+    return {
+        "monthly_limit_gb": 1024,
+        "per_ip_monthly_limit": 10,
+        "download_speed_mbps": 2,
+        "concurrent_per_ip": 4,
+        "ips": {},
+        "last_reset_month": datetime.now().strftime("%Y-%m"),
+        "total_monthly_bandwidth_gb": 0.0,
+        "file_size_gb": 1.5
+    }
+
+def save_download_tracker(tracker):
+    """Save download tracking data to JSON file."""
+    try:
+        with open(DOWNLOAD_TRACKER_FILE, 'w') as f:
+            json.dump(tracker, f, indent=2)
+    except Exception as e:
+        print(f"Error saving download tracker: {e}")
+
+def reset_tracker_if_new_month(tracker):
+    """Reset tracker if we've entered a new month."""
+    current_month = datetime.now().strftime("%Y-%m")
+    if tracker.get("last_reset_month") != current_month:
+        tracker["last_reset_month"] = current_month
+        tracker["total_monthly_bandwidth_gb"] = 0.0
+        tracker["ips"] = {}
+        save_download_tracker(tracker)
+    return tracker
+
+def get_download_status(client_ip: str):
+    """Get download status for an IP address."""
+    tracker = load_download_tracker()
+    tracker = reset_tracker_if_new_month(tracker)
+    
+    ip_data = tracker["ips"].get(client_ip, {})
+    downloads_this_month = ip_data.get("count", 0)
+    bandwidth_used_gb = ip_data.get("bandwidth_gb", 0.0)
+    active_downloads = ip_data.get("active_downloads", 0)
+    
+    return {
+        "downloads_this_month": downloads_this_month,
+        "max_downloads_per_month": tracker["per_ip_monthly_limit"],
+        "bandwidth_used_gb": round(bandwidth_used_gb, 2),
+        "file_size_gb": tracker["file_size_gb"],
+        "active_downloads": active_downloads,
+        "max_concurrent": tracker["concurrent_per_ip"],
+        "total_monthly_bandwidth_gb": round(tracker["total_monthly_bandwidth_gb"], 2),
+        "monthly_limit_gb": tracker["monthly_limit_gb"],
+        "can_download": downloads_this_month < tracker["per_ip_monthly_limit"] and active_downloads < tracker["concurrent_per_ip"] and tracker["total_monthly_bandwidth_gb"] < tracker["monthly_limit_gb"]
+    }
+
+def check_download_allowed(client_ip: str):
+    """Check if download is allowed for this IP."""
+    tracker = load_download_tracker()
+    tracker = reset_tracker_if_new_month(tracker)
+    
+    # Check monthly limit per IP
+    ip_data = tracker["ips"].get(client_ip, {})
+    downloads_this_month = ip_data.get("count", 0)
+    active_downloads = ip_data.get("active_downloads", 0)
+    
+    if downloads_this_month >= tracker["per_ip_monthly_limit"]:
+        return False, f"Monthly limit reached: {downloads_this_month}/{tracker['per_ip_monthly_limit']} downloads"
+    
+    if active_downloads >= tracker["concurrent_per_ip"]:
+        return False, f"Too many concurrent downloads: {active_downloads}/{tracker['concurrent_per_ip']}"
+    
+    if tracker["total_monthly_bandwidth_gb"] >= tracker["monthly_limit_gb"]:
+        return False, f"Monthly bandwidth limit reached: {tracker['total_monthly_bandwidth_gb']}/{tracker['monthly_limit_gb']} GB"
+    
+    return True, "Download allowed"
+
+def record_download_start(client_ip: str):
+    """Record when a download starts."""
+    tracker = load_download_tracker()
+    tracker = reset_tracker_if_new_month(tracker)
+    
+    if client_ip not in tracker["ips"]:
+        tracker["ips"][client_ip] = {
+            "count": 0,
+            "bandwidth_gb": 0.0,
+            "active_downloads": 0,
+            "last_download": None
+        }
+    
+    tracker["ips"][client_ip]["active_downloads"] = tracker["ips"][client_ip].get("active_downloads", 0) + 1
+    save_download_tracker(tracker)
+
+def record_download_complete(client_ip: str, bytes_downloaded: int):
+    """Record when a download completes."""
+    tracker = load_download_tracker()
+    
+    if client_ip not in tracker["ips"]:
+        tracker["ips"][client_ip] = {
+            "count": 0,
+            "bandwidth_gb": 0.0,
+            "active_downloads": 0,
+            "last_download": None
+        }
+    
+    gb_downloaded = bytes_downloaded / (1024 ** 3)
+    tracker["ips"][client_ip]["count"] = tracker["ips"][client_ip].get("count", 0) + 1
+    tracker["ips"][client_ip]["bandwidth_gb"] = tracker["ips"][client_ip].get("bandwidth_gb", 0.0) + gb_downloaded
+    tracker["ips"][client_ip]["active_downloads"] = max(0, tracker["ips"][client_ip].get("active_downloads", 1) - 1)
+    tracker["ips"][client_ip]["last_download"] = datetime.now().isoformat()
+    tracker["total_monthly_bandwidth_gb"] = tracker.get("total_monthly_bandwidth_gb", 0) + gb_downloaded
+    
+    save_download_tracker(tracker)
+
+def record_download_cancel(client_ip: str):
+    """Record when a download is cancelled."""
+    tracker = load_download_tracker()
+    
+    if client_ip in tracker["ips"]:
+        tracker["ips"][client_ip]["active_downloads"] = max(0, tracker["ips"][client_ip].get("active_downloads", 1) - 1)
+        save_download_tracker(tracker)
+
+# ====================================================
+# End Download Management System
+# ====================================================
+
 def verify_user(user_id: int, rfid_code: str, client_ip: str = None) -> str:
     user = UserRepository.get_user_by_id(user_id)
     
@@ -11189,7 +11330,21 @@ def init_sentle_tables():
                 sentence VARCHAR(500) NOT NULL,
                 word_count INT NOT NULL,
                 used BOOLEAN DEFAULT FALSE,
+                reuse_count INT DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Create daily sentences tracking table (maps dates to sentences for archive)
+        Database.execute_sql("""
+            CREATE TABLE IF NOT EXISTS sentle_daily_sentences (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                date DATE NOT NULL UNIQUE,
+                sentence_id INT NOT NULL,
+                is_reused BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (sentence_id) REFERENCES sentle_sentences(id) ON DELETE CASCADE,
+                INDEX idx_date (date)
             )
         """)
         
@@ -11265,6 +11420,147 @@ def init_sentle_tables():
 
 # Initialize tables on startup
 init_sentle_tables()
+
+def remove_duplicate_sentences():
+    """Remove duplicate sentences with the same date, keeping the most recently created one"""
+    try:
+        from database.database import Database
+        
+        sentle_logger.info("Checking for duplicate sentences...")
+        
+        # Find duplicate dates
+        duplicates = Database.get_rows(
+            """SELECT date, COUNT(*) as count 
+               FROM sentle_sentences 
+               GROUP BY date 
+               HAVING count > 1"""
+        )
+        
+        if not duplicates:
+            sentle_logger.info("No duplicates found")
+            return
+        
+        removed = 0
+        for dup in duplicates:
+            dup_date = dup['date']
+            # Get all sentences for this date, ordered by creation (keep newest)
+            sentences = Database.get_rows(
+                "SELECT id FROM sentle_sentences WHERE date = %s ORDER BY created_at ASC",
+                (dup_date,)
+            )
+            
+            # Delete all but the last one
+            if len(sentences) > 1:
+                for i in range(len(sentences) - 1):
+                    Database.execute_sql(
+                        "DELETE FROM sentle_sentences WHERE id = %s",
+                        (sentences[i]['id'],)
+                    )
+                    removed += 1
+                    sentle_logger.info(f"Removed duplicate sentence ID {sentences[i]['id']} for date {dup_date}")
+        
+        sentle_logger.info(f"Removed {removed} duplicate sentences")
+        
+    except Exception as e:
+        sentle_logger.error(f"Duplicate removal failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+
+def backfill_archive_dates():
+    """Ensure all dates from first sentence until yesterday have entries in sentle_daily_sentences"""
+    try:
+        from database.database import Database
+        
+        sentle_logger.info("Starting archive backfill...")
+        
+        # First, remove duplicates
+        remove_duplicate_sentences()
+        
+        # Get the earliest and latest sentence dates
+        date_range = Database.get_one_row(
+            "SELECT MIN(date) as first_date, MAX(date) as last_date FROM sentle_sentences WHERE used = TRUE"
+        )
+        
+        if not date_range or not date_range.get('first_date'):
+            sentle_logger.info("No used sentences found, skipping backfill")
+            return
+        
+        first_date = date_range['first_date']
+        today = datetime.now().date()
+        yesterday = today - timedelta(days=1)
+        
+        # Use the earlier of yesterday or last_date to avoid future dates
+        last_date = min(yesterday, date_range['last_date']) if date_range.get('last_date') else yesterday
+        
+        sentle_logger.info(f"Backfilling dates from {first_date} to {last_date}")
+        
+        # Iterate through each date in range
+        current_date = first_date
+        filled = 0
+        skipped = 0
+        
+        while current_date <= last_date:
+            # Check if this date already has an entry
+            existing = Database.get_one_row(
+                "SELECT id FROM sentle_daily_sentences WHERE date = %s",
+                (current_date,)
+            )
+            
+            if not existing:
+                # Find which sentence to use for this date
+                # First check if there's a scheduled sentence for this date
+                scheduled = Database.get_one_row(
+                    "SELECT id FROM sentle_sentences WHERE date = %s",
+                    (current_date,)
+                )
+                
+                if scheduled:
+                    # Use the scheduled sentence
+                    Database.execute_sql(
+                        "INSERT INTO sentle_daily_sentences (date, sentence_id, is_reused) VALUES (%s, %s, FALSE)",
+                        (current_date, scheduled['id'])
+                    )
+                    # Mark sentence as used
+                    Database.execute_sql(
+                        "UPDATE sentle_sentences SET used = TRUE WHERE id = %s",
+                        (scheduled['id'],)
+                    )
+                    filled += 1
+                else:
+                    # Find oldest used sentence with lowest reuse count
+                    reusable = Database.get_one_row(
+                        """SELECT id FROM sentle_sentences 
+                           WHERE used = TRUE AND date < %s
+                           ORDER BY reuse_count ASC, date ASC 
+                           LIMIT 1""",
+                        (current_date,)
+                    )
+                    
+                    if reusable:
+                        Database.execute_sql(
+                            "INSERT INTO sentle_daily_sentences (date, sentence_id, is_reused) VALUES (%s, %s, TRUE)",
+                            (current_date, reusable['id'])
+                        )
+                        # Increment reuse count
+                        Database.execute_sql(
+                            "UPDATE sentle_sentences SET reuse_count = reuse_count + 1 WHERE id = %s",
+                            (reusable['id'],)
+                        )
+                        filled += 1
+            else:
+                skipped += 1
+            
+            current_date += timedelta(days=1)
+        
+        sentle_logger.info(f"Archive backfill complete: {filled} dates filled, {skipped} already existed")
+        
+    except Exception as e:
+        sentle_logger.error(f"Archive backfill failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+
+# Backfill archive on startup
+backfill_archive_dates()
 
 # Sentle Admin Password (stored in environment variable for security)
 SENTLE_ADMIN_PASSWORD = os.getenv("SENTLE_ADMIN_PASSWORD", "sentle6967god")
@@ -11431,35 +11727,96 @@ async def sentle_login(payload: Dict[str, Any] = Body(...), request: Request = N
 
 @app.get("/api/sentle/daily", tags=["Sentle"])
 async def get_daily_sentence():
-    """Get the daily Sentle sentence"""
+    """Get the daily Sentle sentence (with intelligent reuse when none scheduled)"""
     try:
         from database.database import Database
         
         today = datetime.now().date()
         
-        # Get today's sentence
-        result = Database.get_one_row(
+        # First check if we already assigned a sentence for today
+        daily_entry = Database.get_one_row(
+            "SELECT sentence_id FROM sentle_daily_sentences WHERE date = %s",
+            (today,)
+        )
+        
+        if daily_entry:
+            # We already have a sentence assigned for today
+            sentence = Database.get_one_row(
+                "SELECT id, sentence, date FROM sentle_sentences WHERE id = %s",
+                (daily_entry['sentence_id'],)
+            )
+            if sentence:
+                return {
+                    "id": sentence['id'],
+                    "sentence": sentence['sentence'],
+                    "date": str(today)
+                }
+        
+        # Check if there's a sentence scheduled specifically for today
+        scheduled = Database.get_one_row(
             "SELECT id, sentence, date FROM sentle_sentences WHERE date = %s",
             (today,)
         )
         
-        if result:
-            # Mark as used
+        if scheduled:
+            # Mark as used and record in daily tracking
             Database.execute_sql(
                 "UPDATE sentle_sentences SET used = TRUE WHERE id = %s",
-                (result['id'],)
+                (scheduled['id'],)
+            )
+            Database.execute_sql(
+                "INSERT INTO sentle_daily_sentences (date, sentence_id, is_reused) VALUES (%s, %s, FALSE)",
+                (today, scheduled['id'])
             )
             
             return {
-                "id": result['id'],
-                "sentence": result['sentence'],
-                "date": str(result['date'])
+                "id": scheduled['id'],
+                "sentence": scheduled['sentence'],
+                "date": str(today)
             }
-        else:
-            # No sentence for today
+        
+        # No sentence scheduled for today - reuse an old one
+        sentle_logger.info(f"No sentence scheduled for {today}, selecting a sentence to reuse")
+        
+        # Get all used sentences ordered by reuse_count (least reused first), then random
+        reusable = Database.get_rows(
+            """SELECT id, sentence, date, reuse_count 
+               FROM sentle_sentences 
+               WHERE used = TRUE
+               ORDER BY reuse_count ASC, RAND()
+               LIMIT 10"""
+        )
+        
+        if not reusable:
+            sentle_logger.warning(f"No sentences available to reuse for {today}")
             return {"sentence": None, "date": str(today), "id": None}
+        
+        # Pick the first one (lowest reuse_count + random)
+        selected = reusable[0]
+        
+        # Increment reuse count
+        Database.execute_sql(
+            "UPDATE sentle_sentences SET reuse_count = reuse_count + 1 WHERE id = %s",
+            (selected['id'],)
+        )
+        
+        # Record in daily tracking
+        Database.execute_sql(
+            "INSERT INTO sentle_daily_sentences (date, sentence_id, is_reused) VALUES (%s, %s, TRUE)",
+            (today, selected['id'])
+        )
+        
+        sentle_logger.info(f"Reused sentence {selected['id']} for {today} (reuse_count now {selected['reuse_count'] + 1})")
+        
+        return {
+            "id": selected['id'],
+            "sentence": selected['sentence'],
+            "date": str(today),
+            "reused": True
+        }
             
     except Exception as e:
+        sentle_logger.error(f"Error loading daily sentence: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error loading sentence: {str(e)}")
 
 @app.post("/api/sentle/game/start", tags=["Sentle"])
@@ -12454,23 +12811,27 @@ async def get_daily_leaderboard(date: Optional[str] = None):
 
 @app.get("/api/sentle/archive", tags=["Sentle"])
 async def get_archive():
-    """Get archive of past sentences with stats"""
+    """Get archive of past sentences with stats (includes all dates from daily tracking)"""
     try:
         from database.database import Database
         
         today = datetime.now().date()
         
-        # Get past sentences with stats
+        # Get past sentences from daily tracking (ensures all dates appear)
         results = Database.get_rows(
             """SELECT 
-                s.id, s.date, s.sentence,
+                ds.date,
+                s.id, 
+                s.sentence,
+                ds.is_reused,
                 COUNT(DISTINCT sc.id) as plays,
                 MAX(sc.score) as best_score
-               FROM sentle_sentences s
-               LEFT JOIN sentle_scores sc ON s.id = sc.sentence_id
-               WHERE s.date < %s
-               GROUP BY s.id, s.date, s.sentence
-               ORDER BY s.date DESC
+               FROM sentle_daily_sentences ds
+               INNER JOIN sentle_sentences s ON ds.sentence_id = s.id
+               LEFT JOIN sentle_scores sc ON s.id = sc.sentence_id AND sc.date = ds.date
+               WHERE ds.date < %s
+               GROUP BY ds.date, s.id, s.sentence, ds.is_reused
+               ORDER BY ds.date DESC
                LIMIT 100""",
             (today,)
         )
@@ -12481,7 +12842,8 @@ async def get_archive():
                 "date": str(row['date']),
                 "sentence": row['sentence'],
                 "plays": row['plays'] or 0,
-                "bestScore": row['best_score'] or 0
+                "bestScore": row['best_score'] or 0,
+                "reused": bool(row.get('is_reused', False))
             }
             for row in (results or [])
         ]
@@ -12489,7 +12851,26 @@ async def get_archive():
         return {"archive": archive}
         
     except Exception as e:
+        sentle_logger.error(f"Error loading archive: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error loading archive: {str(e)}")
+
+@app.post("/api/sentle/admin/backfill", tags=["Sentle"])
+async def admin_backfill_archive(request: Request):
+    """Manually trigger archive backfill (admin only)"""
+    try:
+        # Verify admin token
+        verify_admin_token(request)
+        
+        # Run backfill
+        backfill_archive_dates()
+        
+        return {"success": True, "message": "Archive backfill completed"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        sentle_logger.error(f"Manual backfill failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Backfill failed: {str(e)}")
 
 @app.get("/api/sentle/debug/scores", tags=["Sentle"])
 async def debug_get_all_scores():
@@ -12640,23 +13021,29 @@ async def admin_list_sentences(request: Request):
         # Verify admin token
         verify_admin_token(request)
         
+        today = datetime.now().date()
+        
         # Get all future and recent sentences
         results = Database.get_rows(
-            """SELECT id, date, sentence, used 
+            """SELECT id, date, sentence, used, reuse_count 
                FROM sentle_sentences 
                ORDER BY date DESC 
                LIMIT 50"""
         )
         
-        sentences = [
-            {
+        sentences = []
+        for row in (results or []):
+            sentence_date = row['date']
+            # Mark as used if date has passed, even if DB says otherwise
+            is_used = bool(row['used']) or (sentence_date < today)
+            
+            sentences.append({
                 "id": row['id'],
-                "date": str(row['date']),
+                "date": str(sentence_date),
                 "sentence": row['sentence'],
-                "used": bool(row['used'])
-            }
-            for row in (results or [])
-        ]
+                "used": is_used,
+                "reuse_count": row.get('reuse_count', 0)
+            })
         
         return {"sentences": sentences}
         
@@ -12665,9 +13052,189 @@ async def admin_list_sentences(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error listing sentences: {str(e)}")
 
+@app.delete("/api/sentle/admin/delete/{sentence_id}", tags=["Sentle"])
+async def admin_delete_sentence(sentence_id: int, request: Request):
+    """Admin endpoint to delete a sentence"""
+    try:
+        from database.database import Database
+        
+        # Verify admin token
+        verify_admin_token(request)
+        
+        # Check if sentence exists
+        existing = Database.get_one_row(
+            "SELECT id FROM sentle_sentences WHERE id = %s",
+            (sentence_id,)
+        )
+        
+        if not existing:
+            raise HTTPException(status_code=404, detail="Sentence not found")
+        
+        # Delete sentence (CASCADE will handle related records)
+        Database.execute_sql(
+            "DELETE FROM sentle_sentences WHERE id = %s",
+            (sentence_id,)
+        )
+        
+        sentle_logger.info(f"Admin deleted sentence {sentence_id}")
+        return {"success": True, "message": "Sentence deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        sentle_logger.error(f"Error deleting sentence: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error deleting sentence: {str(e)}")
+
+@app.put("/api/sentle/admin/edit/{sentence_id}", tags=["Sentle"])
+async def admin_edit_sentence(sentence_id: int, payload: Dict[str, Any] = Body(...), request: Request = None):
+    """Admin endpoint to edit an existing sentence"""
+    try:
+        from database.database import Database
+        
+        # Verify admin token
+        verify_admin_token(request)
+        
+        new_sentence = payload.get('sentence', '').strip()
+        new_date = payload.get('date')
+        
+        if not new_sentence:
+            raise HTTPException(status_code=400, detail="Sentence is required")
+        
+        # Validate sentence
+        words = new_sentence.split()
+        word_count = len(words)
+        
+        if word_count < 2 or word_count > 15:
+            raise HTTPException(
+                status_code=400, 
+                detail="Sentence must be between 2 and 15 words"
+            )
+        
+        # Check if sentence exists
+        existing = Database.get_one_row(
+            "SELECT id, date FROM sentle_sentences WHERE id = %s",
+            (sentence_id,)
+        )
+        
+        if not existing:
+            raise HTTPException(status_code=404, detail="Sentence not found")
+        
+        # Update sentence
+        if new_date and new_date != str(existing['date']):
+            # Check if new date is available
+            date_conflict = Database.get_one_row(
+                "SELECT id FROM sentle_sentences WHERE date = %s AND id != %s",
+                (new_date, sentence_id)
+            )
+            if date_conflict:
+                raise HTTPException(
+                    status_code=400, 
+                    detail="Another sentence already exists for this date"
+                )
+            
+            Database.execute_sql(
+                "UPDATE sentle_sentences SET sentence = %s, word_count = %s, date = %s WHERE id = %s",
+                (new_sentence, word_count, new_date, sentence_id)
+            )
+        else:
+            Database.execute_sql(
+                "UPDATE sentle_sentences SET sentence = %s, word_count = %s WHERE id = %s",
+                (new_sentence, word_count, sentence_id)
+            )
+        
+        sentle_logger.info(f"Admin edited sentence {sentence_id}")
+        return {"success": True, "message": "Sentence updated successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        sentle_logger.error(f"Error editing sentence: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error editing sentence: {str(e)}")
+
 # =============================================================================
 # END SENTLE GAME API ENDPOINTS
 # =============================================================================
+
+# ====================================================
+# Download Endpoints for ConversionTheSpireReborn.zip
+# ====================================================
+
+@app.get("/api/v1/download/conversion/status")
+async def get_conversion_download_status(request: Request):
+    """Get download status for the user's IP."""
+    client_ip = get_client_ip(request)
+    status = get_download_status(client_ip)
+    return status
+
+@app.post("/api/v1/download/conversion/check")
+async def check_conversion_download(request: Request):
+    """Check if download is allowed for this IP."""
+    client_ip = get_client_ip(request)
+    allowed, message = check_download_allowed(client_ip)
+    
+    if not allowed:
+        raise HTTPException(status_code=429, detail=message)
+    
+    return {"allowed": True, "message": message}
+
+@app.get("/api/v1/download/conversion")
+async def download_conversion(request: Request):
+    """Download ConversionTheSpireReborn.zip with bandwidth throttling."""
+    from fastapi.responses import StreamingResponse
+    import time
+    
+    client_ip = get_client_ip(request)
+    
+    # Check if download is allowed
+    allowed, message = check_download_allowed(client_ip)
+    if not allowed:
+        raise HTTPException(status_code=429, detail=message)
+    
+    # Check if file exists
+    if not os.path.exists(CONVERSION_FILE_PATH):
+        raise HTTPException(status_code=404, detail="Download file not found")
+    
+    # Record download start
+    record_download_start(client_ip)
+    
+    def generate_with_throttle():
+        """Stream file with bandwidth throttling."""
+        try:
+            # Load tracker to get speed limit
+            tracker = load_download_tracker()
+            speed_mbps = tracker.get("download_speed_mbps", 2)
+            chunk_size = 1024 * 1024  # 1 MB chunks
+            delay_per_chunk = (chunk_size / (1024 * 1024)) / speed_mbps  # seconds
+            
+            bytes_sent = 0
+            with open(CONVERSION_FILE_PATH, 'rb') as f:
+                while True:
+                    chunk = f.read(chunk_size)
+                    if not chunk:
+                        break
+                    bytes_sent += len(chunk)
+                    yield chunk
+                    time.sleep(delay_per_chunk)  # Throttle
+            
+            # Record successful completion
+            record_download_complete(client_ip, bytes_sent)
+        except Exception as e:
+            print(f"Error during download: {e}")
+            record_download_cancel(client_ip)
+    
+    file_size = os.path.getsize(CONVERSION_FILE_PATH)
+    return StreamingResponse(
+        generate_with_throttle(),
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": "attachment; filename=ConversionTheSpireReborn.zip",
+            "Content-Length": str(file_size)
+        }
+    )
+
+# ====================================================
+# End Download Endpoints
+# ====================================================
 
 if __name__ == "__main__":
     # System startup info - Triple-layer fallback system
@@ -12718,30 +13285,21 @@ if __name__ == "__main__":
         print("  4. Or users can upload cookies via the frontend UI")
         print()
     
-    elif not has_cookies:
-        print("\n[INFO] No global cookies - relying on browser extraction and proxies")
-    elif not has_proxy:
-        print("\n[INFO] No proxy - using direct connection with cookies")
-    else:
-        print("\n Optimal config: Both cookies and proxy configured!")
-    
-    # Enable auto-reload for development (toggle via env var)
     dev_reload = os.getenv("DEV_RELOAD", "false").lower() in ("1", "true", "yes")
     # Only start the Uvicorn server when this module is executed directly.
     # Use the already-created `app` object instead of passing a string target
     # to avoid uvicorn re-importing this module (which can cause duplicate
     # side-effects and confusing bind errors). Keep `reload=False` here to
     # avoid automatic reloading in long-running deployments.
-    if __name__ == "__main__":
-        # Run the top-level ASGI app that includes Socket.IO and FastAPI
-        uvicorn.run(
-            asgi_app,
-            host="0.0.0.0",
-            port=int(os.getenv("PORT", 8001)),  # Allow overriding via PORT env var
-            reload=dev_reload,
-            # Use a portable path for reload watching (backend directory)
-            reload_dirs=[os.path.dirname(__file__)] if dev_reload else None
-        )
+    # Run the top-level ASGI app that includes Socket.IO and FastAPI
+    uvicorn.run(
+        asgi_app,
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", 8001)),  # Allow overriding via PORT env var
+        reload=dev_reload,
+        # Use a portable path for reload watching (backend directory)
+        reload_dirs=[os.path.dirname(__file__)] if dev_reload else None
+    )
 
 
 
