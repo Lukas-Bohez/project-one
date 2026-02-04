@@ -729,3 +729,37 @@
 2026-02-03 16:37:33,207 - INFO - ==================================================
 2026-02-03 16:37:33,207 - INFO - Quiz Logger Initialized
 2026-02-03 16:37:33,207 - INFO - ==================================================
+2026-02-03 17:00:54,557 - INFO - ==================================================
+2026-02-03 17:00:54,557 - INFO - ==================================================
+2026-02-03 17:00:54,559 - INFO - Quiz Logger Initialized
+2026-02-03 17:00:54,559 - INFO - Quiz Logger Initialized
+2026-02-03 17:00:54,559 - INFO - ==================================================
+2026-02-03 17:00:54,559 - INFO - ==================================================
+2026-02-03 20:19:10,101 - INFO - Converting video file: /tmp/project-one/temp_uploads/1770146349.966003_video-output-88343B31-32F9-4CB1-8F9C-8D19F0EE9594-1.MP4 (128392194 bytes) to mp3
+2026-02-03 20:19:29,578 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1770146349.966003_video-output-88343B31-32F9-4CB1-8F9C-8D19F0EE9594-1.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1770146350.096385_video-output-88343B31-32F9-4CB1-8F9C-8D19F0EE9594-1.mp3
+2026-02-03 20:19:33,117 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1770146350.096385_video-output-88343B31-32F9-4CB1-8F9C-8D19F0EE9594-1.mp3 (3913531 bytes)
+2026-02-03 20:19:37,649 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1770146350.096385_video-output-88343B31-32F9-4CB1-8F9C-8D19F0EE9594-1.mp3
+2026-02-03 20:34:48,719 - INFO - Converting video file: /tmp/project-one/temp_uploads/1770147288.660113_madison beer - ryder.MP4 (13911710 bytes) to mp3
+2026-02-03 20:34:59,877 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1770147288.660113_madison beer - ryder.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1770147288.714324_madison beer - ryder.mp3
+2026-02-03 20:35:05,498 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1770147288.714324_madison beer - ryder.mp3 (5926632 bytes)
+2026-02-03 20:35:09,628 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1770147288.714324_madison beer - ryder.mp3
+2026-02-03 20:39:28,734 - INFO - Converting video file: /tmp/project-one/temp_uploads/1770147568.664293_madison beer - ryder.MP4 (13911710 bytes) to mp3
+2026-02-03 20:39:39,911 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1770147568.664293_madison beer - ryder.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1770147568.729669_madison beer - ryder.mp3
+2026-02-03 20:39:45,515 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1770147568.729669_madison beer - ryder.mp3 (5926632 bytes)
+2026-02-03 20:39:50,038 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1770147568.729669_madison beer - ryder.mp3
+2026-02-04 01:34:58,696 - INFO - Converting video file: /tmp/project-one/temp_uploads/1770165298.620308_DWLLRS - This Heavens Tall.MP4 (51936543 bytes) to mp3
+2026-02-04 01:35:14,451 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1770165298.620308_DWLLRS - This Heavens Tall.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1770165298.690915_DWLLRS - This Heaven's Tall.mp3
+2026-02-04 01:35:19,278 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1770165298.690915_DWLLRS - This Heaven's Tall.mp3 (5176813 bytes)
+2026-02-04 01:35:24,677 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1770165298.690915_DWLLRS - This Heaven's Tall.mp3
+2026-02-04 01:38:04,687 - INFO - Converting video file: /tmp/project-one/temp_uploads/1770165484.586628_Em Beihold - Brutus.MP4 (41610767 bytes) to mp3
+2026-02-04 01:38:16,031 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1770165484.586628_Em Beihold - Brutus.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1770165484.681984_Em Beihold - Brutus.mp3
+2026-02-04 01:38:19,417 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1770165484.681984_Em Beihold - Brutus.mp3 (3532980 bytes)
+2026-02-04 01:38:23,319 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1770165484.681984_Em Beihold - Brutus.mp3
+2026-02-04 01:41:00,967 - INFO - Converting video file: /tmp/project-one/temp_uploads/1770165660.860375_Em Beihold - Numb Little Bug piano.MP4 (36333928 bytes) to mp3
+2026-02-04 01:41:13,085 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1770165660.860375_Em Beihold - Numb Little Bug piano.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1770165660.962781_Em Beihold - Numb Little Bug (piano).mp3
+2026-02-04 01:41:16,711 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1770165660.962781_Em Beihold - Numb Little Bug (piano).mp3 (4003811 bytes)
+2026-02-04 01:41:20,955 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1770165660.962781_Em Beihold - Numb Little Bug (piano).mp3
+2026-02-04 13:47:41,540 - INFO - Converting video file: /tmp/project-one/temp_uploads/1770209261.441309_Glen Campbell - Dont Think Twice Its Alright.MP4 (82039109 bytes) to mp3
+2026-02-04 13:47:55,574 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1770209261.441309_Glen Campbell - Dont Think Twice Its Alright.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1770209261.535494_Glen Campbell - Don't Think Twice, It's Alright.mp3
+2026-02-04 13:47:59,275 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1770209261.535494_Glen Campbell - Don't Think Twice, It's Alright.mp3 (3718553 bytes)
+2026-02-04 13:48:03,185 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1770209261.535494_Glen Campbell - Don't Think Twice, It's Alright.mp3

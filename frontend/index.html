@@ -25,16 +25,22 @@
         .c-btn{display:inline-flex;align-items:center;justify-content:center;padding:1rem 1.5rem;border:2px solid #000;border-radius:8px;font-size:1rem;font-weight:500;cursor:pointer;background:#fff;color:#000;min-height:44px;transition:all .2s ease}
         .spire-background{position:fixed;top:0;left:0;width:100%;height:100vh;z-index:-1;overflow:hidden}
         .spire-background img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s;filter:brightness(.85)}
-        .c-download-panel{display:flex;flex-direction:column;gap:.75rem;align-items:center;text-align:center;background:rgba(255,255,255,.88);border:1px solid #e5e7eb;border-radius:12px;padding:1.25rem;box-shadow:0 8px 24px rgba(0,0,0,.08)}
+        .c-download-panel{display:flex;flex-direction:column;gap:.75rem;align-items:center;text-align:center;background:rgba(255,255,255,.88);border:1px solid #e5e7eb;border-radius:12px;padding:1.25rem;box-shadow:0 8px 24px rgba(0,0,0,.08);transition:background .3s ease,border-color .3s ease}
+        [data-theme="dark"] .c-download-panel,.theme-dark .c-download-panel,body.theme-dark .c-download-panel{background:rgba(31,35,38,.95);border-color:#2a3034}
+        [data-theme="dark"] .c-download-panel .c-download-note,.theme-dark .c-download-panel .c-download-note,body.theme-dark .c-download-panel .c-download-note{color:#b9c5d6}
         .c-download-panel .c-btn{font-weight:700}
-        .c-download-note{margin:0;color:#374151;font-size:.98rem}
+        .c-download-note{margin:0;color:#374151;font-size:.98rem;transition:color .3s ease}
         .c-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.5);z-index:1000;padding:1.5rem}
         .c-modal.is-open{display:flex}
-        .c-modal__content{background:#fff;border-radius:12px;max-width:520px;width:100%;padding:1.25rem 1.5rem;box-shadow:0 18px 40px rgba(0,0,0,.2);border:1px solid #e5e7eb}
+        .c-modal__content{background:#fff;border-radius:12px;max-width:520px;width:100%;padding:1.25rem 1.5rem;box-shadow:0 18px 40px rgba(0,0,0,.2);border:1px solid #e5e7eb;transition:background .3s ease,border-color .3s ease,color .3s ease}
+        [data-theme="dark"] .c-modal__content,.theme-dark .c-modal__content,body.theme-dark .c-modal__content{background:#0f1112;border-color:#2a3034;color:#e6eef8}
         .c-modal__header{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.75rem}
-        .c-modal__close{border:1px solid #e5e7eb;background:#f9fafb;border-radius:999px;width:36px;height:36px;font-size:1.2rem;cursor:pointer}
-        .c-modal__list{margin:.5rem 0 0 1.25rem;color:#111827}
-        .c-modal__note{margin:.75rem 0 0;color:#4b5563}
+        .c-modal__close{border:1px solid #e5e7eb;background:#f9fafb;border-radius:999px;width:36px;height:36px;font-size:1.2rem;cursor:pointer;transition:background .3s ease,border-color .3s ease}
+        [data-theme="dark"] .c-modal__close,.theme-dark .c-modal__close,body.theme-dark .c-modal__close{border-color:#2a3034;background:#1f2326;color:#b9c5d6}
+        .c-modal__list{margin:.5rem 0 0 1.25rem;color:#111827;transition:color .3s ease}
+        [data-theme="dark"] .c-modal__list,.theme-dark .c-modal__list,body.theme-dark .c-modal__list{color:#b9c5d6}
+        .c-modal__note{margin:.75rem 0 0;color:#4b5563;transition:color .3s ease}
+        [data-theme="dark"] .c-modal__note,.theme-dark .c-modal__note,body.theme-dark .c-modal__note{color:#8f9fb0}
     </style>
     
     <link rel="stylesheet" href="css/styles.css">
@@ -66,7 +72,7 @@
         <div class="c-welcome-message">
             <div class="c-download-panel">
                 <button id="conversionDownloadBtn" class="c-btn c-btn--primary bw-btn" onclick="handleConversionDownload(event)">⬇️ Download ConversionTheSpireReborn.zip</button>
-                <div id="conversionStatus" style="display:none; margin-top:0.75rem; padding:0.75rem; background:#f0f4f8; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9rem; color:#334155;">
+                <div id="conversionStatus" style="display:none; margin-top:0.75rem; padding:0.75rem; background:#f0f4f8; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9rem; color:#334155; transition:background .3s ease,border-color .3s ease,color .3s ease;">
                     <p id="statusText" style="margin:0;"></p>
                 </div>
                 <p class="c-download-note">After downloading, you will see clear setup steps. Please consider viewing ads on other parts of the website to support Convert the Spire Reborn’s development so features like automatic updates can be added.</p>
@@ -185,6 +191,31 @@
     <script src="js/radar.js" defer></script>
     <script src="js/infomodal.js" defer></script>
     <script>
+    // Utility function to detect current theme
+    function getCurrentTheme() {
+        const htmlTheme = document.documentElement.getAttribute('data-theme');
+        if (htmlTheme) return htmlTheme;
+        if (document.body.classList.contains('theme-dark')) return 'dark';
+        if (document.body.classList.contains('theme-light')) return 'light';
+        return localStorage.getItem('theme') || 'light';
+    }
+    
+    // Utility function to apply theme colors to status div
+    function applyStatusDivTheme(isDark) {
+        const statusDiv = document.getElementById('conversionStatus');
+        if (!statusDiv) return;
+        
+        if (isDark) {
+            statusDiv.style.background = 'rgba(15, 17, 18, 0.95)';
+            statusDiv.style.borderColor = '#2a3034';
+            statusDiv.style.color = '#b9c5d6';
+        } else {
+            statusDiv.style.background = '#f0f4f8';
+            statusDiv.style.borderColor = '#cbd5e1';
+            statusDiv.style.color = '#334155';
+        }
+    }
+    
     // Download management for ConversionTheSpireReborn
     async function handleConversionDownload(event) {
         event.preventDefault();
@@ -192,6 +223,7 @@
         const statusDiv = document.getElementById('conversionStatus');
         const statusText = document.getElementById('statusText');
         const btn = document.getElementById('conversionDownloadBtn');
+        const isDark = getCurrentTheme() === 'dark';
         
         try {
             // Check if download is allowed
@@ -201,8 +233,15 @@
                 const error = await response.json();
                 statusText.textContent = '❌ ' + error.detail;
                 statusDiv.style.display = 'block';
-                statusDiv.style.background = '#fee2e2';
-                statusDiv.style.borderLeftColor = '#ef4444';
+                if (isDark) {
+                    statusDiv.style.background = 'rgba(127, 29, 29, 0.9)';
+                    statusDiv.style.borderColor = '#ef4444';
+                    statusDiv.style.color = '#fecaca';
+                } else {
+                    statusDiv.style.background = '#fee2e2';
+                    statusDiv.style.borderColor = '#ef4444';
+                    statusDiv.style.color = '#7f1d1d';
+                }
                 return;
             }
             
@@ -210,8 +249,15 @@
             const status = await fetch('/api/v1/download/conversion/status').then(r => r.json());
             statusText.innerHTML = `✓ Downloads this month: ${status.downloads_this_month}/${status.max_downloads_per_month}<br>File size: ${status.file_size_gb} GB<br>Speed: ${status.download_speed_mbps || 2} MB/s`;
             statusDiv.style.display = 'block';
-            statusDiv.style.background = '#dbeafe';
-            statusDiv.style.borderLeftColor = '#3b82f6';
+            if (isDark) {
+                statusDiv.style.background = 'rgba(30, 58, 138, 0.9)';
+                statusDiv.style.borderColor = '#3b82f6';
+                statusDiv.style.color = '#93c5fd';
+            } else {
+                statusDiv.style.background = '#dbeafe';
+                statusDiv.style.borderColor = '#3b82f6';
+                statusDiv.style.color = '#1e3a8a';
+            }
             
             // Show modal with instructions
             modal.classList.add('is-open');
@@ -226,10 +272,27 @@
             console.error('Download error:', error);
             statusText.textContent = '❌ Error: ' + error.message;
             statusDiv.style.display = 'block';
-            statusDiv.style.background = '#fee2e2';
-            statusDiv.style.borderLeftColor = '#ef4444';
+            if (isDark) {
+                statusDiv.style.background = 'rgba(127, 29, 29, 0.9)';
+                statusDiv.style.borderColor = '#ef4444';
+                statusDiv.style.color = '#fecaca';
+            } else {
+                statusDiv.style.background = '#fee2e2';
+                statusDiv.style.borderColor = '#ef4444';
+                statusDiv.style.color = '#7f1d1d';
+            }
         }
     }
+    
+    // Watch for theme changes and update status div
+    const observer = new MutationObserver(() => {
+        const isDark = getCurrentTheme() === 'dark';
+        if (document.getElementById('conversionStatus').style.display !== 'none') {
+            applyStatusDivTheme(isDark);
+        }
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
     
     // Modal controls
     (function(){
