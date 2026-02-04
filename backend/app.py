@@ -497,10 +497,37 @@ def reset_tracker_if_new_month(tracker):
         save_download_tracker(tracker)
     return tracker
 
+def cleanup_stale_active_downloads(tracker):
+    """Remove active_downloads count for IPs that haven't downloaded in > 1 hour (likely stalled)."""
+    current_time = datetime.now()
+    for ip, ip_data in tracker["ips"].items():
+        last_download = ip_data.get("last_download")
+        active_downloads = ip_data.get("active_downloads", 0)
+        
+        # If there are active downloads but no actual count, reset them
+        if active_downloads > 0 and ip_data.get("count", 0) == 0:
+            # This is an anomaly - bot or stalled connection with no successful download
+            if last_download is None:
+                # Never completed a download, likely stalled bot
+                tracker["ips"][ip]["active_downloads"] = 0
+            else:
+                # Check if last_download was > 1 hour ago
+                try:
+                    last_time = datetime.fromisoformat(last_download)
+                    if (current_time - last_time).total_seconds() > 3600:
+                        tracker["ips"][ip]["active_downloads"] = 0
+                except:
+                    # If we can't parse the timestamp, reset it
+                    tracker["ips"][ip]["active_downloads"] = 0
+    
+    return tracker
+
 def get_download_status(client_ip: str):
     """Get download status for an IP address."""
     tracker = load_download_tracker()
     tracker = reset_tracker_if_new_month(tracker)
+    tracker = cleanup_stale_active_downloads(tracker)
+    save_download_tracker(tracker)
     
     ip_data = tracker["ips"].get(client_ip, {})
     downloads_this_month = ip_data.get("count", 0)
@@ -523,6 +550,8 @@ def check_download_allowed(client_ip: str):
     """Check if download is allowed for this IP."""
     tracker = load_download_tracker()
     tracker = reset_tracker_if_new_month(tracker)
+    tracker = cleanup_stale_active_downloads(tracker)
+    save_download_tracker(tracker)
     
     # Check monthly limit per IP
     ip_data = tracker["ips"].get(client_ip, {})
