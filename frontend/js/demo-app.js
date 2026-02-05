@@ -646,7 +646,58 @@ function submitTimeOffRequest(event) {
 }
 
 function showAddShiftForm() {
-    showDemoNotification('In the real app, you can drag-and-drop to create shifts or use the quick-add form!', 'info');
+    const employees = demoData.business.employees || [];
+    
+    const formHTML = `
+        <form class="ui-task-form" onsubmit="event.preventDefault(); handleAddShift(event)">
+            <div class="ui-form-row">
+                <div class="ui-form-group">
+                    <label><i class="fa-solid fa-user"></i> Employee</label>
+                    <select name="employee_id" class="ui-input" required>
+                        <option value="">Select employee...</option>
+                        ${employees.map(emp => `<option value="${emp.id}">${emp.name} - ${emp.role}</option>`).join('')}
+                    </select>
+                </div>
+                
+                <div class="ui-form-group">
+                    <label><i class="fa-solid fa-calendar"></i> Shift Date</label>
+                    <input type="date" name="shift_date" class="ui-input" required>
+                </div>
+            </div>
+            
+            <div class="ui-form-row">
+                <div class="ui-form-group">
+                    <label><i class="fa-solid fa-clock"></i> Start Time</label>
+                    <input type="time" name="start_time" class="ui-input" required>
+                </div>
+                
+                <div class="ui-form-group">
+                    <label><i class="fa-solid fa-clock"></i> End Time</label>
+                    <input type="time" name="end_time" class="ui-input" required>
+                </div>
+            </div>
+            
+            <div class="ui-form-row">
+                <div class="ui-form-group full-width">
+                    <label><i class="fa-solid fa-align-left"></i> Notes (Optional)</label>
+                    <textarea name="notes" class="ui-input" rows="2" placeholder="e.g., Morning shift, Training..."></textarea>
+                </div>
+            </div>
+            
+            <div class="ui-form-actions">
+                <button type="button" class="ui-btn ui-btn-secondary" onclick="ManageUI.modal.close()">
+                    Cancel
+                </button>
+                <button type="submit" class="ui-btn ui-btn-primary">
+                    <i class="fa-solid fa-calendar-plus"></i> Create Shift
+                </button>
+            </div>
+        </form>
+    `;
+    
+    if (window.ManageUI) {
+        window.ManageUI.modal.show('Add Shift', formHTML, 'medium');
+    }
 }
 
 // Task Management Functions
@@ -970,11 +1021,7 @@ function updateTaskStatus(taskId, newStatus = null) {
 }
 
 function showCreateTaskForm() {
-    const shared = window.ManageShared;
-    showDemoNotification(
-        'In the real app, you can create custom tasks with deadlines, priorities, and assign them to specific employees!',
-        'info'
-    );
+    showNewTaskModal();
 }
 
 function showDemoNotification(message, type = 'info') {
@@ -1089,45 +1136,104 @@ function updateTaskProgressInDOM(taskId, task) {
 }
 
 function showNewTaskModal() {
-    if (!window.ManageUI) return;
+    if (!window.ManageUI || !window.ManageShared) return;
     
     const employees = demoData.business.employees || [];
     const employeeOptions = employees.map(e => ({
-        value: e.id,
-        label: e.name
+        id: e.id,
+        name: e.name,
+        role: e.role
     }));
+    
+    const formHTML = window.ManageUI.tasks.renderTaskForm(
+        employeeOptions,
+        'handleTaskFormSubmit'
+    );
     
     window.ManageUI.modal.show(
         'Create New Task',
-        window.ManageUI.tasks.renderTaskForm({
-            employees: employeeOptions,
-            onSubmit: (taskData) => createNewTask(taskData)
-        }),
+        formHTML,
         'medium'
     );
 }
 
+function handleTaskFormSubmit(event) {
+    const formData = new FormData(event.target);
+    const taskData = {
+        title: formData.get('title'),
+        description: formData.get('description'),
+        assigned_to: formData.get('assigned_to'),
+        priority: formData.get('priority'),
+        category: formData.get('category'),
+        due_date: formData.get('due_date')
+    };
+    createNewTask(taskData);
+}
+
 function createNewTask(taskData) {
+    const employeeId = parseInt(taskData.assigned_to);
+    const employee = demoData.business.employees.find(e => e.id === employeeId);
+    
     const newTask = {
-        id: Math.max(...demoData.business.tasks.map(t => t.id), 0) + 1,
+        id: demoData.business.tasks.length > 0 ? Math.max(...demoData.business.tasks.map(t => t.id)) + 1 : 1,
         title: taskData.title,
         description: taskData.description || '',
-        assigned_to: parseInt(taskData.assignedTo),
-        assigned_name: demoData.business.employees.find(e => e.id === parseInt(taskData.assignedTo))?.name || 'Unknown',
+        assigned_to: employeeId,
+        assigned_name: employee?.name || 'Unknown',
         priority: taskData.priority || 'medium',
         category: taskData.category || 'general',
         status: 'todo',
-        due_date: taskData.dueDate || null,
+        due_date: taskData.due_date || null,
         created_at: new Date().toISOString(),
         completed_at: null,
-        subtasks: taskData.subtasks || []
+        subtasks: []
     };
     
     demoData.business.tasks.push(newTask);
     
     if (window.ManageUI) {
         window.ManageUI.modal.close();
-        window.ManageUI.notification.show(`Task "${newTask.title}" created successfully!`, 'success');
+        window.ManageUI.notification.show(`✓ Task "${newTask.title}" created successfully!`, 'success');
+    }
+    
+    refreshDemo();
+}
+
+function handleAddShift(event) {
+    const formData = new FormData(event.target);
+    const employeeId = parseInt(formData.get('employee_id'));
+    const employee = demoData.business.employees.find(e => e.id === employeeId);
+    
+    const shiftDate = new Date(formData.get('shift_date'));
+    const startTime = formData.get('start_time');
+    const endTime = formData.get('end_time');
+    
+    // Create start and end datetime objects
+    const [startHour, startMin] = startTime.split(':');
+    const [endHour, endMin] = endTime.split(':');
+    
+    const startDatetime = new Date(shiftDate);
+    startDatetime.setHours(parseInt(startHour), parseInt(startMin));
+    
+    const endDatetime = new Date(shiftDate);
+    endDatetime.setHours(parseInt(endHour), parseInt(endMin));
+    
+    const newShift = {
+        id: demoData.business.shifts.length > 0 ? Math.max(...demoData.business.shifts.map(s => s.id)) + 1 : 1,
+        employee_id: employeeId,
+        employee_name: employee?.name || 'Unknown',
+        start_time: startDatetime.toISOString(),
+        end_time: endDatetime.toISOString(),
+        duration: (endDatetime - startDatetime) / (1000 * 60 * 60),
+        notes: formData.get('notes') || '',
+        created_at: new Date().toISOString()
+    };
+    
+    demoData.business.shifts.push(newShift);
+    
+    if (window.ManageUI) {
+        window.ManageUI.modal.close();
+        window.ManageUI.notification.show(`✓ Shift added for ${employee?.name || 'employee'}!`, 'success');
     }
     
     refreshDemo();
