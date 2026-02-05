@@ -745,9 +745,6 @@ function renderTasksOverview() {
         <div class="demo-tasks-grid">
             <div class="tasks-column">
                 <h5><i class="fa-solid fa-list"></i> To Do (${todoTasks.length})</h5>
-                <button class="ui-btn-small" onclick="showNewTaskModal()">
-                    <i class="fa-solid fa-plus"></i> New Task
-                </button>
                 ${todoTasks.length > 0 ? todoTasks.map(t => renderTaskCard(t, 'boss')).join('') : '<div class="empty-tasks">No tasks</div>'}
             </div>
             <div class="tasks-column">
@@ -871,7 +868,7 @@ function renderSubtaskCard(taskId, subtask) {
              onclick="toggleSubtaskStatus(${taskId}, ${subtask.id}, event)">
             
             <div class="ui-subtask-checkbox ${isCompleted ? 'checked' : isInProgress ? 'in-progress' : ''}">
-                <i class="fa-solid ${isCompleted ? 'fa-check' : isInProgress ? 'fa-spinner fa-spin' : ''}" style="font-size: 0.75rem;"></i>
+                <i class="fa-solid ${isCompleted ? 'fa-check' : isInProgress ? 'fa-spinner fa-spin' : 'fa-circle'}" style="font-size: 0.75rem;"></i>
             </div>
             
             <div class="ui-subtask-content">
@@ -905,20 +902,31 @@ function changeTaskStatus(taskId, newStatus) {
     const task = demoData.business.tasks.find(t => t.id === taskId);
     if (!task) return;
     
+    // If trying to complete task, check if all subtasks are done
+    if (newStatus === 'completed' && task.subtasks && task.subtasks.length > 0) {
+        const allSubtasksDone = task.subtasks.every(st => st.status === 'completed');
+        if (!allSubtasksDone) {
+            const completed = task.subtasks.filter(st => st.status === 'completed').length;
+            showDemoNotification(
+                `Cannot complete task: ${completed}/${task.subtasks.length} subtasks done. Complete all subtasks first.`,
+                'error'
+            );
+            return;
+        }
+    }
+    
     task.status = newStatus;
     
     if (newStatus === 'completed') {
         task.completed_at = new Date().toISOString();
-        // Mark all subtasks as completed
-        if (task.subtasks) {
-            task.subtasks.forEach(st => {
-                st.status = 'completed';
-                st.completed_at = new Date().toISOString();
-            });
-        }
-        showDemoNotification(`✓ Task "${task.title}" completed!`, 'success');
-    } else {
+        showDemoNotification(`<i class="fa-solid fa-check"></i> Task "${task.title}" completed!`, 'success');
+    } else if (newStatus === 'in_progress') {
         task.completed_at = null;
+        showDemoNotification(`<i class="fa-solid fa-play"></i> Task "${task.title}" started`, 'info');
+    } else if (newStatus === 'todo') {
+        task.completed_at = null;
+        showDemoNotification(`<i class="fa-solid fa-undo"></i> Task "${task.title}" reopened`, 'info');
+    } else {
         const shared = window.ManageShared;
         showDemoNotification(
             `Task "${task.title}" moved to ${shared?.taskManager.statusLabels[newStatus] || newStatus}`,
@@ -958,35 +966,58 @@ function toggleSubtaskStatus(taskId, subtaskId, event) {
     const subtask = task.subtasks.find(st => st.id === subtaskId);
     if (!subtask) return;
     
-    // Toggle ONLY between pending and completed (never in_progress for subtasks)
-    const wasCompleted = subtask.status === 'completed';
+    // Cycle through 3 states: pending → in_progress (busy) → completed → pending
+    const currentStatus = subtask.status || 'pending';
+    let newStatus;
+    let message, type;
     
-    if (wasCompleted) {
-        subtask.status = 'pending';
-        subtask.completed_at = null;
-        showDemoNotification(`Subtask "${subtask.title}" reopened`, 'info');
-        
-        // If task was completed, move it back to in_progress
-        if (task.status === 'completed') {
-            task.status = 'in_progress';
-            task.completed_at = null;
-        }
-    } else {
-        // Always go straight to completed, regardless of current status
-        subtask.status = 'completed';
-        subtask.completed_at = new Date().toISOString();
-        showDemoNotification(`✓ Subtask "${subtask.title}" completed`, 'success');
-        
-        // If all subtasks completed, complete the task
+    switch(currentStatus) {
+        case 'pending':
+            newStatus = 'in_progress';
+            message = `<i class="fa-solid fa-briefcase"></i> Subtask "${subtask.title}" marked as BUSY`;
+            type = 'info';
+            break;
+        case 'in_progress':
+            newStatus = 'completed';
+            message = `<i class="fa-solid fa-check"></i> Subtask "${subtask.title}" completed`;
+            type = 'success';
+            break;
+        case 'completed':
+            newStatus = 'pending';
+            message = `<i class="fa-solid fa-circle"></i> Subtask "${subtask.title}" reopened`;
+            type = 'info';
+            break;
+        default:
+            newStatus = 'pending';
+            message = `Subtask "${subtask.title}" reset`;
+            type = 'info';
+    }
+    
+    subtask.status = newStatus;
+    subtask.completed_at = newStatus === 'completed' ? new Date().toISOString() : null;
+    
+    // Update task status if needed
+    if (newStatus === 'in_progress' && task.status === 'todo') {
+        task.status = 'in_progress';
+    } else if (newStatus === 'completed') {
+        // Check if all subtasks are completed
         const allCompleted = task.subtasks.every(st => st.status === 'completed');
         if (allCompleted) {
             task.status = 'completed';
             task.completed_at = new Date().toISOString();
-            showDemoNotification(`🎉 All subtasks done! Task "${task.title}" completed!`, 'success');
+            showDemoNotification(`<i class="fa-solid fa-star"></i> All subtasks done! Task "${task.title}" completed!`, 'success');
         } else if (task.status === 'todo') {
             task.status = 'in_progress';
         }
+    } else if (newStatus === 'pending') {
+        // If reopening a subtask, ensure task is back to in_progress if not already completed
+        if (task.status === 'completed') {
+            task.status = 'in_progress';
+            task.completed_at = null;
+        }
     }
+    
+    showDemoNotification(message, type);
     
     // Update just this subtask and progress bar in the DOM instead of full refresh
     updateSubtaskInDOM(taskId, subtaskId, subtask);
@@ -1089,17 +1120,24 @@ function updateSubtaskInDOM(taskId, subtaskId, subtask) {
     if (!subtaskEl) return;
     
     const isCompleted = subtask.status === 'completed';
+    const isInProgress = subtask.status === 'in_progress';
     const checkbox = subtaskEl.querySelector('.ui-subtask-checkbox');
     const icon = checkbox.querySelector('i');
     const title = subtaskEl.querySelector('.ui-subtask-title');
     
     // Update classes
     subtaskEl.className = `ui-subtask-card ${subtask.status}`;
-    checkbox.className = `ui-subtask-checkbox ${isCompleted ? 'checked' : ''}`;
+    checkbox.className = `ui-subtask-checkbox ${isCompleted ? 'checked' : isInProgress ? 'in-progress' : ''}`;
     title.className = `ui-subtask-title ${isCompleted ? 'completed' : ''}`;
     
-    // Update icon
-    icon.className = `fa-solid ${isCompleted ? 'fa-check' : ''}`;
+    // Update icon based on status
+    if (isCompleted) {
+        icon.className = 'fa-solid fa-check';
+    } else if (isInProgress) {
+        icon.className = 'fa-solid fa-spinner fa-spin';
+    } else {
+        icon.className = 'fa-solid fa-circle';
+    }
     icon.style.fontSize = '0.75rem';
 }
 
