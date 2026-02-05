@@ -592,14 +592,30 @@ button[onclick*="idleGame/idlegame.html"]:hover {
     position: absolute;
     top: var(--spacing-md);
     right: var(--spacing-md);
-    font-size: 28px;
-    font-weight: bold;
+    font-size: 22px;
+    font-weight: 700;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
     cursor: pointer;
-    transition: color 0.2s ease;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
 }
 
 .c-modal__close:hover {
     color: var(--text-primary);
+    background: var(--bg-secondary);
+    border-color: var(--primary-color);
+    transform: scale(1.05);
+}
+
+.c-modal__close:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
 }
 
 .c-info-section {

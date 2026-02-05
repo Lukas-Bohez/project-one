@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Portal - Manage the Spire</title>
+    
+    <link rel="icon" href="../favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/manage.css">
+    <link rel="stylesheet" href="../css/employee.css">
+    <link rel="stylesheet" href="../css/footer.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    
+    <script src="../js/themeManager.js" defer></script>
+    <script src="../js/websocket-client.js" defer></script>
+    <script src="../js/employee.js" defer></script>
+</head>
+<body>
+    <header class="c-header">
+        <div class="c-header__content">
+            <a href="manage.html" class="c-header__logo">
+                <h1 class="c-header__title"><i class="fa-solid fa-user" aria-hidden="true"></i> Employee Portal</h1>
+            </a>
+            <div class="header-actions">
+                <span id="employeeName" class="employee-name">Loading...</span>
+                <button class="c-btn c-btn--secondary c-btn--sm" onclick="window.location.href='manage.html'">← Back</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="o-container employee-container">
+        <!-- Welcome Card -->
+        <div class="welcome-card">
+            <h2>Welcome, <span id="welcomeName">Employee</span>!</h2>
+            <p class="welcome-subtitle">Manage your schedule, request time off, and stay connected</p>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fa-regular fa-calendar" aria-hidden="true"></i></div>
+                <div class="stat-info">
+                    <div class="stat-label">This Week's Hours</div>
+                    <div class="stat-value" id="weekHours">0.0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fa-solid fa-dollar-sign" aria-hidden="true"></i></div>
+                <div class="stat-info">
+                    <div class="stat-label">Estimated Pay</div>
+                    <div class="stat-value" id="estimatedPay">$0.00</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fa-solid fa-umbrella-beach" aria-hidden="true"></i></div>
+                <div class="stat-info">
+                    <div class="stat-label">PTO Balance</div>
+                    <div class="stat-value" id="ptoBalance">0 hrs</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fa-solid fa-chart-line" aria-hidden="true"></i></div>
+                <div class="stat-info">
+                    <div class="stat-label">Next Shift</div>
+                    <div class="stat-value" id="nextShift">None</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="schedule">My Schedule</button>
+            <button class="tab-btn" data-tab="timeoff">Time Off</button>
+            <button class="tab-btn" data-tab="swaps">Shift Swaps</button>
+            <button class="tab-btn" data-tab="profile">My Profile</button>
+        </div>
+
+        <!-- Tab: My Schedule -->
+        <div id="schedule-tab" class="tab-content active">
+            <div class="tab-header">
+                <h3>My Upcoming Shifts</h3>
+                <button class="c-btn c-btn--secondary c-btn--sm" id="downloadScheduleBtn"><i class="fa-solid fa-download" aria-hidden="true"></i> Download</button>
+            </div>
+            
+            <div class="shifts-list" id="shiftsList">
+                <div class="loading-state">Loading your schedule...</div>
+            </div>
+        </div>
+
+        <!-- Tab: Time Off -->
+        <div id="timeoff-tab" class="tab-content">
+            <div class="tab-header">
+                <h3>Time Off Requests</h3>
+                <button class="c-btn c-btn--primary c-btn--sm" id="requestTimeOffBtn">+ Request Time Off</button>
+            </div>
+            
+            <div class="time-off-balance">
+                <p><strong>Available PTO:</strong> <span id="availablePTO">40</span> hours</p>
+                <p><strong>Pending Requests:</strong> <span id="pendingRequests">0</span></p>
+            </div>
+            
+            <div class="requests-list" id="requestsList">
+                <div class="loading-state">Loading time-off requests...</div>
+            </div>
+        </div>
+
+        <!-- Tab: Shift Swaps -->
+        <div id="swaps-tab" class="tab-content">
+            <div class="tab-header">
+                <h3>Shift Swap Marketplace</h3>
+                <button class="c-btn c-btn--primary c-btn--sm" id="offerSwapBtn"><i class="fa-solid fa-right-left" aria-hidden="true"></i> Offer a Shift</button>
+            </div>
+            
+            <div class="info-box">
+                <p><i class="fa-regular fa-clipboard" aria-hidden="true"></i> Need to swap a shift? Post it here and your coworkers can accept it.</p>
+                <p><i class="fa-regular fa-lightbulb" aria-hidden="true"></i> You can also browse and accept shifts offered by others.</p>
+            </div>
+            
+            <h4>Available Shifts</h4>
+            <div class="swaps-list" id="swapsList">
+                <div class="empty-state">No shift swaps available right now.</div>
+            </div>
+        </div>
+
+        <!-- Tab: My Profile -->
+        <div id="profile-tab" class="tab-content">
+            <div class="tab-header">
+                <h3>My Profile</h3>
+            </div>
+            
+            <div class="profile-info">
+                <div class="profile-section">
+                    <h4>Personal Information</h4>
+                    <div class="info-row">
+                        <span class="info-label">Name:</span>
+                        <span class="info-value" id="profileName">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Employee Code:</span>
+                        <span class="info-value" id="profileCode">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Role:</span>
+                        <span class="info-value" id="profileRole">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Hourly Rate:</span>
+                        <span class="info-value" id="profileRate">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Hire Date:</span>
+                        <span class="info-value" id="profileHireDate">-</span>
+                    </div>
+                </div>
+                
+                <div class="profile-section">
+                    <h4>Performance</h4>
+                    <div class="info-row">
+                        <span class="info-label">Total Hours (All Time):</span>
+                        <span class="info-value" id="totalHours">0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Shifts Completed:</span>
+                        <span class="info-value" id="shiftsCompleted">0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Attendance Rate:</span>
+                        <span class="info-value" id="attendanceRate">100%</span>
+                    </div>
+                </div>
+                
+                <div class="profile-section">
+                    <h4>Availability</h4>
+                    <button class="c-btn c-btn--tertiary" id="updateAvailabilityBtn">Update Availability</button>
+                    <p class="small-text">Let your manager know when you're available to work</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Time Off Request Modal -->
+    <div id="timeOffModal" class="c-modal" role="dialog" aria-hidden="true">
+        <div class="c-modal__content manage-modal">
+            <div class="c-modal__header">
+                <h2>Request Time Off</h2>
+                <button class="c-modal__close" aria-label="Close">&times;</button>
+            </div>
+            <div class="c-modal__body">
+                <form id="timeOffForm" class="manage-form">
+                    <div class="form-group">
+                        <label for="requestType">Request Type *</label>
+                        <select id="requestType" class="form-control" required>
+                            <option value="vacation">Vacation</option>
+                            <option value="sick">Sick Leave</option>
+                            <option value="personal">Personal Day</option>
+                            <option value="unpaid">Unpaid Time Off</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="startDate">Start Date *</label>
+                            <input type="date" id="startDate" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="endDate">End Date *</label>
+                            <input type="date" id="endDate" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="requestReason">Reason</label>
+                        <textarea id="requestReason" class="form-control" rows="3" placeholder="Optional explanation..."></textarea>
+                    </div>
+
+                    <div class="time-off-summary">
+                        <p><strong>Total Days:</strong> <span id="totalDays">0</span></p>
+                        <p><strong>Total Hours:</strong> <span id="totalRequestHours">0</span></p>
+                        <p><strong>Remaining PTO:</strong> <span id="remainingPTO">40</span> hours</p>
+                    </div>
+
+                    <div id="timeOffError" class="error-message" style="display: none;"></div>
+                    
+                    <button type="submit" class="c-btn c-btn--primary c-btn--block">Submit Request</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer class="c-footer">
+        <p class="c-footer__text">
+            <strong>© 2026 Manage the Spire</strong><br>
+            Part of the Quiz The Spire Suite by <strong>Oroka Conner</strong>
+        </p>
+    </footer>
+</body>
+</html>

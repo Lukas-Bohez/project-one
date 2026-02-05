@@ -319,6 +319,14 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
+# Include Manage the Spire router
+try:
+    from api.routers.manage import router as manage_router
+    app.include_router(manage_router)
+    print("✓ Manage the Spire API routes loaded")
+except Exception as e:
+    print(f"Warning: Could not load Manage the Spire routes: {e}")
+
 # Rate limiting setup
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter

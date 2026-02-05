@@ -1,35 +1,60 @@
 /* Common Footer Styles */
 .c-footer {
     text-align: center;
-    padding: 20px;
-    margin-top: 40px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 28px 20px 32px;
+    margin-top: 48px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    background: linear-gradient(180deg, rgba(248, 249, 252, 0.85), rgba(255, 255, 255, 0.98));
+    color: #1f2937;
 }
 
 .c-footer__text {
-    margin: 5px 0;
-    font-size: 0.95em;
+    margin: 6px 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
 }
 
 .c-footer__links {
-    margin-top: 15px;
-    font-size: 0.9em;
+    margin-top: 12px;
+    font-size: 0.9rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
 }
 
 .c-footer__link {
-    margin: 0 10px;
-    color: inherit;
-    text-decoration: underline;
+    margin: 0;
+    color: #1d4ed8;
+    text-decoration: none;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.2s ease, color 0.2s ease;
 }
 
 .c-footer__link:hover {
-    opacity: 0.8;
+    background: rgba(37, 99, 235, 0.12);
+    color: #1e40af;
 }
 
 /* Dark theme support */
 [data-theme="dark"] .c-footer,
 body[data-theme="dark"] .c-footer {
     border-top-color: rgba(255, 255, 255, 0.08);
+    background: linear-gradient(180deg, rgba(17, 24, 39, 0.9), rgba(15, 23, 42, 0.98));
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .c-footer__link,
+body[data-theme="dark"] .c-footer__link {
+    color: #93c5fd;
+}
+
+[data-theme="dark"] .c-footer__link:hover,
+body[data-theme="dark"] .c-footer__link:hover {
+    background: rgba(59, 130, 246, 0.18);
+    color: #bfdbfe;
 }
 
 /* Make the Buy Me a Coffee block prominent at the top of the footer */

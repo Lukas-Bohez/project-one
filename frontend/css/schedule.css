@@ -1,0 +1,409 @@
+/* ============================
+   Schedule Calendar Styles
+   ============================ */
+
+.schedule-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem;
+}
+
+/* Header Actions */
+.c-header__content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.business-name {
+    font-weight: 600;
+    color: var(--color-text-primary, #fff);
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+}
+
+/* Calendar Controls */
+.calendar-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--color-bg-secondary, #f8f9fa);
+    border-radius: 8px;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.controls-left,
+.controls-right {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.controls-center h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--color-text-primary, #1a1a1a);
+}
+
+/* Calendar Grid */
+.calendar-wrapper {
+    background: var(--color-bg-primary, #fff);
+    border: 2px solid var(--color-border, #ddd);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.calendar-header {
+    display: grid;
+    grid-template-columns: 150px repeat(7, 1fr);
+    background: var(--color-bg-tertiary, #e9ecef);
+    border-bottom: 2px solid var(--color-border, #ddd);
+}
+
+.time-column-header {
+    padding: 1rem;
+    font-weight: 700;
+    color: var(--color-text-primary, #1a1a1a);
+    border-right: 1px solid var(--color-border, #ddd);
+    display: flex;
+    align-items: center;
+}
+
+.day-header {
+    padding: 1rem;
+    text-align: center;
+    border-right: 1px solid var(--color-border, #ddd);
+}
+
+.day-header:last-child {
+    border-right: none;
+}
+
+.day-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--color-text-primary, #1a1a1a);
+    margin-bottom: 0.25rem;
+}
+
+.day-date {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary, #666);
+}
+
+/* Calendar Body */
+.calendar-body {
+    min-height: 400px;
+}
+
+.loading-state {
+    padding: 3rem;
+    text-align: center;
+    color: var(--color-text-secondary, #666);
+}
+
+.employee-row {
+    display: grid;
+    grid-template-columns: 150px repeat(7, 1fr);
+    border-bottom: 1px solid var(--color-border, #ddd);
+    min-height: 80px;
+}
+
+.employee-row:last-child {
+    border-bottom: none;
+}
+
+.employee-cell {
+    padding: 1rem;
+    font-weight: 600;
+    color: var(--color-text-primary, #1a1a1a);
+    border-right: 1px solid var(--color-border, #ddd);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: var(--color-bg-secondary, #f8f9fa);
+}
+
+.employee-name {
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+.employee-role {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary, #666);
+    font-weight: 400;
+}
+
+.day-cell {
+    padding: 0.5rem;
+    border-right: 1px solid var(--color-border, #ddd);
+    position: relative;
+    background: var(--color-bg-primary, #fff);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.day-cell:hover {
+    background: rgba(0, 123, 255, 0.05);
+}
+
+.day-cell:last-child {
+    border-right: none;
+}
+
+/* Shift Cards */
+.shift-card {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: #fff;
+    padding: 0.5rem;
+    border-radius: 6px;
+    margin-bottom: 0.25rem;
+    cursor: move;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+}
+
+.shift-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.shift-card.dragging {
+    opacity: 0.5;
+}
+
+.shift-time {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.shift-duration {
+    font-size: 0.75rem;
+    opacity: 0.9;
+}
+
+.shift-notes {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    opacity: 0.8;
+    font-style: italic;
+}
+
+/* Shift Status Colors */
+.shift-card.status-scheduled {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+.shift-card.status-completed {
+    background: linear-gradient(135deg, #6c757d, #545b62);
+}
+
+.shift-card.status-missed {
+    background: linear-gradient(135deg, #dc3545, #bd2130);
+}
+
+/* Add Shift Placeholder */
+.add-shift-hint {
+    display: none;
+    text-align: center;
+    color: var(--color-text-tertiary, #999);
+    font-size: 0.85rem;
+    padding: 1rem 0.5rem;
+}
+
+.day-cell:hover .add-shift-hint {
+    display: block;
+}
+
+/* Weekly Summary */
+.weekly-summary {
+    background: var(--color-bg-secondary, #f8f9fa);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 2px solid var(--color-border, #ddd);
+}
+
+.weekly-summary h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.25rem;
+    color: var(--color-text-primary, #1a1a1a);
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.summary-card {
+    background: var(--color-bg-primary, #fff);
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--color-border, #ddd);
+}
+
+.summary-label {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary, #666);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.summary-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-primary, #007bff);
+}
+
+/* Shift Modal */
+.shift-modal {
+    max-width: 600px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.shift-preview {
+    padding: 1rem;
+    background: rgba(0, 123, 255, 0.1);
+    border-radius: 6px;
+    margin: 1rem 0;
+    font-size: 0.95rem;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+/* Checkbox Group */
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 400;
+    cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+/* Dark Mode */
+[data-theme="dark"] .calendar-controls,
+[data-theme="dark"] .employee-cell {
+    background: var(--color-bg-secondary, #2a2a2a);
+}
+
+[data-theme="dark"] .calendar-wrapper,
+[data-theme="dark"] .summary-card {
+    background: var(--color-bg-primary, #1a1a1a);
+    border-color: var(--color-border, #444);
+}
+
+[data-theme="dark"] .calendar-header {
+    background: var(--color-bg-tertiary, #333);
+}
+
+[data-theme="dark"] .day-cell {
+    background: var(--color-bg-primary, #1a1a1a);
+}
+
+[data-theme="dark"] .day-cell:hover {
+    background: rgba(0, 123, 255, 0.1);
+}
+
+[data-theme="dark"] .controls-center h2,
+[data-theme="dark"] .weekly-summary h3,
+[data-theme="dark"] .day-name,
+[data-theme="dark"] .employee-name,
+[data-theme="dark"] .time-column-header {
+    color: var(--color-text-primary, #e0e0e0);
+}
+
+[data-theme="dark"] .day-date,
+[data-theme="dark"] .employee-role,
+[data-theme="dark"] .summary-label {
+    color: var(--color-text-secondary, #b0b0b0);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .calendar-header,
+    .employee-row {
+        grid-template-columns: 120px repeat(7, 1fr);
+    }
+}
+
+@media (max-width: 992px) {
+    .calendar-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .controls-left,
+    .controls-center,
+    .controls-right {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .controls-center h2 {
+        text-align: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .calendar-wrapper {
+        overflow-x: auto;
+    }
+    
+    .calendar-header,
+    .employee-row {
+        min-width: 800px;
+    }
+    
+    .summary-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}

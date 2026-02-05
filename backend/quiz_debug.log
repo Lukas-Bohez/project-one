@@ -763,3 +763,23 @@
 2026-02-04 13:47:55,574 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1770209261.441309_Glen Campbell - Dont Think Twice Its Alright.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1770209261.535494_Glen Campbell - Don't Think Twice, It's Alright.mp3
 2026-02-04 13:47:59,275 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1770209261.535494_Glen Campbell - Don't Think Twice, It's Alright.mp3 (3718553 bytes)
 2026-02-04 13:48:03,185 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1770209261.535494_Glen Campbell - Don't Think Twice, It's Alright.mp3
+2026-02-04 22:27:54,668 - INFO - Converting video file: /tmp/project-one/temp_uploads/1770240474.549364_BETWEEN FRIENDS - self destruct.mp4 (63360241 bytes) to mp3
+2026-02-04 22:28:06,225 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1770240474.549364_BETWEEN FRIENDS - self destruct.mp4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1770240474.663198_BETWEEN FRIENDS - self destruct.mp3
+2026-02-04 22:28:09,357 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1770240474.663198_BETWEEN FRIENDS - self destruct.mp3 (3416996 bytes)
+2026-02-04 22:28:12,886 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1770240474.663198_BETWEEN FRIENDS - self destruct.mp3
+2026-02-05 00:16:19,255 - INFO - Converting video file: /tmp/project-one/temp_uploads/1770246979.126766_Alessia Cara - Not Today.MP4 (94342713 bytes) to mp3
+2026-02-05 00:16:34,515 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1770246979.126766_Alessia Cara - Not Today.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1770246979.249978_Alessia Cara - Not Today.mp3
+2026-02-05 00:16:37,941 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1770246979.249978_Alessia Cara - Not Today.mp3 (3761812 bytes)
+2026-02-05 00:16:41,911 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1770246979.249978_Alessia Cara - Not Today.mp3
+2026-02-05 00:19:28,435 - INFO - Converting video file: /tmp/project-one/temp_uploads/1770247168.331825_top - Not Today.MP4 (50770146 bytes) to mp3
+2026-02-05 00:19:42,522 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1770247168.331825_top - Not Today.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1770247168.430539_top - Not Today.mp3
+2026-02-05 00:19:47,772 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1770247168.430539_top - Not Today.mp3 (5693411 bytes)
+2026-02-05 00:19:52,384 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1770247168.430539_top - Not Today.mp3
+2026-02-05 00:57:27,656 - INFO - Converting video file: /tmp/project-one/temp_uploads/1770249447.503208_Kodaline - High Hopes.MP4 (135661372 bytes) to mp3
+2026-02-05 00:57:49,342 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1770249447.503208_Kodaline - High Hopes.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1770249447.646494_Kodaline - High Hopes.mp3
+2026-02-05 00:57:54,386 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1770249447.646494_Kodaline - High Hopes.mp3 (5531660 bytes)
+2026-02-05 00:58:00,036 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1770249447.646494_Kodaline - High Hopes.mp3
+2026-02-05 01:04:56,076 - INFO - Converting video file: /tmp/project-one/temp_uploads/1770249895.934152_patd - High Hopes.MP4 (102625892 bytes) to mp3
+2026-02-05 01:05:13,403 - INFO - FFmpeg command: ffmpeg -i /tmp/project-one/temp_uploads/1770249895.934152_patd - High Hopes.MP4 -map_metadata 0 -vn -acodec libmp3lame -y -b:a 192k /tmp/project-one/temp_converted/1770249896.071798_patd - High Hopes.mp3
+2026-02-05 01:05:17,556 - INFO - Video to audio conversion successful: /tmp/project-one/temp_converted/1770249896.071798_patd - High Hopes.mp3 (4589371 bytes)
+2026-02-05 01:05:22,353 - INFO - Embedded extracted thumbnail in MP3: /tmp/project-one/temp_converted/1770249896.071798_patd - High Hopes.mp3
