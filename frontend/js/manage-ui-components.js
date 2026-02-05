@@ -264,10 +264,10 @@ const ManageUI = {
         },
         
         /**
-         * Placeholder for closing task form (override in implementation)
+         * Close task form modal
          */
         closeTaskForm() {
-            console.warn('ManageUI.tasks.closeTaskForm not implemented. Override this in your app.');
+            ManageUI.modal.close();
         }
     },
     
