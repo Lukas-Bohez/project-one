@@ -6,7 +6,6 @@ This folder is served by Apache as the web root. Paths are preserved to avoid br
 
 - index.html and other root files (ads.txt, robots.txt, sitemap.xml, site verification)
 - pages/ - app pages (one folder per page)
-- html/ - legacy shims redirecting to /pages
 - css/ - shared stylesheets and css/pages per-page styles
 - js/ - shared scripts and js/pages per-page scripts
 - images/, svg/, lofi/ - assets
@@ -20,7 +19,6 @@ See [ROOT_FILES.md](ROOT_FILES.md) for the list of web-root files that must stay
 ## Folder Readmes
 
 - [pages/README.md](pages/README.md)
-- [html/README.md](html/README.md)
 - [css/README.md](css/README.md)
 - [css/pages/README.md](css/pages/README.md)
 - [js/README.md](js/README.md)
