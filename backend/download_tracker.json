@@ -31,11 +31,101 @@
     "79.116.152.100": {
       "count": 0,
       "bandwidth_gb": 0.0,
+      "active_downloads": 0,
+      "last_download": null
+    },
+    "176.241.63.132": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 0,
+      "last_download": null
+    },
+    "49.206.11.206": {
+      "count": 1,
+      "bandwidth_gb": 1.446158679202199,
+      "active_downloads": 0,
+      "last_download": "2026-02-05T18:54:35.651301"
+    },
+    "82.1.234.48": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 0,
+      "last_download": null
+    },
+    "91.173.98.199": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 0,
+      "last_download": null
+    },
+    "93.86.231.10": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 0,
+      "last_download": null
+    },
+    "68.189.57.66": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 0,
+      "last_download": null
+    },
+    "196.96.170.30": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 0,
+      "last_download": null
+    },
+    "49.43.128.194": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 0,
+      "last_download": null
+    },
+    "49.43.132.4": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 0,
+      "last_download": null
+    },
+    "41.186.132.1": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 0,
+      "last_download": null
+    },
+    "84.140.75.204": {
+      "count": 1,
+      "bandwidth_gb": 1.446158679202199,
+      "active_downloads": 0,
+      "last_download": "2026-02-07T11:48:38.668118"
+    },
+    "62.206.166.6": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 0,
+      "last_download": null
+    },
+    "92.226.2.196": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 0,
+      "last_download": null
+    },
+    "87.79.22.5": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 0,
+      "last_download": null
+    },
+    "79.135.126.187": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
       "active_downloads": 1,
       "last_download": null
     }
   },
   "last_reset_month": "2026-02",
-  "total_monthly_bandwidth_gb": 5.784634716808796,
+  "total_monthly_bandwidth_gb": 8.676952075213194,
   "file_size_gb": 1.5
 }

@@ -592,6 +592,7 @@
     gap: 1rem;
     justify-content: center;
     margin-bottom: 2rem;
+    flex-wrap: wrap;
 }
 
 .view-switch-btn {
@@ -793,6 +794,7 @@
 
 .demo-calendar {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .demo-calendar-grid {
@@ -802,6 +804,7 @@
     background: var(--color-border, #e2e8f0);
     border-radius: 8px;
     overflow: hidden;
+    min-width: 860px;
 }
 
 .demo-calendar-header {
@@ -1887,6 +1890,30 @@
     border-color: #334155;
 }
 
+[data-theme="dark"] .demo-header-new h3 {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .demo-header-new p {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .demo-app-container {
+    background: #0f172a;
+}
+
+[data-theme="dark"] .view-switch-btn {
+    background: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .view-switch-btn:hover {
+    background: #111827;
+    border-color: #3b82f6;
+    color: #93c5fd;
+}
+
 [data-theme="dark"] .demo-stat-value,
 [data-theme="dark"] .team-name,
 [data-theme="dark"] .request-name,
@@ -1907,6 +1934,37 @@
 [data-theme="dark"] .demo-employee-task-card {
     background: #0f172a;
     border-color: #334155;
+}
+
+[data-theme="dark"] .demo-calendar-header {
+    background: #1d4ed8;
+}
+
+[data-theme="dark"] .demo-calendar-header.today {
+    background: #2563eb;
+}
+
+[data-theme="dark"] .demo-time-label {
+    background: #111827;
+    color: #93c5fd;
+}
+
+[data-theme="dark"] .demo-calendar-grid {
+    background: #1f2937;
+}
+
+[data-theme="dark"] .demo-shift-block {
+    background: #0b1220;
+    box-shadow: none;
+    border: 1px solid #1f2937;
+}
+
+[data-theme="dark"] .shift-time {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .demo-action-btn {
+    background: #2563eb;
 }
 
 [data-theme="dark"] .demo-busy-badge {
@@ -1955,6 +2013,43 @@
     .demo-calendar {
         overflow-x: scroll;
     }
+
+    .demo-section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .demo-schedule-section,
+    .demo-timeoff-section,
+    .demo-tasks-section,
+    .demo-team-section {
+        padding: 1rem;
+    }
+
+    .demo-calendar-grid {
+        grid-template-columns: 52px repeat(7, minmax(90px, 1fr));
+        min-width: 760px;
+    }
+
+    .demo-calendar-header {
+        padding: 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .demo-calendar-header .date-num {
+        font-size: 1rem;
+    }
+
+    .demo-calendar-cell {
+        min-height: 64px;
+        padding: 0.375rem;
+    }
+
+    .demo-shift-block {
+        padding: 0.375rem;
+        margin-bottom: 0.375rem;
+    }
     
     .demo-request-actions {
         flex-direction: column;
@@ -1977,6 +2072,14 @@
     .shift-date-badge {
         width: 100%;
     }
+
+    .demo-header-new h3 {
+        font-size: 1.5rem;
+    }
+
+    .demo-header-new p {
+        font-size: 1rem;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1986,6 +2089,16 @@
     
     .demo-app-container {
         padding: 1rem;
+    }
+
+    .demo-view-switcher {
+        gap: 0.75rem;
+        flex-direction: column;
+    }
+
+    .view-switch-btn {
+        width: 100%;
+        justify-content: center;
     }
 }
 
