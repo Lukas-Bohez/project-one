@@ -5,7 +5,7 @@
 .schedule-container {
     max-width: 1600px;
     margin: 0 auto;
-    padding: 1.5rem 1rem;
+    padding: 1.5rem 1rem 2.5rem;
 }
 
 /* Header Actions */
@@ -39,8 +39,10 @@
     align-items: center;
     margin-bottom: 1.5rem;
     padding: 1rem;
-    background: var(--color-bg-secondary, #f8f9fa);
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.95), rgba(226, 232, 240, 0.7));
     border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
     flex-wrap: wrap;
     gap: 1rem;
 }
@@ -59,11 +61,12 @@
 
 /* Calendar Grid */
 .calendar-wrapper {
-    background: var(--color-bg-primary, #fff);
-    border: 2px solid var(--color-border, #ddd);
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(148, 163, 184, 0.35);
     border-radius: 8px;
-    overflow: hidden;
+    overflow: auto;
     margin-bottom: 2rem;
+    max-height: 70vh;
 }
 
 .calendar-header {
@@ -71,6 +74,9 @@
     grid-template-columns: 150px repeat(7, 1fr);
     background: var(--color-bg-tertiary, #e9ecef);
     border-bottom: 2px solid var(--color-border, #ddd);
+    position: sticky;
+    top: 0;
+    z-index: 3;
 }
 
 .time-column-header {
@@ -80,6 +86,11 @@
     border-right: 1px solid var(--color-border, #ddd);
     display: flex;
     align-items: center;
+    position: sticky;
+    left: 0;
+    z-index: 4;
+    background: var(--color-bg-tertiary, #e9ecef);
+    box-shadow: 2px 0 6px rgba(15, 23, 42, 0.08);
 }
 
 .day-header {
@@ -135,6 +146,10 @@
     flex-direction: column;
     justify-content: center;
     background: var(--color-bg-secondary, #f8f9fa);
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    box-shadow: 2px 0 6px rgba(15, 23, 42, 0.08);
 }
 
 .employee-name {
@@ -155,10 +170,11 @@
     background: var(--color-bg-primary, #fff);
     cursor: pointer;
     transition: background 0.2s ease;
+    min-height: 90px;
 }
 
 .day-cell:hover {
-    background: rgba(0, 123, 255, 0.05);
+    background: rgba(37, 99, 235, 0.08);
 }
 
 .day-cell:last-child {
@@ -235,7 +251,8 @@
     background: var(--color-bg-secondary, #f8f9fa);
     padding: 1.5rem;
     border-radius: 8px;
-    border: 2px solid var(--color-border, #ddd);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
 }
 
 .weekly-summary h3 {
@@ -254,7 +271,7 @@
     background: var(--color-bg-primary, #fff);
     padding: 1rem;
     border-radius: 6px;
-    border: 1px solid var(--color-border, #ddd);
+    border: 1px solid rgba(148, 163, 184, 0.35);
 }
 
 .summary-label {
@@ -340,7 +357,20 @@
 }
 
 [data-theme="dark"] .day-cell:hover {
-    background: rgba(0, 123, 255, 0.1);
+    background: rgba(37, 99, 235, 0.14);
+}
+
+[data-theme="dark"] .calendar-controls {
+    border-color: rgba(71, 85, 105, 0.6);
+}
+
+[data-theme="dark"] .calendar-wrapper {
+    border-color: rgba(71, 85, 105, 0.6);
+}
+
+[data-theme="dark"] .time-column-header,
+[data-theme="dark"] .employee-cell {
+    box-shadow: 2px 0 6px rgba(2, 6, 23, 0.5);
 }
 
 [data-theme="dark"] .controls-center h2,
@@ -381,13 +411,15 @@
     .controls-center h2 {
         text-align: center;
     }
+
+    .controls-left,
+    .controls-right {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
 }
 
 @media (max-width: 768px) {
-    .calendar-wrapper {
-        overflow-x: auto;
-    }
-    
     .calendar-header,
     .employee-row {
         min-width: 800px;
@@ -395,6 +427,17 @@
     
     .summary-grid {
         grid-template-columns: 1fr 1fr;
+    }
+
+    .calendar-controls .c-btn {
+        flex: 1 1 auto;
+        min-width: 130px;
+    }
+}
+
+@media (max-width: 520px) {
+    .summary-grid {
+        grid-template-columns: 1fr;
     }
 }
 

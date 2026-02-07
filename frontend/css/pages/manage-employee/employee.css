@@ -5,7 +5,7 @@
 .employee-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 1.5rem 1rem;
+    padding: 1.5rem 1rem 2.5rem;
 }
 
 /* Header */
@@ -19,12 +19,13 @@
 
 /* Welcome Card */
 .welcome-card {
-    background: linear-gradient(135deg, #007bff, #0056b3);
+    background: linear-gradient(135deg, #1d4ed8, #0e7490);
     color: #fff;
     padding: 2rem;
     border-radius: 12px;
     margin-bottom: 2rem;
     text-align: center;
+    box-shadow: 0 16px 30px rgba(15, 23, 42, 0.18);
 }
 
 .welcome-card h2 {
@@ -50,15 +51,17 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-    background: var(--color-bg-secondary, #f8f9fa);
+    background: rgba(255, 255, 255, 0.9);
     padding: 1.5rem;
     border-radius: 10px;
-    border: 2px solid var(--color-border, #ddd);
-    transition: transform 0.2s ease;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .stat-card:hover {
     transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
 }
 
 .stat-icon {
@@ -88,7 +91,10 @@
     display: flex;
     gap: 0.5rem;
     margin-bottom: 1.5rem;
-    border-bottom: 2px solid var(--color-border, #ddd);
+    padding: 0.5rem;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: rgba(248, 250, 252, 0.95);
     overflow-x: auto;
 }
 
@@ -96,7 +102,7 @@
     padding: 1rem 1.5rem;
     background: transparent;
     border: none;
-    border-bottom: 3px solid transparent;
+    border-radius: 999px;
     cursor: pointer;
     font-weight: 600;
     color: var(--color-text-secondary, #666);
@@ -109,14 +115,19 @@
 }
 
 .tab-btn.active {
-    color: var(--color-primary, #007bff);
-    border-bottom-color: var(--color-primary, #007bff);
+    color: #0f172a;
+    background: rgba(37, 99, 235, 0.12);
 }
 
 /* Tab Content */
 .tab-content {
     display: none;
     animation: fadeIn 0.3s ease;
+    background: rgba(255, 255, 255, 0.96);
+    border-radius: 16px;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    padding: 1.5rem;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
 }
 
 .tab-content.active {
@@ -128,6 +139,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
+    gap: 1rem;
 }
 
 .tab-header h3 {
@@ -152,6 +164,7 @@
     justify-content: space-between;
     align-items: center;
     transition: transform 0.2s ease;
+    gap: 1rem;
 }
 
 .shift-item:hover {
@@ -224,7 +237,7 @@
     background: var(--color-bg-secondary, #f8f9fa);
     padding: 1.5rem;
     border-radius: 8px;
-    border: 2px solid var(--color-border, #ddd);
+    border: 1px solid rgba(148, 163, 184, 0.35);
 }
 
 .request-header {
@@ -285,10 +298,11 @@
     background: var(--color-bg-secondary, #f8f9fa);
     padding: 1.5rem;
     border-radius: 8px;
-    border: 2px solid var(--color-border, #ddd);
+    border: 1px solid rgba(148, 163, 184, 0.35);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 1rem;
 }
 
 .swap-info h4 {
@@ -312,7 +326,7 @@
     background: var(--color-bg-secondary, #f8f9fa);
     padding: 1.5rem;
     border-radius: 8px;
-    border: 2px solid var(--color-border, #ddd);
+    border: 1px solid rgba(148, 163, 184, 0.35);
 }
 
 .profile-section h4 {
@@ -349,8 +363,42 @@
     background: rgba(0, 123, 255, 0.1);
     padding: 1rem;
     border-radius: 8px;
-    border: 2px solid rgba(0, 123, 255, 0.2);
+    border: 1px solid rgba(37, 99, 235, 0.2);
     margin-bottom: 1.5rem;
+}
+
+@media (max-width: 900px) {
+    .tab-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 768px) {
+    .shift-item,
+    .swap-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .tabs {
+        border-radius: 16px;
+    }
+
+    .tab-btn {
+        padding: 0.75rem 1rem;
+    }
+}
+
+@media (max-width: 520px) {
+    .tab-content {
+        padding: 1rem;
+    }
+
+    .stat-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }
 
 .info-box p {
@@ -403,6 +451,22 @@
 [data-theme="dark"] .loading-state {
     background: var(--color-bg-secondary, #2a2a2a);
     border-color: var(--color-border, #444);
+}
+
+[data-theme="dark"] .tabs {
+    background: rgba(15, 23, 42, 0.9);
+    border-color: rgba(71, 85, 105, 0.6);
+}
+
+[data-theme="dark"] .tab-content {
+    background: rgba(15, 23, 42, 0.95);
+    border-color: rgba(71, 85, 105, 0.6);
+    box-shadow: 0 12px 28px rgba(2, 6, 23, 0.5);
+}
+
+[data-theme="dark"] .tab-btn.active {
+    color: #e2e8f0;
+    background: rgba(59, 130, 246, 0.25);
 }
 
 [data-theme="dark"] .tab-header h3,
