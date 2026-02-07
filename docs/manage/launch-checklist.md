@@ -140,20 +140,20 @@
 ## Phase 8: Documentation ✅
 
 - [x] **API Documentation**
-  - [x] MANAGE_API_REFERENCE.md - Complete endpoint reference
+  - [x] api-reference.md - Complete endpoint reference
   - [x] All endpoints documented with examples
   - [x] All error codes explained
   - [x] cURL examples provided
 
 - [x] **Integration Guide**
-  - [x] MANAGE_INTEGRATION_GUIDE.md - Architecture overview
+  - [x] integration-guide.md - Architecture overview
   - [x] Authentication flow explained
   - [x] WebSocket connection flow documented
   - [x] Error handling documented
   - [x] Database schema documented
 
 - [x] **Project Summary**
-  - [x] MANAGE_COMPLETED.md - Overview of changes
+  - [x] completed.md - Overview of changes
   - [x] Features listed
   - [x] Files modified documented
   - [x] Status clearly marked as production ready
@@ -267,10 +267,10 @@
 ## Support Resources
 
 ### Documentation Files
-- [MANAGE_COMPLETED.md](./MANAGE_COMPLETED.md) - Project overview
-- [MANAGE_INTEGRATION_GUIDE.md](./MANAGE_INTEGRATION_GUIDE.md) - Integration details
-- [MANAGE_API_REFERENCE.md](./MANAGE_API_REFERENCE.md) - API documentation
-- [backend/MANAGE_THE_SPIRE_README.md](./backend/MANAGE_THE_SPIRE_README.md) - Backend features
+- [completed.md](./completed.md) - Project overview
+- [integration-guide.md](./integration-guide.md) - Integration details
+- [api-reference.md](./api-reference.md) - API documentation
+- [backend/docs/manage-the-spire-readme.md](../../backend/docs/manage-the-spire-readme.md) - Backend features
 
 ### Code Files
 - `backend/api/websocket.py` - WebSocket infrastructure

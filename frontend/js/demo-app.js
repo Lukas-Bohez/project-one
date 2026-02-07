@@ -222,9 +222,7 @@ function renderEmployeeView() {
     const myShifts = demoData.business.shifts.filter(s => s.employee_id === employee.id);
     const myRequests = demoData.business.timeOffRequests.filter(r => r.employee_id === employee.id);
     const weekHours = myShifts.reduce((sum, shift) => {
-        const start = parseFloat(shift.start_time.split(':')[0]);
-        const end = parseFloat(shift.end_time.split(':')[0]);
-        return sum + (end - start);
+        return sum + getShiftDurationHours(shift.start_time, shift.end_time);
     }, 0);
 
     return `
@@ -344,7 +342,7 @@ function renderWeeklyCalendar() {
             
             const shiftsInSlot = demoData.business.shifts.filter(shift => {
                 if (shift.date !== dateStr) return false;
-                const shiftStart = parseInt(shift.start_time.split(':')[0]);
+                const shiftStart = parseTimeToMinutes(shift.start_time) / 60;
                 return shiftStart >= hour && shiftStart < hour + 2;
             });
             
@@ -412,9 +410,7 @@ function renderTeamList() {
     return demoData.business.employees.map(emp => {
         const shifts = demoData.business.shifts.filter(s => s.employee_id === emp.id);
         const hours = shifts.reduce((sum, shift) => {
-            const start = parseFloat(shift.start_time.split(':')[0]);
-            const end = parseFloat(shift.end_time.split(':')[0]);
-            return sum + (end - start);
+            return sum + getShiftDurationHours(shift.start_time, shift.end_time);
         }, 0);
         
         const myTasks = demoData.business.tasks.filter(t => t.assigned_to === emp.id);
@@ -464,7 +460,7 @@ function renderEmployeeShifts(shifts) {
     }
     
     return shifts.sort((a, b) => new Date(a.date) - new Date(b.date)).map(shift => {
-        const hours = parseFloat(shift.end_time.split(':')[0]) - parseFloat(shift.start_time.split(':')[0]);
+        const hours = getShiftDurationHours(shift.start_time, shift.end_time);
         const pay = hours * shift.hourly_rate;
         
         return `
@@ -546,9 +542,7 @@ function getTodayShifts() {
 
 function getWeeklyHours() {
     return demoData.business.shifts.reduce((sum, shift) => {
-        const start = parseFloat(shift.start_time.split(':')[0]);
-        const end = parseFloat(shift.end_time.split(':')[0]);
-        return sum + (end - start);
+        return sum + getShiftDurationHours(shift.start_time, shift.end_time);
     }, 0);
 }
 
@@ -557,9 +551,33 @@ function getPendingRequests() {
 }
 
 function formatTime(time) {
-    const [hours, minutes] = time.split(':');
+    const normalized = normalizeTimeString(time);
+    const [hours, minutes] = normalized.split(':');
     const h = parseInt(hours);
     return `${h % 12 || 12}:${minutes}${h < 12 ? 'am' : 'pm'}`;
+}
+
+function normalizeTimeString(timeStr) {
+    if (!timeStr) return '00:00';
+    if (timeStr.includes('T')) {
+        const d = new Date(timeStr);
+        const h = String(d.getHours()).padStart(2, '0');
+        const m = String(d.getMinutes()).padStart(2, '0');
+        return `${h}:${m}`;
+    }
+    return timeStr;
+}
+
+function parseTimeToMinutes(timeStr) {
+    const normalized = normalizeTimeString(timeStr);
+    const [h, m] = normalized.split(':');
+    return (parseInt(h) * 60) + parseInt(m);
+}
+
+function getShiftDurationHours(startTime, endTime) {
+    const start = parseTimeToMinutes(startTime);
+    const end = parseTimeToMinutes(endTime);
+    return Math.max(0, (end - start) / 60);
 }
 
 function formatDate(dateStr) {
@@ -579,17 +597,114 @@ function capitalizeFirst(str) {
 // Interactive functions
 function viewShiftDetails(shiftId) {
     const shift = demoData.business.shifts.find(s => s.id === shiftId);
+    if (!shift || !window.ManageUI) return;
+    
+    const employees = demoData.business.employees || [];
+    const hours = getShiftDurationHours(shift.start_time, shift.end_time);
+    const cost = hours * shift.hourly_rate;
+    const startTime = normalizeTimeString(shift.start_time);
+    const endTime = normalizeTimeString(shift.end_time);
+    
+    const formHTML = `
+        <form class="ui-task-form" onsubmit="event.preventDefault(); handleEditShift(event, ${shift.id})">
+            <div class="ui-form-row">
+                <div class="ui-form-group">
+                    <label><i class="fa-solid fa-user"></i> Employee</label>
+                    <select name="employee_id" class="ui-input" required>
+                        ${employees.map(emp => `
+                            <option value="${emp.id}" ${emp.id === shift.employee_id ? 'selected' : ''}>
+                                ${emp.name} - ${emp.role}
+                            </option>
+                        `).join('')}
+                    </select>
+                </div>
+                <div class="ui-form-group">
+                    <label><i class="fa-solid fa-calendar"></i> Shift Date</label>
+                    <input type="date" name="shift_date" class="ui-input" required value="${shift.date}">
+                </div>
+            </div>
+            
+            <div class="ui-form-row">
+                <div class="ui-form-group">
+                    <label><i class="fa-solid fa-clock"></i> Start Time</label>
+                    <input type="time" name="start_time" class="ui-input" required value="${startTime}">
+                </div>
+                <div class="ui-form-group">
+                    <label><i class="fa-solid fa-clock"></i> End Time</label>
+                    <input type="time" name="end_time" class="ui-input" required value="${endTime}">
+                </div>
+            </div>
+            
+            <div class="ui-form-row">
+                <div class="ui-form-group full-width">
+                    <label><i class="fa-solid fa-align-left"></i> Notes (Optional)</label>
+                    <textarea name="notes" class="ui-input" rows="2" placeholder="e.g., Training shift...">${shift.notes || ''}</textarea>
+                </div>
+            </div>
+            
+            <div class="ui-form-actions" style="justify-content: space-between;">
+                <button type="button" class="ui-btn ui-btn-secondary" onclick="deleteShift(${shift.id})">
+                    <i class="fa-solid fa-trash"></i> Delete
+                </button>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button type="button" class="ui-btn ui-btn-secondary" onclick="ManageUI.modal.close()">
+                        Cancel
+                    </button>
+                    <button type="submit" class="ui-btn ui-btn-primary">
+                        <i class="fa-solid fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </div>
+            
+            <div style="margin-top: 0.75rem; font-size: 0.8125rem; color: #64748b;">
+                ${formatDateWithDay(shift.date)} • ${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} • $${cost.toFixed(2)}
+            </div>
+        </form>
+    `;
+    
+    window.ManageUI.modal.show('Edit Shift', formHTML, 'medium');
+}
+
+function handleEditShift(event, shiftId) {
+    const shift = demoData.business.shifts.find(s => s.id === shiftId);
     if (!shift) return;
     
-    const hours = parseFloat(shift.end_time.split(':')[0]) - parseFloat(shift.start_time.split(':')[0]);
-    const cost = hours * shift.hourly_rate;
+    const formData = new FormData(event.target);
+    const employeeId = parseInt(formData.get('employee_id'));
+    const employee = demoData.business.employees.find(e => e.id === employeeId);
     
-    showDemoNotification(`
-        <strong>${shift.employee_name}</strong><br>
-        ${formatDateWithDay(shift.date)}<br>
-        ${formatTime(shift.start_time)} - ${formatTime(shift.end_time)} (${hours}h)<br>
-        Cost: $${cost.toFixed(2)}
-    `, 'info');
+    shift.employee_id = employeeId;
+    shift.employee_name = employee?.name || 'Unknown';
+    shift.employee_color = employee?.color || '#3b82f6';
+    shift.hourly_rate = employee?.hourly_rate || shift.hourly_rate;
+    shift.date = formData.get('shift_date');
+    shift.start_time = formData.get('start_time');
+    shift.end_time = formData.get('end_time');
+    shift.notes = formData.get('notes') || '';
+    shift.updated_at = new Date().toISOString();
+    
+    if (window.ManageUI) {
+        window.ManageUI.modal.close();
+        window.ManageUI.notification.show('✓ Shift updated', 'success');
+    }
+    
+    refreshDemo();
+}
+
+function deleteShift(shiftId) {
+    if (!confirm('Delete this shift?')) return;
+    
+    const index = demoData.business.shifts.findIndex(s => s.id === shiftId);
+    if (index === -1) return;
+    
+    demoData.business.shifts.splice(index, 1);
+    
+    if (window.ManageUI) {
+        window.ManageUI.modal.close();
+        window.ManageUI.notification.show('Shift deleted', 'info');
+    }
+    
+    refreshDemo();
 }
 
 function approveRequest(requestId) {
@@ -1085,6 +1200,39 @@ function refreshDemo() {
     }
 }
 
+function getCurrentTheme() {
+    const rootTheme = document.documentElement.getAttribute('data-theme');
+    if (rootTheme) return rootTheme;
+    if (document.body.classList.contains('theme-dark')) return 'dark';
+    if (document.body.classList.contains('theme-light')) return 'light';
+    return localStorage.getItem('theme') || 'light';
+}
+
+function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.body.classList.toggle('theme-dark', theme === 'dark');
+    document.body.classList.toggle('theme-light', theme === 'light');
+    localStorage.setItem('theme', theme);
+    window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme } }));
+}
+
+function updateThemeToggle() {
+    const btn = document.querySelector('.theme-toggle-btn');
+    if (!btn) return;
+    const isDark = getCurrentTheme() === 'dark';
+    btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+    const icon = btn.querySelector('i');
+    const label = btn.querySelector('span');
+    if (icon) icon.className = `fa-solid ${isDark ? 'fa-sun' : 'fa-moon'}`;
+    if (label) label.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+}
+
+function toggleDemoTheme() {
+    const current = getCurrentTheme();
+    setTheme(current === 'dark' ? 'light' : 'dark');
+    updateThemeToggle();
+}
+
 // Initialize demo when page loads
 function initializeDemo() {
     initializeDemoShifts();
@@ -1107,6 +1255,13 @@ function initializeDemo() {
             const view = btn.dataset.view;
             container.innerHTML = view === 'boss' ? renderBossView() : renderEmployeeView();
         });
+    });
+
+    setTheme(getCurrentTheme());
+    updateThemeToggle();
+    window.addEventListener('themeChanged', updateThemeToggle);
+    window.addEventListener('storage', (event) => {
+        if (event.key === 'theme') updateThemeToggle();
     });
 }
 
@@ -1242,27 +1397,20 @@ function handleAddShift(event) {
     const employeeId = parseInt(formData.get('employee_id'));
     const employee = demoData.business.employees.find(e => e.id === employeeId);
     
-    const shiftDate = new Date(formData.get('shift_date'));
+    const shiftDate = formData.get('shift_date');
     const startTime = formData.get('start_time');
     const endTime = formData.get('end_time');
-    
-    // Create start and end datetime objects
-    const [startHour, startMin] = startTime.split(':');
-    const [endHour, endMin] = endTime.split(':');
-    
-    const startDatetime = new Date(shiftDate);
-    startDatetime.setHours(parseInt(startHour), parseInt(startMin));
-    
-    const endDatetime = new Date(shiftDate);
-    endDatetime.setHours(parseInt(endHour), parseInt(endMin));
     
     const newShift = {
         id: demoData.business.shifts.length > 0 ? Math.max(...demoData.business.shifts.map(s => s.id)) + 1 : 1,
         employee_id: employeeId,
         employee_name: employee?.name || 'Unknown',
-        start_time: startDatetime.toISOString(),
-        end_time: endDatetime.toISOString(),
-        duration: (endDatetime - startDatetime) / (1000 * 60 * 60),
+        employee_color: employee?.color || '#3b82f6',
+        hourly_rate: employee?.hourly_rate || 0,
+        date: shiftDate,
+        start_time: startTime,
+        end_time: endTime,
+        duration: getShiftDurationHours(startTime, endTime),
         notes: formData.get('notes') || '',
         created_at: new Date().toISOString()
     };

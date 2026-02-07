@@ -170,7 +170,7 @@ Handle Disconnect with Auto-Reconnect
 ## 📚 Documentation
 
 ### File Created
-- **`MANAGE_INTEGRATION_GUIDE.md`** - Comprehensive integration guide covering:
+- **`integration-guide.md`** - Comprehensive integration guide covering:
   - Architecture overview
   - All integration points with examples
   - WebSocket connection flow
@@ -256,7 +256,7 @@ Handle Disconnect with Auto-Reconnect
 ### Created
 - `backend/api/websocket.py` - 600+ lines of WebSocket infrastructure
 - `frontend/js/websocket-client.js` - 400+ lines of client-side real-time handling
-- `MANAGE_INTEGRATION_GUIDE.md` - Comprehensive integration documentation
+- `integration-guide.md` - Comprehensive integration documentation
 
 ### Updated
 - `backend/api/routers/manage.py` - Added WebSocket endpoints and broadcaster calls
@@ -306,7 +306,7 @@ Handle Disconnect with Auto-Reconnect
 ## 📞 Support
 
 For questions or issues:
-1. Check `MANAGE_INTEGRATION_GUIDE.md` for detailed integration docs
+1. Check `integration-guide.md` for detailed integration docs
 2. Review the commented code in `websocket-client.js` for client patterns
 3. Check `manage.py` for server endpoint patterns
 4. Run with `--reload` flag during development for hot reloading
