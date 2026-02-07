@@ -69,21 +69,21 @@ const listenToButtons = () => {
     if (dom.startQuizBtn) {
         dom.startQuizBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            window.location.href = '/html/quiz.html';
+            window.location.href = '/pages/quiz/';
         });
     }
 
     if (dom.viewGraphsBtn) {
         dom.viewGraphsBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            window.location.href = '/html/graphs.html';
+            window.location.href = '/pages/graphs/';
         });
     }
 
     if (dom.manageQuizBtn) {
         dom.manageQuizBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            window.location.href = '/html/login.html';
+            window.location.href = '/pages/login/';
         });
     }
 
@@ -172,9 +172,9 @@ const initApp = () => {
     const path = window.location.pathname;
     if (path.includes('index.html') || path === '/') {
         initIndexPage();
-    } else if (path.includes('quiz.html')) {
+    } else if (path.startsWith('/pages/quiz')) {
         initQuizPage();
-    } else if (path.includes('login.html')) {
+    } else if (path.startsWith('/pages/login')) {
         initLoginPage();
     }
 

@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentle Archive - Past Sentences</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/sentle.css">
+    <script src="/js/themeManager.js"></script>
+    <script src="/js/sentle.js"></script>
+    <style>
+        .archive-container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .archive-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .archive-card {
+            background: var(--sentle-bg);
+            border: 1px solid var(--sentle-border);
+            border-radius: 8px;
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .archive-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .archive-date {
+            font-weight: 600;
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+        .archive-sentence {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: var(--sentle-text);
+            min-height: 60px;
+        }
+        .leaderboard-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .leaderboard-modal-content {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            max-width: 800px;
+            margin: 0 auto;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .leaderboard-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .leaderboard-modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--sentle-bg);
+            border: 1px solid var(--sentle-border);
+            border-radius: 6px;
+        }
+        .leaderboard-entry .rank {
+            font-weight: bold;
+            min-width: 60px;
+        }
+        .leaderboard-entry .player {
+            flex: 1;
+            text-align: center;
+        }
+        .leaderboard-entry .score {
+            font-weight: bold;
+            color: var(--sentle-text);
+        }
+        .leaderboard-empty {
+            text-align: center;
+            padding: 20px;
+            color: var(--sentle-text);
+            opacity: 0.7;
+        }
+        .reused-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #ff9800;
+            color: white;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-left: 8px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="archive-container">
+        <h1>📅 Sentle Archive</h1>
+        <p style="color: var(--sentle-text);">Browse past Sentle sentences and replay them in practice mode.</p>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin: 20px 0;">
+            <a href="/pages/sentle/" class="btn-link">← Back to Today's Game</a>
+            <button id="randomReplayBtn" class="btn-link" style="border: none; cursor: pointer;">🎲 Replay Random</button>
+        </div>
+        
+        <div id="archiveGrid" class="archive-grid">
+            <div class="loading">Loading archive...</div>
+        </div>
+    </div>
+    
+    <!-- Leaderboard Modal -->
+    <div id="leaderboardModal" class="leaderboard-modal">
+        <div class="leaderboard-modal-content">
+            <div class="leaderboard-modal-header">
+                <h2 id="leaderboardTitle">Leaderboard</h2>
+                <button id="leaderboardModalClose" class="leaderboard-modal-close">&times;</button>
+            </div>
+            <div id="modalLeaderboardContent">
+                <div class="loading">Loading leaderboard...</div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="sentle-footer">
+        <p>&copy; 2025 Quiz The Spire • Created by Oroka Conner</p>
+        <p>
+            <a href="/pages/privacy/">Privacy Policy</a> |
+            <a href="/pages/terms/">Terms of Service</a> |
+            <a href="/pages/contact/">Contact</a>
+        </p>
+    </footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const archiveGrid = document.getElementById('archiveGrid');
+            
+            try {
+                const response = await fetch('/api/sentle/archive');
+                const data = await response.json();
+                
+                const archiveItems = data.archive || [];
+
+                const renderCards = (items) => items.map((item, idx) => {
+                    const reusedBadge = item.reused ? '<span class="reused-badge">♻️ REUSED</span>' : '';
+                    return `
+                        <div class="archive-card">
+                            <div class="archive-date">${formatDate(item.date)}${reusedBadge}</div>
+                            <div class="archive-stats">
+                                <span>🎮 ${item.plays || 0} plays</span>
+                                <span>✨ Best: ${item.bestScore || 0} pts</span>
+                            </div>
+                            <div style="display:flex; gap:8px; margin-top:12px; flex-wrap: wrap;">
+                                <button class="btn-submit archive-replay" data-idx="${idx}" style="flex:1; min-width:140px;">Replay</button>
+                                <button class="btn-link archive-leaderboard" data-idx="${idx}" style="flex:1; min-width:140px; border: 1px solid var(--sentle-border);">🏆 Leaderboard</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                if (archiveItems.length > 0) {
+                    archiveGrid.innerHTML = renderCards(archiveItems);
+                    // Bind replay buttons
+                    archiveGrid.querySelectorAll('.archive-replay').forEach((btn) => {
+                        btn.addEventListener('click', () => {
+                            const idx = parseInt(btn.getAttribute('data-idx'), 10);
+                            const picked = archiveItems[idx];
+                            replaySentence(picked);
+                        });
+                    });
+                    
+                    // Bind leaderboard buttons
+                    archiveGrid.querySelectorAll('.archive-leaderboard').forEach((btn) => {
+                        btn.addEventListener('click', () => {
+                            const idx = parseInt(btn.getAttribute('data-idx'), 10);
+                            const picked = archiveItems[idx];
+                            showLeaderboardModal(picked.date);
+                        });
+                    });
+                } else {
+                    archiveGrid.innerHTML = '<p style="text-align: center; grid-column: 1/-1;">No past sentences yet. Check back soon!</p>';
+                }
+
+                const randomBtn = document.getElementById('randomReplayBtn');
+                if (randomBtn) {
+                    randomBtn.onclick = () => {
+                        if (!archiveItems.length) return;
+                        const rand = archiveItems[Math.floor(Math.random() * archiveItems.length)];
+                        replaySentence(rand);
+                    };
+                }
+            } catch (error) {
+                archiveGrid.innerHTML = '<p style="text-align: center; color: #e06c75; grid-column: 1/-1;">Error loading archive.</p>';
+            }
+                
+                // Modal close functionality
+                const modalClose = document.getElementById('leaderboardModalClose');
+                if (modalClose) {
+                    modalClose.onclick = () => {
+                        document.getElementById('leaderboardModal').style.display = 'none';
+                    };
+                }
+                
+                // Close modal when clicking outside
+                window.onclick = (event) => {
+                    const modal = document.getElementById('leaderboardModal');
+                    if (event.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                };
+            
+            async function showLeaderboardModal(date) {
+                modalTitle.textContent = `Leaderboard for ${formatDate(date)}`;
+                modalContent.innerHTML = '<div class="loading">Loading leaderboard...</div>';
+                modal.style.display = 'block';
+                
+                try {
+                    const dailyUrl = `/api/sentle/leaderboard/daily?date=${encodeURIComponent(date)}`;
+                    const dailyRes = await fetch(dailyUrl, { cache: 'no-store' });
+                    const dailyData = await dailyRes.json();
+                    
+                    if (dailyData?.leaderboard && dailyData.leaderboard.length > 0) {
+                        modalContent.innerHTML = renderLeaderboard(dailyData.leaderboard);
+                    } else {
+                        modalContent.innerHTML = '<p style="text-align: center; color: var(--sentle-text);">No scores for this date yet.</p>';
+                    }
+                } catch (err) {
+                    console.error('Error loading leaderboard:', err);
+                    modalContent.innerHTML = '<p style="text-align: center; color: #e06c75;">Error loading leaderboard.</p>';
+                }
+            }
+            
+            function renderLeaderboard(scores) {
+                return `
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        ${scores.map((score, idx) => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--sentle-border);">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <span style="font-weight: 600; min-width: 24px;">#${idx + 1}</span>
+                                    <span style="color: var(--sentle-text);">${escapeHtml(score.username || 'Anonymous')}</span>
+                                </div>
+                                <span style="font-weight: 600; color: #1976d2;">${score.score} pts</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            function formatDate(dateStr) {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+            }
+            
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // Practice replay helper
+            window.replaySentence = function(item) {
+                if (!item || !item.sentence) return;
+                const payload = {
+                    sentence: item.sentence,
+                    id: item.id || null,
+                    date: item.date || 'archive',
+                    wordOrder: null // let client shuffle; state will persist per session
+                };
+                localStorage.setItem('sentle_replay_payload', JSON.stringify(payload));
+                window.location.href = '/pages/sentle/';
+            }
+
+            // Leaderboard functions for archive page
+            async function showLeaderboardModal(targetDate) {
+                const modal = document.getElementById('leaderboardModal');
+                const content = document.getElementById('modalLeaderboardContent');
+                const title = document.getElementById('leaderboardTitle');
+                
+                if (!modal || !content || !title) return;
+                
+                title.textContent = `Leaderboard - ${formatDate(targetDate)}`;
+                content.innerHTML = '<div class="loading">Loading leaderboard...</div>';
+                modal.style.display = 'block';
+                
+                try {
+                    // Load both global and daily leaderboards
+                    const [globalRes, dailyRes] = await Promise.all([
+                        fetch('/api/sentle/leaderboard', { cache: 'no-store' }),
+                        fetch(`/api/sentle/leaderboard/daily?date=${encodeURIComponent(targetDate)}`, { cache: 'no-store' })
+                    ]);
+                    
+                    const [globalData, dailyData] = await Promise.all([
+                        globalRes.json(),
+                        dailyRes.json()
+                    ]);
+                    
+                    // Render the leaderboards
+                    let html = '<div style="display: flex; gap: 20px; flex-wrap: wrap;">';
+                    
+                    // Global leaderboard
+                    html += '<div style="flex: 1; min-width: 300px;">';
+                    html += '<h3>All-Time Leaders</h3>';
+                    html += renderLeaderboard(globalData?.leaderboard, 'No scores yet.');
+                    html += '</div>';
+                    
+                    // Daily leaderboard for the selected date
+                    html += '<div style="flex: 1; min-width: 300px;">';
+                    html += `<h3>Leaders for ${formatDate(targetDate)}</h3>`;
+                    const dailyEmpty = `No scores yet for ${formatDate(targetDate)}.`;
+                    html += renderLeaderboard(dailyData?.leaderboard, dailyEmpty);
+                    html += '</div>';
+                    
+                    html += '</div>';
+                    content.innerHTML = html;
+                    
+                } catch (err) {
+                    console.error('Error loading leaderboard:', err);
+                    content.innerHTML = '<div class="loading">Unable to load leaderboard.</div>';
+                }
+            }
+            
+            function renderLeaderboard(entries, emptyText) {
+                if (!entries || entries.length === 0) {
+                    return `<div class="leaderboard-empty">${emptyText}</div>`;
+                }
+                
+                let html = '<div class="leaderboard-list">';
+                entries.forEach((entry, index) => {
+                    const rank = index + 1;
+                    const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '🏅';
+                    html += `
+                        <div class="leaderboard-entry">
+                            <span class="rank">${medal} ${rank}</span>
+                            <span class="player">${escapeHtml(entry.playerName || 'Anonymous')}</span>
+                            <span class="score">${entry.score} pts</span>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                return html;
+            }
+        });
+    </script>
+</body>
+</html>

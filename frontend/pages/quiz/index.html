@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <title>Quiz Session | Quiz The Spire</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/pages/quiz/quiz.css">
+    <link rel="stylesheet" href="/css/pages/quiz/chat.css">
+    <link rel="stylesheet" href="/css/footer.css">
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" defer></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449"
+     crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <header class="c-header">
+        <a href="/" class="c-header__link">
+            <h1 class="c-header__title gamepad">Quiz The Spire</h1>
+        </a>
+        <button id="infoBtn" class="c-info-btn">i</button>
+    </header>
+    <main class="c-quiz-container">
+        <div class="c-quiz-header">
+            <div class="c-items-container">
+                <div class="c-item-slot gamepad-special gamepad" id="item1"></div>
+                <div class="c-item-slot gamepad-special gamepad" id="item2"></div>
+                <div class="c-item-slot gamepad-special gamepad" id="item3"></div>
+            </div>
+            <div class="c-quiz-controls">
+                <button id="servoTestBtn" class="c-btn c-btn--tertiary gamepad">Toggle Theme</button>
+            </div>
+            <div class="c-timer-container">
+                <div class="c-servo-visual" id="servoVisual">
+                    <div class="c-servo-bar"></div>
+                </div>
+                <span class="c-time-remaining" id="timeRemaining">60</span>
+            </div>
+        </div>
+        </div>
+        <div class="c-question-container">
+            <h2 id="questionText">Loading question...</h2>
+            <div class="c-image-container" id="questionImage"></div>
+            <div class="c-error-container" id="errorDisplay" style="display: none;"></div>
+        </div>
+        <div class="c-answers-container">
+            <button class="c-answer-btn gamepad" id="answer1"></button>
+            <button class="c-answer-btn gamepad" id="answer2"></button>
+            <button class="c-answer-btn gamepad" id="answer3"></button>
+            <button class="c-answer-btn gamepad" id="answer4"></button>
+        </div>
+        <div class="c-players-container">
+            <h3>Players</h3>
+            <div class="c-players-list" id="playersList"></div>
+        </div>
+        <div class="c-chat-container">
+            <div class="c-chat-header">
+                <h3>Quiz Chat</h3>
+                <button id="chatToggle" class="c-chat-toggle">−</button>
+            </div>
+            <div class="c-chat-content" id="chatContent">
+                <div class="c-chat-messages" id="chatMessages"></div>
+                <div class="c-chat-input-container">
+                    <input type="text" id="chatInput" class="c-chat-input" placeholder="Type a message..."
+                        maxlength="1000">
+                    <button id="chatSend" class="c-chat-send-btn">Send</button>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <footer class="c-footer">
+        <p class="c-footer__text">
+            <strong>© 2025 Quiz The Spire</strong><br>
+            Created, Owned & Operated by <strong>Oroka Conner</strong><br>
+            All rights reserved.
+        </p>
+        <p class="c-footer__links">
+            <a href="/pages/privacy/" class="c-footer__link">Privacy Policy</a> |
+            <a href="/pages/contact/" class="c-footer__link">Contact Us</a> |
+            <a href="/pages/terms/" class="c-footer__link">Terms of Service</a> |
+            <a href="/pages/about/" class="c-footer__link">About</a>
+        </p>
+    </footer>
+    
+    <script src="/js/themeManager.js" defer></script>
+    <script src="/js/pages/quiz/items.js"></script>
+    <script src="/js/infomodal.js" defer></script>
+    <script src="/js/pages/quiz/gamepadQuiz.js"></script>
+    <script src="/js/pages/quiz/quiz.js"></script>
+    <script src="/js/pages/quiz/quizmain.js" defer></script>
+    <script src="/js/lofi.js" defer></script>
+    <script src="/js/pages/quiz/quizlogic2.js"></script>
+    <script src="/js/pages/quiz/quizlogic.js"></script>
+    <script src="/js/pages/quiz/quizlogic3.js"></script>
+    <script src="/js/pages/quiz/quizlogic4.js"></script>
+    <script src="/js/ip.js" defer></script>
+    <script src="/js/pages/quiz/quizPlayerListManager.js"></script>
+    <script src="/js/pages/quiz/quizlogin.js"></script>
+    <script src="/js/pages/quiz/chat.js"></script>
+    <script src="/js/pages/quiz/quizItems.js"></script>
+    <script src="/js/privacy.js" defer></script>
+    
+    <!-- Support the site -->
+    <div style="text-align: center; margin: 20px 0; opacity: 0.7;">
+        <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="OrokaConner" data-color="#2c6fb8" data-emoji=""  data-font="Inter" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
+    </div>
+</body>
+
+</html>

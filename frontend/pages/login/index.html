@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.socket.io; style-src 'self' 'unsafe-inline';">
+    <title>Login | Quiz The Spire</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/pages/login/login.css">
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-2huaZvOR9iDzHqsl6wpS5f6W5W5S5O5F5f5F5U5U5U5f5f5f5F5f5f5f5F5f5f5f" crossorigin="anonymous" defer></script>
+</head>
+
+<body>
+    <header class="c-header">
+        <a href="/" class="c-header__link">
+            <h1 class="c-header__title">Quiz The Spire</h1>
+        </a>
+    </header>
+
+    <main class="c-login-container">
+        <form id="adminLoginForm" class="c-login-form js-login-form">
+            <div class="c-error-message js-error-message" role="alert" aria-live="assertive"></div>
+
+            <h2 class="c-login-title">Manage Quiz</h2>
+
+            <div class="c-form-group">
+                <label for="firstname" class="c-form-label">First Name</label>
+                <input type="text" id="firstname" class="c-login-input js-user-input" placeholder="Firstname" required autocomplete="given-name" minlength="2" maxlength="50">
+            </div>
+
+            <div class="c-form-group">
+                <label for="lastname" class="c-form-label">Last Name</label>
+                <input type="text" id="lastname" class="c-login-input js-user-input-2" placeholder="Lastname" required autocomplete="family-name" minlength="2" maxlength="50">
+            </div>
+
+            <div class="c-form-group">
+                <label for="rfid" class="c-form-label">RFID Badge Code</label>
+                <input type="password" id="rfid" class="c-login-input js-rfid-input" placeholder="RFID badge code" required autocomplete="one-time-code" minlength="8" maxlength="24">
+            </div>
+
+            <!-- CSRF Protection -->
+            <input type="hidden" id="csrfToken" name="_csrf" value="">
+
+            <div class="c-login-buttons">
+                <button type="button" class="c-btn c-btn--primary js-login-admin" aria-label="Login as administrator">
+                    Login
+                </button>
+            </div>
+        </form>
+    </main>
+
+
+
+    <!-- Non-blocking script loading -->
+    <script src="/js/themeManager.js" defer></script>
+    <script src="/js/pages/login/login.js" defer></script>
+    <script src="/js/lofi.js" defer></script>
+    <script src="/js/infomodal.js" defer></script>
+    <script src="/js/ip.js" defer></script>
+    <script src="/js/privacy.js" defer></script>
+</body>
+</html>

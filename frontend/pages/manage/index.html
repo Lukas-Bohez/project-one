@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage the Spire - Employee Management System</title>
+    <meta name="description" content="Fair, transparent employee management for small businesses. Scheduling, time tracking, and HR tools built for frontline workers.">
+    
+    <!-- Favicons -->
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/manage.css">
+    <link rel="stylesheet" href="/css/pages/manage/manage-ui-components.css">
+    <link rel="stylesheet" href="/css/footer.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    
+    <!-- Scripts -->
+    <script src="/js/themeManager.js" defer></script>
+    <script src="/js/websocket-client.js" defer></script>
+    <script src="/js/pages/manage/manage-shared.js" defer></script>
+    <script src="/js/pages/manage/manage-ui-components.js" defer></script>
+    <script src="/js/pages/manage/demo-app.js" defer></script>
+    <script src="/js/pages/manage/manage.js" defer></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="c-header">
+        <div class="c-header__content">
+            <a href="/" class="c-header__logo">
+                <h1 class="c-header__title"><i class="fa-solid fa-gear" aria-hidden="true"></i> Manage the Spire</h1>
+            </a>
+            <p class="c-header__subtitle">Fair & Transparent Employee Management</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="o-container manage-container">
+        
+        <!-- Welcome Section (Before Login) -->
+        <section id="welcomeSection" class="manage-welcome">
+            <div class="hero-section">
+                <h2 class="hero-title">Employee Management Built for Fairness</h2>
+                <p class="hero-subtitle">
+                    The first management platform designed to prevent bias, ensure compliance, 
+                    and empower both employers and employees.
+                </p>
+                
+                <div class="hero-features">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fa-regular fa-calendar" aria-hidden="true"></i></div>
+                        <h3>Smart Scheduling</h3>
+                        <p>AI-powered schedule optimization ensures fair shift distribution</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i></div>
+                        <h3>Compliance Built-In</h3>
+                        <p>Automatic labor law compliance monitoring and alerts</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fa-regular fa-comments" aria-hidden="true"></i></div>
+                        <h3>Two-Way Communication</h3>
+                        <p>Anonymous feedback and transparent performance tracking</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fa-solid fa-chart-line" aria-hidden="true"></i></div>
+                        <h3>Real-Time Analytics</h3>
+                        <p>Labor costs, overtime trends, and workforce insights</p>
+                    </div>
+                </div>
+
+                <!-- Interactive Full Application Demo -->
+                <section class="demo-section" aria-labelledby="demoTitle">
+                    <div class="demo-header-new">
+                        <h3 id="demoTitle">Fully Interactive Demo - Try The Complete Application</h3>
+                        <p>Experience the real application with both manager and employee perspectives. Everything works - no signup required.</p>
+                    </div>
+                    
+                    <div class="demo-view-switcher">
+                        <button class="view-switch-btn is-active" data-view="boss">
+                            <i class="fa-solid fa-user-tie"></i>
+                            <span>Manager Dashboard</span>
+                        </button>
+                        <button class="view-switch-btn" data-view="employee">
+                            <i class="fa-solid fa-user"></i>
+                            <span>Employee Portal</span>
+                        </button>
+                        <button class="view-switch-btn theme-toggle-btn" type="button" onclick="toggleDemoTheme()" aria-pressed="false">
+                            <i class="fa-solid fa-moon"></i>
+                            <span>Dark Mode</span>
+                        </button>
+                    </div>
+
+                    <div class="demo-app-container" id="demoAppContainer">
+                        <!-- Dynamic content will be rendered here -->
+                    </div>
+
+                    <div class="demo-footer-info">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <span>This is a fully functional simulation. Click, drag, and interact just like the real application.</span>
+                    </div>
+                </section>
+
+                <div class="cta-section">
+                    <button class="c-btn c-btn--primary c-btn--lg" id="getStartedBtn">
+                        Get Started Free
+                    </button>
+                    <button class="c-btn c-btn--secondary c-btn--lg" id="loginBtn">
+                        Employee/Manager Login
+                    </button>
+                </div>
+
+                <div class="pricing-info">
+                    <p><strong>Free for up to 10 employees</strong> • No credit card required</p>
+                    <p class="pricing-tiers">
+                        <span>Free: 10 employees</span> • 
+                        <span>Pro: Unlimited @ $49/month</span> • 
+                        <span>Enterprise: Custom</span>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Login Modal -->
+        <div id="loginModal" class="c-modal" role="dialog" aria-hidden="true">
+            <div class="c-modal__content manage-modal">
+                <div class="c-modal__header">
+                    <h2>Login to Manage the Spire</h2>
+                    <button class="c-modal__close" aria-label="Close">&times;</button>
+                </div>
+                <div class="c-modal__body">
+                    <form id="loginForm" class="manage-form">
+                        <div class="form-group">
+                            <label for="loginEmail">Email</label>
+                            <input 
+                                type="email" 
+                                id="loginEmail" 
+                                class="form-control" 
+                                required 
+                                placeholder="your@email.com"
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">Password</label>
+                            <input 
+                                type="password" 
+                                id="loginPassword" 
+                                class="form-control" 
+                                required 
+                                placeholder="••••••••"
+                            >
+                        </div>
+                        <div id="loginError" class="error-message" style="display: none;"></div>
+                        <button type="submit" class="c-btn c-btn--primary c-btn--block">
+                            Login
+                        </button>
+                    </form>
+                    <div class="form-footer">
+                        <p>Don't have an account? <a href="#" id="signupLink">Create a business account</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Business Setup Modal -->
+        <div id="setupModal" class="c-modal" role="dialog" aria-hidden="true">
+            <div class="c-modal__content manage-modal">
+                <div class="c-modal__header">
+                    <h2>Create Your Business Account</h2>
+                    <button class="c-modal__close" aria-label="Close">&times;</button>
+                </div>
+                <div class="c-modal__body">
+                    <form id="setupForm" class="manage-form">
+                        <div class="form-group">
+                            <label for="businessName">Business Name *</label>
+                            <input 
+                                type="text" 
+                                id="businessName" 
+                                class="form-control" 
+                                required 
+                                placeholder="Your Business Name"
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label for="contactEmail">Contact Email *</label>
+                            <input 
+                                type="email" 
+                                id="contactEmail" 
+                                class="form-control" 
+                                required 
+                                placeholder="owner@business.com"
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label for="contactPhone">Phone Number</label>
+                            <input 
+                                type="tel" 
+                                id="contactPhone" 
+                                class="form-control" 
+                                placeholder="(555) 123-4567"
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label for="timezone">Timezone *</label>
+                            <select id="timezone" class="form-control" required>
+                                <option value="America/New_York">Eastern Time (ET)</option>
+                                <option value="America/Chicago">Central Time (CT)</option>
+                                <option value="America/Denver">Mountain Time (MT)</option>
+                                <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                                <option value="America/Anchorage">Alaska Time (AKT)</option>
+                                <option value="Pacific/Honolulu">Hawaii Time (HT)</option>
+                            </select>
+                        </div>
+                        <div id="setupError" class="error-message" style="display: none;"></div>
+                        <div id="setupSuccess" class="success-message" style="display: none;"></div>
+                        <button type="submit" class="c-btn c-btn--primary c-btn--block">
+                            Create Business Account
+                        </button>
+                    </form>
+                    <div class="form-footer">
+                        <p class="small-text">
+                            By creating an account, you agree to our 
+                            <a href="/pages/terms/" target="_blank">Terms of Service</a> and 
+                            <a href="/pages/privacy/" target="_blank">Privacy Policy</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Section (After Login) -->
+        <section id="dashboardSection" class="manage-dashboard" style="display: none;">
+            <div class="dashboard-header">
+                <div>
+                    <h2 id="dashboardBusinessName">Loading...</h2>
+                    <p id="dashboardRole" class="role-badge">Manager</p>
+                </div>
+                <div class="dashboard-actions">
+                    <button class="c-btn c-btn--secondary" id="logoutBtn">Logout</button>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Active Employees</div>
+                    <div class="stat-value" id="statActiveEmployees">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Shifts Today</div>
+                    <div class="stat-value" id="statShiftsToday">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Pending Requests</div>
+                    <div class="stat-value" id="statPendingRequests">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">This Week's Hours</div>
+                    <div class="stat-value" id="statWeekHours">0</div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <h3>Quick Actions</h3>
+                <div class="action-grid">
+                    <button class="action-btn" id="addEmployeeBtn">
+                        <span class="action-icon"><i class="fa-solid fa-user-plus" aria-hidden="true"></i></span>
+                        <span class="action-text">Add Employee</span>
+                    </button>
+                    <button class="action-btn" id="createShiftBtn" onclick="window.location.href='/pages/manage-schedule/'">
+                        <span class="action-icon"><i class="fa-regular fa-calendar" aria-hidden="true"></i></span>
+                        <span class="action-text">Schedule Manager</span>
+                    </button>
+                    <button class="action-btn" id="viewScheduleBtn" onclick="window.location.href='/pages/manage-schedule/'">
+                        <span class="action-icon"><i class="fa-solid fa-chart-line" aria-hidden="true"></i></span>
+                        <span class="action-text">View Schedule</span>
+                    </button>
+                    <button class="action-btn" id="timeOffBtn" onclick="window.location.href='/pages/manage-employee/'">
+                        <span class="action-icon"><i class="fa-solid fa-umbrella-beach" aria-hidden="true"></i></span>
+                        <span class="action-text">Employee Portal</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Status Notice -->
+            <div class="info-banner">
+                <p><strong><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Schedule Manager is now live!</strong> Click "Schedule Manager" to access the interactive calendar with drag-and-drop shift scheduling.</p>
+                <p><strong><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Employee Portal</strong> allows self-service time-off requests and schedule viewing.</p>
+                <p>API Status: <code>/api/v1/manage/health</code> <i class="fa-solid fa-circle-check" aria-hidden="true"></i> Ready</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="c-footer">
+        <p class="c-footer__text">
+            <strong>© 2026 Manage the Spire</strong><br>
+            Part of the Quiz The Spire Suite by <strong>Oroka Conner</strong>
+        </p>
+        <p class="c-footer__links">
+            <a href="/pages/privacy/" class="c-footer__link">Privacy</a> |
+            <a href="/pages/terms/" class="c-footer__link">Terms</a> |
+            <a href="/pages/contact/" class="c-footer__link">Contact</a> |
+            <a href="/" class="c-footer__link">Back to Quiz The Spire</a>
+        </p>
+    </footer>
+</body>
+</html>

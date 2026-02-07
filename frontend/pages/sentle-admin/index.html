@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentle Admin Panel</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/sentle.css">
+    <script src="/js/themeManager.js"></script>
+    <style>
+        body {
+            background: var(--sentle-bg);
+            color: var(--sentle-text);
+            font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .admin-header {
+            background: var(--sentle-bg);
+            border-bottom: 1px solid var(--sentle-border);
+            padding: 12px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--sentle-text);
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--sentle-border);
+        }
+
+        .login-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--sentle-bg);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-screen.active {
+            display: flex;
+        }
+
+        .login-container {
+            background: var(--sentle-bg);
+            border: 1px solid var(--sentle-border);
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-container h2 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 30px;
+            color: var(--sentle-text);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--sentle-text);
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--sentle-border);
+            border-radius: 4px;
+            font-size: 1rem;
+            background: var(--sentle-bg);
+            color: var(--sentle-text);
+            box-sizing: border-box;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #1976d2;
+            box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: #1976d2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: #1565c0;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .admin-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .admin-form {
+            background: var(--sentle-bg);
+            border: 1px solid var(--sentle-border);
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .admin-form h2 {
+            color: var(--sentle-text);
+            margin-top: 0;
+        }
+
+        .sentence-list {
+            background: var(--sentle-bg);
+            border: 1px solid var(--sentle-border);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .sentence-list h2 {
+            color: var(--sentle-text);
+            margin-top: 0;
+        }
+
+        .sentence-item {
+            padding: 15px;
+            border-bottom: 1px solid var(--sentle-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .sentence-item:last-child {
+            border-bottom: none;
+        }
+
+        .sentence-date {
+            font-weight: 600;
+            color: #1976d2;
+            min-width: 100px;
+        }
+
+        .sentence-text {
+            flex: 1;
+            color: var(--sentle-text);
+            min-width: 200px;
+        }
+
+        .sentence-status {
+            font-weight: 600;
+            min-width: 80px;
+            text-align: right;
+        }
+
+        .sentence-actions {
+            display: flex;
+            gap: 8px;
+            min-width: 120px;
+        }
+
+        .btn-edit, .btn-delete {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .btn-edit {
+            background: #1976d2;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: #1565c0;
+        }
+
+        .btn-delete {
+            background: #d32f2f;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #c62828;
+        }
+
+        .reuse-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #ff9800;
+            color: white;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-left: 8px;
+        }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .btn-link {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #1976d2;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 600;
+            transition: background 0.2s;
+            margin-bottom: 20px;
+        }
+
+        .btn-link:hover {
+            background: #1565c0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen active">
+        <div class="login-container">
+            <h2>🔐 Admin Panel</h2>
+            <form id="adminLoginForm">
+                <div class="form-group">
+                    <label for="adminPassword">Admin Password:</label>
+                    <input type="password" id="adminPassword" required autofocus>
+                </div>
+                <div id="loginAlert" class="alert"></div>
+                <button type="submit" class="btn-primary">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" style="display: none;">
+        <div class="admin-header">
+            <h1>Sentle Admin Panel</h1>
+            <div class="header-buttons">
+                <button id="themeToggleBtn" class="icon-btn" title="Toggle theme">
+                    <span>🌓</span>
+                </button>
+                <button id="logoutBtn" class="icon-btn" title="Logout">
+                    <span>🚪</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="admin-container">
+            <a href="/pages/sentle/" class="btn-link">← Back to Game</a>
+            
+            <div id="alert" class="alert"></div>
+            
+            <div class="admin-form">
+                <h2>Add New Sentence</h2>
+                <form id="addSentenceForm">
+                    <div class="form-group">
+                        <label for="sentenceDate">Date:</label>
+                        <input type="date" id="sentenceDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="sentenceText">Sentence:</label>
+                        <textarea id="sentenceText" placeholder="Enter the sentence (2-15 words)" required></textarea>
+                        <small style="color: var(--sentle-text);">Tip: Use clear English sentences with 2-15 words.</small>
+                    </div>
+                    <button type="submit" class="btn-primary">Add Sentence</button>
+                </form>
+            </div>
+            
+            <div class="admin-form">
+                <h2>🔧 Archive Maintenance</h2>
+                <p style="color: var(--sentle-text); margin-bottom: 15px;">
+                    If the archive is missing dates, click below to fill gaps automatically.
+                </p>
+                <button id="backfillBtn" class="btn-primary" style="background: #ff9800;">
+                    🔄 Fill Archive Gaps
+                </button>
+                <div id="backfillStatus" style="margin-top: 10px; color: var(--sentle-text);"></div>
+            </div>
+            
+            <div class="sentence-list">
+                <h2>Scheduled Sentences</h2>
+                <div id="sentenceList">
+                    <div class="loading">Loading sentences...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class AdminPanel {
+            constructor() {
+                this.adminToken = localStorage.getItem('sentle_admin_token') || '';
+                this.init();
+            }
+
+            init() {
+                if (this.adminToken) {
+                    this.showAdminPanel();
+                    this.setupPanel();
+                } else {
+                    this.showLoginScreen();
+                }
+            }
+
+            showLoginScreen() {
+                const loginScreen = document.getElementById('loginScreen');
+                const adminPanel = document.getElementById('adminPanel');
+                if (loginScreen) loginScreen.classList.add('active');
+                if (adminPanel) adminPanel.style.display = 'none';
+            }
+
+            showAdminPanel() {
+                const loginScreen = document.getElementById('loginScreen');
+                const adminPanel = document.getElementById('adminPanel');
+                if (loginScreen) loginScreen.classList.remove('active');
+                if (adminPanel) adminPanel.style.display = 'block';
+            }
+
+            setupLogin() {
+                const form = document.getElementById('adminLoginForm');
+                const passwordInput = document.getElementById('adminPassword');
+
+                form?.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const password = passwordInput.value;
+                    
+                    try {
+                        const response = await fetch('/api/sentle/admin/login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ password })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            this.adminToken = data.admin_token;
+                            localStorage.setItem('sentle_admin_token', this.adminToken);
+                            this.showAdminPanel();
+                            this.setupPanel();
+                        } else {
+                            this.showLoginAlert(data.detail || 'Invalid password', 'error');
+                        }
+                    } catch (err) {
+                        console.error('Login error:', err);
+                        this.showLoginAlert('Network error', 'error');
+                    }
+                });
+            }
+
+            showLoginAlert(message, type) {
+                const alert = document.getElementById('loginAlert');
+                if (!alert) return;
+                alert.textContent = message;
+                alert.className = `alert ${type === 'error' ? 'alert-error' : 'alert-success'}`;
+                alert.classList.add('show');
+                setTimeout(() => alert.classList.remove('show'), 5000);
+            }
+
+            setupPanel() {
+                const form = document.getElementById('addSentenceForm');
+                const logoutBtn = document.getElementById('logoutBtn');
+                const backfillBtn = document.getElementById('backfillBtn');
+                
+                // Set default date to tomorrow
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                document.getElementById('sentenceDate').value = tomorrow.toISOString().split('T')[0];
+                
+                // Load sentences
+                this.loadSentences();
+                
+                // Form submission
+                form?.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    await this.submitSentence();
+                });
+
+                // Logout
+                logoutBtn?.addEventListener('click', () => {
+                    this.logout();
+                });
+                
+                // Backfill archive
+                backfillBtn?.addEventListener('click', async () => {
+                    await this.backfillArchive();
+                });
+            }
+
+            async submitSentence() {
+                const date = document.getElementById('sentenceDate').value;
+                const sentence = document.getElementById('sentenceText').value;
+                
+                if (!date || !sentence) {
+                    this.showAlert('Please fill in all fields', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/sentle/admin/add', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            admin_token: this.adminToken,
+                            date, 
+                            sentence
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        this.showAlert('Sentence added successfully!', 'success');
+                        document.getElementById('addSentenceForm').reset();
+                        const tomorrow = new Date();
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        document.getElementById('sentenceDate').value = tomorrow.toISOString().split('T')[0];
+                        this.loadSentences();
+                    } else {
+                        if (response.status === 401) {
+                            this.logout();
+                        } else {
+                            this.showAlert(data.detail || data.message || 'Error adding sentence', 'error');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    this.showAlert('Network error. Please try again.', 'error');
+                }
+            }
+
+            async loadSentences() {
+                try {
+                    const response = await fetch('/api/sentle/admin/list', {
+                        headers: { 'Authorization': `Bearer ${this.adminToken}` }
+                    });
+                    const data = await response.json();
+                    
+                    if (response.status === 401) {
+                        this.logout();
+                        return;
+                    }
+                    
+                    const sentenceList = document.getElementById('sentenceList');
+                    if (data.sentences && data.sentences.length > 0) {
+                        sentenceList.innerHTML = data.sentences.map(s => {
+                            const statusText = s.used ? '✓ Used' : '⏳ Scheduled';
+                            const statusColor = s.used ? '#4caf50' : '#ff9800';
+                            const reuseBadge = (s.reuse_count && s.reuse_count > 0) ? `<span class="reuse-badge">Reused ${s.reuse_count}x</span>` : '';
+                            
+                            return `
+                            <div class="sentence-item">
+                                <span class="sentence-date">${s.date}</span>
+                                <span class="sentence-text">${this.escapeHtml(s.sentence)}${reuseBadge}</span>
+                                <span class="sentence-status" style="color: ${statusColor}">${statusText}</span>
+                                <div class="sentence-actions">
+                                    <button class="btn-edit" onclick="window.adminInstance.editSentence(${s.id}, '${s.date}', \`${this.escapeHtml(s.sentence).replace(/`/g, '\\`')}\`)">✏️ Edit</button>
+                                    <button class="btn-delete" onclick="window.adminInstance.deleteSentence(${s.id})">🗑️ Delete</button>
+                                </div>
+                            </div>
+                        `;
+                        }).join('');
+                    } else {
+                        sentenceList.innerHTML = '<p style="text-align: center; color: var(--sentle-text);">No sentences scheduled yet.</p>';
+                    }
+                } catch (error) {
+                    console.error('Error loading sentences:', error);
+                    document.getElementById('sentenceList').innerHTML = '<p style="text-align: center; color: #e06c75;">Error loading sentences.</p>';
+                }
+            }
+
+            async editSentence(id, currentDate, currentSentence) {
+                const newSentence = prompt('Edit sentence:', currentSentence);
+                if (!newSentence || newSentence === currentSentence) {
+                    return;
+                }
+                
+                const newDate = prompt('Edit date (YYYY-MM-DD):', currentDate);
+                if (!newDate) {
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`/api/sentle/admin/edit/${id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.adminToken}`
+                        },
+                        body: JSON.stringify({
+                            sentence: newSentence,
+                            date: newDate
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        this.showAlert('Sentence updated successfully!', 'success');
+                        this.loadSentences();
+                    } else {
+                        if (response.status === 401) {
+                            this.logout();
+                        } else {
+                            this.showAlert(data.detail || 'Failed to update sentence', 'error');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    this.showAlert('Network error', 'error');
+                }
+            }
+
+            async deleteSentence(id) {
+                if (!confirm('Are you sure you want to delete this sentence? This action cannot be undone.')) {
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`/api/sentle/admin/delete/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${this.adminToken}`
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        this.showAlert('Sentence deleted successfully!', 'success');
+                        this.loadSentences();
+                    } else {
+                        if (response.status === 401) {
+                            this.logout();
+                        } else {
+                            this.showAlert(data.detail || 'Failed to delete sentence', 'error');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    this.showAlert('Network error', 'error');
+                }
+            }
+
+            async backfillArchive() {
+                const statusDiv = document.getElementById('backfillStatus');
+                const btn = document.getElementById('backfillBtn');
+                
+                if (!statusDiv || !btn) return;
+                
+                try {
+                    btn.disabled = true;
+                    btn.textContent = '⏳ Processing...';
+                    statusDiv.textContent = 'Filling archive gaps... This may take a moment.';
+                    statusDiv.style.color = '#ff9800';
+                    
+                    const response = await fetch('/api/sentle/admin/backfill', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${this.adminToken}`
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        statusDiv.textContent = '✓ Archive gaps filled successfully! Check the archive page.';
+                        statusDiv.style.color = '#4caf50';
+                        this.showAlert('Archive backfill completed!', 'success');
+                    } else {
+                        if (response.status === 401) {
+                            this.logout();
+                        } else {
+                            statusDiv.textContent = '✗ Failed: ' + (data.detail || 'Unknown error');
+                            statusDiv.style.color = '#e06c75';
+                            this.showAlert(data.detail || 'Backfill failed', 'error');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Backfill error:', error);
+                    statusDiv.textContent = '✗ Network error occurred';
+                    statusDiv.style.color = '#e06c75';
+                    this.showAlert('Network error', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = '🔄 Fill Archive Gaps';
+                }
+            }
+
+            showAlert(message, type) {
+                const alert = document.getElementById('alert');
+                if (!alert) return;
+                alert.textContent = message;
+                alert.className = `alert alert-${type}`;
+                alert.classList.add('show');
+                setTimeout(() => alert.classList.remove('show'), 5000);
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            logout() {
+                localStorage.removeItem('sentle_admin_token');
+                this.adminToken = '';
+                document.getElementById('addSentenceForm').reset();
+                this.showLoginScreen();
+                document.getElementById('adminPassword').focus();
+            }
+        }
+
+        // Initialize admin panel
+        document.addEventListener('DOMContentLoaded', () => {
+            window.adminInstance = new AdminPanel();
+            window.adminInstance.setupLogin();
+        });
+    </script>
+</body>
+</html>
