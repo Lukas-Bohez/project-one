@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Check if user has already given consent
-    if (!isConsentValid() && window.location.pathname.indexOf('privacy.html') === -1) {
+    if (!isConsentValid() && window.location.pathname.indexOf('/pages/privacy') === -1) {
         // Use setTimeout to allow page content to load first
         setTimeout(showPrivacyModal, 1000);
     }
