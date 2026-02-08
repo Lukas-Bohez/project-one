@@ -33,3 +33,26 @@ class UserEmailRepository:
         ]
 
         return Database.execute_sql(sql, params)
+
+    @staticmethod
+    def update_user_profile(user_id: int, profile_data: Dict[str, Any]) -> bool:
+        """Update user profile fields that include the email column."""
+        set_clauses = []
+        params = []
+
+        if 'email' in profile_data and profile_data['email'] is not None:
+            set_clauses.append("email = %s")
+            params.append(profile_data['email'])
+        if 'first_name' in profile_data and profile_data['first_name'] is not None:
+            set_clauses.append("first_name = %s")
+            params.append(profile_data['first_name'])
+        if 'last_name' in profile_data and profile_data['last_name'] is not None:
+            set_clauses.append("last_name = %s")
+            params.append(profile_data['last_name'])
+
+        if not set_clauses:
+            return False
+
+        params.append(user_id)
+        sql = f"UPDATE users SET {', '.join(set_clauses)} WHERE id = %s"
+        return bool(Database.execute_sql(sql, params))

@@ -9,20 +9,31 @@ const API_BASE = '/api/v1/manage';
 // State Management
 let currentUser = null;
 let currentBusiness = null;
+let employees = [];
+let employeeRoles = [];
 
 // DOM Elements
 const welcomeSection = document.getElementById('welcomeSection');
 const dashboardSection = document.getElementById('dashboardSection');
 const loginModal = document.getElementById('loginModal');
 const setupModal = document.getElementById('setupModal');
+const employeeModal = document.getElementById('employeeModal');
+const employeeForm = document.getElementById('employeeForm');
 const loginForm = document.getElementById('loginForm');
 const setupForm = document.getElementById('setupForm');
+const employeeList = document.getElementById('employeeList');
+const employeeSearch = document.getElementById('employeeSearch');
+const employeeStatusFilter = document.getElementById('employeeStatusFilter');
 
 // Button Elements
 const getStartedBtn = document.getElementById('getStartedBtn');
 const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const signupLink = document.getElementById('signupLink');
+const addEmployeeBtnSecondary = document.getElementById('addEmployeeBtnSecondary');
+const generatePasswordBtn = document.getElementById('generatePasswordBtn');
+const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+const cancelEmployeeBtn = document.getElementById('cancelEmployeeBtn');
 
 // Modal Close Buttons
 const modalCloses = document.querySelectorAll('.c-modal__close');
@@ -87,7 +98,11 @@ function attachEventListeners() {
     
     // Quick action buttons
     document.getElementById('addEmployeeBtn')?.addEventListener('click', () => {
-        showNotification('Employee management UI coming soon!', 'info');
+        openEmployeeModal('create');
+    });
+
+    addEmployeeBtnSecondary?.addEventListener('click', () => {
+        openEmployeeModal('create');
     });
     
     document.getElementById('createShiftBtn')?.addEventListener('click', () => {
@@ -101,6 +116,13 @@ function attachEventListeners() {
     document.getElementById('timeOffBtn')?.addEventListener('click', () => {
         showNotification('Time-off management UI coming soon!', 'info');
     });
+
+    employeeForm?.addEventListener('submit', handleEmployeeSubmit);
+    cancelEmployeeBtn?.addEventListener('click', () => closeModal(employeeModal));
+    employeeSearch?.addEventListener('input', applyEmployeeFilters);
+    employeeStatusFilter?.addEventListener('change', applyEmployeeFilters);
+    generatePasswordBtn?.addEventListener('click', generateTempPassword);
+    togglePasswordBtn?.addEventListener('click', togglePasswordVisibility);
 }
 
 /**
@@ -313,28 +335,15 @@ function showWelcome() {
     dashboardSection.style.display = 'none';
 }
 
-/**const token = localStorage.getItem('manage_token');
-        const headers = {};
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-        
-        // Fetch dashboard data from API
-        const response = await fetch(`${API_BASE}/businesses/${currentBusiness.id}/dashboard`, {
-            headers: headers
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            
-            // Update stats
-            document.getElementById('statActiveEmployees').textContent = data.active_employees || 0;
-            document.getElementById('statShiftsToday').textContent = data.shifts_today || 0;
-            document.getElementById('statPendingRequests').textContent = data.pending_time_off_requests || 0;
-            document.getElementById('statWeekHours').textContent = (data.weekly_hours || 0).toFixed(1);
-        } else {
-            // If API call fails, show placeholder data
-            console.warn('Dashboard API call failed, showing placeholder data');
+/**
+ * Show dashboard section
+ */
+function showDashboard() {
+    welcomeSection.style.display = 'none';
+    dashboardSection.style.display = 'block';
+    loadDashboardData();
+    loadEmployeeRoles();
+    loadEmployees();
 }
 
 /**
@@ -369,6 +378,374 @@ async function loadDashboardData() {
         document.getElementById('statShiftsToday').textContent = '-';
         document.getElementById('statPendingRequests').textContent = '-';
         document.getElementById('statWeekHours').textContent = '-';
+    }
+}
+
+/**
+ * Load employee directory
+ */
+async function loadEmployees() {
+    if (!currentBusiness?.id) return;
+
+    if (employeeList) {
+        employeeList.innerHTML = '<div class="loading-state">Loading employees...</div>';
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/businesses/${currentBusiness.id}/employees`);
+        if (!response.ok) {
+            throw new Error('Failed to load employees');
+        }
+        employees = await response.json();
+        applyEmployeeFilters();
+    } catch (error) {
+        console.error('Failed to load employees:', error);
+        if (employeeList) {
+            employeeList.innerHTML = '<div class="empty-state">Unable to load employees.</div>';
+        }
+    }
+}
+
+async function loadEmployeeRoles() {
+    try {
+        const response = await fetch(`${API_BASE}/employee-roles`);
+        if (!response.ok) {
+            throw new Error('Failed to load roles');
+        }
+        employeeRoles = await response.json();
+    } catch (error) {
+        console.error('Failed to load employee roles:', error);
+        employeeRoles = [];
+    }
+}
+
+function applyEmployeeFilters() {
+    if (!employeeList) return;
+    const query = (employeeSearch?.value || '').trim().toLowerCase();
+    const status = employeeStatusFilter?.value || '';
+
+    const filtered = employees.filter(emp => {
+        const matchesStatus = !status || emp.status === status;
+        const haystack = `${emp.first_name} ${emp.last_name} ${emp.email} ${emp.role_name || ''}`.toLowerCase();
+        const matchesQuery = !query || haystack.includes(query);
+        return matchesStatus && matchesQuery;
+    });
+
+    renderEmployeeList(filtered);
+}
+
+function renderEmployeeList(list) {
+    if (!employeeList) return;
+
+    const roleMap = employeeRoles.reduce((acc, role) => {
+        acc[role.id] = role.role_name;
+        return acc;
+    }, {});
+
+    if (!list.length) {
+        employeeList.innerHTML = '<div class="empty-state">No employees found.</div>';
+        return;
+    }
+
+    employeeList.innerHTML = list.map(emp => {
+        const name = `${emp.first_name} ${emp.last_name}`;
+        const role = emp.position_title || emp.role_name || roleMap[emp.role_id] || 'Employee';
+        const status = emp.status || 'active';
+        const rate = emp.hourly_rate ? `$${emp.hourly_rate.toFixed(2)}/hr` : 'Rate not set';
+        const statusLabel = status.replace('_', ' ');
+        const toggleLabel = status === 'active' ? 'Deactivate' : 'Activate';
+        const toggleAction = status === 'active' ? 'deactivate' : 'activate';
+
+        return `
+            <div class="employee-card" data-employee-id="${emp.id}">
+                <div class="employee-meta">
+                    <div class="employee-name">${name}</div>
+                    <div class="employee-role">${role}</div>
+                    <div class="employee-contact">${emp.email || 'No email'}${emp.phone ? ` • ${emp.phone}` : ''}</div>
+                </div>
+                <div class="employee-badges">
+                    <span class="employee-badge status-${status}">${statusLabel}</span>
+                    <span class="employee-badge">${rate}</span>
+                </div>
+                <div class="employee-meta">
+                    <div class="employee-role">Hire Date: ${emp.hire_date || 'N/A'}</div>
+                    <div class="employee-role">Dept: ${emp.department || 'Not set'}</div>
+                </div>
+                <div class="employee-actions">
+                    <button class="c-btn c-btn--secondary c-btn--sm" data-action="edit">Edit</button>
+                    <button class="c-btn c-btn--tertiary c-btn--sm" data-action="${toggleAction}">${toggleLabel}</button>
+                    <button class="c-btn c-btn--danger c-btn--sm" data-action="delete">Delete</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    employeeList.querySelectorAll('[data-action]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const card = btn.closest('.employee-card');
+            const employeeId = parseInt(card.dataset.employeeId, 10);
+            const employee = employees.find(emp => emp.id === employeeId);
+            const action = btn.dataset.action;
+
+            if (action === 'edit') {
+                openEmployeeModal('edit', employee);
+                return;
+            }
+
+            if (action === 'deactivate') {
+                updateEmployeeStatus(employeeId, 'terminated');
+                return;
+            }
+
+            if (action === 'activate') {
+                updateEmployeeStatus(employeeId, 'active');
+                return;
+            }
+
+            if (action === 'delete') {
+                deleteEmployee(employeeId, employee);
+            }
+        });
+    });
+}
+
+function openEmployeeModal(mode, employee = null) {
+    if (!employeeModal || !employeeForm) return;
+
+    const title = document.getElementById('employeeModalTitle');
+    const passwordInput = document.getElementById('employeePassword');
+    const hireDateInput = document.getElementById('employeeHireDate');
+
+    employeeForm.dataset.mode = mode;
+    employeeForm.dataset.employeeId = employee?.id || '';
+
+    if (title) {
+        title.textContent = mode === 'edit' ? 'Edit Employee' : 'Add Employee';
+    }
+
+    employeeForm.reset();
+    if (passwordInput) {
+        passwordInput.type = 'password';
+    }
+    if (togglePasswordBtn) {
+        togglePasswordBtn.textContent = 'Show password';
+    }
+    const today = new Date().toISOString().split('T')[0];
+
+    if (mode === 'edit' && employee) {
+        document.getElementById('employeeFirstName').value = employee.first_name || '';
+        document.getElementById('employeeLastName').value = employee.last_name || '';
+        document.getElementById('employeeEmail').value = employee.email || '';
+        document.getElementById('employeePhone').value = employee.phone || '';
+        populateRoleSelect(employee.role_id || '');
+        document.getElementById('employeeStatus').value = employee.status || 'active';
+        document.getElementById('employeePosition').value = employee.position_title || '';
+        document.getElementById('employeeDepartment').value = employee.department || '';
+        document.getElementById('employeeHireDate').value = employee.hire_date || today;
+        document.getElementById('employeeHourlyRate').value = employee.hourly_rate || '';
+        document.getElementById('employeeCode').value = employee.employee_code || '';
+        document.getElementById('employeeEmergencyName').value = employee.emergency_contact_name || '';
+        document.getElementById('employeeEmergencyPhone').value = employee.emergency_contact_phone || '';
+        if (passwordInput) passwordInput.required = false;
+    } else {
+        populateRoleSelect('');
+        if (hireDateInput) hireDateInput.value = today;
+        if (passwordInput) passwordInput.required = true;
+    }
+
+    const errorDiv = document.getElementById('employeeFormError');
+    if (errorDiv) errorDiv.style.display = 'none';
+
+    openModal(employeeModal);
+}
+
+function populateRoleSelect(selectedId) {
+    const roleSelect = document.getElementById('employeeRole');
+    if (!roleSelect) return;
+
+    if (!employeeRoles.length) {
+        roleSelect.innerHTML = `
+            <option value="1">Owner</option>
+            <option value="2">Manager</option>
+            <option value="3">Employee</option>
+        `;
+        roleSelect.value = selectedId || '3';
+        return;
+    }
+
+    roleSelect.innerHTML = employeeRoles.map(role => {
+        return `<option value="${role.id}">${role.role_name}</option>`;
+    }).join('');
+    roleSelect.value = selectedId || employeeRoles[0]?.id || '';
+}
+
+async function handleEmployeeSubmit(e) {
+    e.preventDefault();
+    if (!currentBusiness?.id) return;
+
+    const mode = employeeForm.dataset.mode || 'create';
+    const employeeId = employeeForm.dataset.employeeId;
+    const errorDiv = document.getElementById('employeeFormError');
+
+    const basePayload = {
+        first_name: document.getElementById('employeeFirstName').value.trim(),
+        last_name: document.getElementById('employeeLastName').value.trim(),
+        email: document.getElementById('employeeEmail').value.trim(),
+        phone: document.getElementById('employeePhone').value.trim() || null,
+        role_id: parseInt(document.getElementById('employeeRole').value, 10),
+        status: document.getElementById('employeeStatus').value,
+        position_title: document.getElementById('employeePosition').value.trim() || null,
+        department: document.getElementById('employeeDepartment').value.trim() || null,
+        hire_date: document.getElementById('employeeHireDate').value,
+        hourly_rate: document.getElementById('employeeHourlyRate').value ? parseFloat(document.getElementById('employeeHourlyRate').value) : null,
+        employee_code: document.getElementById('employeeCode').value.trim() || null,
+        emergency_contact_name: document.getElementById('employeeEmergencyName').value.trim() || null,
+        emergency_contact_phone: document.getElementById('employeeEmergencyPhone').value.trim() || null
+    };
+
+    const payload = mode === 'edit'
+        ? {
+            email: basePayload.email,
+            first_name: basePayload.first_name,
+            last_name: basePayload.last_name,
+            phone: basePayload.phone,
+            role_id: basePayload.role_id,
+            employee_code: basePayload.employee_code,
+            hire_date: basePayload.hire_date,
+            position_title: basePayload.position_title,
+            department: basePayload.department,
+            hourly_rate: basePayload.hourly_rate,
+            status: basePayload.status,
+            emergency_contact_name: basePayload.emergency_contact_name,
+            emergency_contact_phone: basePayload.emergency_contact_phone
+        }
+        : {
+            business_id: currentBusiness.id,
+            email: basePayload.email,
+            first_name: basePayload.first_name,
+            last_name: basePayload.last_name,
+            phone: basePayload.phone,
+            role_id: basePayload.role_id,
+            status: basePayload.status,
+            position_title: basePayload.position_title,
+            department: basePayload.department,
+            hire_date: basePayload.hire_date,
+            hourly_rate: basePayload.hourly_rate,
+            employee_code: basePayload.employee_code,
+            emergency_contact_name: basePayload.emergency_contact_name,
+            emergency_contact_phone: basePayload.emergency_contact_phone
+        };
+
+    const passwordValue = document.getElementById('employeePassword').value;
+    if (passwordValue) {
+        payload.password = passwordValue;
+    }
+
+    try {
+        const response = await fetch(
+            mode === 'edit' ? `${API_BASE}/employees/${employeeId}` : `${API_BASE}/employees`,
+            {
+                method: mode === 'edit' ? 'PATCH' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }
+        );
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to save employee');
+        }
+
+        await response.json();
+        closeModal(employeeModal);
+        showNotification(mode === 'edit' ? 'Employee updated!' : 'Employee added!', 'success');
+        loadEmployees();
+    } catch (error) {
+        console.error('Employee save error:', error);
+        if (errorDiv) {
+            errorDiv.textContent = `Error: ${error.message}`;
+            errorDiv.style.display = 'block';
+        }
+    }
+}
+
+function generateTempPassword() {
+    const passwordInput = document.getElementById('employeePassword');
+    if (!passwordInput) return;
+
+    const charset = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
+    let password = '';
+    for (let i = 0; i < 12; i += 1) {
+        password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+
+    passwordInput.value = password;
+
+    if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(password).then(() => {
+            showNotification('Temporary password copied to clipboard', 'success');
+        }).catch(() => {
+            showNotification('Password generated (copy failed)', 'info');
+        });
+    } else {
+        showNotification('Password generated. Copy it manually.', 'info');
+    }
+}
+
+function togglePasswordVisibility() {
+    const passwordInput = document.getElementById('employeePassword');
+    if (!passwordInput || !togglePasswordBtn) return;
+
+    const isHidden = passwordInput.type === 'password';
+    passwordInput.type = isHidden ? 'text' : 'password';
+    togglePasswordBtn.textContent = isHidden ? 'Hide password' : 'Show password';
+}
+
+async function updateEmployeeStatus(employeeId, status) {
+    try {
+        const response = await fetch(`${API_BASE}/employees/${employeeId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to update employee status');
+        }
+
+        await response.json();
+        showNotification('Employee status updated', 'success');
+        loadEmployees();
+    } catch (error) {
+        console.error('Status update error:', error);
+        showNotification(`Error: ${error.message}`, 'error');
+    }
+}
+
+async function deleteEmployee(employeeId, employee) {
+    const name = employee ? `${employee.first_name} ${employee.last_name}` : 'this employee';
+    const typed = window.prompt(`Type DELETE to confirm deleting ${name}. This cannot be undone.`);
+    if (typed !== 'DELETE') {
+        showNotification('Delete cancelled', 'info');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/employees/${employeeId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to delete employee');
+        }
+
+        showNotification('Employee deleted', 'success');
+        loadEmployees();
+    } catch (error) {
+        console.error('Delete employee error:', error);
+        showNotification(`Error: ${error.message}`, 'error');
     }
 }
 

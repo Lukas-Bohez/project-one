@@ -444,7 +444,10 @@ function renderTeamList() {
                         <i class="fa-solid fa-dollar-sign"></i> $${emp.hourly_rate.toFixed(2)}/hr
                     </div>
                 </div>
-                <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e2e8f0;">
+                <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e2e8f0; display: grid; gap: 0.5rem;">
+                    <button class="ui-btn-small" onclick="showEditTeamMemberModal(${emp.id})" style="width: 100%;">
+                        <i class="fa-solid fa-user-pen"></i> Edit Team Member
+                    </button>
                     <button class="ui-btn-small" onclick="quickLoginAs(${emp.id})" style="width: 100%;">
                         <i class="fa-solid fa-right-to-bracket"></i> Login as ${emp.name.split(' ')[0]}
                     </button>
@@ -1467,6 +1470,10 @@ function showAddTeamMemberModal() {
                     <input type="password" name="password" class="ui-input" required minlength="6" placeholder="Min 6 characters">
                 </div>
             </div>
+
+            <div style="font-size: 0.85rem; color: #64748b; margin-top: -0.25rem;">
+                Set the employee's initial password (can be changed later by an admin).
+            </div>
             
             <div class="ui-form-actions">
                 <button type="button" class="ui-btn-secondary" onclick="if(window.ManageUI) window.ManageUI.modal.close()">
@@ -1482,6 +1489,66 @@ function showAddTeamMemberModal() {
     if (window.ManageUI) {
         window.ManageUI.modal.show('Add Team Member', formHTML, 'medium');
     }
+}
+
+function showEditTeamMemberModal(employeeId) {
+    const employee = demoData.business.employees.find(e => e.id === employeeId);
+    if (!employee || !window.ManageUI) return;
+
+    const credentials = demoState.employeeCredentials.find(c => c.id === employeeId);
+    const formHTML = `
+        <form class="ui-task-form" onsubmit="event.preventDefault(); updateTeamMember(event, ${employeeId})">
+            <div class="ui-form-row">
+                <div class="ui-form-group full-width">
+                    <label><i class="fa-solid fa-user"></i> Full Name</label>
+                    <input type="text" name="name" class="ui-input" required value="${employee.name}">
+                </div>
+            </div>
+
+            <div class="ui-form-row">
+                <div class="ui-form-group">
+                    <label><i class="fa-solid fa-briefcase"></i> Role</label>
+                    <select name="role" class="ui-input" required>
+                        <option value="Server" ${employee.role === 'Server' ? 'selected' : ''}>Server</option>
+                        <option value="Barista" ${employee.role === 'Barista' ? 'selected' : ''}>Barista</option>
+                        <option value="Cook" ${employee.role === 'Cook' ? 'selected' : ''}>Cook</option>
+                        <option value="Manager" ${employee.role === 'Manager' ? 'selected' : ''}>Manager</option>
+                        <option value="Cashier" ${employee.role === 'Cashier' ? 'selected' : ''}>Cashier</option>
+                    </select>
+                </div>
+                <div class="ui-form-group">
+                    <label><i class="fa-solid fa-dollar-sign"></i> Hourly Rate</label>
+                    <input type="number" name="hourlyRate" class="ui-input" required min="7.25" step="0.25" value="${employee.hourly_rate}">
+                </div>
+            </div>
+
+            <div class="ui-form-row">
+                <div class="ui-form-group">
+                    <label><i class="fa-solid fa-user-circle"></i> Username</label>
+                    <input type="text" name="username" class="ui-input" required value="${employee.username || ''}" pattern="[a-z0-9]+" title="Lowercase letters and numbers only">
+                </div>
+                <div class="ui-form-group">
+                    <label><i class="fa-solid fa-lock"></i> New Password</label>
+                    <input type="password" name="password" class="ui-input" minlength="6" placeholder="Set a new password">
+                </div>
+            </div>
+
+            <div style="font-size: 0.85rem; color: #64748b; margin-top: -0.25rem;">
+                Leave the password blank to keep the current one. Current: ${credentials ? 'Set' : 'Not set'}.
+            </div>
+
+            <div class="ui-form-actions">
+                <button type="button" class="ui-btn-secondary" onclick="if(window.ManageUI) window.ManageUI.modal.close()">
+                    Cancel
+                </button>
+                <button type="submit" class="ui-btn-primary">
+                    <i class="fa-solid fa-save"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    `;
+
+    window.ManageUI.modal.show('Edit Team Member', formHTML, 'medium');
 }
 
 function addTeamMember(event) {
@@ -1522,6 +1589,46 @@ function addTeamMember(event) {
         window.ManageUI.notification.show(`${newEmployee.name} added to the team!`, 'success');
     }
     
+    refreshDemo();
+}
+
+function updateTeamMember(event, employeeId) {
+    const employee = demoData.business.employees.find(e => e.id === employeeId);
+    if (!employee) return;
+
+    const formData = new FormData(event.target);
+    const newUsername = formData.get('username').toLowerCase();
+    const password = formData.get('password');
+
+    const usernameTaken = demoState.employeeCredentials.some(c => c.username === newUsername && c.id !== employeeId);
+    if (usernameTaken) {
+        if (window.ManageUI) {
+            window.ManageUI.notification.show('Username already exists! Please choose another.', 'error');
+        }
+        return;
+    }
+
+    employee.name = formData.get('name');
+    employee.role = formData.get('role');
+    employee.hourly_rate = parseFloat(formData.get('hourlyRate'));
+    employee.username = newUsername;
+
+    let credentials = demoState.employeeCredentials.find(c => c.id === employeeId);
+    if (!credentials) {
+        credentials = { id: employeeId, username: newUsername, password: 'demo123' };
+        demoState.employeeCredentials.push(credentials);
+    }
+
+    credentials.username = newUsername;
+    if (password && password.length >= 6) {
+        credentials.password = password;
+    }
+
+    if (window.ManageUI) {
+        window.ManageUI.modal.close();
+        window.ManageUI.notification.show(`Updated ${employee.name}'s profile`, 'success');
+    }
+
     refreshDemo();
 }
 
