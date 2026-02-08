@@ -54,6 +54,11 @@ class WarningType(str, Enum):
     termination = "termination"
 
 
+class EmployeeRoleResponse(BaseModel):
+    id: int
+    role_name: str
+
+
 # Business Models
 class BusinessCreate(BaseModel):
     business_name: str = Field(..., min_length=1, max_length=255)
@@ -86,6 +91,7 @@ class EmployeeCreate(BaseModel):
     user_id: Optional[int] = None
     employee_code: Optional[str] = None
     email: EmailStr
+    password: Optional[str] = Field(None, min_length=6)
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
     phone: Optional[str] = None
@@ -96,13 +102,19 @@ class EmployeeCreate(BaseModel):
     hourly_rate: Optional[float] = None
     emergency_contact_name: Optional[str] = None
     emergency_contact_phone: Optional[str] = None
+    status: Optional[EmployeeStatus] = EmployeeStatus.active
 
 
 class EmployeeUpdate(BaseModel):
     email: Optional[EmailStr] = None
+    password: Optional[str] = Field(None, min_length=6)
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     phone: Optional[str] = None
+    role_id: Optional[int] = None
+    employee_code: Optional[str] = None
+    hire_date: Optional[date] = None
+    termination_date: Optional[date] = None
     position_title: Optional[str] = None
     department: Optional[str] = None
     hourly_rate: Optional[float] = None

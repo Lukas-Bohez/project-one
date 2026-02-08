@@ -110,6 +110,29 @@ class ManageBusinessRepository:
 
 class ManageEmployeeRepository:
     """Repository for employee management"""
+
+    @staticmethod
+    def get_employee_roles() -> List[Dict[str, Any]]:
+        """Get available employee roles"""
+        try:
+            conn = connection_pool.get_connection()
+            cursor = conn.cursor(dictionary=True)
+
+            query = "SELECT id, role_name FROM manage_employee_roles ORDER BY id"
+            cursor.execute(query)
+            results = cursor.fetchall()
+
+            cursor.close()
+            conn.close()
+            return results
+        except Error as e:
+            logger.error(f"Error fetching employee roles: {e}")
+            return []
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
     
     @staticmethod
     def create_employee(employee_data: Dict[str, Any]) -> Optional[int]:
@@ -205,7 +228,7 @@ class ManageEmployeeRepository:
         """Get employee by ID"""
         try:
             conn = connection_pool.get_connection()
-            cursor = cursor(dictionary=True)
+            cursor = conn.cursor(dictionary=True)
             
             query = """
                 SELECT e.*, r.role_name 
@@ -222,6 +245,82 @@ class ManageEmployeeRepository:
         except Error as e:
             logger.error(f"Error fetching employee: {e}")
             return None
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+    @staticmethod
+    def update_employee(employee_id: int, update_data: Dict[str, Any]) -> bool:
+        """Update an employee record"""
+        try:
+            conn = connection_pool.get_connection()
+            cursor = conn.cursor()
+
+            allowed_fields = {
+                'user_id',
+                'employee_code',
+                'email',
+                'first_name',
+                'last_name',
+                'phone',
+                'role_id',
+                'position_title',
+                'department',
+                'hire_date',
+                'termination_date',
+                'hourly_rate',
+                'status',
+                'emergency_contact_name',
+                'emergency_contact_phone'
+            }
+
+            set_clauses = []
+            params = []
+
+            for field, value in update_data.items():
+                if field in allowed_fields:
+                    set_clauses.append(f"{field} = %s")
+                    params.append(value)
+
+            if not set_clauses:
+                return False
+
+            params.append(employee_id)
+            query = f"UPDATE manage_employees SET {', '.join(set_clauses)} WHERE id = %s"
+            cursor.execute(query, params)
+            conn.commit()
+
+            return cursor.rowcount > 0
+        except Error as e:
+            logger.error(f"Error updating employee: {e}")
+            if conn:
+                conn.rollback()
+            return False
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+    @staticmethod
+    def delete_employee(employee_id: int) -> bool:
+        """Delete an employee record"""
+        try:
+            conn = connection_pool.get_connection()
+            cursor = conn.cursor()
+
+            query = "DELETE FROM manage_employees WHERE id = %s"
+            cursor.execute(query, (employee_id,))
+            conn.commit()
+
+            return cursor.rowcount > 0
+        except Error as e:
+            logger.error(f"Error deleting employee: {e}")
+            if conn:
+                conn.rollback()
+            return False
         finally:
             if cursor:
                 cursor.close()

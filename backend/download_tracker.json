@@ -121,11 +121,23 @@
     "79.135.126.187": {
       "count": 0,
       "bandwidth_gb": 0.0,
-      "active_downloads": 1,
+      "active_downloads": 0,
       "last_download": null
+    },
+    "174.53.117.63": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 0,
+      "last_download": null
+    },
+    "179.127.250.21": {
+      "count": 1,
+      "bandwidth_gb": 1.446158679202199,
+      "active_downloads": 0,
+      "last_download": "2026-02-08T03:32:53.241007"
     }
   },
   "last_reset_month": "2026-02",
-  "total_monthly_bandwidth_gb": 8.676952075213194,
+  "total_monthly_bandwidth_gb": 10.123110754415393,
   "file_size_gb": 1.5
 }

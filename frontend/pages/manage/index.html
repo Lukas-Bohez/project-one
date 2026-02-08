@@ -284,6 +284,32 @@
                 </div>
             </div>
 
+            <!-- Employee Directory -->
+            <section class="employee-directory" aria-labelledby="employeeDirectoryTitle">
+                <div class="section-header">
+                    <div>
+                        <h3 id="employeeDirectoryTitle">Employee Directory</h3>
+                        <p class="section-subtitle">Manage employee profiles, roles, and passwords.</p>
+                    </div>
+                    <button class="c-btn c-btn--primary" id="addEmployeeBtnSecondary">
+                        <i class="fa-solid fa-user-plus" aria-hidden="true"></i> Add Employee
+                    </button>
+                </div>
+                <div class="employee-toolbar">
+                    <input type="search" id="employeeSearch" class="form-control" placeholder="Search by name, role, or email">
+                    <select id="employeeStatusFilter" class="form-control">
+                        <option value="">All statuses</option>
+                        <option value="active">Active</option>
+                        <option value="on_leave">On leave</option>
+                        <option value="suspended">Suspended</option>
+                        <option value="terminated">Terminated</option>
+                    </select>
+                </div>
+                <div id="employeeList" class="employee-list">
+                    <div class="loading-state">Loading employees...</div>
+                </div>
+            </section>
+
             <!-- Status Notice -->
             <div class="info-banner">
                 <p><strong><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Schedule Manager is now live!</strong> Click "Schedule Manager" to access the interactive calendar with drag-and-drop shift scheduling.</p>
@@ -292,6 +318,115 @@
             </div>
         </section>
     </main>
+
+    <!-- Employee Modal -->
+    <div id="employeeModal" class="c-modal" role="dialog" aria-hidden="true">
+        <div class="c-modal__content manage-modal employee-modal">
+            <div class="c-modal__header">
+                <h2 id="employeeModalTitle">Add Employee</h2>
+                <button class="c-modal__close" aria-label="Close">&times;</button>
+            </div>
+            <div class="c-modal__body">
+                <form id="employeeForm" class="manage-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="employeeFirstName">First Name *</label>
+                            <input type="text" id="employeeFirstName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="employeeLastName">Last Name *</label>
+                            <input type="text" id="employeeLastName" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="employeeEmail">Email *</label>
+                            <input type="email" id="employeeEmail" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="employeePhone">Phone</label>
+                            <input type="tel" id="employeePhone" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="employeeRole">Role *</label>
+                            <select id="employeeRole" class="form-control" required>
+                                <option value="3">Employee</option>
+                                <option value="2">Manager</option>
+                                <option value="1">Owner</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="employeeStatus">Status</label>
+                            <select id="employeeStatus" class="form-control">
+                                <option value="active">Active</option>
+                                <option value="on_leave">On leave</option>
+                                <option value="suspended">Suspended</option>
+                                <option value="terminated">Terminated</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="employeePosition">Position Title</label>
+                            <input type="text" id="employeePosition" class="form-control" placeholder="Barista, Cashier, etc.">
+                        </div>
+                        <div class="form-group">
+                            <label for="employeeDepartment">Department</label>
+                            <input type="text" id="employeeDepartment" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="employeeHireDate">Hire Date *</label>
+                            <input type="date" id="employeeHireDate" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="employeeHourlyRate">Hourly Rate</label>
+                            <input type="number" id="employeeHourlyRate" class="form-control" min="0" step="0.01" placeholder="15.00">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="employeeCode">Employee Code</label>
+                            <input type="text" id="employeeCode" class="form-control" placeholder="EMP-001">
+                        </div>
+                        <div class="form-group">
+                            <label for="employeePassword">Password</label>
+                            <div class="password-field">
+                                <input type="password" id="employeePassword" class="form-control" minlength="6" placeholder="Set a password">
+                                <button type="button" class="c-btn c-btn--tertiary c-btn--sm" id="generatePasswordBtn">Generate & Copy</button>
+                            </div>
+                            <button type="button" class="link-btn" id="togglePasswordBtn">Show password</button>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="employeeEmergencyName">Emergency Contact Name</label>
+                            <input type="text" id="employeeEmergencyName" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="employeeEmergencyPhone">Emergency Contact Phone</label>
+                            <input type="tel" id="employeeEmergencyPhone" class="form-control">
+                        </div>
+                    </div>
+
+                    <div id="employeeFormError" class="error-message" style="display: none;"></div>
+                    <div class="modal-actions">
+                        <button type="button" class="c-btn c-btn--secondary" id="cancelEmployeeBtn">Cancel</button>
+                        <button type="submit" class="c-btn c-btn--primary">Save Employee</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer class="c-footer">

@@ -12,6 +12,7 @@ import logging
 from models.manage_models import (
     BusinessCreate, BusinessResponse,
     EmployeeCreate, EmployeeUpdate, EmployeeResponse,
+    EmployeeRoleResponse,
     ShiftCreate, ShiftUpdate, ShiftResponse,
     TimeOffRequestCreate, TimeOffRequestReview, TimeOffRequestResponse,
     WarningCreate, WarningResponse,
@@ -26,6 +27,8 @@ from database.manage_repository import (
     ManageTimeOffRepository,
     ManageWarningRepository
 )
+from database.datarepository import UserRepository
+from database.user_email_repository import UserEmailRepository
 from api.websocket import (
     manager, 
     broadcast_shift_created, 
@@ -107,7 +110,33 @@ async def create_employee(employee: EmployeeCreate):
                 detail=f"Free tier limit of {business['max_employees']} employees reached. Upgrade to add more."
             )
     
-    employee_id = ManageEmployeeRepository.create_employee(employee.dict())
+    employee_data = employee.dict()
+    password = employee_data.pop('password', None)
+
+    if password and not employee_data.get('user_id'):
+        hashed = UserRepository.hash_password(password)
+        user_id = UserEmailRepository.create_user_with_email({
+            "first_name": employee.first_name,
+            "last_name": employee.last_name,
+            "email": employee.email,
+            "password_hash": hashed["password_hash"],
+            "salt": hashed["salt"],
+            "rfid_code": None,
+            "userRoleId": 1,
+            "updated_by": business.get('owner_user_id', 1)
+        })
+
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create employee login"
+            )
+
+        employee_data['user_id'] = user_id
+    elif password and employee_data.get('user_id'):
+        UserRepository.update_user(employee_data['user_id'], {"password": password})
+
+    employee_id = ManageEmployeeRepository.create_employee(employee_data)
     
     if not employee_id:
         raise HTTPException(
@@ -119,6 +148,65 @@ async def create_employee(employee: EmployeeCreate):
     return created_employee
 
 
+@router.patch("/employees/{employee_id}", response_model=EmployeeResponse)
+async def update_employee(employee_id: int, employee_update: EmployeeUpdate):
+    """Update an employee and optionally reset their password"""
+    employee = ManageEmployeeRepository.get_employee_by_id(employee_id)
+
+    if not employee:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Employee {employee_id} not found"
+        )
+
+    update_data = employee_update.dict(exclude_unset=True)
+    password = update_data.pop('password', None)
+
+    if password:
+        user_id = employee.get('user_id')
+        if user_id:
+            UserRepository.update_user(user_id, {"password": password})
+        else:
+            hashed = UserRepository.hash_password(password)
+            user_id = UserEmailRepository.create_user_with_email({
+                "first_name": update_data.get('first_name') or employee.get('first_name'),
+                "last_name": update_data.get('last_name') or employee.get('last_name'),
+                "email": update_data.get('email') or employee.get('email'),
+                "password_hash": hashed["password_hash"],
+                "salt": hashed["salt"],
+                "rfid_code": None,
+                "userRoleId": 1,
+                "updated_by": employee.get('user_id') or 1
+            })
+
+            if not user_id:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to create employee login"
+                )
+
+            update_data['user_id'] = user_id
+
+    user_profile_updates = {
+        key: update_data.get(key)
+        for key in ['email', 'first_name', 'last_name']
+        if key in update_data
+    }
+    if employee.get('user_id') and user_profile_updates:
+        UserEmailRepository.update_user_profile(employee['user_id'], user_profile_updates)
+
+    if update_data:
+        updated = ManageEmployeeRepository.update_employee(employee_id, update_data)
+        if not updated:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to update employee"
+            )
+
+    updated_employee = ManageEmployeeRepository.get_employee_by_id(employee_id)
+    return updated_employee
+
+
 @router.get("/businesses/{business_id}/employees", response_model=List[EmployeeResponse])
 async def get_business_employees(
     business_id: int,
@@ -127,6 +215,12 @@ async def get_business_employees(
     """Get all employees for a business"""
     employees = ManageEmployeeRepository.get_employees_by_business(business_id, status)
     return employees
+
+
+@router.get("/employee-roles", response_model=List[EmployeeRoleResponse])
+async def get_employee_roles():
+    """Get list of available employee roles"""
+    return ManageEmployeeRepository.get_employee_roles()
 
 
 @router.get("/employees/{employee_id}", response_model=EmployeeResponse)
@@ -141,6 +235,25 @@ async def get_employee(employee_id: int):
         )
     
     return employee
+
+
+@router.delete("/employees/{employee_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_employee(employee_id: int):
+    """Delete an employee"""
+    employee = ManageEmployeeRepository.get_employee_by_id(employee_id)
+
+    if not employee:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Employee {employee_id} not found"
+        )
+
+    deleted = ManageEmployeeRepository.delete_employee(employee_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete employee"
+        )
 
 
 # ============================================================
