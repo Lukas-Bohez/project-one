@@ -157,7 +157,31 @@
     "90.251.108.114": {
       "count": 0,
       "bandwidth_gb": 0.0,
-      "active_downloads": 1,
+      "active_downloads": 0,
+      "last_download": null
+    },
+    "193.191.179.245": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 0,
+      "last_download": null
+    },
+    "162.120.198.72": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 0,
+      "last_download": null
+    },
+    "68.57.153.52": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 0,
+      "last_download": null
+    },
+    "96.241.196.42": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 0,
       "last_download": null
     }
   },

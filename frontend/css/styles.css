@@ -314,6 +314,65 @@ body * {
     margin-right: auto;
 }
 
+.c-section-panel {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg) var(--spacing-md);
+    box-shadow: 0 4px 6px var(--shadow-light);
+}
+
+.section .c-section-panel {
+    margin-bottom: var(--spacing-xl);
+}
+
+.c-download-title {
+    margin: 0;
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+}
+
+.c-download-subtitle {
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+.c-download-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    justify-content: center;
+}
+
+.c-download-help {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.c-download-help a {
+    color: var(--primary-color);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.c-download-help a:hover {
+    text-decoration: underline;
+}
+
+.c-section-title {
+    margin: 0 0 var(--spacing-xs);
+    font-size: var(--font-size-lg);
+    text-align: center;
+}
+
+.c-section-lead {
+    margin: 0 0 var(--spacing-lg);
+    color: var(--text-secondary);
+    text-align: center;
+    font-size: var(--font-size-sm);
+}
+
 .c-btn {
     display: inline-flex;
     align-items: center;
