@@ -450,6 +450,7 @@ from pathlib import Path
 
 DOWNLOAD_TRACKER_FILE = os.path.join(os.path.dirname(__file__), 'download_tracker.json')
 CONVERSION_FILE_PATH = os.path.join(os.path.dirname(__file__), '../frontend/downloads/ConversionTheSpireReborn.zip')
+DOWNLOAD_TRACKER_LOCK = Lock()
 
 def load_download_tracker():
     """Load download tracking data from JSON file."""
@@ -497,19 +498,16 @@ def cleanup_stale_active_downloads(tracker):
         last_download = ip_data.get("last_download")
         active_downloads = ip_data.get("active_downloads", 0)
         
-        # If there are active downloads but no actual count, reset them
-        if active_downloads > 0 and ip_data.get("count", 0) == 0:
-            # This is an anomaly - bot or stalled connection with no successful download
+        if active_downloads > 0:
+            # If we have active downloads with no recent completion, assume they stalled
             if last_download is None:
-                # Never completed a download, likely stalled bot
                 tracker["ips"][ip]["active_downloads"] = 0
             else:
-                # Check if last_download was > 1 hour ago
                 try:
                     last_time = datetime.fromisoformat(last_download)
                     if (current_time - last_time).total_seconds() > 3600:
                         tracker["ips"][ip]["active_downloads"] = 0
-                except:
+                except Exception:
                     # If we can't parse the timestamp, reset it
                     tracker["ips"][ip]["active_downloads"] = 0
     
@@ -517,10 +515,11 @@ def cleanup_stale_active_downloads(tracker):
 
 def get_download_status(client_ip: str):
     """Get download status for an IP address."""
-    tracker = load_download_tracker()
-    tracker = reset_tracker_if_new_month(tracker)
-    tracker = cleanup_stale_active_downloads(tracker)
-    save_download_tracker(tracker)
+    with DOWNLOAD_TRACKER_LOCK:
+        tracker = load_download_tracker()
+        tracker = reset_tracker_if_new_month(tracker)
+        tracker = cleanup_stale_active_downloads(tracker)
+        save_download_tracker(tracker)
     
     ip_data = tracker["ips"].get(client_ip, {})
     downloads_this_month = ip_data.get("count", 0)
@@ -541,10 +540,11 @@ def get_download_status(client_ip: str):
 
 def check_download_allowed(client_ip: str):
     """Check if download is allowed for this IP."""
-    tracker = load_download_tracker()
-    tracker = reset_tracker_if_new_month(tracker)
-    tracker = cleanup_stale_active_downloads(tracker)
-    save_download_tracker(tracker)
+    with DOWNLOAD_TRACKER_LOCK:
+        tracker = load_download_tracker()
+        tracker = reset_tracker_if_new_month(tracker)
+        tracker = cleanup_stale_active_downloads(tracker)
+        save_download_tracker(tracker)
     
     # Check monthly limit per IP
     ip_data = tracker["ips"].get(client_ip, {})
@@ -564,48 +564,51 @@ def check_download_allowed(client_ip: str):
 
 def record_download_start(client_ip: str):
     """Record when a download starts."""
-    tracker = load_download_tracker()
-    tracker = reset_tracker_if_new_month(tracker)
-    
-    if client_ip not in tracker["ips"]:
-        tracker["ips"][client_ip] = {
-            "count": 0,
-            "bandwidth_gb": 0.0,
-            "active_downloads": 0,
-            "last_download": None
-        }
-    
-    tracker["ips"][client_ip]["active_downloads"] = tracker["ips"][client_ip].get("active_downloads", 0) + 1
-    save_download_tracker(tracker)
+    with DOWNLOAD_TRACKER_LOCK:
+        tracker = load_download_tracker()
+        tracker = reset_tracker_if_new_month(tracker)
+        
+        if client_ip not in tracker["ips"]:
+            tracker["ips"][client_ip] = {
+                "count": 0,
+                "bandwidth_gb": 0.0,
+                "active_downloads": 0,
+                "last_download": None
+            }
+        
+        tracker["ips"][client_ip]["active_downloads"] = tracker["ips"][client_ip].get("active_downloads", 0) + 1
+        save_download_tracker(tracker)
 
 def record_download_complete(client_ip: str, bytes_downloaded: int):
     """Record when a download completes."""
-    tracker = load_download_tracker()
-    
-    if client_ip not in tracker["ips"]:
-        tracker["ips"][client_ip] = {
-            "count": 0,
-            "bandwidth_gb": 0.0,
-            "active_downloads": 0,
-            "last_download": None
-        }
-    
-    gb_downloaded = bytes_downloaded / (1024 ** 3)
-    tracker["ips"][client_ip]["count"] = tracker["ips"][client_ip].get("count", 0) + 1
-    tracker["ips"][client_ip]["bandwidth_gb"] = tracker["ips"][client_ip].get("bandwidth_gb", 0.0) + gb_downloaded
-    tracker["ips"][client_ip]["active_downloads"] = max(0, tracker["ips"][client_ip].get("active_downloads", 1) - 1)
-    tracker["ips"][client_ip]["last_download"] = datetime.now().isoformat()
-    tracker["total_monthly_bandwidth_gb"] = tracker.get("total_monthly_bandwidth_gb", 0) + gb_downloaded
-    
-    save_download_tracker(tracker)
+    with DOWNLOAD_TRACKER_LOCK:
+        tracker = load_download_tracker()
+        
+        if client_ip not in tracker["ips"]:
+            tracker["ips"][client_ip] = {
+                "count": 0,
+                "bandwidth_gb": 0.0,
+                "active_downloads": 0,
+                "last_download": None
+            }
+        
+        gb_downloaded = bytes_downloaded / (1024 ** 3)
+        tracker["ips"][client_ip]["count"] = tracker["ips"][client_ip].get("count", 0) + 1
+        tracker["ips"][client_ip]["bandwidth_gb"] = tracker["ips"][client_ip].get("bandwidth_gb", 0.0) + gb_downloaded
+        tracker["ips"][client_ip]["active_downloads"] = max(0, tracker["ips"][client_ip].get("active_downloads", 1) - 1)
+        tracker["ips"][client_ip]["last_download"] = datetime.now().isoformat()
+        tracker["total_monthly_bandwidth_gb"] = tracker.get("total_monthly_bandwidth_gb", 0) + gb_downloaded
+        
+        save_download_tracker(tracker)
 
 def record_download_cancel(client_ip: str):
     """Record when a download is cancelled."""
-    tracker = load_download_tracker()
-    
-    if client_ip in tracker["ips"]:
-        tracker["ips"][client_ip]["active_downloads"] = max(0, tracker["ips"][client_ip].get("active_downloads", 1) - 1)
-        save_download_tracker(tracker)
+    with DOWNLOAD_TRACKER_LOCK:
+        tracker = load_download_tracker()
+        
+        if client_ip in tracker["ips"]:
+            tracker["ips"][client_ip]["active_downloads"] = max(0, tracker["ips"][client_ip].get("active_downloads", 1) - 1)
+            save_download_tracker(tracker)
 
 # ====================================================
 # End Download Management System
@@ -13221,6 +13224,8 @@ async def download_conversion(request: Request):
     
     def generate_with_throttle():
         """Stream file with bandwidth throttling."""
+        bytes_sent = 0
+        completed = False
         try:
             # Load tracker to get speed limit
             tracker = load_download_tracker()
@@ -13228,7 +13233,6 @@ async def download_conversion(request: Request):
             chunk_size = 1024 * 1024  # 1 MB chunks
             delay_per_chunk = (chunk_size / (1024 * 1024)) / speed_mbps  # seconds
             
-            bytes_sent = 0
             with open(CONVERSION_FILE_PATH, 'rb') as f:
                 while True:
                     chunk = f.read(chunk_size)
@@ -13240,9 +13244,13 @@ async def download_conversion(request: Request):
             
             # Record successful completion
             record_download_complete(client_ip, bytes_sent)
+            completed = True
         except Exception as e:
             print(f"Error during download: {e}")
-            record_download_cancel(client_ip)
+            raise
+        finally:
+            if not completed:
+                record_download_cancel(client_ip)
     
     file_size = os.path.getsize(CONVERSION_FILE_PATH)
     return StreamingResponse(
