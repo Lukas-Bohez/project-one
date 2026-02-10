@@ -228,21 +228,6 @@ async def lifespan(app: FastAPI):
         # If the thread is not a daemon, you'd want to join it: pi_thread.join(timeout=5)
         print("Shutdown signal sent to Raspberry Pi thread.")
         
-        # Shutdown video conversion process pool gracefully
-        try:
-            if VIDEO_CONVERTER_AVAILABLE and 'video_process_pool' in globals():
-                print("Shutting down video conversion process pool...")
-                video_process_pool.shutdown(wait=False, cancel_futures=True)
-                print("[OK] Video process pool shutdown complete")
-        except Exception as e:
-            print(f"Error during video process pool shutdown: {e}")
-        try:
-            if VIDEO_CONVERTER_AVAILABLE and 'long_video_process_pool' in globals():
-                print("Shutting down long-video conversion process pool...")
-                long_video_process_pool.shutdown(wait=False, cancel_futures=True)
-                print("[OK] Long-video process pool shutdown complete")
-        except Exception as e:
-            print(f"Error during long-video process pool shutdown: {e}")
     except Exception as e:
         print(f"Error in shutdown: {e}")
 

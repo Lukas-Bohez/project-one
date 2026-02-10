@@ -7,7 +7,7 @@
     "109.137.130.57": {
       "count": 1,
       "bandwidth_gb": 1.446158679202199,
-      "active_downloads": 3,
+      "active_downloads": 4,
       "last_download": "2026-02-02T15:30:22.075855"
     },
     "45.190.31.150": {
@@ -135,6 +135,30 @@
       "bandwidth_gb": 1.446158679202199,
       "active_downloads": 0,
       "last_download": "2026-02-08T03:32:53.241007"
+    },
+    "172.226.16.17": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 0,
+      "last_download": null
+    },
+    "131.226.100.87": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 0,
+      "last_download": null
+    },
+    "84.15.178.170": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 0,
+      "last_download": null
+    },
+    "90.251.108.114": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 1,
+      "last_download": null
     }
   },
   "last_reset_month": "2026-02",
