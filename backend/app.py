@@ -464,7 +464,7 @@ def load_download_tracker():
     # Return defaults if file doesn't exist
     return {
         "monthly_limit_gb": 1024,
-        "per_ip_monthly_limit": 10,
+        "per_ip_monthly_limit": None,
         "download_speed_mbps": 2,
         "concurrent_per_ip": 4,
         "ips": {},
@@ -528,14 +528,14 @@ def get_download_status(client_ip: str):
     
     return {
         "downloads_this_month": downloads_this_month,
-        "max_downloads_per_month": tracker["per_ip_monthly_limit"],
+        "max_downloads_per_month": tracker.get("per_ip_monthly_limit"),
         "bandwidth_used_gb": round(bandwidth_used_gb, 2),
         "file_size_gb": tracker["file_size_gb"],
         "active_downloads": active_downloads,
         "max_concurrent": tracker["concurrent_per_ip"],
         "total_monthly_bandwidth_gb": round(tracker["total_monthly_bandwidth_gb"], 2),
         "monthly_limit_gb": tracker["monthly_limit_gb"],
-        "can_download": downloads_this_month < tracker["per_ip_monthly_limit"] and active_downloads < tracker["concurrent_per_ip"] and tracker["total_monthly_bandwidth_gb"] < tracker["monthly_limit_gb"]
+        "can_download": active_downloads < tracker["concurrent_per_ip"] and tracker["total_monthly_bandwidth_gb"] < tracker["monthly_limit_gb"]
     }
 
 def check_download_allowed(client_ip: str):
@@ -550,9 +550,6 @@ def check_download_allowed(client_ip: str):
     ip_data = tracker["ips"].get(client_ip, {})
     downloads_this_month = ip_data.get("count", 0)
     active_downloads = ip_data.get("active_downloads", 0)
-    
-    if downloads_this_month >= tracker["per_ip_monthly_limit"]:
-        return False, f"Monthly limit reached: {downloads_this_month}/{tracker['per_ip_monthly_limit']} downloads"
     
     if active_downloads >= tracker["concurrent_per_ip"]:
         return False, f"Too many concurrent downloads: {active_downloads}/{tracker['concurrent_per_ip']}"

@@ -98,11 +98,11 @@
                     <ol class="c-modal__list">
                         <li>Unzip ConversionTheSpireReborn.zip.</li>
                         <li>Open the unzipped folder.</li>
-                        <li>Run run_app.py in the root of that folder.</li>
+                        <li>Run ConvertTheSpireReborn.exe in the root of that folder.</li>
                     </ol>
                 </div>
                 <div style="background:#fff3cd; padding:0.75rem; border-left:3px solid #ffc107; border-radius:4px; margin-bottom:1rem;">
-                    <p style="margin:0; font-size:0.9rem; color:#664d03;"><strong>Download limits:</strong> 10 downloads per month per IP. File is throttled to 2 MB/s to manage server bandwidth.</p>
+                    <p style="margin:0; font-size:0.9rem; color:#664d03;"><strong>Note:</strong> Downloads are still throttled to 2 MB/s to manage server bandwidth.</p>
                 </div>
                 <p class="c-modal__note">Please consider viewing ads on other parts of the website to support Convert the Spire Reborn’s development so features like automatic updates can be added.</p>
             </div>
@@ -265,7 +265,7 @@
             
             // Get status info
             const status = await fetch('/api/v1/download/conversion/status').then(r => r.json());
-            statusText.innerHTML = `✓ Downloads this month: ${status.downloads_this_month}/${status.max_downloads_per_month}<br>File size: ${status.file_size_gb} GB<br>Speed: ${status.download_speed_mbps || 2} MB/s`;
+            statusText.innerHTML = `✓ Downloads this month: ${status.downloads_this_month}<br>File size: ${status.file_size_gb} GB<br>Speed: ${status.download_speed_mbps || 2} MB/s`;
             statusDiv.style.display = 'block';
             if (isDark) {
                 statusDiv.style.background = 'rgba(30, 58, 138, 0.9)';
