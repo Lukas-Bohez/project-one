@@ -470,7 +470,7 @@ def load_download_tracker():
         "ips": {},
         "last_reset_month": datetime.now().strftime("%Y-%m"),
         "total_monthly_bandwidth_gb": 0.0,
-        "file_size_gb": 1.5
+        "file_size_gb": 0.0126953125
     }
 
 def save_download_tracker(tracker):
