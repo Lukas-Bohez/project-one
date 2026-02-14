@@ -55,6 +55,8 @@ html, body {
     --font-size-lg: 1.125rem;
     --font-size-xl: 1.25rem;
     --font-size-2xl: 2rem;
+    --font-body: "Inter", "Segoe UI", Arial, sans-serif;
+    --font-display: "Space Grotesk", "Segoe UI", Arial, sans-serif;
 
     /* Map commonly used vars to the 60/30/10 tokens */
     --bg-primary: var(--bg-60);
@@ -134,7 +136,7 @@ html[data-theme="dark"],
  # ELEMENTS
 /*---------------------------------------*/
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: var(--font-body);
     background-color: var(--bg-primary);
     color: var(--text-primary);
     line-height: 1.6;
@@ -245,6 +247,9 @@ body * {
     grid-template-columns: 1fr;
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-lg);
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .o-status-display {
@@ -293,6 +298,7 @@ body * {
     display: inline-block;
     font-size: var(--font-size-2xl) !important;
     font-weight: 600;
+    font-family: var(--font-display);
     color: white !important;
 }
 
@@ -302,24 +308,28 @@ body * {
 }
 
 .c-welcome-message {
-    background-color: var(--bg-secondary);
+    background: rgba(255, 255, 255, 0.92);
     padding: var(--spacing-xl) 2rem;
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius-lg);
     margin-bottom: var(--spacing-xl);
-    border: 1px solid var(--border-color);
-    box-shadow: 0 4px 6px var(--shadow-light);
+    border: 1px solid rgba(44, 76, 124, 0.12);
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
     text-align: center;
     max-width: 800px;
     margin-left: auto;
     margin-right: auto;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 .c-section-panel {
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(44, 76, 124, 0.12);
+    border-radius: var(--border-radius-lg);
     padding: var(--spacing-lg) var(--spacing-md);
-    box-shadow: 0 4px 6px var(--shadow-light);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
 }
 
 .section .c-section-panel {
@@ -330,6 +340,8 @@ body * {
     margin: 0;
     font-size: var(--font-size-xl);
     font-weight: 600;
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
 }
 
 .c-download-subtitle {
@@ -338,10 +350,66 @@ body * {
 }
 
 .c-download-actions {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: var(--spacing-sm);
     justify-content: center;
+    width: 100%;
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+.c-download-panel {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.92));
+    border: 1px solid rgba(44, 76, 124, 0.14);
+    border-left: 4px solid rgba(44, 111, 184, 0.6);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.12);
+    padding: var(--spacing-xl);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.c-download-panel .c-btn {
+    font-weight: 600;
+}
+
+.c-download-note {
+    max-width: 720px;
+    margin: var(--spacing-sm) auto 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.c-download-status {
+    display: none;
+    width: 100%;
+    max-width: 640px;
+    margin: var(--spacing-md) auto 0;
+    padding: 0.75rem;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.95rem;
+    border: 1px solid var(--border-color);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.c-download-status p {
+    margin: 0;
+}
+
+.c-modal__alert {
+    background: #fff3cd;
+    border-left: 3px solid #ffc107;
+    border-radius: var(--border-radius-sm);
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.c-modal__alert-text {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #664d03;
 }
 
 .c-download-help {
@@ -364,6 +432,8 @@ body * {
     margin: 0 0 var(--spacing-xs);
     font-size: var(--font-size-lg);
     text-align: center;
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
 }
 
 .c-section-lead {
@@ -371,6 +441,39 @@ body * {
     color: var(--text-secondary);
     text-align: center;
     font-size: var(--font-size-sm);
+}
+
+[data-theme="dark"] .c-welcome-message,
+.theme-dark .c-welcome-message,
+[data-theme="dark"] .c-section-panel,
+.theme-dark .c-section-panel {
+    background: rgba(15, 17, 18, 0.92);
+    border-color: rgba(96, 165, 250, 0.18);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .c-download-panel,
+.theme-dark .c-download-panel {
+    background: linear-gradient(135deg, rgba(15, 17, 18, 0.98), rgba(17, 24, 39, 0.92));
+    border-color: rgba(96, 165, 250, 0.2);
+    border-left-color: rgba(96, 165, 250, 0.8);
+    box-shadow: 0 22px 44px rgba(0, 0, 0, 0.55);
+}
+
+[data-theme="dark"] .c-download-note,
+.theme-dark .c-download-note {
+    color: var(--text-30);
+}
+
+[data-theme="dark"] .c-modal__alert,
+.theme-dark .c-modal__alert {
+    background: rgba(120, 53, 15, 0.3);
+    border-left-color: #f59e0b;
+}
+
+[data-theme="dark"] .c-modal__alert-text,
+.theme-dark .c-modal__alert-text {
+    color: #fcd34d;
 }
 
 .c-btn {
@@ -1049,19 +1152,21 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 
 /* Compact button row: visually consistent, equal-width buttons that sit side-by-side when space allows */
 .compact-button-row{
-    display:flex;
-    gap:0.75rem;
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--spacing-md);
     justify-content:center;
     align-items:stretch; /* make buttons equal height */
-    margin-bottom: var(--spacing-lg);
+    margin: 0 auto var(--spacing-lg);
+    width: 100%;
+    max-width: 900px;
 }
 
 /* Make buttons equal-width across the row when there's room, but allow them
    to shrink to a sensible minimum. On phones they'll stack (see media query). */
 .compact-button-row .c-btn{
-    flex: 1 1 0; /* equal growth, allow shrinking */
-    min-width: 140px; /* keep comfortable touch targets */
-    max-width: 360px;
+    min-width: 180px; /* keep comfortable touch targets */
+    max-width: 100%;
     display:inline-flex;
     align-items:center;
     justify-content:center;
@@ -1070,12 +1175,10 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 @media (max-width: 480px){
     /* On phones, stack the buttons vertically and make them full-width */
     .compact-button-row{
-        flex-direction:column;
         gap:0.5rem;
         align-items:stretch;
     }
     .compact-button-row .c-btn{
-        flex: 1 1 100%;
         max-width: none;
         width: 100%;
     }
@@ -1143,16 +1246,19 @@ button[onclick*="idleGame/idlegame.html"]:hover {
     gap: 0.5rem;
     margin: 1rem 0;
     padding: 0.5rem;
-    background: var(--bg-secondary);
-    border-radius: var(--border-radius);
-    box-shadow: 0 2px 4px var(--shadow-light);
+    background: rgba(255, 255, 255, 0.88);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid rgba(44, 76, 124, 0.12);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 .c-nav-btn {
     padding: 0.75rem 1rem;
-    border: 2px solid var(--border-color);
-    border-radius: var(--border-radius);
-    background: var(--bg-tertiary);
+    border: 1px solid rgba(44, 76, 124, 0.18);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
     color: var(--text-primary);
     font-size: var(--font-size-sm);
     font-weight: 500;
@@ -1162,8 +1268,8 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 }
 
 .c-nav-btn:hover {
-    background: var(--hover-bg);
-    border-color: var(--primary-color);
+    background: rgba(219, 234, 254, 0.5);
+    border-color: rgba(44, 111, 184, 0.6);
 }
 
 .c-nav-btn.active {
@@ -1176,6 +1282,25 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 .theme-dark .c-nav-btn.active {
     background: var(--primary-color);
     color: var(--text-inverse);
+}
+
+[data-theme="dark"] .c-nav,
+.theme-dark .c-nav {
+    background: rgba(15, 17, 18, 0.92);
+    border-color: rgba(96, 165, 250, 0.2);
+    box-shadow: 0 12px 22px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .c-nav-btn,
+.theme-dark .c-nav-btn {
+    background: rgba(15, 17, 18, 0.95);
+    border-color: rgba(96, 165, 250, 0.25);
+}
+
+[data-theme="dark"] .c-nav-btn:hover,
+.theme-dark .c-nav-btn:hover {
+    background: rgba(30, 58, 138, 0.35);
+    border-color: rgba(96, 165, 250, 0.6);
 }
 
 .section {
@@ -1194,8 +1319,581 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 }
 
 .compact-button-row.section {
+    margin-bottom: var(--spacing-lg);
+}
+
+
+/* =====================================================
+   PRODUCT CARDS — Hero download & Lofi extension promos
+   ===================================================== */
+.c-product-card {
+    position: relative;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(44, 76, 124, 0.12);
+    border-radius: 16px;
+    padding: 2rem 2rem 1.75rem;
+    margin-bottom: var(--spacing-xl);
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: 0 12px 40px rgba(15, 23, 42, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    text-align: center;
+    transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+
+.c-product-card--hero {
+    border-left: 4px solid var(--primary-color);
+}
+
+.c-product-card--lofi {
+    border-left: 4px solid #8b5cf6;
+}
+
+/* Badge row */
+.c-product-card__badge-row {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
     gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+/* Badges */
+.c-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.c-badge--sm {
+    padding: 0.22rem 0.55rem;
+    font-size: 0.72rem;
+}
+
+.c-badge--green {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.c-badge--blue {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+}
+
+.c-badge--slate {
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+}
+
+.c-badge--purple {
+    background: #f3e8ff;
+    color: #6b21a8;
+    border: 1px solid #e9d5ff;
+}
+
+.c-badge--orange {
+    background: #fff7ed;
+    color: #9a3412;
+    border: 1px solid #fed7aa;
+}
+
+/* Product card title */
+.c-product-card__title {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+}
+
+.c-product-card__tagline {
+    margin: 0 0 1.25rem;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.5;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Feature list */
+.c-feature-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.5rem;
+    text-align: left;
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.c-feature-list__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 0.45rem 0;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+.c-feature-list__item i {
+    color: var(--primary-color);
+    font-size: 0.85rem;
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+    width: 18px;
+    text-align: center;
+}
+
+/* Horizontal variant for lofi card */
+.c-feature-list--horizontal {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+    justify-content: center;
+    max-width: 100%;
+    text-align: center;
+}
+
+.c-feature-list--horizontal .c-feature-list__item {
+    flex: 0 0 auto;
+    justify-content: center;
+}
+
+.c-feature-list--horizontal .c-feature-list__item i {
+    color: #8b5cf6;
+}
+
+/* Product card actions */
+.c-product-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+/* CTA button — primary download action */
+.c-btn--cta {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: #fff;
+    border: none;
+    padding: 0.85rem 1.75rem;
+    font-weight: 700;
+    font-size: 1rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 14px rgba(30, 58, 138, 0.25);
+    letter-spacing: 0.01em;
+}
+
+.c-btn--cta:hover {
+    box-shadow: 0 6px 20px rgba(30, 58, 138, 0.35);
+    transform: translateY(-2px);
+    filter: brightness(1.08);
+}
+
+.c-btn--cta:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(30, 58, 138, 0.2);
+}
+
+/* Lofi variant CTA */
+.c-btn--lofi {
+    background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
+}
+
+.c-btn--lofi:hover {
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+}
+
+/* Outline button — secondary action */
+.c-btn--outline {
+    background: transparent;
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border-radius: 10px;
+}
+
+.c-btn--outline:hover {
+    background: rgba(44, 111, 184, 0.08);
+    box-shadow: 0 0 0 1px var(--primary-color);
+}
+
+/* SENTLE button */
+.c-btn--sentle {
+    background: linear-gradient(135deg, #6aaa64, #c9b458);
+    color: white;
+    border: 2px solid #6aaa64;
+    font-weight: 700;
+    font-size: 1.05rem;
+    padding: 1rem 1.75rem;
+    border-radius: 10px;
+}
+
+.c-btn--sentle:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 6px 16px rgba(106, 170, 100, 0.3);
+}
+
+/* Support note */
+.c-product-card__support-note {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.c-product-card__support-note a {
+    color: var(--primary-color);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.c-product-card__support-note a:hover {
+    text-decoration: underline;
+}
+
+/* Download status bar */
+.c-download-status {
+    display: none;
+    width: 100%;
+    max-width: 640px;
+    margin: 0.75rem auto;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    border: 1px solid var(--border-color);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    text-align: left;
+}
+
+.c-download-status p {
+    margin: 0;
+}
+
+/* 2-column button groups */
+.o-button-group--2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (max-width: 520px) {
+    .o-button-group--2col {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* =====================================================
+   MODAL — Setup instructions overlay (redesigned)
+   ===================================================== */
+.c-modal__title {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-primary);
+}
+
+.c-modal__title i {
+    color: var(--primary-color);
+}
+
+.c-modal__body {
+    padding: 1.5rem 1.75rem;
+}
+
+.c-modal__section-heading {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.75rem;
+}
+
+/* Numbered step list */
+.c-modal__steps {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.25rem;
+    counter-reset: none;
+}
+
+.c-modal__steps li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.c-modal__steps li:last-child {
+    border-bottom: none;
+}
+
+.c-modal__step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: var(--primary-color);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.82rem;
+    flex-shrink: 0;
+}
+
+/* Alert box inside modal */
+.c-modal__alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.c-modal__alert-icon {
+    color: #d97706;
+    font-size: 1.1rem;
+    margin-top: 0.1rem;
+    flex-shrink: 0;
+}
+
+.c-modal__alert-text {
+    margin: 0;
+    font-size: 0.88rem;
+    color: #78350f;
+    line-height: 1.45;
+}
+
+.c-modal__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    padding-top: 0.5rem;
+}
+
+.c-modal__footer {
+    padding: 1rem 1.75rem;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+    border-radius: 0 0 16px 16px;
+}
+
+.c-modal__note {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.4;
+}
+
+/* Footer separator dots */
+.c-footer__sep {
+    color: var(--text-muted);
+    margin: 0 0.15rem;
+}
+
+
+/* =====================================================
+   DARK MODE — Product cards, modal, badges
+   ===================================================== */
+[data-theme="dark"] .c-product-card,
+.theme-dark .c-product-card {
+    background: rgba(17, 24, 39, 0.95);
+    border-color: rgba(96, 165, 250, 0.15);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .c-product-card--hero,
+.theme-dark .c-product-card--hero {
+    border-left-color: #60a5fa;
+}
+
+[data-theme="dark"] .c-product-card--lofi,
+.theme-dark .c-product-card--lofi {
+    border-left-color: #a78bfa;
+}
+
+/* Dark badges */
+[data-theme="dark"] .c-badge--green,
+.theme-dark .c-badge--green {
+    background: rgba(22, 101, 52, 0.25);
+    color: #86efac;
+    border-color: rgba(134, 239, 172, 0.2);
+}
+
+[data-theme="dark"] .c-badge--blue,
+.theme-dark .c-badge--blue {
+    background: rgba(30, 64, 175, 0.25);
+    color: #93c5fd;
+    border-color: rgba(147, 197, 253, 0.2);
+}
+
+[data-theme="dark"] .c-badge--slate,
+.theme-dark .c-badge--slate {
+    background: rgba(51, 65, 85, 0.4);
+    color: #cbd5e1;
+    border-color: rgba(203, 213, 225, 0.15);
+}
+
+[data-theme="dark"] .c-badge--purple,
+.theme-dark .c-badge--purple {
+    background: rgba(107, 33, 168, 0.25);
+    color: #d8b4fe;
+    border-color: rgba(216, 180, 254, 0.2);
+}
+
+[data-theme="dark"] .c-badge--orange,
+.theme-dark .c-badge--orange {
+    background: rgba(154, 52, 18, 0.25);
+    color: #fdba74;
+    border-color: rgba(253, 186, 116, 0.2);
+}
+
+/* Dark feature list icons */
+[data-theme="dark"] .c-feature-list__item i,
+.theme-dark .c-feature-list__item i {
+    color: #60a5fa;
+}
+
+[data-theme="dark"] .c-feature-list--horizontal .c-feature-list__item i,
+.theme-dark .c-feature-list--horizontal .c-feature-list__item i {
+    color: #a78bfa;
+}
+
+/* Dark CTA buttons */
+[data-theme="dark"] .c-btn--cta,
+.theme-dark .c-btn--cta {
+    box-shadow: 0 4px 14px rgba(96, 165, 250, 0.2);
+}
+
+[data-theme="dark"] .c-btn--cta:hover,
+.theme-dark .c-btn--cta:hover {
+    box-shadow: 0 6px 20px rgba(96, 165, 250, 0.3);
+}
+
+/* Dark outline button */
+[data-theme="dark"] .c-btn--outline,
+.theme-dark .c-btn--outline {
+    color: #93c5fd;
+    border-color: #93c5fd;
+}
+
+[data-theme="dark"] .c-btn--outline:hover,
+.theme-dark .c-btn--outline:hover {
+    background: rgba(96, 165, 250, 0.1);
+    box-shadow: 0 0 0 1px #93c5fd;
+}
+
+/* Dark modal */
+[data-theme="dark"] .c-modal__title,
+.theme-dark .c-modal__title {
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .c-modal__title i,
+.theme-dark .c-modal__title i {
+    color: #60a5fa;
+}
+
+[data-theme="dark"] .c-modal__section-heading,
+.theme-dark .c-modal__section-heading {
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .c-modal__steps li,
+.theme-dark .c-modal__steps li {
+    color: #d1d5db;
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .c-modal__step-num,
+.theme-dark .c-modal__step-num {
+    background: #3b82f6;
+}
+
+[data-theme="dark"] .c-modal__alert,
+.theme-dark .c-modal__alert {
+    background: rgba(120, 53, 15, 0.2);
+    border-color: rgba(251, 191, 36, 0.3);
+}
+
+[data-theme="dark"] .c-modal__alert-icon,
+.theme-dark .c-modal__alert-icon {
+    color: #fbbf24;
+}
+
+[data-theme="dark"] .c-modal__alert-text,
+.theme-dark .c-modal__alert-text {
+    color: #fde68a;
+}
+
+[data-theme="dark"] .c-modal__footer,
+.theme-dark .c-modal__footer {
+    background: rgba(17, 24, 39, 0.6);
+    border-top-color: #374151;
+}
+
+[data-theme="dark"] .c-modal__note,
+.theme-dark .c-modal__note {
+    color: #9ca3af;
+}
+
+/* Dark footer separator */
+[data-theme="dark"] .c-footer__sep,
+.theme-dark .c-footer__sep {
+    color: #6b7280;
+}
+
+/* Responsive: product cards */
+@media (max-width: 600px) {
+    .c-product-card {
+        padding: 1.5rem 1.25rem 1.25rem;
+    }
+    .c-product-card__title {
+        font-size: 1.3rem;
+    }
+    .c-product-card__actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .c-feature-list--horizontal {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
 }

@@ -9,40 +9,39 @@
     <!-- Ownership & Author Information -->
     <meta name="author" content="Oroka Conner">
     <meta name="owner" content="Oroka Conner">
-    <meta name="copyright" content="Copyright © 2025 Oroka Conner. All rights reserved.">
+    <meta name="copyright" content="Copyright &copy; 2025 Oroka Conner. All rights reserved.">
     <meta property="og:site_name" content="Quiz The Spire by Oroka Conner">
     
     <!-- Preconnect to external domains -->
     <link rel="preconnect" href="https://cdn.socket.io" crossorigin>
     <link rel="dns-prefetch" href="https://cdn.socket.io">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="css/footer.css">
     
     <!-- Critical CSS inlined for faster initial render -->
     <style>
-        body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f4f8fc;min-height:100vh;position:relative}
+        body{margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f4f8fc;min-height:100vh;position:relative}
         .c-header{background:linear-gradient(135deg,#1e3a8a,#0c4061);color:#fff;padding:1.5rem 1rem;text-align:center;border-bottom:1px solid rgba(255,255,255,.1);box-shadow:0 2px 8px rgba(0,0,0,.1)}
         .c-header h1{margin:0;font-size:1.25rem;font-weight:600;color:#fff}
         .o-container{max-width:1200px;padding:0 1rem;margin:1rem auto}
         .c-btn{display:inline-flex;align-items:center;justify-content:center;padding:1rem 1.5rem;border:2px solid #000;border-radius:8px;font-size:1rem;font-weight:500;cursor:pointer;background:#fff;color:#000;min-height:44px;transition:all .2s ease}
         .spire-background{position:fixed;top:0;left:0;width:100%;height:100vh;z-index:-1;overflow:hidden}
         .spire-background img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s;filter:brightness(.85)}
-        .c-download-panel{display:flex;flex-direction:column;gap:.75rem;align-items:center;text-align:center;background:rgba(255,255,255,.88);border:1px solid #e5e7eb;border-radius:12px;padding:1.25rem;box-shadow:0 8px 24px rgba(0,0,0,.08);transition:background .3s ease,border-color .3s ease}
-        [data-theme="dark"] .c-download-panel,.theme-dark .c-download-panel,body.theme-dark .c-download-panel{background:rgba(31,35,38,.95);border-color:#2a3034}
-        [data-theme="dark"] .c-download-panel .c-download-note,.theme-dark .c-download-panel .c-download-note,body.theme-dark .c-download-panel .c-download-note{color:#b9c5d6}
-        .c-download-panel .c-btn{font-weight:700}
-        .c-download-note{margin:0;color:#374151;font-size:.98rem;transition:color .3s ease}
-        .c-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.5);z-index:1000;padding:1.5rem}
+        .c-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:1000;padding:1.5rem;backdrop-filter:blur(4px)}
         .c-modal.is-open{display:flex}
-        .c-modal__content{background:#fff;border-radius:12px;max-width:520px;width:100%;padding:1.25rem 1.5rem;box-shadow:0 18px 40px rgba(0,0,0,.2);border:1px solid #e5e7eb;transition:background .3s ease,border-color .3s ease,color .3s ease}
-        [data-theme="dark"] .c-modal__content,.theme-dark .c-modal__content,body.theme-dark .c-modal__content{background:#0f1112;border-color:#2a3034;color:#e6eef8}
-        .c-modal__header{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.75rem}
-        .c-modal__close{border:1px solid #e5e7eb;background:#f9fafb;border-radius:999px;width:36px;height:36px;font-size:1.2rem;cursor:pointer;transition:background .3s ease,border-color .3s ease}
-        [data-theme="dark"] .c-modal__close,.theme-dark .c-modal__close,body.theme-dark .c-modal__close{border-color:#2a3034;background:#1f2326;color:#b9c5d6}
-        .c-modal__list{margin:.5rem 0 0 1.25rem;color:#111827;transition:color .3s ease}
-        [data-theme="dark"] .c-modal__list,.theme-dark .c-modal__list,body.theme-dark .c-modal__list{color:#b9c5d6}
-        .c-modal__note{margin:.75rem 0 0;color:#4b5563;transition:color .3s ease}
-        [data-theme="dark"] .c-modal__note,.theme-dark .c-modal__note,body.theme-dark .c-modal__note{color:#8f9fb0}
+        .c-modal__content{background:#fff;border-radius:16px;max-width:560px;width:100%;padding:0;box-shadow:0 24px 48px rgba(0,0,0,.18);border:1px solid #e5e7eb;transition:background .3s ease,border-color .3s ease,color .3s ease;overflow:hidden}
+        [data-theme="dark"] .c-modal__content,.theme-dark .c-modal__content{background:#111827;border-color:#374151;color:#e5e7eb}
+        .c-modal__header{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.25rem 1.75rem;border-bottom:1px solid #e5e7eb}
+        [data-theme="dark"] .c-modal__header,.theme-dark .c-modal__header{border-bottom-color:#374151}
+        .c-modal__close{border:1px solid #e5e7eb;background:#f9fafb;border-radius:999px;width:36px;height:36px;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s ease}
+        .c-modal__close:hover{background:#f1f5f9;border-color:#cbd5e1}
+        [data-theme="dark"] .c-modal__close,.theme-dark .c-modal__close{border-color:#374151;background:#1f2937;color:#d1d5db}
+        [data-theme="dark"] .c-modal__close:hover,.theme-dark .c-modal__close:hover{background:#374151;border-color:#4b5563}
+        .c-product-card{display:none}
+        .c-product-card{display:block}
     </style>
     
     <link rel="stylesheet" href="css/styles.css">
@@ -52,8 +51,7 @@
     <meta name="google-site-verification" content="i-fm4jHv_Tzy9zhCDiAArKCN0CTisNhAbAm3rmEwpfM" />
     <script src="js/privacy.js" defer></script>
     
-    
-    <!-- Favicon: ensure discoverable at root for search engines -->
+    <!-- Favicon -->
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" href="/favicon.ico">
@@ -70,67 +68,132 @@
         <h1 class="c-header__title">Quiz The Spire</h1>
         <p class="c-header__subtitle">Created and owned by Oroka Conner</p>
     </header>
-    <main class="o-container">
-        <div class="c-welcome-message">
-            <div class="c-download-panel">
-                <h2 class="c-download-title">Conversion The Spire Reborn</h2>
-                <p class="c-download-subtitle">Official download and setup steps for the offline app.</p>
-                <div class="c-download-actions">
-                    <button id="conversionDownloadBtn" class="c-btn c-btn--primary bw-btn" onclick="handleConversionDownload(event)">⬇️ Download ConversionTheSpireReborn.zip</button>
-                    <button id="conversionInstructionsBtn" class="c-btn c-btn--tertiary bw-btn" type="button">View instructions</button>
-                </div>
-                <div id="conversionStatus" style="display:none; margin-top:0.75rem; padding:0.75rem; background:#f0f4f8; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9rem; color:#334155; transition:background .3s ease,border-color .3s ease,color .3s ease;">
-                    <p id="statusText" style="margin:0;"></p>
-                </div>
-                <p class="c-download-help">Need help? <a href="/pages/support/" target="_blank" rel="noopener">Contact support</a>.</p>
-                <p class="c-download-note">After downloading, you will see clear setup steps. Please consider viewing ads on other parts of the website to support Convert the Spire Reborn’s development so features like automatic updates can be added.</p>
-            </div>
-        </div>
 
+    <main class="o-container">
+
+        <!-- =============================================
+             HERO: Conversion The Spire Reborn  (#1 promo)
+             ============================================= -->
+        <section class="c-product-card c-product-card--hero" aria-label="Conversion The Spire Reborn">
+            <div class="c-product-card__badge-row">
+                <span class="c-badge c-badge--green"><i class="fa-solid fa-shield-halved"></i> Open Source</span>
+                <span class="c-badge c-badge--blue"><i class="fa-solid fa-scale-balanced"></i> GPLv3 Licensed</span>
+                <span class="c-badge c-badge--slate"><i class="fa-brands fa-windows"></i> Windows</span>
+            </div>
+
+            <h2 class="c-product-card__title">Conversion The Spire Reborn</h2>
+            <p class="c-product-card__tagline">A powerful offline converter built with Flutter. Free, open-source, and yours to keep.</p>
+
+            <ul class="c-feature-list">
+                <li class="c-feature-list__item"><i class="fa-solid fa-bolt"></i> Fast local conversion &mdash; no internet needed</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-lock"></i> Your files never leave your machine</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-code-branch"></i> 100% open-source &mdash; inspect every line of code</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-arrows-rotate"></i> Regular updates &amp; community-driven</li>
+            </ul>
+
+            <div class="c-product-card__actions">
+                <button id="conversionDownloadBtn" class="c-btn c-btn--cta" onclick="handleConversionDownload(event)">
+                    <i class="fa-solid fa-download"></i>&nbsp; Download ConversionTheSpireReborn.zip
+                </button>
+                <button id="conversionInstructionsBtn" class="c-btn c-btn--outline" type="button">
+                    <i class="fa-solid fa-circle-info"></i>&nbsp; Setup instructions
+                </button>
+            </div>
+
+            <div id="conversionStatus" class="c-download-status" aria-live="polite">
+                <p id="statusText"></p>
+            </div>
+
+            <p class="c-product-card__support-note">
+                Need help? <a href="/pages/support/" target="_blank" rel="noopener">Contact support</a> &mdash; we typically reply within 24 hours.
+            </p>
+        </section>
+
+        <!-- Download instructions modal -->
         <div id="conversionDownloadModal" class="c-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="conversionDownloadTitle">
             <div class="c-modal__content" role="document">
                 <div class="c-modal__header">
-                    <h2 id="conversionDownloadTitle" class="modal-title">Download instructions & limits</h2>
-                    <button type="button" class="c-modal__close" aria-label="Close instructions">×</button>
+                    <h2 id="conversionDownloadTitle" class="c-modal__title"><i class="fa-solid fa-circle-info"></i> Setup instructions</h2>
+                    <button type="button" class="c-modal__close" aria-label="Close instructions">&times;</button>
                 </div>
-                <div style="margin-bottom:1rem;">
-                    <h3 style="margin:0.5rem 0; font-size:1rem; color:#1f2937;">How to use:</h3>
-                    <ol class="c-modal__list">
-                        <li>Unzip ConversionTheSpireReborn.zip.</li>
-                        <li>Open the unzipped folder.</li>
-                        <li>Run ConvertTheSpireReborn.exe in the root of that folder.</li>
+
+                <div class="c-modal__body">
+                    <h3 class="c-modal__section-heading">How to install</h3>
+                    <ol class="c-modal__steps">
+                        <li><span class="c-modal__step-num">1</span> Unzip <strong>ConversionTheSpireReborn.zip</strong></li>
+                        <li><span class="c-modal__step-num">2</span> Open the unzipped folder</li>
+                        <li><span class="c-modal__step-num">3</span> Run <strong>ConvertTheSpireReborn.exe</strong></li>
                     </ol>
+
+                    <div class="c-modal__alert">
+                        <i class="fa-solid fa-circle-exclamation c-modal__alert-icon"></i>
+                        <div>
+                            <p class="c-modal__alert-text"><strong>Bandwidth note:</strong> Downloads are throttled to 2&nbsp;MB/s to keep the server stable for everyone.</p>
+                        </div>
+                    </div>
+
+                    <div class="c-modal__meta">
+                        <span class="c-badge c-badge--green c-badge--sm"><i class="fa-solid fa-scale-balanced"></i> GPLv3</span>
+                        <span class="c-badge c-badge--slate c-badge--sm"><i class="fa-brands fa-windows"></i> Windows</span>
+                        <span class="c-badge c-badge--blue c-badge--sm"><i class="fa-solid fa-puzzle-piece"></i> Flutter</span>
+                    </div>
                 </div>
-                <div style="background:#fff3cd; padding:0.75rem; border-left:3px solid #ffc107; border-radius:4px; margin-bottom:1rem;">
-                    <p style="margin:0; font-size:0.9rem; color:#664d03;"><strong>Note:</strong> Downloads are still throttled to 2 MB/s to manage server bandwidth.</p>
+
+                <div class="c-modal__footer">
+                    <p class="c-modal__note">Consider viewing ads on other pages to support development &mdash; features like auto-update are on the roadmap.</p>
                 </div>
-                <p class="c-modal__note">Please consider viewing ads on other parts of the website to support Convert the Spire Reborn’s development so features like automatic updates can be added.</p>
             </div>
         </div>
 
-        <!-- Navigation -->
-        <nav class="c-nav">
-            <button class="c-nav-btn active" data-section="games">Quiz & Games</button>
-            <button class="c-nav-btn" data-section="tools">Tools & Content</button>
+        <!-- =============================================
+             PROMO: Lofi Extension  (#2 promo)
+             ============================================= -->
+        <section class="c-product-card c-product-card--lofi" aria-label="Lofi Extension">
+            <div class="c-product-card__badge-row">
+                <span class="c-badge c-badge--purple"><i class="fa-solid fa-puzzle-piece"></i> Browser Extension</span>
+                <span class="c-badge c-badge--slate"><i class="fa-brands fa-chrome"></i> Chrome</span>
+                <span class="c-badge c-badge--orange"><i class="fa-brands fa-firefox-browser"></i> Firefox</span>
+            </div>
+
+            <h2 class="c-product-card__title">Lofi Extension</h2>
+            <p class="c-product-card__tagline">Ambient lo-fi music right in your browser. Focus better, study longer, relax instantly.</p>
+
+            <ul class="c-feature-list c-feature-list--horizontal">
+                <li class="c-feature-list__item"><i class="fa-solid fa-headphones"></i> Curated lo-fi tracks</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-sliders"></i> Volume &amp; playback controls</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-moon"></i> Minimal &amp; distraction-free</li>
+            </ul>
+
+            <div class="c-product-card__actions">
+                <a id="downloadLofiZipBtn" class="c-btn c-btn--cta c-btn--lofi" href="/pages/lofi-download/">
+                    <i class="fa-solid fa-download"></i>&nbsp; Get Lofi Extension
+                </a>
+            </div>
+        </section>
+
+        <!-- =============================================
+             TAB NAVIGATION
+             ============================================= -->
+        <nav class="c-nav" aria-label="Site sections">
+            <button class="c-nav-btn active" data-section="games">Quiz &amp; Games</button>
+            <button class="c-nav-btn" data-section="tools">Tools &amp; Content</button>
             <button class="c-nav-btn" data-section="support">Support</button>
         </nav>
         
         <!-- Quiz & Games Section -->
         <div id="games-section" class="section active">
             <div class="c-section-panel">
-                <h2 class="c-section-title">Quiz & Games</h2>
+                <h2 class="c-section-title">Quiz &amp; Games</h2>
                 <p class="c-section-lead">Pick a mode to start playing.</p>
-                <div class="o-button-group">
+                <div class="o-button-group o-button-group--2col">
                     <button id="startQuizBtn" class="c-btn c-btn--tertiary bw-btn gamepad">Start or join Quiz</button>
                     <button id="studyQuizBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/study/'">Study quiz questions</button>
                 </div>
-                <div class="o-button-group u-mt-2" style="margin-top: 1.5rem;">
-                    <button id="sentleBtn" class="c-btn c-btn--primary bw-btn" onclick="window.location.href='/pages/sentle/';" style="background: linear-gradient(135deg, #6aaa64, #c9b458); color: white; border: 2px solid #6aaa64; font-weight: 700; font-size: 1.1rem; padding: 1.2rem 2rem;">
-                        🎯 SENTLE - Guess The Sentence!
+                <div class="o-button-group o-button-group--2col">
+                    <button id="sentleBtn" class="c-btn c-btn--sentle" onclick="window.location.href='/pages/sentle/';">
+                        &#127919; SENTLE &mdash; Guess The Sentence!
                     </button>
-                </div>
-                <div class="o-button-group u-mt-2">
-                    <button id="kingdomQuarryBtn" class="c-btn c-btn--primary c-btn--sm accent-blue" onclick="window.location.href='idleGame/idlegame.html';">⛏️ Industrial Empire</button>
+                    <button id="kingdomQuarryBtn" class="c-btn c-btn--primary accent-blue" onclick="window.location.href='idleGame/idlegame.html';">&#9935;&#65039; Industrial Empire</button>
                 </div>
             </div>
         </div>
@@ -138,18 +201,18 @@
         <!-- Tools & Content Section -->
         <div id="tools-section" class="section">
             <div class="c-section-panel">
-                <h2 class="c-section-title">Tools & Content</h2>
-                <p class="c-section-lead">Build, browse, and customize your experience.</p>
-                <div class="compact-button-row section">
+                <h2 class="c-section-title">Tools &amp; Content</h2>
+                <p class="c-section-lead">Build, browse, and customise your experience.</p>
+                <div class="o-button-group o-button-group--2col">
                     <button id="viewGraphsBtn" class="c-btn c-btn--tertiary bw-btn gamepad">View Graphs</button>
                     <button id="storyCreatorBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/storyCreator/'">Story Creator</button>
                 </div>
-                <div class="compact-button-row section u-mt-2">
+                <div class="o-button-group o-button-group--2col">
                     <button id="servoTestBtn" class="c-btn c-btn--tertiary bw-btn gamepad">Toggle Theme</button>
                     <button id="articleTheSpireBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/content/'">Stories</button>
                 </div>
-                <div class="compact-button-row section u-mt-2">
-                    <button id="articlesHubBtn" class="c-btn c-btn--tertiary c-btn--sm bw-btn" onclick="window.location.href='articles/articlepagenew.html'">Articles</button>
+                <div class="o-button-group o-button-group--2col">
+                    <button id="articlesHubBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='articles/articlepagenew.html'">Articles</button>
                     <button id="manageTheSpireBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/manage/'">Manage the Spire</button>
                 </div>
             </div>
@@ -160,15 +223,15 @@
             <div class="c-section-panel">
                 <h2 class="c-section-title">Support</h2>
                 <p class="c-section-lead">Get help fast and review site policies.</p>
-                <div class="o-button-group">
-                    <button id="supportBtn" class="c-btn c-btn--primary c-btn--sm bw-btn" onclick="window.open('/pages/support/','_blank');">💬 Contact Support</button>
+                <div class="o-button-group o-button-group--2col">
+                    <button id="supportBtn" class="c-btn c-btn--primary bw-btn" onclick="window.open('/pages/support/','_blank');">&#128172; Contact Support</button>
                     <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/about/'">About Me</button>
                 </div>
-                <div class="o-button-group u-mt-2">
+                <div class="o-button-group o-button-group--2col">
                     <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/privacy/'">Privacy Policy</button>
                     <button id="manageQuizBtn" class="c-btn c-btn--tertiary bw-btn">Manage Quiz</button>
                 </div>
-                <div class="o-button-group u-mt-2">
+                <div class="o-button-group o-button-group--2col">
                     <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/terms/'">Terms of Service</button>
                     <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/contact/'">Contact Us</button>
                 </div>
@@ -181,21 +244,18 @@
         <div class="c-footer__bmc" aria-hidden="false">
             <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="OrokaConner" data-color="#2c6fb8" data-emoji=""  data-font="Inter" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
         </div>
-        <div class="c-footer__download">
-            <a id="downloadLofiZipBtn" class="c-btn c-btn--tertiary bw-btn" href="/pages/lofi-download/">⬇️ Download Lofi Extension</a>
-        </div>
         <p class="c-footer__text">
-            <strong>© 2025 Quiz The Spire</strong><br>
-            Created, Owned & Operated by <strong>Oroka Conner</strong><br>
+            <strong>&copy; 2025 Quiz The Spire</strong><br>
+            Created, Owned &amp; Operated by <strong>Oroka Conner</strong><br>
             All rights reserved.
         </p>
-        <p class="c-footer__notice" style="color: #666; font-size: 0.9rem; margin-top: 0.5rem;">
-            Convert the Spire has been taken down by YouTube
-        </p>
         <p class="c-footer__links">
-            <a href="/pages/privacy/" class="c-footer__link">Privacy Policy</a> |
-            <a href="/pages/contact/" class="c-footer__link">Contact Us</a> |
-            <a href="/pages/terms/" class="c-footer__link">Terms of Service</a> |
+            <a href="/pages/privacy/" class="c-footer__link">Privacy Policy</a>
+            <span class="c-footer__sep" aria-hidden="true">&middot;</span>
+            <a href="/pages/contact/" class="c-footer__link">Contact Us</a>
+            <span class="c-footer__sep" aria-hidden="true">&middot;</span>
+            <a href="/pages/terms/" class="c-footer__link">Terms of Service</a>
+            <span class="c-footer__sep" aria-hidden="true">&middot;</span>
             <a href="/pages/about/" class="c-footer__link">About</a>
         </p>
     </footer>
@@ -222,7 +282,6 @@
     function applyStatusDivTheme(isDark) {
         const statusDiv = document.getElementById('conversionStatus');
         if (!statusDiv) return;
-        
         if (isDark) {
             statusDiv.style.background = 'rgba(15, 17, 18, 0.95)';
             statusDiv.style.borderColor = '#2a3034';
@@ -244,12 +303,10 @@
         const isDark = getCurrentTheme() === 'dark';
         
         try {
-            // Check if download is allowed
             const response = await fetch('/api/v1/download/conversion/check', { method: 'POST' });
-            
             if (!response.ok) {
                 const error = await response.json();
-                statusText.textContent = '❌ ' + error.detail;
+                statusText.textContent = '\u274c ' + error.detail;
                 statusDiv.style.display = 'block';
                 if (isDark) {
                     statusDiv.style.background = 'rgba(127, 29, 29, 0.9)';
@@ -262,10 +319,8 @@
                 }
                 return;
             }
-            
-            // Get status info
             const status = await fetch('/api/v1/download/conversion/status').then(r => r.json());
-            statusText.innerHTML = `✓ Downloads this month: ${status.downloads_this_month}<br>File size: ${status.file_size_gb} GB<br>Speed: ${status.download_speed_mbps || 2} MB/s`;
+            statusText.innerHTML = `\u2713 Downloads this month: ${status.downloads_this_month}<br>File size: ${status.file_size_gb} GB<br>Speed: ${status.download_speed_mbps || 2} MB/s`;
             statusDiv.style.display = 'block';
             if (isDark) {
                 statusDiv.style.background = 'rgba(30, 58, 138, 0.9)';
@@ -276,19 +331,12 @@
                 statusDiv.style.borderColor = '#3b82f6';
                 statusDiv.style.color = '#1e3a8a';
             }
-            
-            // Show modal with instructions
             modal.classList.add('is-open');
             modal.setAttribute('aria-hidden', 'false');
-            
-            // Trigger actual download after brief delay
-            setTimeout(() => {
-                window.location.href = '/api/v1/download/conversion';
-            }, 500);
-            
+            setTimeout(() => { window.location.href = '/api/v1/download/conversion'; }, 500);
         } catch (error) {
             console.error('Download error:', error);
-            statusText.textContent = '❌ Error: ' + error.message;
+            statusText.textContent = '\u274c Error: ' + error.message;
             statusDiv.style.display = 'block';
             if (isDark) {
                 statusDiv.style.background = 'rgba(127, 29, 29, 0.9)';
@@ -316,33 +364,14 @@
     (function(){
         const modal = document.getElementById('conversionDownloadModal');
         if (!modal) return;
-        
         const closeBtn = modal.querySelector('.c-modal__close');
         const instructionsBtn = document.getElementById('conversionInstructionsBtn');
-        const openModal = () => {
-            modal.classList.add('is-open');
-            modal.setAttribute('aria-hidden', 'false');
-        };
-        const closeModal = () => {
-            modal.classList.remove('is-open');
-            modal.setAttribute('aria-hidden', 'true');
-        };
-        
-        if (closeBtn) {
-            closeBtn.addEventListener('click', closeModal);
-        }
-        if (instructionsBtn) {
-            instructionsBtn.addEventListener('click', (event) => {
-                event.preventDefault();
-                openModal();
-            });
-        }
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
-        });
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeModal();
-        });
+        const openModal = () => { modal.classList.add('is-open'); modal.setAttribute('aria-hidden', 'false'); };
+        const closeModal = () => { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); };
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        if (instructionsBtn) instructionsBtn.addEventListener('click', (e) => { e.preventDefault(); openModal(); });
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
     })();
     </script>
     
