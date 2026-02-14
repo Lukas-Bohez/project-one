@@ -10,4 +10,3 @@
 
 - /js/themeManager.js
 - https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js
-- /js/lofi.js
