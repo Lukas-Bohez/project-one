@@ -1653,7 +1653,7 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 }
 
 .c-modal__body {
-    padding: 1.25rem 1.5rem;
+    padding: 1rem 1rem; /* tighter, more natural flow */
     overflow-y: auto;
     flex: 1;
     min-height: 0;
@@ -1676,15 +1676,19 @@ button[onclick*="idleGame/idlegame.html"]:hover {
     counter-reset: none;
 }
 
+/* make each step a normal flowing block and reserve space for the number */
 .c-modal__steps li {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.6rem;
-    padding: 0.5rem 0;
+    position: relative;
+    display: block;
+    padding-left: 40px;           /* reserve space for absolute step number */
+    margin: 0.35rem 0;
     font-size: 0.92rem;
+    line-height: 1.35;
     color: var(--text-primary);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: none;
+    word-break: normal;           /* don't split words mid-syllable */
     overflow-wrap: break-word;
+    hyphens: none;
     min-width: 0;
 }
 
@@ -1693,18 +1697,22 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 }
 
 .c-modal__step-num {
+    position: absolute;        /* removed from text flow so lines wrap naturally */
+    left: 0;
+    top: 0.12rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
     border-radius: 999px;
-    background: var(--primary-color);
-    color: #fff;
+    background: rgba(0,0,0,0.03);
+    border: 1px solid rgba(0,0,0,0.06);
+    color: var(--primary-color);
     font-weight: 700;
     font-size: 0.78rem;
     flex-shrink: 0;
-    margin-top: 0.05rem;
+    margin: 0;
 }
 
 /* Alert box inside modal */
@@ -1712,11 +1720,11 @@ button[onclick*="idleGame/idlegame.html"]:hover {
     display: flex;
     align-items: flex-start;
     gap: 0.6rem;
-    background: #fffbeb;
-    border: 1px solid #fde68a;
-    border-radius: 10px;
-    padding: 0.75rem 0.85rem;
-    margin-bottom: 1rem;
+    background: transparent;               /* less 'card-like' */
+    border-left: 4px solid #fde68a;        /* subtle accent instead */
+    border-radius: 4px;
+    padding: 0.4rem 0.6rem;                /* tighter padding */
+    margin-bottom: 0.6rem;
     min-width: 0;
 }
 
@@ -2235,18 +2243,25 @@ button[onclick*="idleGame/idlegame.html"]:hover {
         margin-bottom: 0.875rem;
     }
     .c-modal__steps li {
-        font-size: 0.82rem;
-        gap: 0.5rem;
-        padding: 0.4rem 0;
-        line-height: 1.4;
+        display: block;
+        padding-left: 34px;
+        font-size: 0.84rem;
+        margin: 0.18rem 0;
+        line-height: 1.28;
+        word-break: normal;
+        overflow-wrap: break-word;
     }
     .c-modal__steps li strong {
         overflow-wrap: break-word;
     }
     .c-modal__step-num {
-        width: 22px;
-        height: 22px;
-        font-size: 0.7rem;
+        position: absolute;
+        left: 0;
+        top: 0.06rem;
+        width: 20px;
+        height: 20px;
+        font-size: 0.66rem;
+        border-radius: 4px;
     }
     .c-modal__alert {
         padding: 0.6rem 0.7rem;
@@ -2288,5 +2303,44 @@ button[onclick*="idleGame/idlegame.html"]:hover {
         font-size: 0.82rem;
         padding: 0.5rem 0.5rem;
         gap: 0.35rem;
+    }
+}
+
+/* Very small screens — tighten modal steps so short instructions use fewer lines */
+@media (max-width: 420px) {
+    .c-modal__body {
+        padding: 0.65rem 0.75rem;
+        font-size: 0.95rem;
+    }
+
+    .c-modal__steps {
+        margin-bottom: 0.6rem;
+    }
+
+    .c-modal__steps li {
+        display: block;
+        padding-left: 30px;
+        font-size: 0.78rem;
+        line-height: 1.22;
+        margin: 0.08rem 0;
+        word-break: normal;
+        overflow-wrap: break-word;
+    }
+
+    .c-modal__step-num {
+        position: absolute;
+        left: 0;
+        top: 0.03rem;
+        width: 18px;
+        height: 18px;
+        font-size: 0.62rem;
+        border-radius: 3px;
+        margin-right: 0;
+    }
+
+    /* Prevent very short sentences from being split into many lines */
+    .c-platform-panel#platform-android .c-modal__steps li:last-child {
+        white-space: normal; /* allow compact wrapping */
+        margin-bottom: 0.15rem;
     }
 }
