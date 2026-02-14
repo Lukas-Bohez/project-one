@@ -1610,6 +1610,30 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 /* =====================================================
    MODAL — Setup instructions overlay (redesigned)
    ===================================================== */
+
+/* Override general modal styles for conversion download modal */
+#conversionDownloadModal {
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+#conversionDownloadModal.is-open {
+    display: flex;
+}
+#conversionDownloadModal .c-modal__content {
+    margin: 0;
+    padding: 0;
+    max-height: 90vh;
+    max-height: 90dvh;
+    display: flex;
+    flex-direction: column;
+    max-width: 560px;
+    width: 100%;
+}
+#conversionDownloadModal .c-modal__header {
+    flex-shrink: 0;
+}
+
 .c-modal__title {
     font-family: var(--font-display);
     font-size: 1.15rem;
@@ -1627,6 +1651,10 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 
 .c-modal__body {
     padding: 1.5rem 1.75rem;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
 }
 
 .c-modal__section-heading {
@@ -1711,6 +1739,7 @@ button[onclick*="idleGame/idlegame.html"]:hover {
     border-top: 1px solid #e5e7eb;
     background: #f9fafb;
     border-radius: 0 0 16px 16px;
+    flex-shrink: 0;
 }
 
 .c-modal__note {
@@ -2078,10 +2107,13 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 /* Responsive: product cards */
 @media (max-width: 600px) {
     .c-product-card {
-        padding: 1.5rem 1.25rem 1.25rem;
+        padding: 1.25rem 1rem 1rem;
     }
     .c-product-card__title {
-        font-size: 1.3rem;
+        font-size: 1.2rem;
+    }
+    .c-product-card__tagline {
+        font-size: 0.9rem;
     }
     .c-product-card__actions {
         flex-direction: column;
@@ -2094,5 +2126,71 @@ button[onclick*="idleGame/idlegame.html"]:hover {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.5rem;
+    }
+    .c-badge {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.55rem;
+    }
+    .c-feature-list__item {
+        font-size: 0.88rem;
+    }
+    .c-btn--cta {
+        font-size: 0.92rem;
+        padding: 0.75rem 1.25rem;
+    }
+    .c-btn--outline {
+        font-size: 0.88rem;
+        padding: 0.65rem 1rem;
+    }
+}
+
+/* Modal mobile fixes */
+@media (max-width: 600px) {
+    .c-modal {
+        padding: 0.5rem !important;
+    }
+    .c-modal__content {
+        max-height: 95vh !important;
+        max-height: 95dvh !important;
+        border-radius: 12px;
+    }
+    .c-modal__header {
+        padding: 1rem 1.125rem;
+    }
+    .c-modal__body {
+        padding: 1rem 1.125rem;
+    }
+    .c-modal__footer {
+        padding: 0.75rem 1.125rem;
+        border-radius: 0 0 12px 12px;
+    }
+    .c-modal__title {
+        font-size: 1rem;
+    }
+    .c-modal__section-heading {
+        font-size: 0.88rem;
+    }
+    .c-modal__steps li {
+        font-size: 0.88rem;
+        padding: 0.5rem 0;
+    }
+    .c-modal__step-num {
+        width: 24px;
+        height: 24px;
+        font-size: 0.75rem;
+    }
+    .c-modal__alert {
+        padding: 0.7rem 0.85rem;
+        gap: 0.6rem;
+    }
+    .c-modal__alert-text {
+        font-size: 0.82rem;
+    }
+    .c-modal__alert-steps {
+        font-size: 0.82rem;
+    }
+    .c-platform-tab {
+        font-size: 0.85rem;
+        padding: 0.55rem 0.75rem;
     }
 }
