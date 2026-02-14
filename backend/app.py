@@ -13259,6 +13259,67 @@ async def download_conversion(request: Request):
         }
     )
 
+# APK Download for Android
+CONVERSION_APK_PATH = os.path.join(os.path.dirname(__file__), '../frontend/downloads/ConvertTheSpireReborn.apk')
+
+@app.get("/api/v1/download/conversion/apk")
+async def download_conversion_apk(request: Request):
+    """Download ConvertTheSpireReborn.apk with bandwidth throttling."""
+    from fastapi.responses import StreamingResponse
+    import time
+    
+    client_ip = get_client_ip(request)
+    
+    # Check if download is allowed
+    allowed, message = check_download_allowed(client_ip)
+    if not allowed:
+        raise HTTPException(status_code=429, detail=message)
+    
+    # Check if file exists
+    if not os.path.exists(CONVERSION_APK_PATH):
+        raise HTTPException(status_code=404, detail="APK download file not found")
+    
+    # Record download start
+    record_download_start(client_ip)
+    
+    def generate_with_throttle():
+        """Stream APK file with bandwidth throttling."""
+        bytes_sent = 0
+        completed = False
+        try:
+            tracker = load_download_tracker()
+            speed_mbps = tracker.get("download_speed_mbps", 2)
+            chunk_size = 1024 * 1024  # 1 MB chunks
+            delay_per_chunk = (chunk_size / (1024 * 1024)) / speed_mbps
+            
+            with open(CONVERSION_APK_PATH, 'rb') as f:
+                while True:
+                    chunk = f.read(chunk_size)
+                    if not chunk:
+                        break
+                    bytes_sent += len(chunk)
+                    yield chunk
+                    time.sleep(delay_per_chunk)
+            
+            record_download_complete(client_ip, bytes_sent)
+            completed = True
+        except Exception as e:
+            print(f"Error during APK download: {e}")
+            raise
+        finally:
+            if not completed:
+                record_download_cancel(client_ip)
+    
+    file_size = os.path.getsize(CONVERSION_APK_PATH)
+    return StreamingResponse(
+        generate_with_throttle(),
+        media_type="application/vnd.android.package-archive",
+        headers={
+            "Content-Disposition": "attachment; filename=ConvertTheSpireReborn.apk",
+            "Content-Length": str(file_size)
+        }
+    )
+
 # ====================================================
 # End Download Endpoints
 # ====================================================

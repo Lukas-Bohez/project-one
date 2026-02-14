@@ -79,6 +79,7 @@
                 <span class="c-badge c-badge--green"><i class="fa-solid fa-shield-halved"></i> Open Source</span>
                 <span class="c-badge c-badge--blue"><i class="fa-solid fa-scale-balanced"></i> GPLv3 Licensed</span>
                 <span class="c-badge c-badge--slate"><i class="fa-brands fa-windows"></i> Windows</span>
+                <span class="c-badge c-badge--green"><i class="fa-brands fa-android"></i> Android</span>
             </div>
 
             <h2 class="c-product-card__title">Conversion The Spire Reborn</h2>
@@ -91,10 +92,15 @@
                 <li class="c-feature-list__item"><i class="fa-solid fa-arrows-rotate"></i> Regular updates &amp; community-driven</li>
             </ul>
 
-            <div class="c-product-card__actions">
-                <button id="conversionDownloadBtn" class="c-btn c-btn--cta" onclick="handleConversionDownload(event)">
-                    <i class="fa-solid fa-download"></i>&nbsp; Download ConversionTheSpireReborn.zip
+            <div class="c-product-card__actions c-product-card__actions--platform">
+                <button id="conversionDownloadBtn" class="c-btn c-btn--cta c-btn--windows" onclick="handleConversionDownload(event, 'windows')">
+                    <i class="fa-brands fa-windows"></i>&nbsp; Download for Windows
                 </button>
+                <button id="conversionDownloadApkBtn" class="c-btn c-btn--cta c-btn--android" onclick="handleConversionDownload(event, 'android')">
+                    <i class="fa-brands fa-android"></i>&nbsp; Download for Android
+                </button>
+            </div>
+            <div class="c-product-card__actions">
                 <button id="conversionInstructionsBtn" class="c-btn c-btn--outline" type="button">
                     <i class="fa-solid fa-circle-info"></i>&nbsp; Setup instructions
                 </button>
@@ -118,12 +124,59 @@
                 </div>
 
                 <div class="c-modal__body">
-                    <h3 class="c-modal__section-heading">How to install</h3>
-                    <ol class="c-modal__steps">
-                        <li><span class="c-modal__step-num">1</span> Unzip <strong>ConversionTheSpireReborn.zip</strong></li>
-                        <li><span class="c-modal__step-num">2</span> Open the unzipped folder</li>
-                        <li><span class="c-modal__step-num">3</span> Run <strong>ConvertTheSpireReborn.exe</strong></li>
-                    </ol>
+                    <!-- Platform tabs -->
+                    <div class="c-platform-tabs">
+                        <button class="c-platform-tab active" data-platform="windows"><i class="fa-brands fa-windows"></i> Windows</button>
+                        <button class="c-platform-tab" data-platform="android"><i class="fa-brands fa-android"></i> Android</button>
+                    </div>
+
+                    <!-- Windows instructions -->
+                    <div class="c-platform-panel active" id="platform-windows">
+                        <h3 class="c-modal__section-heading"><i class="fa-brands fa-windows"></i> Windows Installation</h3>
+                        <ol class="c-modal__steps">
+                            <li><span class="c-modal__step-num">1</span> Download <strong>ConversionTheSpireReborn.zip</strong></li>
+                            <li><span class="c-modal__step-num">2</span> Unzip the downloaded file</li>
+                            <li><span class="c-modal__step-num">3</span> Open the unzipped folder and run <strong>ConvertTheSpireReborn.exe</strong></li>
+                        </ol>
+
+                        <div class="c-modal__alert c-modal__alert--warning">
+                            <i class="fa-solid fa-triangle-exclamation c-modal__alert-icon"></i>
+                            <div>
+                                <p class="c-modal__alert-text"><strong>Windows SmartScreen warning:</strong> Because the app is not code-signed, Windows may show a &ldquo;Windows protected your PC&rdquo; warning. This is normal for unsigned software.</p>
+                                <ol class="c-modal__alert-steps">
+                                    <li>Click <strong>&ldquo;More info&rdquo;</strong></li>
+                                    <li>Click <strong>&ldquo;Run anyway&rdquo;</strong></li>
+                                </ol>
+                                <p class="c-modal__alert-text">The app is fully open-source &mdash; you can <a href="https://github.com/Lukas-Bohez/project-one" target="_blank" rel="noopener">inspect every line of code</a> on GitHub.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Android instructions -->
+                    <div class="c-platform-panel" id="platform-android">
+                        <h3 class="c-modal__section-heading"><i class="fa-brands fa-android"></i> Android Installation</h3>
+                        <ol class="c-modal__steps">
+                            <li><span class="c-modal__step-num">1</span> Download <strong>ConvertTheSpireReborn.apk</strong> to your Android device</li>
+                            <li><span class="c-modal__step-num">2</span> Open the downloaded <strong>.apk</strong> file</li>
+                            <li><span class="c-modal__step-num">3</span> If prompted, enable <strong>&ldquo;Install from unknown sources&rdquo;</strong> for your browser</li>
+                            <li><span class="c-modal__step-num">4</span> Tap <strong>&ldquo;Install&rdquo;</strong> and wait for it to finish</li>
+                            <li><span class="c-modal__step-num">5</span> Open the app from your app drawer</li>
+                        </ol>
+
+                        <div class="c-modal__alert c-modal__alert--warning">
+                            <i class="fa-solid fa-triangle-exclamation c-modal__alert-icon"></i>
+                            <div>
+                                <p class="c-modal__alert-text"><strong>Unofficial APK:</strong> This APK is not distributed through the Google Play Store. Android will warn you about installing apps from unknown sources &mdash; this is standard for any APK installed outside the Play Store.</p>
+                                <p class="c-modal__alert-text"><strong>To enable installation:</strong></p>
+                                <ol class="c-modal__alert-steps">
+                                    <li>Go to <strong>Settings &rarr; Security</strong> (or <strong>Settings &rarr; Apps &rarr; Special access</strong>)</li>
+                                    <li>Enable <strong>&ldquo;Install unknown apps&rdquo;</strong> for your browser</li>
+                                    <li>Try opening the APK again</li>
+                                </ol>
+                                <p class="c-modal__alert-text">The app is fully open-source &mdash; you can <a href="https://github.com/Lukas-Bohez/project-one" target="_blank" rel="noopener">inspect every line of code</a> on GitHub.</p>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="c-modal__alert">
                         <i class="fa-solid fa-circle-exclamation c-modal__alert-icon"></i>
@@ -135,6 +188,7 @@
                     <div class="c-modal__meta">
                         <span class="c-badge c-badge--green c-badge--sm"><i class="fa-solid fa-scale-balanced"></i> GPLv3</span>
                         <span class="c-badge c-badge--slate c-badge--sm"><i class="fa-brands fa-windows"></i> Windows</span>
+                        <span class="c-badge c-badge--green c-badge--sm"><i class="fa-brands fa-android"></i> Android</span>
                         <span class="c-badge c-badge--blue c-badge--sm"><i class="fa-solid fa-puzzle-piece"></i> Flutter</span>
                     </div>
                 </div>
@@ -294,13 +348,15 @@
     }
     
     // Download management for ConversionTheSpireReborn
-    async function handleConversionDownload(event) {
+    async function handleConversionDownload(event, platform) {
         event.preventDefault();
         const modal = document.getElementById('conversionDownloadModal');
         const statusDiv = document.getElementById('conversionStatus');
         const statusText = document.getElementById('statusText');
-        const btn = document.getElementById('conversionDownloadBtn');
         const isDark = getCurrentTheme() === 'dark';
+        const isAndroid = platform === 'android';
+        const downloadUrl = isAndroid ? '/api/v1/download/conversion/apk' : '/api/v1/download/conversion';
+        const fileName = isAndroid ? 'ConvertTheSpireReborn.apk' : 'ConversionTheSpireReborn.zip';
         
         try {
             const response = await fetch('/api/v1/download/conversion/check', { method: 'POST' });
@@ -320,7 +376,7 @@
                 return;
             }
             const status = await fetch('/api/v1/download/conversion/status').then(r => r.json());
-            statusText.innerHTML = `\u2713 Downloads this month: ${status.downloads_this_month}<br>File size: ${status.file_size_gb} GB<br>Speed: ${status.download_speed_mbps || 2} MB/s`;
+            statusText.innerHTML = `\u2713 Downloading <strong>${fileName}</strong><br>Downloads this month: ${status.downloads_this_month}<br>Speed: ${status.download_speed_mbps || 2} MB/s`;
             statusDiv.style.display = 'block';
             if (isDark) {
                 statusDiv.style.background = 'rgba(30, 58, 138, 0.9)';
@@ -331,9 +387,13 @@
                 statusDiv.style.borderColor = '#3b82f6';
                 statusDiv.style.color = '#1e3a8a';
             }
+            // Switch modal to the right platform tab
+            const targetTab = isAndroid ? 'android' : 'windows';
+            document.querySelectorAll('.c-platform-tab').forEach(t => t.classList.toggle('active', t.dataset.platform === targetTab));
+            document.querySelectorAll('.c-platform-panel').forEach(p => p.classList.toggle('active', p.id === 'platform-' + targetTab));
             modal.classList.add('is-open');
             modal.setAttribute('aria-hidden', 'false');
-            setTimeout(() => { window.location.href = '/api/v1/download/conversion'; }, 500);
+            setTimeout(() => { window.location.href = downloadUrl; }, 500);
         } catch (error) {
             console.error('Download error:', error);
             statusText.textContent = '\u274c Error: ' + error.message;
@@ -372,6 +432,15 @@
         if (instructionsBtn) instructionsBtn.addEventListener('click', (e) => { e.preventDefault(); openModal(); });
         modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+        // Platform tab switching
+        modal.querySelectorAll('.c-platform-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const platform = tab.dataset.platform;
+                modal.querySelectorAll('.c-platform-tab').forEach(t => t.classList.toggle('active', t === tab));
+                modal.querySelectorAll('.c-platform-panel').forEach(p => p.classList.toggle('active', p.id === 'platform-' + platform));
+            });
+        });
     })();
     </script>
     

@@ -1879,6 +1879,202 @@ button[onclick*="idleGame/idlegame.html"]:hover {
     color: #6b7280;
 }
 
+/* =============================================
+   Platform Tabs (modal)
+   ============================================= */
+.c-platform-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid #e5e7eb;
+    margin-bottom: 1.25rem;
+}
+
+.c-platform-tab {
+    flex: 1;
+    padding: 0.65rem 1rem;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.c-platform-tab:hover {
+    color: #334155;
+    background: #f1f5f9;
+}
+
+.c-platform-tab.active {
+    color: #1e40af;
+    border-bottom-color: #1e40af;
+}
+
+.c-platform-panel {
+    display: none;
+}
+
+.c-platform-panel.active {
+    display: block;
+}
+
+[data-theme="dark"] .c-platform-tabs,
+.theme-dark .c-platform-tabs {
+    border-bottom-color: #374151;
+}
+
+[data-theme="dark"] .c-platform-tab,
+.theme-dark .c-platform-tab {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .c-platform-tab:hover,
+.theme-dark .c-platform-tab:hover {
+    color: #e5e7eb;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .c-platform-tab.active,
+.theme-dark .c-platform-tab.active {
+    color: #60a5fa;
+    border-bottom-color: #60a5fa;
+}
+
+/* =============================================
+   Platform-specific CTA Buttons
+   ============================================= */
+.c-product-card__actions--platform {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.c-btn--windows {
+    background: linear-gradient(135deg, #0078d4, #005a9e);
+    border-color: #0078d4;
+    color: #fff;
+}
+
+.c-btn--windows:hover {
+    background: linear-gradient(135deg, #005a9e, #003d6b);
+    border-color: #005a9e;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+}
+
+.c-btn--android {
+    background: linear-gradient(135deg, #34a853, #0f9d58);
+    border-color: #34a853;
+    color: #fff;
+}
+
+.c-btn--android:hover {
+    background: linear-gradient(135deg, #0f9d58, #0b7a3e);
+    border-color: #0f9d58;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(52, 168, 83, 0.3);
+}
+
+[data-theme="dark"] .c-btn--windows,
+.theme-dark .c-btn--windows {
+    background: linear-gradient(135deg, #2b7de9, #1565c0);
+    border-color: #2b7de9;
+}
+
+[data-theme="dark"] .c-btn--windows:hover,
+.theme-dark .c-btn--windows:hover {
+    background: linear-gradient(135deg, #1565c0, #0d47a1);
+    box-shadow: 0 4px 16px rgba(43, 125, 233, 0.4);
+}
+
+[data-theme="dark"] .c-btn--android,
+.theme-dark .c-btn--android {
+    background: linear-gradient(135deg, #43a047, #2e7d32);
+    border-color: #43a047;
+}
+
+[data-theme="dark"] .c-btn--android:hover,
+.theme-dark .c-btn--android:hover {
+    background: linear-gradient(135deg, #2e7d32, #1b5e20);
+    box-shadow: 0 4px 16px rgba(67, 160, 71, 0.4);
+}
+
+/* =============================================
+   Warning alert variant
+   ============================================= */
+.c-modal__alert--warning {
+    background: #fef3c7;
+    border-color: #f59e0b;
+}
+
+.c-modal__alert--warning .c-modal__alert-icon {
+    color: #d97706;
+}
+
+.c-modal__alert--warning .c-modal__alert-text {
+    color: #78350f;
+}
+
+.c-modal__alert-steps {
+    margin: 0.5rem 0 0.25rem 1.25rem;
+    padding: 0;
+    font-size: 0.88rem;
+    color: #78350f;
+    line-height: 1.6;
+}
+
+.c-modal__alert-steps li {
+    margin-bottom: 0.15rem;
+}
+
+.c-modal__alert--warning a {
+    color: #92400e;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.c-modal__alert--warning a:hover {
+    color: #78350f;
+}
+
+[data-theme="dark"] .c-modal__alert--warning,
+.theme-dark .c-modal__alert--warning {
+    background: rgba(146, 64, 14, 0.2);
+    border-color: #b45309;
+}
+
+[data-theme="dark"] .c-modal__alert--warning .c-modal__alert-icon,
+.theme-dark .c-modal__alert--warning .c-modal__alert-icon {
+    color: #fbbf24;
+}
+
+[data-theme="dark"] .c-modal__alert--warning .c-modal__alert-text,
+.theme-dark .c-modal__alert--warning .c-modal__alert-text {
+    color: #fde68a;
+}
+
+[data-theme="dark"] .c-modal__alert-steps,
+.theme-dark .c-modal__alert-steps {
+    color: #fde68a;
+}
+
+[data-theme="dark"] .c-modal__alert--warning a,
+.theme-dark .c-modal__alert--warning a {
+    color: #fbbf24;
+}
+
+[data-theme="dark"] .c-modal__alert--warning a:hover,
+.theme-dark .c-modal__alert--warning a:hover {
+    color: #fde68a;
+}
+
 /* Responsive: product cards */
 @media (max-width: 600px) {
     .c-product-card {
@@ -1890,6 +2086,9 @@ button[onclick*="idleGame/idlegame.html"]:hover {
     .c-product-card__actions {
         flex-direction: column;
         align-items: stretch;
+    }
+    .c-product-card__actions--platform {
+        grid-template-columns: 1fr;
     }
     .c-feature-list--horizontal {
         flex-direction: column;
