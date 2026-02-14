@@ -17,7 +17,6 @@
 - /js/pages/quiz/gamepadQuiz.js
 - /js/pages/quiz/quiz.js
 - /js/pages/quiz/quizmain.js
-- /js/lofi.js
 - /js/pages/quiz/quizlogic2.js
 - /js/pages/quiz/quizlogic.js
 - /js/pages/quiz/quizlogic3.js

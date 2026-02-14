@@ -5,10 +5,10 @@
   "concurrent_per_ip": 4,
   "ips": {
     "109.137.130.57": {
-      "count": 9,
-      "bandwidth_gb": 0.1128077283501625,
-      "active_downloads": 1,
-      "last_download": "2026-02-14T16:14:02.087410"
+      "count": 10,
+      "bandwidth_gb": 0.12533991876989603,
+      "active_downloads": 0,
+      "last_download": "2026-02-14T16:57:49.818190"
     },
     "45.190.31.150": {
       "count": 1,
@@ -294,6 +294,6 @@
     }
   },
   "last_reset_month": "2026-02",
-  "total_monthly_bandwidth_gb": 0.26432694122195244,
+  "total_monthly_bandwidth_gb": 0.27685913164168596,
   "file_size_gb": 0.0126953125
 }

@@ -16,6 +16,5 @@
 - /js/pages/admin/admin2.js
 - /js/pages/admin/admin3.js
 - /js/pages/admin/admin4.js
-- /js/lofi.js
 - /js/ip.js
 - /js/privacy.js

@@ -13,7 +13,6 @@
 - https://cdn.jsdelivr.net/npm/apexcharts
 - /js/pages/graphs/graphs.js
 - /js/pages/graphs/gamepadGraphs.js
-- /js/lofi.js
 - /js/infomodal.js
 - /js/ip.js
 - /js/privacy.js
