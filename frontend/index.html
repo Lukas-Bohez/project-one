@@ -30,9 +30,9 @@
         .c-btn{display:inline-flex;align-items:center;justify-content:center;padding:1rem 1.5rem;border:2px solid #000;border-radius:8px;font-size:1rem;font-weight:500;cursor:pointer;background:#fff;color:#000;min-height:44px;transition:all .2s ease}
         .spire-background{position:fixed;top:0;left:0;width:100%;height:100vh;z-index:-1;overflow:hidden}
         .spire-background img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s;filter:brightness(.85)}
-        .c-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:1000;padding:1.5rem;backdrop-filter:blur(4px)}
+        .c-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:1000;padding:1rem;backdrop-filter:blur(4px)}
         .c-modal.is-open{display:flex}
-        .c-modal__content{background:#fff;border-radius:16px;max-width:560px;width:100%;padding:0;box-shadow:0 24px 48px rgba(0,0,0,.18);border:1px solid #e5e7eb;transition:background .3s ease,border-color .3s ease,color .3s ease;overflow:hidden}
+        .c-modal__content{background:#fff;border-radius:16px;max-width:560px;width:100%;padding:0;box-shadow:0 24px 48px rgba(0,0,0,.18);border:1px solid #e5e7eb;transition:background .3s ease,border-color .3s ease,color .3s ease;overflow:hidden;max-height:90vh;max-height:90dvh;display:flex;flex-direction:column}
         [data-theme="dark"] .c-modal__content,.theme-dark .c-modal__content{background:#111827;border-color:#374151;color:#e5e7eb}
         .c-modal__header{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.25rem 1.75rem;border-bottom:1px solid #e5e7eb}
         [data-theme="dark"] .c-modal__header,.theme-dark .c-modal__header{border-bottom-color:#374151}
@@ -93,12 +93,12 @@
             </ul>
 
             <div class="c-product-card__actions c-product-card__actions--platform">
-                <button id="conversionDownloadBtn" class="c-btn c-btn--cta c-btn--windows" onclick="handleConversionDownload(event, 'windows')">
+                <button id="conversionDownloadBtn" class="c-btn c-btn--cta c-btn--windows" onclick="handleConversionDownload(event)">
                     <i class="fa-brands fa-windows"></i>&nbsp; Download for Windows
                 </button>
-                <button id="conversionDownloadApkBtn" class="c-btn c-btn--cta c-btn--android" onclick="handleConversionDownload(event, 'android')">
+                <a id="conversionDownloadApkBtn" class="c-btn c-btn--cta c-btn--android" href="/downloads/ConvertTheSpireReborn.apk" download="ConvertTheSpireReborn.apk" onclick="showAndroidInstructions()">
                     <i class="fa-brands fa-android"></i>&nbsp; Download for Android
-                </button>
+                </a>
             </div>
             <div class="c-product-card__actions">
                 <button id="conversionInstructionsBtn" class="c-btn c-btn--outline" type="button">
@@ -347,16 +347,23 @@
         }
     }
     
-    // Download management for ConversionTheSpireReborn
-    async function handleConversionDownload(event, platform) {
+    // Show Android instructions when APK download is clicked
+    function showAndroidInstructions() {
+        const modal = document.getElementById('conversionDownloadModal');
+        // Switch to Android tab
+        document.querySelectorAll('.c-platform-tab').forEach(t => t.classList.toggle('active', t.dataset.platform === 'android'));
+        document.querySelectorAll('.c-platform-panel').forEach(p => p.classList.toggle('active', p.id === 'platform-android'));
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    // Download management for ConversionTheSpireReborn (Windows)
+    async function handleConversionDownload(event) {
         event.preventDefault();
         const modal = document.getElementById('conversionDownloadModal');
         const statusDiv = document.getElementById('conversionStatus');
         const statusText = document.getElementById('statusText');
         const isDark = getCurrentTheme() === 'dark';
-        const isAndroid = platform === 'android';
-        const downloadUrl = isAndroid ? '/api/v1/download/conversion/apk' : '/api/v1/download/conversion';
-        const fileName = isAndroid ? 'ConvertTheSpireReborn.apk' : 'ConversionTheSpireReborn.zip';
         
         try {
             const response = await fetch('/api/v1/download/conversion/check', { method: 'POST' });
@@ -376,7 +383,7 @@
                 return;
             }
             const status = await fetch('/api/v1/download/conversion/status').then(r => r.json());
-            statusText.innerHTML = `\u2713 Downloading <strong>${fileName}</strong><br>Downloads this month: ${status.downloads_this_month}<br>Speed: ${status.download_speed_mbps || 2} MB/s`;
+            statusText.innerHTML = `\u2713 Downloading <strong>ConversionTheSpireReborn.zip</strong><br>Downloads this month: ${status.downloads_this_month}<br>Speed: ${status.download_speed_mbps || 2} MB/s`;
             statusDiv.style.display = 'block';
             if (isDark) {
                 statusDiv.style.background = 'rgba(30, 58, 138, 0.9)';
@@ -387,13 +394,12 @@
                 statusDiv.style.borderColor = '#3b82f6';
                 statusDiv.style.color = '#1e3a8a';
             }
-            // Switch modal to the right platform tab
-            const targetTab = isAndroid ? 'android' : 'windows';
-            document.querySelectorAll('.c-platform-tab').forEach(t => t.classList.toggle('active', t.dataset.platform === targetTab));
-            document.querySelectorAll('.c-platform-panel').forEach(p => p.classList.toggle('active', p.id === 'platform-' + targetTab));
+            // Switch modal to Windows tab
+            document.querySelectorAll('.c-platform-tab').forEach(t => t.classList.toggle('active', t.dataset.platform === 'windows'));
+            document.querySelectorAll('.c-platform-panel').forEach(p => p.classList.toggle('active', p.id === 'platform-windows'));
             modal.classList.add('is-open');
             modal.setAttribute('aria-hidden', 'false');
-            setTimeout(() => { window.location.href = downloadUrl; }, 500);
+            setTimeout(() => { window.location.href = '/api/v1/download/conversion'; }, 500);
         } catch (error) {
             console.error('Download error:', error);
             statusText.textContent = '\u274c Error: ' + error.message;
