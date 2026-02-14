@@ -1681,7 +1681,7 @@ button[onclick*="idleGame/idlegame.html"]:hover {
     position: relative;
     display: block;
     padding-left: 40px;           /* reserve space for absolute step number */
-    margin: 0.35rem 0;
+    margin: 0.65rem 0;            /* increased from 0.35rem to prevent number overlap */
     font-size: 0.92rem;
     line-height: 1.35;
     color: var(--text-primary);
@@ -2246,7 +2246,7 @@ button[onclick*="idleGame/idlegame.html"]:hover {
         display: block;
         padding-left: 34px;
         font-size: 0.84rem;
-        margin: 0.18rem 0;
+        margin: 0.5rem 0;         /* increased from 0.18rem to prevent 20px numbers overlapping */
         line-height: 1.28;
         word-break: normal;
         overflow-wrap: break-word;
@@ -2322,7 +2322,7 @@ button[onclick*="idleGame/idlegame.html"]:hover {
         padding-left: 30px;
         font-size: 0.78rem;
         line-height: 1.22;
-        margin: 0.08rem 0;
+        margin: 0.45rem 0;        /* increased from 0.08rem to prevent 18px numbers overlapping */
         word-break: normal;
         overflow-wrap: break-word;
     }
