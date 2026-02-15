@@ -309,9 +309,33 @@
       "bandwidth_gb": 0.012540135532617569,
       "active_downloads": 0,
       "last_download": "2026-02-15T01:55:41.652558"
+    },
+    "78.162.145.50": {
+      "count": 1,
+      "bandwidth_gb": 0.012540135532617569,
+      "active_downloads": 0,
+      "last_download": "2026-02-15T14:08:16.575898"
+    },
+    "86.21.81.143": {
+      "count": 1,
+      "bandwidth_gb": 0.012540135532617569,
+      "active_downloads": 0,
+      "last_download": "2026-02-15T14:23:26.963206"
+    },
+    "223.178.87.136": {
+      "count": 1,
+      "bandwidth_gb": 0.012540135532617569,
+      "active_downloads": 0,
+      "last_download": "2026-02-15T15:57:01.911773"
+    },
+    "102.249.67.17": {
+      "count": 1,
+      "bandwidth_gb": 0.012540135532617569,
+      "active_downloads": 0,
+      "last_download": "2026-02-15T17:14:21.681249"
     }
   },
   "last_reset_month": "2026-02",
-  "total_monthly_bandwidth_gb": 0.32701967377215624,
+  "total_monthly_bandwidth_gb": 0.3771802159026265,
   "file_size_gb": 0.0126953125
 }

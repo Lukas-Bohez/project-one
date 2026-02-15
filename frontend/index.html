@@ -80,6 +80,7 @@
                 <span class="c-badge c-badge--blue"><i class="fa-solid fa-scale-balanced"></i> GPLv3 Licensed</span>
                 <span class="c-badge c-badge--slate"><i class="fa-brands fa-windows"></i> Windows</span>
                 <span class="c-badge c-badge--green"><i class="fa-brands fa-android"></i> Android</span>
+                <span class="c-badge c-badge--slate"><i class="fa-brands fa-linux"></i> Linux</span>
             </div>
 
             <h2 class="c-product-card__title">Conversion The Spire Reborn</h2>
@@ -98,6 +99,9 @@
                 </button>
                 <a id="conversionDownloadApkBtn" class="c-btn c-btn--cta c-btn--android" href="/downloads/ConvertTheSpireReborn.apk" download="ConvertTheSpireReborn.apk" onclick="showAndroidInstructions()">
                     <i class="fa-brands fa-android"></i>&nbsp; Download for Android
+                </a>
+                <a id="conversionDownloadLinuxBtn" class="c-btn c-btn--cta c-btn--linux" href="/downloads/linux.zip" download="linux.zip" onclick="showLinuxInstructions()">
+                    <i class="fa-brands fa-linux"></i>&nbsp; Download for Linux
                 </a>
             </div>
             <div class="c-product-card__actions">
@@ -128,6 +132,7 @@
                     <div class="c-platform-tabs">
                         <button class="c-platform-tab active" data-platform="windows"><i class="fa-brands fa-windows"></i> Windows</button>
                         <button class="c-platform-tab" data-platform="android"><i class="fa-brands fa-android"></i> Android</button>
+                        <button class="c-platform-tab" data-platform="linux"><i class="fa-brands fa-linux"></i> Linux</button>
                     </div>
 
                     <!-- Windows instructions -->
@@ -178,6 +183,16 @@
                         </div>
                     </div>
 
+                    <!-- Linux instructions -->
+                    <div class="c-platform-panel" id="platform-linux">
+                        <h3 class="c-modal__section-heading"><i class="fa-brands fa-linux"></i> Linux Installation</h3>
+                        <ol class="c-modal__steps">
+                            <li><span class="c-modal__step-num">1</span> Download <strong>linux.zip</strong> to your Linux machine</li>
+                            <li><span class="c-modal__step-num">2</span> Unzip the file</li>
+                            <li><span class="c-modal__step-num">3</span> Run <strong>convert_the_spire_reborn</strong> (double-click or <strong>./convert_the_spire_reborn</strong>)</li>
+                        </ol>
+                    </div>
+
                     <div class="c-modal__alert">
                         <i class="fa-solid fa-circle-exclamation c-modal__alert-icon"></i>
                         <div>
@@ -189,6 +204,7 @@
                         <span class="c-badge c-badge--green c-badge--sm"><i class="fa-solid fa-scale-balanced"></i> GPLv3</span>
                         <span class="c-badge c-badge--slate c-badge--sm"><i class="fa-brands fa-windows"></i> Windows</span>
                         <span class="c-badge c-badge--green c-badge--sm"><i class="fa-brands fa-android"></i> Android</span>
+                        <span class="c-badge c-badge--slate c-badge--sm"><i class="fa-brands fa-linux"></i> Linux</span>
                         <span class="c-badge c-badge--blue c-badge--sm"><i class="fa-solid fa-puzzle-piece"></i> Flutter</span>
                     </div>
                 </div>
@@ -352,6 +368,16 @@
         // Switch to Android tab
         document.querySelectorAll('.c-platform-tab').forEach(t => t.classList.toggle('active', t.dataset.platform === 'android'));
         document.querySelectorAll('.c-platform-panel').forEach(p => p.classList.toggle('active', p.id === 'platform-android'));
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    // Show Linux instructions when Linux download is clicked
+    function showLinuxInstructions() {
+        const modal = document.getElementById('conversionDownloadModal');
+        // Switch to Linux tab
+        document.querySelectorAll('.c-platform-tab').forEach(t => t.classList.toggle('active', t.dataset.platform === 'linux'));
+        document.querySelectorAll('.c-platform-panel').forEach(p => p.classList.toggle('active', p.id === 'platform-linux'));
         modal.classList.add('is-open');
         modal.setAttribute('aria-hidden', 'false');
     }
