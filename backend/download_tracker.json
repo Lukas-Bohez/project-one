@@ -5,10 +5,10 @@
   "concurrent_per_ip": 4,
   "ips": {
     "109.137.130.57": {
-      "count": 10,
-      "bandwidth_gb": 0.12533991876989603,
+      "count": 11,
+      "bandwidth_gb": 0.1378800543025136,
       "active_downloads": 0,
-      "last_download": "2026-02-14T16:57:49.818190"
+      "last_download": "2026-02-14T19:25:46.750829"
     },
     "45.190.31.150": {
       "count": 1,
@@ -291,9 +291,27 @@
       "bandwidth_gb": 0.012540671974420547,
       "active_downloads": 0,
       "last_download": "2026-02-14T12:29:53.292681"
+    },
+    "91.187.119.33": {
+      "count": 1,
+      "bandwidth_gb": 0.012540135532617569,
+      "active_downloads": 0,
+      "last_download": "2026-02-14T20:34:14.514325"
+    },
+    "75.131.140.180": {
+      "count": 1,
+      "bandwidth_gb": 0.012540135532617569,
+      "active_downloads": 0,
+      "last_download": "2026-02-14T22:56:23.371595"
+    },
+    "191.96.106.52": {
+      "count": 1,
+      "bandwidth_gb": 0.012540135532617569,
+      "active_downloads": 0,
+      "last_download": "2026-02-15T01:55:41.652558"
     }
   },
   "last_reset_month": "2026-02",
-  "total_monthly_bandwidth_gb": 0.27685913164168596,
+  "total_monthly_bandwidth_gb": 0.32701967377215624,
   "file_size_gb": 0.0126953125
 }

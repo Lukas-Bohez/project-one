@@ -1680,7 +1680,7 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 .c-modal__steps li {
     position: relative;
     display: block;
-    padding-left: 40px;           /* reserve space for absolute step number */
+    padding-left: 0;              /* no step number */
     margin: 0.65rem 0;            /* increased from 0.35rem to prevent number overlap */
     font-size: 0.92rem;
     line-height: 1.35;
@@ -1713,6 +1713,7 @@ button[onclick*="idleGame/idlegame.html"]:hover {
     font-size: 0.78rem;
     flex-shrink: 0;
     margin: 0;
+    display: none;
 }
 
 /* Alert box inside modal */
@@ -2244,7 +2245,7 @@ button[onclick*="idleGame/idlegame.html"]:hover {
     }
     .c-modal__steps li {
         display: block;
-        padding-left: 34px;
+        padding-left: 0;
         font-size: 0.84rem;
         margin: 0.5rem 0;         /* increased from 0.18rem to prevent 20px numbers overlapping */
         line-height: 1.28;
@@ -2262,6 +2263,7 @@ button[onclick*="idleGame/idlegame.html"]:hover {
         height: 20px;
         font-size: 0.66rem;
         border-radius: 4px;
+        display: none;
     }
     .c-modal__alert {
         padding: 0.6rem 0.7rem;
@@ -2319,7 +2321,7 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 
     .c-modal__steps li {
         display: block;
-        padding-left: 30px;
+        padding-left: 0;
         font-size: 0.78rem;
         line-height: 1.22;
         margin: 0.45rem 0;        /* increased from 0.08rem to prevent 18px numbers overlapping */
@@ -2336,6 +2338,7 @@ button[onclick*="idleGame/idlegame.html"]:hover {
         font-size: 0.62rem;
         border-radius: 3px;
         margin-right: 0;
+        display: none;
     }
 
     /* Prevent very short sentences from being split into many lines */
