@@ -1419,21 +1419,19 @@ class GameEngine {
         this.playSound('research');
         this.flashElement('gold-amount');
         
-        // Hide the unlock button after purchasing
+        // Hide the unlock button after purchasing + celebration
         const button = document.querySelector(`[data-unlock="${key}"]`);
         if (button) {
-            button.style.setProperty('display', 'none', 'important');
+            this.spawnParticles(button, '#ffd700', 15);
+            this.spawnConfetti(button, 12);
+            this.triggerScreenShake();
+            this.triggerScreenFlash();
+            // Dramatic delay before hiding
+            setTimeout(() => button.style.setProperty('display', 'none', 'important'), 600);
         }
         
         console.log(`Unlocked feature: ${key}`);
         this.showNotification(`✅ Feature unlocked!`);
-        
-        // Big celebration for unlocks
-        const button = document.querySelector(`[data-unlock="${key}"]`);
-        if (button) {
-            this.spawnParticles(button, '#ffd700', 12);
-            this.triggerScreenShake();
-        }
         
         return true;
     }
@@ -1515,17 +1513,41 @@ class GameEngine {
         this.playSound('mine');
         this.flashElement('stone-amount');
         
-        // Show floating "+1" at the mine button
+        // Satisfying mine click feedback
         const btn = document.getElementById('mine-stone-btn');
         if (btn) {
-            this.spawnFloatingNumber(btn, '+1', '#8d8d8d');
+            // Floating number with increasing enthusiasm based on combo
+            const comboText = this._comboCount >= 10 ? '+1 ⚡' : 
+                              this._comboCount >= 5 ? '+1 🔥' : '+1';
+            const color = this._comboCount >= 10 ? '#ffd700' :
+                          this._comboCount >= 5 ? '#ff6b6b' : '#8d8d8d';
+            this.spawnFloatingNumber(btn, comboText, color);
             this.spawnClickRipple(btn, null);
             this.triggerMineShake(btn);
-            this.spawnParticles(btn, '#8d8d8d', 5);
+            
+            // Particles scale with combo — more clicks = more spectacular
+            const particleCount = Math.min(12, 3 + Math.floor((this._comboCount || 0) / 3));
+            this.spawnParticles(btn, color, particleCount);
         }
         
         // Combo tracking for rapid clicking
         this.trackCombo();
+        
+        // Milestone celebrations
+        const totalStone = this.state.stats.totalResourcesMined.stone;
+        if (totalStone === 10) {
+            this.showNotification('🪨 10 stone mined! You\'re getting the hang of it!');
+            this.triggerScreenShake();
+        } else if (totalStone === 100) {
+            this.showNotification('⛏️ 100 stone! A true miner!');
+            this.triggerScreenShake();
+            this.spawnParticles(btn, '#ffd700', 20);
+        } else if (totalStone === 1000) {
+            this.showNotification('💎 1000 stone! LEGENDARY MINER!');
+            this.triggerScreenShake();
+            this.spawnParticles(btn, '#ffd700', 25);
+            this.spawnParticles(btn, '#64ffda', 25);
+        }
         
         console.log('Mined 1 stone manually');
     }
@@ -1577,11 +1599,21 @@ class GameEngine {
                 silverMiner: 'hire-silver-miner-btn'
             };
             this.triggerPurchaseEffect(btnMap[workerType]);
+            this.triggerBuildAnimation(btnMap[workerType]);
             this.spawnFloatingNumber(
                 document.getElementById(btnMap[workerType]),
                 `-${this.formatNumber(cost)} 💰`,
                 '#ffd700'
             );
+            
+            // Bounce the worker count
+            const countMap = {
+                stoneMiner: 'stone-miners-count',
+                coalMiner: 'coal-miners-count',
+                ironMiner: 'iron-miners-count',
+                silverMiner: 'silver-miners-count'
+            };
+            this.bounceElement(countMap[workerType]);
             
             console.log(`Hired ${workerType} for ${cost} gold (discount applied)`);
             return true;
@@ -1951,6 +1983,25 @@ class GameEngine {
         this.playSound('sell');
         this.flashElement('gold-amount');
         this.showNotification(`💰 Sold ${cityAmount}x ${itemName} for ${finalValue} capital!`);
+        
+        // Big sell celebration — ka-ching!
+        const goldEl = document.getElementById('gold-amount');
+        if (goldEl) {
+            this.triggerGoldShimmer('gold-amount');
+            if (finalValue >= 500) {
+                // Big sale = big gold number + confetti + screen flash
+                this.spawnBigGoldNumber(`+${this.formatNumber(finalValue)} 💰`);
+                this.spawnConfetti(goldEl, 12);
+                this.triggerScreenFlash();
+                this.triggerScreenShake();
+            } else if (finalValue >= 100) {
+                this.spawnFloatingNumber(goldEl, `+${this.formatNumber(finalValue)} 💰`, '#ffd700');
+                this.spawnParticles(goldEl, '#ffd700', Math.min(15, Math.floor(finalValue / 50)));
+            } else {
+                this.spawnFloatingNumber(goldEl, `+${this.formatNumber(finalValue)} 💰`, '#ffd700');
+            }
+        }
+        
         return true;
     }
     
@@ -2085,6 +2136,23 @@ class GameEngine {
             
             this.playSound('build');
             this.flashElement('gold-amount');
+            
+            // Building construction celebration
+            const btnMap = {
+                smelter: 'build-smelter-btn', forge: 'build-forge-btn',
+                refinery: 'build-refinery-btn', mint: 'build-mint-btn',
+                polishers: 'build-polisher-btn', cokers: 'build-coker-btn',
+                chemPlants: 'build-chemplant-btn', chipFabs: 'build-chipfab-btn',
+                jewelers: 'build-jeweler-btn', assemblies: 'build-assembly-btn',
+                autoPlants: 'build-autoplant-btn'
+            };
+            const btn = document.getElementById(btnMap[stateKey] || btnMap[processorType]);
+            if (btn) {
+                this.triggerPurchaseEffect(btnMap[stateKey] || btnMap[processorType]);
+                this.spawnParticles(btn, '#a044ff', 8);
+                this.spawnFloatingNumber(btn, `🏗️ Built!`, '#a044ff');
+            }
+            
             console.log(`Built ${processorType} (${stateKey}) for ${cost} gold`);
             return true;
         }
@@ -2106,6 +2174,21 @@ class GameEngine {
             
             this.playSound('hire');
             this.flashElement('gold-amount');
+            
+            // Trader hire celebration
+            const btnMap = {
+                stoneTrader: 'hire-stone-trader-btn',
+                coalTrader: 'hire-coal-trader-btn',
+                metalTrader: 'hire-metal-trader-btn'
+            };
+            const btnId = btnMap[traderType];
+            this.triggerPurchaseEffect(btnId);
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                this.spawnFloatingNumber(btn, `📊 -${this.formatNumber(cost)}g`, '#4facfe');
+                this.spawnParticles(btn, '#00f2fe', 6);
+            }
+            
             console.log(`Hired ${traderType} for ${cost} gold`);
             return true;
         }
@@ -2118,6 +2201,7 @@ class GameEngine {
             wagon: 150,
             train: 800
         };
+        const emojis = { cart: '🛒', wagon: '🚛', train: '🚂' };
         
         const cost = costs[transportType];
         if (this.state.resources.gold >= cost) {
@@ -2127,6 +2211,17 @@ class GameEngine {
             
             this.playSound('build');
             this.flashElement('gold-amount');
+            
+            // Transport purchase with vehicle emoji
+            const btnId = `buy-${transportType}-btn`;
+            this.triggerPurchaseEffect(btnId);
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                this.spawnFloatingNumber(btn, `${emojis[transportType]} Bought!`, '#ff9a9e');
+                this.spawnParticles(btn, '#fecfef', 8);
+                if (transportType === 'train') this.triggerScreenShake(); // Trains are big!
+            }
+            
             console.log(`Bought ${transportType} for ${cost} gold`);
             return true;
         }
@@ -2145,6 +2240,15 @@ class GameEngine {
                 
                 this.playSound('hire');
                 this.flashElement('gold-amount');
+                
+                // Police hire celebration
+                const policeBtn = document.getElementById('hire-police-btn');
+                if (policeBtn) {
+                    this.triggerPurchaseEffect('hire-police-btn');
+                    this.spawnFloatingNumber(policeBtn, `🚔 Officer #${this.state.city.police}!`, '#4facfe');
+                    this.spawnParticles(policeBtn, '#2196f3', 8);
+                }
+                
                 console.log(`Hired security guard #${this.state.city.police} for ${cost} gold (upkeep: 0.5 gold/sec or 30 gold/min, generates decay)`);
                 return true;
             }
@@ -2157,6 +2261,15 @@ class GameEngine {
                 this.state.city.politicians++;
                 this.playSound('hire');
                 this.flashElement('gold-amount');
+                
+                // Politician hire celebration
+                const politicianBtn = document.getElementById('hire-politician-btn');
+                if (politicianBtn) {
+                    this.triggerPurchaseEffect('hire-politician-btn');
+                    this.spawnFloatingNumber(politicianBtn, `🏛️ Politician #${this.state.city.politicians}!`, '#ffecd2');
+                    this.spawnParticles(politicianBtn, '#fcb69f', 6);
+                }
+                
                 console.log(`Hired politician #${this.state.city.politicians} for ${cost} gold (reduces tax rate by 2% compound)`);
                 return true;
             }
@@ -2215,6 +2328,13 @@ class GameEngine {
                 this.state.cityInventory.finished[itemName] += 1;
                 
                 this.playSound('transport');
+                
+                // Transport visual - item flying from button
+                const transportBtn = document.getElementById('transport-next-btn');
+                if (transportBtn) {
+                    this.spawnFloatingNumber(transportBtn, `📦 → 🏙️`, '#ff9a9e');
+                }
+                
                 return true;
             }
         }
@@ -2332,6 +2452,23 @@ class GameEngine {
                 this.flashElement('gold-amount');
                 console.log(`✅ ${buildingType} upgraded! New level: ${this.state.city[config.stateKey]}`);
                 
+                // Upgradable building celebration with level callout
+                const upgBtnMap = {
+                    salesDepartment: 'build-sales-dept-btn',
+                    miningAcademy: 'build-mining-academy-btn',
+                    automationLab: 'build-automation-lab-btn'
+                };
+                const upgBtnId = upgBtnMap[buildingType];
+                if (upgBtnId) {
+                    this.triggerPurchaseEffect(upgBtnId);
+                    const upgBtn = document.getElementById(upgBtnId);
+                    if (upgBtn) {
+                        this.spawnFloatingNumber(upgBtn, `⭐ Lvl ${this.state.city[config.stateKey]}!`, '#ffd700');
+                        this.spawnParticles(upgBtn, '#ffecd2', 10);
+                        if (this.state.city[config.stateKey] >= 3) this.triggerScreenShake();
+                    }
+                }
+                
                 // Apply efficiency bonuses
                 this.updateRDLabsEfficiency();
                 
@@ -2353,6 +2490,24 @@ class GameEngine {
             
             this.playSound('build');
             this.flashElement('gold-amount');
+            
+            // Regular building construction celebration
+            const cityBtnMap = {
+                bank: 'build-bank-btn',
+                market: 'build-market-btn',
+                university: 'build-university-btn'
+            };
+            const cityBtnId = cityBtnMap[buildingType];
+            if (cityBtnId) {
+                this.triggerPurchaseEffect(cityBtnId);
+                const cityBtn = document.getElementById(cityBtnId);
+                if (cityBtn) {
+                    const buildEmojis = { bank: '🏦', market: '🏪', university: '🎓' };
+                    this.spawnFloatingNumber(cityBtn, `${buildEmojis[buildingType]} #${this.state.city[config.stateKey]}!`, '#fcb69f');
+                    this.spawnParticles(cityBtn, '#ffecd2', 8);
+                }
+            }
+            
             console.log(`Built ${buildingType} level ${this.state.city[config.stateKey]} for ${cost} gold (base: ${config.cost})`);
             return true;
         }
@@ -2387,6 +2542,18 @@ class GameEngine {
             this.flashElement('gold-amount');
             console.log(`Completed research: ${researchType} for ${cost} gold`);
             this.showNotification(`🔬 Research complete: ${researchType}!`);
+            
+            // Research completion celebration — feel the science!
+            const resBtn = document.getElementById(`research-${researchType}-btn`);
+            if (resBtn) {
+                this.spawnParticles(resBtn, '#667eea', 15);
+                this.spawnFloatingNumber(resBtn, `🧪 Eureka!`, '#667eea');
+                this.triggerScreenShake();
+                this.spawnConfetti(resBtn, 10);
+                resBtn.classList.add('research-sparkle');
+                setTimeout(() => resBtn.classList.remove('research-sparkle'), 800);
+            }
+            
             return true;
         }
         return false;
@@ -2445,6 +2612,16 @@ class GameEngine {
             this.playSound('research');
             this.flashElement('gold-amount');
             this.showNotification(`⭐ Upgraded ${upgrade.name} to Level ${currentLevel + 1}!`);
+            
+            // Rebirth upgrade celebration — extra dramatic
+            const upgradeBtn = document.querySelector(`[data-upgrade="${upgradeKey}"]`);
+            if (upgradeBtn) {
+                this.spawnParticles(upgradeBtn, '#ffd700', 12);
+                this.spawnFloatingNumber(upgradeBtn, `⭐ Lvl ${currentLevel + 1}!`, '#ffd700');
+                this.triggerScreenShake();
+                this.spawnConfetti(upgradeBtn, 8);
+                this.triggerBuildAnimation(upgradeBtn.id);
+            }
             
             // Update UI
             this.updateRebirthUpgradesUI();
@@ -2706,12 +2883,14 @@ class GameEngine {
         this.playSound('prestige');
         this.showNotification(`🔄 Rebirth #${newRebirthCount} - A new chapter begins...`);
         this.triggerScreenShake();
+        this.triggerScreenFlash();
         
-        // Dramatic particle burst from center of screen
+        // Dramatic particle burst + confetti from center of screen
         const header = document.querySelector('.game-header');
         if (header) {
             this.spawnParticles(header, '#ffd700', 20);
             this.spawnParticles(header, '#ff416c', 15);
+            this.spawnConfetti(header, 20);
         }
         
         console.log(`City rebirth completed! Total rebirths: ${newRebirthCount}`);
@@ -2856,6 +3035,38 @@ class GameEngine {
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
                     osc.start(now);
                     osc.stop(now + 0.18);
+                    break;
+                case 'build':
+                    // Chunky thud — low saw wave with quick decay
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(120, now);
+                    osc.frequency.exponentialRampToValueAtTime(80, now + 0.15);
+                    gain.gain.setValueAtTime(0.06, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                    break;
+                case 'transport':
+                    // Whoosh — rising square wave
+                    osc.type = 'square';
+                    gain.gain.setValueAtTime(0.04, now);
+                    osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.exponentialRampToValueAtTime(600, now + 0.12);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                    break;
+                case 'prestige':
+                    // Epic ascending triad
+                    osc.type = 'sine';
+                    gain.gain.setValueAtTime(0.07, now);
+                    osc.frequency.setValueAtTime(262, now);
+                    osc.frequency.setValueAtTime(330, now + 0.1);
+                    osc.frequency.setValueAtTime(392, now + 0.2);
+                    osc.frequency.setValueAtTime(523, now + 0.3);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
                     break;
                 default:
                     osc.type = 'sine';
@@ -3423,6 +3634,82 @@ class GameEngine {
         void container.offsetWidth;
         container.classList.add('screen-shake');
         setTimeout(() => container.classList.remove('screen-shake'), 300);
+    }
+
+    /**
+     * Full-screen golden flash for huge moments
+     */
+    triggerScreenFlash(color) {
+        const flash = document.createElement('div');
+        flash.className = 'screen-flash';
+        if (color) flash.style.setProperty('background', color);
+        document.body.appendChild(flash);
+        flash.addEventListener('animationend', () => flash.remove());
+    }
+
+    /**
+     * Spawn confetti-like emoji particles for celebrations
+     */
+    spawnConfetti(element, count) {
+        if (!element) return;
+        const rect = element.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const emojis = ['✨', '⭐', '🎉', '💫', '🌟', '🎊', '💎', '🏆'];
+        
+        for (let i = 0; i < (count || 8); i++) {
+            const c = document.createElement('div');
+            c.className = 'confetti';
+            c.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            c.style.left = (cx + (Math.random() - 0.5) * 40) + 'px';
+            c.style.top = (cy - 10) + 'px';
+            c.style.setProperty('--cx', ((Math.random() - 0.5) * 200) + 'px');
+            c.style.setProperty('--cy', (Math.random() * -150 - 50) + 'px');
+            c.style.setProperty('--cr', (Math.random() * 720 - 360) + 'deg');
+            c.style.animationDelay = (Math.random() * 0.15) + 's';
+            document.body.appendChild(c);
+            c.addEventListener('animationend', () => c.remove());
+        }
+    }
+
+    /**
+     * Display a large floating gold number for big sales
+     */
+    spawnBigGoldNumber(text) {
+        const goldEl = document.getElementById('gold-amount');
+        if (!goldEl) return;
+        const rect = goldEl.getBoundingClientRect();
+        const el = document.createElement('div');
+        el.className = 'big-gold-number';
+        el.textContent = text;
+        el.style.left = (rect.left + rect.width / 2 - 60) + 'px';
+        el.style.top = (rect.top - 10) + 'px';
+        document.body.appendChild(el);
+        el.addEventListener('animationend', () => el.remove());
+    }
+
+    /**
+     * Bounce a worker/building count element when it changes
+     */
+    bounceElement(elementId) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        el.classList.remove('worker-hired');
+        void el.offsetWidth;
+        el.classList.add('worker-hired');
+        setTimeout(() => el.classList.remove('worker-hired'), 400);
+    }
+
+    /**
+     * Building construction animation on a button
+     */
+    triggerBuildAnimation(buttonId) {
+        const btn = document.getElementById(buttonId);
+        if (!btn) return;
+        btn.classList.remove('building-construct');
+        void btn.offsetWidth;
+        btn.classList.add('building-construct');
+        setTimeout(() => btn.classList.remove('building-construct'), 600);
     }
 
     /**

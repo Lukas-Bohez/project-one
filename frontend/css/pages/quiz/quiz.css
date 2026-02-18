@@ -570,3 +570,116 @@ input[type="password"].error:focus {
     border-color: rgba(220, 38, 38, 0.5);
     box-shadow: 0 4px 6px rgba(220, 38, 38, 0.3);
 }
+
+/* ============================================
+   ITEM EFFECT VISUALS
+   ============================================ */
+
+/* ---- Effect Overlay (announcement banner) ---- */
+.item-effect-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.5);
+    z-index: 9999;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.item-effect-overlay--show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+.item-effect-overlay__icon {
+    font-size: 5rem;
+    filter: drop-shadow(0 0 20px currentColor);
+    animation: effectPulse 0.6s ease infinite alternate;
+}
+.item-effect-overlay__label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.6);
+    margin-top: 8px;
+}
+
+@keyframes effectPulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.15); }
+}
+
+/* ---- Shield Effect ---- */
+.effect-shield {
+    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.5), inset 0 0 30px rgba(52, 152, 219, 0.1) !important;
+    border-color: #3498db !important;
+    animation: shieldGlow 2s ease-in-out infinite;
+}
+@keyframes shieldGlow {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.3), inset 0 0 20px rgba(52, 152, 219, 0.05); }
+    50% { box-shadow: 0 0 0 8px rgba(52, 152, 219, 0.5), inset 0 0 40px rgba(52, 152, 219, 0.1); }
+}
+
+/* ---- Double Points ---- */
+.effect-double-points {
+    animation: doublePointsGlow 0.8s ease-in-out infinite alternate;
+    color: #f39c12 !important;
+}
+@keyframes doublePointsGlow {
+    from { text-shadow: 0 0 5px rgba(243, 156, 18, 0.3); transform: scale(1); }
+    to { text-shadow: 0 0 20px rgba(243, 156, 18, 0.8); transform: scale(1.1); }
+}
+
+/* ---- Time Warp ---- */
+.effect-time-warp {
+    animation: timeWarpFlash 0.4s ease-in-out 3;
+    color: #9b59b6 !important;
+}
+@keyframes timeWarpFlash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; transform: scale(1.2); }
+}
+
+/* ---- Lightning Eliminate ---- */
+.effect-lightning-eliminate {
+    animation: lightningFade 0.6s ease forwards;
+}
+@keyframes lightningFade {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(0.95); background: rgba(241, 196, 15, 0.3); }
+    100% { transform: scale(0.9); opacity: 0.2; }
+}
+
+/* ---- Mystery Box ---- */
+.effect-mystery-box {
+    animation: mysteryShimmer 0.5s ease-in-out 3;
+}
+@keyframes mysteryShimmer {
+    0%, 100% { filter: hue-rotate(0deg); }
+    50% { filter: hue-rotate(90deg) brightness(1.2); }
+}
+
+/* ---- Spotlight ---- */
+.effect-spotlight-highlight {
+    animation: spotlightPulse 0.6s ease-in-out infinite alternate;
+    box-shadow: 0 0 20px rgba(230, 126, 34, 0.6) !important;
+    border: 2px solid #e67e22 !important;
+    z-index: 10;
+    position: relative;
+}
+@keyframes spotlightPulse {
+    from { box-shadow: 0 0 10px rgba(230, 126, 34, 0.4); }
+    to { box-shadow: 0 0 30px rgba(230, 126, 34, 0.8); }
+}
+
+/* ---- Earthquake ---- */
+.effect-earthquake {
+    animation: earthquakeShake 0.15s ease-in-out infinite;
+}
+@keyframes earthquakeShake {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(-4px, 2px) rotate(-0.5deg); }
+    50% { transform: translate(3px, -3px) rotate(0.5deg); }
+    75% { transform: translate(-2px, 4px) rotate(-0.3deg); }
+}

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="lbGrad" x1="0%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" style="stop-color:#fff176"/>
+      <stop offset="50%" style="stop-color:#ffeb3b"/>
+      <stop offset="100%" style="stop-color:#f57f17"/>
+    </linearGradient>
+    <filter id="lbGlow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <polygon points="32,2 36,22 40,22 30,38 34,30 28,30 32,2" fill="url(#lbGrad)" stroke="#f57f17" stroke-width="1" filter="url(#lbGlow)"/>
+  <polygon points="30,38 34,30 38,44 44,44 28,62 32,48 26,48" fill="url(#lbGrad)" stroke="#f57f17" stroke-width="1" filter="url(#lbGlow)"/>
+  <!-- Spark effects -->
+  <circle cx="20" cy="20" r="2" fill="#fff176" opacity="0.8"/>
+  <circle cx="46" cy="32" r="1.5" fill="#fff176" opacity="0.6"/>
+  <circle cx="22" cy="46" r="1.5" fill="#ffeb3b" opacity="0.7"/>
+  <line x1="14" y1="14" x2="18" y2="18" stroke="#fff176" stroke-width="1" opacity="0.5"/>
+  <line x1="48" y1="22" x2="52" y2="18" stroke="#fff176" stroke-width="1" opacity="0.5"/>
+</svg>

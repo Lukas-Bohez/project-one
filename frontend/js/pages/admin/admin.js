@@ -1388,6 +1388,11 @@ const loadTabData = async (tabId) => {
         case 'users':
             await loadUsers();
             break;
+        case 'community':
+            if (typeof loadCommunityTab === 'function') {
+                await loadCommunityTab();
+            }
+            break;
     }
 };
 

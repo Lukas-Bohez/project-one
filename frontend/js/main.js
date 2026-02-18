@@ -65,7 +65,7 @@ const listenToButtons = () => {
     if (dom.startQuizBtn) {
         dom.startQuizBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            window.location.href = '/pages/quiz/';
+            window.location.href = '/pages/spire-ai/';
         });
     }
 

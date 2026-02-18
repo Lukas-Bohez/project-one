@@ -2353,3 +2353,148 @@ body {
     70% { transform: scale(1.2); }
     100% { transform: scale(1); opacity: 1; }
 }
+
+/* --- Screen Flash for huge events --- */
+.screen-flash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 99999;
+    animation: screenFlash 0.4s ease-out forwards;
+}
+
+@keyframes screenFlash {
+    0% { background: rgba(255, 215, 0, 0.3); }
+    100% { background: transparent; }
+}
+
+/* --- Confetti particle (star shapes via box-shadow tricks) --- */
+.confetti {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9998;
+    font-size: 1.2rem;
+    animation: confettiFall 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    opacity: 0.9;
+}
+
+@keyframes confettiFall {
+    0% {
+        opacity: 1;
+        transform: translate(0, 0) rotate(0deg) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(var(--cx), var(--cy)) rotate(var(--cr)) scale(0.3);
+    }
+}
+
+/* --- Mine button pickaxe swing on active --- */
+.mine-btn .btn-title::before {
+    content: '⛏️';
+    display: inline-block;
+    margin-right: 6px;
+    transition: transform 0.15s ease;
+}
+
+.mine-btn:active .btn-title::before {
+    animation: pickaxeSwing 0.2s ease-out;
+}
+
+@keyframes pickaxeSwing {
+    0% { transform: rotate(0deg); }
+    40% { transform: rotate(-35deg) translateY(-3px); }
+    100% { transform: rotate(0deg); }
+}
+
+/* --- Worker count bump on hire --- */
+.worker-hired {
+    animation: workerHiredBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes workerHiredBounce {
+    0% { transform: scale(1); color: inherit; }
+    40% { transform: scale(1.4); color: #4caf50; text-shadow: 0 0 15px rgba(76, 175, 80, 0.8); }
+    100% { transform: scale(1); color: inherit; text-shadow: none; }
+}
+
+/* --- Big gold number for huge sales --- */
+.big-gold-number {
+    position: fixed;
+    pointer-events: none;
+    z-index: 10000;
+    font-weight: 900;
+    font-size: 2rem;
+    color: #ffd700;
+    text-shadow: 0 3px 15px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 215, 0, 0.6);
+    animation: bigGoldFloat 1.8s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+    white-space: nowrap;
+}
+
+@keyframes bigGoldFloat {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(0.5);
+    }
+    15% {
+        transform: translateY(-15px) scale(1.3);
+    }
+    30% {
+        transform: translateY(-25px) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-100px) scale(0.8);
+    }
+}
+
+/* --- Building construction animation --- */
+.building-construct {
+    animation: buildConstruct 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes buildConstruct {
+    0% { transform: translateY(0) scale(1); }
+    25% { transform: translateY(-10px) scale(1.08); filter: brightness(1.4); }
+    50% { transform: translateY(-5px) scale(1.02); }
+    75% { transform: translateY(-2px) scale(1.05); }
+    100% { transform: translateY(0) scale(1); filter: brightness(1); }
+}
+
+/* --- Research discovery sparkle --- */
+.research-sparkle {
+    animation: researchSparkle 0.8s ease-out;
+}
+
+@keyframes researchSparkle {
+    0% { filter: brightness(1) hue-rotate(0deg); }
+    25% { filter: brightness(1.8) hue-rotate(30deg); box-shadow: 0 0 30px rgba(102, 126, 234, 0.8); }
+    50% { filter: brightness(1.4) hue-rotate(-15deg); }
+    100% { filter: brightness(1) hue-rotate(0deg); box-shadow: none; }
+}
+
+/* --- Sell button ka-ching effect --- */
+.sell-btn:active:not(:disabled) {
+    animation: sellKaChing 0.25s ease-out;
+}
+
+@keyframes sellKaChing {
+    0% { transform: translateY(0) scale(1); filter: brightness(1); }
+    30% { transform: translateY(-4px) scale(1.05); filter: brightness(1.3); }
+    100% { transform: translateY(0) scale(1); filter: brightness(1); }
+}
+
+/* --- Hover wobble for interactive elements --- */
+.mine-btn:hover {
+    animation: hoverWobble 0.5s ease-in-out;
+}
+
+@keyframes hoverWobble {
+    0% { transform: translateY(-4px) scale(1.03) rotate(0deg); }
+    25% { transform: translateY(-4px) scale(1.03) rotate(0.5deg); }
+    75% { transform: translateY(-4px) scale(1.03) rotate(-0.5deg); }
+    100% { transform: translateY(-4px) scale(1.03) rotate(0deg); }
+}
