@@ -371,6 +371,65 @@ body header.c-header.c-header--admin,
     text-align: center;
 }
 
+/* Community badge */
+.c-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-left: auto;
+}
+.c-badge--pending {
+    background: #f59e0b;
+    color: #fff;
+}
+
+/* Community tab styles */
+.c-community-stats {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.c-stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    background: var(--admin-card, #f9fafb);
+    border: 1px solid var(--admin-border, #e5e7eb);
+}
+.c-community-filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.c-community-filters .c-btn--sm {
+    font-size: 0.85rem;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--admin-border, #e5e7eb);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.c-community-filters .c-btn--ghost {
+    background: transparent;
+    color: var(--admin-text-muted, #6b7280);
+}
+.c-community-filters .c-btn--primary.active {
+    background: var(--admin-primary, #e67e22);
+    color: #fff;
+    border-color: var(--admin-primary, #e67e22);
+}
+
 .c-admin-sidebar__stats {
     background-color: var(--admin-card);
     border-radius: 8px;

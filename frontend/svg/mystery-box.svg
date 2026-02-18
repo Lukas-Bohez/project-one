@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="mbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ab47bc"/>
+      <stop offset="100%" style="stop-color:#4a148c"/>
+    </linearGradient>
+    <linearGradient id="mbLid" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ce93d8"/>
+      <stop offset="100%" style="stop-color:#7b1fa2"/>
+    </linearGradient>
+  </defs>
+  <!-- Box body -->
+  <rect x="12" y="28" width="40" height="30" rx="4" fill="url(#mbGrad)" stroke="#4a148c" stroke-width="2"/>
+  <!-- Lid -->
+  <path d="M8 28 L32 12 L56 28 Z" fill="url(#mbLid)" stroke="#4a148c" stroke-width="2"/>
+  <!-- Question mark -->
+  <text x="32" y="48" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="24" font-weight="bold" fill="#ffd54f" dominant-baseline="central">?</text>
+  <!-- Shine/sparkle effects -->
+  <circle cx="20" cy="20" r="2" fill="#ffd54f" opacity="0.8"/>
+  <circle cx="48" cy="18" r="1.5" fill="#ffeb3b" opacity="0.7"/>
+  <circle cx="16" cy="42" r="1" fill="#fff176" opacity="0.6"/>
+  <line x1="42" y1="8" x2="46" y2="4" stroke="#ffd54f" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="50" y1="10" x2="54" y2="8" stroke="#ffeb3b" stroke-width="1" stroke-linecap="round"/>
+  <!-- Ribbon -->
+  <line x1="32" y1="28" x2="32" y2="58" stroke="#ffd54f" stroke-width="2"/>
+  <line x1="12" y1="42" x2="52" y2="42" stroke="#ffd54f" stroke-width="2"/>
+</svg>

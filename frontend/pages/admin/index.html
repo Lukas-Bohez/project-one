@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Admin panel for managing Quiz The Spire quizzes, users, and settings.">
     
     <title>Admin Panel | Quiz The Spire</title>
     <link rel="stylesheet" href="/css/styles.css">
@@ -11,6 +12,19 @@
     <link rel="stylesheet" href="/css/pages/admin/content-new.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" defer></script>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="/favicon.ico">
+    <meta property="og:title" content="Admin Panel | Quiz The Spire">
+    <meta property="og:description" content="Admin panel for managing quizzes, users, and settings">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://quizthespire.com/pages/admin/">
+    <meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Admin Panel | Quiz The Spire">
+    <meta name="twitter:description" content="Admin panel for managing quizzes, users, and settings">
+    <meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg">
+    <link rel="canonical" href="https://quizthespire.com/pages/admin/">
 </head>
 
 <body>
@@ -58,6 +72,13 @@
                         <button class="c-admin-menu__link js-tab-btn" data-tab="users">
                             <i class="fas fa-users"></i>
                             <span>Users</span>
+                        </button>
+                    </li>
+                    <li class="c-admin-menu__item">
+                        <button class="c-admin-menu__link js-tab-btn" data-tab="community">
+                            <i class="fas fa-brain"></i>
+                            <span>Community</span>
+                            <span class="c-badge c-badge--pending js-community-badge" style="display:none;">0</span>
                         </button>
                     </li>
                 </ul>
@@ -284,6 +305,35 @@
                     </table>
                 </div>
             </div>
+            <div class="c-tab-content js-tab-content" data-tab="community">
+                <div class="c-admin-header">
+                    <h2 class="c-admin-title">Community Themes</h2>
+                    <div class="c-community-stats">
+                        <span class="c-stat-pill"><i class="fas fa-clock"></i> Pending: <strong class="js-pending-count">0</strong></span>
+                        <span class="c-stat-pill"><i class="fas fa-check"></i> Approved: <strong class="js-approved-count">0</strong></span>
+                        <span class="c-stat-pill"><i class="fas fa-crown"></i> Promoted: <strong class="js-promoted-count">0</strong></span>
+                    </div>
+                </div>
+
+                <div class="c-community-filters">
+                    <button class="c-btn c-btn--sm c-btn--primary js-community-filter active" data-filter="pending">
+                        <i class="fas fa-clock"></i> Pending Review
+                    </button>
+                    <button class="c-btn c-btn--sm c-btn--ghost js-community-filter" data-filter="approved">
+                        <i class="fas fa-check"></i> Approved
+                    </button>
+                    <button class="c-btn c-btn--sm c-btn--ghost js-community-filter" data-filter="rejected">
+                        <i class="fas fa-times"></i> Rejected
+                    </button>
+                    <button class="c-btn c-btn--sm c-btn--ghost js-community-filter" data-filter="all">
+                        <i class="fas fa-list"></i> All
+                    </button>
+                </div>
+
+                <div class="c-community-list js-community-list">
+                    <div class="c-loading">Loading community themes...</div>
+                </div>
+            </div>
         </section>
 
         <section class="c-admin-card c-stats-card">
@@ -365,6 +415,7 @@
     <script src="/js/pages/admin/admin2.js"></script>
     <script src="/js/pages/admin/admin3.js"></script>
     <script src="/js/pages/admin/admin4.js"></script>
+    <script src="/js/pages/admin/community.js"></script>
     <script src="/js/ip.js" defer></script>
 </body>
 

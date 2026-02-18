@@ -313,6 +313,14 @@ try:
 except Exception as e:
     print(f"Warning: Could not load Manage the Spire routes: {e}")
 
+# Include Spire AI Collaboration router
+try:
+    from api.routers.community import router as community_router
+    app.include_router(community_router)
+    print("✓ Spire AI Collaboration routes loaded")
+except Exception as e:
+    print(f"Warning: Could not load Spire AI Collaboration routes: {e}")
+
 # Rate limiting setup
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
@@ -6837,6 +6845,95 @@ def tempUp():
     threadsafe_emit_message_sent(sio,get_active_session_id(),main_asyncio_loop)
     # Emit temperature change to all clients
     sio.emit('B2F_temperatureChange', {'temperature': virtualTemperature}, broadcast=True)
+
+# ============================================================
+# NEW ITEM EFFECTS - Spire AI Collaboration Update
+# ============================================================
+
+def activateShield():
+    """Activates a shield on the using player - blocks next item effect"""
+    print("[ITEM] Shield activated")
+    ChatLogRepository.create_chat_message(
+        session_id=get_active_session_id(),
+        message_text="🛡️ A player activated their Shield!",
+        user_id=1, message_type='system', reply_to_id=1
+    )
+    threadsafe_emit_message_sent(sio, get_active_session_id(), main_asyncio_loop)
+    sio.emit('B2F_itemEffect', {'effect': 'shield', 'duration': 30}, broadcast=True)
+
+def activateDoublePoints():
+    """Next correct answer earns double points"""
+    print("[ITEM] Double Points activated")
+    ChatLogRepository.create_chat_message(
+        session_id=get_active_session_id(),
+        message_text="⭐ Double Points activated! Next correct answer = 2x!",
+        user_id=1, message_type='system', reply_to_id=1
+    )
+    threadsafe_emit_message_sent(sio, get_active_session_id(), main_asyncio_loop)
+    sio.emit('B2F_itemEffect', {'effect': 'doublePoints', 'duration': 0}, broadcast=True)
+
+def activateTimeWarp():
+    """Adds 10 seconds to the current question timer"""
+    print("[ITEM] Time Warp activated")
+    ChatLogRepository.create_chat_message(
+        session_id=get_active_session_id(),
+        message_text="⏰ Time Warp! +10 seconds added to the clock!",
+        user_id=1, message_type='system', reply_to_id=1
+    )
+    threadsafe_emit_message_sent(sio, get_active_session_id(), main_asyncio_loop)
+    sio.emit('B2F_itemEffect', {'effect': 'timeWarp', 'seconds': 10}, broadcast=True)
+
+def activateLightningBolt():
+    """Eliminates two wrong answers from the current question"""
+    print("[ITEM] Lightning Bolt activated")
+    ChatLogRepository.create_chat_message(
+        session_id=get_active_session_id(),
+        message_text="⚡ Lightning Bolt! Two wrong answers eliminated!",
+        user_id=1, message_type='system', reply_to_id=1
+    )
+    threadsafe_emit_message_sent(sio, get_active_session_id(), main_asyncio_loop)
+    sio.emit('B2F_itemEffect', {'effect': 'lightningBolt', 'eliminate': 2}, broadcast=True)
+
+def activateMysteryBox():
+    """Triggers a random item effect"""
+    import random
+    effects = [activateShield, activateDoublePoints, activateTimeWarp, 
+               activateLightningBolt, activateSpotlight, activateEarthquake,
+               activateAdvertFlood, tempDown, tempUp]
+    chosen = random.choice(effects)
+    print(f"[ITEM] Mystery Box → {chosen.__name__}")
+    ChatLogRepository.create_chat_message(
+        session_id=get_active_session_id(),
+        message_text="🎁 Mystery Box opened! What will it be...?",
+        user_id=1, message_type='system', reply_to_id=1
+    )
+    threadsafe_emit_message_sent(sio, get_active_session_id(), main_asyncio_loop)
+    sio.emit('B2F_itemEffect', {'effect': 'mysteryBox', 'duration': 2}, broadcast=True)
+    # Small delay then trigger the random effect
+    import threading
+    threading.Timer(2.0, chosen).start()
+
+def activateSpotlight():
+    """Highlights the correct answer for 2 seconds"""
+    print("[ITEM] Spotlight activated")
+    ChatLogRepository.create_chat_message(
+        session_id=get_active_session_id(),
+        message_text="🔦 Spotlight! The correct answer is briefly revealed!",
+        user_id=1, message_type='system', reply_to_id=1
+    )
+    threadsafe_emit_message_sent(sio, get_active_session_id(), main_asyncio_loop)
+    sio.emit('B2F_itemEffect', {'effect': 'spotlight', 'duration': 2}, broadcast=True)
+
+def activateEarthquake():
+    """Shakes everyone's screen for 5 seconds"""
+    print("[ITEM] Earthquake activated")
+    ChatLogRepository.create_chat_message(
+        session_id=get_active_session_id(),
+        message_text="🌍 EARTHQUAKE! Hold on tight!",
+        user_id=1, message_type='system', reply_to_id=1
+    )
+    threadsafe_emit_message_sent(sio, get_active_session_id(), main_asyncio_loop)
+    sio.emit('B2F_itemEffect', {'effect': 'earthquake', 'duration': 5}, broadcast=True)
 
 # Item management functions
 

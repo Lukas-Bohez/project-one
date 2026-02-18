@@ -16,6 +16,37 @@ class QuizSocketHandler {
             advertFlood.activate(15); // Fixed 18-second duration for the scream flood
         });
 
+        // ---- ITEM EFFECT HANDLER ----
+        this.socket.on('B2F_itemEffect', (data) => {
+            console.log('🎯 Item effect received:', data);
+            const effect = data.effect;
+            this._showEffectOverlay(effect, data);
+
+            switch (effect) {
+                case 'shield':
+                    this._applyShieldEffect(data.duration || 30);
+                    break;
+                case 'doublePoints':
+                    this._applyDoublePointsEffect();
+                    break;
+                case 'timeWarp':
+                    this._applyTimeWarpEffect(data.seconds || 10);
+                    break;
+                case 'lightningBolt':
+                    this._applyLightningEffect(data.eliminate || 2);
+                    break;
+                case 'mysteryBox':
+                    this._applyMysteryBoxEffect();
+                    break;
+                case 'spotlight':
+                    this._applySpotlightEffect(data.duration || 2);
+                    break;
+                case 'earthquake':
+                    this._applyEarthquakeEffect(data.duration || 5);
+                    break;
+            }
+        });
+
 
         if (!this.socket || this.socket._quizLogicListenersInitialized) {
             return;
@@ -378,6 +409,97 @@ this.socket.on('quiz_timer', (data) => {
         if (this.socket) {
             this.socket.connect();
         }
+    }
+
+    // ── ITEM EFFECT VISUALS ──
+
+    _showEffectOverlay(effect, data) {
+        const EFFECT_META = {
+            shield: { icon: '🛡️', label: 'Shield Activated!', color: '#3498db' },
+            doublePoints: { icon: '✨', label: 'Double Points!', color: '#f39c12' },
+            timeWarp: { icon: '⏰', label: `+${data.seconds || 10}s Time Warp!`, color: '#9b59b6' },
+            lightningBolt: { icon: '⚡', label: 'Lightning Bolt!', color: '#f1c40f' },
+            mysteryBox: { icon: '🎁', label: 'Mystery Box...', color: '#8e44ad' },
+            spotlight: { icon: '💡', label: 'Spotlight!', color: '#e67e22' },
+            earthquake: { icon: '🌍', label: 'Earthquake!', color: '#e74c3c' }
+        };
+        const meta = EFFECT_META[effect] || { icon: '🎯', label: effect, color: '#6c5ce7' };
+
+        const overlay = document.createElement('div');
+        overlay.className = 'item-effect-overlay';
+        overlay.innerHTML = `
+            <div class="item-effect-overlay__icon" style="color:${meta.color}">${meta.icon}</div>
+            <div class="item-effect-overlay__label">${meta.label}</div>
+        `;
+        document.body.appendChild(overlay);
+
+        requestAnimationFrame(() => overlay.classList.add('item-effect-overlay--show'));
+        setTimeout(() => {
+            overlay.classList.remove('item-effect-overlay--show');
+            setTimeout(() => overlay.remove(), 500);
+        }, 2500);
+    }
+
+    _applyShieldEffect(duration) {
+        const quizArea = document.querySelector('.c-quiz-container') || document.querySelector('main');
+        if (!quizArea) return;
+        quizArea.classList.add('effect-shield');
+        setTimeout(() => quizArea.classList.remove('effect-shield'), duration * 1000);
+    }
+
+    _applyDoublePointsEffect() {
+        const scoreEls = document.querySelectorAll('.c-player-score, .c-score-display, [data-score]');
+        scoreEls.forEach(el => {
+            el.classList.add('effect-double-points');
+            setTimeout(() => el.classList.remove('effect-double-points'), 8000);
+        });
+    }
+
+    _applyTimeWarpEffect(seconds) {
+        const timer = document.querySelector('.c-timer, .quiz-timer, [data-timer]');
+        if (timer) {
+            timer.classList.add('effect-time-warp');
+            setTimeout(() => timer.classList.remove('effect-time-warp'), 3000);
+        }
+    }
+
+    _applyLightningEffect(eliminate) {
+        const answers = document.querySelectorAll('.c-answer-btn, .c-answers-container button');
+        let eliminated = 0;
+        answers.forEach(btn => {
+            if (eliminated >= eliminate) return;
+            // Try to detect wrong answers by data attributes or class
+            const isCorrect = btn.classList.contains('correct') || btn.dataset.correct === 'true';
+            if (!isCorrect && !btn.disabled) {
+                btn.classList.add('effect-lightning-eliminate');
+                btn.style.pointerEvents = 'none';
+                btn.style.opacity = '0.3';
+                eliminated++;
+            }
+        });
+    }
+
+    _applyMysteryBoxEffect() {
+        const quizArea = document.querySelector('.c-quiz-container') || document.querySelector('main');
+        if (!quizArea) return;
+        quizArea.classList.add('effect-mystery-box');
+        setTimeout(() => quizArea.classList.remove('effect-mystery-box'), 3000);
+    }
+
+    _applySpotlightEffect(duration) {
+        const answers = document.querySelectorAll('.c-answer-btn, .c-answers-container button');
+        answers.forEach(btn => {
+            const isCorrect = btn.classList.contains('correct') || btn.dataset.correct === 'true';
+            if (isCorrect) {
+                btn.classList.add('effect-spotlight-highlight');
+                setTimeout(() => btn.classList.remove('effect-spotlight-highlight'), duration * 1000);
+            }
+        });
+    }
+
+    _applyEarthquakeEffect(duration) {
+        document.body.classList.add('effect-earthquake');
+        setTimeout(() => document.body.classList.remove('effect-earthquake'), duration * 1000);
     }
 }
 
