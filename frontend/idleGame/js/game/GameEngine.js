@@ -348,6 +348,7 @@ class GameEngine {
         // Update UI periodically (not every tick for performance)
         if (now - this.lastUIUpdate > this.uiUpdateRate) {
             this.updateUI();
+            this.updateIncomeIndicators();
             this.lastUIUpdate = now;
             
             // Update theme if needed (checks internally if theme changed)
@@ -1426,6 +1427,14 @@ class GameEngine {
         
         console.log(`Unlocked feature: ${key}`);
         this.showNotification(`✅ Feature unlocked!`);
+        
+        // Big celebration for unlocks
+        const button = document.querySelector(`[data-unlock="${key}"]`);
+        if (button) {
+            this.spawnParticles(button, '#ffd700', 12);
+            this.triggerScreenShake();
+        }
+        
         return true;
     }
     
@@ -1506,6 +1515,18 @@ class GameEngine {
         this.playSound('mine');
         this.flashElement('stone-amount');
         
+        // Show floating "+1" at the mine button
+        const btn = document.getElementById('mine-stone-btn');
+        if (btn) {
+            this.spawnFloatingNumber(btn, '+1', '#8d8d8d');
+            this.spawnClickRipple(btn, null);
+            this.triggerMineShake(btn);
+            this.spawnParticles(btn, '#8d8d8d', 5);
+        }
+        
+        // Combo tracking for rapid clicking
+        this.trackCombo();
+        
         console.log('Mined 1 stone manually');
     }
     
@@ -1547,6 +1568,21 @@ class GameEngine {
             
             this.playSound('hire');
             this.flashElement('gold-amount');
+            
+            // Purchase celebration effect
+            const btnMap = {
+                stoneMiner: 'hire-stone-miner-btn',
+                coalMiner: 'hire-coal-miner-btn',
+                ironMiner: 'hire-iron-miner-btn',
+                silverMiner: 'hire-silver-miner-btn'
+            };
+            this.triggerPurchaseEffect(btnMap[workerType]);
+            this.spawnFloatingNumber(
+                document.getElementById(btnMap[workerType]),
+                `-${this.formatNumber(cost)} 💰`,
+                '#ffd700'
+            );
+            
             console.log(`Hired ${workerType} for ${cost} gold (discount applied)`);
             return true;
         }
@@ -1654,6 +1690,14 @@ class GameEngine {
         this.state.crafted[recipe.produces] = (this.state.crafted[recipe.produces] || 0) + produceAmount;
         
         this.playSound('build');
+        
+        // Visual feedback for crafting
+        const craftBtn = document.getElementById(`craft-${tier}-btn`);
+        if (craftBtn) {
+            this.spawnParticles(craftBtn, '#f093fb', 6);
+            this.spawnFloatingNumber(craftBtn, `+${produceAmount} ✨`, '#f093fb');
+        }
+        
         console.log(`Crafted ${tier}: ${recipe.name} (x${produceAmount})`);
         return true;
     }
@@ -2542,6 +2586,14 @@ class GameEngine {
             
             this.playSound('sell');
             this.flashElement('gold-amount');
+            
+            // Floating gold earned indicator
+            const goldEl = document.getElementById('gold-amount');
+            if (goldEl) {
+                this.spawnFloatingNumber(goldEl, `+${goldEarned.toFixed(1)} 💰`, '#ffd700');
+                this.triggerGoldShimmer('gold-amount');
+            }
+            
             console.log(`Sold 1 ${resourceType} for ${goldEarned.toFixed(1)} gold`);
         }
     }
@@ -2653,6 +2705,15 @@ class GameEngine {
         
         this.playSound('prestige');
         this.showNotification(`🔄 Rebirth #${newRebirthCount} - A new chapter begins...`);
+        this.triggerScreenShake();
+        
+        // Dramatic particle burst from center of screen
+        const header = document.querySelector('.game-header');
+        if (header) {
+            this.spawnParticles(header, '#ffd700', 20);
+            this.spawnParticles(header, '#ff416c', 15);
+        }
+        
         console.log(`City rebirth completed! Total rebirths: ${newRebirthCount}`);
         
         // 🔓 REBIRTH UNLOCK: Release lock and force save the new state
@@ -2753,9 +2814,59 @@ class GameEngine {
     }
     
     playSound(type) {
-        // Placeholder for sound effects
-        // Could be expanded to play actual audio files
-        console.log(`Playing ${type} sound`);
+        // Web Audio API micro-sounds — no audio files needed
+        try {
+            if (!this._audioCtx) {
+                this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            const ctx = this._audioCtx;
+            if (ctx.state === 'suspended') ctx.resume();
+            
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            
+            const now = ctx.currentTime;
+            gain.gain.setValueAtTime(0.08, now);
+            
+            switch (type) {
+                case 'mine':
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.exponentialRampToValueAtTime(440, now + 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                    break;
+                case 'sell':
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523, now);
+                    osc.frequency.exponentialRampToValueAtTime(784, now + 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                    break;
+                case 'hire':
+                case 'research':
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(330, now);
+                    osc.frequency.exponentialRampToValueAtTime(660, now + 0.06);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+                    osc.start(now);
+                    osc.stop(now + 0.18);
+                    break;
+                default:
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+            }
+        } catch (e) {
+            // Audio not available — silently ignore
+        }
     }
     
     autoSave() {
@@ -3051,7 +3162,13 @@ class GameEngine {
         // Simple notification system
         console.log(`📢 ${message}`);
         
-        // You could also create a UI notification here
+        // Stack notifications - find existing ones and push them down
+        const existingNotifs = document.querySelectorAll('.game-notification:not(.notification-exit)');
+        existingNotifs.forEach((notif, i) => {
+            const currentTop = parseInt(notif.style.top) || 20;
+            notif.style.top = (currentTop + 70) + 'px';
+        });
+        
         const notification = document.createElement('div');
         notification.className = 'game-notification';
         notification.textContent = message;
@@ -3062,17 +3179,22 @@ class GameEngine {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 15px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            z-index: 1000;
-            animation: slideIn 0.3s ease-out;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 15px rgba(102, 126, 234, 0.3);
+            z-index: 10000;
+            max-width: 320px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            font-weight: 500;
         `;
         
         document.body.appendChild(notification);
         
+        // Animate out then remove
         setTimeout(() => {
-            notification.remove();
-        }, 3000);
+            notification.classList.add('notification-exit');
+            setTimeout(() => notification.remove(), 300);
+        }, 2700);
     }
     
     updateAdCooldowns() {
@@ -3175,6 +3297,208 @@ class GameEngine {
         if (this.state.prestige.points >= 20) return 'Rare';
         if (this.state.prestige.points >= 5) return 'Uncommon';
         return 'Common';
+    }
+
+    // ============================================
+    // ANIMATION & VISUAL FEEDBACK METHODS
+    // ============================================
+
+    /**
+     * Spawn a floating number near an element (e.g. "+1", "-5 💰")
+     */
+    spawnFloatingNumber(element, text, color) {
+        if (!element) return;
+        const rect = element.getBoundingClientRect();
+        const el = document.createElement('div');
+        el.className = 'floating-number';
+        el.textContent = text;
+        el.style.color = color || '#64ffda';
+        // Place slightly above the element with some random horizontal jitter
+        const jitterX = (Math.random() - 0.5) * 30;
+        el.style.left = (rect.left + rect.width / 2 + jitterX - 20) + 'px';
+        el.style.top = (rect.top - 5) + 'px';
+        document.body.appendChild(el);
+        el.addEventListener('animationend', () => el.remove());
+    }
+
+    /**
+     * Spawn a click ripple inside a button from click position
+     */
+    spawnClickRipple(button, event) {
+        if (!button) return;
+        const ripple = document.createElement('div');
+        ripple.className = 'click-ripple';
+        const rect = button.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        
+        // Position ripple at click point or center
+        let x, y;
+        if (event) {
+            x = event.clientX - rect.left - size / 2;
+            y = event.clientY - rect.top - size / 2;
+        } else {
+            x = rect.width / 2 - size / 2;
+            y = rect.height / 2 - size / 2;
+        }
+        
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = x + 'px';
+        ripple.style.top = y + 'px';
+        button.appendChild(ripple);
+        ripple.addEventListener('animationend', () => ripple.remove());
+    }
+
+    /**
+     * Quick micro-shake on the mine button after clicking
+     */
+    triggerMineShake(element) {
+        if (!element) return;
+        element.classList.remove('mine-click-shake');
+        // Force reflow to restart animation
+        void element.offsetWidth;
+        element.classList.add('mine-click-shake');
+        setTimeout(() => element.classList.remove('mine-click-shake'), 150);
+    }
+
+    /**
+     * Spawn colored particles bursting out of an element
+     */
+    spawnParticles(element, color, count) {
+        if (!element) return;
+        const rect = element.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        
+        for (let i = 0; i < (count || 6); i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.background = color || '#64ffda';
+            p.style.left = cx + 'px';
+            p.style.top = cy + 'px';
+            
+            // Random direction
+            const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.8;
+            const dist = 30 + Math.random() * 50;
+            p.style.setProperty('--px', Math.cos(angle) * dist + 'px');
+            p.style.setProperty('--py', Math.sin(angle) * dist + 'px');
+            p.style.width = (3 + Math.random() * 5) + 'px';
+            p.style.height = p.style.width;
+            
+            document.body.appendChild(p);
+            p.addEventListener('animationend', () => p.remove());
+        }
+    }
+
+    /**
+     * Trigger a green flash on a button after a successful purchase
+     */
+    triggerPurchaseEffect(buttonId) {
+        const btn = document.getElementById(buttonId);
+        if (!btn) return;
+        btn.classList.remove('purchase-success');
+        void btn.offsetWidth;
+        btn.classList.add('purchase-success');
+        setTimeout(() => btn.classList.remove('purchase-success'), 500);
+    }
+
+    /**
+     * Gold shimmer animation on a resource value element
+     */
+    triggerGoldShimmer(elementId) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        el.classList.remove('gold-earned');
+        void el.offsetWidth;
+        el.classList.add('gold-earned');
+        setTimeout(() => el.classList.remove('gold-earned'), 600);
+    }
+
+    /**
+     * Subtle screen shake for big events (unlocks, rebirths)
+     */
+    triggerScreenShake() {
+        const container = document.getElementById('game-container');
+        if (!container) return;
+        container.classList.remove('screen-shake');
+        void container.offsetWidth;
+        container.classList.add('screen-shake');
+        setTimeout(() => container.classList.remove('screen-shake'), 300);
+    }
+
+    /**
+     * Track rapid clicks and show a combo counter
+     */
+    trackCombo() {
+        const now = Date.now();
+        if (!this._comboCount) this._comboCount = 0;
+        if (!this._lastMineClick) this._lastMineClick = 0;
+        
+        // Reset combo if more than 800ms between clicks
+        if (now - this._lastMineClick > 800) {
+            this._comboCount = 0;
+        }
+        this._lastMineClick = now;
+        this._comboCount++;
+        
+        // Show combo indicator for streaks of 5+
+        if (this._comboCount >= 5 && this._comboCount % 3 === 0) {
+            const btn = document.getElementById('mine-stone-btn');
+            if (btn) {
+                const rect = btn.getBoundingClientRect();
+                
+                // Remove old combo indicator
+                const oldCombo = document.querySelector('.combo-indicator');
+                if (oldCombo) oldCombo.remove();
+                
+                const combo = document.createElement('div');
+                combo.className = 'combo-indicator';
+                combo.textContent = `🔥 x${this._comboCount}`;
+                combo.style.left = (rect.left + rect.width / 2 - 30) + 'px';
+                combo.style.top = (rect.top - 40) + 'px';
+                
+                // Scale up with combo
+                const scale = Math.min(1.5, 1 + this._comboCount * 0.02);
+                combo.style.transform = `scale(${scale})`;
+                
+                document.body.appendChild(combo);
+                setTimeout(() => combo.remove(), 1500);
+            }
+        }
+    }
+
+    /**
+     * Add per-second income indicators to resource items in the header
+     */
+    updateIncomeIndicators() {
+        const resources = ['stone', 'coal', 'iron', 'silver', 'gold'];
+        
+        resources.forEach(res => {
+            const resourceItem = document.querySelector(`.resource-item.${res}`);
+            if (!resourceItem) return;
+            
+            // Calculate income per second for this resource
+            let perSec = 0;
+            if (res === 'stone') perSec = this.state.workers.stoneMiners || 0;
+            else if (res === 'coal') perSec = this.state.workers.coalMiners || 0;
+            else if (res === 'iron') perSec = this.state.workers.ironMiners || 0;
+            else if (res === 'silver') perSec = this.state.workers.silverMiners || 0;
+            
+            // Only show if there's meaningful income
+            if (perSec <= 0 && res !== 'gold') return;
+            
+            let indicator = resourceItem.querySelector('.idle-income-indicator');
+            if (!indicator) {
+                indicator = document.createElement('span');
+                indicator.className = 'idle-income-indicator positive';
+                resourceItem.style.position = 'relative';
+                resourceItem.appendChild(indicator);
+            }
+            
+            if (perSec > 0) {
+                indicator.textContent = `+${this.formatNumber(perSec)}/s`;
+                indicator.className = 'idle-income-indicator positive';
+            }
+        });
     }
 }
 
