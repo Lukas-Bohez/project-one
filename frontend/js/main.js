@@ -8,21 +8,17 @@ const dom = {
     manageQuizBtn: document.getElementById('manageQuizBtn'),
     infoBtn: document.getElementById('infoBtn'),
     closeModal: document.querySelector('.c-modal__close'),
-    tempValue: document.getElementById('tempValue'),
-    lightValue: document.getElementById('lightValue'),
-    servoTestBtn: document.getElementById('servoTestBtn'),
-    servoVisual: document.getElementById('servoVisual')
+    servoTestBtn: document.getElementById('servoTestBtn')
 };
 
 let initialData
 
 const showSensorData = (temp, light, degrees, players) => {
-    if (dom.tempValue) dom.tempValue.textContent = temp;
-    if (dom.lightValue) dom.lightValue.textContent = light;
+    // Sensor display elements removed - live data feature retired
 };
 
 const showServoMovement = (angle) => {
-    if (dom.servoVisual) dom.servoVisual.style.transform = `rotate(${angle}deg)`;
+    // Servo visual element removed - live data feature retired
 };
 
 const callbackUpdateDifficulty = (temp, light, sound) => {
