@@ -1228,12 +1228,13 @@ body {
 }
 
 .flash {
-    animation: flash 0.5s;
+    animation: flash 0.5s ease-out;
 }
 
 @keyframes flash {
-    0%, 100% { background-color: transparent; }
-    50% { background-color: rgba(100, 255, 218, 0.3); }
+    0% { background-color: transparent; transform: scale(1); }
+    30% { background-color: rgba(100, 255, 218, 0.4); transform: scale(1.15); text-shadow: 0 0 8px rgba(100, 255, 218, 0.8); }
+    100% { background-color: transparent; transform: scale(1); text-shadow: none; }
 }
 
 /* Scrollbar Styling */
@@ -2063,4 +2064,292 @@ body {
     font-family: 'Courier New', monospace;
     font-size: 1.1em;
     color: #64ffda;
+}
+
+/* ============================================
+   ENGAGEMENT ANIMATIONS & EFFECTS
+   ============================================ */
+
+/* --- Floating Number Popups ("+1 Stone", "+5 Gold") --- */
+.floating-number {
+    position: fixed;
+    pointer-events: none;
+    font-weight: 800;
+    font-size: 1.1rem;
+    z-index: 9998;
+    animation: floatUp 1.2s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 12px currentColor;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+}
+
+@keyframes floatUp {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(0.7);
+    }
+    15% {
+        opacity: 1;
+        transform: translateY(-8px) scale(1.1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-60px) scale(0.9);
+    }
+}
+
+/* --- Mine Button Click Ripple --- */
+.mine-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.click-ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.5) 0%, transparent 70%);
+    transform: scale(0);
+    animation: rippleExpand 0.6s ease-out forwards;
+    pointer-events: none;
+}
+
+@keyframes rippleExpand {
+    0% {
+        transform: scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/* --- Mine Button Click Shake --- */
+.mine-click-shake {
+    animation: mineShake 0.15s ease-out;
+}
+
+@keyframes mineShake {
+    0% { transform: translateY(-3px) scale(1.02); }
+    50% { transform: translateY(2px) scale(0.98); }
+    100% { transform: translateY(0) scale(1); }
+}
+
+/* --- Particle Burst Effect --- */
+.particle {
+    position: fixed;
+    pointer-events: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    z-index: 9997;
+    animation: particleBurst 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes particleBurst {
+    0% {
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(var(--px), var(--py)) scale(0);
+    }
+}
+
+/* --- Button Affordable Glow Pulse --- */
+.affordable-glow {
+    animation: affordableGlow 2s ease-in-out infinite;
+}
+
+@keyframes affordableGlow {
+    0%, 100% {
+        box-shadow: 0 4px 15px rgba(100, 255, 218, 0.2);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(100, 255, 218, 0.5), 0 0 30px rgba(100, 255, 218, 0.15);
+    }
+}
+
+/* --- Purchase Success Flash --- */
+.purchase-success {
+    animation: purchaseFlash 0.5s ease-out;
+}
+
+@keyframes purchaseFlash {
+    0% {
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+        transform: translateY(-3px) scale(1.03);
+    }
+    50% {
+        box-shadow: 0 0 20px 10px rgba(76, 175, 80, 0.3);
+    }
+    100% {
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* --- Resource Counter Bump --- */
+.resource-bump {
+    animation: resourceBump 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes resourceBump {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.25); }
+    100% { transform: scale(1); }
+}
+
+/* --- Gold Earned Shimmer --- */
+.gold-earned {
+    animation: goldShimmer 0.6s ease-out;
+}
+
+@keyframes goldShimmer {
+    0% { color: #ffd700; text-shadow: 0 0 0 transparent; }
+    30% { color: #fff8dc; text-shadow: 0 0 15px rgba(255, 215, 0, 0.9), 0 0 30px rgba(255, 215, 0, 0.5); }
+    100% { color: #ffd700; text-shadow: none; }
+}
+
+/* --- Notification Entrance Enhancement --- */
+.game-notification {
+    animation: notificationSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes notificationSlideIn {
+    0% {
+        transform: translateX(120%) scale(0.8);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+    }
+}
+
+/* --- Notification Exit --- */
+.notification-exit {
+    animation: notificationSlideOut 0.3s ease-in forwards;
+}
+
+@keyframes notificationSlideOut {
+    0% {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(120%) scale(0.8);
+        opacity: 0;
+    }
+}
+
+/* --- Tab Unlock Attention Seeker --- */
+.tab-unlock-glow {
+    animation: tabUnlockGlow 1.5s ease-in-out 3;
+    position: relative;
+}
+
+@keyframes tabUnlockGlow {
+    0%, 100% {
+        box-shadow: none;
+    }
+    50% {
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.6), 0 0 30px rgba(255, 215, 0, 0.3), inset 0 0 10px rgba(255, 215, 0, 0.1);
+        color: #ffd700;
+    }
+}
+
+/* --- Milestone Celebration --- */
+.milestone-burst {
+    animation: milestonePop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes milestonePop {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.15); filter: brightness(1.5); }
+    60% { transform: scale(0.95); }
+    100% { transform: scale(1); filter: brightness(1); }
+}
+
+/* --- Idle Income Floating Indicator --- */
+.idle-income-indicator {
+    position: absolute;
+    top: -18px;
+    right: 5px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    white-space: nowrap;
+}
+
+.resource-item:hover .idle-income-indicator {
+    opacity: 1;
+}
+
+.idle-income-indicator.positive {
+    color: #4caf50;
+}
+
+.idle-income-indicator.negative {
+    color: #f44336;
+}
+
+/* --- Rebirth Button Enhanced Pulse --- */
+#rebirth-btn:not(:disabled) {
+    animation: rebirthReady 2s ease-in-out infinite;
+}
+
+@keyframes rebirthReady {
+    0%, 100% {
+        box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 25px rgba(231, 76, 60, 0.7), 0 0 40px rgba(231, 76, 60, 0.3);
+        transform: translateY(-2px);
+    }
+}
+
+/* --- Screen shake for big events --- */
+.screen-shake {
+    animation: screenShake 0.3s ease-out;
+}
+
+@keyframes screenShake {
+    0%, 100% { transform: translate(0, 0); }
+    20% { transform: translate(-3px, 2px); }
+    40% { transform: translate(3px, -2px); }
+    60% { transform: translate(-2px, -1px); }
+    80% { transform: translate(2px, 1px); }
+}
+
+/* --- Counter spin-up --- */
+.counter-spin {
+    animation: counterSpin 0.4s ease-out;
+}
+
+@keyframes counterSpin {
+    0% { transform: translateY(8px); opacity: 0.3; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+/* --- Combo counter for rapid clicking --- */
+.combo-indicator {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    font-size: 1.5rem;
+    font-weight: 900;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8), 0 0 20px currentColor;
+    color: #ffd700;
+    animation: comboPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: transform 0.1s ease;
+}
+
+@keyframes comboPop {
+    0% { transform: scale(0.5); opacity: 0; }
+    70% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
 }
