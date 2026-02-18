@@ -240,9 +240,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     </p>
                     <ul style="margin-bottom: 1rem; padding-left: 2rem; line-height: 1.6;">
                         <li style="margin-bottom: 0.5rem;">
-                            <strong>Environmental Sensor Data:</strong> To adjust the dynamic difficulty of the quiz, we collect anonymized data from environmental sensors, such as temperature and light levels, from your gaming environment. This data is used to influence the timer speed and question difficulty. This data is not directly linked to your identity.
-                        </li>
-                        <li style="margin-bottom: 0.5rem;">
                             <strong>Game Data:</strong> Information about your quiz performance, points scored, items used, and game progress is collected to improve the game and display your results.
                         </li>
                         <li style="margin-bottom: 0.5rem;">
@@ -258,7 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </p>
                     <ul style="margin-bottom: 1rem; padding-left: 2rem; line-height: 1.6;">
                         <li style="margin-bottom: 0.5rem;">
-                            To <strong>personalize and improve gameplay</strong>, such as adjusting difficulty based on environmental sensor data.
+                            To <strong>personalize and improve gameplay</strong> and develop new features.
                         </li>
                         <li style="margin-bottom: 0.5rem;">
                             For <strong>internal analysis</strong> to understand game performance and develop new features.
@@ -327,7 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="margin-bottom: 2rem;">
                     <h3 style="color: var(--primary-color); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--primary-color);">About Quiz The Spire</h3>
                     <p style="margin-bottom: 1rem; line-height: 1.6;">
-                        Quiz The Spire is a <strong>completely free</strong> dynamic quiz game that adapts to your environment. Using temperature and lighting data, the game creates a unique experience with changing difficulty levels and timer speeds. Enjoy fun quizzes and questions that respond to your surroundings!
+                        Quiz The Spire is a <strong>completely free</strong> dynamic quiz game. Enjoy fun quizzes and questions with changing difficulty levels!
                     </p>
                 </div>
 

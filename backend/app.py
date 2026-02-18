@@ -189,16 +189,17 @@ def threadsafe_emit_message_sent(sio, session_id, loop):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    startup_logger = logging.getLogger('uvicorn.error')
     try:
         global main_asyncio_loop
-        print("FastAPI app starting up...")
+        startup_logger.info("FastAPI app starting up...")
 
         if RPI_COMPONENTS_AVAILABLE:
             try:
                 # Get the main asyncio event loop when FastAPI starts.
                 # This is the loop on which Socket.IO emits will be scheduled.
                 main_asyncio_loop = asyncio.get_running_loop()
-                print(f"Main asyncio loop obtained: {main_asyncio_loop}")
+                startup_logger.info(f"Main asyncio loop obtained: {main_asyncio_loop}")
 
                 # Start the Raspberry Pi script in a new thread
                 # Pass the sio instance and the main_asyncio_loop to the thread
@@ -208,28 +209,28 @@ async def lifespan(app: FastAPI):
                     daemon=True
                 )
                 pi_thread.start()
-                print("Raspberry Pi script thread started.")
+                startup_logger.info("Raspberry Pi script thread started.")
             except Exception as e:
-                print(f"Failed to start Raspberry Pi thread: {e}")
-                print("Continuing without Pi components.")
+                startup_logger.error(f"Failed to start Raspberry Pi thread: {e}")
+                startup_logger.info("Continuing without Pi components.")
         else:
-            print("Raspberry Pi thread will not be started due to import errors.")
+            startup_logger.info("Raspberry Pi thread will not be started due to import errors.")
 
-        print("Server started - Socket.IO backend is ready!")
+        startup_logger.info("Server started - Socket.IO backend is ready!")
     except Exception as e:
-        print(f"Error in startup: {e}")
+        startup_logger.error(f"Error in startup: {e}")
         raise
     yield
     try:
-        print("FastAPI app shutting down...")
+        startup_logger.info("FastAPI app shutting down...")
         # Signal the background thread to stop
         stop_thread_event.set()
         # Give the thread a moment to clean up (optional, as it's a daemon thread)
         # If the thread is not a daemon, you'd want to join it: pi_thread.join(timeout=5)
-        print("Shutdown signal sent to Raspberry Pi thread.")
+        startup_logger.info("Shutdown signal sent to Raspberry Pi thread.")
         
     except Exception as e:
-        print(f"Error in shutdown: {e}")
+        logging.getLogger('uvicorn.error').error(f"Error in shutdown: {e}")
 
 app = FastAPI(title="Socket.IO Messaging Backend", version="1.0.0", lifespan=lifespan)
 
@@ -457,12 +458,15 @@ def load_download_tracker():
     try:
         if os.path.exists(DOWNLOAD_TRACKER_FILE):
             with open(DOWNLOAD_TRACKER_FILE, 'r') as f:
-                return json.load(f)
+                content = f.read().strip()
+                if content:
+                    return json.loads(content)
     except Exception as e:
         print(f"Error loading download tracker: {e}")
     
-    # Return defaults if file doesn't exist
-    return {
+    # Return defaults if file doesn't exist, is empty, or is corrupt
+    # Also immediately persist defaults so the file self-heals
+    defaults = {
         "monthly_limit_gb": 1024,
         "per_ip_monthly_limit": None,
         "download_speed_mbps": 2,
@@ -472,6 +476,12 @@ def load_download_tracker():
         "total_monthly_bandwidth_gb": 0.0,
         "file_size_gb": 0.0126953125
     }
+    try:
+        with open(DOWNLOAD_TRACKER_FILE, 'w') as f:
+            json.dump(defaults, f, indent=2)
+    except Exception as e:
+        print(f"Error writing default download tracker: {e}")
+    return defaults
 
 def save_download_tracker(tracker):
     """Save download tracking data to JSON file."""
