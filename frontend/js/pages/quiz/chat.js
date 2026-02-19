@@ -12,6 +12,25 @@ class ChatSystem {
         this.maxRetryAttempts = 10; // Maximum retry attempts
 
         console.log('ChatSystem: Constructor called. Fetching active session ID...');
+
+        // Try to get session ID from URL params first (set by hub join button)
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlSessionId = urlParams.get('session');
+        if (urlSessionId) {
+            this.sessionId = parseInt(urlSessionId, 10);
+            sessionStorage.setItem('quiz_session_id', String(this.sessionId));
+            console.log(`ChatSystem: Using session ID from URL: ${this.sessionId}`);
+        } else {
+            // Check sessionStorage (set by session create flow)
+            const storedId = sessionStorage.getItem('quiz_session_id');
+            if (storedId) {
+                this.sessionId = parseInt(storedId, 10);
+                console.log(`ChatSystem: Using session ID from sessionStorage: ${this.sessionId}`);
+            }
+        }
+        // Store a global reference for other modules
+        window.currentQuizSessionId = this.sessionId;
+
         this.fetchActiveSessionId().then(() => {
             if (typeof io !== 'undefined') {
                 this.socket = window.createCompatibleSocket ? 
@@ -112,6 +131,7 @@ class ChatSystem {
         this.socket.on('connect', () => {
             console.log('ChatSystem: Connected to server with ID:', this.socket.id);
             if (this.sessionId) {
+                // Join the chat room
                 this.socket.emit('join', `quiz_session_${this.sessionId}`, (response) => {
                     if (response && response.status === 'success') {
                         console.log(`ChatSystem: Successfully joined room: quiz_session_${this.sessionId}`);
@@ -119,6 +139,9 @@ class ChatSystem {
                         console.error(`ChatSystem: Failed to join room: quiz_session_${this.sessionId}`, response);
                     }
                 });
+                // Also emit join_quiz_session so the backend tracks which session this client is in
+                this.socket.emit('join_quiz_session', { session_id: this.sessionId });
+                console.log(`ChatSystem: Emitted join_quiz_session for session ${this.sessionId}`);
             } else {
                 console.warn('ChatSystem: Socket connected, but sessionId is null. Cannot join room.');
             }
@@ -148,6 +171,7 @@ class ChatSystem {
 
     async fetchActiveSessionId() {
         try {
+            // If we already have a session from URL/sessionStorage, validate it exists in active sessions
             const response = await fetch(`${this.lanIP}/api/v1/sessions/active`);
 
             if (!response.ok) {
@@ -156,15 +180,24 @@ class ChatSystem {
             }
 
             const data = await response.json();
-            const activeSessionIdsList = data.active_session_ids;
+            const activeSessionIdsList = data.active_session_ids || [];
 
-            if (activeSessionIdsList && activeSessionIdsList.length > 0) {
+            // If we have a target session (from URL), stick with it if it's still active
+            if (this.sessionId && activeSessionIdsList.includes(this.sessionId)) {
+                console.log(`ChatSystem: Target session ${this.sessionId} is still active`);
+                window.currentQuizSessionId = this.sessionId;
+                return;
+            }
+
+            // If target session is gone, or no target, pick first active
+            if (activeSessionIdsList.length > 0) {
                 const newSessionId = activeSessionIdsList[0];
                 
                 // Only update if the session ID has changed
                 if (this.sessionId !== newSessionId) {
                     const oldSessionId = this.sessionId;
                     this.sessionId = newSessionId;
+                    window.currentQuizSessionId = this.sessionId;
                     console.log(`ChatSystem: Session ID updated from ${oldSessionId} to ${newSessionId}`);
                     
                     // Update socket room - socket.io will queue if not connected
@@ -180,6 +213,8 @@ class ChatSystem {
                                 console.error(`ChatSystem: Failed to join room: quiz_session_${this.sessionId}`, response);
                             }
                         });
+                        // Inform backend about session association
+                        this.socket.emit('join_quiz_session', { session_id: this.sessionId });
                         console.log(`ChatSystem: Emitted join for room: quiz_session_${this.sessionId}`);
                     }
                     

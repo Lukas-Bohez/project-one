@@ -712,10 +712,30 @@ def is_quiz_session_active(session_id):
 asgi_app = socketio.ASGIApp(sio, app, socketio_path='socket.io')
 
 newClient = None
+
+# ── Session-aware client tracking ──
+# Maps SID → session_id so we know which session each client belongs to
+client_sessions = {}       # {sid: session_id}
+client_sessions_lock = Lock()
+
+def get_client_session(sid):
+    """Get the session_id a client is in, or None."""
+    with client_sessions_lock:
+        return client_sessions.get(sid)
+
+def set_client_session(sid, session_id):
+    """Associate a client with a quiz session."""
+    with client_sessions_lock:
+        client_sessions[sid] = session_id
+
+def remove_client_session(sid):
+    """Remove a client's session association. Returns the old session_id or None."""
+    with client_sessions_lock:
+        return client_sessions.pop(sid, None)
+
 # ----------------------------------------------------
 # Socket.IO event handlers
 # ----------------------------------------------------
-# Socket.IO event handlers
 @sio.event
 async def connect(sid, environ):
     global newClient
@@ -739,33 +759,80 @@ async def connect(sid, environ):
         newClient = sid
         print(f"Server emitted 'client_connected' for new client {sid}. Total clients: {len(connected_clients)}")
 
-        # Sync client with current phase
-        active_session_id = get_active_session_id()
-        if not active_session_id:
-            print(f"No active session for client {sid}")
+    except Exception as e:
+        print(f"Critical error in connect handler: {e}")
+        traceback.print_exc()
+
+
+@sio.on('join_quiz_session')
+async def handle_join_quiz_session(sid, data):
+    """
+    Client explicitly joins a specific quiz session.
+    data: { session_id: int } or just session_id as int/str
+    """
+    try:
+        # Parse session_id from data
+        if isinstance(data, dict):
+            target_session_id = data.get('session_id')
+        else:
+            target_session_id = data
+
+        if target_session_id is not None:
+            target_session_id = int(target_session_id)
+
+        # Validate the session exists and is active
+        if target_session_id:
+            session_info = QuizSessionRepository.get_session_by_id(target_session_id)
+            if not session_info:
+                print(f"[JOIN_SESSION] Session {target_session_id} not found for {sid}")
+                await sio.emit('join_session_error', {'error': 'Session not found'}, room=sid)
+                return
+
+        # If no specific session requested, fall back to first active
+        if not target_session_id:
+            target_session_id = get_active_session_id()
+
+        if not target_session_id:
+            print(f"[JOIN_SESSION] No active session for {sid}")
+            await sio.emit('join_session_error', {'error': 'No active sessions'}, room=sid)
             return
 
-        current_phase = get_session_phase(active_session_id)
-        if not current_phase:
-            print(f"No current phase for session {active_session_id}")
-            return
+        # Leave any previous quiz session room
+        old_session_id = get_client_session(sid)
+        if old_session_id and old_session_id != target_session_id:
+            old_room = f'quiz_session_{old_session_id}'
+            await sio.leave_room(sid, old_room)
+            print(f"[JOIN_SESSION] {sid} left room {old_room}")
 
-        session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+        # Join the new session room
+        room_name = f'quiz_session_{target_session_id}'
+        await sio.enter_room(sid, room_name)
+        set_client_session(sid, target_session_id)
+        print(f"[JOIN_SESSION] {sid} joined session {target_session_id} (room {room_name})")
+
+        # Confirm join
+        await sio.emit('join_session_success', {
+            'session_id': target_session_id,
+            'room': room_name,
+            'timestamp': datetime.now().isoformat()
+        }, room=sid)
+
+        # Sync client with current session phase
+        current_phase = get_session_phase(target_session_id)
+        session_info = QuizSessionRepository.get_session_by_id(target_session_id)
         if not session_info:
-            print(f"No session info found for {active_session_id}")
             return
 
-        quiz_state = get_quiz_state(active_session_id)
-        print(f"Syncing client {sid} with phase {current_phase}")
+        quiz_st = get_quiz_state(target_session_id)
+        print(f"[JOIN_SESSION] Syncing {sid} with session {target_session_id} phase={current_phase}")
 
         if current_phase == 'voting':
             try:
-                # Ensure we have a valid event loop
                 loop = asyncio.get_event_loop()
-                emit_combined_theme_selection(sio, loop, sid)
-                print(f"Sent theme selection to client {sid}")
+                emit_combined_theme_selection(sio, loop, sid, session_id=target_session_id)
+                print(f"[JOIN_SESSION] Sent theme selection to {sid}")
             except Exception as e:
-                print(f"Error sending theme selection: {e}")
+                print(f"[JOIN_SESSION] Error sending theme selection: {e}")
 
         elif current_phase == 'theme_display':
             theme_id = session_info.get('themeId')
@@ -774,53 +841,46 @@ async def connect(sid, environ):
                     theme_data = ThemeRepository.get_theme_by_id(theme_id)
                     if theme_data:
                         await sio.emit('theme_selected', {
-                            'session_id': active_session_id,  # Use parameter instead of function call
+                            'session_id': target_session_id,
                             'theme_data': theme_data,
                             'timestamp': datetime.now().isoformat()
                         }, room=sid)
-                        print(f"Sent theme display to client {sid}")
                 except Exception as e:
-                    print(f"Error sending theme display: {e}")
+                    print(f"[JOIN_SESSION] Error sending theme display: {e}")
 
         elif current_phase == 'quiz':
-            current_question = quiz_state.get('current_question')
+            current_question = quiz_st.get('current_question')
             if current_question:
                 try:
-                    # Send current question
                     emit_combined_question_and_answers(
-                        current_question['id'], 
-                        sio, 
-                        asyncio.get_event_loop()
+                        current_question['id'], sio, asyncio.get_event_loop(), target=sid
                     )
-                    
-                    # Send question number
                     await sio.emit('question_number', {
-                        'session_id': active_session_id,
-                        'question_number': quiz_state.get('question_count', 1),
+                        'session_id': target_session_id,
+                        'question_number': quiz_st.get('question_count', 1),
                         'timestamp': datetime.now().isoformat()
                     }, room=sid)
-                    
-                    if quiz_state.get('waiting_for_answers', False):
+
+                    if quiz_st.get('waiting_for_answers', False):
                         await sio.emit('waiting_for_answers', {
-                            'session_id': active_session_id,
+                            'session_id': target_session_id,
                             'timestamp': datetime.now().isoformat()
                         }, room=sid)
-                        print(f"Sent waiting_for_answers to client {sid}")
                     else:
                         explanation = current_question.get('explanation', 'No explanation available')
                         await sio.emit('explanation', {
-                            'session_id': active_session_id,
+                            'session_id': target_session_id,
                             'question_id': current_question['id'],
                             'explanation_text': explanation,
                             'timestamp': datetime.now().isoformat()
                         }, room=sid)
-                        print(f"Sent explanation to client {sid}")
                 except Exception as e:
-                    print(f"Error syncing quiz state: {e}")
+                    print(f"[JOIN_SESSION] Error syncing quiz state: {e}")
 
     except Exception as e:
-        print(f"Critical error in connect handler: {e}")
+        print(f"[JOIN_SESSION] Critical error: {e}")
         traceback.print_exc()
+        await sio.emit('join_session_error', {'error': str(e)}, room=sid)
 
 
 @sio.event
@@ -829,6 +889,9 @@ async def disconnect(sid):
     if sid in connected_clients:
         connected_clients.remove(sid)
 
+    # Remove session association
+    old_session_id = remove_client_session(sid)
+
     # Notify all remaining clients about the disconnection
     await sio.emit('client_disconnected', {
         'client_id': sid,
@@ -836,11 +899,28 @@ async def disconnect(sid):
         'timestamp': datetime.now().isoformat()
     })
     print(f"Server emitted 'client_disconnected' for client {sid}. Total clients: {len(connected_clients)}")
-    
-    if len(connected_clients) <= 0:
-        QuizSessionRepository.update_session_status(get_active_session_id(), 3)
-        print(f"Updated session status to 'ended' after 1 second of inactivity")
 
+    # If the client was in a session, check if that session room is now empty
+    if old_session_id:
+        room_name = f'quiz_session_{old_session_id}'
+        try:
+            room = sio.manager.rooms.get('/', {}).get(room_name, set())
+            if len(room) == 0:
+                QuizSessionRepository.update_session_status(old_session_id, 3)
+                print(f"Session {old_session_id} ended — no clients remaining in room")
+                # Broadcast session ended so hub pages update
+                await sio.emit('session_ended', {
+                    'session_id': old_session_id,
+                    'timestamp': datetime.now().isoformat()
+                })
+        except Exception as e:
+            print(f"Error checking session room after disconnect: {e}")
+    elif len(connected_clients) <= 0:
+        # Fallback: if no clients at all, end any active session
+        active = get_active_session_id()
+        if active:
+            QuizSessionRepository.update_session_status(active, 3)
+            print(f"Updated session status to 'ended' — no connected clients")
 
 
 @sio.event
@@ -856,7 +936,7 @@ async def message(sid, data):
 
 @sio.event
 async def join_room(sid, data):
-    room = data.get('room')
+    room = data.get('room') if isinstance(data, dict) else data
     if room:
         await sio.enter_room(sid, room)
         await sio.emit('room_joined', {
@@ -867,7 +947,7 @@ async def join_room(sid, data):
 
 @sio.event
 async def leave_room(sid, data):
-    room = data.get('room')
+    room = data.get('room') if isinstance(data, dict) else data
     if room:
         await sio.leave_room(sid, room)
         await sio.emit('room_left', {
@@ -4145,25 +4225,61 @@ async def get_all_items():
 async def get_active_sessions():
     """
     Get all currently active quiz sessions (excluding support session 999999).
+    Returns session details including phase and player count.
     """
     try:
         active_sessions = QuizSessionRepository.get_sessions_by_status(2)
 
-        # Check if active_sessions is a list of tuples or dictionaries
-        # Let's add a robust check and assume it's most likely dictionaries now given previous fixes
-        # Or, if it's still tuples, keep session[0].
-        # For safety, let's try to get the first element and check its type.
-        
-        # This assumes get_sessions_by_status returns at least one session if active sessions exist
         if active_sessions and isinstance(active_sessions[0], dict):
-            # If it's a list of dictionaries, access by key and filter out support session
-            active_session_ids = [session['sessionId'] for session in active_sessions if session.get('sessionId') != 999999]
+            raw_ids = [session['sessionId'] for session in active_sessions if session.get('sessionId') != 999999]
         else:
-            # If it's a list of tuples (or empty), access by index 0 and filter out support session
-            active_session_ids = [session[0] for session in active_sessions if session[0] != 999999]
-        
-        # Return as a dictionary with a clear key for JSON serialization
-        return {"active_session_ids": active_session_ids}
+            raw_ids = [session[0] for session in active_sessions if session[0] != 999999]
+
+        # Build detailed session list
+        sessions_detail = []
+        for sid in raw_ids:
+            session_info = QuizSessionRepository.get_session_by_id(sid)
+            if not session_info:
+                continue
+
+            # Get phase from in-memory state
+            phase = get_session_phase(sid)
+
+            # Get player count
+            players = SessionPlayerRepository.get_session_players(sid) if hasattr(SessionPlayerRepository, 'get_session_players') else []
+            player_count = len(players) if players else 0
+
+            # Get theme name if set
+            theme_name = None
+            theme_id = session_info.get('themeId')
+            if theme_id:
+                theme_data = ThemeRepository.get_theme_by_id(theme_id)
+                if theme_data:
+                    theme_name = theme_data.get('name')
+
+            # Get available theme count from in-memory state
+            available_theme_count = 0
+            with session_lock:
+                sess_data = quiz_sessions.get(sid, {})
+                available_themes = sess_data.get('available_themes', [])
+                available_theme_count = len(available_themes)
+
+            sessions_detail.append({
+                "id": sid,
+                "name": session_info.get("name", f"Session #{sid}"),
+                "phase": phase,
+                "player_count": player_count,
+                "theme_name": theme_name,
+                "theme_count": available_theme_count,
+                "host_user_id": session_info.get("hostUserId"),
+                "start_time": str(session_info.get("start_time", ""))
+            })
+
+        # Also return legacy format for backwards compatibility
+        return {
+            "active_session_ids": raw_ids,
+            "sessions": sessions_detail
+        }
     except Exception as e:
         # For better debugging, log the actual exception and traceback
         import logging
@@ -4173,6 +4289,144 @@ async def get_active_sessions():
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve active sessions"
         )
+
+
+@app.post("/api/v1/sessions/create")
+async def create_quiz_session(request: Request):
+    """
+    Create a new quiz session with specific theme IDs for voting.
+    Body: { "theme_ids": [1, 2, 3], "user_id": 5 }
+    """
+    try:
+        body = await request.json()
+        theme_ids = body.get("theme_ids", [])
+        user_id = body.get("user_id")
+
+        if not theme_ids or not isinstance(theme_ids, list):
+            raise HTTPException(status_code=400, detail="theme_ids must be a non-empty list")
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id is required")
+
+        # Validate theme IDs exist
+        valid_themes = []
+        for tid in theme_ids:
+            theme = ThemeRepository.get_theme_by_id(int(tid))
+            if theme:
+                valid_themes.append(theme)
+
+        if not valid_themes:
+            raise HTTPException(status_code=404, detail="No valid themes found")
+
+        # Create the session
+        new_session_id = QuizSessionRepository.create_session(
+            session_date=datetime.now(),
+            name=f"Quiz Session {datetime.now().strftime('%H:%M')}",
+            description=f"Session with {len(valid_themes)} theme(s) for voting",
+            session_status_id=2,  # Active
+            theme_id=None,  # No theme yet — will be set after voting
+            host_user_id=int(user_id),
+            start_time=datetime.now()
+        )
+
+        if not new_session_id:
+            raise HTTPException(status_code=500, detail="Failed to create session")
+
+        # Add the host as a player
+        SessionPlayerRepository.add_player_to_session(new_session_id, int(user_id))
+
+        # Store available themes for voting in the in-memory session state
+        with session_lock:
+            quiz_sessions[new_session_id] = {
+                "phase": "voting",
+                "available_themes": valid_themes
+            }
+
+        quiz_logger.info(f"[CREATE_SESSION] Session {new_session_id} created by user {user_id} with {len(valid_themes)} themes for voting")
+
+        # Broadcast session_created event so all hub pages can update in real-time
+        session_detail = {
+            "session_id": new_session_id,
+            "name": f"Quiz Session {datetime.now().strftime('%H:%M')}",
+            "phase": "voting",
+            "player_count": 1,
+            "theme_count": len(valid_themes),
+            "themes": [{"id": t["id"], "name": t["name"]} for t in valid_themes],
+            "host_user_id": int(user_id),
+            "timestamp": datetime.now().isoformat()
+        }
+        try:
+            await sio.emit('session_created', session_detail)
+            quiz_logger.info(f"[CREATE_SESSION] Broadcasted session_created event for session {new_session_id}")
+        except Exception as broadcast_err:
+            quiz_logger.warning(f"[CREATE_SESSION] Failed to broadcast session_created: {broadcast_err}")
+
+        return {
+            "session_id": new_session_id,
+            "theme_count": len(valid_themes),
+            "themes": [{"id": t["id"], "name": t["name"]} for t in valid_themes],
+            "phase": "voting"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        quiz_logger.error(f"Failed to create session: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to create session")
+
+
+# ── Session idle timeout cleanup ──
+# Constants needed before the thread function
+SESSION_IDLE_TIMEOUT = 60  # seconds of no players before auto-ending a session
+session_last_activity = {}  # {session_id: timestamp} — tracks when session became empty
+
+# Background thread that checks every 15 seconds for sessions with 0 players
+# and ends them after SESSION_IDLE_TIMEOUT seconds of being empty.
+def _session_idle_checker():
+    """Background thread: ends sessions that have had 0 players for > SESSION_IDLE_TIMEOUT."""
+    while True:
+        try:
+            time.sleep(15)  # Check every 15 seconds
+            now = time.time()
+            active_sessions = QuizSessionRepository.get_sessions_by_status(2)
+            for session_row in active_sessions:
+                sid = session_row[0]
+                if sid == 999999:
+                    continue  # Skip support session
+                room_name = f'quiz_session_{sid}'
+                try:
+                    room = sio.manager.rooms.get('/', {}).get(room_name, set())
+                    player_count = len(room)
+                except Exception:
+                    player_count = -1  # Unknown, skip
+
+                if player_count == 0:
+                    # Mark when we first saw it empty
+                    if sid not in session_last_activity:
+                        session_last_activity[sid] = now
+                    elif now - session_last_activity[sid] >= SESSION_IDLE_TIMEOUT:
+                        # Idle for too long — end this session
+                        QuizSessionRepository.update_session_status(sid, 3)
+                        session_last_activity.pop(sid, None)
+                        quiz_logger.info(f"[IDLE_CLEANUP] Session {sid} auto-ended after {SESSION_IDLE_TIMEOUT}s with no players")
+                        # Broadcast so hub pages update
+                        if main_asyncio_loop:
+                            asyncio.run_coroutine_threadsafe(
+                                sio.emit('session_ended', {
+                                    'session_id': sid,
+                                    'reason': 'idle_timeout',
+                                    'timestamp': datetime.now().isoformat()
+                                }),
+                                main_asyncio_loop
+                            )
+                elif player_count > 0:
+                    # Players present — reset the idle timer
+                    session_last_activity.pop(sid, None)
+        except Exception as e:
+            quiz_logger.error(f"[IDLE_CLEANUP] Error in idle checker: {e}")
+
+_idle_checker_thread = Thread(target=_session_idle_checker, daemon=True)
+_idle_checker_thread.start()
+quiz_logger.info("[IDLE_CLEANUP] Session idle checker started (timeout=%ds)", SESSION_IDLE_TIMEOUT)
 
 
 import logging # Import the logging module
@@ -5294,13 +5548,16 @@ def emit_timer_update(sio, loop, session_id, time_remaining, phase, total_time, 
             'totalTime': total_time  # camelCase for JS
         }
         
+        # Emit to session room for session isolation
+        session_room = f'quiz_session_{session_id}'
+        
         # Emit both events for compatibility
         future1 = asyncio.run_coroutine_threadsafe(
-            sio.emit('timer_update', timer_data),
+            sio.emit('timer_update', timer_data, room=session_room),
             loop
         )
         future2 = asyncio.run_coroutine_threadsafe(
-            sio.emit('quiz_timer', timer_data),
+            sio.emit('quiz_timer', timer_data, room=session_room),
             loop
         )
         
@@ -5327,13 +5584,16 @@ def emit_timer_finished(sio, loop, session_id, phase, **extra_data):
             **extra_data
         }
         
+        # Emit to session room for isolation
+        session_room = f'quiz_session_{session_id}'
+        
         # Emit both events for compatibility
         future1 = asyncio.run_coroutine_threadsafe(
-            sio.emit('timer_finished', finish_data),
+            sio.emit('timer_finished', finish_data, room=session_room),
             loop
         )
         future2 = asyncio.run_coroutine_threadsafe(
-            sio.emit('quiz_timer_finished', finish_data),
+            sio.emit('quiz_timer_finished', finish_data, room=session_room),
             loop
         )
         
@@ -5409,13 +5669,14 @@ def handle_voting_phase(sio, loop, session_id, voting_time):
     """Handle the voting countdown phase with dynamic speed based on votes"""
     print(f"Starting voting phase for session {session_id}")
     
-    # Emit voting phase start
+    # Emit voting phase start to session room
+    session_room = f'quiz_session_{session_id}'
     future = asyncio.run_coroutine_threadsafe(
         sio.emit('phase_started', {
             'session_id': session_id,
             'phase': 'voting',
             'duration': voting_time
-        }),
+        }, room=session_room),
         loop
     )
     future.result(timeout=1)
@@ -5521,10 +5782,24 @@ def handle_voting_phase(sio, loop, session_id, voting_time):
             }
 
             future = asyncio.run_coroutine_threadsafe(
-                sio.emit('questionData', combined_data),
+                sio.emit('questionData', combined_data, room=session_room),
                 loop
             )
             future.result(timeout=1)
+            
+            # Broadcast session_updated so hub pages know the theme was selected
+            try:
+                asyncio.run_coroutine_threadsafe(
+                    sio.emit('session_updated', {
+                        'session_id': session_id,
+                        'phase': 'theme_display',
+                        'theme_name': winning_theme_name,
+                        'timestamp': time.time()
+                    }),
+                    loop
+                ).result(timeout=1)
+            except Exception:
+                pass
             
             # Continue to theme display phase immediately
             handle_theme_display_phase(sio, loop, session_id, 10)
@@ -5550,14 +5825,15 @@ def handle_theme_display_phase(sio, loop, session_id, display_time):
         
     theme_data = ThemeRepository.get_theme_by_id(session_info['themeId'])
     
-    # Emit theme display start
+    # Emit theme display start to session room
+    session_room = f'quiz_session_{session_id}'
     future = asyncio.run_coroutine_threadsafe(
         sio.emit('phase_started', {
             'session_id': session_id,
             'phase': 'theme_display',
             'duration': display_time,
             'theme_data': theme_data
-        }),
+        }, room=session_room),
         loop
     )
     future.result(timeout=1)
@@ -5566,7 +5842,7 @@ def handle_theme_display_phase(sio, loop, session_id, display_time):
         sio.emit('theme_display', {
             'session_id': session_id,
             'theme_data': theme_data
-        }),
+        }, room=session_room),
         loop
     )
     # Reset servo to start position
@@ -5673,6 +5949,7 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
         quiz_logger.warning(f"ENDING QUIZ: No connected clients in session {session_id}")
         print(f"ENDING QUIZ: No connected clients in session {session_id}")
         QuizSessionRepository.update_session_status(session_id, 3)
+        session_room = f'quiz_session_{session_id}'
         asyncio.run_coroutine_threadsafe(
             sio.emit('quiz_finished', {
                 'session_id': session_id,
@@ -5682,8 +5959,13 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
                 'ended_early': True,
                 'final_scores': [],
                 'message': 'Quiz ended - no players remaining.'
-            }), loop
+            }, room=session_room), loop
         ).result(timeout=1)
+        # Broadcast session ended for hub updates
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('session_ended', {'session_id': session_id, 'timestamp': time.time()}),
+            loop
+        )
         # Clear played-theme tracking for this session now that the quiz ended
         try:
             with session_played_lock:
@@ -5731,8 +6013,8 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
             threadsafe_emit_message_sent(sio, session_id, loop)
 
             try:
-                # emit_combined_theme_selection signature: (sio, loop, target=None, active_only=True, exclude_ids=None)
-                emit_combined_theme_selection(sio, loop, None, True, played)
+                # emit_combined_theme_selection signature: (sio, loop, target=None, active_only=True, exclude_ids=None, session_id=None)
+                emit_combined_theme_selection(sio, loop, None, True, played, session_id=session_id)
             except Exception as e:
                 print(f"Failed to emit new theme selection for session {session_id}: {e}")
 
@@ -5763,6 +6045,7 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
             final_state = get_quiz_state(session_id)
             player_scores = PlayerAnswerRepository.get_all_player_scores_for_session(session_id)
             total_score = sum(float(score.get('total_score', 0)) for score in player_scores)
+            session_room = f'quiz_session_{session_id}'
             asyncio.run_coroutine_threadsafe(
                 sio.emit('quiz_finished', {
                     'session_id': session_id,
@@ -5772,21 +6055,26 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
                     'ended_early': False,
                     'final_scores': [],
                     'message': f'Quiz completed! All questions answered. Final score: {total_score}'
-                }), loop
+                }, room=session_room), loop
             ).result(timeout=1)
+            # Broadcast session ended for hub updates
+            asyncio.run_coroutine_threadsafe(
+                sio.emit('session_ended', {'session_id': session_id, 'timestamp': time.time()}),
+                loop
+            )
             return
 
     # Only send "Preparing question" message if we have questions to ask
     quiz_logger.info(f"About to send 'Preparing question {quiz_state['question_count'] + 1}' message")
     print(f"Sending 'Preparing question' message")
     ChatLogRepository.create_chat_message(
-        session_id=get_active_session_id(),
+        session_id=session_id,
         message_text=f"Preparing question {quiz_state['question_count'] + 1}",
         user_id=1,
         message_type='system',
         reply_to_id=1
     )
-    threadsafe_emit_message_sent(sio, get_active_session_id(), loop)
+    threadsafe_emit_message_sent(sio, session_id, loop)
 
     quiz_ended_early = False
     consecutive_score_failures = 0  # Track consecutive failures to meet score requirement
@@ -6185,12 +6473,13 @@ def emit_error(sio, loop, session_id, error_message):
     )
     future.result(timeout=1)
 
-def emit_combined_theme_selection(sio, loop, target=None, active_only=True, exclude_ids=None):
+def emit_combined_theme_selection(sio, loop, target=None, active_only=True, exclude_ids=None, session_id=None):
     """
     Emit theme selection question with theme options via socket.io.
-    - target: if provided, send only to that room/sid; otherwise broadcast
+    - target: if provided, send only to that room/sid; otherwise broadcast to session room
     - active_only: whether to use active themes only
     - exclude_ids: optional list of theme IDs to exclude from selection
+    - session_id: if provided, use this session's themes and emit to its room
     """
     try:
         # Backwards-compat: allow callers passing (sio, loop, True) where True was active_only
@@ -6198,7 +6487,22 @@ def emit_combined_theme_selection(sio, loop, target=None, active_only=True, excl
             active_only = target
             target = None
 
-        if active_only:
+        # Determine which session to use
+        effective_session_id = session_id or get_active_session_id()
+
+        # Check if the session has specific themes stored (from session creation)
+        session_themes = None
+        if effective_session_id:
+            with session_lock:
+                session_data = quiz_sessions.get(effective_session_id, {})
+                session_themes = session_data.get('available_themes')
+        active_session_id = effective_session_id
+
+        if session_themes and len(session_themes) > 0:
+            # Use session-specific themes
+            themes = list(session_themes)
+            print(f"[THEME_SELECTION] Using {len(themes)} session-specific themes for session {active_session_id}")
+        elif active_only:
             themes = ThemeRepository.get_active_themes() or []
         else:
             themes = ThemeRepository.get_all_themes() or []
@@ -6270,10 +6574,11 @@ def check_sensor_data(temp_sensor, light_sensor):
             'illuminance': 0,
         }
 
-def emit_combined_question_and_answers(question_id, sio, loop):
+def emit_combined_question_and_answers(question_id, sio, loop, target=None):
     """
     Fetches a question and its answers, combines them into a single structured
     object, and emits it via socket.io on the 'questionData' channel.
+    target: if provided, emit only to that sid/room; otherwise broadcast.
     """
     try:
         # 1. Fetch the primary resource: the question
@@ -6308,9 +6613,14 @@ def emit_combined_question_and_answers(question_id, sio, loop):
         # 4. Emit the unified data on a single, predictable channel
         print(f"[DEBUG] Emitting questionData for question_id={question_id} with {len(answers) if answers else 0} answers")
         try:
-            future = asyncio.run_coroutine_threadsafe(
-                sio.emit('questionData', combined_data), loop
-            )
+            if target:
+                future = asyncio.run_coroutine_threadsafe(
+                    sio.emit('questionData', combined_data, room=target), loop
+                )
+            else:
+                future = asyncio.run_coroutine_threadsafe(
+                    sio.emit('questionData', combined_data), loop
+                )
             # Attempt to get result to surface any scheduling errors quickly
             try:
                 future.result(timeout=1)
@@ -6477,8 +6787,8 @@ async def handle_answer_submission(sid, data):
     global current_phase, progress, explanationNow, remaining_explanation_time
     print(f"data received is answer submission is {data}")
     
-    # Get active session and check if we're in quiz phase
-    active_session_id = get_active_session_id()
+    # Session-aware: use client's session or fall back to first active
+    active_session_id = get_client_session(sid) or get_active_session_id()
     if active_session_id:
         current_phase = get_session_phase(active_session_id)
         print(f"Current phase: {current_phase}, explanationNow: {explanationNow}")
@@ -6498,7 +6808,7 @@ async def handle_answer_submission(sid, data):
                 await sio.emit('answer_response', {'success': False, 'error': error_msg}, room=sid)
                 return
             
-            if PlayerAnswerRepository.get_player_answers_for_user_in_session_by_question(get_active_session_id(), user_id, question_id):
+            if PlayerAnswerRepository.get_player_answers_for_user_in_session_by_question(active_session_id, user_id, question_id):
                 error_msg = 'Answer already submitted before'
                 logger.error(error_msg)
                 await sio.emit('answer_response', {'success': False, 'error': error_msg}, room=sid)
@@ -6506,7 +6816,6 @@ async def handle_answer_submission(sid, data):
 
             logger.debug(f"Valid submission from user {user_id} for question {question_id}")
 
-            active_session_id = get_active_session_id()
             if not active_session_id:
                 error_msg = 'No active session found'
                 logger.error(error_msg)
@@ -6559,7 +6868,7 @@ async def handle_answer_submission(sid, data):
 
             points_earned = 0
             if is_correct:
-                luck = calculate_player_score_percentage(get_active_session_id(), user_id)
+                luck = calculate_player_score_percentage(active_session_id, user_id)
                 print(f"player luck is calculated to be {luck}")
                 get_random_item(user_id=user_id, luck=luck)
                 progress_decimal = float(1 - progress)
@@ -6640,15 +6949,16 @@ async def handle_answer_submission(sid, data):
 @sio.on('theme_selected')
 async def handle_theme_selection(sid, data):
     """
-    Handle theme selection votes and start voting timer when first vote is cast
+    Handle theme selection votes and start voting timer when first vote is cast.
+    Session-aware: uses client_sessions to route to the correct session.
     """
     print(f"[THEME_SELECTION] Received from sid {sid}: {data}")
     try:
-        # Get active session and check phase
-        active_session_id = get_active_session_id()
+        # Determine which session this client belongs to
+        active_session_id = get_client_session(sid) or get_active_session_id()
         
         if not active_session_id:
-            print(f"[THEME_SELECTION] ERROR: No active session found")
+            print(f"[THEME_SELECTION] ERROR: No active session found for {sid}")
             await sio.emit('answer_response', {
                 'success': False,
                 'error': 'No active session found'
@@ -6716,12 +7026,13 @@ async def handle_theme_selection(sid, data):
             user_votes[user_id] = theme_id
             print(f"[THEME_SELECTION] Added vote for theme {theme_id}. Total votes: {dict(votes)}")
         
-        # Broadcast vote updates to all users in the session
+        # Broadcast vote updates to all users in the session room
+        session_room = f'quiz_session_{session_id}'
         await sio.emit('theme_votes_update', {
             'session_id': session_id,
             'votes': dict(votes)
-        })
-        print(f"[THEME_SELECTION] Broadcasted vote update")
+        }, room=session_room)
+        print(f"[THEME_SELECTION] Broadcasted vote update to room {session_room}")
         
         # Start timer on first vote
         total_votes = sum(votes.values())

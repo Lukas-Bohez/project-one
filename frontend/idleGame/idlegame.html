@@ -640,164 +640,9 @@
                 </div>
             </section>
 
-            <!-- Prestige Tab -->
-            <section id="prestige-tab" class="tab-content" style="display: none;">
-                <div class="panel-grid">
-                    <div class="panel">
-                        <h2>✨ Prestige</h2>
-                        <div class="action-buttons">
-                            <button id="prestige-btn" class="action-btn prestige-btn" data-action="prestige">
-                                <div class="btn-title">Prestige Now</div>
-                                <div class="btn-cost">Requires 10,000 total gold</div>
-                                <div class="btn-description">Reset for prestige points</div>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="panel">
-                        <h2>🌟 Prestige Status</h2>
-                        <div class="resource-grid">
-                            <div class="resource-row">
-                                <span class="resource-type">Prestige Points:</span>
-                                <span id="prestige-points" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Global Efficiency:</span>
-                                <span id="prestige-efficiency" class="resource-count">100%</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Prestige Resets:</span>
-                                <span id="prestige-resets" class="resource-count">0</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Military Tab -->
-            <section id="military-tab" class="tab-content" style="display: none;">
-                <div class="panel">
-                    <h2>⚔️ Military</h2>
-                    <p>This feature is not yet implemented. Build a powerful city to unlock it!</p>
-                </div>
-            </section>
         </main>
     </div>
 
-            <!-- Research Tab -->
-            <section id="research-tab" class="tab-content">
-                <div class="panel-grid">
-                    <div class="panel">
-                        <h2>🔬 Research Projects</h2>
-                        <div class="research-tree">
-                            <div class="research-tier">
-                                <h3>Unlocks</h3>
-                                <button id="research-unlock-coal" class="research-btn" data-unlock="unlock_coal">
-                                    <div class="research-title">Unlock Coal</div>
-                                    <div class="research-cost">Cost: 25 gold</div>
-                                    <div class="research-effect">Allows coal miners</div>
-                                </button>
-                                <button id="research-unlock-iron" class="research-btn" data-unlock="unlock_iron">
-                                    <div class="research-title">Unlock Iron</div>
-                                    <div class="research-cost">Cost: 60 gold</div>
-                                    <div class="research-effect">Allows iron miners</div>
-                                </button>
-                                <button id="research-unlock-silver" class="research-btn" data-unlock="unlock_silver">
-                                    <div class="research-title">Unlock Silver</div>
-                                    <div class="research-cost">Cost: 200 gold</div>
-                                    <div class="research-effect">Allows silver miners</div>
-                                </button>
-                                <button id="research-unlock-oil" class="research-btn" data-unlock="unlock_oil">
-                                    <div class="research-title">Unlock Oil</div>
-                                    <div class="research-cost">Cost: 150 gold</div>
-                                    <div class="research-effect">Allows oil processing</div>
-                                </button>
-                                <button id="research-unlock-rubber" class="research-btn" data-unlock="unlock_rubber">
-                                    <div class="research-title">Unlock Rubber</div>
-                                    <div class="research-cost">Cost: 120 gold</div>
-                                    <div class="research-effect">Enables car tires</div>
-                                </button>
-                                <button id="research-unlock-processing" class="research-btn" data-unlock="unlock_processing">
-                                    <div class="research-title">Unlock Processing</div>
-                                    <div class="research-cost">Cost: 80 gold</div>
-                                    <div class="research-effect">Enables processors</div>
-                                </button>
-                                <button id="research-unlock-electronics" class="research-btn" data-unlock="unlock_electronics">
-                                    <div class="research-title">Unlock Electronics</div>
-                                    <div class="research-cost">Cost: 800 gold</div>
-                                    <div class="research-effect">Microchips & assemblies</div>
-                                </button>
-                                <button id="research-unlock-jewelry" class="research-btn" data-unlock="unlock_jewelry">
-                                    <div class="research-title">Unlock Jewelry</div>
-                                    <div class="research-cost">Cost: 500 gold</div>
-                                    <div class="research-effect">Jeweler & luxury goods</div>
-                                </button>
-                                <button id="research-unlock-automotive" class="research-btn" data-unlock="unlock_automotive">
-                                    <div class="research-title">Unlock Automotive</div>
-                                    <div class="research-cost">Cost: 2000 gold</div>
-                                    <div class="research-effect">Auto plant & cars</div>
-                                </button>
-                            </div>
-                            <div class="research-tier">
-                                <h3>Basic Research</h3>
-                                <button id="research-mining-btn" class="research-btn" data-research="mining">
-                                    <div class="research-title">Mining Techniques</div>
-                                    <div class="research-cost">Cost: 50 gold</div>
-                                    <div class="research-effect">+25% mining efficiency</div>
-                                </button>
-                                
-                                <button id="research-processing-btn" class="research-btn" data-research="processing">
-                                    <div class="research-title">Processing Methods</div>
-                                    <div class="research-cost">Cost: 100 gold</div>
-                                    <div class="research-effect">+25% processing efficiency</div>
-                                </button>
-                            </div>
-
-                            <div class="research-tier">
-                                <h3>Advanced Research</h3>
-                                <button id="research-automation-btn" class="research-btn" data-research="automation">
-                                    <div class="research-title">Industrial Automation</div>
-                                    <div class="research-cost">Cost: 500 gold</div>
-                                    <div class="research-effect">Unlock auto-systems</div>
-                                </button>
-                                
-                                <button id="research-logistics-btn" class="research-btn" data-research="logistics">
-                                    <div class="research-title">Advanced Logistics</div>
-                                    <div class="research-cost">Cost: 1000 gold</div>
-                                    <div class="research-effect">+50% transport efficiency</div>
-                                </button>
-                            </div>
-
-                            <div class="research-tier">
-                                <h3>Elite Research</h3>
-                                <button id="research-quantum-btn" class="research-btn" data-research="quantum">
-                                    <div class="research-title">Quantum Mining</div>
-                                    <div class="research-cost">Cost: 5000 gold</div>
-                                    <div class="research-effect">+100% all efficiency</div>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="panel">
-                        <h2>📚 Research Status</h2>
-                        <div class="resource-grid">
-                            <div class="resource-row">
-                                <span class="resource-type">Completed Projects:</span>
-                                <span id="completed-research" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Research Bonus:</span>
-                                <span id="research-bonus" class="resource-count">0%</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Next Unlock:</span>
-                                <span id="next-research" class="resource-count">Mining Techniques</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            
             <!-- Arcade Tab -->
             <section id="arcade-tab" class="tab-content">
                 <div class="panel-grid">
@@ -1425,9 +1270,6 @@
         }
     </script>
     
-    <script src="js/game/ResourceManager.js?v=2"></script>
-    <script src="js/game/UpgradeSystem.js?v=2"></script>
-    <script src="js/game/MarketSystem.js?v=2"></script>
     <script src="js/game/NewResourceManager.js?v=2"></script>
     <script src="js/game/RebirthThemes.js?v=2"></script>
     <script src="js/game/RebirthRewards.js?v=2"></script>
@@ -1436,10 +1278,8 @@
     <script src="js/ui/UIManager.js?v=2"></script>
     <script src="js/ui/UIThemeManager.js?v=2"></script>
     <script src="js/game/GameEngine.js?v=2"></script>
-    <script src="js/api/ApiClient.js?v=2"></script>
     <script src="js/devMenu.js?v=2"></script>
     <script src="js/app.js?v=2"></script>
-    <script src="js/debug.js?v=2"></script>
 </body>
 </html>
 ```

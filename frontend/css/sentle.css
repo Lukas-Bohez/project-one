@@ -15,8 +15,8 @@
     --color-input-bg: #ffffff;
 }
 
-.theme-dark,
-.theme-dark body {
+[data-theme="dark"],
+[data-theme="dark"] body {
     --sentle-bg: #121213;
     --sentle-text: #ffffff;
     --sentle-border: #3a3a3c;

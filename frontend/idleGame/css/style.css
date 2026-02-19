@@ -810,8 +810,8 @@ body {
     padding: 20px;
     background: rgba(255, 255, 255, 0.08);
     border-radius: 12px;
-    border-left: 4px solid #64ffda;
     border: 1px solid rgba(100, 255, 218, 0.2);
+    border-left: 4px solid #64ffda;
 }
 
 .research-tier h3 {

@@ -52,7 +52,7 @@ class IndustrialEmpireApp {
         const tabButtons = document.querySelectorAll('.tab-btn');
         tabButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const tabName = e.target.dataset.tab;
+                const tabName = e.currentTarget.dataset.tab || e.target.closest('.tab-btn')?.dataset.tab;
                 this.switchTab(tabName);
                 
                 // If switching to arcade tab, update arcade UI
@@ -192,9 +192,10 @@ class IndustrialEmpireApp {
         this.currentTab = tabName;
         
         // Fix arcade text when switching to arcade tab in Sterile theme
-        if (tabName === 'arcade' && this.themeManager && this.themeManager.currentTheme) {
-            if (this.themeManager.currentTheme.atmosphere === 'sterile') {
-                setTimeout(() => this.themeManager.fixArcadeTextForSterile(), 50);
+        const tm = this.gameEngine?.themeManager;
+        if (tabName === 'arcade' && tm && tm.currentTheme) {
+            if (tm.currentTheme.atmosphere === 'sterile') {
+                setTimeout(() => tm.fixArcadeTextForSterile(), 50);
             }
         }
     }
@@ -212,13 +213,13 @@ class IndustrialEmpireApp {
         this.bindButton('build-forge-btn', () => this.gameEngine.buildProcessor('forge'));
         this.bindButton('build-refinery-btn', () => this.gameEngine.buildProcessor('refinery'));
         this.bindButton('build-mint-btn', () => this.gameEngine.buildProcessor('mint'));
-    this.bindButton('build-polisher-btn', () => this.gameEngine.buildProcessor('polishers'));
-    this.bindButton('build-coker-btn', () => this.gameEngine.buildProcessor('cokers'));
-    this.bindButton('build-chemplant-btn', () => this.gameEngine.buildProcessor('chemPlants'));
-    this.bindButton('build-chipfab-btn', () => this.gameEngine.buildProcessor('chipFabs'));
-    this.bindButton('build-jeweler-btn', () => this.gameEngine.buildProcessor('jewelers'));
-    this.bindButton('build-assembly-btn', () => this.gameEngine.buildProcessor('assemblies'));
-    this.bindButton('build-autoplant-btn', () => this.gameEngine.buildProcessor('autoPlants'));
+    this.bindButton('build-polisher-btn', () => this.gameEngine.buildProcessor('polisher'));
+    this.bindButton('build-coker-btn', () => this.gameEngine.buildProcessor('coker'));
+    this.bindButton('build-chemplant-btn', () => this.gameEngine.buildProcessor('chemPlant'));
+    this.bindButton('build-chipfab-btn', () => this.gameEngine.buildProcessor('chipFab'));
+    this.bindButton('build-jeweler-btn', () => this.gameEngine.buildProcessor('jeweler'));
+    this.bindButton('build-assembly-btn', () => this.gameEngine.buildProcessor('assembly'));
+    this.bindButton('build-autoplant-btn', () => this.gameEngine.buildProcessor('autoPlant'));
         
         // NEW Manual Crafting System
         this.bindButton('craft-basic-btn', () => this.gameEngine.craftItem('basic'));
@@ -283,14 +284,6 @@ class IndustrialEmpireApp {
         this.bindButton('research-processing-btn', () => this.gameEngine.purchaseResearch('processing'));
         this.bindButton('research-automation-btn', () => this.gameEngine.purchaseResearch('automation'));
         this.bindButton('research-logistics-btn', () => this.gameEngine.purchaseResearch('logistics'));
-        
-        // Prestige tab actions
-        this.bindButton('prestige-btn', () => this.gameEngine.prestige());
-        this.bindButton('prestige-mining-btn', () => this.gameEngine.applyPrestigeBonus('mining'));
-        this.bindButton('prestige-processing-btn', () => this.gameEngine.applyPrestigeBonus('processing'));
-        this.bindButton('prestige-trading-btn', () => this.gameEngine.applyPrestigeBonus('trading'));
-        this.bindButton('prestige-transport-btn', () => this.gameEngine.applyPrestigeBonus('transport'));
-        this.bindButton('prestige-city-btn', () => this.gameEngine.applyPrestigeBonus('city'));
         
         // Advertisement/Monetization actions
         this.bindButton('ad-double-resources-btn', () => this.gameEngine.watchAdForDoubleResources());
