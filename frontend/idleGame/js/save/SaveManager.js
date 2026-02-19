@@ -23,6 +23,9 @@ class SaveManager {
         
         // Load saved credentials on startup
         this.loadCredentials();
+        
+        // Security: Remove any legacy plaintext password from localStorage
+        localStorage.removeItem('gamePassword');
     }
 
     // ===================
@@ -53,9 +56,6 @@ class SaveManager {
                 this.authToken = data.access_token;
                 this.username = username;
                 this.isAuthenticated = true;
-                
-                // Store password (encrypted in real production!) for token refresh
-                localStorage.setItem('gamePassword', password);
                 
                 this.saveCredentials();
                 this.startAutoSave();
@@ -98,25 +98,13 @@ class SaveManager {
     }
     
     async refreshToken() {
-        if (!this.username) {
-            console.log('🔐 No username - cannot refresh token');
-            return false;
-        }
-        
-        try {
-            // Re-login silently with stored credentials
-            const storedPassword = localStorage.getItem('gamePassword');
-            if (!storedPassword) {
-                console.log('🔐 No stored password - cannot refresh');
-                return false;
-            }
-            
-            const result = await this.login(this.username, storedPassword, true);
-            return result.success;
-        } catch (error) {
-            console.error('Token refresh failed:', error);
-            return false;
-        }
+        // Token expired — user needs to re-login
+        console.log('🔐 Token expired — session ended, please log in again');
+        this.isAuthenticated = false;
+        this.authToken = null;
+        localStorage.removeItem('industrialEmpire_auth');
+        this.gameEngine.showNotification('⏰ Session expired — please log in again to save/load.');
+        return false;
     }
 
     async login(username, password, silent = false) {
@@ -163,9 +151,6 @@ class SaveManager {
                 this.authToken = data.access_token;
                 this.username = username;
                 this.isAuthenticated = true;
-                
-                // Store password (encrypted in real production!) for token refresh
-                localStorage.setItem('gamePassword', password);
                 
                 this.saveCredentials();
                 this.startAutoSave();
@@ -540,7 +525,18 @@ class SaveManager {
                 },
                 
                 // Efficiency multipliers
-                efficiency: state.efficiency || {}
+                efficiency: state.efficiency || {},
+                
+                // Events (persist counter, clear active event since it's session-specific)
+                events: {
+                    lastEventTime: 0,
+                    activeEvent: null,
+                    eventEndTime: 0,
+                    eventsTriggered: state.events?.eventsTriggered || 0
+                },
+                
+                // Achievements / milestones (permanent)
+                achievements: state.achievements || {}
             },
             
             // Prestige level (used by backend for leaderboard)
@@ -638,7 +634,8 @@ class SaveManager {
                 'chipFab': 'chipFabs',
                 'jeweler': 'jewelers',
                 'assembly': 'assemblies',
-                'autoPlant': 'autoPlants'
+                'autoPlant': 'autoPlants',
+                'chemPlant': 'chemPlants'
             };
             
             Object.keys(migrations).forEach(oldName => {
@@ -771,6 +768,21 @@ class SaveManager {
         // Restore efficiency
         if (customData.efficiency) {
             state.efficiency = Object.assign({}, customData.efficiency);
+        }
+        
+        // Restore events (counter only — active event is session-specific)
+        if (customData.events) {
+            state.events = {
+                lastEventTime: 0,
+                activeEvent: null,
+                eventEndTime: 0,
+                eventsTriggered: customData.events.eventsTriggered || 0
+            };
+        }
+        
+        // Restore achievements (permanent milestones)
+        if (customData.achievements && typeof customData.achievements === 'object') {
+            state.achievements = Object.assign({}, customData.achievements);
         }
         
         // Restore game time

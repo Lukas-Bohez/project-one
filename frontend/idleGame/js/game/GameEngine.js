@@ -221,7 +221,18 @@ class GameEngine {
             // Game time
             gameTime: 0,
             offlineTime: 0,
-            lastSave: Date.now()
+            lastSave: Date.now(),
+
+            // Random events system
+            events: {
+                lastEventTime: 0,
+                activeEvent: null,
+                eventEndTime: 0,
+                eventsTriggered: 0
+            },
+
+            // Achievements / milestones
+            achievements: {}
         };
     }
     
@@ -338,6 +349,10 @@ class GameEngine {
         this.updateUpgrades(deltaTime);
         this.updateAdCooldowns();
         this.updateAutoSellFinished(now);
+
+        // Random events & achievements (every tick)
+        this.checkRandomEvents(deltaTime);
+        this.checkAchievements();
         
         // 🛡️ SAFETY: Ensure gold never goes negative during gameplay
         if (this.state.resources.gold < 0) {
@@ -376,11 +391,12 @@ class GameEngine {
         
         if (now < this.nextAutoSellFinishedAt) return;
         
-        // Sell ALL items in city at once
+        // Sell ALL items in city at once (cap per tick to prevent frame drops)
         const inv = this.state.cityInventory?.finished || {};
         let itemsSold = 0;
+        const maxSellsPerTick = 1000;
         for (const k in inv) { 
-            while (inv[k] > 0) { 
+            while (inv[k] > 0 && itemsSold < maxSellsPerTick) { 
                 const success = this.sellOneFinished();
                 if (!success) break;
                 itemsSold++;
@@ -570,8 +586,16 @@ class GameEngine {
             return amount;
         };
         
+        // Event-based modifiers
+        const activeEffect = this.getActiveEventEffect ? this.getActiveEventEffect() : null;
+        let eventMiningMult = 1;
+        if (activeEffect === 'miningBoost')    eventMiningMult = 1.5;
+        if (activeEffect === 'miningPenalty')  eventMiningMult = 0.5;
+        if (activeEffect === 'globalBoost')    eventMiningMult = 1.5;
+        if (activeEffect === 'halfProduction') eventMiningMult = 0.5;
+
         // Stone mining
-        let stoneProduced = this.state.workers.stoneMiners * efficiency * deltaTime;
+        let stoneProduced = this.state.workers.stoneMiners * efficiency * deltaTime * eventMiningMult;
         stoneProduced = applyGatherChance(stoneProduced);
         
         // Apply double resources bonus
@@ -579,37 +603,49 @@ class GameEngine {
             stoneProduced *= 2;
         }
         
+        // Soft cap — diminishing returns near 10T
+        stoneProduced *= this.softCapMultiplier(this.state.resources.stone);
         this.state.resources.stone += stoneProduced;
         this.state.stats.totalResourcesMined.stone += stoneProduced;
-        this.state.production.stone = this.state.workers.stoneMiners * efficiency;
+        this.state.production.stone = this.state.workers.stoneMiners * efficiency * eventMiningMult;
         
         // Coal mining (direct)
-        let coalProduced = this.state.workers.coalMiners * efficiency * deltaTime;
+        let coalProduced = this.state.workers.coalMiners * efficiency * deltaTime * eventMiningMult;
         coalProduced = applyGatherChance(coalProduced);
         if (this.state.ads.doubleResources.active) coalProduced *= 2;
+        coalProduced *= this.softCapMultiplier(this.state.resources.coal);
         this.state.resources.coal += coalProduced;
         this.state.stats.totalResourcesMined.coal += coalProduced;
-        this.state.production.coal = this.state.workers.coalMiners * efficiency;
+        this.state.production.coal = this.state.workers.coalMiners * efficiency * eventMiningMult;
         
         // Iron mining (direct)
-        let ironProduced = this.state.workers.ironMiners * efficiency * deltaTime;
+        let ironProduced = this.state.workers.ironMiners * efficiency * deltaTime * eventMiningMult;
         ironProduced = applyGatherChance(ironProduced);
         if (this.state.ads.doubleResources.active) ironProduced *= 2;
+        ironProduced *= this.softCapMultiplier(this.state.resources.iron);
         this.state.resources.iron += ironProduced;
         this.state.stats.totalResourcesMined.iron += ironProduced;
+        this.state.production.iron = this.state.workers.ironMiners * efficiency * eventMiningMult;
         
         // Silver mining (direct)
-        let silverProduced = this.state.workers.silverMiners * efficiency * deltaTime;
+        let silverProduced = this.state.workers.silverMiners * efficiency * deltaTime * eventMiningMult;
         silverProduced = applyGatherChance(silverProduced);
         if (this.state.ads.doubleResources.active) silverProduced *= 2;
+        silverProduced *= this.softCapMultiplier(this.state.resources.silver);
         this.state.resources.silver += silverProduced;
         this.state.stats.totalResourcesMined.silver += silverProduced;
+        this.state.production.silver = this.state.workers.silverMiners * efficiency * eventMiningMult;
     }
     
     updateProcessingProduction(deltaTime) {
         // Apply per-tick transport penalty to processing efficiency
         const penaltyProcessing = (this.state.transport && this.state.transport.penaltyProcessing) ? this.state.transport.penaltyProcessing : 1.0;
-        const efficiency = this.state.efficiency.processing * penaltyProcessing * this.state.efficiency.global;
+        let efficiency = this.state.efficiency.processing * penaltyProcessing * this.state.efficiency.global;
+        
+        // Event-based modifiers for processing
+        const activeEffect = this.getActiveEventEffect ? this.getActiveEventEffect() : null;
+        if (activeEffect === 'globalBoost')    efficiency *= 1.5;
+        if (activeEffect === 'halfProduction') efficiency *= 0.5;
         
         // Coal smelting: 2 stone -> 1 coal
         const smelterProduction = Math.min(
@@ -657,7 +693,12 @@ class GameEngine {
         const corruption = Math.max(0, this.state.city.corruption - this.state.city.police * 5) / 100;
         // Apply transport penalty (from prior tick's usage calculation)
         const penaltyTrading = (this.state.transport && typeof this.state.transport.penaltyTrading === 'number') ? this.state.transport.penaltyTrading : 1.0;
-        const efficiency = this.state.efficiency.trading * penaltyTrading * (1 - corruption) * this.state.efficiency.global;
+        let efficiency = this.state.efficiency.trading * penaltyTrading * (1 - corruption) * this.state.efficiency.global;
+        
+        // Event-based modifiers for trading
+        const activeEffect = this.getActiveEventEffect ? this.getActiveEventEffect() : null;
+        if (activeEffect === 'globalBoost')    efficiency *= 1.5;
+        if (activeEffect === 'halfProduction') efficiency *= 0.5;
         
         // Auto-sell stone
         const stoneToSell = Math.min(
@@ -762,6 +803,12 @@ class GameEngine {
         this.state.city.adjustedMaxDecay = adjustedMaxDecay;
         
         // Apply taxes on gold income (reduced by politicians)
+        // Tax holiday event = no taxes
+        const activeEffect = this.getActiveEventEffect ? this.getActiveEventEffect() : null;
+        if (activeEffect === 'noTax') {
+            this.lastGoldEarned = this.state.stats.totalGoldEarned;
+            return; // Skip taxes entirely
+        }
         const taxReduction = 1 - Math.pow(0.98, this.state.city.politicians); // 2% reduction per politician (compound)
         const effectiveTaxRate = Math.max(0, this.state.city.taxRate - taxReduction);
         
@@ -1098,17 +1145,39 @@ class GameEngine {
             if (!this.rebirthUpgradesInitialized) {
                 this.updateRebirthUpgradesUI();
                 this.rebirthUpgradesInitialized = true;
+            } else {
+                // Lightweight affordability refresh — update existing buttons without full DOM rebuild
+                this.updateRebirthUpgradeAffordability();
             }
         }
     }
     
     updateButtonStates() {
+        // Worker cost helper — escalating 1.08x per owned
+        const wCost = (base, type) => {
+            const owned = this.state.workers[type] || 0;
+            const rebirthEffects = this.rebirthRewards ?
+                this.rebirthRewards.getActiveEffects(this.state.rebirthUpgrades || {}) :
+                { buildingDiscount: 1 };
+            return Math.ceil(base * Math.pow(1.08, owned) * rebirthEffects.buildingDiscount);
+        };
+        const stoneCost  = wCost(5,   'stoneMiners');
+        const coalCost   = wCost(25,  'coalMiners');
+        const ironCost   = wCost(100, 'ironMiners');
+        const silverCost = wCost(500, 'silverMiners');
+
         // Mining buttons (check both gold cost AND unlock status)
         this.updateButtonState('mine-stone-btn', true); // Always available
-        this.updateButtonState('hire-stone-miner-btn', this.state.resources.gold >= 5);
-        this.updateButtonState('hire-coal-miner-btn', this.state.resources.gold >= 25 && this.state.unlock_coal);
-        this.updateButtonState('hire-iron-miner-btn', this.state.resources.gold >= 100 && this.state.unlock_iron);
-        this.updateButtonState('hire-silver-miner-btn', this.state.resources.gold >= 500 && this.state.unlock_silver);
+        this.updateButtonState('hire-stone-miner-btn', this.state.resources.gold >= stoneCost);
+        this.updateButtonState('hire-coal-miner-btn', this.state.resources.gold >= coalCost && this.state.unlock_coal);
+        this.updateButtonState('hire-iron-miner-btn', this.state.resources.gold >= ironCost && this.state.unlock_iron);
+        this.updateButtonState('hire-silver-miner-btn', this.state.resources.gold >= silverCost && this.state.unlock_silver);
+
+        // Show worker costs on buttons
+        this.updateElement('stone-miner-cost', this.formatNumber(stoneCost));
+        this.updateElement('coal-miner-cost',  this.formatNumber(coalCost));
+        this.updateElement('iron-miner-cost',  this.formatNumber(ironCost));
+        this.updateElement('silver-miner-cost', this.formatNumber(silverCost));
         
     // Processing buttons (gated by unlocks)
     this.updateButtonState('build-smelter-btn', this.state.resources.gold >= 20 && this.state.unlock_processing);
@@ -1581,7 +1650,10 @@ class GameEngine {
             { buildingDiscount: 1 };
         
         const baseCost = baseCosts[workerType];
-        const cost = Math.ceil(baseCost * rebirthEffects.buildingDiscount);
+        const owned = this.state.workers[workerType + 's'] || 0;
+        // Escalating cost: each worker costs 8% more than the last
+        const scaledCost = baseCost * Math.pow(1.08, owned);
+        const cost = Math.ceil(scaledCost * rebirthEffects.buildingDiscount);
         
         if (this.state.resources.gold >= cost) {
             this.state.resources.gold -= cost;
@@ -1973,9 +2045,7 @@ class GameEngine {
         
         // Remove ALL from city
         this.state.cityInventory.finished[itemName] = 0;
-        
-        // Also decrease the crafted inventory counter
-        this.state.crafted[tier] = Math.max(0, (this.state.crafted[tier] || 0) - cityAmount);
+        // Note: don't touch this.state.crafted — those track factory items, not city items
         
         this.state.resources.gold += finalValue;
         this.state.stats.totalGoldEarned += finalValue;
@@ -2393,13 +2463,29 @@ class GameEngine {
             
             const craftInfo = craftedItems[item];
             const bankBonus = Math.pow(1.20, this.state.city.banks);
-            const finalValue = Math.floor(craftInfo.value * bankBonus);
+            
+            // Get rebirth upgrade effects for gold multipliers
+            const rebirthEffects = this.rebirthRewards ? 
+                this.rebirthRewards.getActiveEffects(this.state.rebirthUpgrades || {}) : 
+                { goldMultiplier: 1, cosmicMultiplier: 1, sellingBonus: 1, transcendenceBonus: 1 };
+            
+            // Get arcade bonuses
+            const arcadeBonuses = this.arcadeManager ? 
+                this.arcadeManager.getArcadeBonuses() : 
+                { goldBonus: 1 };
+            
+            let finalValue = craftInfo.value * bankBonus;
+            finalValue *= rebirthEffects.goldMultiplier;
+            finalValue *= rebirthEffects.cosmicMultiplier;
+            finalValue *= rebirthEffects.sellingBonus;
+            finalValue *= rebirthEffects.transcendenceBonus;
+            finalValue *= arcadeBonuses.goldBonus;
+            finalValue = Math.floor(finalValue);
             
             // Remove one from city
             this.state.cityInventory.finished[item] -= 1;
             
-            // Decrease crafted inventory counter
-            this.state.crafted[craftInfo.tier] = Math.max(0, (this.state.crafted[craftInfo.tier] || 0) - 1);
+            // Note: don't touch this.state.crafted — those track factory items, not city items
             
             // Add gold
             this.state.resources.gold += finalValue;
@@ -2567,14 +2653,19 @@ class GameEngine {
             case 'processing':
                 this.state.efficiency.processing *= 1.25;
                 break;
+            case 'automation':
+                // Unlock auto-systems (handled in UI)
+                break;
             case 'logistics':
                 this.state.efficiency.transport *= 1.5;
                 break;
             case 'quantum':
+                // Quantum doubles everything: individual efficiencies AND global
                 this.state.efficiency.mining *= 2.0;
                 this.state.efficiency.processing *= 2.0;
                 this.state.efficiency.trading *= 2.0;
                 this.state.efficiency.transport *= 2.0;
+                this.state.efficiency.global *= 2.0;
                 break;
         }
     }
@@ -2727,24 +2818,36 @@ class GameEngine {
         }
     }
     
-    applyResearchBonus(researchType) {
-        switch (researchType) {
-            case 'mining':
-                this.state.efficiency.mining *= 1.25;
-                break;
-            case 'processing':
-                this.state.efficiency.processing *= 1.25;
-                break;
-            case 'automation':
-                // Unlock auto-systems (handled in UI)
-                break;
-            case 'logistics':
-                this.state.efficiency.transport *= 1.5;
-                break;
-            case 'quantum':
-                this.state.efficiency.global *= 2.0;
-                break;
-        }
+    // Lightweight affordability update for rebirth upgrade buttons — runs every UI tick
+    updateRebirthUpgradeAffordability() {
+        if (!this.rebirthRewards) return;
+        const container = document.getElementById('rebirth-upgrades-container');
+        if (!container) return;
+        
+        const buttons = container.querySelectorAll('button[data-upgrade]');
+        buttons.forEach(button => {
+            const key = button.dataset.upgrade;
+            if (!key) return;
+            
+            const upgrade = this.rebirthRewards.rebirthUpgrades[key];
+            if (!upgrade) return;
+            
+            const currentLevel = this.state.rebirthUpgrades[key] || 0;
+            const isMaxed = currentLevel >= upgrade.maxLevel;
+            if (isMaxed) return; // Maxed buttons don't need affordability updates
+            
+            const cost = this.rebirthRewards.getUpgradeCost(key, currentLevel);
+            const canAfford = this.state.resources.gold >= cost;
+            
+            button.style.opacity = canAfford ? '1' : '0.5';
+            button.style.cursor = canAfford ? 'pointer' : 'not-allowed';
+            
+            // Also update the cost display in case level changed
+            const costDiv = button.querySelector('.btn-cost');
+            if (costDiv) {
+                costDiv.textContent = `Cost: ${cost} gold`;
+            }
+        });
     }
     
     sellResource(resourceType) {
@@ -2756,7 +2859,17 @@ class GameEngine {
         };
         
         if (this.state.resources[resourceType] >= 1) {
-            const goldEarned = sellRates[resourceType] * Math.pow(1.20, this.state.city.banks);
+            // Event-based sell multiplier
+            const activeEffect = this.getActiveEventEffect ? this.getActiveEventEffect() : null;
+            let eventSellMult = 1;
+            if (activeEffect === 'doubleSellPrice')  eventSellMult = 2;
+            if (activeEffect === 'tripleSellPrice')  eventSellMult = 3;
+            if (activeEffect === 'coalBonus' && resourceType === 'coal') eventSellMult = 5;
+            if (activeEffect === 'globalBoost')      eventSellMult = 1.5;
+
+            // Soft cap on gold too
+            const goldCapMult = this.softCapMultiplier(this.state.resources.gold);
+            const goldEarned = sellRates[resourceType] * Math.pow(1.20, this.state.city.banks) * eventSellMult * goldCapMult;
             this.state.resources[resourceType] -= 1;
             this.state.resources.gold += goldEarned;
             this.state.stats.totalGoldEarned += goldEarned;
@@ -2816,8 +2929,13 @@ class GameEngine {
         const newRebirthCount = currentRebirths + 1;
         const savedEfficiency = { ...this.state.efficiency };
         const savedRebirthUpgrades = { ...this.state.rebirthUpgrades }; // Preserve rebirth upgrades!
+        const savedAchievements = { ...this.state.achievements }; // Preserve achievements across rebirth
+        const savedEventsTriggered = this.state.events?.eventsTriggered || 0; // Preserve event count
         
         console.log(`🔄 REBIRTH: Starting rebirth #${newRebirthCount}, preserving upgrades:`, savedRebirthUpgrades);
+        
+        // Hide any active event banner before reset
+        this.hideEventBanner();
         
         // Reset game completely (including unlocks and research)
         this.state = this.getInitialState();
@@ -2826,6 +2944,8 @@ class GameEngine {
         this.state.efficiency = savedEfficiency;
         this.state.city.rebirths = newRebirthCount;
         this.state.rebirthUpgrades = savedRebirthUpgrades; // Restore rebirth upgrades!
+        this.state.achievements = savedAchievements; // Restore achievements!
+        this.state.events.eventsTriggered = savedEventsTriggered; // Restore event count!
         
         console.log(`🔄 REBIRTH: After reset, rebirth count is ${this.state.city.rebirths}`);
         
@@ -2961,6 +3081,158 @@ class GameEngine {
         }, 1000);
     }
     
+    // ═══════════════════════════════════
+    //  SOFT CAP  — asymptotic 10 Trillion
+    // ═══════════════════════════════════
+    static SOFT_CAP = 1e13; // 10 Trillion
+
+    /**
+     * Diminishing-returns multiplier.  When amount << cap the multiplier is ~1.
+     * As amount approaches the cap the multiplier drops toward 0.
+     * Formula:  mult = cap / (cap + amount)
+     * At 1T  → mult ≈ 0.91  (nearly full speed)
+     * At 5T  → mult ≈ 0.67
+     * At 10T → mult ≈ 0.50
+     * At 50T → mult ≈ 0.17  (trickle)
+     */
+    softCapMultiplier(currentAmount) {
+        if (currentAmount <= 0) return 1;
+        return GameEngine.SOFT_CAP / (GameEngine.SOFT_CAP + currentAmount);
+    }
+
+    // ═══════════════════════════════════
+    //  RANDOM EVENTS
+    // ═══════════════════════════════════
+    static EVENTS = [
+        { id: 'trade_caravan',   emoji: '🐫', name: 'Trade Caravan',       desc: 'A travelling merchant doubles your sell prices!',       duration: 30, effect: 'doubleSellPrice' },
+        { id: 'gold_rush',       emoji: '💰', name: 'Gold Rush',           desc: 'Workers find gold nuggets — +50% mining speed!',        duration: 25, effect: 'miningBoost' },
+        { id: 'mine_collapse',   emoji: '⚠️', name: 'Mine Collapse',       desc: 'A tunnel collapsed! Mining slowed by 50% for a while.', duration: 20, effect: 'miningPenalty' },
+        { id: 'market_boom',     emoji: '📈', name: 'Market Boom',         desc: 'Resource prices surge — sell now for 3× value!',        duration: 20, effect: 'tripleSellPrice' },
+        { id: 'lucky_find',      emoji: '🍀', name: 'Lucky Find',          desc: 'Workers discovered a rich vein! Free bonus resources.', duration: 0,  effect: 'freeResources' },
+        { id: 'tax_holiday',     emoji: '🎉', name: 'Tax Holiday',         desc: 'The government declared a tax holiday!',               duration: 45, effect: 'noTax' },
+        { id: 'efficiency_wave', emoji: '⚡', name: 'Efficiency Wave',     desc: 'Everything runs faster for a short burst!',            duration: 30, effect: 'globalBoost' },
+        { id: 'worker_strike',   emoji: '✊', name: 'Worker Strike',       desc: 'Workers demand better pay — production halved!',       duration: 15, effect: 'halfProduction' },
+        { id: 'merchant_visit',  emoji: '🏪', name: 'Wandering Merchant',  desc: 'A merchant offers to buy coal at 5× price!',           duration: 20, effect: 'coalBonus' },
+        { id: 'decay_storm',     emoji: '🌪️', name: 'Decay Storm',         desc: 'A surge of entropy — decay jumps forward!',            duration: 0,  effect: 'decayBoost' }
+    ];
+
+    checkRandomEvents(deltaTime) {
+        if (!this.state.events) {
+            this.state.events = { lastEventTime: 0, activeEvent: null, eventEndTime: 0, eventsTriggered: 0 };
+        }
+        const now = this.state.gameTime;
+        const timeSinceLast = now - (this.state.events.lastEventTime || 0);
+        // Events every 45–90 seconds on average
+        const minInterval = 45;
+        const chance = deltaTime / 90; // avg once per 90s
+
+        // Expire active event
+        if (this.state.events.activeEvent && now >= this.state.events.eventEndTime) {
+            this.state.events.activeEvent = null;
+            this.state.events.eventEndTime = 0;
+            this.hideEventBanner();
+        }
+
+        if (timeSinceLast < minInterval) return;
+        if (Math.random() > chance) return;
+
+        // Pick a random event
+        const event = GameEngine.EVENTS[Math.floor(Math.random() * GameEngine.EVENTS.length)];
+        this.state.events.lastEventTime = now;
+        this.state.events.eventsTriggered++;
+
+        // Instant events
+        if (event.effect === 'freeResources') {
+            const bonus = 50 + Math.floor(Math.random() * 200);
+            const res = ['stone', 'coal', 'iron', 'silver'][Math.floor(Math.random() * 4)];
+            this.state.resources[res] += bonus;
+            this.showNotification(`${event.emoji} ${event.name}: +${bonus} ${res}!`);
+            return;
+        }
+        if (event.effect === 'decayBoost') {
+            const boost = 5 + Math.random() * 15;
+            const maxD = this.state.city.adjustedMaxDecay || this.state.city.maxDecay;
+            this.state.city.decay = Math.min(maxD, this.state.city.decay + boost);
+            this.showNotification(`${event.emoji} ${event.name}: +${boost.toFixed(0)} decay!`);
+            return;
+        }
+
+        // Timed events
+        this.state.events.activeEvent = event;
+        this.state.events.eventEndTime = now + event.duration;
+        this.showNotification(`${event.emoji} ${event.name}: ${event.desc} (${event.duration}s)`);
+        this.showEventBanner(event);
+    }
+
+    getActiveEventEffect() {
+        if (!this.state.events?.activeEvent) return null;
+        if (this.state.gameTime >= this.state.events.eventEndTime) return null;
+        return this.state.events.activeEvent.effect;
+    }
+
+    showEventBanner(event) {
+        let banner = document.getElementById('event-banner');
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'event-banner';
+            banner.style.cssText = 'position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:9999;' +
+                'background:linear-gradient(135deg,#2d1b69,#1a1a2e);color:#fff;padding:12px 24px;border-radius:12px;' +
+                'box-shadow:0 8px 32px rgba(108,92,231,0.4);font-size:0.92rem;display:flex;align-items:center;gap:10px;' +
+                'border:1px solid rgba(108,92,231,0.5);animation:eventSlide 0.4s ease;max-width:90vw;';
+            document.body.appendChild(banner);
+            // Inject animation
+            if (!document.getElementById('event-anim-style')) {
+                const s = document.createElement('style');
+                s.id = 'event-anim-style';
+                s.textContent = '@keyframes eventSlide{from{opacity:0;transform:translateX(-50%) translateY(-30px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}';
+                document.head.appendChild(s);
+            }
+        }
+        banner.innerHTML = `<span style="font-size:1.4rem">${event.emoji}</span><span><strong>${event.name}</strong> — ${event.desc}</span>`;
+        banner.style.display = 'flex';
+    }
+
+    hideEventBanner() {
+        const banner = document.getElementById('event-banner');
+        if (banner) banner.style.display = 'none';
+    }
+
+    // ═══════════════════════════════════
+    //  ACHIEVEMENTS
+    // ═══════════════════════════════════
+    static MILESTONES = [
+        { id: 'stone_1k',     check: s => s.resources.stone >= 1000,             msg: '🪨 1,000 Stone — Quarry Master!' },
+        { id: 'stone_1m',     check: s => s.resources.stone >= 1e6,              msg: '⛰️ 1M Stone — Mountain Mover!' },
+        { id: 'gold_10k',     check: s => s.resources.gold >= 10000,             msg: '💰 10K Gold — Getting Rich!' },
+        { id: 'gold_1m',      check: s => s.resources.gold >= 1e6,               msg: '🏦 1M Gold — Millionaire!' },
+        { id: 'gold_1b',      check: s => s.resources.gold >= 1e9,               msg: '👑 1B Gold — Billionaire Tycoon!' },
+        { id: 'workers_10',   check: s => (s.workers.stoneMiners + s.workers.coalMiners + s.workers.ironMiners + s.workers.silverMiners) >= 10, msg: '👷 10 Workers — Small Team!' },
+        { id: 'workers_50',   check: s => (s.workers.stoneMiners + s.workers.coalMiners + s.workers.ironMiners + s.workers.silverMiners) >= 50, msg: '🏭 50 Workers — Corporation!' },
+        { id: 'workers_200',  check: s => (s.workers.stoneMiners + s.workers.coalMiners + s.workers.ironMiners + s.workers.silverMiners) >= 200, msg: '🌐 200 Workers — Empire!' },
+        { id: 'rebirth_1',    check: s => s.city.rebirths >= 1,                  msg: '🔄 First Rebirth — New Beginning!' },
+        { id: 'rebirth_5',    check: s => s.city.rebirths >= 5,                  msg: '🔁 5 Rebirths — Cycle Master!' },
+        { id: 'rebirth_10',   check: s => s.city.rebirths >= 10,                 msg: '♾️ 10 Rebirths — Eternal!' },
+        { id: 'coal_unlock',  check: s => s.unlock_coal,                         msg: '🔓 Coal Unlocked — Deeper Mining!' },
+        { id: 'iron_unlock',  check: s => s.unlock_iron,                         msg: '⚒️ Iron Unlocked — Industrial Age!' },
+        { id: 'silver_unlock',check: s => s.unlock_silver,                       msg: '🥈 Silver Unlocked — Precious Metals!' },
+        { id: 'event_5',      check: s => (s.events?.eventsTriggered || 0) >= 5, msg: '🎲 5 Events Survived!' },
+        { id: 'event_20',     check: s => (s.events?.eventsTriggered || 0) >= 20,msg: '🎰 20 Events — Veteran!' },
+        { id: 'iron_100k',    check: s => s.resources.iron >= 1e5,               msg: '⚙️ 100K Iron — Forge Lord!' },
+        { id: 'silver_10k',   check: s => s.resources.silver >= 1e4,             msg: '🪙 10K Silver — Silver Baron!' }
+    ];
+
+    checkAchievements() {
+        if (!this.state.achievements) this.state.achievements = {};
+        for (const m of GameEngine.MILESTONES) {
+            if (this.state.achievements[m.id]) continue;
+            if (m.check(this.state)) {
+                this.state.achievements[m.id] = Date.now();
+                this.showNotification(m.msg);
+                this.playSound('hire'); // reuse celebration sound
+            }
+        }
+    }
+
     // Utility methods
     formatNumber(num) {
         if (num < 1000) return Math.floor(num).toString();
@@ -3113,8 +3385,18 @@ class GameEngine {
     
     loadSaveData(saveData) {
         if (saveData && saveData.version) {
-            // Merge save data with current state, preserving any new properties
-            this.state = { ...this.state, ...saveData };
+            // Deep merge save data with current state, preserving nested object structure
+            const initial = this.getInitialState();
+            for (const key of Object.keys(initial)) {
+                if (saveData[key] !== undefined) {
+                    if (typeof initial[key] === 'object' && initial[key] !== null && !Array.isArray(initial[key])) {
+                        // Deep merge for nested objects — keep new properties from initial state
+                        this.state[key] = { ...initial[key], ...saveData[key] };
+                    } else {
+                        this.state[key] = saveData[key];
+                    }
+                }
+            }
             
             // Calculate offline progress if applicable
             if (saveData.lastSave) {
@@ -3122,10 +3404,8 @@ class GameEngine {
                 this.calculateOfflineProgress(offlineTime);
             }
             
-            // Re-initialize systems
-            if (this.resourceManager) this.resourceManager.setState(this.state);
-            if (this.upgradeSystem) this.upgradeSystem.setState(this.state);
-            if (this.marketSystem) this.marketSystem.setState(this.state);
+            // Re-initialize active systems
+            if (this.newResourceManager) this.newResourceManager.state = this.state;
             
             console.log('Game loaded from save data');
             return true;
@@ -3134,13 +3414,30 @@ class GameEngine {
     }
     
     calculateOfflineProgress(offlineSeconds) {
-        if (offlineSeconds > 60) { // Only calculate if offline for more than 1 minute
-            const offlineProduction = this.resourceManager.calculateStoneProduction() * offlineSeconds;
-            this.state.stone += offlineProduction;
-            this.state.totalStoneMined += offlineProduction;
-            this.state.offlineTime = offlineSeconds;
+        if (offlineSeconds > 60) {
+            // Calculate offline stone production from miners
+            const stoneMinerRate = (this.state.workers?.stoneMiners || 0) * 1 * this.state.efficiency.mining * this.state.efficiency.global;
+            const coalMinerRate = (this.state.workers?.coalMiners || 0) * 0.5 * this.state.efficiency.mining * this.state.efficiency.global;
+            const ironMinerRate = (this.state.workers?.ironMiners || 0) * 0.25 * this.state.efficiency.mining * this.state.efficiency.global;
+            const silverMinerRate = (this.state.workers?.silverMiners || 0) * 0.1 * this.state.efficiency.mining * this.state.efficiency.global;
             
-            console.log(`Offline for ${this.formatTime(offlineSeconds)}, gained ${this.formatNumber(offlineProduction)} stone`);
+            // Apply 50% offline efficiency penalty
+            const offlineEfficiency = 0.5;
+            const stoneGained = stoneMinerRate * offlineSeconds * offlineEfficiency;
+            const coalGained = coalMinerRate * offlineSeconds * offlineEfficiency;
+            const ironGained = ironMinerRate * offlineSeconds * offlineEfficiency;
+            const silverGained = silverMinerRate * offlineSeconds * offlineEfficiency;
+            
+            this.state.resources.stone += stoneGained;
+            this.state.resources.coal += coalGained;
+            this.state.resources.iron += ironGained;
+            this.state.resources.silver += silverGained;
+            
+            const totalGained = stoneGained + coalGained + ironGained + silverGained;
+            if (totalGained > 0) {
+                this.showNotification(`⏰ Offline for ${this.formatTime(offlineSeconds)} — gained resources at 50% rate!`);
+                console.log(`Offline for ${this.formatTime(offlineSeconds)}, gained ${Math.floor(stoneGained)} stone, ${Math.floor(coalGained)} coal, ${Math.floor(ironGained)} iron, ${Math.floor(silverGained)} silver`);
+            }
         }
     }
     
@@ -3195,6 +3492,9 @@ class GameEngine {
                 prestigePanel.style.display = 'none';
             }
             
+            // Hide any active event banner
+            this.hideEventBanner();
+            
             console.log('💾 RESET: Saving EMPTY state to server to overwrite old save...');
             console.log('🔍 RESET: Fresh state to save:', {
                 gold: this.state.resources.gold,
@@ -3234,17 +3534,24 @@ class GameEngine {
     }
 
     applyPrestigeBonus(target, cost) {
+        // Prestige system not yet implemented — guard against missing state
+        if (!this.state.prestige || !this.state.prestige.bonuses) {
+            console.warn('Prestige system not available');
+            this.showNotification('⚠️ Prestige system is not yet available.');
+            return;
+        }
+        
         const bonusCosts = {
-            'mining': Math.max(1, Math.floor(100 * Math.pow(2, this.state.prestige.bonuses.mining))),
-            'processing': Math.max(1, Math.floor(200 * Math.pow(2, this.state.prestige.bonuses.processing))),
-            'trading': Math.max(1, Math.floor(300 * Math.pow(2, this.state.prestige.bonuses.trading))),
-            'transport': Math.max(1, Math.floor(500 * Math.pow(2, this.state.prestige.bonuses.transport))),
-            'city': Math.max(1, Math.floor(1000 * Math.pow(2, this.state.prestige.bonuses.city)))
+            'mining': Math.max(1, Math.floor(100 * Math.pow(2, this.state.prestige.bonuses.mining || 0))),
+            'processing': Math.max(1, Math.floor(200 * Math.pow(2, this.state.prestige.bonuses.processing || 0))),
+            'trading': Math.max(1, Math.floor(300 * Math.pow(2, this.state.prestige.bonuses.trading || 0))),
+            'transport': Math.max(1, Math.floor(500 * Math.pow(2, this.state.prestige.bonuses.transport || 0))),
+            'city': Math.max(1, Math.floor(1000 * Math.pow(2, this.state.prestige.bonuses.city || 0)))
         };
 
         if (this.state.prestige.points >= bonusCosts[target]) {
             this.state.prestige.points -= bonusCosts[target];
-            this.state.prestige.bonuses[target] += 1;
+            this.state.prestige.bonuses[target] = (this.state.prestige.bonuses[target] || 0) + 1;
             
             // Apply the bonus effect
             switch(target) {
@@ -3503,10 +3810,11 @@ class GameEngine {
     }
 
     prestigeTier() {
-        if (this.state.prestige.points >= 100) return 'Legendary';
-        if (this.state.prestige.points >= 50) return 'Epic';
-        if (this.state.prestige.points >= 20) return 'Rare';
-        if (this.state.prestige.points >= 5) return 'Uncommon';
+        const points = this.state.prestige?.points || 0;
+        if (points >= 100) return 'Legendary';
+        if (points >= 50) return 'Epic';
+        if (points >= 20) return 'Rare';
+        if (points >= 5) return 'Uncommon';
         return 'Common';
     }
 

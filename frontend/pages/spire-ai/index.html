@@ -3,26 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Spire AI Collaboration - Create, share, and play community quiz themes. Upload AI-generated quizzes via CSV or build your own.">
+    <meta name="description" content="Quiz The Spire — Play quizzes, create community themes, and compete with friends in real-time.">
     <meta name="copyright" content="© 2026 Oroka Conner. All rights reserved.">
-    <title>Spire AI Collaboration | Quiz The Spire</title>
+    <title>Quiz The Spire</title>
 
-    <!-- SEO -->
     <meta name="author" content="Oroka Conner">
-    <meta name="keywords" content="spire ai, quiz creator, community quizzes, ai generated quizzes, csv quiz upload, collaborative learning">
     <meta name="robots" content="index, follow">
 
-    <!-- Open Graph -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Spire AI Collaboration - Community Quiz Creator">
-    <meta property="og:description" content="Create, share, and play community quiz themes. Upload AI-generated quizzes or build your own.">
+    <meta property="og:title" content="Quiz The Spire — Play & Create Quizzes">
+    <meta property="og:description" content="Play quizzes, create community themes, and compete with friends.">
     <meta property="og:url" content="https://quizthespire.com/pages/spire-ai/">
     <meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg">
-
-    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Spire AI Collaboration">
-    <meta name="twitter:description" content="Create and share AI-powered community quizzes">
+    <meta name="twitter:title" content="Quiz The Spire">
+    <meta name="twitter:description" content="Play quizzes, create community themes, and compete.">
     <meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg">
 
     <link rel="canonical" href="https://quizthespire.com/pages/spire-ai/">
@@ -32,225 +27,258 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous">
-    <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="spire-ai.css">
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" defer></script>
 </head>
 <body>
-    <!-- Login Modal -->
-    <div id="loginModal" class="sai-modal sai-modal--active">
+
+    <!-- ══════════════  LOGIN MODAL  ══════════════ -->
+    <div id="loginModal" class="sai-modal sai-modal--active" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
         <div class="sai-modal__backdrop"></div>
         <div class="sai-modal__content sai-login">
             <div class="sai-login__header">
-                <div class="sai-login__logo">
-                    <i class="fas fa-brain"></i>
-                </div>
-                <h2>Quiz The Spire</h2>
-                <p>Sign in to play, create, and share quizzes</p>
+                <div class="sai-login__logo"><i class="fas fa-bolt"></i></div>
+                <h2 id="loginModalTitle">Quiz The Spire</h2>
+                <p>Sign in to play, create, and compete</p>
             </div>
             <form id="loginForm" class="sai-login__form">
-                <div class="sai-form-group">
+                <div class="sai-field">
                     <label for="loginFirst">First Name</label>
-                    <input type="text" id="loginFirst" required autocomplete="given-name">
+                    <input type="text" id="loginFirst" required autocomplete="given-name" placeholder="Enter first name">
                 </div>
-                <div class="sai-form-group">
+                <div class="sai-field">
                     <label for="loginLast">Last Name</label>
-                    <input type="text" id="loginLast" required autocomplete="family-name">
+                    <input type="text" id="loginLast" required autocomplete="family-name" placeholder="Enter last name">
                 </div>
-                <div class="sai-form-group">
+                <div class="sai-field">
                     <label for="loginPassword">Password</label>
-                    <input type="password" id="loginPassword" required autocomplete="current-password">
+                    <input type="password" id="loginPassword" required autocomplete="current-password" placeholder="Enter password">
                 </div>
                 <button type="submit" class="sai-btn sai-btn--primary sai-btn--full">
                     <i class="fas fa-sign-in-alt"></i> Sign In
                 </button>
-                <button type="button" id="registerBtn" class="sai-btn sai-btn--ghost sai-btn--full">
+                <button type="button" id="registerBtn" class="sai-btn sai-btn--outline sai-btn--full">
                     <i class="fas fa-user-plus"></i> Create Account
                 </button>
             </form>
+            <a href="/" class="sai-login__back"><i class="fas fa-arrow-left"></i> Back to homepage</a>
         </div>
     </div>
 
-    <!-- Main App -->
-    <div id="mainApp" class="sai-app" style="display: none;">
-        <!-- Header -->
-        <header class="sai-header">
-            <div class="sai-header__left">
-                <a href="/" class="sai-header__logo">
-                    <i class="fas fa-brain"></i>
-                    <span>Quiz The Spire</span>
-                </a>
-            </div>
-            <nav class="sai-header__nav">
+    <!-- ══════════════  MAIN APP  ══════════════ -->
+    <div id="mainApp" class="sai-app" style="display:none;">
+
+        <!-- Top Bar -->
+        <header class="sai-topbar">
+            <a href="/" class="sai-topbar__brand">
+                <i class="fas fa-bolt"></i>
+                <span>Quiz The Spire</span>
+            </a>
+            <nav class="sai-topbar__nav" id="mainNav">
                 <button class="sai-nav-btn sai-nav-btn--active" data-tab="play">
-                    <i class="fas fa-gamepad"></i>
-                    <span>Play</span>
+                    <i class="fas fa-play"></i><span>Play</span>
                 </button>
                 <button class="sai-nav-btn" data-tab="explore">
-                    <i class="fas fa-compass"></i>
-                    <span>Community</span>
+                    <i class="fas fa-globe"></i><span>Community</span>
                 </button>
                 <button class="sai-nav-btn" data-tab="create">
-                    <i class="fas fa-plus-circle"></i>
-                    <span>Create</span>
+                    <i class="fas fa-hammer"></i><span>Create</span>
                 </button>
                 <button class="sai-nav-btn" data-tab="my-themes">
-                    <i class="fas fa-folder-open"></i>
-                    <span>My Themes</span>
+                    <i class="fas fa-folder"></i><span>My Themes</span>
                 </button>
                 <button class="sai-nav-btn" data-tab="csv-upload">
-                    <i class="fas fa-file-csv"></i>
-                    <span>CSV Import</span>
+                    <i class="fas fa-file-csv"></i><span>Import</span>
                 </button>
             </nav>
-            <div class="sai-header__right">
-                <span id="userDisplayName" class="sai-user-badge">
+            <div class="sai-topbar__user">
+                <button id="theme-toggle" class="sai-btn sai-btn--ghost sai-btn--sm" title="Toggle theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <span id="userDisplayName" class="sai-avatar">
                     <i class="fas fa-user-circle"></i>
                     <span>User</span>
                 </span>
-                <button id="logoutBtn" class="sai-btn sai-btn--ghost sai-btn--sm">
+                <button id="logoutBtn" class="sai-btn sai-btn--ghost sai-btn--sm" title="Log out">
                     <i class="fas fa-sign-out-alt"></i>
                 </button>
             </div>
         </header>
 
-        <!-- Tab: Play (Active Sessions + Quick Join) -->
-        <main id="tab-play" class="sai-main sai-tab sai-tab--active">
+        <!-- ═══════════  PLAY TAB  ═══════════ -->
+        <section id="tab-play" class="sai-page sai-tab sai-tab--active">
+            <!-- Hero -->
             <div class="sai-hero">
-                <h1><i class="fas fa-gamepad"></i> Play Quiz</h1>
-                <p>Join an active session or start your own with official or community themes!</p>
+                <div class="sai-hero__inner">
+                    <h1>Ready to play?</h1>
+                    <p>Join a live session or start a new quiz with your favourite themes.</p>
+                    <button class="sai-btn sai-btn--accent sai-btn--lg" onclick="joinActiveQuiz()">
+                        <i class="fas fa-play"></i> Join Quiz Now
+                    </button>
+                </div>
+                <div class="sai-hero__glow"></div>
             </div>
 
-            <!-- Active Sessions -->
-            <div class="sai-container">
-                <div class="sai-play-section">
-                    <div class="sai-play-section__header">
+            <div class="sai-content">
+                <!-- Live Sessions -->
+                <div class="sai-section">
+                    <div class="sai-section__head">
                         <h2><i class="fas fa-signal"></i> Live Sessions</h2>
                         <button id="refreshSessionsBtn" class="sai-btn sai-btn--ghost sai-btn--sm">
                             <i class="fas fa-sync-alt"></i> Refresh
                         </button>
                     </div>
-                    <div id="activeSessionsList" class="sai-sessions-list">
+                    <div id="activeSessionsList" class="sai-sessions">
                         <div class="sai-spinner"></div>
                     </div>
                 </div>
 
-                <!-- Quick Actions -->
-                <div class="sai-play-actions">
-                    <div class="sai-action-card sai-action-card--play" onclick="joinActiveQuiz()">
-                        <div class="sai-action-card__icon"><i class="fas fa-play-circle"></i></div>
-                        <h3>Join Active Quiz</h3>
-                        <p>Jump into an ongoing quiz session instantly</p>
+                <!-- Start New Session — Multi-Theme Picker -->
+                <div class="sai-section">
+                    <div class="sai-section__head">
+                        <h2><i class="fas fa-plus-circle"></i> Start New Session</h2>
                     </div>
-                    <div class="sai-action-card sai-action-card--community" onclick="switchTab('explore')">
-                        <div class="sai-action-card__icon"><i class="fas fa-users"></i></div>
-                        <h3>Community Themes</h3>
-                        <p>Browse and play community-created quiz themes</p>
-                    </div>
-                    <div class="sai-action-card sai-action-card--create" onclick="switchTab('create')">
-                        <div class="sai-action-card__icon"><i class="fas fa-plus-circle"></i></div>
-                        <h3>Create Theme</h3>
-                        <p>Design your own quiz and share it with the community</p>
-                    </div>
-                </div>
+                    <div class="sai-session-create">
+                        <p class="sai-session-create__desc">Pick one or more themes, then launch a quiz session.</p>
 
-                <!-- Stats Bar -->
-                <div class="sai-stats-bar" id="statsBar">
-                    <div class="sai-stat">
-                        <span class="sai-stat__value" id="statThemes">0</span>
-                        <span class="sai-stat__label">Community Themes</span>
-                    </div>
-                    <div class="sai-stat">
-                        <span class="sai-stat__value" id="statPlays">0</span>
-                        <span class="sai-stat__label">Total Plays</span>
-                    </div>
-                    <div class="sai-stat">
-                        <span class="sai-stat__value" id="statCreators">0</span>
-                        <span class="sai-stat__label">Creators</span>
-                    </div>
-                    <div class="sai-stat">
-                        <span class="sai-stat__value" id="statLive">0</span>
-                        <span class="sai-stat__label">Live Now</span>
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <!-- Tab: Community (Explore Approved Themes) -->
-        <main id="tab-explore" class="sai-main sai-tab">
-            <div class="sai-hero">
-                <h1><i class="fas fa-compass"></i> Community Themes</h1>
-                <p>Discover quiz themes created by the community. Browse, rate, and play!</p>
-                <div class="sai-search-bar">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="Search community themes...">
-                </div>
-            </div>
-
-            <div id="exploreGrid" class="sai-theme-grid">
-                <div class="sai-empty-state">
-                    <i class="fas fa-rocket"></i>
-                    <h3>No community themes yet</h3>
-                    <p>Be the first to create one!</p>
-                    <button class="sai-btn sai-btn--primary" onclick="switchTab('create')">
-                        <i class="fas fa-plus"></i> Create Theme
-                    </button>
-                </div>
-            </div>
-        </main>
-
-        <!-- Tab: Create New Theme -->
-        <main id="tab-create" class="sai-main sai-tab">
-            <div class="sai-container">
-                <h2><i class="fas fa-plus-circle"></i> Create New Theme</h2>
-                <p class="sai-subtitle">Design your quiz theme, add questions, and share it with the community.</p>
-
-                <form id="createThemeForm" class="sai-form">
-                    <div class="sai-form-row">
-                        <div class="sai-form-group sai-form-group--flex">
-                            <label for="themeName">
-                                <i class="fas fa-tag"></i> Theme Name
-                            </label>
-                            <input type="text" id="themeName" placeholder="e.g. Space Exploration" required maxlength="100">
+                        <div class="sai-picker-header">
+                            <h3><i class="fas fa-palette"></i> Select Themes</h3>
+                            <span id="selectedThemeCount" class="sai-chip">0 selected</span>
                         </div>
+
+                        <div class="sai-picker-tabs">
+                            <button class="sai-picker-tab sai-picker-tab--active" data-picker="official">
+                                <i class="fas fa-crown"></i> Official
+                            </button>
+                            <button class="sai-picker-tab" data-picker="community">
+                                <i class="fas fa-users"></i> Community
+                            </button>
+                        </div>
+
+                        <div id="themePickerGrid" class="sai-picker-grid">
+                            <div class="sai-spinner"></div>
+                        </div>
+
+                        <button id="startSessionBtn" class="sai-btn sai-btn--primary sai-btn--lg sai-btn--full" disabled>
+                            <i class="fas fa-rocket"></i> Start Quiz with Selected Themes
+                        </button>
                     </div>
-                    <div class="sai-form-group">
-                        <label for="themeDesc">
-                            <i class="fas fa-align-left"></i> Description
-                        </label>
-                        <textarea id="themeDesc" rows="3" placeholder="Describe your quiz theme..."></textarea>
+                </div>
+
+                <!-- Stats -->
+                <div class="sai-stats" id="statsBar">
+                    <div class="sai-stats__item">
+                        <span class="sai-stats__val" id="statLive">0</span>
+                        <span class="sai-stats__lbl">Live Now</span>
                     </div>
-                    <button type="submit" class="sai-btn sai-btn--primary">
-                        <i class="fas fa-rocket"></i> Create Theme
+                    <div class="sai-stats__item">
+                        <span class="sai-stats__val" id="statThemes">0</span>
+                        <span class="sai-stats__lbl">Themes</span>
+                    </div>
+                    <div class="sai-stats__item">
+                        <span class="sai-stats__val" id="statPlays">0</span>
+                        <span class="sai-stats__lbl">Total Plays</span>
+                    </div>
+                    <div class="sai-stats__item">
+                        <span class="sai-stats__val" id="statCreators">0</span>
+                        <span class="sai-stats__lbl">Creators</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════  COMMUNITY TAB  ═══════════ -->
+        <section id="tab-explore" class="sai-page sai-tab">
+            <div class="sai-page__header">
+                <h1><i class="fas fa-globe"></i> Community Themes</h1>
+                <p>Browse, rate, and play themes created by the community.</p>
+                <div class="sai-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search themes…" aria-label="Search community themes">
+                </div>
+            </div>
+            <div class="sai-content">
+                <div id="adminReviewBanner"></div>
+                <div id="exploreGrid" class="sai-grid">
+                    <div class="sai-empty">
+                        <i class="fas fa-rocket"></i>
+                        <h3>No community themes yet</h3>
+                        <p>Be the first to create one!</p>
+                        <button class="sai-btn sai-btn--primary" onclick="switchTab('create')">
+                            <i class="fas fa-plus"></i> Create Theme
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════  CREATE TAB  ═══════════ -->
+        <section id="tab-create" class="sai-page sai-tab">
+            <div class="sai-content sai-content--narrow">
+                <!-- Step indicator -->
+                <div class="sai-create-steps">
+                    <div class="sai-step sai-step--active" data-step="1">
+                        <span class="sai-step__num">1</span>
+                        <span class="sai-step__label">Name &amp; Describe</span>
+                    </div>
+                    <div class="sai-step-line"></div>
+                    <div class="sai-step" data-step="2">
+                        <span class="sai-step__num">2</span>
+                        <span class="sai-step__label">Add Questions</span>
+                    </div>
+                    <div class="sai-step-line"></div>
+                    <div class="sai-step" data-step="3">
+                        <span class="sai-step__num">3</span>
+                        <span class="sai-step__label">Submit</span>
+                    </div>
+                </div>
+
+                <form id="createThemeForm" class="sai-form sai-create-card">
+                    <h2><i class="fas fa-lightbulb"></i> What's your quiz about?</h2>
+                    <p class="sai-muted">Give it a catchy name and a short description so players know what to expect.</p>
+                    <div class="sai-field">
+                        <label for="themeName"><i class="fas fa-tag"></i> Theme Name</label>
+                        <input type="text" id="themeName" placeholder="e.g. Space Exploration" required maxlength="100">
+                        <span class="sai-field__hint" id="themeNameCount">0/100</span>
+                    </div>
+                    <div class="sai-field">
+                        <label for="themeDesc"><i class="fas fa-align-left"></i> Description</label>
+                        <textarea id="themeDesc" rows="3" placeholder="Describe your quiz theme…" maxlength="500"></textarea>
+                        <span class="sai-field__hint" id="themeDescCount">0/500</span>
+                    </div>
+                    <button type="submit" class="sai-btn sai-btn--primary sai-btn--lg sai-btn--full sai-btn--glow">
+                        <i class="fas fa-arrow-right"></i> Create Theme &amp; Add Questions
                     </button>
                 </form>
 
-                <!-- Question Builder (shown after theme creation) -->
-                <div id="questionBuilder" class="sai-question-builder" style="display: none;">
-                    <div class="sai-builder-header">
-                        <h3><i class="fas fa-list-ol"></i> Questions for: <span id="builderThemeName"></span></h3>
-                        <div class="sai-builder-actions">
-                            <span id="questionCount" class="sai-badge">0 questions</span>
-                            <button id="submitForReviewBtn" class="sai-btn sai-btn--success" disabled>
-                                <i class="fas fa-paper-plane"></i> Submit for Review
-                            </button>
+                <!-- Question Builder -->
+                <div id="questionBuilder" class="sai-builder" style="display:none;">
+                    <div class="sai-builder__head">
+                        <h2><i class="fas fa-list-ol"></i> Questions for <em id="builderThemeName"></em></h2>
+                        <div class="sai-builder__actions">
+                            <span id="questionCount" class="sai-chip">0 questions</span>
+                            <div class="sai-builder__progress">
+                                <div class="sai-builder__bar" id="questionProgressBar" style="width:0%"></div>
+                            </div>
+                            <span class="sai-muted sai-builder__goal">Need 5 to submit</span>
                         </div>
                     </div>
 
-                    <div id="questionsList" class="sai-questions-list">
-                        <!-- Populated dynamically -->
-                    </div>
+                    <button id="submitForReviewBtn" class="sai-btn sai-btn--accent sai-btn--full" disabled>
+                        <i class="fas fa-paper-plane"></i> Submit for Review (need <span id="questionsNeeded">5</span> more)
+                    </button>
 
-                    <div class="sai-add-question">
-                        <h4><i class="fas fa-plus"></i> Add Question</h4>
-                        <form id="addQuestionForm">
-                            <div class="sai-form-group">
-                                <label>Question Text</label>
-                                <input type="text" id="qText" required maxlength="500" placeholder="Enter your question...">
+                    <div id="questionsList" class="sai-qlist"></div>
+
+                    <details class="sai-add-q" open>
+                        <summary><i class="fas fa-plus-circle"></i> Add a Question</summary>
+                        <form id="addQuestionForm" class="sai-form">
+                            <div class="sai-field">
+                                <label for="qText">Question Text</label>
+                                <input type="text" id="qText" required maxlength="500" placeholder="Enter your question…">
                             </div>
-                            <div class="sai-form-row sai-form-row--3col">
-                                <div class="sai-form-group">
-                                    <label>Difficulty</label>
+                            <div class="sai-row sai-row--3">
+                                <div class="sai-field">
+                                    <label for="qDifficulty">Difficulty</label>
                                     <select id="qDifficulty">
                                         <option value="easy">Easy</option>
                                         <option value="medium" selected>Medium</option>
@@ -258,158 +286,123 @@
                                         <option value="expert">Expert</option>
                                     </select>
                                 </div>
-                                <div class="sai-form-group">
-                                    <label>Time Limit (s)</label>
+                                <div class="sai-field">
+                                    <label for="qTimeLimit">Time (s)</label>
                                     <input type="number" id="qTimeLimit" value="30" min="5" max="120">
                                 </div>
-                                <div class="sai-form-group">
-                                    <label>Points</label>
+                                <div class="sai-field">
+                                    <label for="qPoints">Points</label>
                                     <input type="number" id="qPoints" value="10" min="1" max="100">
                                 </div>
                             </div>
-                            <div class="sai-form-group">
-                                <label>Explanation (shown after answering)</label>
-                                <input type="text" id="qExplanation" placeholder="Optional explanation...">
+                            <div class="sai-field">
+                                <label for="qExplanation">Explanation <span class="sai-muted">(optional)</span></label>
+                                <input type="text" id="qExplanation" placeholder="Shown after answering">
                             </div>
-                            <div class="sai-answers-builder">
-                                <label><i class="fas fa-check-circle"></i> Answers (mark correct ones)</label>
-                                <div class="sai-answer-row">
-                                    <input type="checkbox" id="aCorrect1" checked>
-                                    <input type="text" id="aText1" placeholder="Correct answer" required>
-                                </div>
-                                <div class="sai-answer-row">
-                                    <input type="checkbox" id="aCorrect2">
-                                    <input type="text" id="aText2" placeholder="Wrong answer 1" required>
-                                </div>
-                                <div class="sai-answer-row">
-                                    <input type="checkbox" id="aCorrect3">
-                                    <input type="text" id="aText3" placeholder="Wrong answer 2">
-                                </div>
-                                <div class="sai-answer-row">
-                                    <input type="checkbox" id="aCorrect4">
-                                    <input type="text" id="aText4" placeholder="Wrong answer 3">
-                                </div>
+                            <div class="sai-answers">
+                                <label><i class="fas fa-check-circle"></i> Answers — tick the correct one(s)</label>
+                                <div class="sai-answer-row"><input type="checkbox" id="aCorrect1" checked aria-label="Mark answer 1 as correct"><input type="text" id="aText1" placeholder="✓ Correct answer" required></div>
+                                <div class="sai-answer-row"><input type="checkbox" id="aCorrect2" aria-label="Mark answer 2 as correct"><input type="text" id="aText2" placeholder="✗ Wrong answer" required></div>
+                                <div class="sai-answer-row"><input type="checkbox" id="aCorrect3" aria-label="Mark answer 3 as correct"><input type="text" id="aText3" placeholder="✗ Wrong answer (optional)"></div>
+                                <div class="sai-answer-row"><input type="checkbox" id="aCorrect4" aria-label="Mark answer 4 as correct"><input type="text" id="aText4" placeholder="✗ Wrong answer (optional)"></div>
                             </div>
-                            <div class="sai-form-group">
-                                <label class="sai-checkbox">
-                                    <input type="checkbox" id="qAiGenerated">
-                                    <span><i class="fas fa-robot"></i> AI-Generated Question</span>
-                                </label>
-                            </div>
-                            <button type="submit" class="sai-btn sai-btn--primary">
+                            <label class="sai-check">
+                                <input type="checkbox" id="qAiGenerated">
+                                <span><i class="fas fa-robot"></i> AI-Generated</span>
+                            </label>
+                            <button type="submit" class="sai-btn sai-btn--primary sai-btn--lg sai-btn--full">
                                 <i class="fas fa-plus"></i> Add Question
                             </button>
                         </form>
-                    </div>
+                    </details>
                 </div>
             </div>
-        </main>
+        </section>
 
-        <!-- Tab: My Themes -->
-        <main id="tab-my-themes" class="sai-main sai-tab">
-            <div class="sai-container">
-                <h2><i class="fas fa-folder-open"></i> My Themes</h2>
-                <p class="sai-subtitle">Manage your created quiz themes and track their status.</p>
-                <div id="myThemesGrid" class="sai-theme-grid">
-                    <div class="sai-empty-state">
+        <!-- ═══════════  MY THEMES TAB  ═══════════ -->
+        <section id="tab-my-themes" class="sai-page sai-tab">
+            <div class="sai-content">
+                <h1><i class="fas fa-folder"></i> My Themes</h1>
+                <p class="sai-muted">Manage your created quiz themes and track their review status.</p>
+                <div id="myThemesGrid" class="sai-grid">
+                    <div class="sai-empty">
                         <i class="fas fa-folder-open"></i>
                         <h3>No themes yet</h3>
                         <p>Create your first theme to get started!</p>
                     </div>
                 </div>
             </div>
-        </main>
+        </section>
 
-        <!-- Tab: CSV Upload -->
-        <main id="tab-csv-upload" class="sai-main sai-tab">
-            <div class="sai-container">
-                <h2><i class="fas fa-file-csv"></i> CSV Quiz Import</h2>
-                <p class="sai-subtitle">Bulk-import questions from a CSV file — perfect for AI-generated content!</p>
+        <!-- ═══════════  CSV IMPORT TAB  ═══════════ -->
+        <section id="tab-csv-upload" class="sai-page sai-tab">
+            <div class="sai-content sai-content--narrow">
+                <h1><i class="fas fa-file-csv"></i> CSV Quiz Import</h1>
+                <p class="sai-muted">Bulk-import questions from a CSV file — perfect for AI-generated content!</p>
 
-                <div class="sai-csv-info">
+                <div class="sai-cards-row">
                     <div class="sai-info-card">
-                        <h4><i class="fas fa-robot"></i> AI-Powered Quiz Creation</h4>
-                        <p>Use ChatGPT, Claude, or any AI to generate quiz questions, export as CSV, and import them here in seconds!</p>
-                        <div class="sai-csv-prompt">
-                            <strong>Example AI prompt:</strong>
+                        <h4><i class="fas fa-robot"></i> AI-Powered Creation</h4>
+                        <p>Use ChatGPT, Claude, or any AI to generate quiz questions, export as CSV, and import them here.</p>
+                        <div class="sai-code-block">
+                            <strong>Example prompt:</strong>
                             <code>"Generate 20 quiz questions about [topic] in CSV format with columns: question, correct_answer, wrong_answer_1, wrong_answer_2, wrong_answer_3, explanation, difficulty"</code>
                         </div>
                     </div>
-
                     <div class="sai-info-card">
                         <h4><i class="fas fa-table"></i> CSV Format</h4>
-                        <table class="sai-csv-format">
-                            <thead>
-                                <tr>
-                                    <th>Column</th>
-                                    <th>Required</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
+                        <table class="sai-csv-table">
+                            <thead><tr><th>Column</th><th>Req</th><th>Info</th></tr></thead>
                             <tbody>
                                 <tr><td>question</td><td>✅</td><td>The question text</td></tr>
                                 <tr><td>correct_answer</td><td>✅</td><td>The correct answer</td></tr>
                                 <tr><td>wrong_answer_1</td><td>✅</td><td>First wrong answer</td></tr>
-                                <tr><td>wrong_answer_2</td><td>-</td><td>Second wrong answer</td></tr>
-                                <tr><td>wrong_answer_3</td><td>-</td><td>Third wrong answer</td></tr>
-                                <tr><td>explanation</td><td>-</td><td>Shown after answering</td></tr>
-                                <tr><td>difficulty</td><td>-</td><td>easy/medium/hard/expert</td></tr>
-                                <tr><td>ai_generated</td><td>-</td><td>true/false</td></tr>
+                                <tr><td>wrong_answer_2</td><td>—</td><td>Second wrong answer</td></tr>
+                                <tr><td>wrong_answer_3</td><td>—</td><td>Third wrong answer</td></tr>
+                                <tr><td>explanation</td><td>—</td><td>Shown after answering</td></tr>
+                                <tr><td>difficulty</td><td>—</td><td>easy / medium / hard / expert</td></tr>
                             </tbody>
                         </table>
-                        <button id="downloadTemplateBtn" class="sai-btn sai-btn--ghost sai-btn--sm">
-                            <i class="fas fa-download"></i> Download Template
-                        </button>
+                        <button id="downloadTemplateBtn" class="sai-btn sai-btn--ghost sai-btn--sm"><i class="fas fa-download"></i> Download Template</button>
                     </div>
                 </div>
 
-                <div class="sai-csv-upload-area">
-                    <div class="sai-form-group">
-                        <label for="csvThemeSelect">
-                            <i class="fas fa-tag"></i> Select Theme
-                        </label>
-                        <select id="csvThemeSelect">
-                            <option value="">-- Select a theme to import into --</option>
-                        </select>
-                        <button id="csvNewThemeBtn" class="sai-btn sai-btn--ghost sai-btn--sm">
-                            <i class="fas fa-plus"></i> Create New Theme First
+                <div class="sai-csv-upload">
+                    <div class="sai-field">
+                        <label for="csvThemeSelect"><i class="fas fa-tag"></i> Import into theme</label>
+                        <select id="csvThemeSelect"><option value="">— Select a theme —</option></select>
+                        <button id="csvNewThemeBtn" class="sai-btn sai-btn--outline sai-btn--sm" style="margin-top:8px; align-self:flex-start;">
+                            <i class="fas fa-plus"></i> New Theme
                         </button>
                     </div>
-
-                    <div id="csvDropZone" class="sai-drop-zone">
+                    <div id="csvDropZone" class="sai-dropzone">
                         <i class="fas fa-cloud-upload-alt"></i>
                         <h3>Drop CSV file here</h3>
                         <p>or click to browse</p>
                         <input type="file" id="csvFileInput" accept=".csv" hidden>
                     </div>
-
-                    <div id="csvResults" class="sai-csv-results" style="display: none;">
-                        <!-- Populated after upload -->
-                    </div>
+                    <div id="csvResults" class="sai-csv-results" style="display:none;"></div>
                 </div>
             </div>
-        </main>
+        </section>
 
-        <!-- Theme Detail / Play Modal -->
-        <div id="themeDetailModal" class="sai-modal">
+        <!-- Theme Detail Modal -->
+        <div id="themeDetailModal" class="sai-modal" role="dialog" aria-modal="true" aria-label="Theme details">
             <div class="sai-modal__backdrop"></div>
-            <div class="sai-modal__content sai-theme-detail">
-                <button class="sai-modal__close" onclick="closeModal('themeDetailModal')">
-                    <i class="fas fa-times"></i>
-                </button>
-                <div id="themeDetailContent">
-                    <!-- Populated dynamically -->
-                </div>
+            <div class="sai-modal__content sai-modal__content--wide">
+                <button class="sai-modal__close" onclick="closeModal('themeDetailModal')" aria-label="Close dialog"><i class="fas fa-times"></i></button>
+                <div id="themeDetailContent"></div>
             </div>
         </div>
 
         <!-- Footer -->
         <footer class="sai-footer">
-            <p>&copy; 2026 Quiz The Spire • <a href="/">Home</a> • <a href="/pages/about/">About</a> • <a href="/pages/privacy/">Privacy</a></p>
+            <p>&copy; 2026 Quiz The Spire &bull; <a href="/">Home</a> &bull; <a href="/pages/about/">About</a> &bull; <a href="/pages/privacy/">Privacy</a></p>
         </footer>
     </div>
 
     <script src="/js/themeManager.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="spire-ai.js"></script>
 </body>
 </html>

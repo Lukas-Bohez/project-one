@@ -1768,8 +1768,6 @@ window.toggleLogin = function() {
 
 // Initialize game when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    
+    // Theme is handled by themeManager.js — do NOT override it here
     gameInstance = new SentleGame();
 });

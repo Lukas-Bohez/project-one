@@ -1,6 +1,6 @@
 /**
  * Quiz The Spire — Hub & Spire AI Collaboration
- * Central hub: active sessions, community themes, create, CSV upload, admin review
+ * Central hub: play (with multi-theme picker), community, create, CSV upload, admin review
  */
 
 (function () {
@@ -22,6 +22,12 @@
     let activeThemeId = null;
     let myThemes = [];
     let sessionRefreshInterval = null;
+
+    // Multi-theme picker state
+    const selectedThemes = new Set();
+    let officialThemes = [];
+    let communityThemes = [];
+    let currentPickerTab = 'official';
 
     // ── Helpers ──
     function $(sel) { return document.querySelector(sel); }
@@ -73,6 +79,11 @@
         const d = document.createElement('div');
         d.textContent = str || '';
         return d.innerHTML;
+    }
+
+    function escAttr(str) {
+        return (str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+                          .replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
     function renderStars(avg) {
@@ -137,7 +148,8 @@
     }
 
     function logout() {
-        if (sessionRefreshInterval) clearInterval(sessionRefreshInterval);
+        if (sessionRefreshInterval) { clearInterval(sessionRefreshInterval); sessionRefreshInterval = null; }
+        if (hubSocket) { hubSocket.disconnect(); hubSocket = null; }
         Object.values(STORAGE_KEYS).forEach(k => localStorage.removeItem(k));
         currentUser = null;
         location.reload();
@@ -159,6 +171,12 @@
     //  TAB NAVIGATION
     // ══════════════════════════════════════
     window.switchTab = function (tabId) {
+        // Clear play tab polling when navigating away
+        if (tabId !== 'play' && sessionRefreshInterval) {
+            clearInterval(sessionRefreshInterval);
+            sessionRefreshInterval = null;
+        }
+
         $$('.sai-tab').forEach(t => t.classList.remove('sai-tab--active'));
         $$('.sai-nav-btn').forEach(b => b.classList.remove('sai-nav-btn--active'));
         const tab = $(`#tab-${tabId}`);
@@ -170,83 +188,257 @@
         if (tabId === 'explore') loadExploreTab();
         if (tabId === 'my-themes') loadMyThemes();
         if (tabId === 'csv-upload') loadCsvThemeSelect();
+        if (tabId === 'create') resetCreateTab();
     };
 
     // ══════════════════════════════════════
-    //  PLAY TAB — Active Sessions + Quick Actions
+    //  PLAY TAB — Sessions + Theme Picker
     // ══════════════════════════════════════
     async function loadPlayTab() {
         loadActiveSessions();
         loadStats();
-        // Auto-refresh sessions every 5 seconds
+        loadThemePicker();
         if (sessionRefreshInterval) clearInterval(sessionRefreshInterval);
         sessionRefreshInterval = setInterval(loadActiveSessions, 5000);
     }
 
+    // ── Active Sessions ──
     async function loadActiveSessions() {
         const container = $('#activeSessionsList');
         try {
             const response = await apiRaw('/sessions/active');
-            const sessionIds = Array.isArray(response)
-                ? response
-                : (response?.active_session_ids || []);
+            const sessions = response?.sessions || [];
+            const sessionIds = response?.active_session_ids || [];
 
-            // Update live stat
             const liveEl = $('#statLive');
             if (liveEl) liveEl.textContent = sessionIds.length;
 
-            if (sessionIds.length === 0) {
+            if (sessions.length === 0) {
                 container.innerHTML = `
                     <div class="sai-no-sessions">
                         <i class="fas fa-satellite-dish"></i>
                         <h3>No active sessions right now</h3>
-                        <p>Start a quiz from below or wait for someone to create one!</p>
+                        <p>Start a new quiz below or wait for someone to create one!</p>
                     </div>`;
                 return;
             }
 
-            container.innerHTML = sessionIds.map((sid, i) => `
+            container.innerHTML = sessions.map(s => {
+                const phaseLabel = { voting: 'Voting', theme_display: 'Theme Reveal', quiz: 'Playing' }[s.phase] || 'Waiting';
+                const phaseClass = { voting: 'voting', theme_display: 'playing', quiz: 'playing' }[s.phase] || 'waiting';
+                const themePart = s.theme_name
+                    ? `<span><i class="fas fa-palette"></i> ${esc(s.theme_name)}</span>`
+                    : (s.theme_count > 0 ? `<span><i class="fas fa-palette"></i> ${s.theme_count} themes</span>` : '');
+
+                return `
                 <div class="sai-session-card">
                     <div class="sai-session-card__header">
-                        <span class="sai-session-card__title">Quiz Session #${sid}</span>
+                        <span class="sai-session-card__title">${esc(s.name)}</span>
                         <span class="sai-session-card__live">Live</span>
                     </div>
                     <div class="sai-session-card__meta">
-                        <span><i class="fas fa-clock"></i> Active now</span>
-                        <span class="sai-session-card__phase sai-phase--playing">In Progress</span>
+                        <span><i class="fas fa-users"></i> ${s.player_count} player${s.player_count !== 1 ? 's' : ''}</span>
+                        ${themePart}
+                        <span class="sai-session-card__phase sai-phase--${phaseClass}">${phaseLabel}</span>
                     </div>
                     <div class="sai-session-card__actions">
-                        <button class="sai-btn sai-btn--success sai-btn--sm" onclick="joinActiveQuiz()">
-                            <i class="fas fa-play"></i> Join Session
+                        <button class="sai-btn sai-btn--success sai-btn--sm" onclick="joinActiveQuiz(${s.id})">
+                            <i class="fas fa-play"></i> Join
                         </button>
                     </div>
-                </div>
-            `).join('');
-        } catch (e) {
+                </div>`;
+            }).join('');
+        } catch {
             container.innerHTML = `
                 <div class="sai-no-sessions">
                     <i class="fas fa-satellite-dish"></i>
                     <h3>No active sessions</h3>
-                    <p>Click "Join Active Quiz" to start or join a session</p>
+                    <p>Start a new quiz below to begin playing</p>
                 </div>`;
         }
     }
 
-    window.joinActiveQuiz = function () {
-        // Navigate to the quiz page — it will auto-join the active session
-        window.location.href = QUIZ_PAGE;
+    window.joinActiveQuiz = function (sessionId) {
+        if (sessionId) {
+            sessionStorage.setItem('quiz_session_id', String(sessionId));
+            window.location.href = `${QUIZ_PAGE}?session=${sessionId}`;
+        } else {
+            window.location.href = QUIZ_PAGE;
+        }
     };
 
+    // ── Stats ──
     async function loadStats() {
         try {
             const stats = await api('/admin/stats');
             if (stats.total_themes !== undefined) {
-                const el = (id) => $(id);
+                const el = id => $(id);
                 if (el('#statThemes')) el('#statThemes').textContent = stats.total_themes || 0;
                 if (el('#statPlays')) el('#statPlays').textContent = stats.total_plays || 0;
                 if (el('#statCreators')) el('#statCreators').textContent = stats.total_creators || 0;
             }
-        } catch { /* stats endpoint may require admin — show defaults */ }
+        } catch {
+            // Stats require admin — hide the bar for non-admin users
+            const bar = $('#statsBar');
+            if (bar) bar.style.display = 'none';
+        }
+    }
+
+    // ══════════════════════════════════════
+    //  THEME PICKER — Multi-Select
+    // ══════════════════════════════════════
+    async function loadThemePicker() {
+        const grid = $('#themePickerGrid');
+        grid.innerHTML = '<div class="sai-spinner"></div>';
+
+        // Fetch official themes and community themes in parallel
+        try {
+            const [officialRes, communityRes] = await Promise.allSettled([
+                apiRaw('/themes/'),
+                api('/themes?status=approved')
+            ]);
+
+            officialThemes = officialRes.status === 'fulfilled' ? (officialRes.value || []) : [];
+            communityThemes = communityRes.status === 'fulfilled' ? (communityRes.value || []) : [];
+
+            // If official themes came as an object with themes array, unwrap
+            if (officialThemes && !Array.isArray(officialThemes) && officialThemes.themes) {
+                officialThemes = officialThemes.themes;
+            }
+            if (!Array.isArray(officialThemes)) officialThemes = [];
+            if (!Array.isArray(communityThemes)) communityThemes = [];
+
+        } catch {
+            officialThemes = [];
+            communityThemes = [];
+        }
+
+        renderPickerGrid();
+    }
+
+    function renderPickerGrid() {
+        const grid = $('#themePickerGrid');
+        const themes = currentPickerTab === 'official' ? officialThemes : communityThemes;
+
+        if (!themes || themes.length === 0) {
+            const label = currentPickerTab === 'official' ? 'official' : 'community';
+            grid.innerHTML = `
+                <div class="sai-picker-empty">
+                    <i class="fas fa-inbox"></i>
+                    <p>No ${label} themes available yet.</p>
+                </div>`;
+            return;
+        }
+
+        grid.innerHTML = themes.map(t => {
+            const id = t.id || t.theme_id;
+            const key = `${currentPickerTab}-${id}`;
+            const isSelected = selectedThemes.has(key);
+            const name = t.name || t.theme_name || 'Untitled';
+            const qCount = t.question_count || t.questions_count || 0;
+            const source = currentPickerTab === 'official' ? 'Official' : (t.creator_name || 'Community');
+
+            return `
+                <div class="sai-picker-card ${isSelected ? 'sai-picker-card--selected' : ''}"
+                     onclick="toggleThemeSelection('${key}', this)"
+                     data-theme-key="${key}"
+                     data-theme-id="${id}"
+                     data-theme-type="${currentPickerTab}"
+                     data-theme-name="${escAttr(name)}">
+                    <div class="sai-picker-card__name">${esc(name)}</div>
+                    <div class="sai-picker-card__info">
+                        <span><i class="fas fa-question-circle"></i> ${qCount}</span>
+                        <span><i class="fas fa-${currentPickerTab === 'official' ? 'crown' : 'users'}"></i> ${esc(source)}</span>
+                    </div>
+                </div>`;
+        }).join('');
+    }
+
+    window.toggleThemeSelection = function (key, el) {
+        if (selectedThemes.has(key)) {
+            selectedThemes.delete(key);
+            el.classList.remove('sai-picker-card--selected');
+        } else {
+            selectedThemes.add(key);
+            el.classList.add('sai-picker-card--selected');
+        }
+        updateSelectedCount();
+    };
+
+    function updateSelectedCount() {
+        const countEl = $('#selectedThemeCount');
+        const btn = $('#startSessionBtn');
+        const count = selectedThemes.size;
+        countEl.textContent = `${count} selected`;
+        btn.disabled = count === 0;
+    }
+
+    function setupPickerTabs() {
+        $$('.sai-picker-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                $$('.sai-picker-tab').forEach(t => t.classList.remove('sai-picker-tab--active'));
+                tab.classList.add('sai-picker-tab--active');
+                currentPickerTab = tab.dataset.picker;
+                renderPickerGrid();
+            });
+        });
+    }
+
+    function setupStartSession() {
+        const btn = $('#startSessionBtn');
+        if (!btn) return;
+        btn.addEventListener('click', async () => {
+            if (selectedThemes.size === 0) return toast('Select at least one theme', 'error');
+
+            // Gather selected theme IDs
+            const themeIds = [];
+            const themeData = [];
+            selectedThemes.forEach(key => {
+                const card = $(`.sai-picker-card[data-theme-key="${key}"]`);
+                if (card) {
+                    themeIds.push(parseInt(card.dataset.themeId, 10));
+                    themeData.push({
+                        id: card.dataset.themeId,
+                        type: card.dataset.themeType,
+                        name: card.dataset.themeName
+                    });
+                }
+            });
+
+            if (themeIds.length === 0) return toast('No valid themes selected', 'error');
+
+            // Create session on the backend with selected themes
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating session…';
+
+            try {
+                const result = await apiRaw('/sessions/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        theme_ids: themeIds,
+                        user_id: currentUser.id
+                    })
+                });
+
+                // Also store in sessionStorage as fallback
+                sessionStorage.setItem('quiz_selected_themes', JSON.stringify(themeData));
+                sessionStorage.setItem('quiz_session_id', String(result.session_id));
+
+                toast(`Session created with ${result.theme_count} theme${result.theme_count > 1 ? 's' : ''} — voting starts now!`, 'success');
+
+                // Navigate to quiz page with session ID
+                setTimeout(() => {
+                    window.location.href = `${QUIZ_PAGE}?session=${result.session_id}`;
+                }, 500);
+
+            } catch (err) {
+                console.error('Session creation failed:', err);
+                toast(err.detail || 'Failed to create session', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-rocket"></i> Start Quiz with Selected Themes';
+            }
+        });
     }
 
     // ══════════════════════════════════════
@@ -264,7 +456,6 @@
                 console.warn('Failed to load themes:', e);
             }
         }
-        // Check if user is admin → show review banner
         loadAdminReviewBanner();
     }
 
@@ -273,18 +464,10 @@
             const pending = await api('/admin/pending');
             if (!pending || pending.length === 0) {
                 const existing = $('#adminReviewBanner');
-                if (existing) existing.remove();
+                if (existing) existing.innerHTML = '';
                 return;
             }
-            // User is admin (request succeeded) — show review section
             let banner = $('#adminReviewBanner');
-            if (!banner) {
-                banner = document.createElement('div');
-                banner.id = 'adminReviewBanner';
-                const exploreTab = $('#tab-explore');
-                const grid = $('#exploreGrid');
-                exploreTab.insertBefore(banner, grid);
-            }
             banner.innerHTML = `
                 <div class="sai-review-banner">
                     <div class="sai-review-banner__text">
@@ -293,45 +476,42 @@
                         <span class="sai-review-banner__count">${pending.length}</span>
                     </div>
                 </div>
-                <div class="sai-container" style="padding-top:0;">
-                    ${pending.map(t => `
-                        <div class="sai-review-card" id="review-card-${t.id}">
-                            <div class="sai-review-card__header">
-                                <span class="sai-review-card__title">${esc(t.name)}</span>
-                                <span class="sai-theme-card__badge sai-badge--pending">Pending Review</span>
-                            </div>
-                            <p class="sai-review-card__desc">${esc(t.description || 'No description')}</p>
-                            <div class="sai-review-card__meta">
-                                <span><i class="fas fa-user"></i> ${esc(t.creator_name || 'Anonymous')}</span>
-                                <span><i class="fas fa-question-circle"></i> ${t.question_count || 0} questions</span>
-                                <span><i class="fas fa-calendar"></i> ${t.created_at ? new Date(t.created_at).toLocaleDateString() : 'Unknown'}</span>
-                            </div>
-                            <div class="sai-review-card__actions">
-                                <button class="sai-btn sai-btn--ghost sai-btn--sm" onclick="previewReviewTheme(${t.id})">
-                                    <i class="fas fa-eye"></i> Preview
-                                </button>
-                                <button class="sai-btn sai-btn--success sai-btn--sm" onclick="reviewTheme(${t.id}, 'approve')">
-                                    <i class="fas fa-check"></i> Approve
-                                </button>
-                                <button class="sai-btn sai-btn--danger sai-btn--sm" onclick="reviewTheme(${t.id}, 'reject')">
-                                    <i class="fas fa-times"></i> Reject
-                                </button>
-                                <button class="sai-btn sai-btn--primary sai-btn--sm" onclick="promoteTheme(${t.id})" title="Promote to official quiz theme">
-                                    <i class="fas fa-crown"></i> Promote to Official
-                                </button>
-                            </div>
+                ${pending.map(t => `
+                    <div class="sai-review-card" id="review-card-${t.id}">
+                        <div class="sai-review-card__header">
+                            <span class="sai-review-card__title">${esc(t.name)}</span>
+                            <span class="sai-theme-card__badge sai-badge--pending">Pending</span>
                         </div>
-                    `).join('')}
-                </div>
+                        <p class="sai-review-card__desc">${esc(t.description || 'No description')}</p>
+                        <div class="sai-review-card__meta">
+                            <span><i class="fas fa-user"></i> ${esc(t.creator_name || 'Anonymous')}</span>
+                            <span><i class="fas fa-question-circle"></i> ${t.question_count || 0} questions</span>
+                            <span><i class="fas fa-calendar"></i> ${t.created_at ? new Date(t.created_at).toLocaleDateString() : '—'}</span>
+                        </div>
+                        <div class="sai-review-card__actions">
+                            <button class="sai-btn sai-btn--ghost sai-btn--sm" onclick="previewReviewTheme(${t.id})">
+                                <i class="fas fa-eye"></i> Preview
+                            </button>
+                            <button class="sai-btn sai-btn--success sai-btn--sm" onclick="reviewTheme(${t.id}, 'approve')">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                            <button class="sai-btn sai-btn--danger sai-btn--sm" onclick="reviewTheme(${t.id}, 'reject')">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                            <button class="sai-btn sai-btn--primary sai-btn--sm" onclick="promoteTheme(${t.id})" title="Promote to official">
+                                <i class="fas fa-crown"></i> Promote
+                            </button>
+                        </div>
+                    </div>
+                `).join('')}
             `;
         } catch {
-            // Not admin or error — no review banner
+            // Not admin — no review banner
         }
     }
 
     window.previewReviewTheme = async function (themeId) {
         try {
-            // Fetch the theme details + questions for preview
             const theme = await api(`/themes/${themeId}`);
             const questions = await api(`/themes/${themeId}/questions`);
 
@@ -341,7 +521,7 @@
                     <h2>${esc(theme.name)}</h2>
                     <span class="sai-theme-card__badge sai-badge--${theme.status}" style="display:inline-block;margin-top:8px;">${theme.status}</span>
                     <p style="color:var(--sai-text-muted);margin-top:8px;">${esc(theme.description || '')}</p>
-                    <div class="sai-theme-detail__stats" style="margin-top:12px;">
+                    <div class="sai-theme-detail__stats">
                         <span><i class="fas fa-question-circle"></i> ${(questions || []).length} questions</span>
                         <span><i class="fas fa-user"></i> ${esc(theme.creator_name || 'Anonymous')}</span>
                     </div>
@@ -356,7 +536,7 @@
                                     ${a.is_correct ? '✓' : '✗'} ${esc(a.answer_text)}
                                 </span>
                             `).join('')}
-                            ${q.explanation ? `<p style="font-size:0.8rem;color:var(--sai-text-muted);margin-top:4px;"><em>Explanation: ${esc(q.explanation)}</em></p>` : ''}
+                            ${q.explanation ? `<p style="font-size:0.8rem;color:var(--sai-text-muted);margin-top:4px;"><em>${esc(q.explanation)}</em></p>` : ''}
                         </div>
                     `).join('')}
                 </div>
@@ -378,20 +558,19 @@
                 body: JSON.stringify({ action, notes: notes || null })
             });
             toast(`Theme ${action === 'approve' ? 'approved' : 'rejected'}!`, action === 'approve' ? 'success' : 'info');
-            // Remove the card from DOM
             const card = $(`#review-card-${themeId}`);
             if (card) card.remove();
-            loadExploreTab(); // Refresh
+            loadExploreTab();
         } catch (e) {
             toast('Review failed: ' + (e.detail || ''), 'error');
         }
     };
 
     window.promoteTheme = async function (themeId) {
-        if (!confirm('Promote this community theme to an official quiz theme? This will copy it into the main quiz system.')) return;
+        if (!confirm('Promote this community theme to an official quiz theme?')) return;
         try {
             await api(`/admin/promote/${themeId}`, { method: 'POST' });
-            toast('Theme promoted to official! It will now appear in the main quiz rotation.', 'success');
+            toast('Theme promoted to official!', 'success');
             loadExploreTab();
         } catch (e) {
             toast('Promotion failed: ' + (e.detail || ''), 'error');
@@ -402,7 +581,7 @@
         const grid = $(selector);
         if (!themes || themes.length === 0) {
             grid.innerHTML = `
-                <div class="sai-empty-state">
+                <div class="sai-empty">
                     <i class="fas fa-rocket"></i>
                     <h3>No themes yet</h3>
                     <p>Be the first to create one!</p>
@@ -465,7 +644,7 @@
                             `).join('')}
                         </div>
                     `).join('')}
-                    ${(questions || []).length > 10 ? `<p style="color:var(--sai-text-muted);text-align:center;margin-top:8px;">... and ${questions.length - 10} more questions</p>` : ''}
+                    ${(questions || []).length > 10 ? `<p style="color:var(--sai-text-muted);text-align:center;margin-top:8px;">… and ${questions.length - 10} more questions</p>` : ''}
                 </div>
                 <div style="margin-top:20px;">
                     <h4 style="margin-bottom:8px;">Rate this theme</h4>
@@ -531,14 +710,67 @@
     // ══════════════════════════════════════
     //  CREATE TAB
     // ══════════════════════════════════════
+
+    /* ---------- char counters ---------- */
+    function setupCharCounters() {
+        const nameInput = $('#themeName');
+        const descInput = $('#themeDesc');
+        const nameCount = $('#themeNameCount');
+        const descCount = $('#themeDescCount');
+        if (nameInput && nameCount) {
+            const update = () => nameCount.textContent = `${nameInput.value.length}/${nameInput.maxLength}`;
+            nameInput.addEventListener('input', update);
+            update();
+        }
+        if (descInput && descCount) {
+            const update = () => descCount.textContent = `${descInput.value.length}/${descInput.maxLength}`;
+            descInput.addEventListener('input', update);
+            update();
+        }
+    }
+
+    /* ---------- step indicator ---------- */
+    function setCreateStep(num) {
+        document.querySelectorAll('.sai-step').forEach(el => {
+            const s = parseInt(el.dataset.step);
+            el.classList.toggle('sai-step--active', s === num);
+            el.classList.toggle('sai-step--done', s < num);
+        });
+    }
+
+    /* ---------- question progress bar ---------- */
+    function updateQuestionProgress(count) {
+        const bar = $('#questionProgressBar');
+        const needed = $('#questionsNeeded');
+        const btn = $('#submitForReviewBtn');
+        if (!bar) return;
+        const pct = Math.min(count / 5, 1) * 100;
+        bar.style.width = pct + '%';
+        const remaining = Math.max(5 - count, 0);
+        if (btn) {
+            btn.disabled = count < 5;
+            if (count >= 5) {
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit for Review';
+            } else {
+                btn.innerHTML = `<i class="fas fa-paper-plane"></i> Submit for Review (need ${remaining} more)`;
+            }
+        }
+        if (needed) needed.textContent = remaining;
+    }
+
     function setupCreateForm() {
         const form = $('#createThemeForm');
         if (!form) return;
+        setupCharCounters();
         form.addEventListener('submit', async e => {
             e.preventDefault();
             const name = $('#themeName').value.trim();
             const desc = $('#themeDesc').value.trim();
             if (!name) return toast('Theme name is required', 'error');
+
+            const btn = form.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating…';
 
             try {
                 const theme = await api('/themes', {
@@ -548,19 +780,46 @@
                 activeThemeId = theme.id;
                 toast('Theme created! Now add questions.', 'success');
                 showQuestionBuilder(theme);
-                form.reset();
+                form.style.display = 'none';
+                setCreateStep(2);
             } catch (e) {
                 toast('Failed to create theme: ' + (e.detail || ''), 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-arrow-right"></i> Create Theme &amp; Add Questions';
             }
         });
     }
 
     function showQuestionBuilder(theme) {
+        const form = $('#createThemeForm');
+        if (form) form.style.display = 'none';
         const builder = $('#questionBuilder');
         builder.style.display = '';
+        builder.style.animation = 'sai-fadeUp 0.4s ease';
         $('#builderThemeName').textContent = theme.name;
         activeThemeId = theme.id;
+        setCreateStep(2);
         loadQuestions(theme.id);
+    }
+
+    function resetCreateTab() {
+        // If actively editing a theme, reload its questions
+        if (activeThemeId) {
+            loadQuestions(activeThemeId);
+            return;
+        }
+        // Otherwise reset to step 1 — fresh creation flow
+        setCreateStep(1);
+        const form = $('#createThemeForm');
+        if (form) { form.style.display = ''; form.reset(); }
+        const builder = $('#questionBuilder');
+        if (builder) builder.style.display = 'none';
+        // Reset char counters
+        const nc = $('#themeNameCount');
+        const dc = $('#themeDescCount');
+        if (nc) nc.textContent = '0/100';
+        if (dc) dc.textContent = '0/500';
     }
 
     async function loadQuestions(themeId) {
@@ -578,6 +837,9 @@
         const submitBtn = $('#submitForReviewBtn');
         count.textContent = `${questions.length} question${questions.length !== 1 ? 's' : ''}`;
         submitBtn.disabled = questions.length < 5;
+        updateQuestionProgress(questions.length);
+
+        if (questions.length >= 5) setCreateStep(3);
 
         if (questions.length === 0) {
             list.innerHTML = '<p style="color:var(--sai-text-muted);text-align:center;padding:20px;">No questions yet. Add your first one below!</p>';
@@ -663,9 +925,9 @@
             if (!activeThemeId) return;
             try {
                 await api(`/themes/${activeThemeId}/submit`, { method: 'POST' });
-                toast('Theme submitted for admin review! Once approved, it can be promoted to the main quiz.', 'success');
+                toast('Theme submitted for admin review!', 'success');
                 btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-check"></i> Submitted for Review';
+                btn.innerHTML = '<i class="fas fa-check"></i> Submitted';
             } catch (e) {
                 toast('Submit failed: ' + (e.detail || ''), 'error');
             }
@@ -710,7 +972,7 @@
         try {
             const themes = await api(`/themes?creator_id=${currentUser.id}`);
             const select = $('#csvThemeSelect');
-            select.innerHTML = '<option value="">-- Select a theme to import into --</option>';
+            select.innerHTML = '<option value="">— Select a theme —</option>';
             (themes || []).forEach(t => {
                 const opt = document.createElement('option');
                 opt.value = t.id;
@@ -729,11 +991,11 @@
         if (!dropZone) return;
 
         dropZone.addEventListener('click', () => fileInput.click());
-        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('sai-drop-zone--active'); });
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('sai-drop-zone--active'));
+        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('sai-dropzone--active'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('sai-dropzone--active'));
         dropZone.addEventListener('drop', e => {
             e.preventDefault();
-            dropZone.classList.remove('sai-drop-zone--active');
+            dropZone.classList.remove('sai-dropzone--active');
             const file = e.dataTransfer.files[0];
             if (file && file.name.endsWith('.csv')) uploadCsv(file);
             else toast('Please drop a .csv file', 'error');
@@ -764,7 +1026,7 @@
         if (!themeId) return toast('Select a theme first', 'error');
 
         const dropZone = $('#csvDropZone');
-        dropZone.innerHTML = '<div class="sai-spinner"></div><p>Uploading & parsing...</p>';
+        dropZone.innerHTML = '<div class="sai-spinner"></div><p>Uploading & parsing…</p>';
 
         try {
             const formData = new FormData();
@@ -804,13 +1066,59 @@
         dropZone.innerHTML = `
             <i class="fas fa-cloud-upload-alt"></i>
             <h3>Drop CSV file here</h3>
-            <p>or click to browse</p>`;
-        $('#csvFileInput').value = '';
+            <p>or click to browse</p>
+            <input type="file" id="csvFileInput" accept=".csv" hidden>`;
+        const newInput = $('#csvFileInput');
+        newInput.addEventListener('change', () => {
+            if (newInput.files[0]) uploadCsv(newInput.files[0]);
+        });
     }
 
     // ══════════════════════════════════════
     //  INIT
     // ══════════════════════════════════════
+    // ══════════════════════════════════════
+    //  REAL-TIME SESSION UPDATES VIA SOCKET.IO
+    // ══════════════════════════════════════
+    let hubSocket = null;
+
+    function setupRealtimeSessionUpdates() {
+        if (typeof io === 'undefined') return;
+        try {
+            hubSocket = io(`https://${window.location.hostname}`, {
+                transports: ['polling', 'websocket'],
+                reconnection: true,
+                reconnectionAttempts: 5,
+                reconnectionDelay: 3000,
+                forceNew: false
+            });
+
+            hubSocket.on('connect', () => {
+                console.log('[SpireAI] Hub socket connected');
+            });
+
+            // A new session was just created — refresh the list immediately
+            hubSocket.on('session_created', (data) => {
+                console.log('[SpireAI] New session created:', data);
+                loadActiveSessions();
+                const name = data.name || `Session #${data.session_id}`;
+                toast(`New quiz started: ${name}`, 'info');
+            });
+
+            // A session's phase/theme changed
+            hubSocket.on('session_updated', () => {
+                loadActiveSessions();
+            });
+
+            // A session ended
+            hubSocket.on('session_ended', () => {
+                loadActiveSessions();
+            });
+        } catch (err) {
+            console.warn('[SpireAI] Could not set up real-time session updates:', err);
+        }
+    }
+
     function init() {
         // Auth form
         $('#loginForm').addEventListener('submit', async e => {
@@ -835,7 +1143,7 @@
             try {
                 await doRegister(fn, ln, pw);
                 showApp();
-                toast(`Welcome, ${fn}! Start by joining a quiz or creating your own theme.`, 'success');
+                toast(`Welcome, ${fn}!`, 'success');
             } catch {
                 toast('Registration failed — try different credentials', 'error');
             }
@@ -857,18 +1165,36 @@
             });
         }
 
-        // Modal backdrop close
+        // Modal backdrop close (skip login modal — would leave blank page)
         $$('.sai-modal__backdrop').forEach(bd => {
             bd.addEventListener('click', () => {
-                bd.parentElement.classList.remove('sai-modal--active');
+                const modal = bd.parentElement;
+                if (modal.id === 'loginModal') return;
+                modal.classList.remove('sai-modal--active');
             });
         });
 
+        // Setup all features
+        setupPickerTabs();
+        setupStartSession();
         setupSearch();
         setupCreateForm();
         setupQuestionForm();
         setupSubmitForReview();
         setupCsvUpload();
+        setupRealtimeSessionUpdates();
+
+        // Theme toggle icon sync
+        function updateThemeIcon() {
+            const btn = $('#theme-toggle');
+            if (!btn) return;
+            const icon = btn.querySelector('i');
+            if (!icon) return;
+            const theme = document.documentElement.getAttribute('data-theme');
+            icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+        updateThemeIcon();
+        window.addEventListener('themeChanged', updateThemeIcon);
 
         autoLogin();
     }
