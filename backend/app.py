@@ -71,10 +71,12 @@ except ImportError as e:
 # ----------------------------------------------------
 # Logging Setup
 # ----------------------------------------------------
+from logging.handlers import RotatingFileHandler
+
 quiz_log_file = os.path.join(os.path.dirname(__file__), 'quiz_debug.log')
 quiz_logger = logging.getLogger('quiz_debug')
 quiz_logger.setLevel(logging.INFO)
-quiz_file_handler = logging.FileHandler(quiz_log_file, mode='a')
+quiz_file_handler = RotatingFileHandler(quiz_log_file, mode='a', maxBytes=10*1024*1024, backupCount=3)
 quiz_file_handler.setLevel(logging.INFO)
 
 # Create formatter for quiz logs
@@ -87,7 +89,7 @@ if not any(isinstance(h, logging.FileHandler) and getattr(h, 'baseFilename', Non
 sentle_log_file = os.path.join(os.path.dirname(__file__), 'sentle.log')
 sentle_logger = logging.getLogger('sentle')
 sentle_logger.setLevel(logging.DEBUG)
-sentle_file_handler = logging.FileHandler(sentle_log_file, mode='a')
+sentle_file_handler = RotatingFileHandler(sentle_log_file, mode='a', maxBytes=10*1024*1024, backupCount=3)
 sentle_file_handler.setLevel(logging.DEBUG)
 sentle_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 sentle_file_handler.setFormatter(sentle_formatter)
@@ -98,22 +100,22 @@ if not any(isinstance(h, logging.FileHandler) and getattr(h, 'baseFilename', Non
 # Write socket-related logs to `socket.log` for debugging client connection errors
 socket_log_file = os.path.join(os.path.dirname(__file__), 'socket.log')
 socket_logger = logging.getLogger('socketio')
-socket_logger.setLevel(logging.DEBUG)
-socket_file_handler = logging.FileHandler(socket_log_file, mode='a')
-socket_file_handler.setLevel(logging.DEBUG)
+socket_logger.setLevel(logging.WARNING)
+socket_file_handler = RotatingFileHandler(socket_log_file, mode='a', maxBytes=10*1024*1024, backupCount=3)
+socket_file_handler.setLevel(logging.WARNING)
 socket_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 socket_file_handler.setFormatter(socket_formatter)
 if not any(isinstance(h, logging.FileHandler) and getattr(h, 'baseFilename', None) == socket_file_handler.baseFilename for h in socket_logger.handlers):
     socket_logger.addHandler(socket_file_handler)
 
 engineio_logger = logging.getLogger('engineio')
-engineio_logger.setLevel(logging.DEBUG)
+engineio_logger.setLevel(logging.WARNING)
 if not any(isinstance(h, logging.FileHandler) and getattr(h, 'baseFilename', None) == socket_file_handler.baseFilename for h in engineio_logger.handlers):
     engineio_logger.addHandler(socket_file_handler)
 
 # Also capture uvicorn error/access logs to the same file to correlate failures
 uvicorn_error_logger = logging.getLogger('uvicorn.error')
-uvicorn_error_logger.setLevel(logging.DEBUG)
+uvicorn_error_logger.setLevel(logging.WARNING)
 if not any(isinstance(h, logging.FileHandler) and getattr(h, 'baseFilename', None) == socket_file_handler.baseFilename for h in uvicorn_error_logger.handlers):
     uvicorn_error_logger.addHandler(socket_file_handler)
 
@@ -346,8 +348,24 @@ try:
     from datetime import timedelta
     import secrets
     
-    # JWT Configuration
-    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY") or secrets.token_urlsafe(32)  # Use env var if available
+    # JWT Configuration - persist secret to file so tokens survive restarts
+    _JWT_SECRET_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".jwt_secret")
+    def _load_or_create_jwt_secret():
+        env_secret = os.getenv("JWT_SECRET_KEY")
+        if env_secret:
+            return env_secret
+        if os.path.exists(_JWT_SECRET_FILE):
+            with open(_JWT_SECRET_FILE, "r") as f:
+                stored = f.read().strip()
+                if stored:
+                    return stored
+        new_secret = secrets.token_urlsafe(32)
+        with open(_JWT_SECRET_FILE, "w") as f:
+            f.write(new_secret)
+        os.chmod(_JWT_SECRET_FILE, 0o600)
+        return new_secret
+    
+    JWT_SECRET_KEY = _load_or_create_jwt_secret()
     JWT_ALGORITHM = "HS256"
     JWT_EXPIRATION_TIME = timedelta(hours=24)
     JWT_AVAILABLE = True
@@ -537,21 +555,22 @@ def reset_tracker_if_new_month(tracker):
     return tracker
 
 def cleanup_stale_active_downloads(tracker):
-    """Remove active_downloads count for IPs that haven't downloaded in > 10 minutes (likely stalled/disconnected)."""
+    """Remove active_downloads count for IPs that haven't had download activity in > 10 minutes (likely stalled/disconnected)."""
     current_time = datetime.now()
     STALE_SECONDS = 600  # 10 minutes — even the 241 MB APK finishes in ~2 min at 2 MB/s
     for ip, ip_data in tracker["ips"].items():
-        last_download = ip_data.get("last_download")
         active_downloads = ip_data.get("active_downloads", 0)
         
         if active_downloads > 0:
-            # If we have active downloads with no recent completion, assume they stalled
-            if last_download is None:
+            # Use download_started_at (set when download begins) for freshness,
+            # falling back to last_download (set on completion) for legacy entries.
+            ref_time_str = ip_data.get("download_started_at") or ip_data.get("last_download")
+            if ref_time_str is None:
                 tracker["ips"][ip]["active_downloads"] = 0
             else:
                 try:
-                    last_time = datetime.fromisoformat(last_download)
-                    if (current_time - last_time).total_seconds() > STALE_SECONDS:
+                    ref_time = datetime.fromisoformat(ref_time_str)
+                    if (current_time - ref_time).total_seconds() > STALE_SECONDS:
                         tracker["ips"][ip]["active_downloads"] = 0
                 except Exception:
                     # If we can't parse the timestamp, reset it
@@ -664,6 +683,7 @@ def record_download_start(client_ip: str, user_agent: str = ""):
             }
         
         tracker["ips"][client_ip]["active_downloads"] = tracker["ips"][client_ip].get("active_downloads", 0) + 1
+        tracker["ips"][client_ip]["download_started_at"] = datetime.now().isoformat()
 
         # Store platform info from user-agent (only keep latest per IP)
         if user_agent:
@@ -1013,8 +1033,7 @@ async def handle_join_quiz_session(sid, data):
 @sio.event
 async def disconnect(sid):
     print(f"Client {sid} disconnected")
-    if sid in connected_clients:
-        connected_clients.remove(sid)
+    connected_clients.discard(sid)
 
     # Remove session association
     old_session_id = remove_client_session(sid)
@@ -1220,7 +1239,14 @@ def create_article(
 
 
 @app.put(ENDPOINT + "/articles/{article_id}/", tags=["Articles"])
-def update_article(article_id: int, payload: Dict[str, Any] = Body(...)):
+def update_article(
+    article_id: int,
+    payload: Dict[str, Any] = Body(...),
+    current_user_info: dict = Depends(get_current_user_info)
+):
+    role = current_user_info["role"]
+    if role != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can update articles")
     try:
         ok = ArticlesRepository.update_article(article_id, **(payload or {}))
         if not ok:
@@ -1234,7 +1260,13 @@ def update_article(article_id: int, payload: Dict[str, Any] = Body(...)):
 
 
 @app.delete(ENDPOINT + "/articles/{article_id}/", tags=["Articles"])
-def delete_article(article_id: int):
+def delete_article(
+    article_id: int,
+    current_user_info: dict = Depends(get_current_user_info)
+):
+    role = current_user_info["role"]
+    if role != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can delete articles")
     try:
         # StoriesRepository contains delete_article helper
         ok = StoriesRepository.delete_article(article_id)
@@ -1320,9 +1352,9 @@ async def get_active_questions_count():
 
 
 @app.get("/api/users/active/count")
-async def get_active_questions_count():
+async def get_active_users_count():
     try:
-        # Fetch all active questions
+        # Fetch all users
         users = UserRepository.get_all_users()
         
         # Count them manually (if result is a list)
@@ -2082,7 +2114,7 @@ async def banned_page(request: Request):
             ban_details = IpAddressRepository.get_ip_address_by_string(client_ip_str)
             if ban_details and ban_details.get('is_banned'):
                 # Check if ban is still active
-                if ban_details.get('ban_expires_at') and datetime.now() >= ban_details['ban_date'] + (ban_details['ban_expires_at'] - ban_details['ban_date']) / 2:
+                if ban_details.get('ban_expires_at') and datetime.now() >= ban_details['ban_expires_at']:
                     is_currently_banned = False # Ban has expired
                     can_appeal = True
                 else:
@@ -13727,6 +13759,10 @@ async def get_download_analytics():
     # Only include IPs that actually completed at least 1 download
     active_ips = {ip: data for ip, data in ips_data.items() if data.get("count", 0) > 0}
 
+    # Separate tracked (have user-agent data) from legacy (pre-tracking) IPs
+    tracked_ips = {ip: d for ip, d in active_ips.items() if d.get("user_agent")}
+    legacy_count = len(active_ips) - len(tracked_ips)
+
     # Batch geolocate all IPs
     geo = _batch_geolocate(list(active_ips.keys()))
 
@@ -13757,14 +13793,17 @@ async def get_download_analytics():
         country_counts[cc]["downloads"] += d["download_count"]
         country_counts[cc]["unique_ips"] += 1
 
-    # Aggregate platform stats
+    # Aggregate platform stats (only from IPs that have user-agent tracking)
     platform_counts: dict = {}
     browser_counts: dict = {}
-    for d in downloads:
-        p = d["platform"]
-        b = d["browser"]
-        platform_counts[p] = platform_counts.get(p, 0) + d["download_count"]
-        browser_counts[b] = browser_counts.get(b, 0) + d["download_count"]
+    for ip, data in active_ips.items():
+        if not data.get("user_agent"):
+            continue  # skip legacy IPs without user-agent tracking
+        p = data.get("platform", "Unknown")
+        b = data.get("browser", "Unknown")
+        dl_count = data.get("count", 0)
+        platform_counts[p] = platform_counts.get(p, 0) + dl_count
+        browser_counts[b] = browser_counts.get(b, 0) + dl_count
 
     platforms_sorted = sorted(platform_counts.items(), key=lambda x: x[1], reverse=True)
     browsers_sorted = sorted(browser_counts.items(), key=lambda x: x[1], reverse=True)
@@ -13775,11 +13814,15 @@ async def get_download_analytics():
     total_bandwidth = round(sum(d["bandwidth_gb"] for d in downloads), 4)
     unique_users = len(downloads)
 
+    # Sum tracked-only platform/browser downloads for percentages
+    tracked_downloads_total = sum(c for _, c in platforms_sorted)
+
     return {
         "total_downloads": total_downloads,
         "unique_users": unique_users,
         "total_bandwidth_gb": total_bandwidth,
         "month": tracker.get("last_reset_month", ""),
+        "legacy_untracked_users": legacy_count,
         "countries": [
             {
                 "country": name,
@@ -13791,6 +13834,7 @@ async def get_download_analytics():
         ],
         "platforms": [{"name": name, "downloads": count} for name, count in platforms_sorted],
         "browsers": [{"name": name, "downloads": count} for name, count in browsers_sorted],
+        "tracked_downloads": tracked_downloads_total,
         "downloads": sorted(downloads, key=lambda x: x["last_download"] or "", reverse=True),
     }
 

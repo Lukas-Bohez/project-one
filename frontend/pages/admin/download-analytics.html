@@ -240,12 +240,16 @@
                     </div>
 
                     <!-- Platform & Browser Breakdown (inline grid) -->
-                    ${(data.platforms && data.platforms.length) ? `
+                    ${(data.platforms && data.platforms.length) ? (() => {
+                        const trackedTotal = data.tracked_downloads || data.platforms.reduce((s, p) => s + p.downloads, 0);
+                        const legacyNote = data.legacy_untracked_users ? `<p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:12px;"><i class="fas fa-info-circle"></i> Platform &amp; browser stats cover <strong>${trackedTotal}</strong> tracked downloads. ${data.legacy_untracked_users} earlier users were recorded before platform tracking was added.</p>` : '';
+                        return `
+                    ${legacyNote}
                     <div class="da-plat-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
                         <div>
                             <h3 style="font-size:0.9rem;color:var(--text-muted);margin-bottom:8px;display:flex;align-items:center;gap:6px;"><i class="fas fa-desktop" style="color:var(--primary-light)"></i> Platform</h3>
                             ${data.platforms.map(p => {
-                                const pct = data.total_downloads ? ((p.downloads / data.total_downloads) * 100).toFixed(1) : 0;
+                                const pct = trackedTotal ? ((p.downloads / trackedTotal) * 100).toFixed(1) : 0;
                                 const icon = {'Windows':'fa-brands fa-windows','Android':'fa-brands fa-android','Linux':'fa-brands fa-linux','macOS':'fa-brands fa-apple','iOS':'fa-brands fa-apple','ChromeOS':'fa-brands fa-chrome'}[p.name] || 'fa-solid fa-question';
                                 return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
                                     <i class="${icon}" style="width:16px;text-align:center;color:var(--text-muted)"></i>
@@ -258,7 +262,7 @@
                         <div>
                             <h3 style="font-size:0.9rem;color:var(--text-muted);margin-bottom:8px;display:flex;align-items:center;gap:6px;"><i class="fas fa-compass" style="color:var(--primary-light)"></i> Browser</h3>
                             ${(data.browsers || []).map(b => {
-                                const pct = data.total_downloads ? ((b.downloads / data.total_downloads) * 100).toFixed(1) : 0;
+                                const pct = trackedTotal ? ((b.downloads / trackedTotal) * 100).toFixed(1) : 0;
                                 const icon = {'Chrome':'fa-brands fa-chrome','Firefox':'fa-brands fa-firefox-browser','Safari':'fa-brands fa-safari','Edge':'fa-brands fa-edge','Opera':'fa-brands fa-opera','CLI':'fa-solid fa-terminal'}[b.name] || 'fa-solid fa-globe';
                                 return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
                                     <i class="${icon}" style="width:16px;text-align:center;color:var(--text-muted)"></i>
@@ -269,7 +273,8 @@
                             }).join('')}
                         </div>
                     </div>
-                    ` : ''}
+                    `;
+                    })() : ''}
 
                     <div class="da-log">
                         <table class="da-table">

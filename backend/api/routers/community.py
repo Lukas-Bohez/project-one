@@ -46,6 +46,8 @@ async def get_user_from_headers(request):
     rfid = request.headers.get("X-RFID")
     if not user_id:
         raise HTTPException(status_code=401, detail="Authentication required. Please log in.")
+    if not rfid:
+        raise HTTPException(status_code=401, detail="Authentication required. Missing RFID.")
     try:
         user_id = int(user_id)
     except (ValueError, TypeError):
@@ -53,11 +55,13 @@ async def get_user_from_headers(request):
     user = UserRepository.get_user_by_id(user_id)
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
+    if user.get('rfid_code') != rfid:
+        raise HTTPException(status_code=403, detail="Invalid RFID code")
     return user
 
 
 def is_admin(user):
-    return user.get('userRoleId') == 1
+    return user.get('userRoleId') == 3
 
 
 # ============================================================
