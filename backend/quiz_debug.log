@@ -1299,3 +1299,56 @@
 2026-02-20 16:55:32,492 - INFO - Quiz Logger Initialized
 2026-02-20 16:55:32,492 - INFO - ==================================================
 2026-02-20 16:55:32,625 - INFO - [IDLE_CLEANUP] Session idle checker started (timeout=60s)
+2026-02-20 16:58:32,449 - INFO - ==================================================
+2026-02-20 16:58:32,458 - INFO - Quiz Logger Initialized
+2026-02-20 16:58:32,458 - INFO - ==================================================
+2026-02-20 16:58:32,741 - INFO - [IDLE_CLEANUP] Session idle checker started (timeout=60s)
+2026-02-20 16:58:35,075 - INFO - ==================================================
+2026-02-20 16:58:35,075 - INFO - Quiz Logger Initialized
+2026-02-20 16:58:35,075 - INFO - ==================================================
+2026-02-20 16:58:35,301 - INFO - [IDLE_CLEANUP] Session idle checker started (timeout=60s)
+2026-02-20 17:03:18,767 - INFO - [CREATE_SESSION] Session 1000199 created by user 12 with 1 themes for voting
+2026-02-20 17:03:18,818 - INFO - [CREATE_SESSION] Broadcasted session_created event for session 1000199
+2026-02-20 17:03:24,438 - INFO - start_generic_timer: Created and starting timer thread for session 1000199
+2026-02-20 17:03:24,454 - INFO - Timer thread started for session 1000199, phase: voting
+2026-02-20 17:03:41,933 - INFO - handle_theme_display_phase: starting quiz timer for session 1000199
+2026-02-20 17:03:41,948 - INFO - start_generic_timer: Timer already exists for session 1000199, returning False
+2026-02-20 17:03:41,959 - INFO - Timer thread ending, removing from active_timers for session 1000199
+2026-02-20 17:03:42,305 - INFO - Main loop check - quiz phase, no timer. Session 1000199
+2026-02-20 17:03:42,320 - INFO - Room check: quiz_session_1000199 has 1 participants
+2026-02-20 17:03:42,336 - INFO - Main loop: About to check available questions and start timer
+2026-02-20 17:03:42,362 - INFO - Main loop: Calling start_generic_timer for session 1000199
+2026-02-20 17:03:42,372 - INFO - start_generic_timer: Created and starting timer thread for session 1000199
+2026-02-20 17:03:42,392 - INFO - Timer thread started for session 1000199, phase: quiz
+2026-02-20 17:03:42,398 - INFO - Main loop: start_generic_timer returned True
+2026-02-20 17:03:42,418 - INFO - ========== HANDLE_QUIZ_PHASE CALLED for session 1000199 ==========
+2026-02-20 17:03:42,505 - INFO - Found 1 total questions for theme 41
+2026-02-20 17:03:42,542 - INFO - Already answered questions: []
+2026-02-20 17:03:42,578 - INFO - Available questions: 1
+2026-02-20 17:03:42,599 - INFO - Total players: 1
+2026-02-20 17:03:42,614 - INFO - Room check: quiz_session_1000199 has 1 participants
+2026-02-20 17:03:42,624 - INFO - Is quiz session active (Socket.IO room check): True
+2026-02-20 17:03:42,651 - INFO - About to send 'Preparing question 1' message
+2026-02-20 17:03:42,706 - INFO - ENTERING WHILE LOOP: available_questions=1, quiz_ended_early=False
+2026-02-20 17:03:42,737 - INFO - INSIDE WHILE LOOP - selecting question
+2026-02-20 17:04:08,600 - INFO - Current theme exhausted but other themes remain for session 1000199; reopening voting
+2026-02-20 17:04:08,695 - INFO - start_generic_timer: Timer already exists for session 1000199, returning False
+2026-02-20 17:04:08,726 - INFO - Timer thread ending, removing from active_timers for session 1000199
+2026-02-20 17:06:03,533 - INFO - [IDLE_CLEANUP] Session 1000199 auto-ended after 60s with no players
+2026-02-20 17:34:49,437 - INFO - ==================================================
+2026-02-20 17:34:49,437 - INFO - Quiz Logger Initialized
+2026-02-20 17:34:49,438 - INFO - ==================================================
+2026-02-20 17:34:49,572 - INFO - [IDLE_CLEANUP] Session idle checker started (timeout=60s)
+2026-02-20 17:35:08,538 - INFO - ==================================================
+2026-02-20 17:35:08,538 - INFO - Quiz Logger Initialized
+2026-02-20 17:35:08,538 - INFO - ==================================================
+2026-02-20 17:35:08,669 - INFO - [IDLE_CLEANUP] Session idle checker started (timeout=60s)
+2026-02-20 19:02:51,670 - INFO - ==================================================
+2026-02-20 19:02:51,670 - INFO - Quiz Logger Initialized
+2026-02-20 19:02:51,670 - INFO - ==================================================
+2026-02-20 19:02:51,801 - INFO - [IDLE_CLEANUP] Session idle checker started (timeout=60s)
+2026-02-20 19:03:17,666 - WARNING - Authentication failed: Missing credentials from IP 127.0.0.1
+2026-02-20 19:22:22,001 - INFO - ==================================================
+2026-02-20 19:22:22,001 - INFO - Quiz Logger Initialized
+2026-02-20 19:22:22,001 - INFO - ==================================================
+2026-02-20 19:22:22,129 - INFO - [IDLE_CLEANUP] Session idle checker started (timeout=60s)

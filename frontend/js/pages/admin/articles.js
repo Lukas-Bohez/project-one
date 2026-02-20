@@ -199,12 +199,19 @@ const updateArticleStatus = async (articleId, status) => {
         } else {
             payload = { is_active: false };
         }
+        const userId = sessionStorage.getItem('admin_user_id');
+        const rfidCode = sessionStorage.getItem('admin_rfid_code');
+
+        if (!userId || !rfidCode) {
+            throw new Error('Authentication required. Please log in as admin first.');
+        }
+
         const response = await fetch(`${lanIP}/api/v1/articles/${articleId}/status/`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
-                'X-User-ID': localStorage.getItem('currentUserId') || '1',
-                'X-RFID': localStorage.getItem('currentUserRFID') || 'admin'
+                'X-User-ID': userId,
+                'X-RFID': rfidCode
             },
             body: JSON.stringify(payload)
         });
@@ -378,7 +385,8 @@ const renderArticlesGrouped = async () => {
 };
 
 // Simple read-only view modal for an article (enhanced to show full JSON content)
-const showArticleDetails = (article) => {
+// Exposed on window so the Stories tab can also use it
+const showArticleDetails = window.showArticleDetails = (article) => {
     const modal = domAdmin.editModal;
     const modalTitle = modal.querySelector('.c-modal-title');
     const form = modal.querySelector('.c-edit-form');
@@ -1350,7 +1358,13 @@ const attachArticleButtonListeners = (container) => {
     });
 };
 
+let _articlesListenersAttached = false;
+
 const listenToArticles = () => {
+    // Guard against duplicate initialization
+    if (_articlesListenersAttached) return;
+    _articlesListenersAttached = true;
+
     // Add article button
     document.addEventListener('click', async (e) => {
         if (e.target.closest('.js-add-article')) {
