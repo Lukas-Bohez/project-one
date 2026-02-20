@@ -1157,7 +1157,7 @@ const showEditModal = async (itemType, item = null) => {
             <option value="days">Days</option>
             <option value="permanent">Eternity</option>
         </select>
-        <button type="button" class="c-btn c-btn--primary" onclick="banIpAddress()">Ban IP Address</button>
+        <button type="button" class="c-btn c-btn--primary js-ban-ip-btn" onclick="banIpAddress()">Ban IP Address</button>
     </div>
 </div>
     `;
@@ -1206,7 +1206,7 @@ const showEditModal = async (itemType, item = null) => {
 
             try {
                 // Get the button element
-                const banButton = document.querySelector('.c-btn--primary');
+                const banButton = document.querySelector('.js-ban-ip-btn');
                 if (banButton) {
                     banButton.disabled = true;
                     banButton.textContent = 'Banning...';
@@ -1241,7 +1241,7 @@ const showEditModal = async (itemType, item = null) => {
                 showNotification(`Failed to ban IP address: ${error.message}`, 'error');
             } finally {
                 // Re-enable button
-                const banButton = document.querySelector('.c-btn--primary');
+                const banButton = document.querySelector('.js-ban-ip-btn');
                 if (banButton) {
                     banButton.disabled = false;
                     banButton.textContent = 'Ban IP Address';
@@ -1466,7 +1466,9 @@ const loadQuestions = async () => {
             window.themeManager.applyThemeToNewElements(questionList);
         }
         
-        // Add event delegation for better performance
+        // Add event delegation for better performance (remove first to prevent duplicates)
+        questionList.removeEventListener('click', handleQuestionActions);
+        questionList.removeEventListener('change', handleQuestionFieldChanges);
         questionList.addEventListener('click', handleQuestionActions);
         questionList.addEventListener('change', handleQuestionFieldChanges);
         
@@ -2737,13 +2739,18 @@ async function loadStoriesTab() {
         ${stories.map(s => `
           <div class="c-story-card" data-story-id="${s.id}">
             <div class="c-story-card__header">
-              <h3 class="c-story-card__title">${s.name}</h3>
+              <h3 class="c-story-card__title">${escapeHTML(s.name)}</h3>
             </div>
             <div class="c-story-card__body">
-              <div class="c-story-card__desc">${s.description || ''}</div>
-              <button class="c-btn c-btn--primary js-view-story" data-id="${s.id}">
-                <i class="fas fa-list-ol"></i> View Articles
-              </button>
+              <div class="c-story-card__desc">${escapeHTML(s.description || '')}</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+                <button class="c-btn c-btn--sm c-btn--primary js-view-story" data-id="${s.id}">
+                  <i class="fas fa-list-ol"></i> View Articles
+                </button>
+                <button class="c-btn c-btn--sm c-btn--danger js-delete-story" data-id="${s.id}" data-name="${escapeHTML(s.name)}">
+                  <i class="fas fa-trash"></i> Delete
+                </button>
+              </div>
             </div>
           </div>
         `).join('')}
@@ -2768,6 +2775,32 @@ async function loadStoriesTab() {
                 }
             });
         }
+
+    // Delete story buttons
+    container.querySelectorAll('.js-delete-story').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const storyId = e.currentTarget.getAttribute('data-id');
+            const storyName = e.currentTarget.getAttribute('data-name');
+            if (!storyId) return;
+            if (!confirm(`Delete story "${storyName}"? Articles within the story will NOT be deleted.`)) return;
+            try {
+                const userId = sessionStorage.getItem('admin_user_id');
+                const rfidCode = sessionStorage.getItem('admin_rfid_code');
+                const headers = { 'Accept': 'application/json' };
+                if (userId && rfidCode) { headers['X-User-ID'] = userId; headers['X-RFID'] = rfidCode; }
+                const res = await fetch(`${lanIP}/api/v1/stories/${encodeURIComponent(storyId)}`, { method: 'DELETE', headers });
+                if (!res.ok) {
+                    const data = await res.json().catch(() => null);
+                    throw new Error(data?.detail || `HTTP ${res.status}`);
+                }
+                showNotification('Story deleted', 'success');
+                await loadStoriesTab();
+            } catch (err) {
+                console.error('Failed to delete story:', err);
+                showNotification(err.message || 'Failed to delete story', 'error');
+            }
+        });
+    });
 
     container.querySelectorAll('.js-view-story').forEach(btn => {
       btn.addEventListener('click', async (e) => {

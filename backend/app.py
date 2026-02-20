@@ -420,21 +420,33 @@ except ImportError:
 # Authentication and Helper Functions
 # ----------------------------------------------------
 
+def _is_valid_ip(ip_str: str) -> bool:
+    """Check if a string is a valid IPv4 or IPv6 address."""
+    import ipaddress
+    try:
+        ipaddress.ip_address(ip_str)
+        return True
+    except (ValueError, TypeError):
+        return False
+
 def get_client_ip_sync(request: Request) -> str:
-    """Extract client IP address from request headers."""
+    """Extract client IP address from request headers with validation."""
     # Check for forwarded IP first (in case of proxy/load balancer)
     forwarded_for = request.headers.get("X-Forwarded-For")
     if forwarded_for:
         # Take the first IP if there are multiple
-        return forwarded_for.split(",")[0].strip()
+        ip = forwarded_for.split(",")[0].strip()
+        if _is_valid_ip(ip):
+            return ip
     
     # Check for real IP header
     real_ip = request.headers.get("X-Real-IP")
-    if real_ip:
-        return real_ip
+    if real_ip and _is_valid_ip(real_ip.strip()):
+        return real_ip.strip()
     
     # Fall back to direct client IP
-    return request.client.host if request.client else "unknown"
+    host = request.client.host if request.client else "unknown"
+    return host
 
 
 # Lightweight synchronous wrapper to provide a single, non-async
@@ -512,10 +524,22 @@ def load_download_tracker():
     return defaults
 
 def save_download_tracker(tracker):
-    """Save download tracking data to JSON file."""
+    """Save download tracking data to JSON file atomically."""
+    import tempfile
     try:
-        with open(DOWNLOAD_TRACKER_FILE, 'w') as f:
-            json.dump(tracker, f, indent=2)
+        dir_name = os.path.dirname(DOWNLOAD_TRACKER_FILE) or '.'
+        fd, tmp_path = tempfile.mkstemp(dir=dir_name, suffix='.tmp')
+        try:
+            with os.fdopen(fd, 'w') as f:
+                json.dump(tracker, f, indent=2)
+            os.replace(tmp_path, DOWNLOAD_TRACKER_FILE)
+        except Exception:
+            # Clean up temp file on failure
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+            raise
     except Exception as e:
         print(f"Error saving download tracker: {e}")
 
@@ -634,6 +658,49 @@ def check_download_allowed(client_ip: str):
     
     return True, "Download allowed"
 
+def check_and_start_download(client_ip: str, user_agent: str = ""):
+    """Atomically check if download is allowed AND record the start under one lock.
+    
+    Prevents TOCTOU race where two concurrent requests both pass
+    check_download_allowed before either calls record_download_start.
+    Returns (allowed: bool, message: str).
+    """
+    with DOWNLOAD_TRACKER_LOCK:
+        tracker = load_download_tracker()
+        tracker = reset_tracker_if_new_month(tracker)
+        tracker = cleanup_stale_active_downloads(tracker)
+        
+        ip_data = tracker["ips"].get(client_ip, {})
+        active_downloads = ip_data.get("active_downloads", 0)
+        
+        if active_downloads >= tracker["concurrent_per_ip"]:
+            save_download_tracker(tracker)
+            return False, f"Too many concurrent downloads: {active_downloads}/{tracker['concurrent_per_ip']}"
+        
+        if tracker["total_monthly_bandwidth_gb"] >= tracker["monthly_limit_gb"]:
+            save_download_tracker(tracker)
+            return False, f"Monthly bandwidth limit reached: {tracker['total_monthly_bandwidth_gb']}/{tracker['monthly_limit_gb']} GB"
+        
+        # Allowed — atomically record the start
+        if client_ip not in tracker["ips"]:
+            tracker["ips"][client_ip] = {
+                "count": 0,
+                "bandwidth_gb": 0.0,
+                "active_downloads": 0,
+                "last_download": None
+            }
+        
+        tracker["ips"][client_ip]["active_downloads"] = tracker["ips"][client_ip].get("active_downloads", 0) + 1
+        tracker["ips"][client_ip]["download_started_at"] = datetime.now().isoformat()
+        
+        if user_agent:
+            tracker["ips"][client_ip]["platform"] = _parse_platform(user_agent)
+            tracker["ips"][client_ip]["browser"] = _parse_browser(user_agent)
+            tracker["ips"][client_ip]["user_agent"] = user_agent[:256]
+        
+        save_download_tracker(tracker)
+        return True, "Download allowed"
+
 def _parse_platform(ua: str) -> str:
     """Extract platform (OS) from a User-Agent string."""
     ua_lower = (ua or "").lower()
@@ -715,13 +782,18 @@ def record_download_complete(client_ip: str, bytes_downloaded: int):
         
         save_download_tracker(tracker)
 
-def record_download_cancel(client_ip: str):
-    """Record when a download is cancelled."""
+def record_download_cancel(client_ip: str, bytes_sent: int = 0):
+    """Record when a download is cancelled, including any partial bandwidth used."""
     with DOWNLOAD_TRACKER_LOCK:
         tracker = load_download_tracker()
         
         if client_ip in tracker["ips"]:
             tracker["ips"][client_ip]["active_downloads"] = max(0, tracker["ips"][client_ip].get("active_downloads", 1) - 1)
+            # Record partial bandwidth so usage tracking stays accurate
+            if bytes_sent > 0:
+                gb_sent = bytes_sent / (1024 ** 3)
+                tracker["ips"][client_ip]["bandwidth_gb"] = tracker["ips"][client_ip].get("bandwidth_gb", 0.0) + gb_sent
+                tracker["total_monthly_bandwidth_gb"] = tracker.get("total_monthly_bandwidth_gb", 0) + gb_sent
             save_download_tracker(tracker)
 
 # ====================================================
@@ -1147,6 +1219,25 @@ def create_story_if_not_exists(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create story: {e}")
+
+
+@app.delete(ENDPOINT + "/stories/{story_id}", tags=["Stories"])
+def delete_story(
+    story_id: int,
+    current_user_info: dict = Depends(get_current_user_info)
+):
+    """Delete a story by ID (admin only). Articles in the story are NOT deleted."""
+    if current_user_info["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can delete stories")
+    try:
+        ok = StoriesRepository.delete_story(story_id)
+        if not ok:
+            raise HTTPException(status_code=404, detail="Story not found")
+        return {"detail": "Story deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete story: {e}")
 
 
 # ----------------------------------------------------
@@ -2075,7 +2166,7 @@ async def get_user_by_id(user_id: int):
 @app.get("/api/v1/client-ip")
 async def get_client_ip_endpoint(request: Request):
     try:
-        ip_address = request.headers.get("X-Forwarded-For") or request.client.host
+        ip_address = get_client_ip_sync(request)
         return {"ip_address": ip_address}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get client IP: {e}")
@@ -4996,10 +5087,10 @@ def format_second_row(temp, lux, angle):
 servo = None
 temp_sensor = None
 light_sensor = None
-RPI_COMPONENTS_AVAILABLE = True  # Placeholder
+# RPI_COMPONENTS_AVAILABLE is set by the import guard at the top of the file — do NOT override here
 SERVO_IDLE_ANGLE = 90
 RFID_DISPLAY_TIME = 20
-REFRESH_INTERVAL = 1
+REFRESH_INTERVAL = 2
 servo_command_queue = queue.Queue() # Assuming this is defined elsewhere
 
 # --- RFID Reader Thread ---
@@ -5020,6 +5111,7 @@ def rfid_reader_thread(rfid_sensor, rfid_queue, stop_event):
             uid = rfid_sensor.read_card()
             if uid:
                 rfid_queue.put(str(uid)) # Add the scanned UID to the queue
+            time.sleep(0.1) # Prevent tight-loop if read_card returns immediately
         except Exception as e:
             print(f"Error in RFID reader thread: {e}")
             # Avoid rapid-fire error logging on persistent hardware failure
@@ -5145,25 +5237,20 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
                     print("Sensor read/display error")
                     if lcd:
                         lcd.write_line(1, "Sensor Error")
-                    last_refresh = current_time            # --- Step 3: Handle Quiz Session Specific Logic ---
-                try:
-                    if get_active_session_id():
-                        # Logic specific to an active quiz can be placed here
-                        # For example, logging sensor data to the quiz session
-                        if should_update_quiz_session(current_time):
-                            session_id = get_active_session_id()
-                            sensor_data = read_sensor_data(temp_sensor, light_sensor, servo)
-                            log_quiz_sensor_data(session_id, sensor_data)
-                            emit_theme_selection_if_needed(sio, loop)
-                    else:
-                        # Logic for when no quiz is active
-                        # This could involve processing servo commands from a queue, etc.
-                        pass # Most of the "normal" logic is already handled above
+                    last_refresh = current_time
 
-                except Exception as e:
-                    print(f"Error in quiz session logic block: {e}")
+            # --- Step 3: Handle Quiz Session Specific Logic ---
+            try:
+                if get_active_session_id():
+                    if should_update_quiz_session(current_time):
+                        session_id = get_active_session_id()
+                        sensor_data = read_sensor_data(temp_sensor, light_sensor, servo)
+                        log_quiz_sensor_data(session_id, sensor_data)
+                        emit_theme_selection_if_needed(sio, loop)
+            except Exception as e:
+                print(f"Error in quiz session logic block: {e}")
 
-            time.sleep(0.05) # Main loop delay
+            time.sleep(0.25) # Main loop delay — keep >= 0.2 to avoid GIL-starving uvicorn
 
     except Exception as e:
         print(f"Fatal error in Pi thread: {e}")
@@ -13856,18 +13943,15 @@ async def download_conversion(request: Request):
     
     client_ip = get_client_ip(request)
     
-    # Check if download is allowed
-    allowed, message = check_download_allowed(client_ip)
-    if not allowed:
-        raise HTTPException(status_code=429, detail=message)
-    
-    # Check if file exists
+    # Check if file exists first (before acquiring download slot)
     if not os.path.exists(CONVERSION_FILE_PATH):
         raise HTTPException(status_code=404, detail="Download file not found")
     
-    # Record download start (with user-agent tracking)
+    # Atomically check permission and record start (prevents TOCTOU race)
     ua = request.headers.get("user-agent", "")
-    record_download_start(client_ip, ua)
+    allowed, message = check_and_start_download(client_ip, ua)
+    if not allowed:
+        raise HTTPException(status_code=429, detail=message)
     
     file_size = os.path.getsize(CONVERSION_FILE_PATH)
     return StreamingResponse(
@@ -13919,7 +14003,7 @@ def _tracked_stream(file_path: str, client_ip: str, label: str = "download"):
             raise
         finally:
             if not completed:
-                record_download_cancel(client_ip)
+                record_download_cancel(client_ip, bytes_sent)
 
     return generate()
 
@@ -13931,18 +14015,13 @@ async def download_conversion_apk(request: Request):
     
     client_ip = get_client_ip(request)
     
-    # Check if download is allowed
-    allowed, message = check_download_allowed(client_ip)
-    if not allowed:
-        raise HTTPException(status_code=429, detail=message)
-    
-    # Check if file exists
     if not os.path.exists(CONVERSION_APK_PATH):
         raise HTTPException(status_code=404, detail="APK download file not found")
     
-    # Record download start (with user-agent tracking)
     ua = request.headers.get("user-agent", "")
-    record_download_start(client_ip, ua)
+    allowed, message = check_and_start_download(client_ip, ua)
+    if not allowed:
+        raise HTTPException(status_code=429, detail=message)
     
     file_size = os.path.getsize(CONVERSION_APK_PATH)
     return StreamingResponse(
@@ -13962,15 +14041,13 @@ async def download_conversion_linux(request: Request):
     
     client_ip = get_client_ip(request)
     
-    allowed, message = check_download_allowed(client_ip)
-    if not allowed:
-        raise HTTPException(status_code=429, detail=message)
-    
     if not os.path.exists(CONVERSION_LINUX_PATH):
         raise HTTPException(status_code=404, detail="Linux download file not found")
     
     ua = request.headers.get("user-agent", "")
-    record_download_start(client_ip, ua)
+    allowed, message = check_and_start_download(client_ip, ua)
+    if not allowed:
+        raise HTTPException(status_code=429, detail=message)
     
     file_size = os.path.getsize(CONVERSION_LINUX_PATH)
     return StreamingResponse(
