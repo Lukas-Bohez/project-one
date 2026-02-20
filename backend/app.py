@@ -301,7 +301,7 @@ async def log_incoming_requests(request, call_next):
 # CORS middleware for FastAPI
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for development
+    allow_origins=["https://quizthespire.com", "https://www.quizthespire.com", "https://quizthespire.duckdns.org"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
@@ -331,7 +331,7 @@ app.add_middleware(SlowAPIMiddleware)
 
 # Socket.IO server setup
 sio = socketio.AsyncServer(
-    cors_allowed_origins="*",
+    cors_allowed_origins=["https://quizthespire.com", "https://www.quizthespire.com", "https://quizthespire.duckdns.org"],
     async_mode='asgi',
     logger=True,
     engineio_logger=True
