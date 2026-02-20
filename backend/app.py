@@ -459,6 +459,8 @@ from pathlib import Path
 
 DOWNLOAD_TRACKER_FILE = os.path.join(os.path.dirname(__file__), 'download_tracker.json')
 CONVERSION_FILE_PATH = os.path.join(os.path.dirname(__file__), '../frontend/downloads/ConversionTheSpireReborn.zip')
+CONVERSION_APK_PATH = os.path.join(os.path.dirname(__file__), '../frontend/downloads/ConvertTheSpireReborn.apk')
+CONVERSION_LINUX_PATH = os.path.join(os.path.dirname(__file__), '../frontend/downloads/linux.zip')
 DOWNLOAD_TRACKER_LOCK = Lock()
 
 def load_download_tracker():
@@ -500,18 +502,44 @@ def save_download_tracker(tracker):
         print(f"Error saving download tracker: {e}")
 
 def reset_tracker_if_new_month(tracker):
-    """Reset tracker if we've entered a new month."""
+    """Reset monthly counters when a new month begins.
+    
+    Archives the previous month's summary to 'archived_months' so historical
+    data is NEVER lost.  Per-IP metadata (platform, browser, user_agent) is
+    preserved across resets so returning users keep their profile.
+    """
     current_month = datetime.now().strftime("%Y-%m")
     if tracker.get("last_reset_month") != current_month:
+        old_month = tracker.get("last_reset_month", "unknown")
+
+        # ---------- archive previous month ----------
+        if "archived_months" not in tracker:
+            tracker["archived_months"] = {}
+
+        old_ips = tracker.get("ips", {})
+        tracker["archived_months"][old_month] = {
+            "total_bandwidth_gb": round(tracker.get("total_monthly_bandwidth_gb", 0), 4),
+            "total_downloads": sum(ip.get("count", 0) for ip in old_ips.values()),
+            "unique_users": len([ip for ip in old_ips.values() if ip.get("count", 0) > 0]),
+            "ip_count": len(old_ips),
+        }
+
+        # ---------- reset per-IP monthly counters ----------
+        for ip_data in old_ips.values():
+            ip_data["count"] = 0
+            ip_data["bandwidth_gb"] = 0.0
+            ip_data["active_downloads"] = 0
+            # Keep: platform, browser, user_agent, last_download
+
         tracker["last_reset_month"] = current_month
         tracker["total_monthly_bandwidth_gb"] = 0.0
-        tracker["ips"] = {}
         save_download_tracker(tracker)
     return tracker
 
 def cleanup_stale_active_downloads(tracker):
-    """Remove active_downloads count for IPs that haven't downloaded in > 1 hour (likely stalled)."""
+    """Remove active_downloads count for IPs that haven't downloaded in > 10 minutes (likely stalled/disconnected)."""
     current_time = datetime.now()
+    STALE_SECONDS = 600  # 10 minutes — even the 241 MB APK finishes in ~2 min at 2 MB/s
     for ip, ip_data in tracker["ips"].items():
         last_download = ip_data.get("last_download")
         active_downloads = ip_data.get("active_downloads", 0)
@@ -523,7 +551,7 @@ def cleanup_stale_active_downloads(tracker):
             else:
                 try:
                     last_time = datetime.fromisoformat(last_download)
-                    if (current_time - last_time).total_seconds() > 3600:
+                    if (current_time - last_time).total_seconds() > STALE_SECONDS:
                         tracker["ips"][ip]["active_downloads"] = 0
                 except Exception:
                     # If we can't parse the timestamp, reset it
@@ -543,17 +571,27 @@ def get_download_status(client_ip: str):
     downloads_this_month = ip_data.get("count", 0)
     bandwidth_used_gb = ip_data.get("bandwidth_gb", 0.0)
     active_downloads = ip_data.get("active_downloads", 0)
+
+    # Compute real file sizes instead of using the hardcoded tracker value
+    file_sizes = {}
+    for label, path in [("windows", CONVERSION_FILE_PATH), ("apk", CONVERSION_APK_PATH), ("linux", CONVERSION_LINUX_PATH)]:
+        try:
+            file_sizes[label] = round(os.path.getsize(path) / (1024 ** 3), 6)
+        except OSError:
+            file_sizes[label] = 0
     
     return {
         "downloads_this_month": downloads_this_month,
         "max_downloads_per_month": tracker.get("per_ip_monthly_limit"),
         "bandwidth_used_gb": round(bandwidth_used_gb, 2),
-        "file_size_gb": tracker["file_size_gb"],
+        "file_size_gb": file_sizes.get("windows", tracker.get("file_size_gb", 0)),
+        "file_sizes": file_sizes,
         "active_downloads": active_downloads,
         "max_concurrent": tracker["concurrent_per_ip"],
         "total_monthly_bandwidth_gb": round(tracker["total_monthly_bandwidth_gb"], 2),
         "monthly_limit_gb": tracker["monthly_limit_gb"],
-        "can_download": active_downloads < tracker["concurrent_per_ip"] and tracker["total_monthly_bandwidth_gb"] < tracker["monthly_limit_gb"]
+        "can_download": active_downloads < tracker["concurrent_per_ip"] and tracker["total_monthly_bandwidth_gb"] < tracker["monthly_limit_gb"],
+        "download_speed_mbps": tracker.get("download_speed_mbps", 2)
     }
 
 def check_download_allowed(client_ip: str):
@@ -13771,7 +13809,6 @@ async def check_conversion_download(request: Request):
 async def download_conversion(request: Request):
     """Download ConversionTheSpireReborn.zip with bandwidth throttling."""
     from fastapi.responses import StreamingResponse
-    import time
     
     client_ip = get_client_ip(request)
     
@@ -13788,39 +13825,9 @@ async def download_conversion(request: Request):
     ua = request.headers.get("user-agent", "")
     record_download_start(client_ip, ua)
     
-    def generate_with_throttle():
-        """Stream file with bandwidth throttling."""
-        bytes_sent = 0
-        completed = False
-        try:
-            # Load tracker to get speed limit
-            tracker = load_download_tracker()
-            speed_mbps = tracker.get("download_speed_mbps", 2)
-            chunk_size = 1024 * 1024  # 1 MB chunks
-            delay_per_chunk = (chunk_size / (1024 * 1024)) / speed_mbps  # seconds
-            
-            with open(CONVERSION_FILE_PATH, 'rb') as f:
-                while True:
-                    chunk = f.read(chunk_size)
-                    if not chunk:
-                        break
-                    bytes_sent += len(chunk)
-                    yield chunk
-                    time.sleep(delay_per_chunk)  # Throttle
-            
-            # Record successful completion
-            record_download_complete(client_ip, bytes_sent)
-            completed = True
-        except Exception as e:
-            print(f"Error during download: {e}")
-            raise
-        finally:
-            if not completed:
-                record_download_cancel(client_ip)
-    
     file_size = os.path.getsize(CONVERSION_FILE_PATH)
     return StreamingResponse(
-        generate_with_throttle(),
+        _tracked_stream(CONVERSION_FILE_PATH, client_ip, "Windows download"),
         media_type="application/zip",
         headers={
             "Content-Disposition": "attachment; filename=ConversionTheSpireReborn.zip",
@@ -13828,14 +13835,55 @@ async def download_conversion(request: Request):
         }
     )
 
-# APK Download for Android
-CONVERSION_APK_PATH = os.path.join(os.path.dirname(__file__), '../frontend/downloads/ConvertTheSpireReborn.apk')
+# APK Download for Android + Linux download
+# (Path constants defined near the top of the download section)
+
+
+def _tracked_stream(file_path: str, client_ip: str, label: str = "download"):
+    """Return a throttled generator that records download completion or cancellation.
+
+    Shared helper so every platform (Windows / Android / Linux) uses the
+    same reliable tracking logic.
+    """
+    import time
+
+    def generate():
+        bytes_sent = 0
+        completed = False
+        try:
+            tracker = load_download_tracker()
+            speed_mbps = tracker.get("download_speed_mbps", 2)
+            chunk_size = 1024 * 1024  # 1 MB chunks
+            delay_per_chunk = (chunk_size / (1024 * 1024)) / speed_mbps
+
+            with open(file_path, 'rb') as f:
+                while True:
+                    chunk = f.read(chunk_size)
+                    if not chunk:
+                        break
+                    bytes_sent += len(chunk)
+                    yield chunk
+                    time.sleep(delay_per_chunk)
+
+            record_download_complete(client_ip, bytes_sent)
+            completed = True
+        except GeneratorExit:
+            # Client disconnected — not an error, but download is incomplete
+            print(f"Client disconnected during {label} ({bytes_sent} bytes sent)")
+        except Exception as e:
+            print(f"Error during {label}: {e}")
+            raise
+        finally:
+            if not completed:
+                record_download_cancel(client_ip)
+
+    return generate()
+
 
 @app.get("/api/v1/download/conversion/apk")
 async def download_conversion_apk(request: Request):
     """Download ConvertTheSpireReborn.apk with bandwidth throttling."""
     from fastapi.responses import StreamingResponse
-    import time
     
     client_ip = get_client_ip(request)
     
@@ -13852,43 +13900,44 @@ async def download_conversion_apk(request: Request):
     ua = request.headers.get("user-agent", "")
     record_download_start(client_ip, ua)
     
-    def generate_with_throttle():
-        """Stream APK file with bandwidth throttling."""
-        bytes_sent = 0
-        completed = False
-        try:
-            tracker = load_download_tracker()
-            speed_mbps = tracker.get("download_speed_mbps", 2)
-            chunk_size = 1024 * 1024  # 1 MB chunks
-            delay_per_chunk = (chunk_size / (1024 * 1024)) / speed_mbps
-            
-            with open(CONVERSION_APK_PATH, 'rb') as f:
-                while True:
-                    chunk = f.read(chunk_size)
-                    if not chunk:
-                        break
-                    bytes_sent += len(chunk)
-                    yield chunk
-                    time.sleep(delay_per_chunk)
-            
-            record_download_complete(client_ip, bytes_sent)
-            completed = True
-        except Exception as e:
-            print(f"Error during APK download: {e}")
-            raise
-        finally:
-            if not completed:
-                record_download_cancel(client_ip)
-    
     file_size = os.path.getsize(CONVERSION_APK_PATH)
     return StreamingResponse(
-        generate_with_throttle(),
+        _tracked_stream(CONVERSION_APK_PATH, client_ip, "APK download"),
         media_type="application/vnd.android.package-archive",
         headers={
             "Content-Disposition": "attachment; filename=ConvertTheSpireReborn.apk",
             "Content-Length": str(file_size)
         }
     )
+
+
+@app.get("/api/v1/download/conversion/linux")
+async def download_conversion_linux(request: Request):
+    """Download linux.zip with bandwidth throttling."""
+    from fastapi.responses import StreamingResponse
+    
+    client_ip = get_client_ip(request)
+    
+    allowed, message = check_download_allowed(client_ip)
+    if not allowed:
+        raise HTTPException(status_code=429, detail=message)
+    
+    if not os.path.exists(CONVERSION_LINUX_PATH):
+        raise HTTPException(status_code=404, detail="Linux download file not found")
+    
+    ua = request.headers.get("user-agent", "")
+    record_download_start(client_ip, ua)
+    
+    file_size = os.path.getsize(CONVERSION_LINUX_PATH)
+    return StreamingResponse(
+        _tracked_stream(CONVERSION_LINUX_PATH, client_ip, "Linux download"),
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": "attachment; filename=linux.zip",
+            "Content-Length": str(file_size)
+        }
+    )
+
 
 # ====================================================
 # End Download Endpoints

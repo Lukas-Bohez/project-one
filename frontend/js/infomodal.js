@@ -27,7 +27,7 @@
                 border-radius: 50%;
                 font-size: 18px;
                 cursor: pointer;
-                z-index: 999999;
+                z-index: 999;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -50,7 +50,7 @@
                 width: 100%;
                 height: 100%;
                 background: rgba(0,0,0,0.7);
-                z-index: 1000000;
+                z-index: 10001;
                 overflow-y: auto;
             }
             
@@ -249,7 +249,7 @@
         // If the site uses a dark theme (data-theme or body class), or localStorage, mark modal/button with dark class
         try {
             const current = (document.documentElement.getAttribute('data-theme') === 'dark' || document.body.classList.contains('theme-dark')) ? 'dark' : null;
-            const saved = current || localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            const saved = current || localStorage.getItem('quiz-theme-preference') || localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
             if (saved === 'dark') {
                 btn.classList.add('qts-dark');
             }
@@ -331,7 +331,7 @@
 
         // Apply dark class to modal if needed (ensures inline-styled DOM shows dark)
         try {
-            const saved = localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            const saved = localStorage.getItem('quiz-theme-preference') || localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
             if (saved === 'dark') {
                 modal.classList.add('qts-dark');
             }

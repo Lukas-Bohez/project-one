@@ -1133,8 +1133,12 @@ class SentleGame {
             this.endGame(true, score);
         } else {
             this.showMessage('❌ Incorrect arrangement. Try again!', 'error');
-            // Allow retry - clear sentence builder for another attempt
+            // Allow retry - clear sentence builder and reset pill states
             sentenceBuilder.innerHTML = '';
+            const availableWords = document.getElementById('availableWords');
+            if (availableWords) {
+                Array.from(availableWords.children).forEach(pill => pill.classList.remove('used'));
+            }
         }
     }
 

@@ -10,16 +10,25 @@
         /* ── Reset & Variables ── */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
+            --bg: #f4f7fb; --surface: #ffffff; --surface2: #f0f2f5;
+            --border: rgba(0,0,0,0.08); --text: #1a1d27; --text-muted: #64748b;
+            --primary: #6c5ce7; --primary-light: #7c6ff0;
+            --success: #00a89d; --danger: #e74c3c; --accent: #e6a817;
+            --radius: 12px; --radius-sm: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        [data-theme="dark"] {
             --bg: #0f1117; --surface: #1a1d27; --surface2: #222632;
             --border: rgba(255,255,255,0.08); --text: #e4e6eb; --text-muted: #8b8fa3;
             --primary: #6c5ce7; --primary-light: #a29bfe;
             --success: #00cec9; --danger: #ff6b6b; --accent: #fdcb6e;
-            --radius: 12px; --radius-sm: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
             background: var(--bg); color: var(--text);
             min-height: 100vh; padding: 24px 16px;
+            transition: background 0.3s, color 0.3s;
         }
 
         /* ── Layout ── */
@@ -33,7 +42,8 @@
         .da-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
         .da-stat {
             background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-            padding: 20px 18px; text-align: center;
+            padding: 20px 18px; text-align: center; box-shadow: var(--shadow);
+            transition: background 0.3s, border-color 0.3s;
         }
         .da-stat__val { font-size: 2rem; font-weight: 800; display: block; line-height: 1.1; }
         .da-stat__lbl { font-size: 0.82rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
@@ -45,7 +55,8 @@
         /* ── Section ── */
         .da-section {
             background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-            padding: 22px; margin-bottom: 24px;
+            padding: 22px; margin-bottom: 24px; box-shadow: var(--shadow);
+            transition: background 0.3s, border-color 0.3s;
         }
         .da-section h2 { font-size: 1.15rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
         .da-section h2 i { color: var(--primary-light); }
@@ -98,9 +109,23 @@
         /* ── Error ── */
         .da-error { text-align: center; padding: 32px; color: var(--danger); }
         .da-error i { font-size: 2rem; display: block; margin-bottom: 8px; }
+
+        /* ── Theme Toggle ── */
+        .da-theme-toggle {
+            position: fixed; top: 16px; right: 16px; z-index: 100;
+            background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
+            width: 42px; height: 42px; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; font-size: 1.1rem; color: var(--text-muted);
+            box-shadow: var(--shadow); transition: all 0.3s;
+        }
+        .da-theme-toggle:hover { color: var(--primary-light); border-color: var(--primary); }
     </style>
 </head>
 <body>
+    <button class="da-theme-toggle" id="themeToggle" aria-label="Toggle light/dark mode" title="Toggle theme">
+        <i class="fas fa-moon"></i>
+    </button>
+
     <div class="da-container">
         <a href="/" class="da-back"><i class="fas fa-arrow-left"></i> Back to Home</a>
         <div class="da-header">
@@ -145,7 +170,7 @@
                 const data = await res.json();
                 render(data);
             } catch (e) {
-                content.innerHTML = `<div class="da-error"><i class="fas fa-exclamation-triangle"></i><p>Failed to load analytics: ${esc(e.message)}</p></div>`;
+                content.innerHTML = `<div class="da-error"><i class="fas fa-exclamation-triangle"></i><p>Failed to load analytics: ${esc(e.message)}</p><button class="da-refresh" onclick="window.__refreshAnalytics()" style="margin-top:12px"><i class="fas fa-sync-alt"></i> Retry</button></div>`;
             }
         }
 
@@ -216,7 +241,7 @@
 
                     <!-- Platform & Browser Breakdown (inline grid) -->
                     ${(data.platforms && data.platforms.length) ? `
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+                    <div class="da-plat-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
                         <div>
                             <h3 style="font-size:0.9rem;color:var(--text-muted);margin-bottom:8px;display:flex;align-items:center;gap:6px;"><i class="fas fa-desktop" style="color:var(--primary-light)"></i> Platform</h3>
                             ${data.platforms.map(p => {
@@ -287,6 +312,28 @@
         };
 
         load();
+    })();
+    </script>
+
+    <!-- Theme toggle logic -->
+    <script>
+    (function () {
+        const btn = document.getElementById('themeToggle');
+        const icon = btn.querySelector('i');
+        // Respect parent site preference, or system preference
+        const stored = localStorage.getItem('da-theme') || localStorage.getItem('theme') || localStorage.getItem('quiz-theme-preference');
+        const prefersDark = stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        function applyTheme(dark) {
+            document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+            icon.className = dark ? 'fas fa-sun' : 'fas fa-moon';
+            btn.title = dark ? 'Switch to light mode' : 'Switch to dark mode';
+            localStorage.setItem('da-theme', dark ? 'dark' : 'light');
+        }
+        applyTheme(prefersDark);
+        btn.addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            applyTheme(!isDark);
+        });
     })();
     </script>
 </body>

@@ -205,7 +205,7 @@ class NewResourceManager {
 		// Clean city finished inventory
 		if (this.state.cityInventory?.finished) {
 			Object.keys(this.state.cityInventory.finished).forEach(item => {
-				if (!validOutputs.has(item) && !this.catalog.processed[item]) {
+				if (!validOutputs.has(item) && !this.catalog.processed[item] && !this.catalog.finished[item]) {
 					delete this.state.cityInventory.finished[item];
 					console.log(`🧹 Removed old item from city: ${item}`);
 				}
@@ -225,6 +225,9 @@ class NewResourceManager {
 		const eff = (this.state?.efficiency?.processing || 1) * (this.state?.efficiency?.global || 1);
 		const speed = eff * deltaTime;
 
+		// Fractional accumulator so sub-tick production is carried across ticks
+		if (!this._recipeAccumulator) this._recipeAccumulator = {};
+
 		// Iterate through owned buildings and try to process
 		const buildings = this.state.processors || {};
 		Object.keys(buildings).forEach(bKey => {
@@ -235,15 +238,16 @@ class NewResourceManager {
 			const handled = Object.entries(this.recipes).filter(([name, r]) => r.building === bKey);
 			
 			handled.forEach(([name, r]) => {
-				// Each building can process multiple times per tick based on count and deltaTime
-				// At 60fps, deltaTime ≈ 0.016, so 7 smelters * 0.016 ≈ 0.11 runs per tick
-				// This accumulates to about 7 runs per second
-				const canRunFloat = count * speed;
-				const canRun = Math.max(1, Math.floor(canRunFloat)); // At least try 1 if we have buildings
+				// Accumulate fractional runs across ticks
+				// e.g. 1 smelter at 60fps: 1 * 1.0 * 0.0167 ≈ 0.0167 per tick → ~1 run/sec
+				this._recipeAccumulator[name] = (this._recipeAccumulator[name] || 0) + count * speed;
+				const canRun = Math.floor(this._recipeAccumulator[name]);
+				if (canRun <= 0) return;
 				
 				const runs = this.maxRuns(r.input, canRun);
 				if (runs > 0) {
 					this.applyRecipe(r.input, r.output, runs);
+					this._recipeAccumulator[name] -= runs;
 				}
 			});
 		});
@@ -371,7 +375,7 @@ class NewResourceManager {
 		const inv = this.state.cityInventory.finished;
 		if (!inv[item] || inv[item] <= 0) return { sold: 0, gold: 0 };
 		inv[item] -= 1;
-		const gold = meta.value * (1 + (this.state.city?.banks || 0) * 0.2);
+		const gold = meta.value * Math.pow(1.20, this.state.city?.banks || 0);
 		this.state.resources.gold += gold;
 		this.state.stats.totalGoldEarned += gold;
 		return { sold: 1, gold };
