@@ -672,7 +672,12 @@ class SentleGame {
     }
 
     setupEventListeners() {
-        document.addEventListener('keydown', (e) => this.handleKeyPress(e));
+        // Remove previous keydown handler to prevent duplicate listeners
+        if (this._keyHandler) {
+            document.removeEventListener('keydown', this._keyHandler);
+        }
+        this._keyHandler = (e) => this.handleKeyPress(e);
+        document.addEventListener('keydown', this._keyHandler);
 
         document.querySelectorAll('.key').forEach((key) => {
             key.addEventListener('click', () => {
@@ -869,7 +874,8 @@ class SentleGame {
                 this.handleCorrectGuess();
             } else {
                 if (this.wordGuesses.length >= this.maxAttemptsPerWord) {
-                    // Failed this word, move to next
+                    // Failed this word — add it to guessedWords so arrangement stage has it
+                    this.guessedWords.push(this.currentWord);
                     this.showMessage(`Out of attempts for "${this.currentWord}". Moving to next word.`, 'warning');
                     this.currentWordIndex += 1;
                     if (this.currentWordIndex < this.words.length) {
@@ -1477,6 +1483,7 @@ class SentleGame {
             userId: this.userId || null,
             revealsUsed: this.revealsUsed,
             revealedLetters: this.revealedLetters,
+            maxReveals: this.maxReveals,
             wordOrder: this.wordOrder,
             originalWords: this.originalWords,
             practiceMode: this.practiceMode,
@@ -1555,10 +1562,7 @@ class SentleGame {
         this.practiceMode = state.practiceMode || false;
         this.revealsUsed = state.revealsUsed || 0;
         this.revealedLetters = state.revealedLetters || {};
-        if (!this.maxReveals) {
-            const totalLetters = (this.sentence || '').replace(/\s/g, '').length;
-            this.maxReveals = Math.floor(totalLetters * 0.2);
-        }
+        this.maxReveals = state.maxReveals || 0;
         this.currentWord = this.words[this.currentWordIndex] || '';
         this.restoreStateDone = true;
 

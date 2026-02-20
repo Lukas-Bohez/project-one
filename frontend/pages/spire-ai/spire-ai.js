@@ -25,6 +25,7 @@
 
     // Multi-theme picker state
     const selectedThemes = new Set();
+    const selectedThemeData = new Map(); // key → { id, type, name }
     let officialThemes = [];
     let communityThemes = [];
     let currentPickerTab = 'official';
@@ -112,11 +113,13 @@
     }
 
     async function doLogin(firstName, lastName, password) {
-        const data = await fetch(`${API_BASE}/login`, {
+        const r = await fetch(`${API_BASE}/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ first_name: firstName, last_name: lastName, password })
-        }).then(r => r.json());
+        });
+        if (!r.ok) throw new Error('Login failed');
+        const data = await r.json();
         if (data.user_id) {
             storeUser(data.user_id, firstName, lastName, password);
             currentUser = { id: data.user_id, firstName, lastName };
@@ -126,11 +129,13 @@
     }
 
     async function doRegister(firstName, lastName, password) {
-        const data = await fetch(`${API_BASE}/register`, {
+        const r = await fetch(`${API_BASE}/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ first_name: firstName, last_name: lastName, password })
-        }).then(r => r.json());
+        });
+        if (!r.ok) throw new Error('Registration failed');
+        const data = await r.json();
         if (data.user_id) {
             storeUser(data.user_id, firstName, lastName, password);
             currentUser = { id: data.user_id, firstName, lastName };
@@ -357,9 +362,15 @@
     window.toggleThemeSelection = function (key, el) {
         if (selectedThemes.has(key)) {
             selectedThemes.delete(key);
+            selectedThemeData.delete(key);
             el.classList.remove('sai-picker-card--selected');
         } else {
             selectedThemes.add(key);
+            selectedThemeData.set(key, {
+                id: el.dataset.themeId,
+                type: el.dataset.themeType,
+                name: el.dataset.themeName
+            });
             el.classList.add('sai-picker-card--selected');
         }
         updateSelectedCount();
@@ -390,19 +401,16 @@
         btn.addEventListener('click', async () => {
             if (selectedThemes.size === 0) return toast('Select at least one theme', 'error');
 
-            // Gather selected theme IDs
+            // Gather selected theme IDs from the stored Map (not DOM — other tab cards may not exist)
             const themeIds = [];
             const themeData = [];
-            selectedThemes.forEach(key => {
-                const card = $(`.sai-picker-card[data-theme-key="${key}"]`);
-                if (card) {
-                    themeIds.push(parseInt(card.dataset.themeId, 10));
-                    themeData.push({
-                        id: card.dataset.themeId,
-                        type: card.dataset.themeType,
-                        name: card.dataset.themeName
-                    });
-                }
+            selectedThemeData.forEach((meta, key) => {
+                themeIds.push(parseInt(meta.id, 10));
+                themeData.push({
+                    id: meta.id,
+                    type: meta.type,
+                    name: meta.name
+                });
             });
 
             if (themeIds.length === 0) return toast('No valid themes selected', 'error');
@@ -990,7 +998,10 @@
 
         if (!dropZone) return;
 
-        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('click', () => {
+            const input = $('#csvFileInput');
+            if (input) input.click();
+        });
         dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('sai-dropzone--active'); });
         dropZone.addEventListener('dragleave', () => dropZone.classList.remove('sai-dropzone--active'));
         dropZone.addEventListener('drop', e => {
@@ -1013,6 +1024,7 @@
                 a.href = URL.createObjectURL(blob);
                 a.download = 'quiz-template.csv';
                 a.click();
+                URL.revokeObjectURL(a.href);
             });
         }
 

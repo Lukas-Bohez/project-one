@@ -57,15 +57,17 @@ const getIpFromWebRTC = () => {
         pc.createDataChannel('');
         pc.createOffer()
             .then(offer => pc.setLocalDescription(offer))
-            .catch(() => resolve(null));
+            .catch(() => { pc.close(); resolve(null); });
             
         pc.onicecandidate = (ice) => {
             if (!ice || !ice.candidate || !ice.candidate.candidate) {
+                pc.close();
                 resolve(null);
                 return;
             }
             const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3})/;
             const ipMatch = ipRegex.exec(ice.candidate.candidate);
+            pc.close();
             if (ipMatch && ipMatch[1]) {
                 resolve(ipMatch[1]);
             } else {
@@ -83,7 +85,7 @@ const handleIpStatus = async (ipAddress) => {
     }
 
     try {
-        const url = `${lanIP}/api/v1/ip-status`;
+        const url = `${window.location.origin}/api/v1/ip-status`;
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -102,7 +104,7 @@ const handleIpStatus = async (ipAddress) => {
 
         if (result.is_banned) {
             console.warn(`IP Address ${ipAddress} is banned! Kicking user...`);
-            window.location.href = `${lanIP}/banned`;
+            window.location.href = `${window.location.origin}/banned`;
             return true;
         } else {
             console.log(`IP Address ${ipAddress} is not banned. Welcome!`);

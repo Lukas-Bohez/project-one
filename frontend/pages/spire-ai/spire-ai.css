@@ -675,6 +675,8 @@ body {
     max-height: 360px;
     overflow-y: auto;
     padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--sai-border) transparent;
 }
 .sai-picker-grid::-webkit-scrollbar { width: 5px; }
 .sai-picker-grid::-webkit-scrollbar-track { background: transparent; }
@@ -1248,7 +1250,7 @@ body {
    ═══════════════════════════════════ */
 .sai-stars { display: flex; gap: 4px; }
 .sai-star { cursor: pointer; font-size: 1.2rem; color: var(--sai-text-muted); opacity: 0.45; transition: var(--sai-transition); }
-.sai-star--active, .sai-star:hover { color: var(--sai-warning); }
+.sai-star--active, .sai-star:hover { color: var(--sai-warning); opacity: 1; }
 
 /* ═══════════════════════════════════
    ADMIN REVIEW (community tab)

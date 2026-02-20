@@ -41,6 +41,21 @@
         [data-theme="dark"] .c-modal__close,.theme-dark .c-modal__close{border-color:#374151;background:#1f2937;color:#d1d5db}
         [data-theme="dark"] .c-modal__close:hover,.theme-dark .c-modal__close:hover{background:#374151;border-color:#4b5563}
         .c-product-card{display:block}
+        /* Trust bar */
+        .c-trust-bar{margin:-0.25rem auto 1rem;max-width:1200px;padding:0 1rem}
+        .c-trust-bar__inner{background:rgba(255,255,255,0.88);backdrop-filter:blur(10px);border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem}
+        .c-trust-bar__stats{display:flex;gap:1.5rem;flex-wrap:wrap}
+        .c-trust-stat{display:flex;align-items:center;gap:0.4rem;font-size:0.88rem;color:#334155}
+        .c-trust-stat i{color:#3b82f6;font-size:0.9rem}
+        .c-trust-stat__val{font-weight:700;color:#1e293b}
+        .c-trust-stat__lbl{color:#64748b;font-size:0.82rem}
+        .c-trust-bar__link{font-size:0.85rem;color:#3b82f6;text-decoration:none;font-weight:500;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+        .c-trust-bar__link:hover{text-decoration:underline}
+        [data-theme="dark"] .c-trust-bar__inner,.theme-dark .c-trust-bar__inner{background:rgba(17,24,39,0.88);border-color:rgba(255,255,255,0.08)}
+        [data-theme="dark"] .c-trust-stat,.theme-dark .c-trust-stat{color:#cbd5e1}
+        [data-theme="dark"] .c-trust-stat__val,.theme-dark .c-trust-stat__val{color:#e2e8f0}
+        [data-theme="dark"] .c-trust-stat__lbl,.theme-dark .c-trust-stat__lbl{color:#94a3b8}
+        [data-theme="dark"] .c-trust-bar__link,.theme-dark .c-trust-bar__link{color:#93c5fd}
     </style>
     
     <link rel="stylesheet" href="css/styles.css">
@@ -126,6 +141,39 @@
             <p class="c-product-card__support-note">
                 Need help? <a href="/pages/support/" target="_blank" rel="noopener">Contact support</a> &mdash; we typically reply within 24 hours.
             </p>
+        </section>
+
+        <!-- =============================================
+             TRUST: Live Download Statistics
+             ============================================= -->
+        <section class="c-trust-bar" id="trustBar" aria-label="Download statistics" style="display:none;">
+            <div class="c-trust-bar__inner">
+                <div class="c-trust-bar__stats">
+                    <div class="c-trust-stat">
+                        <i class="fa-solid fa-download"></i>
+                        <span class="c-trust-stat__val" id="trustDownloads">—</span>
+                        <span class="c-trust-stat__lbl">Downloads</span>
+                    </div>
+                    <div class="c-trust-stat">
+                        <i class="fa-solid fa-users"></i>
+                        <span class="c-trust-stat__val" id="trustUsers">—</span>
+                        <span class="c-trust-stat__lbl">Unique Users</span>
+                    </div>
+                    <div class="c-trust-stat">
+                        <i class="fa-solid fa-globe"></i>
+                        <span class="c-trust-stat__val" id="trustCountries">—</span>
+                        <span class="c-trust-stat__lbl">Countries</span>
+                    </div>
+                    <div class="c-trust-stat">
+                        <i class="fa-solid fa-desktop"></i>
+                        <span class="c-trust-stat__val" id="trustTopPlatform">—</span>
+                        <span class="c-trust-stat__lbl">Top Platform</span>
+                    </div>
+                </div>
+                <a href="/pages/admin/download-analytics.html" class="c-trust-bar__link">
+                    <i class="fa-solid fa-chart-line"></i> View full analytics
+                </a>
+            </div>
         </section>
 
         <!-- Download instructions modal -->
@@ -486,6 +534,25 @@
     
     <script>
     (function(){'use strict';function getCurrentTheme(){const t=document.documentElement.getAttribute('data-theme');if(t)return t;if(document.body.classList.contains('theme-dark'))return'dark';if(document.body.classList.contains('theme-light'))return'light';return localStorage.getItem('theme')||localStorage.getItem('quiz-theme-preference')||'light'}function updateModals(){const theme=getCurrentTheme(),isDark=theme==='dark',infoModal=document.getElementById('infoModal'),infoBtn=document.getElementById('infoBtn');if(infoModal){const content=infoModal.querySelector('.modal-content'),closeBtn=infoModal.querySelector('.close-btn');if(isDark){infoModal.classList.add('qts-dark');if(content){content.style.background='#0f1724';content.style.color='#e6eef9';content.style.boxShadow='0 10px 30px rgba(0,0,0,0.6)';content.querySelectorAll('.info-list li').forEach(li=>{li.style.color='#cbd5e1';const strong=li.querySelector('strong');if(strong)strong.style.color='#93c5fd'});content.querySelectorAll('.section-title').forEach(t=>{t.style.color='#93c5fd';t.style.borderBottomColor='rgba(255,255,255,0.08)'});const modalTitle=content.querySelector('.modal-title');if(modalTitle)modalTitle.style.color='#e6eef9';content.querySelectorAll('.info-section p').forEach(p=>p.style.color='#cbd5e1')}if(closeBtn){closeBtn.style.background='#0b1220';closeBtn.style.border='1px solid rgba(255,255,255,0.1)';closeBtn.style.color='#cbd5e1'}if(infoBtn){infoBtn.style.background='#1d4ed8';infoBtn.style.boxShadow='0 2px 10px rgba(29,78,216,0.3)'}}else{infoModal.classList.remove('qts-dark');if(content){content.style.background='white';content.style.color='#2c3e50';content.style.boxShadow='0 10px 30px rgba(0,0,0,0.3)';content.querySelectorAll('.info-list li').forEach(li=>{li.style.color='#555';const strong=li.querySelector('strong');if(strong)strong.style.color='#2c3e50'});content.querySelectorAll('.section-title').forEach(t=>{t.style.color='#34495e';t.style.borderBottomColor='#e9ecef'});const modalTitle=content.querySelector('.modal-title');if(modalTitle)modalTitle.style.color='#2c3e50';content.querySelectorAll('.info-section p').forEach(p=>p.style.color='#555')}if(closeBtn){closeBtn.style.background='#f8f9fa';closeBtn.style.border='1px solid #dee2e6';closeBtn.style.color='#6c757d'}if(infoBtn){infoBtn.style.background='#007bff';infoBtn.style.boxShadow='0 2px 10px rgba(0,123,255,0.3)'}}}}window.addEventListener('storage',function(e){if((e.key==='theme'||e.key==='quiz-theme-preference')&&e.newValue){setTimeout(updateModals,50)}});window.addEventListener('themeChanged',function(e){setTimeout(updateModals,50)});const observer=new MutationObserver(function(mutations){let themeChanged=false;mutations.forEach(function(mutation){if(mutation.type==='attributes'&&(mutation.attributeName==='data-theme'||mutation.attributeName==='class')){themeChanged=true}if(mutation.type==='attributes'&&mutation.attributeName==='style'){if(mutation.target.id==='infoModal'&&mutation.target.style.display==='block'){setTimeout(updateModals,10)}}});if(themeChanged){setTimeout(updateModals,10)}});observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class']});observer.observe(document.body,{attributes:true,attributeFilter:['style','class']});setTimeout(updateModals,100)})();
+    </script>
+    
+    <!-- Trust bar: live download statistics -->
+    <script>
+    (function () {
+        const bar = document.getElementById('trustBar');
+        if (!bar) return;
+        fetch(`https://${window.location.hostname}/api/v1/download/analytics`)
+            .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+            .then(d => {
+                document.getElementById('trustDownloads').textContent = d.total_downloads.toLocaleString();
+                document.getElementById('trustUsers').textContent = d.unique_users.toLocaleString();
+                document.getElementById('trustCountries').textContent = d.countries.length;
+                const topPlatform = d.platforms && d.platforms.length ? d.platforms[0].name : '—';
+                document.getElementById('trustTopPlatform').textContent = topPlatform;
+                bar.style.display = '';
+            })
+            .catch(() => { /* silently hide bar on error */ });
+    })();
     </script>
 </body>
 </html>

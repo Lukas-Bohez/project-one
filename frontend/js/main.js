@@ -192,8 +192,6 @@ const manualInitialize = () => {
     listenToButtons();
 };
 
-document.addEventListener('DOMContentLoaded', initApp);
-
 if (document.readyState !== 'loading') {
     initApp();
 } else {
