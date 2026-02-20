@@ -1070,9 +1070,59 @@
       "platform": "Windows",
       "browser": "Opera",
       "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 OPR/127.0.0.0"
+    },
+    "38.125.100.54": {
+      "count": 1,
+      "bandwidth_gb": 0.012928055599331856,
+      "active_downloads": 0,
+      "last_download": "2026-02-20T19:28:10.278561",
+      "download_started_at": "2026-02-20T19:28:03.260082",
+      "platform": "Windows",
+      "browser": "Chrome",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+    },
+    "178.221.10.204": {
+      "count": 1,
+      "bandwidth_gb": 0.012928055599331856,
+      "active_downloads": 0,
+      "last_download": "2026-02-20T19:31:09.465750",
+      "download_started_at": "2026-02-20T19:30:59.226656",
+      "platform": "Windows",
+      "browser": "Chrome",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+    },
+    "77.111.244.210": {
+      "count": 1,
+      "bandwidth_gb": 0.012928055599331856,
+      "active_downloads": 0,
+      "last_download": "2026-02-20T19:33:35.158844",
+      "download_started_at": "2026-02-20T19:33:20.720219",
+      "platform": "Windows",
+      "browser": "Opera",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 OPR/127.0.0.0"
+    },
+    "86.83.60.232": {
+      "count": 1,
+      "bandwidth_gb": 0.012928055599331856,
+      "active_downloads": 0,
+      "last_download": "2026-02-20T19:51:00.741609",
+      "download_started_at": "2026-02-20T19:50:53.717152",
+      "platform": "Windows",
+      "browser": "Edge",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0"
+    },
+    "136.49.68.215": {
+      "count": 0,
+      "bandwidth_gb": 0.0,
+      "active_downloads": 1,
+      "last_download": null,
+      "download_started_at": "2026-02-20T19:53:36.671790",
+      "platform": "Android",
+      "browser": "Chrome",
+      "user_agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Mobile Safari/537.36"
     }
   },
   "last_reset_month": "2026-02",
-  "total_monthly_bandwidth_gb": 2.5956115917043685,
+  "total_monthly_bandwidth_gb": 2.647323814101696,
   "file_size_gb": 0.0126953125
 }

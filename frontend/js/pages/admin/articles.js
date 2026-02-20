@@ -665,16 +665,31 @@ const renderArticleStats = () => {
 };
 
 const updatePagination = () => {
-    const prevBtn = document.querySelector('.c-pagination__btn--prev');
-    const nextBtn = document.querySelector('.c-pagination__btn--next');
-    const pageInfo = document.querySelector('.c-pagination__info');
+    // Scope to the articles tab to avoid hitting the Questions tab pagination
+    const articlesTab = document.querySelector('[data-tab="articles"]');
+    if (!articlesTab) return;
+    
+    const prevBtn = articlesTab.querySelector('.c-pagination__btn--prev');
+    const nextBtn = articlesTab.querySelector('.c-pagination__btn--next');
+    const pageInfo = articlesTab.querySelector('.c-pagination__info');
     
     if (prevBtn) {
         prevBtn.disabled = articlesState.currentPage === 1;
+        // Remove old listener to avoid duplicates, then add click handler
+        prevBtn.onclick = () => {
+            if (articlesState.currentPage > 1) {
+                loadArticles(articlesState.currentPage - 1);
+            }
+        };
     }
     
     if (nextBtn) {
         nextBtn.disabled = articlesState.currentPage >= articlesState.totalPages;
+        nextBtn.onclick = () => {
+            if (articlesState.currentPage < articlesState.totalPages) {
+                loadArticles(articlesState.currentPage + 1);
+            }
+        };
     }
     
     if (pageInfo) {
@@ -1276,86 +1291,9 @@ const handleArticleSave = async (event) => {
 };
 
 const attachArticleButtonListeners = (container) => {
-    // Edit buttons
-    container.querySelectorAll('.js-edit-article').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            const articleId = parseInt(btn.dataset.id);
-            let article = (articlesState.articles || []).find(a => a.id === articleId);
-            if (!article) {
-                try { article = await fetchArticleById(articleId); } catch {}
-            }
-            if (article) {
-                await showArticleModal(article);
-            }
-        });
-    });
-    
-    // View buttons
-    container.querySelectorAll('.js-view-article').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            const articleId = parseInt(btn.dataset.id);
-            let article = (articlesState.articles || []).find(a => a.id === articleId);
-            if (!article) {
-                try { article = await fetchArticleById(articleId); } catch {}
-            }
-            if (article) {
-                showArticleDetails(article);
-            }
-        });
-    });
-    
-    // Publish buttons
-    container.querySelectorAll('.js-publish-article').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            const articleId = parseInt(btn.dataset.id);
-            try {
-                await updateArticleStatus(articleId, 'published');
-                await loadArticles(articlesState.currentPage);
-            } catch (error) {
-                console.error('Error publishing article:', error);
-            }
-        });
-    });
-    
-    // Unpublish buttons
-    container.querySelectorAll('.js-unpublish-article').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            const articleId = parseInt(btn.dataset.id);
-            try {
-                await updateArticleStatus(articleId, 'draft');
-                await loadArticles(articlesState.currentPage);
-            } catch (error) {
-                console.error('Error unpublishing article:', error);
-            }
-        });
-    });
-    
-    // Delete buttons
-    container.querySelectorAll('.js-delete-article').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            const articleId = parseInt(btn.dataset.id);
-            const article = articlesState.articles.find(a => a.id === articleId);
-            
-            if (article) {
-                showConfirmDialog(
-                    `Are you sure you want to delete "${article.title}"? This action cannot be undone.`,
-                    async () => {
-                        try {
-                            await deleteArticle(articleId);
-                            await loadArticles(articlesState.currentPage);
-                        } catch (error) {
-                            console.error('Error deleting article:', error);
-                        }
-                    }
-                );
-            }
-        });
-    });
+    // All button click handling is done via document-level event delegation
+    // in listenToArticles(). This function is kept as a no-op for compatibility
+    // with existing call sites in loadArticles() and renderGroupedArticles().
 };
 
 let _articlesListenersAttached = false;

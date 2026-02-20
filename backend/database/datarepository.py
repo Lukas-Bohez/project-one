@@ -2836,6 +2836,27 @@ class StoriesRepository:
         params = [story_id]
         result = Database.execute_sql(sql, params)
         return result is not None and result > 0
+
+    @staticmethod
+    def update_story(story_id: int, name: Optional[str] = None, description: Optional[str] = None, slug: Optional[str] = None) -> bool:
+        """Update a story's name, description, and/or slug."""
+        fields = []
+        params = []
+        if name is not None:
+            fields.append("name = %s")
+            params.append(name)
+        if description is not None:
+            fields.append("description = %s")
+            params.append(description)
+        if slug is not None:
+            fields.append("slug = %s")
+            params.append(slug)
+        if not fields:
+            return False
+        sql = f"UPDATE stories SET {', '.join(fields)} WHERE id = %s"
+        params.append(story_id)
+        result = Database.execute_sql(sql, params)
+        return result is not None and result >= 0
     
     @staticmethod
     def set_article_active_status(article_id: int, is_active: bool) -> bool:

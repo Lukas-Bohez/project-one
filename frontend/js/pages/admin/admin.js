@@ -2294,28 +2294,26 @@ const listenToAddButtons = () => {
     // The articles tab will be initialized when that script loads
 };
 
+let _migrationListenersAttached = false;
+
 const listenToMigration = () => {
+    // Guard against duplicate initialization (called on every Themes tab switch)
+    if (_migrationListenersAttached) return;
+    _migrationListenersAttached = true;
+
     // Migration dropdown change listeners
     const sourceSelect = document.querySelector('.js-source-theme-select');
     const targetSelect = document.querySelector('.js-target-theme-select');
     const migrateButton = document.querySelector('.js-migrate-questions');
     
-    console.log('Setting up migration listeners:', {
-        sourceSelect: !!sourceSelect,
-        targetSelect: !!targetSelect,
-        migrateButton: !!migrateButton
-    });
-    
     if (sourceSelect) {
         sourceSelect.addEventListener('change', () => {
-            console.log('Source theme changed:', sourceSelect.value);
             updateMigrationButtonState();
         });
     }
     
     if (targetSelect) {
         targetSelect.addEventListener('change', () => {
-            console.log('Target theme changed:', targetSelect.value);
             updateMigrationButtonState();
         });
     }
@@ -2743,9 +2741,12 @@ async function loadStoriesTab() {
             </div>
             <div class="c-story-card__body">
               <div class="c-story-card__desc">${escapeHTML(s.description || '')}</div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+              <div class="c-story-card__actions">
                 <button class="c-btn c-btn--sm c-btn--primary js-view-story" data-id="${s.id}">
                   <i class="fas fa-list-ol"></i> View Articles
+                </button>
+                <button class="c-btn c-btn--sm c-btn--edit js-edit-story" data-id="${s.id}" data-name="${escapeHTML(s.name)}" data-desc="${escapeHTML(s.description || '')}">
+                  <i class="fas fa-pen"></i> Edit
                 </button>
                 <button class="c-btn c-btn--sm c-btn--danger js-delete-story" data-id="${s.id}" data-name="${escapeHTML(s.name)}">
                   <i class="fas fa-trash"></i> Delete
@@ -2755,24 +2756,66 @@ async function loadStoriesTab() {
           </div>
         `).join('')}
       </div>
-      <div class="c-story-articles js-story-articles" style="margin-top:16px;"></div>
+      <div class="c-story-articles js-story-articles" style="margin-top:16px;">
+        <div class="c-empty-state" style="padding:2rem;">
+          <i class="fas fa-hand-pointer" style="font-size:1.5rem;opacity:0.4;margin-bottom:0.5rem;"></i>
+          <p>Click "View Articles" on a story to see its articles here.</p>
+        </div>
+      </div>
     `;
 
         // Hook up Create Story button
         const createBtn = container.querySelector('.js-create-story');
         if (createBtn) {
-            createBtn.addEventListener('click', async () => {
-                try {
-                    const name = prompt('Story name (required):');
-                    if (!name || !name.trim()) return;
-                    const description = prompt('Story description (optional):') || '';
-                    const result = await createStoryIfNotExists(name.trim(), description.trim());
-                    showNotification(result.created ? 'Story created' : 'Story already existed', 'success');
-                    await loadStoriesTab();
-                } catch (e) {
-                    console.error(e);
-                    showNotification(e.message || 'Failed to create story', 'error');
-                }
+            createBtn.addEventListener('click', () => {
+                const overlay = document.createElement('div');
+                overlay.className = 'c-modal-overlay c-modal-overlay--active';
+                overlay.innerHTML = `
+                  <div class="c-modal c-modal--sm">
+                    <div class="c-modal__header">
+                      <h2 class="c-modal__title"><i class="fas fa-plus"></i> Create Story</h2>
+                      <button class="c-modal__close js-close-create-story">&times;</button>
+                    </div>
+                    <div class="c-modal__body">
+                      <div class="c-form-group">
+                        <label class="c-form-label" for="create-story-name">Name <span style="color:var(--admin-danger)">*</span></label>
+                        <input class="c-form-input" type="text" id="create-story-name" placeholder="Enter story name" maxlength="200" />
+                      </div>
+                      <div class="c-form-group">
+                        <label class="c-form-label" for="create-story-desc">Description</label>
+                        <textarea class="c-form-input" id="create-story-desc" rows="4" placeholder="Optional description" maxlength="2000"></textarea>
+                      </div>
+                    </div>
+                    <div class="c-modal__footer">
+                      <button class="c-btn c-btn--sm c-btn--secondary js-close-create-story">Cancel</button>
+                      <button class="c-btn c-btn--sm c-btn--primary js-save-create-story">Create Story</button>
+                    </div>
+                  </div>
+                `;
+                document.body.appendChild(overlay);
+
+                const closeModal = () => overlay.remove();
+                overlay.querySelectorAll('.js-close-create-story').forEach(b => b.addEventListener('click', closeModal));
+                overlay.addEventListener('click', (ev) => { if (ev.target === overlay) closeModal(); });
+
+                // Auto-focus the name input
+                const nameInput = overlay.querySelector('#create-story-name');
+                if (nameInput) nameInput.focus();
+
+                overlay.querySelector('.js-save-create-story').addEventListener('click', async () => {
+                    const name = overlay.querySelector('#create-story-name').value.trim();
+                    const description = overlay.querySelector('#create-story-desc').value.trim();
+                    if (!name) { showNotification('Story name is required', 'error'); return; }
+                    try {
+                        const result = await createStoryIfNotExists(name, description);
+                        closeModal();
+                        showNotification(result.created ? 'Story created' : 'Story already existed', 'success');
+                        await loadStoriesTab();
+                    } catch (e) {
+                        console.error(e);
+                        showNotification(e.message || 'Failed to create story', 'error');
+                    }
+                });
             });
         }
 
@@ -2782,23 +2825,95 @@ async function loadStoriesTab() {
             const storyId = e.currentTarget.getAttribute('data-id');
             const storyName = e.currentTarget.getAttribute('data-name');
             if (!storyId) return;
-            if (!confirm(`Delete story "${storyName}"? Articles within the story will NOT be deleted.`)) return;
-            try {
-                const userId = sessionStorage.getItem('admin_user_id');
-                const rfidCode = sessionStorage.getItem('admin_rfid_code');
-                const headers = { 'Accept': 'application/json' };
-                if (userId && rfidCode) { headers['X-User-ID'] = userId; headers['X-RFID'] = rfidCode; }
-                const res = await fetch(`${lanIP}/api/v1/stories/${encodeURIComponent(storyId)}`, { method: 'DELETE', headers });
-                if (!res.ok) {
-                    const data = await res.json().catch(() => null);
-                    throw new Error(data?.detail || `HTTP ${res.status}`);
+            showConfirmDialog(
+                `Delete story "${storyName}"? Articles within the story will NOT be deleted.`,
+                async () => {
+                    try {
+                        const userId = sessionStorage.getItem('admin_user_id');
+                        const rfidCode = sessionStorage.getItem('admin_rfid_code');
+                        const headers = { 'Accept': 'application/json' };
+                        if (userId && rfidCode) { headers['X-User-ID'] = userId; headers['X-RFID'] = rfidCode; }
+                        const res = await fetch(`${lanIP}/api/v1/stories/${encodeURIComponent(storyId)}`, { method: 'DELETE', headers });
+                        if (!res.ok) {
+                            const data = await res.json().catch(() => null);
+                            throw new Error(data?.detail || `HTTP ${res.status}`);
+                        }
+                        showNotification('Story deleted', 'success');
+                        await loadStoriesTab();
+                    } catch (err) {
+                        console.error('Failed to delete story:', err);
+                        showNotification(err.message || 'Failed to delete story', 'error');
+                    }
                 }
-                showNotification('Story deleted', 'success');
-                await loadStoriesTab();
-            } catch (err) {
-                console.error('Failed to delete story:', err);
-                showNotification(err.message || 'Failed to delete story', 'error');
-            }
+            );
+        });
+    });
+
+    // Edit story buttons
+    container.querySelectorAll('.js-edit-story').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const storyId = e.currentTarget.getAttribute('data-id');
+            const currentName = e.currentTarget.getAttribute('data-name');
+            const currentDesc = e.currentTarget.getAttribute('data-desc');
+            if (!storyId) return;
+
+            // Show edit modal
+            const overlay = document.createElement('div');
+            overlay.className = 'c-modal-overlay c-modal-overlay--active';
+            overlay.innerHTML = `
+              <div class="c-modal c-modal--sm">
+                <div class="c-modal__header">
+                  <h2 class="c-modal__title"><i class="fas fa-pen"></i> Edit Story</h2>
+                  <button class="c-modal__close js-close-edit-story">&times;</button>
+                </div>
+                <div class="c-modal__body">
+                  <div class="c-form-group">
+                    <label class="c-form-label" for="edit-story-name">Name</label>
+                    <input class="c-form-input" type="text" id="edit-story-name" value="${currentName}" maxlength="200" />
+                  </div>
+                  <div class="c-form-group">
+                    <label class="c-form-label" for="edit-story-desc">Description</label>
+                    <textarea class="c-form-input" id="edit-story-desc" rows="4" maxlength="2000">${currentDesc}</textarea>
+                  </div>
+                </div>
+                <div class="c-modal__footer">
+                  <button class="c-btn c-btn--sm c-btn--secondary js-close-edit-story">Cancel</button>
+                  <button class="c-btn c-btn--sm c-btn--primary js-save-edit-story">Save Changes</button>
+                </div>
+              </div>
+            `;
+            document.body.appendChild(overlay);
+
+            const closeModal = () => overlay.remove();
+            overlay.querySelectorAll('.js-close-edit-story').forEach(b => b.addEventListener('click', closeModal));
+            overlay.addEventListener('click', (ev) => { if (ev.target === overlay) closeModal(); });
+
+            overlay.querySelector('.js-save-edit-story').addEventListener('click', async () => {
+                const newName = overlay.querySelector('#edit-story-name').value.trim();
+                const newDesc = overlay.querySelector('#edit-story-desc').value.trim();
+                if (!newName) { showNotification('Story name cannot be empty', 'error'); return; }
+                try {
+                    const userId = sessionStorage.getItem('admin_user_id');
+                    const rfidCode = sessionStorage.getItem('admin_rfid_code');
+                    const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+                    if (userId && rfidCode) { headers['X-User-ID'] = userId; headers['X-RFID'] = rfidCode; }
+                    const res = await fetch(`${lanIP}/api/v1/stories/${encodeURIComponent(storyId)}`, {
+                        method: 'PUT',
+                        headers,
+                        body: JSON.stringify({ name: newName, description: newDesc })
+                    });
+                    if (!res.ok) {
+                        const data = await res.json().catch(() => null);
+                        throw new Error(data?.detail || `HTTP ${res.status}`);
+                    }
+                    closeModal();
+                    showNotification('Story updated', 'success');
+                    await loadStoriesTab();
+                } catch (err) {
+                    console.error('Failed to update story:', err);
+                    showNotification(err.message || 'Failed to update story', 'error');
+                }
+            });
         });
     });
 
@@ -2815,6 +2930,16 @@ async function loadStoriesTab() {
           // Ensure ordered by story_order ascending
           list.sort((a, b) => (a.story_order ?? 0) - (b.story_order ?? 0));
           
+          if (list.length === 0) {
+            target.innerHTML = `
+              <div class="c-empty-state">
+                <i class="fas fa-book-open" style="font-size:2rem;opacity:0.4;margin-bottom:0.5rem;"></i>
+                <p>No articles in this story yet.</p>
+                <p style="font-size:0.85rem;opacity:0.7;">Add articles and assign them to this story from the Articles tab.</p>
+              </div>`;
+            return;
+          }
+
           // Parse content and render articles like articles.js does
           target.innerHTML = list.map(a => {
             const createdAt = new Date(a.created_at).toLocaleDateString();

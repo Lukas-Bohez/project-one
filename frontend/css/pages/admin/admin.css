@@ -442,6 +442,12 @@ body header.c-header.c-header--admin,
     margin-bottom: 4px;
     line-height: 1.45;
 }
+.c-story-card__actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
 [data-theme="dark"] .c-story-card {
     background: var(--admin-card);
     border-color: var(--admin-border);
@@ -560,10 +566,13 @@ body header.c-header.c-header--admin,
 .c-btn--primary {
     background-color: var(--admin-primary);
     color: white;
+    border: none;
 }
 
 .c-btn--primary:hover {
     background-color: var(--admin-secondary);
+    color: white;
+    border: none;
     transform: translateY(-1px);
     box-shadow: 0 3px 7px rgba(0, 0, 0, 0.15);
 }
@@ -617,6 +626,7 @@ body header.c-header.c-header--admin,
 .c-btn--sm {
     padding: 0.5rem 1.25rem;
     font-size: 0.9rem;
+    min-height: auto;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
@@ -3080,6 +3090,104 @@ textarea[placeholder*="Brief introduction"] {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Edit Story Modal ── */
+.c-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1100;
+    justify-content: center;
+    align-items: center;
+}
+.c-modal-overlay--active {
+    display: flex;
+}
+.c-modal-overlay .c-modal {
+    position: relative;
+    width: 100%;
+    height: auto;
+    max-width: 480px;
+    background: var(--admin-card, #fff);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    animation: fadeIn 0.2s ease;
+}
+.c-modal-overlay .c-modal--sm {
+    max-width: 420px;
+}
+.c-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--admin-border, #e5e7eb);
+}
+.c-modal__title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--admin-text, #1e293b);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.c-modal__close {
+    position: static;
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: var(--admin-text-light, #64748b);
+    padding: 0;
+    line-height: 1;
+}
+.c-modal__close:hover {
+    color: var(--admin-danger, #e74c3c);
+}
+.c-modal__body {
+    padding: 1.25rem;
+}
+.c-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid var(--admin-border, #e5e7eb);
+}
+
+.c-form-label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--admin-text, #1e293b);
+}
+
+.c-btn--secondary {
+    background-color: var(--admin-light, #f1f5f9);
+    color: var(--admin-dark, #2c3e50);
+    border: none;
+}
+.c-btn--secondary:hover {
+    background-color: var(--admin-border, #e5e7eb);
+    color: var(--admin-dark, #2c3e50);
+}
+
+[data-theme="dark"] .c-modal-overlay .c-modal {
+    background: var(--admin-card);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+[data-theme="dark"] .c-modal__title,
+[data-theme="dark"] .c-form-label {
+    color: var(--admin-text);
+}
+[data-theme="dark"] .c-modal__header,
+[data-theme="dark"] .c-modal__footer {
+    border-color: var(--admin-border);
 }
 
 
