@@ -87,3 +87,5 @@ build/
 .vite/
 .parcel/
 .eslintcache
+# JWT secret (auto-generated, must not be committed)
+backend/.jwt_secret

@@ -21,6 +21,8 @@ class ManageBusinessRepository:
     @staticmethod
     def create_business(business_data: Dict[str, Any]) -> Optional[int]:
         """Create a new business"""
+        conn = None
+        cursor = None
         try:
             conn = connection_pool.get_connection()
             cursor = conn.cursor()
@@ -64,6 +66,8 @@ class ManageBusinessRepository:
     @staticmethod
     def get_business_by_id(business_id: int) -> Optional[Dict[str, Any]]:
         """Get business by ID"""
+        conn = None
+        cursor = None
         try:
             conn = connection_pool.get_connection()
             cursor = conn.cursor(dictionary=True)
@@ -87,6 +91,8 @@ class ManageBusinessRepository:
     @staticmethod
     def get_businesses_by_owner(owner_user_id: int) -> List[Dict[str, Any]]:
         """Get all businesses owned by a user"""
+        conn = None
+        cursor = None
         try:
             conn = connection_pool.get_connection()
             cursor = conn.cursor(dictionary=True)
@@ -114,6 +120,8 @@ class ManageEmployeeRepository:
     @staticmethod
     def get_employee_roles() -> List[Dict[str, Any]]:
         """Get available employee roles"""
+        conn = None
+        cursor = None
         try:
             conn = connection_pool.get_connection()
             cursor = conn.cursor(dictionary=True)
@@ -137,6 +145,8 @@ class ManageEmployeeRepository:
     @staticmethod
     def create_employee(employee_data: Dict[str, Any]) -> Optional[int]:
         """Create a new employee"""
+        conn = None
+        cursor = None
         try:
             conn = connection_pool.get_connection()
             cursor = conn.cursor()
@@ -187,6 +197,8 @@ class ManageEmployeeRepository:
     @staticmethod
     def get_employees_by_business(business_id: int, status: Optional[str] = None) -> List[Dict[str, Any]]:
         """Get all employees for a business"""
+        conn = None
+        cursor = None
         try:
             conn = connection_pool.get_connection()
             cursor = conn.cursor(dictionary=True)
@@ -226,6 +238,8 @@ class ManageEmployeeRepository:
     @staticmethod
     def get_employee_by_id(employee_id: int) -> Optional[Dict[str, Any]]:
         """Get employee by ID"""
+        conn = None
+        cursor = None
         try:
             conn = connection_pool.get_connection()
             cursor = conn.cursor(dictionary=True)
@@ -254,6 +268,8 @@ class ManageEmployeeRepository:
     @staticmethod
     def update_employee(employee_id: int, update_data: Dict[str, Any]) -> bool:
         """Update an employee record"""
+        conn = None
+        cursor = None
         try:
             conn = connection_pool.get_connection()
             cursor = conn.cursor()
@@ -307,6 +323,8 @@ class ManageEmployeeRepository:
     @staticmethod
     def delete_employee(employee_id: int) -> bool:
         """Delete an employee record"""
+        conn = None
+        cursor = None
         try:
             conn = connection_pool.get_connection()
             cursor = conn.cursor()
@@ -334,6 +352,8 @@ class ManageShiftRepository:
     @staticmethod
     def create_shift(shift_data: Dict[str, Any]) -> Optional[int]:
         """Create a new shift"""
+        conn = None
+        cursor = None
         try:
             conn = connection_pool.get_connection()
             cursor = conn.cursor()
@@ -379,6 +399,8 @@ class ManageShiftRepository:
     @staticmethod
     def get_shifts_by_date_range(business_id: int, start_date: date, end_date: date) -> List[Dict[str, Any]]:
         """Get shifts within a date range"""
+        conn = None
+        cursor = None
         try:
             conn = connection_pool.get_connection()
             cursor = conn.cursor(dictionary=True)
@@ -409,6 +431,8 @@ class ManageShiftRepository:
     @staticmethod
     def get_employee_shifts(employee_id: int, start_date: date, end_date: date) -> List[Dict[str, Any]]:
         """Get shifts for a specific employee"""
+        conn = None
+        cursor = None
         try:
             conn = connection_pool.get_connection()
             cursor = conn.cursor(dictionary=True)
@@ -442,6 +466,8 @@ class ManageTimeOffRepository:
     @staticmethod
     def create_time_off_request(request_data: Dict[str, Any]) -> Optional[int]:
         """Create a new time-off request"""
+        conn = None
+        cursor = None
         try:
             conn = connection_pool.get_connection()
             cursor = conn.cursor()
@@ -484,6 +510,8 @@ class ManageTimeOffRepository:
     @staticmethod
     def get_pending_requests(business_id: int) -> List[Dict[str, Any]]:
         """Get all pending time-off requests for a business"""
+        conn = None
+        cursor = None
         try:
             conn = connection_pool.get_connection()
             cursor = conn.cursor(dictionary=True)
@@ -517,6 +545,8 @@ class ManageWarningRepository:
     @staticmethod
     def create_warning(warning_data: Dict[str, Any]) -> Optional[int]:
         """Create a new warning"""
+        conn = None
+        cursor = None
         try:
             conn = connection_pool.get_connection()
             cursor = conn.cursor()
@@ -560,6 +590,8 @@ class ManageWarningRepository:
     @staticmethod
     def get_employee_warnings(employee_id: int, active_only: bool = True) -> List[Dict[str, Any]]:
         """Get warnings for an employee"""
+        conn = None
+        cursor = None
         try:
             conn = connection_pool.get_connection()
             cursor = conn.cursor(dictionary=True)
@@ -598,6 +630,8 @@ class ManageShiftRepository:
     @staticmethod
     def get_shift_by_id(shift_id: int) -> Optional[Dict[str, Any]]:
         """Get shift by ID"""
+        conn = None
+        cursor = None
         try:
             conn = connection_pool.get_connection()
             cursor = conn.cursor(dictionary=True)
@@ -621,6 +655,8 @@ class ManageShiftRepository:
     @staticmethod
     def update_shift(shift_id: int, shift_data: Dict[str, Any]) -> bool:
         """Update a shift"""
+        conn = None
+        cursor = None
         try:
             conn = connection_pool.get_connection()
             cursor = conn.cursor()
@@ -659,6 +695,8 @@ class ManageShiftRepository:
     @staticmethod
     def delete_shift(shift_id: int) -> bool:
         """Delete a shift"""
+        conn = None
+        cursor = None
         try:
             conn = connection_pool.get_connection()
             cursor = conn.cursor()
@@ -688,6 +726,8 @@ class ManageTimeOffRepository:
     @staticmethod
     def get_time_off_request_by_id(request_id: int) -> Optional[Dict[str, Any]]:
         """Get time-off request by ID"""
+        conn = None
+        cursor = None
         try:
             conn = connection_pool.get_connection()
             cursor = conn.cursor(dictionary=True)
@@ -711,6 +751,8 @@ class ManageTimeOffRepository:
     @staticmethod
     def get_employee_time_off_requests(employee_id: int) -> List[Dict[str, Any]]:
         """Get all time-off requests for an employee"""
+        conn = None
+        cursor = None
         try:
             conn = connection_pool.get_connection()
             cursor = conn.cursor(dictionary=True)
@@ -738,6 +780,8 @@ class ManageTimeOffRepository:
     @staticmethod
     def review_time_off_request(request_id: int, review_data: Dict[str, Any]) -> bool:
         """Review (approve/deny) a time-off request"""
+        conn = None
+        cursor = None
         try:
             conn = connection_pool.get_connection()
             cursor = conn.cursor()
