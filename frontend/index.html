@@ -56,6 +56,11 @@
         [data-theme="dark"] .c-trust-stat__val,.theme-dark .c-trust-stat__val{color:#e2e8f0}
         [data-theme="dark"] .c-trust-stat__lbl,.theme-dark .c-trust-stat__lbl{color:#94a3b8}
         [data-theme="dark"] .c-trust-bar__link,.theme-dark .c-trust-bar__link{color:#93c5fd}
+        /* Update banner */
+        .c-update-banner{display:flex;align-items:center;gap:0.6rem;background:linear-gradient(135deg,#dbeafe,#ede9fe);border:1px solid #c7d2fe;border-radius:8px;padding:0.6rem 1rem;margin-bottom:1rem;font-size:0.88rem;color:#3730a3}
+        .c-update-banner i{color:#6366f1;font-size:1rem}
+        [data-theme="dark"] .c-update-banner,.theme-dark .c-update-banner{background:linear-gradient(135deg,rgba(30,58,138,0.35),rgba(88,28,135,0.25));border-color:rgba(99,102,241,0.3);color:#c7d2fe}
+        [data-theme="dark"] .c-update-banner i,.theme-dark .c-update-banner i{color:#a5b4fc}
     </style>
     
     <link rel="stylesheet" href="css/styles.css">
@@ -110,6 +115,11 @@
             <h2 class="c-product-card__title">Conversion The Spire Reborn</h2>
             <p class="c-product-card__tagline">A powerful offline converter built with Flutter. Free, open-source, and yours to keep.</p>
 
+            <div class="c-update-banner">
+                <i class="fa-solid fa-sparkles"></i>
+                <span><strong>v1.5 is out now!</strong> &mdash; Dark mode, improved performance &amp; bug fixes.</span>
+            </div>
+
             <ul class="c-feature-list">
                 <li class="c-feature-list__item"><i class="fa-solid fa-bolt"></i> Fast local conversion &mdash; no internet needed</li>
                 <li class="c-feature-list__item"><i class="fa-solid fa-lock"></i> Your files never leave your machine</li>
@@ -121,12 +131,12 @@
                 <button id="conversionDownloadBtn" class="c-btn c-btn--cta c-btn--windows" onclick="handleConversionDownload(event)">
                     <i class="fa-brands fa-windows"></i>&nbsp; Download for Windows
                 </button>
-                <a id="conversionDownloadApkBtn" class="c-btn c-btn--cta c-btn--android" href="/downloads/ConvertTheSpireReborn.apk" download="ConvertTheSpireReborn.apk" onclick="showAndroidInstructions()">
+                <button id="conversionDownloadApkBtn" class="c-btn c-btn--cta c-btn--android" onclick="handleAndroidDownload(event)">
                     <i class="fa-brands fa-android"></i>&nbsp; Download for Android
-                </a>
-                <a id="conversionDownloadLinuxBtn" class="c-btn c-btn--cta c-btn--linux" href="/downloads/linux.zip" download="linux.zip" onclick="showLinuxInstructions()">
+                </button>
+                <button id="conversionDownloadLinuxBtn" class="c-btn c-btn--cta c-btn--linux" onclick="handleLinuxDownload(event)">
                     <i class="fa-brands fa-linux"></i>&nbsp; Download for Linux
-                </a>
+                </button>
             </div>
             <div class="c-product-card__actions">
                 <button id="conversionInstructionsBtn" class="c-btn c-btn--outline" type="button">
@@ -464,7 +474,9 @@
                 }
                 return;
             }
-            const status = await fetch('/api/v1/download/conversion/status').then(r => r.json());
+            const statusRes = await fetch('/api/v1/download/conversion/status');
+            if (!statusRes.ok) throw new Error('Status check failed');
+            const status = await statusRes.json();
             statusText.innerHTML = `\u2713 Downloading <strong>ConversionTheSpireReborn.zip</strong><br>Downloads this month: ${status.downloads_this_month}<br>Speed: ${status.download_speed_mbps || 2} MB/s`;
             statusDiv.style.display = 'block';
             if (isDark) {
@@ -497,11 +509,63 @@
             }
         }
     }
+
+    // Generic tracked download handler for Android and Linux
+    async function _handleTrackedDownload(event, platform, apiPath, fileName) {
+        event.preventDefault();
+        const modal = document.getElementById('conversionDownloadModal');
+        const statusDiv = document.getElementById('conversionStatus');
+        const statusText = document.getElementById('statusText');
+        const isDark = getCurrentTheme() === 'dark';
+        
+        try {
+            const checkRes = await fetch('/api/v1/download/conversion/check', { method: 'POST' });
+            if (!checkRes.ok) {
+                const error = await checkRes.json();
+                statusText.textContent = '\u274c ' + error.detail;
+                statusDiv.style.display = 'block';
+                if (isDark) { statusDiv.style.background = 'rgba(127,29,29,0.9)'; statusDiv.style.borderColor = '#ef4444'; statusDiv.style.color = '#fecaca'; }
+                else { statusDiv.style.background = '#fee2e2'; statusDiv.style.borderColor = '#ef4444'; statusDiv.style.color = '#7f1d1d'; }
+                return;
+            }
+            const statusRes = await fetch('/api/v1/download/conversion/status');
+            if (!statusRes.ok) throw new Error('Status check failed');
+            const status = await statusRes.json();
+            statusText.innerHTML = `\u2713 Downloading <strong>${fileName}</strong><br>Downloads this month: ${status.downloads_this_month}<br>Speed: ${status.download_speed_mbps || 2} MB/s`;
+            statusDiv.style.display = 'block';
+            if (isDark) { statusDiv.style.background = 'rgba(30,58,138,0.9)'; statusDiv.style.borderColor = '#3b82f6'; statusDiv.style.color = '#93c5fd'; }
+            else { statusDiv.style.background = '#dbeafe'; statusDiv.style.borderColor = '#3b82f6'; statusDiv.style.color = '#1e3a8a'; }
+
+            // Switch modal to the correct platform tab
+            document.querySelectorAll('.c-platform-tab').forEach(t => t.classList.toggle('active', t.dataset.platform === platform));
+            document.querySelectorAll('.c-platform-panel').forEach(p => p.classList.toggle('active', p.id === 'platform-' + platform));
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+
+            setTimeout(() => { window.location.href = apiPath; }, 500);
+        } catch (error) {
+            console.error('Download error:', error);
+            statusText.textContent = '\u274c Error: ' + error.message;
+            statusDiv.style.display = 'block';
+            if (isDark) { statusDiv.style.background = 'rgba(127,29,29,0.9)'; statusDiv.style.borderColor = '#ef4444'; statusDiv.style.color = '#fecaca'; }
+            else { statusDiv.style.background = '#fee2e2'; statusDiv.style.borderColor = '#ef4444'; statusDiv.style.color = '#7f1d1d'; }
+        }
+    }
+
+    function handleAndroidDownload(event) {
+        _handleTrackedDownload(event, 'android', '/api/v1/download/conversion/apk', 'ConvertTheSpireReborn.apk');
+    }
+
+    function handleLinuxDownload(event) {
+        _handleTrackedDownload(event, 'linux', '/api/v1/download/conversion/linux', 'linux.zip');
+    }
     
     // Watch for theme changes and update status div
     const observer = new MutationObserver(() => {
+        const statusDiv = document.getElementById('conversionStatus');
+        if (!statusDiv) return;
         const isDark = getCurrentTheme() === 'dark';
-        if (document.getElementById('conversionStatus').style.display !== 'none') {
+        if (getComputedStyle(statusDiv).display !== 'none') {
             applyStatusDivTheme(isDark);
         }
     });

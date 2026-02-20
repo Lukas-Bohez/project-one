@@ -635,6 +635,15 @@ class GameEngine {
         this.state.resources.silver += silverProduced;
         this.state.stats.totalResourcesMined.silver += silverProduced;
         this.state.production.silver = this.state.workers.silverMiners * efficiency * eventMiningMult;
+        
+        // Arcade Legend: passive resource generation while playing arcade games
+        if (arcadeBonuses.passiveGen && arcadeBonuses.passiveGen > 0) {
+            const passiveRate = arcadeBonuses.passiveGen * deltaTime;
+            this.state.resources.stone += passiveRate * (this.state.workers.stoneMiners || 1);
+            this.state.resources.coal += passiveRate * (this.state.workers.coalMiners || 0);
+            this.state.resources.iron += passiveRate * (this.state.workers.ironMiners || 0);
+            this.state.resources.silver += passiveRate * (this.state.workers.silverMiners || 0);
+        }
     }
     
     updateProcessingProduction(deltaTime) {
@@ -954,7 +963,7 @@ class GameEngine {
         this.updateElement('universities-count', this.state.city.universities.toString());
         
         // Update bank bonus display
-        const bankBonusPct = (Math.pow(1.20, this.state.city.banks) - 1) * 100; // 20% per bank (compound)
+        const bankBonusPct = Math.round((Math.pow(1.20, this.state.city.banks) - 1) * 1000) / 10; // 20% per bank (compound)
         this.updateElement('bank-bonus-display', `+${bankBonusPct}%`);
         
         // Update sales department with level and interval info
@@ -1179,37 +1188,38 @@ class GameEngine {
         this.updateElement('iron-miner-cost',  this.formatNumber(ironCost));
         this.updateElement('silver-miner-cost', this.formatNumber(silverCost));
         
-    // Processing buttons (gated by unlocks)
-    this.updateButtonState('build-smelter-btn', this.state.resources.gold >= 20 && this.state.unlock_processing);
-    this.updateButtonState('build-forge-btn', this.state.resources.gold >= 100 && this.state.unlock_processing);
-    this.updateButtonState('build-refinery-btn', this.state.resources.gold >= 500 && this.state.unlock_processing);
-    this.updateButtonState('build-mint-btn', this.state.resources.gold >= 2000 && this.state.unlock_processing);
-    this.updateButtonState('build-polisher-btn', this.state.resources.gold >= 50 && this.state.unlock_processing);
-    this.updateButtonState('build-coker-btn', this.state.resources.gold >= 150 && this.state.unlock_processing);
-    this.updateButtonState('build-chemplant-btn', this.state.resources.gold >= 400 && this.state.unlock_oil);
-    this.updateButtonState('build-chipfab-btn', this.state.resources.gold >= 1200 && this.state.unlock_electronics);
-    this.updateButtonState('build-jeweler-btn', this.state.resources.gold >= 900 && this.state.unlock_jewelry);
-    this.updateButtonState('build-assembly-btn', this.state.resources.gold >= 1600 && this.state.unlock_electronics);
-    this.updateButtonState('build-autoplant-btn', this.state.resources.gold >= 5000 && this.state.unlock_automotive);
+    // Processing buttons (gated by unlocks) — apply building discount
+    const bd = (this.rebirthRewards ? this.rebirthRewards.getActiveEffects(this.state.rebirthUpgrades || {}).buildingDiscount : 1);
+    this.updateButtonState('build-smelter-btn', this.state.resources.gold >= Math.ceil(20 * bd) && this.state.unlock_processing);
+    this.updateButtonState('build-forge-btn', this.state.resources.gold >= Math.ceil(100 * bd) && this.state.unlock_processing);
+    this.updateButtonState('build-refinery-btn', this.state.resources.gold >= Math.ceil(500 * bd) && this.state.unlock_processing);
+    this.updateButtonState('build-mint-btn', this.state.resources.gold >= Math.ceil(2000 * bd) && this.state.unlock_processing);
+    this.updateButtonState('build-polisher-btn', this.state.resources.gold >= Math.ceil(50 * bd) && this.state.unlock_processing);
+    this.updateButtonState('build-coker-btn', this.state.resources.gold >= Math.ceil(150 * bd) && this.state.unlock_processing);
+    this.updateButtonState('build-chemplant-btn', this.state.resources.gold >= Math.ceil(400 * bd) && this.state.unlock_oil);
+    this.updateButtonState('build-chipfab-btn', this.state.resources.gold >= Math.ceil(1200 * bd) && this.state.unlock_electronics);
+    this.updateButtonState('build-jeweler-btn', this.state.resources.gold >= Math.ceil(900 * bd) && this.state.unlock_jewelry);
+    this.updateButtonState('build-assembly-btn', this.state.resources.gold >= Math.ceil(1600 * bd) && this.state.unlock_electronics);
+    this.updateButtonState('build-autoplant-btn', this.state.resources.gold >= Math.ceil(5000 * bd) && this.state.unlock_automotive);
         
         // Market buttons
         this.updateButtonState('sell-stone-btn', this.state.resources.stone >= 1);
         this.updateButtonState('sell-coal-btn', this.state.resources.coal >= 1);
         this.updateButtonState('sell-iron-btn', this.state.resources.iron >= 1);
         this.updateButtonState('sell-silver-btn', this.state.resources.silver >= 1);
-        this.updateButtonState('hire-stone-trader-btn', this.state.resources.gold >= 15);
-        this.updateButtonState('hire-coal-trader-btn', this.state.resources.gold >= 75);
-        this.updateButtonState('hire-metal-trader-btn', this.state.resources.gold >= 300);
+        this.updateButtonState('hire-stone-trader-btn', this.state.resources.gold >= Math.ceil(15 * bd));
+        this.updateButtonState('hire-coal-trader-btn', this.state.resources.gold >= Math.ceil(75 * bd));
+        this.updateButtonState('hire-metal-trader-btn', this.state.resources.gold >= Math.ceil(300 * bd));
         
         // Transport buttons
-        this.updateButtonState('buy-cart-btn', this.state.resources.gold >= 30);
-        this.updateButtonState('buy-wagon-btn', this.state.resources.gold >= 150);
-        this.updateButtonState('buy-train-btn', this.state.resources.gold >= 800);
+        this.updateButtonState('buy-cart-btn', this.state.resources.gold >= Math.ceil(30 * bd));
+        this.updateButtonState('buy-wagon-btn', this.state.resources.gold >= Math.ceil(150 * bd));
+        this.updateButtonState('buy-train-btn', this.state.resources.gold >= Math.ceil(800 * bd));
         
-        // City buttons - dynamic costs based on current level
+        // City buttons - dynamic costs based on current level (apply building discount)
         // Police/Security cost scales with 1.25x per hire (generates decay for rebirth)
         const policeCount = this.state.city.police || 0;
-        const policeCost = Math.floor(5000 * Math.pow(1.25, policeCount));
+        const policeCost = Math.ceil(5000 * Math.pow(1.25, policeCount) * bd);
         this.updateElement('police-cost', policeCost.toString());
         this.updateButtonState('hire-police-btn', this.state.resources.gold >= policeCost);
         
@@ -1226,7 +1236,7 @@ class GameEngine {
         
         // Politician cost scales with 1.05x per hire
         const politicianCount = this.state.city.politicians || 0;
-        const politicianCost = Math.floor(250 * Math.pow(1.05, politicianCount));
+        const politicianCost = Math.ceil(250 * Math.pow(1.05, politicianCount) * bd);
         this.updateElement('politician-cost', politicianCost.toString());
         this.updateButtonState('hire-politician-btn', this.state.resources.gold >= politicianCost);
         
@@ -1243,7 +1253,7 @@ class GameEngine {
         
         // Bank cost scales with 1.20x per building
         const bankCount = this.state.city.banks || 0;
-        const bankCost = Math.floor(500 * Math.pow(1.20, bankCount));
+        const bankCost = Math.ceil(500 * Math.pow(1.20, bankCount) * bd);
         this.updateElement('bank-cost', bankCost.toString());
         this.updateButtonState('build-bank-btn', this.state.resources.gold >= bankCost);
         
@@ -1260,7 +1270,7 @@ class GameEngine {
         
         // Market cost scales with 1.15x per building
         const marketCount = this.state.city.markets || 0;
-        const marketCost = Math.floor(1000 * Math.pow(1.15, marketCount));
+        const marketCost = Math.ceil(1000 * Math.pow(1.15, marketCount) * bd);
         this.updateElement('market-cost', marketCost.toString());
         this.updateButtonState('build-market-btn', this.state.resources.gold >= marketCost);
         
@@ -1277,7 +1287,7 @@ class GameEngine {
         
         // University cost scales with 1.10x per building
         const universityCount = this.state.city.universities || 0;
-        const universityCost = Math.floor(2500 * Math.pow(1.10, universityCount));
+        const universityCost = Math.ceil(2500 * Math.pow(1.10, universityCount) * bd);
         this.updateElement('university-cost', universityCost.toString());
         this.updateButtonState('build-university-btn', this.state.resources.gold >= universityCost);
         
@@ -1294,7 +1304,7 @@ class GameEngine {
         
         // Sales department button - dynamic cost based on level
         const salesDeptLevel = this.state.city.salesDepartment || 0;
-        const salesDeptCost = Math.floor(300 * Math.pow(1.5, salesDeptLevel));
+        const salesDeptCost = Math.ceil(300 * Math.pow(1.5, salesDeptLevel) * bd);
         this.updateElement('sales-dept-cost', salesDeptCost.toString());
         this.updateButtonState('build-sales-dept-btn', this.state.resources.gold >= salesDeptCost);
         
@@ -1311,7 +1321,7 @@ class GameEngine {
         
         // Mining Academy button - dynamic cost based on level
         const miningAcademyLevel = this.state.city.miningAcademy || 0;
-        const miningAcademyCost = Math.floor(400 * Math.pow(1.15, miningAcademyLevel));
+        const miningAcademyCost = Math.ceil(400 * Math.pow(1.15, miningAcademyLevel) * bd);
         this.updateElement('mining-academy-cost', miningAcademyCost.toString());
         this.updateButtonState('build-mining-academy-btn', this.state.resources.gold >= miningAcademyCost);
         
@@ -1327,7 +1337,7 @@ class GameEngine {
         
         // Automation Lab button - dynamic cost based on level
         const automationLabLevel = this.state.city.automationLab || 0;
-        const automationLabCost = Math.floor(600 * Math.pow(1.5, automationLabLevel));
+        const automationLabCost = Math.ceil(600 * Math.pow(1.5, automationLabLevel) * bd);
         this.updateElement('automation-lab-cost', automationLabCost.toString());
         this.updateButtonState('build-automation-lab-btn', this.state.resources.gold >= automationLabCost);
         
@@ -2100,7 +2110,7 @@ class GameEngine {
         // Get rebirth upgrade effects
         const rebirthEffects = this.rebirthRewards ? 
             this.rebirthRewards.getActiveEffects(this.state.rebirthUpgrades || {}) : 
-            { instantCraftChance: 0, automationSpeedMultiplier: 1, extraAutoCrafts: 0 };
+            { instantCraftChance: 0, automationSpeedMultiplier: 1, extraAutoCrafts: 0, cooldownReduction: 1, craftingSpeed: 1 };
         
         // Check for instant craft (bypasses cooldown)
         if (rebirthEffects.instantCraftChance > 0 && Math.random() < rebirthEffects.instantCraftChance) {
@@ -2118,6 +2128,12 @@ class GameEngine {
             
             // Apply automation speed multiplier from rebirth upgrades
             cooldown = cooldown / rebirthEffects.automationSpeedMultiplier;
+            
+            // Apply crafting speed from Quick Crafting rebirth upgrade
+            cooldown = cooldown / rebirthEffects.craftingSpeed;
+            
+            // Apply cooldown reduction from Time Warp rebirth upgrade
+            cooldown = cooldown * rebirthEffects.cooldownReduction;
             
             if (now - this.state.lastAutoCraftTime < cooldown) {
                 return; // Still in cooldown
@@ -2190,7 +2206,7 @@ class GameEngine {
             autoPlant: 'autoPlants'
         };
         
-        const cost = costs[processorType];
+        const baseCost = costs[processorType];
         const stateKey = stateKeyMap[processorType];
         
         if (!stateKey) {
@@ -2198,6 +2214,12 @@ class GameEngine {
             return false;
         }
         
+        // Apply building discount from rebirth upgrades
+        const rebirthEffects = this.rebirthRewards ? 
+            this.rebirthRewards.getActiveEffects(this.state.rebirthUpgrades || {}) : 
+            { buildingDiscount: 1 };
+        
+        const cost = Math.ceil(baseCost * rebirthEffects.buildingDiscount);
         if (this.state.resources.gold >= cost) {
             this.state.resources.gold -= cost;
             this.state.stats.totalGoldSpent += cost;
@@ -2230,13 +2252,18 @@ class GameEngine {
     }
     
     hireTrader(traderType) {
-        const costs = {
+        const baseCosts = {
             stoneTrader: 15,
             coalTrader: 75,
             metalTrader: 300
         };
         
-        const cost = costs[traderType];
+        // Apply building discount from rebirth upgrades
+        const rebirthEffects = this.rebirthRewards ? 
+            this.rebirthRewards.getActiveEffects(this.state.rebirthUpgrades || {}) : 
+            { buildingDiscount: 1 };
+        
+        const cost = Math.ceil(baseCosts[traderType] * rebirthEffects.buildingDiscount);
         if (this.state.resources.gold >= cost) {
             this.state.resources.gold -= cost;
             this.state.stats.totalGoldSpent += cost;
@@ -2266,14 +2293,19 @@ class GameEngine {
     }
     
     buyTransport(transportType) {
-        const costs = {
+        const baseCosts = {
             cart: 30,
             wagon: 150,
             train: 800
         };
         const emojis = { cart: '🛒', wagon: '🚛', train: '🚂' };
         
-        const cost = costs[transportType];
+        // Apply building discount from rebirth upgrades
+        const rebirthEffects = this.rebirthRewards ? 
+            this.rebirthRewards.getActiveEffects(this.state.rebirthUpgrades || {}) : 
+            { buildingDiscount: 1 };
+        
+        const cost = Math.ceil(baseCosts[transportType] * rebirthEffects.buildingDiscount);
         if (this.state.resources.gold >= cost) {
             this.state.resources.gold -= cost;
             this.state.stats.totalGoldSpent += cost;
@@ -2299,10 +2331,15 @@ class GameEngine {
     }
     
     hireService(serviceType) {
+        // Apply building discount from rebirth upgrades
+        const rebirthEffects = this.rebirthRewards ? 
+            this.rebirthRewards.getActiveEffects(this.state.rebirthUpgrades || {}) : 
+            { buildingDiscount: 1 };
+        
         if (serviceType === 'police') {
             const currentPolice = this.state.city.police || 0;
             // Scale cost significantly since police generate decay progress (needed for rebirth)
-            const cost = Math.floor(5000 * Math.pow(1.25, currentPolice)); // 25% increase per hire
+            const cost = Math.ceil(5000 * Math.pow(1.25, currentPolice) * rebirthEffects.buildingDiscount); // 25% increase per hire
             if (this.state.resources.gold >= cost) {
                 this.state.resources.gold -= cost;
                 this.state.stats.totalGoldSpent += cost;
@@ -2324,7 +2361,7 @@ class GameEngine {
             }
         } else if (serviceType === 'politician') {
             const currentPoliticians = this.state.city.politicians || 0;
-            const cost = Math.floor(250 * Math.pow(1.05, currentPoliticians));
+            const cost = Math.ceil(250 * Math.pow(1.05, currentPoliticians) * rebirthEffects.buildingDiscount);
             if (this.state.resources.gold >= cost) {
                 this.state.resources.gold -= cost;
                 this.state.stats.totalGoldSpent += cost;
@@ -2520,12 +2557,17 @@ class GameEngine {
         const config = buildingConfig[buildingType];
         if (!config) return false;
         
+        // Apply building discount from rebirth upgrades
+        const rebirthEffects = this.rebirthRewards ? 
+            this.rebirthRewards.getActiveEffects(this.state.rebirthUpgrades || {}) : 
+            { buildingDiscount: 1 };
+        
         // Upgradable buildings (scaling costs)
         const upgradableBuildings = ['salesDepartment', 'miningAcademy', 'automationLab'];
         
         if (upgradableBuildings.includes(buildingType)) {
             const currentLevel = this.state.city[config.stateKey] || 0;
-            const cost = Math.floor(config.cost * Math.pow(config.effectMultiplier, currentLevel));
+            const cost = Math.ceil(config.cost * Math.pow(config.effectMultiplier, currentLevel) * rebirthEffects.buildingDiscount);
             
             console.log(`${buildingType}: Current level ${currentLevel}, Cost: ${cost}, Gold: ${this.state.resources.gold}`);
             
@@ -2567,7 +2609,7 @@ class GameEngine {
         
         // Regular buildings (bank, market, university) - now also scale with effect multiplier
         const currentLevel = this.state.city[config.stateKey] || 0;
-        const cost = Math.floor(config.cost * Math.pow(config.effectMultiplier, currentLevel));
+        const cost = Math.ceil(config.cost * Math.pow(config.effectMultiplier, currentLevel) * rebirthEffects.buildingDiscount);
         
         if (this.state.resources.gold >= cost) {
             this.state.resources.gold -= cost;
@@ -2955,6 +2997,12 @@ class GameEngine {
             if (effects.startingGold > 0) {
                 this.state.resources.gold += effects.startingGold;
                 console.log(`💰 Starting gold bonus: +${effects.startingGold} gold`);
+            }
+            // Apply starting decay from Void Resistance upgrade
+            if (effects.startingDecay > 0) {
+                const effectiveMaxDecay = this.state.city.maxDecay * (1 + (newRebirthCount * 0.5));
+                this.state.city.decay = Math.min(effectiveMaxDecay, effects.startingDecay);
+                console.log(`🌀 Starting decay bonus: +${effects.startingDecay} decay`);
             }
         }
         
