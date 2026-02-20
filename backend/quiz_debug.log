@@ -1352,3 +1352,7 @@
 2026-02-20 19:22:22,001 - INFO - Quiz Logger Initialized
 2026-02-20 19:22:22,001 - INFO - ==================================================
 2026-02-20 19:22:22,129 - INFO - [IDLE_CLEANUP] Session idle checker started (timeout=60s)
+2026-02-20 19:51:56,658 - INFO - ==================================================
+2026-02-20 19:51:56,658 - INFO - Quiz Logger Initialized
+2026-02-20 19:51:56,658 - INFO - ==================================================
+2026-02-20 19:51:56,792 - INFO - [IDLE_CLEANUP] Session idle checker started (timeout=60s)

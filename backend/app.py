@@ -1240,6 +1240,34 @@ def delete_story(
         raise HTTPException(status_code=500, detail=f"Failed to delete story: {e}")
 
 
+@app.put(ENDPOINT + "/stories/{story_id}", tags=["Stories"])
+def update_story(
+    story_id: int,
+    payload: dict = Body(...),
+    current_user_info: dict = Depends(get_current_user_info)
+):
+    """Update a story's name and/or description (admin only)."""
+    if current_user_info["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can edit stories")
+    name = payload.get("name")
+    description = payload.get("description")
+    slug = payload.get("slug")
+    if name is not None and not str(name).strip():
+        raise HTTPException(status_code=400, detail="Story name cannot be empty")
+    try:
+        ok = StoriesRepository.update_story(story_id, name=name, description=description, slug=slug)
+        if not ok and name is None and description is None and slug is None:
+            raise HTTPException(status_code=400, detail="No fields to update")
+        story = StoriesRepository.get_story_by_id(story_id)
+        if not story:
+            raise HTTPException(status_code=404, detail="Story not found")
+        return story
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update story: {e}")
+
+
 # ----------------------------------------------------
 # Articles Endpoints (fix view/create/update/delete and by-story)
 # ----------------------------------------------------
