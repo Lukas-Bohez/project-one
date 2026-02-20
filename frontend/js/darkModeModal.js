@@ -33,7 +33,11 @@
     const ensureTM = () => window.themeManager || window.themeManager?.applyTheme || window.setTheme;
     const setLight = () => window.setTheme ? window.setTheme('light') : document.documentElement.setAttribute('data-theme','light');
     const setDark = () => window.setTheme ? window.setTheme('dark') : document.documentElement.setAttribute('data-theme','dark');
-    const toggle = () => window.toggleTheme ? window.toggleTheme() : document.documentElement.toggleAttribute('data-theme','dark');
+    const toggle = () => {
+      if (window.toggleTheme) { window.toggleTheme(); return; }
+      const cur = document.documentElement.getAttribute('data-theme');
+      document.documentElement.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
+    };
 
     document.getElementById('dm-light').addEventListener('click', ()=>{ ensureTM(); setLight(); });
     document.getElementById('dm-dark').addEventListener('click', ()=>{ ensureTM(); setDark(); });

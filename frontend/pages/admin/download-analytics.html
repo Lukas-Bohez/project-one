@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Analytics | Quiz The Spire</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <style>
+        /* ── Reset & Variables ── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #0f1117; --surface: #1a1d27; --surface2: #222632;
+            --border: rgba(255,255,255,0.08); --text: #e4e6eb; --text-muted: #8b8fa3;
+            --primary: #6c5ce7; --primary-light: #a29bfe;
+            --success: #00cec9; --danger: #ff6b6b; --accent: #fdcb6e;
+            --radius: 12px; --radius-sm: 8px;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; padding: 24px 16px;
+        }
+
+        /* ── Layout ── */
+        .da-container { max-width: 1100px; margin: 0 auto; }
+        .da-header { text-align: center; margin-bottom: 32px; }
+        .da-header h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 6px; }
+        .da-header h1 i { color: var(--primary-light); margin-right: 8px; }
+        .da-header p { color: var(--text-muted); font-size: 0.95rem; }
+
+        /* ── Stat Cards ── */
+        .da-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+        .da-stat {
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 20px 18px; text-align: center;
+        }
+        .da-stat__val { font-size: 2rem; font-weight: 800; display: block; line-height: 1.1; }
+        .da-stat__lbl { font-size: 0.82rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+        .da-stat--primary .da-stat__val { color: var(--primary-light); }
+        .da-stat--success .da-stat__val { color: var(--success); }
+        .da-stat--accent  .da-stat__val { color: var(--accent); }
+        .da-stat--danger  .da-stat__val { color: var(--danger); }
+
+        /* ── Section ── */
+        .da-section {
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 22px; margin-bottom: 24px;
+        }
+        .da-section h2 { font-size: 1.15rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .da-section h2 i { color: var(--primary-light); }
+
+        /* ── Country Table ── */
+        .da-table { width: 100%; border-collapse: collapse; }
+        .da-table th {
+            text-align: left; font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase;
+            letter-spacing: 0.5px; padding: 8px 12px; border-bottom: 1px solid var(--border);
+        }
+        .da-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 0.92rem; }
+        .da-table tr:last-child td { border-bottom: none; }
+        .da-table tr:hover td { background: rgba(108,92,231,0.04); }
+        .da-flag { font-size: 1.3rem; vertical-align: middle; margin-right: 8px; }
+        .da-bar-wrap { background: var(--surface2); border-radius: 4px; height: 8px; width: 100%; max-width: 180px; }
+        .da-bar { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--primary), var(--primary-light)); min-width: 4px; }
+
+        /* ── Download Log Table ── */
+        .da-log { max-height: 480px; overflow-y: auto; }
+        .da-log::-webkit-scrollbar { width: 6px; }
+        .da-log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .da-log table { width: 100%; }
+
+        /* ── Loading ── */
+        .da-loading { text-align: center; padding: 48px; color: var(--text-muted); }
+        .da-loading i { font-size: 2rem; margin-bottom: 12px; display: block; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Responsive ── */
+        @media (max-width: 600px) {
+            .da-stats { grid-template-columns: repeat(2, 1fr); }
+            .da-table td, .da-table th { padding: 8px 6px; font-size: 0.82rem; }
+            .da-bar-wrap { max-width: 80px; }
+            .da-plat-grid { grid-template-columns: 1fr !important; }
+        }
+
+        /* ── Back link ── */
+        .da-back { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); text-decoration: none; font-size: 0.88rem; margin-bottom: 16px; transition: color 0.2s; }
+        .da-back:hover { color: var(--primary-light); }
+
+        /* ── Refresh ── */
+        .da-refresh {
+            background: var(--primary); color: #fff; border: none; padding: 8px 16px;
+            border-radius: var(--radius-sm); cursor: pointer; font-size: 0.85rem;
+            display: inline-flex; align-items: center; gap: 6px; transition: opacity 0.2s;
+        }
+        .da-refresh:hover { opacity: 0.85; }
+        .da-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* ── Error ── */
+        .da-error { text-align: center; padding: 32px; color: var(--danger); }
+        .da-error i { font-size: 2rem; display: block; margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+    <div class="da-container">
+        <a href="/" class="da-back"><i class="fas fa-arrow-left"></i> Back to Home</a>
+        <div class="da-header">
+            <h1><i class="fas fa-chart-line"></i> Download Analytics</h1>
+            <p>Conversion The Spire Reborn — download statistics & geographic reach</p>
+        </div>
+
+        <div id="content">
+            <div class="da-loading" id="loader">
+                <i class="fas fa-spinner"></i>
+                <p>Loading analytics data…</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        const API = `https://${window.location.hostname}/api/v1/download/analytics`;
+        const content = document.getElementById('content');
+
+        // Country code → flag emoji
+        function flag(code) {
+            if (!code || code === 'XX') return '🌍';
+            return String.fromCodePoint(...[...code.toUpperCase()].map(c => 0x1F1E6 + c.charCodeAt(0) - 65));
+        }
+
+        function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+        function timeAgo(iso) {
+            if (!iso) return '—';
+            const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+            if (diff < 60) return 'just now';
+            if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+            return `${Math.floor(diff / 86400)}d ago`;
+        }
+
+        async function load() {
+            try {
+                const res = await fetch(API);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                render(data);
+            } catch (e) {
+                content.innerHTML = `<div class="da-error"><i class="fas fa-exclamation-triangle"></i><p>Failed to load analytics: ${esc(e.message)}</p></div>`;
+            }
+        }
+
+        function render(data) {
+            const maxCountryDl = data.countries.length ? data.countries[0].downloads : 1;
+
+            content.innerHTML = `
+                <!-- Summary Stats -->
+                <div class="da-stats">
+                    <div class="da-stat da-stat--primary">
+                        <span class="da-stat__val">${data.total_downloads}</span>
+                        <span class="da-stat__lbl">Total Downloads</span>
+                    </div>
+                    <div class="da-stat da-stat--success">
+                        <span class="da-stat__val">${data.unique_users}</span>
+                        <span class="da-stat__lbl">Unique Users</span>
+                    </div>
+                    <div class="da-stat da-stat--accent">
+                        <span class="da-stat__val">${data.countries.length}</span>
+                        <span class="da-stat__lbl">Countries</span>
+                    </div>
+                    <div class="da-stat da-stat--danger">
+                        <span class="da-stat__val">${data.total_bandwidth_gb.toFixed(2)} GB</span>
+                        <span class="da-stat__lbl">Bandwidth Used</span>
+                    </div>
+                </div>
+
+                <!-- Country Breakdown -->
+                <div class="da-section">
+                    <h2><i class="fas fa-globe-americas"></i> Downloads by Country</h2>
+                    <table class="da-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Country</th>
+                                <th>Downloads</th>
+                                <th>Users</th>
+                                <th>Share</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.countries.map((c, i) => {
+                                const pct = data.total_downloads ? ((c.downloads / data.total_downloads) * 100).toFixed(1) : 0;
+                                const barW = Math.max(3, (c.downloads / maxCountryDl) * 100);
+                                return `<tr>
+                                    <td style="color:var(--text-muted)">${i + 1}</td>
+                                    <td><span class="da-flag">${flag(c.country_code)}</span>${esc(c.country)}</td>
+                                    <td><strong>${c.downloads}</strong></td>
+                                    <td>${c.unique_users}</td>
+                                    <td>
+                                        <div style="display:flex;align-items:center;gap:8px;">
+                                            <div class="da-bar-wrap"><div class="da-bar" style="width:${barW}%"></div></div>
+                                            <span style="font-size:0.8rem;color:var(--text-muted)">${pct}%</span>
+                                        </div>
+                                    </td>
+                                </tr>`;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Individual Downloads Log -->
+                <div class="da-section">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                        <h2 style="margin-bottom:0"><i class="fas fa-list"></i> Download Log</h2>
+                        <button class="da-refresh" onclick="window.__refreshAnalytics()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                    </div>
+
+                    <!-- Platform & Browser Breakdown (inline grid) -->
+                    ${(data.platforms && data.platforms.length) ? `
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+                        <div>
+                            <h3 style="font-size:0.9rem;color:var(--text-muted);margin-bottom:8px;display:flex;align-items:center;gap:6px;"><i class="fas fa-desktop" style="color:var(--primary-light)"></i> Platform</h3>
+                            ${data.platforms.map(p => {
+                                const pct = data.total_downloads ? ((p.downloads / data.total_downloads) * 100).toFixed(1) : 0;
+                                const icon = {'Windows':'fa-brands fa-windows','Android':'fa-brands fa-android','Linux':'fa-brands fa-linux','macOS':'fa-brands fa-apple','iOS':'fa-brands fa-apple','ChromeOS':'fa-brands fa-chrome'}[p.name] || 'fa-solid fa-question';
+                                return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                                    <i class="${icon}" style="width:16px;text-align:center;color:var(--text-muted)"></i>
+                                    <span style="min-width:70px;font-size:0.88rem;">${esc(p.name)}</span>
+                                    <div class="da-bar-wrap" style="flex:1;max-width:none;"><div class="da-bar" style="width:${pct}%"></div></div>
+                                    <span style="font-size:0.78rem;color:var(--text-muted);min-width:56px;text-align:right">${p.downloads} (${pct}%)</span>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                        <div>
+                            <h3 style="font-size:0.9rem;color:var(--text-muted);margin-bottom:8px;display:flex;align-items:center;gap:6px;"><i class="fas fa-compass" style="color:var(--primary-light)"></i> Browser</h3>
+                            ${(data.browsers || []).map(b => {
+                                const pct = data.total_downloads ? ((b.downloads / data.total_downloads) * 100).toFixed(1) : 0;
+                                const icon = {'Chrome':'fa-brands fa-chrome','Firefox':'fa-brands fa-firefox-browser','Safari':'fa-brands fa-safari','Edge':'fa-brands fa-edge','Opera':'fa-brands fa-opera','CLI':'fa-solid fa-terminal'}[b.name] || 'fa-solid fa-globe';
+                                return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                                    <i class="${icon}" style="width:16px;text-align:center;color:var(--text-muted)"></i>
+                                    <span style="min-width:70px;font-size:0.88rem;">${esc(b.name)}</span>
+                                    <div class="da-bar-wrap" style="flex:1;max-width:none;"><div class="da-bar" style="width:${pct}%"></div></div>
+                                    <span style="font-size:0.78rem;color:var(--text-muted);min-width:56px;text-align:right">${b.downloads} (${pct}%)</span>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <div class="da-log">
+                        <table class="da-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Location</th>
+                                    <th>Platform</th>
+                                    <th>Downloads</th>
+                                    <th>Bandwidth</th>
+                                    <th>Last Active</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.downloads.map(d => `<tr>
+                                    <td style="font-family:monospace;font-size:0.82rem;color:var(--text-muted)">${esc(d.ip_masked)}</td>
+                                    <td><span class="da-flag">${flag(d.country_code)}</span>${esc(d.city ? d.city + ', ' + d.country : d.country)}</td>
+                                    <td style="font-size:0.82rem">${esc(d.platform || '—')} / ${esc(d.browser || '—')}</td>
+                                    <td>${d.download_count}</td>
+                                    <td>${(d.bandwidth_gb * 1024).toFixed(1)} MB</td>
+                                    <td style="color:var(--text-muted)">${timeAgo(d.last_download)}</td>
+                                </tr>`).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <p style="text-align:center;color:var(--text-muted);font-size:0.8rem;margin-top:12px;">
+                    Data period: ${esc(data.month)} &middot; IPs are partially masked for privacy
+                </p>
+            `;
+        }
+
+        window.__refreshAnalytics = function () {
+            const btn = document.querySelector('.da-refresh');
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading…'; }
+            load().then(() => {
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh'; }
+            });
+        };
+
+        load();
+    })();
+    </script>
+</body>
+</html>

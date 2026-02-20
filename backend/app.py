@@ -577,7 +577,41 @@ def check_download_allowed(client_ip: str):
     
     return True, "Download allowed"
 
-def record_download_start(client_ip: str):
+def _parse_platform(ua: str) -> str:
+    """Extract platform (OS) from a User-Agent string."""
+    ua_lower = (ua or "").lower()
+    if "android" in ua_lower:
+        return "Android"
+    elif "iphone" in ua_lower or "ipad" in ua_lower:
+        return "iOS"
+    elif "windows" in ua_lower:
+        return "Windows"
+    elif "macintosh" in ua_lower or "mac os" in ua_lower:
+        return "macOS"
+    elif "linux" in ua_lower:
+        return "Linux"
+    elif "cros" in ua_lower:
+        return "ChromeOS"
+    return "Unknown"
+
+def _parse_browser(ua: str) -> str:
+    """Extract browser name from a User-Agent string."""
+    ua_lower = (ua or "").lower()
+    if "edg" in ua_lower:
+        return "Edge"
+    elif "opr" in ua_lower or "opera" in ua_lower:
+        return "Opera"
+    elif "firefox" in ua_lower:
+        return "Firefox"
+    elif "chrome" in ua_lower or "chromium" in ua_lower:
+        return "Chrome"
+    elif "safari" in ua_lower:
+        return "Safari"
+    elif "curl" in ua_lower or "wget" in ua_lower:
+        return "CLI"
+    return "Other"
+
+def record_download_start(client_ip: str, user_agent: str = ""):
     """Record when a download starts."""
     with DOWNLOAD_TRACKER_LOCK:
         tracker = load_download_tracker()
@@ -592,6 +626,13 @@ def record_download_start(client_ip: str):
             }
         
         tracker["ips"][client_ip]["active_downloads"] = tracker["ips"][client_ip].get("active_downloads", 0) + 1
+
+        # Store platform info from user-agent (only keep latest per IP)
+        if user_agent:
+            tracker["ips"][client_ip]["platform"] = _parse_platform(user_agent)
+            tracker["ips"][client_ip]["browser"] = _parse_browser(user_agent)
+            tracker["ips"][client_ip]["user_agent"] = user_agent[:256]  # truncate
+
         save_download_tracker(tracker)
 
 def record_download_complete(client_ip: str, bytes_downloaded: int):
@@ -624,6 +665,54 @@ def record_download_cancel(client_ip: str):
         if client_ip in tracker["ips"]:
             tracker["ips"][client_ip]["active_downloads"] = max(0, tracker["ips"][client_ip].get("active_downloads", 1) - 1)
             save_download_tracker(tracker)
+
+# ====================================================
+# Download Analytics — IP geolocation + stats
+# ====================================================
+import urllib.request as _urllib_req
+
+_geo_cache: dict = {}  # in-memory cache: ip -> {country, countryCode, city, region}
+
+def _batch_geolocate(ips: list) -> dict:
+    """Resolve IPs to countries via ip-api.com batch endpoint (max 100 per call)."""
+    results = {}
+    uncached = [ip for ip in ips if ip not in _geo_cache]
+
+    # Serve cached entries first
+    for ip in ips:
+        if ip in _geo_cache:
+            results[ip] = _geo_cache[ip]
+
+    # Batch request uncached IPs (ip-api allows 100 per POST)
+    for i in range(0, len(uncached), 100):
+        batch = uncached[i:i + 100]
+        try:
+            payload = json.dumps([{"query": ip} for ip in batch]).encode('utf-8')
+            req = _urllib_req.Request(
+                "http://ip-api.com/batch?fields=query,country,countryCode,city,regionName",
+                data=payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with _urllib_req.urlopen(req, timeout=10) as resp:
+                entries = json.loads(resp.read().decode('utf-8'))
+                for entry in entries:
+                    ip_addr = entry.get("query", "")
+                    geo = {
+                        "country": entry.get("country", "Unknown"),
+                        "countryCode": entry.get("countryCode", "XX"),
+                        "city": entry.get("city", ""),
+                        "region": entry.get("regionName", ""),
+                    }
+                    _geo_cache[ip_addr] = geo
+                    results[ip_addr] = geo
+        except Exception as e:
+            logger.warning(f"GeoIP batch lookup failed: {e}")
+            for ip_addr in batch:
+                fallback = {"country": "Unknown", "countryCode": "XX", "city": "", "region": ""}
+                results[ip_addr] = fallback
+
+    return results
 
 # ====================================================
 # End Download Management System
@@ -915,12 +1004,8 @@ async def disconnect(sid):
                 })
         except Exception as e:
             print(f"Error checking session room after disconnect: {e}")
-    elif len(connected_clients) <= 0:
-        # Fallback: if no clients at all, end any active session
-        active = get_active_session_id()
-        if active:
-            QuizSessionRepository.update_session_status(active, 3)
-            print(f"Updated session status to 'ended' — no connected clients")
+    # NOTE: Removed fallback that ended unrelated sessions when any client disconnected.
+    # The idle checker now handles orphaned sessions with a proper 60s timeout.
 
 
 @sio.event
@@ -2583,7 +2668,6 @@ async def add_user_to_active_session(user_id: int):
 
 @app.post("/api/v1/register", status_code=status.HTTP_201_CREATED)
 async def register_user(user_credentials: UserCredentials, request: Request):
-    global current_phase
     try:
         if UserRepository.get_user_by_name(user_credentials.first_name, user_credentials.last_name):
             raise HTTPException(
@@ -2613,32 +2697,17 @@ async def register_user(user_credentials: UserCredentials, request: Request):
         
 
 
-        if not get_active_session_id():
-            # Auto-generated name and description
-            auto_name = f"Session {datetime.now().strftime('%Y-%m-%d %H:%M')}"
-            auto_description = f"Automatically created session on {datetime.now().strftime('%B %d, %Y at %H:%M')}"
-
-            new_session_id = QuizSessionRepository.create_session(
-                session_date=datetime.now(),
-                name="Auto Session",
-                description="Automatically created session",
-                session_status_id=2,  # Must be provided
-                theme_id=None,          # Must be provided (default theme)
-                host_user_id=user_id,  # Must be provided
-                start_time=datetime.now()
+        # Send welcome chat message if there's an active session
+        active_sid = get_active_session_id()
+        if active_sid:
+            ChatLogRepository.create_chat_message(
+                session_id=active_sid,
+                message_text=generate_kawaii_string(user_credentials),
+                user_id=1,
+                message_type='system',
+                reply_to_id=1
             )
-            quiz_logger.info(f"[REGISTER] Created new session {new_session_id} with status=2 (active)")
-            current_phase = 'voting'
-        ChatLogRepository.create_chat_message(
-            session_id=get_active_session_id(),
-            message_text=generate_kawaii_string(user_credentials),  # Comma was missing here
-            user_id=1,
-            message_type='system',
-            reply_to_id=1
-        )
-
-        threadsafe_emit_message_sent(sio,get_active_session_id(),main_asyncio_loop)
-
+            threadsafe_emit_message_sent(sio, active_sid, main_asyncio_loop)
 
         log_user_ip_address(user_id, get_client_ip_sync(request))
         await add_user_to_active_session(user_id)
@@ -2657,7 +2726,6 @@ async def register_user(user_credentials: UserCredentials, request: Request):
 
 @app.post("/api/v1/login")
 async def login_user(user_credentials: UserCredentials, request: Request):
-    global current_phase
     try:
         user_id = UserRepository.authenticate_user(
             user_credentials.first_name,
@@ -2670,30 +2738,17 @@ async def login_user(user_credentials: UserCredentials, request: Request):
                 detail="Invalid first name, last name, or password."
             )
         
-        if not get_active_session_id():
-            # Auto-generated name and description
-            auto_name = f"Session {datetime.now().strftime('%Y-%m-%d %H:%M')}"
-            auto_description = f"Automatically created session on {datetime.now().strftime('%B %d, %Y at %H:%M')}"
-
-            new_session_id = QuizSessionRepository.create_session(
-                session_date=datetime.now(),
-                name="Auto Session",
-                description="Automatically created session",
-                session_status_id=2,  # Must be provided
-                theme_id=None,          # Must be provided (default theme)
-                host_user_id=user_id,  # Must be provided
-                start_time=datetime.now()
+        # Send welcome chat message if there's an active session
+        active_sid = get_active_session_id()
+        if active_sid:
+            ChatLogRepository.create_chat_message(
+                session_id=active_sid,
+                message_text=generate_kawaii_string(user_credentials),
+                user_id=1,
+                message_type='system',
+                reply_to_id=1
             )
-            quiz_logger.info(f"[LOGIN] Created new session {new_session_id} with status=2 (active)")
-            current_phase = 'voting'
-        ChatLogRepository.create_chat_message(
-            session_id=get_active_session_id(),
-            message_text=generate_kawaii_string(user_credentials),  # Comma was missing here
-            user_id=1,
-            message_type='system',
-            reply_to_id=1
-        )
-
+            threadsafe_emit_message_sent(sio, active_sid, main_asyncio_loop)
 
         log_user_ip_address(user_id, get_client_ip_sync(request))
         await add_user_to_active_session(user_id)
@@ -4343,6 +4398,9 @@ async def create_quiz_session(request: Request):
 
         quiz_logger.info(f"[CREATE_SESSION] Session {new_session_id} created by user {user_id} with {len(valid_themes)} themes for voting")
 
+        # Record creation time for idle-checker grace period
+        session_creation_time[new_session_id] = time.time()
+
         # Broadcast session_created event so all hub pages can update in real-time
         session_detail = {
             "session_id": new_session_id,
@@ -4377,7 +4435,9 @@ async def create_quiz_session(request: Request):
 # ── Session idle timeout cleanup ──
 # Constants needed before the thread function
 SESSION_IDLE_TIMEOUT = 60  # seconds of no players before auto-ending a session
+SESSION_GRACE_PERIOD = 90  # seconds after creation before idle checker can end a session
 session_last_activity = {}  # {session_id: timestamp} — tracks when session became empty
+session_creation_time = {}  # {session_id: timestamp} — tracks when session was created
 
 # Background thread that checks every 15 seconds for sessions with 0 players
 # and ends them after SESSION_IDLE_TIMEOUT seconds of being empty.
@@ -4400,6 +4460,10 @@ def _session_idle_checker():
                     player_count = -1  # Unknown, skip
 
                 if player_count == 0:
+                    # Skip sessions still in grace period after creation
+                    created_at = session_creation_time.get(sid)
+                    if created_at and (now - created_at) < SESSION_GRACE_PERIOD:
+                        continue
                     # Mark when we first saw it empty
                     if sid not in session_last_activity:
                         session_last_activity[sid] = now
@@ -6653,9 +6717,13 @@ def emit_theme_selection_if_needed(sio, loop):
 
     try:
         active_session_id = get_active_session_id()
+        if not active_session_id:
+            return  # No active session — nothing to coordinate
         
         # Get the full session details using the ID
         active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
+        if not active_session_info:
+            return  # Session was deleted or invalid
         current_phase = get_session_phase(active_session_id)
         is_timer_running = is_timer_active(active_session_id)
         
@@ -6784,17 +6852,18 @@ def calculate_player_score_percentage(session_id, user_id):
 
 @sio.on('submit_answer')
 async def handle_answer_submission(sid, data):
-    global current_phase, progress, explanationNow, remaining_explanation_time
+    global progress, explanationNow, remaining_explanation_time
     print(f"data received is answer submission is {data}")
     
     # Session-aware: use client's session or fall back to first active
     active_session_id = get_client_session(sid) or get_active_session_id()
+    session_phase = None
     if active_session_id:
-        current_phase = get_session_phase(active_session_id)
-        print(f"Current phase: {current_phase}, explanationNow: {explanationNow}")
+        session_phase = get_session_phase(active_session_id)
+        print(f"Current phase: {session_phase}, explanationNow: {explanationNow}")
     
     # Only accept answers during quiz phase, NOT during explanation phase
-    if current_phase == 'quiz' and not explanationNow:
+    if session_phase == 'quiz' and not explanationNow:
         try:
             logger.debug(f"Starting answer submission with data: {data}")
             
@@ -13606,6 +13675,87 @@ async def get_conversion_download_status(request: Request):
     status = get_download_status(client_ip)
     return status
 
+@app.get("/api/v1/download/analytics")
+async def get_download_analytics():
+    """
+    Public analytics endpoint — returns aggregated download statistics
+    with geolocation data for each IP that completed a download.
+    """
+    with DOWNLOAD_TRACKER_LOCK:
+        tracker = load_download_tracker()
+
+    ips_data = tracker.get("ips", {})
+
+    # Only include IPs that actually completed at least 1 download
+    active_ips = {ip: data for ip, data in ips_data.items() if data.get("count", 0) > 0}
+
+    # Batch geolocate all IPs
+    geo = _batch_geolocate(list(active_ips.keys()))
+
+    # Build per-IP records
+    downloads = []
+    for ip, data in active_ips.items():
+        g = geo.get(ip, {})
+        downloads.append({
+            "ip_masked": ".".join(ip.split(".")[:2]) + ".*.*",  # privacy: mask last 2 octets
+            "ip_hash": hex(hash(ip) & 0xFFFFFFFF),  # stable identifier without revealing IP
+            "country": g.get("country", "Unknown"),
+            "country_code": g.get("countryCode", "XX"),
+            "city": g.get("city", ""),
+            "region": g.get("region", ""),
+            "platform": data.get("platform", "Unknown"),
+            "browser": data.get("browser", "Unknown"),
+            "download_count": data.get("count", 0),
+            "bandwidth_gb": round(data.get("bandwidth_gb", 0.0), 4),
+            "last_download": data.get("last_download"),
+        })
+
+    # Aggregate country stats
+    country_counts: dict = {}
+    for d in downloads:
+        cc = d["country"]
+        if cc not in country_counts:
+            country_counts[cc] = {"downloads": 0, "unique_ips": 0, "country_code": d["country_code"]}
+        country_counts[cc]["downloads"] += d["download_count"]
+        country_counts[cc]["unique_ips"] += 1
+
+    # Aggregate platform stats
+    platform_counts: dict = {}
+    browser_counts: dict = {}
+    for d in downloads:
+        p = d["platform"]
+        b = d["browser"]
+        platform_counts[p] = platform_counts.get(p, 0) + d["download_count"]
+        browser_counts[b] = browser_counts.get(b, 0) + d["download_count"]
+
+    platforms_sorted = sorted(platform_counts.items(), key=lambda x: x[1], reverse=True)
+    browsers_sorted = sorted(browser_counts.items(), key=lambda x: x[1], reverse=True)
+
+    countries_sorted = sorted(country_counts.items(), key=lambda x: x[1]["downloads"], reverse=True)
+
+    total_downloads = sum(d["download_count"] for d in downloads)
+    total_bandwidth = round(sum(d["bandwidth_gb"] for d in downloads), 4)
+    unique_users = len(downloads)
+
+    return {
+        "total_downloads": total_downloads,
+        "unique_users": unique_users,
+        "total_bandwidth_gb": total_bandwidth,
+        "month": tracker.get("last_reset_month", ""),
+        "countries": [
+            {
+                "country": name,
+                "country_code": info["country_code"],
+                "downloads": info["downloads"],
+                "unique_users": info["unique_ips"],
+            }
+            for name, info in countries_sorted
+        ],
+        "platforms": [{"name": name, "downloads": count} for name, count in platforms_sorted],
+        "browsers": [{"name": name, "downloads": count} for name, count in browsers_sorted],
+        "downloads": sorted(downloads, key=lambda x: x["last_download"] or "", reverse=True),
+    }
+
 @app.post("/api/v1/download/conversion/check")
 async def check_conversion_download(request: Request):
     """Check if download is allowed for this IP."""
@@ -13634,8 +13784,9 @@ async def download_conversion(request: Request):
     if not os.path.exists(CONVERSION_FILE_PATH):
         raise HTTPException(status_code=404, detail="Download file not found")
     
-    # Record download start
-    record_download_start(client_ip)
+    # Record download start (with user-agent tracking)
+    ua = request.headers.get("user-agent", "")
+    record_download_start(client_ip, ua)
     
     def generate_with_throttle():
         """Stream file with bandwidth throttling."""
@@ -13697,8 +13848,9 @@ async def download_conversion_apk(request: Request):
     if not os.path.exists(CONVERSION_APK_PATH):
         raise HTTPException(status_code=404, detail="APK download file not found")
     
-    # Record download start
-    record_download_start(client_ip)
+    # Record download start (with user-agent tracking)
+    ua = request.headers.get("user-agent", "")
+    record_download_start(client_ip, ua)
     
     def generate_with_throttle():
         """Stream APK file with bandwidth throttling."""
