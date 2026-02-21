@@ -55,6 +55,39 @@ a { color: inherit; text-decoration: none; }
     overflow: hidden;
 }
 
+/* fix chrome/mobile safari extra bottom padding and stray emoji issues */
+body {
+    padding-bottom: 0 !important;
+}
+
+/* ensure chat messages always have readable text on all themes */
+.chat-message {
+    color: var(--text);
+}
+[data-theme="dark"] .chat-message.other {
+    /* dark mode explicitly light text */
+    color: #e2e8f0;
+}
+
+/* button group in auth modal wraps to avoid overflow */
+.o-button-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    max-width: 100%;
+}
+.o-button-group .c-btn {
+    flex: 1 1 calc(50% - 5px);
+    min-width: 0;                  /* allow shrinking if necessary */
+    box-sizing: border-box;
+}
+@media (max-width: 480px) {
+    .o-button-group .c-btn {
+        flex: 1 1 100%;
+    }
+}
+
 /* ═══════════════ SIDEBAR ═══════════════ */
 .sidebar {
     width: 280px;
@@ -298,8 +331,13 @@ a { color: inherit; text-decoration: none; }
     color: var(--text);
 }
 .room-description {
-    font-size: .82rem;
-    color: var(--text-secondary);
+    display: block;             /* allow multi-line wrapping */
+    font-size: .9rem;
+    color: var(--text);          /* use full contrast so description is clear */
+    margin-top: 3px;
+}
+[data-theme="dark"] .room-description {
+    color: var(--text-secondary); /* slightly dimmer in dark theme for balance */
 }
 .btn-icon {
     background: none;
@@ -320,6 +358,11 @@ a { color: inherit; text-decoration: none; }
     border-bottom: 1px solid var(--border);
     font-size: .88rem;
     line-height: 1.6;
+    color: var(--text);
+}
+/* dark theme banner needs stronger contrast */
+[data-theme="dark"] .room-info-banner {
+    background: var(--bg-secondary);
     color: var(--text);
 }
 .room-info-banner h3 {
@@ -588,11 +631,33 @@ a { color: inherit; text-decoration: none; }
 .error-shake { animation: shake .3s; }
 @keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 
+/* layout for generic button groups inside modals */
 .o-button-group {
     display: flex;
     gap: 10px;
     margin-top: 4px;
 }
+/* override after styles.css global grid, target auth modal specifically */
+#authModal .o-button-group,
+.c-modal__content .o-button-group {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+}
+#authModal .o-button-group .c-btn,
+.c-modal__content .o-button-group .c-btn {
+    flex: 1 1 calc(50% - 5px) !important;
+    min-width: 0 !important;
+    box-sizing: border-box;
+}
+@media (max-width:480px) {
+    #authModal .o-button-group .c-btn,
+    .c-modal__content .o-button-group .c-btn {
+        flex: 1 1 100% !important;
+    }
+}
+
 .c-btn { flex: 1; padding: 11px; border: none; border-radius: var(--radius-sm); font-size: .95rem; font-weight: 600; transition: var(--transition); }
 .c-btn--primary { background: var(--accent); color: #fff; }
 .c-btn--primary:hover { background: var(--accent-hover); }

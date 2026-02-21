@@ -197,6 +197,7 @@
                 document.getElementById('servoTestBtn'),
                 document.getElementById('servoTestBtn-mobile'),
                 document.getElementById('theme-toggle'),
+                document.getElementById('theme-toggle-mobile'),   // mobile support chat toggle
                 document.getElementById('themeToggleBtn')
             ].filter(btn => btn !== null);
             
@@ -223,7 +224,8 @@
             const toggleBtn = specificBtn || 
                              document.getElementById('servoTestBtn') || 
                              document.getElementById('servoTestBtn-mobile') ||
-                             document.getElementById('theme-toggle');
+                             document.getElementById('theme-toggle') ||
+                             document.getElementById('theme-toggle-mobile');
             if (!toggleBtn) return;
             
             const effectiveTheme = this.getEffectiveTheme();
