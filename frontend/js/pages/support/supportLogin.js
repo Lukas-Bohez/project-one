@@ -98,6 +98,7 @@ class SupportAuthSystem {
                                 <span class="button-text">Register</span>
                             </button>
                         </div>
+                        <!-- buttons will wrap via CSS on narrow viewports -->
                     </form>
                 </div>
             </div>
@@ -387,7 +388,7 @@ class SupportAuthSystem {
         
         this.hideAuthModal();
         this.notifyUserAuthenticated(this.currentUser);
-        this.showWelcomeMessage(this.currentUser);
+        // welcome popup removed per request
     }
 
     registerUser(userData, userId) {
@@ -407,8 +408,7 @@ class SupportAuthSystem {
         this.currentUser = newUser;
         this.hideAuthModal();
         this.notifyUserAuthenticated(newUser);
-        this.showWelcomeMessage(newUser);
-        
+        // popup suppressed
         document.dispatchEvent(new CustomEvent('userRegistered', {
             detail: { user: newUser }
         }));
@@ -420,26 +420,9 @@ class SupportAuthSystem {
         }));
     }
 
+    // welcome message popup removed per user request; function kept for parity
     showWelcomeMessage(user) {
-        const welcomeMsg = document.createElement('div');
-        welcomeMsg.className = 'c-welcome-message';
-        welcomeMsg.style.position = 'fixed';
-        welcomeMsg.style.top = '20px';
-        welcomeMsg.style.right = '20px';
-        welcomeMsg.style.zIndex = '1000';
-        welcomeMsg.style.maxWidth = '300px';
-        welcomeMsg.innerHTML = `
-            <strong>Welcome, ${user.fullName}!</strong>
-            <p>You can now use the support chat.</p>
-        `;
-
-        document.body.appendChild(welcomeMsg);
-
-        setTimeout(() => {
-            if (welcomeMsg.parentNode) {
-                welcomeMsg.parentNode.removeChild(welcomeMsg);
-            }
-        }, 5000);
+        // intentionally blank
     }
 
     logout() {

@@ -1050,10 +1050,11 @@ const showEditModal = async (itemType, item = null) => {
 </div>
 <div class="c-form-group">
     <label>Role</label>
-    <select name="role" class="c-form-select">
-        <option value="Admin" ${item && item.userRoleId === 3 ? 'selected' : ''}>Admin</option>
-        <option value="Moderator" ${item && item.userRoleId === 2 ? 'selected' : ''}>Moderator</option>
-        <option value="User" ${item && item.userRoleId === 1 ? 'selected' : ''}>User</option>
+    <select name="userRoleId" class="c-form-select">
+        <!-- numeric values must correspond to the database table (1=Admin,2=Moderator,3=User) -->
+        <option value="1" ${item && item.userRoleId === 1 ? 'selected' : ''}>Admin</option>
+        <option value="2" ${item && item.userRoleId === 2 ? 'selected' : ''}>Moderator</option>
+        <option value="3" ${item && item.userRoleId === 3 ? 'selected' : ''}>User</option>
     </select>
 </div>
 <div class="c-form-group">
@@ -2079,7 +2080,9 @@ try {
 
     } else if (itemType === 'users') {
         currentEditItem.username = form.querySelector('[name="username"]').value;
-        currentEditItem.role = form.querySelector('[name="role"]').value;
+        // read numeric role id instead of string name
+        const roleVal = form.querySelector('[name="userRoleId"]').value;
+        currentEditItem.userRoleId = roleVal ? parseInt(roleVal, 10) : null;
     }
     
     // Basic validation
