@@ -3231,14 +3231,20 @@ class SupportRoomRepository:
     def get_rooms_for_user(user_id: int, user_role_id: int = 1):
         """Get rooms visible to a user: all public rooms + private rooms they created.
         Admins (role >= 3) see all rooms."""
-        if user_role_id >= 3:
+        
+        # Fetch the user's role directly from the database to ensure accuracy
+        user = UserRepository.get_user_by_id(user_id)
+        actual_role_id = user['userRoleId'] if user else user_role_id
+
+        if actual_role_id >= 3:
             return SupportRoomRepository.get_all_rooms()
+        
         sql = """SELECT r.*, COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'System') as creator_name,
                         (SELECT COUNT(*) FROM support_messages m WHERE m.room_id = r.id) as message_count
-                 FROM support_rooms r
-                 LEFT JOIN users u ON r.created_by = u.id
-                 WHERE r.is_private = FALSE OR r.created_by = %s
-                 ORDER BY r.is_private ASC, r.created_at ASC"""
+                FROM support_rooms r
+                LEFT JOIN users u ON r.created_by = u.id
+                WHERE r.is_private = FALSE OR r.created_by = %s
+                ORDER BY r.is_private ASC, r.created_at ASC"""
         return Database.get_rows(sql, [user_id])
 
     @staticmethod
