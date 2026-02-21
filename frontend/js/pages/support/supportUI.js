@@ -1,185 +1,185 @@
-// Support UI - Handles user interface interactions for support chat
+/**
+ * Support UI – Handles user interface interactions for multi-room support chat
+ */
 class SupportUI {
     constructor() {
         this.authSystem = null;
-        this.supportChatSystem = null;
+        this.chat = null;
         this.init();
     }
 
     init() {
-        // Initialize authentication and chat system
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('Support page loaded, initializing systems...');
-
-            // Initialize support auth system (NOT quiz auth)
+            // Auth system
             this.authSystem = new SupportAuthSystem();
 
-            // Initialize support chat system (it will wait for authentication)
-            this.supportChatSystem = new SupportChatSystem();
+            // Chat system
+            this.chat = new SupportChatSystem();
 
-            // Set up UI event handlers
-            this.setupUIHandlers();
-
-            // Set up user info display
-            this.setupUserInfoDisplay();
+            this.bindUI();
+            this.bindUserDisplay();
         });
     }
 
-    setupUIHandlers() {
-        const sendButton = document.getElementById('sendButton');
-        const messageInput = document.getElementById('messageInput');
+    /* ───────── Core UI bindings ───────── */
+    bindUI() {
+        // Send message (form submit + Enter key)
+        const form = document.getElementById('messageForm');
+        const input = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendButton');
 
-        if (sendButton) {
-            sendButton.addEventListener('click', () => this.handleSendMessage());
+        if (form) {
+            form.addEventListener('submit', (e) => { e.preventDefault(); this.handleSend(); });
         }
-
-        if (messageInput) {
-            messageInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    this.handleSendMessage();
-                }
+        if (input) {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.handleSend(); }
             });
-
-            // Enable/disable send button based on input content
-            messageInput.addEventListener('input', () => {
-                const message = messageInput.value.trim();
-                if (sendButton) {
-                    sendButton.disabled = message.length === 0;
-                }
+            // Enable/disable send button
+            input.addEventListener('input', () => {
+                if (sendBtn) sendBtn.disabled = !input.value.trim() || !this.chat?.activeRoomId;
             });
-
-            // Auto-resize textarea
-            messageInput.addEventListener('input', function() {
+            // Auto-resize
+            input.addEventListener('input', function () {
                 this.style.height = 'auto';
-                this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+        }
+
+        // Logout
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                if (this.authSystem) this.authSystem.logout();
+            });
+        }
+
+        // Mobile sidebar toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarClose = document.getElementById('sidebarClose');
+
+        if (menuToggle && sidebar) {
+            menuToggle.addEventListener('click', () => sidebar.classList.add('open'));
+        }
+        if (sidebarClose && sidebar) {
+            sidebarClose.addEventListener('click', () => sidebar.classList.remove('open'));
+        }
+
+        // Create room modal
+        const createRoomBtn = document.getElementById('createRoomBtn');
+        const createRoomModal = document.getElementById('createRoomModal');
+        const createRoomClose = document.getElementById('createRoomClose');
+        const createRoomCancel = document.getElementById('createRoomCancel');
+        const createRoomForm = document.getElementById('createRoomForm');
+
+        if (createRoomBtn && createRoomModal) {
+            createRoomBtn.addEventListener('click', () => { createRoomModal.style.display = 'flex'; });
+        }
+        if (createRoomClose && createRoomModal) {
+            createRoomClose.addEventListener('click', () => { createRoomModal.style.display = 'none'; });
+        }
+        if (createRoomCancel && createRoomModal) {
+            createRoomCancel.addEventListener('click', () => { createRoomModal.style.display = 'none'; });
+        }
+        // Close modal on overlay click
+        if (createRoomModal) {
+            createRoomModal.addEventListener('click', (e) => {
+                if (e.target === createRoomModal) createRoomModal.style.display = 'none';
+            });
+        }
+        if (createRoomForm) {
+            createRoomForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const name = document.getElementById('roomNameInput')?.value.trim();
+                const desc = document.getElementById('roomDescInput')?.value.trim();
+                const priv = document.getElementById('roomPrivateCheck')?.checked || false;
+
+                if (!name || name.length < 2) {
+                    this.chat?.showNotification('Room name must be at least 2 characters', 'error');
+                    return;
+                }
+
+                const roomId = await this.chat?.createRoom(name, desc, priv);
+                if (roomId) {
+                    createRoomForm.reset();
+                    if (createRoomModal) createRoomModal.style.display = 'none';
+                }
+            });
+        }
+
+        // Delete room
+        const deleteBtn = document.getElementById('deleteRoomBtn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => {
+                if (!this.chat?.activeRoomId) return;
+                const room = this.chat.rooms.find(r => r.id === this.chat.activeRoomId);
+                const roomName = room ? room.name : 'this room';
+                if (confirm(`Delete "${roomName}"? This cannot be undone.`)) {
+                    this.chat.deleteRoom(this.chat.activeRoomId);
+                }
             });
         }
     }
 
-    setupUserInfoDisplay() {
-        // Listen for user authentication events
-        document.addEventListener('userAuthenticated', (event) => {
-            const user = event.detail.user;
-            this.showUserInfo(user.fullName);
+    /* ───────── User display ───────── */
+    bindUserDisplay() {
+        document.addEventListener('userAuthenticated', (e) => {
+            this.showUser(e.detail.user.fullName);
         });
-
         document.addEventListener('userLoggedOut', () => {
-            // Only hide if we're sure the user is actually logged out
-            setTimeout(() => {
-                if (!this.authSystem || !this.authSystem.getCurrentUser()) {
-                    this.hideUserInfo();
-                }
-            }, 100);
+            this.hideUser();
         });
 
-        // Check authentication state after a short delay to let the auth system initialize
-        setTimeout(() => {
-            this.checkAndUpdateUserDisplay();
-        }, 500);
-
-        // Also check after auth system is fully initialized
-        setTimeout(() => {
-            this.checkAndUpdateUserDisplay();
-        }, 2000);
+        // Delayed check after auth system initialises
+        setTimeout(() => this.checkUser(), 600);
+        setTimeout(() => this.checkUser(), 2000);
     }
 
-    checkAndUpdateUserDisplay() {
-        // Check if we have a valid user from the auth system
-        if (this.authSystem && typeof this.authSystem.getCurrentUser === 'function') {
-            const user = this.authSystem.getCurrentUser();
-            if (user && user.fullName) {
-                this.showUserInfo(user.fullName);
-                return;
-            }
-        }
-
-        // Fallback to localStorage check
-        const user = this.getCurrentUserFromStorage();
-        if (user && user.fullName) {
-            this.showUserInfo(user.fullName);
-        } else {
-            this.hideUserInfo();
-        }
-    }
-
-    showUserInfo(fullName) {
-        const userInfo = document.getElementById('userInfo');
-        const userName = document.getElementById('userName');
-
-        if (userInfo && userName) {
-            userName.textContent = fullName;
-            userInfo.style.display = 'block';
-
-            // Adjust styling for mobile devices to integrate with flexbox
-            if (window.innerWidth <= 768) {
-                userInfo.style.position = 'static';
-                userInfo.style.marginTop = '10px';
-                userInfo.style.background = 'none';
-                userInfo.style.padding = '0';
-                userInfo.style.borderRadius = '0';
-                userInfo.style.opacity = '1';
-            }
-        }
-    }
-
-    hideUserInfo() {
-        const userInfo = document.getElementById('userInfo');
-        if (userInfo) {
-            userInfo.style.display = 'none';
-        }
-    }
-
-    getCurrentUserFromStorage() {
-        try {
-            const firstName = localStorage.getItem('support_first_name');
-            const lastName = localStorage.getItem('support_last_name');
-
-            if (firstName && lastName) {
-                return {
-                    fullName: `${firstName} ${lastName}`
-                };
-            }
-            return null;
-        } catch (error) {
-            console.error('Error reading user from localStorage:', error);
-            return null;
-        }
-    }
-
-    async handleSendMessage() {
-        const messageInput = document.getElementById('messageInput');
-        if (!messageInput) return;
-
-        const message = messageInput.value.trim();
-        if (!message) return;
-
-        if (!this.supportChatSystem) {
-            console.error('Support chat system not initialized');
+    checkUser() {
+        if (this.authSystem?.getCurrentUser()) {
+            this.showUser(this.authSystem.getCurrentUser().fullName);
             return;
         }
+        const fn = localStorage.getItem('support_first_name');
+        const ln = localStorage.getItem('support_last_name');
+        if (fn && ln) this.showUser(`${fn} ${ln}`);
+        else this.hideUser();
+    }
 
-        // Send the message
-        const success = await this.supportChatSystem.sendMessage(message);
+    showUser(name) {
+        const el = document.getElementById('sidebarUser');
+        const nameEl = document.getElementById('sidebarUserName');
+        if (el) el.style.display = 'block';
+        if (nameEl) nameEl.textContent = `👤 ${name}`;
+    }
 
-        if (success) {
-            // Clear input
-            messageInput.value = '';
-            messageInput.style.height = 'auto';
+    hideUser() {
+        const el = document.getElementById('sidebarUser');
+        if (el) el.style.display = 'none';
+    }
+
+    /* ───────── Send helper ───────── */
+    async handleSend() {
+        const input = document.getElementById('messageInput');
+        if (!input) return;
+        const text = input.value.trim();
+        if (!text) return;
+        if (!this.chat) return;
+
+        const ok = await this.chat.sendMessage(text);
+        if (ok) {
+            input.value = '';
+            input.style.height = 'auto';
+            const sendBtn = document.getElementById('sendButton');
+            if (sendBtn) sendBtn.disabled = true;
         }
     }
 }
 
-// Global variables for backward compatibility
-let supportChatSystem = null;
-let authSystem = null;
-
-// Initialize the UI when the script loads
+// Boot
 const supportUI = new SupportUI();
 
-// Clean up on page unload
-window.addEventListener('beforeunload', function() {
-    if (supportUI.supportChatSystem) {
-        supportUI.supportChatSystem.destroy();
-    }
+window.addEventListener('beforeunload', () => {
+    if (supportUI.chat) supportUI.chat.destroy();
 });

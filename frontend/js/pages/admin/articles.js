@@ -1,5 +1,18 @@
 // #region ***  Articles Management                      ***********
 
+// Ensure escapeHTML is available (may be defined in admin.js, but guard for independent loading)
+if (typeof escapeHTML === 'undefined') {
+    var escapeHTML = (str) => {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    };
+}
+
 // Articles state
 let articlesState = {
     articles: [],

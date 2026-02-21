@@ -333,6 +333,11 @@ class ThemeInput(BaseModel):
     description: Optional[str] = None
     is_active: bool = True
 
+class ThemeUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    is_active: Optional[bool] = None
+
 
 # Updated response model to include IP information
 class UserIpAddress(BaseModel):

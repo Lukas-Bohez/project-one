@@ -39,7 +39,7 @@ from models.models import (
     RandomQuestionRequest, QuestionMetadataUpdate,
     QuestionActivationNotification,
     AnswerBase, AnswerCreate, AnswerListResponse, AnswerResponse, 
-    AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand,BroadcastMessage,DirectMessage, ClientActivity,SessionSensorData,MultiSessionSensorResponse,UserUpdateNames,UserCredentials,AnswerInput,QuestionInput, ThemeInput,
+    AnswerStatusUpdate, AnswerUpdate, CorrectAnswerResponse,IpAddressPayload,AppealPayload,ServoCommand,BroadcastMessage,DirectMessage, ClientActivity,SessionSensorData,MultiSessionSensorResponse,UserUpdateNames,UserCredentials,AnswerInput,QuestionInput, ThemeInput, ThemeUpdate,
     UserPublic,UserPublicWithIp,UserIpAddress,BanIpRequest,AuditLogResponse,ChatMessage,ChatMessageCreate,ShutdownRequest,PaginationInfo,
     # Kingdom Quarry Game Models
     GameSaveData, GameSaveRequest, GameSaveResponse, GameLoadResponse, GameResourcesResponse,
@@ -236,67 +236,16 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Socket.IO Messaging Backend", version="1.0.0", lifespan=lifespan)
 
-# Middleware to log incoming HTTP requests (path, query, headers) to socket.log
+# Middleware to catch unhandled errors and prevent crashes
 @app.middleware("http")
 async def log_incoming_requests(request, call_next):
     try:
-        sock_logger = logging.getLogger('socketio')
-        info = {
-            'method': request.method,
-            'path': request.url.path,
-            'query': str(request.url.query),
-            'origin': request.headers.get('origin'),
-            'upgrade': request.headers.get('upgrade'),
-            'connection': request.headers.get('connection')
-        }
-        # Log request plus full headers at DEBUG level for socket.io polling paths
-        sock_logger.debug(f"Incoming HTTP request: {info}")
-        if request.url.path.startswith('/socket.io'):
-            # Log all headers for additional context
-            headers_dict = {k: v for k, v in request.headers.items()}
-            sock_logger.debug(f"Socket.IO request headers: {headers_dict}")
-    except Exception:
-        logging.exception("Failed to log incoming request")
-    response = await call_next(request)
-    try:
-        if request.url.path.startswith('/socket.io'):
-            # Attempt to read response body for debugging. Some responses are streaming,
-            # so we handle both direct body and iterator cases. If we consume the
-            # iterator, we recreate the Response so the client still receives it.
-            body_bytes = None
-            try:
-                if hasattr(response, 'body') and response.body is not None:
-                    body_bytes = response.body
-                else:
-                    # For streaming responses, gather the chunks
-                    body_chunks = []
-                    async for chunk in response.body_iterator:
-                        body_chunks.append(chunk)
-                    body_bytes = b"".join(body_chunks)
-                    # Recreate Response so it's still sent to the client
-                    from starlette.responses import Response as StarletteResponse
-                    new_resp = StarletteResponse(content=body_bytes, status_code=response.status_code, headers=dict(response.headers), media_type=getattr(response, 'media_type', None))
-                    response = new_resp
-            except Exception:
-                logging.exception("Failed to extract socket.io response body")
-
-            try:
-                decoded = None
-                if body_bytes is not None:
-                    try:
-                        decoded = body_bytes.decode('utf-8')
-                    except Exception:
-                        decoded = repr(body_bytes)
-                sock_logger.debug({
-                    'status_code': response.status_code,
-                    'response_headers': dict(response.headers),
-                    'body': decoded
-                })
-            except Exception:
-                logging.exception("Failed to log socket.io response metadata")
-    except Exception:
-        logging.exception("Failed to log socket.io response metadata")
-    return response
+        response = await call_next(request)
+        return response
+    except Exception as e:
+        logging.getLogger('uvicorn.error').error(f"Unhandled error on {request.method} {request.url.path}: {e}")
+        from starlette.responses import JSONResponse
+        return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 # CORS middleware for FastAPI
 app.add_middleware(
@@ -333,8 +282,8 @@ app.add_middleware(SlowAPIMiddleware)
 sio = socketio.AsyncServer(
     cors_allowed_origins=["https://quizthespire.com", "https://www.quizthespire.com", "https://quizthespire.duckdns.org"],
     async_mode='asgi',
-    logger=True,
-    engineio_logger=True
+    logger=False,
+    engineio_logger=False
 )
 
 ENDPOINT = "/api/v1"  # API base endpoint
@@ -2006,37 +1955,7 @@ async def delete_article(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting article: {str(e)}")
 
-# ----------------------------------------------------
-# FastAPI Endpoints - Stories
-# ----------------------------------------------------
-
-@app.get(
-    ENDPOINT + "/stories/",
-    summary="List all stories",
-    response_model=List[StoryResponse],
-    tags=["Stories"]
-)
-async def list_stories():
-    """Return all stories for filtering and admin UI."""
-    try:
-        stories = StoriesRepository.list_stories()
-        return [StoryResponse(**story) for story in stories]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving stories: {str(e)}")
-
-@app.get(
-    ENDPOINT + "/articles/by-story/{story_id}/",
-    summary="Get articles by story (ordered)",
-    response_model=List[ArticleResponse],
-    tags=["Articles"]
-)
-async def get_articles_by_story(story_id: int, active_only: bool = True):
-    """Get all articles within a story, ordered by story_order."""
-    try:
-        articles = ArticlesRepository.get_articles_by_story_id(story_id, active_only=active_only)
-        return [ArticleResponse(**article) for article in articles]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving articles for story {story_id}: {str(e)}")
+# NOTE: Stories and articles-by-story routes defined above in the Stories/Articles section
 
 # ----------------------------------------------------
 # FastAPI Endpoints - Users
@@ -3039,6 +2958,210 @@ async def support_register_user(user_credentials: UserCredentials, request: Requ
         )
 
 
+# ──────────────────────────────────────────────────────────────────────
+# Support Chat Room Endpoints
+# ──────────────────────────────────────────────────────────────────────
+
+from database.datarepository import SupportRoomRepository, SupportMessageRepository
+
+@app.get("/api/v1/support/rooms")
+async def list_support_rooms(user_id: int = None):
+    """List support chat rooms visible to the user."""
+    try:
+        if user_id:
+            user = UserRepository.get_user_by_id(user_id)
+            role_id = user.get('userRoleId', 1) if user else 1
+            rooms = SupportRoomRepository.get_rooms_for_user(user_id, role_id)
+        else:
+            rooms = SupportRoomRepository.get_all_rooms()
+
+        return {"rooms": [
+            {
+                "id": r["id"],
+                "name": r["name"],
+                "description": r.get("description"),
+                "is_private": bool(r.get("is_private", False)),
+                "created_by": r.get("created_by"),
+                "creator_name": r.get("creator_name", "System"),
+                "message_count": r.get("message_count", 0),
+                "created_at": str(r["created_at"]) if r.get("created_at") else None
+            }
+            for r in (rooms or [])
+        ]}
+    except Exception as e:
+        logger.error(f"Error listing support rooms: {e}")
+        raise HTTPException(status_code=500, detail="Failed to list rooms")
+
+
+@app.post("/api/v1/support/rooms")
+async def create_support_room(request: Request):
+    """Create a new support chat room."""
+    try:
+        body = await request.json()
+        name = body.get("name", "").strip()
+        description = body.get("description", "").strip()
+        is_private = bool(body.get("is_private", False))
+        user_id = body.get("user_id")
+
+        if not name or len(name) < 2 or len(name) > 100:
+            raise HTTPException(status_code=400, detail="Room name must be 2-100 characters")
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id is required")
+
+        room_id = SupportRoomRepository.create_room(
+            name=name,
+            description=description or None,
+            is_private=is_private,
+            created_by=int(user_id)
+        )
+        if not room_id:
+            raise HTTPException(status_code=500, detail="Failed to create room")
+
+        # Emit room list update via socket
+        await sio.emit('support_rooms_updated', {})
+
+        return {"room_id": room_id, "status": "created"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating support room: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create room")
+
+
+@app.delete("/api/v1/support/rooms/{room_id}")
+async def delete_support_room(room_id: int, user_id: int = None):
+    """Delete a support room. Only the creator or admins can delete."""
+    try:
+        if room_id == 1:
+            raise HTTPException(status_code=403, detail="Cannot delete the Global Chat room")
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id is required")
+
+        room = SupportRoomRepository.get_room_by_id(room_id)
+        if not room:
+            raise HTTPException(status_code=404, detail="Room not found")
+
+        user = UserRepository.get_user_by_id(user_id)
+        user_role = user.get('userRoleId', 1) if user else 1
+        is_owner = room.get('created_by') == user_id
+        is_admin = user_role >= 3
+
+        if not is_owner and not is_admin:
+            raise HTTPException(status_code=403, detail="Only the room creator or admins can delete this room")
+
+        SupportRoomRepository.delete_room(room_id)
+        await sio.emit('support_rooms_updated', {})
+
+        return {"status": "deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting support room: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete room")
+
+
+@app.get("/api/v1/support/rooms/{room_id}/messages")
+async def get_support_room_messages(room_id: int, user_id: int = None):
+    """Get messages for a support room with access control."""
+    try:
+        room = SupportRoomRepository.get_room_by_id(room_id)
+        if not room:
+            raise HTTPException(status_code=404, detail="Room not found")
+
+        # Access control for private rooms
+        if room.get('is_private'):
+            if not user_id:
+                raise HTTPException(status_code=403, detail="Authentication required for private rooms")
+            user = UserRepository.get_user_by_id(user_id)
+            user_role = user.get('userRoleId', 1) if user else 1
+            is_owner = room.get('created_by') == user_id
+            is_admin = user_role >= 3
+            if not is_owner and not is_admin:
+                raise HTTPException(status_code=403, detail="You don't have access to this private room")
+
+        messages = SupportMessageRepository.get_messages_by_room(room_id)
+        return {"messages": [
+            {
+                "id": m["id"],
+                "username": m.get("username", "Unknown"),
+                "message": m["message_text"],
+                "user_id": m.get("user_id"),
+                "created_at": str(m["created_at"]) if m.get("created_at") else None
+            }
+            for m in (messages or [])
+        ]}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting support room messages: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get messages")
+
+
+# Rate limiter for support messages
+support_user_last_msg = {}
+SUPPORT_RATE_LIMIT = 1.0  # 1 second between messages
+
+@app.post("/api/v1/support/rooms/{room_id}/messages")
+async def send_support_room_message(room_id: int, request: Request):
+    """Send a message to a support room."""
+    try:
+        body = await request.json()
+        message_text = body.get("message_text", "").strip()
+        user_id = body.get("user_id")
+
+        if not message_text or len(message_text) > 1000:
+            raise HTTPException(status_code=400, detail="Message must be 1-1000 characters")
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id is required")
+
+        user_id = int(user_id)
+
+        # Rate limiting
+        now = time.time()
+        if user_id in support_user_last_msg:
+            if now - support_user_last_msg[user_id] < SUPPORT_RATE_LIMIT:
+                raise HTTPException(status_code=429, detail="Please wait before sending another message")
+        support_user_last_msg[user_id] = now
+
+        room = SupportRoomRepository.get_room_by_id(room_id)
+        if not room:
+            raise HTTPException(status_code=404, detail="Room not found")
+
+        # Access control for private rooms
+        if room.get('is_private'):
+            user = UserRepository.get_user_by_id(user_id)
+            user_role = user.get('userRoleId', 1) if user else 1
+            is_owner = room.get('created_by') == user_id
+            is_admin = user_role >= 3
+            if not is_owner and not is_admin:
+                raise HTTPException(status_code=403, detail="You don't have access to this private room")
+
+        msg_id = SupportMessageRepository.create_message(room_id, user_id, message_text)
+        if not msg_id:
+            raise HTTPException(status_code=500, detail="Failed to send message")
+
+        # Get username for the socket event
+        user = UserRepository.get_user_by_id(user_id)
+        username = f"{user['first_name']} {user['last_name']}" if user else "Unknown"
+
+        # Emit to room-specific socket room
+        await sio.emit('support_message', {
+            'room_id': room_id,
+            'message_id': msg_id,
+            'username': username,
+            'message': message_text,
+            'user_id': user_id,
+            'created_at': datetime.now().isoformat()
+        }, room=f'support_room_{room_id}')
+
+        return {"message_id": msg_id, "status": "sent"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error sending support message: {e}")
+        raise HTTPException(status_code=500, detail="Failed to send message")
+
+
 def generate_kawaii_string(user_credentials):
     # Mixed emotion phrases with emojis (kawaii, kowai, excited, etc.)
     emotion_strings = [
@@ -3788,6 +3911,62 @@ async def create_theme_endpoint(
             status_code=500,
             detail=f"Failed to create theme: {str(e)}"
         )
+
+
+# Update theme endpoint
+@app.patch("/api/v1/themes/{theme_id}")
+async def update_theme_endpoint(
+    theme_id: int,
+    theme_data: ThemeUpdate,
+    current_user_info: dict = Depends(get_current_user_info),
+    request: Request = None
+):
+    user_id = current_user_info["id"]
+    role = current_user_info["role"]
+    client_ip = get_client_ip(request) if request else "unknown"
+
+    if role != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can update themes")
+
+    # Verify theme exists
+    existing_theme = ThemeRepository.get_theme_by_id(theme_id)
+    if not existing_theme:
+        raise HTTPException(status_code=404, detail="Theme not found")
+
+    try:
+        # Audit log
+        old_values = {"name": existing_theme.get("name"), "description": existing_theme.get("description"), "is_active": existing_theme.get("is_active")}
+        new_values = theme_data.dict(exclude_unset=True)
+        AuditLogRepository.create_audit_log(
+            table_name="themes",
+            record_id=theme_id,
+            action="UPDATE",
+            old_values=json.dumps(old_values),
+            new_values=json.dumps(new_values),
+            changed_by=user_id,
+            ip_address=client_ip
+        )
+    except Exception as audit_error:
+        print(f"Audit log creation failed: {audit_error}")
+
+    try:
+        result = ThemeRepository.update_theme(
+            theme_id=theme_id,
+            name=theme_data.name,
+            description=theme_data.description,
+            is_active=theme_data.is_active
+        )
+
+        if result is None or result is False:
+            raise HTTPException(status_code=500, detail="Failed to update theme")
+
+        return {"status": "success", "theme_id": theme_id}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating theme: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update theme: {str(e)}")
 
 
 # Fixed delete theme endpoint
@@ -4845,7 +5024,8 @@ async def get_chat_messages(session_id: int) -> Dict[str, List[Dict]]:
                 "message": msg.get("message", ""),
                 "is_flagged": msg.get("is_flagged", False),
                 "flagged_by": msg.get("flagged_by"),
-                "flagged_reason": msg.get("flagged_reason")
+                "flagged_reason": msg.get("flagged_reason"),
+                "created_at": str(msg["created_at"]) if msg.get("created_at") else None
             })
         return {"messages": formatted_messages}
     except Exception as e:
@@ -5368,10 +5548,6 @@ async def trigger_servo():
 
 # --- FastAPI Endpoints ---
 
-@app.get("/")
-async def read_root():
-    return {"message": "Welcome to the Site Quiz Backend!"}
-
 @app.get("/api/v1/users/", response_model=List[UserPublic])
 async def get_all_users(request: Request):
     """
@@ -5429,9 +5605,9 @@ def read_sensor_data(temp_sensor, light_sensor, servo):
         if raw_temp is None or not isinstance(raw_temp, (int, float)):
             temperature = 0.0
         else:
-            temperature = max(-50.0, min(100.0, float(raw_temp)))
-            # Round to 2 decimal places to avoid precision issues
-            temperature = round(temperature, 2) + virtualTemperature
+            temperature = float(raw_temp) + virtualTemperature
+            # Clamp AFTER adding virtualTemperature to fit DECIMAL(5,2) column (-999.99 to 999.99)
+            temperature = max(-999.99, min(999.99, round(temperature, 2)))
             sensorData = {'temperature': temperature, 'illuminance': light_sensor()}
         return {
             'temperature': temperature,
@@ -7394,7 +7570,11 @@ def tempDown():
     )
     threadsafe_emit_message_sent(sio,get_active_session_id(),main_asyncio_loop)
     # Emit temperature change to all clients
-    sio.emit('B2F_temperatureChange', {'temperature': virtualTemperature}, broadcast=True)
+    if main_asyncio_loop:
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('B2F_temperatureChange', {'temperature': virtualTemperature}),
+            main_asyncio_loop
+        )
 
 def tempUp():
     """Raise the virtual temperature by 20 degrees"""
@@ -7409,7 +7589,11 @@ def tempUp():
     )
     threadsafe_emit_message_sent(sio,get_active_session_id(),main_asyncio_loop)
     # Emit temperature change to all clients
-    sio.emit('B2F_temperatureChange', {'temperature': virtualTemperature}, broadcast=True)
+    if main_asyncio_loop:
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('B2F_temperatureChange', {'temperature': virtualTemperature}),
+            main_asyncio_loop
+        )
 
 # ============================================================
 # NEW ITEM EFFECTS - Spire AI Collaboration Update
@@ -7424,7 +7608,11 @@ def activateShield():
         user_id=1, message_type='system', reply_to_id=1
     )
     threadsafe_emit_message_sent(sio, get_active_session_id(), main_asyncio_loop)
-    sio.emit('B2F_itemEffect', {'effect': 'shield', 'duration': 30}, broadcast=True)
+    if main_asyncio_loop:
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('B2F_itemEffect', {'effect': 'shield', 'duration': 30}),
+            main_asyncio_loop
+        )
 
 def activateDoublePoints():
     """Next correct answer earns double points"""
@@ -7435,7 +7623,11 @@ def activateDoublePoints():
         user_id=1, message_type='system', reply_to_id=1
     )
     threadsafe_emit_message_sent(sio, get_active_session_id(), main_asyncio_loop)
-    sio.emit('B2F_itemEffect', {'effect': 'doublePoints', 'duration': 0}, broadcast=True)
+    if main_asyncio_loop:
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('B2F_itemEffect', {'effect': 'doublePoints', 'duration': 0}),
+            main_asyncio_loop
+        )
 
 def activateTimeWarp():
     """Adds 10 seconds to the current question timer"""
@@ -7446,7 +7638,11 @@ def activateTimeWarp():
         user_id=1, message_type='system', reply_to_id=1
     )
     threadsafe_emit_message_sent(sio, get_active_session_id(), main_asyncio_loop)
-    sio.emit('B2F_itemEffect', {'effect': 'timeWarp', 'seconds': 10}, broadcast=True)
+    if main_asyncio_loop:
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('B2F_itemEffect', {'effect': 'timeWarp', 'seconds': 10}),
+            main_asyncio_loop
+        )
 
 def activateLightningBolt():
     """Eliminates two wrong answers from the current question"""
@@ -7457,7 +7653,11 @@ def activateLightningBolt():
         user_id=1, message_type='system', reply_to_id=1
     )
     threadsafe_emit_message_sent(sio, get_active_session_id(), main_asyncio_loop)
-    sio.emit('B2F_itemEffect', {'effect': 'lightningBolt', 'eliminate': 2}, broadcast=True)
+    if main_asyncio_loop:
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('B2F_itemEffect', {'effect': 'lightningBolt', 'eliminate': 2}),
+            main_asyncio_loop
+        )
 
 def activateMysteryBox():
     """Triggers a random item effect"""
@@ -7473,7 +7673,11 @@ def activateMysteryBox():
         user_id=1, message_type='system', reply_to_id=1
     )
     threadsafe_emit_message_sent(sio, get_active_session_id(), main_asyncio_loop)
-    sio.emit('B2F_itemEffect', {'effect': 'mysteryBox', 'duration': 2}, broadcast=True)
+    if main_asyncio_loop:
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('B2F_itemEffect', {'effect': 'mysteryBox', 'duration': 2}),
+            main_asyncio_loop
+        )
     # Small delay then trigger the random effect
     import threading
     threading.Timer(2.0, chosen).start()
@@ -7487,7 +7691,11 @@ def activateSpotlight():
         user_id=1, message_type='system', reply_to_id=1
     )
     threadsafe_emit_message_sent(sio, get_active_session_id(), main_asyncio_loop)
-    sio.emit('B2F_itemEffect', {'effect': 'spotlight', 'duration': 2}, broadcast=True)
+    if main_asyncio_loop:
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('B2F_itemEffect', {'effect': 'spotlight', 'duration': 2}),
+            main_asyncio_loop
+        )
 
 def activateEarthquake():
     """Shakes everyone's screen for 5 seconds"""
@@ -7498,7 +7706,11 @@ def activateEarthquake():
         user_id=1, message_type='system', reply_to_id=1
     )
     threadsafe_emit_message_sent(sio, get_active_session_id(), main_asyncio_loop)
-    sio.emit('B2F_itemEffect', {'effect': 'earthquake', 'duration': 5}, broadcast=True)
+    if main_asyncio_loop:
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('B2F_itemEffect', {'effect': 'earthquake', 'duration': 5}),
+            main_asyncio_loop
+        )
 
 # Item management functions
 
@@ -7707,7 +7919,11 @@ def reset_temperature():
     """Reset virtual temperature to 0"""
     global virtualTemperature
     virtualTemperature = 0
-    sio.emit('B2F_temperatureChange', {'temperature': virtualTemperature}, broadcast=True)
+    if main_asyncio_loop:
+        asyncio.run_coroutine_threadsafe(
+            sio.emit('B2F_temperatureChange', {'temperature': virtualTemperature}),
+            main_asyncio_loop
+        )
     return {"success": True, "temperature": virtualTemperature}
 
 
@@ -12115,6 +12331,54 @@ def init_sentle_tables():
 # Initialize tables on startup
 init_sentle_tables()
 
+
+# Initialize Support Chat tables
+def init_support_chat_tables():
+    """Initialize support chat room and message tables."""
+    try:
+        from database.database import Database
+
+        Database.execute_sql("""
+            CREATE TABLE IF NOT EXISTS support_rooms (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                description TEXT,
+                is_private BOOLEAN DEFAULT FALSE,
+                created_by INT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+            )
+        """)
+
+        Database.execute_sql("""
+            CREATE TABLE IF NOT EXISTS support_messages (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                room_id INT NOT NULL,
+                user_id INT,
+                message_text TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (room_id) REFERENCES support_rooms(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+                INDEX idx_room_time (room_id, created_at),
+                CHECK (CHAR_LENGTH(message_text) <= 1000)
+            )
+        """)
+
+        # Seed the Global room if it doesn't exist
+        existing = Database.get_one_row("SELECT id FROM support_rooms WHERE id = 1")
+        if not existing:
+            Database.execute_sql(
+                """INSERT INTO support_rooms (name, description, is_private, created_by)
+                   VALUES (%s, %s, %s, %s)""",
+                ['Global Chat', 'Welcome! This is the public support chat. Ask questions, report bugs, or just say hi. Everyone can see messages here.', False, None]
+            )
+
+        print("✓ Support chat tables initialized")
+    except Exception as e:
+        print(f"Warning: Could not initialize support chat tables: {e}")
+
+init_support_chat_tables()
+
 def remove_duplicate_sentences():
     """Remove duplicate sentences with the same date, keeping the most recently created one"""
     try:
@@ -13119,93 +13383,7 @@ async def submit_score(data: dict):
         raise HTTPException(status_code=500, detail=f"Error submitting score: {str(e)}")
 
 
-@app.post("/api/sentle/login", tags=["Sentle"])
-async def sentle_login(request: Request):
-    try:
-        payload = await request.json()
-        
-        first_name = payload.get('first_name')
-        last_name = payload.get('last_name')
-        password = payload.get('password')
-        
-        if not all([first_name, last_name, password]):
-            raise HTTPException(status_code=400, detail="Missing required fields")
-        
-        # Authenticate user
-        user_id = UserRepository.authenticate_user(first_name, last_name, password)
-        if not user_id:
-            raise HTTPException(status_code=401, detail="Invalid credentials")
-        
-        # Generate session token
-        session_token = secrets.token_urlsafe(32)
-        
-        # Store session
-        Database.execute_sql(
-            "INSERT INTO sentle_sessions (user_id, session_token, created_at) VALUES (%s, %s, %s)",
-            (user_id, session_token, datetime.now())
-        )
-        
-        sentle_logger.info(f"Sentle login successful for user {user_id}")
-        return {"session_token": session_token, "user_id": user_id}
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        sentle_logger.error(f"Error in sentle login: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Login failed: {str(e)}")
-
-
-@app.post("/api/sentle/register", tags=["Sentle"])
-async def sentle_register(request: Request):
-    try:
-        payload = await request.json()
-        
-        first_name = payload.get('first_name')
-        last_name = payload.get('last_name')
-        password = payload.get('password')
-        
-        if not all([first_name, last_name, password]):
-            raise HTTPException(status_code=400, detail="Missing required fields")
-        
-        if len(password) < 6:
-            raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
-        
-        # Check if user exists
-        existing = Database.get_one_row(
-            "SELECT id FROM users WHERE first_name = %s AND last_name = %s",
-            (first_name, last_name)
-        )
-        if existing:
-            raise HTTPException(status_code=400, detail="User already exists")
-        
-        # Hash password
-        hashed = UserRepository.hash_password(password)
-        
-        # Create user
-        user_id = Database.execute_sql(
-            """INSERT INTO users (first_name, last_name, password_hash, salt, rfid_code, userRoleId, created_at) 
-               VALUES (%s, %s, %s, %s, %s, 1, %s)""",
-            (first_name, last_name, hashed['password_hash'], hashed['salt'], f"sentle_{first_name}_{last_name}", datetime.now())
-        )
-        
-        # Generate session token
-        session_token = secrets.token_urlsafe(32)
-        
-        # Store session
-        Database.execute_sql(
-            "INSERT INTO sentle_sessions (user_id, session_token, created_at) VALUES (%s, %s, %s)",
-            (user_id, session_token, datetime.now())
-        )
-        
-        sentle_logger.info(f"Sentle registration successful for user {user_id}")
-        return {"session_token": session_token, "user_id": user_id}
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        sentle_logger.error(f"Error in sentle register: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
-
+# NOTE: Sentle login/register routes defined above in "Sentle Auth" section (lines ~12274/12318)
 
 @app.get("/api/sentle/stats", tags=["Sentle"])
 async def get_user_stats(request: Request):
@@ -13566,54 +13744,7 @@ async def admin_backfill_archive(request: Request):
         sentle_logger.error(f"Manual backfill failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Backfill failed: {str(e)}")
 
-@app.get("/api/sentle/debug/scores", tags=["Sentle"])
-async def debug_get_all_scores():
-    """DEBUG ENDPOINT: Get ALL sentle_scores rows (for troubleshooting)"""
-    try:
-        from database.database import Database
-        
-        # Raw count
-        count_result = Database.get_one_row("SELECT COUNT(*) as total FROM sentle_scores")
-        total_count = count_result['total'] if count_result else 0
-        
-        # Get all scores with user names
-        results = Database.get_rows(
-            """SELECT 
-                    ss.id,
-                    ss.user_id,
-                    u.first_name,
-                    u.last_name,
-                    ss.sentence_id,
-                    ss.score,
-                    ss.attempts,
-                    ss.date
-               FROM sentle_scores ss
-               LEFT JOIN users u ON ss.user_id = u.id
-               ORDER BY ss.date DESC, ss.id DESC
-               LIMIT 50"""
-        )
-        
-        scores = [
-            {
-                "id": row['id'],
-                "user_id": row['user_id'],
-                "player_name": f"{row['first_name']} {row['last_name']}" if row['first_name'] else "Unknown",
-                "sentence_id": row['sentence_id'],
-                "score": row['score'],
-                "attempts": row['attempts'],
-                "date": str(row['date'])
-            }
-            for row in (results or [])
-        ]
-        
-        return {
-            "total_scores_in_db": total_count,
-            "last_50_scores": scores,
-            "debug_info": "If this returns empty but you've submitted scores, check: (1) Are INSERT queries actually executing? (2) Is the user_id valid in users table?"
-        }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching scores: {str(e)}")
+# NOTE: Sentle debug/scores route defined above (line ~13249)
 
 @app.post("/api/sentle/admin/login", tags=["Sentle"])
 async def admin_login(payload: Dict[str, Any] = Body(...)):

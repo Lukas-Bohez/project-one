@@ -285,7 +285,6 @@ async function updateAverageScore() {
     }
     
     const percentage = await response.json();
-    console.log(percentage)
     // Validate percentage is a number
     const score = typeof percentage === 'number' ? percentage : 0;
     

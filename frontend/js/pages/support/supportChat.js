@@ -1,489 +1,438 @@
-// Support Chat System - Dedicated to session 999999
+/**
+ * Support Chat System – Multi-Room
+ * Connects via Socket.IO, manages rooms, loads/sends messages.
+ */
 class SupportChatSystem {
     constructor() {
         this.currentUser = null;
-        this.lanIP = `https://${window.location.hostname}`;
-        this.sessionId = 999999; // Fixed support session ID
+        this.baseURL = `https://${window.location.hostname}`;
         this.socket = null;
+        this.rooms = [];
+        this.activeRoomId = null;
+        this.joinedSocketRooms = new Set();
 
-        console.log('SupportChatSystem: Initializing for session 999999');
         this.initializeSocket();
         this.listenForUserEvents();
     }
 
+    /* ──────────────────── Socket ──────────────────── */
     initializeSocket() {
-        console.log('SupportChatSystem: Initializing Socket.IO connection...');
-        
-        this.socket = window.createCompatibleSocket ? 
-            window.createCompatibleSocket(this.lanIP, {
-                transports: ["polling", "websocket"],
-                timeout: 30000,
-                reconnection: true,
-                reconnectionAttempts: 10,
-                reconnectionDelay: 2000,
-                reconnectionDelayMax: 10000,
-                autoConnect: true,
-                forceNew: false
-            }) : 
-            io(this.lanIP, {
-                transports: ["polling", "websocket"],
-                timeout: 30000,
-                reconnection: true,
-                reconnectionAttempts: 10,
-                reconnectionDelay: 2000,
-                reconnectionDelayMax: 10000,
-                forceNew: false,
-                upgrade: true,
-                rememberUpgrade: false,
-                autoConnect: true
-            });
-        
-        // Make socket available globally for other systems
+        this.socket = io(this.baseURL, {
+            transports: ['polling', 'websocket'],
+            timeout: 30000,
+            reconnection: true,
+            reconnectionAttempts: Infinity,
+            reconnectionDelay: 2000,
+            reconnectionDelayMax: 15000,
+            upgrade: true,
+            autoConnect: true
+        });
+
         window.supportSocket = this.socket;
 
         this.socket.on('connect', () => {
-            console.log('SupportChatSystem: Connected to server with ID:', this.socket.id);
-            this.updateConnectionStatus();
-            
-            // Join the support session room
-            this.socket.emit('join', `quiz_session_${this.sessionId}`, (response) => {
-                if (response && response.status === 'success') {
-                    console.log(`SupportChatSystem: Successfully joined support room`);
-                } else {
-                    console.error(`SupportChatSystem: Failed to join support room`, response);
-                }
-            });
-        });
-
-        this.socket.on('disconnect', (reason) => {
-            console.log('SupportChatSystem: Disconnected:', reason);
-            this.updateConnectionStatus();
-        });
-
-        this.socket.on('reconnect', (attemptNumber) => {
-            console.log('SupportChatSystem: Reconnected after', attemptNumber, 'attempts');
-            this.updateConnectionStatus();
-        });
-
-        this.socket.on('reconnecting', (attemptNumber) => {
-            console.log('SupportChatSystem: Reconnecting, attempt', attemptNumber);
-            this.updateConnectionStatus();
-        });
-
-        this.socket.on('message_sent', (data) => {
-            console.log('SupportChatSystem: Received message_sent event:', data);
-            
-            if (data.session_id === this.sessionId) {
-                console.log('SupportChatSystem: Reloading messages for support session');
-                setTimeout(() => {
-                    this.loadMessages();
-                }, 100);
+            this.updateConnectionStatus(true);
+            // Re-join rooms we were in
+            for (const rName of this.joinedSocketRooms) {
+                this.socket.emit('join', rName);
             }
+            // Reload current room messages after reconnect
+            if (this.activeRoomId) this.loadMessages(this.activeRoomId);
         });
 
-        this.socket.on('error', (error) => {
-            console.error('SupportChatSystem: Socket error:', error);
+        this.socket.on('disconnect', () => this.updateConnectionStatus(false));
+        this.socket.on('reconnecting', () => this.updateConnectionStatus(null));
+
+        // Real-time message for any support room
+        this.socket.on('support_message', (data) => {
+            if (data.room_id === this.activeRoomId) {
+                this.appendMessage(data);
+            }
+            // Update unread badge logic could go here
         });
 
-        console.log('SupportChatSystem: Socket listeners initialized');
+        // Room list changed (created / deleted)
+        this.socket.on('support_rooms_updated', () => {
+            this.loadRooms();
+        });
     }
 
+    /* ──────────────────── Auth events ──────────────────── */
     listenForUserEvents() {
-        document.addEventListener('userAuthenticated', (event) => {
-            console.log('SupportChatSystem: User authenticated event received');
-            this.currentUser = event.detail.user;
-            console.log('SupportChatSystem: Current user set to:', this.currentUser);
-            
-            // Load messages when user logs in
-            this.loadMessages();
+        document.addEventListener('userAuthenticated', (e) => {
+            this.currentUser = e.detail.user;
+            this.loadRooms().then(() => {
+                // Auto-select Global Chat (room 1)
+                if (!this.activeRoomId && this.rooms.length) {
+                    const global = this.rooms.find(r => r.id === 1) || this.rooms[0];
+                    this.selectRoom(global.id);
+                }
+            });
             this.updateConnectionStatus();
         });
 
         document.addEventListener('userLoggedOut', () => {
-            console.log('SupportChatSystem: User logged out');
             this.currentUser = null;
+            this.rooms = [];
+            this.activeRoomId = null;
+            this.joinedSocketRooms.forEach(r => this.socket.emit('leave', r));
+            this.joinedSocketRooms.clear();
+            this.renderRoomList();
+            this.clearMessages();
             this.updateConnectionStatus();
         });
     }
 
-    getUserFromLocalStorage() {
+    getCurrentUser() {
+        if (this.currentUser) return this.currentUser;
+        // Fallback to localStorage
+        const id = localStorage.getItem('support_user_id');
+        const fn = localStorage.getItem('support_first_name');
+        const ln = localStorage.getItem('support_last_name');
+        if (id && fn && ln) {
+            return { id, firstName: fn, lastName: ln, fullName: `${fn} ${ln}` };
+        }
+        return null;
+    }
+
+    /* ──────────────────── Rooms ──────────────────── */
+    async loadRooms() {
+        const user = this.getCurrentUser();
+        if (!user) return;
         try {
-            const userId = localStorage.getItem('user_user_id');
-            const firstName = localStorage.getItem('user_first_name');
-            const lastName = localStorage.getItem('user_last_name');
+            const res = await fetch(`${this.baseURL}/api/v1/support/rooms?user_id=${user.id}`);
+            if (!res.ok) throw new Error('Failed to load rooms');
+            const data = await res.json();
+            this.rooms = data.rooms || [];
+            this.renderRoomList();
 
-            if (userId && firstName && lastName) {
-                return {
-                    id: userId,
-                    fullName: `${firstName} ${lastName}`,
-                    firstName: firstName,
-                    lastName: lastName
-                };
+            // Join socket rooms for every room (so we get real-time messages)
+            for (const room of this.rooms) {
+                const rName = `support_room_${room.id}`;
+                if (!this.joinedSocketRooms.has(rName)) {
+                    this.socket.emit('join', rName);
+                    this.joinedSocketRooms.add(rName);
+                }
             }
-            return null;
-        } catch (error) {
-            console.error('SupportChatSystem: Error reading from localStorage:', error);
-            return null;
+        } catch (err) {
+            console.error('loadRooms error:', err);
         }
     }
 
-    getCurrentUserWithFallback() {
-        if (this.currentUser) {
-            return this.currentUser;
-        }
-        // Try localStorage as fallback
-        return this.getUserFromLocalStorage();
-    }
+    renderRoomList() {
+        const list = document.getElementById('roomList');
+        if (!list) return;
+        list.innerHTML = '';
 
-    async loadMessages() {
-        try {
-            console.log('SupportChatSystem: Loading messages...');
-            const response = await fetch(`${this.lanIP}/api/v1/chat/messages/${this.sessionId}`);
-            
-            if (!response.ok) {
-                throw new Error('Failed to load messages');
-            }
-
-            const data = await response.json();
-            const messages = data.messages || [];
-            console.log('SupportChatSystem: Loaded', messages.length, 'messages');
-
-            const chatBox = document.getElementById('chatBox');
-            if (!chatBox) {
-                console.warn('SupportChatSystem: Chat box element not found');
-                return;
-            }
-
-            chatBox.innerHTML = '';
-
-            if (messages.length === 0) {
-                chatBox.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary, #999);">No messages yet. Start the conversation!</div>';
-            } else {
-                // Reverse messages so oldest appears first (top) and newest last (bottom)
-                messages.reverse().forEach((msg, idx) => {
-                    // Pass the index so displayMessage can show a stable fallback when timestamps are missing
-                    this.displayMessage(msg, idx);
-                });
-            }
-
-            this.scrollToBottom();
-
-        } catch (error) {
-            console.error('SupportChatSystem: Error loading messages:', error);
-            const chatBox = document.getElementById('chatBox');
-            if (chatBox) {
-                chatBox.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary, #999);">Unable to load messages. Please refresh the page.</div>';
-            }
-        }
-    }
-
-    displayMessage(msg, idx = null) {
-        const chatBox = document.getElementById('chatBox');
-        if (!chatBox) return;
-
-        const currentUser = this.getCurrentUserWithFallback();
-        const currentUsername = currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : null;
-        const isOwn = msg.username === currentUsername;
-
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `chat-message ${isOwn ? 'own' : 'other'}`;
-
-        const usernameSpan = document.createElement('div');
-        usernameSpan.className = 'username';
-        usernameSpan.textContent = msg.username || 'Guest';
-
-        const contentDiv = document.createElement('div');
-        contentDiv.textContent = msg.message;
-
-        const timestampDiv = document.createElement('div');
-        timestampDiv.className = 'timestamp';
-
-        // Compute formatted timestamp once (avoid double-parsing)
-        const candidateTs = this.getTimestampFromMessage(msg) || msg.created_at || msg.createdAt || msg.timestamp || msg.sent_at || msg.sentAt || msg.time || msg.date;
-        const formattedTs = this.formatTimestamp(candidateTs);
-
-        // If there's no usable timestamp, show a stable fallback using the message index (oldest-first)
-        if (formattedTs === 'Unknown time' && Number.isInteger(idx)) {
-            timestampDiv.textContent = `Message #${idx + 1} · Unknown time`;
-        } else {
-            timestampDiv.textContent = formattedTs;
-        }
-
-        // No debug logging here  use fallback timestamp extraction when fields are missing
-
-        messageDiv.appendChild(usernameSpan);
-        messageDiv.appendChild(contentDiv);
-        messageDiv.appendChild(timestampDiv);
-
-        chatBox.appendChild(messageDiv);
-        
-        // Auto-scroll to bottom to show newest messages
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    async sendMessage(messageText) {
-        if (!messageText || !messageText.trim()) {
-            console.warn('SupportChatSystem: Cannot send empty message');
+        if (!this.rooms.length) {
+            list.innerHTML = '<div style="text-align:center;padding:20px;opacity:.6;font-size:.85rem;">No rooms available</div>';
             return;
         }
 
-        const user = this.getCurrentUserWithFallback();
-        if (!user) {
-            console.error('SupportChatSystem: No user found, cannot send message');
-            this.showError('Please log in to send messages');
-            return;
+        for (const room of this.rooms) {
+            const card = document.createElement('div');
+            card.className = `room-card${room.id === this.activeRoomId ? ' active' : ''}`;
+            card.dataset.roomId = room.id;
+
+            const icon = room.is_private ? '🔒' : (room.id === 1 ? '🌐' : '💬');
+            const meta = room.is_private ? 'Private' : `${room.message_count || 0} msgs`;
+
+            card.innerHTML = `
+                <span class="room-card-icon">${icon}</span>
+                <div class="room-card-info">
+                    <div class="room-card-name">${this.escapeHTML(room.name)}</div>
+                    <div class="room-card-meta">${meta} · ${this.escapeHTML(room.creator_name || 'System')}</div>
+                </div>
+            `;
+
+            card.addEventListener('click', () => this.selectRoom(room.id));
+            list.appendChild(card);
+        }
+    }
+
+    selectRoom(roomId) {
+        if (this.activeRoomId === roomId) return;
+        this.activeRoomId = roomId;
+        this.renderRoomList(); // update active highlight
+
+        const room = this.rooms.find(r => r.id === roomId);
+        if (!room) return;
+
+        // Update header
+        const title = document.getElementById('roomTitle');
+        const desc = document.getElementById('roomDescription');
+        const deleteBtn = document.getElementById('deleteRoomBtn');
+        const mobileName = document.getElementById('mobileRoomName');
+        const banner = document.getElementById('roomInfoBanner');
+
+        if (title) title.textContent = room.name;
+        if (desc) desc.textContent = room.description || '';
+        if (mobileName) mobileName.textContent = room.name;
+
+        // Show delete btn only if user is owner or admin, and not Global Chat
+        const user = this.getCurrentUser();
+        if (deleteBtn) {
+            const canDelete = room.id !== 1 && user && (
+                String(room.created_by) === String(user.id) || this.isAdmin()
+            );
+            deleteBtn.style.display = canDelete ? 'inline-flex' : 'none';
         }
 
-        console.log('SupportChatSystem: Sending message...', { user: user.fullName, message: messageText });
+        // Show info banner only for Global Chat
+        if (banner) {
+            banner.style.display = room.id === 1 ? 'block' : 'none';
+        }
 
+        // Close sidebar on mobile
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) sidebar.classList.remove('open');
+
+        this.loadMessages(roomId);
+    }
+
+    async createRoom(name, description, isPrivate) {
+        const user = this.getCurrentUser();
+        if (!user) return null;
         try {
-            const response = await fetch(`${this.lanIP}/api/v1/chat/support/messages`, {
+            const res = await fetch(`${this.baseURL}/api/v1/support/rooms`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    session_id: this.sessionId,
-                    message_text: messageText,
-                    user_id: user.id,
-                    message_type: 'chat',
-                    reply_to_id: null
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, description, is_private: isPrivate, user_id: user.id })
             });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || 'Failed to send message');
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.detail || 'Failed to create room');
             }
+            const data = await res.json();
+            await this.loadRooms();
+            this.selectRoom(data.room_id);
+            return data.room_id;
+        } catch (err) {
+            this.showNotification(err.message, 'error');
+            return null;
+        }
+    }
 
-            const result = await response.json();
-            console.log('SupportChatSystem: Message sent successfully:', result);
-
-            // If no socket, reload messages manually
-            if (!this.socket || !this.socket.connected) {
-                setTimeout(() => this.loadMessages(), 100);
+    async deleteRoom(roomId) {
+        const user = this.getCurrentUser();
+        if (!user) return false;
+        try {
+            const res = await fetch(`${this.baseURL}/api/v1/support/rooms/${roomId}?user_id=${user.id}`, {
+                method: 'DELETE'
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.detail || 'Failed to delete room');
             }
-
+            // If we were in that room, switch to Global Chat
+            if (this.activeRoomId === roomId) {
+                this.activeRoomId = null;
+                this.selectRoom(1);
+            }
+            await this.loadRooms();
+            this.showNotification('Room deleted', 'success');
             return true;
-
-        } catch (error) {
-            console.error('SupportChatSystem: Error sending message:', error);
-            this.showError('Failed to send message: ' + error.message);
+        } catch (err) {
+            this.showNotification(err.message, 'error');
             return false;
         }
     }
 
-    updateConnectionStatus(connected = null) {
-        const statusEl = document.getElementById('connectionStatus');
-        const sendButton = document.getElementById('sendButton');
-
-        if (!statusEl || !sendButton) return;
-
-        const user = this.getCurrentUserWithFallback();
-        
-        // If connected parameter not provided, check actual socket state
-        if (connected === null) {
-            connected = this.socket && this.socket.connected;
-        }
-        
-        const isReconnecting = this.socket && this.socket.reconnecting;
-
-        if (connected && user) {
-            statusEl.className = 'status-indicator connected';
-            statusEl.querySelector('span:last-child').textContent = 'Connected';
-            sendButton.disabled = false;
-        } else if (isReconnecting && user) {
-            statusEl.className = 'status-indicator connecting';
-            statusEl.querySelector('span:last-child').textContent = 'Reconnecting...';
-            sendButton.disabled = true;
-        } else if (!user) {
-            statusEl.className = 'status-indicator disconnected';
-            statusEl.querySelector('span:last-child').textContent = 'Please log in to chat...';
-            sendButton.disabled = true;
-        } else {
-            statusEl.className = 'status-indicator disconnected';
-            statusEl.querySelector('span:last-child').textContent = 'Disconnected';
-            sendButton.disabled = true;
-        }
-    }
-
-    formatTimestamp(timestamp) {
-        // Distinguish missing timestamp from a recent timestamp.
-        // When there's no timestamp available, return an empty string so nothing is shown.
-        if (timestamp === null || timestamp === undefined || timestamp === '') return '';
-
-        // Normalize and robustly parse many timestamp formats:
-        // - Unix seconds (e.g. 1630000000)
-        // - Unix milliseconds (e.g. 1630000000000)
-        // - Numeric strings of the above
-        // - Common SQL datetime strings ("YYYY-MM-DD HH:MM:SS")
-        // - ISO strings
-        let date = null;
+    /* ──────────────────── Messages ──────────────────── */
+    async loadMessages(roomId) {
+        const user = this.getCurrentUser();
+        if (!user) return;
+        const chatBox = document.getElementById('chatBox');
+        if (!chatBox) return;
 
         try {
-            if (typeof timestamp === 'number') {
-                // If it looks like seconds (10 digits), convert to ms
-                date = timestamp < 1e12 ? new Date(timestamp * 1000) : new Date(timestamp);
-            } else if (typeof timestamp === 'string') {
-                const s = timestamp.trim();
+            const res = await fetch(`${this.baseURL}/api/v1/support/rooms/${roomId}/messages?user_id=${user.id}`);
+            if (!res.ok) {
+                if (res.status === 403) {
+                    chatBox.innerHTML = '<div class="no-messages">🔒 You don\'t have access to this room.</div>';
+                    return;
+                }
+                throw new Error('Failed to load messages');
+            }
+            const data = await res.json();
+            const messages = data.messages || [];
 
-                // Pure numeric string
-                if (/^\d+$/.test(s)) {
-                    const num = parseInt(s, 10);
-                    date = num < 1e12 ? new Date(num * 1000) : new Date(num);
-                } else {
-                    // Fix SQL-style 'YYYY-MM-DD HH:MM:SS' -> 'YYYY-MM-DDTHH:MM:SS' for reliable parsing
-                    let normalized = s;
-                    // Normalize SQL-style 'YYYY-MM-DD HH:MM:SS[.micro]' -> 'YYYY-MM-DDTHH:MM:SS[.ms][zone]'
-                    const sqlMatch = s.match(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2}(?:\.\d+)?)(.*)$/);
-                    if (sqlMatch) {
-                        normalized = `${sqlMatch[1]}T${sqlMatch[2]}${sqlMatch[3] || ''}`;
-                    }
-
-                    // Trim fractional seconds to milliseconds precision (max 3 digits)
-                    // e.g. 2025-11-18T17:24:27.122398 -> 2025-11-18T17:24:27.122
-                    normalized = normalized.replace(/(\.\d{3})\d+/, '$1');
-
-                    date = new Date(normalized);
-
-                    // If still invalid, try removing fractional seconds entirely then parse
-                    if (isNaN(date)) {
-                        const withoutFraction = normalized.replace(/\.\d+/, '');
-                        date = new Date(withoutFraction);
-                    }
-
-                    // If still invalid, try treating as UTC by appending 'Z'
-                    if (isNaN(date) && !/Z$/.test(normalized)) {
-                        date = new Date(normalized + 'Z');
-                    }
+            chatBox.innerHTML = '';
+            if (!messages.length) {
+                chatBox.innerHTML = '<div class="no-messages">No messages yet. Start the conversation!</div>';
+            } else {
+                for (const msg of messages) {
+                    this.appendMessage(msg, false);
                 }
             }
+            this.scrollToBottom();
         } catch (err) {
-            date = null;
+            console.error('loadMessages error:', err);
+            chatBox.innerHTML = '<div class="no-messages">Unable to load messages. Try again later.</div>';
         }
-
-        if (!date || isNaN(date.getTime())) {
-            return 'Just now';
-        }
-
-        const now = new Date();
-        const diffMs = now - date;
-        const diffMins = Math.floor(diffMs / 60000);
-
-        if (diffMins < 1) return 'Just now';
-        if (diffMins < 60) return `${diffMins}m ago`;
-        if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
-
-        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
-    // Try to extract a timestamp from a message object by checking common fields
-    getTimestampFromMessage(msg) {
-        if (!msg || typeof msg !== 'object') return null;
+    appendMessage(msg, scroll = true) {
+        const chatBox = document.getElementById('chatBox');
+        if (!chatBox) return;
 
-        // Common known fields
-        const keysToTry = ['created_at', 'createdAt', 'timestamp', 'sent_at', 'sentAt', 'time', 'date', 'created', 'created_on', 'createdOn', 'ts'];
-        for (const k of keysToTry) {
-            if (k in msg && msg[k]) return msg[k];
+        // Remove "no messages" placeholder
+        const placeholder = chatBox.querySelector('.no-messages');
+        if (placeholder) placeholder.remove();
+
+        const user = this.getCurrentUser();
+        const currentName = user ? `${user.firstName} ${user.lastName}` : null;
+        const isOwn = msg.username === currentName || String(msg.user_id) === String(user?.id);
+
+        const div = document.createElement('div');
+        div.className = `chat-message ${isOwn ? 'own' : 'other'}`;
+
+        const nameEl = document.createElement('div');
+        nameEl.className = 'username';
+        nameEl.textContent = msg.username || 'Unknown';
+
+        const bodyEl = document.createElement('div');
+        bodyEl.textContent = msg.message || msg.message_text || '';
+
+        const timeEl = document.createElement('div');
+        timeEl.className = 'timestamp';
+        timeEl.textContent = this.formatTimestamp(msg.created_at);
+
+        div.appendChild(nameEl);
+        div.appendChild(bodyEl);
+        div.appendChild(timeEl);
+        chatBox.appendChild(div);
+
+        if (scroll) this.scrollToBottom();
+    }
+
+    clearMessages() {
+        const chatBox = document.getElementById('chatBox');
+        if (chatBox) chatBox.innerHTML = '<div class="no-messages">Select a room to start chatting.</div>';
+        const title = document.getElementById('roomTitle');
+        if (title) title.textContent = 'Select a room';
+        const desc = document.getElementById('roomDescription');
+        if (desc) desc.textContent = '';
+        const deleteBtn = document.getElementById('deleteRoomBtn');
+        if (deleteBtn) deleteBtn.style.display = 'none';
+    }
+
+    async sendMessage(text) {
+        if (!text || !text.trim()) return false;
+        const user = this.getCurrentUser();
+        if (!user) { this.showNotification('Please log in to send messages', 'error'); return false; }
+        if (!this.activeRoomId) { this.showNotification('Select a room first', 'error'); return false; }
+
+        try {
+            const res = await fetch(`${this.baseURL}/api/v1/support/rooms/${this.activeRoomId}/messages`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message_text: text.trim(), user_id: user.id })
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.detail || 'Failed to send');
+            }
+            // Message will arrive via socket event – no manual append needed
+            // But if socket is disconnected, reload manually
+            if (!this.socket || !this.socket.connected) {
+                setTimeout(() => this.loadMessages(this.activeRoomId), 200);
+            }
+            return true;
+        } catch (err) {
+            this.showNotification(err.message, 'error');
+            return false;
         }
+    }
 
-        // Shallow scan: look for any string/number value that looks like a date/time
-        const isoLike = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+\-]\d{2}:?\d{2})?$/;
-        const sqlLike = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d+)?$/;
-        for (const k in msg) {
-            try {
-                const v = msg[k];
-                if (typeof v === 'string') {
-                    const s = v.trim();
-                    if (isoLike.test(s) || sqlLike.test(s) || /^\d{10,13}$/.test(s)) return s;
-                } else if (typeof v === 'number') {
-                    // plausible unix seconds or ms
-                    if (v > 1e9) return v;
-                }
-            } catch (err) {
-                // ignore
+    /* ──────────────────── Helpers ──────────────────── */
+    isAdmin() {
+        // Simple heuristic – the backend does the real check
+        // We could store userRoleId, but for now return false (UI only)
+        return false;
+    }
+
+    updateConnectionStatus(connected = null) {
+        const el = document.getElementById('connectionStatus');
+        const sendBtn = document.getElementById('sendButton');
+        const user = this.getCurrentUser();
+
+        if (connected === null && this.socket) connected = this.socket.connected;
+
+        if (el) {
+            const span = el.querySelector('span:last-child');
+            if (connected && user) {
+                el.className = 'status-indicator connected';
+                if (span) span.textContent = 'Connected';
+            } else if (connected === null) {
+                el.className = 'status-indicator connecting';
+                if (span) span.textContent = 'Reconnecting…';
+            } else if (!user) {
+                el.className = 'status-indicator disconnected';
+                if (span) span.textContent = 'Please log in…';
+            } else {
+                el.className = 'status-indicator disconnected';
+                if (span) span.textContent = 'Disconnected';
             }
         }
+        if (sendBtn) {
+            sendBtn.disabled = !(connected && user && this.activeRoomId);
+        }
+    }
 
-        return null;
+    formatTimestamp(ts) {
+        if (!ts) return '';
+        let date;
+        try {
+            let s = String(ts).trim();
+            // Normalize SQL datetime
+            s = s.replace(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})/, '$1T$2');
+            // Trim excess fractional seconds
+            s = s.replace(/(\.\d{3})\d+/, '$1');
+            date = new Date(s);
+            if (isNaN(date)) date = new Date(s + 'Z');
+        } catch { date = null; }
+        if (!date || isNaN(date.getTime())) return '';
+
+        const diffMin = Math.floor((Date.now() - date) / 60000);
+        if (diffMin < 1) return 'Just now';
+        if (diffMin < 60) return `${diffMin}m ago`;
+        if (diffMin < 1440) return `${Math.floor(diffMin / 60)}h ago`;
+        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
     scrollToBottom() {
         const chatBox = document.getElementById('chatBox');
-        if (chatBox) {
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
+        if (chatBox) requestAnimationFrame(() => { chatBox.scrollTop = chatBox.scrollHeight; });
     }
 
-    sanitizeHTML(str) {
+    escapeHTML(str) {
         if (!str) return '';
-        const temp = document.createElement('div');
-        temp.textContent = str;
-        return temp.innerHTML;
+        const el = document.createElement('span');
+        el.textContent = str;
+        return el.innerHTML;
     }
 
-    showError(message) {
-        this.showNotification('Error', message, 'error');
-    }
-
-    showSuccess(message) {
-        this.showNotification('Success', message, 'success');
-    }
-
-    showNotification(title, message, type) {
-        const chatBox = document.getElementById('chatBox');
-        if (!chatBox) return;
-
-        const notificationDiv = document.createElement('div');
-        notificationDiv.className = `chat-notification chat-notification-${type}`;
-        notificationDiv.style.cssText = `
-            padding: 12px;
-            margin: 10px 0;
-            border-radius: 6px;
-            text-align: center;
-            font-weight: 500;
-            animation: slideIn 0.3s ease-out;
-        `;
-
-        if (type === 'error') {
-            notificationDiv.style.background = 'rgba(220, 53, 69, 0.1)';
-            notificationDiv.style.color = '#dc3545';
-            notificationDiv.style.border = '1px solid rgba(220, 53, 69, 0.3)';
-        } else if (type === 'success') {
-            notificationDiv.style.background = 'rgba(40, 167, 69, 0.1)';
-            notificationDiv.style.color = '#28a745';
-            notificationDiv.style.border = '1px solid rgba(40, 167, 69, 0.3)';
+    showNotification(message, type = 'error') {
+        // Reuse or create a toast element
+        let toast = document.getElementById('supportToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'supportToast';
+            toast.style.cssText = 'position:fixed;top:16px;right:16px;z-index:1000;padding:12px 18px;border-radius:8px;font-size:.9rem;font-weight:500;box-shadow:0 4px 14px rgba(0,0,0,.15);transition:opacity .3s;max-width:340px;';
+            document.body.appendChild(toast);
         }
-
-        notificationDiv.innerHTML = `<strong>${title}:</strong> ${message}`;
-        chatBox.appendChild(notificationDiv);
-        this.scrollToBottom();
-
-        setTimeout(() => {
-            if (notificationDiv.parentNode) {
-                notificationDiv.remove();
-            }
-        }, 5000);
+        toast.textContent = message;
+        toast.style.opacity = '1';
+        toast.style.background = type === 'error' ? '#dc3545' : '#28a745';
+        toast.style.color = '#fff';
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 4000);
     }
 
-    isConnected() {
-        return this.socket && this.socket.connected;
-    }
-
-    getCurrentUser() {
-        return this.getCurrentUserWithFallback();
-    }
-
-    canChat() {
-        return this.getCurrentUserWithFallback() !== null;
-    }
-
-    destroy() {
-        if (this.socket) {
-            this.socket.disconnect();
-        }
-    }
+    isConnected() { return this.socket && this.socket.connected; }
+    canChat() { return !!this.getCurrentUser(); }
+    destroy() { if (this.socket) this.socket.disconnect(); }
 }
 
-// Export for use in other scripts
 window.SupportChatSystem = SupportChatSystem;

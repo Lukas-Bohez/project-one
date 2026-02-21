@@ -327,24 +327,25 @@
         hideBulkBar();
     };
 
-    window.bulkApprove = async function () {
-        if (!confirm(`Approve ${selectedThemeIds.size} theme(s)?`)) return;
-        for (const id of [...selectedThemeIds]) {
-            try {
-                await communityApi(`/admin/review/${id}`, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'approve', notes: null })
-                });
-                removeCard(id);
-            } catch (e) {
-                notify(`Failed to approve theme #${id}: ${e.detail || ''}`, 'error');
+    window.bulkApprove = function () {
+        showConfirmDialog(`Approve ${selectedThemeIds.size} theme(s)?`, async () => {
+            for (const id of [...selectedThemeIds]) {
+                try {
+                    await communityApi(`/admin/review/${id}`, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'approve', notes: null })
+                    });
+                    removeCard(id);
+                } catch (e) {
+                    notify(`Failed to approve theme #${id}: ${e.detail || ''}`, 'error');
+                }
             }
-        }
-        selectedThemeIds.clear();
-        hideBulkBar();
-        updateBadge();
-        loadCommunityStats();
-        notify('Bulk approve complete!', 'success');
+            selectedThemeIds.clear();
+            hideBulkBar();
+            updateBadge();
+            loadCommunityStats();
+            notify('Bulk approve complete!', 'success');
+        });
     };
 
     window.bulkReject = function () {
