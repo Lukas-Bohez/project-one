@@ -2420,9 +2420,19 @@
       "platform": "Windows",
       "browser": "Chrome",
       "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+    },
+    "46.52.57.110": {
+      "count": 0,
+      "bandwidth_gb": 0.1552734375,
+      "active_downloads": 1,
+      "last_download": null,
+      "download_started_at": "2026-02-21T17:17:17.249962",
+      "platform": "Android",
+      "browser": "Chrome",
+      "user_agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
     }
   },
   "last_reset_month": "2026-02",
-  "total_monthly_bandwidth_gb": 10.26352511613834,
+  "total_monthly_bandwidth_gb": 10.41879855363834,
   "file_size_gb": 0.0126953125
 }
