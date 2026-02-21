@@ -1927,7 +1927,7 @@ class SessionPlayerRepository:
     @staticmethod
     def get_session_player(session_id: int, user_id: int):
         try:
-            sql = "SELECT * FROM sessionPlayers WHERE sessionId = %s AND user_id = %s"
+            sql = "SELECT * FROM sessionPlayers WHERE sessionId = %s AND userId = %s"
             params = [session_id, user_id]
             # Use get_rows instead of get_one, then take first result
             results = Database.get_rows(sql, params)
@@ -3198,3 +3198,76 @@ class GameUpgradesRepository:
         stats['vehicle_popularity'] = sorted(vehicle_counts.items(), key=lambda x: x[1], reverse=True)
         
         return stats
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Support Chat Rooms & Messages
+# ──────────────────────────────────────────────────────────────────────
+
+class SupportRoomRepository:
+    """Repository for support chat rooms."""
+
+    @staticmethod
+    def create_room(name: str, description: str = None, is_private: bool = False, created_by: int = None):
+        sql = """INSERT INTO support_rooms (name, description, is_private, created_by)
+                 VALUES (%s, %s, %s, %s)"""
+        return Database.execute_sql(sql, [name, description, is_private, created_by])
+
+    @staticmethod
+    def get_room_by_id(room_id: int):
+        sql = "SELECT * FROM support_rooms WHERE id = %s"
+        return Database.get_one_row(sql, [room_id])
+
+    @staticmethod
+    def get_all_rooms():
+        sql = """SELECT r.*, COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'System') as creator_name,
+                        (SELECT COUNT(*) FROM support_messages m WHERE m.room_id = r.id) as message_count
+                 FROM support_rooms r
+                 LEFT JOIN users u ON r.created_by = u.id
+                 ORDER BY r.is_private ASC, r.created_at ASC"""
+        return Database.get_rows(sql)
+
+    @staticmethod
+    def get_rooms_for_user(user_id: int, user_role_id: int = 1):
+        """Get rooms visible to a user: all public rooms + private rooms they created.
+        Admins (role >= 3) see all rooms."""
+        if user_role_id >= 3:
+            return SupportRoomRepository.get_all_rooms()
+        sql = """SELECT r.*, COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'System') as creator_name,
+                        (SELECT COUNT(*) FROM support_messages m WHERE m.room_id = r.id) as message_count
+                 FROM support_rooms r
+                 LEFT JOIN users u ON r.created_by = u.id
+                 WHERE r.is_private = FALSE OR r.created_by = %s
+                 ORDER BY r.is_private ASC, r.created_at ASC"""
+        return Database.get_rows(sql, [user_id])
+
+    @staticmethod
+    def delete_room(room_id: int):
+        sql = "DELETE FROM support_rooms WHERE id = %s"
+        return Database.execute_sql(sql, [room_id])
+
+
+class SupportMessageRepository:
+    """Repository for support chat messages."""
+
+    @staticmethod
+    def create_message(room_id: int, user_id: int, message_text: str):
+        sql = """INSERT INTO support_messages (room_id, user_id, message_text)
+                 VALUES (%s, %s, %s)"""
+        return Database.execute_sql(sql, [room_id, user_id, message_text])
+
+    @staticmethod
+    def get_messages_by_room(room_id: int, limit: int = 200):
+        sql = """SELECT m.id, m.room_id, m.user_id, m.message_text, m.created_at,
+                        COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Unknown') as username
+                 FROM support_messages m
+                 LEFT JOIN users u ON m.user_id = u.id
+                 WHERE m.room_id = %s
+                 ORDER BY m.created_at ASC
+                 LIMIT %s"""
+        return Database.get_rows(sql, [room_id, limit])
+
+    @staticmethod
+    def delete_message(message_id: int):
+        sql = "DELETE FROM support_messages WHERE id = %s"
+        return Database.execute_sql(sql, [message_id])

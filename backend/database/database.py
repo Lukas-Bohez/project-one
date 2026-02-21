@@ -96,6 +96,11 @@ class Database:
                 return cls._local.cursor.rowcount
                 
         except connector.Error as error:
+            # Suppress "Table already exists" warnings from CREATE TABLE IF NOT EXISTS
+            # (caused by raise_on_warnings=True in db_config)
+            if error.errno == 1050 and 'IF NOT EXISTS' in sql_query.upper():
+                cls._local.db.commit()
+                return 0
             if hasattr(cls._local, 'db'):
                 cls._local.db.rollback()
             print(f"Execute error: {error}")

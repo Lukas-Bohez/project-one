@@ -579,7 +579,7 @@ class AuditLogsManager {
         return;
       }
       
-      console.log('Audit Logs Manager: Starting update cycle');
+      // Start update cycle
       
       // Clear any existing interval
       this.stop();
@@ -635,7 +635,7 @@ class AuditLogsManager {
    */
   async update() {
     if (this.isUpdateRunning) {
-      console.log('Audit Logs Manager: Update already running, skipping...');
+      // Update already running, skip
       return;
     }
     
@@ -646,10 +646,10 @@ class AuditLogsManager {
     this.abortController = new AbortController();
     
     try {
-      console.log('Audit Logs Manager: Fetching audit logs...');
+      // Fetching audit logs
       
       const url = `${this.baseUrl}${this.apiEndpoint}?limit=15&_=${Date.now()}`;
-      console.log('Audit Logs Manager: Request URL:', url);
+      // Request audit logs
       
       // Create timeout manually for better browser compatibility
       const timeoutId = setTimeout(() => {
@@ -683,7 +683,7 @@ class AuditLogsManager {
       // Clear timeout on successful response
       clearTimeout(timeoutId);
 
-      console.log('Audit Logs Manager: Response status:', response.status);
+      // Response received
 
       if (!response.ok) {
         // Handle authentication errors specifically to prevent browser dialogs
@@ -710,7 +710,7 @@ class AuditLogsManager {
       }
 
       const rawData = await response.json();
-      console.log('Audit Logs Manager: Received raw data:', rawData);
+      // Data received
 
       // Ensure we have an array to work with
       let auditLogs = [];
@@ -1110,11 +1110,7 @@ class AuditLogsManager {
    * Format timestamp for display - Improved version with better date parsing
    */
   formatTimestamp(timestamp) {
-    // Debug logging to see what we're actually getting
-    console.log('formatTimestamp received:', timestamp, 'type:', typeof timestamp);
-    
     if (!timestamp) {
-      console.log('No timestamp provided');
       return 'Unknown time';
     }
     
@@ -1190,8 +1186,6 @@ class AuditLogsManager {
         date = new Date(timestamp);
       }
       
-      console.log('Parsed date:', date, 'Valid:', !isNaN(date.getTime()));
-      
       // Final validation
       if (isNaN(date.getTime())) {
         console.error('All parsing methods failed for timestamp:', timestamp);
@@ -1206,8 +1200,6 @@ class AuditLogsManager {
       const diffWeeks = Math.floor(diffDays / 7);
       const diffMonths = Math.floor(diffDays / 30);
       const diffYears = Math.floor(diffDays / 365);
-      
-      console.log('Time difference - Minutes:', diffMins, 'Hours:', diffHours, 'Days:', diffDays);
       
       // Handle future dates (negative differences)
       if (diffMs < 0) {

@@ -31,16 +31,32 @@ function addShutdownButton() {
 }
 
 async function handleShutdown() {
-    // Use the custom confirm dialog from admin.js instead of browser confirm
+    // Use the custom confirm dialog from admin.js
     if (typeof showConfirmDialog === 'function') {
         showConfirmDialog('Are you sure you want to shutdown the Raspberry Pi?', async () => {
             await performShutdown();
         });
     } else {
-        // Fallback if function not available
-        if (confirm('Are you sure you want to shutdown the Raspberry Pi?')) {
+        // Fallback: create a simple inline confirm modal
+        const overlay = document.createElement('div');
+        overlay.className = 'c-modal-overlay c-modal-overlay--active';
+        overlay.innerHTML = `
+          <div class="c-modal c-modal--sm">
+            <div class="c-modal__header"><h2 class="c-modal__title">Confirm Shutdown</h2></div>
+            <div class="c-modal__body"><p>Are you sure you want to shutdown the Raspberry Pi?</p></div>
+            <div class="c-modal__footer">
+              <button class="c-btn c-btn--sm c-btn--secondary js-cancel">Cancel</button>
+              <button class="c-btn c-btn--sm c-btn--danger js-confirm">Shutdown</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+        overlay.querySelector('.js-cancel').addEventListener('click', () => overlay.remove());
+        overlay.addEventListener('click', (ev) => { if (ev.target === overlay) overlay.remove(); });
+        overlay.querySelector('.js-confirm').addEventListener('click', async () => {
+            overlay.remove();
             await performShutdown();
-        }
+        });
     }
 }
 

@@ -156,6 +156,7 @@ const fetchQuestions = async (activeOnly = false) => {
             console.warn('Returning stale data due to fetch error:', data);
             return data;
         }
+        return [];
     }
 };
 
@@ -409,21 +410,6 @@ const displayUserIpInfo = (user) => {
     return ipInfo || 'No IP addresses recorded';
 };
 
-// Example usage in your UI rendering
-const renderUserTable = (users) => {
-    return users.map(user => {
-        const ipDisplay = displayUserIpInfo(user);
-        return `
-            <tr>
-                <td>${user.first_name} ${user.last_name}</td>
-                <td>${user.rfid_code || 'N/A'}</td>
-                <td>${ipDisplay}</td>
-                <td>${user.last_active || 'Never'}</td>
-            </tr>
-        `;
-    }).join('');
-};
-
 
 
 let state = {
@@ -585,40 +571,11 @@ const updateQuestion = async (question) => {
 
 
 
-const saveItem = async (itemType, item, isNewQuestion = false) => {
-    console.log(`Saving ${itemType}:`, item);
-    
+const saveItem = async (itemType, item) => {
     if (itemType === 'questions') {
-        const questionForm = document.querySelector('.c-question-edit-container.active');
-        
-        // If it's a new question and we can't find the form, just reload and bail out
-        if (isNewQuestion && !questionForm) {
-            window.location.reload();
-            return;
-        }
-        
-        // If we get here, either it's not a new question or we found the form
-        if (questionForm) {
-            // [Keep all your existing form data collection logic here]
-            
-            if (isNewQuestion || !item.id) {
-                await createQuestion(questionData);
-                window.location.reload();
-                return;
-            } else {
-                // Existing question update logic
-                const updatedQuestion = await updateQuestion(questionData);
-                // [Rest of your update logic]
-                return updatedQuestion;
-            }
-        }
-        
-        // If we get here and it's not a new question, then silently reload
-        window.location.reload();
-        return;
-    }
-    // Code for themes and users ...
- else if (itemType === 'themes') {
+        // Question updates are handled by updateQuestion() directly
+        return await updateQuestion(item);
+    } else if (itemType === 'themes') {
         const index = state.themes.findIndex(t => t.id === item.id);
         if (index >= 0) {
             state.themes[index] = item;
@@ -639,7 +596,6 @@ const saveItem = async (itemType, item, isNewQuestion = false) => {
         return item;
     }
    
-    // If itemType doesn't match any known type
     throw new Error(`Unknown item type: ${itemType}`);
 };
 
@@ -883,18 +839,6 @@ const showEditModal = async (itemType, item = null) => {
     const modalTitle = modal.querySelector('.c-modal-title');
     const form = modal.querySelector('.c-edit-form');
     
-    // Helper function to escape HTML
-    const escapeHTML = (str) => {
-        if (!str) return '';
-        return str.replace(/[&<>'"]/g, (tag) => ({
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            "'": '&#39;',
-            '"': '&quot;'
-        }[tag] || tag));
-    };
-    
     // **FIX: Ensure themes are loaded before building question form**
     if (itemType === 'questions' && (!state.themes || state.themes.length === 0)) {
         try {
@@ -906,28 +850,7 @@ const showEditModal = async (itemType, item = null) => {
         }
     }
     
-    // Helper function to generate answers HTML
-    const generateAnswersHTML = (answers, count) => {
-        return Array.from({length: count}, (_, i) => {
-            // Preserve existing answers up to the new count
-            const answer = i < answers.length ? answers[i] : {text: '', isCorrect: false};
-            return `
-                <div class="c-answer-item">
-                    <input type="text" 
-                        name="answers[${i}][text]"
-                        class="c-answer-text c-form-input" 
-                        value="${escapeHTML(answer.text)}" 
-                        placeholder="Answer option ${i+1}">
-                    <label class="c-answer-correct">
-                        <input type="checkbox" 
-                            name="answers[${i}][isCorrect]"
-                            ${answer.isCorrect ? 'checked' : ''}>
-                        <span>Correct</span>
-                    </label>
-                </div>
-            `;
-        }).join('');
-    };
+    // Uses module-scope generateAnswersHTML (with answer_text / is_correct property names)
 
     // Clear previous form
     form.innerHTML = '';
@@ -1299,13 +1222,14 @@ const showConfirmDialog = (message, onConfirm) => {
     modal.innerHTML = `
         <div class="c-modal__content c-modal__content--confirm">
             <h3 class="c-modal-title">Confirm Action</h3>
-            <p class="c-confirm-message">${message}</p>
+            <p class="c-confirm-message"></p>
             <div class="c-form-actions">
                 <button class="c-btn c-btn--cancel c-confirm-cancel">Cancel</button>
                 <button class="c-btn c-btn--delete c-confirm-ok">Confirm</button>
             </div>
         </div>
     `;
+    modal.querySelector('.c-confirm-message').textContent = message;
     
     document.body.appendChild(modal);
     
@@ -1824,20 +1748,14 @@ const handleQuestionFieldChanges = (event) => {
     }
     
     if (target.classList.contains('js-explanation')) {
-        // Use blur event to avoid too many updates
-        target.addEventListener('blur', () => {
-            question.explanation = target.value;
-            updateQuestion(question);
-        }, { once: true });
+        question.explanation = target.value;
+        updateQuestion(question);
     }
     
     // Handle question text changes
     if (target.classList.contains('c-question-text-edit')) {
-        // Use blur event to avoid too many updates
-        target.addEventListener('blur', () => {
-            question.question_text = target.value;
-            updateQuestion(question);
-        }, { once: true });
+        question.question_text = target.value;
+        updateQuestion(question);
     }
 };
 
@@ -1870,7 +1788,7 @@ const loadThemes = async () => {
         themeList.innerHTML = themes.map(theme => `
             <div class="c-theme-item" data-id="${theme.id}">
                 <div class="c-theme-info">
-                    <div class="c-theme-name">${theme.name}</div>
+                    <div class="c-theme-name">${escapeHTML(theme.name)}</div>
                     <div class="c-theme-meta">
                         <span class="c-tag c-tag--count">${theme.questionCount} questions</span>
                     </div>
@@ -1943,11 +1861,11 @@ const loadUsers = async () => {
             // Map userRoleId to a displayable role name
             const roleName = getRoleName(user.userRoleId);
             const lastActiveDisplay = user.last_active ? new Date(user.last_active).toLocaleString() : 'Never';
-            const displayName = `${user.first_name} ${user.last_name}`;
+            const displayName = escapeHTML(`${user.first_name} ${user.last_name}`);
             
             // Check if user has IP addresses (admin access)
             const hasIpInfo = user.ip_addresses && user.ip_addresses.length > 0;
-            const ipInfo = hasIpInfo ? displayUserIpInfo(user) : 'no ip';
+            const ipInfo = hasIpInfo ? escapeHTML(displayUserIpInfo(user)) : 'no ip';
             
             return `
                 <tr data-id="${user.id}">
@@ -2098,7 +2016,7 @@ const formData = new FormData(form);
 // Validate and sanitize form data
 const themeName = formData.get('name')?.toString().trim();
 if (!themeName || themeName.length < 3) {
-    console.error('Theme name must be at least 3 characters long');
+    showNotification('Theme name must be at least 3 characters long', 'error');
     return;
 }
 
@@ -2114,12 +2032,16 @@ try {
     const rfidCode = sessionStorage.getItem('admin_rfid_code');
     
     if (!userId || !rfidCode) {
-        console.error('Authentication required. Please log in again.');
+        showNotification('Authentication required. Please log in again.', 'error');
         return;
     }
 
-    const response = await fetch(`${lanIP}/api/v1/themes`, {
-        method: 'POST',
+    const isEditing = currentEditItem && currentEditItem.id;
+    const url = isEditing ? `${lanIP}/api/v1/themes/${currentEditItem.id}` : `${lanIP}/api/v1/themes`;
+    const method = isEditing ? 'PATCH' : 'POST';
+
+    const response = await fetch(url, {
+        method: method,
         headers: {
             'Content-Type': 'application/json',
             'X-User-ID': userId,
@@ -2127,29 +2049,31 @@ try {
             'X-Requested-With': 'XMLHttpRequest'
         },
         body: JSON.stringify(themeData)
-        // Removed credentials: 'include' to fix CORS issue
     });
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => null);
         const errorMessage = errorData?.detail || errorData?.message || `HTTP error ${response.status}`;
-        console.error('Theme creation failed:', errorMessage);
+        showNotification(`Theme save failed: ${errorMessage}`, 'error');
         return;
     }
 
     const result = await response.json();
     
     if (!result.theme_id) {
-        console.error('Server did not return a valid theme ID');
+        showNotification('Server did not return a valid theme ID', 'error');
         return;
     }
 
-    // Success - log the created theme
-    console.log(`Theme "${themeData.name}" created successfully with ID: ${result.theme_id}`);
-    form.reset();
+    // Success
+    showNotification(isEditing ? 'Theme updated successfully!' : 'Theme created successfully!', 'success');
+    hideEditModal();
+    loadTabData(currentTab);
+    return;
     
 } catch (error) {
-    console.error('Theme creation failed:', error.message);
+    showNotification(`Theme save failed: ${error.message}`, 'error');
+    return;
 }
 
 
@@ -2190,9 +2114,9 @@ const filterQuestions = () => {
 
 // Enhanced event listeners for filters
 const listenToFilters = () => {
-    // Search input listener (existing)
+    // Search input listener with debounce to avoid excessive DOM rebuilds
     if (domAdmin.searchInput) {
-        domAdmin.searchInput.addEventListener('input', filterQuestions);
+        domAdmin.searchInput.addEventListener('input', debounce(filterQuestions, 300));
     }
     
     // Theme filter listener
@@ -2634,40 +2558,38 @@ const handleMigrationClick = async () => {
     
     // Confirmation dialog
     const questionCount = sourceTheme.questionCount || 0;
-    const confirmMessage = `Are you sure you want to migrate ${questionCount} question${questionCount !== 1 ? 's' : ''} from "${sourceTheme.name}" to "${targetTheme.name}"?\n\nThis action cannot be undone.`;
+    const confirmMessage = `Are you sure you want to migrate ${questionCount} question${questionCount !== 1 ? 's' : ''} from "${sourceTheme.name}" to "${targetTheme.name}"? This action cannot be undone.`;
     
-    if (!confirm(confirmMessage)) {
-        return;
-    }
-    
-    // Disable button during migration
-    const migrateButton = document.querySelector('.js-migrate-questions');
-    if (migrateButton) {
-        migrateButton.disabled = true;
-        migrateButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Migrating...';
-    }
-    
-    try {
-        await migrateQuestionsToTheme(sourceThemeId, targetThemeId);
-        
-        // Refresh data after successful migration
-        await loadTabData('themes');
-        await loadTabData('questions');
-        
-        // Reset form
-        sourceSelect.value = '';
-        targetSelect.value = '';
-        updateMigrationButtonState();
-        
-    } catch (error) {
-        // Error already handled in migrateQuestionsToTheme
-    } finally {
-        // Re-enable button
+    showConfirmDialog(confirmMessage, async () => {
+        // Disable button during migration
+        const migrateButton = document.querySelector('.js-migrate-questions');
         if (migrateButton) {
-            migrateButton.disabled = false;
-            migrateButton.innerHTML = '<i class="fas fa-arrows-alt-h"></i> Migrate All Questions';
+            migrateButton.disabled = true;
+            migrateButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Migrating...';
         }
-    }
+        
+        try {
+            await migrateQuestionsToTheme(sourceThemeId, targetThemeId);
+            
+            // Refresh data after successful migration
+            await loadTabData('themes');
+            await loadTabData('questions');
+            
+            // Reset form
+            sourceSelect.value = '';
+            targetSelect.value = '';
+            updateMigrationButtonState();
+            
+        } catch (error) {
+            // Error already handled in migrateQuestionsToTheme
+        } finally {
+            // Re-enable button
+            if (migrateButton) {
+                migrateButton.disabled = false;
+                migrateButton.innerHTML = '<i class="fas fa-arrows-alt-h"></i> Migrate All Questions';
+            }
+        }
+    });
 };
 
 // #endregion
@@ -2712,18 +2634,54 @@ async function loadStoriesTab() {
             `;
             const createBtn = container.querySelector('.js-create-story');
             if (createBtn) {
-                createBtn.addEventListener('click', async () => {
-                    try {
-                        const name = prompt('Story name (required):');
-                        if (!name || !name.trim()) return;
-                        const description = prompt('Story description (optional):') || '';
-                        const result = await createStoryIfNotExists(name.trim(), description.trim());
-                        showNotification(result.created ? 'Story created' : 'Story already existed', 'success');
-                        await loadStoriesTab();
-                    } catch (e) {
-                        console.error(e);
-                        showNotification(e.message || 'Failed to create story', 'error');
-                    }
+                createBtn.addEventListener('click', () => {
+                    const overlay = document.createElement('div');
+                    overlay.className = 'c-modal-overlay c-modal-overlay--active';
+                    overlay.innerHTML = `
+                      <div class="c-modal c-modal--sm">
+                        <div class="c-modal__header">
+                          <h2 class="c-modal__title"><i class="fas fa-plus"></i> Create Story</h2>
+                          <button class="c-modal__close js-close-create-story">&times;</button>
+                        </div>
+                        <div class="c-modal__body">
+                          <div class="c-form-group">
+                            <label class="c-form-label" for="create-story-name">Name <span style="color:var(--admin-danger)">*</span></label>
+                            <input class="c-form-input" type="text" id="create-story-name" placeholder="Enter story name" maxlength="200" />
+                          </div>
+                          <div class="c-form-group">
+                            <label class="c-form-label" for="create-story-desc">Description</label>
+                            <textarea class="c-form-input" id="create-story-desc" rows="4" placeholder="Optional description" maxlength="2000"></textarea>
+                          </div>
+                        </div>
+                        <div class="c-modal__footer">
+                          <button class="c-btn c-btn--sm c-btn--secondary js-close-create-story">Cancel</button>
+                          <button class="c-btn c-btn--sm c-btn--primary js-save-create-story">Create Story</button>
+                        </div>
+                      </div>
+                    `;
+                    document.body.appendChild(overlay);
+
+                    const closeModal = () => overlay.remove();
+                    overlay.querySelectorAll('.js-close-create-story').forEach(b => b.addEventListener('click', closeModal));
+                    overlay.addEventListener('click', (ev) => { if (ev.target === overlay) closeModal(); });
+
+                    const nameInput = overlay.querySelector('#create-story-name');
+                    if (nameInput) nameInput.focus();
+
+                    overlay.querySelector('.js-save-create-story').addEventListener('click', async () => {
+                        const name = overlay.querySelector('#create-story-name').value.trim();
+                        const description = overlay.querySelector('#create-story-desc').value.trim();
+                        if (!name) { showNotification('Story name is required', 'error'); return; }
+                        try {
+                            const result = await createStoryIfNotExists(name, description);
+                            closeModal();
+                            showNotification(result.created ? 'Story created' : 'Story already existed', 'success');
+                            await loadStoriesTab();
+                        } catch (e) {
+                            console.error(e);
+                            showNotification(e.message || 'Failed to create story', 'error');
+                        }
+                    });
                 });
             }
       return;
@@ -2869,11 +2827,11 @@ async function loadStoriesTab() {
                 <div class="c-modal__body">
                   <div class="c-form-group">
                     <label class="c-form-label" for="edit-story-name">Name</label>
-                    <input class="c-form-input" type="text" id="edit-story-name" value="${currentName}" maxlength="200" />
+                    <input class="c-form-input" type="text" id="edit-story-name" maxlength="200" />
                   </div>
                   <div class="c-form-group">
                     <label class="c-form-label" for="edit-story-desc">Description</label>
-                    <textarea class="c-form-input" id="edit-story-desc" rows="4" maxlength="2000">${currentDesc}</textarea>
+                    <textarea class="c-form-input" id="edit-story-desc" rows="4" maxlength="2000"></textarea>
                   </div>
                 </div>
                 <div class="c-modal__footer">
@@ -2883,6 +2841,10 @@ async function loadStoriesTab() {
               </div>
             `;
             document.body.appendChild(overlay);
+
+            // Set values safely via DOM (avoids HTML injection from special chars)
+            overlay.querySelector('#edit-story-name').value = currentName || '';
+            overlay.querySelector('#edit-story-desc').value = currentDesc || '';
 
             const closeModal = () => overlay.remove();
             overlay.querySelectorAll('.js-close-edit-story').forEach(b => b.addEventListener('click', closeModal));
@@ -2920,8 +2882,15 @@ async function loadStoriesTab() {
     container.querySelectorAll('.js-view-story').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const storyId = e.currentTarget.getAttribute('data-id');
+        const storyCard = e.currentTarget.closest('.c-story-card');
+        const storyName = storyCard ? storyCard.querySelector('.c-story-card__title')?.textContent : 'Story';
         const target = container.querySelector('.js-story-articles');
         if (!storyId || !target) return;
+
+        // Highlight the selected story card
+        container.querySelectorAll('.c-story-card').forEach(c => c.classList.remove('c-story-card--selected'));
+        if (storyCard) storyCard.classList.add('c-story-card--selected');
+
         target.innerHTML = '<div class="c-loading">Loading articles in story...</div>';
         try {
           const res = await fetch(`${lanIP}/api/v1/articles/by-story/${encodeURIComponent(storyId)}/`);
@@ -2932,6 +2901,10 @@ async function loadStoriesTab() {
           
           if (list.length === 0) {
             target.innerHTML = `
+              <div class="c-story-articles__header">
+                <h3 class="c-story-articles__title"><i class="fas fa-book-open"></i> ${escapeHTML(storyName)}</h3>
+                <span class="c-story-articles__count">0 articles</span>
+              </div>
               <div class="c-empty-state">
                 <i class="fas fa-book-open" style="font-size:2rem;opacity:0.4;margin-bottom:0.5rem;"></i>
                 <p>No articles in this story yet.</p>
@@ -2941,7 +2914,7 @@ async function loadStoriesTab() {
           }
 
           // Parse content and render articles like articles.js does
-          target.innerHTML = list.map(a => {
+          const articlesHtml = list.map(a => {
             const createdAt = new Date(a.created_at).toLocaleDateString();
             const updatedAt = new Date(a.updated_at).toLocaleDateString();
             
@@ -3025,6 +2998,14 @@ async function loadStoriesTab() {
               </div>
             `;
           }).join('');
+
+          target.innerHTML = `
+            <div class="c-story-articles__header">
+              <h3 class="c-story-articles__title"><i class="fas fa-book-open"></i> ${escapeHTML(storyName)}</h3>
+              <span class="c-story-articles__count">${list.length} article${list.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div class="c-article-list">${articlesHtml}</div>
+          `;
           
           // Attach click listeners to view buttons
           target.querySelectorAll('.js-view-article-story').forEach(btn => {

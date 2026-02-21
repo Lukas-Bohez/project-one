@@ -448,11 +448,6 @@ class SupportAuthSystem {
         
         document.dispatchEvent(new CustomEvent('userLoggedOut'));
         
-        // Re-create the auth modal since it was removed from DOM on login
-        if (!document.getElementById('authModal')) {
-            this.createAuthModal();
-            this.bindEvents();
-        }
         this.showAuthModal();
     }
 

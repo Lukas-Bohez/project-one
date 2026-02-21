@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="blue">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Community support chat for Quiz The Spire. Get help or discuss with other players.">
+    <link rel="stylesheet" href="/css/pages/support/support.css">
+    <title>Community Support Chat - Quiz The Spire</title>
+    <meta name="author" content="Oroka Conner">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="preconnect" href="https://cdn.socket.io" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.socket.io">
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" defer></script>
+    <script src="/js/pages/support/websocket-compatibility.js" defer></script>
+    <script src="/js/themeManager.js" defer></script>
+    <script src="/js/pages/support/supportLogin.js" defer></script>
+    <script src="/js/pages/support/supportChat.js" defer></script>
+    <script src="/js/pages/support/supportUI.js" defer></script>
+
+    <style>
+        /* Theme Toggle Button Styling */
+        .c-theme-toggle {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+            min-width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .c-theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .c-theme-toggle:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Dark theme adjustments for toggle */
+        [data-theme="dark"] .c-theme-toggle {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+        }
+
+        [data-theme="dark"] .c-theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .support-header {
+                flex-direction: column !important;
+                text-align: center !important;
+            }
+            
+            .header-center {
+                order: 1 !important;
+            }
+            
+            .c-theme-toggle {
+                order: 2 !important;
+                align-self: center !important;
+                margin: 10px 0;
+            }
+            
+            .header-right {
+                order: 3 !important;
+                justify-content: center !important;
+            }
+        }
+    </style>
+
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="/favicon.ico">
+    <meta property="og:title" content="Community Support | Quiz The Spire">
+    <meta property="og:description" content="Community support chat">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://quizthespire.com/pages/support/">
+    <meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Community Support | Quiz The Spire">
+    <meta name="twitter:description" content="Community support chat">
+    <meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg">
+    <link rel="canonical" href="https://quizthespire.com/pages/support/">
+</head>
+<body class="theme-blue">
+    <header class="support-header" onclick="window.location.href='/'" title="Click to return home" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+        <button class="c-theme-toggle" id="theme-toggle" style="order: 1; flex-shrink: 0;">
+            Light Mode
+        </button>
+        
+        <div class="header-center" style="order: 2; flex: 1; text-align: center; min-width: 0;">
+            <h1>💬 Community Support Chat</h1>
+            <p>Get help, ask questions, and connect with the Quiz The Spire community</p>
+        </div>
+        
+        <div class="header-right" style="order: 3; flex-shrink: 0; display: flex; align-items: center; gap: 10px;">
+            <div class="back-hint">← Click to go back</div>
+            <div class="user-info" id="userInfo" style="display: none;">
+                <span class="user-greeting">Logged in as: <span id="userName"></span></span>
+            </div>
+        </div>
+    </header>
+
+    <div class="chat-container">
+        <div class="chat-info">
+            <h3>Welcome to Support Chat!</h3>
+            <p>ℹ️ This is a public chat where you can ask questions and get support.</p>
+            <p>👥 Messages are visible to everyone. Please be respectful and helpful!</p>
+            <p>
+                <span class="status-indicator disconnected" id="connectionStatus">
+                    <span class="status-dot"></span>
+                    <span>Please log in to chat...</span>
+                </span>
+            </p>
+        </div>
+
+        <div id="chatBox"></div>
+
+        <div class="input-area">
+            <div class="message-input">
+                <textarea id="messageInput" placeholder="Type your message here..." maxlength="500"></textarea>
+                <button id="sendButton" disabled>Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Support the site -->
+    <div style="text-align: center; margin: 20px 0; opacity: 0.7;">
+        <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="OrokaConner" data-color="#2c6fb8" data-emoji=""  data-font="Inter" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
+    </div>
+
+</body>
+</html>
