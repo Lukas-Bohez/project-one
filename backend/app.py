@@ -14126,45 +14126,48 @@ async def download_conversion(request: Request):
 # (Path constants defined near the top of the download section)
 
 
-def _tracked_stream(file_path: str, client_ip: str, label: str = "download"):
-    """Return a throttled generator that records download completion or cancellation.
+async def _tracked_stream(file_path: str, client_ip: str, label: str = "download"):
+    """Return a throttled async generator that records download completion or cancellation.
 
-    Shared helper so every platform (Windows / Android / Linux) uses the
-    same reliable tracking logic.
+    The original implementation used `time.sleep` inside a synchronous generator,
+    which blocked the single-event-loop worker and made the entire FastAPI
+    process unresponsive for the duration of any download.  By converting to an
+    async generator and using `await asyncio.sleep` the event loop remains free
+    to accept new connections while throttling.
+
+    This helper is shared by Windows / Android / Linux endpoints.
     """
-    import time
+    import asyncio
 
-    def generate():
-        bytes_sent = 0
-        completed = False
-        try:
-            tracker = load_download_tracker()
-            speed_mbps = tracker.get("download_speed_mbps", 2)
-            chunk_size = 1024 * 1024  # 1 MB chunks
-            delay_per_chunk = (chunk_size / (1024 * 1024)) / speed_mbps
+    bytes_sent = 0
+    completed = False
+    try:
+        tracker = load_download_tracker()
+        speed_mbps = tracker.get("download_speed_mbps", 2)
+        chunk_size = 1024 * 1024  # 1 MB chunks
+        delay_per_chunk = (chunk_size / (1024 * 1024)) / speed_mbps
 
-            with open(file_path, 'rb') as f:
-                while True:
-                    chunk = f.read(chunk_size)
-                    if not chunk:
-                        break
-                    bytes_sent += len(chunk)
-                    yield chunk
-                    time.sleep(delay_per_chunk)
+        with open(file_path, 'rb') as f:
+            while True:
+                chunk = f.read(chunk_size)
+                if not chunk:
+                    break
+                bytes_sent += len(chunk)
+                yield chunk
+                # non-blocking sleep keeps loop responsive
+                await asyncio.sleep(delay_per_chunk)
 
-            record_download_complete(client_ip, bytes_sent)
-            completed = True
-        except GeneratorExit:
-            # Client disconnected — not an error, but download is incomplete
-            print(f"Client disconnected during {label} ({bytes_sent} bytes sent)")
-        except Exception as e:
-            print(f"Error during {label}: {e}")
-            raise
-        finally:
-            if not completed:
-                record_download_cancel(client_ip, bytes_sent)
-
-    return generate()
+        record_download_complete(client_ip, bytes_sent)
+        completed = True
+    except GeneratorExit:
+        # Client disconnected — not an error, but download is incomplete
+        print(f"Client disconnected during {label} ({bytes_sent} bytes sent)")
+    except Exception as e:
+        print(f"Error during {label}: {e}")
+        raise
+    finally:
+        if not completed:
+            record_download_cancel(client_ip, bytes_sent)
 
 
 @app.get("/api/v1/download/conversion/apk")
