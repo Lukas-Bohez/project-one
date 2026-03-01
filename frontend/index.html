@@ -24,10 +24,10 @@
     <!-- Critical CSS inlined for faster initial render -->
     <style>
         body{margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f4f8fc;min-height:100vh;position:relative}
-        .c-header{background:linear-gradient(135deg,#1e3a8a,#0c4061);color:#fff;padding:1.5rem 1rem;text-align:center;border-bottom:1px solid rgba(255,255,255,.1);box-shadow:0 2px 8px rgba(0,0,0,.1)}
+        .c-header{background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 40%,#2563eb 100%);color:#fff;padding:2rem 1rem;text-align:center;box-shadow:0 4px 20px rgba(15,23,42,.25);overflow:hidden}
         .c-header h1{margin:0;font-size:1.25rem;font-weight:600;color:#fff}
         .o-container{max-width:1200px;padding:0 1rem;margin:1rem auto}
-        .c-btn{display:inline-flex;align-items:center;justify-content:center;padding:1rem 1.5rem;border:2px solid #000;border-radius:8px;font-size:1rem;font-weight:500;cursor:pointer;background:#fff;color:#000;min-height:44px;transition:all .2s ease}
+        .c-btn{display:inline-flex;align-items:center;justify-content:center;padding:1rem 1.5rem;border:1.5px solid #e2e8f0;border-radius:12px;font-size:1rem;font-weight:500;cursor:pointer;background:#fff;color:#1e293b;min-height:44px;transition:all .2s ease}
         .spire-background{position:fixed;top:0;left:0;width:100%;height:100vh;z-index:-1;overflow:hidden}
         .spire-background img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s;filter:brightness(.85)}
         .c-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:1000;padding:1rem;backdrop-filter:blur(4px)}
@@ -51,9 +51,10 @@
         .c-trust-stat__lbl{color:#64748b;font-size:0.82rem}
         .c-trust-bar__link{font-size:0.85rem;color:#3b82f6;text-decoration:none;font-weight:500;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
         .c-trust-bar__link:hover{text-decoration:underline}
-        [data-theme="dark"] .c-trust-bar__inner,.theme-dark .c-trust-bar__inner{background:rgba(17,24,39,0.88);border-color:rgba(255,255,255,0.08)}
+        [data-theme="dark"] .c-trust-bar__inner,.theme-dark .c-trust-bar__inner{background:rgba(15,17,18,0.92);border-color:rgba(96,165,250,0.1);box-shadow:0 4px 16px rgba(0,0,0,0.4)}
         [data-theme="dark"] .c-trust-stat,.theme-dark .c-trust-stat{color:#cbd5e1}
-        [data-theme="dark"] .c-trust-stat__val,.theme-dark .c-trust-stat__val{color:#e2e8f0}
+        [data-theme="dark"] .c-trust-stat i,.theme-dark .c-trust-stat i{color:#60a5fa}
+        [data-theme="dark"] .c-trust-stat__val,.theme-dark .c-trust-stat__val{color:#f1f5f9}
         [data-theme="dark"] .c-trust-stat__lbl,.theme-dark .c-trust-stat__lbl{color:#94a3b8}
         [data-theme="dark"] .c-trust-bar__link,.theme-dark .c-trust-bar__link{color:#93c5fd}
         /* Update banner */
@@ -95,7 +96,7 @@
     
     <header class="c-header">
         <h1 class="c-header__title">Quiz The Spire</h1>
-        <p class="c-header__subtitle">Created and owned by Oroka Conner</p>
+        <p class="c-header__subtitle">Interactive Learning &amp; Gaming Platform</p>
     </header>
 
     <main class="o-container">
@@ -312,9 +313,9 @@
              TAB NAVIGATION
              ============================================= -->
         <nav class="c-nav" aria-label="Site sections">
-            <button class="c-nav-btn active" data-section="games">Quiz &amp; Games</button>
-            <button class="c-nav-btn" data-section="tools">Tools &amp; Content</button>
-            <button class="c-nav-btn" data-section="support">Support</button>
+            <button class="c-nav-btn active" data-section="games"><i class="fa-solid fa-gamepad"></i> Quiz &amp; Games</button>
+            <button class="c-nav-btn" data-section="tools"><i class="fa-solid fa-toolbox"></i> Tools &amp; Content</button>
+            <button class="c-nav-btn" data-section="support"><i class="fa-solid fa-life-ring"></i> Support</button>
         </nav>
         
         <!-- Quiz & Games Section -->
@@ -323,14 +324,14 @@
                 <h2 class="c-section-title">Quiz &amp; Games</h2>
                 <p class="c-section-lead">Pick a mode to start playing.</p>
                 <div class="o-button-group o-button-group--2col">
-                    <button id="startQuizBtn" class="c-btn c-btn--tertiary bw-btn gamepad">Start or join Quiz</button>
-                    <button id="studyQuizBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/study/'">Study quiz questions</button>
+                    <button id="startQuizBtn" class="c-btn c-btn--tertiary bw-btn gamepad"><i class="fa-solid fa-play"></i>&nbsp; Start or join Quiz</button>
+                    <button id="studyQuizBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/study/'"><i class="fa-solid fa-graduation-cap"></i>&nbsp; Study quiz questions</button>
                 </div>
                 <div class="o-button-group o-button-group--2col">
                     <button id="sentleBtn" class="c-btn c-btn--sentle" onclick="window.location.href='/pages/sentle/';">
-                        &#127919; SENTLE &mdash; Guess The Sentence!
+                        <i class="fa-solid fa-spell-check"></i>&nbsp; SENTLE &mdash; Guess The Sentence!
                     </button>
-                    <button id="kingdomQuarryBtn" class="c-btn c-btn--primary accent-blue" onclick="window.location.href='idleGame/idlegame.html';">&#9935;&#65039; Industrial Empire</button>
+                    <button id="kingdomQuarryBtn" class="c-btn c-btn--primary accent-blue" onclick="window.location.href='idleGame/idlegame.html';"><i class="fa-solid fa-industry"></i>&nbsp; Industrial Empire</button>
                 </div>
             </div>
         </div>
@@ -341,16 +342,16 @@
                 <h2 class="c-section-title">Tools &amp; Content</h2>
                 <p class="c-section-lead">Build, browse, and customise your experience.</p>
                 <div class="o-button-group o-button-group--2col">
-                    <button id="viewGraphsBtn" class="c-btn c-btn--tertiary bw-btn gamepad">View Graphs</button>
-                    <button id="storyCreatorBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/storyCreator/'">Story Creator</button>
+                    <button id="viewGraphsBtn" class="c-btn c-btn--tertiary bw-btn gamepad"><i class="fa-solid fa-chart-line"></i>&nbsp; View Graphs</button>
+                    <button id="storyCreatorBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/storyCreator/'"><i class="fa-solid fa-pen-fancy"></i>&nbsp; Story Creator</button>
                 </div>
                 <div class="o-button-group o-button-group--2col">
-                    <button id="servoTestBtn" class="c-btn c-btn--tertiary bw-btn gamepad">Toggle Theme</button>
-                    <button id="articleTheSpireBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/content/'">Stories</button>
+                    <button id="servoTestBtn" class="c-btn c-btn--tertiary bw-btn gamepad"><i class="fa-solid fa-palette"></i>&nbsp; Toggle Theme</button>
+                    <button id="articleTheSpireBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/content/'"><i class="fa-solid fa-book-open"></i>&nbsp; Stories</button>
                 </div>
                 <div class="o-button-group o-button-group--2col">
-                    <button id="articlesHubBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='articles/articlepagenew.html'">Articles</button>
-                    <button id="manageTheSpireBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/manage/'">Manage the Spire</button>
+                    <button id="articlesHubBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='articles/articlepagenew.html'"><i class="fa-solid fa-newspaper"></i>&nbsp; Articles</button>
+                    <button id="manageTheSpireBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/manage/'"><i class="fa-solid fa-sliders"></i>&nbsp; Manage the Spire</button>
                 </div>
             </div>
         </div>
@@ -361,16 +362,16 @@
                 <h2 class="c-section-title">Support</h2>
                 <p class="c-section-lead">Get help fast and review site policies.</p>
                 <div class="o-button-group o-button-group--2col">
-                    <button id="supportBtn" class="c-btn c-btn--primary bw-btn" onclick="window.open('/pages/support/','_blank');">&#128172; Contact Support</button>
-                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/about/'">About Me</button>
+                    <button id="supportBtn" class="c-btn c-btn--primary bw-btn" onclick="window.open('/pages/support/','_blank');"><i class="fa-solid fa-headset"></i>&nbsp; Contact Support</button>
+                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/about/'"><i class="fa-solid fa-user"></i>&nbsp; About Me</button>
                 </div>
                 <div class="o-button-group o-button-group--2col">
-                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/privacy/'">Privacy Policy</button>
-                    <button id="manageQuizBtn" class="c-btn c-btn--tertiary bw-btn">Manage Quiz</button>
+                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/privacy/'"><i class="fa-solid fa-shield-halved"></i>&nbsp; Privacy Policy</button>
+                    <button id="manageQuizBtn" class="c-btn c-btn--tertiary bw-btn"><i class="fa-solid fa-gears"></i>&nbsp; Manage Quiz</button>
                 </div>
                 <div class="o-button-group o-button-group--2col">
-                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/terms/'">Terms of Service</button>
-                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/contact/'">Contact Us</button>
+                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/terms/'"><i class="fa-solid fa-file-contract"></i>&nbsp; Terms of Service</button>
+                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/contact/'"><i class="fa-solid fa-envelope"></i>&nbsp; Contact Us</button>
                 </div>
             </div>
         </div>
@@ -477,7 +478,7 @@
             const statusRes = await fetch('/api/v1/download/conversion/status');
             if (!statusRes.ok) throw new Error('Status check failed');
             const status = await statusRes.json();
-            statusText.innerHTML = `\u2713 Downloading <strong>ConversionTheSpireReborn.zip</strong><br>Downloads this month: ${status.downloads_this_month}<br>Speed: ${status.download_speed_mbps || 2} MB/s`;
+            statusText.innerHTML = `\u2713 Downloading <strong>ConversionTheSpireReborn.zip</strong><br>Speed: ${status.download_speed_mbps || 2} MB/s`;
             statusDiv.style.display = 'block';
             if (isDark) {
                 statusDiv.style.background = 'rgba(30, 58, 138, 0.9)';
@@ -531,7 +532,7 @@
             const statusRes = await fetch('/api/v1/download/conversion/status');
             if (!statusRes.ok) throw new Error('Status check failed');
             const status = await statusRes.json();
-            statusText.innerHTML = `\u2713 Downloading <strong>${fileName}</strong><br>Downloads this month: ${status.downloads_this_month}<br>Speed: ${status.download_speed_mbps || 2} MB/s`;
+            statusText.innerHTML = `\u2713 Downloading <strong>${fileName}</strong><br>Speed: ${status.download_speed_mbps || 2} MB/s`;
             statusDiv.style.display = 'block';
             if (isDark) { statusDiv.style.background = 'rgba(30,58,138,0.9)'; statusDiv.style.borderColor = '#3b82f6'; statusDiv.style.color = '#93c5fd'; }
             else { statusDiv.style.background = '#dbeafe'; statusDiv.style.borderColor = '#3b82f6'; statusDiv.style.color = '#1e3a8a'; }

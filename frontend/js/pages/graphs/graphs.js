@@ -238,8 +238,8 @@ const createChatDisplay = (chatMessages) => {
 
     const chatHTML = chatMessages.map(msg => {
         const timestamp = msg.created_at ? new Date(msg.created_at).toLocaleString() : 'Unknown time';
-        const username = msg.username || 'Anonymous';
-        const message = msg.message || '';
+        const username = escapeHTML(msg.username || 'Anonymous');
+        const message = escapeHTML(msg.message || '');
 
         return `
             <div class="chat-message">
@@ -261,12 +261,12 @@ const createPlayerAnswersDisplay = (playerAnswers) => {
     }
 
     const answersHTML = playerAnswers.map(questionData => {
-        const questionText = questionData.question_text || `Question ${questionData.question_id}`;
+        const questionText = escapeHTML(questionData.question_text || `Question ${questionData.question_id}`);
         const answers = questionData.player_answers || [];
 
         const answersListHTML = answers.map(answer => {
-            const playerName = `${answer.first_name || ''} ${answer.last_name || ''}`.trim() || 'Unknown Player';
-            const answerText = answer.answer_text || 'No specific answer recorded';
+            const playerName = escapeHTML(`${answer.first_name || ''} ${answer.last_name || ''}`.trim() || 'Unknown Player');
+            const answerText = escapeHTML(answer.answer_text || 'No specific answer recorded');
             const isCorrect = answer.is_correct;
             const points = answer.points_earned || 0;
             const timeFormatted = answer.time_taken ? `${answer.time_taken}s` : 'N/A';

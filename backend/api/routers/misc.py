@@ -20,9 +20,10 @@ async def get_active_questions_count():
         count = len(active_questions) if active_questions else 0
         return JSONResponse(content={"count": count})
     except Exception as e:
+        print(f"Error retrieving active questions count: {e}")
         return JSONResponse(
             status_code=500,
-            content={"error": f"Failed to retrieve active questions count: {str(e)}"}
+            content={"error": "Failed to retrieve active questions count."}
         )
 
 
@@ -33,9 +34,10 @@ async def get_active_users_count():
         count = len(users) if users else 0
         return JSONResponse(content={"count": count})
     except Exception as e:
+        print(f"Error retrieving active users count: {e}")
         return JSONResponse(
             status_code=500,
-            content={"error": f"Failed to retrieve active users count: {str(e)}"}
+            content={"error": "Failed to retrieve active users count."}
         )
 
 

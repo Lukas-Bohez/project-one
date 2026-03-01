@@ -513,7 +513,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         if (dom.explanation) {
-            dom.explanation.innerHTML = `<strong>Explanation:</strong> ${currentQuestion.explanation || 'No explanation available.'}`;
+            dom.explanation.textContent = '';
+            const strong = document.createElement('strong');
+            strong.textContent = 'Explanation: ';
+            dom.explanation.appendChild(strong);
+            dom.explanation.appendChild(document.createTextNode(currentQuestion.explanation || 'No explanation available.'));
             dom.explanation.classList.add('show');
         }
         if (dom.checkAnswerBtn) dom.checkAnswerBtn.disabled = true;
@@ -819,7 +823,16 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error("Failed to initialize the practice hub:", error);
             if (dom.questionDisplay) {
-                dom.questionDisplay.innerHTML = '<h2>Error 😢</h2><p>Could not load questions. Please try refreshing the page.</p><p>Error details: ' + error.message + '</p>';
+                dom.questionDisplay.textContent = '';
+                const h2 = document.createElement('h2');
+                h2.textContent = 'Error \ud83d\ude22';
+                const p1 = document.createElement('p');
+                p1.textContent = 'Could not load questions. Please try refreshing the page.';
+                const p2 = document.createElement('p');
+                p2.textContent = 'Error details: ' + error.message;
+                dom.questionDisplay.appendChild(h2);
+                dom.questionDisplay.appendChild(p1);
+                dom.questionDisplay.appendChild(p2);
                 dom.questionDisplay.style.display = 'block';
             }
         }

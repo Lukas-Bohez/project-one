@@ -661,11 +661,16 @@ class ManageShiftRepository:
             conn = connection_pool.get_connection()
             cursor = conn.cursor()
             
-            # Build dynamic UPDATE query
+            # Build dynamic UPDATE query with allowlist to prevent SQL injection
+            allowed_fields = {
+                'employee_id', 'shift_date', 'start_time', 'end_time',
+                'break_duration', 'status', 'notes', 'shift_type',
+                'location', 'department'
+            }
             fields = []
             values = []
             for key, value in shift_data.items():
-                if key != 'id':
+                if key != 'id' and key in allowed_fields:
                     fields.append(f"{key} = %s")
                     values.append(value)
             

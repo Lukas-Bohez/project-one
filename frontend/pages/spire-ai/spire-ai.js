@@ -42,6 +42,11 @@
         }
         if (currentUser) {
             headers['X-User-ID'] = String(currentUser.id);
+            // Send password for authentication
+            const storedPassword = localStorage.getItem('sai_password');
+            if (storedPassword) {
+                headers['X-Password'] = storedPassword;
+            }
         }
         return fetch(url, { ...opts, headers })
             .then(async r => {
@@ -113,10 +118,13 @@
     }
 
     async function doLogin(firstName, lastName, password) {
-        const r = await fetch(`${API_BASE}/login`, {
+        // Use community auth endpoint — password is optional
+        const body = { first_name: firstName, last_name: lastName };
+        if (password) body.password = password;
+        const r = await fetch(`${COMMUNITY_API}/auth`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ first_name: firstName, last_name: lastName, password })
+            body: JSON.stringify(body)
         });
         if (!r.ok) throw new Error('Login failed');
         const data = await r.json();
@@ -129,10 +137,13 @@
     }
 
     async function doRegister(firstName, lastName, password) {
-        const r = await fetch(`${API_BASE}/register`, {
+        // Use community auth endpoint — password is optional, creates account if needed
+        const body = { first_name: firstName, last_name: lastName };
+        if (password) body.password = password;
+        const r = await fetch(`${COMMUNITY_API}/auth`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ first_name: firstName, last_name: lastName, password })
+            body: JSON.stringify(body)
         });
         if (!r.ok) throw new Error('Registration failed');
         const data = await r.json();
@@ -148,7 +159,10 @@
         $('#loginModal').classList.remove('sai-modal--active');
         $('#mainApp').style.display = '';
         const display = $('#userDisplayName');
-        display.querySelector('span').textContent = `${currentUser.firstName} ${currentUser.lastName}`;
+        if (display) {
+            const span = display.querySelector('span');
+            if (span) span.textContent = `${currentUser.firstName} ${currentUser.lastName}`;
+        }
         loadPlayTab();
     }
 
@@ -162,9 +176,9 @@
 
     async function autoLogin() {
         const stored = getStoredUser();
-        if (stored && stored.password) {
+        if (stored && stored.id && stored.firstName && stored.lastName) {
             try {
-                await doLogin(stored.firstName, stored.lastName, stored.password);
+                await doLogin(stored.firstName, stored.lastName, stored.password || null);
                 showApp();
             } catch {
                 // stored credentials invalid — show login modal
@@ -193,6 +207,7 @@
         if (tabId === 'explore') loadExploreTab();
         if (tabId === 'my-themes') loadMyThemes();
         if (tabId === 'csv-upload') loadCsvThemeSelect();
+        if (tabId === 'paste-text') loadPasteThemeSelect();
         if (tabId === 'create') resetCreateTab();
     };
 
@@ -1087,6 +1102,152 @@
     }
 
     // ══════════════════════════════════════
+    //  PASTE RAW TEXT TAB
+    // ══════════════════════════════════════
+    async function loadPasteThemeSelect() {
+        try {
+            const themes = await api(`/themes?creator_id=${currentUser.id}`);
+            const select = $('#pasteThemeSelect');
+            select.innerHTML = '<option value="">— Select a theme —</option>';
+            (themes || []).forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = `${t.name} (${t.status})`;
+                select.appendChild(opt);
+            });
+        } catch { /* no themes */ }
+    }
+
+    function parseRawTextToQuestions(text) {
+        const questions = [];
+        // Split by blank lines or "Q:" markers
+        const blocks = text.split(/\n\s*\n/).filter(b => b.trim());
+        
+        for (const block of blocks) {
+            const lines = block.split('\n').map(l => l.trim()).filter(l => l);
+            let questionText = '';
+            const answers = [];
+            let explanation = null;
+            let difficulty = 'medium';
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                if (/^Q:\s*/i.test(line)) {
+                    questionText = line.replace(/^Q:\s*/i, '').trim();
+                } else if (/^A:\s*/i.test(line)) {
+                    const answerRaw = line.replace(/^A:\s*/i, '').trim();
+                    const isCorrect = /\(correct\)/i.test(answerRaw);
+                    const answerText = answerRaw.replace(/\s*\(correct\)\s*/i, '').trim();
+                    if (answerText) answers.push({ answer_text: answerText, is_correct: isCorrect });
+                } else if (/^E:\s*/i.test(line)) {
+                    explanation = line.replace(/^E:\s*/i, '').trim() || null;
+                } else if (/^D:\s*/i.test(line)) {
+                    const d = line.replace(/^D:\s*/i, '').trim().toLowerCase();
+                    if (['easy', 'medium', 'hard', 'expert'].includes(d)) difficulty = d;
+                } else if (!questionText && i === 0) {
+                    // First line without prefix treated as question
+                    questionText = line;
+                }
+            }
+
+            if (questionText && answers.length >= 2) {
+                // Ensure at least one correct answer
+                if (!answers.some(a => a.is_correct) && answers.length > 0) {
+                    answers[0].is_correct = true;
+                }
+                questions.push({ question_text: questionText, answers, explanation, difficulty });
+            }
+        }
+        return questions;
+    }
+
+    function setupPasteText() {
+        const textarea = $('#pasteTextarea');
+        const parseBtn = $('#parseTextBtn');
+        const newThemeBtn = $('#pasteNewThemeBtn');
+        const lineCount = $('#pasteLineCount');
+
+        if (!textarea || !parseBtn) return;
+
+        textarea.addEventListener('input', () => {
+            const lines = textarea.value.split('\n').filter(l => l.trim()).length;
+            if (lineCount) lineCount.textContent = `${lines} line${lines !== 1 ? 's' : ''}`;
+        });
+
+        if (newThemeBtn) {
+            newThemeBtn.addEventListener('click', () => switchTab('create'));
+        }
+
+        parseBtn.addEventListener('click', async () => {
+            const themeId = $('#pasteThemeSelect').value;
+            if (!themeId) return toast('Select a theme first', 'error');
+
+            const text = textarea.value.trim();
+            if (!text) return toast('Paste some text first', 'error');
+
+            const questions = parseRawTextToQuestions(text);
+            if (questions.length === 0) {
+                return toast('Could not parse any questions. Use Q: and A: prefixes.', 'error');
+            }
+
+            parseBtn.disabled = true;
+            parseBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing…';
+
+            let imported = 0;
+            let failed = 0;
+            const errors = [];
+
+            for (let i = 0; i < questions.length; i++) {
+                const q = questions[i];
+                try {
+                    await api(`/themes/${themeId}/questions`, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            question_text: q.question_text,
+                            difficulty: q.difficulty,
+                            time_limit: 30,
+                            points: 10,
+                            explanation: q.explanation,
+                            is_ai_generated: true,
+                            answers: q.answers
+                        })
+                    });
+                    imported++;
+                } catch (e) {
+                    failed++;
+                    errors.push(`Q${i+1}: ${e.detail || 'Failed'}`);
+                }
+            }
+
+            const resultsDiv = $('#pasteResults');
+            resultsDiv.style.display = '';
+            resultsDiv.innerHTML = `
+                <h4><i class="fas fa-check-circle" style="color:var(--sai-success)"></i> Import Complete</h4>
+                <div class="sai-result-stat">
+                    <span>Questions imported</span>
+                    <strong style="color:var(--sai-success)">${imported}</strong>
+                </div>
+                <div class="sai-result-stat">
+                    <span>Failed</span>
+                    <strong style="color:${failed ? 'var(--sai-danger)' : 'var(--sai-text-muted)'}">${failed}</strong>
+                </div>
+                ${errors.length > 0 ? `
+                    <div style="margin-top:12px;font-size:0.85rem;color:var(--sai-danger)">
+                        <strong>Errors:</strong>
+                        <ul style="margin-left:16px;margin-top:4px;">
+                            ${errors.slice(0, 5).map(e => `<li>${esc(e)}</li>`).join('')}
+                        </ul>
+                    </div>` : ''}
+            `;
+
+            toast(`Imported ${imported} question${imported !== 1 ? 's' : ''} from pasted text!`, 'success');
+
+            parseBtn.disabled = false;
+            parseBtn.innerHTML = '<i class="fas fa-magic"></i> Parse & Import Questions';
+        });
+    }
+
+    // ══════════════════════════════════════
     //  INIT
     // ══════════════════════════════════════
     // ══════════════════════════════════════
@@ -1137,7 +1298,8 @@
             e.preventDefault();
             const fn = $('#loginFirst').value.trim();
             const ln = $('#loginLast').value.trim();
-            const pw = $('#loginPassword').value;
+            const pw = $('#loginPassword').value || null;
+            if (!fn || !ln) return toast('Enter your first and last name', 'error');
             try {
                 await doLogin(fn, ln, pw);
                 showApp();
@@ -1150,8 +1312,8 @@
         $('#registerBtn').addEventListener('click', async () => {
             const fn = $('#loginFirst').value.trim();
             const ln = $('#loginLast').value.trim();
-            const pw = $('#loginPassword').value;
-            if (!fn || !ln || !pw) return toast('Fill in all fields', 'error');
+            const pw = $('#loginPassword').value || null;
+            if (!fn || !ln) return toast('Enter your first and last name', 'error');
             try {
                 await doRegister(fn, ln, pw);
                 showApp();
@@ -1194,6 +1356,7 @@
         setupQuestionForm();
         setupSubmitForReview();
         setupCsvUpload();
+        setupPasteText();
         setupRealtimeSessionUpdates();
 
         // Theme toggle icon sync

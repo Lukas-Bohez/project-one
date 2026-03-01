@@ -82,7 +82,7 @@ class ChatSystem {
         console.log('ChatSystem: Starting periodic sessionId updater...');
         this.sessionUpdateInterval = setInterval(() => {
             this.fetchActiveSessionId();
-        }, 1000); // Update every second
+        }, 30000); // Update every 30 seconds
     }
 
     // Stop periodic sessionId updates
@@ -612,10 +612,17 @@ class ChatSystem {
 
         const messageElement = document.createElement('div');
         messageElement.className = `c-chat-message ${className}`;
-        messageElement.innerHTML = `
-            <span class="c-chat-sender">${type}:</span>
-            <span class="c-chat-text">${message}</span>
-        `;
+        
+        const senderSpan = document.createElement('span');
+        senderSpan.className = 'c-chat-sender';
+        senderSpan.textContent = type + ':';
+        
+        const textSpan = document.createElement('span');
+        textSpan.className = 'c-chat-text';
+        textSpan.textContent = message;
+        
+        messageElement.appendChild(senderSpan);
+        messageElement.appendChild(textSpan);
 
         chatMessages.appendChild(messageElement);
         this.scrollChatToBottom();

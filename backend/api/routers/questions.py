@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from typing import List
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from api.dependencies import get_current_user_info, get_client_ip
 from database.datarepository import QuestionRepository, AnswerRepository, AuditLogRepository
@@ -10,7 +10,6 @@ from models.models import (
     QuestionResponse,
     ErrorNotFound,
     QuestionWithAnswers,
-    RandomQuestionRequest,
     AnswerListResponse,
     CorrectAnswerResponse,
     AnswerResponse,
@@ -90,10 +89,10 @@ async def get_question_by_id(question_id: int):
     responses={404: {"model": ErrorNotFound}},
     tags=["Special Question Operations"]
 )
-async def get_random_question(params: RandomQuestionRequest = Body(default=None)):
+async def get_random_question(themeId: int = None, difficultyLevelId: int = None):
     question = QuestionRepository.get_random_question(
-        themeId=params.themeId if params else None,
-        difficultyLevelId=params.difficultyLevelId if params else None
+        themeId=themeId,
+        difficultyLevelId=difficultyLevelId
     )
     if not question:
         raise HTTPException(
@@ -314,7 +313,7 @@ async def update_question_endpoint(
         raise
     except Exception as e:
         print(f"Error updating question: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to update question: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update question. Please try again later.")
 
 
 @router.delete("/api/v1/questions/{question_id}", tags=["Questions"])
@@ -378,7 +377,7 @@ async def delete_question_endpoint(
         raise
     except Exception as e:
         print(f"Error deleting question: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to delete question: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to delete question. Please try again later.")
 
 
 # ----------------------------------------------------

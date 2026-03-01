@@ -1180,7 +1180,7 @@ function showDemoNotification(message, type = 'info') {
         // Fallback
         const notification = document.createElement('div');
         notification.className = `demo-notification demo-notification-${type}`;
-        notification.innerHTML = message;
+        notification.textContent = message;
         
         document.body.appendChild(notification);
         
@@ -1196,7 +1196,8 @@ function showDemoNotification(message, type = 'info') {
 }
 
 function refreshDemo() {
-    const currentView = document.querySelector('.view-switch-btn.is-active').dataset.view;
+    const activeBtn = document.querySelector('.view-switch-btn.is-active');
+    const currentView = activeBtn ? activeBtn.dataset.view : 'dashboard';
     const container = document.getElementById('demoAppContainer');
     if (container) {
         container.innerHTML = currentView === 'boss' ? renderBossView() : renderEmployeeView();

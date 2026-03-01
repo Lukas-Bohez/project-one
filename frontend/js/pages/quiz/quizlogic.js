@@ -8,13 +8,21 @@ class QuizSocketHandler {
     }
 
     initializeListeners() {
+        if (!this.socket || this.socket._quizLogicListenersInitialized) {
+            return;
+        }
+        console.log("Initializing all socket listeners...");
 
-        const advertFlood = new CompliantAdSystem()
-        // Listen for the B2F_addItem event and automatically activate the flood
-        this.socket.on('B2F_addItem', () => {
-            console.log('📢📢📢 Initiating the Anti-Adblocker Scream Flood! 📢📢📢');
-            advertFlood.activate(15); // Fixed 18-second duration for the scream flood
-        });
+        try {
+            const advertFlood = new CompliantAdSystem();
+            // Listen for the B2F_addItem event and automatically activate the flood
+            this.socket.on('B2F_addItem', () => {
+                console.log('📢📢📢 Initiating the Anti-Adblocker Scream Flood! 📢📢📢');
+                advertFlood.activate(15); // Fixed 18-second duration for the scream flood
+            });
+        } catch (e) {
+            console.warn('CompliantAdSystem not available:', e.message);
+        }
 
         // ---- ITEM EFFECT HANDLER ----
         this.socket.on('B2F_itemEffect', (data) => {
@@ -46,12 +54,6 @@ class QuizSocketHandler {
                     break;
             }
         });
-
-
-        if (!this.socket || this.socket._quizLogicListenersInitialized) {
-            return;
-        }
-        console.log("Initializing all socket listeners...");
 
         // Player/User data updates
         this.socket.on('all_users_data_updated', (data) => this.handleAllUsersDataUpdate(data));

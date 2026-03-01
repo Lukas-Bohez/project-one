@@ -36,7 +36,7 @@ class GamepadNavigator {
     init() {
         this.addStyles();
         this.setupGamepadDetection();
-        this.gamepadLoop();
+        // gamepadLoop starts on gamepad connect, not on init
         this.updateNavigableElements();
         this.observeDOMChanges();
         // The call to setupStorageKeys() is removed from here.
@@ -71,6 +71,8 @@ class GamepadNavigator {
                 this.updateSelection();
                 // Set storage keys on new connection
                 this.setupStorageKeys();
+                // Start the gamepad loop
+                this.gamepadLoop();
             }
         };
 
@@ -167,9 +169,14 @@ class GamepadNavigator {
     }
 
     gamepadLoop() {
+        if (this.gamepadIndex === null) {
+            // No gamepad connected, stop the loop until one connects
+            return;
+        }
+
         const gamepads = navigator.getGamepads();
 
-        if (this.gamepadIndex !== null && gamepads[this.gamepadIndex]) {
+        if (gamepads[this.gamepadIndex]) {
             this.handleGamepadInput(gamepads[this.gamepadIndex]);
         }
 
@@ -452,20 +459,29 @@ class GamepadNavigator {
         return this.navigableElements[this.currentSelectedIndex] || null;
     }
     
-    // This method now sets the storage keys.
+    // This method now sets the gamepad-specific storage keys.
+    // Uses separate keys to avoid overwriting real user credentials.
     setupStorageKeys() {
-        localStorage.setItem(this.STORAGE_KEYS.USER.FIRST_NAME, 'gamepad');
-        localStorage.setItem(this.STORAGE_KEYS.USER.LAST_NAME, 'user');
-        localStorage.setItem(this.STORAGE_KEYS.USER.PASSWORD, 'gamepaduser');
-        console.log('Local Storage credentials updated for Gamepad Navigator.');
+        try {
+            localStorage.setItem('gamepad_first_name', 'gamepad');
+            localStorage.setItem('gamepad_last_name', 'user');
+            localStorage.setItem('gamepad_active', 'true');
+            console.log('Local Storage credentials updated for Gamepad Navigator.');
+        } catch (e) {
+            console.warn('Unable to set gamepad storage keys:', e.message);
+        }
     }
 
     // New method to clear the storage keys.
     clearStorageKeys() {
-        localStorage.removeItem(this.STORAGE_KEYS.USER.FIRST_NAME);
-        localStorage.removeItem(this.STORAGE_KEYS.USER.LAST_NAME);
-        localStorage.removeItem(this.STORAGE_KEYS.USER.PASSWORD);
-        console.log('Local Storage credentials for Gamepad Navigator cleared.');
+        try {
+            localStorage.removeItem('gamepad_first_name');
+            localStorage.removeItem('gamepad_last_name');
+            localStorage.removeItem('gamepad_active');
+            console.log('Local Storage credentials for Gamepad Navigator cleared.');
+        } catch (e) {
+            console.warn('Unable to clear gamepad storage keys:', e.message);
+        }
     }
 }
 

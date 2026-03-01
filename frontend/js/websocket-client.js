@@ -106,16 +106,19 @@ class ManageWebSocketClient {
     }
 
     /**
-     * Attempt to reconnect
+     * Attempt to reconnect with exponential backoff
      */
     attemptReconnect() {
         if (this.reconnectAttempts < this.maxReconnectAttempts) {
             this.reconnectAttempts++;
-            console.log(`Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+            const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
+            console.log(`Attempting to reconnect in ${delay}ms... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
             
             setTimeout(() => {
-                this.connect(this.businessId, this.userId);
-            }, this.reconnectDelay);
+                if (!this.isConnected()) {
+                    this.connect(this.businessId, this.userId);
+                }
+            }, delay);
         } else {
             console.error('Failed to reconnect after maximum attempts');
         }

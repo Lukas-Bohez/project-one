@@ -405,9 +405,10 @@ async def ban_ip_address(
                 ban_request.ban_duration_unit
             )
         except ValueError as e:
+            print(f"Invalid ban duration: {e}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e)
+                detail="Invalid ban duration specified."
             )
         
         # Update IP address with ban information
@@ -464,5 +465,5 @@ async def ban_ip_address(
         print(f"Error banning IP address: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to ban IP address: {str(e)}"
+            detail="Failed to ban IP address. Please try again later."
         )

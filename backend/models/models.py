@@ -74,6 +74,7 @@ class ThemeUpdate(BaseModel):
 
 class ThemeResponse(ThemeBase):
     id: int
+    question_count: Optional[int] = None
     # You might also want created_at and updated_at if your DB tracks them for themes
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

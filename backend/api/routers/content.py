@@ -40,7 +40,8 @@ async def list_stories():
         stories = StoriesRepository.list_stories()
         return [StoryResponse(**story) for story in stories]
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving stories: {str(e)}")
+        print(f"Error retrieving stories: {e}")
+        raise HTTPException(status_code=500, detail="Error retrieving stories. Please try again later.")
 
 
 @router.post("/api/v1/stories/create-if-not-exists", tags=["Stories"])
@@ -97,7 +98,8 @@ async def get_all_articles(active_only: bool = False, include_story_info: bool =
             featured_count=stats.get('featured_articles', 0)
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving articles: {str(e)}")
+        print(f"Error retrieving articles: {e}")
+        raise HTTPException(status_code=500, detail="Error retrieving articles. Please try again later.")
 
 
 @router.get(
@@ -209,7 +211,8 @@ async def get_articles_by_story(story_id: int, active_only: bool = True):
         articles = ArticlesRepository.get_articles_by_story_id(story_id, active_only=active_only)
         return [ArticleResponse(**article) for article in articles]
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving articles for story {story_id}: {str(e)}")
+        print(f"Error retrieving articles for story {story_id}: {e}")
+        raise HTTPException(status_code=500, detail="Error retrieving articles. Please try again later.")
 
 
 # Protected Article Operations (require authentication)
@@ -267,7 +270,8 @@ async def create_article(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error creating article: {str(e)}")
+        print(f"Error creating article: {e}")
+        raise HTTPException(status_code=500, detail="Error creating article. Please try again later.")
 
 
 @router.patch(
@@ -326,7 +330,8 @@ async def update_article(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error updating article: {str(e)}")
+        print(f"Error updating article: {e}")
+        raise HTTPException(status_code=500, detail="Error updating article. Please try again later.")
 
 
 @router.patch(
@@ -382,7 +387,8 @@ async def update_article_status(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error updating article status: {str(e)}")
+        print(f"Error updating article status: {e}")
+        raise HTTPException(status_code=500, detail="Error updating article status. Please try again later.")
 
 
 @router.delete(
@@ -424,4 +430,5 @@ async def delete_article(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error deleting article: {str(e)}")
+        print(f"Error deleting article: {e}")
+        raise HTTPException(status_code=500, detail="Error deleting article. Please try again later.")
