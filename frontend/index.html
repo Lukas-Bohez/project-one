@@ -609,8 +609,10 @@
         fetch(`https://${window.location.hostname}/api/v1/download/analytics`)
             .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
             .then(d => {
-                document.getElementById('trustDownloads').textContent = d.total_downloads.toLocaleString();
-                document.getElementById('trustUsers').textContent = d.unique_users.toLocaleString();
+                const totalDl = d.all_time_downloads || d.total_downloads;
+                const totalUsers = d.all_time_unique_users || d.unique_users;
+                document.getElementById('trustDownloads').textContent = totalDl.toLocaleString();
+                document.getElementById('trustUsers').textContent = totalUsers.toLocaleString();
                 document.getElementById('trustCountries').textContent = d.countries.length;
                 const topPlatform = d.platforms && d.platforms.length ? d.platforms[0].name : '—';
                 document.getElementById('trustTopPlatform').textContent = topPlatform;
