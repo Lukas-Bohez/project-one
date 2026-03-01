@@ -189,7 +189,6 @@
         }
 
         function render(data) {
-            const maxCountryDl = data.countries.length ? data.countries[0].downloads : 1;
             const allTimeDl = data.all_time_downloads || data.total_downloads;
             const allTimeUsers = data.all_time_unique_users || data.unique_users;
             const allTimeBw = data.all_time_bandwidth_gb || data.total_bandwidth_gb;
@@ -254,26 +253,27 @@
 
                 <!-- Country Breakdown -->
                 <div class="da-section">
-                    <h2><i class="fas fa-globe-americas"></i> Downloads by Country</h2>
+                    <h2><i class="fas fa-globe-americas"></i> Users by Country</h2>
                     <table class="da-table">
                         <thead>
                             <tr>
                                 <th>#</th>
                                 <th>Country</th>
-                                <th>Downloads</th>
-                                <th>Users</th>
+                                <th>Unique Users</th>
+                                <th>This Month</th>
                                 <th>Share</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${data.countries.map((c, i) => {
-                                const pct = data.total_downloads ? ((c.downloads / data.total_downloads) * 100).toFixed(1) : 0;
-                                const barW = Math.max(3, (c.downloads / maxCountryDl) * 100);
+                                const maxUsers = data.countries.length ? data.countries[0].unique_users : 1;
+                                const pct = allTimeUsers ? ((c.unique_users / allTimeUsers) * 100).toFixed(1) : 0;
+                                const barW = Math.max(3, (c.unique_users / maxUsers) * 100);
                                 return `<tr>
                                     <td style="color:var(--text-muted)">${i + 1}</td>
                                     <td><span class="da-flag">${flag(c.country_code)}</span>${esc(c.country)}</td>
-                                    <td><strong>${c.downloads}</strong></td>
-                                    <td>${c.unique_users}</td>
+                                    <td><strong>${c.unique_users}</strong></td>
+                                    <td>${c.downloads || 0}</td>
                                     <td>
                                         <div style="display:flex;align-items:center;gap:8px;">
                                             <div class="da-bar-wrap"><div class="da-bar" style="width:${barW}%"></div></div>

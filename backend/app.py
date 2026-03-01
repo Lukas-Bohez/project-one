@@ -14001,23 +14001,22 @@ async def get_download_analytics():
 
     ips_data = tracker.get("ips", {})
 
-    # Only include IPs that actually completed at least 1 download
-    active_ips = {ip: data for ip, data in ips_data.items() if data.get("count", 0) > 0}
+    # Current-month active IPs: those with count > 0 this month
+    month_active_ips = {ip: data for ip, data in ips_data.items() if data.get("count", 0) > 0}
 
-    # Separate tracked (have user-agent data) from legacy (pre-tracking) IPs
-    tracked_ips = {ip: d for ip, d in active_ips.items() if d.get("user_agent")}
-    legacy_count = len(active_ips) - len(tracked_ips)
+    # All-time IPs: any IP that has a last_download timestamp (ever downloaded)
+    all_time_ips = {ip: data for ip, data in ips_data.items() if data.get("last_download")}
 
-    # Batch geolocate all IPs
-    geo = _batch_geolocate(list(active_ips.keys()))
+    # Batch geolocate ALL IPs that ever downloaded (for country stats)
+    geo = _batch_geolocate(list(all_time_ips.keys()))
 
-    # Build per-IP records
+    # Build per-IP records for current month (download log)
     downloads = []
-    for ip, data in active_ips.items():
+    for ip, data in month_active_ips.items():
         g = geo.get(ip, {})
         downloads.append({
-            "ip_masked": ".".join(ip.split(".")[:2]) + ".*.*",  # privacy: mask last 2 octets
-            "ip_hash": hex(hash(ip) & 0xFFFFFFFF),  # stable identifier without revealing IP
+            "ip_masked": ".".join(ip.split(".")[:2]) + ".*.*",
+            "ip_hash": hex(hash(ip) & 0xFFFFFFFF),
             "country": g.get("country", "Unknown"),
             "country_code": g.get("countryCode", "XX"),
             "city": g.get("city", ""),
@@ -14029,43 +14028,50 @@ async def get_download_analytics():
             "last_download": data.get("last_download"),
         })
 
-    # Aggregate country stats
+    # Aggregate ALL-TIME country stats (from all IPs that ever downloaded)
     country_counts: dict = {}
-    for d in downloads:
-        cc = d["country"]
+    for ip, data in all_time_ips.items():
+        g = geo.get(ip, {})
+        cc = g.get("country", "Unknown")
+        cc_code = g.get("countryCode", "XX")
         if cc not in country_counts:
-            country_counts[cc] = {"downloads": 0, "unique_ips": 0, "country_code": d["country_code"]}
-        country_counts[cc]["downloads"] += d["download_count"]
+            country_counts[cc] = {"downloads": 0, "unique_ips": 0, "country_code": cc_code}
         country_counts[cc]["unique_ips"] += 1
 
-    # Aggregate platform stats (only from IPs that have user-agent tracking)
+    # Add current month download counts to country stats
+    for d in downloads:
+        cc = d["country"]
+        if cc in country_counts:
+            country_counts[cc]["downloads"] += d["download_count"]
+
+    # Aggregate platform stats from ALL IPs that have user-agent tracking
     platform_counts: dict = {}
     browser_counts: dict = {}
-    for ip, data in active_ips.items():
+    for ip, data in all_time_ips.items():
         if not data.get("user_agent"):
-            continue  # skip legacy IPs without user-agent tracking
+            continue
         p = data.get("platform", "Unknown")
         b = data.get("browser", "Unknown")
-        dl_count = data.get("count", 0)
-        platform_counts[p] = platform_counts.get(p, 0) + dl_count
-        browser_counts[b] = browser_counts.get(b, 0) + dl_count
+        platform_counts[p] = platform_counts.get(p, 0) + 1
+        browser_counts[b] = browser_counts.get(b, 0) + 1
 
     platforms_sorted = sorted(platform_counts.items(), key=lambda x: x[1], reverse=True)
     browsers_sorted = sorted(browser_counts.items(), key=lambda x: x[1], reverse=True)
 
-    countries_sorted = sorted(country_counts.items(), key=lambda x: x[1]["downloads"], reverse=True)
+    countries_sorted = sorted(country_counts.items(), key=lambda x: x[1]["unique_ips"], reverse=True)
 
     total_downloads = sum(d["download_count"] for d in downloads)
     total_bandwidth = round(sum(d["bandwidth_gb"] for d in downloads), 4)
-    unique_users = len(downloads)
+    unique_users = len(month_active_ips)
 
-    # Sum tracked-only platform/browser downloads for percentages
+    # Sum tracked-only platform/browser counts for percentages
     tracked_downloads_total = sum(c for _, c in platforms_sorted)
 
     # Compute all-time totals including archived months
     archived = tracker.get("archived_months", {})
     all_time_downloads = total_downloads + sum(m.get("total_downloads", 0) for m in archived.values())
-    all_time_unique = unique_users + sum(m.get("unique_users", 0) for m in archived.values())
+    # Use the actual IP pool count — each IP is one unique user across all time
+    all_time_unique = len(all_time_ips)
     all_time_bandwidth = total_bandwidth + sum(m.get("total_bandwidth_gb", 0) for m in archived.values())
 
     # Build monthly history (archived + current)
