@@ -714,8 +714,10 @@ class StoryWeaver {
         // Clear editor if this scene was being edited
         if (this.currentEditingScene === sceneId) {
             this.currentEditingScene = null;
-            document.getElementById('sceneEditor').classList.add('hidden');
-            document.getElementById('welcomeMessage').classList.remove('hidden');
+            const sceneEditor = document.getElementById('sceneEditor') || document.getElementById('sceneEditorContainer');
+            const welcomeMessage = document.getElementById('welcomeMessage');
+            if (sceneEditor) sceneEditor.classList.add('hidden');
+            if (welcomeMessage) welcomeMessage.classList.remove('hidden');
         }
         
         this.renderEditor();
@@ -1185,10 +1187,7 @@ class StoryWeaver {
             });
         }
 
-        // Scene editor actions
-        document.getElementById('addChoiceBtn')?.addEventListener('click', () => this.addChoice());
-        document.getElementById('deleteSceneBtn')?.addEventListener('click', () => this.deleteCurrentScene());
-        document.getElementById('duplicateSceneBtn')?.addEventListener('click', () => this.duplicateScene());
+        // Scene editor actions (already bound above, removed duplicates)
 
         // Mobile bottom actions (if visible)
         const playBtnMobile = document.getElementById('playBtnMobile');

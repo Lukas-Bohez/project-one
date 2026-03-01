@@ -425,12 +425,21 @@ class ThemeRepository:
     # READ operations
     @staticmethod
     def get_all_themes():
-        sql = "SELECT * FROM themes ORDER BY name ASC"
+        sql = """SELECT t.*, COUNT(q.id) as question_count
+                 FROM themes t
+                 LEFT JOIN questions q ON q.themeId = t.id
+                 GROUP BY t.id
+                 ORDER BY t.name ASC"""
         return Database.get_rows(sql)
 
     @staticmethod
     def get_active_themes():
-        sql = "SELECT * FROM themes WHERE is_active = TRUE ORDER BY name ASC"
+        sql = """SELECT t.*, COUNT(q.id) as question_count
+                 FROM themes t
+                 LEFT JOIN questions q ON q.themeId = t.id
+                 WHERE t.is_active = TRUE
+                 GROUP BY t.id
+                 ORDER BY t.name ASC"""
         return Database.get_rows(sql)
 
     @staticmethod
@@ -1506,14 +1515,11 @@ class PlayerItemRepository:
 
     @staticmethod
     def debug_insert_test(user_id: int, item_id: int, quantity: int = 1) -> Dict[str, Any]:
-        """Debug method to test insertion and see what's happening."""
+        """Test insertion method for diagnostics (debug prints removed for production)."""
         try:
-            print(f"DEBUG: Attempting to insert - userId: {user_id}, itemId: {item_id}, quantity: {quantity}")
-            
             # First check if the item exists in the items table
             item_check_sql = "SELECT id, name, is_active FROM items WHERE id = %s"
             item_check_result = Database.execute_sql(item_check_sql, [item_id])
-            print(f"DEBUG: Item check result: {item_check_result}")
             
             if not item_check_result or (isinstance(item_check_result, list) and len(item_check_result) == 0):
                 return {"error": "Item does not exist", "item_id": item_id}
@@ -1524,16 +1530,12 @@ class PlayerItemRepository:
                 VALUES (%s, %s, %s, NOW())
             """
             params = [user_id, item_id, quantity]
-            print(f"DEBUG: Executing SQL: {sql}")
-            print(f"DEBUG: With params: {params}")
             
             result = Database.execute_sql(sql, params)
-            print(f"DEBUG: Insert result: {result}, type: {type(result)}")
             
             # Verify the insert by checking the table
             verify_sql = "SELECT * FROM playerItems WHERE userId = %s AND itemId = %s"
             verify_result = Database.execute_sql(verify_sql, [user_id, item_id])
-            print(f"DEBUG: Verification result: {verify_result}")
             
             return {
                 "insert_result": result,
@@ -1542,7 +1544,7 @@ class PlayerItemRepository:
             }
             
         except Exception as e:
-            print(f"DEBUG: Exception occurred: {e}")
+            logger.error(f"debug_insert_test failed: {e}")
             return {"error": str(e), "success": False}
 
 
@@ -1553,8 +1555,6 @@ class PlayerItemRepository:
 
 # Enhanced Repository Method with Debug Logging
 import logging
-# Set up logging
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 class AuditLogRepository:
@@ -2894,30 +2894,23 @@ class GameSaveRepository:
     @staticmethod
     def create_save(user_id: int, save_data: Dict[str, Any], game_version: str = "1.0.0") -> Optional[int]:
         """Create or update a game save - ensures only ONE save per user"""
-        print(f"💾 REPOSITORY: create_save called with user_id={user_id}, game_version={game_version}")
-        print(f"💾 REPOSITORY: save_data keys = {save_data.keys() if save_data else 'null'}")
-        print(f"💾 REPOSITORY: save_data JSON length = {len(json.dumps(save_data))} chars")
         
         # CRITICAL: Delete ALL existing saves for this user first (prevents duplicates)
         delete_sql = "DELETE FROM game_saves WHERE user_id = %s"
         Database.execute_sql(delete_sql, [user_id])
-        print(f"💾 REPOSITORY: Deleted all existing saves for user_id={user_id}")
         
         # Now create a fresh save (only one will exist)
-        print(f"💾 REPOSITORY: Creating new save for user_id={user_id}")
         sql = """
         INSERT INTO game_saves (user_id, save_data, game_version, last_updated)
         VALUES (%s, %s, %s, CURRENT_TIMESTAMP)
         """
         params = [user_id, json.dumps(save_data), game_version]
         result = Database.execute_sql(sql, params)
-        print(f"💾 REPOSITORY: Insert returned = {result}")
         return result
     
     @staticmethod
     def get_save_by_user(user_id: int) -> Optional[Dict[str, Any]]:
         """Get the latest save for a user"""
-        print(f"🔍 REPOSITORY: get_save_by_user called with user_id={user_id}")
         sql = """
         SELECT id, user_id, save_data, last_updated, game_version
         FROM game_saves 
@@ -2927,12 +2920,8 @@ class GameSaveRepository:
         """
         params = [user_id]
         result = Database.get_one_row(sql, params)
-        print(f"🔍 REPOSITORY: Query result = {result is not None}")
-        if result:
-            print(f"🔍 REPOSITORY: save_data column = {result.get('save_data') is not None}")
         if result and result['save_data']:
             result['save_data'] = json.loads(result['save_data'])
-            print(f"🔍 REPOSITORY: Parsed save_data, keys = {result['save_data'].keys() if result['save_data'] else 'null'}")
         return result
     
     @staticmethod

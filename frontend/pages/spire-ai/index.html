@@ -50,8 +50,8 @@
                     <input type="text" id="loginLast" required autocomplete="family-name" placeholder="Enter last name">
                 </div>
                 <div class="sai-field">
-                    <label for="loginPassword">Password</label>
-                    <input type="password" id="loginPassword" required autocomplete="current-password" placeholder="Enter password">
+                    <label for="loginPassword">Password <span style="font-weight:400;color:var(--text-muted,#9aa6b2);font-size:0.85em">(optional)</span></label>
+                    <input type="password" id="loginPassword" autocomplete="current-password" placeholder="Optional — needed for admin features">
                 </div>
                 <button type="submit" class="sai-btn sai-btn--primary sai-btn--full">
                     <i class="fas fa-sign-in-alt"></i> Sign In
@@ -88,6 +88,9 @@
                 </button>
                 <button class="sai-nav-btn" data-tab="csv-upload">
                     <i class="fas fa-file-csv"></i><span>Import</span>
+                </button>
+                <button class="sai-nav-btn" data-tab="paste-text">
+                    <i class="fas fa-paste"></i><span>Paste Text</span>
                 </button>
             </nav>
             <div class="sai-topbar__user">
@@ -383,6 +386,43 @@
                     </div>
                     <div id="csvResults" class="sai-csv-results" style="display:none;"></div>
                 </div>
+            </div>
+        </section>
+
+        <!-- ═══════════  PASTE RAW TEXT TAB  ═══════════ -->
+        <section id="tab-paste-text" class="sai-page sai-tab">
+            <div class="sai-content sai-content--narrow">
+                <h1><i class="fas fa-paste"></i> Paste Raw Text</h1>
+                <p class="sai-muted">Paste AI-generated quiz content as raw text and we'll parse it into questions automatically.</p>
+
+                <div class="sai-info-card" style="margin-bottom:20px;">
+                    <h4><i class="fas fa-robot"></i> How It Works</h4>
+                    <p>Paste text from ChatGPT, Claude, or any AI in a simple format. Each question block should follow this pattern:</p>
+                    <div class="sai-code-block">
+                        <code>Q: What is the capital of France?<br>A: Paris (correct)<br>A: London<br>A: Berlin<br>A: Madrid<br>E: Paris has been the capital since the 10th century<br>D: easy<br><br>Q: What is 2+2?<br>A: 4 (correct)<br>A: 3<br>A: 5<br>E: Basic arithmetic<br>D: easy</code>
+                    </div>
+                    <p class="sai-muted" style="margin-top:8px; font-size:0.85rem;">Mark correct answers with <strong>(correct)</strong>. Lines starting with <strong>E:</strong> are explanations, <strong>D:</strong> is difficulty (easy/medium/hard/expert).</p>
+                </div>
+
+                <div class="sai-field">
+                    <label for="pasteThemeSelect"><i class="fas fa-tag"></i> Import into theme</label>
+                    <select id="pasteThemeSelect"><option value="">— Select a theme —</option></select>
+                    <button id="pasteNewThemeBtn" class="sai-btn sai-btn--outline sai-btn--sm" style="margin-top:8px; align-self:flex-start;">
+                        <i class="fas fa-plus"></i> New Theme
+                    </button>
+                </div>
+
+                <div class="sai-field">
+                    <label for="pasteTextarea"><i class="fas fa-align-left"></i> Paste your questions below</label>
+                    <textarea id="pasteTextarea" rows="14" placeholder="Q: What is the capital of France?&#10;A: Paris (correct)&#10;A: London&#10;A: Berlin&#10;E: Paris is the capital since the 10th century&#10;D: easy&#10;&#10;Q: What is 2+2?&#10;A: 4 (correct)&#10;A: 3&#10;A: 5&#10;D: easy" style="font-family:monospace; font-size:0.9rem; resize:vertical; min-height:200px;"></textarea>
+                    <span class="sai-field__hint" id="pasteLineCount">0 lines</span>
+                </div>
+
+                <button id="parseTextBtn" class="sai-btn sai-btn--primary sai-btn--lg sai-btn--full">
+                    <i class="fas fa-magic"></i> Parse &amp; Import Questions
+                </button>
+
+                <div id="pasteResults" class="sai-csv-results" style="display:none;"></div>
             </div>
         </section>
 

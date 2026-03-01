@@ -209,4 +209,4 @@ async def delete_user_endpoint(
         raise
     except Exception as e:
         print(f"Error deleting user: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to delete user: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to delete user. Please try again later.")

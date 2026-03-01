@@ -144,6 +144,7 @@
     <script>
     (function () {
         const API = `https://${window.location.hostname}/api/v1/download/analytics`;
+        const ADMIN_API = `https://${window.location.hostname}/api/v1/download/analytics/admin`;
         const content = document.getElementById('content');
 
         // Country code → flag emoji
@@ -168,6 +169,19 @@
                 const res = await fetch(API);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
+                // Try to get admin download log
+                let downloads = [];
+                const userId = localStorage.getItem('user_user_id');
+                if (userId) {
+                    try {
+                        const adminRes = await fetch(ADMIN_API, { headers: { 'X-User-ID': userId } });
+                        if (adminRes.ok) {
+                            const adminData = await adminRes.json();
+                            downloads = adminData.downloads || [];
+                        }
+                    } catch { /* not admin or network error — no detailed log */ }
+                }
+                data.downloads = downloads;
                 render(data);
             } catch (e) {
                 content.innerHTML = `<div class="da-error"><i class="fas fa-exclamation-triangle"></i><p>Failed to load analytics: ${esc(e.message)}</p><button class="da-refresh" onclick="window.__refreshAnalytics()" style="margin-top:12px"><i class="fas fa-sync-alt"></i> Retry</button></div>`;
@@ -176,27 +190,67 @@
 
         function render(data) {
             const maxCountryDl = data.countries.length ? data.countries[0].downloads : 1;
+            const allTimeDl = data.all_time_downloads || data.total_downloads;
+            const allTimeUsers = data.all_time_unique_users || data.unique_users;
+            const allTimeBw = data.all_time_bandwidth_gb || data.total_bandwidth_gb;
+            const history = data.monthly_history || [];
 
             content.innerHTML = `
-                <!-- Summary Stats -->
+                <!-- All-Time Summary Stats -->
                 <div class="da-stats">
                     <div class="da-stat da-stat--primary">
-                        <span class="da-stat__val">${data.total_downloads}</span>
-                        <span class="da-stat__lbl">Total Downloads</span>
+                        <span class="da-stat__val">${allTimeDl}</span>
+                        <span class="da-stat__lbl">All-Time Downloads</span>
                     </div>
                     <div class="da-stat da-stat--success">
-                        <span class="da-stat__val">${data.unique_users}</span>
-                        <span class="da-stat__lbl">Unique Users</span>
+                        <span class="da-stat__val">${allTimeUsers}</span>
+                        <span class="da-stat__lbl">All-Time Users</span>
                     </div>
                     <div class="da-stat da-stat--accent">
                         <span class="da-stat__val">${data.countries.length}</span>
                         <span class="da-stat__lbl">Countries</span>
                     </div>
                     <div class="da-stat da-stat--danger">
-                        <span class="da-stat__val">${data.total_bandwidth_gb.toFixed(2)} GB</span>
-                        <span class="da-stat__lbl">Bandwidth Used</span>
+                        <span class="da-stat__val">${allTimeBw.toFixed(2)} GB</span>
+                        <span class="da-stat__lbl">All-Time Bandwidth</span>
                     </div>
                 </div>
+
+                <!-- Current Month Stats -->
+                <div class="da-stats" style="margin-bottom:12px;">
+                    <div class="da-stat">
+                        <span class="da-stat__val" style="font-size:1.4rem;">${data.total_downloads}</span>
+                        <span class="da-stat__lbl">This Month Downloads</span>
+                    </div>
+                    <div class="da-stat">
+                        <span class="da-stat__val" style="font-size:1.4rem;">${data.unique_users}</span>
+                        <span class="da-stat__lbl">This Month Users</span>
+                    </div>
+                    <div class="da-stat">
+                        <span class="da-stat__val" style="font-size:1.4rem;">${data.total_bandwidth_gb.toFixed(2)} GB</span>
+                        <span class="da-stat__lbl">This Month Bandwidth</span>
+                    </div>
+                </div>
+
+                ${history.length > 1 ? `
+                <!-- Monthly History -->
+                <div class="da-section">
+                    <h2><i class="fas fa-calendar-alt"></i> Monthly History</h2>
+                    <table class="da-table">
+                        <thead>
+                            <tr><th>Month</th><th>Downloads</th><th>Users</th><th>Bandwidth</th></tr>
+                        </thead>
+                        <tbody>
+                            ${history.slice().reverse().map(m => `<tr>
+                                <td><strong>${esc(m.month)}</strong>${m.month === data.month ? ' <span style="color:var(--success);font-size:0.75rem;">current</span>' : ''}</td>
+                                <td>${m.total_downloads}</td>
+                                <td>${m.unique_users}</td>
+                                <td>${m.total_bandwidth_gb.toFixed(2)} GB</td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                ` : ''}
 
                 <!-- Country Breakdown -->
                 <div class="da-section">
@@ -277,7 +331,7 @@
                     })() : ''}
 
                     <div class="da-log">
-                        <table class="da-table">
+                        ${data.downloads && data.downloads.length > 0 ? `<table class="da-table">
                             <thead>
                                 <tr>
                                     <th>User</th>
@@ -298,12 +352,12 @@
                                     <td style="color:var(--text-muted)">${timeAgo(d.last_download)}</td>
                                 </tr>`).join('')}
                             </tbody>
-                        </table>
+                        </table>` : `<p style="text-align:center;color:var(--text-muted);padding:24px;">Download log requires admin access. Log in as an admin to see per-user details.</p>`}
                     </div>
                 </div>
 
                 <p style="text-align:center;color:var(--text-muted);font-size:0.8rem;margin-top:12px;">
-                    Data period: ${esc(data.month)} &middot; IPs are partially masked for privacy
+                    Current period: ${esc(data.month)} &middot; All-time data includes ${history.length} month(s) &middot; IPs are partially masked for privacy
                 </p>
             `;
         }

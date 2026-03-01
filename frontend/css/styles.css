@@ -273,14 +273,27 @@ body * {
  # COMPONENTS
 /*---------------------------------------*/
 .c-header {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 40%, #2563eb 100%);
     color: var(--text-inverse);
-    padding: var(--spacing-lg) var(--spacing-md);
+    padding: var(--spacing-xl) var(--spacing-md);
     text-align: center;
     position: relative;
-    border-bottom: 1px solid var(--border-color);
-    box-shadow: 0 2px 8px var(--shadow-light);
+    border-bottom: none;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.25);
     z-index: 1;
+    overflow: hidden;
+}
+
+.c-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 50%, rgba(96, 165, 250, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 70% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+    pointer-events: none;
 }
 
 .c-header__link {
@@ -295,10 +308,12 @@ body * {
 .c-header__title {
     margin: 0;
     display: inline-block;
-    font-size: var(--font-size-2xl) !important;
-    font-weight: 600;
+    font-size: 2.25rem !important;
+    font-weight: 700;
     font-family: var(--font-display);
     color: white !important;
+    letter-spacing: -0.03em;
+    position: relative;
 }
 
 .c-header {
@@ -322,13 +337,19 @@ body * {
 }
 
 .c-section-panel {
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(44, 76, 124, 0.12);
-    border-radius: var(--border-radius-lg);
-    padding: var(--spacing-lg) var(--spacing-md);
-    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(44, 76, 124, 0.08);
+    border-radius: 20px;
+    padding: var(--spacing-xl) var(--spacing-lg);
+    box-shadow: 0 8px 28px rgba(15, 23, 42, 0.07), 0 1px 3px rgba(15, 23, 42, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.c-section-panel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 36px rgba(15, 23, 42, 0.1), 0 2px 6px rgba(15, 23, 42, 0.06);
 }
 
 .section .c-section-panel {
@@ -361,7 +382,6 @@ body * {
 .c-download-panel {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.92));
     border: 1px solid rgba(44, 76, 124, 0.14);
-    border-left: 4px solid rgba(44, 111, 184, 0.6);
     border-radius: var(--border-radius-lg);
     box-shadow: 0 18px 36px rgba(15, 23, 42, 0.12);
     padding: var(--spacing-xl);
@@ -429,10 +449,12 @@ body * {
 
 .c-section-title {
     margin: 0 0 var(--spacing-xs);
-    font-size: var(--font-size-lg);
+    font-size: 1.35rem;
     text-align: center;
     font-family: var(--font-display);
-    letter-spacing: -0.01em;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
 }
 
 .c-section-lead {
@@ -440,22 +462,27 @@ body * {
     color: var(--text-secondary);
     text-align: center;
     font-size: var(--font-size-sm);
+    line-height: 1.5;
 }
 
 [data-theme="dark"] .c-welcome-message,
 .theme-dark .c-welcome-message,
 [data-theme="dark"] .c-section-panel,
 .theme-dark .c-section-panel {
-    background: rgba(15, 17, 18, 0.92);
-    border-color: rgba(96, 165, 250, 0.18);
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+    background: rgba(15, 17, 18, 0.94);
+    border-color: rgba(96, 165, 250, 0.1);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .c-section-panel:hover,
+.theme-dark .c-section-panel:hover {
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 
 [data-theme="dark"] .c-download-panel,
 .theme-dark .c-download-panel {
     background: linear-gradient(135deg, rgba(15, 17, 18, 0.98), rgba(17, 24, 39, 0.92));
-    border-color: rgba(96, 165, 250, 0.2);
-    border-left-color: rgba(96, 165, 250, 0.8);
+    border-color: rgba(96, 165, 250, 0.15);
     box-shadow: 0 22px 44px rgba(0, 0, 0, 0.55);
 }
 
@@ -481,7 +508,7 @@ body * {
     justify-content: center;
     padding: var(--spacing-md) var(--spacing-lg);
     border: none;
-    border-radius: var(--border-radius);
+    border-radius: 12px;
     font-size: var(--font-size-base);
     font-weight: 500;
     cursor: pointer;
@@ -490,6 +517,7 @@ body * {
     overflow: hidden;
     min-height: 44px; /* Touch target accessibility */
     transition: all 0.2s ease;
+    gap: 0.35rem;
 }
 
 .c-btn:hover {
@@ -514,25 +542,35 @@ body * {
 .c-btn--secondary,
 .c-btn--tertiary {
     background-color: #fff;
-    color: #000;
-    border: 2px solid #000;
+    color: #1e293b;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
 }
 
 .c-btn--primary:hover,
 .c-btn--secondary:hover,
 .c-btn--tertiary:hover {
-    background-color: #fff;
+    background-color: #f8fafc;
     border-color: var(--primary-color);
     color: var(--primary-color);
-    box-shadow: 0 0 0 1px var(--primary-color), 0 4px 12px rgba(30, 58, 138, 0.15);
+    box-shadow: 0 0 0 1px var(--primary-color), 0 4px 12px rgba(30, 58, 138, 0.12);
 }
 
 /* Black & White button utility for unimportant actions */
 .bw-btn,
 .c-btn--bw {
     background-color: #fff;
-    color: #000;
-    border: 2px solid #000;
+    color: #1e293b;
+    border: 1.5px solid #e2e8f0;
+    font-weight: 600;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.bw-btn i,
+.c-btn--bw i {
+    color: var(--primary-color);
+    font-size: 0.9em;
 }
 
 /* Dark mode variant: invert colors */
@@ -540,9 +578,17 @@ body * {
 .theme-dark .bw-btn,
 [data-theme="dark"] .c-btn--bw,
 .theme-dark .c-btn--bw {
-    background-color: #000;
-    color: #fff;
-    border: 2px solid #fff;
+    background-color: rgba(15, 17, 18, 0.9);
+    color: #e2e8f0;
+    border: 1.5px solid rgba(96, 165, 250, 0.2);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .bw-btn i,
+.theme-dark .bw-btn i,
+[data-theme="dark"] .c-btn--bw i,
+.theme-dark .c-btn--bw i {
+    color: #60a5fa;
 }
 
 /* Accent button (blue) for highlighted actions like Industrial Empire) */
@@ -550,7 +596,12 @@ body * {
 .c-btn--accent {
     background-color: var(--primary-color);
     color: var(--text-inverse);
-    border: 2px solid rgba(0,0,0,0.06);
+    border: 1.5px solid rgba(0,0,0,0.06);
+}
+
+.accent-blue i,
+.c-btn--accent i {
+    color: white !important;
 }
 
 [data-theme="dark"] .accent-blue,
@@ -559,15 +610,34 @@ body * {
 .theme-dark .c-btn--accent {
     background-color: var(--primary-color);
     color: var(--text-inverse);
-    border: 2px solid rgba(255,255,255,0.06);
+    border: 1.5px solid rgba(255,255,255,0.06);
+}
+
+[data-theme="dark"] .accent-blue i,
+.theme-dark .accent-blue i,
+[data-theme="dark"] .c-btn--accent i,
+.theme-dark .c-btn--accent i {
+    color: white !important;
 }
 
 /* Make sure bw buttons have a subtle hover effect */
 .bw-btn:hover,
 .c-btn--bw:hover {
-    filter: brightness(0.98);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(24,24,24,0.06);
+    background: #f8fafc;
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(44, 111, 184, 0.12);
+}
+
+[data-theme="dark"] .bw-btn:hover,
+.theme-dark .bw-btn:hover,
+[data-theme="dark"] .c-btn--bw:hover,
+.theme-dark .c-btn--bw:hover {
+    background: rgba(30, 58, 138, 0.15);
+    border-color: #60a5fa;
+    color: #93c5fd;
+    box-shadow: 0 4px 14px rgba(96, 165, 250, 0.15);
 }
 
 /* Dark mode button styles */
@@ -577,9 +647,9 @@ body * {
 .theme-dark .c-btn--primary,
 .theme-dark .c-btn--secondary,
 .theme-dark .c-btn--tertiary {
-    background-color: #000;
-    color: #fff;
-    border: 2px solid #fff;
+    background-color: rgba(15, 17, 18, 0.9);
+    color: #e2e8f0;
+    border: 1.5px solid rgba(96, 165, 250, 0.2);
 }
 
 [data-theme="dark"] .c-btn--primary:hover,
@@ -588,10 +658,10 @@ body * {
 .theme-dark .c-btn--primary:hover,
 .theme-dark .c-btn--secondary:hover,
 .theme-dark .c-btn--tertiary:hover {
-    background-color: #000;
-    border-color: var(--primary-color);
-    color: var(--primary-color);
-    box-shadow: 0 0 0 1px var(--primary-color), 0 4px 12px rgba(96, 165, 250, 0.25);
+    background-color: rgba(30, 58, 138, 0.15);
+    border-color: #60a5fa;
+    color: #93c5fd;
+    box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.4), 0 4px 12px rgba(96, 165, 250, 0.15);
 }
 
 .c-btn--delete {
@@ -605,15 +675,16 @@ body * {
 
 .c-btn--tertiary {
     background-color: #fff;
-    color: #000;
-    border: 2px solid #000;
+    color: #1e293b;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
 }
 
 .c-btn--tertiary:hover {
-    background-color: #fff;
+    background-color: #f8fafc;
     border-color: var(--primary-color);
     color: var(--primary-color);
-    box-shadow: 0 0 0 1px var(--primary-color), 0 4px 12px rgba(30, 58, 138, 0.15);
+    box-shadow: 0 0 0 1px var(--primary-color), 0 4px 12px rgba(30, 58, 138, 0.12);
 }
 
 /* Specific buttons that should remain blue */
@@ -623,16 +694,25 @@ body * {
 button[onclick*="idleGame/idlegame.html"] {
     background-color: var(--primary-color) !important;
     color: white !important;
-    border: 2px solid black !important;
+    border: 1.5px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 4px 14px rgba(44, 111, 184, 0.2);
+}
+
+#startQuizBtn i,
+#studyQuizBtn i,
+#articleTheSpireBtn i,
+button[onclick*="idleGame/idlegame.html"] i {
+    color: white !important;
 }
 
 #startQuizBtn:hover,
 #studyQuizBtn:hover,
 #articleTheSpireBtn:hover,
 button[onclick*="idleGame/idlegame.html"]:hover {
-    background-color: var(--primary-color) !important;
+    background-color: var(--secondary-color) !important;
     color: white !important;
-    border: 2px solid white !important;
+    border: 1.5px solid rgba(0, 0, 0, 0.12) !important;
+    box-shadow: 0 6px 20px rgba(44, 111, 184, 0.3);
 }
 
 .c-btn--admin {
@@ -1147,9 +1227,12 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 }
 
 .c-header__subtitle {
-    font-size: 1rem;
-    opacity: 0.8;
-    margin-top: 5px;
+    font-size: 0.95rem;
+    opacity: 0.75;
+    margin-top: 0.35rem;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
 /* Compact button row: visually consistent, equal-width buttons that sit side-by-side when space allows */
@@ -1246,63 +1329,71 @@ button[onclick*="idleGame/idlegame.html"]:hover {
     flex-wrap: wrap;
     justify-content: center;
     gap: 0.5rem;
-    margin: 1rem 0;
-    padding: 0.5rem;
-    background: rgba(255, 255, 255, 0.88);
-    border-radius: var(--border-radius-lg);
-    border: 1px solid rgba(44, 76, 124, 0.12);
-    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    margin: 1.25rem 0;
+    padding: 0.5rem 0.75rem;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 999px;
+    border: 1px solid rgba(44, 76, 124, 0.08);
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .c-nav-btn {
-    padding: 0.75rem 1rem;
-    border: 1px solid rgba(44, 76, 124, 0.18);
+    padding: 0.7rem 1.25rem;
+    border: none;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.9);
-    color: var(--text-primary);
+    background: transparent;
+    color: var(--text-secondary);
     font-size: var(--font-size-sm);
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
     min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
 }
 
 .c-nav-btn:hover {
-    background: rgba(219, 234, 254, 0.5);
-    border-color: rgba(44, 111, 184, 0.6);
+    background: rgba(44, 111, 184, 0.08);
+    color: var(--primary-color);
 }
 
 .c-nav-btn.active {
     background: var(--primary-color);
-    color: var(--text-inverse);
-    border-color: var(--primary-color);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(44, 111, 184, 0.3);
 }
 
 [data-theme="dark"] .c-nav-btn.active,
 .theme-dark .c-nav-btn.active {
     background: var(--primary-color);
-    color: var(--text-inverse);
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(96, 165, 250, 0.3);
 }
 
 [data-theme="dark"] .c-nav,
 .theme-dark .c-nav {
-    background: rgba(15, 17, 18, 0.92);
-    border-color: rgba(96, 165, 250, 0.2);
-    box-shadow: 0 12px 22px rgba(0, 0, 0, 0.5);
+    background: rgba(15, 17, 18, 0.94);
+    border-color: rgba(96, 165, 250, 0.12);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
 [data-theme="dark"] .c-nav-btn,
 .theme-dark .c-nav-btn {
-    background: rgba(15, 17, 18, 0.95);
-    border-color: rgba(96, 165, 250, 0.25);
+    background: transparent;
+    border-color: transparent;
+    color: var(--text-secondary);
 }
 
 [data-theme="dark"] .c-nav-btn:hover,
 .theme-dark .c-nav-btn:hover {
-    background: rgba(30, 58, 138, 0.35);
-    border-color: rgba(96, 165, 250, 0.6);
+    background: rgba(96, 165, 250, 0.12);
+    color: #93c5fd;
 }
 
 .section {
@@ -1330,27 +1421,32 @@ button[onclick*="idleGame/idlegame.html"]:hover {
    ===================================================== */
 .c-product-card {
     position: relative;
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid rgba(44, 76, 124, 0.12);
-    border-radius: 16px;
-    padding: 2rem 2rem 1.75rem;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(44, 76, 124, 0.1);
+    border-radius: 20px;
+    padding: 2.25rem 2rem 2rem;
     margin-bottom: var(--spacing-xl);
     max-width: 800px;
     margin-left: auto;
     margin-right: auto;
-    box-shadow: 0 12px 40px rgba(15, 23, 42, 0.1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.06);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     text-align: center;
-    transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.3s, border-color 0.3s;
+}
+
+.c-product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 48px rgba(15, 23, 42, 0.14), 0 2px 6px rgba(15, 23, 42, 0.08);
 }
 
 .c-product-card--hero {
-    border-left: 4px solid var(--primary-color);
+    border: 1px solid rgba(44, 111, 184, 0.15);
 }
 
 .c-product-card--lofi {
-    border-left: 4px solid #8b5cf6;
+    border: 1px solid rgba(139, 92, 246, 0.15);
 }
 
 /* Badge row */
@@ -1414,11 +1510,12 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 /* Product card title */
 .c-product-card__title {
     font-family: var(--font-display);
-    font-size: 1.6rem;
+    font-size: 1.75rem;
     font-weight: 700;
     margin: 0 0 0.5rem;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
     color: var(--text-primary);
+    line-height: 1.2;
 }
 
 .c-product-card__tagline {
@@ -1497,9 +1594,15 @@ button[onclick*="idleGame/idlegame.html"]:hover {
     padding: 0.85rem 1.75rem;
     font-weight: 700;
     font-size: 1rem;
-    border-radius: 10px;
-    box-shadow: 0 4px 14px rgba(30, 58, 138, 0.25);
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(30, 58, 138, 0.2);
     letter-spacing: 0.01em;
+}
+
+.c-btn--cta i,
+.c-btn--lofi i,
+.c-btn--sentle i {
+    color: white !important;
 }
 
 .c-btn--cta:hover {
@@ -1525,13 +1628,13 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 
 /* Outline button — secondary action */
 .c-btn--outline {
-    background: transparent;
+    background: rgba(255, 255, 255, 0.8);
     color: var(--primary-color);
-    border: 2px solid var(--primary-color);
+    border: 1.5px solid var(--primary-color);
     padding: 0.75rem 1.5rem;
     font-weight: 600;
     font-size: 0.95rem;
-    border-radius: 10px;
+    border-radius: 12px;
 }
 
 .c-btn--outline:hover {
@@ -1541,18 +1644,20 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 
 /* SENTLE button */
 .c-btn--sentle {
-    background: linear-gradient(135deg, #6aaa64, #c9b458);
+    background: linear-gradient(135deg, #6aaa64, #538d4e);
     color: white;
-    border: 2px solid #6aaa64;
+    border: none;
     font-weight: 700;
-    font-size: 1.05rem;
+    font-size: 1rem;
     padding: 1rem 1.75rem;
-    border-radius: 10px;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(106, 170, 100, 0.2);
 }
 
 .c-btn--sentle:hover {
     filter: brightness(1.08);
-    box-shadow: 0 6px 16px rgba(106, 170, 100, 0.3);
+    box-shadow: 0 6px 20px rgba(106, 170, 100, 0.35);
+    transform: translateY(-2px);
 }
 
 /* Support note */
@@ -1595,8 +1700,8 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 .o-button-group--2col {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-md);
-    margin-bottom: var(--spacing-md);
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
     max-width: 680px;
     margin-left: auto;
     margin-right: auto;
@@ -1785,19 +1890,24 @@ button[onclick*="idleGame/idlegame.html"]:hover {
    ===================================================== */
 [data-theme="dark"] .c-product-card,
 .theme-dark .c-product-card {
-    background: rgba(17, 24, 39, 0.95);
-    border-color: rgba(96, 165, 250, 0.15);
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+    background: rgba(17, 24, 39, 0.96);
+    border-color: rgba(96, 165, 250, 0.1);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .c-product-card:hover,
+.theme-dark .c-product-card:hover {
+    box-shadow: 0 20px 56px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 
 [data-theme="dark"] .c-product-card--hero,
 .theme-dark .c-product-card--hero {
-    border-left-color: #60a5fa;
+    border-color: rgba(96, 165, 250, 0.15);
 }
 
 [data-theme="dark"] .c-product-card--lofi,
 .theme-dark .c-product-card--lofi {
-    border-left-color: #a78bfa;
+    border-color: rgba(167, 139, 250, 0.15);
 }
 
 /* Dark badges */
@@ -2165,7 +2275,7 @@ button[onclick*="idleGame/idlegame.html"]:hover {
     }
     .c-product-card--hero,
     .c-product-card--lofi {
-        border-left-width: 3px;
+        border-width: 1px;
     }
     .c-product-card__badge-row {
         gap: 0.35rem;

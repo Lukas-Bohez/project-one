@@ -1041,10 +1041,14 @@ class SentleGame {
     moveToArrangementStage() {
         this.gameStage = 'arranging';
         this.resetKeyboard();
-        document.getElementById('gameBoard').style.display = 'none';
-        document.getElementById('keyboard').style.display = 'none';
-        document.querySelector('.game-progress').style.display = 'none';
-        document.querySelector('.current-word-section').style.display = 'none';
+        const gameBoard = document.getElementById('gameBoard');
+        const keyboard = document.getElementById('keyboard');
+        const gameProgress = document.querySelector('.game-progress');
+        const currentWordSection = document.querySelector('.current-word-section');
+        if (gameBoard) gameBoard.style.display = 'none';
+        if (keyboard) keyboard.style.display = 'none';
+        if (gameProgress) gameProgress.style.display = 'none';
+        if (currentWordSection) currentWordSection.style.display = 'none';
 
         const arrangementStage = document.getElementById('arrangementStage');
         arrangementStage.style.display = 'block';

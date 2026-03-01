@@ -129,7 +129,7 @@ async def create_theme_endpoint(
         print(f"Error creating theme: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to create theme: {str(e)}"
+            detail="Failed to create theme. Please try again later."
         )
 
 
@@ -191,7 +191,7 @@ async def delete_theme_endpoint(
         raise
     except Exception as e:
         print(f"Error deleting theme: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to delete theme: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to delete theme. Please try again later.")
 
 
 # Mass migration endpoint for moving questions between themes
@@ -303,5 +303,5 @@ async def migrate_questions_between_themes(
         print(f"Error migrating questions from theme {source_theme_id} to {target_theme_id}: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Internal server error during question migration: {str(e)}"
+            detail="Internal server error during question migration. Please try again later."
         )

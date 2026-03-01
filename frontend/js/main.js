@@ -94,7 +94,9 @@ const listenToButtons = () => {
     const navBtns = document.querySelectorAll('.c-nav-btn');
     navBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
-            const section = e.target.dataset.section;
+            const navBtn = e.target.closest('.c-nav-btn');
+            if (!navBtn) return;
+            const section = navBtn.dataset.section;
             showSection(section);
         });
     });

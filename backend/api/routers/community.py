@@ -8,6 +8,7 @@ import csv
 import io
 import logging
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Query, Request, status
+from pydantic import BaseModel, Field
 from typing import Optional, List
 
 from database.community_repository import (
@@ -40,14 +41,18 @@ router = APIRouter(prefix="/api/v1/community", tags=["Spire AI Collaboration"])
 # Helper: extract user info from headers (same as app.py pattern)
 # ============================================================
 async def get_user_from_headers(request):
-    """Extract user info from request headers."""
+    """Extract user info from request headers.
+    
+    Supports two auth methods:
+    1. RFID-based: X-User-ID + X-RFID headers (hardware auth)
+    2. Password-based: X-User-ID + X-Password headers (web auth)
+    """
     from database.datarepository import UserRepository
     user_id = request.headers.get("X-User-ID")
     rfid = request.headers.get("X-RFID")
+    password = request.headers.get("X-Password")
     if not user_id:
         raise HTTPException(status_code=401, detail="Authentication required. Please log in.")
-    if not rfid:
-        raise HTTPException(status_code=401, detail="Authentication required. Missing RFID.")
     try:
         user_id = int(user_id)
     except (ValueError, TypeError):
@@ -55,13 +60,97 @@ async def get_user_from_headers(request):
     user = UserRepository.get_user_by_id(user_id)
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
-    if user.get('rfid_code') != rfid:
-        raise HTTPException(status_code=403, detail="Invalid RFID code")
+    # Try RFID auth first, then fall back to password auth
+    if rfid:
+        if user.get('rfid_code') != rfid:
+            raise HTTPException(status_code=403, detail="Invalid RFID code")
+    elif password:
+        if not UserRepository.authenticate_user(user.get('first_name'), user.get('last_name'), password):
+            raise HTTPException(status_code=403, detail="Invalid password")
+    else:
+        raise HTTPException(status_code=401, detail="Authentication credentials required. Please provide RFID or password.")
+    return user
+
+
+async def get_user_loose(request):
+    """Loosely identify a user from X-User-ID header without verifying password/RFID.
+    
+    Used for community content creation endpoints where any registered user
+    can contribute. Content goes through admin approval before going live,
+    so strict auth is not required for creation.
+    """
+    from database.datarepository import UserRepository
+    user_id = request.headers.get("X-User-ID")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Please log in to create community content.")
+    try:
+        user_id = int(user_id)
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=401, detail="Invalid user ID")
+    user = UserRepository.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
     return user
 
 
 def is_admin(user):
     return user.get('userRoleId') == 3
+
+
+# ============================================================
+# PASSWORDLESS AUTH — for community content creation
+# ============================================================
+
+class CommunityAuthRequest(BaseModel):
+    first_name: str = Field(..., min_length=1, max_length=50)
+    last_name: str = Field(..., min_length=1, max_length=50)
+    password: Optional[str] = Field(None, min_length=8)
+
+
+@router.post("/auth")
+async def community_auth(auth_data: CommunityAuthRequest, request: Request):
+    """Sign in or register for community features. Password is optional.
+    
+    - With password: full authentication (same as /api/v1/login)
+    - Without password: name-only lookup or auto-register for community content creation
+    
+    Community content (themes, questions) goes through admin approval,
+    so strict password auth is not required for creation.
+    """
+    from database.datarepository import UserRepository
+
+    existing = UserRepository.get_user_by_name(auth_data.first_name, auth_data.last_name)
+
+    if auth_data.password:
+        # Full auth — verify password
+        user_id = UserRepository.authenticate_user(
+            auth_data.first_name, auth_data.last_name, auth_data.password
+        )
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid name or password.")
+        return {"message": "Login successful", "user_id": user_id, "auth_level": "full"}
+    else:
+        # Passwordless — lookup or create
+        if existing:
+            logger.info(f"Passwordless community login for user {existing['id']} ({auth_data.first_name} {auth_data.last_name})")
+            return {"message": "Welcome back!", "user_id": existing['id'], "auth_level": "community"}
+        else:
+            # Auto-register without password
+            user_data = {
+                'first_name': auth_data.first_name,
+                'last_name': auth_data.last_name,
+                'password_hash': None,
+                'salt': None,
+                'userRoleId': 1,
+                'soul_points': 4,
+                'limb_points': 4,
+                'updated_by': 1
+            }
+            user_id = UserRepository.create_user_with_password(user_data)
+            if not user_id:
+                raise HTTPException(status_code=500, detail="Failed to create account")
+            logger.info(f"Passwordless community registration: user {user_id} ({auth_data.first_name} {auth_data.last_name})")
+            return {"message": "Account created!", "user_id": user_id, "auth_level": "community"}
 
 
 # ============================================================
@@ -106,8 +195,9 @@ async def get_community_theme(theme_id: int):
 
 @router.post("/themes", response_model=CommunityThemeResponse, status_code=status.HTTP_201_CREATED)
 async def create_community_theme(theme_data: CommunityThemeCreate, request: Request):
-    """Create a new community theme. Any logged-in user can create themes."""
-    user = await get_user_from_headers(request)
+    """Create a new community theme. Any registered user can create themes (no password required).
+    Content starts as draft and requires admin approval before going live."""
+    user = await get_user_loose(request)
     theme_id = CommunityThemeRepository.create_theme(
         name=theme_data.name,
         description=theme_data.description,
@@ -154,8 +244,8 @@ async def delete_community_theme(theme_id: int, request: Request):
 
 @router.post("/themes/{theme_id}/submit")
 async def submit_theme_for_review(theme_id: int, request: Request):
-    """Submit a draft theme for admin review."""
-    user = await get_user_from_headers(request)
+    """Submit a draft theme for admin review. No password required."""
+    user = await get_user_loose(request)
     theme = CommunityThemeRepository.get_theme_by_id(theme_id)
     if not theme:
         raise HTTPException(status_code=404, detail="Theme not found")
@@ -176,8 +266,8 @@ async def submit_theme_for_review(theme_id: int, request: Request):
 
 @router.post("/themes/{theme_id}/rate")
 async def rate_community_theme(theme_id: int, rating_data: RatingInput, request: Request):
-    """Rate a community theme (1-5 stars)."""
-    user = await get_user_from_headers(request)
+    """Rate a community theme (1-5 stars). No password required."""
+    user = await get_user_loose(request)
     theme = CommunityThemeRepository.get_theme_by_id(theme_id)
     if not theme:
         raise HTTPException(status_code=404, detail="Theme not found")
@@ -219,8 +309,8 @@ async def list_theme_questions(theme_id: int, request: Request):
 @router.post("/themes/{theme_id}/questions", response_model=CommunityQuestionResponse, 
               status_code=status.HTTP_201_CREATED)
 async def create_question(theme_id: int, question_data: CommunityQuestionCreate, request: Request):
-    """Add a question to a community theme."""
-    user = await get_user_from_headers(request)
+    """Add a question to a community theme. No password required — content goes through admin review."""
+    user = await get_user_loose(request)
     theme = CommunityThemeRepository.get_theme_by_id(theme_id)
     if not theme:
         raise HTTPException(status_code=404, detail="Theme not found")
@@ -309,7 +399,7 @@ async def upload_csv_questions(
     Required columns: question, correct_answer
     Optional columns: wrong_answer_1, wrong_answer_2, wrong_answer_3, explanation, difficulty, ai_generated
     """
-    user = await get_user_from_headers(request)
+    user = await get_user_loose(request)
     theme = CommunityThemeRepository.get_theme_by_id(theme_id)
     if not theme:
         raise HTTPException(status_code=404, detail="Theme not found")

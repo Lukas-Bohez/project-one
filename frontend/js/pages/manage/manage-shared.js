@@ -240,7 +240,7 @@ const ManageShared = {
         show(message, type = 'info') {
             const notification = document.createElement('div');
             notification.className = `manage-notification manage-notification-${type}`;
-            notification.innerHTML = message;
+            notification.textContent = message;
             
             Object.assign(notification.style, {
                 position: 'fixed',

@@ -78,15 +78,16 @@ class QuizQuestionHandler {
 
         // Only set timeout if we haven't already tried reloading
         if (!sessionStorage.getItem('questionReloadAttempted')) {
-            // Set 2-second timeout - reload page if no question loads
+            // Set 8-second timeout - reload page if no question loads
             this.questionLoadTimeout = setTimeout(() => {
                 // Check if we have a current question
-                if (!this.currentQuestion || document.getElementById('questionText').textContent === 'Loading question...') {
-                    console.log("No question loaded within 2 seconds, marking reload attempted and reloading page");
+                const questionText = document.getElementById('questionText');
+                if (!this.currentQuestion || (questionText && questionText.textContent === 'Loading question...')) {
+                    console.log("No question loaded within 8 seconds, marking reload attempted and reloading page");
                     sessionStorage.setItem('questionReloadAttempted', 'true');
                     window.location.reload();
                 }
-            }, 2000);
+            }, 8000);
         }
     }
 
@@ -270,7 +271,12 @@ clearExplanations() {
     setQuestionImage(questionData) {
         const questionImage = document.getElementById('questionImage');
         if (questionImage && questionData.image) {
-            questionImage.innerHTML = `<img src="${questionData.image}" alt="Question image" class="c-question-image">`;
+            questionImage.innerHTML = '';
+            const img = document.createElement('img');
+            img.src = questionData.image;
+            img.alt = 'Question image';
+            img.className = 'c-question-image';
+            questionImage.appendChild(img);
         }
     }
 

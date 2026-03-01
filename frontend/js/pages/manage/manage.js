@@ -6,6 +6,14 @@
 // API Base URL
 const API_BASE = '/api/v1/manage';
 
+// Escape HTML to prevent XSS
+function escapeHTML(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // State Management
 let currentUser = null;
 let currentBusiness = null;
@@ -53,9 +61,16 @@ function initializeApp() {
     const savedBusiness = localStorage.getItem('manage_business');
     
     if (savedUser && savedBusiness) {
-        currentUser = JSON.parse(savedUser);
-        currentBusiness = JSON.parse(savedBusiness);
-        showDashboard();
+        try {
+            currentUser = JSON.parse(savedUser);
+            currentBusiness = JSON.parse(savedBusiness);
+            showDashboard();
+        } catch (e) {
+            console.error('Failed to parse saved user/business data:', e);
+            localStorage.removeItem('manage_user');
+            localStorage.removeItem('manage_business');
+            showWelcome();
+        }
     } else {
         showWelcome();
     }
@@ -253,8 +268,14 @@ async function handleBusinessSetup(e) {
             userId = null;
         }
         
+        if (!userId) {
+            errorDiv.textContent = 'Could not verify user account. Please log in first.';
+            errorDiv.style.display = 'block';
+            return;
+        }
+
         const businessData = {
-            owner_user_id: userId || 1, // Use 1 as placeholder if not found
+            owner_user_id: userId,
             business_name: businessName,
             tier: 'free',
             max_employees: 10,
@@ -448,28 +469,31 @@ function renderEmployeeList(list) {
     }
 
     employeeList.innerHTML = list.map(emp => {
-        const name = `${emp.first_name} ${emp.last_name}`;
-        const role = emp.position_title || emp.role_name || roleMap[emp.role_id] || 'Employee';
+        const name = escapeHTML(`${emp.first_name} ${emp.last_name}`);
+        const role = escapeHTML(emp.position_title || emp.role_name || roleMap[emp.role_id] || 'Employee');
         const status = emp.status || 'active';
         const rate = emp.hourly_rate ? `$${emp.hourly_rate.toFixed(2)}/hr` : 'Rate not set';
-        const statusLabel = status.replace('_', ' ');
+        const statusLabel = escapeHTML(status.replace('_', ' '));
         const toggleLabel = status === 'active' ? 'Deactivate' : 'Activate';
         const toggleAction = status === 'active' ? 'deactivate' : 'activate';
+        const email = escapeHTML(emp.email || 'No email');
+        const phone = emp.phone ? ` • ${escapeHTML(emp.phone)}` : '';
+        const department = escapeHTML(emp.department || 'Not set');
 
         return `
             <div class="employee-card" data-employee-id="${emp.id}">
                 <div class="employee-meta">
                     <div class="employee-name">${name}</div>
                     <div class="employee-role">${role}</div>
-                    <div class="employee-contact">${emp.email || 'No email'}${emp.phone ? ` • ${emp.phone}` : ''}</div>
+                    <div class="employee-contact">${email}${phone}</div>
                 </div>
                 <div class="employee-badges">
                     <span class="employee-badge status-${status}">${statusLabel}</span>
                     <span class="employee-badge">${rate}</span>
                 </div>
                 <div class="employee-meta">
-                    <div class="employee-role">Hire Date: ${emp.hire_date || 'N/A'}</div>
-                    <div class="employee-role">Dept: ${emp.department || 'Not set'}</div>
+                    <div class="employee-role">Hire Date: ${escapeHTML(emp.hire_date || 'N/A')}</div>
+                    <div class="employee-role">Dept: ${department}</div>
                 </div>
                 <div class="employee-actions">
                     <button class="c-btn c-btn--secondary c-btn--sm" data-action="edit">Edit</button>

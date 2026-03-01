@@ -12,7 +12,6 @@ import traceback
 import threading
 from threading import Thread, Event, Lock
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-import asyncio
 import socket
 import logging
 logging.getLogger('mysql.connector').setLevel(logging.WARNING)
@@ -14063,12 +14062,41 @@ async def get_download_analytics():
     # Sum tracked-only platform/browser downloads for percentages
     tracked_downloads_total = sum(c for _, c in platforms_sorted)
 
+    # Compute all-time totals including archived months
+    archived = tracker.get("archived_months", {})
+    all_time_downloads = total_downloads + sum(m.get("total_downloads", 0) for m in archived.values())
+    all_time_unique = unique_users + sum(m.get("unique_users", 0) for m in archived.values())
+    all_time_bandwidth = total_bandwidth + sum(m.get("total_bandwidth_gb", 0) for m in archived.values())
+
+    # Build monthly history (archived + current)
+    monthly_history = []
+    for month_key in sorted(archived.keys()):
+        if month_key == "unknown":
+            continue
+        m = archived[month_key]
+        monthly_history.append({
+            "month": month_key,
+            "total_downloads": m.get("total_downloads", 0),
+            "unique_users": m.get("unique_users", 0),
+            "total_bandwidth_gb": round(m.get("total_bandwidth_gb", 0), 4),
+        })
+    # Append current month
+    monthly_history.append({
+        "month": tracker.get("last_reset_month", ""),
+        "total_downloads": total_downloads,
+        "unique_users": unique_users,
+        "total_bandwidth_gb": total_bandwidth,
+    })
+
     return {
         "total_downloads": total_downloads,
         "unique_users": unique_users,
         "total_bandwidth_gb": total_bandwidth,
         "month": tracker.get("last_reset_month", ""),
-        "legacy_untracked_users": legacy_count,
+        "all_time_downloads": all_time_downloads,
+        "all_time_unique_users": all_time_unique,
+        "all_time_bandwidth_gb": round(all_time_bandwidth, 4),
+        "monthly_history": monthly_history,
         "countries": [
             {
                 "country": name,
@@ -14081,6 +14109,44 @@ async def get_download_analytics():
         "platforms": [{"name": name, "downloads": count} for name, count in platforms_sorted],
         "browsers": [{"name": name, "downloads": count} for name, count in browsers_sorted],
         "tracked_downloads": tracked_downloads_total,
+    }
+
+@app.get("/api/v1/download/analytics/admin")
+async def get_download_analytics_admin(request: Request):
+    """Admin-only detailed analytics endpoint — includes per-IP download log.
+    Requires admin authentication via X-User-ID header."""
+    user_id_header = request.headers.get("X-User-ID")
+    if not user_id_header:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    try:
+        user = UserRepository.get_user_by_id(int(user_id_header))
+        if not user or user.get('userRoleId') != 3:
+            raise HTTPException(status_code=403, detail="Admin access required")
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=401, detail="Invalid user ID")
+
+    with DOWNLOAD_TRACKER_LOCK:
+        tracker = load_download_tracker()
+    ips_data = tracker.get("ips", {})
+    active_ips = {ip: data for ip, data in ips_data.items() if data.get("count", 0) > 0}
+    geo = _batch_geolocate(list(active_ips.keys()))
+    downloads = []
+    for ip, data in active_ips.items():
+        g = geo.get(ip, {})
+        downloads.append({
+            "ip_masked": ".".join(ip.split(".")[:2]) + ".*.*",
+            "ip_hash": hex(hash(ip) & 0xFFFFFFFF),
+            "country": g.get("country", "Unknown"),
+            "country_code": g.get("countryCode", "XX"),
+            "city": g.get("city", ""),
+            "region": g.get("region", ""),
+            "platform": data.get("platform", "Unknown"),
+            "browser": data.get("browser", "Unknown"),
+            "download_count": data.get("count", 0),
+            "bandwidth_gb": round(data.get("bandwidth_gb", 0.0), 4),
+            "last_download": data.get("last_download"),
+        })
+    return {
         "downloads": sorted(downloads, key=lambda x: x["last_download"] or "", reverse=True),
     }
 

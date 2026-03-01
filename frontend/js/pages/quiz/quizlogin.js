@@ -139,7 +139,7 @@ class AuthSystem {
     }
 
     showError(message) {
-        const errorContainer = document.getElementById('errorContainer');
+        const errorContainer = document.getElementById('authError') || document.getElementById('errorContainer');
         if (errorContainer) {
             errorContainer.textContent = message;
             errorContainer.style.display = 'block';
@@ -246,10 +246,8 @@ class AuthSystem {
             return null;
         }
         
-        // Store credentials for auto-login only after validation
-        localStorage.setItem(STORAGE_KEYS.USER.FIRST_NAME, firstName);
-        localStorage.setItem(STORAGE_KEYS.USER.LAST_NAME, lastName);
-        localStorage.setItem(STORAGE_KEYS.USER.PASSWORD, password);
+        // Store credentials will happen after successful authentication
+        // localStorage.setItem calls moved to loginUser/registerUser
 
         return { firstName, lastName, password };
     }
@@ -378,6 +376,11 @@ class AuthSystem {
     }
 
     loginUser(userData, userId) {
+        // Store credentials after successful authentication
+        localStorage.setItem(STORAGE_KEYS.USER.FIRST_NAME, userData.firstName);
+        localStorage.setItem(STORAGE_KEYS.USER.LAST_NAME, userData.lastName);
+        localStorage.setItem(STORAGE_KEYS.USER.PASSWORD, userData.password);
+
         this.currentUser = {
             id: userId,
             firstName: userData.firstName,
@@ -400,6 +403,11 @@ class AuthSystem {
     }
 
     registerUser(userData, userId) {
+        // Store credentials after successful authentication
+        localStorage.setItem(STORAGE_KEYS.USER.FIRST_NAME, userData.firstName);
+        localStorage.setItem(STORAGE_KEYS.USER.LAST_NAME, userData.lastName);
+        localStorage.setItem(STORAGE_KEYS.USER.PASSWORD, userData.password);
+
         const newUser = {
             id: userId,
             firstName: userData.firstName,
@@ -533,10 +541,12 @@ class AuthSystem {
         welcomeMsg.style.right = '20px';
         welcomeMsg.style.zIndex = '1000';
         welcomeMsg.style.maxWidth = '300px';
-        welcomeMsg.innerHTML = `
-            <strong>Welcome, ${user.fullName}!</strong>
-            <p>You have joined the quiz session. Good luck!</p>
-        `;
+        const nameEl = document.createElement('strong');
+        nameEl.textContent = `Welcome, ${user.fullName}!`;
+        const msgEl = document.createElement('p');
+        msgEl.textContent = 'You have joined the quiz session. Good luck!';
+        welcomeMsg.appendChild(nameEl);
+        welcomeMsg.appendChild(msgEl);
 
         document.body.appendChild(welcomeMsg);
 
