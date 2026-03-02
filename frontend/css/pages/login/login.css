@@ -45,3 +45,20 @@ html, body {
     width: 100%;
     padding: 1rem;
 }
+
+/*---------------------------------------/*
+ # DARK MODE
+/*---------------------------------------*/
+[data-theme="dark"] .c-login-container {
+    color: #e4e8ec;
+}
+
+[data-theme="dark"] .c-login-card {
+    background-color: #16213e;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    color: #e4e8ec;
+}
+
+[data-theme="dark"] .c-login-title {
+    color: #5b8abf;
+}

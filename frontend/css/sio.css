@@ -147,3 +147,48 @@ html, body {
 .status-connected {
     display: none;
 }
+
+/*---------------------------------------/*
+ # DARK MODE
+/*---------------------------------------*/
+[data-theme="dark"] .notification {
+    background-color: #1e2a3a;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .notification-info {
+    background-color: #1a3a5c;
+}
+
+[data-theme="dark"] .notification-success {
+    background-color: #1a3c1a;
+}
+
+[data-theme="dark"] .notification-warning {
+    background-color: #4a3000;
+}
+
+[data-theme="dark"] .notification-error {
+    background-color: #4a1515;
+}
+
+[data-theme="dark"] .status-initial {
+    background-color: #1a3a5c;
+}
+
+[data-theme="dark"] .status-disconnected {
+    background-color: #5c1a1a;
+}
+
+[data-theme="dark"] .status-reconnecting {
+    background-color: #5c3a0a;
+}
+
+[data-theme="dark"] .status-error {
+    background-color: #4a1515;
+}
+
+[data-theme="dark"] #error-message {
+    background-color: #4a1515;
+    border-color: #6a2020;
+}

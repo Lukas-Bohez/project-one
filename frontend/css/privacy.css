@@ -406,3 +406,70 @@ body {
         margin: 5% auto; /* Revert to original desktop margin */
     }
 }
+
+/*---------------------------------------/*
+ # DARK MODE
+/*---------------------------------------*/
+[data-theme="dark"] {
+    --primary-color: #5b8abf;
+    --secondary-color: #3b7aad;
+    --tertiary-color: #4a9ad4;
+    --dark-color: #e4e8ec;
+    --light-color: #1a1a2e;
+    --success-color: #4caf50;
+    --danger-color: #ef5350;
+    --warning-color: #ff9800;
+    --info-color: #42a5f5;
+}
+
+[data-theme="dark"] body {
+    background-color: #1a1a2e;
+    color: #e4e8ec;
+}
+
+[data-theme="dark"] .o-status-display {
+    background-color: #16213e;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .c-header {
+    background-color: #16213e;
+}
+
+[data-theme="dark"] .c-welcome-message {
+    background-color: #16213e;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .c-modal__content {
+    background-color: #1e2a3a;
+    box-shadow: 0 8px 20px 0 rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .c-modal__close {
+    color: #aaa;
+}
+
+[data-theme="dark"] .c-modal__close:hover,
+[data-theme="dark"] .c-modal__close:focus {
+    color: #ef5350;
+}
+
+[data-theme="dark"] .c-login-form {
+    background-color: #16213e;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .c-login-input {
+    background-color: #1a2740;
+    border-color: #2a3a50;
+    color: #e4e8ec;
+}
+
+[data-theme="dark"] .c-error-message {
+    background-color: rgba(239, 83, 80, 0.15);
+}
+
+[data-theme="dark"] .c-info-section__title {
+    color: #5b8abf;
+}

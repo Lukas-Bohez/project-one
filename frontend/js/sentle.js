@@ -1321,17 +1321,18 @@ class SentleGame {
                 const item = document.createElement('div');
                 item.className = 'leaderboard-item';
                 const rankClass = index === 0 ? 'top1' : index === 1 ? 'top2' : index === 2 ? 'top3' : '';
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}`;
                 item.innerHTML = `
-                    <span class="leaderboard-rank ${rankClass}">#${index + 1}</span>
+                    <span class="leaderboard-rank ${rankClass}">${medal}</span>
                     <div class="leaderboard-text">
                         <span class="leaderboard-name">${this.escapeHtml(entry.playerName)}</span>
-                        <span class="leaderboard-score">${entry.score} pts</span>
+                        <span class="leaderboard-score">${entry.score.toLocaleString()} pts</span>
                     </div>
                 `;
                 container.appendChild(item);
             });
         } else {
-            container.innerHTML = `<div class="loading">${emptyText}</div>`;
+            container.innerHTML = `<div class="leaderboard-empty"><span class="empty-icon">🏁</span>${emptyText}</div>`;
         }
     }
 
@@ -1776,6 +1777,16 @@ window.toggleRegister = function() {
 };
 window.toggleLogin = function() {
     gameInstance?.toggleForms('login');
+};
+
+// Leaderboard tab switching
+window.switchLeaderboardTab = function(tab) {
+    document.querySelectorAll('.leaderboard-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    document.querySelectorAll('.leaderboard-card').forEach(card => {
+        card.classList.toggle('active', card.id === `card-${tab}`);
+    });
 };
 
 // Initialize game when DOM is ready

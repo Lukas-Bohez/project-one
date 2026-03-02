@@ -129,13 +129,13 @@ html, body {
 }
 
 .c-theme-toggle::before {
-    content: "☀️";
+    content: '\2600';  /* ☀ sun text glyph – inherits button color */
     font-size: 0.9rem;
     transition: all 0.3s ease;
 }
 
 [data-theme="dark"] .c-theme-toggle::before {
-    content: "🌙";
+    content: '\263E';  /* ☾ moon text glyph – inherits button color */
 }
 
 /* Responsive theme button */
@@ -214,7 +214,6 @@ html, body {
 .donation-admin.collapsed {
     cursor: pointer;
     white-space: nowrap;
-}   white-space: nowrap;
 }
 
 .donation-admin h4 {
