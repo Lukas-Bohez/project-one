@@ -736,7 +736,7 @@ body header.c-header.c-header--admin,
 }
 
 .c-theme-toggle::before {
-    content: "☀️";
+    content: '\2600';  /* ☀ sun text glyph */
     font-size: 1rem;
     transition: all 0.3s ease;
     margin-right: 0.5rem;
@@ -749,7 +749,7 @@ body header.c-header.c-header--admin,
 }
 
 [data-theme="dark"] .c-theme-toggle::before {
-    content: "🌙";
+    content: '\263E';  /* ☾ moon text glyph */
 }
 
 .c-theme-toggle:active {

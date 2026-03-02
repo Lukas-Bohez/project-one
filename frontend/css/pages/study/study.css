@@ -217,7 +217,7 @@ body {
 
 /* Theme toggle icons for study page */
 #theme-toggle::before {
-    content: '☀️';
+    content: '\2600';  /* ☀ sun text glyph */
     position: absolute;
     top: 50%;
     left: 12px;
@@ -235,7 +235,7 @@ body {
 
 [data-theme="dark"] #theme-toggle::before,
 .theme-dark #theme-toggle::before {
-    content: '🌙';
+    content: '\263E';  /* ☾ moon text glyph */
     opacity: 1;
 }
 

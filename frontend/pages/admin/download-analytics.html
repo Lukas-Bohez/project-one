@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Download Analytics | Quiz The Spire</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <style>
         /* ── Reset & Variables ── */
@@ -74,12 +74,6 @@
         .da-bar-wrap { background: var(--surface2); border-radius: 4px; height: 8px; width: 100%; max-width: 180px; }
         .da-bar { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--primary), var(--primary-light)); min-width: 4px; }
 
-        /* ── Download Log Table ── */
-        .da-log { max-height: 480px; overflow-y: auto; }
-        .da-log::-webkit-scrollbar { width: 6px; }
-        .da-log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-        .da-log table { width: 100%; }
-
         /* ── Loading ── */
         .da-loading { text-align: center; padding: 48px; color: var(--text-muted); }
         .da-loading i { font-size: 2rem; margin-bottom: 12px; display: block; animation: spin 1s linear infinite; }
@@ -143,8 +137,8 @@
 
     <script>
     (function () {
-        const API = `https://${window.location.hostname}/api/v1/download/analytics`;
-        const ADMIN_API = `https://${window.location.hostname}/api/v1/download/analytics/admin`;
+        /* Public analytics only — no admin/personal data fetched on this page */
+        const API = '/api/v1/download/analytics';
         const content = document.getElementById('content');
 
         // Country code → flag emoji
@@ -155,36 +149,14 @@
 
         function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
-        function timeAgo(iso) {
-            if (!iso) return '—';
-            const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-            if (diff < 60) return 'just now';
-            if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-            if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-            return `${Math.floor(diff / 86400)}d ago`;
-        }
-
         async function load() {
             try {
                 const res = await fetch(API);
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                if (!res.ok) throw new Error('Unable to load data');
                 const data = await res.json();
-                // Try to get admin download log
-                let downloads = [];
-                const userId = localStorage.getItem('user_user_id');
-                if (userId) {
-                    try {
-                        const adminRes = await fetch(ADMIN_API, { headers: { 'X-User-ID': userId } });
-                        if (adminRes.ok) {
-                            const adminData = await adminRes.json();
-                            downloads = adminData.downloads || [];
-                        }
-                    } catch { /* not admin or network error — no detailed log */ }
-                }
-                data.downloads = downloads;
                 render(data);
             } catch (e) {
-                content.innerHTML = `<div class="da-error"><i class="fas fa-exclamation-triangle"></i><p>Failed to load analytics: ${esc(e.message)}</p><button class="da-refresh" onclick="window.__refreshAnalytics()" style="margin-top:12px"><i class="fas fa-sync-alt"></i> Retry</button></div>`;
+                content.innerHTML = '<div class="da-error"><i class="fas fa-exclamation-triangle"></i><p>Failed to load analytics.</p><button class="da-refresh" onclick="window.__refreshAnalytics()" style="margin-top:12px"><i class="fas fa-sync-alt"></i> Retry</button></div>';
             }
         }
 
@@ -289,75 +261,32 @@
                 <!-- Individual Downloads Log -->
                 <div class="da-section">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                        <h2 style="margin-bottom:0"><i class="fas fa-list"></i> Download Log</h2>
+                        <h2 style="margin-bottom:0"><i class="fas fa-desktop"></i> Platform &amp; Browser</h2>
                         <button class="da-refresh" onclick="window.__refreshAnalytics()"><i class="fas fa-sync-alt"></i> Refresh</button>
                     </div>
 
                     <!-- Platform & Browser Breakdown (inline grid) -->
                     ${(data.platforms && data.platforms.length) ? (() => {
                         const trackedTotal = data.tracked_downloads || data.platforms.reduce((s, p) => s + p.downloads, 0);
-                        const legacyNote = data.legacy_untracked_users ? `<p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:12px;"><i class="fas fa-info-circle"></i> Platform &amp; browser stats cover <strong>${trackedTotal}</strong> tracked downloads. ${data.legacy_untracked_users} earlier users were recorded before platform tracking was added.</p>` : '';
-                        return `
-                    ${legacyNote}
-                    <div class="da-plat-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
-                        <div>
-                            <h3 style="font-size:0.9rem;color:var(--text-muted);margin-bottom:8px;display:flex;align-items:center;gap:6px;"><i class="fas fa-desktop" style="color:var(--primary-light)"></i> Platform</h3>
-                            ${data.platforms.map(p => {
+                        const legacyNote = data.legacy_untracked_users ? '<p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:12px;"><i class="fas fa-info-circle"></i> Platform stats cover <strong>' + trackedTotal + '</strong> tracked downloads.</p>' : '';
+                        return legacyNote + '<div class="da-plat-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;"><div><h3 style="font-size:0.9rem;color:var(--text-muted);margin-bottom:8px;display:flex;align-items:center;gap:6px;"><i class="fas fa-desktop" style="color:var(--primary-light)"></i> Platform</h3>' +
+                            data.platforms.map(p => {
                                 const pct = trackedTotal ? ((p.downloads / trackedTotal) * 100).toFixed(1) : 0;
                                 const icon = {'Windows':'fa-brands fa-windows','Android':'fa-brands fa-android','Linux':'fa-brands fa-linux','macOS':'fa-brands fa-apple','iOS':'fa-brands fa-apple','ChromeOS':'fa-brands fa-chrome'}[p.name] || 'fa-solid fa-question';
-                                return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-                                    <i class="${icon}" style="width:16px;text-align:center;color:var(--text-muted)"></i>
-                                    <span style="min-width:70px;font-size:0.88rem;">${esc(p.name)}</span>
-                                    <div class="da-bar-wrap" style="flex:1;max-width:none;"><div class="da-bar" style="width:${pct}%"></div></div>
-                                    <span style="font-size:0.78rem;color:var(--text-muted);min-width:56px;text-align:right">${p.downloads} (${pct}%)</span>
-                                </div>`;
-                            }).join('')}
-                        </div>
-                        <div>
-                            <h3 style="font-size:0.9rem;color:var(--text-muted);margin-bottom:8px;display:flex;align-items:center;gap:6px;"><i class="fas fa-compass" style="color:var(--primary-light)"></i> Browser</h3>
-                            ${(data.browsers || []).map(b => {
+                                return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><i class="' + icon + '" style="width:16px;text-align:center;color:var(--text-muted)"></i><span style="min-width:70px;font-size:0.88rem;">' + esc(p.name) + '</span><div class="da-bar-wrap" style="flex:1;max-width:none;"><div class="da-bar" style="width:' + pct + '%"></div></div><span style="font-size:0.78rem;color:var(--text-muted);min-width:56px;text-align:right">' + p.downloads + ' (' + pct + '%)</span></div>';
+                            }).join('') +
+                        '</div><div><h3 style="font-size:0.9rem;color:var(--text-muted);margin-bottom:8px;display:flex;align-items:center;gap:6px;"><i class="fas fa-compass" style="color:var(--primary-light)"></i> Browser</h3>' +
+                            (data.browsers || []).map(b => {
                                 const pct = trackedTotal ? ((b.downloads / trackedTotal) * 100).toFixed(1) : 0;
                                 const icon = {'Chrome':'fa-brands fa-chrome','Firefox':'fa-brands fa-firefox-browser','Safari':'fa-brands fa-safari','Edge':'fa-brands fa-edge','Opera':'fa-brands fa-opera','CLI':'fa-solid fa-terminal'}[b.name] || 'fa-solid fa-globe';
-                                return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-                                    <i class="${icon}" style="width:16px;text-align:center;color:var(--text-muted)"></i>
-                                    <span style="min-width:70px;font-size:0.88rem;">${esc(b.name)}</span>
-                                    <div class="da-bar-wrap" style="flex:1;max-width:none;"><div class="da-bar" style="width:${pct}%"></div></div>
-                                    <span style="font-size:0.78rem;color:var(--text-muted);min-width:56px;text-align:right">${b.downloads} (${pct}%)</span>
-                                </div>`;
-                            }).join('')}
-                        </div>
-                    </div>
-                    `;
-                    })() : ''}
-
-                    <div class="da-log">
-                        ${data.downloads && data.downloads.length > 0 ? `<table class="da-table">
-                            <thead>
-                                <tr>
-                                    <th>User</th>
-                                    <th>Location</th>
-                                    <th>Platform</th>
-                                    <th>Downloads</th>
-                                    <th>Bandwidth</th>
-                                    <th>Last Active</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${data.downloads.map(d => `<tr>
-                                    <td style="font-family:monospace;font-size:0.82rem;color:var(--text-muted)">${esc(d.ip_masked)}</td>
-                                    <td><span class="da-flag">${flag(d.country_code)}</span>${esc(d.city ? d.city + ', ' + d.country : d.country)}</td>
-                                    <td style="font-size:0.82rem">${esc(d.platform || '—')} / ${esc(d.browser || '—')}</td>
-                                    <td>${d.download_count}</td>
-                                    <td>${(d.bandwidth_gb * 1024).toFixed(1)} MB</td>
-                                    <td style="color:var(--text-muted)">${timeAgo(d.last_download)}</td>
-                                </tr>`).join('')}
-                            </tbody>
-                        </table>` : `<p style="text-align:center;color:var(--text-muted);padding:24px;">Download log requires admin access. Log in as an admin to see per-user details.</p>`}
-                    </div>
+                                return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><i class="' + icon + '" style="width:16px;text-align:center;color:var(--text-muted)"></i><span style="min-width:70px;font-size:0.88rem;">' + esc(b.name) + '</span><div class="da-bar-wrap" style="flex:1;max-width:none;"><div class="da-bar" style="width:' + pct + '%"></div></div><span style="font-size:0.78rem;color:var(--text-muted);min-width:56px;text-align:right">' + b.downloads + ' (' + pct + '%)</span></div>';
+                            }).join('') +
+                        '</div></div>';
+                    })() : '<p style="text-align:center;color:var(--text-muted);padding:16px;">Platform data not yet available.</p>'}
                 </div>
 
                 <p style="text-align:center;color:var(--text-muted);font-size:0.8rem;margin-top:12px;">
-                    Current period: ${esc(data.month)} &middot; All-time data includes ${history.length} month(s) &middot; IPs are partially masked for privacy
+                    Current period: ${esc(data.month)} &middot; All-time data includes ${history.length} month(s)
                 </p>
             `;
         }

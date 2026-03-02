@@ -243,7 +243,7 @@ body {
 
 /* Theme toggle icons for content page */
 #servoTestBtn::before {
-    content: '☀️';
+    content: '\2600';  /* ☀ sun text glyph */
     position: absolute;
     top: 50%;
     left: 12px;
@@ -261,7 +261,7 @@ body {
 
 [data-theme="dark"] #servoTestBtn::before,
 .theme-dark #servoTestBtn::before {
-    content: '🌙';
+    content: '\263E';  /* ☾ moon text glyph */
     opacity: 1;
 }
 

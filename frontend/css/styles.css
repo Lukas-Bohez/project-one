@@ -738,8 +738,13 @@ button[onclick*="idleGame/idlegame.html"]:hover {
     text-align: center;
 }
 
+/* Force icon inside theme toggle to inherit button text color (white on blue) */
+#servoTestBtn i {
+    color: inherit !important;
+}
+
 .c-theme-toggle::before {
-    content: "☀️";
+    content: '\2600';  /* ☀ sun text glyph – inherits CSS color */
     font-size: 1rem;
     transition: all 0.3s ease;
     margin-right: 0.5rem;
@@ -752,7 +757,7 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 }
 
 [data-theme="dark"] .c-theme-toggle::before {
-    content: "🌙";
+    content: '\263E';  /* ☾ moon text glyph – inherits CSS color */
 }
 
 /* Remove the ::after pseudo-element since we only need one icon */
@@ -1143,6 +1148,12 @@ button[onclick*="idleGame/idlegame.html"]:hover {
     background-color: rgba(211, 47, 47, 0.1);
     padding: 0.5rem;
     text-align: center;
+}
+
+[data-theme="dark"] .status-initial,
+.theme-dark .status-initial {
+    color: #9ca3af;
+    background-color: rgba(255, 255, 255, 0.06);
 }
 
 /* Responsive design */
@@ -1971,13 +1982,14 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 /* Dark outline button */
 [data-theme="dark"] .c-btn--outline,
 .theme-dark .c-btn--outline {
+    background: rgba(30, 58, 138, 0.15);
     color: #93c5fd;
     border-color: #93c5fd;
 }
 
 [data-theme="dark"] .c-btn--outline:hover,
 .theme-dark .c-btn--outline:hover {
-    background: rgba(96, 165, 250, 0.1);
+    background: rgba(96, 165, 250, 0.22);
     box-shadow: 0 0 0 1px #93c5fd;
 }
 

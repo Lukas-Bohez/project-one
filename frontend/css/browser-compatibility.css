@@ -327,3 +327,61 @@ input, button, select, textarea {
         color: black !important;
     }
 }
+
+/*---------------------------------------/*
+ # DARK MODE — browser-compatibility overrides
+/*---------------------------------------*/
+[data-theme="dark"] ::-webkit-scrollbar-track {
+    background: #1a1a2e;
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: #3a3a5e;
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+    background: #5a5a8e;
+}
+[data-theme="dark"] {
+    scrollbar-color: #3a3a5e #1a1a2e;
+}
+
+[data-theme="dark"] .status-connected {
+    background-color: #1a3c1a !important;
+    color: #7ec87e !important;
+    border-color: #2a5c2a !important;
+}
+[data-theme="dark"] .status-connecting {
+    background-color: #3c3000 !important;
+    color: #ffd060 !important;
+    border-color: #5c4a00 !important;
+}
+[data-theme="dark"] .status-disconnected {
+    background-color: #3c1a1a !important;
+    color: #ef8080 !important;
+    border-color: #5c2a2a !important;
+}
+[data-theme="dark"] .status-error {
+    background-color: #3c1a1a !important;
+    color: #ef8080 !important;
+    border-color: #5c2a2a !important;
+}
+[data-theme="dark"] .status-offline {
+    background-color: #2a2a3e !important;
+    color: #a0a0b0 !important;
+    border-color: #3a3a5e !important;
+}
+[data-theme="dark"] .status-initial {
+    background-color: #1a2a3c !important;
+    color: #60b0d0 !important;
+    border-color: #2a4a6c !important;
+}
+[data-theme="dark"] #error-message {
+    background-color: #3c1a1a;
+    color: #ef8080;
+    border-color: #5c2a2a;
+}
+[data-theme="dark"] #error-message button {
+    background-color: #c0392b;
+}
+[data-theme="dark"] #error-message button:hover {
+    background-color: #a93226;
+}

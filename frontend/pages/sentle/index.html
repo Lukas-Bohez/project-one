@@ -164,17 +164,22 @@
         <div class="leaderboard-section">
             <h2>🏆 Top Players</h2>
 
-            <div class="leaderboard-card">
-                <h3>All-Time Leaders</h3>
-                <div id="leaderboard-global" class="leaderboard">
-                    <div class="loading">Loading leaderboard...</div>
+            <div class="leaderboard-tabs">
+                <button class="leaderboard-tab active" data-tab="daily" onclick="switchLeaderboardTab('daily')">Today</button>
+                <button class="leaderboard-tab" data-tab="global" onclick="switchLeaderboardTab('global')">All-Time</button>
+            </div>
+
+            <div class="leaderboard-card active" id="card-daily">
+                <h3>Today's Leaders</h3>
+                <div id="leaderboard-daily" class="leaderboard">
+                    <div class="loading">Loading today&apos;s scores...</div>
                 </div>
             </div>
 
-            <div class="leaderboard-card">
-                <h3>Today&apos;s Leaders</h3>
-                <div id="leaderboard-daily" class="leaderboard">
-                    <div class="loading">Loading today&apos;s scores...</div>
+            <div class="leaderboard-card" id="card-global">
+                <h3>All-Time Leaders</h3>
+                <div id="leaderboard-global" class="leaderboard">
+                    <div class="loading">Loading leaderboard...</div>
                 </div>
             </div>
         </div>

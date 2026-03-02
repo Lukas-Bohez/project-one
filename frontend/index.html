@@ -57,11 +57,12 @@
         [data-theme="dark"] .c-trust-stat__val,.theme-dark .c-trust-stat__val{color:#f1f5f9}
         [data-theme="dark"] .c-trust-stat__lbl,.theme-dark .c-trust-stat__lbl{color:#94a3b8}
         [data-theme="dark"] .c-trust-bar__link,.theme-dark .c-trust-bar__link{color:#93c5fd}
-        /* Update banner */
-        .c-update-banner{display:flex;align-items:center;gap:0.6rem;background:linear-gradient(135deg,#dbeafe,#ede9fe);border:1px solid #c7d2fe;border-radius:8px;padding:0.6rem 1rem;margin-bottom:1rem;font-size:0.88rem;color:#3730a3}
-        .c-update-banner i{color:#6366f1;font-size:1rem}
-        [data-theme="dark"] .c-update-banner,.theme-dark .c-update-banner{background:linear-gradient(135deg,rgba(30,58,138,0.35),rgba(88,28,135,0.25));border-color:rgba(99,102,241,0.3);color:#c7d2fe}
-        [data-theme="dark"] .c-update-banner i,.theme-dark .c-update-banner i{color:#a5b4fc}
+        /* Update banner — major release */
+        .c-update-banner{display:flex;align-items:center;gap:0.75rem;background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid #f59e0b;border-radius:10px;padding:0.85rem 1.15rem;margin-bottom:1rem;font-size:0.9rem;color:#78350f;box-shadow:0 2px 12px rgba(245,158,11,0.18)}
+        .c-update-banner i{color:#d97706;font-size:1.15rem}
+        .c-update-banner .c-update-badge{display:inline-block;background:#dc2626;color:#fff;font-size:0.7rem;font-weight:800;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:0.5px;margin-right:2px}
+        [data-theme="dark"] .c-update-banner,.theme-dark .c-update-banner{background:linear-gradient(135deg,rgba(120,53,15,0.45),rgba(146,64,14,0.30));border-color:rgba(245,158,11,0.5);color:#fde68a;box-shadow:0 2px 12px rgba(245,158,11,0.12)}
+        [data-theme="dark"] .c-update-banner i,.theme-dark .c-update-banner i{color:#fbbf24}
     </style>
     
     <link rel="stylesheet" href="css/styles.css">
@@ -117,8 +118,8 @@
             <p class="c-product-card__tagline">A powerful offline converter built with Flutter. Free, open-source, and yours to keep.</p>
 
             <div class="c-update-banner">
-                <i class="fa-solid fa-sparkles"></i>
-                <span><strong>Announcing the Release of v2.1:</strong> This update introduces a streamlined onboarding experience and enhanced documentation to better support your workflow. (android and linux are still on v2.0)</span>
+                <i class="fa-solid fa-fire"></i>
+                <span><span class="c-update-badge">Major</span> <strong>v3.0.0 Released!</strong> Full HD video downloads &amp; 320 kbps high-quality audio. The biggest update yet! Upgrade now for the best experience.</span>
             </div>
 
             <ul class="c-feature-list">
@@ -606,7 +607,7 @@
     (function () {
         const bar = document.getElementById('trustBar');
         if (!bar) return;
-        fetch(`https://${window.location.hostname}/api/v1/download/analytics`)
+        fetch('/api/v1/download/analytics')
             .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
             .then(d => {
                 const totalDl = d.all_time_downloads || d.total_downloads;
