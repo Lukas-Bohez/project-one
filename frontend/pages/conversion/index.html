@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Conversion The Spire Reborn — A free, open-source offline media converter for Windows, Android and Linux. Built with Flutter. GPLv3 licensed. Your files never leave your machine.">
+    <title>Conversion The Spire Reborn — Free Offline Media Converter</title>
+
+    <meta name="author" content="Oroka Conner">
+    <meta name="robots" content="index, follow">
+    <meta name="keywords" content="offline media converter, free media converter, open source converter, Flutter converter app, Windows media converter, Android media converter, Linux media converter, GPLv3, MP3 converter, MP4 converter">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Conversion The Spire Reborn — Free Offline Media Converter">
+    <meta property="og:description" content="A powerful offline media converter built with Flutter. Free, open-source (GPLv3), and available for Windows, Android, and Linux.">
+    <meta property="og:url" content="https://quizthespire.com/pages/conversion/">
+    <meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg">
+    <meta property="og:site_name" content="Quiz The Spire">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Conversion The Spire Reborn — Free Offline Media Converter">
+    <meta name="twitter:description" content="A powerful offline media converter built with Flutter. Free, open-source, and available on three platforms.">
+    <meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg">
+    <link rel="canonical" href="https://quizthespire.com/pages/conversion/">
+
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="/favicon.ico">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/footer.css">
+
+    <style>
+        /* Conversion page specific */
+        .cvt-hero { text-align: center; max-width: 800px; margin: 2rem auto 0; padding: 0 1rem; }
+        .cvt-hero__title { font-family: 'Space Grotesk', sans-serif; font-size: 2.2rem; font-weight: 700; letter-spacing: -0.03em; margin: 0 0 0.5rem; color: var(--text-primary); }
+        .cvt-hero__sub { font-size: 1.1rem; color: var(--text-secondary); margin: 0 0 1.5rem; line-height: 1.6; }
+        .cvt-badges { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin-bottom: 1.5rem; }
+        .cvt-stats { display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; margin: 1.5rem 0; }
+        .cvt-stat { text-align: center; }
+        .cvt-stat__val { display: block; font-size: 1.75rem; font-weight: 800; color: var(--primary-color); }
+        .cvt-stat__lbl { font-size: 0.82rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .cvt-features { max-width: 700px; margin: 2rem auto; padding: 0 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+        @media(max-width:600px) { .cvt-features { grid-template-columns: 1fr; } }
+        .cvt-feature { background: rgba(255,255,255,0.96); border: 1px solid rgba(0,0,0,0.06); border-radius: 12px; padding: 1.25rem; text-align: left; }
+        .cvt-feature__icon { font-size: 1.25rem; color: var(--primary-color); margin-bottom: 0.5rem; }
+        .cvt-feature__title { font-weight: 700; font-size: 0.95rem; margin: 0 0 0.25rem; color: var(--text-primary); }
+        .cvt-feature__desc { font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.5; }
+        [data-theme="dark"] .cvt-feature, .theme-dark .cvt-feature { background: rgba(15,17,18,0.94); border-color: rgba(96,165,250,0.1); }
+        .cvt-dl { text-align: center; max-width: 700px; margin: 2rem auto; padding: 0 1rem; }
+        .cvt-dl__buttons { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; margin: 1rem 0; }
+        .cvt-faq { max-width: 700px; margin: 2.5rem auto; padding: 0 1rem; }
+        .cvt-faq h2 { text-align: center; font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; margin-bottom: 1.25rem; color: var(--text-primary); }
+        .cvt-faq details { background: rgba(255,255,255,0.96); border: 1px solid rgba(0,0,0,0.06); border-radius: 10px; margin-bottom: 0.75rem; }
+        .cvt-faq summary { padding: 0.85rem 1rem; cursor: pointer; font-weight: 600; font-size: 0.95rem; color: var(--text-primary); list-style: none; display: flex; align-items: center; gap: 0.5rem; }
+        .cvt-faq summary::-webkit-details-marker { display: none; }
+        .cvt-faq summary::after { content: '\25BC'; font-size: 0.6rem; margin-left: auto; color: var(--text-muted); transition: transform 0.2s; }
+        .cvt-faq details[open] summary::after { transform: rotate(180deg); }
+        .cvt-faq .cvt-faq__body { padding: 0 1rem 0.85rem; font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
+        [data-theme="dark"] .cvt-faq details, .theme-dark .cvt-faq details { background: rgba(15,17,18,0.94); border-color: rgba(96,165,250,0.1); }
+    </style>
+</head>
+<body class="theme-blue">
+
+    <header class="c-header">
+        <h1 class="c-header__title"><a href="/" style="color:inherit;text-decoration:none;">Quiz The Spire</a></h1>
+        <p class="c-header__subtitle">Conversion The Spire Reborn</p>
+    </header>
+
+    <main class="o-container">
+
+        <div class="cvt-hero">
+            <h2 class="cvt-hero__title">Conversion The Spire Reborn</h2>
+            <p class="cvt-hero__sub">A powerful offline media converter built with Flutter. Free, open-source, and yours to keep forever. Your files never leave your machine.</p>
+
+            <div class="cvt-badges">
+                <span class="c-badge c-badge--green"><i class="fa-solid fa-shield-halved"></i> Open Source</span>
+                <span class="c-badge c-badge--blue"><i class="fa-solid fa-scale-balanced"></i> GPLv3 Licensed</span>
+                <span class="c-badge c-badge--slate"><i class="fa-brands fa-windows"></i> Windows</span>
+                <span class="c-badge c-badge--green"><i class="fa-brands fa-android"></i> Android</span>
+                <span class="c-badge c-badge--slate"><i class="fa-brands fa-linux"></i> Linux</span>
+            </div>
+
+            <div class="cvt-stats">
+                <div class="cvt-stat">
+                    <span class="cvt-stat__val" id="statDownloads">728</span>
+                    <span class="cvt-stat__lbl">Downloads</span>
+                </div>
+                <div class="cvt-stat">
+                    <span class="cvt-stat__val" id="statUsers">660</span>
+                    <span class="cvt-stat__lbl">Unique Users</span>
+                </div>
+                <div class="cvt-stat">
+                    <span class="cvt-stat__val" id="statCountries">84</span>
+                    <span class="cvt-stat__lbl">Countries</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="cvt-features">
+            <div class="cvt-feature">
+                <div class="cvt-feature__icon"><i class="fa-solid fa-bolt"></i></div>
+                <h3 class="cvt-feature__title">Fast Local Conversion</h3>
+                <p class="cvt-feature__desc">Everything runs on your machine. No uploading, no waiting for a server, no size limits.</p>
+            </div>
+            <div class="cvt-feature">
+                <div class="cvt-feature__icon"><i class="fa-solid fa-lock"></i></div>
+                <h3 class="cvt-feature__title">Complete Privacy</h3>
+                <p class="cvt-feature__desc">Your files never leave your device. No tracking, no analytics, no cloud processing.</p>
+            </div>
+            <div class="cvt-feature">
+                <div class="cvt-feature__icon"><i class="fa-solid fa-code-branch"></i></div>
+                <h3 class="cvt-feature__title">100% Open Source</h3>
+                <p class="cvt-feature__desc">Every line of code is public on GitHub under the GPLv3 license. Audit, fork, contribute.</p>
+            </div>
+            <div class="cvt-feature">
+                <div class="cvt-feature__icon"><i class="fa-solid fa-film"></i></div>
+                <h3 class="cvt-feature__title">Full HD &amp; High-Quality Audio</h3>
+                <p class="cvt-feature__desc">Convert to MP3 (320 kbps), MP4 (1080p Full HD), and M4A. v3.0.0 brings the best quality yet.</p>
+            </div>
+            <div class="cvt-feature">
+                <div class="cvt-feature__icon"><i class="fa-solid fa-arrows-rotate"></i></div>
+                <h3 class="cvt-feature__title">Regular Updates</h3>
+                <p class="cvt-feature__desc">Community-driven development with frequent releases. Feature requests welcome on GitHub.</p>
+            </div>
+            <div class="cvt-feature">
+                <div class="cvt-feature__icon"><i class="fa-solid fa-desktop"></i></div>
+                <h3 class="cvt-feature__title">Cross-Platform</h3>
+                <p class="cvt-feature__desc">Available for Windows, Android, and Linux. Built with Flutter for a native experience on every platform.</p>
+            </div>
+        </div>
+
+        <div class="cvt-dl">
+            <h2 style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;margin-bottom:0.5rem;color:var(--text-primary);">Download Now</h2>
+            <p style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:1rem;">Free forever. No account required. No installer needed.</p>
+
+            <div class="cvt-dl__buttons">
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--windows">
+                    <i class="fa-brands fa-windows"></i>&nbsp; Download for Windows
+                </a>
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--android">
+                    <i class="fa-brands fa-android"></i>&nbsp; Download for Android
+                </a>
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--linux">
+                    <i class="fa-brands fa-linux"></i>&nbsp; Download for Linux
+                </a>
+            </div>
+
+            <p style="font-size:0.82rem;color:var(--text-muted);margin-top:0.5rem;">
+                <i class="fa-solid fa-lock-open" style="color:var(--success-color, #16a34a);"></i>
+                Open source &middot; GPLv3 &middot; No installer needed &middot;
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter" target="_blank" rel="noopener" style="color:var(--primary-color);font-weight:600;text-decoration:none;">View on GitHub</a>
+            </p>
+        </div>
+
+        <div class="cvt-faq">
+            <h2>Frequently Asked Questions</h2>
+
+            <details>
+                <summary><i class="fa-solid fa-shield-halved" style="color:var(--primary-color);"></i> Why does Windows show a SmartScreen warning?</summary>
+                <div class="cvt-faq__body">
+                    <p>Windows SmartScreen warns about unsigned software. Code-signing certificates cost ~$200/year, which isn't feasible for a free, solo-developed project. The app is <strong>100% open-source</strong> under the GPLv3 license — you can inspect every line of code on <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter" target="_blank" rel="noopener">GitHub</a>.</p>
+                    <p>To run: click <strong>"More info"</strong> → <strong>"Run anyway."</strong></p>
+                </div>
+            </details>
+
+            <details>
+                <summary><i class="fa-solid fa-globe" style="color:var(--primary-color);"></i> What media sources are supported?</summary>
+                <div class="cvt-faq__body">
+                    <p>The converter supports a wide range of online media sources. It works with most publicly accessible media URLs. Conversion happens entirely on your device — nothing is uploaded to any server.</p>
+                </div>
+            </details>
+
+            <details>
+                <summary><i class="fa-solid fa-file-audio" style="color:var(--primary-color);"></i> What output formats are available?</summary>
+                <div class="cvt-faq__body">
+                    <p>You can convert to <strong>MP3</strong> (up to 320 kbps), <strong>MP4</strong> (up to 1080p Full HD), and <strong>M4A</strong>. v3.0.0 added Full HD video and 320 kbps high-quality audio support.</p>
+                </div>
+            </details>
+
+            <details>
+                <summary><i class="fa-solid fa-lock" style="color:var(--primary-color);"></i> Is my data private?</summary>
+                <div class="cvt-faq__body">
+                    <p>Yes, completely. All file processing happens locally on your machine. The app makes no network requests except to fetch media from the source URL. No analytics, no tracking, no cloud processing. Your files stay yours.</p>
+                </div>
+            </details>
+
+            <details>
+                <summary><i class="fa-solid fa-code-branch" style="color:var(--primary-color);"></i> Is this really free and open-source?</summary>
+                <div class="cvt-faq__body">
+                    <p>Yes. The full source code is available on <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter" target="_blank" rel="noopener">GitHub</a> under the GPLv3 license. You can audit, fork, and modify it freely. There are no ads, no premium tiers, and no hidden costs.</p>
+                </div>
+            </details>
+
+            <details>
+                <summary><i class="fa-solid fa-laptop" style="color:var(--primary-color);"></i> What platforms are supported?</summary>
+                <div class="cvt-faq__body">
+                    <p><strong>Windows</strong> (10/11, 64-bit), <strong>Android</strong> (6.0+), and <strong>Linux</strong> (x86_64). The app is built with Flutter, providing a native experience on each platform. macOS and iOS support is planned for a future release.</p>
+                </div>
+            </details>
+
+            <details>
+                <summary><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary-color);"></i> What's new in v3.0.0?</summary>
+                <div class="cvt-faq__body">
+                    <p><strong>v3.0.0</strong> is the biggest update yet:</p>
+                    <ul style="margin:0.5rem 0;padding-left:1.25rem;">
+                        <li>Full HD (1080p) video download support</li>
+                        <li>320 kbps high-quality MP3 audio</li>
+                        <li>Faster conversion engine</li>
+                        <li>Improved stability and error handling</li>
+                    </ul>
+                    <p>See the full <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases" target="_blank" rel="noopener">release notes on GitHub</a>.</p>
+                </div>
+            </details>
+        </div>
+
+    </main>
+
+    <footer class="c-footer">
+        <p class="c-footer__about">
+            Built and maintained by one indie developer &mdash; <strong>Oroka Conner</strong>. 728+ downloads across 84 countries and counting.
+        </p>
+        <div class="c-footer__bmc" aria-hidden="false">
+            <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="OrokaConner" data-color="#2c6fb8" data-emoji="" data-font="Inter" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00"></script>
+        </div>
+        <p class="c-footer__text">
+            <strong>&copy; 2026 Quiz The Spire</strong><br>
+            Created, Owned &amp; Operated by <strong>Oroka Conner</strong><br>
+            All rights reserved.
+        </p>
+        <p class="c-footer__links">
+            <a href="/pages/privacy/" class="c-footer__link">Privacy Policy</a>
+            <span class="c-footer__sep" aria-hidden="true">&middot;</span>
+            <a href="/pages/contact/" class="c-footer__link">Contact Us</a>
+            <span class="c-footer__sep" aria-hidden="true">&middot;</span>
+            <a href="/pages/terms/" class="c-footer__link">Terms of Service</a>
+            <span class="c-footer__sep" aria-hidden="true">&middot;</span>
+            <a href="/" class="c-footer__link">Homepage</a>
+        </p>
+    </footer>
+
+    <script src="/js/themeManager.js"></script>
+    <script>
+    // Update stats from API (static fallback already in HTML)
+    fetch('/api/v1/download/analytics')
+        .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+        .then(d => {
+            const dl = d.all_time_downloads || d.total_downloads;
+            const users = d.all_time_unique_users || d.unique_users;
+            const countries = d.countries ? d.countries.length : 83;
+            document.getElementById('statDownloads').textContent = dl.toLocaleString();
+            document.getElementById('statUsers').textContent = users.toLocaleString();
+            document.getElementById('statCountries').textContent = countries;
+        })
+        .catch(() => {});
+
+    // Platform auto-detect: reorder download buttons for current OS
+    (function () {
+        const ua = navigator.userAgent || '';
+        let platform = 'windows';
+        if (/android/i.test(ua)) platform = 'android';
+        else if (/linux/i.test(ua) && !/android/i.test(ua)) platform = 'linux';
+        const container = document.querySelector('.cvt-dl__buttons');
+        if (!container) return;
+        const map = { windows: 'Windows', android: 'Android', linux: 'Linux' };
+        const links = container.querySelectorAll('a');
+        for (const link of links) {
+            if (link.textContent.includes(map[platform])) {
+                container.insertBefore(link, container.firstElementChild);
+                break;
+            }
+        }
+    })();
+    </script>
+</body>
+</html>

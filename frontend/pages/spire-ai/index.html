@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Quiz The Spire — Play quizzes, create community themes, and compete with friends in real-time.">
+    <meta name="description" content="SpireAI — Create AI-powered quizzes, share community themes, and compete with friends in real-time multiplayer.">
     <meta name="copyright" content="© 2026 Oroka Conner. All rights reserved.">
-    <title>Quiz The Spire</title>
+    <title>SpireAI — AI Quiz Platform | Quiz The Spire</title>
 
     <meta name="author" content="Oroka Conner">
     <meta name="robots" content="index, follow">
 
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Quiz The Spire — Play & Create Quizzes">
-    <meta property="og:description" content="Play quizzes, create community themes, and compete with friends.">
+    <meta property="og:title" content="SpireAI — AI Quiz Platform | Quiz The Spire">
+    <meta property="og:description" content="Create AI-powered quizzes, share community themes, and compete in real-time multiplayer.">
     <meta property="og:url" content="https://quizthespire.com/pages/spire-ai/">
     <meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Quiz The Spire">
-    <meta name="twitter:description" content="Play quizzes, create community themes, and compete.">
+    <meta name="twitter:title" content="SpireAI — AI Quiz Platform">
+    <meta name="twitter:description" content="Create AI-powered quizzes, share community themes, and compete in real-time multiplayer.">
     <meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg">
 
     <link rel="canonical" href="https://quizthespire.com/pages/spire-ai/">
@@ -37,8 +37,8 @@
         <div class="sai-modal__content sai-login">
             <div class="sai-login__header">
                 <div class="sai-login__logo"><i class="fas fa-bolt"></i></div>
-                <h2 id="loginModalTitle">Quiz The Spire</h2>
-                <p>Sign in to play, create, and compete</p>
+                <h2 id="loginModalTitle">SpireAI</h2>
+                <p>AI-powered quiz platform — sign in to play, create, and compete</p>
             </div>
             <form id="loginForm" class="sai-login__form">
                 <div class="sai-field">
@@ -50,7 +50,7 @@
                     <input type="text" id="loginLast" required autocomplete="family-name" placeholder="Enter last name">
                 </div>
                 <div class="sai-field">
-                    <label for="loginPassword">Password <span style="font-weight:400;color:var(--text-muted,#9aa6b2);font-size:0.85em">(optional)</span></label>
+                    <label for="loginPassword">Password <span style="font-weight:400;color:var(--text-muted,#64748b);font-size:0.85em">(optional)</span></label>
                     <input type="password" id="loginPassword" autocomplete="current-password" placeholder="Optional — needed for admin features">
                 </div>
                 <button type="submit" class="sai-btn sai-btn--primary sai-btn--full">
@@ -113,7 +113,7 @@
             <div class="sai-hero">
                 <div class="sai-hero__inner">
                     <h1>Ready to play?</h1>
-                    <p>Join a live session or start a new quiz with your favourite themes.</p>
+                    <p>SpireAI lets you create quizzes with AI, import from CSV, or paste raw text — then compete with friends in real-time.</p>
                     <button class="sai-btn sai-btn--accent sai-btn--lg" onclick="joinActiveQuiz()">
                         <i class="fas fa-play"></i> Join Quiz Now
                     </button>
@@ -167,8 +167,8 @@
                     </div>
                 </div>
 
-                <!-- Stats -->
-                <div class="sai-stats" id="statsBar">
+                <!-- Stats (hidden until data loads) -->
+                <div class="sai-stats" id="statsBar" style="display:none;">
                     <div class="sai-stats__item">
                         <span class="sai-stats__val" id="statLive">0</span>
                         <span class="sai-stats__lbl">Live Now</span>

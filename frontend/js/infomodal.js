@@ -89,6 +89,22 @@
             body.theme-dark #infoBtn:hover {
                 background: #2563eb;
             }
+
+            [data-theme="dark"] .close-btn {
+                background: #0b1220;
+                border: 1px solid rgba(255,255,255,0.06);
+                color: #cbd5e1;
+            }
+            [data-theme="dark"] .close-btn:hover {
+                background: #111827;
+                color: #fff;
+            }
+            [data-theme="dark"] .modal-title { color: #e6eef9; }
+            [data-theme="dark"] .section-title { color: #93c5fd; border-bottom-color: rgba(255,255,255,0.04); }
+            [data-theme="dark"] .info-section p,
+            [data-theme="dark"] .info-list li { color: #cbd5e1; }
+            [data-theme="dark"] .info-list strong { color: #93c5fd; }
+            }
             
             .close-btn {
                 position: absolute;
@@ -304,25 +320,6 @@
             </div>
         `;
         
-        // If saved theme is dark, apply inline dark styles to content and close button so it renders immediately
-        try {
-            const saved = localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-            if (saved === 'dark') {
-                // inline dark styles for immediate effect
-                content.style.background = '#0f1724';
-                content.style.color = '#e6eef9';
-                content.style.boxShadow = '0 10px 30px rgba(0,0,0,0.6)';
-                const closeBtn = content.querySelector('.close-btn');
-                if (closeBtn) {
-                    closeBtn.style.background = '#0b1220';
-                    closeBtn.style.border = '1px solid rgba(255,255,255,0.06)';
-                    closeBtn.style.color = '#cbd5e1';
-                }
-                btn.style.background = '#1d4ed8';
-                btn.style.boxShadow = '0 2px 10px rgba(29,78,216,0.28)';
-            }
-        } catch (e) {}
-
         modal.appendChild(content);
         
         // Add to page
