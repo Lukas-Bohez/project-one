@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Quiz The Spire - A competitive multiplayer quiz game with real-time leaderboards, themed questions, and interactive gameplay. Join or start a quiz session now!">
-    <title>Quiz The Spire - Owned by Oroka Conner</title>
+    <meta name="description" content="Quiz The Spire — A hub for indie tools by Oroka Conner. Download the Conversion The Spire Reborn offline media converter, play competitive multiplayer quizzes, try the Lofi Extension, and more.">
+    <title>Quiz The Spire — Tools, Games &amp; More by Oroka Conner</title>
     
     <!-- Ownership & Author Information -->
     <meta name="author" content="Oroka Conner">
@@ -24,10 +24,12 @@
     <!-- Critical CSS inlined for faster initial render -->
     <style>
         body{margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f4f8fc;min-height:100vh;position:relative}
+        [data-theme="dark"] body,.theme-dark body{background:#0f1112;color:#e6eef8}
         .c-header{background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 40%,#2563eb 100%);color:#fff;padding:2rem 1rem;text-align:center;box-shadow:0 4px 20px rgba(15,23,42,.25);overflow:hidden}
         .c-header h1{margin:0;font-size:1.25rem;font-weight:600;color:#fff}
         .o-container{max-width:1200px;padding:0 1rem;margin:1rem auto}
         .c-btn{display:inline-flex;align-items:center;justify-content:center;padding:1rem 1.5rem;border:1.5px solid #e2e8f0;border-radius:12px;font-size:1rem;font-weight:500;cursor:pointer;background:#fff;color:#1e293b;min-height:44px;transition:all .2s ease}
+        [data-theme="dark"] .c-btn,.theme-dark .c-btn{background:#1f2326;color:#e2e8f0;border-color:#2a3034}
         .spire-background{position:fixed;top:0;left:0;width:100%;height:100vh;z-index:-1;overflow:hidden}
         .spire-background img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s;filter:brightness(.85)}
         .c-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:1000;padding:1rem;backdrop-filter:blur(4px)}
@@ -41,22 +43,7 @@
         [data-theme="dark"] .c-modal__close,.theme-dark .c-modal__close{border-color:#374151;background:#1f2937;color:#d1d5db}
         [data-theme="dark"] .c-modal__close:hover,.theme-dark .c-modal__close:hover{background:#374151;border-color:#4b5563}
         .c-product-card{display:block}
-        /* Trust bar */
-        .c-trust-bar{margin:-0.25rem auto 1rem;max-width:1200px;padding:0 1rem}
-        .c-trust-bar__inner{background:rgba(255,255,255,0.88);backdrop-filter:blur(10px);border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem}
-        .c-trust-bar__stats{display:flex;gap:1.5rem;flex-wrap:wrap}
-        .c-trust-stat{display:flex;align-items:center;gap:0.4rem;font-size:0.88rem;color:#334155}
-        .c-trust-stat i{color:#3b82f6;font-size:0.9rem}
-        .c-trust-stat__val{font-weight:700;color:#1e293b}
-        .c-trust-stat__lbl{color:#64748b;font-size:0.82rem}
-        .c-trust-bar__link{font-size:0.85rem;color:#3b82f6;text-decoration:none;font-weight:500;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
-        .c-trust-bar__link:hover{text-decoration:underline}
-        [data-theme="dark"] .c-trust-bar__inner,.theme-dark .c-trust-bar__inner{background:rgba(15,17,18,0.92);border-color:rgba(96,165,250,0.1);box-shadow:0 4px 16px rgba(0,0,0,0.4)}
-        [data-theme="dark"] .c-trust-stat,.theme-dark .c-trust-stat{color:#cbd5e1}
-        [data-theme="dark"] .c-trust-stat i,.theme-dark .c-trust-stat i{color:#60a5fa}
-        [data-theme="dark"] .c-trust-stat__val,.theme-dark .c-trust-stat__val{color:#f1f5f9}
-        [data-theme="dark"] .c-trust-stat__lbl,.theme-dark .c-trust-stat__lbl{color:#94a3b8}
-        [data-theme="dark"] .c-trust-bar__link,.theme-dark .c-trust-bar__link{color:#93c5fd}
+
         /* Update banner — major release */
         .c-update-banner{display:flex;align-items:center;gap:0.75rem;background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid #f59e0b;border-radius:10px;padding:0.85rem 1.15rem;margin-bottom:1rem;font-size:0.9rem;color:#78350f;box-shadow:0 2px 12px rgba(245,158,11,0.18)}
         .c-update-banner i{color:#d97706;font-size:1.15rem}
@@ -75,16 +62,17 @@
     <!-- Favicon -->
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="apple-touch-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" sizes="192x192" href="/icons/favicon-192x192.png">
+    <link rel="manifest" href="/site.webmanifest">
     
-    <meta property="og:title" content="Quiz The Spire - Interactive Learning Platform">
-    <meta property="og:description" content="Quiz The Spire - A competitive multiplayer quiz game with real-time leaderboards, themed questions, and interactive gameplay. Join or start a quiz session now!">
+    <meta property="og:title" content="Quiz The Spire — Tools, Games &amp; More by Oroka Conner">
+    <meta property="og:description" content="A hub for indie tools by Oroka Conner. Download the Conversion The Spire Reborn offline media converter, play quizzes, try the Lofi Extension, and more.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://quizthespire.com/">
     <meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Quiz The Spire - Interactive Learning Platform">
-    <meta name="twitter:description" content="Quiz The Spire - A competitive multiplayer quiz game with real-time leaderboards, themed questions, and interactive gameplay. Join or start a quiz session now!">
+    <meta name="twitter:title" content="Quiz The Spire — Tools, Games &amp; More by Oroka Conner">
+    <meta name="twitter:description" content="A hub for indie tools by Oroka Conner. Download the Conversion The Spire Reborn offline media converter, play quizzes, try the Lofi Extension, and more.">
     <meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg">
     <link rel="canonical" href="https://quizthespire.com/">
 </head>
@@ -97,7 +85,7 @@
     
     <header class="c-header">
         <h1 class="c-header__title">Quiz The Spire</h1>
-        <p class="c-header__subtitle">Interactive Learning &amp; Gaming Platform</p>
+        <p class="c-header__subtitle">Open-source tools, games &amp; extensions — built and maintained by one developer.</p>
     </header>
 
     <main class="o-container">
@@ -119,7 +107,7 @@
 
             <div class="c-update-banner">
                 <i class="fa-solid fa-fire"></i>
-                <span><span class="c-update-badge">Major</span> <strong>v3.0.0 Released!</strong> Full HD video downloads &amp; 320 kbps high-quality audio. The biggest update yet! Upgrade now for the best experience.</span>
+                <span><span class="c-update-badge">New</span> <strong>v3.0.0</strong> &mdash; Full HD 1080p video, 320 kbps audio, faster engine.</span>
             </div>
 
             <ul class="c-feature-list">
@@ -140,51 +128,33 @@
                     <i class="fa-brands fa-linux"></i>&nbsp; Download for Linux
                 </button>
             </div>
+
+            <p class="c-product-card__reassurance">
+                <i class="fa-solid fa-lock-open"></i> No installer needed &middot; <a href="/pages/admin/download-analytics.html" class="c-product-card__trust-link"><strong id="trustDownloads">728</strong> downloads &middot; <strong id="trustCountries">84</strong> countries</a>
+            </p>
+
+            <details class="c-smartscreen-info">
+                <summary><i class="fa-solid fa-shield-halved"></i> Why does Windows show a warning?</summary>
+                <div class="c-smartscreen-info__body">
+                    <p>Windows SmartScreen warns about unsigned software &mdash; this is normal for indie apps that aren&rsquo;t code-signed (signing costs ~$200/year). The app is <strong>100% open-source</strong> under the GPLv3 license.</p>
+                    <p><strong>To run the app:</strong> click <em>&ldquo;More info&rdquo;</em> &rarr; <em>&ldquo;Run anyway.&rdquo;</em></p>
+                </div>
+            </details>
+
             <div class="c-product-card__actions">
                 <button id="conversionInstructionsBtn" class="c-btn c-btn--outline" type="button">
                     <i class="fa-solid fa-circle-info"></i>&nbsp; Setup instructions
                 </button>
+                <a href="/pages/conversion/" class="c-btn c-btn--outline">
+                    <i class="fa-solid fa-arrow-right"></i>&nbsp; Learn more
+                </a>
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter" target="_blank" rel="noopener" class="c-btn c-btn--outline">
+                    <i class="fa-brands fa-github"></i>&nbsp; View source
+                </a>
             </div>
 
             <div id="conversionStatus" class="c-download-status" aria-live="polite">
                 <p id="statusText"></p>
-            </div>
-
-            <p class="c-product-card__support-note">
-                Need help? <a href="/pages/support/" target="_blank" rel="noopener">Contact support</a> &mdash; we typically reply within 24 hours.
-            </p>
-        </section>
-
-        <!-- =============================================
-             TRUST: Live Download Statistics
-             ============================================= -->
-        <section class="c-trust-bar" id="trustBar" aria-label="Download statistics" style="display:none;">
-            <div class="c-trust-bar__inner">
-                <div class="c-trust-bar__stats">
-                    <div class="c-trust-stat">
-                        <i class="fa-solid fa-download"></i>
-                        <span class="c-trust-stat__val" id="trustDownloads">—</span>
-                        <span class="c-trust-stat__lbl">Downloads</span>
-                    </div>
-                    <div class="c-trust-stat">
-                        <i class="fa-solid fa-users"></i>
-                        <span class="c-trust-stat__val" id="trustUsers">—</span>
-                        <span class="c-trust-stat__lbl">Unique Users</span>
-                    </div>
-                    <div class="c-trust-stat">
-                        <i class="fa-solid fa-globe"></i>
-                        <span class="c-trust-stat__val" id="trustCountries">—</span>
-                        <span class="c-trust-stat__lbl">Countries</span>
-                    </div>
-                    <div class="c-trust-stat">
-                        <i class="fa-solid fa-desktop"></i>
-                        <span class="c-trust-stat__val" id="trustTopPlatform">—</span>
-                        <span class="c-trust-stat__lbl">Top Platform</span>
-                    </div>
-                </div>
-                <a href="/pages/admin/download-analytics.html" class="c-trust-bar__link">
-                    <i class="fa-solid fa-chart-line"></i> View full analytics
-                </a>
             </div>
         </section>
 
@@ -221,7 +191,7 @@
                                     <li>Click <strong>&ldquo;More info&rdquo;</strong></li>
                                     <li>Click <strong>&ldquo;Run anyway&rdquo;</strong></li>
                                 </ol>
-                                <p class="c-modal__alert-text">The app is fully open-source &mdash; you can <a href="https://github.com/Lukas-Bohez/project-one" target="_blank" rel="noopener">inspect every line of code</a> on GitHub.</p>
+                                <p class="c-modal__alert-text">The app is fully open-source &mdash; you can <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter" target="_blank" rel="noopener">inspect every line of code</a> on GitHub.</p>
                             </div>
                         </div>
                     </div>
@@ -247,7 +217,7 @@
                                     <li>Enable <strong>&ldquo;Install unknown apps&rdquo;</strong> for your browser</li>
                                     <li>Try opening the APK again</li>
                                 </ol>
-                                <p class="c-modal__alert-text">The app is fully open-source &mdash; you can <a href="https://github.com/Lukas-Bohez/project-one" target="_blank" rel="noopener">inspect every line of code</a> on GitHub.</p>
+                                <p class="c-modal__alert-text">The app is fully open-source &mdash; you can <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter" target="_blank" rel="noopener">inspect every line of code</a> on GitHub.</p>
                             </div>
                         </div>
                     </div>
@@ -279,7 +249,7 @@
                 </div>
 
                 <div class="c-modal__footer">
-                    <p class="c-modal__note">Consider viewing ads on other pages to support development &mdash; features like auto-update are on the roadmap.</p>
+                    <p class="c-modal__note">Like the app? <a href="https://buymeacoffee.com/OrokaConner" target="_blank" rel="noopener">Buy me a coffee</a> to support development &mdash; features like auto-update are on the roadmap.</p>
                 </div>
             </div>
         </div>
@@ -292,15 +262,18 @@
                 <span class="c-badge c-badge--purple"><i class="fa-solid fa-puzzle-piece"></i> Browser Extension</span>
                 <span class="c-badge c-badge--slate"><i class="fa-brands fa-chrome"></i> Chrome</span>
                 <span class="c-badge c-badge--orange"><i class="fa-brands fa-firefox-browser"></i> Firefox</span>
+                <span class="c-badge c-badge--green"><i class="fa-solid fa-shield-halved"></i> Open Source</span>
             </div>
 
             <h2 class="c-product-card__title">Lofi Extension</h2>
             <p class="c-product-card__tagline">Ambient lo-fi music right in your browser. Focus better, study longer, relax instantly.</p>
 
-            <ul class="c-feature-list c-feature-list--horizontal">
-                <li class="c-feature-list__item"><i class="fa-solid fa-headphones"></i> Curated lo-fi tracks</li>
-                <li class="c-feature-list__item"><i class="fa-solid fa-sliders"></i> Volume &amp; playback controls</li>
-                <li class="c-feature-list__item"><i class="fa-solid fa-moon"></i> Minimal &amp; distraction-free</li>
+            <ul class="c-feature-list">
+                <li class="c-feature-list__item"><i class="fa-solid fa-headphones"></i> Curated lo-fi tracks that play in the background</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-sliders"></i> Volume, playback, and shuffle controls</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-moon"></i> Minimal, distraction-free popup UI</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-globe"></i> Works on Chrome and Firefox &mdash; install once, always available</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-battery-full"></i> Lightweight &mdash; zero impact on browsing performance</li>
             </ul>
 
             <div class="c-product-card__actions">
@@ -325,14 +298,24 @@
                 <h2 class="c-section-title">Quiz &amp; Games</h2>
                 <p class="c-section-lead">Pick a mode to start playing.</p>
                 <div class="o-button-group o-button-group--2col">
-                    <button id="startQuizBtn" class="c-btn c-btn--tertiary bw-btn gamepad"><i class="fa-solid fa-play"></i>&nbsp; Start or join Quiz</button>
-                    <button id="studyQuizBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/study/'"><i class="fa-solid fa-graduation-cap"></i>&nbsp; Study quiz questions</button>
+                    <button id="startQuizBtn" class="c-btn c-btn--tertiary bw-btn gamepad">
+                        <span class="c-btn__content"><i class="fa-solid fa-play"></i>&nbsp; Start or join Quiz</span>
+                        <span class="c-btn__desc">Competitive multiplayer quiz with real-time leaderboards</span>
+                    </button>
+                    <button id="studyQuizBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/study/'">
+                        <span class="c-btn__content"><i class="fa-solid fa-graduation-cap"></i>&nbsp; Study quiz questions</span>
+                        <span class="c-btn__desc">Practice questions at your own pace</span>
+                    </button>
                 </div>
                 <div class="o-button-group o-button-group--2col">
                     <button id="sentleBtn" class="c-btn c-btn--sentle" onclick="window.location.href='/pages/sentle/';">
-                        <i class="fa-solid fa-spell-check"></i>&nbsp; SENTLE &mdash; Guess The Sentence!
+                        <span class="c-btn__content"><i class="fa-solid fa-spell-check"></i>&nbsp; SENTLE</span>
+                        <span class="c-btn__desc">Daily word puzzle &mdash; guess the sentence Wordle-style</span>
                     </button>
-                    <button id="kingdomQuarryBtn" class="c-btn c-btn--primary accent-blue" onclick="window.location.href='idleGame/idlegame.html';"><i class="fa-solid fa-industry"></i>&nbsp; Industrial Empire</button>
+                    <button id="kingdomQuarryBtn" class="c-btn c-btn--primary accent-blue" onclick="window.location.href='idleGame/idlegame.html';">
+                        <span class="c-btn__content"><i class="fa-solid fa-industry"></i>&nbsp; Industrial Empire</span>
+                        <span class="c-btn__desc">Browser-based idle factory game</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -343,16 +326,34 @@
                 <h2 class="c-section-title">Tools &amp; Content</h2>
                 <p class="c-section-lead">Build, browse, and customise your experience.</p>
                 <div class="o-button-group o-button-group--2col">
-                    <button id="viewGraphsBtn" class="c-btn c-btn--tertiary bw-btn gamepad"><i class="fa-solid fa-chart-line"></i>&nbsp; View Graphs</button>
-                    <button id="storyCreatorBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/storyCreator/'"><i class="fa-solid fa-pen-fancy"></i>&nbsp; Story Creator</button>
+                    <button id="viewGraphsBtn" class="c-btn c-btn--tertiary bw-btn gamepad">
+                        <span class="c-btn__content"><i class="fa-solid fa-chart-line"></i>&nbsp; View Graphs</span>
+                        <span class="c-btn__desc">Visualise quiz statistics and performance</span>
+                    </button>
+                    <button id="storyCreatorBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/storyCreator/'">
+                        <span class="c-btn__content"><i class="fa-solid fa-pen-fancy"></i>&nbsp; Story Creator</span>
+                        <span class="c-btn__desc">Write branching interactive stories</span>
+                    </button>
                 </div>
                 <div class="o-button-group o-button-group--2col">
-                    <button id="servoTestBtn" class="c-btn c-btn--tertiary bw-btn gamepad"><i class="fa-solid fa-palette"></i>&nbsp; Toggle Theme</button>
-                    <button id="articleTheSpireBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/content/'"><i class="fa-solid fa-book-open"></i>&nbsp; Stories</button>
+                    <button id="servoTestBtn" class="c-btn c-btn--tertiary bw-btn gamepad">
+                        <span class="c-btn__content"><i class="fa-solid fa-palette"></i>&nbsp; Toggle Theme</span>
+                        <span class="c-btn__desc">Switch between light and dark mode</span>
+                    </button>
+                    <button id="articleTheSpireBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/content/'">
+                        <span class="c-btn__content"><i class="fa-solid fa-book-open"></i>&nbsp; Stories</span>
+                        <span class="c-btn__desc">Read Ash Bloods, Toxic Air &amp; more</span>
+                    </button>
                 </div>
                 <div class="o-button-group o-button-group--2col">
-                    <button id="articlesHubBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='articles/articlepagenew.html'"><i class="fa-solid fa-newspaper"></i>&nbsp; Articles</button>
-                    <button id="manageTheSpireBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/manage/'"><i class="fa-solid fa-sliders"></i>&nbsp; Manage the Spire</button>
+                    <button id="articlesHubBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='articles/articlepagenew.html'">
+                        <span class="c-btn__content"><i class="fa-solid fa-newspaper"></i>&nbsp; Articles</span>
+                        <span class="c-btn__desc">Public domain guides and resources</span>
+                    </button>
+                    <button id="manageTheSpireBtn" class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/manage/'">
+                        <span class="c-btn__content"><i class="fa-solid fa-sliders"></i>&nbsp; Manage the Spire</span>
+                        <span class="c-btn__desc">Admin panel for quiz themes and content</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -363,16 +364,34 @@
                 <h2 class="c-section-title">Support</h2>
                 <p class="c-section-lead">Get help fast and review site policies.</p>
                 <div class="o-button-group o-button-group--2col">
-                    <button id="supportBtn" class="c-btn c-btn--primary bw-btn" onclick="window.open('/pages/support/','_blank');"><i class="fa-solid fa-headset"></i>&nbsp; Contact Support</button>
-                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/about/'"><i class="fa-solid fa-user"></i>&nbsp; About Me</button>
+                    <button id="supportBtn" class="c-btn c-btn--primary bw-btn" onclick="window.open('/pages/support/','_blank');">
+                        <span class="c-btn__content"><i class="fa-solid fa-headset"></i>&nbsp; Contact Support</span>
+                        <span class="c-btn__desc">Get help &mdash; we reply within 24 hours</span>
+                    </button>
+                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/about/'">
+                        <span class="c-btn__content"><i class="fa-solid fa-user"></i>&nbsp; About Me</span>
+                        <span class="c-btn__desc">Meet the developer behind Quiz The Spire</span>
+                    </button>
                 </div>
                 <div class="o-button-group o-button-group--2col">
-                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/privacy/'"><i class="fa-solid fa-shield-halved"></i>&nbsp; Privacy Policy</button>
-                    <button id="manageQuizBtn" class="c-btn c-btn--tertiary bw-btn"><i class="fa-solid fa-gears"></i>&nbsp; Manage Quiz</button>
+                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/privacy/'">
+                        <span class="c-btn__content"><i class="fa-solid fa-shield-halved"></i>&nbsp; Privacy Policy</span>
+                        <span class="c-btn__desc">How we handle your data</span>
+                    </button>
+                    <button id="manageQuizBtn" class="c-btn c-btn--tertiary bw-btn">
+                        <span class="c-btn__content"><i class="fa-solid fa-gears"></i>&nbsp; Manage Quiz</span>
+                        <span class="c-btn__desc">Session settings and quiz controls</span>
+                    </button>
                 </div>
                 <div class="o-button-group o-button-group--2col">
-                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/terms/'"><i class="fa-solid fa-file-contract"></i>&nbsp; Terms of Service</button>
-                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/contact/'"><i class="fa-solid fa-envelope"></i>&nbsp; Contact Us</button>
+                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/terms/'">
+                        <span class="c-btn__content"><i class="fa-solid fa-file-contract"></i>&nbsp; Terms of Service</span>
+                        <span class="c-btn__desc">Usage rules and legal information</span>
+                    </button>
+                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/contact/'">
+                        <span class="c-btn__content"><i class="fa-solid fa-envelope"></i>&nbsp; Contact Us</span>
+                        <span class="c-btn__desc">Questions, feedback, or business enquiries</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -380,6 +399,9 @@
     </main>
 
     <footer class="c-footer">
+        <p class="c-footer__about">
+            Built and maintained by one indie developer &mdash; <strong>Oroka Conner</strong>. 728+ downloads across 84 countries and counting.
+        </p>
         <div class="c-footer__bmc" aria-hidden="false">
             <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="OrokaConner" data-color="#2c6fb8" data-emoji=""  data-font="Inter" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
         </div>
@@ -416,21 +438,6 @@
         return localStorage.getItem('theme') || 'light';
     }
     
-    // Utility function to apply theme colors to status div
-    function applyStatusDivTheme(isDark) {
-        const statusDiv = document.getElementById('conversionStatus');
-        if (!statusDiv) return;
-        if (isDark) {
-            statusDiv.style.background = 'rgba(15, 17, 18, 0.95)';
-            statusDiv.style.borderColor = '#2a3034';
-            statusDiv.style.color = '#b9c5d6';
-        } else {
-            statusDiv.style.background = '#f0f4f8';
-            statusDiv.style.borderColor = '#cbd5e1';
-            statusDiv.style.color = '#334155';
-        }
-    }
-    
     // Show Android instructions when APK download is clicked
     function showAndroidInstructions() {
         const modal = document.getElementById('conversionDownloadModal');
@@ -454,26 +461,19 @@
     // Download management for ConversionTheSpireReborn (Windows)
     async function handleConversionDownload(event) {
         event.preventDefault();
+        const btn = document.getElementById('conversionDownloadBtn');
         const modal = document.getElementById('conversionDownloadModal');
         const statusDiv = document.getElementById('conversionStatus');
         const statusText = document.getElementById('statusText');
-        const isDark = getCurrentTheme() === 'dark';
         
+        btn.classList.add('c-btn--loading');
         try {
             const response = await fetch('/api/v1/download/conversion/check', { method: 'POST' });
             if (!response.ok) {
                 const error = await response.json();
                 statusText.textContent = '\u274c ' + error.detail;
                 statusDiv.style.display = 'block';
-                if (isDark) {
-                    statusDiv.style.background = 'rgba(127, 29, 29, 0.9)';
-                    statusDiv.style.borderColor = '#ef4444';
-                    statusDiv.style.color = '#fecaca';
-                } else {
-                    statusDiv.style.background = '#fee2e2';
-                    statusDiv.style.borderColor = '#ef4444';
-                    statusDiv.style.color = '#7f1d1d';
-                }
+                statusDiv.className = 'c-download-status c-download-status--error';
                 return;
             }
             const statusRes = await fetch('/api/v1/download/conversion/status');
@@ -481,15 +481,7 @@
             const status = await statusRes.json();
             statusText.innerHTML = `\u2713 Downloading <strong>ConversionTheSpireReborn.zip</strong><br>Speed: ${status.download_speed_mbps || 2} MB/s`;
             statusDiv.style.display = 'block';
-            if (isDark) {
-                statusDiv.style.background = 'rgba(30, 58, 138, 0.9)';
-                statusDiv.style.borderColor = '#3b82f6';
-                statusDiv.style.color = '#93c5fd';
-            } else {
-                statusDiv.style.background = '#dbeafe';
-                statusDiv.style.borderColor = '#3b82f6';
-                statusDiv.style.color = '#1e3a8a';
-            }
+            statusDiv.className = 'c-download-status c-download-status--info';
             // Switch modal to Windows tab
             document.querySelectorAll('.c-platform-tab').forEach(t => t.classList.toggle('active', t.dataset.platform === 'windows'));
             document.querySelectorAll('.c-platform-panel').forEach(p => p.classList.toggle('active', p.id === 'platform-windows'));
@@ -500,34 +492,28 @@
             console.error('Download error:', error);
             statusText.textContent = '\u274c Error: ' + error.message;
             statusDiv.style.display = 'block';
-            if (isDark) {
-                statusDiv.style.background = 'rgba(127, 29, 29, 0.9)';
-                statusDiv.style.borderColor = '#ef4444';
-                statusDiv.style.color = '#fecaca';
-            } else {
-                statusDiv.style.background = '#fee2e2';
-                statusDiv.style.borderColor = '#ef4444';
-                statusDiv.style.color = '#7f1d1d';
-            }
+            statusDiv.className = 'c-download-status c-download-status--error';
+        } finally {
+            btn.classList.remove('c-btn--loading');
         }
     }
 
     // Generic tracked download handler for Android and Linux
     async function _handleTrackedDownload(event, platform, apiPath, fileName) {
         event.preventDefault();
+        const btn = event.currentTarget;
         const modal = document.getElementById('conversionDownloadModal');
         const statusDiv = document.getElementById('conversionStatus');
         const statusText = document.getElementById('statusText');
-        const isDark = getCurrentTheme() === 'dark';
         
+        btn.classList.add('c-btn--loading');
         try {
             const checkRes = await fetch('/api/v1/download/conversion/check', { method: 'POST' });
             if (!checkRes.ok) {
                 const error = await checkRes.json();
                 statusText.textContent = '\u274c ' + error.detail;
                 statusDiv.style.display = 'block';
-                if (isDark) { statusDiv.style.background = 'rgba(127,29,29,0.9)'; statusDiv.style.borderColor = '#ef4444'; statusDiv.style.color = '#fecaca'; }
-                else { statusDiv.style.background = '#fee2e2'; statusDiv.style.borderColor = '#ef4444'; statusDiv.style.color = '#7f1d1d'; }
+                statusDiv.className = 'c-download-status c-download-status--error';
                 return;
             }
             const statusRes = await fetch('/api/v1/download/conversion/status');
@@ -535,8 +521,7 @@
             const status = await statusRes.json();
             statusText.innerHTML = `\u2713 Downloading <strong>${fileName}</strong><br>Speed: ${status.download_speed_mbps || 2} MB/s`;
             statusDiv.style.display = 'block';
-            if (isDark) { statusDiv.style.background = 'rgba(30,58,138,0.9)'; statusDiv.style.borderColor = '#3b82f6'; statusDiv.style.color = '#93c5fd'; }
-            else { statusDiv.style.background = '#dbeafe'; statusDiv.style.borderColor = '#3b82f6'; statusDiv.style.color = '#1e3a8a'; }
+            statusDiv.className = 'c-download-status c-download-status--info';
 
             // Switch modal to the correct platform tab
             document.querySelectorAll('.c-platform-tab').forEach(t => t.classList.toggle('active', t.dataset.platform === platform));
@@ -549,8 +534,9 @@
             console.error('Download error:', error);
             statusText.textContent = '\u274c Error: ' + error.message;
             statusDiv.style.display = 'block';
-            if (isDark) { statusDiv.style.background = 'rgba(127,29,29,0.9)'; statusDiv.style.borderColor = '#ef4444'; statusDiv.style.color = '#fecaca'; }
-            else { statusDiv.style.background = '#fee2e2'; statusDiv.style.borderColor = '#ef4444'; statusDiv.style.color = '#7f1d1d'; }
+            statusDiv.className = 'c-download-status c-download-status--error';
+        } finally {
+            btn.classList.remove('c-btn--loading');
         }
     }
 
@@ -561,18 +547,6 @@
     function handleLinuxDownload(event) {
         _handleTrackedDownload(event, 'linux', '/api/v1/download/conversion/linux', 'linux.zip');
     }
-    
-    // Watch for theme changes and update status div
-    const observer = new MutationObserver(() => {
-        const statusDiv = document.getElementById('conversionStatus');
-        if (!statusDiv) return;
-        const isDark = getCurrentTheme() === 'dark';
-        if (getComputedStyle(statusDiv).display !== 'none') {
-            applyStatusDivTheme(isDark);
-        }
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
     
     // Modal controls
     (function(){
@@ -598,28 +572,42 @@
     })();
     </script>
     
-    <script>
-    (function(){'use strict';function getCurrentTheme(){const t=document.documentElement.getAttribute('data-theme');if(t)return t;if(document.body.classList.contains('theme-dark'))return'dark';if(document.body.classList.contains('theme-light'))return'light';return localStorage.getItem('theme')||localStorage.getItem('quiz-theme-preference')||'light'}function updateModals(){const theme=getCurrentTheme(),isDark=theme==='dark',infoModal=document.getElementById('infoModal'),infoBtn=document.getElementById('infoBtn');if(infoModal){const content=infoModal.querySelector('.modal-content'),closeBtn=infoModal.querySelector('.close-btn');if(isDark){infoModal.classList.add('qts-dark');if(content){content.style.background='#0f1724';content.style.color='#e6eef9';content.style.boxShadow='0 10px 30px rgba(0,0,0,0.6)';content.querySelectorAll('.info-list li').forEach(li=>{li.style.color='#cbd5e1';const strong=li.querySelector('strong');if(strong)strong.style.color='#93c5fd'});content.querySelectorAll('.section-title').forEach(t=>{t.style.color='#93c5fd';t.style.borderBottomColor='rgba(255,255,255,0.08)'});const modalTitle=content.querySelector('.modal-title');if(modalTitle)modalTitle.style.color='#e6eef9';content.querySelectorAll('.info-section p').forEach(p=>p.style.color='#cbd5e1')}if(closeBtn){closeBtn.style.background='#0b1220';closeBtn.style.border='1px solid rgba(255,255,255,0.1)';closeBtn.style.color='#cbd5e1'}if(infoBtn){infoBtn.style.background='#1d4ed8';infoBtn.style.boxShadow='0 2px 10px rgba(29,78,216,0.3)'}}else{infoModal.classList.remove('qts-dark');if(content){content.style.background='white';content.style.color='#2c3e50';content.style.boxShadow='0 10px 30px rgba(0,0,0,0.3)';content.querySelectorAll('.info-list li').forEach(li=>{li.style.color='#555';const strong=li.querySelector('strong');if(strong)strong.style.color='#2c3e50'});content.querySelectorAll('.section-title').forEach(t=>{t.style.color='#34495e';t.style.borderBottomColor='#e9ecef'});const modalTitle=content.querySelector('.modal-title');if(modalTitle)modalTitle.style.color='#2c3e50';content.querySelectorAll('.info-section p').forEach(p=>p.style.color='#555')}if(closeBtn){closeBtn.style.background='#f8f9fa';closeBtn.style.border='1px solid #dee2e6';closeBtn.style.color='#6c757d'}if(infoBtn){infoBtn.style.background='#007bff';infoBtn.style.boxShadow='0 2px 10px rgba(0,123,255,0.3)'}}}}window.addEventListener('storage',function(e){if((e.key==='theme'||e.key==='quiz-theme-preference')&&e.newValue){setTimeout(updateModals,50)}});window.addEventListener('themeChanged',function(e){setTimeout(updateModals,50)});const observer=new MutationObserver(function(mutations){let themeChanged=false;mutations.forEach(function(mutation){if(mutation.type==='attributes'&&(mutation.attributeName==='data-theme'||mutation.attributeName==='class')){themeChanged=true}if(mutation.type==='attributes'&&mutation.attributeName==='style'){if(mutation.target.id==='infoModal'&&mutation.target.style.display==='block'){setTimeout(updateModals,10)}}});if(themeChanged){setTimeout(updateModals,10)}});observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class']});observer.observe(document.body,{attributes:true,attributeFilter:['style','class']});setTimeout(updateModals,100)})();
-    </script>
-    
     <!-- Trust bar: live download statistics -->
     <script>
     (function () {
-        const bar = document.getElementById('trustBar');
-        if (!bar) return;
         fetch('/api/v1/download/analytics')
             .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
             .then(d => {
                 const totalDl = d.all_time_downloads || d.total_downloads;
-                const totalUsers = d.all_time_unique_users || d.unique_users;
-                document.getElementById('trustDownloads').textContent = totalDl.toLocaleString();
-                document.getElementById('trustUsers').textContent = totalUsers.toLocaleString();
-                document.getElementById('trustCountries').textContent = d.countries.length;
-                const topPlatform = d.platforms && d.platforms.length ? d.platforms[0].name : '—';
-                document.getElementById('trustTopPlatform').textContent = topPlatform;
-                bar.style.display = '';
+                const countries = d.countries ? d.countries.length : 83;
+                const dlEl = document.getElementById('trustDownloads');
+                const cEl = document.getElementById('trustCountries');
+                if (dlEl) dlEl.textContent = totalDl.toLocaleString();
+                if (cEl) cEl.textContent = countries;
             })
-            .catch(() => { /* silently hide bar on error */ });
+            .catch(() => { /* static fallback numbers already shown */ });
+    })();
+    </script>
+
+    <!-- Platform auto-detect: reorder download buttons for current OS -->
+    <script>
+    (function () {
+        const ua = navigator.userAgent || '';
+        let platform = 'windows'; // default
+        if (/android/i.test(ua)) platform = 'android';
+        else if (/linux/i.test(ua) && !/android/i.test(ua)) platform = 'linux';
+        // If user is on the matching platform, move that button first
+        const container = document.querySelector('.c-product-card__actions--platform');
+        if (!container) return;
+        const map = {
+            windows: 'conversionDownloadBtn',
+            android: 'conversionDownloadApkBtn',
+            linux: 'conversionDownloadLinuxBtn'
+        };
+        const primaryBtn = document.getElementById(map[platform]);
+        if (primaryBtn && primaryBtn !== container.firstElementChild) {
+            container.insertBefore(primaryBtn, container.firstElementChild);
+        }
     })();
     </script>
 </body>

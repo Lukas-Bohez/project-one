@@ -4,6 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Download Analytics | Quiz The Spire</title>
+    <meta name="description" content="Download statistics for Conversion The Spire Reborn — geographic reach, platform breakdown, and monthly trends. See real usage data from users worldwide.">
+    <link rel="canonical" href="https://quizthespire.com/pages/admin/download-analytics.html">
+    <meta property="og:title" content="Download Analytics | Quiz The Spire">
+    <meta property="og:description" content="Download statistics for Conversion The Spire Reborn — geographic reach, platform breakdown, and monthly trends.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://quizthespire.com/pages/admin/download-analytics.html">
+    <meta property="og:site_name" content="Quiz The Spire">
+    <meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Download Analytics | Quiz The Spire">
+    <meta name="twitter:description" content="Download statistics for Conversion The Spire Reborn — geographic reach, platform breakdown, and monthly trends.">
+    <meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <style>
@@ -303,26 +315,46 @@
     })();
     </script>
 
-    <!-- Theme toggle logic -->
+    <!-- Theme toggle logic — syncs with main site ThemeManager -->
     <script>
     (function () {
+        const THEME_KEY = 'quiz-theme-preference';
         const btn = document.getElementById('themeToggle');
         const icon = btn.querySelector('i');
-        // Respect parent site preference, or system preference
-        const stored = localStorage.getItem('da-theme') || localStorage.getItem('theme') || localStorage.getItem('quiz-theme-preference');
-        const prefersDark = stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        // Read the same key the main site's ThemeManager uses
+        const stored = localStorage.getItem(THEME_KEY);
+        const prefersDark = stored === 'dark';
         function applyTheme(dark) {
             document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+            document.body.setAttribute('data-theme', dark ? 'dark' : 'light');
             icon.className = dark ? 'fas fa-sun' : 'fas fa-moon';
             btn.title = dark ? 'Switch to light mode' : 'Switch to dark mode';
-            localStorage.setItem('da-theme', dark ? 'dark' : 'light');
+            localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light');
         }
         applyTheme(prefersDark);
         btn.addEventListener('click', () => {
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             applyTheme(!isDark);
         });
+        // Listen for theme changes from other tabs/pages
+        window.addEventListener('storage', (e) => {
+            if (e.key === THEME_KEY) applyTheme(e.newValue === 'dark');
+        });
     })();
     </script>
+
+    <footer style="text-align:center;padding:2rem 1rem 1.5rem;margin-top:2rem;border-top:1px solid var(--border);color:var(--text-muted);font-size:0.82rem;">
+        <p style="margin-bottom:0.5rem;">Built and maintained by one indie developer &mdash; <strong style="color:var(--text);">Oroka Conner</strong></p>
+        <p style="margin-bottom:0.75rem;"><strong style="color:var(--text);">&copy; 2026 Quiz The Spire</strong> &middot; All rights reserved.</p>
+        <p>
+            <a href="/pages/privacy/" style="color:var(--text-muted);text-decoration:none;">Privacy Policy</a>
+            <span style="margin:0 0.4rem;">&middot;</span>
+            <a href="/pages/contact/" style="color:var(--text-muted);text-decoration:none;">Contact Us</a>
+            <span style="margin:0 0.4rem;">&middot;</span>
+            <a href="/pages/terms/" style="color:var(--text-muted);text-decoration:none;">Terms of Service</a>
+            <span style="margin:0 0.4rem;">&middot;</span>
+            <a href="/" style="color:var(--text-muted);text-decoration:none;">Homepage</a>
+        </p>
+    </footer>
 </body>
 </html>

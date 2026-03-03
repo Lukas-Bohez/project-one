@@ -296,11 +296,12 @@
                 if (el('#statThemes')) el('#statThemes').textContent = stats.total_themes || 0;
                 if (el('#statPlays')) el('#statPlays').textContent = stats.total_plays || 0;
                 if (el('#statCreators')) el('#statCreators').textContent = stats.total_creators || 0;
+                // Show stats bar only when data loaded
+                const bar = $('#statsBar');
+                if (bar) bar.style.display = '';
             }
         } catch {
-            // Stats require admin — hide the bar for non-admin users
-            const bar = $('#statsBar');
-            if (bar) bar.style.display = 'none';
+            // Stats require admin — keep the bar hidden for non-admin users
         }
     }
 

@@ -26,7 +26,7 @@ html, body {
     /* Text colors */
     --text-60: #111418; /* primary text (dark) */
     --text-30: #4b5561; /* secondary text (muted) */
-    --text-10: #9aa6b2; /* subtle muted */
+    --text-10: #64748b; /* subtle muted — WCAG AA on white */
 
     /* UI helpers */
     --border-color: #d3d7db;
@@ -92,7 +92,7 @@ html[data-theme="dark"],
     /* Text colors */
     --text-60: #e6eef8; /* primary text (light) */
     --text-30: #b9c5d6; /* secondary text */
-    --text-10: #8f9fb0; /* subtle muted */
+    --text-10: #94a3b8; /* subtle muted — readable on dark bg */
 
     /* UI helpers */
     --border-color: #2a3034;
@@ -400,37 +400,6 @@ body * {
     font-size: var(--font-size-sm);
 }
 
-.c-download-status {
-    display: none;
-    width: 100%;
-    max-width: 640px;
-    margin: var(--spacing-md) auto 0;
-    padding: 0.75rem;
-    border-radius: var(--border-radius-sm);
-    font-size: 0.95rem;
-    border: 1px solid var(--border-color);
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-}
-
-.c-download-status p {
-    margin: 0;
-}
-
-.c-modal__alert {
-    background: #fff3cd;
-    border-left: 3px solid #ffc107;
-    border-radius: var(--border-radius-sm);
-    padding: 0.75rem;
-    margin-bottom: 1rem;
-}
-
-.c-modal__alert-text {
-    margin: 0;
-    font-size: 0.9rem;
-    color: #664d03;
-}
-
 .c-download-help {
     margin: 0;
     font-size: var(--font-size-sm);
@@ -489,17 +458,6 @@ body * {
 [data-theme="dark"] .c-download-note,
 .theme-dark .c-download-note {
     color: var(--text-30);
-}
-
-[data-theme="dark"] .c-modal__alert,
-.theme-dark .c-modal__alert {
-    background: rgba(120, 53, 15, 0.3);
-    border-left-color: #f59e0b;
-}
-
-[data-theme="dark"] .c-modal__alert-text,
-.theme-dark .c-modal__alert-text {
-    color: #fcd34d;
 }
 
 .c-btn {
@@ -714,6 +672,20 @@ button[onclick*="idleGame/idlegame.html"]:hover {
     border: 1.5px solid rgba(0, 0, 0, 0.12) !important;
     box-shadow: 0 6px 20px rgba(44, 111, 184, 0.3);
 }
+/* Desc text on forced-blue buttons needs white text */
+#startQuizBtn .c-btn__desc,
+#studyQuizBtn .c-btn__desc,
+#articleTheSpireBtn .c-btn__desc,
+button[onclick*="idleGame/idlegame.html"] .c-btn__desc {
+    color: rgba(255, 255, 255, 0.85);
+}
+#startQuizBtn:has(.c-btn__desc),
+#studyQuizBtn:has(.c-btn__desc),
+#articleTheSpireBtn:has(.c-btn__desc),
+button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
+    align-items: center;
+    text-align: center;
+}
 
 .c-btn--admin {
     background-color: var(--dark-color);
@@ -726,25 +698,16 @@ button[onclick*="idleGame/idlegame.html"]:hover {
     font-size: var(--font-size-sm);
 }
 
-/* Theme toggle button (formerly servo button) */
-#servoTestBtn {
-    position: relative;
-    overflow: visible;
-    z-index: 1;
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    color: var(--text-inverse);
-    border: 2px solid var(--border-color);
-    padding: var(--spacing-md) calc(var(--spacing-lg) + 30px); /* Extra padding for icons */
-    text-align: center;
-}
-
-/* Force icon inside theme toggle to inherit button text color (white on blue) */
+/* Theme toggle button (formerly servo button) — on the homepage this is a regular
+   grid button styled via bw-btn. The gradient + special padding only causes conflicts.
+   Standalone toggle styling lives in legal.css / per-page CSS via .c-theme-toggle. */
 #servoTestBtn i {
-    color: inherit !important;
+    color: inherit;
 }
 
+/* Standalone theme-toggle class used on sub-pages (not homepage) */
 .c-theme-toggle::before {
-    content: '\2600';  /* ☀ sun text glyph – inherits CSS color */
+    content: '\2600';  /* sun glyph */
     font-size: 1rem;
     transition: all 0.3s ease;
     margin-right: 0.5rem;
@@ -757,30 +720,7 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 }
 
 [data-theme="dark"] .c-theme-toggle::before {
-    content: '\263E';  /* ☾ moon text glyph – inherits CSS color */
-}
-
-/* Remove the ::after pseudo-element since we only need one icon */
-#servoTestBtn::after {
-    display: none;
-}
-
-#servoTestBtn:hover {
-    background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
-    transform: translateY(-2px);
-}
-
-/* Responsive adjustments for theme button */
-@media (max-width: 480px) {
-    #servoTestBtn {
-        padding: var(--spacing-sm) var(--spacing-lg);
-        font-size: var(--font-size-sm);
-    }
-    
-    #servoTestBtn::before,
-    #servoTestBtn::after {
-        font-size: 1em;
-    }
+    content: '\263E';  /* moon glyph */
 }
 
 .c-info-btn {
@@ -1084,7 +1024,7 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 }
 
 .theme-blueberry-blue {
-    --pulse-color: #2c4c7c;;
+    --pulse-color: #2c4c7c;
     --pulse-glow: rgba(59, 130, 246, 0.7);
 }
 
@@ -1239,7 +1179,7 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 
 .c-header__subtitle {
     font-size: 0.95rem;
-    opacity: 0.75;
+    opacity: 0.88;
     margin-top: 0.35rem;
     font-weight: 400;
     letter-spacing: 0.04em;
@@ -1671,21 +1611,190 @@ button[onclick*="idleGame/idlegame.html"]:hover {
     transform: translateY(-2px);
 }
 
-/* Support note */
-.c-product-card__support-note {
-    margin: 0;
-    font-size: 0.85rem;
+/* Reassurance line under download buttons */
+.c-product-card__reassurance {
+    margin: 0 0 0.75rem;
+    font-size: 0.82rem;
     color: var(--text-muted);
+    letter-spacing: 0.01em;
 }
-
-.c-product-card__support-note a {
-    color: var(--primary-color);
-    font-weight: 600;
+.c-product-card__reassurance strong {
+    font-weight: 800;
+    color: var(--text-secondary);
+}
+.c-product-card__reassurance i {
+    color: #16a34a;
+    margin-right: 0.25rem;
+}
+[data-theme="dark"] .c-product-card__reassurance i,
+.theme-dark .c-product-card__reassurance i {
+    color: #4ade80;
+}
+.c-product-card__trust-link {
+    color: inherit;
     text-decoration: none;
+    border-bottom: 1px dashed currentColor;
+    padding-bottom: 1px;
+    transition: color 0.2s, border-color 0.2s;
+}
+.c-product-card__trust-link:hover {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    border-bottom-style: solid;
+}
+.c-product-card__trust-link strong {
+    font-weight: 800;
+    color: var(--text-secondary);
+}
+.c-product-card__trust-link:hover strong {
+    color: var(--primary-color);
 }
 
-.c-product-card__support-note a:hover {
-    text-decoration: underline;
+/* SmartScreen accordion */
+.c-smartscreen-info {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    margin-bottom: 1.25rem;
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: left;
+    font-size: 0.9rem;
+}
+.c-smartscreen-info summary {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    font-weight: 600;
+    color: #92400e;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    list-style: none;
+}
+.c-smartscreen-info summary::-webkit-details-marker { display: none; }
+.c-smartscreen-info summary::after {
+    content: '\25BC';
+    font-size: 0.65rem;
+    margin-left: auto;
+    transition: transform 0.2s;
+}
+.c-smartscreen-info[open] summary::after {
+    transform: rotate(180deg);
+}
+.c-smartscreen-info summary i {
+    color: #d97706;
+}
+.c-smartscreen-info__body {
+    padding: 0 1rem 0.75rem;
+    color: #78350f;
+    line-height: 1.6;
+}
+.c-smartscreen-info__body p {
+    margin: 0 0 0.5rem;
+}
+.c-smartscreen-info__body a {
+    color: #b45309;
+    font-weight: 600;
+}
+[data-theme="dark"] .c-smartscreen-info,
+.theme-dark .c-smartscreen-info {
+    background: rgba(120, 53, 15, 0.2);
+    border-color: rgba(251, 191, 36, 0.3);
+}
+[data-theme="dark"] .c-smartscreen-info summary,
+.theme-dark .c-smartscreen-info summary {
+    color: #fcd34d;
+}
+[data-theme="dark"] .c-smartscreen-info summary i,
+.theme-dark .c-smartscreen-info summary i {
+    color: #fbbf24;
+}
+[data-theme="dark"] .c-smartscreen-info__body,
+.theme-dark .c-smartscreen-info__body {
+    color: #fde68a;
+}
+[data-theme="dark"] .c-smartscreen-info__body a,
+.theme-dark .c-smartscreen-info__body a {
+    color: #fbbf24;
+}
+
+/* Button description subtitle */
+.c-btn__content {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+.c-btn__desc {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #475569;
+    margin-top: 3px;
+    line-height: 1.35;
+    letter-spacing: 0.01em;
+}
+/* Buttons with descriptions need vertical layout */
+.c-btn:has(.c-btn__desc) {
+    flex-direction: column;
+    text-align: left;
+    padding: 0.9rem 1.15rem;
+    align-items: flex-start;
+}
+[data-theme="dark"] .c-btn__desc,
+.theme-dark .c-btn__desc {
+    color: #cbd5e1;
+}
+/* Desc text on colored-bg buttons needs white text */
+.c-btn--sentle .c-btn__desc,
+.c-btn--cta .c-btn__desc,
+.accent-blue .c-btn__desc,
+.c-btn--accent .c-btn__desc {
+    color: rgba(255, 255, 255, 0.85);
+}
+/* Colored-bg buttons keep center alignment */
+.c-btn--sentle:has(.c-btn__desc),
+.c-btn--cta:has(.c-btn__desc),
+.accent-blue:has(.c-btn__desc),
+.c-btn--accent:has(.c-btn__desc) {
+    align-items: center;
+    text-align: center;
+}
+
+/* Button loading state */
+.c-btn--loading {
+    pointer-events: none;
+    opacity: 0.7;
+    position: relative;
+}
+.c-btn--loading::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: btn-spin 0.6s linear infinite;
+    right: 12px;
+    top: 50%;
+    margin-top: -9px;
+}
+@keyframes btn-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Footer about line */
+.c-footer__about {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin: 0 0 0.75rem;
+    line-height: 1.5;
+}
+.c-footer__about strong {
+    color: var(--text-secondary);
 }
 
 /* Download status bar */
@@ -1702,6 +1811,28 @@ button[onclick*="idleGame/idlegame.html"]:hover {
     color: var(--text-primary);
     text-align: left;
 }
+.c-download-status--info {
+    background: #dbeafe;
+    border-color: #3b82f6;
+    color: #1e3a8a;
+}
+.c-download-status--error {
+    background: #fee2e2;
+    border-color: #ef4444;
+    color: #7f1d1d;
+}
+[data-theme="dark"] .c-download-status--info,
+.theme-dark .c-download-status--info {
+    background: rgba(30, 58, 138, 0.9);
+    border-color: #3b82f6;
+    color: #93c5fd;
+}
+[data-theme="dark"] .c-download-status--error,
+.theme-dark .c-download-status--error {
+    background: rgba(127, 29, 29, 0.9);
+    border-color: #ef4444;
+    color: #fecaca;
+}
 
 .c-download-status p {
     margin: 0;
@@ -1716,6 +1847,12 @@ button[onclick*="idleGame/idlegame.html"]:hover {
     max-width: 680px;
     margin-left: auto;
     margin-right: auto;
+    align-items: stretch;
+}
+.o-button-group--2col .c-btn {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
 }
 
 @media (max-width: 520px) {
@@ -2308,10 +2445,6 @@ button[onclick*="idleGame/idlegame.html"]:hover {
     }
     .c-product-card__actions--platform {
         grid-template-columns: 1fr;
-        gap: 0.5rem;
-    }
-    .c-product-card__support-note {
-        font-size: 0.78rem;
     }
     .c-feature-list {
         margin-bottom: 1rem;

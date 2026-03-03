@@ -45,7 +45,7 @@
             <div class="sidebar-user" id="sidebarUser" style="display:none;">
                 <div class="sidebar-user-name" id="sidebarUserName"></div>
                 <div class="sidebar-user-actions">
-                    <button class="c-theme-toggle" id="theme-toggle" title="Toggle theme"></button>
+                    <button class="c-theme-toggle" id="theme-toggle" title="Toggle theme" aria-label="Toggle light/dark mode"></button>
                     <button class="btn-logout" id="logoutBtn" title="Log out">Logout</button>
                 </div>
             </div>
@@ -72,7 +72,7 @@
             <div class="mobile-topbar">
                 <button class="hamburger" id="menuToggle" aria-label="Open menu">☰</button>
                 <span class="mobile-room-name" id="mobileRoomName">Support Chat</span>
-                <button class="c-theme-toggle mobile-theme" id="theme-toggle-mobile" title="Toggle theme"></button>
+                <button class="c-theme-toggle mobile-theme" id="theme-toggle-mobile" title="Toggle theme" aria-label="Toggle light/dark mode"></button>
             </div>
 
             <!-- Room header -->
@@ -103,8 +103,9 @@
             <!-- Input -->
             <div class="input-area" id="inputArea">
                 <form class="message-form" id="messageForm" autocomplete="off">
+                    <label for=\"messageInput\" class=\"sr-only\" style=\"position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;\">Type a message</label>
                     <textarea id="messageInput" placeholder="Type a message…" maxlength="1000" rows="1"></textarea>
-                    <button type="submit" id="sendButton" disabled title="Send message">
+                    <button type="submit" id="sendButton" disabled title="Send message" aria-label="Send message">
                         <span class="send-icon">➤</span>
                     </button>
                 </form>

@@ -34,7 +34,7 @@
         }
         .archive-date {
             font-weight: 600;
-            color: #1976d2;
+            color: var(--accent-color, #1976d2);
             margin-bottom: 10px;
         }
         .archive-sentence {
@@ -230,7 +230,7 @@
                     };
                 }
             } catch (error) {
-                archiveGrid.innerHTML = '<p style="text-align: center; color: #e06c75; grid-column: 1/-1;">Error loading archive.</p>';
+                archiveGrid.innerHTML = '<p style="text-align: center; color: var(--error-color, #e06c75); grid-column: 1/-1;">Error loading archive.</p>';
             }
                 
                 // Modal close functionality
@@ -266,7 +266,7 @@
                     }
                 } catch (err) {
                     console.error('Error loading leaderboard:', err);
-                    modalContent.innerHTML = '<p style="text-align: center; color: #e06c75;">Error loading leaderboard.</p>';
+                    modalContent.innerHTML = '<p style="text-align: center; color: var(--error-color, #e06c75);">Error loading leaderboard.</p>';
                 }
             }
             
@@ -279,7 +279,7 @@
                                     <span style="font-weight: 600; min-width: 24px;">#${idx + 1}</span>
                                     <span style="color: var(--sentle-text);">${escapeHtml(score.username || 'Anonymous')}</span>
                                 </div>
-                                <span style="font-weight: 600; color: #1976d2;">${score.score} pts</span>
+                                <span style="font-weight: 600; color: var(--accent-color, #1976d2);">${score.score} pts</span>
                             </div>
                         `).join('')}
                     </div>
