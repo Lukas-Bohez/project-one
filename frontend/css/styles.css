@@ -2,6 +2,25 @@
  # SETTINGS
 /*---------------------------------------*/
 
+/* Skip-to-content link for keyboard / screen-reader users */
+.c-skip-link {
+    position: absolute;
+    top: -100%;
+    left: 1rem;
+    z-index: 9999;
+    padding: 0.75rem 1.25rem;
+    background: var(--primary-color);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border-radius: 0 0 8px 8px;
+    text-decoration: none;
+    transition: top 0.2s ease;
+}
+.c-skip-link:focus {
+    top: 0;
+}
+
 /* Prevent horizontal overflow on mobile */
 * {
     box-sizing: border-box;
@@ -648,7 +667,6 @@ body * {
 /* Specific buttons that should remain blue */
 #startQuizBtn,
 #studyQuizBtn,
-#articleTheSpireBtn,
 button[onclick*="idleGame/idlegame.html"] {
     background-color: var(--primary-color) !important;
     color: white !important;
@@ -658,14 +676,12 @@ button[onclick*="idleGame/idlegame.html"] {
 
 #startQuizBtn i,
 #studyQuizBtn i,
-#articleTheSpireBtn i,
 button[onclick*="idleGame/idlegame.html"] i {
     color: white !important;
 }
 
 #startQuizBtn:hover,
 #studyQuizBtn:hover,
-#articleTheSpireBtn:hover,
 button[onclick*="idleGame/idlegame.html"]:hover {
     background-color: var(--secondary-color) !important;
     color: white !important;
@@ -675,13 +691,11 @@ button[onclick*="idleGame/idlegame.html"]:hover {
 /* Desc text on forced-blue buttons needs white text */
 #startQuizBtn .c-btn__desc,
 #studyQuizBtn .c-btn__desc,
-#articleTheSpireBtn .c-btn__desc,
 button[onclick*="idleGame/idlegame.html"] .c-btn__desc {
     color: rgba(255, 255, 255, 0.85);
 }
 #startQuizBtn:has(.c-btn__desc),
 #studyQuizBtn:has(.c-btn__desc),
-#articleTheSpireBtn:has(.c-btn__desc),
 button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     align-items: center;
     text-align: center;
@@ -1345,6 +1359,22 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 .theme-dark .c-nav-btn:hover {
     background: rgba(96, 165, 250, 0.12);
     color: #93c5fd;
+}
+
+/* Nav: switch from pill to rounded rect on narrow screens to avoid awkward wrapping */
+@media (max-width: 520px) {
+    .c-nav {
+        border-radius: 16px;
+        padding: 0.4rem 0.5rem;
+        gap: 0.35rem;
+    }
+    .c-nav-btn {
+        border-radius: 10px;
+        padding: 0.6rem 0.9rem;
+        font-size: 0.82rem;
+        flex: 1 1 auto;
+        justify-content: center;
+    }
 }
 
 .section {

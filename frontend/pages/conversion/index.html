@@ -222,8 +222,8 @@
         <p class="c-footer__about">
             Built and maintained by one indie developer &mdash; <strong>Oroka Conner</strong>. 728+ downloads across 84 countries and counting.
         </p>
-        <div class="c-footer__bmc" aria-hidden="false">
-            <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="OrokaConner" data-color="#2c6fb8" data-emoji="" data-font="Inter" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00"></script>
+        <div class="c-footer__bmc">
+            <script defer src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="OrokaConner" data-color="#2c6fb8" data-emoji="" data-font="Inter" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00"></script>
         </div>
         <p class="c-footer__text">
             <strong>&copy; 2026 Quiz The Spire</strong><br>
@@ -241,7 +241,7 @@
         </p>
     </footer>
 
-    <script src="/js/themeManager.js"></script>
+    <script src="/js/themeManager.js" defer></script>
     <script>
     // Update stats from API (static fallback already in HTML)
     fetch('/api/v1/download/analytics')
