@@ -436,7 +436,7 @@ from datetime import datetime
 from pathlib import Path
 
 DOWNLOAD_TRACKER_FILE = os.path.join(os.path.dirname(__file__), 'download_tracker.json')
-CONVERSION_FILE_PATH = os.path.join(os.path.dirname(__file__), '../frontend/downloads/ConversionTheSpireReborn.zip')
+CONVERSION_FILE_PATH = os.path.join(os.path.dirname(__file__), '../frontend/downloads/ConvertTheSpireReborn.zip')
 CONVERSION_APK_PATH = os.path.join(os.path.dirname(__file__), '../frontend/downloads/ConvertTheSpireReborn.apk')
 CONVERSION_LINUX_PATH = os.path.join(os.path.dirname(__file__), '../frontend/downloads/linux.zip')
 DOWNLOAD_TRACKER_LOCK = Lock()
@@ -683,35 +683,11 @@ def _parse_browser(ua: str) -> str:
         return "CLI"
     return "Other"
 
-def record_download_start(client_ip: str, user_agent: str = ""):
-    """Record when a download starts."""
-    with DOWNLOAD_TRACKER_LOCK:
-        tracker = load_download_tracker()
-        tracker = reset_tracker_if_new_month(tracker)
-        
-        if client_ip not in tracker["ips"]:
-            tracker["ips"][client_ip] = {
-                "count": 0,
-                "bandwidth_gb": 0.0,
-                "active_downloads": 0,
-                "last_download": None
-            }
-        
-        tracker["ips"][client_ip]["active_downloads"] = tracker["ips"][client_ip].get("active_downloads", 0) + 1
-        tracker["ips"][client_ip]["download_started_at"] = datetime.now().isoformat()
-
-        # Store platform info from user-agent (only keep latest per IP)
-        if user_agent:
-            tracker["ips"][client_ip]["platform"] = _parse_platform(user_agent)
-            tracker["ips"][client_ip]["browser"] = _parse_browser(user_agent)
-            tracker["ips"][client_ip]["user_agent"] = user_agent[:256]  # truncate
-
-        save_download_tracker(tracker)
-
 def record_download_complete(client_ip: str, bytes_downloaded: int):
     """Record when a download completes."""
     with DOWNLOAD_TRACKER_LOCK:
         tracker = load_download_tracker()
+        tracker = reset_tracker_if_new_month(tracker)
         
         if client_ip not in tracker["ips"]:
             tracker["ips"][client_ip] = {
@@ -734,6 +710,7 @@ def record_download_cancel(client_ip: str, bytes_sent: int = 0):
     """Record when a download is cancelled, including any partial bandwidth used."""
     with DOWNLOAD_TRACKER_LOCK:
         tracker = load_download_tracker()
+        tracker = reset_tracker_if_new_month(tracker)
         
         if client_ip in tracker["ips"]:
             tracker["ips"][client_ip]["active_downloads"] = max(0, tracker["ips"][client_ip].get("active_downloads", 1) - 1)
@@ -14184,13 +14161,19 @@ async def download_conversion(request: Request):
     if not allowed:
         raise HTTPException(status_code=429, detail=message)
     
-    file_size = os.path.getsize(CONVERSION_FILE_PATH)
+    try:
+        file_size = os.path.getsize(CONVERSION_FILE_PATH)
+    except OSError:
+        record_download_cancel(client_ip, 0)
+        raise HTTPException(status_code=404, detail="Download file not found")
+
     return StreamingResponse(
         _tracked_stream(CONVERSION_FILE_PATH, client_ip, "Windows download"),
         media_type="application/zip",
         headers={
-            "Content-Disposition": "attachment; filename=ConversionTheSpireReborn.zip",
-            "Content-Length": str(file_size)
+            "Content-Disposition": "attachment; filename=ConvertTheSpireReborn.zip",
+            "Content-Length": str(file_size),
+            "Cache-Control": "no-store",
         }
     )
 
@@ -14257,13 +14240,19 @@ async def download_conversion_apk(request: Request):
     if not allowed:
         raise HTTPException(status_code=429, detail=message)
     
-    file_size = os.path.getsize(CONVERSION_APK_PATH)
+    try:
+        file_size = os.path.getsize(CONVERSION_APK_PATH)
+    except OSError:
+        record_download_cancel(client_ip, 0)
+        raise HTTPException(status_code=404, detail="APK download file not found")
+
     return StreamingResponse(
         _tracked_stream(CONVERSION_APK_PATH, client_ip, "APK download"),
         media_type="application/vnd.android.package-archive",
         headers={
             "Content-Disposition": "attachment; filename=ConvertTheSpireReborn.apk",
-            "Content-Length": str(file_size)
+            "Content-Length": str(file_size),
+            "Cache-Control": "no-store",
         }
     )
 
@@ -14283,13 +14272,19 @@ async def download_conversion_linux(request: Request):
     if not allowed:
         raise HTTPException(status_code=429, detail=message)
     
-    file_size = os.path.getsize(CONVERSION_LINUX_PATH)
+    try:
+        file_size = os.path.getsize(CONVERSION_LINUX_PATH)
+    except OSError:
+        record_download_cancel(client_ip, 0)
+        raise HTTPException(status_code=404, detail="Linux download file not found")
+
     return StreamingResponse(
         _tracked_stream(CONVERSION_LINUX_PATH, client_ip, "Linux download"),
         media_type="application/zip",
         headers={
             "Content-Disposition": "attachment; filename=linux.zip",
-            "Content-Length": str(file_size)
+            "Content-Length": str(file_size),
+            "Cache-Control": "no-store",
         }
     )
 
