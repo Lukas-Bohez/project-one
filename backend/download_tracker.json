@@ -8417,10 +8417,10 @@
       "user_agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0"
     },
     "171.79.62.28": {
-      "count": 0,
-      "bandwidth_gb": 0.0,
-      "active_downloads": 1,
-      "last_download": null,
+      "count": 1,
+      "bandwidth_gb": 0.2502279346808791,
+      "active_downloads": 0,
+      "last_download": "2026-03-05T21:26:43.004834",
       "download_started_at": "2026-03-05T21:19:40.745026",
       "platform": "Android",
       "browser": "Chrome",
@@ -8428,7 +8428,7 @@
     }
   },
   "last_reset_month": "2026-03",
-  "total_monthly_bandwidth_gb": 15.91877671610564,
+  "total_monthly_bandwidth_gb": 16.16900465078652,
   "file_size_gb": 0.0126953125,
   "archived_months": {
     "2026-02": {
