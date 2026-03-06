@@ -23,11 +23,11 @@
     
     <!-- Critical CSS inlined for faster initial render -->
     <style>
-        body{margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f4f8fc;min-height:100vh;position:relative}
+        body{margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f4f8fc;min-height:100vh;display:flex;flex-direction:column}
         [data-theme="dark"] body,.theme-dark body{background:#0f1112;color:#e6eef8}
-        .c-header{background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 40%,#2563eb 100%);color:#fff;padding:2rem 1rem;text-align:center;box-shadow:0 4px 20px rgba(15,23,42,.25);overflow:hidden}
+        .c-header{background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 35%,#2563eb 70%,#3b82f6 100%);color:#fff;padding:2.75rem 1rem 2.5rem;text-align:center;box-shadow:0 4px 24px rgba(15,23,42,.3);overflow:hidden;flex-shrink:0}
         .c-header h1{margin:0;font-size:1.25rem;font-weight:600;color:#fff}
-        .o-container{max-width:1200px;padding:0 1rem;margin:1rem auto}
+        .o-container{max-width:1200px;padding:0 1rem;margin:1rem auto;flex:1 0 auto}
         .c-btn{display:inline-flex;align-items:center;justify-content:center;padding:1rem 1.5rem;border:1.5px solid #e2e8f0;border-radius:12px;font-size:1rem;font-weight:500;cursor:pointer;background:#fff;color:#1e293b;min-height:44px;transition:all .2s ease}
         [data-theme="dark"] .c-btn,.theme-dark .c-btn{background:#1f2326;color:#e2e8f0;border-color:#2a3034}
         .spire-background{position:fixed;top:0;left:0;width:100%;height:100vh;z-index:-1;overflow:hidden}
@@ -92,6 +92,19 @@
 
     <main id="main-content" class="o-container">
 
+        <!-- =============================================
+             TAB NAVIGATION
+             ============================================= -->
+        <nav class="c-nav" aria-label="Site sections">
+            <button class="c-nav-btn active" data-section="converter"><i class="fa-solid fa-arrows-rotate"></i> Converter</button>
+            <button class="c-nav-btn" data-section="games"><i class="fa-solid fa-gamepad"></i> Quiz &amp; Games</button>
+            <button class="c-nav-btn" data-section="tools"><i class="fa-solid fa-toolbox"></i> Tools &amp; Content</button>
+            <button class="c-nav-btn" data-section="support"><i class="fa-solid fa-life-ring"></i> Support</button>
+            <button class="c-nav-btn" data-section="lofi"><i class="fa-solid fa-headphones"></i> Lofi Extension</button>
+        </nav>
+
+        <!-- Converter Section -->
+        <div id="converter-section" class="section active">
         <!-- =============================================
              HERO: Convert The Spire Reborn  (#1 promo)
              ============================================= -->
@@ -258,21 +271,11 @@
                 </div>
             </div>
         </div>
+        </div>
 
-       
-
-        <!-- =============================================
-             TAB NAVIGATION
-             ============================================= -->
-        <nav class="c-nav" aria-label="Site sections">
-            <button class="c-nav-btn active" data-section="games"><i class="fa-solid fa-gamepad"></i> Quiz &amp; Games</button>
-            <button class="c-nav-btn" data-section="tools"><i class="fa-solid fa-toolbox"></i> Tools &amp; Content</button>
-            <button class="c-nav-btn" data-section="support"><i class="fa-solid fa-life-ring"></i> Support</button>
-            <button class="c-nav-btn" data-section="lofi"><i class="fa-solid fa-headphones"></i> Lofi Extension</button>
-        </nav>
         
         <!-- Quiz & Games Section -->
-        <div id="games-section" class="section active">
+        <div id="games-section" class="section">
             <div class="c-section-panel">
                 <h2 class="c-section-title">Quiz &amp; Games</h2>
                 <p class="c-section-lead">Pick a mode to start playing.</p>
