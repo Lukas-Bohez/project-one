@@ -1037,13 +1037,13 @@ function changeTaskStatus(taskId, newStatus) {
     
     if (newStatus === 'completed') {
         task.completed_at = new Date().toISOString();
-        showDemoNotification(`<i class="fa-solid fa-check"></i> Task "${task.title}" completed!`, 'success');
+        showDemoNotification(`✓ Task "${task.title}" completed!`, 'success');
     } else if (newStatus === 'in_progress') {
         task.completed_at = null;
-        showDemoNotification(`<i class="fa-solid fa-play"></i> Task "${task.title}" started`, 'info');
+        showDemoNotification(`▶ Task "${task.title}" started`, 'info');
     } else if (newStatus === 'todo') {
         task.completed_at = null;
-        showDemoNotification(`<i class="fa-solid fa-undo"></i> Task "${task.title}" reopened`, 'info');
+        showDemoNotification(`↺ Task "${task.title}" reopened`, 'info');
     } else {
         const shared = window.ManageShared;
         showDemoNotification(
@@ -1123,7 +1123,7 @@ function toggleSubtaskStatus(taskId, subtaskId, event) {
         if (allCompleted) {
             task.status = 'completed';
             task.completed_at = new Date().toISOString();
-            showDemoNotification(`<i class="fa-solid fa-star"></i> All subtasks done! Task "${task.title}" completed!`, 'success');
+            showDemoNotification(`★ All subtasks done! Task "${task.title}" completed!`, 'success');
         } else if (task.status === 'todo') {
             task.status = 'in_progress';
         }
@@ -1196,8 +1196,8 @@ function showDemoNotification(message, type = 'info') {
 }
 
 function refreshDemo() {
-    const activeBtn = document.querySelector('.view-switch-btn.is-active');
-    const currentView = activeBtn ? activeBtn.dataset.view : 'dashboard';
+    const activeBtn = document.querySelector('.view-switch-btn[data-view].is-active');
+    const currentView = activeBtn ? activeBtn.dataset.view : 'boss';
     const container = document.getElementById('demoAppContainer');
     if (container) {
         container.innerHTML = currentView === 'boss' ? renderBossView() : renderEmployeeView();
@@ -1209,14 +1209,14 @@ function getCurrentTheme() {
     if (rootTheme) return rootTheme;
     if (document.body.classList.contains('theme-dark')) return 'dark';
     if (document.body.classList.contains('theme-light')) return 'light';
-    return localStorage.getItem('theme') || 'light';
+    return localStorage.getItem('quiz-theme-preference') || 'light';
 }
 
 function setTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     document.body.classList.toggle('theme-dark', theme === 'dark');
     document.body.classList.toggle('theme-light', theme === 'light');
-    localStorage.setItem('theme', theme);
+    localStorage.setItem('quiz-theme-preference', theme);
     window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme } }));
 }
 
@@ -1225,10 +1225,6 @@ function updateThemeToggle() {
     if (!btn) return;
     const isDark = getCurrentTheme() === 'dark';
     btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
-    const icon = btn.querySelector('i');
-    const label = btn.querySelector('span');
-    if (icon) icon.className = `fa-solid ${isDark ? 'fa-sun' : 'fa-moon'}`;
-    if (label) label.textContent = isDark ? 'Light Mode' : 'Dark Mode';
 }
 
 function toggleDemoTheme() {
@@ -1249,8 +1245,8 @@ function initializeDemo() {
     // Render initial boss view
     container.innerHTML = renderBossView();
     
-    // Setup view switcher
-    const viewButtons = document.querySelectorAll('.view-switch-btn');
+    // Setup view switcher — only for buttons with data-view (exclude theme toggle)
+    const viewButtons = document.querySelectorAll('.view-switch-btn[data-view]');
     viewButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             viewButtons.forEach(b => b.classList.remove('is-active'));
@@ -1265,7 +1261,7 @@ function initializeDemo() {
     updateThemeToggle();
     window.addEventListener('themeChanged', updateThemeToggle);
     window.addEventListener('storage', (event) => {
-        if (event.key === 'theme') updateThemeToggle();
+        if (event.key === 'quiz-theme-preference') updateThemeToggle();
     });
 }
 
@@ -1371,7 +1367,7 @@ function createNewTask(taskData) {
     const employeeId = parseInt(taskData.assigned_to);
     const employee = demoData.business.employees.find(e => e.id === employeeId);
     
-    const newTask = {
+    const newTask = new ManageShared.models.Task({
         id: demoData.business.tasks.length > 0 ? Math.max(...demoData.business.tasks.map(t => t.id)) + 1 : 1,
         title: taskData.title,
         description: taskData.description || '',
@@ -1384,7 +1380,7 @@ function createNewTask(taskData) {
         created_at: new Date().toISOString(),
         completed_at: null,
         subtasks: []
-    };
+    });
     
     demoData.business.tasks.push(newTask);
     
@@ -1693,7 +1689,7 @@ function employeeLogin(event) {
         }
         
         // Switch to employee view
-        const viewButtons = document.querySelectorAll('.view-switch-btn');
+        const viewButtons = document.querySelectorAll('.view-switch-btn[data-view]');
         viewButtons.forEach(b => b.classList.remove('is-active'));
         const employeeBtn = document.querySelector('.view-switch-btn[data-view="employee"]');
         if (employeeBtn) employeeBtn.classList.add('is-active');
@@ -1721,7 +1717,7 @@ function quickLoginAs(employeeId) {
     }
     
     // Switch to employee view
-    const viewButtons = document.querySelectorAll('.view-switch-btn');
+    const viewButtons = document.querySelectorAll('.view-switch-btn[data-view]');
     viewButtons.forEach(b => b.classList.remove('is-active'));
     const employeeBtn = document.querySelector('.view-switch-btn[data-view="employee"]');
     if (employeeBtn) employeeBtn.classList.add('is-active');

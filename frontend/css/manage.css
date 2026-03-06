@@ -791,6 +791,41 @@ h5,
     color: #ffffff;
 }
 
+/* Theme toggle: visually distinct from view-switch buttons */
+.view-switch-btn.theme-toggle-btn {
+    background: rgba(248, 250, 252, 0.6);
+    border: 1px dashed rgba(148, 163, 184, 0.4);
+    padding: 0.6rem 1.2rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 999px;
+    margin-left: 0.5rem;
+}
+
+.view-switch-btn.theme-toggle-btn:hover {
+    background: rgba(248, 250, 252, 0.95);
+    border-color: #94a3b8;
+    color: #475569;
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.view-switch-btn.theme-toggle-btn i {
+    font-size: 1rem;
+}
+
+[data-theme="dark"] .view-switch-btn.theme-toggle-btn {
+    background: rgba(30, 41, 59, 0.6);
+    border-color: rgba(148, 163, 184, 0.3);
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .view-switch-btn.theme-toggle-btn:hover {
+    background: rgba(30, 41, 59, 0.9);
+    border-color: #60a5fa;
+    color: #93c5fd;
+}
+
 /* Demo App Container */
 .demo-app-container {
     background: var(--color-bg-primary, #ffffff);
