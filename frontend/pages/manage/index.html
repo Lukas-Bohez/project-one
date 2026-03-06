@@ -6,6 +6,14 @@
     <title>Manage the Spire - Employee Management System</title>
     <meta name="description" content="Fair, transparent employee management for small businesses. Scheduling, time tracking, and HR tools built for frontline workers.">
     
+    <!-- FOUC prevention: apply stored theme before first paint -->
+    <script>
+        (function() {
+            var t = localStorage.getItem('quiz-theme-preference');
+            if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        })();
+    </script>
+    
     <!-- Favicons -->
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     
@@ -86,9 +94,11 @@
                             <i class="fa-solid fa-user"></i>
                             <span>Employee Portal</span>
                         </button>
-                        <button class="view-switch-btn theme-toggle-btn" type="button" onclick="toggleDemoTheme()" aria-pressed="false">
-                            <i class="fa-solid fa-moon"></i>
-                            <span>Dark Mode</span>
+                        <button class="view-switch-btn theme-toggle-btn" type="button" id="themeToggleBtn" aria-pressed="false">
+                            <i class="fa-solid fa-moon theme-icon-light" aria-hidden="true"></i>
+                            <i class="fa-solid fa-sun theme-icon-dark" aria-hidden="true"></i>
+                            <span class="theme-label-light">Dark Mode</span>
+                            <span class="theme-label-dark">Light Mode</span>
                         </button>
                     </div>
 
@@ -103,12 +113,18 @@
                 </section>
 
                 <div class="cta-section">
-                    <button class="c-btn c-btn--primary c-btn--lg" id="getStartedBtn">
-                        Get Started Free
-                    </button>
-                    <button class="c-btn c-btn--secondary c-btn--lg" id="loginBtn">
-                        Employee/Manager Login
-                    </button>
+                    <div class="cta-card">
+                        <button class="c-btn c-btn--primary c-btn--lg" id="getStartedBtn">
+                            <i class="fa-solid fa-rocket" aria-hidden="true"></i> Get Started Free
+                        </button>
+                        <span class="cta-hint">New here? Create your business account</span>
+                    </div>
+                    <div class="cta-card">
+                        <button class="c-btn c-btn--secondary c-btn--lg" id="loginBtn">
+                            <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Employee/Manager Login
+                        </button>
+                        <span class="cta-hint">Already have an account? Sign in</span>
+                    </div>
                 </div>
 
                 <div class="pricing-info">
@@ -123,10 +139,10 @@
         </section>
 
         <!-- Login Modal -->
-        <div id="loginModal" class="c-modal" role="dialog" aria-hidden="true">
+        <div id="loginModal" class="c-modal" role="dialog" aria-hidden="true" aria-labelledby="loginModalTitle">
             <div class="c-modal__content manage-modal">
                 <div class="c-modal__header">
-                    <h2>Login to Manage the Spire</h2>
+                    <h2 id="loginModalTitle">Login to Manage the Spire</h2>
                     <button class="c-modal__close" aria-label="Close">&times;</button>
                 </div>
                 <div class="c-modal__body">
@@ -164,10 +180,10 @@
         </div>
 
         <!-- Business Setup Modal -->
-        <div id="setupModal" class="c-modal" role="dialog" aria-hidden="true">
+        <div id="setupModal" class="c-modal" role="dialog" aria-hidden="true" aria-labelledby="setupModalTitle">
             <div class="c-modal__content manage-modal">
                 <div class="c-modal__header">
-                    <h2>Create Your Business Account</h2>
+                    <h2 id="setupModalTitle">Create Your Business Account</h2>
                     <button class="c-modal__close" aria-label="Close">&times;</button>
                 </div>
                 <div class="c-modal__body">
@@ -320,7 +336,7 @@
     </main>
 
     <!-- Employee Modal -->
-    <div id="employeeModal" class="c-modal" role="dialog" aria-hidden="true">
+    <div id="employeeModal" class="c-modal" role="dialog" aria-hidden="true" aria-labelledby="employeeModalTitle">
         <div class="c-modal__content manage-modal employee-modal">
             <div class="c-modal__header">
                 <h2 id="employeeModalTitle">Add Employee</h2>

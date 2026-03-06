@@ -1302,7 +1302,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    max-width: 600px;
+    max-width: 750px;
     margin-left: auto;
     margin-right: auto;
 }

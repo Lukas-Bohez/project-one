@@ -111,6 +111,14 @@ function attachEventListeners() {
         }
     });
     
+    // Close modal on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const openModal = document.querySelector('.c-modal[style*="flex"]');
+            if (openModal) closeModal(openModal);
+        }
+    });
+    
     // Quick action buttons
     document.getElementById('addEmployeeBtn')?.addEventListener('click', () => {
         openEmployeeModal('create');
@@ -812,31 +820,23 @@ function closeModal(modal) {
 function showNotification(message, type = 'info') {
     // Create notification element
     const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
+    notification.className = `manage-notification manage-notification--${type}`;
     notification.textContent = message;
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 1rem 1.5rem;
-        background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff'};
-        color: white;
-        border-radius: 6px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 10000;
-        animation: slideIn 0.3s ease;
-    `;
     
     document.body.appendChild(notification);
     
+    // Trigger reflow then add visible class for animation
+    notification.offsetHeight;
+    notification.classList.add('manage-notification--visible');
+    
     // Remove after 4 seconds
     setTimeout(() => {
-        notification.style.animation = 'slideOut 0.3s ease';
+        notification.classList.remove('manage-notification--visible');
         setTimeout(() => notification.remove(), 300);
     }, 4000);
 }
 
-// Add CSS animations for notifications
+// Add CSS animations and notification styles
 const manageStyle = document.createElement('style');
 manageStyle.textContent = `
     @keyframes slideIn {
@@ -859,6 +859,29 @@ manageStyle.textContent = `
             opacity: 0;
         }
     }
+    .manage-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        color: white;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10000;
+        transform: translateX(400px);
+        opacity: 0;
+        transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+    .manage-notification--visible {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    .manage-notification--success { background: #16a34a; }
+    .manage-notification--error { background: #dc2626; }
+    .manage-notification--info { background: #2563eb; }
+    [data-theme="dark"] .manage-notification--success { background: #15803d; }
+    [data-theme="dark"] .manage-notification--error { background: #b91c1c; }
+    [data-theme="dark"] .manage-notification--info { background: #1d4ed8; }
 `;
 if (!document.head.querySelector('style[data-manage-animations]')) {
     manageStyle.setAttribute('data-manage-animations', 'true');

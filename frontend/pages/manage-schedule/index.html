@@ -6,6 +6,14 @@
     <meta name="description" content="Schedule manager for organizing employee shifts and business operations.">
     <title>Schedule Manager - Manage the Spire</title>
     
+    <!-- FOUC prevention: apply stored theme before first paint -->
+    <script>
+        (function() {
+            var t = localStorage.getItem('quiz-theme-preference');
+            if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        })();
+    </script>
+    
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/manage.css">
