@@ -35,28 +35,45 @@ const getInitialPlaceholderData = () => {
 };
 
 const showSection = (sectionName) => {
-    // Hide all sections
-    const sections = document.querySelectorAll('.section');
-    sections.forEach(section => {
-        section.classList.remove('active');
-    });
+    const current = document.querySelector('.section.active');
+    const target = document.getElementById(`${sectionName}-section`);
 
-    // Remove active class from all nav buttons
+    // Update nav buttons immediately for responsive feel
     const navBtns = document.querySelectorAll('.c-nav-btn');
-    navBtns.forEach(btn => {
-        btn.classList.remove('active');
-    });
+    navBtns.forEach(btn => btn.classList.remove('active'));
+    const activeBtn = document.querySelector(`.c-nav-btn[data-section="${sectionName}"]`);
+    if (activeBtn) activeBtn.classList.add('active');
 
-    // Show the selected section
-    const activeSection = document.getElementById(`${sectionName}-section`);
-    if (activeSection) {
-        activeSection.classList.add('active');
+    // Same section or missing target — nothing to animate
+    if (!target || current === target) return;
+
+    // No current section (first load) — just show
+    if (!current) {
+        target.classList.add('active');
+        return;
     }
 
-    // Add active class to the clicked nav button
-    const activeBtn = document.querySelector(`.c-nav-btn[data-section="${sectionName}"]`);
-    if (activeBtn) {
-        activeBtn.classList.add('active');
+    // Cross-fade: fade out current, then fade in new
+    current.classList.add('section--leaving');
+    const onLeave = () => {
+        current.classList.remove('active', 'section--leaving');
+        current.removeEventListener('animationend', onLeave);
+        target.classList.add('active');
+    };
+
+    // Reduced-motion or instant fallback
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) {
+        current.classList.remove('active', 'section--leaving');
+        target.classList.add('active');
+    } else {
+        current.addEventListener('animationend', onLeave, { once: true });
+        // Safety timeout in case animationend doesn't fire
+        setTimeout(() => {
+            if (current.classList.contains('section--leaving')) {
+                onLeave();
+            }
+        }, 300);
     }
 };
 
