@@ -387,17 +387,19 @@ body:not([data-theme]) .spire-bg-light {
 .c-section-panel {
     background: rgba(255, 255, 255, 0.95);
     border: 1px solid rgba(44, 76, 124, 0.08);
-    border-radius: 20px;
+    border-radius: 24px;
     padding: 2.25rem 2rem;
     box-shadow: 0 8px 32px rgba(15, 23, 42, 0.07), 0 1px 4px rgba(15, 23, 42, 0.04);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
+    max-width: 820px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .c-section-panel:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12), 0 2px 8px rgba(15, 23, 42, 0.06);
+    box-shadow: 0 12px 36px rgba(15, 23, 42, 0.10), 0 2px 8px rgba(15, 23, 42, 0.05);
 }
 
 .section .c-section-panel {
@@ -1423,13 +1425,20 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 
 .section.active {
     display: block;
-    animation: sectionFadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation: sectionFadeIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    min-height: 50vh;
+}
+
+/* Fade-out for the leaving section during cross-fade */
+.section.section--leaving {
+    display: block;
+    animation: sectionFadeOut 0.18s ease-out forwards;
 }
 
 @keyframes sectionFadeIn {
     from {
         opacity: 0;
-        transform: translateY(14px);
+        transform: translateY(12px);
     }
     to {
         opacity: 1;
@@ -1437,10 +1446,25 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     }
 }
 
+@keyframes sectionFadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .section.active {
         animation: none;
         opacity: 1;
+    }
+    .section.section--leaving {
+        animation: none;
+        opacity: 0;
     }
 }
 
@@ -1466,8 +1490,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 .c-product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 56px rgba(15, 23, 42, 0.14), 0 4px 10px rgba(15, 23, 42, 0.06);
+    box-shadow: 0 14px 44px rgba(15, 23, 42, 0.11), 0 3px 8px rgba(15, 23, 42, 0.05);
 }
 
 .c-product-card--hero {
@@ -1951,10 +1974,30 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     display: none;
     align-items: center;
     justify-content: center;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 10000;
 }
 #conversionDownloadModal.is-open {
     display: flex;
+    animation: modalBackdropIn 0.25s ease-out;
 }
+#conversionDownloadModal.is-open .c-modal__content {
+    animation: modalContentIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes modalBackdropIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes modalContentIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
 #conversionDownloadModal .c-modal__content {
     margin: 0;
     padding: 0;

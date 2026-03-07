@@ -175,102 +175,6 @@
                 <p id="statusText"></p>
             </div>
         </section>
-
-        <!-- Download instructions modal -->
-        <div id="conversionDownloadModal" class="c-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="conversionDownloadTitle">
-            <div class="c-modal__content" role="document">
-                <div class="c-modal__header">
-                    <h2 id="conversionDownloadTitle" class="c-modal__title"><i class="fa-solid fa-circle-info"></i> Setup instructions</h2>
-                    <button type="button" class="c-modal__close" aria-label="Close instructions">&times;</button>
-                </div>
-
-                <div class="c-modal__body">
-                    <!-- Platform tabs -->
-                    <div class="c-platform-tabs">
-                        <button class="c-platform-tab active" data-platform="windows"><i class="fa-brands fa-windows"></i> Windows</button>
-                        <button class="c-platform-tab" data-platform="android"><i class="fa-brands fa-android"></i> Android</button>
-                        <button class="c-platform-tab" data-platform="linux"><i class="fa-brands fa-linux"></i> Linux</button>
-                    </div>
-
-                    <!-- Windows instructions -->
-                    <div class="c-platform-panel active" id="platform-windows">
-                        <h3 class="c-modal__section-heading"><i class="fa-brands fa-windows"></i> Windows Installation</h3>
-                        <ol class="c-modal__steps">
-                            <li><span class="c-modal__step-num">1</span> Download <strong>ConversionTheSpireReborn.zip</strong></li>
-                            <li><span class="c-modal__step-num">2</span> Unzip the downloaded file</li>
-                            <li><span class="c-modal__step-num">3</span> Open the unzipped folder and run <strong>ConvertTheSpireReborn.exe</strong></li>
-                        </ol>
-
-                        <div class="c-modal__alert c-modal__alert--warning">
-                            <i class="fa-solid fa-triangle-exclamation c-modal__alert-icon"></i>
-                            <div>
-                                <p class="c-modal__alert-text"><strong>Windows SmartScreen warning:</strong> Because the app is not code-signed, Windows may show a &ldquo;Windows protected your PC&rdquo; warning. This is normal for unsigned software.</p>
-                                <ol class="c-modal__alert-steps">
-                                    <li>Click <strong>&ldquo;More info&rdquo;</strong></li>
-                                    <li>Click <strong>&ldquo;Run anyway&rdquo;</strong></li>
-                                </ol>
-                                <p class="c-modal__alert-text">The app is fully open-source &mdash; you can <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter" target="_blank" rel="noopener">inspect every line of code</a> on GitHub.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Android instructions -->
-                    <div class="c-platform-panel" id="platform-android">
-                        <h3 class="c-modal__section-heading"><i class="fa-brands fa-android"></i> Android Installation</h3>
-                        <ol class="c-modal__steps">
-                            <li><span class="c-modal__step-num">1</span> Download <strong>ConvertTheSpireReborn.apk</strong> to your Android device</li>
-                            <li><span class="c-modal__step-num">2</span> Open the downloaded <strong>.apk</strong> file</li>
-                            <li><span class="c-modal__step-num">3</span> If prompted, enable <strong>&ldquo;Install from unknown sources&rdquo;</strong> for your browser</li>
-                            <li><span class="c-modal__step-num">4</span> Tap <strong>&ldquo;Install&rdquo;</strong> and wait for it to finish</li>
-                            <li><span class="c-modal__step-num">5</span> Open the app from your app drawer</li>
-                        </ol>
-
-                        <div class="c-modal__alert c-modal__alert--warning">
-                            <i class="fa-solid fa-triangle-exclamation c-modal__alert-icon"></i>
-                            <div>
-                                <p class="c-modal__alert-text"><strong>Unofficial APK:</strong> This APK is not distributed through the Google Play Store. Android will warn you about installing apps from unknown sources &mdash; this is standard for any APK installed outside the Play Store.</p>
-                                <p class="c-modal__alert-text"><strong>To enable installation:</strong></p>
-                                <ol class="c-modal__alert-steps">
-                                    <li>Go to <strong>Settings &rarr; Security</strong> (or <strong>Settings &rarr; Apps &rarr; Special access</strong>)</li>
-                                    <li>Enable <strong>&ldquo;Install unknown apps&rdquo;</strong> for your browser</li>
-                                    <li>Try opening the APK again</li>
-                                </ol>
-                                <p class="c-modal__alert-text">The app is fully open-source &mdash; you can <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter" target="_blank" rel="noopener">inspect every line of code</a> on GitHub.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Linux instructions -->
-                    <div class="c-platform-panel" id="platform-linux">
-                        <h3 class="c-modal__section-heading"><i class="fa-brands fa-linux"></i> Linux Installation</h3>
-                        <ol class="c-modal__steps">
-                            <li><span class="c-modal__step-num">1</span> Download <strong>linux.zip</strong> to your Linux machine</li>
-                            <li><span class="c-modal__step-num">2</span> Unzip the file</li>
-                            <li><span class="c-modal__step-num">3</span> Run <strong>convert_the_spire_reborn</strong> (double-click or <strong>./convert_the_spire_reborn</strong>)</li>
-                        </ol>
-                    </div>
-
-                    <div class="c-modal__alert">
-                        <i class="fa-solid fa-circle-exclamation c-modal__alert-icon"></i>
-                        <div>
-                            <p class="c-modal__alert-text"><strong>Bandwidth note:</strong> Downloads are throttled to 2&nbsp;MB/s to keep the server stable for everyone.</p>
-                        </div>
-                    </div>
-
-                    <div class="c-modal__meta">
-                        <span class="c-badge c-badge--green c-badge--sm"><i class="fa-solid fa-scale-balanced"></i> GPLv3</span>
-                        <span class="c-badge c-badge--slate c-badge--sm"><i class="fa-brands fa-windows"></i> Windows</span>
-                        <span class="c-badge c-badge--green c-badge--sm"><i class="fa-brands fa-android"></i> Android</span>
-                        <span class="c-badge c-badge--slate c-badge--sm"><i class="fa-brands fa-linux"></i> Linux</span>
-                        <span class="c-badge c-badge--blue c-badge--sm"><i class="fa-solid fa-puzzle-piece"></i> Flutter</span>
-                    </div>
-                </div>
-
-                <div class="c-modal__footer">
-                    <p class="c-modal__note">Like the app? <a href="https://buymeacoffee.com/OrokaConner" target="_blank" rel="noopener">Buy me a coffee</a> to support development &mdash; features like auto-update are on the roadmap.</p>
-                </div>
-            </div>
-        </div>
         </div>
 
         
@@ -407,6 +311,102 @@
         </div>
     
     </main>
+
+    <!-- Download instructions modal — outside main so CSS transforms don't trap position:fixed -->
+    <div id="conversionDownloadModal" class="c-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="conversionDownloadTitle">
+        <div class="c-modal__content" role="document">
+            <div class="c-modal__header">
+                <h2 id="conversionDownloadTitle" class="c-modal__title"><i class="fa-solid fa-circle-info"></i> Setup instructions</h2>
+                <button type="button" class="c-modal__close" aria-label="Close instructions">&times;</button>
+            </div>
+
+            <div class="c-modal__body">
+                <!-- Platform tabs -->
+                <div class="c-platform-tabs">
+                    <button class="c-platform-tab active" data-platform="windows"><i class="fa-brands fa-windows"></i> Windows</button>
+                    <button class="c-platform-tab" data-platform="android"><i class="fa-brands fa-android"></i> Android</button>
+                    <button class="c-platform-tab" data-platform="linux"><i class="fa-brands fa-linux"></i> Linux</button>
+                </div>
+
+                <!-- Windows instructions -->
+                <div class="c-platform-panel active" id="platform-windows">
+                    <h3 class="c-modal__section-heading"><i class="fa-brands fa-windows"></i> Windows Installation</h3>
+                    <ol class="c-modal__steps">
+                        <li><span class="c-modal__step-num">1</span> Download <strong>ConversionTheSpireReborn.zip</strong></li>
+                        <li><span class="c-modal__step-num">2</span> Unzip the downloaded file</li>
+                        <li><span class="c-modal__step-num">3</span> Open the unzipped folder and run <strong>ConvertTheSpireReborn.exe</strong></li>
+                    </ol>
+
+                    <div class="c-modal__alert c-modal__alert--warning">
+                        <i class="fa-solid fa-triangle-exclamation c-modal__alert-icon"></i>
+                        <div>
+                            <p class="c-modal__alert-text"><strong>Windows SmartScreen warning:</strong> Because the app is not code-signed, Windows may show a &ldquo;Windows protected your PC&rdquo; warning. This is normal for unsigned software.</p>
+                            <ol class="c-modal__alert-steps">
+                                <li>Click <strong>&ldquo;More info&rdquo;</strong></li>
+                                <li>Click <strong>&ldquo;Run anyway&rdquo;</strong></li>
+                            </ol>
+                            <p class="c-modal__alert-text">The app is fully open-source &mdash; you can <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter" target="_blank" rel="noopener">inspect every line of code</a> on GitHub.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Android instructions -->
+                <div class="c-platform-panel" id="platform-android">
+                    <h3 class="c-modal__section-heading"><i class="fa-brands fa-android"></i> Android Installation</h3>
+                    <ol class="c-modal__steps">
+                        <li><span class="c-modal__step-num">1</span> Download <strong>ConvertTheSpireReborn.apk</strong> to your Android device</li>
+                        <li><span class="c-modal__step-num">2</span> Open the downloaded <strong>.apk</strong> file</li>
+                        <li><span class="c-modal__step-num">3</span> If prompted, enable <strong>&ldquo;Install from unknown sources&rdquo;</strong> for your browser</li>
+                        <li><span class="c-modal__step-num">4</span> Tap <strong>&ldquo;Install&rdquo;</strong> and wait for it to finish</li>
+                        <li><span class="c-modal__step-num">5</span> Open the app from your app drawer</li>
+                    </ol>
+
+                    <div class="c-modal__alert c-modal__alert--warning">
+                        <i class="fa-solid fa-triangle-exclamation c-modal__alert-icon"></i>
+                        <div>
+                            <p class="c-modal__alert-text"><strong>Unofficial APK:</strong> This APK is not distributed through the Google Play Store. Android will warn you about installing apps from unknown sources &mdash; this is standard for any APK installed outside the Play Store.</p>
+                            <p class="c-modal__alert-text"><strong>To enable installation:</strong></p>
+                            <ol class="c-modal__alert-steps">
+                                <li>Go to <strong>Settings &rarr; Security</strong> (or <strong>Settings &rarr; Apps &rarr; Special access</strong>)</li>
+                                <li>Enable <strong>&ldquo;Install unknown apps&rdquo;</strong> for your browser</li>
+                                <li>Try opening the APK again</li>
+                            </ol>
+                            <p class="c-modal__alert-text">The app is fully open-source &mdash; you can <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter" target="_blank" rel="noopener">inspect every line of code</a> on GitHub.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Linux instructions -->
+                <div class="c-platform-panel" id="platform-linux">
+                    <h3 class="c-modal__section-heading"><i class="fa-brands fa-linux"></i> Linux Installation</h3>
+                    <ol class="c-modal__steps">
+                        <li><span class="c-modal__step-num">1</span> Download <strong>linux.zip</strong> to your Linux machine</li>
+                        <li><span class="c-modal__step-num">2</span> Unzip the file</li>
+                        <li><span class="c-modal__step-num">3</span> Run <strong>convert_the_spire_reborn</strong> (double-click or <strong>./convert_the_spire_reborn</strong>)</li>
+                    </ol>
+                </div>
+
+                <div class="c-modal__alert">
+                    <i class="fa-solid fa-circle-exclamation c-modal__alert-icon"></i>
+                    <div>
+                        <p class="c-modal__alert-text"><strong>Bandwidth note:</strong> Downloads are throttled to 2&nbsp;MB/s to keep the server stable for everyone.</p>
+                    </div>
+                </div>
+
+                <div class="c-modal__meta">
+                    <span class="c-badge c-badge--green c-badge--sm"><i class="fa-solid fa-scale-balanced"></i> GPLv3</span>
+                    <span class="c-badge c-badge--slate c-badge--sm"><i class="fa-brands fa-windows"></i> Windows</span>
+                    <span class="c-badge c-badge--green c-badge--sm"><i class="fa-brands fa-android"></i> Android</span>
+                    <span class="c-badge c-badge--slate c-badge--sm"><i class="fa-brands fa-linux"></i> Linux</span>
+                    <span class="c-badge c-badge--blue c-badge--sm"><i class="fa-solid fa-puzzle-piece"></i> Flutter</span>
+                </div>
+            </div>
+
+            <div class="c-modal__footer">
+                <p class="c-modal__note">Like the app? <a href="https://buymeacoffee.com/OrokaConner" target="_blank" rel="noopener">Buy me a coffee</a> to support development &mdash; features like auto-update are on the roadmap.</p>
+            </div>
+        </div>
+    </div>
 
     <footer class="c-footer">
         <p class="c-footer__about">
