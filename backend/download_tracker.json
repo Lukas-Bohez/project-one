@@ -2217,14 +2217,14 @@
       "user_agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Mobile Safari/537.36"
     },
     "178.117.84.66": {
-      "count": 2,
-      "bandwidth_gb": 0.5080134123563766,
+      "count": 3,
+      "bandwidth_gb": 0.5427520060911775,
       "active_downloads": 0,
-      "last_download": "2026-03-05T12:20:57.785314",
-      "download_started_at": "2026-03-05T12:16:47.466487",
-      "platform": "Android",
-      "browser": "Chrome",
-      "user_agent": "Mozilla/5.0 (Linux; Android 11; M7 Build/RQ2A.210505.003; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/116.0.0.0 Safari/537.36"
+      "last_download": "2026-03-07T12:17:25.893512",
+      "download_started_at": "2026-03-07T12:14:04.992456",
+      "platform": "Windows",
+      "browser": "Edge",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36 Edg/145.0.0.0"
     },
     "38.213.31.43": {
       "count": 0,
@@ -7377,14 +7377,14 @@
       "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
     },
     "87.65.229.136": {
-      "count": 37,
-      "bandwidth_gb": 4.514239272102714,
+      "count": 38,
+      "bandwidth_gb": 4.549954428337514,
       "active_downloads": 0,
-      "last_download": "2026-03-07T11:00:26.746795",
-      "download_started_at": "2026-03-07T10:58:17.930594",
-      "platform": "Android",
-      "browser": "Chrome",
-      "user_agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Mobile Safari/537.36"
+      "last_download": "2026-03-07T11:30:06.906136",
+      "download_started_at": "2026-03-07T11:29:52.756072",
+      "platform": "Windows",
+      "browser": "Firefox",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0"
     },
     "84.71.25.241": {
       "count": 1,
@@ -8955,10 +8955,100 @@
       "platform": "Windows",
       "browser": "Chrome",
       "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+    },
+    "188.113.24.238": {
+      "count": 0,
+      "bandwidth_gb": 0.216796875,
+      "active_downloads": 0,
+      "last_download": null,
+      "download_started_at": "2026-03-07T13:07:55.346428",
+      "platform": "Android",
+      "browser": "Chrome",
+      "user_agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Mobile Safari/537.36"
+    },
+    "212.13.159.46": {
+      "count": 1,
+      "bandwidth_gb": 0.034738593734800816,
+      "active_downloads": 0,
+      "last_download": "2026-03-07T12:42:14.544371",
+      "download_started_at": "2026-03-07T12:41:56.479253",
+      "platform": "Windows",
+      "browser": "Chrome",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+    },
+    "188.62.68.156": {
+      "count": 1,
+      "bandwidth_gb": 0.257463738322258,
+      "active_downloads": 0,
+      "last_download": "2026-03-07T13:36:20.790355",
+      "download_started_at": "2026-03-07T13:34:11.941771",
+      "platform": "Android",
+      "browser": "Chrome",
+      "user_agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Mobile Safari/537.36"
+    },
+    "78.100.179.159": {
+      "count": 1,
+      "bandwidth_gb": 0.034738593734800816,
+      "active_downloads": 0,
+      "last_download": "2026-03-07T13:42:46.813736",
+      "download_started_at": "2026-03-07T13:42:28.760479",
+      "platform": "Windows",
+      "browser": "Chrome",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+    },
+    "152.58.43.173": {
+      "count": 0,
+      "bandwidth_gb": 0.0087890625,
+      "active_downloads": 0,
+      "last_download": null,
+      "download_started_at": "2026-03-07T13:59:18.621169",
+      "platform": "iOS",
+      "browser": "Safari",
+      "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.3 Mobile/15E148 Safari/604.1"
+    },
+    "188.116.86.14": {
+      "count": 1,
+      "bandwidth_gb": 0.034738593734800816,
+      "active_downloads": 0,
+      "last_download": "2026-03-07T14:11:40.633146",
+      "download_started_at": "2026-03-07T14:11:22.463165",
+      "platform": "Windows",
+      "browser": "Chrome",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+    },
+    "86.31.35.37": {
+      "count": 1,
+      "bandwidth_gb": 0.034738593734800816,
+      "active_downloads": 0,
+      "last_download": "2026-03-07T14:34:20.630000",
+      "download_started_at": "2026-03-07T14:34:02.565977",
+      "platform": "Windows",
+      "browser": "Firefox",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0"
+    },
+    "103.55.7.191": {
+      "count": 0,
+      "bandwidth_gb": 0.0234375,
+      "active_downloads": 0,
+      "last_download": null,
+      "download_started_at": "2026-03-07T14:36:45.710892",
+      "platform": "Linux",
+      "browser": "Chrome",
+      "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+    },
+    "104.28.163.68": {
+      "count": 1,
+      "bandwidth_gb": 0.058176093734800816,
+      "active_downloads": 0,
+      "last_download": "2026-03-07T14:36:26.613501",
+      "download_started_at": "2026-03-07T14:36:09.394900",
+      "platform": "Windows",
+      "browser": "Chrome",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
     }
   },
   "last_reset_month": "2026-03",
-  "total_monthly_bandwidth_gb": 21.526828007772565,
+  "total_monthly_bandwidth_gb": 22.30089940223843,
   "file_size_gb": 0.0126953125,
   "archived_months": {
     "2026-02": {
