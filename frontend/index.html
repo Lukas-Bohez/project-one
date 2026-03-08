@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Quiz The Spire — A hub for indie tools by Oroka Conner. Download the Convert The Spire Reborn offline media converter, play competitive multiplayer quizzes, try the Lofi Extension, and more.">
+    <meta name="description" content="Quiz The Spire — Open-source tools, games &amp; browser extensions by Oroka Conner. Download Convert The Spire Reborn (v4.2.0) — a cross-platform media downloader, converter &amp; DLNA caster for Windows, Linux &amp; Android. Play multiplayer quizzes, try the Lofi Extension, and more.">
     <title>Quiz The Spire — Tools, Games &amp; More by Oroka Conner</title>
     
     <!-- Ownership & Author Information -->
@@ -48,8 +48,11 @@
         .c-update-banner{display:flex;align-items:center;gap:0.75rem;background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid #f59e0b;border-radius:10px;padding:0.85rem 1.15rem;margin-bottom:1rem;font-size:0.9rem;color:#78350f;box-shadow:0 2px 12px rgba(245,158,11,0.18)}
         .c-update-banner i{color:#d97706;font-size:1.15rem}
         .c-update-banner .c-update-badge{display:inline-block;background:#dc2626;color:#fff;font-size:0.7rem;font-weight:800;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:0.5px;margin-right:2px}
+        .c-update-banner__link{color:#92400e;font-weight:600;text-decoration:none;white-space:nowrap}
+        .c-update-banner__link:hover{text-decoration:underline}
         [data-theme="dark"] .c-update-banner,.theme-dark .c-update-banner{background:linear-gradient(135deg,rgba(120,53,15,0.45),rgba(146,64,14,0.30));border-color:rgba(245,158,11,0.5);color:#fde68a;box-shadow:0 2px 12px rgba(245,158,11,0.12)}
         [data-theme="dark"] .c-update-banner i,.theme-dark .c-update-banner i{color:#fbbf24}
+        [data-theme="dark"] .c-update-banner__link,.theme-dark .c-update-banner__link{color:#fbbf24}
     </style>
     
     <link rel="stylesheet" href="css/styles.css">
@@ -87,7 +90,7 @@
     
     <header class="c-header">
         <h1 class="c-header__title">Quiz The Spire</h1>
-        <p class="c-header__subtitle">Open-source tools, games &amp; extensions — built and maintained by one developer.</p>
+        <p class="c-header__subtitle">Open-source tools, games &amp; extensions &mdash; crafted by a solo developer.</p>
     </header>
 
     <main id="main-content" class="o-container">
@@ -112,24 +115,29 @@
             <div class="c-product-card__badge-row">
                 <span class="c-badge c-badge--green"><i class="fa-solid fa-shield-halved"></i> Open Source</span>
                 <span class="c-badge c-badge--blue"><i class="fa-solid fa-scale-balanced"></i> GPLv3 Licensed</span>
+                <span class="c-badge c-badge--blue"><i class="fa-solid fa-puzzle-piece"></i> Flutter / Dart</span>
                 <span class="c-badge c-badge--slate"><i class="fa-brands fa-windows"></i> Windows</span>
                 <span class="c-badge c-badge--green"><i class="fa-brands fa-android"></i> Android</span>
                 <span class="c-badge c-badge--slate"><i class="fa-brands fa-linux"></i> Linux</span>
             </div>
 
             <h2 class="c-product-card__title">Convert The Spire Reborn</h2>
-            <p class="c-product-card__tagline">A powerful offline converter built with Flutter. Free, open-source, and yours to keep.</p>
+            <p class="c-product-card__tagline">A cross-platform media powerhouse &mdash; download, convert, play, cast, and compute. Native Flutter performance on Windows, Linux &amp; Android.</p>
 
             <div class="c-update-banner">
-                <i class="fa-solid fa-fire"></i>
-                <span><span class="c-update-badge">New</span> <strong>v3.2.2</strong> &mdash; Full HD 1080p video, 320 kbps audio, faster engine and a lot of bug fixes.</span>
+                <i class="fa-solid fa-rocket"></i>
+                <span><span class="c-update-badge">v4.2.0</span> Browser scroll fix, YouTube compatibility, multi-site downloads from 1,800+ sites, DLNA casting &amp; more. <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v4.2.0" target="_blank" rel="noopener" class="c-update-banner__link">View changelog &rarr;</a></span>
             </div>
 
             <ul class="c-feature-list">
-                <li class="c-feature-list__item"><i class="fa-solid fa-bolt"></i> Fast local conversion &mdash; no internet needed</li>
-                <li class="c-feature-list__item"><i class="fa-solid fa-lock"></i> Your files never leave your machine</li>
-                <li class="c-feature-list__item"><i class="fa-solid fa-code-branch"></i> 100% open-source &mdash; inspect every line of code</li>
-                <li class="c-feature-list__item"><i class="fa-solid fa-arrows-rotate"></i> Regular updates &amp; community-driven</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-globe"></i> Built-in browser with smart URL handling &amp; ad blocking</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-download"></i> Download from 1,800+ sites via yt-dlp &mdash; 1080p video, 320 kbps audio</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-shuffle"></i> Convert between 27+ formats &mdash; docs, images, archives &amp; media</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-tv"></i> DLNA / UPnP casting to any TV, speaker, or receiver on your network</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-play"></i> Built-in media player with playlists, queue &amp; library management</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-microchip"></i> Opt-in distributed computing &mdash; donate spare CPU cycles to science</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-lock"></i> 100% open-source under GPLv3 &mdash; your files never leave your machine</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-bolt"></i> Native AOT compiled &mdash; ~200 ms startup, ~80 MB memory</li>
             </ul>
 
             <div class="c-product-card__actions c-product-card__actions--platform">
