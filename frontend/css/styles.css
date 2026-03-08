@@ -262,6 +262,7 @@ body:not([data-theme]) .spire-bg-light {
     position: relative;
     z-index: 1;
     flex: 1 0 auto; /* Sticky footer: main content fills remaining space */
+    overflow-x: hidden; /* Clip side-to-side slide animations */
 }
 
 .o-button-group {
@@ -1425,45 +1426,64 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 
 .section.active {
     display: block;
-    animation: sectionFadeIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     min-height: 50vh;
+    animation: slideInRight 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-/* Fade-out for the leaving section during cross-fade */
+/* Direction-aware enter animations */
+.section.active.slide-from-left {
+    animation-name: slideInLeft;
+}
+.section.active.slide-from-right {
+    animation-name: slideInRight;
+}
+
+/* Leaving section — slides out opposite direction */
 .section.section--leaving {
     display: block;
-    animation: sectionFadeOut 0.18s ease-out forwards;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+    animation: slideOutLeft 0.28s cubic-bezier(0.55, 0, 1, 0.45) forwards;
+}
+.section.section--leaving.slide-out-right {
+    animation-name: slideOutRight;
+}
+.section.section--leaving.slide-out-left {
+    animation-name: slideOutLeft;
 }
 
-@keyframes sectionFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(12px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(60px); }
+    to   { opacity: 1; transform: translateX(0); }
 }
-
-@keyframes sectionFadeOut {
-    from {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    to {
-        opacity: 0;
-        transform: translateY(-8px);
-    }
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-60px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideOutLeft {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(-60px); }
+}
+@keyframes slideOutRight {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(60px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .section.active {
+    .section.active,
+    .section.active.slide-from-left,
+    .section.active.slide-from-right {
         animation: none;
         opacity: 1;
     }
-    .section.section--leaving {
+    .section.section--leaving,
+    .section.section--leaving.slide-out-left,
+    .section.section--leaving.slide-out-right {
         animation: none;
+        display: none;
         opacity: 0;
     }
 }
@@ -1576,7 +1596,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     color: var(--text-secondary);
     font-size: 1.05rem;
     line-height: 1.55;
-    max-width: 600px;
+    max-width: 680px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -1587,7 +1607,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     padding: 0;
     margin: 0 0 1.5rem;
     text-align: left;
-    max-width: 520px;
+    max-width: 620px;
     margin-left: auto;
     margin-right: auto;
 }

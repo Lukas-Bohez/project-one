@@ -34,6 +34,9 @@ const getInitialPlaceholderData = () => {
     };
 };
 
+/* Tab order for directional sliding — index determines left/right */
+const TAB_ORDER = ['converter', 'games', 'tools', 'support', 'lofi'];
+
 const showSection = (sectionName) => {
     const current = document.querySelector('.section.active');
     const target = document.getElementById(`${sectionName}-section`);
@@ -53,28 +56,34 @@ const showSection = (sectionName) => {
         return;
     }
 
-    // Cross-fade: fade out current, then fade in new
-    current.classList.add('section--leaving');
-    const onLeave = () => {
-        current.classList.remove('active', 'section--leaving');
-        current.removeEventListener('animationend', onLeave);
-        target.classList.add('active');
-    };
+    // Determine slide direction based on tab order
+    const currentName = current.id.replace('-section', '');
+    const currentIdx = TAB_ORDER.indexOf(currentName);
+    const targetIdx = TAB_ORDER.indexOf(sectionName);
+    const goingRight = targetIdx > currentIdx;
 
-    // Reduced-motion or instant fallback
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReduced) {
-        current.classList.remove('active', 'section--leaving');
+    // Reduced-motion: instant swap
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        current.classList.remove('active', 'slide-from-left', 'slide-from-right');
         target.classList.add('active');
-    } else {
-        current.addEventListener('animationend', onLeave, { once: true });
-        // Safety timeout in case animationend doesn't fire
-        setTimeout(() => {
-            if (current.classList.contains('section--leaving')) {
-                onLeave();
-            }
-        }, 300);
+        return;
     }
+
+    // Both sections visible simultaneously: old slides out, new slides in
+    current.classList.remove('active');
+    current.classList.add('section--leaving', goingRight ? 'slide-out-left' : 'slide-out-right');
+
+    target.classList.remove('slide-from-left', 'slide-from-right');
+    target.classList.add('active', goingRight ? 'slide-from-right' : 'slide-from-left');
+
+    // Clean up the leaving section after its animation
+    const cleanup = () => {
+        current.classList.remove('section--leaving', 'slide-out-left', 'slide-out-right');
+    };
+    current.addEventListener('animationend', cleanup, { once: true });
+    setTimeout(() => {
+        if (current.classList.contains('section--leaving')) cleanup();
+    }, 400);
 };
 
 const listenToButtons = () => {
