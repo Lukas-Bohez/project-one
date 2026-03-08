@@ -34,56 +34,19 @@ const getInitialPlaceholderData = () => {
     };
 };
 
-/* Tab order for directional sliding — index determines left/right */
-const TAB_ORDER = ['converter', 'games', 'tools', 'support', 'lofi'];
-
 const showSection = (sectionName) => {
     const current = document.querySelector('.section.active');
     const target = document.getElementById(`${sectionName}-section`);
 
-    // Update nav buttons immediately for responsive feel
-    const navBtns = document.querySelectorAll('.c-nav-btn');
-    navBtns.forEach(btn => btn.classList.remove('active'));
+    // Update nav buttons
+    document.querySelectorAll('.c-nav-btn').forEach(btn => btn.classList.remove('active'));
     const activeBtn = document.querySelector(`.c-nav-btn[data-section="${sectionName}"]`);
     if (activeBtn) activeBtn.classList.add('active');
 
-    // Same section or missing target — nothing to animate
     if (!target || current === target) return;
 
-    // No current section (first load) — just show
-    if (!current) {
-        target.classList.add('active');
-        return;
-    }
-
-    // Determine slide direction based on tab order
-    const currentName = current.id.replace('-section', '');
-    const currentIdx = TAB_ORDER.indexOf(currentName);
-    const targetIdx = TAB_ORDER.indexOf(sectionName);
-    const goingRight = targetIdx > currentIdx;
-
-    // Reduced-motion: instant swap
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        current.classList.remove('active', 'slide-from-left', 'slide-from-right');
-        target.classList.add('active');
-        return;
-    }
-
-    // Both sections visible simultaneously: old slides out, new slides in
-    current.classList.remove('active');
-    current.classList.add('section--leaving', goingRight ? 'slide-out-left' : 'slide-out-right');
-
-    target.classList.remove('slide-from-left', 'slide-from-right');
-    target.classList.add('active', goingRight ? 'slide-from-right' : 'slide-from-left');
-
-    // Clean up the leaving section after its animation
-    const cleanup = () => {
-        current.classList.remove('section--leaving', 'slide-out-left', 'slide-out-right');
-    };
-    current.addEventListener('animationend', cleanup, { once: true });
-    setTimeout(() => {
-        if (current.classList.contains('section--leaving')) cleanup();
-    }, 400);
+    if (current) current.classList.remove('active');
+    target.classList.add('active');
 };
 
 const listenToButtons = () => {
