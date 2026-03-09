@@ -21,6 +21,11 @@
     top: 0;
 }
 
+.platform-highlight {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
 /* Prevent horizontal overflow on mobile */
 * {
     box-sizing: border-box;
