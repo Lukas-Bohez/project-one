@@ -85,15 +85,15 @@
 
             <div class="cvt-stats">
                 <div class="cvt-stat">
-                    <span class="cvt-stat__val" id="statDownloads">728</span>
+                    <span class="cvt-stat__val" id="statDownloads">800+ <!-- UPDATE_STATS --></span>
                     <span class="cvt-stat__lbl">Downloads</span>
                 </div>
                 <div class="cvt-stat">
-                    <span class="cvt-stat__val" id="statUsers">660</span>
+                    <span class="cvt-stat__val" id="statUsers">800+ <!-- UPDATE_STATS --></span>
                     <span class="cvt-stat__lbl">Unique Users</span>
                 </div>
                 <div class="cvt-stat">
-                    <span class="cvt-stat__val" id="statCountries">84</span>
+                    <span class="cvt-stat__val" id="statCountries">85 <!-- UPDATE_STATS --></span>
                     <span class="cvt-stat__lbl">Countries</span>
                 </div>
             </div>
@@ -118,7 +118,7 @@
             <div class="cvt-feature">
                 <div class="cvt-feature__icon"><i class="fa-solid fa-film"></i></div>
                 <h3 class="cvt-feature__title">Full HD &amp; High-Quality Audio</h3>
-                <p class="cvt-feature__desc">Convert to MP3 (320 kbps), MP4 (1080p Full HD), and M4A. v3.0.0 brings the best quality yet.</p>
+                <p class="cvt-feature__desc">Convert to MP3 (320 kbps), MP4 (1080p Full HD), and M4A.</p>
             </div>
             <div class="cvt-feature">
                 <div class="cvt-feature__icon"><i class="fa-solid fa-arrows-rotate"></i></div>
@@ -169,14 +169,20 @@
             <details>
                 <summary><i class="fa-solid fa-globe" style="color:var(--primary-color);"></i> What media sources are supported?</summary>
                 <div class="cvt-faq__body">
-                    <p>The converter supports a wide range of online media sources. It works with most publicly accessible media URLs. Conversion happens entirely on your device — nothing is uploaded to any server.</p>
+                    <p>The app uses yt-dlp to support 1,800+ sites including most major video platforms, social media, and public audio hosts. Sites with DRM (Netflix, Disney+, Spotify) are not supported. Some sites (like HiAnime.to) require you to provide browser cookies — see Settings in the app.</p>
                 </div>
             </details>
 
             <details>
                 <summary><i class="fa-solid fa-file-audio" style="color:var(--primary-color);"></i> What output formats are available?</summary>
                 <div class="cvt-faq__body">
-                    <p>You can convert to <strong>MP3</strong> (up to 320 kbps), <strong>MP4</strong> (up to 1080p Full HD), and <strong>M4A</strong>. v3.0.0 added Full HD video and 320 kbps high-quality audio support.</p>
+                    <p>You can convert to a wide variety of formats grouped by category:</p>
+                    <ul style="margin:0.5rem 0;padding-left:1.25rem;">
+                        <li><strong>Documents:</strong> PDF, EPUB, DOCX, HTML, TXT, CSV, JSON, XML, YAML, MD</li>
+                        <li><strong>Images:</strong> PNG, JPG, BMP, GIF, TIFF, WebP, ICO</li>
+                        <li><strong>Archives:</strong> ZIP, TAR.GZ, CBZ</li>
+                        <li><strong>Media:</strong> MP3, WAV, AAC, FLAC, OGG, MP4, MKV, WEBM</li>
+                    </ul>
                 </div>
             </details>
 
@@ -202,16 +208,20 @@
             </details>
 
             <details>
-                <summary><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary-color);"></i> What's new in v3.0.0?</summary>
+                <summary><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary-color);"></i> What's new in v5.0.0?</summary>
                 <div class="cvt-faq__body">
-                    <p><strong>v3.0.0</strong> is the biggest update yet:</p>
                     <ul style="margin:0.5rem 0;padding-left:1.25rem;">
-                        <li>Full HD (1080p) video download support</li>
-                        <li>320 kbps high-quality MP3 audio</li>
-                        <li>Faster conversion engine</li>
-                        <li>Improved stability and error handling</li>
+                        <li>URL bar fixed — no longer renders characters vertically</li>
+                        <li>Tap URL bar to open tab switcher with all open tabs</li>
+                        <li>Browser tab restored to home screen navigation</li>
+                        <li>Chromecast / Google TV discovery via mDNS (<em>_googlecast._tcp</em>)</li>
+                        <li>HiAnime.to and protected sites: browser cookie passthrough support</li>
+                        <li>Cast button no longer hidden behind Android gesture navigation bar</li>
+                        <li>Tab labels shortened for better mobile display</li>
+                        <li>Full null-safety audit — eliminated unsafe null dereferences</li>
+                        <li><code>.gitignore</code> repaired, build artifacts removed from git history</li>
                     </ul>
-                    <p>See the full <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases" target="_blank" rel="noopener">release notes on GitHub</a>.</p>
+                    <p>See the full <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v5.0.0" target="_blank" rel="noopener">release notes on GitHub</a>.</p>
                 </div>
             </details>
         </div>
@@ -269,6 +279,7 @@
         for (const link of links) {
             if (link.textContent.includes(map[platform])) {
                 container.insertBefore(link, container.firstElementChild);
+                link.classList.add('platform-highlight');
                 break;
             }
         }
