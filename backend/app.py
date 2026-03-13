@@ -832,6 +832,23 @@ def record_github_link(client_ip: str, platform: str = "unknown", release_tag: s
         from fastapi.responses import RedirectResponse
         return RedirectResponse(url=GITHUB_RELEASE_URL)
 
+
+    @app.get(ENDPOINT + "/download/conversion/log")
+    def api_download_conversion_log(request: Request, platform: str = "unknown"):
+        """Lightweight logging endpoint: record the click and return the GitHub URL.
+
+        Frontend should call this via fetch(), then navigate the user to the
+        returned `redirect` URL. This avoids relying on browser redirects and
+        works even if static hosting serves the same hrefs.
+        """
+        client_ip = get_client_ip_sync(request)
+        user_agent = request.headers.get('user-agent', '')
+        try:
+            record_github_link(client_ip, platform, release_tag="v5.1.4", user_agent=user_agent)
+        except Exception:
+            pass
+        return JSONResponse(content={"redirect": GITHUB_RELEASE_URL})
+
 # ====================================================
 # Download Analytics — IP geolocation + stats
 # ====================================================

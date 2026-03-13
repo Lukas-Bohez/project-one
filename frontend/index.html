@@ -142,16 +142,16 @@
             </ul>
 
             <div class="c-product-card__actions c-product-card__actions--platform">
-                <a href="/api/v1/download/conversion" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--windows">
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v5.1.4" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--windows">
                     <i class="fa-brands fa-windows"></i>&nbsp; Download (GitHub release)
                 </a>
-                <a href="/api/v1/download/conversion/apk" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--android">
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v5.1.4" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--android">
                     <i class="fa-brands fa-android"></i>&nbsp; Download (GitHub release)
                 </a>
-                <a href="/api/v1/download/conversion/linux" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--linux" title="Supported on older distributions; newer distros should use the Windows build under Wine">
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v5.1.4" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--linux" title="Supported on older distributions; newer distros should use the Windows build under Wine">
                     <i class="fa-brands fa-linux"></i>&nbsp; Download (GitHub release)
                 </a>
-                <a href="/api/v1/download/conversion/macos" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--macos">
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v5.1.4" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--macos">
                     <i class="fa-brands fa-apple"></i>&nbsp; Download (GitHub release)
                 </a>
             </div>
@@ -533,7 +533,7 @@
             document.querySelectorAll('.c-platform-panel').forEach(p => p.classList.toggle('active', p.id === 'platform-windows'));
             modal.classList.add('is-open');
             modal.setAttribute('aria-hidden', 'false');
-            setTimeout(() => { window.location.href = '/api/v1/download/conversion'; }, 500);
+                        setTimeout(() => { window.location.href = 'http://localhost:8001/api/v1/download/conversion'; }, 500);
         } catch (error) {
             console.error('Download error:', error);
             statusText.textContent = '\u274c Error: ' + error.message;
@@ -563,7 +563,7 @@
                     statusText.textContent = '\u2139 Redirecting to GitHub releases...';
                     statusDiv.style.display = 'block';
                     statusDiv.className = 'c-download-status c-download-status--info';
-                    setTimeout(() => { window.location.href = '/api/v1/download/conversion'; }, 600);
+                    setTimeout(() => { window.location.href = 'http://localhost:8001/api/v1/download/conversion'; }, 600);
                     return;
                 }
                 statusText.textContent = '\u274c ' + (error.detail || 'Download not available');
@@ -630,6 +630,29 @@
         });
     })();
     </script>
+    // Ensure download clicks are logged server-side, then open GitHub releases.
+    (function(){
+        const GH = 'https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v5.1.4';
+        const map = [
+            {sel: '.c-btn--cta.c-btn--windows', platform: 'windows'},
+            {sel: '.c-btn--cta.c-btn--android', platform: 'android'},
+            {sel: '.c-btn--cta.c-btn--linux', platform: 'linux'},
+            {sel: '.c-btn--cta.c-btn--macos', platform: 'macos'}
+        ];
+        map.forEach(m => {
+            document.querySelectorAll(m.sel).forEach(a => {
+                a.addEventListener('click', async function(e){
+                    try {
+                        // Fire-and-forget: ensure server logs the click
+                        await fetch('http://localhost:8001/api/v1/download/conversion/log?platform=' + m.platform, { method: 'GET' });
+                    } catch (err) { /* ignore logging errors */ }
+                    // Open GitHub release in a new tab/window
+                    window.open(GH, '_blank', 'noopener');
+                    e.preventDefault();
+                });
+            });
+        });
+    })();
     
     <!-- Trust bar: live download statistics -->
     <script>
