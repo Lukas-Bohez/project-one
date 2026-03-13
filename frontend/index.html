@@ -118,7 +118,7 @@
                 <span class="c-badge c-badge--blue"><i class="fa-solid fa-puzzle-piece"></i> Flutter / Dart</span>
                 <span class="c-badge c-badge--slate"><i class="fa-brands fa-windows"></i> Windows</span>
                 <span class="c-badge c-badge--green"><i class="fa-brands fa-android"></i> Android</span>
-                <span class="c-badge c-badge--slate"><i class="fa-brands fa-linux"></i> Linux</span>
+                <span class="c-badge c-badge--slate" title="Linux builds target older distributions"><i class="fa-brands fa-linux"></i> Linux (older distros)</span>
                 <span class="c-badge c-badge--slate"><i class="fa-brands fa-apple"></i> macOS (untested)</span>
             </div>
 
@@ -396,12 +396,19 @@
 
                 <!-- Linux instructions -->
                 <div class="c-platform-panel" id="platform-linux">
-                    <h3 class="c-modal__section-heading"><i class="fa-brands fa-linux"></i> Linux Installation</h3>
+                    <h3 class="c-modal__section-heading"><i class="fa-brands fa-linux"></i> Linux Installation (older distributions)</h3>
                     <ol class="c-modal__steps">
                         <li><span class="c-modal__step-num">1</span> Download <strong>linux.zip</strong> to your Linux machine</li>
                         <li><span class="c-modal__step-num">2</span> Unzip the file</li>
                         <li><span class="c-modal__step-num">3</span> Run <strong>convert_the_spire_reborn</strong> (double-click or <strong>./convert_the_spire_reborn</strong>)</li>
                     </ol>
+                    <div class="c-modal__alert">
+                        <i class="fa-solid fa-circle-exclamation c-modal__alert-icon"></i>
+                        <div>
+                            <p class="c-modal__alert-text"><strong>Note:</strong> The native Linux build targets older distributions and may not work on newer releases due to library and packaging differences.</p>
+                            <p class="c-modal__alert-text">If you're using a recent Linux distribution, we recommend installing the Windows build and running it under <strong>Wine</strong> for best compatibility.</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- macOS instructions -->

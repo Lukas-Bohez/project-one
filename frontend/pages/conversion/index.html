@@ -86,7 +86,7 @@
                 <span class="c-badge c-badge--blue"><i class="fa-solid fa-scale-balanced"></i> GPLv3 Licensed</span>
                 <span class="c-badge c-badge--slate"><i class="fa-brands fa-windows"></i> Windows</span>
                 <span class="c-badge c-badge--green"><i class="fa-brands fa-android"></i> Android</span>
-                <span class="c-badge c-badge--slate"><i class="fa-brands fa-linux"></i> Linux</span>
+                <span class="c-badge c-badge--slate" title="Linux builds target older distributions"><i class="fa-brands fa-linux"></i> Linux (older distros)</span>
                 <span class="c-badge c-badge--slate"><i class="fa-brands fa-apple"></i> macOS (untested)</span>
             </div>
 
@@ -150,8 +150,8 @@
                 <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--android">
                     <i class="fa-brands fa-android"></i>&nbsp; Download for Android
                 </a>
-                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--linux">
-                    <i class="fa-brands fa-linux"></i>&nbsp; Download for Linux
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--linux" title="Supported on older distributions; newer distros should use Wine">
+                    <i class="fa-brands fa-linux"></i>&nbsp; Download for Linux (older distros)
                 </a>
                 <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--macos">
                     <i class="fa-brands fa-apple"></i>&nbsp; Download for macOS (untested)
@@ -165,7 +165,7 @@
             </p>
         </div>
 
-        <div class="cvt-faq">
+            <div class="cvt-faq">
             <h2>Frequently Asked Questions</h2>
 
             <details>
@@ -213,7 +213,7 @@
             <details>
                 <summary><i class="fa-solid fa-laptop" style="color:var(--primary-color);"></i> What platforms are supported?</summary>
                 <div class="cvt-faq__body">
-                    <p><strong>Windows</strong> (10/11, 64-bit) and <strong>Android</strong> (6.0+). Linux builds exist but are currently **unsupported due to bugs**; please check back later. The app is built with Flutter, providing a native experience on each platform. macOS and iOS support is planned for a future release.</p>
+                    <p><strong>Windows</strong> (10/11, 64-bit) and <strong>Android</strong> (6.0+). Linux builds are provided for older distributions only; newer Linux releases may encounter compatibility issues. If you're on a recent distribution, we recommend installing the <strong>Windows</strong> build and running it under <strong>Wine</strong> for better compatibility. The app is built with Flutter, providing a native experience on each supported platform. macOS and iOS support is planned for a future release.</p>
                 </div>
             </details>
 
