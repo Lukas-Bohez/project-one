@@ -13065,10 +13065,20 @@
       "platform": "Windows",
       "browser": "Chrome",
       "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+    },
+    "106.213.86.145": {
+      "count": 1,
+      "bandwidth_gb": 0.036286137998104095,
+      "active_downloads": 0,
+      "last_download": "2026-03-13T19:22:34.670539",
+      "download_started_at": "2026-03-13T19:22:08.584911",
+      "platform": "Windows",
+      "browser": "Opera",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 OPR/128.0.0.0"
     }
   },
   "last_reset_month": "2026-03",
-  "total_monthly_bandwidth_gb": 60.34682770539075,
+  "total_monthly_bandwidth_gb": 60.383113843388855,
   "file_size_gb": 0.0126953125,
   "archived_months": {
     "2026-02": {

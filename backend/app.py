@@ -722,6 +722,33 @@ def record_download_cancel(client_ip: str, bytes_sent: int = 0):
                 tracker["total_monthly_bandwidth_gb"] = tracker.get("total_monthly_bandwidth_gb", 0) + gb_sent
             save_download_tracker(tracker)
 
+    def record_github_link(client_ip: str, platform: str = "unknown", release_tag: str = None):
+        """Record that we linked a user to the GitHub release for a download.
+
+        This increments the per-IP download count and marks last_download but
+        does NOT attempt to account for bandwidth because the file is hosted
+        on GitHub. Use this to avoid serving files locally.
+        """
+        with DOWNLOAD_TRACKER_LOCK:
+            tracker = load_download_tracker()
+            tracker = reset_tracker_if_new_month(tracker)
+
+            if client_ip not in tracker["ips"]:
+                tracker["ips"][client_ip] = {
+                    "count": 0,
+                    "bandwidth_gb": 0.0,
+                    "active_downloads": 0,
+                    "last_download": None
+                }
+
+            tracker["ips"][client_ip]["count"] = tracker["ips"][client_ip].get("count", 0) + 1
+            tracker["ips"][client_ip]["last_download"] = datetime.now().isoformat()
+            tracker["ips"][client_ip]["platform"] = platform
+            # Track github links separately for analytics if desired
+            tracker.setdefault("github_linked_downloads", 0)
+            tracker["github_linked_downloads"] = tracker.get("github_linked_downloads", 0) + 1
+            save_download_tracker(tracker)
+
     # ----------------------------------------------------
     # Download API endpoints (streaming) — integrate with tracker
     # These endpoints serve the artifacts from the frontend `/downloads/`
@@ -744,45 +771,8 @@ def record_download_cancel(client_ip: str, bytes_sent: int = 0):
         return JSONResponse(content=status)
 
 
-    def _stream_file_generator(path: str, client_ip: str, chunk_size: int = 65536):
-        """Generator that yields file chunks and updates tracker on completion/cancel."""
-        bytes_sent = 0
-        try:
-            with open(path, 'rb') as fh:
-                while True:
-                    chunk = fh.read(chunk_size)
-                    if not chunk:
-                        break
-                    bytes_sent += len(chunk)
-                    yield chunk
-            # Completed successfully
-            try:
-                record_download_complete(client_ip, bytes_sent)
-            except Exception:
-                # Non-fatal: don't break streaming
-                pass
-        except Exception as e:
-            # Generator aborted or read error — record partial / cancelled download
-            try:
-                record_download_cancel(client_ip, bytes_sent)
-            except Exception:
-                pass
-            raise
-
-
-    def _make_stream_response(path: str, filename: str, client_ip: str):
-        from fastapi.responses import StreamingResponse
-        try:
-            size = os.path.getsize(path)
-        except OSError:
-            raise HTTPException(status_code=404, detail="File not found")
-
-        headers = {
-            'Content-Disposition': f'attachment; filename="{filename}"',
-            'Content-Length': str(size)
-        }
-        return StreamingResponse(_stream_file_generator(path, client_ip), media_type='application/octet-stream', headers=headers)
-
+    # Replace local streaming with GitHub release redirects to offload bandwidth.
+    GITHUB_RELEASE_URL = "https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v5.1.4"
 
     @app.get(ENDPOINT + "/download/conversion")
     def api_download_conversion_root(request: Request):
@@ -790,10 +780,15 @@ def record_download_cancel(client_ip: str, bytes_sent: int = 0):
         allowed, message = check_download_allowed(client_ip)
         if not allowed:
             raise HTTPException(status_code=429, detail=message)
-        # Atomically record the start
         ua = request.headers.get('user-agent', '')
-        check_and_start_download(client_ip, ua)
-        return _make_stream_response(CONVERSION_FILE_PATH, 'ConvertTheSpireReborn.zip', client_ip)
+        platform = _parse_platform(ua)
+        try:
+            # Record that we linked the user to GitHub (no bandwidth accounting)
+            record_github_link(client_ip, platform, release_tag="v5.1.4")
+        except Exception:
+            pass
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url=GITHUB_RELEASE_URL)
 
 
     @app.get(ENDPOINT + "/download/conversion/apk")
@@ -803,8 +798,13 @@ def record_download_cancel(client_ip: str, bytes_sent: int = 0):
         if not allowed:
             raise HTTPException(status_code=429, detail=message)
         ua = request.headers.get('user-agent', '')
-        check_and_start_download(client_ip, ua)
-        return _make_stream_response(CONVERSION_APK_PATH, 'ConvertTheSpireReborn.apk', client_ip)
+        platform = _parse_platform(ua)
+        try:
+            record_github_link(client_ip, platform, release_tag="v5.1.4")
+        except Exception:
+            pass
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url=GITHUB_RELEASE_URL)
 
 
     @app.get(ENDPOINT + "/download/conversion/linux")
@@ -814,8 +814,13 @@ def record_download_cancel(client_ip: str, bytes_sent: int = 0):
         if not allowed:
             raise HTTPException(status_code=429, detail=message)
         ua = request.headers.get('user-agent', '')
-        check_and_start_download(client_ip, ua)
-        return _make_stream_response(CONVERSION_LINUX_PATH, 'linux.zip', client_ip)
+        platform = _parse_platform(ua)
+        try:
+            record_github_link(client_ip, platform, release_tag="v5.1.4")
+        except Exception:
+            pass
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url=GITHUB_RELEASE_URL)
 
 
     @app.get(ENDPOINT + "/download/conversion/macos")
@@ -825,8 +830,13 @@ def record_download_cancel(client_ip: str, bytes_sent: int = 0):
         if not allowed:
             raise HTTPException(status_code=429, detail=message)
         ua = request.headers.get('user-agent', '')
-        check_and_start_download(client_ip, ua)
-        return _make_stream_response(CONVERSION_MACOS_PATH, 'ConvertTheSpireReborn-macOS.zip', client_ip)
+        platform = _parse_platform(ua)
+        try:
+            record_github_link(client_ip, platform, release_tag="v5.1.4")
+        except Exception:
+            pass
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url=GITHUB_RELEASE_URL)
 
 # ====================================================
 # Download Analytics — IP geolocation + stats
