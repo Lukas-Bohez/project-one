@@ -144,16 +144,16 @@
             <p style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:1rem;">Free forever. No account required. No installer needed.</p>
 
             <div class="cvt-dl__buttons">
-                <a href="/api/v1/download/conversion" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--windows">
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v5.1.4" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--windows">
                     <i class="fa-brands fa-windows"></i>&nbsp; Download for Windows
                 </a>
-                <a href="/api/v1/download/conversion/apk" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--android">
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v5.1.4" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--android">
                     <i class="fa-brands fa-android"></i>&nbsp; Download (GitHub release)
                 </a>
-                <a href="/api/v1/download/conversion/linux" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--linux" title="Supported on older distributions; newer distros should use the Windows build under Wine">
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v5.1.4" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--linux" title="Supported on older distributions; newer distros should use the Windows build under Wine">
                     <i class="fa-brands fa-linux"></i>&nbsp; Download (GitHub release)
                 </a>
-                <a href="/api/v1/download/conversion/macos" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--macos">
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v5.1.4" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--macos">
                     <i class="fa-brands fa-apple"></i>&nbsp; Download (GitHub release)
                 </a>
             </div>
@@ -293,6 +293,27 @@
             }
         }
     })();
+        // Log download clicks, then open GitHub releases
+        (function(){
+            const GH = 'https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v5.1.4';
+            const map = [
+                {sel: '.c-btn--cta.c-btn--windows', platform: 'windows'},
+                {sel: '.c-btn--cta.c-btn--android', platform: 'android'},
+                {sel: '.c-btn--cta.c-btn--linux', platform: 'linux'},
+                {sel: '.c-btn--cta.c-btn--macos', platform: 'macos'}
+            ];
+            map.forEach(m => {
+                document.querySelectorAll(m.sel).forEach(a => {
+                    a.addEventListener('click', async function(e){
+                        try {
+                            await fetch('http://localhost:8001/api/v1/download/conversion/log?platform=' + m.platform, { method: 'GET' });
+                        } catch (err) { /* ignore logging errors */ }
+                        window.open(GH, '_blank', 'noopener');
+                        e.preventDefault();
+                    });
+                });
+            });
+        })();
     </script>
 </body>
 </html>
