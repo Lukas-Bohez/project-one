@@ -7378,13 +7378,13 @@
     },
     "87.65.229.136": {
       "count": 47,
-      "bandwidth_gb": 5.984662650153041,
+      "bandwidth_gb": 5.993451712653041,
       "active_downloads": 0,
       "last_download": "2026-03-13T18:58:49.707215",
-      "download_started_at": "2026-03-13T18:58:12.332389",
-      "platform": "Linux",
+      "download_started_at": "2026-03-13T19:24:58.094204",
+      "platform": "Windows",
       "browser": "Firefox",
-      "user_agent": "Mozilla/5.0 (X11; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0"
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0"
     },
     "84.71.25.241": {
       "count": 1,
@@ -13075,10 +13075,20 @@
       "platform": "Windows",
       "browser": "Opera",
       "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 OPR/128.0.0.0"
+    },
+    "151.247.208.99": {
+      "count": 1,
+      "bandwidth_gb": 0.036286137998104095,
+      "active_downloads": 0,
+      "last_download": "2026-03-13T19:27:54.721842",
+      "download_started_at": "2026-03-13T19:27:35.650846",
+      "platform": "Windows",
+      "browser": "Opera",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 OPR/127.0.0.0"
     }
   },
   "last_reset_month": "2026-03",
-  "total_monthly_bandwidth_gb": 60.383113843388855,
+  "total_monthly_bandwidth_gb": 60.42818904388696,
   "file_size_gb": 0.0126953125,
   "archived_months": {
     "2026-02": {

@@ -776,67 +776,23 @@ def record_download_cancel(client_ip: str, bytes_sent: int = 0):
 
     @app.get(ENDPOINT + "/download/conversion")
     def api_download_conversion_root(request: Request):
-        client_ip = get_client_ip_sync(request)
-        allowed, message = check_download_allowed(client_ip)
-        if not allowed:
-            raise HTTPException(status_code=429, detail=message)
-        ua = request.headers.get('user-agent', '')
-        platform = _parse_platform(ua)
-        try:
-            # Record that we linked the user to GitHub (no bandwidth accounting)
-            record_github_link(client_ip, platform, release_tag="v5.1.4")
-        except Exception:
-            pass
-        from fastapi.responses import RedirectResponse
-        return RedirectResponse(url=GITHUB_RELEASE_URL)
+        # Downloads are no longer served from this server to avoid bandwidth costs.
+        raise HTTPException(status_code=410, detail=f"Downloads moved to GitHub: {GITHUB_RELEASE_URL}")
 
 
     @app.get(ENDPOINT + "/download/conversion/apk")
     def api_download_conversion_apk(request: Request):
-        client_ip = get_client_ip_sync(request)
-        allowed, message = check_download_allowed(client_ip)
-        if not allowed:
-            raise HTTPException(status_code=429, detail=message)
-        ua = request.headers.get('user-agent', '')
-        platform = _parse_platform(ua)
-        try:
-            record_github_link(client_ip, platform, release_tag="v5.1.4")
-        except Exception:
-            pass
-        from fastapi.responses import RedirectResponse
-        return RedirectResponse(url=GITHUB_RELEASE_URL)
+        raise HTTPException(status_code=410, detail=f"Downloads moved to GitHub: {GITHUB_RELEASE_URL}")
 
 
     @app.get(ENDPOINT + "/download/conversion/linux")
     def api_download_conversion_linux(request: Request):
-        client_ip = get_client_ip_sync(request)
-        allowed, message = check_download_allowed(client_ip)
-        if not allowed:
-            raise HTTPException(status_code=429, detail=message)
-        ua = request.headers.get('user-agent', '')
-        platform = _parse_platform(ua)
-        try:
-            record_github_link(client_ip, platform, release_tag="v5.1.4")
-        except Exception:
-            pass
-        from fastapi.responses import RedirectResponse
-        return RedirectResponse(url=GITHUB_RELEASE_URL)
+        raise HTTPException(status_code=410, detail=f"Downloads moved to GitHub: {GITHUB_RELEASE_URL}")
 
 
     @app.get(ENDPOINT + "/download/conversion/macos")
     def api_download_conversion_macos(request: Request):
-        client_ip = get_client_ip_sync(request)
-        allowed, message = check_download_allowed(client_ip)
-        if not allowed:
-            raise HTTPException(status_code=429, detail=message)
-        ua = request.headers.get('user-agent', '')
-        platform = _parse_platform(ua)
-        try:
-            record_github_link(client_ip, platform, release_tag="v5.1.4")
-        except Exception:
-            pass
-        from fastapi.responses import RedirectResponse
-        return RedirectResponse(url=GITHUB_RELEASE_URL)
+        raise HTTPException(status_code=410, detail=f"Downloads moved to GitHub: {GITHUB_RELEASE_URL}")
 
 # ====================================================
 # Download Analytics — IP geolocation + stats
