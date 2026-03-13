@@ -439,6 +439,7 @@ DOWNLOAD_TRACKER_FILE = os.path.join(os.path.dirname(__file__), 'download_tracke
 CONVERSION_FILE_PATH = os.path.join(os.path.dirname(__file__), '../frontend/downloads/ConvertTheSpireReborn.zip')
 CONVERSION_APK_PATH = os.path.join(os.path.dirname(__file__), '../frontend/downloads/ConvertTheSpireReborn.apk')
 CONVERSION_LINUX_PATH = os.path.join(os.path.dirname(__file__), '../frontend/downloads/linux.zip')
+CONVERSION_MACOS_PATH = os.path.join(os.path.dirname(__file__), '../frontend/downloads/ConvertTheSpireReborn-macOS.zip')
 DOWNLOAD_TRACKER_LOCK = Lock()
 
 def load_download_tracker():
@@ -720,6 +721,112 @@ def record_download_cancel(client_ip: str, bytes_sent: int = 0):
                 tracker["ips"][client_ip]["bandwidth_gb"] = tracker["ips"][client_ip].get("bandwidth_gb", 0.0) + gb_sent
                 tracker["total_monthly_bandwidth_gb"] = tracker.get("total_monthly_bandwidth_gb", 0) + gb_sent
             save_download_tracker(tracker)
+
+    # ----------------------------------------------------
+    # Download API endpoints (streaming) — integrate with tracker
+    # These endpoints serve the artifacts from the frontend `/downloads/`
+    # directory using StreamingResponse so the tracker can record
+    # completed downloads and partial cancellations.
+    # ----------------------------------------------------
+    @app.post(ENDPOINT + "/download/conversion/check")
+    def api_download_conversion_check(request: Request):
+        client_ip = get_client_ip_sync(request)
+        allowed, message = check_download_allowed(client_ip)
+        if not allowed:
+            raise HTTPException(status_code=429, detail=message)
+        return JSONResponse(content={"detail": message})
+
+
+    @app.get(ENDPOINT + "/download/conversion/status")
+    def api_download_conversion_status(request: Request):
+        client_ip = get_client_ip_sync(request)
+        status = get_download_status(client_ip)
+        return JSONResponse(content=status)
+
+
+    def _stream_file_generator(path: str, client_ip: str, chunk_size: int = 65536):
+        """Generator that yields file chunks and updates tracker on completion/cancel."""
+        bytes_sent = 0
+        try:
+            with open(path, 'rb') as fh:
+                while True:
+                    chunk = fh.read(chunk_size)
+                    if not chunk:
+                        break
+                    bytes_sent += len(chunk)
+                    yield chunk
+            # Completed successfully
+            try:
+                record_download_complete(client_ip, bytes_sent)
+            except Exception:
+                # Non-fatal: don't break streaming
+                pass
+        except Exception as e:
+            # Generator aborted or read error — record partial / cancelled download
+            try:
+                record_download_cancel(client_ip, bytes_sent)
+            except Exception:
+                pass
+            raise
+
+
+    def _make_stream_response(path: str, filename: str, client_ip: str):
+        from fastapi.responses import StreamingResponse
+        try:
+            size = os.path.getsize(path)
+        except OSError:
+            raise HTTPException(status_code=404, detail="File not found")
+
+        headers = {
+            'Content-Disposition': f'attachment; filename="{filename}"',
+            'Content-Length': str(size)
+        }
+        return StreamingResponse(_stream_file_generator(path, client_ip), media_type='application/octet-stream', headers=headers)
+
+
+    @app.get(ENDPOINT + "/download/conversion")
+    def api_download_conversion_root(request: Request):
+        client_ip = get_client_ip_sync(request)
+        allowed, message = check_download_allowed(client_ip)
+        if not allowed:
+            raise HTTPException(status_code=429, detail=message)
+        # Atomically record the start
+        ua = request.headers.get('user-agent', '')
+        check_and_start_download(client_ip, ua)
+        return _make_stream_response(CONVERSION_FILE_PATH, 'ConvertTheSpireReborn.zip', client_ip)
+
+
+    @app.get(ENDPOINT + "/download/conversion/apk")
+    def api_download_conversion_apk(request: Request):
+        client_ip = get_client_ip_sync(request)
+        allowed, message = check_download_allowed(client_ip)
+        if not allowed:
+            raise HTTPException(status_code=429, detail=message)
+        ua = request.headers.get('user-agent', '')
+        check_and_start_download(client_ip, ua)
+        return _make_stream_response(CONVERSION_APK_PATH, 'ConvertTheSpireReborn.apk', client_ip)
+
+
+    @app.get(ENDPOINT + "/download/conversion/linux")
+    def api_download_conversion_linux(request: Request):
+        client_ip = get_client_ip_sync(request)
+        allowed, message = check_download_allowed(client_ip)
+        if not allowed:
+            raise HTTPException(status_code=429, detail=message)
+        ua = request.headers.get('user-agent', '')
+        check_and_start_download(client_ip, ua)
+        return _make_stream_response(CONVERSION_LINUX_PATH, 'linux.zip', client_ip)
+
+
+    @app.get(ENDPOINT + "/download/conversion/macos")
+    def api_download_conversion_macos(request: Request):
+        client_ip = get_client_ip_sync(request)
+        allowed, message = check_download_allowed(client_ip)
+        if not allowed:
+            raise HTTPException(status_code=429, detail=message)
+        ua = request.headers.get('user-agent', '')
+        check_and_start_download(client_ip, ua)
+        return _make_stream_response(CONVERSION_MACOS_PATH, 'ConvertTheSpireReborn-macOS.zip', client_ip)
 
 # ====================================================
 # Download Analytics — IP geolocation + stats
