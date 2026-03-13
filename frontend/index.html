@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Quiz The Spire — Open-source tools, games &amp; browser extensions by Oroka Conner. Download Convert The Spire Reborn (v4.2.1) — a cross-platform media downloader, converter &amp; DLNA caster for Windows, Linux &amp; Android. Play multiplayer quizzes, try the Lofi Extension, and more.">
+    <meta name="description" content="Quiz The Spire — Open-source tools, games &amp; browser extensions by Oroka Conner. Download Convert The Spire Reborn (v5.1.2) — improved yt-dlp handling, better browser, improved casting, and top-bar navigation enhancements. Play multiplayer quizzes, try the Lofi Extension, and more.">
     <title>Quiz The Spire — Tools, Games &amp; More by Oroka Conner</title>
     
     <!-- Ownership & Author Information -->
@@ -126,7 +126,7 @@
 
             <div class="c-update-banner">
                 <i class="fa-solid fa-rocket"></i>
-                <span><span class="c-update-badge">v4.2.1</span> Browser scroll fix, YouTube compatibility, multi-site downloads from 1,800+ sites, DLNA casting &amp; more. <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v4.2.0" target="_blank" rel="noopener" class="c-update-banner__link">View changelog &rarr;</a></span>
+                <span><span class="c-update-badge">v5.1.2</span> Better yt-dlp download handling, improved browser and downloading, improved casting, and enhanced top-bar navigation. <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v5.1.2" target="_blank" rel="noopener" class="c-update-banner__link">View changelog &rarr;</a></span>
             </div>
 
             <ul class="c-feature-list">
@@ -147,8 +147,8 @@
                 <button id="conversionDownloadApkBtn" class="c-btn c-btn--cta c-btn--android" onclick="handleAndroidDownload(event)">
                     <i class="fa-brands fa-android"></i>&nbsp; Download for Android
                 </button>
-                <button id="conversionDownloadLinuxBtn" class="c-btn c-btn--cta c-btn--linux disabled" disabled title="Temporarily unsupported">
-                    <i class="fa-brands fa-linux"></i>&nbsp; Linux (temporarily unsupported)
+                <button id="conversionDownloadLinuxBtn" class="c-btn c-btn--cta c-btn--linux" onclick="handleLinuxDownload(event)">
+                    <i class="fa-brands fa-linux"></i>&nbsp; Download for Linux
                 </button>
             </div>
 
