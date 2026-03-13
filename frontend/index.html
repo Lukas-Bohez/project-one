@@ -148,8 +148,8 @@
                 <button id="conversionDownloadApkBtn" class="c-btn c-btn--cta c-btn--android" onclick="handleAndroidDownload(event)">
                     <i class="fa-brands fa-android"></i>&nbsp; Download for Android
                 </button>
-                <button id="conversionDownloadLinuxBtn" class="c-btn c-btn--cta c-btn--linux" onclick="handleLinuxDownload(event)">
-                    <i class="fa-brands fa-linux"></i>&nbsp; Download for Linux
+                <button id="conversionDownloadLinuxBtn" class="c-btn c-btn--cta c-btn--linux" onclick="handleLinuxDownload(event)" title="Supported on older distributions; newer distros should use the Windows build under Wine">
+                    <i class="fa-brands fa-linux"></i>&nbsp; Download for Linux (older distros)
                 </button>
                 <button id="conversionDownloadMacBtn" class="c-btn c-btn--cta c-btn--macos" onclick="handleMacDownload(event)">
                     <i class="fa-brands fa-apple"></i>&nbsp; Download for macOS (untested)
@@ -343,7 +343,7 @@
                 <div class="c-platform-tabs">
                     <button class="c-platform-tab active" data-platform="windows"><i class="fa-brands fa-windows"></i> Windows</button>
                     <button class="c-platform-tab" data-platform="android"><i class="fa-brands fa-android"></i> Android</button>
-                    <button class="c-platform-tab" data-platform="linux"><i class="fa-brands fa-linux"></i> Linux</button>
+                    <button class="c-platform-tab" data-platform="linux" title="Linux builds target older distributions; newer distros should use Wine"><i class="fa-brands fa-linux"></i> Linux (older distros)</button>
                 </div>
 
                 <!-- Windows instructions -->
