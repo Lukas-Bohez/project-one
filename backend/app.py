@@ -722,32 +722,38 @@ def record_download_cancel(client_ip: str, bytes_sent: int = 0):
                 tracker["total_monthly_bandwidth_gb"] = tracker.get("total_monthly_bandwidth_gb", 0) + gb_sent
             save_download_tracker(tracker)
 
-    def record_github_link(client_ip: str, platform: str = "unknown", release_tag: str = None):
-        """Record that we linked a user to the GitHub release for a download.
+def record_github_link(client_ip: str, platform: str = "unknown", release_tag: str = None, user_agent: str = None):
+    """Record that we linked a user to the GitHub release for a download.
 
-        This increments the per-IP download count and marks last_download but
-        does NOT attempt to account for bandwidth because the file is hosted
-        on GitHub. Use this to avoid serving files locally.
-        """
-        with DOWNLOAD_TRACKER_LOCK:
-            tracker = load_download_tracker()
-            tracker = reset_tracker_if_new_month(tracker)
+    This increments the per-IP download count and marks last_download but
+    does NOT attempt to account for bandwidth because the file is hosted
+    on GitHub. Use this to avoid serving files locally.
+    """
+    with DOWNLOAD_TRACKER_LOCK:
+        tracker = load_download_tracker()
+        tracker = reset_tracker_if_new_month(tracker)
 
-            if client_ip not in tracker["ips"]:
-                tracker["ips"][client_ip] = {
-                    "count": 0,
-                    "bandwidth_gb": 0.0,
-                    "active_downloads": 0,
-                    "last_download": None
-                }
+        if client_ip not in tracker["ips"]:
+            tracker["ips"][client_ip] = {
+                "count": 0,
+                "bandwidth_gb": 0.0,
+                "active_downloads": 0,
+                "last_download": None
+            }
 
-            tracker["ips"][client_ip]["count"] = tracker["ips"][client_ip].get("count", 0) + 1
-            tracker["ips"][client_ip]["last_download"] = datetime.now().isoformat()
-            tracker["ips"][client_ip]["platform"] = platform
-            # Track github links separately for analytics if desired
-            tracker.setdefault("github_linked_downloads", 0)
-            tracker["github_linked_downloads"] = tracker.get("github_linked_downloads", 0) + 1
-            save_download_tracker(tracker)
+        tracker["ips"][client_ip]["count"] = tracker["ips"][client_ip].get("count", 0) + 1
+        tracker["ips"][client_ip]["last_download"] = datetime.now().isoformat()
+        tracker["ips"][client_ip]["platform"] = platform
+        if user_agent:
+            tracker["ips"][client_ip]["browser"] = _parse_browser(user_agent)
+            tracker["ips"][client_ip]["user_agent"] = user_agent[:256]
+        # Track github links separately for analytics if desired
+        tracker.setdefault("github_linked_downloads", 0)
+        tracker["github_linked_downloads"] = tracker.get("github_linked_downloads", 0) + 1
+        # Optionally store last release tag referenced
+        if release_tag:
+            tracker["last_github_release_tag"] = release_tag
+        save_download_tracker(tracker)
 
     # ----------------------------------------------------
     # Download API endpoints (streaming) — integrate with tracker
@@ -777,22 +783,54 @@ def record_download_cancel(client_ip: str, bytes_sent: int = 0):
     @app.get(ENDPOINT + "/download/conversion")
     def api_download_conversion_root(request: Request):
         # Downloads are no longer served from this server to avoid bandwidth costs.
-        raise HTTPException(status_code=410, detail=f"Downloads moved to GitHub: {GITHUB_RELEASE_URL}")
+        client_ip = get_client_ip_sync(request)
+        user_agent = request.headers.get('user-agent', '')
+        platform = _parse_platform(user_agent)
+        try:
+            record_github_link(client_ip, platform, release_tag="v5.1.4", user_agent=user_agent)
+        except Exception:
+            pass
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url=GITHUB_RELEASE_URL)
 
 
     @app.get(ENDPOINT + "/download/conversion/apk")
     def api_download_conversion_apk(request: Request):
-        raise HTTPException(status_code=410, detail=f"Downloads moved to GitHub: {GITHUB_RELEASE_URL}")
+        client_ip = get_client_ip_sync(request)
+        user_agent = request.headers.get('user-agent', '')
+        platform = _parse_platform(user_agent)
+        try:
+            record_github_link(client_ip, platform, release_tag="v5.1.4", user_agent=user_agent)
+        except Exception:
+            pass
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url=GITHUB_RELEASE_URL)
 
 
     @app.get(ENDPOINT + "/download/conversion/linux")
     def api_download_conversion_linux(request: Request):
-        raise HTTPException(status_code=410, detail=f"Downloads moved to GitHub: {GITHUB_RELEASE_URL}")
+        client_ip = get_client_ip_sync(request)
+        user_agent = request.headers.get('user-agent', '')
+        platform = _parse_platform(user_agent)
+        try:
+            record_github_link(client_ip, platform, release_tag="v5.1.4", user_agent=user_agent)
+        except Exception:
+            pass
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url=GITHUB_RELEASE_URL)
 
 
     @app.get(ENDPOINT + "/download/conversion/macos")
     def api_download_conversion_macos(request: Request):
-        raise HTTPException(status_code=410, detail=f"Downloads moved to GitHub: {GITHUB_RELEASE_URL}")
+        client_ip = get_client_ip_sync(request)
+        user_agent = request.headers.get('user-agent', '')
+        platform = _parse_platform(user_agent)
+        try:
+            record_github_link(client_ip, platform, release_tag="v5.1.4", user_agent=user_agent)
+        except Exception:
+            pass
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url=GITHUB_RELEASE_URL)
 
 # ====================================================
 # Download Analytics — IP geolocation + stats
