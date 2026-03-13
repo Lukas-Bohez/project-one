@@ -7378,10 +7378,10 @@
     },
     "87.65.229.136": {
       "count": 47,
-      "bandwidth_gb": 5.993451712653041,
-      "active_downloads": 0,
+      "bandwidth_gb": 6.012006400153041,
+      "active_downloads": 1,
       "last_download": "2026-03-13T18:58:49.707215",
-      "download_started_at": "2026-03-13T19:24:58.094204",
+      "download_started_at": "2026-03-13T19:51:55.388721",
       "platform": "Windows",
       "browser": "Firefox",
       "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0"
@@ -13088,7 +13088,7 @@
     }
   },
   "last_reset_month": "2026-03",
-  "total_monthly_bandwidth_gb": 60.42818904388696,
+  "total_monthly_bandwidth_gb": 60.44674373138696,
   "file_size_gb": 0.0126953125,
   "archived_months": {
     "2026-02": {
