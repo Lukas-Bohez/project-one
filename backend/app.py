@@ -688,10 +688,13 @@ from datetime import datetime
 from pathlib import Path
 
 DOWNLOAD_TRACKER_FILE = os.path.join(os.path.dirname(__file__), 'download_tracker.json')
-CONVERSION_FILE_PATH = os.path.join(os.path.dirname(__file__), '../frontend/downloads/ConvertTheSpireReborn.zip')
-CONVERSION_APK_PATH = os.path.join(os.path.dirname(__file__), '../frontend/downloads/ConvertTheSpireReborn.apk')
-CONVERSION_LINUX_PATH = os.path.join(os.path.dirname(__file__), '../frontend/downloads/linux.zip')
-CONVERSION_MACOS_PATH = os.path.join(os.path.dirname(__file__), '../frontend/downloads/ConvertTheSpireReborn-macOS.zip')
+# Protected downloads directory — keep artifacts outside the webroot and
+# configurable via environment variable. Default: backend/protected_downloads
+PROTECTED_DOWNLOADS_DIR = os.getenv('PROTECTED_DOWNLOADS_DIR', os.path.join(os.path.dirname(__file__), 'protected_downloads'))
+CONVERSION_FILE_PATH = os.path.join(PROTECTED_DOWNLOADS_DIR, 'ConvertTheSpireReborn.zip')
+CONVERSION_APK_PATH = os.path.join(PROTECTED_DOWNLOADS_DIR, 'ConvertTheSpireReborn.apk')
+CONVERSION_LINUX_PATH = os.path.join(PROTECTED_DOWNLOADS_DIR, 'linux.zip')
+CONVERSION_MACOS_PATH = os.path.join(PROTECTED_DOWNLOADS_DIR, 'ConvertTheSpireReborn-macOS.zip')
 DOWNLOAD_TRACKER_LOCK = Lock()
 
 def load_download_tracker():
@@ -1009,10 +1012,101 @@ def record_github_link(client_ip: str, platform: str = "unknown", release_tag: s
 
     # ----------------------------------------------------
     # Download API endpoints (streaming) — integrate with tracker
-    # These endpoints serve the artifacts from the frontend `/downloads/`
-    # directory using StreamingResponse so the tracker can record
-    # completed downloads and partial cancellations.
+    # These endpoints serve artifacts from a protected downloads directory
+    # outside the webroot. If a file is not present locally, we fall back
+    # to redirecting to the GitHub release to avoid bandwidth costs.
     # ----------------------------------------------------
+    from fastapi.responses import StreamingResponse, FileResponse
+    import math
+
+    def _open_file_range(path: str, start: int = None, end: int = None):
+        """Yield file chunks honoring an optional byte range."""
+        chunk_size = 64 * 1024
+        with open(path, 'rb') as f:
+            if start:
+                f.seek(start)
+            remaining = None
+            if end is not None and start is not None:
+                remaining = end - start + 1
+            while True:
+                if remaining is not None:
+                    to_read = min(chunk_size, remaining)
+                else:
+                    to_read = chunk_size
+                data = f.read(to_read)
+                if not data:
+                    break
+                yield data
+                if remaining is not None:
+                    remaining -= len(data)
+                    if remaining <= 0:
+                        break
+
+    def _serve_protected_file(path: str, request: Request, filename: str):
+        """Serve a protected file with simple Range support and tracking.
+
+        Returns a StreamingResponse or raises HTTPException on limits.
+        """
+        client_ip = get_client_ip_sync(request)
+        user_agent = request.headers.get('user-agent', '')
+
+        allowed, msg = check_and_start_download(client_ip, user_agent)
+        if not allowed:
+            raise HTTPException(status_code=429, detail=msg)
+
+        try:
+            file_size = os.path.getsize(path)
+        except OSError:
+            # If file is missing, cancel the start and return 404
+            record_download_cancel(client_ip, 0)
+            raise HTTPException(status_code=404, detail="File not found")
+
+        range_header = request.headers.get('range')
+        start = None
+        end = None
+        status_code = 200
+        headers = {
+            'Accept-Ranges': 'bytes',
+            'Content-Disposition': f'attachment; filename="{filename}"'
+        }
+        if range_header:
+            # Expecting header like: bytes=START-END
+            try:
+                _, range_spec = range_header.split('=')
+                start_s, end_s = range_spec.split('-')
+                start = int(start_s) if start_s else 0
+                end = int(end_s) if end_s else file_size - 1
+                if start >= file_size:
+                    record_download_cancel(client_ip, 0)
+                    raise HTTPException(status_code=416, detail='Requested Range Not Satisfiable')
+                status_code = 206
+                headers['Content-Range'] = f'bytes {start}-{end}/{file_size}'
+                headers['Content-Length'] = str(end - start + 1)
+            except Exception:
+                # Malformed Range header — ignore and serve full file
+                start = None
+                end = None
+        else:
+            headers['Content-Length'] = str(file_size)
+
+        def iterfile():
+            bytes_sent = 0
+            try:
+                for chunk in _open_file_range(path, start, end):
+                    bytes_sent += len(chunk)
+                    yield chunk
+                # Record completion
+                record_download_complete(client_ip, bytes_sent)
+            except GeneratorExit:
+                # Client disconnected
+                record_download_cancel(client_ip, bytes_sent)
+                raise
+            except Exception:
+                # On any error, ensure we decrement active_downloads
+                record_download_cancel(client_ip, bytes_sent)
+                raise
+
+        return StreamingResponse(iterfile(), media_type='application/octet-stream', status_code=status_code, headers=headers)
     @app.post(ENDPOINT + "/download/conversion/check")
     def api_download_conversion_check(request: Request):
         client_ip = get_client_ip_sync(request)
@@ -1034,7 +1128,10 @@ def record_github_link(client_ip: str, platform: str = "unknown", release_tag: s
 
     @app.get(ENDPOINT + "/download/conversion")
     def api_download_conversion_root(request: Request):
-        # Downloads are no longer served from this server to avoid bandwidth costs.
+        # Prefer serving from protected storage if the artifact is present.
+        if os.path.exists(CONVERSION_FILE_PATH):
+            return _serve_protected_file(CONVERSION_FILE_PATH, request, 'ConvertTheSpireReborn.zip')
+        # Fallback: record and redirect to GitHub release
         client_ip = get_client_ip_sync(request)
         user_agent = request.headers.get('user-agent', '')
         platform = _parse_platform(user_agent)
@@ -1048,6 +1145,8 @@ def record_github_link(client_ip: str, platform: str = "unknown", release_tag: s
 
     @app.get(ENDPOINT + "/download/conversion/apk")
     def api_download_conversion_apk(request: Request):
+        if os.path.exists(CONVERSION_APK_PATH):
+            return _serve_protected_file(CONVERSION_APK_PATH, request, 'ConvertTheSpireReborn.apk')
         client_ip = get_client_ip_sync(request)
         user_agent = request.headers.get('user-agent', '')
         platform = _parse_platform(user_agent)
@@ -1061,6 +1160,8 @@ def record_github_link(client_ip: str, platform: str = "unknown", release_tag: s
 
     @app.get(ENDPOINT + "/download/conversion/linux")
     def api_download_conversion_linux(request: Request):
+        if os.path.exists(CONVERSION_LINUX_PATH):
+            return _serve_protected_file(CONVERSION_LINUX_PATH, request, 'linux.zip')
         client_ip = get_client_ip_sync(request)
         user_agent = request.headers.get('user-agent', '')
         platform = _parse_platform(user_agent)
@@ -1074,6 +1175,8 @@ def record_github_link(client_ip: str, platform: str = "unknown", release_tag: s
 
     @app.get(ENDPOINT + "/download/conversion/macos")
     def api_download_conversion_macos(request: Request):
+        if os.path.exists(CONVERSION_MACOS_PATH):
+            return _serve_protected_file(CONVERSION_MACOS_PATH, request, 'ConvertTheSpireReborn-macOS.zip')
         client_ip = get_client_ip_sync(request)
         user_agent = request.headers.get('user-agent', '')
         platform = _parse_platform(user_agent)
