@@ -630,7 +630,8 @@
         });
     })();
     </script>
-    // Ensure download clicks are logged server-side, then open GitHub releases.
+    <!-- Ensure download clicks are logged server-side, then open GitHub releases. -->
+    <script>
     (function(){
         const GH = 'https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v5.1.4';
         const map = [
@@ -639,21 +640,24 @@
             {sel: '.c-btn--cta.c-btn--linux', platform: 'linux'},
             {sel: '.c-btn--cta.c-btn--macos', platform: 'macos'}
         ];
-        map.forEach(m => {
-            document.querySelectorAll(m.sel).forEach(a => {
-                a.addEventListener('click', async function(e){
-                    try {
-                        // Fire-and-forget: ensure server logs the click
-                        await fetch('http://localhost:8001/api/v1/download/conversion/log?platform=' + m.platform, { method: 'GET' });
-                    } catch (err) { /* ignore logging errors */ }
-                    // Open GitHub release in a new tab/window
-                    window.open(GH, '_blank', 'noopener');
-                    e.preventDefault();
-                });
-            });
-        });
+
+        document.addEventListener('click', function(e){
+            const selectors = map.map(m => m.sel).join(',');
+            const btn = e.target.closest(selectors);
+            if (!btn) return;
+            e.preventDefault();
+            const m = map.find(x => btn.matches(x.sel));
+            if (!m) return;
+            const url = 'http://localhost:8001/api/v1/download/conversion/log?platform=' + encodeURIComponent(m.platform);
+            if (navigator.sendBeacon) {
+                try { navigator.sendBeacon(url); } catch (err) { /* ignore */ }
+            } else {
+                fetch(url, { method: 'GET', keepalive: true }).catch(() => {});
+            }
+            window.open(GH, '_blank', 'noopener,noreferrer');
+        }, false);
     })();
-    
+    </script>
     <!-- Trust bar: live download statistics -->
     <script>
     (function () {
