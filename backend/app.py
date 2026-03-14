@@ -239,6 +239,16 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Socket.IO Messaging Backend", version="1.0.0", lifespan=lifespan)
 
+# Rate limiter (slowapi) setup
+try:
+    limiter = Limiter(key_func=get_remote_address)
+    app.state.limiter = limiter
+    app.add_middleware(SlowAPIMiddleware)
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+except Exception:
+    # If slowapi fails to initialize, continue without crashing the app
+    limiter = None
+
 # Middleware to catch unhandled errors and prevent crashes
 @app.middleware("http")
 async def log_incoming_requests(request, call_next):
@@ -3292,6 +3302,7 @@ async def register_user(user_credentials: UserCredentials, request: Request):
         )
 
 @app.post("/api/v1/login")
+@limiter.limit("10/minute")
 async def login_user(user_credentials: UserCredentials, request: Request):
     try:
         user_id = UserRepository.authenticate_user(
@@ -3334,6 +3345,7 @@ async def login_user(user_credentials: UserCredentials, request: Request):
 
 # Support chat login endpoint - does NOT create quiz sessions
 @app.post("/api/v1/support/login")
+@limiter.limit("20/minute")
 async def support_login_user(user_credentials: UserCredentials, request: Request):
     """
     Login endpoint for support chat that does NOT create or join quiz sessions.
