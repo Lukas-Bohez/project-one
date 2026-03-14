@@ -104,7 +104,7 @@ const fetchQuestions = async (activeOnly = false) => {
 
     try {
         // --- ATTEMPT TO RETURN FROM CACHE FIRST ---
-        const cachedDataString = localStorage.getItem(CACHE_KEY);
+        const cachedDataString = sessionStorage.getItem(CACHE_KEY);
         if (cachedDataString) {
             const { timestamp, data } = JSON.parse(cachedDataString);
             const now = new Date().getTime();
@@ -118,7 +118,7 @@ const fetchQuestions = async (activeOnly = false) => {
                         timestamp: new Date().getTime(),
                         data: freshData
                     };
-                    localStorage.setItem(CACHE_KEY, JSON.stringify(dataToCache));
+                    sessionStorage.setItem(CACHE_KEY, JSON.stringify(dataToCache));
                     console.log(`[Cache Update] New data saved to local cache for key: ${CACHE_KEY}`);
                     // Update state and refresh UI if on questions tab
                     state.questions = freshData;
@@ -142,7 +142,7 @@ const fetchQuestions = async (activeOnly = false) => {
             timestamp: new Date().getTime(),
             data: freshData
         };
-        localStorage.setItem(CACHE_KEY, JSON.stringify(dataToCache));
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify(dataToCache));
         console.log(`[Cache Update] New data saved to local cache for key: ${CACHE_KEY}`);
 
         return freshData;
@@ -150,7 +150,7 @@ const fetchQuestions = async (activeOnly = false) => {
     } catch (error) {
         console.error('Failed to fetch questions, answers, or themes:', error);
         // if fetching fails, you might want to return the stale cache if available
-        const cachedDataString = localStorage.getItem(CACHE_KEY);
+        const cachedDataString = sessionStorage.getItem(CACHE_KEY);
         if (cachedDataString) {
             const { data } = JSON.parse(cachedDataString);
             console.warn('Returning stale data due to fetch error:', data);

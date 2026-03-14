@@ -21,8 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
  * Load employee from localStorage
  */
 function loadEmployeeFromStorage() {
-    const savedUser = localStorage.getItem('manage_user');
-    const savedBusiness = localStorage.getItem('manage_business');
+    const savedUser = sessionStorage.getItem('manage_user');
+    const savedBusiness = sessionStorage.getItem('manage_business');
     
     if (savedUser && savedBusiness) {
         const user = JSON.parse(savedUser);
@@ -112,7 +112,7 @@ async function loadShifts() {
     if (!currentEmployee?.id) return;
     
     try {
-        const token = localStorage.getItem('manage_token');
+        const token = sessionStorage.getItem('manage_token');
         const headers = {};
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
@@ -185,7 +185,7 @@ async function loadTimeOffRequests() {
     if (!currentEmployee?.id) return;
     
     try {
-        const token = localStorage.getItem('manage_token');
+        const token = sessionStorage.getItem('manage_token');
         const headers = {};
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
@@ -366,7 +366,7 @@ async function handleTimeOffSubmit(e) {
             reason: document.getElementById('requestReason').value.trim()
         };
 
-        const token = localStorage.getItem('manage_token');
+        const token = sessionStorage.getItem('manage_token');
         const headers = {
             'Content-Type': 'application/json'
         };
