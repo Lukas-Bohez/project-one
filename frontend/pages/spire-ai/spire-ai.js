@@ -234,47 +234,77 @@
             if (liveEl) liveEl.textContent = sessionIds.length;
 
             if (sessions.length === 0) {
-                container.innerHTML = `
-                    <div class="sai-no-sessions">
-                        <i class="fas fa-satellite-dish"></i>
-                        <h3>No active sessions right now</h3>
-                        <p>Start a new quiz below or wait for someone to create one!</p>
-                    </div>`;
+                while (container.firstChild) container.removeChild(container.firstChild);
+                const noEl = document.createElement('div');
+                noEl.className = 'sai-no-sessions';
+                const icon = document.createElement('i'); icon.className = 'fas fa-satellite-dish';
+                const h3 = document.createElement('h3'); h3.textContent = 'No active sessions right now';
+                const p = document.createElement('p'); p.textContent = 'Start a new quiz below or wait for someone to create one!';
+                noEl.appendChild(icon); noEl.appendChild(h3); noEl.appendChild(p);
+                container.appendChild(noEl);
                 return;
             }
 
-            container.innerHTML = sessions.map(s => {
+            while (container.firstChild) container.removeChild(container.firstChild);
+            const frag = document.createDocumentFragment();
+            sessions.forEach(s => {
                 const phaseLabel = { voting: 'Voting', theme_display: 'Theme Reveal', quiz: 'Playing' }[s.phase] || 'Waiting';
                 const phaseClass = { voting: 'voting', theme_display: 'playing', quiz: 'playing' }[s.phase] || 'waiting';
-                const themePart = s.theme_name
-                    ? `<span><i class="fas fa-palette"></i> ${esc(s.theme_name)}</span>`
-                    : (s.theme_count > 0 ? `<span><i class="fas fa-palette"></i> ${s.theme_count} themes</span>` : '');
 
-                return `
-                <div class="sai-session-card">
-                    <div class="sai-session-card__header">
-                        <span class="sai-session-card__title">${esc(s.name)}</span>
-                        <span class="sai-session-card__live">Live</span>
-                    </div>
-                    <div class="sai-session-card__meta">
-                        <span><i class="fas fa-users"></i> ${s.player_count} player${s.player_count !== 1 ? 's' : ''}</span>
-                        ${themePart}
-                        <span class="sai-session-card__phase sai-phase--${phaseClass}">${phaseLabel}</span>
-                    </div>
-                    <div class="sai-session-card__actions">
-                        <button class="sai-btn sai-btn--success sai-btn--sm" onclick="joinActiveQuiz(${s.id})">
-                            <i class="fas fa-play"></i> Join
-                        </button>
-                    </div>
-                </div>`;
-            }).join('');
+                const card = document.createElement('div'); card.className = 'sai-session-card';
+
+                const header = document.createElement('div'); header.className = 'sai-session-card__header';
+                const title = document.createElement('span'); title.className = 'sai-session-card__title'; title.textContent = (typeof esc === 'function') ? esc(s.name) : s.name;
+                const live = document.createElement('span'); live.className = 'sai-session-card__live'; live.textContent = 'Live';
+                header.appendChild(title); header.appendChild(live);
+
+                const meta = document.createElement('div'); meta.className = 'sai-session-card__meta';
+                const playersSpan = document.createElement('span');
+                const usersIcon = document.createElement('i'); usersIcon.className = 'fas fa-users';
+                playersSpan.appendChild(usersIcon);
+                playersSpan.appendChild(document.createTextNode(' ' + s.player_count + ' player' + (s.player_count !== 1 ? 's' : '')));
+                meta.appendChild(playersSpan);
+
+                if (s.theme_name) {
+                    const themeSpan = document.createElement('span');
+                    const pal = document.createElement('i'); pal.className = 'fas fa-palette';
+                    themeSpan.appendChild(pal);
+                    themeSpan.appendChild(document.createTextNode(' ' + ((typeof esc === 'function') ? esc(s.theme_name) : s.theme_name)));
+                    meta.appendChild(themeSpan);
+                } else if (s.theme_count > 0) {
+                    const themeSpan = document.createElement('span');
+                    const pal = document.createElement('i'); pal.className = 'fas fa-palette';
+                    themeSpan.appendChild(pal);
+                    themeSpan.appendChild(document.createTextNode(' ' + s.theme_count + ' themes'));
+                    meta.appendChild(themeSpan);
+                }
+
+                const phaseSpan = document.createElement('span'); phaseSpan.className = 'sai-session-card__phase sai-phase--' + phaseClass; phaseSpan.textContent = phaseLabel;
+                meta.appendChild(phaseSpan);
+
+                const actions = document.createElement('div'); actions.className = 'sai-session-card__actions';
+                const joinBtn = document.createElement('button'); joinBtn.className = 'sai-btn sai-btn--success sai-btn--sm';
+                const playIcon = document.createElement('i'); playIcon.className = 'fas fa-play';
+                joinBtn.appendChild(playIcon);
+                joinBtn.appendChild(document.createTextNode(' Join'));
+                joinBtn.addEventListener('click', function () { joinActiveQuiz(s.id); });
+                actions.appendChild(joinBtn);
+
+                card.appendChild(header);
+                card.appendChild(meta);
+                card.appendChild(actions);
+                frag.appendChild(card);
+            });
+            container.appendChild(frag);
         } catch {
-            container.innerHTML = `
-                <div class="sai-no-sessions">
-                    <i class="fas fa-satellite-dish"></i>
-                    <h3>No active sessions</h3>
-                    <p>Start a new quiz below to begin playing</p>
-                </div>`;
+            while (container.firstChild) container.removeChild(container.firstChild);
+            const noEl = document.createElement('div');
+            noEl.className = 'sai-no-sessions';
+            const icon = document.createElement('i'); icon.className = 'fas fa-satellite-dish';
+            const h3 = document.createElement('h3'); h3.textContent = 'No active sessions';
+            const p = document.createElement('p'); p.textContent = 'Start a new quiz below to begin playing';
+            noEl.appendChild(icon); noEl.appendChild(h3); noEl.appendChild(p);
+            container.appendChild(noEl);
         }
     }
 

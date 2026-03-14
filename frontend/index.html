@@ -525,7 +525,19 @@
             const statusRes = await fetch('/api/v1/download/conversion/status');
             if (!statusRes.ok) throw new Error('Status check failed');
             const status = await statusRes.json();
-            statusText.innerHTML = `\u2713 Downloading <strong>ConversionTheSpireReborn.zip</strong><br>Speed: ${status.download_speed_mbps || 2} MB/s`;
+            // Build safe status message
+            while (statusText.firstChild) statusText.removeChild(statusText.firstChild);
+            const okSpan = document.createElement('span');
+            okSpan.textContent = '\u2713 Downloading ';
+            const strong = document.createElement('strong');
+            strong.textContent = 'ConversionTheSpireReborn.zip';
+            okSpan.appendChild(strong);
+            const br = document.createElement('br');
+            const speed = document.createElement('span');
+            speed.textContent = 'Speed: ' + (status.download_speed_mbps || 2) + ' MB/s';
+            statusText.appendChild(okSpan);
+            statusText.appendChild(br);
+            statusText.appendChild(speed);
             statusDiv.style.display = 'block';
             statusDiv.className = 'c-download-status c-download-status--info';
             // Switch modal to Windows tab
@@ -574,7 +586,18 @@
             const statusRes = await fetch('/api/v1/download/conversion/status');
             if (!statusRes.ok) throw new Error('Status check failed');
             const status = await statusRes.json();
-            statusText.innerHTML = `\u2713 Downloading <strong>${fileName}</strong><br>Speed: ${status.download_speed_mbps || 2} MB/s`;
+            while (statusText.firstChild) statusText.removeChild(statusText.firstChild);
+            const okSpan2 = document.createElement('span');
+            okSpan2.textContent = '\u2713 Downloading ';
+            const strong2 = document.createElement('strong');
+            strong2.textContent = fileName;
+            okSpan2.appendChild(strong2);
+            const br2 = document.createElement('br');
+            const speed2 = document.createElement('span');
+            speed2.textContent = 'Speed: ' + (status.download_speed_mbps || 2) + ' MB/s';
+            statusText.appendChild(okSpan2);
+            statusText.appendChild(br2);
+            statusText.appendChild(speed2);
             statusDiv.style.display = 'block';
             statusDiv.className = 'c-download-status c-download-status--info';
 

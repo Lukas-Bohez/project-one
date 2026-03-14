@@ -168,7 +168,26 @@
                 const data = await res.json();
                 render(data);
             } catch (e) {
-                content.innerHTML = '<div class="da-error"><i class="fas fa-exclamation-triangle"></i><p>Failed to load analytics.</p><button class="da-refresh" onclick="window.__refreshAnalytics()" style="margin-top:12px"><i class="fas fa-sync-alt"></i> Retry</button></div>';
+                while (content.firstChild) content.removeChild(content.firstChild);
+                const errDiv = document.createElement('div');
+                errDiv.className = 'da-error';
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-exclamation-triangle';
+                const p = document.createElement('p');
+                p.textContent = 'Failed to load analytics.';
+                const btn = document.createElement('button');
+                btn.className = 'da-refresh';
+                btn.style.marginTop = '12px';
+                btn.type = 'button';
+                btn.addEventListener('click', function () { window.__refreshAnalytics(); });
+                const btnIcon = document.createElement('i');
+                btnIcon.className = 'fas fa-sync-alt';
+                btn.appendChild(btnIcon);
+                btn.appendChild(document.createTextNode(' Retry'));
+                errDiv.appendChild(icon);
+                errDiv.appendChild(p);
+                errDiv.appendChild(btn);
+                content.appendChild(errDiv);
             }
         }
 
@@ -178,136 +197,154 @@
             const allTimeBw = data.all_time_bandwidth_gb || data.total_bandwidth_gb;
             const history = data.monthly_history || [];
 
-            content.innerHTML = `
-                <!-- All-Time Summary Stats -->
-                <div class="da-stats">
-                    <div class="da-stat da-stat--primary">
-                        <span class="da-stat__val">${allTimeDl}</span>
-                        <span class="da-stat__lbl">All-Time Downloads</span>
-                    </div>
-                    <div class="da-stat da-stat--success">
-                        <span class="da-stat__val">${allTimeUsers}</span>
-                        <span class="da-stat__lbl">All-Time Users</span>
-                    </div>
-                    <div class="da-stat da-stat--accent">
-                        <span class="da-stat__val">${data.countries.length}</span>
-                        <span class="da-stat__lbl">Countries</span>
-                    </div>
-                    <div class="da-stat da-stat--danger">
-                        <span class="da-stat__val">${allTimeBw.toFixed(2)} GB</span>
-                        <span class="da-stat__lbl">All-Time Bandwidth</span>
-                    </div>
-                </div>
+            while (content.firstChild) content.removeChild(content.firstChild);
 
-                <!-- Current Month Stats -->
-                <div class="da-stats" style="margin-bottom:12px;">
-                    <div class="da-stat">
-                        <span class="da-stat__val" style="font-size:1.4rem;">${data.total_downloads}</span>
-                        <span class="da-stat__lbl">This Month Downloads</span>
-                    </div>
-                    <div class="da-stat">
-                        <span class="da-stat__val" style="font-size:1.4rem;">${data.unique_users}</span>
-                        <span class="da-stat__lbl">This Month Users</span>
-                    </div>
-                    <div class="da-stat">
-                        <span class="da-stat__val" style="font-size:1.4rem;">${data.total_bandwidth_gb.toFixed(2)} GB</span>
-                        <span class="da-stat__lbl">This Month Bandwidth</span>
-                    </div>
-                </div>
+            // Helper to create stat cards
+            function statCard(val, label, extraClass) {
+                const c = document.createElement('div');
+                c.className = 'da-stat' + (extraClass ? ' ' + extraClass : '');
+                const v = document.createElement('span'); v.className = 'da-stat__val'; v.textContent = String(val);
+                const l = document.createElement('span'); l.className = 'da-stat__lbl'; l.textContent = label;
+                c.appendChild(v); c.appendChild(l);
+                return c;
+            }
 
-                ${history.length > 1 ? `
-                <!-- Monthly History -->
-                <div class="da-section">
-                    <h2><i class="fas fa-calendar-alt"></i> Monthly History</h2>
-                    <table class="da-table">
-                        <thead>
-                            <tr><th>Month</th><th>Downloads</th><th>Users</th><th>Bandwidth</th></tr>
-                        </thead>
-                        <tbody>
-                            ${history.slice().reverse().map(m => `<tr>
-                                <td><strong>${esc(m.month)}</strong>${m.month === data.month ? ' <span style="color:var(--success);font-size:0.75rem;">current</span>' : ''}</td>
-                                <td>${m.total_downloads}</td>
-                                <td>${m.unique_users}</td>
-                                <td>${m.total_bandwidth_gb.toFixed(2)} GB</td>
-                            </tr>`).join('')}
-                        </tbody>
-                    </table>
-                </div>
-                ` : ''}
+            // All-time stats
+            const statsWrap = document.createElement('div'); statsWrap.className = 'da-stats';
+            statsWrap.appendChild(statCard(allTimeDl, 'All-Time Downloads', 'da-stat--primary'));
+            statsWrap.appendChild(statCard(allTimeUsers, 'All-Time Users', 'da-stat--success'));
+            statsWrap.appendChild(statCard((data.countries && data.countries.length) || 0, 'Countries', 'da-stat--accent'));
+            statsWrap.appendChild(statCard(allTimeBw ? allTimeBw.toFixed(2) + ' GB' : '0.00 GB', 'All-Time Bandwidth', 'da-stat--danger'));
+            content.appendChild(statsWrap);
 
-                <!-- Country Breakdown -->
-                <div class="da-section">
-                    <h2><i class="fas fa-globe-americas"></i> Users by Country</h2>
-                    <table class="da-table">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Country</th>
-                                <th>Unique Users</th>
-                                <th>This Month</th>
-                                <th>Share</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${data.countries.map((c, i) => {
-                                const maxUsers = data.countries.length ? data.countries[0].unique_users : 1;
-                                const pct = allTimeUsers ? ((c.unique_users / allTimeUsers) * 100).toFixed(1) : 0;
-                                const barW = Math.max(3, (c.unique_users / maxUsers) * 100);
-                                return `<tr>
-                                    <td style="color:var(--text-muted)">${i + 1}</td>
-                                    <td><span class="da-flag">${flag(c.country_code)}</span>${esc(c.country)}</td>
-                                    <td><strong>${c.unique_users}</strong></td>
-                                    <td>${c.downloads || 0}</td>
-                                    <td>
-                                        <div style="display:flex;align-items:center;gap:8px;">
-                                            <div class="da-bar-wrap"><div class="da-bar" style="width:${barW}%"></div></div>
-                                            <span style="font-size:0.8rem;color:var(--text-muted)">${pct}%</span>
-                                        </div>
-                                    </td>
-                                </tr>`;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                </div>
+            // Current month stats
+            const monthStats = document.createElement('div'); monthStats.className = 'da-stats'; monthStats.style.marginBottom = '12px';
+            monthStats.appendChild(statCard(data.total_downloads || 0, 'This Month Downloads'));
+            monthStats.appendChild(statCard(data.unique_users || 0, 'This Month Users'));
+            monthStats.appendChild(statCard((data.total_bandwidth_gb || 0).toFixed ? (data.total_bandwidth_gb || 0).toFixed(2) + ' GB' : String(data.total_bandwidth_gb || '0.00 GB'), 'This Month Bandwidth'));
+            content.appendChild(monthStats);
 
-                <!-- Individual Downloads Log -->
-                <div class="da-section">
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                        <h2 style="margin-bottom:0"><i class="fas fa-desktop"></i> Platform &amp; Browser</h2>
-                        <button class="da-refresh" onclick="window.__refreshAnalytics()"><i class="fas fa-sync-alt"></i> Refresh</button>
-                    </div>
+            // History
+            if (history.length > 1) {
+                const sec = document.createElement('div'); sec.className = 'da-section';
+                const h2 = document.createElement('h2'); h2.innerHTML = '<i class="fas fa-calendar-alt"></i> Monthly History';
+                sec.appendChild(h2);
+                const table = document.createElement('table'); table.className = 'da-table';
+                const thead = document.createElement('thead'); thead.innerHTML = '<tr><th>Month</th><th>Downloads</th><th>Users</th><th>Bandwidth</th></tr>';
+                table.appendChild(thead);
+                const tbody = document.createElement('tbody');
+                history.slice().reverse().forEach(m => {
+                    const tr = document.createElement('tr');
+                    const tdMonth = document.createElement('td');
+                    const strong = document.createElement('strong'); strong.textContent = m.month || '';
+                    tdMonth.appendChild(strong);
+                    if (m.month === data.month) {
+                        const span = document.createElement('span'); span.style.color = 'var(--success)'; span.style.fontSize = '0.75rem'; span.textContent = ' current';
+                        tdMonth.appendChild(span);
+                    }
+                    tr.appendChild(tdMonth);
+                    const tdDl = document.createElement('td'); tdDl.textContent = String(m.total_downloads || 0); tr.appendChild(tdDl);
+                    const tdUsers = document.createElement('td'); tdUsers.textContent = String(m.unique_users || 0); tr.appendChild(tdUsers);
+                    const tdBw = document.createElement('td'); tdBw.textContent = (m.total_bandwidth_gb || 0).toFixed ? (m.total_bandwidth_gb || 0).toFixed(2) + ' GB' : String(m.total_bandwidth_gb || '0.00 GB'); tr.appendChild(tdBw);
+                    tbody.appendChild(tr);
+                });
+                table.appendChild(tbody);
+                sec.appendChild(table);
+                content.appendChild(sec);
+            }
 
-                    <!-- Platform & Browser Breakdown (inline grid) -->
-                    ${(data.platforms && data.platforms.length) ? (() => {
-                        const trackedTotal = data.tracked_downloads || data.platforms.reduce((s, p) => s + p.downloads, 0);
-                        const legacyNote = data.legacy_untracked_users ? '<p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:12px;"><i class="fas fa-info-circle"></i> Platform stats cover <strong>' + trackedTotal + '</strong> tracked downloads.</p>' : '';
-                        return legacyNote + '<div class="da-plat-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;"><div><h3 style="font-size:0.9rem;color:var(--text-muted);margin-bottom:8px;display:flex;align-items:center;gap:6px;"><i class="fas fa-desktop" style="color:var(--primary-light)"></i> Platform</h3>' +
-                            data.platforms.map(p => {
-                                const pct = trackedTotal ? ((p.downloads / trackedTotal) * 100).toFixed(1) : 0;
-                                const icon = {'Windows':'fa-brands fa-windows','Android':'fa-brands fa-android','Linux':'fa-brands fa-linux','macOS':'fa-brands fa-apple','iOS':'fa-brands fa-apple','ChromeOS':'fa-brands fa-chrome'}[p.name] || 'fa-solid fa-question';
-                                return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><i class="' + icon + '" style="width:16px;text-align:center;color:var(--text-muted)"></i><span style="min-width:70px;font-size:0.88rem;">' + esc(p.name) + '</span><div class="da-bar-wrap" style="flex:1;max-width:none;"><div class="da-bar" style="width:' + pct + '%"></div></div><span style="font-size:0.78rem;color:var(--text-muted);min-width:56px;text-align:right">' + p.downloads + ' (' + pct + '%)</span></div>';
-                            }).join('') +
-                        '</div><div><h3 style="font-size:0.9rem;color:var(--text-muted);margin-bottom:8px;display:flex;align-items:center;gap:6px;"><i class="fas fa-compass" style="color:var(--primary-light)"></i> Browser</h3>' +
-                            (data.browsers || []).map(b => {
-                                const pct = trackedTotal ? ((b.downloads / trackedTotal) * 100).toFixed(1) : 0;
-                                const icon = {'Chrome':'fa-brands fa-chrome','Firefox':'fa-brands fa-firefox-browser','Safari':'fa-brands fa-safari','Edge':'fa-brands fa-edge','Opera':'fa-brands fa-opera','CLI':'fa-solid fa-terminal'}[b.name] || 'fa-solid fa-globe';
-                                return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><i class="' + icon + '" style="width:16px;text-align:center;color:var(--text-muted)"></i><span style="min-width:70px;font-size:0.88rem;">' + esc(b.name) + '</span><div class="da-bar-wrap" style="flex:1;max-width:none;"><div class="da-bar" style="width:' + pct + '%"></div></div><span style="font-size:0.78rem;color:var(--text-muted);min-width:56px;text-align:right">' + b.downloads + ' (' + pct + '%)</span></div>';
-                            }).join('') +
-                        '</div></div>';
-                    })() : '<p style="text-align:center;color:var(--text-muted);padding:16px;">Platform data not yet available.</p>'}
-                </div>
+            // Country breakdown
+            const countriesSec = document.createElement('div'); countriesSec.className = 'da-section';
+            const ch2 = document.createElement('h2'); ch2.innerHTML = '<i class="fas fa-globe-americas"></i> Users by Country';
+            countriesSec.appendChild(ch2);
+            const ctable = document.createElement('table'); ctable.className = 'da-table';
+            const cthead = document.createElement('thead'); cthead.innerHTML = '<tr><th>#</th><th>Country</th><th>Unique Users</th><th>This Month</th><th>Share</th></tr>';
+            ctable.appendChild(cthead);
+            const ctbody = document.createElement('tbody');
+            (data.countries || []).forEach((c, i) => {
+                const maxUsers = (data.countries && data.countries.length) ? (data.countries[0].unique_users || 1) : 1;
+                const pct = allTimeUsers ? ((c.unique_users / allTimeUsers) * 100).toFixed(1) : 0;
+                const barW = Math.max(3, (c.unique_users / maxUsers) * 100);
+                const tr = document.createElement('tr');
+                const tdIdx = document.createElement('td'); tdIdx.style.color = 'var(--text-muted)'; tdIdx.textContent = String(i + 1); tr.appendChild(tdIdx);
+                const tdCountry = document.createElement('td'); const flagSpan = document.createElement('span'); flagSpan.className = 'da-flag'; flagSpan.textContent = flag(c.country_code);
+                tdCountry.appendChild(flagSpan); const nameText = document.createTextNode(' ' + (c.country || '')); tdCountry.appendChild(nameText); tr.appendChild(tdCountry);
+                const tdUnique = document.createElement('td'); const strongU = document.createElement('strong'); strongU.textContent = String(c.unique_users || 0); tdUnique.appendChild(strongU); tr.appendChild(tdUnique);
+                const tdMonth = document.createElement('td'); tdMonth.textContent = String(c.downloads || 0); tr.appendChild(tdMonth);
+                const tdShare = document.createElement('td'); const shareWrap = document.createElement('div'); shareWrap.style.display = 'flex'; shareWrap.style.alignItems = 'center'; shareWrap.style.gap = '8px';
+                const barWrap = document.createElement('div'); barWrap.className = 'da-bar-wrap'; const bar = document.createElement('div'); bar.className = 'da-bar'; bar.style.width = String(barW) + '%'; barWrap.appendChild(bar);
+                const pctSpan = document.createElement('span'); pctSpan.style.fontSize = '0.8rem'; pctSpan.style.color = 'var(--text-muted)'; pctSpan.textContent = pct + '%';
+                shareWrap.appendChild(barWrap); shareWrap.appendChild(pctSpan); tdShare.appendChild(shareWrap); tr.appendChild(tdShare);
+                ctbody.appendChild(tr);
+            });
+            ctable.appendChild(ctbody); countriesSec.appendChild(ctable); content.appendChild(countriesSec);
 
-                <p style="text-align:center;color:var(--text-muted);font-size:0.8rem;margin-top:12px;">
-                    Current period: ${esc(data.month)} &middot; All-time data includes ${history.length} month(s)
-                </p>
-            `;
+            // Platform & Browser section
+            const pbSec = document.createElement('div'); pbSec.className = 'da-section';
+            const pbHeader = document.createElement('div'); pbHeader.style.display = 'flex'; pbHeader.style.alignItems = 'center'; pbHeader.style.justifyContent = 'space-between'; pbHeader.style.marginBottom = '12px';
+            const ph = document.createElement('h2'); ph.innerHTML = '<i class="fas fa-desktop"></i> Platform &amp; Browser'; ph.style.marginBottom = '0'; pbHeader.appendChild(ph);
+            const refreshBtn = document.createElement('button'); refreshBtn.className = 'da-refresh'; refreshBtn.type = 'button'; refreshBtn.addEventListener('click', () => window.__refreshAnalytics()); refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh'; pbHeader.appendChild(refreshBtn);
+            pbSec.appendChild(pbHeader);
+
+            if (data.platforms && data.platforms.length) {
+                const trackedTotal = data.tracked_downloads || data.platforms.reduce((s, p) => s + (p.downloads || 0), 0);
+                if (data.legacy_untracked_users) {
+                    const note = document.createElement('p'); note.style.fontSize = '0.78rem'; note.style.color = 'var(--text-muted)'; note.style.marginBottom = '12px';
+                    note.innerHTML = '<i class="fas fa-info-circle"></i> Platform stats cover <strong>' + String(trackedTotal) + '</strong> tracked downloads.';
+                    pbSec.appendChild(note);
+                }
+                const grid = document.createElement('div'); grid.className = 'da-plat-grid'; grid.style.display = 'grid'; grid.style.gridTemplateColumns = '1fr 1fr'; grid.style.gap = '16px'; grid.style.marginBottom = '20px';
+                const left = document.createElement('div'); const leftTitle = document.createElement('h3'); leftTitle.style.fontSize = '0.9rem'; leftTitle.style.color = 'var(--text-muted)'; leftTitle.style.marginBottom = '8px'; leftTitle.style.display = 'flex'; leftTitle.style.alignItems = 'center'; leftTitle.style.gap = '6px'; leftTitle.innerHTML = '<i class="fas fa-desktop" style="color:var(--primary-light)"></i> Platform'; left.appendChild(leftTitle);
+                data.platforms.forEach(p => {
+                    const pct = trackedTotal ? ((p.downloads / trackedTotal) * 100).toFixed(1) : 0;
+                    const row = document.createElement('div'); row.style.display = 'flex'; row.style.alignItems = 'center'; row.style.gap = '8px'; row.style.marginBottom = '6px';
+                    const icon = document.createElement('i'); icon.className = {'Windows':'fa-brands fa-windows','Android':'fa-brands fa-android','Linux':'fa-brands fa-linux','macOS':'fa-brands fa-apple','iOS':'fa-brands fa-apple','ChromeOS':'fa-brands fa-chrome'}[p.name] || 'fa-solid fa-question'; icon.style.width = '16px'; icon.style.textAlign = 'center'; icon.style.color = 'var(--text-muted)';
+                    const name = document.createElement('span'); name.style.minWidth = '70px'; name.style.fontSize = '0.88rem'; name.textContent = p.name || '';
+                    const barWrap = document.createElement('div'); barWrap.className = 'da-bar-wrap'; barWrap.style.flex = '1'; barWrap.style.maxWidth = 'none'; const bar = document.createElement('div'); bar.className = 'da-bar'; bar.style.width = pct + '%'; barWrap.appendChild(bar);
+                    const right = document.createElement('span'); right.style.fontSize = '0.78rem'; right.style.color = 'var(--text-muted)'; right.style.minWidth = '56px'; right.style.textAlign = 'right'; right.textContent = String(p.downloads) + ' (' + pct + '%)';
+                    row.appendChild(icon); row.appendChild(name); row.appendChild(barWrap); row.appendChild(right); left.appendChild(row);
+                });
+                const right = document.createElement('div'); const rightTitle = document.createElement('h3'); rightTitle.style.fontSize = '0.9rem'; rightTitle.style.color = 'var(--text-muted)'; rightTitle.style.marginBottom = '8px'; rightTitle.style.display = 'flex'; rightTitle.style.alignItems = 'center'; rightTitle.style.gap = '6px'; rightTitle.innerHTML = '<i class="fas fa-compass" style="color:var(--primary-light)"></i> Browser'; right.appendChild(rightTitle);
+                (data.browsers || []).forEach(b => {
+                    const pct = trackedTotal ? ((b.downloads / trackedTotal) * 100).toFixed(1) : 0;
+                    const row = document.createElement('div'); row.style.display = 'flex'; row.style.alignItems = 'center'; row.style.gap = '8px'; row.style.marginBottom = '6px';
+                    const icon = document.createElement('i'); icon.className = {'Chrome':'fa-brands fa-chrome','Firefox':'fa-brands fa-firefox-browser','Safari':'fa-brands fa-safari','Edge':'fa-brands fa-edge','Opera':'fa-brands fa-opera','CLI':'fa-solid fa-terminal'}[b.name] || 'fa-solid fa-globe'; icon.style.width = '16px'; icon.style.textAlign = 'center'; icon.style.color = 'var(--text-muted)';
+                    const name = document.createElement('span'); name.style.minWidth = '70px'; name.style.fontSize = '0.88rem'; name.textContent = b.name || '';
+                    const barWrap = document.createElement('div'); barWrap.className = 'da-bar-wrap'; barWrap.style.flex = '1'; barWrap.style.maxWidth = 'none'; const bar = document.createElement('div'); bar.className = 'da-bar'; bar.style.width = pct + '%'; barWrap.appendChild(bar);
+                    const rightText = document.createElement('span'); rightText.style.fontSize = '0.78rem'; rightText.style.color = 'var(--text-muted)'; rightText.style.minWidth = '56px'; rightText.style.textAlign = 'right'; rightText.textContent = String(b.downloads) + ' (' + pct + '%)';
+                    row.appendChild(icon); row.appendChild(name); row.appendChild(barWrap); row.appendChild(rightText); right.appendChild(row);
+                });
+                grid.appendChild(left); grid.appendChild(right); pbSec.appendChild(grid);
+            } else {
+                const pnote = document.createElement('p'); pnote.style.textAlign = 'center'; pnote.style.color = 'var(--text-muted)'; pnote.style.padding = '16px'; pnote.textContent = 'Platform data not yet available.'; pbSec.appendChild(pnote);
+            }
+
+            content.appendChild(pbSec);
+
+            const footerP = document.createElement('p'); footerP.style.textAlign = 'center'; footerP.style.color = 'var(--text-muted)'; footerP.style.fontSize = '0.8rem'; footerP.style.marginTop = '12px';
+            footerP.textContent = 'Current period: ' + (data.month || '') + ' · All-time data includes ' + String(history.length) + ' month(s)';
+            content.appendChild(footerP);
         }
 
         window.__refreshAnalytics = function () {
             const btn = document.querySelector('.da-refresh');
-            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading…'; }
+            if (btn) {
+                btn.disabled = true;
+                while (btn.firstChild) btn.removeChild(btn.firstChild);
+                const spin = document.createElement('i');
+                spin.className = 'fas fa-spinner fa-spin';
+                btn.appendChild(spin);
+                btn.appendChild(document.createTextNode(' Loading…'));
+            }
             load().then(() => {
-                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh'; }
+                if (btn) {
+                    btn.disabled = false;
+                    while (btn.firstChild) btn.removeChild(btn.firstChild);
+                    const ico = document.createElement('i');
+                    ico.className = 'fas fa-sync-alt';
+                    btn.appendChild(ico);
+                    btn.appendChild(document.createTextNode(' Refresh'));
+                }
             });
         };
 
