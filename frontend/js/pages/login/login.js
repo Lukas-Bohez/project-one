@@ -15,7 +15,6 @@ const AdminSession = {
     sessionStorage.setItem('admin_user_id', userData.user_id.toString());
     sessionStorage.setItem('admin_first_name', userData.first_name);
     sessionStorage.setItem('admin_last_name', userData.last_name);
-    sessionStorage.setItem('admin_rfid_code', userData.rfid_code);
     sessionStorage.setItem('admin_login_timestamp', Date.now().toString());
   },
 
@@ -23,10 +22,8 @@ const AdminSession = {
     const userId = sessionStorage.getItem('admin_user_id');
     const firstName = sessionStorage.getItem('admin_first_name');
     const lastName = sessionStorage.getItem('admin_last_name');
-    const rfidCode = sessionStorage.getItem('admin_rfid_code');
     const timestamp = sessionStorage.getItem('admin_login_timestamp');
-
-    if (!userId || !firstName || !lastName || !rfidCode || !timestamp) {
+    if (!userId || !firstName || !lastName || !timestamp) {
       return null;
     }
 
@@ -34,7 +31,6 @@ const AdminSession = {
       user_id: parseInt(userId),
       first_name: firstName,
       last_name: lastName,
-      rfid_code: rfidCode,
       login_timestamp: parseInt(timestamp)
     };
   },
@@ -43,7 +39,6 @@ const AdminSession = {
     sessionStorage.removeItem('admin_user_id');
     sessionStorage.removeItem('admin_first_name');
     sessionStorage.removeItem('admin_last_name');
-    sessionStorage.removeItem('admin_rfid_code');
     sessionStorage.removeItem('admin_login_timestamp');
   },
 
@@ -163,12 +158,12 @@ const handleLogin = async (e) => {
         user_id: result.user_id,
         first_name: formData.firstName,
         last_name: formData.lastName,
-        rfid_code: formData.rfidCode
+        
       });
 
       // Also store for articles.js compatibility (session-only)
       sessionStorage.setItem('currentUserId', result.user_id.toString());
-      sessionStorage.setItem('currentUserRFID', formData.rfidCode);
+      
 
       // Redirect to admin page
       window.location.href = '/pages/admin/';

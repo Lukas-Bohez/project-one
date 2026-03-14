@@ -3,16 +3,28 @@ Test script for Articles API endpoints
 Run this to verify the articles system is working correctly
 """
 
-import requests
 import json
+
+import pytest
+import requests
+
+# Skip module if the API server is not available locally.
+try:
+    _ = requests.get("http://127.0.0.1:8000/api/v1/articles/", timeout=1)
+except Exception:
+    pytest.skip(
+        "API server not running on 127.0.0.1:8000 - skipping integration tests",
+        allow_module_level=True,
+    )
 
 # Configuration
 BASE_URL = "http://127.0.0.1:8000/api/v1"
 HEADERS = {
     "X-User-ID": "1",  # Replace with valid user ID
     "X-RFID": "your_rfid_code",  # Replace with valid RFID
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
 }
+
 
 def test_get_all_articles():
     """Test getting all articles"""
@@ -21,11 +33,16 @@ def test_get_all_articles():
     print(f"Status: {response.status_code}")
     if response.status_code == 200:
         data = response.json()
-        print(f"✅ Found {data['total_count']} total articles, {data['active_count']} active")
-        print(f"📰 Sample titles: {[article['title'][:50] for article in data['articles'][:3]]}")
+        print(
+            f"✅ Found {data['total_count']} total articles, {data['active_count']} active"
+        )
+        print(
+            f"📰 Sample titles: {[article['title'][:50] for article in data['articles'][:3]]}"
+        )
     else:
         print(f"❌ Error: {response.text}")
     print("-" * 60)
+
 
 def test_search_articles():
     """Test searching articles"""
@@ -41,6 +58,7 @@ def test_search_articles():
         print(f"❌ Error: {response.text}")
     print("-" * 60)
 
+
 def test_get_featured_articles():
     """Test getting featured articles"""
     print("🔍 Testing GET /articles/featured/")
@@ -52,6 +70,7 @@ def test_get_featured_articles():
     else:
         print(f"❌ Error: {response.text}")
     print("-" * 60)
+
 
 def test_get_stats():
     """Test getting article statistics"""
@@ -69,73 +88,79 @@ def test_get_stats():
         print(f"❌ Error: {response.text}")
     print("-" * 60)
 
+
 def test_create_article():
     """Test creating a new article"""
     print("🔍 Testing POST /articles/ (Create)")
-    
+
     new_article = {
         "title": "Test API Article",
         "author": "API Tester",
         "date_written": "2024-09-27",
         "story": "sample articles",
-        "content": json.dumps({
-            "title": "Test API Article",
-            "intro": "This is a test article created via API",
-            "highlights": [
-                {
-                    "title": "API Testing",
-                    "content": "Testing the articles API endpoints"
-                }
-            ],
-            "cards": [
-                {
-                    "title": "Test Card",
-                    "content": "Test content",
-                    "list": ["Item 1", "Item 2"]
-                }
-            ],
-            "sections": [
-                {
-                    "title": "Test Section",
-                    "content": "Test section content",
-                    "list": ["Point 1", "Point 2"]
-                }
-            ]
-        }),
+        "content": json.dumps(
+            {
+                "title": "Test API Article",
+                "intro": "This is a test article created via API",
+                "highlights": [
+                    {
+                        "title": "API Testing",
+                        "content": "Testing the articles API endpoints",
+                    }
+                ],
+                "cards": [
+                    {
+                        "title": "Test Card",
+                        "content": "Test content",
+                        "list": ["Item 1", "Item 2"],
+                    }
+                ],
+                "sections": [
+                    {
+                        "title": "Test Section",
+                        "content": "Test section content",
+                        "list": ["Point 1", "Point 2"],
+                    }
+                ],
+            }
+        ),
         "excerpt": "A test article for API validation",
         "category": "test",
         "tags": "api, test, validation",
         "word_count": 50,
         "reading_time_minutes": 1,
         "is_active": True,
-        "is_featured": False
+        "is_featured": False,
     }
-    
+
     response = requests.post(f"{BASE_URL}/articles/", json=new_article, headers=HEADERS)
     print(f"Status: {response.status_code}")
     if response.status_code == 201:
         article = response.json()
         print(f"✅ Article created with ID: {article['id']}")
-        return article['id']
+        return article["id"]
     else:
         print(f"❌ Error: {response.text}")
         return None
     print("-" * 60)
+
 
 def test_update_article(article_id):
     """Test updating an article"""
     if not article_id:
         print("⚠️ Skipping update test - no article ID")
         return
-        
+
     print(f"🔍 Testing PATCH /articles/{article_id}/ (Update)")
-    
+
     update_data = {
         "title": "Updated Test API Article",
-        "excerpt": "Updated excerpt for the test article"
+        "excerpt": "Updated excerpt for the test article",
     }
-    
-    response = requests.patch(f"{BASE_URL}/articles/{article_id}/", json=update_data, headers=HEADERS)
+
+    response = requests.patch(
+        f"{BASE_URL}/articles/{article_id}/", json=update_data, headers=HEADERS
+    )
     print(f"Status: {response.status_code}")
     if response.status_code == 200:
         article = response.json()
@@ -144,14 +169,15 @@ def test_update_article(article_id):
         print(f"❌ Error: {response.text}")
     print("-" * 60)
 
+
 def test_delete_article(article_id):
     """Test deleting an article"""
     if not article_id:
         print("⚠️ Skipping delete test - no article ID")
         return
-        
+
     print(f"🔍 Testing DELETE /articles/{article_id}/ (Delete)")
-    
+
     response = requests.delete(f"{BASE_URL}/articles/{article_id}/", headers=HEADERS)
     print(f"Status: {response.status_code}")
     if response.status_code == 204:
@@ -160,6 +186,7 @@ def test_delete_article(article_id):
         print(f"❌ Error: {response.text}")
     print("-" * 60)
 
+
 def main():
     """Run all tests"""
     print("🚀 ARTICLES API TEST SUITE")
@@ -167,20 +194,21 @@ def main():
     print("⚠️ Make sure your FastAPI server is running!")
     print("⚠️ Update HEADERS with valid user credentials!")
     print("=" * 60)
-    
+
     # Test read operations (no auth required)
     test_get_all_articles()
     test_search_articles()
     test_get_featured_articles()
     test_get_stats()
-    
+
     # Test CRUD operations (auth required)
     print("🔐 Testing authenticated operations...")
     article_id = test_create_article()
     test_update_article(article_id)
     test_delete_article(article_id)
-    
+
     print("🏁 Test suite completed!")
+
 
 if __name__ == "__main__":
     main()

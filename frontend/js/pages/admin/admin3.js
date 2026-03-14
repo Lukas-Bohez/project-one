@@ -660,7 +660,8 @@ class AuditLogsManager {
       
       // Get authentication headers
       const userId = sessionStorage.getItem('admin_user_id');
-      const rfidCode = sessionStorage.getItem('admin_rfid_code');
+      // client-side RFID removed
+      const rfidCode = null;
       
       const headers = {
         'Accept': 'application/json',

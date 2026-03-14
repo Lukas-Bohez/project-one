@@ -1,6 +1,7 @@
-import mysql.connector
+from typing import Any, Dict, List, Optional, Tuple
+
 import config
-from typing import List, Dict, Any, Optional, Tuple
+import mysql.connector
 
 """
 Story Quiz Seeder
@@ -33,7 +34,7 @@ POINTS_BY_DIFFICULTY = {
 }
 
 TIME_BY_DIFFICULTY = {
-    1: 30,   # seconds
+    1: 30,  # seconds
     2: 45,
     3: 60,
 }
@@ -53,7 +54,9 @@ def get_or_create_theme(cursor, name: str) -> int:
 
 
 def get_existing_question_texts(cursor, theme_id: int) -> set:
-    cursor.execute("SELECT question_text FROM questions WHERE themeId = %s", (theme_id,))
+    cursor.execute(
+        "SELECT question_text FROM questions WHERE themeId = %s", (theme_id,)
+    )
     return {row[0] for row in cursor.fetchall()}
 
 
@@ -78,7 +81,7 @@ def insert_question_with_answers(
         INSERT INTO questions (question_text, difficultyLevelId, points, time_limit, explanation, Url, themeId)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
         """,
-        (question_text, diff_id, points, time_limit, explanation, url, theme_id)
+        (question_text, diff_id, points, time_limit, explanation, url, theme_id),
     )
     q_id = cursor.lastrowid
 
@@ -89,7 +92,7 @@ def insert_question_with_answers(
             INSERT INTO answers (answer_text, is_correct, questionId)
             VALUES (%s, %s, %s)
             """,
-            (ans["text"], bool(ans.get("is_correct", False)), q_id)
+            (ans["text"], bool(ans.get("is_correct", False)), q_id),
         )
 
     return q_id
@@ -100,16 +103,14 @@ def print_existing_stories_theme():
         conn = get_connection()
         cur = conn.cursor()
         print("=== Existing Story:* themes ===")
-        cur.execute(
-            """
+        cur.execute("""
             SELECT t.id, t.name, COUNT(q.id) as cnt
             FROM themes t
             LEFT JOIN questions q ON q.themeId = t.id
             WHERE t.name LIKE 'Story:%'
             GROUP BY t.id, t.name
             ORDER BY t.name
-            """
-        )
+            """)
         rows = cur.fetchall()
         if not rows:
             print("No Story:* themes found.\n")
@@ -121,7 +122,8 @@ def print_existing_stories_theme():
         print(f"Error reading existing stories: {e}")
     finally:
         try:
-            cur.close(); conn.close()
+            cur.close()
+            conn.close()
         except Exception:
             pass
 
@@ -143,7 +145,10 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
                     {"text": "Bows and arrows for distance"},
                     {"text": "Bare hands and martial arts"},
                     {"text": "Weapons stolen from Ash-Bloods"},
-                    {"text": "Clubs, metal-tipped spears, iron-wrapped knuckles", "is_correct": True},
+                    {
+                        "text": "Clubs, metal-tipped spears, iron-wrapped knuckles",
+                        "is_correct": True,
+                    },
                     {"text": "Magical weapons with special powers"},
                     {"text": "Ceremonial glass blades"},
                     {"text": "Bone flutes that stun enemies"},
@@ -159,7 +164,10 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
                 "difficulty": "easy",
                 "exp": "A power plant core rupture spread mutagenic ash across the land, transforming people into Ash Bloods.",
                 "answers": [
-                    {"text": "A power plant core rupture that spewed ash", "is_correct": True},
+                    {
+                        "text": "A power plant core rupture that spewed ash",
+                        "is_correct": True,
+                    },
                     {"text": "A volcanic eruption that blanketed the realm"},
                     {"text": "A demon ritual in the holy city"},
                     {"text": "A celestial eclipse lasting a year"},
@@ -187,7 +195,10 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
                 "difficulty": "medium",
                 "exp": "Its bells drained life and suffering from those belowtime measured in anguish.",
                 "answers": [
-                    {"text": "Ringing that drained life from the city", "is_correct": True},
+                    {
+                        "text": "Ringing that drained life from the city",
+                        "is_correct": True,
+                    },
                     {"text": "Opening portals to safe havens"},
                     {"text": "Granting immortality to listeners"},
                     {"text": "Calling rain to heal the fields"},
@@ -221,7 +232,6 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
                 ],
             },
         ],
-
         # Story: Toxic Air (survival under ash skies)
         "Story: Toxic Air": [
             {
@@ -287,7 +297,6 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
                 ],
             },
         ],
-
         # Story: Kaizahara Tournament (observation + challenges)
         "Story: Kaizahara Tournament": [
             {
@@ -306,7 +315,10 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
                 "difficulty": "hard",
                 "exp": "It's not time; he slows the perception of time in observers, leaving himself unaffected.",
                 "answers": [
-                    {"text": "A manipulation of opponents' temporal perception", "is_correct": True},
+                    {
+                        "text": "A manipulation of opponents' temporal perception",
+                        "is_correct": True,
+                    },
                     {"text": "Literal freezing of universal time"},
                     {"text": "Teleportation disguised as time magic"},
                     {"text": "An illusion cast by arena crystals"},
@@ -317,7 +329,10 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
                 "difficulty": "hard",
                 "exp": "A gravity well placed at the commit point ignores perception and rips through his approach.",
                 "answers": [
-                    {"text": "Creating a gravity well at the moment of attack", "is_correct": True},
+                    {
+                        "text": "Creating a gravity well at the moment of attack",
+                        "is_correct": True,
+                    },
                     {"text": "Blinding the musicians"},
                     {"text": "Shattering the obsidian walls"},
                     {"text": "Poisoning the arena sands"},
@@ -329,7 +344,10 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
                 "difficulty": "easy",
                 "exp": "Its obsidian construction bent acoustics and space, carrying whispers and amplifying roars.",
                 "answers": [
-                    {"text": "Obsidian curves that carried every whisper", "is_correct": True},
+                    {
+                        "text": "Obsidian curves that carried every whisper",
+                        "is_correct": True,
+                    },
                     {"text": "Walls that absorbed all sound entirely"},
                     {"text": "A floor made of living vines"},
                     {"text": "Shifting gravity every minute"},
@@ -359,7 +377,6 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
                 ],
             },
         ],
-
         # Challenge Path arc themes (prefixed as Story: *)
         "Story: The Challenge Accepted": [
             {
@@ -367,7 +384,10 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
                 "difficulty": "medium",
                 "exp": "Daren had to defeat four champions in succession: Thane, Lady Whisper, Viktor, Seraphina.",
                 "answers": [
-                    {"text": "Defeat four current champions in succession", "is_correct": True},
+                    {
+                        "text": "Defeat four current champions in succession",
+                        "is_correct": True,
+                    },
                     {"text": "Pay a king's ransom to the arena"},
                     {"text": "Win a vote of the scholars"},
                     {"text": "Bring Zerath's sigil"},
@@ -389,21 +409,26 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
                 "difficulty": "easy",
                 "exp": "Demon-steel rope, ward-stones, and crystallized mana cores were priorities.",
                 "answers": [
-                    {"text": "Demon-steel rope, ward-stones, crystallized mana cores", "is_correct": True},
+                    {
+                        "text": "Demon-steel rope, ward-stones, crystallized mana cores",
+                        "is_correct": True,
+                    },
                     {"text": "Phoenix feathers and sun glass"},
                     {"text": "Dragon eggs and moonwater"},
                     {"text": "Clockwork limbs and mercury"},
                 ],
             },
         ],
-
         "Story: The Berserker King": [
             {
                 "q": "What was the core of Daren's tactic against Thane Bloodaxe?",
                 "difficulty": "medium",
                 "exp": "Redirect the berserker's momentum with gravity, wear down healing, then crush at low reserves.",
                 "answers": [
-                    {"text": "Redirect momentum and exhaust his healing", "is_correct": True},
+                    {
+                        "text": "Redirect momentum and exhaust his healing",
+                        "is_correct": True,
+                    },
                     {"text": "Match rage with greater rage"},
                     {"text": "Use poison darts from distance"},
                     {"text": "Freeze time before each spin"},
@@ -443,14 +468,16 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
                 ],
             },
         ],
-
         "Story: Dancing with Shadows": [
             {
                 "q": "What made Lady Whisper's attacks ignore Daren's early defenses?",
                 "difficulty": "hard",
                 "exp": "Her void blade strikes from outside normal 3D space, bypassing planar shields.",
                 "answers": [
-                    {"text": "Dimensional strikes outside 3D space", "is_correct": True},
+                    {
+                        "text": "Dimensional strikes outside 3D space",
+                        "is_correct": True,
+                    },
                     {"text": "Poison that seeped through shields"},
                     {"text": "Speed surpassing light"},
                     {"text": "Magnetism against gravity"},
@@ -472,7 +499,10 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
                 "difficulty": "medium",
                 "exp": "Overlapping gravity cages pinned split manifestations, fracturing her consciousness until surrender.",
                 "answers": [
-                    {"text": "Gravity cages trapped her split forms", "is_correct": True},
+                    {
+                        "text": "Gravity cages trapped her split forms",
+                        "is_correct": True,
+                    },
                     {"text": "A sealing hymn from the choir"},
                     {"text": "Mirror shattering ritual"},
                     {"text": "Absolute darkness dome"},
@@ -490,14 +520,16 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
                 ],
             },
         ],
-
         "Story: Breaking the Unbreakable": [
             {
                 "q": "Why did direct crushing fail against Viktor Ironheart initially?",
                 "difficulty": "medium",
                 "exp": "Living metal redistributed force and adapted density, nullifying straightforward pressure.",
                 "answers": [
-                    {"text": "His living metal redistributed force", "is_correct": True},
+                    {
+                        "text": "His living metal redistributed force",
+                        "is_correct": True,
+                    },
                     {"text": "He teleported on impact"},
                     {"text": "He absorbed gravity as energy"},
                     {"text": "He phased through stone"},
@@ -508,7 +540,10 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
                 "difficulty": "hard",
                 "exp": "Thermal imbalancelocalized plasma heating disrupted the alchemical process maintaining the metal.",
                 "answers": [
-                    {"text": "Thermal disruption of alchemical balance", "is_correct": True},
+                    {
+                        "text": "Thermal disruption of alchemical balance",
+                        "is_correct": True,
+                    },
                     {"text": "Acid corrosion of outer skin"},
                     {"text": "Sonic resonance at 432 Hz"},
                     {"text": "Magnetic reversal of core"},
@@ -537,7 +572,6 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
                 ],
             },
         ],
-
         "Story: Storm's End": [
             {
                 "q": "What fundamental shift let Daren fight Seraphina in her domain?",
@@ -555,7 +589,10 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
                 "difficulty": "hard",
                 "exp": "A gravity well created a temporary vacuum, removing air needed for wind and lift.",
                 "answers": [
-                    {"text": "Creating a vacuum with a gravity well", "is_correct": True},
+                    {
+                        "text": "Creating a vacuum with a gravity well",
+                        "is_correct": True,
+                    },
                     {"text": "Grounding lightning into the city"},
                     {"text": "Freezing the storm with ice runes"},
                     {"text": "Trapping winds in crystal"},
@@ -584,14 +621,16 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
                 ],
             },
         ],
-
         "Story: The Timeless Challenge": [
             {
                 "q": "When did the decisive final exchange occur between Daren and Kazuki?",
                 "difficulty": "medium",
                 "exp": "During 'Tengoku He'without field effects, pure technique met pure technique.",
                 "answers": [
-                    {"text": "During 'Tengoku He' without enhancement", "is_correct": True},
+                    {
+                        "text": "During 'Tengoku He' without enhancement",
+                        "is_correct": True,
+                    },
                     {"text": "During 'Ikou' with full field"},
                     {"text": "Before the music began"},
                     {"text": "After the crowd left"},
@@ -613,7 +652,10 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
                 "difficulty": "hard",
                 "exp": "Spatial analysis via gravitational lensing to locate Kazuki regardless of perception tricks.",
                 "answers": [
-                    {"text": "Spatial analysis with gravitational lensing", "is_correct": True},
+                    {
+                        "text": "Spatial analysis with gravitational lensing",
+                        "is_correct": True,
+                    },
                     {"text": "Counting footfalls per measure"},
                     {"text": "Watching shadows alone"},
                     {"text": "Matching breath rhythms"},
@@ -624,7 +666,10 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
                 "difficulty": "medium",
                 "exp": "Gravity wells appeared at commit points, threatening to tear through his path of attack.",
                 "answers": [
-                    {"text": "Timed gravity wells at commit points", "is_correct": True},
+                    {
+                        "text": "Timed gravity wells at commit points",
+                        "is_correct": True,
+                    },
                     {"text": "Blinding sand thrown by Daren"},
                     {"text": "Broken strings stopped the hymn"},
                     {"text": "An arena quake"},
@@ -696,7 +741,8 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
         return 0, 0, 0
     finally:
         try:
-            cur.close(); conn.close()
+            cur.close()
+            conn.close()
         except Exception:
             pass
 
@@ -710,7 +756,9 @@ def main():
     # Dry run first
     print("🧪 Dry run: computing inserts (no DB changes)...")
     t, q, a = seed_story_questions(dry_run=True)
-    print(f"Would process {t} themes, insert {q} questions and {a} answers if applied.\n")
+    print(
+        f"Would process {t} themes, insert {q} questions and {a} answers if applied.\n"
+    )
 
     resp = input("Apply these changes to the database now? (yes/no): ").strip().lower()
     if resp in ("y", "yes"):

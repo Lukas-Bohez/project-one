@@ -3,16 +3,15 @@ IP Management Router
 Handles IP address tracking, banning, and appeal functionality
 """
 
-from fastapi import APIRouter, HTTPException, Request, status, Depends
-from fastapi.responses import JSONResponse, HTMLResponse
-from typing import Optional
-from datetime import datetime, timedelta
 import json
+from datetime import datetime, timedelta
+from typing import Optional
 
-from database.datarepository import IpAddressRepository, AuditLogRepository
-from api.dependencies import get_current_user_info, get_client_ip, log_user_ip_address
-from models.models import IpAddressPayload, AppealPayload, BanIpRequest
-
+from api.dependencies import get_client_ip, get_current_user_info, log_user_ip_address
+from database.datarepository import AuditLogRepository, IpAddressRepository
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.responses import HTMLResponse, JSONResponse
+from models.models import AppealPayload, BanIpRequest, IpAddressPayload
 
 # Create router
 router = APIRouter(prefix="/api/v1", tags=["IP Management"])
@@ -23,7 +22,7 @@ def calculate_ban_expiry(duration_value: int, duration_unit: str) -> Optional[da
     """Calculate ban expiry datetime based on duration and unit"""
     if duration_unit == "permanent":
         return None
-    
+
     now = datetime.now()
     if duration_unit == "minutes":
         return now + timedelta(minutes=duration_value)
@@ -84,13 +83,20 @@ async def banned_page(request: Request):
     if client_ip_str:
         try:
             ban_details = IpAddressRepository.get_ip_address_by_string(client_ip_str)
-            if ban_details and ban_details.get('is_banned'):
+            if ban_details and ban_details.get("is_banned"):
                 # Check if ban is still active
-                if ban_details.get('ban_expires_at') and datetime.now() >= ban_details['ban_date'] + (ban_details['ban_expires_at'] - ban_details['ban_date']) / 2:
+                if (
+                    ban_details.get("ban_expires_at")
+                    and datetime.now()
+                    >= ban_details["ban_date"]
+                    + (ban_details["ban_expires_at"] - ban_details["ban_date"]) / 2
+                ):
                     is_currently_banned = False  # Ban has expired
                     can_appeal = True
                 else:
-                    is_currently_banned = True  # Ban is still active or permanent (NULL expiry)
+                    is_currently_banned = (
+                        True  # Ban is still active or permanent (NULL expiry)
+                    )
         except Exception as e:
             print(f"Error fetching ban details for {client_ip_str}: {e}")
             ban_details = None  # Reset to avoid incomplete data
@@ -104,18 +110,30 @@ async def banned_page(request: Request):
 
     if ban_details:
         if is_currently_banned:
-            ban_reason = ban_details.get('ban_reason', 'No specific reason provided.') or 'No specific reason provided.'
-            if ban_details.get('ban_date'):
-                ban_date_str = ban_details['ban_date'].strftime('%Y-%m-%d %H:%M:%S')
-            if ban_details.get('ban_expires_at'):
-                ban_expires_str = ban_details['ban_expires_at'].strftime('%Y-%m-%d %H:%M:%S')
-                ban_status_message = f"Your access to Quizanistan is restricted until {ban_expires_str}."
+            ban_reason = (
+                ban_details.get("ban_reason", "No specific reason provided.")
+                or "No specific reason provided."
+            )
+            if ban_details.get("ban_date"):
+                ban_date_str = ban_details["ban_date"].strftime("%Y-%m-%d %H:%M:%S")
+            if ban_details.get("ban_expires_at"):
+                ban_expires_str = ban_details["ban_expires_at"].strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
+                ban_status_message = (
+                    f"Your access to Quizanistan is restricted until {ban_expires_str}."
+                )
             else:
-                ban_status_message = "Your access to Quizanistan is permanently restricted."
+                ban_status_message = (
+                    "Your access to Quizanistan is permanently restricted."
+                )
         elif can_appeal:
-            ban_reason = ban_details.get('ban_reason', 'Your previous restriction has expired.') or 'Your previous restriction has expired.'
-            if ban_details.get('ban_date'):
-                ban_date_str = ban_details['ban_date'].strftime('%Y-%m-%d %H:%M:%S')
+            ban_reason = (
+                ban_details.get("ban_reason", "Your previous restriction has expired.")
+                or "Your previous restriction has expired."
+            )
+            if ban_details.get("ban_date"):
+                ban_date_str = ban_details["ban_date"].strftime("%Y-%m-%d %H:%M:%S")
             ban_expires_str = "Expired"
             ban_status_message = "Your previous restriction has expired. You may appeal to regain full access."
             # Appeal button HTML
@@ -319,17 +337,28 @@ async def appeal_ban(payload: AppealPayload, request: Request):
 
     # Basic validation for the quote
     if not quote or len(quote.strip()) < 10:
-        raise HTTPException(status_code=400, detail="Quote too short or empty. Please provide a more substantial quote.")
+        raise HTTPException(
+            status_code=400,
+            detail="Quote too short or empty. Please provide a more substantial quote.",
+        )
 
     try:
         ban_details = IpAddressRepository.get_ip_address_by_string(client_ip_str)
 
-        if not ban_details or not ban_details.get('is_banned'):
-            raise HTTPException(status_code=400, detail="This IP is not currently banned or no ban record found.")
+        if not ban_details or not ban_details.get("is_banned"):
+            raise HTTPException(
+                status_code=400,
+                detail="This IP is not currently banned or no ban record found.",
+            )
 
         # Check if the ban has actually expired before allowing appeal via this API
-        if ban_details.get('ban_expires_at') and ban_details['ban_expires_at'] > datetime.now():
-            raise HTTPException(status_code=403, detail="Ban has not yet expired. Please wait.")
+        if (
+            ban_details.get("ban_expires_at")
+            and ban_details["ban_expires_at"] > datetime.now()
+        ):
+            raise HTTPException(
+                status_code=403, detail="Ban has not yet expired. Please wait."
+            )
 
         # If we reach here, the ban has expired or was permanent and we're allowing appeal.
         # Log the appeal attempt (e.g., to a separate log file or a database table for appeals)
@@ -340,7 +369,10 @@ async def appeal_ban(payload: AppealPayload, request: Request):
         success = IpAddressRepository.appeal_ban(client_ip_str)
 
         if success:
-            return JSONResponse(status_code=200, content={"message": "Appeal successful! Welcome back to Quizanistan."})
+            return JSONResponse(
+                status_code=200,
+                content={"message": "Appeal successful! Welcome back to Quizanistan."},
+            )
         else:
             raise HTTPException(status_code=500, detail="Failed to process appeal.")
 
@@ -348,14 +380,16 @@ async def appeal_ban(payload: AppealPayload, request: Request):
         raise e  # Re-raise FastAPI HTTP exceptions
     except Exception as e:
         print(f"Error during ban appeal for IP {client_ip_str}: {e}")
-        raise HTTPException(status_code=500, detail="An internal server error occurred during appeal.")
+        raise HTTPException(
+            status_code=500, detail="An internal server error occurred during appeal."
+        )
 
 
 @router.post("/ban-ip")
 async def ban_ip_address(
     ban_request: BanIpRequest,
     current_user: dict = Depends(get_current_user_info),
-    request: Request = None
+    request: Request = None,
 ):
     """
     Ban an IP address with a specified duration and reason.
@@ -364,69 +398,74 @@ async def ban_ip_address(
     user_role = current_user["role"]
     user_id = current_user["id"]
     client_ip = get_client_ip(request) if request else "unknown"
-    
+
     # Only admins can ban IP addresses
     if user_role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only admins can ban IP addresses"
+            detail="Only admins can ban IP addresses",
         )
-    
+
     # Admins can ban up to a week (or permanent)
     if ban_request.ban_duration_unit == "days" and ban_request.ban_duration_value > 7:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admins can ban for up to 7 days maximum"
+            detail="Admins can ban for up to 7 days maximum",
         )
-    elif ban_request.ban_duration_unit == "hours" and ban_request.ban_duration_value > 168:  # 7 days in hours
+    elif (
+        ban_request.ban_duration_unit == "hours"
+        and ban_request.ban_duration_value > 168
+    ):  # 7 days in hours
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Ban duration exceeds 7 day limit"
+            detail="Ban duration exceeds 7 day limit",
         )
-    elif ban_request.ban_duration_unit == "minutes" and ban_request.ban_duration_value > 10080:  # 7 days in minutes
+    elif (
+        ban_request.ban_duration_unit == "minutes"
+        and ban_request.ban_duration_value > 10080
+    ):  # 7 days in minutes
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Ban duration exceeds 7 day limit"
+            detail="Ban duration exceeds 7 day limit",
         )
-    
+
     try:
         # Get IP address record
         ip_record = IpAddressRepository.get_ip_address_by_string(ban_request.ip_address)
         if not ip_record:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"IP address {ban_request.ip_address} not found"
+                detail=f"IP address {ban_request.ip_address} not found",
             )
-        
+
         # Calculate ban expiry
         try:
             ban_expires_at = calculate_ban_expiry(
-                ban_request.ban_duration_value,
-                ban_request.ban_duration_unit
+                ban_request.ban_duration_value, ban_request.ban_duration_unit
             )
         except ValueError as e:
             print(f"Invalid ban duration: {e}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid ban duration specified."
+                detail="Invalid ban duration specified.",
             )
-        
+
         # Update IP address with ban information
         success = IpAddressRepository.update_ip_address(
-            ip_id=ip_record['id'],
+            ip_id=ip_record["id"],
             is_banned=True,
             ban_reason=ban_request.ban_reason or "No reason provided",
             ban_date=datetime.now(),
             banned_by=user_id,
-            ban_expires_at=ban_expires_at
+            ban_expires_at=ban_expires_at,
         )
-        
+
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to ban IP address"
+                detail="Failed to ban IP address",
             )
-        
+
         # Create audit log for IP ban
         new_ip_values = {
             "ip_address": ban_request.ip_address,
@@ -434,36 +473,36 @@ async def ban_ip_address(
             "ban_reason": ban_request.ban_reason or "No reason provided",
             "ban_date": datetime.now().isoformat(),
             "banned_by": user_id,
-            "ban_expires_at": ban_expires_at.isoformat() if ban_expires_at else None
+            "ban_expires_at": ban_expires_at.isoformat() if ban_expires_at else None,
         }
-        
+
         try:
             AuditLogRepository.create_audit_log(
                 table_name="ip_addresses",
-                record_id=ip_record['id'],
+                record_id=ip_record["id"],
                 action="BAN",
                 old_values=None,
                 new_values=json.dumps(new_ip_values),
                 changed_by=user_id,
-                ip_address=client_ip
+                ip_address=client_ip,
             )
         except Exception as audit_error:
             print(f"IP ban audit log creation failed: {audit_error}")
-        
+
         # Log the ban action
         log_user_ip_address(user_id, client_ip)
-        
+
         return {
             "message": f"IP address {ban_request.ip_address} has been banned successfully",
             "ban_expires_at": ban_expires_at,
-            "banned_by": user_id
+            "banned_by": user_id,
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
         print(f"Error banning IP address: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to ban IP address. Please try again later."
+            detail="Failed to ban IP address. Please try again later.",
         )
