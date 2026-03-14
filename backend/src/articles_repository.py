@@ -1,10 +1,17 @@
 import mysql.connector
+from mysql.connector.pooling import MySQLConnectionPool
 import config
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 
 class ArticlesRepository:
     """Repository class for managing articles in the database"""
+
+# Module-level connection pool to avoid creating a new DB connection per call.
+try:
+    _pool = MySQLConnectionPool(pool_name="articles_pool", pool_size=5, **config.db_config)
+except Exception:
+    _pool = None
     
     # CREATE operations
     @staticmethod
@@ -14,7 +21,7 @@ class ArticlesRepository:
                       is_active: bool = True, is_featured: bool = False):
         """Create a new article"""
         try:
-            connection = mysql.connector.connect(**config.db_config)
+            connection = _pool.get_connection() if _pool else mysql.connector.connect(**config.db_config)
             cursor = connection.cursor()
             
             sql = """
@@ -47,7 +54,7 @@ class ArticlesRepository:
     def get_all_articles(active_only: bool = False) -> List[Dict[str, Any]]:
         """Get all articles from the database"""
         try:
-            connection = mysql.connector.connect(**config.db_config)
+            connection = _pool.get_connection() if _pool else mysql.connector.connect(**config.db_config)
             cursor = connection.cursor(dictionary=True)
             
             if active_only:
@@ -70,18 +77,18 @@ class ArticlesRepository:
                 connection.close()
     
     @staticmethod
-    def get_article_by_id(article_id: int) -> Optional[Dict[str, Any]]:
+    def get_article_by_id(article_id: int, increment_view: bool = False) -> Optional[Dict[str, Any]]:
         """Get a single article by ID"""
         try:
-            connection = mysql.connector.connect(**config.db_config)
+            connection = _pool.get_connection() if _pool else mysql.connector.connect(**config.db_config)
             cursor = connection.cursor(dictionary=True)
             
             sql = "SELECT * FROM articles WHERE id = %s"
             cursor.execute(sql, (article_id,))
             article = cursor.fetchone()
             
-            if article:
-                # Increment view count
+            if article and increment_view:
+                # Increment view count only when requested by caller (e.g. an end-user request)
                 cursor.execute("UPDATE articles SET view_count = view_count + 1 WHERE id = %s", (article_id,))
                 connection.commit()
             
@@ -100,7 +107,7 @@ class ArticlesRepository:
     def get_articles_by_author(author: str, active_only: bool = False) -> List[Dict[str, Any]]:
         """Get all articles by a specific author"""
         try:
-            connection = mysql.connector.connect(**config.db_config)
+            connection = _pool.get_connection() if _pool else mysql.connector.connect(**config.db_config)
             cursor = connection.cursor(dictionary=True)
             
             if active_only:
@@ -126,7 +133,7 @@ class ArticlesRepository:
     def get_articles_by_category(category: str, active_only: bool = False) -> List[Dict[str, Any]]:
         """Get all articles in a specific category"""
         try:
-            connection = mysql.connector.connect(**config.db_config)
+            connection = _pool.get_connection() if _pool else mysql.connector.connect(**config.db_config)
             cursor = connection.cursor(dictionary=True)
             
             if active_only:
@@ -152,7 +159,7 @@ class ArticlesRepository:
     def search_articles(search_term: str, active_only: bool = False) -> List[Dict[str, Any]]:
         """Search articles using full-text search"""
         try:
-            connection = mysql.connector.connect(**config.db_config)
+            connection = _pool.get_connection() if _pool else mysql.connector.connect(**config.db_config)
             cursor = connection.cursor(dictionary=True)
             
             if active_only:
@@ -190,23 +197,27 @@ class ArticlesRepository:
     def _fallback_search(search_term: str, active_only: bool = False) -> List[Dict[str, Any]]:
         """Fallback search using LIKE when full-text search fails"""
         try:
-            connection = mysql.connector.connect(**config.db_config)
+            connection = _pool.get_connection() if _pool else mysql.connector.connect(**config.db_config)
             cursor = connection.cursor(dictionary=True)
-            
-            like_term = f"%{search_term}%"
-            
+
+            # Escape LIKE metacharacters to avoid surprising patterns and limit accidental full-table matches.
+            safe = search_term.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+            like_term = f"%{safe}%"
+
             if active_only:
                 sql = """
                 SELECT * FROM articles 
                 WHERE (title LIKE %s OR content LIKE %s OR author LIKE %s OR story LIKE %s) 
                 AND is_active = TRUE
                 ORDER BY date_written DESC
+                ESCAPE '\\'
                 """
             else:
                 sql = """
                 SELECT * FROM articles 
                 WHERE (title LIKE %s OR content LIKE %s OR author LIKE %s OR story LIKE %s)
                 ORDER BY date_written DESC
+                ESCAPE '\\'
                 """
             
             cursor.execute(sql, (like_term, like_term, like_term, like_term))
@@ -227,7 +238,7 @@ class ArticlesRepository:
     def get_featured_articles(limit: int = 5) -> List[Dict[str, Any]]:
         """Get featured articles"""
         try:
-            connection = mysql.connector.connect(**config.db_config)
+            connection = _pool.get_connection() if _pool else mysql.connector.connect(**config.db_config)
             cursor = connection.cursor(dictionary=True)
             
             sql = """
@@ -255,7 +266,7 @@ class ArticlesRepository:
     def get_recent_articles(limit: int = 10, active_only: bool = True) -> List[Dict[str, Any]]:
         """Get most recent articles"""
         try:
-            connection = mysql.connector.connect(**config.db_config)
+            connection = _pool.get_connection() if _pool else mysql.connector.connect(**config.db_config)
             cursor = connection.cursor(dictionary=True)
             
             if active_only:
@@ -282,7 +293,7 @@ class ArticlesRepository:
     def update_article(article_id: int, **kwargs) -> bool:
         """Update an article with provided fields"""
         try:
-            connection = mysql.connector.connect(**config.db_config)
+            connection = _pool.get_connection() if _pool else mysql.connector.connect(**config.db_config)
             cursor = connection.cursor()
             
             # Build dynamic update query
@@ -331,7 +342,7 @@ class ArticlesRepository:
     def set_article_active_status(article_id: int, is_active: bool) -> bool:
         """Set article active/inactive status"""
         try:
-            connection = mysql.connector.connect(**config.db_config)
+            connection = _pool.get_connection() if _pool else mysql.connector.connect(**config.db_config)
             cursor = connection.cursor()
             
             sql = "UPDATE articles SET is_active = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
@@ -359,7 +370,7 @@ class ArticlesRepository:
     def set_article_featured_status(article_id: int, is_featured: bool) -> bool:
         """Set article featured status"""
         try:
-            connection = mysql.connector.connect(**config.db_config)
+            connection = _pool.get_connection() if _pool else mysql.connector.connect(**config.db_config)
             cursor = connection.cursor()
             
             sql = "UPDATE articles SET is_featured = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
@@ -510,7 +521,7 @@ def test_articles_repository():
         
         # Test retrieving the article
         print("\n2. Testing article retrieval...")
-        article = ArticlesRepository.get_article_by_id(article_id)
+        article = ArticlesRepository.get_article_by_id(article_id, increment_view=True)
         if article:
             print(f"✅ Retrieved article: {article['title']}")
         
