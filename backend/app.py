@@ -6,6 +6,11 @@ import threading
 import time
 import traceback
 import zipfile
+import shutil
+import subprocess
+from PIL import Image
+from fastapi.responses import FileResponse
+from starlette.background import BackgroundTask
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
@@ -271,7 +276,7 @@ def get_sentle_scores_columns():
         sentle_logger.info(
             f"Sentle scores columns detected: {_sentle_scores_columns_cache}"
         )
-    except Exception as e:
+    except Exception as _e:
         sentle_logger.error(f"Failed to detect sentle_scores columns: {e}")
         _sentle_scores_columns_cache = []
     return _sentle_scores_columns_cache
@@ -311,7 +316,7 @@ def threadsafe_emit_message_sent(sio, session_id, loop):
         asyncio.run_coroutine_threadsafe(
             sio.emit("message_sent", {"session_id": session_id}), loop
         )
-    except Exception as e:
+    except Exception as _e:
         # Don't let missing emit helper crash timer threads; log and continue
         print(
             f"[WARN] threadsafe_emit_message_sent failed to schedule emit for session {session_id}: {e}"
@@ -350,7 +355,7 @@ async def lifespan(app: FastAPI):
                 )
                 pi_thread.start()
                 startup_logger.info("Raspberry Pi script thread started.")
-            except Exception as e:
+            except Exception as _e:
                 startup_logger.error(f"Failed to start Raspberry Pi thread: {e}")
                 startup_logger.info("Continuing without Pi components.")
         else:
@@ -359,7 +364,7 @@ async def lifespan(app: FastAPI):
             )
 
         startup_logger.info("Server started - Socket.IO backend is ready!")
-    except Exception as e:
+    except Exception as _e:
         startup_logger.error(f"Error in startup: {e}")
         raise
     yield
@@ -371,7 +376,7 @@ async def lifespan(app: FastAPI):
         # If the thread is not a daemon, you'd want to join it: pi_thread.join(timeout=5)
         startup_logger.info("Shutdown signal sent to Raspberry Pi thread.")
 
-    except Exception as e:
+    except Exception as _e:
         logging.getLogger("uvicorn.error").error(f"Error in shutdown: {e}")
 
 
@@ -394,7 +399,7 @@ async def log_incoming_requests(request, call_next):
     try:
         response = await call_next(request)
         return response
-    except Exception as e:
+    except Exception as _e:
         logging.getLogger("uvicorn.error").error(
             f"Unhandled error on {request.method} {request.url.path}: {e}"
         )
@@ -424,7 +429,7 @@ try:
 
     app.include_router(manage_router)
     print("✓ Manage the Spire API routes loaded")
-except Exception as e:
+except Exception as _e:
     print(f"Warning: Could not load Manage the Spire routes: {e}")
 
 # Include Spire AI Collaboration router
@@ -433,7 +438,7 @@ try:
 
     app.include_router(community_router)
     print("✓ Spire AI Collaboration routes loaded")
-except Exception as e:
+except Exception as _e:
     print(f"Warning: Could not load Spire AI Collaboration routes: {e}")
 
 # Rate limiting setup
@@ -514,7 +519,7 @@ from starlette.responses import Response as _StarletteResponse
 async def _admin_token_cookie_middleware(request, call_next):
     try:
         response = await call_next(request)
-    except Exception as e:
+    except Exception as _e:
         raise
 
     try:
@@ -687,7 +692,7 @@ async def admin_logout(request: Request):
         resp = JSONResponse(content={"detail": "Logged out"})
         resp.delete_cookie("admin_token", path="/")
         return resp
-    except Exception as e:
+    except Exception as _e:
         logging.getLogger("uvicorn.error").exception("Failed to logout admin: %s", e)
         raise HTTPException(status_code=500, detail="Failed to logout")
 
@@ -702,7 +707,7 @@ async def admin_token_status(request: Request):
         if is_token_revoked(token):
             return JSONResponse(content={"status": "revoked"})
         return JSONResponse(content={"status": "active"})
-    except Exception as e:
+    except Exception as _e:
         logging.getLogger("uvicorn.error").exception(
             "Failed to check token status: %s", e
         )
@@ -874,7 +879,7 @@ def log_user_ip_address(user_id: int, ip_address: str):
             ip_address_id=ip_address_id,
             is_primary=False,  # Will be set to primary later if needed
         )
-    except Exception as e:
+    except Exception as _e:
         print(f"Error logging user IP address: {e}")
 
 
@@ -910,7 +915,7 @@ def load_download_tracker():
                 content = f.read().strip()
                 if content:
                     return json.loads(content)
-    except Exception as e:
+    except Exception as _e:
         print(f"Error loading download tracker: {e}")
 
     # Return defaults if file doesn't exist, is empty, or is corrupt
@@ -928,7 +933,7 @@ def load_download_tracker():
     try:
         with open(DOWNLOAD_TRACKER_FILE, "w") as f:
             json.dump(defaults, f, indent=2)
-    except Exception as e:
+    except Exception as _e:
         print(f"Error writing default download tracker: {e}")
     return defaults
 
@@ -951,7 +956,7 @@ def save_download_tracker(tracker):
             except OSError:
                 pass
             raise
-    except Exception as e:
+    except Exception as _e:
         print(f"Error saving download tracker: {e}")
 
 
@@ -1534,7 +1539,7 @@ def _batch_geolocate(ips: list) -> dict:
                     }
                     _geo_cache[ip_addr] = geo
                     results[ip_addr] = geo
-        except Exception as e:
+        except Exception as _e:
             logger.warning(f"GeoIP batch lookup failed: {e}")
             for ip_addr in batch:
                 fallback = {
@@ -1621,7 +1626,7 @@ async def get_room_participants(room_name):
     try:
         room = sio.manager.rooms.get("/", {}).get(room_name, set())
         return len(room)
-    except Exception as e:
+    except Exception as _e:
         print(f"Error getting room participants: {e}")
         return 0
 
@@ -1638,7 +1643,7 @@ def is_quiz_session_active(session_id):
         )
         print(f"Room {room_name} has {participant_count} participants")
         return participant_count > 0
-    except Exception as e:
+    except Exception as _e:
         quiz_logger.error(f"Error checking quiz session activity: {e}")
         print(f"Error checking quiz session activity: {e}")
         return True  # Assume active if we can't check
@@ -1711,7 +1716,7 @@ async def connect(sid, environ):
             f"Server emitted 'client_connected' for new client {sid}. Total clients: {len(connected_clients)}"
         )
 
-    except Exception as e:
+    except Exception as _e:
         print(f"Critical error in connect handler: {e}")
         traceback.print_exc()
 
@@ -1797,7 +1802,7 @@ async def handle_join_quiz_session(sid, data):
                     sio, loop, sid, session_id=target_session_id
                 )
                 print(f"[JOIN_SESSION] Sent theme selection to {sid}")
-            except Exception as e:
+            except Exception as _e:
                 print(f"[JOIN_SESSION] Error sending theme selection: {e}")
 
         elif current_phase == "theme_display":
@@ -1815,7 +1820,7 @@ async def handle_join_quiz_session(sid, data):
                             },
                             room=sid,
                         )
-                except Exception as e:
+                except Exception as _e:
                     print(f"[JOIN_SESSION] Error sending theme display: {e}")
 
         elif current_phase == "quiz":
@@ -1861,10 +1866,10 @@ async def handle_join_quiz_session(sid, data):
                             },
                             room=sid,
                         )
-                except Exception as e:
+                except Exception as _e:
                     print(f"[JOIN_SESSION] Error syncing quiz state: {e}")
 
-    except Exception as e:
+    except Exception as _e:
         print(f"[JOIN_SESSION] Critical error: {e}")
         traceback.print_exc()
         await sio.emit("join_session_error", {"error": str(e)}, room=sid)
@@ -1907,7 +1912,7 @@ async def disconnect(sid):
                         "timestamp": datetime.now().isoformat(),
                     },
                 )
-        except Exception as e:
+        except Exception as _e:
             print(f"Error checking session room after disconnect: {e}")
     # NOTE: Removed fallback that ended unrelated sessions when any client disconnected.
     # The idle checker now handles orphaned sessions with a proper 60s timeout.
@@ -1967,7 +1972,7 @@ def list_stories():
     try:
         stories = StoriesRepository.list_stories()
         return stories or []
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(status_code=500, detail=f"Failed to list stories: {e}")
 
 
@@ -1999,7 +2004,7 @@ def create_story_if_not_exists(
         return {"created": True, "story": created}
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(status_code=500, detail=f"Failed to create story: {e}")
 
 
@@ -2017,7 +2022,7 @@ def delete_story(
         return {"detail": "Story deleted"}
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(status_code=500, detail=f"Failed to delete story: {e}")
 
 
@@ -2047,7 +2052,7 @@ def update_story(
         return story
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(status_code=500, detail=f"Failed to update story: {e}")
 
 
@@ -2063,7 +2068,7 @@ def get_articles_by_story(story_id: int, active_only: bool = False):
             story_id, active_only=active_only
         )
         return articles or []
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(
             status_code=500,
             detail=f"Failed to fetch articles for story {story_id}: {e}",
@@ -2085,7 +2090,7 @@ def get_article(article_id: int, increment_view: bool = True):
         return article
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(
             status_code=500, detail=f"Failed to fetch article {article_id}: {e}"
         )
@@ -2146,7 +2151,7 @@ def create_article(
         return created
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(status_code=500, detail=f"Failed to create article: {e}")
 
 
@@ -2169,7 +2174,7 @@ def update_article(
         return updated
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(
             status_code=500, detail=f"Failed to update article {article_id}: {e}"
         )
@@ -2192,7 +2197,7 @@ def delete_article(
         return {"deleted": True, "article_id": article_id}
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(
             status_code=500, detail=f"Failed to delete article {article_id}: {e}"
         )
@@ -2250,7 +2255,7 @@ async def get_active_questions_count():
         count = len(active_questions) if active_questions else 0
 
         return JSONResponse(content={"count": count})
-    except Exception as e:
+    except Exception as _e:
         return JSONResponse(
             status_code=500,
             content={"error": f"Failed to retrieve active questions count: {str(e)}"},
@@ -2267,7 +2272,7 @@ async def get_active_users_count():
         count = len(users) if users else 0
 
         return JSONResponse(content={"count": count})
-    except Exception as e:
+    except Exception as _e:
         return JSONResponse(
             status_code=500,
             content={"error": f"Failed to retrieve active questions count: {str(e)}"},
@@ -2453,7 +2458,7 @@ async def get_all_articles(active_only: bool = False, include_story_info: bool =
             active_count=stats.get("active_articles", 0),
             featured_count=stats.get("featured_articles", 0),
         )
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(
             status_code=500, detail=f"Error retrieving articles: {str(e)}"
         )
@@ -2622,7 +2627,7 @@ async def create_article(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(status_code=500, detail=f"Error creating article: {str(e)}")
 
 
@@ -2694,7 +2699,7 @@ async def update_article(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(status_code=500, detail=f"Error updating article: {str(e)}")
 
 
@@ -2762,7 +2767,7 @@ async def update_article_status(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(
             status_code=500, detail=f"Error updating article status: {str(e)}"
         )
@@ -2811,7 +2816,7 @@ async def delete_article(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(status_code=500, detail=f"Error deleting article: {str(e)}")
 
 
@@ -2957,7 +2962,7 @@ async def get_client_ip_endpoint(request: Request):
     try:
         ip_address = get_client_ip_sync(request)
         return {"ip_address": ip_address}
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(status_code=500, detail=f"Failed to get client IP: {e}")
 
 
@@ -2977,7 +2982,7 @@ async def check_ip_status_and_track(payload: IpAddressPayload):
                 print(f"WARNING: Failed to create new IP {client_ip_str} in database.")
 
         return {"ip_address": client_ip_str, "is_banned": False}
-    except Exception as e:
+    except Exception as _e:
         print(f"Error in /api/v1/ip-status for IP {client_ip_str}: {e}")
         raise HTTPException(status_code=500, detail="Error processing IP status.")
 
@@ -3004,7 +3009,7 @@ async def banned_page(request: Request):
                     is_currently_banned = (
                         True  # Ban is still active or permanent (NULL expiry)
                     )
-        except Exception as e:
+        except Exception as _e:
             print(f"Error fetching ban details for {client_ip_str}: {e}")
             ban_details = None  # Reset to avoid incomplete data
 
@@ -3281,7 +3286,7 @@ async def appeal_ban(payload: AppealPayload, request: Request):
 
     except HTTPException as e:
         raise e  # Re-raise FastAPI HTTP exceptions
-    except Exception as e:
+    except Exception as _e:
         print(f"Error during ban appeal for IP {client_ip_str}: {e}")
         raise HTTPException(
             status_code=500, detail="An internal server error occurred during appeal."
@@ -3526,7 +3531,7 @@ async def get_multi_session_sensor_data(
 
         return response
 
-    except Exception as e:
+    except Exception as _e:
         print(f"Error in get_multi_session_sensor_data: {e}")
         return {"error": str(e)}
 
@@ -3644,7 +3649,7 @@ async def add_user_to_active_session(user_id: int):
         else:
             logger.info(f"User {user_id} is already in session {active_session_id}")
 
-    except Exception as e:
+    except Exception as _e:
         logger.error(
             f"Failed to add user {user_id} to active session: {e}", exc_info=True
         )
@@ -3703,7 +3708,7 @@ async def register_user(user_credentials: UserCredentials, request: Request):
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         logger.error(
             f"An unexpected error occurred during user registration: {e}", exc_info=True
         )
@@ -3747,7 +3752,7 @@ async def login_user(user_credentials: UserCredentials, request: Request):
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         logger.error(
             f"An unexpected error occurred during login for user '{user_credentials.first_name}': {e}",
             exc_info=True,
@@ -3788,7 +3793,7 @@ async def support_login_user(user_credentials: UserCredentials, request: Request
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         logger.error(
             f"An unexpected error occurred during support login for user '{user_credentials.first_name}': {e}",
             exc_info=True,
@@ -3845,7 +3850,7 @@ async def support_register_user(user_credentials: UserCredentials, request: Requ
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         logger.error(
             f"An unexpected error occurred during support registration: {e}",
             exc_info=True,
@@ -3889,7 +3894,7 @@ async def list_support_rooms(user_id: int = None):
                 for r in (rooms or [])
             ]
         }
-    except Exception as e:
+    except Exception as _e:
         logger.error(f"Error listing support rooms: {e}")
         raise HTTPException(status_code=500, detail="Failed to list rooms")
 
@@ -3926,7 +3931,7 @@ async def create_support_room(request: Request):
         return {"room_id": room_id, "status": "created"}
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         logger.error(f"Error creating support room: {e}")
         raise HTTPException(status_code=500, detail="Failed to create room")
 
@@ -3963,7 +3968,7 @@ async def delete_support_room(room_id: int, user_id: int = None):
         return {"status": "deleted"}
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         logger.error(f"Error deleting support room: {e}")
         raise HTTPException(status_code=500, detail="Failed to delete room")
 
@@ -4006,7 +4011,7 @@ async def get_support_room_messages(room_id: int, user_id: int = None):
         }
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         logger.error(f"Error getting support room messages: {e}")
         raise HTTPException(status_code=500, detail="Failed to get messages")
 
@@ -4082,7 +4087,7 @@ async def send_support_room_message(room_id: int, request: Request):
         return {"message_id": msg_id, "status": "sent"}
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         logger.error(f"Error sending support message: {e}")
         raise HTTPException(status_code=500, detail="Failed to send message")
 
@@ -4142,7 +4147,7 @@ def calculate_player_score(session_id: int, user_id: int) -> int:
         logger.debug(f"Score calculated for user {user_id}: {user_score}")
         return user_score
 
-    except Exception as e:
+    except Exception as _e:
         logger.error(
             f"Could not calculate score for user {user_id} in session {session_id}: {e}"
         )
@@ -4230,7 +4235,7 @@ def calculate_player_score_detailed(session_id: int, user_id: int) -> dict:
         )
         return result
 
-    except Exception as e:
+    except Exception as _e:
         logger.error(
             f"Could not calculate detailed score for user {user_id} in session {session_id}: {e}"
         )
@@ -4292,7 +4297,7 @@ def debug_player_score_calculation(session_id: int, user_id: int) -> None:
 
         logger.info(f"=== END DEBUG ===")
 
-    except Exception as e:
+    except Exception as _e:
         logger.error(f"Error in debug function: {e}", exc_info=True)
 
 
@@ -4451,7 +4456,7 @@ async def handle_user_data_request(sid, data):
             f"Sent user data for session {active_session_id} to user {requesting_user_id}"
         )
 
-    except Exception as e:
+    except Exception as _e:
         logger.error(f"Error in handle_user_data_request: {str(e)}", exc_info=True)
         await sio.emit(
             "error",
@@ -4545,7 +4550,7 @@ async def create_question_endpoint(
             changed_by=user_id,
             ip_address=client_ip,
         )
-    except Exception as audit_error:
+    except Exception as _audit_error:
         print(f"Audit log creation failed: {audit_error}")
         # Continue execution even if audit logging fails
 
@@ -4605,7 +4610,7 @@ async def create_question_endpoint(
                 if answer_id:
                     created_answers.append(answer_id)
 
-            except Exception as answer_error:
+            except Exception as _answer_error:
                 print(f"Failed to create answer: {answer_error}")
                 # Continue with other answers
 
@@ -4621,7 +4626,7 @@ async def create_question_endpoint(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         print(f"Question creation error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to create question")
 
@@ -4719,10 +4724,10 @@ async def update_question_endpoint(
                         )
                         if answer_id:
                             created_answers.append(answer_id)
-                    except Exception as answer_error:
+                    except Exception as _answer_error:
                         print(f"Failed to create answer: {answer_error}")
                         continue
-            except Exception as answer_handling_error:
+            except Exception as _answer_handling_error:
                 print(f"Error handling answers: {answer_handling_error}")
                 raise HTTPException(status_code=500, detail="Failed to update answers")
 
@@ -4739,7 +4744,7 @@ async def update_question_endpoint(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         print(f"Error updating question: {e}")
         raise HTTPException(
             status_code=500, detail=f"Failed to update question: {str(e)}"
@@ -4776,7 +4781,7 @@ async def delete_question_endpoint(
                 print(
                     f"Warning: Failed to delete associated answers for question {question_id}"
                 )
-        except Exception as e:
+        except Exception as _e:
             print(f"Error deleting answers: {e}")
             # Continue with question deletion even if answer deletion fails
 
@@ -4804,7 +4809,7 @@ async def delete_question_endpoint(
                 changed_by=user_id,
                 ip_address=client_ip,
             )
-        except Exception as audit_error:
+        except Exception as _audit_error:
             print(f"Delete audit log creation failed: {audit_error}")
 
         return {
@@ -4816,7 +4821,7 @@ async def delete_question_endpoint(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         print(f"Error deleting question: {e}")
         raise HTTPException(
             status_code=500, detail=f"Failed to delete question: {str(e)}"
@@ -4858,7 +4863,7 @@ async def create_theme_endpoint(
             changed_by=user_id,
             ip_address=client_ip,
         )
-    except Exception as audit_error:
+    except Exception as _audit_error:
         print(f"Audit log creation failed: {audit_error}")
         # Continue execution even if audit logging fails
 
@@ -4885,7 +4890,7 @@ async def create_theme_endpoint(
 
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=f"Validation error: {str(ve)}")
-    except Exception as e:
+    except Exception as _e:
         print(f"Error creating theme: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to create theme: {str(e)}")
 
@@ -4927,7 +4932,7 @@ async def update_theme_endpoint(
             changed_by=user_id,
             ip_address=client_ip,
         )
-    except Exception as audit_error:
+    except Exception as _audit_error:
         print(f"Audit log creation failed: {audit_error}")
 
     try:
@@ -4945,7 +4950,7 @@ async def update_theme_endpoint(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         print(f"Error updating theme: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to update theme: {str(e)}")
 
@@ -4995,7 +5000,7 @@ async def delete_theme_endpoint(
                 changed_by=user_id,
                 ip_address=client_ip,
             )
-        except Exception as audit_error:
+        except Exception as _audit_error:
             print(f"Theme delete audit log creation failed: {audit_error}")
 
         return {
@@ -5007,7 +5012,7 @@ async def delete_theme_endpoint(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         print(f"Error deleting theme: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to delete theme: {str(e)}")
 
@@ -5074,7 +5079,7 @@ async def migrate_questions_between_themes(
             )
             if not migration_success:
                 raise Exception("Database migration operation failed")
-        except Exception as migration_error:
+        except Exception as _migration_error:
             raise HTTPException(
                 status_code=500,
                 detail=f"Failed to migrate questions: {str(migration_error)}",
@@ -5102,7 +5107,7 @@ async def migrate_questions_between_themes(
                 changed_by=user_id,
                 ip_address=client_ip,
             )
-        except Exception as audit_error:
+        except Exception as _audit_error:
             print(f"Migration audit log creation failed: {audit_error}")
 
         # Return migration summary
@@ -5118,7 +5123,7 @@ async def migrate_questions_between_themes(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         print(
             f"Error migrating questions from theme {source_theme_id} to {target_theme_id}: {e}"
         )
@@ -5184,7 +5189,7 @@ async def delete_user_endpoint(
                 changed_by=current_user_id,
                 ip_address=client_ip,
             )
-        except Exception as audit_error:
+        except Exception as _audit_error:
             print(f"User delete audit log creation failed: {audit_error}")
 
         return {
@@ -5196,7 +5201,7 @@ async def delete_user_endpoint(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         print(f"Error deleting user: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to delete user: {str(e)}")
 
@@ -5295,7 +5300,7 @@ async def ban_ip_address(
                 changed_by=user_id,
                 ip_address=client_ip,
             )
-        except Exception as audit_error:
+        except Exception as _audit_error:
             print(f"IP ban audit log creation failed: {audit_error}")
 
         # Log the ban action
@@ -5309,7 +5314,7 @@ async def ban_ip_address(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         print(f"Error banning IP address: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -5405,7 +5410,7 @@ async def get_recent_audit_logs(limit: int = 15) -> List[AuditLogResponse]:
                 )
                 audit_logs.append(audit_log)
 
-            except Exception as model_error:
+            except Exception as _model_error:
                 print(
                     f"Error creating AuditLogResponse for log {log_data.get('id')}: {model_error}"
                 )
@@ -5417,7 +5422,7 @@ async def get_recent_audit_logs(limit: int = 15) -> List[AuditLogResponse]:
         )
         return audit_logs
 
-    except Exception as e:
+    except Exception as _e:
         print(f"Error retrieving audit logs: {str(e)}")
         raise HTTPException(
             status_code=500, detail="An error occurred while retrieving audit logs"
@@ -5433,7 +5438,7 @@ async def get_correct_answers_percentage():
     try:
         percentage = PlayerAnswerRepository.get_correct_answers_percentage()
         return percentage
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to calculate answers percentage",
@@ -5502,7 +5507,7 @@ async def get_session_rankings(session_id: int):
                         "session_id": session_id,
                     }
                 )
-            except Exception as e:
+            except Exception as _e:
                 print(f"Error processing user {user_id}: {e}")
                 continue
 
@@ -5513,7 +5518,7 @@ async def get_session_rankings(session_id: int):
 
         return rankings
 
-    except Exception as e:
+    except Exception as _e:
         print(f"Error in get_session_rankings: {e}")
         return []
 
@@ -5581,7 +5586,7 @@ async def get_global_rankings(limit: int = 50):
                         }
                     )
 
-            except Exception as e:
+            except Exception as _e:
                 print(
                     f"Error processing user {username if 'username' in locals() else 'unknown'}: {e}"
                 )
@@ -5594,7 +5599,7 @@ async def get_global_rankings(limit: int = 50):
 
         return global_rankings[:limit]
 
-    except Exception as e:
+    except Exception as _e:
         print(f"Error in get_global_rankings: {e}")
         return []
 
@@ -5608,7 +5613,7 @@ async def get_all_items():
     try:
         items = ItemRepository.get_all_items()
         return {"items": items}
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve items",
@@ -5684,7 +5689,7 @@ async def get_active_sessions():
 
         # Also return legacy format for backwards compatibility
         return {"active_session_ids": raw_ids, "sessions": sessions_detail}
-    except Exception as e:
+    except Exception as _e:
         # For better debugging, log the actual exception and traceback
         import logging
 
@@ -5773,7 +5778,7 @@ async def create_quiz_session(request: Request):
             quiz_logger.info(
                 f"[CREATE_SESSION] Broadcasted session_created event for session {new_session_id}"
             )
-        except Exception as broadcast_err:
+        except Exception as _broadcast_err:
             quiz_logger.warning(
                 f"[CREATE_SESSION] Failed to broadcast session_created: {broadcast_err}"
             )
@@ -5787,7 +5792,7 @@ async def create_quiz_session(request: Request):
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         quiz_logger.error(f"Failed to create session: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to create session")
 
@@ -5853,7 +5858,7 @@ def _session_idle_checker():
                 elif player_count > 0:
                     # Players present — reset the idle timer
                     session_last_activity.pop(sid, None)
-        except Exception as e:
+        except Exception as _e:
             quiz_logger.error(f"[IDLE_CLEANUP] Error in idle checker: {e}")
 
 
@@ -5939,7 +5944,7 @@ async def create_chat_message(request: ChatMessageCreate):
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         logger.exception(f"Unhandled exception in create_chat_message: {e}")
         print(f"Error creating chat message: {e}")
         raise HTTPException(
@@ -6011,7 +6016,7 @@ async def create_support_chat_message(request: ChatMessageCreate):
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         logger.exception(f"Unhandled exception in create_support_chat_message: {e}")
         print(f"Error creating support chat message: {e}")
         raise HTTPException(
@@ -6040,7 +6045,7 @@ async def get_chat_messages(session_id: int) -> Dict[str, List[Dict]]:
                 }
             )
         return {"messages": formatted_messages}
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve chat messages",
@@ -6071,7 +6076,7 @@ async def get_chat_stats(session_id: int):
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve chat statistics",
@@ -6125,7 +6130,7 @@ async def user_left_quiz(sid, data):
         threadsafe_emit_message_sent(sio, get_active_session_id(), main_asyncio_loop)
         return True
 
-    except Exception as e:
+    except Exception as _e:
         print(f"Error in user_left_quiz: {e}")
         return False
 
@@ -6188,7 +6193,7 @@ async def send_system_message(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to send system message",
@@ -6213,7 +6218,7 @@ async def immediate_shutdown(current_user: dict = Depends(get_current_user_info)
             ["sudo", "poweroff"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
         )
         return {"message": "System powering off NOW"}
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(status_code=500, detail=f"Shutdown failed: {str(e)}")
 
 
@@ -6279,7 +6284,7 @@ def rfid_reader_thread(rfid_sensor, rfid_queue, stop_event):
             if uid:
                 rfid_queue.put(str(uid))  # Add the scanned UID to the queue
             time.sleep(0.1)  # Prevent tight-loop if read_card returns immediately
-        except Exception as e:
+        except Exception as _e:
             print(f"Error in RFID reader thread: {e}")
             # Avoid rapid-fire error logging on persistent hardware failure
             time.sleep(2)
@@ -6313,7 +6318,7 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
         )
         rfid_thread.start()
 
-    except Exception as e:
+    except Exception as _e:
         print(f"Failed to initialize Raspberry Pi components in thread: {e}")
         print(traceback.format_exc())
         stop_event.set()
@@ -6376,7 +6381,7 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
             except queue.Empty:
                 # This is normal; it just means no new card has been scanned.
                 pass
-            except Exception as e:
+            except Exception as _e:
                 print(f"Error processing RFID from queue: {e}")
 
             # --- Step 2: Handle Display and Sensor Logic ---
@@ -6412,7 +6417,7 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
                         }
                         emit_sensor_data(sensor_data, sio, loop)
 
-                except Exception as e:
+                except Exception as _e:
                     print("Sensor read/display error")
                     if lcd:
                         lcd.write_line(1, "Sensor Error")
@@ -6426,14 +6431,14 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
                         sensor_data = read_sensor_data(temp_sensor, light_sensor, servo)
                         log_quiz_sensor_data(session_id, sensor_data)
                         emit_theme_selection_if_needed(sio, loop)
-            except Exception as e:
+            except Exception as _e:
                 print(f"Error in quiz session logic block: {e}")
 
             time.sleep(
                 0.25
             )  # Main loop delay — keep >= 0.2 to avoid GIL-starving uvicorn
 
-    except Exception as e:
+    except Exception as _e:
         print(f"Fatal error in Pi thread: {e}")
         print(traceback.format_exc())
     finally:
@@ -6453,7 +6458,7 @@ def raspberry_pi_main_thread(stop_event, sio, loop):
                 lcd.clear()
                 lcd.cleanup()
             print("Pi thread cleanup complete.")
-        except Exception as e:
+        except Exception as _e:
             print(f"Pi thread cleanup error: {e}")
 
 
@@ -6486,7 +6491,7 @@ async def trigger_servo():
                 + (f" named '{session_name}'" if session_name else "")
                 + ". Please wait until the quiz ends."
             }
-    except Exception as e:
+    except Exception as _e:
         print(f"Error checking active quiz sessions: {e}")
         raise HTTPException(
             status_code=500, detail="Internal server error checking quiz status."
@@ -6517,7 +6522,7 @@ async def trigger_servo():
                 "previous_angle": current_angle,
                 "new_angle": target_angle,
             }
-    except Exception as e:
+    except Exception as _e:
         print(f"Error controlling servo: {e}")
         raise HTTPException(
             status_code=500, detail=f"Failed to control servo: {str(e)}"
@@ -6542,7 +6547,7 @@ async def get_all_users(request: Request):
                 user["first_name"] = user["email"]
         # Your console log shows it's a list of dictionaries, so this should work.
         return [UserPublic(**user) for user in users]
-    except Exception as e:
+    except Exception as _e:
         print(f"Error in get_all_users endpoint: {e}")
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail="Failed to retrieve users.")
@@ -6592,7 +6597,7 @@ def read_sensor_data(temp_sensor, light_sensor, servo):
             "illuminance": light_sensor(),
             "servo_angle": servo.read_degrees(),
         }
-    except Exception as e:
+    except Exception as _e:
         print(f"Error reading sensor data: {e}")
         # Return safe default values
         return {"temperature": 0.0, "illuminance": 0, "servo_angle": 0}
@@ -6608,7 +6613,7 @@ def log_quiz_sensor_data(session_id, sensor_data):
             servoPosition=sensor_data["servo_angle"],
             timestamp=datetime.now(),
         )
-    except Exception as e:
+    except Exception as _e:
         print(f"Error logging sensor data: {e}")
 
 
@@ -6643,7 +6648,7 @@ def emit_sensor_data(sensor_data, sio, loop):
     try:
         if should_emit(sensor_data["temperature"], sensor_data["illuminance"]):
             asyncio.run_coroutine_threadsafe(sio.emit("sensor_data", sensor_data), loop)
-    except Exception as e:
+    except Exception as _e:
         print("Error emitting sensor_data from thread")
 
 
@@ -6806,7 +6811,7 @@ def move_servo_smoothly(start_angle, end_angle, duration, reverse=False):
             if i < steps:  # Don't sleep after the last step
                 time.sleep(sleep_time)
 
-    except Exception as e:
+    except Exception as _e:
         print(f"Servo movement error: {e}")
 
 
@@ -6884,7 +6889,7 @@ def emit_timer_update(
         future1.result(timeout=1)
         future2.result(timeout=1)
 
-    except Exception as e:
+    except Exception as _e:
         print(f"Error emitting timer update: {e}")
 
 
@@ -6915,7 +6920,7 @@ def emit_timer_finished(sio, loop, session_id, phase, **extra_data):
         future1.result(timeout=1)
         future2.result(timeout=1)
 
-    except Exception as e:
+    except Exception as _e:
         print(f"Error emitting timer finished: {e}")
 
 
@@ -6980,7 +6985,7 @@ def start_generic_timer(sio, loop, session_id, timer_config):
                     f"[DEBUG] Timer thread for session {session_id} found unexpected phase: {current_phase}"
                 )
 
-        except Exception as e:
+        except Exception as _e:
             quiz_logger.error(f"Timer error for session {session_id}: {e}")
             print(f"Timer error for session {session_id}: {e}")
             traceback.print_exc()
@@ -7097,7 +7102,7 @@ def handle_voting_phase(sio, loop, session_id, voting_time):
                 with session_played_lock:
                     if winning_theme not in session_played_themes[session_id]:
                         session_played_themes[session_id].append(winning_theme)
-            except Exception as e:
+            except Exception as _e:
                 print(
                     f"Warning: failed to record played theme for session {session_id}: {e}"
                 )
@@ -7244,7 +7249,7 @@ def handle_theme_display_phase(sio, loop, session_id, display_time):
             f"handle_theme_display_phase: starting quiz timer for session {session_id}"
         )
         start_generic_timer(sio, loop, session_id, timer_config)
-    except Exception as e:
+    except Exception as _e:
         quiz_logger.error(
             f"Failed to start quiz timer after theme display for session {session_id}: {e}"
         )
@@ -7306,7 +7311,7 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
         print(
             f"[DEBUG] handle_quiz_phase: total_questions for theme {theme_id}: {total_questions}"
         )
-    except Exception as e:
+    except Exception as _e:
         print(f"[DEBUG] handle_quiz_phase: error while counting questions: {e}")
     if not quiz_state["question_count"]:
         quiz_state["question_count"] = len(ids)
@@ -7413,7 +7418,7 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
                 emit_combined_theme_selection(
                     sio, loop, None, True, played, session_id=session_id
                 )
-            except Exception as e:
+            except Exception as _e:
                 print(
                     f"Failed to emit new theme selection for session {session_id}: {e}"
                 )
@@ -7427,7 +7432,7 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
                     "explanation_time": 15,
                 }
                 start_generic_timer(sio, loop, session_id, timer_config)
-            except Exception as e:
+            except Exception as _e:
                 print(
                     f"Failed to start voting timer for new theme selection in session {session_id}: {e}"
                 )
@@ -7555,7 +7560,7 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
             print(
                 f"[DEBUG] emit_combined_question_and_answers called for question_id={question['id']}"
             )
-        except Exception as e:
+        except Exception as _e:
             print(
                 f"[ERROR] emit_combined_question_and_answers failed for question {question['id']}: {e}"
             )
@@ -7891,7 +7896,7 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
         try:
             # Exclude already played themes from the next vote
             emit_combined_theme_selection(sio, loop, None, True, played)
-        except Exception as e:
+        except Exception as _e:
             print(
                 f"Failed to emit theme selection for next theme in session {session_id}: {e}"
             )
@@ -7904,7 +7909,7 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
                 "explanation_time": 15,
             }
             start_generic_timer(sio, loop, session_id, timer_config)
-        except Exception as e:
+        except Exception as _e:
             print(
                 f"Failed to start voting timer for new theme in session {session_id}: {e}"
             )
@@ -8053,7 +8058,7 @@ def emit_combined_theme_selection(
                     asyncio.run_coroutine_threadsafe(
                         sio.emit("theme_selection_error", error_data), loop
                     )
-            except Exception as e:
+            except Exception as _e:
                 print(f"Failed to schedule 'theme_selection_error' emit: {e}")
             return
 
@@ -8076,10 +8081,10 @@ def emit_combined_theme_selection(
                 asyncio.run_coroutine_threadsafe(
                     sio.emit("questionData", combined_data), loop
                 )
-        except Exception as e:
+        except Exception as _e:
             print(f"Failed to schedule 'theme_selection_data' emit: {e}")
 
-    except Exception as e:
+    except Exception as _e:
         print(f"An unexpected error occurred during emit_combined_theme_selection: {e}")
 
 
@@ -8102,7 +8107,7 @@ def check_sensor_data(temp_sensor, light_sensor):
             "temperature": temperature,
             "illuminance": light_sensor(),
         }
-    except Exception as e:
+    except Exception as _e:
         print(f"Error reading sensor data: {e}")
         # Return safe default values
         return {
@@ -8166,12 +8171,12 @@ def emit_combined_question_and_answers(question_id, sio, loop, target=None):
                 print(
                     f"[DEBUG] questionData emit scheduled for question_id={question_id}"
                 )
-            except Exception as e:
+            except Exception as _e:
                 print(f"[DEBUG] questionData emit may have failed to schedule: {e}")
-        except Exception as e:
+        except Exception as _e:
             print(f"[ERROR] Failed to run_coroutine_threadsafe for questionData: {e}")
 
-    except Exception as e:
+    except Exception as _e:
         # Catch any other unexpected errors during the process
         print(
             f"An unexpected error occurred during emit_combined_question_and_answers: {e}"
@@ -8337,7 +8342,7 @@ def emit_theme_selection_if_needed(sio, loop):
                 # No phase set but theme exists - start theme display
                 set_session_phase(active_session_id, "quiz")
 
-    except Exception as e:
+    except Exception as _e:
         print(f"Error in emit_theme_selection_if_needed: {e}")
         traceback.print_exc()
 
@@ -8503,7 +8508,7 @@ async def handle_answer_submission(sid, data):
                     f"Successfully created player answer record for user {user_id}"
                 )
 
-            except Exception as db_error:
+            except Exception as _db_error:
                 logger.error(
                     f"Database error creating player answer: {str(db_error)}",
                     exc_info=True,
@@ -8537,7 +8542,7 @@ async def handle_answer_submission(sid, data):
                 f"Correct: {is_correct}, Points: {points_earned}/{max_points}"
             )
 
-        except Exception as e:
+        except Exception as _e:
             logger.error(
                 f"Unexpected error handling answer submission: {str(e)}", exc_info=True
             )
@@ -8687,7 +8692,7 @@ async def handle_theme_selection(sid, data):
         await sio.emit("answer_response", {"success": True}, to=sid)
         print(f"[THEME_SELECTION] SUCCESS: Vote recorded for user {user_id}")
 
-    except Exception as e:
+    except Exception as _e:
         print(f"[THEME_SELECTION] EXCEPTION: {e}")
         traceback.print_exc()
         await sio.emit(
@@ -8725,7 +8730,7 @@ def threadsafe_emit_message_sent(sio, session_id, loop):
         asyncio.run_coroutine_threadsafe(
             sio.emit("message_sent", {"session_id": session_id}), loop
         )
-    except Exception as e:
+    except Exception as _e:
         # Don't let missing emit helper crash timer threads; log and continue
         print(
             f"[WARN] threadsafe_emit_message_sent failed to schedule emit for session {session_id}: {e}"
@@ -8950,7 +8955,7 @@ async def get_player_items(user_id: int):
     try:
         items = PlayerItemRepository.get_player_items(user_id)
         return {"success": True, "items": items}
-    except Exception as e:
+    except Exception as _e:
         return {"success": False, "error": str(e)}
 
 
@@ -8959,7 +8964,7 @@ def clear_player_items(user_id: int):
     try:
         success = PlayerItemRepository.delete_all_player_items(user_id)
         return {"success": success}
-    except Exception as e:
+    except Exception as _e:
         return {"success": False, "error": str(e)}
 
 
@@ -9002,12 +9007,12 @@ async def use_item(user_id: int, item_id: int, discard: bool = False):
                     function_name = effect[:-2]
                     if function_name in globals():
                         globals()[function_name]()
-        except Exception as effect_error:
+        except Exception as _effect_error:
             print(f"Error executing item effect: {effect_error}")
 
         return {"success": True, "item_used": item}
 
-    except Exception as e:
+    except Exception as _e:
         return {"success": False, "error": str(e)}
 
 
@@ -9050,7 +9055,7 @@ def get_random_item_by_luck(luck: float) -> Optional[Dict[str, Any]]:
 
         return random.choices(all_items, weights=weights, k=1)[0]
 
-    except Exception as e:
+    except Exception as _e:
         print(f"Error getting random item: {e}")
         # Fallback to simple random choice if weighting fails
         return random.choice(all_items) if all_items else None
@@ -9129,7 +9134,7 @@ def get_random_item(user_id: int, luck: float = 0.5) -> Dict[str, Any]:
             }
         )
 
-    except Exception as e:
+    except Exception as _e:
         return {"success": False, "error": f"System error: {str(e)}"}
 
 
@@ -9138,7 +9143,7 @@ def get_all_items():
     try:
         items = ItemRepository.get_all_items()
         return {"success": True, "items": items}
-    except Exception as e:
+    except Exception as _e:
         return {"success": False, "error": str(e)}
 
 
@@ -9147,7 +9152,7 @@ def get_items_by_rarity(rarity: str):
     try:
         items = ItemRepository.get_items_by_rarity(rarity)
         return {"success": True, "items": items}
-    except Exception as e:
+    except Exception as _e:
         return {"success": False, "error": str(e)}
 
 
@@ -9166,16 +9171,6 @@ def reset_temperature():
 # ----------------------------------------------------
 # File Conversion Endpoints
 # ----------------------------------------------------
-
-import os
-import shutil
-import subprocess
-import zipfile
-
-from fastapi import File, Form, UploadFile
-from fastapi.responses import FileResponse
-from PIL import Image
-from starlette.background import BackgroundTask
 
 # Create uploads directory if it doesn't exist
 # Use a project-scoped tmp directory outside the repository to avoid
@@ -9227,7 +9222,7 @@ def cleanup_temp_files():
                             print(f"Cleaned up old temp file: {file_path}")
                     except Exception:
                         pass
-    except Exception as e:
+    except Exception as _e:
         print(f"Error cleaning up temp files: {e}")
 
 
@@ -9241,7 +9236,7 @@ def start_temp_cleanup(interval: int = 60):
         while True:
             try:
                 cleanup_temp_files()
-            except Exception as e:
+            except Exception as _e:
                 print(f"Temp cleanup worker error: {e}")
             time.sleep(interval)
 
@@ -9529,7 +9524,7 @@ def add_to_queue(download_id: str, url: str, client_ip: str, is_long: bool = Fal
     try:
         dispatcher_event.set()
         video_logger.debug(f"Dispatcher event set after enqueueing {download_id}")
-    except Exception as e:
+    except Exception as _e:
         video_logger.warning(f"Failed to set dispatcher event for {download_id}: {e}")
 
 
@@ -9702,7 +9697,7 @@ def process_next_in_queue():
             def done_callback(fut):
                 try:
                     fut.result()  # Raises exception if download failed
-                except Exception as e:
+                except Exception as _e:
                     video_logger.error(f"Download {download_id} error: {e}")
                 finally:
                     decrement_active_conversions(is_long=is_long_job)
@@ -9711,7 +9706,7 @@ def process_next_in_queue():
 
             future.add_done_callback(done_callback)
 
-        except Exception as e:
+        except Exception as _e:
             video_logger.error(f"Failed to submit {download_id} to process pool: {e}")
             decrement_active_conversions(is_long=is_long_job)
             # Re-add to queue since submission failed (it was removed before trying)
@@ -9730,7 +9725,7 @@ def process_next_in_queue():
             with download_lock:
                 if download_id in active_video_downloads:
                     active_video_downloads[download_id]["status"] = "queued"
-    except Exception as e:
+    except Exception as _e:
         video_logger.error(f"Error processing next in queue: {str(e)}")
 
 
@@ -10153,7 +10148,7 @@ def try_invidious_download(
                 update_invidious_health(instance, success=True)
                 return True, info, None
 
-        except Exception as e:
+        except Exception as _e:
             # Update health tracking on failure
             update_invidious_health(instance, success=False)
             continue
@@ -10284,7 +10279,7 @@ def apply_metadata(
                                     data=bio.read(),
                                 )
                             )
-                    except Exception as e:
+                    except Exception as _e:
                         video_logger.warning(f"Failed to embed cover art: {e}")
 
                 # Embed lyrics from subtitle if present
@@ -10308,16 +10303,16 @@ def apply_metadata(
                                     text=lyrics_text,
                                 )
                             )
-                    except Exception as e:
+                    except Exception as _e:
                         video_logger.warning(
                             f"Failed to embed lyrics from subtitle: {e}"
                         )
 
                 try:
                     id3.save(file_path)
-                except Exception as e:
+                except Exception as _e:
                     video_logger.warning(f"Failed to save ID3 tags: {e}")
-            except Exception as e:
+            except Exception as _e:
                 video_logger.warning(f"MP3 metadata embedding error: {e}")
 
         elif ext in (".m4a", ".mp4"):
@@ -10340,7 +10335,7 @@ def apply_metadata(
                         if thumbnail_path.lower().endswith(".png"):
                             fmt = MP4Cover.FORMAT_PNG
                         mp4["covr"] = [MP4Cover(img, imageformat=fmt)]
-                    except Exception as e:
+                    except Exception as _e:
                         video_logger.warning(f"Failed to embed MP4 cover art: {e}")
 
                 # Embed lyrics as "\x00lyr" tag where supported (some MP4 atoms use special keys)
@@ -10356,17 +10351,17 @@ def apply_metadata(
                         lyrics_text = lyrics.strip()
                         if lyrics_text:
                             mp4["\xa9lyr"] = lyrics_text
-                    except Exception as e:
+                    except Exception as _e:
                         video_logger.warning(f"Failed to embed MP4 lyrics: {e}")
 
                 try:
                     mp4.save()
-                except Exception as e:
+                except Exception as _e:
                     video_logger.warning(f"Failed to save MP4 tags: {e}")
-            except Exception as e:
+            except Exception as _e:
                 video_logger.warning(f"MP4 metadata embedding error: {e}")
 
-    except Exception as e:
+    except Exception as _e:
         video_logger.warning(f"apply_metadata encountered an error: {e}")
 
 
@@ -10384,7 +10379,7 @@ def cleanup_old_video_files():
                         print(f"Cleaned up old video file: {filename}")
                 except Exception:
                     pass
-    except Exception as e:
+    except Exception as _e:
         print(f"Error during video cleanup: {e}")
 
 
@@ -10472,7 +10467,7 @@ async def upload_and_convert_file(file: UploadFile, target_format: str = Form(..
             background=bg,
         )
 
-    except Exception as e:
+    except Exception as _e:
         print(f"Conversion error: {e}")
         import traceback
 
@@ -10582,7 +10577,7 @@ async def convert_file_backend(
                 f"Conversion from {file_extension} to {target_format} not supported"
             )
 
-    except Exception as e:
+    except Exception as _e:
         print(f"Conversion error in convert_file_backend: {e}")
         raise
     finally:
@@ -10679,7 +10674,7 @@ async def convert_video_to_audio(input_path: str, output_path: str, format: str)
                                 quiz_logger.info(
                                     f"Found cover art in MP4 metadata for {input_path}"
                                 )
-                        except Exception as e:
+                        except Exception as _e:
                             quiz_logger.debug(f"No cover art in MP4 metadata: {e}")
 
                     # Check MP3 files
@@ -10695,7 +10690,7 @@ async def convert_video_to_audio(input_path: str, output_path: str, format: str)
                                         f"Found cover art in MP3 metadata for {input_path}"
                                     )
                                     break
-                        except Exception as e:
+                        except Exception as _e:
                             quiz_logger.debug(f"No cover art in MP3 metadata: {e}")
 
                     if cover_art:
@@ -10838,7 +10833,7 @@ async def convert_video_to_audio(input_path: str, output_path: str, format: str)
                             if os.path.exists(thumbnail_path):
                                 os.remove(thumbnail_path)
 
-                except Exception as e:
+                except Exception as _e:
                     quiz_logger.warning(f"Thumbnail extraction/embedding failed: {e}")
 
             return output_path
@@ -10856,7 +10851,7 @@ async def convert_video_to_audio(input_path: str, output_path: str, format: str)
     except FileNotFoundError:
         quiz_logger.error("FFmpeg not found - video conversion not available")
         raise Exception("FFmpeg not found - video conversion not available")
-    except Exception as e:
+    except Exception as _e:
         quiz_logger.error(f"Video to audio conversion error: {e}")
         raise
 
@@ -10940,7 +10935,7 @@ async def convert_audio_to_video(input_path: str, output_path: str, format: str)
     except FileNotFoundError:
         quiz_logger.error("FFmpeg not found - audio to video conversion not available")
         raise Exception("FFmpeg not found - audio to video conversion not available")
-    except Exception as e:
+    except Exception as _e:
         quiz_logger.error(f"Audio to video conversion error: {e}")
         raise
 
@@ -10982,7 +10977,7 @@ async def convert_audio_format(input_path: str, output_path: str, format: str) -
                     f"Input and output formats identical ({format}) - copied file to {output_path}"
                 )
                 return output_path
-            except Exception as e:
+            except Exception as _e:
                 print(f"Failed to copy identical-format file: {e}")
                 # fallthrough to attempt conversion as a fallback
 
@@ -11019,7 +11014,7 @@ async def convert_audio_format(input_path: str, output_path: str, format: str) -
         except subprocess.TimeoutExpired:
             print("FFmpeg timed out for file:", input_path)
             raise Exception("Audio conversion timed out")
-        except Exception as e:
+        except Exception as _e:
             print(f"FFmpeg invocation error: {e}")
             raise
 
@@ -11048,7 +11043,7 @@ async def convert_audio_format(input_path: str, output_path: str, format: str) -
                                     cover_art = tag.data
                                     print(f"Found cover art in input MP3: {input_path}")
                                     break
-                        except Exception as e:
+                        except Exception as _e:
                             print(f"No cover art in input MP3: {e}")
 
                     elif input_path.lower().endswith(".wav"):
@@ -11061,7 +11056,7 @@ async def convert_audio_format(input_path: str, output_path: str, format: str) -
                                     cover_art = tag.data
                                     print(f"Found cover art in input WAV: {input_path}")
                                     break
-                        except Exception as e:
+                        except Exception as _e:
                             print(f"No cover art in input WAV: {e}")
 
                     if cover_art:
@@ -11099,7 +11094,7 @@ async def convert_audio_format(input_path: str, output_path: str, format: str) -
 
                         print(f"Embedded cover art in {format.upper()}: {output_path}")
 
-                except Exception as e:
+                except Exception as _e:
                     print(f"Cover art preservation failed: {e}")
 
             return output_path
@@ -11118,7 +11113,7 @@ async def convert_audio_format(input_path: str, output_path: str, format: str) -
         raise Exception(
             "FFmpeg not available for audio conversion - please install ffmpeg"
         )
-    except Exception as e:
+    except Exception as _e:
         print(f"Audio conversion error: {e}")
         raise
 
@@ -11151,7 +11146,7 @@ async def convert_image_format(input_path: str, output_path: str, format: str) -
 
         return output_path
 
-    except Exception as e:
+    except Exception as _e:
         print(f"Image conversion error: {e}")
         raise Exception(f"Image conversion failed: {str(e)}")
 
@@ -11209,7 +11204,7 @@ async def convert_to_pdf(
                     if os.path.exists(temp_img_path):
                         os.remove(temp_img_path)
 
-            except Exception as img_error:
+            except Exception as _img_error:
                 print(f"Image to PDF error: {img_error}")
                 raise
 
@@ -11230,7 +11225,7 @@ async def convert_to_pdf(
 
                 c.drawText(textobject)
 
-            except Exception as text_error:
+            except Exception as _text_error:
                 print(f"Text to PDF error: {text_error}")
                 raise
 
@@ -11255,7 +11250,7 @@ async def convert_to_pdf(
             f.write(f"Size: {os.path.getsize(input_path)} bytes\n")
             f.write(f"Converted: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         return output_path
-    except Exception as e:
+    except Exception as _e:
         print(f"PDF conversion error: {e}")
         raise
 
@@ -11293,7 +11288,7 @@ The original content cannot be represented as readable text.
 
         return output_path
 
-    except Exception as e:
+    except Exception as _e:
         print(f"Text conversion error: {e}")
         raise
 
@@ -11308,7 +11303,7 @@ async def convert_to_zip(
 
         return output_path
 
-    except Exception as e:
+    except Exception as _e:
         print(f"ZIP conversion error: {e}")
         raise
 
@@ -11320,7 +11315,7 @@ async def cleanup_conversion_files():
     try:
         cleanup_temp_files()
         return {"message": "Cleanup completed"}
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(status_code=500, detail=f"Cleanup failed: {str(e)}")
 
 
@@ -11426,7 +11421,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                             entry["error"] = f"Download {reason} - exceeded time limit"
                             entry["finished"] = True
 
-            except Exception as e:
+            except Exception as _e:
                 video_logger.error(f"Watchdog error: {e}")
 
         video_logger.info(" Watchdog monitor stopped")
@@ -11467,14 +11462,14 @@ if VIDEO_CONVERTER_AVAILABLE:
                         break
                     try:
                         process_next_in_queue()
-                    except Exception as e:
+                    except Exception as _e:
                         video_logger.error(
                             f"queue_dispatcher error calling process_next_in_queue: {e}"
                         )
                         break
                     # small pause to yield
                     time.sleep(0.05)
-            except Exception as e:
+            except Exception as _e:
                 video_logger.error(f"Queue dispatcher encountered error: {e}")
             finally:
                 try:
@@ -11493,7 +11488,7 @@ if VIDEO_CONVERTER_AVAILABLE:
         video_logger.info("Queue dispatcher thread initialized")
         # Trigger initial scan in case there are pre-existing queued items
         dispatcher_event.set()
-    except Exception as e:
+    except Exception as _e:
         video_logger.warning(f"Failed to start queue dispatcher: {e}")
 
     # Async wrapper to submit downloads to thread pool
@@ -11523,7 +11518,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                 decrement_video_rate_limit(client_ip)
                 # Process next in queue
                 process_next_in_queue()
-            except Exception as e:
+            except Exception as _e:
                 video_logger.error(f"Download {download_id} failed: {e}")
                 decrement_active_conversions(is_long=is_long)
                 decrement_video_rate_limit(client_ip)
@@ -11593,7 +11588,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                             active_video_downloads[download_id][
                                 "last_progress_update"
                             ] = time.time()
-                except Exception as progress_error:
+                except Exception as _progress_error:
                     pass  # Silent progress errors
             elif d["status"] == "finished":
                 with download_lock:
@@ -11792,7 +11787,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                     video_logger.info(f" Chunk {chunk_index} downloaded successfully")
                     last_exception = None
 
-                except Exception as chunk_error:
+                except Exception as _chunk_error:
                     video_logger.error(f" Chunk {chunk_index} failed: {chunk_error}")
                     raise
 
@@ -11920,7 +11915,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                         video_logger.info(f"Download attempt {attempt} succeeded")
                         last_exception = None
                         break
-                    except Exception as de:
+                    except Exception as _de:
                         derr = str(de)
                         last_exception = de
                         video_logger.error(f"Download attempt {attempt} failed: {derr}")
@@ -12081,7 +12076,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                                 ydl.download([url])
                             last_exception = None
                             break
-                        except Exception as cookie_err:
+                        except Exception as _cookie_err:
                             tried_cookie = True
 
                     # Try rotating proxies FIRST (higher priority than just cookies)
@@ -12102,7 +12097,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                                 proxy_succeeded = True
                                 last_exception = None
                                 break
-                            except Exception as proxy_err:
+                            except Exception as _proxy_err:
                                 # small backoff between proxy attempts
                                 time.sleep(min(1.0, YTDL_BACKOFF_BASE))
                         if proxy_succeeded:
@@ -12169,7 +12164,7 @@ if VIDEO_CONVERTER_AVAILABLE:
             try:
                 all_files = os.listdir(VIDEO_DOWNLOAD_DIR)
                 video_logger.info(f"Files in directory: {all_files}")
-            except Exception as list_err:
+            except Exception as _list_err:
                 video_logger.error(f"Error listing directory: {list_err}")
                 all_files = []
 
@@ -12290,7 +12285,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                         base_pattern,
                         format_type,
                     )
-                except Exception as meta_err:
+                except Exception as _meta_err:
                     pass  # Silent metadata errors
                 # Check file size - if it's too small, it's probably corrupted
                 file_size = os.path.getsize(downloaded_file)
@@ -12329,7 +12324,7 @@ if VIDEO_CONVERTER_AVAILABLE:
 
                 raise Exception(error_details)
 
-        except Exception as e:
+        except Exception as _e:
             # Error occurred - Log detailed error for debugging
             error_msg = str(e)
             video_logger.error(
@@ -12356,7 +12351,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                 try:
                     if os.path.exists(temp_cookie_file):
                         os.remove(temp_cookie_file)
-                except Exception as cleanup_err:
+                except Exception as _cleanup_err:
                     pass
 
             # Decrement rate limit counter when download finishes (success or error)
@@ -12485,7 +12480,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                                 active_video_downloads[download_id]["title"] = info.get(
                                     "title", "Full Playlist Download"
                                 )
-                except Exception as e:
+                except Exception as _e:
                     video_logger.warning(
                         f"Could not extract playlist info: {e}, proceeding with download anyway"
                     )
@@ -12524,7 +12519,7 @@ if VIDEO_CONVERTER_AVAILABLE:
             try:
                 shutil.rmtree(bulk_dir)
                 video_logger.info(f"Cleaned up temp directory: {bulk_dir}")
-            except Exception as e:
+            except Exception as _e:
                 video_logger.warning(f"Failed to cleanup temp directory: {e}")
 
             # Mark as completed
@@ -12542,7 +12537,7 @@ if VIDEO_CONVERTER_AVAILABLE:
 
             video_logger.info(f"Full playlist download completed: {download_id}")
 
-        except Exception as e:
+        except Exception as _e:
             error_msg = str(e)
             video_logger.error(
                 f"Full playlist download failed for {download_id}: {error_msg}"
@@ -12667,7 +12662,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                                     output_path.replace(".%(ext)s", ""),
                                     format_type,
                                 )
-                            except Exception as meta_err:
+                            except Exception as _meta_err:
                                 video_logger.warning(
                                     f"Failed to apply metadata for bulk item: {meta_err}"
                                 )
@@ -12686,7 +12681,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                                 except Exception:
                                     pass
                                 video_logger.info(f"Renamed file to: {new_filename}")
-                            except Exception as rename_error:
+                            except Exception as _rename_error:
                                 video_logger.warning(
                                     f"Failed to rename file, using original: {rename_error}"
                                 )
@@ -12761,7 +12756,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                                         video_logger.debug(
                                             f"Cleaned up file after flush: {f}"
                                         )
-                                    except Exception as cleanup_error:
+                                    except Exception as _cleanup_error:
                                         video_logger.warning(
                                             f"Failed to clean up file {f} after flush: {cleanup_error}"
                                         )
@@ -12770,7 +12765,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                                 pending_part_files = []
                                 pending_part_size = 0
                                 last_flush_time = time.time()
-                            except Exception as flush_err:
+                            except Exception as _flush_err:
                                 video_logger.error(
                                     f"Failed to flush ZIP part for {download_id}: {flush_err}"
                                 )
@@ -12789,7 +12784,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                                 current_progress, 95.0
                             )
 
-                except Exception as e:
+                except Exception as _e:
                     video_logger.error(f"Error downloading video {video_id}: {e}")
                     # Continue with next video
 
@@ -12826,7 +12821,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                             delete_file_safe(f)
                         except Exception:
                             pass
-                except Exception as flush_err:
+                except Exception as _flush_err:
                     video_logger.error(
                         f"Failed to flush final ZIP part for {download_id}: {flush_err}"
                     )
@@ -12848,7 +12843,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                     # the entry only after all parts have been served.
                     entry["finished"] = True if entry.get("parts") else True
 
-        except Exception as e:
+        except Exception as _e:
             # Error occurred
             error_msg = str(e)
             video_logger.error(f"Bulk download error for {download_id}: {error_msg}")
@@ -13055,7 +13050,7 @@ if VIDEO_CONVERTER_AVAILABLE:
 
                     return response
 
-                except Exception as e:
+                except Exception as _e:
                     error_msg = str(e)
                     video_logger.error(
                         f"Error extracting playlist info for {playlist_id}: {error_msg}"
@@ -13092,7 +13087,7 @@ if VIDEO_CONVERTER_AVAILABLE:
 
         except HTTPException:
             raise
-        except Exception as e:
+        except Exception as _e:
             video_logger.error(f"Unexpected error in get_playlist_info: {str(e)}")
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -13121,7 +13116,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                 "queue": queue_info,
                 "download": download_info,
             }
-        except Exception as e:
+        except Exception as _e:
             video_logger.error(f"Error getting queue status: {str(e)}")
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -13199,7 +13194,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                         response["warnings"] = warnings
 
                     return response
-                except Exception as e:
+                except Exception as _e:
                     error_msg = str(e)
                     if "Sign in to confirm your age" in error_msg:
                         return {
@@ -13217,7 +13212,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                             "error": f"Cannot extract video info: {error_msg}",
                         }
 
-        except Exception as e:
+        except Exception as _e:
             return {"valid": False, "error": str(e)}
 
     @app.post("/api/v1/video/convert", response_model=VideoConversionResponse)
@@ -13302,7 +13297,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                 info = await loop.run_in_executor(None, blocking_probe, request.url)
                 duration = info.get("duration", 0) or 0
                 filesize = info.get("filesize") or info.get("filesize_approx", 0) or 0
-            except Exception as probe_err:
+            except Exception as _probe_err:
                 video_logger.debug(
                     f"Could not probe URL metadata for {request.url}: {probe_err}"
                 )
@@ -13418,7 +13413,7 @@ if VIDEO_CONVERTER_AVAILABLE:
                     def done_callback(fut, is_long_flag=is_long):
                         try:
                             fut.result()
-                        except Exception as e:
+                        except Exception as _e:
                             video_logger.error(f"Download {download_id} error: {e}")
                         finally:
                             decrement_active_conversions(is_long=is_long_flag)
@@ -13427,7 +13422,7 @@ if VIDEO_CONVERTER_AVAILABLE:
 
                     future.add_done_callback(done_callback)
 
-                except Exception as e:
+                except Exception as _e:
                     video_logger.error(f"Failed to submit {download_id}: {e}")
                     # Clean up reservation and bookkeeping since we couldn't start
                     decrement_active_conversions(is_long=is_long)
@@ -13459,7 +13454,7 @@ if VIDEO_CONVERTER_AVAILABLE:
 
         except HTTPException:
             raise
-        except Exception as e:
+        except Exception as _e:
             video_logger.error(f"Unexpected error in convert_video: {str(e)}")
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -13555,14 +13550,14 @@ if VIDEO_CONVERTER_AVAILABLE:
                 def done_callback(fut):
                     try:
                         fut.result()
-                    except Exception as e:
+                    except Exception as _e:
                         video_logger.error(f"Bulk download {download_id} error: {e}")
                     finally:
                         decrement_video_rate_limit(client_ip)
 
                 future.add_done_callback(done_callback)
 
-            except Exception as e:
+            except Exception as _e:
                 video_logger.error(f"Failed to submit bulk download {download_id}: {e}")
                 with download_lock:
                     if download_id in active_video_downloads:
@@ -13585,7 +13580,7 @@ if VIDEO_CONVERTER_AVAILABLE:
 
         except HTTPException:
             raise
-        except Exception as e:
+        except Exception as _e:
             video_logger.error(f"Unexpected error in bulk_download_playlist: {str(e)}")
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -13669,13 +13664,13 @@ if VIDEO_CONVERTER_AVAILABLE:
                 def done_callback(fut):
                     try:
                         fut.result()
-                    except Exception as e:
+                    except Exception as _e:
                         video_logger.error(
                             f"Full playlist download {download_id} error: {e}"
                         )
 
                 future.add_done_callback(done_callback)
-            except Exception as e:
+            except Exception as _e:
                 video_logger.error(f"Failed to submit full playlist download: {e}")
                 with download_lock:
                     if download_id in active_video_downloads:
@@ -13694,7 +13689,7 @@ if VIDEO_CONVERTER_AVAILABLE:
 
         except HTTPException:
             raise
-        except Exception as e:
+        except Exception as _e:
             video_logger.error(f"Unexpected error in full_playlist_download: {str(e)}")
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -13719,7 +13714,7 @@ if VIDEO_CONVERTER_AVAILABLE:
             return JSONResponse({"success": True, "path": dest_path})
         except HTTPException:
             raise
-        except Exception as e:
+        except Exception as _e:
             video_logger.error(f"Failed to upload cookiefile for {download_id}: {e}")
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -13760,7 +13755,7 @@ async def health_check():
             )
 
         return response
-    except Exception as e:
+    except Exception as _e:
         return {"status": "degraded", "error": str(e), "timestamp": time.time()}
 
 
@@ -13804,7 +13799,7 @@ async def create_upload_session(
             f"Created upload session {download_id} (total_videos={total_videos}) from IP {client_ip}"
         )
         return JSONResponse({"success": True, "download_id": download_id})
-    except Exception as e:
+    except Exception as _e:
         video_logger.error(f"Failed to create upload session: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -13874,7 +13869,7 @@ async def upload_part(
         return JSONResponse({"success": True, "part": part_name})
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         video_logger.error(f"Error handling upload_part for {download_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -13918,7 +13913,7 @@ async def download_converted_file(request: Request, download_id: str):
         # remain, remove the entry entirely.
         try:
             delete_file_safe(file_path)
-        except Exception as e:
+        except Exception as _e:
             video_logger.warning(f"Failed to delete file {file_path}: {e}")
 
         try:
@@ -13963,7 +13958,7 @@ async def download_converted_file(request: Request, download_id: str):
                         entry["file_path"] = None
                         entry["parts"] = []
                         entry["status"] = "downloading"
-        except Exception as e:
+        except Exception as _e:
             video_logger.warning(f"Error updating active video download record: {e}")
 
     def bg_cleanup_wrapper():
@@ -14094,7 +14089,7 @@ if JWT_AVAILABLE:
 
         except HTTPException:
             raise
-        except Exception as e:
+        except Exception as _e:
             quiz_logger.error("Game registration failed", exc_info=True)
             raise HTTPException(status_code=500, detail="Internal server error")
 
@@ -14140,7 +14135,7 @@ if JWT_AVAILABLE:
 
         except HTTPException:
             raise
-        except Exception as e:
+        except Exception as _e:
             quiz_logger.error("Game login failed", exc_info=True)
             raise HTTPException(status_code=500, detail="Internal server error")
 
@@ -14183,7 +14178,7 @@ if JWT_AVAILABLE:
                 print(f" BACKEND LOAD: No save found, returning has_save=False")
                 return GameLoadResponse(has_save=False)
 
-        except Exception as e:
+        except Exception as _e:
             raise HTTPException(
                 status_code=500, detail=f"Failed to load save: {str(e)}"
             )
@@ -14225,7 +14220,7 @@ if JWT_AVAILABLE:
                 )
             else:
                 return GameLoadResponse(has_save=False)
-        except Exception as e:
+        except Exception as _e:
             quiz_logger.error(
                 f"PUBLIC SAVE ENDPOINT: Error while loading save for user_id={user_id}: {e}"
             )
@@ -14298,7 +14293,7 @@ if JWT_AVAILABLE:
                 backup_id=backup_id,
             )
 
-        except Exception as e:
+        except Exception as _e:
             raise HTTPException(
                 status_code=500, detail=f"Failed to save game: {str(e)}"
             )
@@ -14340,7 +14335,7 @@ if JWT_AVAILABLE:
                 entries=entries, user_rank=user_rank, total_players=len(entries)
             )
 
-        except Exception as e:
+        except Exception as _e:
             raise HTTPException(
                 status_code=500, detail=f"Failed to get leaderboard: {str(e)}"
             )
@@ -14520,7 +14515,7 @@ def init_sentle_tables():
         """)
 
         print("✓ Sentle database tables initialized")
-    except Exception as e:
+    except Exception as _e:
         print(f"Warning: Could not initialize Sentle tables: {e}")
 
 
@@ -14575,7 +14570,7 @@ def init_support_chat_tables():
             )
 
         print("✓ Support chat tables initialized")
-    except Exception as e:
+    except Exception as _e:
         print(f"Warning: Could not initialize support chat tables: {e}")
 
 
@@ -14622,7 +14617,7 @@ def remove_duplicate_sentences():
 
         sentle_logger.info(f"Removed {removed} duplicate sentences")
 
-    except Exception as e:
+    except Exception as _e:
         sentle_logger.error(f"Duplicate removal failed: {str(e)}")
         import traceback
 
@@ -14721,7 +14716,7 @@ def backfill_archive_dates():
             f"Archive backfill complete: {filled} dates filled, {skipped} already existed"
         )
 
-    except Exception as e:
+    except Exception as _e:
         sentle_logger.error(f"Archive backfill failed: {str(e)}")
         import traceback
 
@@ -14817,7 +14812,7 @@ async def sentle_register(payload: Dict[str, Any] = Body(...)):
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         sentle_logger.error("Registration error", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
@@ -14935,7 +14930,7 @@ async def sentle_login(payload: Dict[str, Any] = Body(...), request: Request = N
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         sentle_logger.error("Login error", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
@@ -15030,7 +15025,7 @@ async def get_daily_sentence():
             "reused": True,
         }
 
-    except Exception as e:
+    except Exception as _e:
         sentle_logger.error(f"Error loading daily sentence: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error loading sentence: {str(e)}")
 
@@ -15109,7 +15104,7 @@ async def start_game_session(payload: Dict[str, Any] = Body(...)):
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         sentle_logger.error(f"Error starting game session: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error starting game: {str(e)}")
 
@@ -15232,7 +15227,7 @@ async def submit_guess(payload: Dict[str, Any] = Body(...)):
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         sentle_logger.error(f"Error processing guess: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error processing guess: {str(e)}")
 
@@ -15287,7 +15282,7 @@ async def complete_word(payload: Dict[str, Any] = Body(...)):
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         sentle_logger.error(f"Error completing word: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error completing word: {str(e)}")
 
@@ -15404,7 +15399,7 @@ async def reveal_letter(payload: Dict[str, Any] = Body(...)):
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         sentle_logger.error(f"Error revealing letter: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error revealing letter: {str(e)}")
 
@@ -15540,7 +15535,7 @@ async def submit_score_old(payload: Dict[str, Any] = Body(...)):
                     f"{user_row.get('first_name','').strip()} {user_row.get('last_name','').strip()}".strip()
                     or "Anonymous"
                 )
-        except Exception as name_err:
+        except Exception as _name_err:
             sentle_logger.warning(f"Could not fetch player name: {name_err}")
 
         # Insert score with server-calculated values
@@ -15594,13 +15589,13 @@ async def submit_score_old(payload: Dict[str, Any] = Body(...)):
                     "UPDATE sentle_sessions SET played = TRUE WHERE user_id = %s AND date = %s",
                     (user_id, today),
                 )
-            except Exception as played_err:
+            except Exception as _played_err:
                 sentle_logger.warning(f"Failed to mark session played: {played_err}")
 
             sentle_logger.info(
                 f"Score inserted (SERVER-CALCULATED): user_id={user_id}, sentence_id={sentence_id}, score={calculated_score}, attempts={total_attempts}, reveals={reveals_used}, date={date}"
             )
-        except Exception as insert_err:
+        except Exception as _insert_err:
             sentle_logger.error(f"Failed to insert score: {insert_err}")
             raise HTTPException(
                 status_code=500, detail=f"Failed to save score: {str(insert_err)}"
@@ -15616,7 +15611,7 @@ async def submit_score_old(payload: Dict[str, Any] = Body(...)):
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         sentle_logger.error(f"Error submitting score: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error submitting score: {str(e)}")
 
@@ -15721,7 +15716,7 @@ async def submit_score(data: dict):
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         sentle_logger.error(f"Error submitting score: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error submitting score: {str(e)}")
 
@@ -15875,7 +15870,7 @@ async def get_user_stats(request: Request):
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         sentle_logger.error(f"Error getting user stats: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error loading stats: {str(e)}")
 
@@ -15906,7 +15901,7 @@ async def debug_scores():
 
         return {"totalScores": len(scores), "scores": scores}
 
-    except Exception as e:
+    except Exception as _e:
         sentle_logger.error(f"Error in debug/scores: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -15966,7 +15961,7 @@ async def get_leaderboard():
         sentle_logger.info(f"Leaderboard query returned {len(leaderboard)} entries")
         return {"leaderboard": leaderboard}
 
-    except Exception as e:
+    except Exception as _e:
         sentle_logger.error(f"Leaderboard error: {str(e)}")
         import traceback
 
@@ -16037,7 +16032,7 @@ async def get_daily_leaderboard(date: Optional[str] = None):
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         sentle_logger.error(f"Daily leaderboard error: {str(e)}")
         import traceback
 
@@ -16086,7 +16081,7 @@ async def get_archive():
 
         return {"archive": archive}
 
-    except Exception as e:
+    except Exception as _e:
         sentle_logger.error(f"Error loading archive: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error loading archive: {str(e)}")
 
@@ -16105,7 +16100,7 @@ async def admin_backfill_archive(request: Request):
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         sentle_logger.error(f"Manual backfill failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Backfill failed: {str(e)}")
 
@@ -16138,7 +16133,7 @@ async def admin_login(payload: Dict[str, Any] = Body(...)):
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         sentle_logger.error("Error logging in (admin)", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
@@ -16201,7 +16196,7 @@ async def admin_add_sentence(
 
             return {"success": True, "message": "Sentence added successfully"}
 
-        except Exception as e:
+        except Exception as _e:
             if "Duplicate entry" in str(e):
                 raise HTTPException(
                     status_code=400, detail="A sentence already exists for this date"
@@ -16210,7 +16205,7 @@ async def admin_add_sentence(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         sentle_logger.error("Error adding sentence", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
@@ -16252,7 +16247,7 @@ async def admin_list_sentences(request: Request):
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         raise HTTPException(
             status_code=500, detail=f"Error listing sentences: {str(e)}"
         )
@@ -16285,7 +16280,7 @@ async def admin_delete_sentence(sentence_id: int, request: Request):
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         sentle_logger.error(f"Error deleting sentence: {str(e)}")
         raise HTTPException(
             status_code=500, detail=f"Error deleting sentence: {str(e)}"
@@ -16354,7 +16349,7 @@ async def admin_edit_sentence(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as _e:
         sentle_logger.error(f"Error editing sentence: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error editing sentence: {str(e)}")
 
@@ -16658,7 +16653,7 @@ async def _tracked_stream(file_path: str, client_ip: str, label: str = "download
     except GeneratorExit:
         # Client disconnected — not an error, but download is incomplete
         print(f"Client disconnected during {label} ({bytes_sent} bytes sent)")
-    except Exception as e:
+    except Exception as _e:
         print(f"Error during {label}: {e}")
         raise
     finally:
