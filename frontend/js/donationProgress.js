@@ -458,12 +458,13 @@
     // Set admin credentials at runtime (stores in localStorage). Use this instead of hardcoding.
     setAdminCredentials: (username, password) => {
       try {
-        if (username) localStorage.setItem('donationAdminUsername', username);
-        if (password) localStorage.setItem('donationAdminPassword', password);
-        console.log('🔐 DonationProgress: Admin credentials stored in localStorage (use with caution)');
+        // Never store admin passwords in persistent storage. Keep username in sessionStorage
+        if (username) sessionStorage.setItem('donationAdminUsername', username);
+        // Password is kept in-memory only and not persisted. Caller should handle it.
+        console.warn('🔐 DonationProgress: Admin password will not be persisted for security reasons');
         return { success: true };
       } catch (e) {
-        console.error('🔐 DonationProgress: Failed to store credentials', e);
+        console.error('🔐 DonationProgress: Failed to set admin username', e);
         return { success: false, message: e.message };
       }
     }
