@@ -2053,10 +2053,18 @@ const createLofiModal = () => {
     modalHeader.style.borderBottom = '1px solid var(--primary-color, #2c4c7c)';
     modalHeader.style.marginBottom = '10px';
     modalHeader.style.cursor = 'grab';
-    modalHeader.innerHTML = `
-        <h3 style="margin: 0; color: var(--tertiary-color, #0d9edb);">Lofi Player</h3>
-        <span id="close-modal" style="cursor: pointer; font-size: 20px; color: var(--light-color, #f4f8fc);">&times;</span>
-    `;
+    const mhTitle = document.createElement('h3');
+    mhTitle.style.margin = '0';
+    mhTitle.style.color = 'var(--tertiary-color, #0d9edb)';
+    mhTitle.textContent = 'Lofi Player';
+    const closeSpan = document.createElement('span');
+    closeSpan.id = 'close-modal';
+    closeSpan.style.cursor = 'pointer';
+    closeSpan.style.fontSize = '20px';
+    closeSpan.style.color = 'var(--light-color, #f4f8fc)';
+    closeSpan.textContent = '×';
+    modalHeader.appendChild(mhTitle);
+    modalHeader.appendChild(closeSpan);
     modal.appendChild(modalHeader);
 
     modalHeader.querySelector('#close-modal').addEventListener('click', toggleModal);
@@ -2064,15 +2072,49 @@ const createLofiModal = () => {
     // Song Search + Selector
     const songSelectorDiv = document.createElement('div');
     songSelectorDiv.style.marginBottom = '10px';
-    songSelectorDiv.innerHTML = `
-        <label for="song-search" style="display: block; margin-bottom: 5px; color: var(--light-color, #f4f8fc);">Search Songs (any language):</label>
-        <input type="text" id="song-search" placeholder="Type to filter, e.g., らくらく安楽死" 
-               style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid var(--primary-color, #2c4c7c); background-color: var(--secondary-color, #0c4061); color: var(--light-color, #f4f8fc); margin-bottom: 8px;" />
-        <label for="song-selector" style="display: block; margin-bottom: 5px; color: var(--light-color, #f4f8fc);">Select Song:</label>
-        <select id="song-selector" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid var(--primary-color, #2c4c7c); background-color: var(--secondary-color, #0c4061); color: var(--light-color, #f4f8fc);">
-            <option value="">Select a song...</option>
-        </select>
-    `;
+    const labelSearch = document.createElement('label');
+    labelSearch.setAttribute('for', 'song-search');
+    labelSearch.style.display = 'block';
+    labelSearch.style.marginBottom = '5px';
+    labelSearch.style.color = 'var(--light-color, #f4f8fc)';
+    labelSearch.textContent = 'Search Songs (any language):';
+
+    const inputSearch = document.createElement('input');
+    inputSearch.type = 'text';
+    inputSearch.id = 'song-search';
+    inputSearch.placeholder = 'Type to filter, e.g., らくらく安楽死';
+    inputSearch.style.width = '100%';
+    inputSearch.style.padding = '8px';
+    inputSearch.style.borderRadius = '4px';
+    inputSearch.style.border = '1px solid var(--primary-color, #2c4c7c)';
+    inputSearch.style.backgroundColor = 'var(--secondary-color, #0c4061)';
+    inputSearch.style.color = 'var(--light-color, #f4f8fc)';
+    inputSearch.style.marginBottom = '8px';
+
+    const labelSelect = document.createElement('label');
+    labelSelect.setAttribute('for', 'song-selector');
+    labelSelect.style.display = 'block';
+    labelSelect.style.marginBottom = '5px';
+    labelSelect.style.color = 'var(--light-color, #f4f8fc)';
+    labelSelect.textContent = 'Select Song:';
+
+    const selectEl = document.createElement('select');
+    selectEl.id = 'song-selector';
+    selectEl.style.width = '100%';
+    selectEl.style.padding = '8px';
+    selectEl.style.borderRadius = '4px';
+    selectEl.style.border = '1px solid var(--primary-color, #2c4c7c)';
+    selectEl.style.backgroundColor = 'var(--secondary-color, #0c4061)';
+    selectEl.style.color = 'var(--light-color, #f4f8fc)';
+    const defOpt = document.createElement('option');
+    defOpt.value = '';
+    defOpt.textContent = 'Select a song...';
+    selectEl.appendChild(defOpt);
+
+    songSelectorDiv.appendChild(labelSearch);
+    songSelectorDiv.appendChild(inputSearch);
+    songSelectorDiv.appendChild(labelSelect);
+    songSelectorDiv.appendChild(selectEl);
     modal.appendChild(songSelectorDiv);
 
     const songSelector = songSelectorDiv.querySelector('#song-selector');
@@ -2111,13 +2153,39 @@ const createLofiModal = () => {
     // Progress Bar Section
     const progressSection = document.createElement('div');
     progressSection.style.marginBottom = '10px';
-    progressSection.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-            <span id="current-time" style="font-size: 0.8em; color: var(--light-color, #f4f8fc);">0:00</span>
-            <span id="duration" style="font-size: 0.8em; color: var(--light-color, #f4f8fc);">0:00</span>
-        </div>
-        <input type="range" id="progress-bar" min="0" max="100" value="0" style="width: 100%; height: 6px; background: var(--secondary-color, #0c4061); outline: none; border-radius: 3px; cursor: pointer;">
-    `;
+    const timeWrap = document.createElement('div');
+    timeWrap.style.display = 'flex';
+    timeWrap.style.justifyContent = 'space-between';
+    timeWrap.style.alignItems = 'center';
+    timeWrap.style.marginBottom = '5px';
+    const currentTimeSpan = document.createElement('span');
+    currentTimeSpan.id = 'current-time';
+    currentTimeSpan.style.fontSize = '0.8em';
+    currentTimeSpan.style.color = 'var(--light-color, #f4f8fc)';
+    currentTimeSpan.textContent = '0:00';
+    const durationSpan = document.createElement('span');
+    durationSpan.id = 'duration';
+    durationSpan.style.fontSize = '0.8em';
+    durationSpan.style.color = 'var(--light-color, #f4f8fc)';
+    durationSpan.textContent = '0:00';
+    timeWrap.appendChild(currentTimeSpan);
+    timeWrap.appendChild(durationSpan);
+
+    const progressInput = document.createElement('input');
+    progressInput.type = 'range';
+    progressInput.id = 'progress-bar';
+    progressInput.min = '0';
+    progressInput.max = '100';
+    progressInput.value = '0';
+    progressInput.style.width = '100%';
+    progressInput.style.height = '6px';
+    progressInput.style.background = 'var(--secondary-color, #0c4061)';
+    progressInput.style.outline = 'none';
+    progressInput.style.borderRadius = '3px';
+    progressInput.style.cursor = 'pointer';
+
+    progressSection.appendChild(timeWrap);
+    progressSection.appendChild(progressInput);
     modal.appendChild(progressSection);
 
     const progressBar = progressSection.querySelector('#progress-bar');

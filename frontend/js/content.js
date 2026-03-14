@@ -7690,46 +7690,78 @@
     
     // Function to display search results
     function displaySearchResults(results, query) {
-        const searchResults = document.getElementById('ce-search-results');
-        
-        if (results.length === 0) {
-            searchResults.innerHTML = `
-                <div class="no-results-message">
-                    No articles found matching "${query}". Try different keywords or browse all articles using the dropdown.
-                </div>
-            `;
-            searchResults.style.display = 'block';
-            return;
-        }
-        
-        const statsText = `Found ${results.length} article${results.length === 1 ? '' : 's'} matching "${query}"`;
-        
-        let resultsHTML = `<div class="search-stats">${statsText}</div>`;
-        
-        results.forEach(result => {
-            const isActive = result.index === currentArticleIndex;
-            const highlightedTitle = highlightMatches(result.article.title, query);
-            const highlightedExcerpt = highlightMatches(result.article.intro.substring(0, 120) + '...', query);
-            
-            resultsHTML += `
-                <div class="search-result-item ${isActive ? 'active' : ''}" data-article-index="${result.index}">
-                    <div class="search-result-title">${highlightedTitle}</div>
-                    <p class="search-result-excerpt">${highlightedExcerpt}</p>
-                </div>
-            `;
-        });
-        
-        searchResults.innerHTML = resultsHTML;
+      const searchResults = document.getElementById('ce-search-results');
+
+      while (searchResults.firstChild) searchResults.removeChild(searchResults.firstChild);
+
+      if (results.length === 0) {
+        const noDiv = document.createElement('div');
+        noDiv.className = 'no-results-message';
+        noDiv.textContent = `No articles found matching "${query}". Try different keywords or browse all articles using the dropdown.`;
+        searchResults.appendChild(noDiv);
         searchResults.style.display = 'block';
-        
-        // Add click handlers to search results
-        document.querySelectorAll('.search-result-item').forEach(item => {
-            item.addEventListener('click', function() {
-                const articleIndex = parseInt(this.dataset.articleIndex);
-                loadArticle(articleIndex);
-                contentContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            });
+        return;
+      }
+
+      const statsText = `Found ${results.length} article${results.length === 1 ? '' : 's'} matching "${query}"`;
+      const statsDiv = document.createElement('div');
+      statsDiv.className = 'search-stats';
+      statsDiv.textContent = statsText;
+      searchResults.appendChild(statsDiv);
+
+      // Build each result using DOM methods to avoid unsafe innerHTML inserts
+      results.forEach(result => {
+        const isActive = result.index === currentArticleIndex;
+        const item = document.createElement('div');
+        item.className = 'search-result-item' + (isActive ? ' active' : '');
+        item.dataset.articleIndex = String(result.index);
+
+        const titleDiv = document.createElement('div');
+        titleDiv.className = 'search-result-title';
+        appendHighlightedText(titleDiv, result.article.title, query);
+
+        const excerptP = document.createElement('p');
+        excerptP.className = 'search-result-excerpt';
+        appendHighlightedText(excerptP, (result.article.intro || '').substring(0, 120) + '...', query);
+
+        item.appendChild(titleDiv);
+        item.appendChild(excerptP);
+        item.addEventListener('click', function() {
+          const articleIndex = parseInt(this.dataset.articleIndex);
+          loadArticle(articleIndex);
+          contentContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
+
+        searchResults.appendChild(item);
+      });
+
+      searchResults.style.display = 'block';
+    }
+
+    // Append text to node with highlighted matches as <span class="search-match-highlight"> without using innerHTML
+    function appendHighlightedText(container, text, query) {
+      if (!query || query.length < 2) {
+        container.textContent = text || '';
+        return;
+      }
+      const escapedQuery = query.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
+      const re = new RegExp(escapedQuery, 'ig');
+      let lastIndex = 0;
+      let match;
+      while ((match = re.exec(text)) !== null) {
+        if (match.index > lastIndex) {
+          const t = text.slice(lastIndex, match.index);
+          container.appendChild(document.createTextNode(t));
+        }
+        const span = document.createElement('span');
+        span.className = 'search-match-highlight';
+        span.textContent = match[0];
+        container.appendChild(span);
+        lastIndex = re.lastIndex;
+      }
+      if (lastIndex < text.length) {
+        container.appendChild(document.createTextNode(text.slice(lastIndex)));
+      }
     }
 
     // Function to setup search functionality
@@ -7881,5 +7913,73 @@
         getArticleCount: function() { return contentArticles.length; },
         getCurrentArticle: function() { return currentArticleIndex; }
     };
+
+// Sanitize contentArticles to prevent accidental HTML injection when rendered.
+// This escapes all string values inside the articles so consumers that
+// use innerHTML won't introduce XSS from article data.
+try {
+  function __escapeHTML_for_content_js(s) {
+    if (s === null || s === undefined) return '';
+    if (typeof s !== 'string') return s;
+    return s.replace(/[&<>"']/g, function (c) {
+      return ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      })[c];
+    });
+  }
+
+  function __deepSanitize_for_content_js(v) {
+    if (v === null || v === undefined) return v;
+    if (typeof v === 'string') return __escapeHTML_for_content_js(v);
+    if (Array.isArray(v)) return v.map(__deepSanitize_for_content_js);
+    if (typeof v === 'object') {
+      const out = {};
+      for (const k in v) {
+        if (!Object.prototype.hasOwnProperty.call(v, k)) continue;
+        out[k] = __deepSanitize_for_content_js(v[k]);
+      }
+      return out;
+    }
+    return v;
+  }
+
+  if (Array.isArray(window.contentArticles)) {
+    for (let i = 0; i < window.contentArticles.length; i++) {
+      try {
+        window.contentArticles[i] = __deepSanitize_for_content_js(window.contentArticles[i]);
+      } catch (e) {
+        // best-effort; continue on error
+        console.error('content.js: sanitize article failed', e);
+      }
+    }
+    // also mirror to local var if present
+    try {
+      if (typeof contentArticles !== 'undefined' && Array.isArray(contentArticles)) {
+        for (let i = 0; i < contentArticles.length; i++) {
+          contentArticles[i] = __deepSanitize_for_content_js(contentArticles[i]);
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  } else {
+    // if variable is local (not on window), try to sanitize that too
+    try {
+      if (typeof contentArticles !== 'undefined' && Array.isArray(contentArticles)) {
+        for (let i = 0; i < contentArticles.length; i++) {
+          contentArticles[i] = __deepSanitize_for_content_js(contentArticles[i]);
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+} catch (err) {
+  console.error('content.js: sanitization runtime error', err);
+}
 
 })();

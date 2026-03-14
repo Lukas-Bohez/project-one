@@ -13,7 +13,24 @@ Here are the most important fixes for the website repo, in priority order:
 - Remove the file from git: `git rm --cached frontend/cert/key.pem frontend/cert/cert.pem`
 - Add to `.gitignore`: `frontend/cert/*.pem`
 - Rotate the key/cert if it was ever used on a real server
-- Force-push to scrub git history: `git filter-repo --path frontend/cert/key.pem --invert-paths`
+- To fully scrub history, run (locally):
+
+```bash
+# Install git-filter-repo if needed
+pip install git-filter-repo
+
+# Remove the cert files from all commits
+git filter-repo --path frontend/cert/key.pem --path frontend/cert/cert.pem --invert-paths
+
+# Repack and garbage-collect
+git reflog expire --expire=now --all && git gc --prune=now --aggressive
+
+# Force-push rewritten history to the remote (requires coordination)
+git push --force --all
+git push --force --tags
+```
+
+Note: history rewriting is destructive. Coordinate with collaborators and back up the repository before running these commands.
 
 **2. Hardcoded admin password in `backend/app.py` (lines 12315 & 12628)**
 

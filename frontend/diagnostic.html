@@ -125,17 +125,27 @@
     <script src="js/websocket-compatibility.js"></script>
     
     <script>
-        let logElement = document.getElementById('log-content');
-        
+        const logPre = document.getElementById('log-content');
+        const logContainer = document.getElementById('log');
+
         function log(message, type = 'info') {
             const timestamp = new Date().toLocaleTimeString();
             const color = type === 'error' ? '#f00' : type === 'success' ? '#0f0' : type === 'warning' ? '#ff0' : '#0ff';
-            logElement.innerHTML += `\n<span style="color: ${color}">[${timestamp}] ${message}</span>`;
-            logElement.scrollTop = logElement.scrollHeight;
+            const entry = document.createElement('div');
+            entry.style.color = color;
+            entry.style.whiteSpace = 'pre-wrap';
+            entry.style.fontFamily = 'monospace';
+            entry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
         }
-        
+
         function clearLog() {
-            logElement.innerHTML = 'Log cleared...';
+            while (logContainer.firstChild) logContainer.removeChild(logContainer.firstChild);
+            const p = document.createElement('pre');
+            p.id = 'log-content';
+            p.textContent = 'Log cleared...';
+            logContainer.appendChild(p);
         }
         
         function displayBrowserInfo() {
@@ -164,11 +174,21 @@
             
             fetch(window.location.origin + '/test', { method: 'GET', mode: 'no-cors' })
                 .then(() => {
-                    document.getElementById('http-result').innerHTML = '<div class="status success">✅ HTTP connection working</div>';
+                    const httpRes = document.getElementById('http-result');
+                    while (httpRes.firstChild) httpRes.removeChild(httpRes.firstChild);
+                    const httpDiv = document.createElement('div');
+                    httpDiv.className = 'status success';
+                    httpDiv.textContent = '✅ HTTP connection working';
+                    httpRes.appendChild(httpDiv);
                     log('HTTP test passed', 'success');
                 })
                 .catch(error => {
-                    document.getElementById('http-result').innerHTML = '<div class="status warning">⚠️ HTTP test inconclusive (CORS or 404 expected)</div>';
+                    const httpRes2 = document.getElementById('http-result');
+                    while (httpRes2.firstChild) httpRes2.removeChild(httpRes2.firstChild);
+                    const httpDiv2 = document.createElement('div');
+                    httpDiv2.className = 'status warning';
+                    httpDiv2.textContent = '⚠️ HTTP test inconclusive (CORS or 404 expected)';
+                    httpRes2.appendChild(httpDiv2);
                     log('HTTP test completed (CORS/404 expected)', 'warning');
                 });
         }
@@ -177,10 +197,20 @@
             log('Testing Socket.IO library availability...', 'info');
             
             if (typeof io !== 'undefined') {
-                document.getElementById('socketio-result').innerHTML = '<div class="status success">✅ Socket.IO library loaded successfully</div>';
+                const sioRes = document.getElementById('socketio-result');
+                while (sioRes.firstChild) sioRes.removeChild(sioRes.firstChild);
+                const sioDiv = document.createElement('div');
+                sioDiv.className = 'status success';
+                sioDiv.textContent = '✅ Socket.IO library loaded successfully';
+                sioRes.appendChild(sioDiv);
                 log('Socket.IO library available', 'success');
             } else {
-                document.getElementById('socketio-result').innerHTML = '<div class="status error">❌ Socket.IO library not available</div>';
+                const sioRes2 = document.getElementById('socketio-result');
+                while (sioRes2.firstChild) sioRes2.removeChild(sioRes2.firstChild);
+                const sioDiv2 = document.createElement('div');
+                sioDiv2.className = 'status error';
+                sioDiv2.textContent = '❌ Socket.IO library not available';
+                sioRes2.appendChild(sioDiv2);
                 log('Socket.IO library missing', 'error');
             }
         }
@@ -189,10 +219,20 @@
             log('Testing WebSocket support...', 'info');
             
             if (typeof WebSocket !== 'undefined') {
-                document.getElementById('websocket-result').innerHTML = '<div class="status success">✅ WebSocket supported</div>';
+                const wsRes = document.getElementById('websocket-result');
+                while (wsRes.firstChild) wsRes.removeChild(wsRes.firstChild);
+                const wsDiv = document.createElement('div');
+                wsDiv.className = 'status success';
+                wsDiv.textContent = '✅ WebSocket supported';
+                wsRes.appendChild(wsDiv);
                 log('WebSocket support confirmed', 'success');
             } else {
-                document.getElementById('websocket-result').innerHTML = '<div class="status error">❌ WebSocket not supported</div>';
+                const wsRes2 = document.getElementById('websocket-result');
+                while (wsRes2.firstChild) wsRes2.removeChild(wsRes2.firstChild);
+                const wsDiv2 = document.createElement('div');
+                wsDiv2.className = 'status error';
+                wsDiv2.textContent = '❌ WebSocket not supported';
+                wsRes2.appendChild(wsDiv2);
                 log('WebSocket not supported', 'error');
             }
         }
@@ -201,7 +241,12 @@
             log('Testing full Socket.IO connection with enhanced features...', 'info');
             
             if (typeof io === 'undefined') {
-                document.getElementById('connection-result').innerHTML = '<div class="status error">❌ Cannot test - Socket.IO not loaded</div>';
+                const connRes = document.getElementById('connection-result');
+                while (connRes.firstChild) connRes.removeChild(connRes.firstChild);
+                const connDiv = document.createElement('div');
+                connDiv.className = 'status error';
+                connDiv.textContent = '❌ Cannot test - Socket.IO not loaded';
+                connRes.appendChild(connDiv);
                 log('Connection test failed - Socket.IO not available', 'error');
                 return;
             }
@@ -214,7 +259,12 @@
                 io(serverURL, { timeout: 15000, transports: ['polling', 'websocket'] });
             
             let connectionTimeout = setTimeout(() => {
-                document.getElementById('connection-result').innerHTML = '<div class="status error">❌ Connection timeout (15s)</div>';
+                const connRes2 = document.getElementById('connection-result');
+                while (connRes2.firstChild) connRes2.removeChild(connRes2.firstChild);
+                const connDiv2 = document.createElement('div');
+                connDiv2.className = 'status error';
+                connDiv2.textContent = '❌ Connection timeout (15s)';
+                connRes2.appendChild(connDiv2);
                 log('Connection test timed out after 15 seconds', 'error');
                 testSocket.disconnect();
             }, 18000);
@@ -256,7 +306,12 @@
                 function checkAllFeatures() {
                     if (featuresTestedCount >= totalFeatures) {
                         clearTimeout(connectionTimeout);
-                        document.getElementById('connection-result').innerHTML = '<div class="status success">✅ All enhanced features working!</div>';
+                        const connResSuccess = document.getElementById('connection-result');
+                        while (connResSuccess.firstChild) connResSuccess.removeChild(connResSuccess.firstChild);
+                        const connDivSuccess = document.createElement('div');
+                        connDivSuccess.className = 'status success';
+                        connDivSuccess.textContent = '✅ All enhanced features working!';
+                        connResSuccess.appendChild(connDivSuccess);
                         log(`All ${totalFeatures} enhanced features tested successfully`, 'success');
                         setTimeout(() => testSocket.disconnect(), 2000);
                     }
@@ -266,7 +321,12 @@
                 setTimeout(() => {
                     if (featuresTestedCount < totalFeatures) {
                         clearTimeout(connectionTimeout);
-                        document.getElementById('connection-result').innerHTML = `<div class="status warning">⚠️ Basic connection works (${featuresTestedCount}/${totalFeatures} features)</div>`;
+                        const connResWarn = document.getElementById('connection-result');
+                        while (connResWarn.firstChild) connResWarn.removeChild(connResWarn.firstChild);
+                        const connDivWarn = document.createElement('div');
+                        connDivWarn.className = 'status warning';
+                        connDivWarn.textContent = `⚠️ Basic connection works (${featuresTestedCount}/${totalFeatures} features)`;
+                        connResWarn.appendChild(connDivWarn);
                         log(`Basic connection works, but only ${featuresTestedCount}/${totalFeatures} enhanced features responded`, 'warning');
                         testSocket.disconnect();
                     }
@@ -275,7 +335,12 @@
             
             testSocket.on('connect_error', (error) => {
                 clearTimeout(connectionTimeout);
-                document.getElementById('connection-result').innerHTML = `<div class="status error">❌ Connection failed: ${error.message}</div>`;
+                const connResErr = document.getElementById('connection-result');
+                while (connResErr.firstChild) connResErr.removeChild(connResErr.firstChild);
+                const connDivErr = document.createElement('div');
+                connDivErr.className = 'status error';
+                connDivErr.textContent = '❌ Connection failed: ' + (error && error.message ? error.message : 'unknown');
+                connResErr.appendChild(connDivErr);
                 log(`Enhanced connection test FAILED: ${error.message}`, 'error');
                 log(`Error type: ${error.type || 'unknown'}`, 'error');
             });
