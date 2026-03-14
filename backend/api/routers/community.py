@@ -492,7 +492,7 @@ async def upload_csv_questions(
     except UnicodeDecodeError:
         try:
             text = content.decode("latin-1")
-        except Exception as e:
+        except Exception:
             raise HTTPException(
                 status_code=400, detail="Could not decode CSV file. Use UTF-8 encoding."
             )
@@ -542,9 +542,17 @@ async def get_csv_template():
     return {
         "template": "question,correct_answer,wrong_answer_1,wrong_answer_2,wrong_answer_3,explanation,difficulty,ai_generated",
         "example_rows": [
-            "What is the capital of France?,Paris,London,Berlin,Madrid,Paris has been the capital since the 10th century,easy,false",
-            "What is 2+2?,4,3,5,6,Basic arithmetic,easy,true",
-            "Who wrote Romeo and Juliet?,William Shakespeare,Charles Dickens,Jane Austen,Mark Twain,Written around 1595,medium,false",
+            (
+                "What is the capital of France?,Paris,London,Berlin,Madrid,"
+                "Paris has been the capital since the 10th century,easy,false"
+            ),
+            (
+                "What is 2+2?,4,3,5,6,Basic arithmetic,easy,true"
+            ),
+            (
+                "Who wrote Romeo and Juliet?,William Shakespeare,Charles Dickens,"
+                "Jane Austen,Mark Twain,Written around 1595,medium,false"
+            ),
         ],
         "columns": {
             "question": "Required. The question text.",
