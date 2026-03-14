@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Simple pre-commit hook to prevent committing sensitive files
+set -euo pipefail
+
+# Patterns to block
+BLOCK_PATTERNS=(
+  "*.pem"
+  "*.key"
+  "*.crt"
+  "*.env"
+  "*.bak"
+  ".DS_Store"
+)
+
+STAGED_FILES=$(git diff --name-only --cached || true)
+if [ -z "$STAGED_FILES" ]; then
+  exit 0
+fi
+
+BLOCKED=()
+for pattern in "${BLOCK_PATTERNS[@]}"; do
+  while read -r file; do
+    if [[ "$file" == $pattern || "$file" == */$pattern || "$file" == $pattern ]]; then
+      BLOCKED+=("$file")
+    fi
+  done < <(printf "%s\n" "$STAGED_FILES")
+done
+
+if [ ${#BLOCKED[@]} -gt 0 ]; then
+  echo "ERROR: Commit contains files matching blocked patterns:" >&2
+  for f in "${BLOCKED[@]}"; do echo "  - $f" >&2; done
+  echo "Remove these files from the index (git rm --cached <file>) or update .gitignore." >&2
+  exit 1
+fi
+
+exit 0

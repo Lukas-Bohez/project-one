@@ -57,6 +57,9 @@ logs/
 *.key
 *.crt
 
+# Backup files
+*.bak
+
 # Node modules (if you have any)
 node_modules/
 

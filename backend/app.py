@@ -19,6 +19,10 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+# Require SENTLE_ADMIN_PASSWORD to be set in environment to avoid hardcoded defaults
+SENTLE_ADMIN_PASSWORD = os.getenv("SENTLE_ADMIN_PASSWORD")
+if not SENTLE_ADMIN_PASSWORD:
+    raise RuntimeError("SENTLE_ADMIN_PASSWORD environment variable must be set")
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -272,10 +276,212 @@ except Exception as e:
     print(f"Warning: Could not load Spire AI Collaboration routes: {e}")
 
 # Rate limiting setup
-limiter = Limiter(key_func=get_remote_address)
+ADMIN_TOKEN_TTL_SECONDS = int(os.getenv("SENTLE_ADMIN_TOKEN_TTL", "3600"))
+# Broaden default rate-limits (safe global default)
+limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
+
+
+# Middleware: convert any JSON response containing an `admin_token` field
+# into an HttpOnly Secure SameSite cookie and remove the token from the body.
+import json as _json
+from starlette.responses import Response as _StarletteResponse
+
+
+@app.middleware("http")
+async def _admin_token_cookie_middleware(request, call_next):
+    try:
+        response = await call_next(request)
+    except Exception as e:
+        raise
+
+    try:
+        # Only process JSON responses
+        ctype = response.headers.get("content-type", "")
+        if ctype.startswith("application/json"):
+            body_bytes = None
+            # Fast path: many Response subclasses expose .body
+            if hasattr(response, "body") and response.body is not None:
+                body_bytes = response.body
+            else:
+                # Fallback to reading body_iterator
+                try:
+                    body = b""
+                    async for chunk in response.body_iterator:
+                        body += chunk
+                    body_bytes = body
+                except Exception:
+                    body_bytes = None
+
+            if body_bytes:
+                try:
+                    payload = _json.loads(body_bytes.decode())
+                except Exception:
+                    payload = None
+
+                if isinstance(payload, dict) and "admin_token" in payload:
+                    token = payload.pop("admin_token")
+                    # Set cookie with same TTL as server-side token store
+                    if isinstance(response, _StarletteResponse):
+                        response.set_cookie(
+                            key="admin_token",
+                            value=token,
+                            httponly=True,
+                            secure=True,
+                            samesite="Lax",
+                            max_age=ADMIN_TOKEN_TTL_SECONDS,
+                            path="/"
+                        )
+                    # Replace response body without token
+                    new_body = _json.dumps(payload).encode()
+                    # Some responses (JSONResponse) allow setting .body
+                    try:
+                        response.body = new_body
+                        response.headers["content-length"] = str(len(new_body))
+                    except Exception:
+                        # Last resort: create a new JSONResponse preserving status and headers
+                        from fastapi.responses import JSONResponse
+                        new_resp = JSONResponse(content=payload, status_code=response.status_code)
+                        # copy headers except content-related
+                        for k, v in response.headers.items():
+                            if k.lower() in ("content-type", "content-length"):
+                                continue
+                            new_resp.headers[k] = v
+                        new_resp.set_cookie(
+                            key="admin_token",
+                            value=token,
+                            httponly=True,
+                            secure=True,
+                            samesite="Lax",
+                            max_age=ADMIN_TOKEN_TTL_SECONDS,
+                            path="/"
+                        )
+                        return new_resp
+
+    except Exception:
+        # Do not let cookie middleware break normal responses
+        pass
+
+    return response
+
+
+# Lightweight per-IP rate-limiter for high-risk auth endpoints.
+# This runs before route handlers and provides a focused defense-in-depth
+# layer even if individual endpoints lack decorators.
+_auth_rate_limits = {
+    # key: path fragment -> (max_requests, window_seconds)
+    "login": (5, 60),          # 5 logins per minute per IP
+    "register": (3, 60),       # 3 registrations per minute per IP
+    "support/login": (10, 60), # support login slightly higher
+    "support/register": (5, 60),
+    "admin": (5, 60)
+}
+
+# Store request timestamps per (ip, key)
+_auth_request_log = {}
+_auth_lock = Lock()
+
+
+def _is_rate_limited(client_ip: str, key: str) -> (bool, str):
+    """Return (is_limited, message)"""
+    limits = _auth_rate_limits.get(key)
+    if not limits:
+        return False, ""
+    max_req, window = limits
+    now = time.time()
+    ident = f"{client_ip}:{key}"
+    with _auth_lock:
+        arr = _auth_request_log.get(ident, [])
+        # Prune old timestamps
+        arr = [ts for ts in arr if now - ts < window]
+        if len(arr) >= max_req:
+            return True, f"Rate limit exceeded for {key}. Try again later."
+        arr.append(now)
+        _auth_request_log[ident] = arr
+    return False, ""
+
+
+@app.middleware("http")
+async def _auth_endpoint_rate_limiter(request, call_next):
+    try:
+        path = request.url.path or ""
+        # Normalize path fragments we care about
+        frag = None
+        for k in _auth_rate_limits.keys():
+            if k in path:
+                frag = k
+                break
+        if frag and request.method.upper() in ("POST", "PUT", "PATCH"):
+            client_ip = get_client_ip_sync(request)
+            limited, msg = _is_rate_limited(client_ip, frag)
+            if limited:
+                return JSONResponse(status_code=429, content={"detail": msg})
+    except Exception:
+        # Do not block requests if limiter fails
+        pass
+    return await call_next(request)
+
+
+# --- Admin token revocation support ---
+# Server-side store of revoked admin tokens (token -> expiry_timestamp)
+_revoked_admin_tokens = {}
+_revoked_lock = Lock()
+
+
+def revoke_admin_token(token: str, ttl: int = ADMIN_TOKEN_TTL_SECONDS):
+    """Mark a token as revoked for `ttl` seconds."""
+    if not token:
+        return
+    expire = time.time() + ttl
+    with _revoked_lock:
+        _revoked_admin_tokens[token] = expire
+
+
+def is_token_revoked(token: str) -> bool:
+    if not token:
+        return False
+    now = time.time()
+    with _revoked_lock:
+        # Clean out expired entries lazily
+        expired = [t for t, e in _revoked_admin_tokens.items() if e <= now]
+        for t in expired:
+            _revoked_admin_tokens.pop(t, None)
+        return token in _revoked_admin_tokens
+
+
+@app.post(ENDPOINT + "/admin/logout")
+async def admin_logout(request: Request):
+    """Log out admin by revoking the token in the `admin_token` cookie and clearing the cookie."""
+    try:
+        token = request.cookies.get("admin_token")
+        if token:
+            revoke_admin_token(token)
+        # Clear cookie
+        from fastapi.responses import JSONResponse
+        resp = JSONResponse(content={"detail": "Logged out"})
+        resp.delete_cookie("admin_token", path="/")
+        return resp
+    except Exception as e:
+        logging.getLogger('uvicorn.error').exception("Failed to logout admin: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to logout")
+
+
+@app.get(ENDPOINT + "/admin/token-status")
+async def admin_token_status(request: Request):
+    """Return whether the admin token cookie is present and not revoked."""
+    try:
+        token = request.cookies.get("admin_token")
+        if not token:
+            return JSONResponse(content={"status": "missing"})
+        if is_token_revoked(token):
+            return JSONResponse(content={"status": "revoked"})
+        return JSONResponse(content={"status": "active"})
+    except Exception as e:
+        logging.getLogger('uvicorn.error').exception("Failed to check token status: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to check token status")
+
 
 # Socket.IO server setup
 sio = socketio.AsyncServer(
@@ -12041,6 +12247,7 @@ async def get_game_status():
 if JWT_AVAILABLE:
     # Game Authentication Endpoints
     @app.post(ENDPOINT + "/game/auth/register", response_model=GameAuthResponse, tags=["Kingdom Quarry"])
+    @limiter.limit("5/minute")
     async def game_register(register_data: GameRegisterRequest, request: Request):
         """Register a new game user account"""
         try:
@@ -12091,9 +12298,11 @@ if JWT_AVAILABLE:
         except HTTPException:
             raise
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
+            quiz_logger.error("Game registration failed", exc_info=True)
+            raise HTTPException(status_code=500, detail="Internal server error")
 
     @app.post(ENDPOINT + "/game/auth/login", response_model=GameAuthResponse, tags=["Kingdom Quarry"])
+    @limiter.limit("10/minute")
     async def game_login(login_data: GameLoginRequest, request: Request):
         """Login to game account"""
         try:
@@ -12127,7 +12336,8 @@ if JWT_AVAILABLE:
         except HTTPException:
             raise
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Login failed: {str(e)}")
+            quiz_logger.error("Game login failed", exc_info=True)
+            raise HTTPException(status_code=500, detail="Internal server error")
 
     # Game Save Endpoints
     @app.get(ENDPOINT + "/game/save", response_model=GameLoadResponse, tags=["Kingdom Quarry"])
@@ -12312,7 +12522,35 @@ else:
 # =============================================================================
 
 # Sentle Admin Password (stored in environment variable for security)
-SENTLE_ADMIN_PASSWORD = os.getenv("SENTLE_ADMIN_PASSWORD", "sentle6967god")
+# Require the environment variable to be explicitly set; do not provide a public default.
+SENTLE_ADMIN_PASSWORD = os.getenv("SENTLE_ADMIN_PASSWORD")
+if not SENTLE_ADMIN_PASSWORD:
+    raise RuntimeError("SENTLE_ADMIN_PASSWORD environment variable must be set")
+
+# In-memory admin token storage (short-lived). Tokens are ephemeral and stored
+# only in-process; rotate server or persist to a secure store to survive restarts.
+_admin_tokens: Dict[str, float] = {}
+ADMIN_TOKEN_TTL_SECONDS = int(os.getenv("SENTLE_ADMIN_TOKEN_TTL", "3600"))
+
+def _prune_admin_tokens() -> None:
+    now = time.time()
+    expired = [t for t, exp in _admin_tokens.items() if exp <= now]
+    for t in expired:
+        _admin_tokens.pop(t, None)
+
+def is_valid_admin_token(token: str) -> bool:
+    if not token:
+        return False
+    _prune_admin_tokens()
+    expiry = _admin_tokens.get(token)
+    if not expiry:
+        return False
+    if expiry < time.time():
+        # expired - prune and return false
+        _admin_tokens.pop(token, None)
+        return False
+    return True
+
 
 # Initialize Sentle database tables
 def init_sentle_tables():
@@ -12654,6 +12892,7 @@ def verify_quiz_password(password: str, hashed_password: str, salt: str) -> bool
     return False
 
 @app.post("/api/sentle/register", tags=["Sentle Auth"])
+@limiter.limit("5/minute")
 async def sentle_register(payload: Dict[str, Any] = Body(...)):
     """Register a new Quiz user account (first + last name + password) for Sentle."""
     try:
@@ -12695,9 +12934,11 @@ async def sentle_register(payload: Dict[str, Any] = Body(...)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Registration error: {str(e)}")
+        sentle_logger.error("Registration error", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.post("/api/sentle/login", tags=["Sentle Auth"])
+@limiter.limit("10/minute")
 async def sentle_login(payload: Dict[str, Any] = Body(...), request: Request = None):
     """Login with Quiz user account (first name + last name + password)."""
     try:
@@ -12785,7 +13026,8 @@ async def sentle_login(payload: Dict[str, Any] = Body(...), request: Request = N
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Login error: {str(e)}")
+        sentle_logger.error("Login error", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.get("/api/sentle/daily", tags=["Sentle"])
 async def get_daily_sentence():
@@ -13851,27 +14093,31 @@ async def admin_backfill_archive(request: Request):
 # NOTE: Sentle debug/scores route defined above (line ~13249)
 
 @app.post("/api/sentle/admin/login", tags=["Sentle"])
+@limiter.limit("5/minute")
 async def admin_login(payload: Dict[str, Any] = Body(...)):
     """Authenticate admin and return session token"""
     try:
         password = payload.get('password')
-        
+
         if not password:
             raise HTTPException(status_code=400, detail="Password is required")
-        
+
         # Verify admin password
         if password != SENTLE_ADMIN_PASSWORD:
             raise HTTPException(status_code=401, detail="Invalid password")
-        
-        # Generate secure admin token
+
+        # Generate secure admin token and store with expiry
         admin_token = secrets.token_urlsafe(32)
-        
+        _admin_tokens[admin_token] = time.time() + ADMIN_TOKEN_TTL_SECONDS
+        sentle_logger.info(f"Issued admin token (expires in {ADMIN_TOKEN_TTL_SECONDS}s)")
+
         return {"admin_token": admin_token}
-        
+
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error logging in: {str(e)}")
+        sentle_logger.error("Error logging in (admin)", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 def verify_admin_token(request: Request) -> str:
@@ -13880,14 +14126,11 @@ def verify_admin_token(request: Request) -> str:
     
     if not auth_header.startswith('Bearer '):
         raise HTTPException(status_code=401, detail="Missing or invalid admin token")
-    
-    token = auth_header[7:]  # Remove 'Bearer ' prefix
-    # In a real app, you'd validate against a stored/session token
-    # For now, we'll accept the token if it's non-empty
-    # In production, store issued tokens temporarily and validate against them
-    if not token:
-        raise HTTPException(status_code=401, detail="Invalid admin token")
-    
+
+    token = auth_header[7:]
+    if not token or not is_valid_admin_token(token):
+        raise HTTPException(status_code=401, detail="Invalid or expired admin token")
+
     return token
 
 
@@ -13904,6 +14147,8 @@ async def admin_add_sentence(payload: Dict[str, Any] = Body(...), request: Reque
         # Verify admin token
         if not admin_token:
             raise HTTPException(status_code=401, detail="Admin token required")
+        if not is_valid_admin_token(admin_token):
+            raise HTTPException(status_code=401, detail="Invalid or expired admin token")
         
         if not date or not sentence:
             raise HTTPException(status_code=400, detail="Date and sentence are required")
@@ -13939,7 +14184,8 @@ async def admin_add_sentence(payload: Dict[str, Any] = Body(...), request: Reque
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error adding sentence: {str(e)}")
+        sentle_logger.error("Error adding sentence", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.get("/api/sentle/admin/list", tags=["Sentle"])
 async def admin_list_sentences(request: Request):
