@@ -55,7 +55,7 @@ class HardcoreRFID:
         # No hardware initialization for Windows compatibility    def RC_522_Reset(self):
         try:
             self.Write_RC_522(self.CommandReg, self.PCD_RESETPHASE)
-        except:
+        except Exception as e:
             pass
 
     def Write_RC_522(self, addr, val):

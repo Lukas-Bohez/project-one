@@ -58,7 +58,7 @@ class LightSensor:
         try:
             # Convert ADC to lux (0-1000 range)
             return (adc_value / self.max_adc) * 1000
-        except:
+        except Exception as e:
             return random.uniform(0, 1000)
 
     def __call__(self):

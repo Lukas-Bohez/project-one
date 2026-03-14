@@ -716,7 +716,7 @@ def seed_story_questions(dry_run: bool = True) -> Tuple[int, int, int]:
                     answers_inserted += len(item["answers"])
                     continue
 
-                q_id = insert_question_with_answers(
+                _q_id = insert_question_with_answers(
                     cur,
                     t_id,
                     q_text,

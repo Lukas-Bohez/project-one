@@ -39,7 +39,7 @@ def test_migration():
         len(themes_with_questions) >= 1
     ), "No themes with questions found to test migration"
 
-    print(f"\n📊 Themes with questions:")
+    print("\n📊 Themes with questions:")
     for theme, count in themes_with_questions[:5]:
         print(f"  - {theme['name']}: {count} questions")
 

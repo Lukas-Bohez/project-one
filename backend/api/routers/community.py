@@ -492,7 +492,7 @@ async def upload_csv_questions(
     except UnicodeDecodeError:
         try:
             text = content.decode("latin-1")
-        except:
+        except Exception as e:
             raise HTTPException(
                 status_code=400, detail="Could not decode CSV file. Use UTF-8 encoding."
             )

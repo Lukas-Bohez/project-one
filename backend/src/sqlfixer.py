@@ -206,7 +206,7 @@ def delete_suspicious_users(suspicious_users, confirm_delete=False):
         # Commit all changes
         connection.commit()
 
-        print(f"\n📊 CLEANUP SUMMARY:")
+        print("\n📊 CLEANUP SUMMARY:")
         print(f"   Users identified for deletion: {len(suspicious_users)}")
         print(f"   Users successfully deleted: {deleted_count}")
         print(
