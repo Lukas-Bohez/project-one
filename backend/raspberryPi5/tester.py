@@ -1,7 +1,9 @@
-import RPi.GPIO as GPIO
 import time
+
+import RPi.GPIO as GPIO
 from spidev import SpiDev
- 
+
+
 class Rc_522:
     # RC_522 Command words
     PCD_IDLE = 0x00
@@ -11,7 +13,7 @@ class Rc_522:
     PCD_TRANSCEIVE = 0x0C
     PCD_RESETPHASE = 0x0F
     PCD_CALCCRC = 0x03
- 
+
     # Mifare_One card command words
     PICC_REQIDL = 0x26
     PICC_REQALL = 0x52
@@ -26,7 +28,7 @@ class Rc_522:
     PICC_RESTORE = 0xC2
     PICC_TRANSFER = 0xB0
     PICC_HALT = 0x50
- 
+
     # RC_522 Registers
     CommandReg = 0x01
     CommIEnReg = 0x02
@@ -47,21 +49,21 @@ class Rc_522:
     TPrescalerReg = 0x2B
     TReloadRegH = 0x2C
     TReloadRegL = 0x2D
- 
+
     MAX_LEN = 16
- 
-    def __init__(self, dev='/dev/spidev0.0', spd=1000000):
+
+    def __init__(self, dev="/dev/spidev0.0", spd=1000000):
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(22, GPIO.OUT)
         GPIO.output(22, 1)
- 
+
         # Setup SPI
         self.spi = SpiDev()
-        bus, device_id = map(int, dev.replace('/dev/spidev', '').split('.'))
+        bus, device_id = map(int, dev.replace("/dev/spidev", "").split("."))
         self.spi.open(bus, device_id)
         self.spi.max_speed_hz = spd
- 
+
         self.RC_522_Reset()
         self.Write_RC_522(self.TModeReg, 0x8D)
         self.Write_RC_522(self.TPrescalerReg, 0x3E)
@@ -70,59 +72,59 @@ class Rc_522:
         self.Write_RC_522(self.TxAutoReg, 0x40)
         self.Write_RC_522(self.ModeReg, 0x3D)
         self.AntennaOn()
- 
+
     def RC_522_Reset(self):
         self.Write_RC_522(self.CommandReg, self.PCD_RESETPHASE)
- 
+
     def Write_RC_522(self, addr, val):
         self.spi.xfer2([(addr << 1) & 0x7E, val])
- 
+
     def Read_RC_522(self, addr):
         val = self.spi.xfer2([((addr << 1) & 0x7E) | 0x80, 0])
         return val[1]
- 
+
     def SetBitMask(self, reg, mask):
         tmp = self.Read_RC_522(reg)
         self.Write_RC_522(reg, tmp | mask)
- 
+
     def ClearBitMask(self, reg, mask):
         tmp = self.Read_RC_522(reg)
         self.Write_RC_522(reg, tmp & (~mask))
- 
+
     def AntennaOn(self):
         if not (self.Read_RC_522(self.TxControlReg) & 0x03):
             self.SetBitMask(self.TxControlReg, 0x03)
- 
+
     def AntennaOff(self):
         self.ClearBitMask(self.TxControlReg, 0x03)
- 
+
     def ToCard(self, command, sendData):
         backData = []
         backLen = 0
         status = None
         irqEn = 0x00
         waitIRq = 0x00
- 
+
         if command == self.PCD_AUTHENT:
             irqEn = 0x12
             waitIRq = 0x10
         elif command == self.PCD_TRANSCEIVE:
             irqEn = 0x77
             waitIRq = 0x30
- 
+
         self.Write_RC_522(self.CommIEnReg, irqEn | 0x80)
         self.ClearBitMask(self.CommIrqReg, 0x80)
         self.SetBitMask(self.FIFOLevelReg, 0x80)
- 
+
         self.Write_RC_522(self.CommandReg, self.PCD_IDLE)
- 
+
         for c in sendData:
             self.Write_RC_522(self.FIFODataReg, c)
- 
+
         self.Write_RC_522(self.CommandReg, command)
         if command == self.PCD_TRANSCEIVE:
             self.SetBitMask(self.BitFramingReg, 0x80)
- 
+
         i = 2000
         while True:
             n = self.Read_RC_522(self.CommIrqReg)
@@ -131,34 +133,34 @@ class Rc_522:
             if n & 0x01 or i == 0:
                 break
             i -= 1
- 
+
         self.ClearBitMask(self.BitFramingReg, 0x80)
- 
+
         if i != 0:
             if (self.Read_RC_522(self.ErrorReg) & 0x1B) == 0x00:
                 status = "MI_OK"
- 
+
                 if n & irqEn & 0x01:
                     status = "NOTAGERR"
- 
+
                 if command == self.PCD_TRANSCEIVE:
                     n = self.Read_RC_522(self.FIFOLevelReg)
                     lastBits = self.Read_RC_522(self.ControlReg) & 0x07
                     backLen = (n - 1) * 8 + lastBits if lastBits != 0 else n * 8
- 
+
                     for _ in range(n):
                         backData.append(self.Read_RC_522(self.FIFODataReg))
             else:
                 status = "ERR"
         return status, backData, backLen
- 
+
     def RC_522_Request(self, reqMode):
         self.Write_RC_522(self.BitFramingReg, 0x07)
         status, backData, backBits = self.ToCard(self.PCD_TRANSCEIVE, [reqMode])
         if status != "MI_OK" or backBits != 0x10:
             status = "ERR"
         return status, backBits
- 
+
     def RC_522_Anticoll(self):
         serNum = []
         self.Write_RC_522(self.BitFramingReg, 0x00)
@@ -172,7 +174,7 @@ class Rc_522:
             if serNumCheck != backData[4]:
                 status = "ERR"
         return status, backData
- 
+
     def RC_522_SelectTag(self, serNum):
         buf = [self.PICC_SElECTTAG, 0x70] + serNum[:5]
         pOut = self.CalulateCRC(buf)
@@ -181,7 +183,7 @@ class Rc_522:
         if status == "MI_OK" and backLen == 0x18:
             return 1
         return 0
- 
+
     def RC_522_Auth(self, authMode, BlockAddr, Sectorkey, serNum):
         buff = [authMode, BlockAddr] + Sectorkey[:6] + serNum[:4]
         status, _, _ = self.ToCard(self.PCD_AUTHENT, buff)
@@ -190,7 +192,7 @@ class Rc_522:
         elif (self.Read_RC_522(self.Status2Reg) & 0x08) == 0:
             print("AUTH ERROR(status2reg & 0x08) == 0")
         return status
- 
+
     def RC_522_Read(self, blockAddr):
         recvData = [self.PICC_READ, blockAddr]
         crc = self.CalulateCRC(recvData)
@@ -199,58 +201,55 @@ class Rc_522:
         if status == "MI_OK":
             print(f"Sector {blockAddr} {backData}")
         return backData
- 
+
     def CalulateCRC(self, pIndata):
         self.ClearBitMask(self.DivIrqReg, 0x04)
         self.SetBitMask(self.FIFOLevelReg, 0x80)
         for c in pIndata:
             self.Write_RC_522(self.FIFODataReg, c)
         self.Write_RC_522(self.CommandReg, self.PCD_CALCCRC)
- 
+
         i = 0xFF
         while i > 0:
             n = self.Read_RC_522(self.DivIrqReg)
             if n & 0x04:
                 break
             i -= 1
-        retData = [
-            self.Read_RC_522(0x22),
-            self.Read_RC_522(0x21)
-        ]
+        retData = [self.Read_RC_522(0x22), self.Read_RC_522(0x21)]
         return retData
- 
+
     def cleanup(self):
         self.spi.close()
         GPIO.cleanup()
 
+
 reader = Rc_522()
-    
+
 print("Plaats een kaart tegen de lezer (druk Ctrl+C om te stoppen).")
-    
+
 try:
     while True:
         # Detecteer of er een kaart in de buurt is
         status, _ = reader.RC_522_Request(reader.PICC_REQIDL)
         if status == "MI_OK":
             print("Kaart gedetecteerd.")
-            
+
             # Probeer het UID te lezen
             status, uid = reader.RC_522_Anticoll()
             if status == "MI_OK":
                 print(f"UID: {uid}")
-                
+
                 # Optioneel: selecteer de kaart
                 if reader.RC_522_SelectTag(uid):
                     print("Kaart geselecteerd.")
                 else:
                     print("Selecteren van kaart mislukt.")
-                
+
                 time.sleep(1)  # korte pauze om herhaald lezen te vermijden
         time.sleep(0.1)
- 
+
 except KeyboardInterrupt:
     print("\nProgramma beëindigd door gebruiker.")
 finally:
     reader.cleanup()
     print("GPIO en SPI zijn afgesloten.")
-

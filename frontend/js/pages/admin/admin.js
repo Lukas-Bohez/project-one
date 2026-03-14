@@ -209,16 +209,14 @@ const fetchUsers = async () => {
     try {
         // Get authentication headers like other functions
         const userId = sessionStorage.getItem('admin_user_id');
-        const rfidCode = sessionStorage.getItem('admin_rfid_code');
-        
+
         const headers = {
             'Accept': 'application/json',
         };
-        
-        // Add auth headers if available
-        if (userId && rfidCode) {
+
+        // Add auth header with user id if available. Do NOT send raw RFID from client-side.
+        if (userId) {
             headers['X-User-ID'] = userId;
-            headers['X-RFID'] = rfidCode;
         }
         
         const response = await fetch(url, {
@@ -309,7 +307,8 @@ const createStoryIfNotExists = async (name, description = '', slug = '') => {
     
     // Get authentication headers
     const userId = sessionStorage.getItem('admin_user_id');
-    const rfidCode = sessionStorage.getItem('admin_rfid_code');
+    // client-side RFID removed; do not read it here
+    const rfidCode = null;
     
     const headers = { 'Content-Type': 'application/json' };
     if (userId && rfidCode) {
@@ -337,7 +336,7 @@ const fetchUsersBasic = async () => {
     try {
         // Get authentication headers like other functions
         const userId = sessionStorage.getItem('admin_user_id');
-        const rfidCode = sessionStorage.getItem('admin_rfid_code');
+        const rfidCode = null;
         
         const headers = {
             'Accept': 'application/json',
@@ -425,7 +424,7 @@ let state = {
 const updateQuestion = async (question) => {
     try {
         const userId = sessionStorage.getItem('admin_user_id');
-        const rfidCode = sessionStorage.getItem('admin_rfid_code');
+        const rfidCode = null;
         
         if (!userId || !rfidCode) {
             throw new Error('Authentication required. Please log in again.');
@@ -605,7 +604,7 @@ const deleteItem = async (itemType, itemId) => {
     try {
         if (itemType === 'questions') {
             const userId = sessionStorage.getItem('admin_user_id');
-            const rfidCode = sessionStorage.getItem('admin_rfid_code');
+            const rfidCode = null;
             
             if (!userId || !rfidCode) {
                 throw new Error('Authentication required. Please log in again.');
@@ -655,7 +654,7 @@ const deleteItem = async (itemType, itemId) => {
             return true;
         } else if (itemType === 'themes') {
             const userId = sessionStorage.getItem('admin_user_id');
-            const rfidCode = sessionStorage.getItem('admin_rfid_code');
+            const rfidCode = null;
             
             if (!userId || !rfidCode) {
                 throw new Error('Authentication required. Please log in again.');
@@ -705,7 +704,7 @@ const deleteItem = async (itemType, itemId) => {
             return true;
         } else if (itemType === 'users') {
             const userId = sessionStorage.getItem('admin_user_id');
-            const rfidCode = sessionStorage.getItem('admin_rfid_code');
+            const rfidCode = null;
             
             if (!userId || !rfidCode) {
                 throw new Error('Authentication required. Please log in again.');
@@ -1119,11 +1118,10 @@ const showEditModal = async (itemType, item = null) => {
                 ban_duration_unit: banDurationUnitSelect.value
             };
 
-            // Get user credentials
+            // Get user id (do not rely on client-side RFID)
             const userId = sessionStorage.getItem('admin_user_id');
-            const rfidCode = sessionStorage.getItem('admin_rfid_code');
 
-            if (!userId || !rfidCode) {
+            if (!userId) {
                 showNotification('Admin credentials not found. Please log in again.', 'error');
                 return;
             }
@@ -1140,8 +1138,7 @@ const showEditModal = async (itemType, item = null) => {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-User-ID': userId,
-                        'X-RFID': rfidCode
+                        'X-User-ID': userId
                     },
                     body: JSON.stringify(banData)
                 });
@@ -1977,11 +1974,9 @@ const questionData = {
 };
 
 try {
-    // Get user credentials from session storage
+    // Get user id from session storage (do not rely on client-side RFID)
     const userId = sessionStorage.getItem('admin_user_id');
-    const rfidCode = sessionStorage.getItem('admin_rfid_code');
-    
-    if (!userId || !rfidCode) {
+    if (!userId) {
         throw new Error('User credentials not found. Please access this page with proper authentication.');
     }
 
@@ -1989,8 +1984,7 @@ try {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-User-ID': userId,        // Backend expects this header
-            'X-RFID': rfidCode          // Backend expects this header
+            'X-User-ID': userId
         },
         body: JSON.stringify(questionData)
     });
@@ -2027,12 +2021,10 @@ const themeData = {
     is_active: formData.get('is_active') === 'on'
 };
 
-try {
-    // Get user credentials
+    try {
+    // Get user id
     const userId = sessionStorage.getItem('admin_user_id');
-    const rfidCode = sessionStorage.getItem('admin_rfid_code');
-    
-    if (!userId || !rfidCode) {
+    if (!userId) {
         showNotification('Authentication required. Please log in again.', 'error');
         return;
     }
@@ -2046,7 +2038,6 @@ try {
         headers: {
             'Content-Type': 'application/json',
             'X-User-ID': userId,
-            'X-RFID': rfidCode,
             'X-Requested-With': 'XMLHttpRequest'
         },
         body: JSON.stringify(themeData)
@@ -2859,9 +2850,13 @@ async function loadStoriesTab() {
                 if (!newName) { showNotification('Story name cannot be empty', 'error'); return; }
                 try {
                     const userId = sessionStorage.getItem('admin_user_id');
-                    const rfidCode = sessionStorage.getItem('admin_rfid_code');
                     const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
-                    if (userId && rfidCode) { headers['X-User-ID'] = userId; headers['X-RFID'] = rfidCode; }
+                    if (userId) {
+                        headers['X-User-ID'] = userId;
+                    } else {
+                        showNotification('You are not authorized. Please log in.', 'error');
+                        return;
+                    }
                     const res = await fetch(`${lanIP}/api/v1/stories/${encodeURIComponent(storyId)}`, {
                         method: 'PUT',
                         headers,

@@ -5,9 +5,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function initializeShutdownButton() {
     const userId = sessionStorage.getItem('admin_user_id');
-    const rfidCode = sessionStorage.getItem('admin_rfid_code');
-    
-    if (userId && rfidCode) {
+
+    // Only require a valid admin user id client-side; do not rely on client-side RFID.
+    if (userId) {
         addShutdownButton();
     }
 }
@@ -62,9 +62,8 @@ async function handleShutdown() {
 
 async function performShutdown() {
     const userId = sessionStorage.getItem('admin_user_id');
-    const rfidCode = sessionStorage.getItem('admin_rfid_code');
     
-    if (!userId || !rfidCode) {
+    if (!userId) {
         if (typeof showNotification === 'function') {
             showNotification('Authentication required', 'error');
         } else {
@@ -81,8 +80,7 @@ async function performShutdown() {
         const response = await fetch(`${lanIP}/api/shutdown`, {
             method: 'POST',
             headers: {
-                'X-User-ID': userId,
-                'X-RFID': rfidCode
+                'X-User-ID': userId
             }
         });
 

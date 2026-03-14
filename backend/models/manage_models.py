@@ -3,10 +3,11 @@ Manage the Spire Pydantic Models
 Data validation and serialization models
 """
 
-from pydantic import BaseModel, EmailStr, Field, validator
-from typing import Optional, List
-from datetime import datetime, date, time
+from datetime import date, datetime, time
 from enum import Enum
+from typing import Optional
+
+from pydantic import BaseModel, EmailStr, Field, validator
 
 
 # Enums
@@ -159,10 +160,10 @@ class ShiftCreate(BaseModel):
     notes: Optional[str] = None
     created_by: Optional[int] = None
 
-    @validator('end_time')
+    @validator("end_time")
     def end_after_start(cls, v, values):
-        if 'start_time' in values and v <= values['start_time']:
-            raise ValueError('end_time must be after start_time')
+        if "start_time" in values and v <= values["start_time"]:
+            raise ValueError("end_time must be after start_time")
         return v
 
 
@@ -207,10 +208,10 @@ class TimeOffRequestCreate(BaseModel):
     total_hours: float = Field(..., gt=0)
     reason: Optional[str] = None
 
-    @validator('end_date')
+    @validator("end_date")
     def end_after_start(cls, v, values):
-        if 'start_date' in values and v < values['start_date']:
-            raise ValueError('end_date must be on or after start_date')
+        if "start_date" in values and v < values["start_date"]:
+            raise ValueError("end_date must be on or after start_date")
         return v
 
 

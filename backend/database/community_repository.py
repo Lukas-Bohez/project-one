@@ -14,7 +14,9 @@ class CommunityThemeRepository:
         sql = """INSERT INTO community_themes 
                  (name, description, logo_url, created_by, csv_source, status) 
                  VALUES (%s, %s, %s, %s, %s, 'draft')"""
-        return Database.execute_sql(sql, [name, description, logo_url, created_by, csv_source])
+        return Database.execute_sql(
+            sql, [name, description, logo_url, created_by, csv_source]
+        )
 
     @staticmethod
     def get_all_public_themes():
@@ -88,35 +90,37 @@ class CommunityThemeRepository:
             return None
         # Create official theme
         from .datarepository import ThemeRepository
+
         official_id = ThemeRepository.create_theme(
-            name=theme['name'],
-            description=theme['description'],
-            logo_url=theme.get('logo_url'),
-            is_active=True
+            name=theme["name"],
+            description=theme["description"],
+            logo_url=theme.get("logo_url"),
+            is_active=True,
         )
         if not official_id:
             return None
         # Migrate questions to official system
         questions = CommunityQuestionRepository.get_questions_by_theme(theme_id)
-        from .datarepository import QuestionRepository, AnswerRepository
-        difficulty_map = {'easy': 1, 'medium': 2, 'hard': 3, 'expert': 4}
+        from .datarepository import AnswerRepository, QuestionRepository
+
+        difficulty_map = {"easy": 1, "medium": 2, "hard": 3, "expert": 4}
         for q in questions:
             q_id = QuestionRepository.create_question(
-                question_text=q['question_text'],
+                question_text=q["question_text"],
                 theme_id=official_id,
-                difficulty_level_id=difficulty_map.get(q['difficulty'], 2),
-                explanation=q.get('explanation'),
-                time_limit=q.get('time_limit', 30),
-                points=q.get('points', 10),
-                is_active=True
+                difficulty_level_id=difficulty_map.get(q["difficulty"], 2),
+                explanation=q.get("explanation"),
+                time_limit=q.get("time_limit", 30),
+                points=q.get("points", 10),
+                is_active=True,
             )
             if q_id:
-                answers = CommunityAnswerRepository.get_answers_for_question(q['id'])
+                answers = CommunityAnswerRepository.get_answers_for_question(q["id"])
                 for a in answers:
                     AnswerRepository.create_answer(
                         question_id=q_id,
-                        answer_text=a['answer_text'],
-                        is_correct=bool(a['is_correct'])
+                        answer_text=a["answer_text"],
+                        is_correct=bool(a["is_correct"]),
                     )
         return official_id
 
@@ -179,17 +183,33 @@ class CommunityQuestionRepository:
     """Repository for questions within community themes."""
 
     @staticmethod
-    def create_question(community_theme_id, question_text, explanation=None,
-                        difficulty='medium', time_limit=30, points=10,
-                        image_url=None, is_ai_generated=False):
+    def create_question(
+        community_theme_id,
+        question_text,
+        explanation=None,
+        difficulty="medium",
+        time_limit=30,
+        points=10,
+        image_url=None,
+        is_ai_generated=False,
+    ):
         sql = """INSERT INTO community_questions 
                  (community_theme_id, question_text, explanation, difficulty, 
                   time_limit, points, image_url, is_ai_generated)
                  VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
-        return Database.execute_sql(sql, [
-            community_theme_id, question_text, explanation, difficulty,
-            time_limit, points, image_url, is_ai_generated
-        ])
+        return Database.execute_sql(
+            sql,
+            [
+                community_theme_id,
+                question_text,
+                explanation,
+                difficulty,
+                time_limit,
+                points,
+                image_url,
+                is_ai_generated,
+            ],
+        )
 
     @staticmethod
     def get_questions_by_theme(community_theme_id):
@@ -208,14 +228,23 @@ class CommunityQuestionRepository:
 
     @staticmethod
     def get_questions_with_answers(community_theme_id):
-        questions = CommunityQuestionRepository.get_questions_by_theme(community_theme_id)
+        questions = CommunityQuestionRepository.get_questions_by_theme(
+            community_theme_id
+        )
         for q in questions:
-            q['answers'] = CommunityAnswerRepository.get_answers_for_question(q['id'])
+            q["answers"] = CommunityAnswerRepository.get_answers_for_question(q["id"])
         return questions
 
     @staticmethod
     def update_question(question_id, **kwargs):
-        allowed = ['question_text', 'explanation', 'difficulty', 'time_limit', 'points', 'image_url']
+        allowed = [
+            "question_text",
+            "explanation",
+            "difficulty",
+            "time_limit",
+            "points",
+            "image_url",
+        ]
         updates = []
         params = []
         for key in allowed:
@@ -244,11 +273,11 @@ class CommunityQuestionRepository:
     @staticmethod
     def bulk_create_from_csv(community_theme_id, questions_data):
         """Import multiple questions from parsed CSV data.
-        
+
         questions_data: list of dicts with keys:
             question_text, correct_answer, wrong_answer_1, wrong_answer_2, wrong_answer_3,
             explanation (optional), difficulty (optional)
-        
+
         Returns (imported_count, failed_count, errors)
         """
         imported = 0
@@ -257,21 +286,21 @@ class CommunityQuestionRepository:
 
         for i, row in enumerate(questions_data):
             try:
-                q_text = row.get('question', row.get('question_text', '')).strip()
+                q_text = row.get("question", row.get("question_text", "")).strip()
                 if not q_text:
                     errors.append(f"Row {i+1}: Missing question text")
                     failed += 1
                     continue
 
-                correct = row.get('correct_answer', row.get('answer', '')).strip()
+                correct = row.get("correct_answer", row.get("answer", "")).strip()
                 if not correct:
                     errors.append(f"Row {i+1}: Missing correct answer")
                     failed += 1
                     continue
 
-                wrong1 = row.get('wrong_answer_1', row.get('wrong1', '')).strip()
-                wrong2 = row.get('wrong_answer_2', row.get('wrong2', '')).strip()
-                wrong3 = row.get('wrong_answer_3', row.get('wrong3', '')).strip()
+                wrong1 = row.get("wrong_answer_1", row.get("wrong1", "")).strip()
+                wrong2 = row.get("wrong_answer_2", row.get("wrong2", "")).strip()
+                wrong3 = row.get("wrong_answer_3", row.get("wrong3", "")).strip()
 
                 wrong_answers = [w for w in [wrong1, wrong2, wrong3] if w]
                 if len(wrong_answers) < 1:
@@ -279,19 +308,21 @@ class CommunityQuestionRepository:
                     failed += 1
                     continue
 
-                difficulty = row.get('difficulty', 'medium').strip().lower()
-                if difficulty not in ('easy', 'medium', 'hard', 'expert'):
-                    difficulty = 'medium'
+                difficulty = row.get("difficulty", "medium").strip().lower()
+                if difficulty not in ("easy", "medium", "hard", "expert"):
+                    difficulty = "medium"
 
-                explanation = row.get('explanation', '').strip() or None
-                is_ai = row.get('ai_generated', row.get('is_ai_generated', '')).strip().lower() in ('true', '1', 'yes')
+                explanation = row.get("explanation", "").strip() or None
+                is_ai = row.get(
+                    "ai_generated", row.get("is_ai_generated", "")
+                ).strip().lower() in ("true", "1", "yes")
 
                 q_id = CommunityQuestionRepository.create_question(
                     community_theme_id=community_theme_id,
                     question_text=q_text,
                     explanation=explanation,
                     difficulty=difficulty,
-                    is_ai_generated=is_ai
+                    is_ai_generated=is_ai,
                 )
 
                 if not q_id:
@@ -322,7 +353,9 @@ class CommunityAnswerRepository:
         sql = """INSERT INTO community_answers 
                  (community_question_id, answer_text, is_correct) 
                  VALUES (%s, %s, %s)"""
-        return Database.execute_sql(sql, [community_question_id, answer_text, is_correct])
+        return Database.execute_sql(
+            sql, [community_question_id, answer_text, is_correct]
+        )
 
     @staticmethod
     def get_answers_for_question(community_question_id):
@@ -364,26 +397,26 @@ class CommunityRatingRepository:
         # Check if user already rated
         existing = Database.get_one_row(
             "SELECT id, rating FROM community_theme_ratings WHERE community_theme_id = %s AND user_id = %s",
-            [community_theme_id, user_id]
+            [community_theme_id, user_id],
         )
         if existing:
-            old_rating = existing['rating']
+            old_rating = existing["rating"]
             Database.execute_sql(
                 "UPDATE community_theme_ratings SET rating = %s WHERE id = %s",
-                [rating, existing['id']]
+                [rating, existing["id"]],
             )
             Database.execute_sql(
                 "UPDATE community_themes SET rating_sum = rating_sum - %s + %s WHERE id = %s",
-                [old_rating, rating, community_theme_id]
+                [old_rating, rating, community_theme_id],
             )
         else:
             Database.execute_sql(
                 "INSERT INTO community_theme_ratings (community_theme_id, user_id, rating) VALUES (%s, %s, %s)",
-                [community_theme_id, user_id, rating]
+                [community_theme_id, user_id, rating],
             )
             Database.execute_sql(
                 "UPDATE community_themes SET rating_sum = rating_sum + %s, rating_count = rating_count + 1 WHERE id = %s",
-                [rating, community_theme_id]
+                [rating, community_theme_id],
             )
         return True
 
@@ -391,18 +424,22 @@ class CommunityRatingRepository:
     def get_user_rating(community_theme_id, user_id):
         sql = "SELECT rating FROM community_theme_ratings WHERE community_theme_id = %s AND user_id = %s"
         result = Database.get_one_row(sql, [community_theme_id, user_id])
-        return result['rating'] if result else None
+        return result["rating"] if result else None
 
 
 class CsvUploadRepository:
     """Repository for CSV upload tracking."""
 
     @staticmethod
-    def create_upload(user_id, community_theme_id, filename, imported, failed, error_log=None):
+    def create_upload(
+        user_id, community_theme_id, filename, imported, failed, error_log=None
+    ):
         sql = """INSERT INTO csv_uploads 
                  (user_id, community_theme_id, original_filename, questions_imported, questions_failed, error_log)
                  VALUES (%s, %s, %s, %s, %s, %s)"""
-        return Database.execute_sql(sql, [user_id, community_theme_id, filename, imported, failed, error_log])
+        return Database.execute_sql(
+            sql, [user_id, community_theme_id, filename, imported, failed, error_log]
+        )
 
     @staticmethod
     def get_uploads_by_user(user_id):

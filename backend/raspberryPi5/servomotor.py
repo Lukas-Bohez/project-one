@@ -1,5 +1,6 @@
 import time
 
+
 class ServoMotor:
     def __init__(self, pin=24, min_pulse=0.5, max_pulse=2.5, frequency=50):
         """
@@ -13,18 +14,18 @@ class ServoMotor:
         self.actual_servo_angle = 90  # Track the actual servo position
         self.pwm = None
         self.initialized = True  # Always initialized for simulation
-        
+
     def _move_servo(self, angle):
         """
         Internal method to move the servo with error handling
         """
         if not self.initialized:
             return
-            
+
         # Simulate movement by just setting the angle
         self.actual_servo_angle = angle
         time.sleep(0.3)
-        
+
     def set_angle(self, angle):
         """
         Set the servo angle with silent error handling
@@ -32,33 +33,33 @@ class ServoMotor:
         # Constrain angle
         angle = max(0, min(180, angle))
         self.current_angle = angle
-        
+
         if not self.initialized:
             return
-            
+
         # Only move if angle changed by >=5 degrees
         if abs(angle - self.actual_servo_angle) >= 5:
             self._move_servo(angle)
-   
+
     def read_degrees(self):
         """
         Return the current angle (actual position)
         """
         return self.actual_servo_angle
-   
+
     def get_requested_angle(self):
         """
         Return the last requested angle
         """
         return self.current_angle
-   
+
     def sweep(self, start_angle=0, end_angle=180, step=5, delay=0.1):
         """
         Sweep the servo between angles with error handling
         """
         if not self.initialized:
             return
-            
+
         if start_angle < end_angle:
             for angle in range(start_angle, end_angle + 1, step):
                 self.set_angle(angle)
@@ -67,19 +68,19 @@ class ServoMotor:
             for angle in range(start_angle, end_angle - 1, -step):
                 self.set_angle(angle)
                 time.sleep(delay)
-   
+
     def cleanup(self):
         """
         Properly clean up resources with robust error handling
         """
         # No hardware to clean up
-        pass
 
     def __del__(self):
         """
         Destructor to ensure proper cleanup
         """
         self.cleanup()
+
 
 # Example usage
 if __name__ == "__main__":
@@ -93,26 +94,26 @@ if __name__ == "__main__":
         print("\nTest 1: Move to 90°")
         servo.set_angle(90)
         print(f"Reported position: {servo.read_degrees()}°")
-        
+
         print("\nTest 2: Move to 45°")
         servo.set_angle(45)
         print(f"Reported position: {servo.read_degrees()}°")
-        
+
         print("\nTest 3: Small movement to 47°")
         servo.set_angle(47)
         print(f"Reported position: {servo.read_degrees()}°")
-        
+
         print("\nTest 4: Move to 135°")
         servo.set_angle(135)
         print(f"Reported position: {servo.read_degrees()}°")
-        
+
         time.sleep(1)
-        
+
         # Sweep test
         print("\nPerforming silent sweep:")
         servo.sweep()
         print(f"Final reported position: {servo.read_degrees()}°")
-       
+
     except KeyboardInterrupt:
         print("Program stopped by user")
     except Exception as e:
