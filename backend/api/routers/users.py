@@ -148,12 +148,12 @@ async def update_user_names(
             else:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail=f"RFID code '{rfid_code}' is already associated with another user and is not an 'Open' account.",
+                    detail="RFID code is already associated with another user.",
                 )
         else:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with RFID code '{rfid_code}' not found and no 'Open' account to update.",
+                detail="User with given RFID not found and no 'Open' account to update.",
             )
 
     if target_user_role != 3:

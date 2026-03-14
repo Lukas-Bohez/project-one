@@ -228,14 +228,41 @@ async def banned_page(request: Request):
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Access Denied - Quizanistan</title>
         <style>
-            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }}
-            .container {{ background-color: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); text-align: center; max-width: 600px; width: 100%; position: relative; }}
-            h1 {{ color: #e74c3c; margin-bottom: 15px; font-size: 2.5em; }}
-            p {{ font-size: 1.1em; line-height: 1.6; color: #555; margin-bottom: 10px; }}
-            .icon {{ font-size: 5em; color: #e74c3c; margin-bottom: 25px; }}
-            .details {{ background-color: #fdfdfd; border: 1px solid #eee; border-radius: 8px; padding: 20px; margin-top: 25px; text-align: left; }}
-            .details strong {{ color: #444; }}
-            .c-btn {{
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background-color: #f0f2f5;
+                color: #333;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                margin: 0;
+                padding: 20px;
+                box-sizing: border-box;
+            }
+            .container {
+                background-color: #fff;
+                padding: 40px;
+                border-radius: 12px;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+                text-align: center;
+                max-width: 600px;
+                width: 100%;
+                position: relative;
+            }
+            h1 { color: #e74c3c; margin-bottom: 15px; font-size: 2.5em; }
+            p { font-size: 1.1em; line-height: 1.6; color: #555; margin-bottom: 10px; }
+            .icon { font-size: 5em; color: #e74c3c; margin-bottom: 25px; }
+            .details {
+                background-color: #fdfdfd;
+                border: 1px solid #eee;
+                border-radius: 8px;
+                padding: 20px;
+                margin-top: 25px;
+                text-align: left;
+            }
+            .details strong { color: #444; }
+            .c-btn {
                 background-color: #3498db;
                 color: white;
                 padding: 12px 25px;
@@ -245,7 +272,7 @@ async def banned_page(request: Request):
                 font-size: 1.1em;
                 margin-top: 25px;
                 transition: background-color 0.3s ease;
-            }}
+            }
             .c-btn:hover {{
                 background-color: #2980b9;
             }}
@@ -266,7 +293,7 @@ async def banned_page(request: Request):
                 justify-content: center;
                 align-items: center;
             }}
-            .modal-content {{
+            .modal-content {
                 background-color: #fefefe;
                 margin: auto;
                 padding: 30px;
@@ -276,7 +303,7 @@ async def banned_page(request: Request):
                 max-width: 500px;
                 text-align: center;
                 position: relative;
-            }}
+            }
             .close-button {{
                 color: #aaa;
                 float: right;
