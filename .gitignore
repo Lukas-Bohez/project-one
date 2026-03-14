@@ -91,6 +91,11 @@ logs/
 # Backup files
 *.bak
 
+# Large repo backups and logs (do not commit)
+repo-backup-*.bundle
+*.bundle
+backend/video_debug.log
+
 # Node modules (if you have any)
 node_modules/
 
