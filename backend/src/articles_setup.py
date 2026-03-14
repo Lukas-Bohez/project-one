@@ -420,7 +420,7 @@ def add_sample_articles():
         # Commit the changes
         connection.commit()
 
-        print(f"\n📊 Summary:")
+        print("\n📊 Summary:")
         print(f"   Sample articles inserted: {inserted_count}/{len(sample_articles)}")
 
         # Verify insertion

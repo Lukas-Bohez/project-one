@@ -97,7 +97,7 @@ class TemperatureSensor:
             try:
                 usb.util.release_interface(self.device, self.interface)
                 self.device.attach_kernel_driver(self.interface)
-            except:
+            except Exception as e:
                 pass  # Ignore cleanup errors
 
     def __del__(self):

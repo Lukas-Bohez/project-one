@@ -45,7 +45,7 @@ def parse_and_simplify_logs():
             timestamp_match = re.match(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})", line)
             if not timestamp_match:
                 continue
-            timestamp = timestamp_match.group(1)
+            _timestamp = timestamp_match.group(1)
 
             # Check if this is already in the new simplified format
             if " | IP: " in line and (" | SUCCESS " in line or " | FAILED: " in line):

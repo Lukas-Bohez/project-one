@@ -1073,7 +1073,7 @@ def check_download_allowed(client_ip: str):
 
     # Check monthly limit per IP
     ip_data = tracker["ips"].get(client_ip, {})
-    downloads_this_month = ip_data.get("count", 0)
+    _downloads_this_month = ip_data.get("count", 0)
     active_downloads = ip_data.get("active_downloads", 0)
 
     if active_downloads >= tracker["concurrent_per_ip"]:

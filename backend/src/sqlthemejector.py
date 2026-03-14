@@ -54,7 +54,7 @@ def replace_jack_with_kael():
         cursor.execute("SELECT COUNT(*) FROM answers WHERE answer_text LIKE '%Jack%'")
         answers_after = cursor.fetchone()[0]
 
-        print(f"\nVerification:")
+        print("\nVerification:")
         print(f"Questions with 'Jack' after update: {questions_after}")
         print(f"Answers with 'Jack' after update: {answers_after}")
 

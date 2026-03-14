@@ -79,7 +79,7 @@ def test_get_stats():
     print(f"Status: {response.status_code}")
     if response.status_code == 200:
         stats = response.json()
-        print(f"✅ Statistics retrieved successfully:")
+        print("✅ Statistics retrieved successfully:")
         print(f"   Total: {stats['total_articles']}")
         print(f"   Active: {stats['active_articles']}")
         print(f"   Featured: {stats['featured_articles']}")

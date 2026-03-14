@@ -19,7 +19,7 @@ def check_user_permissions():
         print(f"Current user: {user_info[1]}")
 
         # Check grants for current user
-        print(f"\n📋 Checking grants for user...")
+        print("\n📋 Checking grants for user...")
         try:
             cursor.execute("SHOW GRANTS FOR CURRENT_USER()")
             grants = cursor.fetchall()

@@ -103,7 +103,7 @@ def monitor_app():
             )
             restart_monitor()
 
-        start_time = time.time()
+        _start_time = time.time()
         print(f"\n🚀 Starting your app.py (attempt {restart_count + 1})...")
         print(f"📁 Running: {app_path}")
 

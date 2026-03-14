@@ -342,7 +342,7 @@ def import_articles_to_db(articles: List[Dict[str, Any]]):
             print(f"Article title: {article.get('title', 'Unknown')}")
             continue
 
-    print(f"\nImport completed!")
+    print("\nImport completed!")
     print(f"Successfully imported: {imported_count} articles")
     print(f"Failed imports: {failed_count} articles")
     print(f"Stories created/used: {', '.join(sorted(stories_created))}")
