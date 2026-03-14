@@ -7378,13 +7378,13 @@
     },
     "87.65.229.136": {
       "count": 47,
-      "bandwidth_gb": 6.021772025153041,
-      "active_downloads": 1,
+      "bandwidth_gb": 6.026654837653041,
+      "active_downloads": 0,
       "last_download": "2026-03-13T18:58:49.707215",
-      "download_started_at": "2026-03-13T19:55:12.481767",
-      "platform": "Windows",
-      "browser": "Firefox",
-      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0"
+      "download_started_at": "2026-03-14T00:02:15.132170",
+      "platform": "Android",
+      "browser": "Chrome",
+      "user_agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Mobile Safari/537.36"
     },
     "84.71.25.241": {
       "count": 1,
@@ -13027,11 +13027,11 @@
       "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0"
     },
     "105.112.117.202": {
-      "count": 0,
-      "bandwidth_gb": 0.2490234375,
+      "count": 2,
+      "bandwidth_gb": 0.9581534583121538,
       "active_downloads": 0,
-      "last_download": null,
-      "download_started_at": "2026-03-13T17:50:35.894182",
+      "last_download": "2026-03-14T08:46:28.363890",
+      "download_started_at": "2026-03-14T08:42:36.005462",
       "platform": "Android",
       "browser": "Chrome",
       "user_agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Mobile Safari/537.36"
@@ -13105,10 +13105,20 @@
       "platform": "Windows",
       "browser": "Firefox",
       "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0"
+    },
+    "74.197.66.246": {
+      "count": 1,
+      "bandwidth_gb": 0.038239262998104095,
+      "active_downloads": 0,
+      "last_download": "2026-03-13T20:21:06.954886",
+      "download_started_at": "2026-03-13T20:20:48.572575",
+      "platform": "Windows",
+      "browser": "Chrome",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
     }
   },
   "last_reset_month": "2026-03",
-  "total_monthly_bandwidth_gb": 60.628021095879376,
+  "total_monthly_bandwidth_gb": 61.380273192189634,
   "file_size_gb": 0.0126953125,
   "archived_months": {
     "2026-02": {
