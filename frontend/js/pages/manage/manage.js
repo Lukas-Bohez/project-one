@@ -57,8 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 function initializeApp() {
     // Check if user is already logged in (from localStorage or session)
-    const savedUser = localStorage.getItem('manage_user');
-    const savedBusiness = localStorage.getItem('manage_business');
+    const savedUser = sessionStorage.getItem('manage_user');
+    const savedBusiness = sessionStorage.getItem('manage_business');
     
     if (savedUser && savedBusiness) {
         try {
@@ -192,7 +192,7 @@ async function handleLogin(e) {
         const token = data.token || data.access_token;
         
         // Save authentication token
-        localStorage.setItem('manage_token', token);
+        sessionStorage.setItem('manage_token', token);
         
         // Fetch user details from manage API
         const userResponse = await fetch(`${API_BASE}/me`, {
@@ -223,9 +223,9 @@ async function handleLogin(e) {
         }
         
         // Save to localStorage
-        localStorage.setItem('manage_user', JSON.stringify(currentUser));
+        sessionStorage.setItem('manage_user', JSON.stringify(currentUser));
         if (currentBusiness) {
-            localStorage.setItem('manage_business', JSON.stringify(currentBusiness));
+            sessionStorage.setItem('manage_business', JSON.stringify(currentBusiness));
         }
         
         closeModal(loginModal);
@@ -293,7 +293,7 @@ async function handleBusinessSetup(e) {
         };
         
         // Get token if available
-        const token = localStorage.getItem('manage_token');
+        const token = sessionStorage.getItem('manage_token');
         const headers = {
             'Content-Type': 'application/json'
         };
@@ -327,8 +327,8 @@ async function handleBusinessSetup(e) {
         };
         
         // Save to localStorage
-        localStorage.setItem('manage_user', JSON.stringify(currentUser));
-        localStorage.setItem('manage_business', JSON.stringify(currentBusiness));
+        sessionStorage.setItem('manage_user', JSON.stringify(currentUser));
+        sessionStorage.setItem('manage_business', JSON.stringify(currentBusiness));
         
         // Show success and redirect to dashboard
         setTimeout(() => {
@@ -350,8 +350,8 @@ async function handleBusinessSetup(e) {
 function handleLogout() {
     currentUser = null;
     currentBusiness = null;
-    localStorage.removeItem('manage_user');
-    localStorage.removeItem('manage_business');
+    sessionStorage.removeItem('manage_user');
+    sessionStorage.removeItem('manage_business');
     showWelcome();
     showNotification('Logged out successfully', 'info');
 }

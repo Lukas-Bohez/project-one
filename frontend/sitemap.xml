@@ -2,31 +2,31 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
         <loc>https://quizthespire.com/</loc>
-        <lastmod>2025-10-23</lastmod>
+        <lastmod>2026-03-14</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
     </url>
     <url>
         <loc>https://quizthespire.com/pages/storyCreator/</loc>
-        <lastmod>2025-10-23</lastmod>
+        <lastmod>2026-03-14</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
         <loc>https://quizthespire.com/pages/content/</loc>
-        <lastmod>2025-10-23</lastmod>
+        <lastmod>2026-03-14</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
         <loc>https://quizthespire.com/pages/study/</loc>
-        <lastmod>2025-10-23</lastmod>
+        <lastmod>2026-03-14</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
         <loc>https://quizthespire.com/pages/graphs/</loc>
-        <lastmod>2025-10-23</lastmod>
+        <lastmod>2026-03-14</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
@@ -34,13 +34,13 @@
     <!-- Articles Section -->
     <url>
         <loc>https://quizthespire.com/articles/</loc>
-        <lastmod>2025-10-23</lastmod>
+        <lastmod>2026-03-14</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
         <loc>https://quizthespire.com/articles/index.html</loc>
-        <lastmod>2025-10-23</lastmod>
+        <lastmod>2026-03-14</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.9</priority>
     </url>
@@ -48,7 +48,7 @@
     <!-- Individual Articles -->
     <url>
         <loc>https://quizthespire.com/articles/posts/2025-budget-cuts-health-impact.html</loc>
-        <lastmod>2025-10-23</lastmod>
+        <lastmod>2026-03-14</lastmod>
         <changefreq>monthly</changefreq>
         <priority>1.0</priority>
     </url>

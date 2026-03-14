@@ -277,11 +277,57 @@ except Exception as e:
 
 # Rate limiting setup
 ADMIN_TOKEN_TTL_SECONDS = int(os.getenv("SENTLE_ADMIN_TOKEN_TTL", "3600"))
+
+# Use the request's actual client IP (extracted by our helper) for rate-limiting
+def _rate_limit_key_func(request):
+    try:
+        # `get_client_ip_sync` is defined above and validates headers
+        return get_client_ip_sync(request)
+    except Exception:
+        try:
+            return get_remote_address(request)
+        except Exception:
+            return "unknown"
+
 # Broaden default rate-limits (safe global default)
-limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
+limiter = Limiter(key_func=_rate_limit_key_func, default_limits=["60/minute"])
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
+
+
+# CSRF protection middleware
+import secrets as _secrets
+
+
+@app.middleware("http")
+async def csrf_protect_middleware(request, call_next):
+    """Set a `csrf_token` cookie on safe methods and require the header
+    `X-CSRF-Token` on state-changing methods to match the cookie.
+    """
+    try:
+        # On safe methods, ensure a cookie exists
+        if request.method in ("GET", "HEAD", "OPTIONS"):
+            response = await call_next(request)
+            # If cookie missing, set one
+            if request.cookies.get("csrf_token") is None:
+                token = _secrets.token_urlsafe(32)
+                response.set_cookie("csrf_token", token, httponly=False, secure=True, samesite="Lax", path="/")
+            return response
+
+        # On unsafe methods, require header matching cookie
+        if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+            header_token = request.headers.get("X-CSRF-Token")
+            cookie_token = request.cookies.get("csrf_token")
+            if not cookie_token or not header_token or cookie_token != header_token:
+                from fastapi.responses import JSONResponse
+                return JSONResponse(status_code=403, content={"detail": "CSRF token missing or invalid"})
+
+    except Exception:
+        # Fail-open: if middleware encounters an error, allow the request to proceed
+        pass
+
+    return await call_next(request)
 
 
 # Middleware: convert any JSON response containing an `admin_token` field

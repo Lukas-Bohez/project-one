@@ -158,9 +158,9 @@ const handleLogin = async (e) => {
         rfid_code: formData.rfidCode
       });
 
-      // Also store for articles.js compatibility
-      localStorage.setItem('currentUserId', result.user_id.toString());
-      localStorage.setItem('currentUserRFID', formData.rfidCode);
+      // Also store for articles.js compatibility (session-only)
+      sessionStorage.setItem('currentUserId', result.user_id.toString());
+      sessionStorage.setItem('currentUserRFID', formData.rfidCode);
 
       // Redirect to admin page
       window.location.href = '/pages/admin/';
@@ -209,8 +209,8 @@ const checkExistingSession = () => {
 const logout = () => {
   AdminSession.clear();
   // Clear articles.js compatibility storage
-  localStorage.removeItem('currentUserId');
-  localStorage.removeItem('currentUserRFID');
+  sessionStorage.removeItem('currentUserId');
+  sessionStorage.removeItem('currentUserRFID');
   window.location.href = '/pages/login/';
 };
 

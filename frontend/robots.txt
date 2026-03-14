@@ -14,6 +14,11 @@ Allow: /sitemap.xml
 Allow: /favicon.ico
 Allow: /google*.html
 
+# Block admin and sensitive pages from crawlers
+Disallow: /pages/admin/
+Disallow: /pages/sentle-admin/
+Disallow: /pages/login/
+
 # Block backend and temporary files
 Disallow: /backend/
 Disallow: /temp_*/

@@ -12,9 +12,9 @@ class SentleGame {
         this.gameStage = 'login'; // login | guessing | arranging | ended
         this.guessedWords = [];
         this.totalAttemptsUsed = 0;
-        this.username = localStorage.getItem('sentle_username') || '';
-        this.sessionToken = localStorage.getItem('sentle_session') || '';
-        this.userId = localStorage.getItem('sentle_user_id') || '';
+        this.username = sessionStorage.getItem('sentle_username') || '';
+        this.sessionToken = sessionStorage.getItem('sentle_session') || '';
+        this.userId = sessionStorage.getItem('sentle_user_id') || '';
         this.stats = {
             gamesPlayed: 0,
             gamesWon: 0,
@@ -74,13 +74,13 @@ class SentleGame {
         this.setupModals();
 
         // Check if a replay/practice payload was stored (e.g., from archive)
-        const replayRaw = localStorage.getItem('sentle_replay_payload');
+        const replayRaw = sessionStorage.getItem('sentle_replay_payload');
         if (replayRaw) {
             try {
                 this.practicePayload = JSON.parse(replayRaw);
                 this.practiceMode = true;
                 // Clear the payload so it does not persist beyond this session
-                localStorage.removeItem('sentle_replay_payload');
+                sessionStorage.removeItem('sentle_replay_payload');
             } catch (e) {
                 console.warn('Invalid replay payload; ignoring');
             }
@@ -291,9 +291,9 @@ class SentleGame {
                 this.sessionToken = data.session_token;
                 this.username = data.username;
                 this.userId = data.user_id;
-                localStorage.setItem('sentle_session', this.sessionToken);
-                localStorage.setItem('sentle_username', this.username);
-                if (this.userId) localStorage.setItem('sentle_user_id', this.userId);
+                sessionStorage.setItem('sentle_session', this.sessionToken);
+                sessionStorage.setItem('sentle_username', this.username);
+                if (this.userId) sessionStorage.setItem('sentle_user_id', this.userId);
                 // Reload stats from database
                 const { stats } = await this.loadStats();
                 this.stats = stats;
@@ -1241,9 +1241,9 @@ class SentleGame {
                 // Handle auth issues by forcing re-login
                 if (response.status === 401) {
                     this.showMessage('Session expired. Please log in again to submit your score.', 'error');
-                    localStorage.removeItem('sentle_session');
-                    localStorage.removeItem('sentle_username');
-                    localStorage.removeItem('sentle_user_id');
+                    sessionStorage.removeItem('sentle_session');
+                    sessionStorage.removeItem('sentle_username');
+                    sessionStorage.removeItem('sentle_user_id');
                     this.sessionToken = '';
                     this.username = '';
                     this.userId = '';
@@ -1443,11 +1443,11 @@ class SentleGame {
             userId: this.userId || null,
             username: this.username || null,
         };
-        localStorage.setItem('sentle_played_today', JSON.stringify(payload));
+        sessionStorage.setItem('sentle_played_today', JSON.stringify(payload));
     }
 
     hasLocalPlayedToday() {
-        const raw = localStorage.getItem('sentle_played_today');
+        const raw = sessionStorage.getItem('sentle_played_today');
         if (!raw) return false;
         try {
             const saved = JSON.parse(raw);
@@ -1462,16 +1462,16 @@ class SentleGame {
     }
 
     clearSavedState() {
-        localStorage.removeItem('sentle_gameState');
+        sessionStorage.removeItem('sentle_gameState');
     }
 
     clearSessionAuth() {
         this.sessionToken = '';
         this.username = '';
         this.userId = '';
-        localStorage.removeItem('sentle_session');
-        localStorage.removeItem('sentle_username');
-        localStorage.removeItem('sentle_user_id');
+        sessionStorage.removeItem('sentle_session');
+        sessionStorage.removeItem('sentle_username');
+        sessionStorage.removeItem('sentle_user_id');
     }
 
     saveGameState() {
@@ -1497,11 +1497,11 @@ class SentleGame {
             originalWords: this.originalWords,
             practiceMode: this.practiceMode,
         };
-        localStorage.setItem('sentle_gameState', JSON.stringify(state));
+        sessionStorage.setItem('sentle_gameState', JSON.stringify(state));
     }
 
     checkGameState() {
-        const saved = localStorage.getItem('sentle_gameState');
+        const saved = sessionStorage.getItem('sentle_gameState');
         if (!saved) {
             console.log('No saved game state found');
             return;
@@ -1752,9 +1752,9 @@ class SentleGame {
     }
 
     logout() {
-        localStorage.removeItem('sentle_session');
-        localStorage.removeItem('sentle_username');
-        localStorage.removeItem('sentle_user_id');
+        sessionStorage.removeItem('sentle_session');
+        sessionStorage.removeItem('sentle_username');
+        sessionStorage.removeItem('sentle_user_id');
         this.sessionToken = '';
         this.username = '';
         this.userId = '';
