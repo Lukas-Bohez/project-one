@@ -533,7 +533,7 @@
             document.querySelectorAll('.c-platform-panel').forEach(p => p.classList.toggle('active', p.id === 'platform-windows'));
             modal.classList.add('is-open');
             modal.setAttribute('aria-hidden', 'false');
-                        setTimeout(() => { window.location.href = 'http://localhost:8001/api/v1/download/conversion'; }, 500);
+                        setTimeout(() => { window.location.href = '/api/v1/download/conversion'; }, 500);
         } catch (error) {
             console.error('Download error:', error);
             statusText.textContent = '\u274c Error: ' + error.message;
@@ -563,7 +563,7 @@
                     statusText.textContent = '\u2139 Redirecting to GitHub releases...';
                     statusDiv.style.display = 'block';
                     statusDiv.className = 'c-download-status c-download-status--info';
-                    setTimeout(() => { window.location.href = 'http://localhost:8001/api/v1/download/conversion'; }, 600);
+                    setTimeout(() => { window.location.href = '/api/v1/download/conversion'; }, 600);
                     return;
                 }
                 statusText.textContent = '\u274c ' + (error.detail || 'Download not available');
@@ -648,7 +648,7 @@
             e.preventDefault();
             const m = map.find(x => btn.matches(x.sel));
             if (!m) return;
-            const url = 'http://localhost:8001/api/v1/download/conversion/log?platform=' + encodeURIComponent(m.platform);
+            const url = '/api/v1/download/conversion/log?platform=' + encodeURIComponent(m.platform);
             if (navigator.sendBeacon) {
                 try { navigator.sendBeacon(url); } catch (err) { /* ignore */ }
             } else {

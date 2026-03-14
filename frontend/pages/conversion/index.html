@@ -306,7 +306,7 @@
                 document.querySelectorAll(m.sel).forEach(a => {
                     a.addEventListener('click', async function(e){
                         try {
-                            await fetch('http://localhost:8001/api/v1/download/conversion/log?platform=' + m.platform, { method: 'GET' });
+                            await fetch('/api/v1/download/conversion/log?platform=' + m.platform, { method: 'GET' });
                         } catch (err) { /* ignore logging errors */ }
                         window.open(GH, '_blank', 'noopener');
                         e.preventDefault();
