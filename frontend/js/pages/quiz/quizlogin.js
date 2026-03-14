@@ -31,44 +31,29 @@ class AuthSystem {
     }
 
     async autoLogin() {
-        const firstName = localStorage.getItem(STORAGE_KEYS.USER.FIRST_NAME);
-        const lastName = localStorage.getItem(STORAGE_KEYS.USER.LAST_NAME);
-        const password = localStorage.getItem(STORAGE_KEYS.USER.PASSWORD);
+        // Use session storage for session-resume only (no passwords persisted)
+        const userId = sessionStorage.getItem(STORAGE_KEYS.USER.USER_ID);
+        const firstName = sessionStorage.getItem(STORAGE_KEYS.USER.FIRST_NAME);
+        const lastName = sessionStorage.getItem(STORAGE_KEYS.USER.LAST_NAME);
 
-        if (firstName && lastName && password) {
-            console.log('Attempting auto-login for:', firstName, lastName);
-            
-            const formData = { firstName, lastName, password };
-
-            try {
-                const result = await this.sendAuthenticationRequest('login', firstName, lastName, password);
-                
-                if (result && result.user_id) {
-                    this.loginUser(formData, result.user_id);
-                    console.log('Auto-login successful');
-                    return true;
-                } else {
-                    console.warn('Auto-login failed: Invalid response from server');
-                    this.clearStoredCredentials();
-                    return false;
-                }
-            } catch (error) {
-                console.error('Auto-login error:', error.message || error);
-                // Don't show error message for auto-login failures, just clear and show modal
-                this.clearStoredCredentials();
-                return false;
-            }
-        } else {
-            console.log('No stored credentials found for auto-login');
-            return false;
+        if (userId && firstName && lastName) {
+            // Resume session without storing passwords client-side
+            this.currentUser = {
+                id: parseInt(userId, 10),
+                firstName: firstName,
+                lastName: lastName,
+                fullName: `${firstName} ${lastName}`
+            };
+            console.log('Session resumed for', firstName, lastName);
+            return true;
         }
+        return false;
     }
 
     clearStoredCredentials() {
-        localStorage.removeItem(STORAGE_KEYS.USER.FIRST_NAME);
-        localStorage.removeItem(STORAGE_KEYS.USER.LAST_NAME);
-        localStorage.removeItem(STORAGE_KEYS.USER.PASSWORD);
-        localStorage.removeItem(STORAGE_KEYS.USER.USER_ID);
+        sessionStorage.removeItem(STORAGE_KEYS.USER.FIRST_NAME);
+        sessionStorage.removeItem(STORAGE_KEYS.USER.LAST_NAME);
+        sessionStorage.removeItem(STORAGE_KEYS.USER.USER_ID);
     }
 
     createAuthModal() {
@@ -376,10 +361,9 @@ class AuthSystem {
     }
 
     loginUser(userData, userId) {
-        // Store credentials after successful authentication
-        localStorage.setItem(STORAGE_KEYS.USER.FIRST_NAME, userData.firstName);
-        localStorage.setItem(STORAGE_KEYS.USER.LAST_NAME, userData.lastName);
-        localStorage.setItem(STORAGE_KEYS.USER.PASSWORD, userData.password);
+        // Store non-sensitive session info only (do NOT persist passwords)
+        sessionStorage.setItem(STORAGE_KEYS.USER.FIRST_NAME, userData.firstName);
+        sessionStorage.setItem(STORAGE_KEYS.USER.LAST_NAME, userData.lastName);
 
         this.currentUser = {
             id: userId,
@@ -392,7 +376,7 @@ class AuthSystem {
             sp: 4,
         };
 
-        localStorage.setItem(STORAGE_KEYS.USER.USER_ID, userId);
+        sessionStorage.setItem(STORAGE_KEYS.USER.USER_ID, userId);
         
         this.hideAuthModal();
         this.notifyUserAuthenticated(this.currentUser);
@@ -403,10 +387,9 @@ class AuthSystem {
     }
 
     registerUser(userData, userId) {
-        // Store credentials after successful authentication
-        localStorage.setItem(STORAGE_KEYS.USER.FIRST_NAME, userData.firstName);
-        localStorage.setItem(STORAGE_KEYS.USER.LAST_NAME, userData.lastName);
-        localStorage.setItem(STORAGE_KEYS.USER.PASSWORD, userData.password);
+        // Store non-sensitive session info only (do NOT persist passwords)
+        sessionStorage.setItem(STORAGE_KEYS.USER.FIRST_NAME, userData.firstName);
+        sessionStorage.setItem(STORAGE_KEYS.USER.LAST_NAME, userData.lastName);
 
         const newUser = {
             id: userId,
@@ -419,7 +402,7 @@ class AuthSystem {
             sp: 4,
         };
 
-        localStorage.setItem(STORAGE_KEYS.USER.USER_ID, userId);
+        sessionStorage.setItem(STORAGE_KEYS.USER.USER_ID, userId);
 
         this.currentUser = newUser;
         this.hideAuthModal();
