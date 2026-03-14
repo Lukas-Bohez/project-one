@@ -1,8 +1,8 @@
-from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import JSONResponse
 import traceback
 
 from database.datarepository import QuestionRepository, UserRepository
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import JSONResponse
 from models.models import UserPublic
 
 router = APIRouter()
@@ -23,7 +23,7 @@ async def get_active_questions_count():
         print(f"Error retrieving active questions count: {e}")
         return JSONResponse(
             status_code=500,
-            content={"error": "Failed to retrieve active questions count."}
+            content={"error": "Failed to retrieve active questions count."},
         )
 
 
@@ -36,8 +36,7 @@ async def get_active_users_count():
     except Exception as e:
         print(f"Error retrieving active users count: {e}")
         return JSONResponse(
-            status_code=500,
-            content={"error": "Failed to retrieve active users count."}
+            status_code=500, content={"error": "Failed to retrieve active users count."}
         )
 
 
@@ -49,8 +48,8 @@ async def get_all_users(request: Request):
     try:
         users = UserRepository.get_all_users()
         for user in users:
-            if user.get('email'):
-                user['first_name'] = user['email']
+            if user.get("email"):
+                user["first_name"] = user["email"]
         return [UserPublic(**user) for user in users]
     except Exception as e:
         print(f"Error in get_all_users endpoint: {e}")

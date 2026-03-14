@@ -1,7 +1,9 @@
-from mysql import connector
-from config.config import db_config
-from typing import List, Dict, Any, Optional
 import threading
+from typing import Any, Dict, List, Optional
+
+from config.config import db_config
+from mysql import connector
+
 
 class Database:
     # Thread-local storage prevents weak reference issues
@@ -11,7 +13,7 @@ class Database:
     def __open_connection(cls):
         """Open connection exactly as before, but thread-safe"""
         try:
-            if not hasattr(cls._local, 'db'):
+            if not hasattr(cls._local, "db"):
                 cls._local.db = connector.connect(**db_config)
                 # Keep dictionary=True as in your original
                 cls._local.cursor = cls._local.db.cursor(dictionary=True, buffered=True)
@@ -27,10 +29,10 @@ class Database:
     @classmethod
     def __close_connection(cls):
         """Close connection exactly as before"""
-        if hasattr(cls._local, 'cursor'):
+        if hasattr(cls._local, "cursor"):
             cls._local.cursor.close()
             del cls._local.cursor
-        if hasattr(cls._local, 'db'):
+        if hasattr(cls._local, "db"):
             cls._local.db.close()
             del cls._local.db
 
@@ -61,7 +63,9 @@ class Database:
             cls.__close_connection()
 
     @staticmethod
-    def get_all_rows(sql: str, params: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
+    def get_all_rows(
+        sql: str, params: Optional[List[Any]] = None
+    ) -> List[Dict[str, Any]]:
         """EXACTLY your original implementation"""
         connection = None
         try:
@@ -84,24 +88,24 @@ class Database:
         try:
             cls.__open_connection()
             cls._local.cursor.execute(sql_query, params)
-            
+
             query_type = sql_query.strip().upper().split()[0]
-            
-            if query_type == 'SELECT':
+
+            if query_type == "SELECT":
                 return cls._local.cursor.fetchall()
             else:
                 cls._local.db.commit()
                 if cls._local.cursor.lastrowid:
                     return cls._local.cursor.lastrowid
                 return cls._local.cursor.rowcount
-                
+
         except connector.Error as error:
             # Suppress "Table already exists" warnings from CREATE TABLE IF NOT EXISTS
             # (caused by raise_on_warnings=True in db_config)
-            if error.errno == 1050 and 'IF NOT EXISTS' in sql_query.upper():
+            if error.errno == 1050 and "IF NOT EXISTS" in sql_query.upper():
                 cls._local.db.commit()
                 return 0
-            if hasattr(cls._local, 'db'):
+            if hasattr(cls._local, "db"):
                 cls._local.db.rollback()
             print(f"Execute error: {error}")
             return None

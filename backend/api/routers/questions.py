@@ -2,18 +2,21 @@ import json
 from datetime import datetime
 from typing import List
 
+from api.dependencies import get_client_ip, get_current_user_info
+from database.datarepository import (
+    AnswerRepository,
+    AuditLogRepository,
+    QuestionRepository,
+)
 from fastapi import APIRouter, Depends, HTTPException, Request
-
-from api.dependencies import get_current_user_info, get_client_ip
-from database.datarepository import QuestionRepository, AnswerRepository, AuditLogRepository
 from models.models import (
-    QuestionResponse,
-    ErrorNotFound,
-    QuestionWithAnswers,
     AnswerListResponse,
-    CorrectAnswerResponse,
     AnswerResponse,
-    QuestionInput
+    CorrectAnswerResponse,
+    ErrorNotFound,
+    QuestionInput,
+    QuestionResponse,
+    QuestionWithAnswers,
 )
 
 router = APIRouter()
@@ -31,12 +34,7 @@ def safe_int_convert(value, default=1):
 
 
 def convert_difficulty_to_id(difficulty_string: str) -> int:
-    difficulty_mapping = {
-        "easy": 1,
-        "medium": 2,
-        "hard": 3,
-        "expert": 4
-    }
+    difficulty_mapping = {"easy": 1, "medium": 2, "hard": 3, "expert": 4}
     difficulty_lower = difficulty_string.lower()
 
     if difficulty_lower in difficulty_mapping:
@@ -48,20 +46,18 @@ def convert_difficulty_to_id(difficulty_string: str) -> int:
 # Questions
 # ----------------------------------------------------
 
+
 @router.get(
     "/api/v1/questions/",
     summary="Get all questions",
     response_model=List[QuestionResponse],
     responses={404: {"model": ErrorNotFound}},
-    tags=["Questions"]
+    tags=["Questions"],
 )
 async def get_all_questions(active_only: bool = False):
     questions = QuestionRepository.get_all_questions(active_only)
     if not questions:
-        raise HTTPException(
-            status_code=404,
-            detail="No questions found"
-        )
+        raise HTTPException(status_code=404, detail="No questions found")
     return questions
 
 
@@ -70,14 +66,13 @@ async def get_all_questions(active_only: bool = False):
     summary="Get question by ID",
     response_model=QuestionResponse,
     responses={404: {"model": ErrorNotFound}},
-    tags=["Questions"]
+    tags=["Questions"],
 )
 async def get_question_by_id(question_id: int):
     question = QuestionRepository.get_question_by_id(question_id)
     if not question:
         raise HTTPException(
-            status_code=404,
-            detail=f"Question with ID {question_id} not found"
+            status_code=404, detail=f"Question with ID {question_id} not found"
         )
     return question
 
@@ -87,17 +82,15 @@ async def get_question_by_id(question_id: int):
     summary="Get a random question",
     response_model=QuestionResponse,
     responses={404: {"model": ErrorNotFound}},
-    tags=["Special Question Operations"]
+    tags=["Special Question Operations"],
 )
 async def get_random_question(themeId: int = None, difficultyLevelId: int = None):
     question = QuestionRepository.get_random_question(
-        themeId=themeId,
-        difficultyLevelId=difficultyLevelId
+        themeId=themeId, difficultyLevelId=difficultyLevelId
     )
     if not question:
         raise HTTPException(
-            status_code=404,
-            detail="No active questions found matching criteria"
+            status_code=404, detail="No active questions found matching criteria"
         )
     return question
 
@@ -107,14 +100,13 @@ async def get_random_question(themeId: int = None, difficultyLevelId: int = None
     summary="Get question with answers",
     response_model=QuestionWithAnswers,
     responses={404: {"model": ErrorNotFound}},
-    tags=["Special Question Operations"]
+    tags=["Special Question Operations"],
 )
 async def get_question_with_answers(question_id: int):
     question = QuestionRepository.get_questions_with_answers(question_id)
     if not question:
         raise HTTPException(
-            status_code=404,
-            detail=f"Question with ID {question_id} not found"
+            status_code=404, detail=f"Question with ID {question_id} not found"
         )
     return question
 
@@ -123,23 +115,20 @@ async def get_question_with_answers(question_id: int):
 async def create_question_endpoint(
     question_data: QuestionInput,
     current_user_info: dict = Depends(get_current_user_info),
-    request: Request = None
+    request: Request = None,
 ):
     user_id = current_user_info["id"]
     role = current_user_info["role"]
     client_ip = get_client_ip(request) if request else "unknown"
 
     if role != "admin":
-        raise HTTPException(
-            status_code=403,
-            detail="Only admins can create questions"
-        )
+        raise HTTPException(status_code=403, detail="Only admins can create questions")
 
     new_values = {
         "question_text": question_data.question_text,
         "created_by": user_id,
         "role": role,
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
 
     try:
@@ -150,7 +139,7 @@ async def create_question_endpoint(
             old_values=None,
             new_values=json.dumps(new_values),
             changed_by=user_id,
-            ip_address=client_ip
+            ip_address=client_ip,
         )
     except Exception as audit_error:
         print(f"Audit log creation failed: {audit_error}")
@@ -165,7 +154,9 @@ async def create_question_endpoint(
             raise HTTPException(status_code=400, detail="Question text is required")
 
         if not question_data.answers or len(question_data.answers) == 0:
-            raise HTTPException(status_code=400, detail="At least one answer is required")
+            raise HTTPException(
+                status_code=400, detail="At least one answer is required"
+            )
 
         question_id = QuestionRepository.create_question(
             question_text=question_data.question_text.strip(),
@@ -182,7 +173,7 @@ async def create_question_endpoint(
             LightMax=safe_int_convert(question_data.LightMax, 100),
             LightMin=safe_int_convert(question_data.LightMin, 0),
             TempMax=safe_int_convert(question_data.TempMax, 30),
-            TempMin=safe_int_convert(question_data.TempMin, 10)
+            TempMin=safe_int_convert(question_data.TempMin, 10),
         )
 
         if not question_id:
@@ -197,7 +188,7 @@ async def create_question_endpoint(
                 answer_id = AnswerRepository.create_answer(
                     question_id=question_id,
                     answer_text=answer.answer_text.strip(),
-                    is_correct=bool(answer.is_correct)
+                    is_correct=bool(answer.is_correct),
                 )
 
                 if answer_id:
@@ -213,7 +204,7 @@ async def create_question_endpoint(
             "status": "success",
             "question_id": question_id,
             "answers_created": len(created_answers),
-            "is_active": is_active
+            "is_active": is_active,
         }
 
     except HTTPException:
@@ -228,11 +219,11 @@ async def update_question_endpoint(
     question_id: int,
     question_data: QuestionInput,
     current_user_info: dict = Depends(get_current_user_info),
-    request: Request = None
+    request: Request = None,
 ):
     user_id = current_user_info.get("id")
     role = current_user_info.get("role")
-    client_ip = get_client_ip(request) if request else "unknown"
+    _client_ip = get_client_ip(request) if request else "unknown"
 
     if role != "admin":
         raise HTTPException(status_code=403, detail="Only admins can edit questions")
@@ -242,7 +233,7 @@ async def update_question_endpoint(
             "action": "update_question_attempt",
             "question_id": question_id,
             "requested_by": user_id,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         _ = audit_entry
     except Exception:
@@ -254,7 +245,11 @@ async def update_question_endpoint(
 
         update_success = QuestionRepository.update_question(
             question_id,
-            question_text=question_data.question_text.strip() if question_data.question_text else None,
+            question_text=(
+                question_data.question_text.strip()
+                if question_data.question_text
+                else None
+            ),
             themeId=theme_id,
             difficultyLevelId=difficulty_id,
             explanation=question_data.explanation or None,
@@ -262,32 +257,47 @@ async def update_question_endpoint(
             time_limit=safe_int_convert(question_data.time_limit, None),
             think_time=safe_int_convert(question_data.think_time, None),
             points=safe_int_convert(question_data.points, None),
-            is_active=bool(question_data.is_active) if question_data.is_active is not None else None,
-            no_answer_correct=bool(question_data.no_answer_correct) if question_data.no_answer_correct is not None else None,
+            is_active=(
+                bool(question_data.is_active)
+                if question_data.is_active is not None
+                else None
+            ),
+            no_answer_correct=(
+                bool(question_data.no_answer_correct)
+                if question_data.no_answer_correct is not None
+                else None
+            ),
             LightMax=safe_int_convert(question_data.LightMax, None),
             LightMin=safe_int_convert(question_data.LightMin, None),
             TempMax=safe_int_convert(question_data.TempMax, None),
-            TempMin=safe_int_convert(question_data.TempMin, None)
+            TempMin=safe_int_convert(question_data.TempMin, None),
         )
 
         if not update_success:
             raise HTTPException(status_code=500, detail="Failed to update question")
 
         created_answers = []
-        if getattr(question_data, 'answers', None):
+        if getattr(question_data, "answers", None):
             try:
-                delete_success = AnswerRepository.delete_all_answers_for_question(question_id)
+                delete_success = AnswerRepository.delete_all_answers_for_question(
+                    question_id
+                )
                 if not delete_success:
-                    print(f"Warning: Failed to delete existing answers for question {question_id}")
+                    print(
+                        f"Warning: Failed to delete existing answers for question {question_id}"
+                    )
 
                 for answer in question_data.answers:
-                    if not getattr(answer, 'answer_text', None) or not answer.answer_text.strip():
+                    if (
+                        not getattr(answer, "answer_text", None)
+                        or not answer.answer_text.strip()
+                    ):
                         continue
                     try:
                         answer_id = AnswerRepository.create_answer(
                             question_id=question_id,
                             answer_text=answer.answer_text.strip(),
-                            is_correct=bool(getattr(answer, 'is_correct', False))
+                            is_correct=bool(getattr(answer, "is_correct", False)),
                         )
                         if answer_id:
                             created_answers.append(answer_id)
@@ -306,21 +316,23 @@ async def update_question_endpoint(
             "is_active": bool(question_data.is_active),
             "role": role,
             "difficulty_id": difficulty_id,
-            "theme_id": theme_id
+            "theme_id": theme_id,
         }
 
     except HTTPException:
         raise
     except Exception as e:
         print(f"Error updating question: {e}")
-        raise HTTPException(status_code=500, detail="Failed to update question. Please try again later.")
+        raise HTTPException(
+            status_code=500, detail="Failed to update question. Please try again later."
+        )
 
 
 @router.delete("/api/v1/questions/{question_id}", tags=["Questions"])
 async def delete_question_endpoint(
     question_id: int,
     current_user_info: dict = Depends(get_current_user_info),
-    request: Request = None
+    request: Request = None,
 ):
     user_id = current_user_info["id"]
     role = current_user_info["role"]
@@ -335,9 +347,13 @@ async def delete_question_endpoint(
             raise HTTPException(status_code=404, detail="Question not found")
 
         try:
-            delete_answers_success = AnswerRepository.delete_all_answers_for_question(question_id)
+            delete_answers_success = AnswerRepository.delete_all_answers_for_question(
+                question_id
+            )
             if not delete_answers_success:
-                print(f"Warning: Failed to delete associated answers for question {question_id}")
+                print(
+                    f"Warning: Failed to delete associated answers for question {question_id}"
+                )
         except Exception as e:
             print(f"Error deleting answers: {e}")
 
@@ -350,7 +366,7 @@ async def delete_question_endpoint(
             "deleted_by": user_id,
             "question_id": question_id,
             "action": "DELETE",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         try:
@@ -361,7 +377,7 @@ async def delete_question_endpoint(
                 old_values=None,
                 new_values=json.dumps(new_values),
                 changed_by=user_id,
-                ip_address=client_ip
+                ip_address=client_ip,
             )
         except Exception as audit_error:
             print(f"Delete audit log creation failed: {audit_error}")
@@ -370,39 +386,38 @@ async def delete_question_endpoint(
             "status": "success",
             "message": "Question deleted successfully",
             "question_id": question_id,
-            "role": role
+            "role": role,
         }
 
     except HTTPException:
         raise
     except Exception as e:
         print(f"Error deleting question: {e}")
-        raise HTTPException(status_code=500, detail="Failed to delete question. Please try again later.")
+        raise HTTPException(
+            status_code=500, detail="Failed to delete question. Please try again later."
+        )
 
 
 # ----------------------------------------------------
 # Answers
 # ----------------------------------------------------
 
+
 @router.get(
     "/api/v1/questions/{question_id}/answers/",
     summary="Get all answers for a question",
     response_model=AnswerListResponse,
     responses={404: {"model": ErrorNotFound}},
-    tags=["Answers"]
+    tags=["Answers"],
 )
 async def get_answers_for_question(question_id: int):
     if not QuestionRepository.get_question_by_id(question_id):
         raise HTTPException(
-            status_code=404,
-            detail=f"Question with ID {question_id} not found"
+            status_code=404, detail=f"Question with ID {question_id} not found"
         )
 
     answers = AnswerRepository.get_all_answers_for_question(question_id)
-    return AnswerListResponse(
-        answers=answers,
-        count=len(answers)
-    )
+    return AnswerListResponse(answers=answers, count=len(answers))
 
 
 @router.get(
@@ -410,20 +425,16 @@ async def get_answers_for_question(question_id: int):
     summary="Get correct answers for a question",
     response_model=CorrectAnswerResponse,
     responses={404: {"model": ErrorNotFound}},
-    tags=["Answers"]
+    tags=["Answers"],
 )
 async def get_correct_answers(question_id: int):
     if not QuestionRepository.get_question_by_id(question_id):
         raise HTTPException(
-            status_code=404,
-            detail=f"Question with ID {question_id} not found"
+            status_code=404, detail=f"Question with ID {question_id} not found"
         )
 
     answers = AnswerRepository.get_correct_answers_for_question(question_id)
-    return CorrectAnswerResponse(
-        correct_answers=answers,
-        count=len(answers)
-    )
+    return CorrectAnswerResponse(correct_answers=answers, count=len(answers))
 
 
 @router.get(
@@ -431,13 +442,12 @@ async def get_correct_answers(question_id: int):
     summary="Get answer by ID",
     response_model=AnswerResponse,
     responses={404: {"model": ErrorNotFound}},
-    tags=["Answers"]
+    tags=["Answers"],
 )
 async def get_answer(answer_id: int):
     answer = AnswerRepository.get_answer_by_id(answer_id)
     if not answer:
         raise HTTPException(
-            status_code=404,
-            detail=f"Answer with ID {answer_id} not found"
+            status_code=404, detail=f"Answer with ID {answer_id} not found"
         )
     return answer

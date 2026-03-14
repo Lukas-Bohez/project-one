@@ -102,9 +102,7 @@ const fetchArticleStats = async () => {
 const createArticle = async (articleData) => {
     try {
         const userId = sessionStorage.getItem('admin_user_id');
-        const rfidCode = sessionStorage.getItem('admin_rfid_code');
-        
-        if (!userId || !rfidCode) {
+        if (!userId) {
             throw new Error('Authentication required. Please log in as admin first.');
         }
         
@@ -112,8 +110,7 @@ const createArticle = async (articleData) => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-User-ID': userId,
-                'X-RFID': rfidCode
+                'X-User-ID': userId
             },
             body: JSON.stringify(articleData)
         });
@@ -136,9 +133,7 @@ const createArticle = async (articleData) => {
 const updateArticle = async (articleId, articleData) => {
     try {
         const userId = sessionStorage.getItem('admin_user_id');
-        const rfidCode = sessionStorage.getItem('admin_rfid_code');
-        
-        if (!userId || !rfidCode) {
+        if (!userId) {
             throw new Error('Authentication required. Please log in as admin first.');
         }
         
@@ -146,8 +141,7 @@ const updateArticle = async (articleId, articleData) => {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
-                'X-User-ID': userId,
-                'X-RFID': rfidCode
+                'X-User-ID': userId
             },
             body: JSON.stringify(articleData)
         });
@@ -170,17 +164,14 @@ const updateArticle = async (articleId, articleData) => {
 const deleteArticle = async (articleId) => {
     try {
         const userId = sessionStorage.getItem('admin_user_id');
-        const rfidCode = sessionStorage.getItem('admin_rfid_code');
-        
-        if (!userId || !rfidCode) {
+        if (!userId) {
             throw new Error('Authentication required. Please log in as admin first.');
         }
         
         const response = await fetch(`${lanIP}/api/v1/articles/${articleId}/`, {
             method: 'DELETE',
             headers: {
-                'X-User-ID': userId,
-                'X-RFID': rfidCode
+                'X-User-ID': userId
             }
         });
 
@@ -213,9 +204,7 @@ const updateArticleStatus = async (articleId, status) => {
             payload = { is_active: false };
         }
         const userId = sessionStorage.getItem('admin_user_id');
-        const rfidCode = sessionStorage.getItem('admin_rfid_code');
-
-        if (!userId || !rfidCode) {
+        if (!userId) {
             throw new Error('Authentication required. Please log in as admin first.');
         }
 
@@ -223,8 +212,7 @@ const updateArticleStatus = async (articleId, status) => {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
-                'X-User-ID': userId,
-                'X-RFID': rfidCode
+                'X-User-ID': userId
             },
             body: JSON.stringify(payload)
         });

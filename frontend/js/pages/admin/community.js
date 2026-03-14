@@ -16,7 +16,8 @@
     // ── Auth helpers ──
     function getAuthHeaders() {
         const userId = sessionStorage.getItem('admin_user_id');
-        const rfidCode = sessionStorage.getItem('admin_rfid_code');
+        // client-side RFID removed
+        const rfidCode = null;
         const headers = { 'Accept': 'application/json', 'Content-Type': 'application/json' };
         if (userId && rfidCode) {
             headers['X-User-ID'] = userId;
