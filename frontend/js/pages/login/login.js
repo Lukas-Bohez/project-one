@@ -90,10 +90,18 @@ const showLoadingState = (button, isLoading) => {
 
 // #region *** API Call ***********
 const authenticateUser = async (firstName, lastName, rfidCode) => {
+  const csrfToken = (function getCookie(name) {
+    const v = `; ${document.cookie}`;
+    const parts = v.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+  })('csrf_token');
+
   const response = await fetch(`/api/v1/users/${encodeURIComponent(rfidCode)}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
+      ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {})
     },
     body: JSON.stringify({
       first_name: firstName,
@@ -236,6 +244,13 @@ const init = () => {
 
   // Only initialize if the login form is present on the page
   if (document.querySelector('.js-login-form')) {
+      // Populate CSRF token field from cookie (middleware sets `csrf_token` cookie)
+      const tokenInput = document.getElementById('csrfToken');
+      if (tokenInput) {
+        const v = `; ${document.cookie}`;
+        const parts = v.split(`; csrf_token=`);
+        if (parts.length === 2) tokenInput.value = parts.pop().split(';').shift() || '';
+      }
     setupEventListeners();
     
     // Clear any existing error messages on page load
