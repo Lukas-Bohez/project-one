@@ -3,9 +3,6 @@ Gunicorn configuration for production deployment with high concurrency support.
 This configuration handles API overload by using multiple workers and async processing.
 """
 
-import multiprocessing
-import os
-
 # Bind to all interfaces on port 8001
 bind = "0.0.0.0:8001"
 
@@ -49,10 +46,12 @@ limit_request_field_size = 8190
 # Forwarded headers (for proxy/load balancer support)
 forwarded_allow_ips = "*"  # Trust all proxies (adjust for production)
 
+
 # Worker lifecycle hooks
 def on_starting(server):
     """Called just before the master process is initialized."""
     print("🚀 Gunicorn master process starting...")
+
 
 def when_ready(server):
     """Called just after the server is started."""
@@ -61,13 +60,16 @@ def when_ready(server):
     print(f"   Connections per worker: {worker_connections}")
     print(f"   Max concurrent: ~{workers * worker_connections}")
 
+
 def worker_int(worker):
     """Called when a worker receives INT or QUIT signal."""
     print(f"⚠️  Worker {worker.pid} received termination signal")
 
+
 def worker_abort(worker):
     """Called when a worker is forcefully killed."""
     print(f"❌ Worker {worker.pid} was forcefully terminated")
+
 
 def on_exit(server):
     """Called when gunicorn is shutting down."""

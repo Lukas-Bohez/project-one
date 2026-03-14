@@ -1,0 +1,240 @@
+./backend/api/routers/community.py:495:9: F841 local variable 'e' is assigned to but never used
+./backend/api/routers/community.py:543:121: E501 line too long (127 > 120 characters)
+./backend/api/routers/community.py:545:121: E501 line too long (133 > 120 characters)
+./backend/api/routers/community.py:547:121: E501 line too long (134 > 120 characters)
+./backend/api/routers/ip_management.py:231:121: E501 line too long (254 > 120 characters)
+./backend/api/routers/ip_management.py:232:121: E501 line too long (203 > 120 characters)
+./backend/api/routers/ip_management.py:236:121: E501 line too long (148 > 120 characters)
+./backend/api/routers/questions.py:226:5: F841 local variable '_client_ip' is assigned to but never used
+./backend/api/routers/users.py:151:121: E501 line too long (124 > 120 characters)
+./backend/app.py:30:1: E402 module level import not at top of file
+./backend/app.py:38:1: E402 module level import not at top of file
+./backend/app.py:39:1: E402 module level import not at top of file
+./backend/app.py:40:1: E402 module level import not at top of file
+./backend/app.py:41:1: E402 module level import not at top of file
+./backend/app.py:43:1: E402 module level import not at top of file
+./backend/app.py:64:1: E402 module level import not at top of file
+./backend/app.py:65:1: F811 redefinition of unused 'Request' from line 16
+./backend/app.py:65:1: E402 module level import not at top of file
+./backend/app.py:68:1: E402 module level import not at top of file
+./backend/app.py:69:1: F401 'models.models.AnswerBase' imported but unused
+./backend/app.py:69:1: F401 'models.models.AnswerCreate' imported but unused
+./backend/app.py:69:1: F401 'models.models.AnswerInput' imported but unused
+./backend/app.py:69:1: F401 'models.models.AnswerStatusUpdate' imported but unused
+./backend/app.py:69:1: F401 'models.models.AnswerUpdate' imported but unused
+./backend/app.py:69:1: F401 'models.models.ArticleBase' imported but unused
+./backend/app.py:69:1: F401 'models.models.BroadcastMessage' imported but unused
+./backend/app.py:69:1: F401 'models.models.ChatMessage' imported but unused
+./backend/app.py:69:1: F401 'models.models.ClientActivity' imported but unused
+./backend/app.py:69:1: F401 'models.models.DifficultyLevelResponse' imported but unused
+./backend/app.py:69:1: F401 'models.models.DirectMessage' imported but unused
+./backend/app.py:69:1: F401 'models.models.GameResourcesResponse' imported but unused
+./backend/app.py:69:1: F401 'models.models.GameResourceUpdate' imported but unused
+./backend/app.py:69:1: F401 'models.models.GameSaveData' imported but unused
+./backend/app.py:69:1: F401 'models.models.GameStatsResponse' imported but unused
+./backend/app.py:69:1: F401 'models.models.GameUpgradeRequest' imported but unused
+./backend/app.py:69:1: F401 'models.models.GameUpgradesResponse' imported but unused
+./backend/app.py:69:1: F401 'models.models.GameVehicleUnlockRequest' imported but unused
+./backend/app.py:69:1: F401 'models.models.PaginationInfo' imported but unused
+./backend/app.py:69:1: F401 'models.models.QuestionActivationNotification' imported but unused
+./backend/app.py:69:1: F401 'models.models.QuestionBase' imported but unused
+./backend/app.py:69:1: F401 'models.models.QuestionCreate' imported but unused
+./backend/app.py:69:1: F401 'models.models.QuestionMetadataUpdate' imported but unused
+./backend/app.py:69:1: F401 'models.models.QuestionSearchResult' imported but unused
+./backend/app.py:69:1: F401 'models.models.QuestionStatusUpdate' imported but unused
+./backend/app.py:69:1: F401 'models.models.QuestionUpdate' imported but unused
+./backend/app.py:69:1: F401 'models.models.SaveConflictData' imported but unused
+./backend/app.py:69:1: F401 'models.models.SaveConflictResolution' imported but unused
+./backend/app.py:69:1: F401 'models.models.ServoCommand' imported but unused
+./backend/app.py:69:1: F401 'models.models.ShutdownRequest' imported but unused
+./backend/app.py:69:1: F401 'models.models.StoryResponse' imported but unused
+./backend/app.py:69:1: F401 'models.models.ThemeBase' imported but unused
+./backend/app.py:69:1: F401 'models.models.ThemeCreate' imported but unused
+./backend/app.py:69:1: F401 'models.models.User' imported but unused
+./backend/app.py:69:1: F401 'models.models.UserCreate' imported but unused
+./backend/app.py:69:1: F401 'models.models.UserUpdate' imported but unused
+./backend/app.py:69:1: E402 module level import not at top of file
+./backend/app.py:69:121: E501 line too long (138 > 120 characters)
+./backend/app.py:145:1: E402 module level import not at top of file
+./backend/app.py:146:1: E402 module level import not at top of file
+./backend/app.py:147:1: E402 module level import not at top of file
+./backend/app.py:148:1: E402 module level import not at top of file
+./backend/app.py:166:1: E402 module level import not at top of file
+./backend/app.py:291:1: E402 module level import not at top of file
+./backend/app.py:463:1: E402 module level import not at top of file
+./backend/app.py:508:1: E402 module level import not at top of file
+./backend/app.py:510:1: E402 module level import not at top of file
+./backend/app.py:517:5: F841 local variable 'e' is assigned to but never used
+./backend/app.py:677:11: F821 undefined name 'ENDPOINT'
+./backend/app.py:695:10: F821 undefined name 'ENDPOINT'
+./backend/app.py:732:5: F811 redefinition of unused 'timedelta' from line 11
+./backend/app.py:884:1: E402 module level import not at top of file
+./backend/app.py:885:1: F811 redefinition of unused 'datetime' from line 11
+./backend/app.py:885:1: E402 module level import not at top of file
+./backend/app.py:999:121: E501 line too long (129 > 120 characters)
+./backend/app.py:1076:5: F841 local variable '_downloads_this_month' is assigned to but never used
+./backend/app.py:1088:121: E501 line too long (121 > 120 characters)
+./backend/app.py:1120:121: E501 line too long (125 > 120 characters)
+./backend/app.py:1499:1: E402 module level import not at top of file
+./backend/app.py:1516:27: E203 whitespace before ':'
+./backend/app.py:1979:5: F841 local variable 'user_id' is assigned to but never used
+./backend/app.py:2099:5: F841 local variable 'user_id' is assigned to but never used
+./backend/app.py:2572:1: F811 redefinition of unused 'create_article' from line 2095
+./backend/app.py:2635:1: F811 redefinition of unused 'update_article' from line 2154
+./backend/app.py:2777:1: F811 redefinition of unused 'delete_article' from line 2179
+./backend/app.py:3138:121: E501 line too long (254 > 120 characters)
+./backend/app.py:3139:121: E501 line too long (203 > 120 characters)
+./backend/app.py:3143:121: E501 line too long (148 > 120 characters)
+./backend/app.py:3534:1: F811 redefinition of unused 'datetime' from line 885
+./backend/app.py:3534:1: E402 module level import not at top of file
+./backend/app.py:3536:1: F811 redefinition of unused 'HTTPException' from line 16
+./backend/app.py:3536:1: E402 module level import not at top of file
+./backend/app.py:3608:121: E501 line too long (124 > 120 characters)
+./backend/app.py:3700:121: E501 line too long (123 > 120 characters)
+./backend/app.py:3842:121: E501 line too long (127 > 120 characters)
+./backend/app.py:3863:1: E402 module level import not at top of file
+./backend/app.py:4251:21: F541 f-string is missing placeholders
+./backend/app.py:4293:21: F541 f-string is missing placeholders
+./backend/app.py:4300:1: E402 module level import not at top of file
+./backend/app.py:4465:1: F811 redefinition of unused 'json' from line 884
+./backend/app.py:4465:1: E402 module level import not at top of file
+./backend/app.py:4466:1: F811 redefinition of unused 'datetime' from line 3534
+./backend/app.py:4466:1: E402 module level import not at top of file
+./backend/app.py:4467:1: E402 module level import not at top of file
+./backend/app.py:4469:1: F811 redefinition of unused 'HTTPException' from line 3536
+./backend/app.py:4469:1: E402 module level import not at top of file
+./backend/app.py:4639:5: F841 local variable 'client_ip' is assigned to but never used
+./backend/app.py:4647:9: F841 local variable 'audit_entry' is assigned to but never used
+./backend/app.py:5320:1: F811 redefinition of unused 'json' from line 4465
+./backend/app.py:5320:1: E402 module level import not at top of file
+./backend/app.py:5436:5: F841 local variable 'e' is assigned to but never used
+./backend/app.py:5611:5: F841 local variable 'e' is assigned to but never used
+./backend/app.py:5687:5: F841 local variable 'e' is assigned to but never used
+./backend/app.py:5754:121: E501 line too long (125 > 120 characters)
+./backend/app.py:5867:1: E402 module level import not at top of file
+./backend/app.py:6043:5: F841 local variable 'e' is assigned to but never used
+./backend/app.py:6074:5: F841 local variable 'e' is assigned to but never used
+./backend/app.py:6083:1: F811 redefinition of unused 'join_room' from line 1928
+./backend/app.py:6191:5: F841 local variable 'e' is assigned to but never used
+./backend/app.py:6198:1: E402 module level import not at top of file
+./backend/app.py:6200:1: E402 module level import not at top of file
+./backend/app.py:6248:1: F811 redefinition of unused 'format_second_row' from line 6243
+./backend/app.py:6415:17: F841 local variable 'e' is assigned to but never used
+./backend/app.py:6469:5: F824 `global servo` is unused: name is never assigned in scope
+./backend/app.py:6534:1: F811 redefinition of unused 'get_all_users' from line 2830
+./backend/app.py:6575:5: F824 `global virtualTemperature` is unused: name is never assigned in scope
+./backend/app.py:6642:5: F824 `global newClient` is unused: name is never assigned in scope
+./backend/app.py:6646:5: F841 local variable 'e' is assigned to but never used
+./backend/app.py:6652:1: F811 redefinition of unused 'asyncio' from line 1
+./backend/app.py:6652:1: E402 module level import not at top of file
+./backend/app.py:6653:1: E402 module level import not at top of file
+./backend/app.py:6654:1: F811 redefinition of unused 'time' from line 6
+./backend/app.py:6654:1: E402 module level import not at top of file
+./backend/app.py:6655:1: F811 redefinition of unused 'traceback' from line 7
+./backend/app.py:6655:1: E402 module level import not at top of file
+./backend/app.py:6658:1: E402 module level import not at top of file
+./backend/app.py:6659:1: E402 module level import not at top of file
+./backend/app.py:6694:5: F824 `global virtualTemperature` is unused: name is never assigned in scope
+./backend/app.py:6849:5: F824 `global sensorData` is unused: name is never assigned in scope
+./backend/app.py:7264:5: F824 `global multiplier` is unused: name is never assigned in scope
+./backend/app.py:7387:121: E501 line too long (122 > 120 characters)
+./backend/app.py:7412:121: E501 line too long (136 > 120 characters)
+./backend/app.py:7489:11: F541 f-string is missing placeholders
+./backend/app.py:7515:26: F541 f-string is missing placeholders
+./backend/app.py:7516:15: F541 f-string is missing placeholders
+./backend/app.py:7533:19: F541 f-string is missing placeholders
+./backend/app.py:7608:23: F541 f-string is missing placeholders
+./backend/app.py:7745:121: E501 line too long (217 > 120 characters)
+./backend/app.py:7762:121: E501 line too long (157 > 120 characters)
+./backend/app.py:7770:27: F541 f-string is missing placeholders
+./backend/app.py:7773:121: E501 line too long (161 > 120 characters)
+./backend/app.py:7799:121: E501 line too long (125 > 120 characters)
+./backend/app.py:7833:121: E501 line too long (122 > 120 characters)
+./backend/app.py:7929:121: E501 line too long (208 > 120 characters)
+./backend/app.py:7932:121: E501 line too long (216 > 120 characters)
+./backend/app.py:7981:121: E501 line too long (127 > 120 characters)
+./backend/app.py:8192:5: F824 `global light_sensor` is unused: name is never assigned in scope
+./backend/app.py:8193:5: F824 `global temp_sensor` is unused: name is never assigned in scope
+./backend/app.py:8278:25: F541 f-string is missing placeholders
+./backend/app.py:8368:5: F824 `global progress` is unused: name is never assigned in scope
+./backend/app.py:8368:5: F824 `global explanationNow` is unused: name is never assigned in scope
+./backend/app.py:8368:5: F824 `global remaining_explanation_time` is unused: name is never assigned in scope
+./backend/app.py:8552:121: E501 line too long (135 > 120 characters)
+./backend/app.py:8563:121: E501 line too long (140 > 120 characters)
+./backend/app.py:8719:1: F811 redefinition of unused 'threadsafe_emit_message_sent' from line 304
+./backend/app.py:9038:13: E722 do not use bare 'except'
+./backend/app.py:9136:1: F811 redefinition of unused 'get_all_items' from line 5604
+./backend/app.py:9170:1: E402 module level import not at top of file
+./backend/app.py:9171:1: E402 module level import not at top of file
+./backend/app.py:9172:1: F811 redefinition of unused 'subprocess' from line 6198
+./backend/app.py:9172:1: E402 module level import not at top of file
+./backend/app.py:9173:1: F811 redefinition of unused 'zipfile' from line 8
+./backend/app.py:9173:1: E402 module level import not at top of file
+./backend/app.py:9175:1: F811 redefinition of unused 'File' from line 16
+./backend/app.py:9175:1: F811 redefinition of unused 'Form' from line 16
+./backend/app.py:9175:1: F811 redefinition of unused 'UploadFile' from line 16
+./backend/app.py:9175:1: E402 module level import not at top of file
+./backend/app.py:9176:1: E402 module level import not at top of file
+./backend/app.py:9177:1: E402 module level import not at top of file
+./backend/app.py:9178:1: E402 module level import not at top of file
+./backend/app.py:9272:1: E402 module level import not at top of file
+./backend/app.py:9273:1: F811 redefinition of unused 'threading' from line 5
+./backend/app.py:9273:1: E402 module level import not at top of file
+./backend/app.py:9274:1: F811 redefinition of unused 'time' from line 6654
+./backend/app.py:9274:1: E402 module level import not at top of file
+./backend/app.py:9275:1: E402 module level import not at top of file
+./backend/app.py:9276:1: E402 module level import not at top of file
+./backend/app.py:9295:13: F821 undefined name 'video_logger'
+./backend/app.py:9383:5: F824 `global request_session_state` is unused: name is never assigned in scope
+./backend/app.py:9385:10: F821 undefined name 'youtube_request_lock'
+./backend/app.py:9390:14: F821 undefined name 'session_state_lock'
+./backend/app.py:9401:27: F821 undefined name 'MIN_REQUEST_INTERVAL'
+./backend/app.py:9408:13: F821 undefined name 'video_logger'
+./backend/app.py:9422:13: F821 undefined name 'video_logger'
+./backend/app.py:9436:25: F821 undefined name 'video_download_rate_limit'
+./backend/app.py:9437:9: F821 undefined name 'video_download_rate_limit'
+./backend/app.py:9439:42: F821 undefined name 'RATE_LIMIT_WINDOW'
+./backend/app.py:9444:23: F821 undefined name 'video_download_rate_limit'
+./backend/app.py:9445:9: F821 undefined name 'video_download_rate_limit'
+./backend/app.py:9447:42: F821 undefined name 'RATE_LIMIT_WINDOW'
+./backend/app.py:9452:8: F821 undefined name 'video_download_rate_limit'
+./backend/app.py:9452:56: F821 undefined name 'MAX_CONCURRENT_DOWNLOADS_PER_IP'
+./backend/app.py:9460:21: F821 undefined name 'video_download_rate_limit'
+./backend/app.py:9461:9: F821 undefined name 'video_download_rate_limit'
+./backend/app.py:9467:22: F821 undefined name 'video_download_rate_limit'
+./backend/app.py:9468:13: F821 undefined name 'video_download_rate_limit'
+./backend/app.py:9470:9: F821 undefined name 'video_download_rate_limit'
+./backend/app.py:9475:5: F824 `global active_conversions_count` is unused: name is never assigned in scope
+./backend/app.py:9475:5: F824 `global active_long_conversions_count` is unused: name is never assigned in scope
+./backend/app.py:9476:10: F821 undefined name 'queue_lock'
+./backend/app.py:9486:41: F821 undefined name 'MAX_CONCURRENT_CONVERSIONS'
+./backend/app.py:9496:45: F821 undefined name 'MAX_CONCURRENT_CONVERSIONS'
+./backend/app.py:9497:44: F821 undefined name 'MAX_CONCURRENT_LONG_CONVERSIONS'
+./backend/app.py:9508:37: F821 undefined name 'MAX_CONCURRENT_CONVERSIONS'
+./backend/app.py:9509:36: F821 undefined name 'MAX_CONCURRENT_LONG_CONVERSIONS'
+./backend/app.py:9515:10: F821 undefined name 'queue_lock'
+./backend/app.py:9525:9: F821 undefined name 'video_logger'
+./backend/app.py:9530:9: F821 undefined name 'dispatcher_event'
+./backend/app.py:9531:9: F821 undefined name 'video_logger'
+./backend/app.py:9533:9: F821 undefined name 'video_logger'
+./backend/app.py:9539:10: F821 undefined name 'queue_lock'
+./backend/app.py:9545:9: F821 undefined name 'video_logger'
+./backend/app.py:9555:5: F824 `global active_conversions_count` is unused: name is never assigned in scope
+./backend/app.py:9555:5: F824 `global active_long_conversions_count` is unused: name is never assigned in scope
+./backend/app.py:9557:48: F821 undefined name 'MAX_CONCURRENT_LONG_CONVERSIONS'
+./backend/app.py:9558:39: F821 undefined name 'MAX_CONCURRENT_CONVERSIONS'
+./backend/app.py:9564:10: F821 undefined name 'conversions_lock'
+./backend/app.py:9567:13: F821 undefined name 'video_logger'
+./backend/app.py:9568:77: F821 undefined name 'MAX_CONCURRENT_LONG_CONVERSIONS'
+./backend/app.py:9572:13: F821 undefined name 'video_logger'
+./backend/app.py:9573:73: F821 undefined name 'MAX_CONCURRENT_CONVERSIONS'
+./backend/app.py:9580:10: F821 undefined name 'conversions_lock'
+./backend/app.py:9584:13: F821 undefined name 'video_logger'
+./backend/app.py:9585:77: F821 undefined name 'MAX_CONCURRENT_LONG_CONVERSIONS'
+./backend/app.py:9590:13: F821 undefined name 'video_logger'
+./backend/app.py:9591:73: F821 undefined name 'MAX_CONCURRENT_CONVERSIONS'
+./backend/app.py:9600:9: F821 undefined name 'video_logger'
+./backend/app.py:9603:13: F821 undefined name 'video_logger'
+./backend/app.py:9608:14: F821 undefined name 'queue_lock'
+./backend/app.py:9610:17: F821 undefined name 'video_logger'
+./backend/app.py:9629:17: F821 undefined name 'video_logger'

@@ -1,5 +1,6 @@
+from typing import Any, Dict, Optional
+
 from .database import Database
-from typing import Dict, Any, Optional
 
 
 class UserEmailRepository:
@@ -20,16 +21,16 @@ class UserEmailRepository:
         """
 
         params = [
-            user_data.get('last_name'),
-            user_data.get('first_name'),
-            user_data.get('email'),
-            user_data.get('password_hash'),
-            user_data.get('salt'),
-            user_data.get('rfid_code'),
-            user_data.get('userRoleId', 1),
-            user_data.get('soul_points', 4),
-            user_data.get('limb_points', 4),
-            user_data.get('updated_by', 1)
+            user_data.get("last_name"),
+            user_data.get("first_name"),
+            user_data.get("email"),
+            user_data.get("password_hash"),
+            user_data.get("salt"),
+            user_data.get("rfid_code"),
+            user_data.get("userRoleId", 1),
+            user_data.get("soul_points", 4),
+            user_data.get("limb_points", 4),
+            user_data.get("updated_by", 1),
         ]
 
         return Database.execute_sql(sql, params)
@@ -40,15 +41,15 @@ class UserEmailRepository:
         set_clauses = []
         params = []
 
-        if 'email' in profile_data and profile_data['email'] is not None:
+        if "email" in profile_data and profile_data["email"] is not None:
             set_clauses.append("email = %s")
-            params.append(profile_data['email'])
-        if 'first_name' in profile_data and profile_data['first_name'] is not None:
+            params.append(profile_data["email"])
+        if "first_name" in profile_data and profile_data["first_name"] is not None:
             set_clauses.append("first_name = %s")
-            params.append(profile_data['first_name'])
-        if 'last_name' in profile_data and profile_data['last_name'] is not None:
+            params.append(profile_data["first_name"])
+        if "last_name" in profile_data and profile_data["last_name"] is not None:
             set_clauses.append("last_name = %s")
-            params.append(profile_data['last_name'])
+            params.append(profile_data["last_name"])
 
         if not set_clauses:
             return False

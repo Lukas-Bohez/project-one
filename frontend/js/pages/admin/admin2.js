@@ -39,17 +39,15 @@ async function updateActiveUsersCount() {
   try {
     // Get authentication headers
     const userId = sessionStorage.getItem('admin_user_id');
-    const rfidCode = sessionStorage.getItem('admin_rfid_code');
-    
+
     const headers = {
       'Accept': 'application/json',
       'Cache-Control': 'no-cache'
     };
-    
-    // Add auth headers if available
-    if (userId && rfidCode) {
+
+    // Add auth header with user id if available. Do NOT send raw RFID from client-side.
+    if (userId) {
       headers['X-User-ID'] = userId;
-      headers['X-RFID'] = rfidCode;
     }
     
     const response = await fetch(`${lanIP}/api/users/active/count?t=${Date.now()}`, {
@@ -139,17 +137,15 @@ async function updateActiveQuestionsCount() {
   try {
     // Get authentication headers
     const userId = sessionStorage.getItem('admin_user_id');
-    const rfidCode = sessionStorage.getItem('admin_rfid_code');
-    
+
     const headers = {
       'Accept': 'application/json',
       'Cache-Control': 'no-cache'
     };
-    
-    // Add auth headers if available
-    if (userId && rfidCode) {
+
+    // Add auth header with user id if available. Do NOT send raw RFID from client-side.
+    if (userId) {
       headers['X-User-ID'] = userId;
-      headers['X-RFID'] = rfidCode;
     }
     
     const response = await fetch(`${lanIP}/api/questions/active/count?t=${Date.now()}`, {
@@ -250,17 +246,15 @@ async function updateAverageScore() {
   try {
     // Get authentication headers
     const userId = sessionStorage.getItem('admin_user_id');
-    const rfidCode = sessionStorage.getItem('admin_rfid_code');
-    
+
     const headers = {
       'Accept': 'application/json',
       'Cache-Control': 'no-cache'
     };
-    
-    // Add auth headers if available
-    if (userId && rfidCode) {
+
+    // Add auth header with user id if available. Do NOT send raw RFID from client-side.
+    if (userId) {
       headers['X-User-ID'] = userId;
-      headers['X-RFID'] = rfidCode;
     }
     
     const response = await fetch(`${lanIP}/api/v1/answers/percentage?t=${Date.now()}`, {
