@@ -95,6 +95,7 @@ logs/
 repo-backup-*.bundle
 *.bundle
 backend/video_debug.log
+backend/download_tracker.json
 
 # Node modules (if you have any)
 node_modules/
