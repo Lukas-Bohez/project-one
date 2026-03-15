@@ -887,165 +887,58 @@ def log_user_ip_address(user_id: int, ip_address: str):
 
 
 # ====================================================
-# Download Management System for ConversionTheSpireReborn.zip
+# Download Management (no IP tracking)
 # ====================================================
-# Duplicate import commented out by script
-# import json
-# Duplicate import commented out by script
-# from datetime import datetime
+# This simplified download manager avoids storing IP addresses in any
+# repository-stored artifacts. It remains compatible with the frontend
+# expectations for status/check APIs without persisting per-client data.
 
 DOWNLOAD_TRACKER_FILE = os.path.join(os.path.dirname(__file__), "download_tracker.json")
-# Protected downloads directory — keep artifacts outside the webroot and
-# configurable via environment variable. Default: backend/protected_downloads
-PROTECTED_DOWNLOADS_DIR = os.getenv(
-    "PROTECTED_DOWNLOADS_DIR",
-    os.path.join(os.path.dirname(__file__), "protected_downloads"),
-)
-CONVERSION_FILE_PATH = os.path.join(
-    PROTECTED_DOWNLOADS_DIR, "ConvertTheSpireReborn.zip"
-)
-CONVERSION_APK_PATH = os.path.join(PROTECTED_DOWNLOADS_DIR, "ConvertTheSpireReborn.apk")
-CONVERSION_LINUX_PATH = os.path.join(PROTECTED_DOWNLOADS_DIR, "linux.zip")
-CONVERSION_MACOS_PATH = os.path.join(
-    PROTECTED_DOWNLOADS_DIR, "ConvertTheSpireReborn-macOS.zip"
-)
 DOWNLOAD_TRACKER_LOCK = Lock()
+
+DOWNLOAD_SPEED_MBPS = int(os.getenv("DOWNLOAD_SPEED_MBPS", "2"))
+MAX_CONCURRENT_DOWNLOADS = int(os.getenv("MAX_CONCURRENT_DOWNLOADS", "100"))
+MONTHLY_BANDWIDTH_LIMIT_GB = float(os.getenv("MONTHLY_BANDWIDTH_LIMIT_GB", "0.0"))
 
 
 def load_download_tracker():
-    """Load download tracking data from JSON file."""
+    """Load persisted download stats (no per-IP data)."""
     try:
         if os.path.exists(DOWNLOAD_TRACKER_FILE):
             with open(DOWNLOAD_TRACKER_FILE, "r") as f:
-                content = f.read().strip()
-                if content:
-                    return json.loads(content)
-    except Exception as e:
-        print(f"Error loading download tracker: {e}")
+                data = _json.load(f)
+                if isinstance(data, dict):
+                    return data
+    except Exception:
+        pass
 
-    # Return defaults if file doesn't exist, is empty, or is corrupt
-    # Also immediately persist defaults so the file self-heals
     defaults = {
-        "monthly_limit_gb": 1024,
-        "per_ip_monthly_limit": None,
-        "download_speed_mbps": 2,
-        "concurrent_per_ip": 4,
-        "ips": {},
-        "last_reset_month": datetime.now().strftime("%Y-%m"),
+        "monthly_limit_gb": MONTHLY_BANDWIDTH_LIMIT_GB,
+        "download_speed_mbps": DOWNLOAD_SPEED_MBPS,
+        "concurrent_per_ip": MAX_CONCURRENT_DOWNLOADS,
         "total_monthly_bandwidth_gb": 0.0,
-        "file_size_gb": 0.0126953125,
+        "ips": {},
+        "archived_months": {},
+        "last_reset_month": datetime.now().strftime("%Y-%m"),
     }
     try:
         with open(DOWNLOAD_TRACKER_FILE, "w") as f:
-            json.dump(defaults, f, indent=2)
-    except Exception as e:
-        print(f"Error writing default download tracker: {e}")
+            _json.dump(defaults, f, indent=2)
+    except Exception:
+        pass
     return defaults
 
 
-def save_download_tracker(tracker):
-    """Save download tracking data to JSON file atomically."""
-    import tempfile
-
+def save_download_tracker(tracker: dict):
     try:
-        dir_name = os.path.dirname(DOWNLOAD_TRACKER_FILE) or "."
-        fd, tmp_path = tempfile.mkstemp(dir=dir_name, suffix=".tmp")
-        try:
-            with os.fdopen(fd, "w") as f:
-                json.dump(tracker, f, indent=2)
-            os.replace(tmp_path, DOWNLOAD_TRACKER_FILE)
-        except Exception:
-            # Clean up temp file on failure
-            try:
-                os.unlink(tmp_path)
-            except OSError:
-                pass
-            raise
-    except Exception as e:
-        print(f"Error saving download tracker: {e}")
-
-
-def reset_tracker_if_new_month(tracker):
-    """Reset monthly counters when a new month begins.
-
-    Archives the previous month's summary to 'archived_months' so historical
-    data is NEVER lost.  Per-IP metadata (platform, browser, user_agent) is
-    preserved across resets so returning users keep their profile.
-    """
-    current_month = datetime.now().strftime("%Y-%m")
-    if tracker.get("last_reset_month") != current_month:
-        old_month = tracker.get("last_reset_month", "unknown")
-
-        # ---------- archive previous month ----------
-        if "archived_months" not in tracker:
-            tracker["archived_months"] = {}
-
-        old_ips = tracker.get("ips", {})
-        tracker["archived_months"][old_month] = {
-            "total_bandwidth_gb": round(
-                tracker.get("total_monthly_bandwidth_gb", 0), 4
-            ),
-            "total_downloads": sum(ip.get("count", 0) for ip in old_ips.values()),
-            "unique_users": len(
-                [ip for ip in old_ips.values() if ip.get("count", 0) > 0]
-            ),
-            "ip_count": len(old_ips),
-        }
-
-        # ---------- reset per-IP monthly counters ----------
-        for ip_data in old_ips.values():
-            ip_data["count"] = 0
-            ip_data["bandwidth_gb"] = 0.0
-            ip_data["active_downloads"] = 0
-            # Keep: platform, browser, user_agent, last_download
-
-        tracker["last_reset_month"] = current_month
-        tracker["total_monthly_bandwidth_gb"] = 0.0
-        save_download_tracker(tracker)
-    return tracker
-
-
-def cleanup_stale_active_downloads(tracker):
-    """Remove active_downloads count for IPs that haven't had download activity in > 10 minutes (likely stalled/disconnected)."""
-    current_time = datetime.now()
-    STALE_SECONDS = 600  # 10 minutes — even the 241 MB APK finishes in ~2 min at 2 MB/s
-    for ip, ip_data in tracker["ips"].items():
-        active_downloads = ip_data.get("active_downloads", 0)
-
-        if active_downloads > 0:
-            # Use download_started_at (set when download begins) for freshness,
-            # falling back to last_download (set on completion) for legacy entries.
-            ref_time_str = ip_data.get("download_started_at") or ip_data.get(
-                "last_download"
-            )
-            if ref_time_str is None:
-                tracker["ips"][ip]["active_downloads"] = 0
-            else:
-                try:
-                    ref_time = datetime.fromisoformat(ref_time_str)
-                    if (current_time - ref_time).total_seconds() > STALE_SECONDS:
-                        tracker["ips"][ip]["active_downloads"] = 0
-                except Exception:
-                    # If we can't parse the timestamp, reset it
-                    tracker["ips"][ip]["active_downloads"] = 0
-
-    return tracker
+        with open(DOWNLOAD_TRACKER_FILE, "w") as f:
+            _json.dump(tracker, f, indent=2)
+    except Exception:
+        pass
 
 
 def get_download_status(client_ip: str):
-    """Get download status for an IP address."""
-    with DOWNLOAD_TRACKER_LOCK:
-        tracker = load_download_tracker()
-        tracker = reset_tracker_if_new_month(tracker)
-        tracker = cleanup_stale_active_downloads(tracker)
-        save_download_tracker(tracker)
-
-    ip_data = tracker["ips"].get(client_ip, {})
-    downloads_this_month = ip_data.get("count", 0)
-    bandwidth_used_gb = ip_data.get("bandwidth_gb", 0.0)
-    active_downloads = ip_data.get("active_downloads", 0)
-
-    # Compute real file sizes instead of using the hardcoded tracker value
+    # Return basic data for the UI. No per-IP tracking is performed.
     file_sizes = {}
     for label, path in [
         ("windows", CONVERSION_FILE_PATH),
@@ -1058,189 +951,34 @@ def get_download_status(client_ip: str):
             file_sizes[label] = 0
 
     return {
-        "downloads_this_month": downloads_this_month,
-        "max_downloads_per_month": tracker.get("per_ip_monthly_limit"),
-        "bandwidth_used_gb": round(bandwidth_used_gb, 2),
-        "file_size_gb": file_sizes.get("windows", tracker.get("file_size_gb", 0)),
+        "downloads_this_month": 0,
+        "max_downloads_per_month": None,
+        "bandwidth_used_gb": 0.0,
+        "file_size_gb": file_sizes.get("windows", 0),
         "file_sizes": file_sizes,
-        "active_downloads": active_downloads,
-        "max_concurrent": tracker["concurrent_per_ip"],
-        "total_monthly_bandwidth_gb": round(tracker["total_monthly_bandwidth_gb"], 2),
-        "monthly_limit_gb": tracker["monthly_limit_gb"],
-        "can_download": active_downloads < tracker["concurrent_per_ip"]
-        and tracker["total_monthly_bandwidth_gb"] < tracker["monthly_limit_gb"],
-        "download_speed_mbps": tracker.get("download_speed_mbps", 2),
+        "active_downloads": 0,
+        "max_concurrent": MAX_CONCURRENT_DOWNLOADS,
+        "total_monthly_bandwidth_gb": 0.0,
+        "monthly_limit_gb": MONTHLY_BANDWIDTH_LIMIT_GB,
+        "can_download": True,
+        "download_speed_mbps": DOWNLOAD_SPEED_MBPS,
     }
 
 
 def check_download_allowed(client_ip: str):
-    """Check if download is allowed for this IP."""
-    with DOWNLOAD_TRACKER_LOCK:
-        tracker = load_download_tracker()
-        tracker = reset_tracker_if_new_month(tracker)
-        tracker = cleanup_stale_active_downloads(tracker)
-        save_download_tracker(tracker)
-
-    # Check monthly limit per IP
-    ip_data = tracker["ips"].get(client_ip, {})
-    _downloads_this_month = ip_data.get("count", 0)
-    active_downloads = ip_data.get("active_downloads", 0)
-
-    if active_downloads >= tracker["concurrent_per_ip"]:
-        return (
-            False,
-            f"Too many concurrent downloads: {active_downloads}/{tracker['concurrent_per_ip']}",
-        )
-
-    if tracker["total_monthly_bandwidth_gb"] >= tracker["monthly_limit_gb"]:
-        return (
-            False,
-            f"Monthly bandwidth limit reached: {tracker['total_monthly_bandwidth_gb']}/{tracker['monthly_limit_gb']} GB",
-        )
-
     return True, "Download allowed"
 
 
 def check_and_start_download(client_ip: str, user_agent: str = ""):
-    """Atomically check if download is allowed AND record the start under one lock.
-
-    Prevents TOCTOU race where two concurrent requests both pass
-    check_download_allowed before either calls record_download_start.
-    Returns (allowed: bool, message: str).
-    """
-    with DOWNLOAD_TRACKER_LOCK:
-        tracker = load_download_tracker()
-        tracker = reset_tracker_if_new_month(tracker)
-        tracker = cleanup_stale_active_downloads(tracker)
-
-        ip_data = tracker["ips"].get(client_ip, {})
-        active_downloads = ip_data.get("active_downloads", 0)
-
-        if active_downloads >= tracker["concurrent_per_ip"]:
-            save_download_tracker(tracker)
-            return (
-                False,
-                f"Too many concurrent downloads: {active_downloads}/{tracker['concurrent_per_ip']}",
-            )
-
-        if tracker["total_monthly_bandwidth_gb"] >= tracker["monthly_limit_gb"]:
-            save_download_tracker(tracker)
-            return (
-                False,
-                f"Monthly bandwidth limit reached: {tracker['total_monthly_bandwidth_gb']}/{tracker['monthly_limit_gb']} GB",
-            )
-
-        # Allowed — atomically record the start
-        if client_ip not in tracker["ips"]:
-            tracker["ips"][client_ip] = {
-                "count": 0,
-                "bandwidth_gb": 0.0,
-                "active_downloads": 0,
-                "last_download": None,
-            }
-
-        tracker["ips"][client_ip]["active_downloads"] = (
-            tracker["ips"][client_ip].get("active_downloads", 0) + 1
-        )
-        tracker["ips"][client_ip]["download_started_at"] = datetime.now().isoformat()
-
-        if user_agent:
-            tracker["ips"][client_ip]["platform"] = _parse_platform(user_agent)
-            tracker["ips"][client_ip]["browser"] = _parse_browser(user_agent)
-            tracker["ips"][client_ip]["user_agent"] = user_agent[:256]
-
-        save_download_tracker(tracker)
-        return True, "Download allowed"
-
-
-def _parse_platform(ua: str) -> str:
-    """Extract platform (OS) from a User-Agent string."""
-    ua_lower = (ua or "").lower()
-    if "android" in ua_lower:
-        return "Android"
-    elif "iphone" in ua_lower or "ipad" in ua_lower:
-        return "iOS"
-    elif "windows" in ua_lower:
-        return "Windows"
-    elif "macintosh" in ua_lower or "mac os" in ua_lower:
-        return "macOS"
-    elif "linux" in ua_lower:
-        return "Linux"
-    elif "cros" in ua_lower:
-        return "ChromeOS"
-    return "Unknown"
-
-
-def _parse_browser(ua: str) -> str:
-    """Extract browser name from a User-Agent string."""
-    ua_lower = (ua or "").lower()
-    if "edg" in ua_lower:
-        return "Edge"
-    elif "opr" in ua_lower or "opera" in ua_lower:
-        return "Opera"
-    elif "firefox" in ua_lower:
-        return "Firefox"
-    elif "chrome" in ua_lower or "chromium" in ua_lower:
-        return "Chrome"
-    elif "safari" in ua_lower:
-        return "Safari"
-    elif "curl" in ua_lower or "wget" in ua_lower:
-        return "CLI"
-    return "Other"
+    return True, "Download allowed"
 
 
 def record_download_complete(client_ip: str, bytes_downloaded: int):
-    """Record when a download completes."""
-    with DOWNLOAD_TRACKER_LOCK:
-        tracker = load_download_tracker()
-        tracker = reset_tracker_if_new_month(tracker)
-
-        if client_ip not in tracker["ips"]:
-            tracker["ips"][client_ip] = {
-                "count": 0,
-                "bandwidth_gb": 0.0,
-                "active_downloads": 0,
-                "last_download": None,
-            }
-
-        gb_downloaded = bytes_downloaded / (1024**3)
-        tracker["ips"][client_ip]["count"] = (
-            tracker["ips"][client_ip].get("count", 0) + 1
-        )
-        tracker["ips"][client_ip]["bandwidth_gb"] = (
-            tracker["ips"][client_ip].get("bandwidth_gb", 0.0) + gb_downloaded
-        )
-        tracker["ips"][client_ip]["active_downloads"] = max(
-            0, tracker["ips"][client_ip].get("active_downloads", 1) - 1
-        )
-        tracker["ips"][client_ip]["last_download"] = datetime.now().isoformat()
-        tracker["total_monthly_bandwidth_gb"] = (
-            tracker.get("total_monthly_bandwidth_gb", 0) + gb_downloaded
-        )
-
-        save_download_tracker(tracker)
+    return
 
 
 def record_download_cancel(client_ip: str, bytes_sent: int = 0):
-    """Record when a download is cancelled, including any partial bandwidth used."""
-    with DOWNLOAD_TRACKER_LOCK:
-        tracker = load_download_tracker()
-        tracker = reset_tracker_if_new_month(tracker)
-
-        if client_ip in tracker["ips"]:
-            tracker["ips"][client_ip]["active_downloads"] = max(
-                0, tracker["ips"][client_ip].get("active_downloads", 1) - 1
-            )
-            # Record partial bandwidth so usage tracking stays accurate
-            if bytes_sent > 0:
-                gb_sent = bytes_sent / (1024**3)
-                tracker["ips"][client_ip]["bandwidth_gb"] = (
-                    tracker["ips"][client_ip].get("bandwidth_gb", 0.0) + gb_sent
-                )
-                tracker["total_monthly_bandwidth_gb"] = (
-                    tracker.get("total_monthly_bandwidth_gb", 0) + gb_sent
-                )
-            save_download_tracker(tracker)
+    return
 
 
 def record_github_link(
@@ -1249,314 +987,7 @@ def record_github_link(
     release_tag: str = None,
     user_agent: str = None,
 ):
-    """Record that we linked a user to the GitHub release for a download.
-
-    This increments the per-IP download count and marks last_download but
-    does NOT attempt to account for bandwidth because the file is hosted
-    on GitHub. Use this to avoid serving files locally.
-    """
-    with DOWNLOAD_TRACKER_LOCK:
-        tracker = load_download_tracker()
-        tracker = reset_tracker_if_new_month(tracker)
-
-        if client_ip not in tracker["ips"]:
-            tracker["ips"][client_ip] = {
-                "count": 0,
-                "bandwidth_gb": 0.0,
-                "active_downloads": 0,
-                "last_download": None,
-            }
-
-        tracker["ips"][client_ip]["count"] = (
-            tracker["ips"][client_ip].get("count", 0) + 1
-        )
-        tracker["ips"][client_ip]["last_download"] = datetime.now().isoformat()
-        tracker["ips"][client_ip]["platform"] = platform
-        if user_agent:
-            tracker["ips"][client_ip]["browser"] = _parse_browser(user_agent)
-            tracker["ips"][client_ip]["user_agent"] = user_agent[:256]
-        # Track github links separately for analytics if desired
-        tracker.setdefault("github_linked_downloads", 0)
-        tracker["github_linked_downloads"] = (
-            tracker.get("github_linked_downloads", 0) + 1
-        )
-        # Optionally store last release tag referenced
-        if release_tag:
-            tracker["last_github_release_tag"] = release_tag
-        save_download_tracker(tracker)
-
-    # ----------------------------------------------------
-    # Download API endpoints (streaming) — integrate with tracker
-    # These endpoints serve artifacts from a protected downloads directory
-    # outside the webroot. If a file is not present locally, we fall back
-    # to redirecting to the GitHub release to avoid bandwidth costs.
-    # ----------------------------------------------------
-    from fastapi.responses import StreamingResponse
-
-    def _open_file_range(path: str, start: int = None, end: int = None):
-        """Yield file chunks honoring an optional byte range."""
-        chunk_size = 64 * 1024
-        with open(path, "rb") as f:
-            if start:
-                f.seek(start)
-            remaining = None
-            if end is not None and start is not None:
-                remaining = end - start + 1
-            while True:
-                if remaining is not None:
-                    to_read = min(chunk_size, remaining)
-                else:
-                    to_read = chunk_size
-                data = f.read(to_read)
-                if not data:
-                    break
-                yield data
-                if remaining is not None:
-                    remaining -= len(data)
-                    if remaining <= 0:
-                        break
-
-    def _serve_protected_file(path: str, request: Request, filename: str):
-        """Serve a protected file with simple Range support and tracking.
-
-        Returns a StreamingResponse or raises HTTPException on limits.
-        """
-        client_ip = get_client_ip_sync(request)
-        user_agent = request.headers.get("user-agent", "")
-
-        allowed, msg = check_and_start_download(client_ip, user_agent)
-        if not allowed:
-            raise HTTPException(status_code=429, detail=msg)
-
-        try:
-            file_size = os.path.getsize(path)
-        except OSError:
-            # If file is missing, cancel the start and return 404
-            record_download_cancel(client_ip, 0)
-            raise HTTPException(status_code=404, detail="File not found")
-
-        range_header = request.headers.get("range")
-        start = None
-        end = None
-        status_code = 200
-        headers = {
-            "Accept-Ranges": "bytes",
-            "Content-Disposition": f'attachment; filename="{filename}"',
-        }
-        if range_header:
-            # Expecting header like: bytes=START-END
-            try:
-                _, range_spec = range_header.split("=")
-                start_s, end_s = range_spec.split("-")
-                start = int(start_s) if start_s else 0
-                end = int(end_s) if end_s else file_size - 1
-                if start >= file_size:
-                    record_download_cancel(client_ip, 0)
-                    raise HTTPException(
-                        status_code=416, detail="Requested Range Not Satisfiable"
-                    )
-                status_code = 206
-                headers["Content-Range"] = f"bytes {start}-{end}/{file_size}"
-                headers["Content-Length"] = str(end - start + 1)
-            except Exception:
-                # Malformed Range header — ignore and serve full file
-                start = None
-                end = None
-        else:
-            headers["Content-Length"] = str(file_size)
-
-        def iterfile():
-            bytes_sent = 0
-            try:
-                for chunk in _open_file_range(path, start, end):
-                    bytes_sent += len(chunk)
-                    yield chunk
-                # Record completion
-                record_download_complete(client_ip, bytes_sent)
-            except GeneratorExit:
-                # Client disconnected
-                record_download_cancel(client_ip, bytes_sent)
-                raise
-            except Exception:
-                # On any error, ensure we decrement active_downloads
-                record_download_cancel(client_ip, bytes_sent)
-                raise
-
-        return StreamingResponse(
-            iterfile(),
-            media_type="application/octet-stream",
-            status_code=status_code,
-            headers=headers,
-        )
-
-    @app.post(ENDPOINT + "/download/conversion/check")
-    def api_download_conversion_check(request: Request):
-        client_ip = get_client_ip_sync(request)
-        allowed, message = check_download_allowed(client_ip)
-        if not allowed:
-            raise HTTPException(status_code=429, detail=message)
-        return JSONResponse(content={"detail": message})
-
-    @app.get(ENDPOINT + "/download/conversion/status")
-    def api_download_conversion_status(request: Request):
-        client_ip = get_client_ip_sync(request)
-        status = get_download_status(client_ip)
-        return JSONResponse(content=status)
-
-    # Replace local streaming with GitHub release redirects to offload bandwidth.
-    GITHUB_RELEASE_TAG = os.getenv("GITHUB_RELEASE_TAG", "v5.2.0")
-    GITHUB_RELEASE_URL = (
-        f"https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/{GITHUB_RELEASE_TAG}"
-    )
-
-    @app.get(ENDPOINT + "/download/conversion")
-    def api_download_conversion_root(request: Request):
-        # Prefer serving from protected storage if the artifact is present.
-        if os.path.exists(CONVERSION_FILE_PATH):
-            return _serve_protected_file(
-                CONVERSION_FILE_PATH, request, "ConvertTheSpireReborn.zip"
-            )
-        # Fallback: record and redirect to GitHub release
-        client_ip = get_client_ip_sync(request)
-        user_agent = request.headers.get("user-agent", "")
-        platform = _parse_platform(user_agent)
-        try:
-            record_github_link(
-                client_ip, platform, release_tag=GITHUB_RELEASE_TAG, user_agent=user_agent
-            )
-        except Exception:
-            pass
-        from fastapi.responses import RedirectResponse
-
-        return RedirectResponse(url=GITHUB_RELEASE_URL)
-
-    @app.get(ENDPOINT + "/download/conversion/apk")
-    def api_download_conversion_apk(request: Request):
-        if os.path.exists(CONVERSION_APK_PATH):
-            return _serve_protected_file(
-                CONVERSION_APK_PATH, request, "ConvertTheSpireReborn.apk"
-            )
-        client_ip = get_client_ip_sync(request)
-        user_agent = request.headers.get("user-agent", "")
-        platform = _parse_platform(user_agent)
-        try:
-            record_github_link(
-                client_ip, platform, release_tag=GITHUB_RELEASE_TAG, user_agent=user_agent
-            )
-        except Exception:
-            pass
-        from fastapi.responses import RedirectResponse
-
-        return RedirectResponse(url=GITHUB_RELEASE_URL)
-
-    @app.get(ENDPOINT + "/download/conversion/linux")
-    def api_download_conversion_linux(request: Request):
-        if os.path.exists(CONVERSION_LINUX_PATH):
-            return _serve_protected_file(CONVERSION_LINUX_PATH, request, "linux.zip")
-        client_ip = get_client_ip_sync(request)
-        user_agent = request.headers.get("user-agent", "")
-        platform = _parse_platform(user_agent)
-        try:
-            record_github_link(
-                client_ip, platform, release_tag=GITHUB_RELEASE_TAG, user_agent=user_agent
-            )
-        except Exception:
-            pass
-        from fastapi.responses import RedirectResponse
-
-        return RedirectResponse(url=GITHUB_RELEASE_URL)
-
-    @app.get(ENDPOINT + "/download/conversion/macos")
-    def api_download_conversion_macos(request: Request):
-        if os.path.exists(CONVERSION_MACOS_PATH):
-            return _serve_protected_file(
-                CONVERSION_MACOS_PATH, request, "ConvertTheSpireReborn-macOS.zip"
-            )
-        client_ip = get_client_ip_sync(request)
-        user_agent = request.headers.get("user-agent", "")
-        platform = _parse_platform(user_agent)
-        try:
-            record_github_link(
-                client_ip, platform, release_tag=GITHUB_RELEASE_TAG, user_agent=user_agent
-            )
-        except Exception:
-            pass
-        from fastapi.responses import RedirectResponse
-
-        return RedirectResponse(url=GITHUB_RELEASE_URL)
-
-    @app.get(ENDPOINT + "/download/conversion/log")
-    def api_download_conversion_log(request: Request, platform: str = "unknown"):
-        """Lightweight logging endpoint: record the click and return the GitHub URL.
-
-        Frontend should call this via fetch(), then navigate the user to the
-        returned `redirect` URL. This avoids relying on browser redirects and
-        works even if static hosting serves the same hrefs.
-        """
-        client_ip = get_client_ip_sync(request)
-        user_agent = request.headers.get("user-agent", "")
-        try:
-            record_github_link(
-                client_ip, platform, release_tag=GITHUB_RELEASE_TAG, user_agent=user_agent
-            )
-        except Exception:
-            pass
-        return JSONResponse(content={"redirect": GITHUB_RELEASE_URL})
-
-
-# ====================================================
-# Download Analytics — IP geolocation + stats
-# ====================================================
-import urllib.request as _urllib_req
-
-_geo_cache: dict = {}  # in-memory cache: ip -> {country, countryCode, city, region}
-
-
-def _batch_geolocate(ips: list) -> dict:
-    """Resolve IPs to countries via ip-api.com batch endpoint (max 100 per call)."""
-    results = {}
-    uncached = [ip for ip in ips if ip not in _geo_cache]
-
-    # Serve cached entries first
-    for ip in ips:
-        if ip in _geo_cache:
-            results[ip] = _geo_cache[ip]
-
-    # Batch request uncached IPs (ip-api allows 100 per POST)
-    for i in range(0, len(uncached), 100):
-        batch = uncached[i : i + 100]
-        try:
-            payload = json.dumps([{"query": ip} for ip in batch]).encode("utf-8")
-            req = _urllib_req.Request(
-                "http://ip-api.com/batch?fields=query,country,countryCode,city,regionName",
-                data=payload,
-                headers={"Content-Type": "application/json"},
-                method="POST",
-            )
-            with _urllib_req.urlopen(req, timeout=10) as resp:
-                entries = json.loads(resp.read().decode("utf-8"))
-                for entry in entries:
-                    ip_addr = entry.get("query", "")
-                    geo = {
-                        "country": entry.get("country", "Unknown"),
-                        "countryCode": entry.get("countryCode", "XX"),
-                        "city": entry.get("city", ""),
-                        "region": entry.get("regionName", ""),
-                    }
-                    _geo_cache[ip_addr] = geo
-                    results[ip_addr] = geo
-        except Exception as e:
-            logger.warning(f"GeoIP batch lookup failed: {e}")
-            for ip_addr in batch:
-                fallback = {
-                    "country": "Unknown",
-                    "countryCode": "XX",
-                    "city": "",
-                    "region": "",
-                }
-                results[ip_addr] = fallback
-
-    return results
+    return
 
 
 # ====================================================
