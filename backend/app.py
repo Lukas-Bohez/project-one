@@ -1404,8 +1404,9 @@ def record_github_link(
         return JSONResponse(content=status)
 
     # Replace local streaming with GitHub release redirects to offload bandwidth.
+    GITHUB_RELEASE_TAG = os.getenv("GITHUB_RELEASE_TAG", "v5.2.0")
     GITHUB_RELEASE_URL = (
-        "https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v5.1.4"
+        f"https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/{GITHUB_RELEASE_TAG}"
     )
 
     @app.get(ENDPOINT + "/download/conversion")
@@ -1421,7 +1422,7 @@ def record_github_link(
         platform = _parse_platform(user_agent)
         try:
             record_github_link(
-                client_ip, platform, release_tag="v5.1.4", user_agent=user_agent
+                client_ip, platform, release_tag=GITHUB_RELEASE_TAG, user_agent=user_agent
             )
         except Exception:
             pass
@@ -1440,7 +1441,7 @@ def record_github_link(
         platform = _parse_platform(user_agent)
         try:
             record_github_link(
-                client_ip, platform, release_tag="v5.1.4", user_agent=user_agent
+                client_ip, platform, release_tag=GITHUB_RELEASE_TAG, user_agent=user_agent
             )
         except Exception:
             pass
@@ -1457,7 +1458,7 @@ def record_github_link(
         platform = _parse_platform(user_agent)
         try:
             record_github_link(
-                client_ip, platform, release_tag="v5.1.4", user_agent=user_agent
+                client_ip, platform, release_tag=GITHUB_RELEASE_TAG, user_agent=user_agent
             )
         except Exception:
             pass
@@ -1476,7 +1477,7 @@ def record_github_link(
         platform = _parse_platform(user_agent)
         try:
             record_github_link(
-                client_ip, platform, release_tag="v5.1.4", user_agent=user_agent
+                client_ip, platform, release_tag=GITHUB_RELEASE_TAG, user_agent=user_agent
             )
         except Exception:
             pass
@@ -1496,7 +1497,7 @@ def record_github_link(
         user_agent = request.headers.get("user-agent", "")
         try:
             record_github_link(
-                client_ip, platform, release_tag="v5.1.4", user_agent=user_agent
+                client_ip, platform, release_tag=GITHUB_RELEASE_TAG, user_agent=user_agent
             )
         except Exception:
             pass
