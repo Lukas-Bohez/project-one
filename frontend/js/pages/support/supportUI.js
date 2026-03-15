@@ -1,5 +1,5 @@
 /**
- * Support UI – Handles user interface interactions for multi-room support chat
+ * Support UI - Handles user interface interactions for multi-room support chat
  */
 class SupportUI {
     constructor() {

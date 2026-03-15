@@ -1245,7 +1245,7 @@ function initializeDemo() {
     // Render initial boss view
     container.innerHTML = renderBossView();
     
-    // Setup view switcher — only for buttons with data-view (exclude theme toggle)
+    // Setup view switcher - only for buttons with data-view (exclude theme toggle)
     const viewButtons = document.querySelectorAll('.view-switch-btn[data-view]');
     viewButtons.forEach(btn => {
         btn.addEventListener('click', () => {

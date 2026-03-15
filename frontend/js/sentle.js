@@ -874,7 +874,7 @@ class SentleGame {
                 this.handleCorrectGuess();
             } else {
                 if (this.wordGuesses.length >= this.maxAttemptsPerWord) {
-                    // Failed this word — add it to guessedWords so arrangement stage has it
+                    // Failed this word - add it to guessedWords so arrangement stage has it
                     this.guessedWords.push(this.currentWord);
                     this.showMessage(`Out of attempts for "${this.currentWord}". Moving to next word.`, 'warning');
                     this.currentWordIndex += 1;
@@ -1791,6 +1791,6 @@ window.switchLeaderboardTab = function(tab) {
 
 // Initialize game when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    // Theme is handled by themeManager.js — do NOT override it here
+    // Theme is handled by themeManager.js - do NOT override it here
     gameInstance = new SentleGame();
 });

@@ -329,7 +329,7 @@ input, button, select, textarea {
 }
 
 /*---------------------------------------/*
- # DARK MODE — browser-compatibility overrides
+ # DARK MODE - browser-compatibility overrides
 /*---------------------------------------*/
 [data-theme="dark"] ::-webkit-scrollbar-track {
     background: #1a1a2e;

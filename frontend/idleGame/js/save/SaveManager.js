@@ -98,12 +98,12 @@ class SaveManager {
     }
     
     async refreshToken() {
-        // Token expired — user needs to re-login
-        console.log('🔐 Token expired — session ended, please log in again');
+        // Token expired - user needs to re-login
+        console.log('🔐 Token expired - session ended, please log in again');
         this.isAuthenticated = false;
         this.authToken = null;
         localStorage.removeItem('industrialEmpire_auth');
-        this.gameEngine.showNotification('⏰ Session expired — please log in again to save/load.');
+        this.gameEngine.showNotification('⏰ Session expired - please log in again to save/load.');
         return false;
     }
 
@@ -770,7 +770,7 @@ class SaveManager {
             state.efficiency = Object.assign({}, customData.efficiency);
         }
         
-        // Restore events (counter only — active event is session-specific)
+        // Restore events (counter only - active event is session-specific)
         if (customData.events) {
             state.events = {
                 lastEventTime: 0,

@@ -1,5 +1,5 @@
 /**
- * Admin Panel — Community Themes Moderation
+ * Admin Panel - Community Themes Moderation
  * Full moderation workflow: preview, edit questions, approve, reject, promote
  * Includes search, sort, bulk actions, and proper rejection reason modal
  */

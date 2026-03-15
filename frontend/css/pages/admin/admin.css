@@ -2703,7 +2703,7 @@ textarea[placeholder*="Brief introduction"] {
 }
 
 /*---------------------------------------/*
- # COMMUNITY MODERATION — Cards
+ # COMMUNITY MODERATION - Cards
 /*---------------------------------------*/
 .c-community-card {
     background: var(--admin-card);
@@ -2801,7 +2801,7 @@ textarea[placeholder*="Brief introduction"] {
 .c-btn--edit-community:hover { background: #4f46e5; }
 
 /*---------------------------------------/*
- # COMMUNITY MODERATION — Preview Modal
+ # COMMUNITY MODERATION - Preview Modal
 /*---------------------------------------*/
 .c-preview-section { padding: 12px 0; }
 .c-preview-meta {
@@ -2855,7 +2855,7 @@ textarea[placeholder*="Brief introduction"] {
 }
 
 /*---------------------------------------/*
- # COMMUNITY MODERATION — Reject Modal
+ # COMMUNITY MODERATION - Reject Modal
 /*---------------------------------------*/
 .c-reject-modal {
     position: fixed;
@@ -2908,7 +2908,7 @@ textarea[placeholder*="Brief introduction"] {
 }
 
 /*---------------------------------------/*
- # COMMUNITY — Search & Sort bar
+ # COMMUNITY - Search & Sort bar
 /*---------------------------------------*/
 .c-community-toolbar {
     display: flex;
@@ -2928,7 +2928,7 @@ textarea[placeholder*="Brief introduction"] {
 }
 
 /*---------------------------------------/*
- # COMMUNITY — Empty state
+ # COMMUNITY - Empty state
 /*---------------------------------------*/
 .c-community-empty {
     text-align: center;
@@ -2951,7 +2951,7 @@ textarea[placeholder*="Brief introduction"] {
 }
 
 /*---------------------------------------/*
- # COMMUNITY — Bulk action bar
+ # COMMUNITY - Bulk action bar
 /*---------------------------------------*/
 .c-bulk-bar {
     display: flex;

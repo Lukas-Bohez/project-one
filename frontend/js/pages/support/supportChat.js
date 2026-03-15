@@ -1,5 +1,5 @@
 /**
- * Support Chat System – Multi-Room
+ * Support Chat System - Multi-Room
  * Connects via Socket.IO, manages rooms, loads/sends messages.
  */
 class SupportChatSystem {
@@ -333,7 +333,7 @@ class SupportChatSystem {
                 const err = await res.json();
                 throw new Error(err.detail || 'Failed to send');
             }
-            // Message will arrive via socket event – no manual append needed
+            // Message will arrive via socket event - no manual append needed
             // But if socket is disconnected, reload manually
             if (!this.socket || !this.socket.connected) {
                 setTimeout(() => this.loadMessages(this.activeRoomId), 200);
@@ -347,7 +347,7 @@ class SupportChatSystem {
 
     /* ──────────────────── Helpers ──────────────────── */
     isAdmin() {
-        // Simple heuristic – the backend does the real check
+        // Simple heuristic - the backend does the real check
         // We could store userRoleId, but for now return false (UI only)
         return false;
     }

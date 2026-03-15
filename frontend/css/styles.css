@@ -77,7 +77,7 @@ html, body {
     /* Text colors */
     --text-60: #111418; /* primary text (dark) */
     --text-30: #4b5561; /* secondary text (muted) */
-    --text-10: #64748b; /* subtle muted — WCAG AA on white */
+    --text-10: #64748b; /* subtle muted - WCAG AA on white */
 
     /* UI helpers */
     --border-color: #d3d7db;
@@ -143,7 +143,7 @@ html[data-theme="dark"],
     /* Text colors */
     --text-60: #e6eef8; /* primary text (light) */
     --text-30: #b9c5d6; /* secondary text */
-    --text-10: #94a3b8; /* subtle muted — readable on dark bg */
+    --text-10: #94a3b8; /* subtle muted - readable on dark bg */
 
     /* UI helpers */
     --border-color: #2a3034;
@@ -276,7 +276,7 @@ body:not([data-theme]) .spire-bg-light {
     pointer-events: none;
 }
 
-/* Smooth transitions for theme changes — scoped to key elements for performance */
+/* Smooth transitions for theme changes - scoped to key elements for performance */
 .c-header, .c-footer, .c-nav, .c-nav-btn, .c-section-panel, .c-product-card,
 .c-btn, .c-badge, .o-container::before {
     transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
@@ -779,7 +779,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     font-size: var(--font-size-sm);
 }
 
-/* Theme toggle button (formerly servo button) — on the homepage this is a regular
+/* Theme toggle button (formerly servo button) - on the homepage this is a regular
    grid button styled via bw-btn. The gradient + special padding only causes conflicts.
    Standalone toggle styling lives in legal.css / per-page CSS via .c-theme-toggle. */
 #servoTestBtn i {
@@ -1475,7 +1475,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 
 
 /* =====================================================
-   PRODUCT CARDS — Hero download & Lofi extension promos
+   PRODUCT CARDS - Hero download & Lofi extension promos
    ===================================================== */
 .c-product-card {
     position: relative;
@@ -1644,7 +1644,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     margin-bottom: 1rem;
 }
 
-/* CTA button — primary download action */
+/* CTA button - primary download action */
 .c-btn--cta {
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: #fff;
@@ -1685,7 +1685,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
 }
 
-/* Outline button — secondary action */
+/* Outline button - secondary action */
 .c-btn--outline {
     background: rgba(255, 255, 255, 0.8);
     color: var(--primary-color);
@@ -1971,7 +1971,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 
 
 /* =====================================================
-   MODAL — Setup instructions overlay (redesigned)
+   MODAL - Setup instructions overlay (redesigned)
    ===================================================== */
 
 /* Override general modal styles for conversion download modal */
@@ -2162,7 +2162,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 
 
 /* =====================================================
-   DARK MODE — Product cards, modal, badges
+   DARK MODE - Product cards, modal, badges
    ===================================================== */
 [data-theme="dark"] .c-product-card,
 .theme-dark .c-product-card {
@@ -2715,7 +2715,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     }
 }
 
-/* Very small screens — tighten modal steps so short instructions use fewer lines */
+/* Very small screens - tighten modal steps so short instructions use fewer lines */
 @media (max-width: 420px) {
     .c-modal__body {
         padding: 0.65rem 0.75rem;

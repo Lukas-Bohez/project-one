@@ -43,14 +43,14 @@ body[data-theme="dark"] .c-theme-toggle:hover {
 }
 
 .c-theme-toggle::before {
-    content: '\2600';  /* ☀ sun text glyph – inherits CSS color, always legible */
+    content: '\2600';  /* ☀ sun text glyph - inherits CSS color, always legible */
     font-size: 1.25rem;
     line-height: 1;
 }
 
 [data-theme="dark"] .c-theme-toggle::before,
 body[data-theme="dark"] .c-theme-toggle::before {
-    content: '\263E';  /* ☾ moon text glyph – inherits CSS color */
+    content: '\263E';  /* ☾ moon text glyph - inherits CSS color */
 }
 
 @media (max-width: 768px) {

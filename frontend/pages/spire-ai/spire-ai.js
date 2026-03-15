@@ -1,5 +1,5 @@
 /**
- * Quiz The Spire — Hub & Spire AI Collaboration
+ * Quiz The Spire - Hub & Spire AI Collaboration
  * Central hub: play (with multi-theme picker), community, create, CSV upload, admin review
  */
 
@@ -118,7 +118,7 @@
     }
 
     async function doLogin(firstName, lastName, password) {
-        // Use community auth endpoint — password is optional
+        // Use community auth endpoint - password is optional
         const body = { first_name: firstName, last_name: lastName };
         if (password) body.password = password;
         const r = await fetch(`${COMMUNITY_API}/auth`, {
@@ -137,7 +137,7 @@
     }
 
     async function doRegister(firstName, lastName, password) {
-        // Use community auth endpoint — password is optional, creates account if needed
+        // Use community auth endpoint - password is optional, creates account if needed
         const body = { first_name: firstName, last_name: lastName };
         if (password) body.password = password;
         const r = await fetch(`${COMMUNITY_API}/auth`, {
@@ -181,7 +181,7 @@
                 await doLogin(stored.firstName, stored.lastName, stored.password || null);
                 showApp();
             } catch {
-                // stored credentials invalid — show login modal
+                // stored credentials invalid - show login modal
             }
         }
     }
@@ -212,7 +212,7 @@
     };
 
     // ══════════════════════════════════════
-    //  PLAY TAB — Sessions + Theme Picker
+    //  PLAY TAB - Sessions + Theme Picker
     // ══════════════════════════════════════
     async function loadPlayTab() {
         loadActiveSessions();
@@ -331,12 +331,12 @@
                 if (bar) bar.style.display = '';
             }
         } catch {
-            // Stats require admin — keep the bar hidden for non-admin users
+            // Stats require admin - keep the bar hidden for non-admin users
         }
     }
 
     // ══════════════════════════════════════
-    //  THEME PICKER — Multi-Select
+    //  THEME PICKER - Multi-Select
     // ══════════════════════════════════════
     async function loadThemePicker() {
         const grid = $('#themePickerGrid');
@@ -447,7 +447,7 @@
         btn.addEventListener('click', async () => {
             if (selectedThemes.size === 0) return toast('Select at least one theme', 'error');
 
-            // Gather selected theme IDs from the stored Map (not DOM — other tab cards may not exist)
+            // Gather selected theme IDs from the stored Map (not DOM - other tab cards may not exist)
             const themeIds = [];
             const themeData = [];
             selectedThemeData.forEach((meta, key) => {
@@ -479,7 +479,7 @@
                 sessionStorage.setItem('quiz_selected_themes', JSON.stringify(themeData));
                 sessionStorage.setItem('quiz_session_id', String(result.session_id));
 
-                toast(`Session created with ${result.theme_count} theme${result.theme_count > 1 ? 's' : ''} — voting starts now!`, 'success');
+                toast(`Session created with ${result.theme_count} theme${result.theme_count > 1 ? 's' : ''} - voting starts now!`, 'success');
 
                 // Navigate to quiz page with session ID
                 setTimeout(() => {
@@ -496,7 +496,7 @@
     }
 
     // ══════════════════════════════════════
-    //  EXPLORE TAB — Community Themes + Admin Review
+    //  EXPLORE TAB - Community Themes + Admin Review
     // ══════════════════════════════════════
     async function loadExploreTab() {
         try {
@@ -540,7 +540,7 @@
                         <div class="sai-review-card__meta">
                             <span><i class="fas fa-user"></i> ${esc(t.creator_name || 'Anonymous')}</span>
                             <span><i class="fas fa-question-circle"></i> ${t.question_count || 0} questions</span>
-                            <span><i class="fas fa-calendar"></i> ${t.created_at ? new Date(t.created_at).toLocaleDateString() : '—'}</span>
+                            <span><i class="fas fa-calendar"></i> ${t.created_at ? new Date(t.created_at).toLocaleDateString() : '-'}</span>
                         </div>
                         <div class="sai-review-card__actions">
                             <button class="sai-btn sai-btn--ghost sai-btn--sm" onclick="previewReviewTheme(${t.id})">
@@ -560,7 +560,7 @@
                 `).join('')}
             `;
         } catch {
-            // Not admin — no review banner
+            // Not admin - no review banner
         }
     }
 
@@ -733,7 +733,7 @@
             });
             toast('Thanks for rating!', 'success');
         } catch (e) {
-            toast('Rating failed — ' + (e.detail || 'try again'), 'error');
+            toast('Rating failed - ' + (e.detail || 'try again'), 'error');
         }
     };
 
@@ -863,7 +863,7 @@
             loadQuestions(activeThemeId);
             return;
         }
-        // Otherwise reset to step 1 — fresh creation flow
+        // Otherwise reset to step 1 - fresh creation flow
         setCreateStep(1);
         const form = $('#createThemeForm');
         if (form) { form.style.display = ''; form.reset(); }
@@ -1026,7 +1026,7 @@
         try {
             const themes = await api(`/themes?creator_id=${currentUser.id}`);
             const select = $('#csvThemeSelect');
-            select.innerHTML = '<option value="">— Select a theme —</option>';
+            select.innerHTML = '<option value="">- Select a theme -</option>';
             (themes || []).forEach(t => {
                 const opt = document.createElement('option');
                 opt.value = t.id;
@@ -1139,7 +1139,7 @@
         try {
             const themes = await api(`/themes?creator_id=${currentUser.id}`);
             const select = $('#pasteThemeSelect');
-            select.innerHTML = '<option value="">— Select a theme —</option>';
+            select.innerHTML = '<option value="">- Select a theme -</option>';
             (themes || []).forEach(t => {
                 const opt = document.createElement('option');
                 opt.value = t.id;
@@ -1301,7 +1301,7 @@
                 console.log('[SpireAI] Hub socket connected');
             });
 
-            // A new session was just created — refresh the list immediately
+            // A new session was just created - refresh the list immediately
             hubSocket.on('session_created', (data) => {
                 console.log('[SpireAI] New session created:', data);
                 loadActiveSessions();
@@ -1336,7 +1336,7 @@
                 showApp();
                 toast(`Welcome back, ${fn}!`, 'success');
             } catch {
-                toast('Login failed — check your credentials', 'error');
+                toast('Login failed - check your credentials', 'error');
             }
         });
 
@@ -1350,7 +1350,7 @@
                 showApp();
                 toast(`Welcome, ${fn}!`, 'success');
             } catch {
-                toast('Registration failed — try different credentials', 'error');
+                toast('Registration failed - try different credentials', 'error');
             }
         });
 
@@ -1370,7 +1370,7 @@
             });
         }
 
-        // Modal backdrop close (skip login modal — would leave blank page)
+        // Modal backdrop close (skip login modal - would leave blank page)
         $$('.sai-modal__backdrop').forEach(bd => {
             bd.addEventListener('click', () => {
                 const modal = bd.parentElement;

@@ -1,5 +1,5 @@
 /* ============================================
-   Quiz The Spire — Hub Stylesheet
+   Quiz The Spire - Hub Stylesheet
    ============================================ */
 
 :root {
@@ -864,7 +864,7 @@ body {
 .sai-theme-card__creator { font-size: 0.78rem; color: var(--sai-text-muted); }
 
 /* ═══════════════════════════════════
-   CREATE — QUESTION BUILDER
+   CREATE - QUESTION BUILDER
    ═══════════════════════════════════ */
 .sai-builder {
     margin-top: 32px;
@@ -994,7 +994,7 @@ body {
 }
 
 /* ═══════════════════════════════════
-   CREATE TAB — STEP INDICATOR + CARDS
+   CREATE TAB - STEP INDICATOR + CARDS
    ═══════════════════════════════════ */
 .sai-create-steps {
     display: flex;

@@ -27,7 +27,7 @@
     /* Text colors */
     --text-60: #111418; /* primary text (dark) */
     --text-30: #4b5561; /* secondary text (muted) */
-    --text-10: #64748b; /* subtle muted — WCAG AA on white */
+    --text-10: #64748b; /* subtle muted - WCAG AA on white */
 
     /* UI helpers */
     --border-color: #d3d7db;
@@ -69,7 +69,7 @@
     /* Text colors */
     --text-60: #e6eef8; /* primary text (light) */
     --text-30: #b9c5d6; /* secondary text */
-    --text-10: #94a3b8; /* subtle muted — readable on dark bg */
+    --text-10: #94a3b8; /* subtle muted - readable on dark bg */
 
     /* UI helpers */
     --border-color: #2a3034;
@@ -129,13 +129,13 @@ html, body {
 }
 
 .c-theme-toggle::before {
-    content: '\2600';  /* ☀ sun text glyph – inherits button color */
+    content: '\2600';  /* ☀ sun text glyph - inherits button color */
     font-size: 0.9rem;
     transition: all 0.3s ease;
 }
 
 [data-theme="dark"] .c-theme-toggle::before {
-    content: '\263E';  /* ☾ moon text glyph – inherits button color */
+    content: '\263E';  /* ☾ moon text glyph - inherits button color */
 }
 
 /* Responsive theme button */

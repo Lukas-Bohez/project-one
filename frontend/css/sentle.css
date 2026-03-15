@@ -422,7 +422,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════
-   LEADERBOARD SECTION — Tabbed design
+   LEADERBOARD SECTION - Tabbed design
    ═══════════════════════════════════════════ */
 .leaderboard-section {
     width: 100%;
@@ -469,7 +469,7 @@ body {
 
 [data-theme="dark"] .leaderboard-tab.active { color: #7ec87e; border-bottom-color: #7ec87e; }
 
-/* Card container — only visible card is shown */
+/* Card container - only visible card is shown */
 .leaderboard-card {
     display: none;
     margin-top: 14px;
