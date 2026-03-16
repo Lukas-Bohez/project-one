@@ -2389,11 +2389,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 /* =============================================
    Platform-specific CTA Buttons
    ============================================= */
-.c-product-card__actions--platform {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 0.75rem;
-}
+
 
 .c-btn--windows {
     background: linear-gradient(135deg, #0078d4, #005a9e);
