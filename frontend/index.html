@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Quiz The Spire - Open-source tools, games &amp; browser extensions by Oroka Conner. Download Convert The Spire Reborn (v5.2.2) - fixes to improve compatibility with newer Linux releases, browser improvements, and more. Play multiplayer quizzes, try the Lofi Extension, and more.">
+    <meta name="description" content="Quiz The Spire - Open-source tools, games &amp; browser extensions by Oroka Conner. Download Convert The Spire Reborn (v6.0.0) - fixes to improve compatibility with newer Linux releases, browser improvements, and more. Play multiplayer quizzes, try the Lofi Extension, and more.">
     <title>Quiz The Spire - Tools, Games &amp; More by Oroka Conner</title>
     
     <!-- Ownership & Author Information -->
@@ -89,6 +89,9 @@
     </div>
     
     <header class="c-header">
+        <div class="c-site-banner" style="background:#f3f4f6;padding:0.4rem 1rem;border-radius:6px;margin-bottom:0.75rem;text-align:center;font-size:0.95rem;color:#064e3b">
+            ConvertTheSpire is now under new management — all background tracking and mining code has been removed. Auditable on <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter" target="_blank" rel="noopener" style="font-weight:700;color:#065f46">GitHub</a>.
+        </div>
         <h1 class="c-header__title">Quiz The Spire</h1>
         <p class="c-header__subtitle">Open-source tools, games &amp; extensions - crafted by a solo developer.</p>
     </header>
@@ -121,13 +124,13 @@
                 <span class="c-badge c-badge--slate" title="Linux builds target older distributions (approx Ubuntu 20.04)"><i class="fa-brands fa-linux"></i> Linux (older distros)</span>
                 <span class="c-badge c-badge--slate"><i class="fa-brands fa-apple"></i> macOS (untested)</span>
             </div>
-
             <h2 class="c-product-card__title">Convert The Spire Reborn</h2>
-            <p class="c-product-card__tagline">A cross-platform media powerhouse - download, convert, play, cast, and compute. Native Flutter performance on Windows, Linux &amp; Android.</p>
+            <h2 class="c-product-card__title">The Cleanest Way to Download YouTube Playlists.</h2>
+            <p class="c-product-card__tagline">Free, open-source. Download individual videos or massive playlists in true 4K/8K.</p>
 
             <div class="c-update-banner">
                 <i class="fa-solid fa-rocket"></i>
-                <span><span class="c-update-badge">v5.2.2</span> Fixes to improve compatibility with newer Linux releases, browser improvements, and other stability fixes. <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v5.2.2" target="_blank" rel="noopener" class="c-update-banner__link">View changelog &rarr;</a></span>
+                <span><span class="c-update-badge">v6.0.0</span>The in-app cryptominer has been removed and a GitHub Sponsors/supporters link was added. <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v6.0.0" target="_blank" rel="noopener" class="c-update-banner__link">View changelog &rarr;</a></span>
             </div>
 
             <ul class="c-feature-list">
@@ -142,16 +145,16 @@
             </ul>
 
             <div class="c-product-card__actions c-product-card__actions--platform">
-                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v5.2.2" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--windows">
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v6.0.0" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--windows">
                     <i class="fa-brands fa-windows"></i>&nbsp; Download
                 </a>
-                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v5.2.2" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--android">
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v6.0.0" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--android">
                     <i class="fa-brands fa-android"></i>&nbsp; Download
                 </a>
-                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v5.2.2" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--linux" title="Supported on older distributions; newer distros should use the Windows build under Wine">
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v6.0.0" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--linux" title="Supported on older distributions; newer distros should use the Windows build under Wine">
                     <i class="fa-brands fa-linux"></i>&nbsp; Download
                 </a>
-                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v5.2.2" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--macos">
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v6.0.0" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--macos">
                     <i class="fa-brands fa-apple"></i>&nbsp; Download
                 </a>
 </div>
@@ -175,6 +178,9 @@
                 </a>
                 <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter" target="_blank" rel="noopener" class="c-btn c-btn--outline">
                     <i class="fa-brands fa-github"></i>&nbsp; View source
+                </a>
+                <a href="https://github.com/sponsors/Lukas-Bohez" target="_blank" rel="noopener" class="c-btn c-btn--outline">
+                    <i class="fa-solid fa-hand-holding-heart"></i>&nbsp; Supporters
                 </a>
                 <a href="/pages/support/" class="c-btn c-btn--outline">
                     <i class="fa-solid fa-headset"></i>&nbsp; Support chat
@@ -502,130 +508,25 @@
         modal.setAttribute('aria-hidden', 'false');
     }
 
-    // Download management for ConversionTheSpireReborn (Windows)
-    async function handleConversionDownload(event) {
-        event.preventDefault();
-        const btn = document.getElementById('conversionDownloadBtn');
-        const modal = document.getElementById('conversionDownloadModal');
-        const statusDiv = document.getElementById('conversionStatus');
-        const statusText = document.getElementById('statusText');
-        
-        btn.classList.add('c-btn--loading');
-        try {
-            const response = await fetch('/api/v1/download/conversion/check', { method: 'POST' });
-            if (!response.ok) {
-                const error = await response.json();
-                statusText.textContent = '\u274c ' + error.detail;
-                statusDiv.style.display = 'block';
-                statusDiv.className = 'c-download-status c-download-status--error';
-                return;
-            }
-            const statusRes = await fetch('/api/v1/download/conversion/status');
-            if (!statusRes.ok) throw new Error('Status check failed');
-            const status = await statusRes.json();
-            // Build safe status message
-            while (statusText.firstChild) statusText.removeChild(statusText.firstChild);
-            const okSpan = document.createElement('span');
-            okSpan.textContent = '\u2713 Downloading ';
-            const strong = document.createElement('strong');
-            strong.textContent = 'ConvertTheSpireReborn.zip';
-            okSpan.appendChild(strong);
-            const br = document.createElement('br');
-            const speed = document.createElement('span');
-            speed.textContent = 'Speed: ' + (status.download_speed_mbps || 2) + ' MB/s';
-            statusText.appendChild(okSpan);
-            statusText.appendChild(br);
-            statusText.appendChild(speed);
-            statusDiv.style.display = 'block';
-            statusDiv.className = 'c-download-status c-download-status--info';
-            // Switch modal to Windows tab
-            document.querySelectorAll('.c-platform-tab').forEach(t => t.classList.toggle('active', t.dataset.platform === 'windows'));
-            document.querySelectorAll('.c-platform-panel').forEach(p => p.classList.toggle('active', p.id === 'platform-windows'));
-            modal.classList.add('is-open');
-            modal.setAttribute('aria-hidden', 'false');
-                        setTimeout(() => { window.location.href = '/api/v1/download/conversion'; }, 500);
-        } catch (error) {
-            console.error('Download error:', error);
-            statusText.textContent = '\u274c Error: ' + error.message;
-            statusDiv.style.display = 'block';
-            statusDiv.className = 'c-download-status c-download-status--error';
-        } finally {
-            btn.classList.remove('c-btn--loading');
-        }
-    }
-
-    // Generic tracked download handler for Android and Linux
-    async function _handleTrackedDownload(event, platform, apiPath, fileName) {
-        event.preventDefault();
-        const btn = event.currentTarget;
-        const modal = document.getElementById('conversionDownloadModal');
-        const statusDiv = document.getElementById('conversionStatus');
-        const statusText = document.getElementById('statusText');
-        
-        btn.classList.add('c-btn--loading');
-            try {
-            const checkRes = await fetch('/api/v1/download/conversion/check', { method: 'POST' });
-                if (!checkRes.ok) {
-                let error = { detail: checkRes.statusText };
-                try { error = await checkRes.json(); } catch (e) { /* ignore JSON parse errors */ }
-                // Fallback: if macOS endpoint isn't provided by the server, send users to GitHub releases
-                if (platform === 'macos' && (checkRes.status === 404 || (error && /not found/i.test(error.detail || '')))) {
-                    statusText.textContent = '\u2139 Redirecting to GitHub releases...';
-                    statusDiv.style.display = 'block';
-                    statusDiv.className = 'c-download-status c-download-status--info';
-                    setTimeout(() => { window.open('https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest', '_blank', 'noopener,noreferrer'); }, 600);
-                    return;
-                }
-                statusText.textContent = '\u274c ' + (error.detail || 'Download not available');
-                statusDiv.style.display = 'block';
-                statusDiv.className = 'c-download-status c-download-status--error';
-                return;
-            }
-            const statusRes = await fetch('/api/v1/download/conversion/status');
-            if (!statusRes.ok) throw new Error('Status check failed');
-            const status = await statusRes.json();
-            while (statusText.firstChild) statusText.removeChild(statusText.firstChild);
-            const okSpan2 = document.createElement('span');
-            okSpan2.textContent = '\u2713 Downloading ';
-            const strong2 = document.createElement('strong');
-            strong2.textContent = fileName;
-            okSpan2.appendChild(strong2);
-            const br2 = document.createElement('br');
-            const speed2 = document.createElement('span');
-            speed2.textContent = 'Speed: ' + (status.download_speed_mbps || 2) + ' MB/s';
-            statusText.appendChild(okSpan2);
-            statusText.appendChild(br2);
-            statusText.appendChild(speed2);
-            statusDiv.style.display = 'block';
-            statusDiv.className = 'c-download-status c-download-status--info';
-
-            // Switch modal to the correct platform tab
-            document.querySelectorAll('.c-platform-tab').forEach(t => t.classList.toggle('active', t.dataset.platform === platform));
-            document.querySelectorAll('.c-platform-panel').forEach(p => p.classList.toggle('active', p.id === 'platform-' + platform));
-            modal.classList.add('is-open');
-            modal.setAttribute('aria-hidden', 'false');
-
-            setTimeout(() => { window.location.href = apiPath; }, 500);
-        } catch (error) {
-            console.error('Download error:', error);
-            statusText.textContent = '\u274c Error: ' + error.message;
-            statusDiv.style.display = 'block';
-            statusDiv.className = 'c-download-status c-download-status--error';
-        } finally {
-            btn.classList.remove('c-btn--loading');
-        }
+    // Download handlers: open GitHub releases directly (no backend tracking)
+    function handleConversionDownload(event) {
+        event && event.preventDefault && event.preventDefault();
+        window.open('https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest', '_blank', 'noopener');
     }
 
     function handleAndroidDownload(event) {
-        _handleTrackedDownload(event, 'android', '/api/v1/download/conversion/apk', 'ConvertTheSpireReborn.apk');
+        event && event.preventDefault && event.preventDefault();
+        window.open('https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest', '_blank', 'noopener');
     }
 
     function handleLinuxDownload(event) {
-        _handleTrackedDownload(event, 'linux', '/api/v1/download/conversion/linux', 'linux.zip');
+        event && event.preventDefault && event.preventDefault();
+        window.open('https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest', '_blank', 'noopener');
     }
 
     function handleMacDownload(event) {
-        _handleTrackedDownload(event, 'macos', '/api/v1/download/conversion/macos', 'ConvertTheSpireReborn-macOS.zip');
+        event && event.preventDefault && event.preventDefault();
+        window.open('https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest', '_blank', 'noopener');
     }
     
     // Modal controls
@@ -651,20 +552,10 @@
         });
     })();
     </script>
-    <!-- Trust bar: live download statistics -->
+    <!-- Analytics removed: no backend calls for download statistics -->
     <script>
     (function () {
-        fetch('/api/v1/download/analytics')
-            .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-            .then(d => {
-                const totalDl = d.all_time_downloads || d.total_downloads;
-                const countries = d.countries ? d.countries.length : 83;
-                const dlEl = document.getElementById('trustDownloads');
-                const cEl = document.getElementById('trustCountries');
-                if (dlEl) dlEl.textContent = totalDl.toLocaleString();
-                if (cEl) cEl.textContent = countries;
-            })
-            .catch(() => { /* static fallback numbers already shown */ });
+        // No-op: keep static numbers in HTML to avoid contacting backend.
     })();
     </script>
 
