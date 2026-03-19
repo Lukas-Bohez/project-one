@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Lukas Bohez Portfolio
 
-## Getting Started
+Welcome to the personal portfolio of Lukas Bohez, a frontend developer and designer with a passion for modern web applications.
 
-First, run the development server:
+## About Me
+
+- Name: Lukas Bohez
+- Role: Frontend developer & UX-focused designer
+- Stack: Next.js 16, React 19, TypeScript, Tailwind CSS
+- Interests: responsive interfaces, accessibility, clean architecture, CI/CD, performance optimization
+
+## Portfolio Overview
+
+This repository includes:
+
+- Professional portfolio website built with Next.js App Router
+- TailwindCSS-based design system
+- ESLint + Prettier integration for consistent code quality
+- GitHub Actions CI for lint, formatting check, and production build validation
+
+## Quick Start
+
+Run the following commands to start development locally:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `npm run dev` - start Next.js development server
+- `npm run build` - build production app
+- `npm run start` - run production build locally
+- `npm run lint` - run ESLint checks
+- `npm run format` - format source with Prettier
+- `npm run format:check` - verify formatting
+- `npm test` - lint + build
 
-## Learn More
+## Connect
 
-To learn more about Next.js, take a look at the following resources:
+- GitHub: [github.com/Lukas-Bohez](https://github.com/Lukas-Bohez)
+- LinkedIn: [linkedin.com/in/lukas-bohez](https://www.linkedin.com/in/lukas-bohez)
+- Email: lukas@example.com
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Deploy safely to Vercel or any Next.js compatible hosting. CI automatically validates each commit.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Thank you for visiting my portfolio codebase. Feedback is welcome!
