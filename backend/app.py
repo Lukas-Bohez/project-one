@@ -444,6 +444,15 @@ try:
 except Exception as e:
     print(f"Warning: Could not load Spire AI Collaboration routes: {e}")
 
+# Include VaultTheSpire router
+try:
+    from api.routers.vault import router as vault_router
+
+    app.include_router(vault_router)
+    print("✓ VaultTheSpire API routes loaded")
+except Exception as e:
+    print(f"Warning: Could not load VaultTheSpire routes: {e}")
+
 # Rate limiting setup
 ADMIN_TOKEN_TTL_SECONDS = int(os.getenv("SENTLE_ADMIN_TOKEN_TTL", "3600"))
 
