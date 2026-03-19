@@ -5,6 +5,7 @@ This repository is a multi-part project with a static frontend, backend services
 ## Primary Areas
 
 - frontend/ - Apache web root and static site assets
+  - frontend/portfolio/ - Next.js portfolio project (Lukas Bohez)
 - backend/ - FastAPI backend and data integrations
 - docs/ - Consolidated documentation (project, manage, demo, sentle, shared)
 - scripts/ - Automation and operational scripts
