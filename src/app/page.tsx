@@ -22,13 +22,42 @@ export default function Home() {
               View projects
             </a>
             <a
-              href="#contact"
+              href="#support"
               className="rounded-full border border-blue-700 px-5 py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-600 hover:text-white dark:border-blue-300 dark:text-blue-300 dark:hover:bg-blue-400"
             >
-              Let’s talk
+              Support my work
             </a>
           </div>
         </header>
+
+        <section
+          id="support"
+          className="mb-10 rounded-2xl border border-slate-200 bg-white/85 p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/70"
+        >
+          <h2 className="text-xl font-bold">Support My Work</h2>
+          <p className="mt-3 text-slate-600 dark:text-slate-300">
+            If you find my tools and open-source contributions useful, support me so I can keep
+            building practical, privacy-focused software.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <a
+              href="https://github.com/sponsors/Lukas-Bohez"
+              target="_blank"
+              rel="noreferrer noopener"
+              className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+            >
+              GitHub Sponsors
+            </a>
+            <a
+              href="https://buymeacoffee.com/LukasBohez"
+              target="_blank"
+              rel="noreferrer noopener"
+              className="rounded-md border border-amber-500 px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-100 dark:border-amber-400 dark:text-amber-300 dark:hover:bg-amber-500/20"
+            >
+              Buy Me a Coffee
+            </a>
+          </div>
+        </section>
 
         <section className="mb-10 grid gap-5 md:grid-cols-2">
           <article className="rounded-2xl bg-white/80 p-6 shadow-sm dark:bg-slate-800/75">
