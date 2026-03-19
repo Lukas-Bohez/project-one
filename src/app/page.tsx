@@ -1,6 +1,6 @@
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-100 text-slate-900 dark:from-[#020617] dark:via-[#040a18] dark:to-[#0f172a] dark:text-slate-100">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-sky-100 text-slate-900 dark:from-[#020617] dark:via-[#040a18] dark:to-[#0f172a] dark:text-slate-100">
       <main className="mx-auto w-full max-w-6xl p-6 sm:p-10">
         <header className="mb-12 rounded-3xl border border-slate-200 bg-white/75 p-8 shadow-lg backdrop-blur dark:border-slate-700 dark:bg-slate-900/70">
           <p className="text-sm font-semibold uppercase tracking-widest text-blue-700 dark:text-blue-300">Lukas Bohez</p>
@@ -88,8 +88,8 @@ export default function Home() {
           </p>
           <ul className="mt-4 space-y-2 text-slate-700 dark:text-slate-300">
             <li>Email: <a className="font-medium text-blue-700 hover:underline dark:text-blue-300" href="mailto:lukas@example.com">lukas@example.com</a></li>
-            <li>GitHub: <a className="font-medium text-blue-700 hover:underline dark:text-blue-300" href="https://github.com/Lukas-Bohez" target="_blank" rel="noreferrer">github.com/Lukas-Bohez</a></li>
-            <li>LinkedIn: <a className="font-medium text-blue-700 hover:underline dark:text-blue-300" href="https://linkedin.com/in/lukas-bohez" target="_blank" rel="noreferrer">linkedin.com/in/lukas-bohez</a></li>
+            <li>GitHub: <a className="font-medium text-blue-700 hover:underline dark:text-blue-300" href="https://github.com/Lukas-Bohez" target="_blank" rel="noreferrer noopener">github.com/Lukas-Bohez</a></li>
+            <li>LinkedIn: <a className="font-medium text-blue-700 hover:underline dark:text-blue-300" href="https://linkedin.com/in/lukas-bohez" target="_blank" rel="noreferrer noopener">linkedin.com/in/lukas-bohez</a></li>
           </ul>
         </section>
 
