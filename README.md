@@ -1,13 +1,36 @@
-# Lukas Bohez Portfolio
+# Lukas Bohez — Full-Stack Software Engineer
 
-Welcome to the personal portfolio of Lukas Bohez, a frontend developer and designer with a passion for modern web applications.
+Welcome to the personal portfolio and self-hosted lab of Lukas Bohez. I specialize in Python backend systems, Dart/Flutter cross-platform frontend, and high-performance media engineering.
 
 ## About Me
 
 - Name: Lukas Bohez
-- Role: Frontend developer & UX-focused designer
-- Stack: Next.js 16, React 19, TypeScript, Tailwind CSS
-- Interests: responsive interfaces, accessibility, clean architecture, CI/CD, performance optimization
+- Role: Full-Stack Software Engineer
+- Focus: Python, FastAPI, Dart/Flutter, Linux infrastructure, Raspberry Pi 5
+- Media Engineering: yt-dlp, FFmpeg, youtube_explode_dart, native stream/conversion workflows
+- Infrastructure: Docker, Apache2, self-hosted server labs, 24/7 production operations
+- Database: MySQL, SQLite, JSON state management
+- Languages: Python (expert), Dart/Flutter (advanced), JavaScript/TypeScript, HTML/CSS, C++ (Arduino)
+
+## Technical Expertise
+
+- Backend: FastAPI, Docker, Apache2, Linux server administration, web automation, scalable self-hosted architectures.
+- Frontend: Flutter cross-platform apps, responsive UI/UX with modern web techniques.
+- Media systems: real-time streaming metadata processing, batch conversions, privacy-first workflows.
+- CI/CD & quality: ESLint, Prettier, GitHub Actions, safe deployment pipelines.
+
+## Key Projects
+
+- **ConvertTheSpire**: native Flutter media engine for fast local stream handling and bulk conversion.
+- **QuizTheSpire.com**: Python backend + Apache frontend toolchain for playlist MP3/MP4 throughput.
+- **SportScore!**: collaborative JavaScript team app.
+- **Howest school assignments**: academic projects (e.g. `opdracht-1-howest`) from Hogeschool West-Vlaanderen.
+
+## Personal Interests
+
+- Learning Japanese with an emphasis on linguistic logic and cross-cultural design thinking.
+- Strategic gaming and manga (Ragna Crimson) to inform complex system architecture.
+- Digital content strategy and professional video editing.
 
 ## Portfolio Overview
 

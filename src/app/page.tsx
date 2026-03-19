@@ -34,15 +34,16 @@ export default function Home() {
           <article className="rounded-2xl bg-white/80 p-6 shadow-sm dark:bg-slate-800/75">
             <h2 className="text-xl font-bold">About Me</h2>
             <p className="mt-3 text-slate-600 dark:text-slate-300">
-              I’m a practicing web developer specializing in modern React/Next.js applications. I
-              focus on performance, accessibility and maintenance through strong architecture and
-              component design.
+              Full-Stack software engineer specialized in Python backend systems and Dart/Flutter
+              cross-platform apps. I ship high-performance media infrastructure with self-hosted
+              tooling, then optimize for reliability and security on Raspberry Pi and Linux.
             </p>
             <ul className="mt-4 list-disc space-y-1 pl-5 text-slate-600 dark:text-slate-300">
-              <li>4+ years of frontend experience</li>
-              <li>Next.js 16, React 19, TypeScript, TailwindCSS</li>
-              <li>Responsive design + performance optimizations</li>
-              <li>Automated testing & CI/CD pipeline</li>
+              <li>Python (backend), Dart/Flutter (cross-platform), JavaScript, HTML/CSS, C++</li>
+              <li>FastAPI, Docker, Apache2, Linux server orchestration (24/7 production)</li>
+              <li>Media systems: yt-dlp, FFmpeg, youtube_explode_dart, streaming conversions</li>
+              <li>DBs: MySQL, SQLite, JSON state management</li>
+              <li>CI/CD & code quality: GitHub Actions, ESLint, Prettier</li>
             </ul>
           </article>
           <article className="rounded-2xl bg-white/80 p-6 shadow-sm dark:bg-slate-800/75">
