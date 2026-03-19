@@ -49,7 +49,7 @@ export default function Home() {
               GitHub Sponsors
             </a>
             <a
-              href="https://buymeacoffee.com/LukasBohez"
+              href="https://buymeacoffee.com/OrokaConner"
               target="_blank"
               rel="noreferrer noopener"
               className="rounded-md border border-amber-500 px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-100 dark:border-amber-400 dark:text-amber-300 dark:hover:bg-amber-500/20"
@@ -124,49 +124,6 @@ export default function Home() {
               </a>
             </article>
           </div>
-        </section>
-
-        <section
-          id="contact"
-          className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/75"
-        >
-          <h2 className="text-2xl font-bold">Contact</h2>
-          <p className="mt-3 text-slate-600 dark:text-slate-300">
-            I’m open to new projects and collaboration. Connect on LinkedIn or send an email below.
-          </p>
-          <ul className="mt-4 space-y-2 text-slate-700 dark:text-slate-300">
-            <li>
-              Email:{' '}
-              <a
-                className="font-medium text-blue-700 hover:underline dark:text-blue-300"
-                href="mailto:lukas@example.com"
-              >
-                lukas@example.com
-              </a>
-            </li>
-            <li>
-              GitHub:{' '}
-              <a
-                className="font-medium text-blue-700 hover:underline dark:text-blue-300"
-                href="https://github.com/Lukas-Bohez"
-                target="_blank"
-                rel="noreferrer noopener"
-              >
-                github.com/Lukas-Bohez
-              </a>
-            </li>
-            <li>
-              LinkedIn:{' '}
-              <a
-                className="font-medium text-blue-700 hover:underline dark:text-blue-300"
-                href="https://linkedin.com/in/lukas-bohez"
-                target="_blank"
-                rel="noreferrer noopener"
-              >
-                linkedin.com/in/lukas-bohez
-              </a>
-            </li>
-          </ul>
         </section>
 
         <footer className="mt-8 border-t border-slate-200 pt-4 text-center text-sm text-slate-600 dark:border-slate-700 dark:text-slate-400">
