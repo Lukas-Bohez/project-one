@@ -65,29 +65,33 @@ export default function Home() {
           <h2 className="text-2xl font-bold">Featured Projects</h2>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-              <h3 className="text-lg font-semibold">Portfolio Redesign</h3>
+              <h3 className="text-lg font-semibold">ConvertTheSpireFlutter</h3>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                A fully responsive and accessible portfolio built with Next.js App Router, typed
-                with TypeScript, and styled using TailwindCSS.
+                Native Flutter media download engine with YouTube metadata stream handling and bulk
+                conversion. Builds for Linux, Windows, macOS, and Android.
               </p>
               <a
                 className="mt-4 inline-flex items-center text-sm font-semibold text-blue-700 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-100"
-                href="#"
+                href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter"
+                target="_blank"
+                rel="noreferrer noopener"
               >
-                Live demo ↗
+                Repository ↗
               </a>
             </article>
             <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-              <h3 className="text-lg font-semibold">UI Component Library</h3>
+              <h3 className="text-lg font-semibold">QuizTheSpire</h3>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                Reusable components with strict types and built-in accessibility, including buttons,
-                form fields, modals and dark mode support.
+                Python + Apache web utility for high-speed playlist conversion (MP3/MP4),
+                privacy-first and ad-free operation.
               </p>
               <a
                 className="mt-4 inline-flex items-center text-sm font-semibold text-blue-700 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-100"
-                href="#"
+                href="https://quizthespire.com"
+                target="_blank"
+                rel="noreferrer noopener"
               >
-                GitHub source ↗
+                Live App ↗
               </a>
             </article>
           </div>

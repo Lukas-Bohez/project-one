@@ -70,8 +70,18 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## Connect
 
 - GitHub: [github.com/Lukas-Bohez](https://github.com/Lukas-Bohez)
+- Sponsors: [github.com/sponsors/Lukas-Bohez](https://github.com/sponsors/Lukas-Bohez)
+- Support: [buymeacoffee.com/LukasBohez](https://buymeacoffee.com/LukasBohez)
+- Personal tool: [quizthespire.com](https://quizthespire.com)
 - LinkedIn: [linkedin.com/in/lukas-bohez](https://www.linkedin.com/in/lukas-bohez)
 - Email: lukas@example.com
+
+## Featured Repositories
+
+- [ConvertTheSpireFlutter](https://github.com/Lukas-Bohez/ConvertTheSpireFlutter)
+- [QuizTheSpire](https://github.com/Lukas-Bohez/QuizTheSpire)
+- [opdracht-1-howest](https://github.com/Lukas-Bohez/opdracht-1-howest)
+- [mct-interaction-design/view-transition-intro-Lukas-Bohez](https://github.com/Lukas-Bohez/mct-interaction-design/tree/main/view-transition-intro-Lukas-Bohez)
 
 ## Deploy
 
