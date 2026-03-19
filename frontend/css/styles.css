@@ -467,16 +467,7 @@ body:not([data-theme]) .spire-bg-light {
     line-height: 1.5;
 }
 
-.portfolio-card .c-btn {
-    margin-top: auto;
-    width: fit-content;
-}
-
-@media (max-width: 720px) {
-    .portfolio-grid {
-        grid-template-columns: 1fr;
-    }
-}
+/* Remove portfolio card styles now that we use external portfolio page */
 
 .c-download-title {
     margin: 0;
