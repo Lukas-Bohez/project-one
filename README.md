@@ -41,6 +41,11 @@ This repository includes:
 - ESLint + Prettier integration for consistent code quality
 - GitHub Actions CI for lint, formatting check, and production build validation
 
+Additional docs:
+
+- [PROJECTS.md](./PROJECTS.md) — detailed project architecture and highlights
+- [CONTRIBUTIONS.md](./CONTRIBUTIONS.md) — community and open-source collaboration strategy
+
 ## Quick Start
 
 Run the following commands to start development locally:
