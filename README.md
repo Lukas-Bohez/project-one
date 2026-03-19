@@ -85,6 +85,36 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Deploy
 
+### Option 1: Static export (Apache friendly)
+
+1. Build and export static files:
+   ```bash
+   npm run build
+   npm run export
+   ```
+2. This generates an `out` directory with an `index.html` and static asset tree.
+3. Copy `out/` into your Apache docroot (e.g., `/var/www/quizthespire.com/`).
+4. Ensure `DirectoryIndex index.html` is set, and (optionally) add this in `.htaccess`:
+   ```apache
+   RewriteEngine On
+   RewriteBase /
+   RewriteRule ^index\.html$ - [L]
+   RewriteCond %{REQUEST_FILENAME} !-f
+   RewriteRule ^(.*)$ /index.html [L,QSA]
+   ```
+5. Visit your site at `https://quizthespire.com`.
+
+### Option 2: Next.js server reverse proxy
+
+If you prefer dynamic mode, run `npm run start` on a node server and reverse proxy through Apache:
+
+```apache
+ProxyPass / http://127.0.0.1:3000/
+ProxyPassReverse / http://127.0.0.1:3000/
+```
+
+---
+
 Deploy safely to Vercel or any Next.js compatible hosting. CI automatically validates each commit.
 
 ---
