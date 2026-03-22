@@ -416,11 +416,7 @@ async def log_incoming_requests(request, call_next):
 # CORS middleware for FastAPI
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://quizthespire.com",
-        "https://www.quizthespire.com",
-        "https://quizthespire.duckdns.org",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
