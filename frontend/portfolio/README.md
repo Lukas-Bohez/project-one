@@ -120,3 +120,9 @@ Deploy safely to Vercel or any Next.js compatible hosting. CI automatically vali
 ---
 
 Thank you for visiting my portfolio codebase. Feedback is welcome!
+
+## Updated About Me (Added by AI sync)
+
+- AI setup: repository synchronized with https://github.com/Lukas-Bohez/lbohez-portfolio
+- Latest skills: added notes about full-stack Next.js portfolio + static export deployment.
+- Personal intent: maintain accessible open-source self-hosted tools and media pipelines.
