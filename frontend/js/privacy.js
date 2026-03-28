@@ -371,6 +371,17 @@ document.addEventListener('DOMContentLoaded', () => {
                             'ad_user_data': 'granted',
                             'ad_personalization': 'granted'
                         });
+                        // Server-side GA4 Measurement Protocol event (secret is not exposed here)
+                        fetch('/api/v1/analytics/track', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                event_name: 'privacy_consent_granted',
+                                params: {source: 'frontend', consent: true}
+                            }),
+                        }).catch(() => {
+                            console.warn('GA4 MP track event failed (grant)');
+                        });
                     } catch(e) { /* noop */ }
                     
                     // Remove modal
@@ -401,6 +412,17 @@ document.addEventListener('DOMContentLoaded', () => {
                             'analytics_storage': 'denied',
                             'ad_user_data': 'denied',
                             'ad_personalization': 'denied'
+                        });
+                        // Server-side GA4 Measurement Protocol event (secret is not exposed here)
+                        fetch('/api/v1/analytics/track', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                event_name: 'privacy_consent_denied',
+                                params: {source: 'frontend', consent: false}
+                            }),
+                        }).catch(() => {
+                            console.warn('GA4 MP track event failed (deny)');
                         });
                     } catch(e) { /* noop */ }
                     

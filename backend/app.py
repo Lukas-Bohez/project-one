@@ -19,6 +19,9 @@ from datetime import datetime, timedelta
 
 import socketio
 import uvicorn
+import json
+import urllib.request
+import urllib.error
 from fastapi import (
     Body,
     FastAPI,
@@ -37,10 +40,16 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+
 # Require SENTLE_ADMIN_PASSWORD to be set in environment to avoid hardcoded defaults
 SENTLE_ADMIN_PASSWORD = os.getenv("SENTLE_ADMIN_PASSWORD")
 if not SENTLE_ADMIN_PASSWORD:
     raise RuntimeError("SENTLE_ADMIN_PASSWORD environment variable must be set")
+
+# Google Analytics Measurement Protocol configuration
+GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "G-SSEBSTQM21")
+GA_API_SECRET = os.getenv("GA_API_SECRET", "4eYFFQR7R0-wBX1Bc3T2Xw")
+
 import queue
 from io import BytesIO
 from typing import Any, Dict, List, Optional
@@ -13226,6 +13235,63 @@ async def health_check():
         return response
     except Exception as e:
         return {"status": "degraded", "error": str(e), "timestamp": time.time()}
+
+
+@app.post("/api/v1/analytics/track")
+async def analytics_track(request: Request):
+    """Track an event via GA4 Measurement Protocol."""
+    try:
+        body = await request.json()
+        event_name = body.get("event_name", "custom_event")
+        client_id = body.get("client_id") or str(uuid4())
+        params = body.get("params", {})
+
+        # asynchronous best-effort; don't block route even if GA fails
+        try:
+            send_ga4_event(client_id, event_name, params)
+        except Exception as exc:
+            quiz_logger.warning(f"GA tracking failed for {event_name}: {exc}")
+
+        return {"success": True, "event": event_name, "client_id": client_id}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid analytics payload: {e}")
+
+
+def send_ga4_event(client_id: str, event_name: str, params: dict = None):
+    """Send a Google Analytics 4 Measurement Protocol event."""
+    if not GA_MEASUREMENT_ID or not GA_API_SECRET:
+        raise RuntimeError("Google Analytics measurement ID and API secret must be configured")
+
+    payload = {
+        "client_id": client_id,
+        "events": [
+            {
+                "name": event_name,
+                "params": params or {},
+            }
+        ],
+    }
+
+    url = (
+        f"https://www.google-analytics.com/mp/collect?measurement_id={GA_MEASUREMENT_ID}"
+        f"&api_secret={GA_API_SECRET}"
+    )
+
+    try:
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=5) as res:
+            status_code = res.getcode()
+            if status_code != 204 and status_code != 200:
+                raise RuntimeError(f"GA4 MP request failed {status_code}")
+    except urllib.error.HTTPError as err:
+        raise RuntimeError(f"GA4 MP HTTP error: {err.code} {err.reason}")
+    except urllib.error.URLError as err:
+        raise RuntimeError(f"GA4 MP URL error: {err.reason}")
 
 
 @app.post("/api/v1/video/create_upload_session")

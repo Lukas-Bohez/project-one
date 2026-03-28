@@ -1481,3 +1481,4 @@
 2026-03-13 17:27:36,825 - INFO - Quiz Logger Initialized
 2026-03-13 17:27:36,825 - INFO - ==================================================
 2026-03-13 17:27:37,118 - INFO - [IDLE_CLEANUP] Session idle checker started (timeout=60s)
+2026-03-26 05:55:05,184 - WARNING - Authentication failed: Missing credentials from IP 185.177.72.13

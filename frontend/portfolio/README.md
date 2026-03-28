@@ -1,4 +1,4 @@
-# Lukas Bohez — Full-Stack Software Engineer
+# Lukas Bohez - Full-Stack Software Engineer
 
 Welcome to the personal portfolio and self-hosted lab of Lukas Bohez. I specialize in Python backend systems, Dart/Flutter cross-platform frontend, and high-performance media engineering.
 
@@ -41,6 +41,30 @@ This repository includes:
 - ESLint + Prettier integration for consistent code quality
 - GitHub Actions CI for lint, formatting check, and production build validation
 
+## CMS Research
+
+### Comparison Table
+
+| CMS            | Type                 | Free tier                      | Next.js integration                          | Best for portfolio?                                  |
+| -------------- | -------------------- | ------------------------------ | -------------------------------------------- | ---------------------------------------------------- |
+| **Sanity**     | Headless SaaS        | Yes — unlimited projects, 10GB | Excellent (official SDK, GROQ, live preview) | Yes — best docs, real-time, GROQ is powerful         |
+| **Keystatic**  | File-based / Git     | Fully free (no account)        | Good (official Next.js adapter)              | Yes — zero cost, content in repo, good for solo devs |
+| **Contentful** | Headless SaaS        | Yes — 25k API calls/month      | Excellent (official SDK, TypeScript types)   | Yes — enterprise-grade but free tier is limited      |
+| **Strapi**     | Self-hosted headless | Free (self-hosted)             | Good (REST + GraphQL)                        | Possible — requires server, overkill for portfolio   |
+| **@next/mdx**  | Markdown/local       | Fully free                     | Native (built into Next.js)                  | Good for blogs, not ideal for structured data        |
+
+### Chosen CMS: Sanity
+
+**Why Sanity:**
+
+- Free tier is genuinely unlimited for a portfolio (no API call caps that matter at this scale)
+- GROQ query language is more powerful than GraphQL for selective field fetching
+- Official Next.js integration with TypeScript support out of the box
+- Real-time collaborative editing (useful if you ever add a collaborator)
+- Sanity Studio (the editing UI) can be embedded directly in the Next.js app at `/studio`
+
+**Caching strategy:** ISR with `revalidate: 3600` for projects (changes rarely) and `revalidate: 86400` for about content (changes almost never). This gives static-site performance while still allowing CMS updates to propagate within an hour without redeploying.
+
 Additional docs:
 
 - [PROJECTS.md](./PROJECTS.md) — detailed project architecture and highlights
@@ -71,10 +95,10 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 - GitHub: [github.com/Lukas-Bohez](https://github.com/Lukas-Bohez)
 - Sponsors: [github.com/sponsors/Lukas-Bohez](https://github.com/sponsors/Lukas-Bohez)
-- Support: [buymeacoffee.com/LukasBohez](https://buymeacoffee.com/LukasBohez)
+- Support: [buymeacoffee.com/OrokaConner](https://buymeacoffee.com/OrokaConner)
 - Personal tool: [quizthespire.com](https://quizthespire.com)
 - LinkedIn: [linkedin.com/in/lukas-bohez](https://www.linkedin.com/in/lukas-bohez)
-- Email: lukas@example.com
+- Email: lukasbohez@gmail.com
 
 ## Featured Repositories
 

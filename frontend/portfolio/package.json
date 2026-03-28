@@ -13,12 +13,17 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "@sanity/image-url": "^2.1.0",
+    "@studio-freight/lenis": "^1.0.42",
+    "framer-motion": "^11.1.5",
     "next": "16.2.0",
+    "next-sanity": "^12.2.1",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
   "devDependencies": {
     "@rtsao/scc": "^1.1.0",
+    "@sanity/cli": "^6.2.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
