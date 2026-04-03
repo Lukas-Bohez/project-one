@@ -3,3 +3,7 @@
     Header set Access-Control-Allow-Origin "https://quizthespire.com"
     Header set Access-Control-Allow-Methods "GET"
 </IfModule>
+
+# Portfolio path is served by Apache Alias from config [quizthespire.com-le-ssl.conf]
+# so no local rewrite is required here.
+
