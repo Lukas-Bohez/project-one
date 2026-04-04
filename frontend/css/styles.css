@@ -1650,8 +1650,9 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 
 .c-vault-release {
     text-align: left;
-    background: linear-gradient(135deg, rgba(44, 111, 184, 0.08), rgba(16, 185, 129, 0.06));
+    background: #ffffff;
     border-color: rgba(44, 111, 184, 0.16);
+    margin-top: 1rem;
 }
 
 .c-vault-release .c-product-card__badge-row {
@@ -2290,7 +2291,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 
 [data-theme="dark"] .c-vault-release,
 .theme-dark .c-vault-release {
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.16), rgba(16, 185, 129, 0.08));
+    background: #000000;
     border-color: rgba(96, 165, 250, 0.18);
 }
 
