@@ -47,8 +47,9 @@ if not SENTLE_ADMIN_PASSWORD:
     raise RuntimeError("SENTLE_ADMIN_PASSWORD environment variable must be set")
 
 # Google Analytics Measurement Protocol configuration
-GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "G-SSEBSTQM21")
-GA_API_SECRET = os.getenv("GA_API_SECRET", "4eYFFQR7R0-wBX1Bc3T2Xw")
+# Do not hardcode secrets: configure these in backend/.env or process env.
+GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID")
+GA_API_SECRET = os.getenv("GA_API_SECRET")
 
 import queue
 from io import BytesIO

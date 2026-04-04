@@ -1,51 +1,18 @@
-<<<<<<< HEAD
-# Byte-compiled / optimized / DLL files
+# Python cache and artifacts
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Distribution / packaging
-build/
-dist/
-eggs/
-parts/
-bin/
-var/
-*.egg-info/
-*.egg
-
-# Logs and databases
-*.log
-logs/
-*.sqlite3
-
-# OS files
-.DS_Store
-
-# Sensitive certs and keys
-frontend/cert/*.pem
-
-# Ignore downloads (move artifacts out of webroot/protected storage)
-frontend/downloads/
-
-# Backup files
-**/*.bak
-config.py
-venv_fswd
-# Log backups
-backend/log_backups/
-
-# Python bytecode and cache files
-__pycache__/
-*.py[cod]
-*$py.class
+*.cpython-*.pyc
+*.pyo
+*.pyd
+*.pdb
 *.so
 .Python
 
-# Distribution / packaging
+# Python packaging/build outputs
 build/
-develop-eggs/
 dist/
+develop-eggs/
 downloads/
 eggs/
 .eggs/
@@ -63,78 +30,11 @@ wheels/
 venv/
 ENV/
 env/
-.venv
+.venv/
+venv_fswd/
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-logs/
-
-# Environment variables
-.env
-.env.local
-
-# Certificates
-*.pem
-*.key
-*.crt
-
-# Backup files
-*.bak
-
-# Large repo backups and logs (do not commit)
-repo-backup-*.bundle
-*.bundle
-backend/video_debug.log
-backend/download_tracker.json
-
-# Node modules (if you have any)
+# Node and frontend build outputs
 node_modules/
-
-# CPython compiled files and artifacts (explicit)
-# Examples: .cpython-38.pyc, .cpython-310.pyc, .pyd, .pyo
-*.cpython-*.pyc
-*.pyo
-*.pyd
-*.pdb
-# Keep Python cache dir ignored (redundant but explicit)
-__pycache__/
-
-# npm / node artifact files and lockfiles
-# Don't commit node_modules or common npm/yarn/pnpm lock and debug files
-npm-debug.log*
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
-.npm/
-.parcel-cache/
-.cache/
-/.turbo/
-
-# Common build/output dirs from JS toolchains
-dist/
-build/
-.next/
-.vite/
-.parcel/
-.eslintcache
-# JWT secret (auto-generated, must not be committed)
-backend/.jwt_secret
-=======
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -142,34 +42,57 @@ backend/.jwt_secret
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+.next/
+out/
+.vite/
+.parcel/
+.parcel-cache/
+.cache/
+/.turbo/
+coverage/
 
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
+# Logs
+*.log
+logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# Local environment and secrets
+.env
+.env.local
+.env.*
+backend/.jwt_secret
 
-# vercel
-.vercel
+# Certificates and keys
+*.pem
+*.key
+*.crt
+frontend/cert/*.pem
 
-# typescript
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# App-specific runtime files
+frontend/downloads/
+backend/log_backups/
+backend/video_debug.log
+backend/download_tracker.json
+repo-backup-*.bundle
+*.bundle
+*.sqlite3
+
+# Misc generated
+*.bak
+config.py
+
+# TypeScript incremental cache
 *.tsbuildinfo
 next-env.d.ts
->>>>>>> upstream/main
