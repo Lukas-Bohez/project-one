@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "export": "next export",
-    "update:portfolio": "npm run build && rm -rf frontend/portfolio/out && mkdir -p frontend/portfolio/out && cp -r out/. frontend/portfolio/out/",
+    "update:portfolio": "npm run build && rm -rf frontend/portfolio/out && mkdir -p frontend/portfolio/out && cp -r out/. frontend/portfolio/out/ && cp frontend/portfolio/cache-control.htaccess frontend/portfolio/out/.htaccess && mkdir -p /home/student/Project/Portfolio/out && rm -rf /home/student/Project/Portfolio/out/* && cp -r frontend/portfolio/out/. /home/student/Project/Portfolio/out/",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "test": "npm run lint && npm run build",
