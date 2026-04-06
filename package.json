@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "export": "next export",
+    "update:portfolio": "npm run build && rm -rf frontend/portfolio/out && mkdir -p frontend/portfolio/out && cp -r out/. frontend/portfolio/out/",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "test": "npm run lint && npm run build",
