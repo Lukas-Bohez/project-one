@@ -11,8 +11,11 @@ def main():
         backend_dir = "/home/student/Project/project-one/backend"
         os.chdir(backend_dir)
 
-        # Activate virtual environment
-        venv_python = "/home/student/Project/.venv/bin/python"
+        # Use the backend-specific virtual environment used by the systemd service.
+        venv_python = "/home/student/Project/project-one/backend/venv/bin/python"
+        if not os.path.isfile(venv_python):
+            print(f"Python executable not found: {venv_python}")
+            sys.exit(1)
 
         # Start the server using python3 app.py (which runs the ASGI app with Socket.IO)
         cmd = [venv_python, "app.py"]
