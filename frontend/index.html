@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Quiz The Spire - Open-source tools, games &amp; browser extensions by Oroka Conner. Download Convert The Spire Reborn (v6.0.1) - better dark mode, Android fixes, and other improvements. Play multiplayer quizzes, try the Lofi Extension, and more.">
-    <title>Quiz The Spire - Tools, Games &amp; More by Oroka Conner</title>
+    <meta name="description" content="Quiz The Spire - Portfolio-first hub for open-source tools and downloads by Oroka Conner. Explore Convert The Spire Reborn, Vault The Spire, Lofi Extension, and other projects in one place.">
+    <title>Quiz The Spire - Portfolio & Downloads by Oroka Conner</title>
     
     <!-- Google Analytics (GA4) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-SSEBSTQM21"></script>
@@ -55,6 +55,12 @@
         [data-theme="dark"] .c-modal__close,.theme-dark .c-modal__close{border-color:#374151;background:#1f2937;color:#d1d5db}
         [data-theme="dark"] .c-modal__close:hover,.theme-dark .c-modal__close:hover{background:#374151;border-color:#4b5563}
         .c-product-card{display:block}
+        .c-portfolio-panel{display:flex;flex-direction:column;gap:1rem;background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:1.5rem;box-shadow:0 22px 40px rgba(15,23,42,.08);margin-bottom:1.5rem}
+        .c-portfolio-panel__actions{display:flex;flex-wrap:wrap;gap:0.75rem}
+        .c-portfolio-panel__actions a{flex:1 1 240px;min-width:220px}
+        .c-btn--portfolio{min-width:280px;padding:1rem 1.35rem;font-size:1rem;background:#2563eb;color:#fff;border-color:transparent}
+        .c-btn--portfolio:hover{background:#1d4ed8}
+        [data-theme="dark"] .c-portfolio-panel,.theme-dark .c-portfolio-panel{background:#111827;border-color:#374151}
 
         /* Update banner - major release */
         .c-update-banner{display:flex;align-items:center;gap:0.75rem;background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid #f59e0b;border-radius:10px;padding:0.85rem 1.15rem;margin-bottom:1rem;font-size:0.9rem;color:#78350f;box-shadow:0 2px 12px rgba(245,158,11,0.18)}
@@ -80,14 +86,14 @@
     <link rel="apple-touch-icon" sizes="192x192" href="/icons/favicon-192x192.png">
     <link rel="manifest" href="/site.webmanifest">
     
-    <meta property="og:title" content="Quiz The Spire - Tools, Games &amp; More by Oroka Conner">
-    <meta property="og:description" content="A hub for indie tools by Oroka Conner. Download the Convert The Spire Reborn offline media converter, play quizzes, try the Lofi Extension, and more.">
+    <meta property="og:title" content="Quiz The Spire - Portfolio & Downloads by Oroka Conner">
+    <meta property="og:description" content="Portfolio-first hub for open-source downloads and tools by Oroka Conner. Get Convert The Spire Reborn, Vault The Spire, Lofi Extension, and more.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://quizthespire.com/">
     <meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Quiz The Spire - Tools, Games &amp; More by Oroka Conner">
-    <meta name="twitter:description" content="A hub for indie tools by Oroka Conner. Download the Convert The Spire Reborn offline media converter, play quizzes, try the Lofi Extension, and more.">
+    <meta name="twitter:title" content="Quiz The Spire - Portfolio & Downloads by Oroka Conner">
+    <meta name="twitter:description" content="Portfolio-first hub for open-source downloads and tools by Oroka Conner. Get Convert The Spire Reborn, Vault The Spire, Lofi Extension, and more.">
     <meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg">
     <link rel="canonical" href="https://quizthespire.com/">
 </head>
@@ -111,17 +117,36 @@
              TAB NAVIGATION
              ============================================= -->
         <nav class="c-nav" aria-label="Site sections">
-            <button class="c-nav-btn active" data-section="converter"><i class="fa-solid fa-arrows-rotate"></i> Converter</button>
+            <button class="c-nav-btn active" data-section="portfolio"><i class="fa-solid fa-briefcase"></i> Portfolio</button>
             <button class="c-nav-btn" data-section="games"><i class="fa-solid fa-gamepad"></i> Quiz &amp; Games</button>
             <button class="c-nav-btn" data-section="tools"><i class="fa-solid fa-toolbox"></i> Tools &amp; Content</button>
             <button class="c-nav-btn" data-section="support"><i class="fa-solid fa-life-ring"></i> Support</button>
         </nav>
 
-        <!-- Converter Section -->
-        <div id="converter-section" class="section active">
+        <!-- Portfolio Section -->
+        <div id="portfolio-section" class="section active">
         <!-- =============================================
              HERO: Convert The Spire Reborn  (#1 promo)
              ============================================= -->
+        <div class="c-portfolio-panel">
+            <h2 class="c-section-title">Portfolio</h2>
+            <p class="c-section-lead">Explore my download-ready projects in one place. The main portfolio hub includes Convert The Spire Reborn, Vault The Spire, and the Lofi Extension — all open-source, cross-platform tools with direct downloads.</p>
+            <div class="c-portfolio-panel__actions">
+                <a href="/portfolio/" class="c-btn c-btn--portfolio">
+                    <i class="fa-solid fa-briefcase"></i>&nbsp; Open Portfolio Hub
+                </a>
+                <a href="/pages/conversion/" class="c-btn c-btn--outline">
+                    <i class="fa-solid fa-arrows-rotate"></i>&nbsp; Convert The Spire Reborn
+                </a>
+                <a href="https://github.com/Lukas-Bohez/vault_the_spire" target="_blank" rel="noopener" class="c-btn c-btn--outline">
+                    <i class="fa-solid fa-lock"></i>&nbsp; Vault The Spire
+                </a>
+                <a href="/pages/lofi-download/" class="c-btn c-btn--outline">
+                    <i class="fa-solid fa-music"></i>&nbsp; Lofi Extension
+                </a>
+            </div>
+        </div>
+
         <section class="c-product-card c-product-card--hero" aria-label="Convert The Spire Reborn">
             <div class="c-product-card__badge-row">
                 <span class="c-badge c-badge--green"><i class="fa-solid fa-shield-halved"></i> Open Source</span>
@@ -200,6 +225,76 @@
             </div>
         </section>
 
+        <section class="c-product-card c-product-card--hero c-vault-release" aria-label="Vault The Spire v4.2.0 release">
+            <div class="c-product-card__badge-row">
+                <span class="c-badge c-badge--green"><i class="fa-solid fa-circle-check"></i> Fully Released</span>
+                <span class="c-badge c-badge--blue"><i class="fa-solid fa-box-open"></i> v4.2.0 Latest</span>
+                <span class="c-badge c-badge--blue"><i class="fa-solid fa-gauge-high"></i> Improved Performance</span>
+                <span class="c-badge c-badge--slate"><i class="fa-brands fa-flutter"></i> Flutter / Dart</span>
+                <span class="c-badge c-badge--slate"><i class="fa-brands fa-windows"></i> Windows</span>
+                <span class="c-badge c-badge--slate"><i class="fa-brands fa-android"></i> Android</span>
+            </div>
+            <p class="c-product-card__eyebrow">Featured release</p>
+            <h2 class="c-product-card__title">Vault The Spire</h2>
+            <p class="c-product-card__tagline">v4.2.0 is now live with improved performance, a fix for file explorer crash scenarios, and automatic recovery when a crash occurs.</p>
+
+            <div class="c-update-banner">
+                <i class="fa-solid fa-circle-check"></i>
+                <span><span class="c-update-badge">v4.2.0</span> Improved performance + file explorer crash recovery. <a href="https://github.com/Lukas-Bohez/vault_the_spire/releases/tag/4.2.0" target="_blank" rel="noopener" class="c-update-banner__link">View release notes &rarr;</a></span>
+            </div>
+
+            <ul class="c-feature-list">
+                <li class="c-feature-list__item"><i class="fa-solid fa-bolt"></i> Improved app performance in v4.2.0</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-folder-open"></i> Fixed file explorer full-crash issue</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-shield-heart"></i> Added recovery flow when file explorer crashes</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-file-zipper"></i> Windows x64 ZIP asset published with SHA256 verification</li>
+            </ul>
+
+            <div class="c-product-card__actions">
+                <a href="https://github.com/Lukas-Bohez/vault_the_spire/releases/tag/4.2.0" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--windows">
+                    <i class="fa-brands fa-windows"></i>&nbsp; View release
+                </a>
+                <a href="https://github.com/Lukas-Bohez/vault_the_spire/releases/download/4.2.0/vault_the_spire_4.2.0_windows_x64.zip" target="_blank" rel="noopener" class="c-btn c-btn--outline">
+                    <i class="fa-solid fa-file-zipper"></i>&nbsp; Download ZIP
+                </a>
+                <a href="https://groups.google.com/g/testersvaultthespire/" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--outline" aria-label="Join the Vault The Spire Android testing group">
+                    <i class="fa-solid fa-users"></i>&nbsp; Join test group
+                </a>
+            </div>
+
+            <p class="c-product-card__reassurance"><i class="fa-solid fa-circle-check"></i><strong>Latest release:</strong> v4.2.0 Windows x64 ZIP is now available for download.</p>
+        </section>
+
+        <section class="c-product-card c-product-card--hero c-product-card--lofi" aria-label="Lofi Extension download">
+            <div class="c-product-card__badge-row">
+                <span class="c-badge c-badge--green"><i class="fa-solid fa-headphones-simple"></i> Background music</span>
+                <span class="c-badge c-badge--blue"><i class="fa-solid fa-download"></i> Direct download</span>
+                <span class="c-badge c-badge--slate"><i class="fa-brands fa-chrome"></i> Chrome-compatible</span>
+                <span class="c-badge c-badge--slate"><i class="fa-brands fa-firefox-browser"></i> Firefox-ready</span>
+            </div>
+            <p class="c-product-card__eyebrow">Browser extension</p>
+            <h2 class="c-product-card__title">Lofi Extension</h2>
+            <p class="c-product-card__tagline">Ambient music controls for your browser. Install the Firefox add-on, or download the Chromium ZIP for Chrome, Edge, Brave and Opera.</p>
+
+            <ul class="c-feature-list">
+                <li class="c-feature-list__item"><i class="fa-solid fa-music"></i> Play relaxing lo-fi while you work or study</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-download"></i> Download ZIP for Chromium browsers or install from Firefox Add-ons</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-user-shield"></i> Privacy-first experience with no tracking</li>
+            </ul>
+
+            <div class="c-product-card__actions">
+                <a href="/pages/lofi-download/" class="c-btn c-btn--cta c-btn--android">
+                    <i class="fa-solid fa-download"></i>&nbsp; Download Extension
+                </a>
+                <a href="https://addons.mozilla.org/nl/firefox/addon/lofi-player/" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--outline">
+                    <i class="fa-brands fa-firefox-browser"></i>&nbsp; Firefox Add-on
+                </a>
+                <a href="/downloads/LofiExtension.zip" download class="c-btn c-btn--outline">
+                    <i class="fa-brands fa-chrome"></i>&nbsp; Chromium ZIP
+                </a>
+            </div>
+        </section>
+
             <!-- explanatory video -->
             <div class="c-video-wrapper" aria-label="Demo video">
                 <iframe src="https://www.youtube.com/embed/1Pvzw1hOprQ" title="Convert The Spire updated demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
@@ -243,10 +338,10 @@
                 <p class="c-section-lead">Build, browse, and customise your experience.</p>
             </div>
 
-            <section class="c-product-card c-product-card--hero c-vault-release" aria-label="Vault The Spire v4.1.0 release">
+            <section class="c-product-card c-product-card--hero c-vault-release" aria-label="Vault The Spire v4.2.0 release">
                 <div class="c-product-card__badge-row">
                     <span class="c-badge c-badge--green"><i class="fa-solid fa-circle-check"></i> Fully Released</span>
-                    <span class="c-badge c-badge--blue"><i class="fa-solid fa-box-open"></i> v4.1.0 Latest</span>
+                    <span class="c-badge c-badge--blue"><i class="fa-solid fa-box-open"></i> v4.2.0 Latest</span>
                     <span class="c-badge c-badge--blue"><i class="fa-solid fa-gauge-high"></i> Improved Performance</span>
                     <span class="c-badge c-badge--slate"><i class="fa-brands fa-flutter"></i> Flutter / Dart</span>
                     <span class="c-badge c-badge--slate"><i class="fa-brands fa-windows"></i> Windows</span>
@@ -254,28 +349,28 @@
                 </div>
                 <p class="c-product-card__eyebrow">Featured release</p>
                 <h2 class="c-product-card__title">Vault The Spire</h2>
-                <p class="c-product-card__tagline">v4.1.0 is now live with improved performance, a fix for file explorer crash scenarios, and automatic recovery when a crash occurs.</p>
+                <p class="c-product-card__tagline">v4.2.0 is now live with improved performance, a fix for file explorer crash scenarios, and automatic recovery when a crash occurs.</p>
 
                 <div class="c-update-banner">
                     <i class="fa-solid fa-circle-check"></i>
-                    <span><span class="c-update-badge">v4.1.0</span> Improved performance + file explorer crash recovery. <a href="https://github.com/Lukas-Bohez/vault_the_spire/releases/tag/4.1.0" target="_blank" rel="noopener" class="c-update-banner__link">View release notes &rarr;</a></span>
+                    <span><span class="c-update-badge">v4.2.0</span> Improved performance + file explorer crash recovery. <a href="https://github.com/Lukas-Bohez/vault_the_spire/releases/tag/4.2.0" target="_blank" rel="noopener" class="c-update-banner__link">View release notes &rarr;</a></span>
                 </div>
 
                 <ul class="c-feature-list">
-                    <li class="c-feature-list__item"><i class="fa-solid fa-bolt"></i> Improved app performance in v4.1.0</li>
+                    <li class="c-feature-list__item"><i class="fa-solid fa-bolt"></i> Improved app performance in v4.2.0</li>
                     <li class="c-feature-list__item"><i class="fa-solid fa-folder-open"></i> Fixed file explorer full-crash issue</li>
                     <li class="c-feature-list__item"><i class="fa-solid fa-shield-heart"></i> Added recovery flow when file explorer crashes</li>
                     <li class="c-feature-list__item"><i class="fa-solid fa-file-zipper"></i> Windows x64 ZIP asset published with SHA256 verification</li>
                 </ul>
 
                 <div class="c-product-card__actions">
-                    <a href="https://github.com/Lukas-Bohez/vault_the_spire/releases/tag/4.1.0" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--windows">
-                        <i class="fa-brands fa-windows"></i>&nbsp; View v4.1.0 release
+                    <a href="https://github.com/Lukas-Bohez/vault_the_spire/releases/tag/4.2.0" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--windows">
+                        <i class="fa-brands fa-windows"></i>&nbsp; View v4.2.0 release
                     </a>
                     <a href="https://groups.google.com/g/testersvaultthespire/" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--cta c-btn--android" aria-label="Join the Vault The Spire Android testing group">
                         <i class="fa-solid fa-users"></i>&nbsp; Join test group
                     </a>
-                    <a href="https://github.com/Lukas-Bohez/vault_the_spire/releases/download/4.1.0/vault_the_spire_4.1.0_windows_x64.zip" target="_blank" rel="noopener" class="c-btn c-btn--outline">
+                    <a href="https://github.com/Lukas-Bohez/vault_the_spire/releases/download/4.2.0/vault_the_spire_4.2.0_windows_x64.zip" target="_blank" rel="noopener" class="c-btn c-btn--outline">
                         <i class="fa-solid fa-file-zipper"></i>&nbsp; Windows ZIP (x64)
                     </a>
                     <a href="https://github.com/Lukas-Bohez/vault_the_spire" target="_blank" rel="noopener" class="c-btn c-btn--outline">
@@ -283,7 +378,7 @@
                     </a>
                 </div>
 
-                <p class="c-product-card__reassurance"><i class="fa-solid fa-circle-check"></i><strong>Latest release:</strong> v4.1.0 Windows x64 ZIP (14.8 MB) published with SHA256 <code>e295c80af8e06f272d0eeeb0de1be3d956e981416d4e52209e1cbc2cd9217432</code>.</p>
+                <p class="c-product-card__reassurance"><i class="fa-solid fa-circle-check"></i><strong>Latest release:</strong> v4.2.0 Windows x64 ZIP (14.8 MB) published with SHA256 <code>e295c80af8e06f272d0eeeb0de1be3d956e981416d4e52209e1cbc2cd9217432</code>.</p>
             </section>
 
             <aside class="c-ad-slot-card" aria-label="Advertisement">
