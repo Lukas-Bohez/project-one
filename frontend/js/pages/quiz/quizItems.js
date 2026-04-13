@@ -461,12 +461,42 @@ const trySetSVGIcon = (iconElement, itemName, slotNumber) => {
 // Separate function to find matching SVG with improved logic
 const findMatchingSVG = (itemName, availableSVGs) => {
     const itemNameLower = itemName.toLowerCase().trim();
+    const normalizedItemName = itemNameLower
+        .replace(/[()]/g, ' ')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
     let matchingSVG = null;
+
+    // Strategy 0: explicit item-to-icon mapping for known item names.
+    const explicitMappings = {
+        'freeze': 'iceball.svg',
+        'ice': 'iceball.svg',
+        'fireball': 'fireball.svg',
+        'fire': 'fireball.svg',
+        'shield': 'shield.svg',
+        'double points': 'double-points.svg',
+        'time warp': 'time-warp.svg',
+        'lightning bolt': 'lightning.svg',
+        'lightning': 'lightning.svg',
+        'mystery box': 'mystery-box.svg',
+        'spotlight': 'spotlight.svg',
+        'earthquake': 'earthquake.svg',
+        'flood': 'flood.svg'
+    };
+
+    for (const [pattern, svgName] of Object.entries(explicitMappings)) {
+        if (normalizedItemName === pattern || normalizedItemName.includes(pattern)) {
+            matchingSVG = availableSVGs.find(svg => svg.toLowerCase() === svgName.toLowerCase());
+            if (matchingSVG) {
+                return matchingSVG;
+            }
+        }
+    }
     
     // Strategy 1: Exact match (remove .svg extension from available files)
     matchingSVG = availableSVGs.find(svg => {
         const svgNameWithoutExt = svg.toLowerCase().replace('.svg', '');
-        return svgNameWithoutExt === itemNameLower;
+        return svgNameWithoutExt === itemNameLower || svgNameWithoutExt === normalizedItemName.replace(/\s+/g, '-');
     });
     
     // Strategy 2: Item name contains SVG name
@@ -504,21 +534,26 @@ const findMatchingSVG = (itemName, availableSVGs) => {
     // Strategy 5: Common item type mappings
     if (!matchingSVG) {
         const itemTypeMappings = {
-            'fire': ['fireball', 'flame'],
-            'ice': ['iceball', 'freeze', 'frost'],
+            'fireball': ['fireball', 'flame', 'fire'],
+            'freeze': ['iceball', 'freeze', 'frost', 'ice'],
             'water': ['waterball', 'splash'],
             'earth': ['earthball', 'rock'],
-            'lightning': ['lightningball', 'thunder'],
+            'lightning': ['lightning', 'lightningball', 'thunder'],
+            'double points': ['double-points', 'double points'],
+            'time warp': ['time-warp', 'time warp'],
+            'mystery box': ['mystery-box', 'mystery box'],
+            'spotlight': ['spotlight'],
+            'shield': ['shield', 'defense'],
+            'flood': ['flood'],
             'heal': ['healpotion', 'health'],
             'mana': ['manapotion', 'magic'],
             'sword': ['sword', 'blade'],
-            'shield': ['shield', 'defense'],
             'bow': ['bow', 'arrow'],
             'staff': ['staff', 'wand']
         };
         
         for (const [type, variations] of Object.entries(itemTypeMappings)) {
-            if (itemNameLower.includes(type)) {
+            if (normalizedItemName.includes(type)) {
                 matchingSVG = availableSVGs.find(svg => {
                     const svgNameLower = svg.toLowerCase();
                     return variations.some(variation => svgNameLower.includes(variation));
