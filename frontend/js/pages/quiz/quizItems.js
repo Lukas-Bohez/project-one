@@ -371,12 +371,13 @@ const setupItemIcon = (slotElement, item, slotNumber) => {
     iconElement.title = itemName; // Tooltip for item name
     
     // Use logoUrl if available
-    if (item.logoUrl) {
-        console.log(`🖼️ Using logoUrl for slot ${slotNumber}:`, item.logoUrl);
-        iconElement.src = item.logoUrl;
+    const resolvedLogoUrl = resolveItemLogoUrl(item.logoUrl);
+    if (resolvedLogoUrl) {
+        console.log(`🖼️ Using logoUrl for slot ${slotNumber}:`, resolvedLogoUrl);
+        iconElement.src = resolvedLogoUrl;
         
         iconElement.onerror = () => {
-            console.warn(`❌ logoUrl failed to load for ${itemName}:`, item.logoUrl);
+            console.warn(`❌ logoUrl failed to load for ${itemName}:`, resolvedLogoUrl);
             // Try SVG fallback if logoUrl fails
             trySetSVGIcon(iconElement, itemName, slotNumber);
         };
@@ -388,6 +389,29 @@ const setupItemIcon = (slotElement, item, slotNumber) => {
         // Try to find matching SVG
         trySetSVGIcon(iconElement, itemName, slotNumber);
     }
+};
+
+const resolveItemLogoUrl = (logoUrl) => {
+    if (!logoUrl || typeof logoUrl !== 'string') {
+        return null;
+    }
+
+    const cleanUrl = logoUrl.split('?')[0].split('#')[0];
+    const fileName = cleanUrl.split('/').pop()?.trim();
+
+    if (!fileName || !fileName.toLowerCase().endsWith('.svg')) {
+        return null;
+    }
+
+    if (availableSVGs.length > 0) {
+        const matchingSVG = availableSVGs.find(svg => svg.toLowerCase() === fileName.toLowerCase());
+        if (matchingSVG) {
+            return `/svg/${matchingSVG}`;
+        }
+        return null;
+    }
+
+    return `/svg/${fileName}`;
 };
 
 // New function to setup quantity display
