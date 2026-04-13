@@ -77,6 +77,29 @@ class QuizLogic {
     }
 
     getCurrentUser() {
+        // Try to restore session from storage if user is missing
+        if (!this.currentUser) {
+            const userId = sessionStorage.getItem('user_user_id');
+            const firstName = sessionStorage.getItem('user_first_name');
+            const lastName = sessionStorage.getItem('user_last_name');
+            
+            if (userId && firstName && lastName) {
+                console.log('QuizLogic: Restoring user session from storage:', firstName, lastName);
+                this.currentUser = {
+                    id: parseInt(userId, 10),
+                    user_id: parseInt(userId, 10),
+                    firstName: firstName,
+                    lastName: lastName,
+                    fullName: `${firstName} ${lastName}`
+                };
+                
+                // Also set on question handler if it exists
+                if (this.questionHandler) {
+                    this.questionHandler.setCurrentUser(this.currentUser);
+                }
+            }
+        }
+        
         return this.currentUser;
     }
 

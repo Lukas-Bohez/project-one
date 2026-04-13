@@ -66,12 +66,12 @@ html, body {
  # COMPONENTS
 /*---------------------------------------*/
 .c-quiz-container {
-    max-width: 1000px;
-    margin: var(--spacing-md) auto;
-    padding: var(--spacing-md);
+    max-width: 1200px;
+    margin: var(--spacing-lg) auto;
+    padding: var(--spacing-lg);
     display: grid;
     grid-template-rows: auto 1fr auto auto;
-    gap: var(--spacing-lg);
+    gap: var(--spacing-xl);
     height: fit-content;
     min-height: calc(100vh - 120px);
 }
@@ -80,11 +80,13 @@ html, body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: var(--spacing-lg);
     background-color: var(--bg-secondary);
-    padding: var(--spacing-lg);
-    border-radius: var(--border-radius);
+    padding: var(--spacing-xl);
+    border-radius: var(--border-radius-lg);
     border: 1px solid var(--border-color);
-    box-shadow: 0 4px 6px var(--shadow-light);
+    box-shadow: 0 4px 12px var(--shadow-light);
+    flex-wrap: wrap;
 }
 
 /* Updated CSS */
@@ -146,22 +148,23 @@ html, body {
     color: var(--text-secondary);
 }
 
-.c-question-container {
-    background-color: var(--bg-secondary);
-    padding: var(--spacing-xl);
-    border-radius: var(--border-radius);
+.c-question-container { var(--spacing-xxl, 3rem);
+    border-radius: var(--border-radius-lg);
     border: 1px solid var(--border-color);
-    box-shadow: 0 4px 6px var(--shadow-light);
+    box-shadow: 0 4px 12px var(--shadow-light);
+    text-align: center;
+    min-height: 254px 6px var(--shadow-light);
     text-align: center;
     min-height: 200px;
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
-
-.c-question-container h2 {
-    margin-bottom: var(--spacing-lg);
+xl);
     color: var(--text-primary);
+    font-weight: 700;
+    line-height: 1.5;
+    font-size: 1.8remt-primary);
     font-weight: 600;
     line-height: 1.4;
 }
@@ -195,20 +198,20 @@ html, body {
 
 .c-answers-container {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columxl: repeat(2, 1fr);
     gap: var(--spacing-lg);
 }
 
-.c-answer-btn {
-    padding: var(--spacing-lg);
+.c-answer-btn {xl);
     border: 2px solid var(--border-color);
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius-lg);
     background-color: var(--bg-secondary);
     color: var(--text-primary);
-    font-size: var(--font-size-base);
-    font-weight: 500;
+    font-size: 1.1rem;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
+    min-height: 8ll 0.2s ease;
     min-height: 60px;
     display: flex;
     align-items: center;
@@ -316,11 +319,11 @@ html, body {
 
 
 .c-players-container {
-    background-color: var(--bg-secondary);
-    padding: var(--spacing-lg);
-    border-radius: var(--border-radius);
+    background-color: var(-xl);
+    border-radius: var(--border-radius-lg);
     border: 1px solid var(--border-color);
-    box-shadow: 0 4px 6px var(--shadow-light);
+    box-shadow: 0 4px 12px var(--shadow-light);
+    margin-bottom: var(--spacing-lgdow-light);
     margin-bottom: var(--spacing-md);
 }
 
@@ -471,6 +474,96 @@ html, body {
     .c-stats-display {
         flex-direction: column;
         gap: var(--spacing-sm);
+    }
+}
+
+/* Desktop optimizations for larger screens */
+@media (min-width: 1024px) {
+    .c-quiz-container {
+        max-width: 1400px;
+        margin: var(--spacing-xl) auto;
+        padding: var(--spacing-xl);
+        gap: var(--spacing-xxl, 2.5rem);
+    }
+
+    .c-items-container {
+        gap: var(--spacing-lg);
+    }
+
+    .c-item-slot {
+        width: 50px;
+        height: 50px;
+        font-size: var(--font-size-xl);
+    }
+
+    .c-answer-btn {
+        min-height: 100px;
+        font-size: 1.2rem;
+        font-weight: 700;
+        padding: var(--spacing-xxl, 2rem);
+    }
+
+    .c-answer-btn:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px var(--shadow-medium, rgba(44,76,124,0.12));
+    }
+
+    .c-players-list {
+        max-height: 400px;
+    }
+
+    .c-question-container h2 {
+        font-size: 2.2rem;
+        margin-bottom: var(--spacing-xxl, 2.5rem);
+    }
+
+    /* Enhance header for desktop */
+    .c-quiz-header {
+        gap: var(--spacing-xl);
+        padding: var(--spacing-xl);
+    }
+
+    .c-timer-container {
+        gap: var(--spacing-lg);
+    }
+
+    .c-servo-visual {
+        width: 120px;
+        height: 24px;
+    }
+
+    .c-time-remaining {
+        font-size: 2rem;
+    }
+
+    /* Better spacing for controls */
+    .c-quiz-controls {
+        gap: var(--spacing-lg);
+    }
+
+    .c-btn {
+        padding: var(--spacing-lg) var(--spacing-xl);
+        font-size: 1.1rem;
+    }
+
+    /* Improve player list styling */
+    .c-player-item {
+        padding: var(--spacing-lg);
+        border-radius: var(--border-radius-lg);
+    }
+
+    .c-player-name {
+        font-size: var(--font-size-base);
+    }
+
+    .c-player-score {
+        font-size: var(--font-size-sm);
+    }
+
+    /* Image container improvements */
+    .c-image-container {
+        max-height: 400px;
+        margin: var(--spacing-xl) auto;
     }
 }
 

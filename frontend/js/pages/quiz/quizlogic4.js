@@ -610,7 +610,14 @@ handleAnswerClick(boxElement) {
     if (!userId) {
         console.error("No current user ID available");
         console.error("Current user object:", this.currentUser);
-        this.handleErrorDisplay("Please log in again");
+        console.error("Session storage check:");
+        console.error("  user_user_id:", sessionStorage.getItem('user_user_id'));
+        console.error("  user_first_name:", sessionStorage.getItem('user_first_name'));
+        console.error("  user_last_name:", sessionStorage.getItem('user_last_name'));
+        
+        // Provide specific error message based on context
+        const errorMsg = "Your session has expired. Please refresh the page and log in again.";
+        this.handleErrorDisplay(errorMsg);
         this.enableAnswerBoxes();
         return;
     }
@@ -688,13 +695,38 @@ enableAnswerBoxes() {
         box.style.pointerEvents = '';
         box.querySelector('.snes-button').style.opacity = '';
     });
-}
+    }
 
-// Helper method to get current user ID
-getCurrentUserId() {
-    if (!this.currentUser) return null;
-    return Number(this.currentUser.user_id || this.currentUser.id);
-}
+    // Helper method to restore user session from storage if lost
+    restoreUserSessionIfNeeded() {
+        if (this.currentUser) return; // Already have user
+        
+        // Try to restore from sessionStorage
+        const userId = sessionStorage.getItem('user_user_id');
+        const firstName = sessionStorage.getItem('user_first_name');
+        const lastName = sessionStorage.getItem('user_last_name');
+        
+        if (userId && firstName && lastName) {
+            console.log('Restoring user session from storage:', firstName, lastName);
+            this.currentUser = {
+                id: parseInt(userId, 10),
+                user_id: parseInt(userId, 10),
+                firstName: firstName,
+                lastName: lastName,
+                fullName: `${firstName} ${lastName}`
+            };
+            console.log('User session restored:', this.currentUser);
+        }
+    }
+
+    // Helper method to get current user ID
+    getCurrentUserId() {
+        // Try to restore session if current user is missing
+        this.restoreUserSessionIfNeeded();
+        
+        if (!this.currentUser) return null;
+        return Number(this.currentUser.user_id || this.currentUser.id);
+    }
 
 showExplanation(data) {
     console.log("Showing explanation for question", data.question_id || 'unknown', data);

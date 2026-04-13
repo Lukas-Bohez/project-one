@@ -97,6 +97,7 @@ html, body {
     --spacing-md: 1rem;
     --spacing-lg: 1.5rem;
     --spacing-xl: 2rem;
+    --spacing-xxl: 2.5rem;
 
     /* Typography */
     --font-size-xs: 0.75rem;
@@ -1649,44 +1650,44 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 .c-vault-release {
-    text-align: left;
+    text-align: center;
     background: #ffffff;
     border-color: rgba(44, 111, 184, 0.16);
     margin-top: 1rem;
 }
 
 .c-vault-release .c-product-card__badge-row {
-    justify-content: flex-start;
+    justify-content: center;
 }
 
 .c-vault-release .c-product-card__title,
 .c-vault-release .c-product-card__tagline {
-    text-align: left;
-    margin-left: 0;
-    margin-right: 0;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .c-vault-release .c-product-card__tagline {
-    max-width: none;
+    max-width: 700px;
 }
 
 .c-vault-release .c-feature-list {
-    max-width: none;
-    margin-left: 0;
-    margin-right: 0;
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .c-vault-release .c-product-card__actions {
-    justify-content: flex-start;
+    justify-content: center;
 }
 
 .c-vault-release .c-update-banner {
     margin: 1rem 0 1.1rem;
-    justify-content: flex-start;
+    justify-content: center;
 }
 
 .c-vault-release .c-product-card__reassurance {
-    text-align: left;
+    text-align: center;
 }
 
 /* Feature list */
@@ -2828,6 +2829,70 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
         padding: 0.6rem 0.75rem;
     }
 
+    .c-product-card__badge-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        overflow: visible;
+    }
+
+    .c-product-card__badge-row .c-badge {
+        min-height: 1.75rem;
+        font-size: 0.75rem;
+        line-height: 1.1;
+        padding: 0.25rem 0.6rem;
+        border-radius: 999px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        text-align: center;
+    }
+
+
+@media (min-width: 601px) and (max-width: 640px) {
+    .c-product-card__badge-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        overflow: visible;
+    }
+
+    .c-product-card__badge-row .c-badge {
+        min-height: 1.75rem;
+        font-size: 0.75rem;
+        line-height: 1.1;
+        padding: 0.25rem 0.6rem;
+        border-radius: 999px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        text-align: center;
+    }
+}
+
+@media (min-width: 641px) and (max-width: 1023px) {
+    .c-product-card__badge-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        overflow: visible;
+    }
+
+    .c-product-card__badge-row .c-badge {
+        min-height: 1.8rem;
+        font-size: 0.8rem;
+        line-height: 1.1;
+        padding: 0.25rem 0.6rem;
+        border-radius: 999px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        text-align: center;
+    }
+}
     /* Modal */
     .c-modal {
         padding: 0.375rem !important;

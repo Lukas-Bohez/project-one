@@ -722,6 +722,13 @@
     };
 
     window.rateTheme = async function (themeId, stars) {
+        // Check if user is logged in
+        if (!currentUser || !currentUser.id) {
+            toast('Please log in to rate themes', 'error');
+            $('#loginModal').classList.add('sai-modal--active');
+            return;
+        }
+        
         try {
             await api(`/themes/${themeId}/rate`, {
                 method: 'POST',
@@ -733,7 +740,12 @@
             });
             toast('Thanks for rating!', 'success');
         } catch (e) {
-            toast('Rating failed - ' + (e.detail || 'try again'), 'error');
+            if (e.status === 401 || e.detail === 'Unauthorized') {
+                toast('Your session expired. Please log in again.', 'error');
+                $('#loginModal').classList.add('sai-modal--active');
+            } else {
+                toast('Rating failed - ' + (e.detail || 'try again'), 'error');
+            }
         }
     };
 
