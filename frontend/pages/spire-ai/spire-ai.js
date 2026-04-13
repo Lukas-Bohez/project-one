@@ -43,7 +43,7 @@
         if (currentUser) {
             headers['X-User-ID'] = String(currentUser.id);
             // Send password for authentication
-            const storedPassword = localStorage.getItem('sai_password');
+            const storedPassword = localStorage.getItem('sai_password') || localStorage.getItem(STORAGE_KEYS.PASSWORD);
             if (storedPassword) {
                 headers['X-Password'] = storedPassword;
             }
@@ -114,7 +114,10 @@
         localStorage.setItem(STORAGE_KEYS.USER_ID, id);
         localStorage.setItem(STORAGE_KEYS.FIRST_NAME, firstName);
         localStorage.setItem(STORAGE_KEYS.LAST_NAME, lastName);
-        if (password) localStorage.setItem(STORAGE_KEYS.PASSWORD, password);
+        if (password) {
+            localStorage.setItem(STORAGE_KEYS.PASSWORD, password);
+            localStorage.setItem('sai_password', password);
+        }
     }
 
     async function doLogin(firstName, lastName, password) {
@@ -170,6 +173,7 @@
         if (sessionRefreshInterval) { clearInterval(sessionRefreshInterval); sessionRefreshInterval = null; }
         if (hubSocket) { hubSocket.disconnect(); hubSocket = null; }
         Object.values(STORAGE_KEYS).forEach(k => localStorage.removeItem(k));
+        localStorage.removeItem('sai_password');
         currentUser = null;
         location.reload();
     }
@@ -308,12 +312,45 @@
         }
     }
 
-    window.joinActiveQuiz = function (sessionId) {
+    window.joinActiveQuiz = async function (sessionId, themeId) {
         if (sessionId) {
             sessionStorage.setItem('quiz_session_id', String(sessionId));
             window.location.href = `${QUIZ_PAGE}?session=${sessionId}`;
-        } else {
-            window.location.href = QUIZ_PAGE;
+            return;
+        }
+
+        if (themeId) {
+            try {
+                if (!currentUser || !currentUser.id) {
+                    toast('Please log in before starting a quiz', 'error');
+                    $('#loginModal')?.classList.add('sai-modal--active');
+                    return;
+                }
+
+                const result = await apiRaw('/sessions/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        theme_ids: [themeId],
+                        user_id: currentUser.id
+                    })
+                });
+
+                if (!result || !result.session_id) {
+                    throw new Error('Session creation failed');
+                }
+
+                sessionStorage.setItem('quiz_session_id', String(result.session_id));
+                window.location.href = `${QUIZ_PAGE}?session=${result.session_id}`;
+                return;
+            } catch (error) {
+                console.error('Failed to create quiz session from theme detail:', error);
+                toast(error.detail || error.message || 'Failed to create quiz session', 'error');
+                return;
+            }
+        }
+
+        window.location.href = QUIZ_PAGE;
         }
     };
 
@@ -707,7 +744,7 @@
                     </div>
                 </div>
                 <div class="sai-theme-detail__actions">
-                    <button class="sai-btn sai-btn--success" onclick="closeModal('themeDetailModal'); joinActiveQuiz();">
+                    <button class="sai-btn sai-btn--success" onclick="closeModal('themeDetailModal'); joinActiveQuiz(null, ${themeId});">
                         <i class="fas fa-play"></i> Play Quiz
                     </button>
                     <button class="sai-btn sai-btn--ghost" onclick="closeModal('themeDetailModal')">Close</button>

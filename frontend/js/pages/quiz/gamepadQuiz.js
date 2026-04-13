@@ -1,5 +1,12 @@
 class QuizGamepadNavigator {
     constructor() {
+        this.STORAGE_KEYS = window.STORAGE_KEYS || {
+            USER: {
+                FIRST_NAME: 'user_first_name',
+                LAST_NAME: 'user_last_name',
+                PASSWORD: 'user_password'
+            }
+        };
         this.gamepadIndex = null;
         this.buttonStates = {
             dpadUp: false,

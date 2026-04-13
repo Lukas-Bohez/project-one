@@ -10,6 +10,7 @@ class ChatSystem {
         this.pendingMessage = null; // Store message being retried
         this.retryAttempts = 0;
         this.maxRetryAttempts = 10; // Maximum retry attempts
+        this.explicitSessionId = null;
 
         console.log('ChatSystem: Constructor called. Fetching active session ID...');
 
@@ -18,6 +19,7 @@ class ChatSystem {
         const urlSessionId = urlParams.get('session');
         if (urlSessionId) {
             this.sessionId = parseInt(urlSessionId, 10);
+            this.explicitSessionId = this.sessionId;
             sessionStorage.setItem('quiz_session_id', String(this.sessionId));
             console.log(`ChatSystem: Using session ID from URL: ${this.sessionId}`);
         } else {
@@ -25,6 +27,7 @@ class ChatSystem {
             const storedId = sessionStorage.getItem('quiz_session_id');
             if (storedId) {
                 this.sessionId = parseInt(storedId, 10);
+                this.explicitSessionId = this.sessionId;
                 console.log(`ChatSystem: Using session ID from sessionStorage: ${this.sessionId}`);
             }
         }
@@ -171,7 +174,6 @@ class ChatSystem {
 
     async fetchActiveSessionId() {
         try {
-            // If we already have a session from URL/sessionStorage, validate it exists in active sessions
             const response = await fetch(`${this.lanIP}/api/v1/sessions/active`);
 
             if (!response.ok) {
@@ -181,61 +183,71 @@ class ChatSystem {
 
             const data = await response.json();
             const activeSessionIdsList = data.active_session_ids || [];
+            const sessions = Array.isArray(data.sessions) ? data.sessions : [];
 
-            // If we have a target session (from URL), stick with it if it's still active
-            if (this.sessionId && activeSessionIdsList.includes(this.sessionId)) {
-                console.log(`ChatSystem: Target session ${this.sessionId} is still active`);
+            const newestSession = sessions
+                .filter(session => session && session.id !== 999999)
+                .sort((left, right) => {
+                    const leftTime = Date.parse(left.start_time || '') || 0;
+                    const rightTime = Date.parse(right.start_time || '') || 0;
+                    if (rightTime !== leftTime) {
+                        return rightTime - leftTime;
+                    }
+                    return (right.id || 0) - (left.id || 0);
+                })[0];
+
+            const newestSessionId = newestSession?.id || activeSessionIdsList[0] || null;
+
+            // If we have an explicit session from URL/sessionStorage, keep it.
+            // Do not overwrite it with an older active session while the new one is still warming up.
+            if (this.explicitSessionId) {
+                if (activeSessionIdsList.includes(this.explicitSessionId)) {
+                    console.log(`ChatSystem: Explicit session ${this.explicitSessionId} is active`);
+                } else {
+                    console.log(`ChatSystem: Waiting for explicit session ${this.explicitSessionId} to become active`);
+                }
+
                 window.currentQuizSessionId = this.sessionId;
                 return;
             }
 
-            // If target session is gone, or no target, pick first active
-            if (activeSessionIdsList.length > 0) {
-                const newSessionId = activeSessionIdsList[0];
-                
-                // Only update if the session ID has changed
-                if (this.sessionId !== newSessionId) {
-                    const oldSessionId = this.sessionId;
-                    this.sessionId = newSessionId;
-                    window.currentQuizSessionId = this.sessionId;
-                    console.log(`ChatSystem: Session ID updated from ${oldSessionId} to ${newSessionId}`);
-                    
-                    // Update socket room - socket.io will queue if not connected
-                    if (this.socket) {
-                        if (oldSessionId) {
-                            this.socket.emit('leave', `quiz_session_${oldSessionId}`);
-                            console.log(`ChatSystem: Emitted leave for room: quiz_session_${oldSessionId}`);
+            if (!newestSessionId) {
+                console.warn('ChatSystem: No active sessions found. Waiting for a new session to be created.');
+                return;
+            }
+
+            // If we had no explicit session, adopt the newest active session.
+            if (this.sessionId !== newestSessionId) {
+                const oldSessionId = this.sessionId;
+                this.sessionId = newestSessionId;
+                sessionStorage.setItem('quiz_session_id', String(this.sessionId));
+                window.currentQuizSessionId = this.sessionId;
+                console.log(`ChatSystem: Session ID updated from ${oldSessionId} to ${newestSessionId}`);
+
+                if (this.socket) {
+                    if (oldSessionId) {
+                        this.socket.emit('leave', `quiz_session_${oldSessionId}`);
+                        console.log(`ChatSystem: Emitted leave for room: quiz_session_${oldSessionId}`);
+                    }
+                    this.socket.emit('join', `quiz_session_${this.sessionId}`, (response) => {
+                        if (response && response.status === 'success') {
+                            console.log(`ChatSystem: Successfully joined room: quiz_session_${this.sessionId}`);
+                        } else {
+                            console.error(`ChatSystem: Failed to join room: quiz_session_${this.sessionId}`, response);
                         }
-                        this.socket.emit('join', `quiz_session_${this.sessionId}`, (response) => {
-                            if (response && response.status === 'success') {
-                                console.log(`ChatSystem: Successfully joined room: quiz_session_${this.sessionId}`);
-                            } else {
-                                console.error(`ChatSystem: Failed to join room: quiz_session_${this.sessionId}`, response);
-                            }
-                        });
-                        // Inform backend about session association
-                        this.socket.emit('join_quiz_session', { session_id: this.sessionId });
-                        console.log(`ChatSystem: Emitted join for room: quiz_session_${this.sessionId}`);
-                    }
-                    
-                    // Retry pending message if we have one
-                    if (this.pendingMessage) {
-                        console.log('ChatSystem: Retrying pending message with new sessionId');
-                        this.retryPendingMessage();
-                    }
+                    });
+                    this.socket.emit('join_quiz_session', { session_id: this.sessionId });
+                    console.log(`ChatSystem: Emitted join for room: quiz_session_${this.sessionId}`);
                 }
-            } else {
-                console.warn('ChatSystem: No active sessions found. Defaulting to 2.');
-                if (this.sessionId !== 2) {
-                    this.sessionId = 2;
+
+                if (this.pendingMessage) {
+                    console.log('ChatSystem: Retrying pending message with new sessionId');
+                    this.retryPendingMessage();
                 }
             }
         } catch (error) {
             console.error('ChatSystem: Error fetching active session ID:', error);
-            if (this.sessionId === null) {
-                console.warn('ChatSystem: Could not fetch active session. Defaulting to 2.');
-                this.sessionId = 2;
-            }
+            // Keep the current sessionId untouched on transient failures.
         }
     }
 

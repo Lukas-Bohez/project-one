@@ -1242,6 +1242,10 @@ async def handle_join_quiz_session(sid, data):
         if not session_info:
             return
 
+        if current_phase == "voting" and session_info.get("themeId"):
+            clear_stale_session_theme_if_needed(target_session_id)
+            session_info = QuizSessionRepository.get_session_by_id(target_session_id)
+
         quiz_st = get_quiz_state(target_session_id)
         print(
             f"[JOIN_SESSION] Syncing {sid} with session {target_session_id} phase={current_phase}"
@@ -6223,6 +6227,28 @@ def set_session_phase(session_id, phase):
         quiz_sessions[session_id]["phase"] = phase
 
 
+def clear_stale_session_theme_if_needed(session_id):
+    """Clear a leftover themeId if the session is back in voting phase.
+
+    This handles cases where a previous theme selection was persisted but the
+    session was already reset to voting, which would otherwise reject new votes.
+    """
+    try:
+        session_info = QuizSessionRepository.get_session_by_id(session_id)
+        if not session_info:
+            return False
+
+        if get_session_phase(session_id) == "voting" and session_info.get("themeId"):
+            print(
+                f"[THEME_SELECTION] Clearing stale themeId for session {session_id} before voting"
+            )
+            return QuizSessionRepository.update_session_theme(session_id, None)
+    except Exception as e:
+        print(f"[THEME_SELECTION] Failed to clear stale theme for session {session_id}: {e}")
+
+    return False
+
+
 def get_quiz_state(session_id):
     """Get quiz state for a session"""
     with quiz_state_lock:
@@ -8101,6 +8127,11 @@ async def handle_theme_selection(sid, data):
                 to=sid,
             )
             return
+
+        if current_phase == "voting" and active_session_info.get("themeId"):
+            cleared = clear_stale_session_theme_if_needed(active_session_id)
+            if cleared:
+                active_session_info = QuizSessionRepository.get_session_by_id(active_session_id)
 
         # Check if theme is already set
         if active_session_info.get("themeId"):
