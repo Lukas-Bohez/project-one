@@ -7363,7 +7363,9 @@ def handle_quiz_phase(sio, loop, session_id, timer_config):
 
         try:
             # Exclude already played themes from the next vote
-            emit_combined_theme_selection(sio, loop, None, True, played)
+            emit_combined_theme_selection(
+                sio, loop, None, True, played, session_id=session_id
+            )
         except Exception as e:
             print(
                 f"Failed to emit theme selection for next theme in session {session_id}: {e}"
@@ -7545,6 +7547,11 @@ def emit_combined_theme_selection(
                 asyncio.run_coroutine_threadsafe(
                     sio.emit("questionData", combined_data, room=target), loop
                 )
+            elif effective_session_id:
+                session_room = f"quiz_session_{effective_session_id}"
+                asyncio.run_coroutine_threadsafe(
+                    sio.emit("questionData", combined_data, room=session_room), loop
+                )
             else:
                 asyncio.run_coroutine_threadsafe(
                     sio.emit("questionData", combined_data), loop
@@ -7683,11 +7690,15 @@ def emit_theme_selection_if_needed(sio, loop):
             current_phase = "voting"
             if current_phase == "voting" and not is_timer_running:
                 # Voting phase but no timer running - emit theme selection to allow voting
-                pass
+                emit_combined_theme_selection(
+                    sio, loop, session_id=active_session_id
+                )
             elif current_phase not in ["voting", "theme_display", "quiz"]:
                 # No phase set - initialize voting phase and emit theme selection
                 set_session_phase(active_session_id, "voting")
-                emit_combined_theme_selection(sio, loop)
+                emit_combined_theme_selection(
+                    sio, loop, session_id=active_session_id
+                )
         else:
             # Theme is already set - handle transitions
             if current_phase == "voting" and not is_timer_running:
@@ -8048,14 +8059,17 @@ async def handle_theme_selection(sid, data):
     """
     print(f"[THEME_SELECTION] Received from sid {sid}: {data}")
     try:
-        # Determine which session this client belongs to
-        active_session_id = get_client_session(sid) or get_active_session_id()
+        # Determine which session this client belongs to (strictly per-socket)
+        active_session_id = get_client_session(sid)
 
         if not active_session_id:
-            print(f"[THEME_SELECTION] ERROR: No active session found for {sid}")
+            print(f"[THEME_SELECTION] ERROR: No session mapping found for {sid}")
             await sio.emit(
                 "answer_response",
-                {"success": False, "error": "No active session found"},
+                {
+                    "success": False,
+                    "error": "No active session joined. Please rejoin the quiz session.",
+                },
                 to=sid,
             )
             return

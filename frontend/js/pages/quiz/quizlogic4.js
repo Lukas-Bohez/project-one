@@ -7,6 +7,7 @@ class QuizQuestionHandler {
         this.currentUser = null;
         this.players = [];
         this.timeRemaining = 0;
+        this.currentPhase = null;
         
         // Listen for answer responses from server
         if (this.socket) {
@@ -106,6 +107,10 @@ class QuizQuestionHandler {
             console.warn('[DEBUG] Failed to read questionData diagnostic fields:', e);
         }
         this.currentQuestion = questionData;
+
+        if (this.isThemeResultQuestion(questionData)) {
+            this.currentPhase = 'theme_display';
+        }
 
         // Clear the question load timeout since we got a question
         if (this.questionLoadTimeout) {
@@ -300,6 +305,18 @@ getOptionText(option, questionType) {
         : (option.answer_text || option.text || option);
 }
 
+isThemeResultQuestion(questionData) {
+    if (!questionData || questionData.type !== 'theme_selection') {
+        return false;
+    }
+
+    return questionData.id === 'voting_result' || !!questionData.winning_theme;
+}
+
+isThemeSelectionLocked() {
+    return this.currentPhase === 'theme_display' || this.isThemeResultQuestion(this.currentQuestion);
+}
+
 // Then your existing setupAnswerOptions function
 setupAnswerOptions(questionData) {
     // 1. Style Injection (only once)
@@ -335,6 +352,14 @@ setupAnswerOptions(questionData) {
     // 4. Process Answers
     const filteredOptions = this.selectOptimalAnswers(options, questionData.type);
     this.renderAnswerBoxes(filteredOptions, container, questionData.type);
+
+    if (questionData.type === 'theme_selection' && this.isThemeSelectionLocked()) {
+        const answerBoxes = container.querySelectorAll('.answer-box');
+        answerBoxes.forEach((box) => {
+            box.classList.add('is-disabled');
+            box.style.pointerEvents = 'none';
+        });
+    }
 }
 
 // ========================
@@ -408,84 +433,17 @@ renderAnswerBoxes(options, container, questionType) {
 // STYLES & UTILITIES
 // ========================
 injectAnswerBoxStyles() {
-    if (document.getElementById('answer-box-styles')) return;
-   
-    const style = document.createElement('style');
-    style.id = 'answer-box-styles';
-    style.textContent = `
-        .answer-grid-container {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-       
-        .answer-box {
-            position: relative;
-            perspective: 1000px;
-            height: 80px; /* Reduced from 120px */
-        }
-       
-        .snes-button {
-            height: 100%;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-weight: bold;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            border: none;
-            padding: 8px; /* Added padding to prevent content touching edges */
-        }
-       
-        .snes-button:hover {
-            transform: translateY(-3px); /* Reduced from -5px */
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2); /* Reduced shadow */
-        }
-       
-        .button-label {
-            position: absolute;
-            font-size: 12px; /* Reduced from 14px */
-            font-weight: bold;
-            opacity: 0.9;
-            z-index: 2;
-            background: rgba(0,0,0,0.2); /* Added subtle background */
-            padding: 2px 6px;
-            border-radius: 4px;
-            min-width: 16px;
-            text-align: center;
-        }
-       
-        .answer-content {
-            padding: 4px 8px; /* Reduced padding */
-            text-align: center;
-            font-size: 14px; /* Reduced from 16px */
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-            line-height: 1.2;
-            z-index: 1;
-            position: relative;
-        }
-       
-        /* Position labels in corners, away from content */
-        .answer-box:nth-child(1) .button-label { top: 4px; right: 4px; }
-        .answer-box:nth-child(2) .button-label { bottom: 4px; right: 4px; }
-        .answer-box:nth-child(3) .button-label { bottom: 4px; left: 4px; }
-        .answer-box:nth-child(4) .button-label { top: 4px; left: 4px; }
-    `;
-    document.head.appendChild(style);
+    // Styling is owned by /css/pages/quiz/quiz.css to avoid runtime conflicts.
+    return;
 }
 
 
 
 bindAnswerEvents() {
+    if (this.currentQuestion?.type === 'theme_selection' && this.isThemeSelectionLocked()) {
+        return;
+    }
+
     const answerBoxes = document.querySelectorAll('.answer-box');
     if (answerBoxes.length === 0) {
         console.warn("No answer boxes found");
@@ -537,6 +495,11 @@ handleAnswerClick(boxElement) {
 
     if (!this.currentQuestion || !this.currentQuestion.type) {
         console.error("Invalid question state - no current question");
+        return;
+    }
+
+    if (this.currentQuestion.type === 'theme_selection' && this.isThemeSelectionLocked()) {
+        this.showFeedback('Theme is already locked for this round.');
         return;
     }
 
@@ -793,7 +756,7 @@ displayExplanation(explanationData) {
     
     // Try to find existing containers first
     let questionTextEl = document.getElementById('questionText');
-    let answerContainer = document.getElementById('answerContainer');
+    let answerContainer = document.querySelector('.c-answers-container');
     
     // If core containers don't exist, try to find or create them
     if (!questionTextEl || !answerContainer) {
@@ -823,8 +786,7 @@ displayExplanation(explanationData) {
         
         if (!answerContainer) {
             answerContainer = document.createElement('div');
-            answerContainer.id = 'answerContainer';
-            answerContainer.className = 'answer-container';
+            answerContainer.className = 'c-answers-container';
             quizContainer.appendChild(answerContainer);
         }
     }
@@ -930,7 +892,7 @@ displayTheme(themeData) {
     
     // Try to find existing containers first (same as explanation display)
     let questionTextEl = document.getElementById('questionText');
-    let answerContainer = document.getElementById('answerContainer');
+    let answerContainer = document.querySelector('.c-answers-container');
     
     // If core containers don't exist, try to find or create them
     if (!questionTextEl || !answerContainer) {
@@ -959,8 +921,7 @@ displayTheme(themeData) {
         
         if (!answerContainer) {
             answerContainer = document.createElement('div');
-            answerContainer.id = 'answerContainer';
-            answerContainer.className = 'answer-container';
+            answerContainer.className = 'c-answers-container';
             quizContainer.appendChild(answerContainer);
         }
     }
@@ -1353,11 +1314,16 @@ displayFinalScreen(title, message) {
     // Method to handle phase changes
     handlePhaseChange(data) {
         console.log(`Handling phase change to ${data.phase}`);
+        this.currentPhase = data.phase;
         let message = "";
         
         switch (data.phase) {
             case 'theme_display':
                 message = `Theme selected! Get ready for the quiz.`;
+                document.querySelectorAll('.answer-box').forEach((box) => {
+                    box.classList.add('is-disabled');
+                    box.style.pointerEvents = 'none';
+                });
                 this.clearQuestion();
                 break;
             case 'quiz':
