@@ -108,8 +108,8 @@ class QuizQuestionHandler {
         }
         this.currentQuestion = questionData;
 
-        if (this.isThemeResultQuestion(questionData)) {
-            this.currentPhase = 'theme_display';
+        if (questionData?.type === 'theme_selection') {
+            this.currentPhase = this.isThemeResultQuestion(questionData) ? 'theme_display' : 'voting';
         }
 
         // Clear the question load timeout since we got a question

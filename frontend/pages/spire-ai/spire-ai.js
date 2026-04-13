@@ -325,6 +325,30 @@
     }
 
     window.joinActiveQuiz = async function (sessionId, themeId) {
+        if (!currentUser || !currentUser.id) {
+            toast('Please log in before joining a quiz', 'error');
+            $('#loginModal')?.classList.add('sai-modal--active');
+            return;
+        }
+
+        const createSession = async (themeIds) => {
+            const result = await apiRaw('/sessions/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    theme_ids: themeIds,
+                    user_id: currentUser.id
+                })
+            });
+
+            if (!result || !result.session_id) {
+                throw new Error('Session creation failed');
+            }
+
+            sessionStorage.setItem('quiz_session_id', String(result.session_id));
+            window.location.href = `${QUIZ_PAGE}?session=${result.session_id}`;
+        };
+
         if (sessionId) {
             sessionStorage.setItem('quiz_session_id', String(sessionId));
             window.location.href = `${QUIZ_PAGE}?session=${sessionId}`;
@@ -333,27 +357,7 @@
 
         if (themeId) {
             try {
-                if (!currentUser || !currentUser.id) {
-                    toast('Please log in before starting a quiz', 'error');
-                    $('#loginModal')?.classList.add('sai-modal--active');
-                    return;
-                }
-
-                const result = await apiRaw('/sessions/create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        theme_ids: [themeId],
-                        user_id: currentUser.id
-                    })
-                });
-
-                if (!result || !result.session_id) {
-                    throw new Error('Session creation failed');
-                }
-
-                sessionStorage.setItem('quiz_session_id', String(result.session_id));
-                window.location.href = `${QUIZ_PAGE}?session=${result.session_id}`;
+                await createSession([themeId]);
                 return;
             } catch (error) {
                 console.error('Failed to create quiz session from theme detail:', error);
@@ -362,7 +366,51 @@
             }
         }
 
-        window.location.href = QUIZ_PAGE;
+        try {
+            // If there are active sessions, join one at random first.
+            const active = await apiRaw('/sessions/active');
+            const activeIds = Array.isArray(active?.active_session_ids) ? active.active_session_ids : [];
+            if (activeIds.length > 0) {
+                const randomSessionId = activeIds[Math.floor(Math.random() * activeIds.length)];
+                sessionStorage.setItem('quiz_session_id', String(randomSessionId));
+                window.location.href = `${QUIZ_PAGE}?session=${randomSessionId}`;
+                return;
+            }
+
+            // No active sessions: create one with all available themes (official + community).
+            const seenThemeIds = new Set();
+            const addThemes = (themes) => {
+                (Array.isArray(themes) ? themes : []).forEach((theme) => {
+                    const id = parseInt(theme?.id, 10);
+                    if (Number.isInteger(id) && id > 0) {
+                        seenThemeIds.add(id);
+                    }
+                });
+            };
+
+            addThemes(officialThemes);
+            addThemes(communityThemes);
+
+            if (seenThemeIds.size === 0) {
+                try {
+                    const allThemes = await api('/themes');
+                    addThemes(allThemes);
+                } catch (e) {
+                    console.warn('Could not load /community/themes for auto-join creation:', e);
+                }
+            }
+
+            const themeIds = Array.from(seenThemeIds);
+            if (themeIds.length === 0) {
+                toast('No themes available to create a quiz session.', 'error');
+                return;
+            }
+
+            await createSession(themeIds);
+        } catch (error) {
+            console.error('Join Quiz failed:', error);
+            toast(error.detail || error.message || 'Failed to join or create a quiz session', 'error');
+        }
     };
 
     // ── Stats ──
