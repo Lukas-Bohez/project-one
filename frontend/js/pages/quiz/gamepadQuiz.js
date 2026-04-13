@@ -1,12 +1,5 @@
 class QuizGamepadNavigator {
     constructor() {
-        this.STORAGE_KEYS = window.STORAGE_KEYS || {
-            USER: {
-                FIRST_NAME: 'user_first_name',
-                LAST_NAME: 'user_last_name',
-                PASSWORD: 'user_password'
-            }
-        };
         this.gamepadIndex = null;
         this.buttonStates = {
             dpadUp: false,
@@ -38,15 +31,6 @@ class QuizGamepadNavigator {
         this.addStyles();
         this.setupGamepadDetection();
         this.gamepadLoop();
-        this.setupStorageKeys(); // Set up local storage credentials
-    }
-
-    // This method now sets the storage keys.
-    setupStorageKeys() {
-        localStorage.setItem(this.STORAGE_KEYS.USER.FIRST_NAME, 'gamepad');
-        localStorage.setItem(this.STORAGE_KEYS.USER.LAST_NAME, 'user');
-        localStorage.setItem(this.STORAGE_KEYS.USER.PASSWORD, 'gamepaduser');
-        console.log('Local Storage credentials updated for Gamepad Navigator.');
     }
 
     addStyles() {

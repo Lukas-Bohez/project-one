@@ -2,6 +2,7 @@
 // Note: Frontend chat filtering/flagging display has been removed; moderation is handled by the backend.
 class ChatSystem {
     constructor() {
+        window.chatSystemInstance = this;
         this.currentUser = null;
         this.lanIP = `https://${window.location.hostname}`;
         this.sessionId = null;
@@ -11,6 +12,7 @@ class ChatSystem {
         this.retryAttempts = 0;
         this.maxRetryAttempts = 10; // Maximum retry attempts
         this.explicitSessionId = null;
+        this.autoCreateAttempted = false;
 
         console.log('ChatSystem: Constructor called. Fetching active session ID...');
 
@@ -213,6 +215,7 @@ class ChatSystem {
 
             if (!newestSessionId) {
                 console.warn('ChatSystem: No active sessions found. Waiting for a new session to be created.');
+                await this.tryCreateSessionWhenMissing();
                 return;
             }
 
@@ -248,6 +251,87 @@ class ChatSystem {
         } catch (error) {
             console.error('ChatSystem: Error fetching active session ID:', error);
             // Keep the current sessionId untouched on transient failures.
+        }
+    }
+
+    async tryCreateSessionWhenMissing() {
+        if (this.autoCreateAttempted || this.explicitSessionId || this.sessionId) {
+            return;
+        }
+
+        const user = this.currentUser || this.getCurrentUserWithFallback();
+        if (!user || !user.id) {
+            return;
+        }
+
+        this.autoCreateAttempted = true;
+
+        try {
+            let themeIds = [];
+
+            const selectedRaw = sessionStorage.getItem('quiz_selected_themes');
+            if (selectedRaw) {
+                const selected = JSON.parse(selectedRaw);
+                if (Array.isArray(selected)) {
+                    themeIds = selected
+                        .map(theme => parseInt(theme.id, 10))
+                        .filter(id => Number.isInteger(id) && id > 0);
+                }
+            }
+
+            if (themeIds.length === 0) {
+                const communityResp = await fetch(`${this.lanIP}/api/v1/community/themes`);
+                if (communityResp.ok) {
+                    const themes = await communityResp.json();
+                    if (Array.isArray(themes)) {
+                        themeIds = themes
+                            .map(theme => parseInt(theme.id, 10))
+                            .filter(id => Number.isInteger(id) && id > 0)
+                            .slice(0, 3);
+                    }
+                }
+            }
+
+            if (themeIds.length === 0) {
+                console.warn('ChatSystem: Auto-create skipped, no available theme IDs.');
+                return;
+            }
+
+            const createResp = await fetch(`${this.lanIP}/api/v1/sessions/create`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    theme_ids: themeIds,
+                    user_id: parseInt(user.id, 10)
+                })
+            });
+
+            if (!createResp.ok) {
+                const errData = await createResp.json().catch(() => ({}));
+                throw new Error(errData.detail || `Session create failed (${createResp.status})`);
+            }
+
+            const created = await createResp.json();
+            const newSessionId = parseInt(created.session_id, 10);
+            if (!Number.isInteger(newSessionId) || newSessionId <= 0) {
+                throw new Error('Invalid session id returned by create endpoint');
+            }
+
+            this.sessionId = newSessionId;
+            this.explicitSessionId = newSessionId;
+            sessionStorage.setItem('quiz_session_id', String(newSessionId));
+            window.currentQuizSessionId = newSessionId;
+
+            console.log(`ChatSystem: Auto-created session ${newSessionId}`);
+
+            if (this.socket) {
+                this.socket.emit('join', `quiz_session_${newSessionId}`);
+                this.socket.emit('join_quiz_session', { session_id: newSessionId });
+            }
+
+            this.loadChatMessages();
+        } catch (error) {
+            console.error('ChatSystem: Auto-create session failed:', error);
         }
     }
 

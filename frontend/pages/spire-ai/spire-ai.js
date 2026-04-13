@@ -106,6 +106,18 @@
         const fn = localStorage.getItem(STORAGE_KEYS.FIRST_NAME);
         const ln = localStorage.getItem(STORAGE_KEYS.LAST_NAME);
         const pw = localStorage.getItem(STORAGE_KEYS.PASSWORD);
+
+        const looksLikePlaceholder = String(fn || '').toLowerCase() === 'gamepad' &&
+            String(ln || '').toLowerCase() === 'user';
+        if (looksLikePlaceholder) {
+            localStorage.removeItem(STORAGE_KEYS.USER_ID);
+            localStorage.removeItem(STORAGE_KEYS.FIRST_NAME);
+            localStorage.removeItem(STORAGE_KEYS.LAST_NAME);
+            localStorage.removeItem(STORAGE_KEYS.PASSWORD);
+            localStorage.removeItem('sai_password');
+            return null;
+        }
+
         if (id && fn && ln) return { id, firstName: fn, lastName: ln, password: pw };
         return null;
     }
@@ -351,7 +363,6 @@
         }
 
         window.location.href = QUIZ_PAGE;
-        }
     };
 
     // ── Stats ──

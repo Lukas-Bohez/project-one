@@ -676,11 +676,22 @@ document.addEventListener('userAuthenticated', (event) => {
     
     // Function to initialize when socket is ready
     const initializeWhenReady = () => {
-        // Try multiple ways to access the socket
-        const socket = window.socket || 
-                      window.quizSocket || 
-                      window.io ||
+        // Use only real socket instances (window.io is a factory function, not a socket)
+        const socket = window.sharedSocket ||
+                      window.socket ||
+                      window.quizSocket ||
                       (window.socketInstance && window.socketInstance.socket);
+
+        if (window.playersListManager) {
+            window.playersListManager.setCurrentUser(user);
+            return;
+        }
+
+        if (socket && typeof socket.on !== 'function') {
+            console.warn('Socket candidate is not a Socket.IO instance yet, retrying...');
+            setTimeout(initializeWhenReady, 300);
+            return;
+        }
         
         if (socket && (socket.connected || socket.readyState === 'open')) {
             console.log("Socket found and connected:", socket);
@@ -691,7 +702,7 @@ document.addEventListener('userAuthenticated', (event) => {
         } else if (socket) {
             console.log("Socket found but not connected, waiting...");
             // Wait for socket to connect
-            socket.on('connect', () => {
+            socket.once('connect', () => {
                 console.log("Socket connected, initializing PlayersListManager");
                 const playersManager = initializePlayersListManager(socket, user);
                 if (playersManager) {

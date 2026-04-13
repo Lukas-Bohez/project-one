@@ -23,6 +23,9 @@ class AuthSystem {
         this.autoLogin().then(success => {
             if (!success) {
                 this.showAuthModal();
+            } else {
+                this.hideAuthModal();
+                this.notifyUserAuthenticated(this.currentUser);
             }
         }).catch(error => {
             console.error('Auto-login attempt failed:', error);
@@ -32,9 +35,23 @@ class AuthSystem {
 
     async autoLogin() {
         // Use session storage for session-resume only (no passwords persisted)
-        const userId = sessionStorage.getItem(STORAGE_KEYS.USER.USER_ID);
-        const firstName = sessionStorage.getItem(STORAGE_KEYS.USER.FIRST_NAME);
-        const lastName = sessionStorage.getItem(STORAGE_KEYS.USER.LAST_NAME);
+        let userId = sessionStorage.getItem(STORAGE_KEYS.USER.USER_ID);
+        let firstName = sessionStorage.getItem(STORAGE_KEYS.USER.FIRST_NAME);
+        let lastName = sessionStorage.getItem(STORAGE_KEYS.USER.LAST_NAME);
+
+        // Fallback for cross-page navigation paths that may store user identity in localStorage.
+        if ((!userId || !firstName || !lastName) && localStorage) {
+            userId = userId || localStorage.getItem(STORAGE_KEYS.USER.USER_ID);
+            firstName = firstName || localStorage.getItem(STORAGE_KEYS.USER.FIRST_NAME);
+            lastName = lastName || localStorage.getItem(STORAGE_KEYS.USER.LAST_NAME);
+        }
+
+        // Ignore placeholder credentials from gamepad helper.
+        const looksLikePlaceholder = String(firstName || '').toLowerCase() === 'gamepad' &&
+            String(lastName || '').toLowerCase() === 'user';
+        if (looksLikePlaceholder) {
+            return false;
+        }
 
         if (userId && firstName && lastName) {
             // Resume session without storing passwords client-side
@@ -44,6 +61,10 @@ class AuthSystem {
                 lastName: lastName,
                 fullName: `${firstName} ${lastName}`
             };
+            // Keep sessionStorage in sync for modules that depend on it.
+            sessionStorage.setItem(STORAGE_KEYS.USER.USER_ID, String(this.currentUser.id));
+            sessionStorage.setItem(STORAGE_KEYS.USER.FIRST_NAME, firstName);
+            sessionStorage.setItem(STORAGE_KEYS.USER.LAST_NAME, lastName);
             console.log('Session resumed for', firstName, lastName);
             return true;
         }
