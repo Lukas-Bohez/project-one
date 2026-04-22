@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+        <script>
+        (function() {
+            var saved = localStorage.getItem('spire-theme');
+            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            var theme = saved || (prefersDark ? 'dark' : 'dark');
+            document.documentElement.setAttribute('data-theme', theme);
+            document.documentElement.classList.toggle('dark', theme === 'dark');
+        }());
+        </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Quiz The Spire - Live multiplayer quizzes with AI-powered themes, real-time leaderboards, and community content. Create quizzes instantly for classrooms.">
@@ -29,6 +38,10 @@
     <link rel="dns-prefetch" href="https://cdn.socket.io">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin>
+    <link rel="preconnect" href="https://googleads.g.doubleclick.net" crossorigin>
+    <link rel="dns-prefetch" href="//pagead2.googlesyndication.com">
+    <link rel="dns-prefetch" href="//googleads.g.doubleclick.net">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"></noscript>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -62,10 +75,11 @@
         .c-btn--portfolio:hover{background:#1d4ed8}
         [data-theme="dark"] .c-portfolio-panel,.theme-dark .c-portfolio-panel{background:#111827;border-color:#374151}
         .c-featured-tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0.85rem;margin-top:1rem}
-        .c-featured-tool{display:flex;flex-direction:column;gap:0.4rem;align-items:flex-start;padding:1rem 1rem;border-radius:12px;border:1px solid #dbe3ef;background:linear-gradient(135deg,#ffffff 0%,#f8fbff 100%);text-decoration:none;color:#1e293b;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+        .c-featured-tool{display:flex;flex-direction:column;gap:0.45rem;align-items:flex-start;padding:1rem 1rem;border-radius:12px;border:1px solid #dbe3ef;background:linear-gradient(135deg,#ffffff 0%,#f8fbff 100%);text-decoration:none;color:#1e293b;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
         .c-featured-tool:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(30,58,138,.12);border-color:#93c5fd}
-        .c-featured-tool i{font-size:1.05rem;color:#1d4ed8}
-        .c-featured-tool__title{font-weight:700;font-size:.98rem}
+        .c-featured-tool__header{display:flex;align-items:center;gap:0.55rem;min-width:0}
+        .c-featured-tool i{font-size:1.05rem;color:#1d4ed8;flex:0 0 auto}
+        .c-featured-tool__title{font-weight:700;font-size:.98rem;line-height:1.2}
         .c-featured-tool__desc{font-size:.86rem;line-height:1.4;color:#475569}
         [data-theme="dark"] .c-featured-tool,.theme-dark .c-featured-tool{background:linear-gradient(135deg,#0f172a 0%,#111827 100%);border-color:#334155;color:#e5e7eb}
         [data-theme="dark"] .c-featured-tool__desc,.theme-dark .c-featured-tool__desc{color:#cbd5e1}
@@ -104,6 +118,8 @@
     <meta name="twitter:title" content="Quiz The Spire - Live Multiplayer Quizzes">
     <meta name="twitter:description" content="Create and play real-time multiplayer quizzes with AI-powered themes. Build quizzes instantly for classrooms.">
     <meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg">
+    <meta name="theme-color" content="#0a0a14" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f8f9fc" media="(prefers-color-scheme: light)">
     <link rel="canonical" href="https://quizthespire.com/">
 </head>
 <body class="theme-blue">
@@ -111,13 +127,39 @@
 
     <!-- Dynamic spire background -->
     <div class="spire-background">
-        <img class="spire-bg-light" src="images/spire-light.jpeg" alt="" loading="eager" width="1920" height="1080">
-        <img class="spire-bg-dark" src="images/spire-dark.jpeg" alt="" loading="eager" width="1920" height="1080">
+        <img class="spire-bg-light" src="images/spire-light.jpeg" alt="Quiz The Spire background illustration in light mode" loading="eager" width="1920" height="1080">
+        <img class="spire-bg-dark" src="images/spire-dark.jpeg" alt="Quiz The Spire background illustration in dark mode" loading="eager" width="1920" height="1080">
     </div>
     
     <header class="c-header">
         <h1 class="c-header__title">Quiz The Spire</h1>
         <p class="c-header__subtitle">Live multiplayer quizzes, AI-powered themes, and real-time leaderboards. Built for educators and classrooms.</p>
+        <div class="hero-stats" aria-label="Site statistics">
+            <div class="hero-stat">
+                <span class="hero-stat-number" data-target="1000" data-suffix="+">0</span>
+                <p class="hero-stat-label">Downloads</p>
+            </div>
+            <div class="hero-stat-divider" aria-hidden="true"></div>
+            <div class="hero-stat">
+                <span class="hero-stat-number" data-target="95" data-suffix="+">0</span>
+                <p class="hero-stat-label">Countries</p>
+            </div>
+            <div class="hero-stat-divider" aria-hidden="true"></div>
+            <div class="hero-stat hero-stat--compact">
+                <span class="hero-stat-number" data-target="5" data-suffix=" apps">0</span>
+                <p class="hero-stat-label">Free tools</p>
+            </div>
+            <div class="hero-stat-divider" aria-hidden="true"></div>
+            <div class="hero-stat hero-stat--compact">
+                <span class="hero-stat-number" data-target="1" data-suffix=" dev">0</span>
+                <p class="hero-stat-label">Solo built</p>
+            </div>
+        </div>
+        <div class="c-header__trust" aria-label="Trust signals">
+            <span class="c-header__trust-item"><i class="fa-solid fa-shield-halved"></i>Open source</span>
+            <span class="c-header__trust-item"><i class="fa-solid fa-bolt"></i>Fast shipping</span>
+            <span class="c-header__trust-item"><i class="fa-solid fa-globe"></i>Worldwide reach</span>
+        </div>
     </header>
 
     <main id="main-content" class="o-container">
@@ -130,6 +172,12 @@
             <button class="c-nav-btn" data-section="games"><i class="fa-solid fa-gamepad"></i> Quiz &amp; Games</button>
             <button class="c-nav-btn" data-section="tools"><i class="fa-solid fa-toolbox"></i> Tools &amp; Content</button>
             <button class="c-nav-btn" data-section="support"><i class="fa-solid fa-life-ring"></i> Support</button>
+            <div class="c-nav-actions">
+                <button id="theme-toggle" class="c-theme-nav-btn" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
+                    <i class="fa-solid fa-circle-half-stroke"></i>
+                    <span>Theme</span>
+                </button>
+            </div>
         </nav>
 
         <!-- Portfolio Section -->
@@ -150,6 +198,18 @@
             </div>
         </div>
 
+        <div class="ad-unit-wrapper ad-slot-horizontal" aria-label="Sponsored content">
+            <p class="ad-label">Sponsored</p>
+            <ins class="adsbygoogle js-adsbygoogle"
+                style="display:block"
+                data-ad-client="ca-pub-8418485814964449"
+                data-ad-slot="6531017850"
+                data-ad-format="auto"
+                data-full-width-responsive="true"></ins>
+        </div>
+
+            <div class="section-divider" role="separator" aria-hidden="true"><span></span></div>
+
         <section class="c-product-card c-product-card--hero" aria-label="Convert The Spire Reborn">
             <div class="c-product-card__badge-row">
                 <span class="c-badge c-badge--green"><i class="fa-solid fa-shield-halved"></i> Open Source</span>
@@ -166,8 +226,15 @@
 
             <div class="c-update-banner">
                 <i class="fa-solid fa-rocket"></i>
-                <span><span class="c-update-badge">v9.0.1</span> Android file picker display hotfix, plus Vault + Convert unified workflows. <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v9.0.1" target="_blank" rel="noopener" class="c-update-banner__link">View changelog &rarr;</a></span>
+                <span><span class="c-update-badge" data-version>v10.0.6</span> Improved corrupted download detection with live repair progress tracking. <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v10.0.6" target="_blank" rel="noopener noreferrer" data-release-link class="c-update-banner__link">View full changelog &rarr;</a></span>
             </div>
+
+            <ul class="c-feature-list" aria-label="Latest release highlights">
+                <li class="c-feature-list__item"><i class="fa-solid fa-circle-check"></i> <span data-version>v10.0.6</span>: Improved detection and recovery for corrupted downloads - progress now updates live during repair</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-circle-check"></i> <span data-version>v10.0.6</span>: Corrupted file handler now reports real-time track status instead of showing stale progress</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-circle-check"></i> Unified Convert + BitPlayer workflow remains active across desktop and mobile</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-circle-check"></i> Published SHA256 checksums make binary verification straightforward</li>
+            </ul>
 
             <ul class="c-feature-list">
                 <li class="c-feature-list__item"><i class="fa-solid fa-globe"></i> Built-in browser with smart URL handling &amp; ad blocking</li>
@@ -181,17 +248,17 @@
             </ul>
 
             <div class="c-product-card__actions c-product-card__actions--platform">
-                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v9.0.1/ConvertTheSpireReborn-windows-x64.zip" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--windows">
-                    <i class="fa-brands fa-windows"></i>&nbsp; Download
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v10.0.6/ConvertTheSpireReborn-windows-x64.zip" data-download-win target="_blank" rel="noopener noreferrer" class="c-btn c-btn--cta c-btn--windows">
+                    <span class="c-btn__content c-platform-download-text"><svg class="c-platform-download-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 4.4 11 3v8H3V4.4Zm9.5-1.7L21 1v10.5h-8.5V2.7Zm-9.5 11.1H11v8l-8-1.4v-6.6Zm9.5 0H21V23l-8.5-1.5v-6.7Z"/></svg><span>Windows</span></span>
                 </a>
-                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v9.0.1/ConvertTheSpireReborn-android.apk" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--android">
-                    <i class="fa-brands fa-android"></i>&nbsp; Download
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v10.0.6/ConvertTheSpireReborn.apk" data-download-android target="_blank" rel="noopener noreferrer" class="c-btn c-btn--cta c-btn--android">
+                    <span class="c-btn__content c-platform-download-text"><svg class="c-platform-download-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 8.2 19.2 5l-1.4-.8-1.8 3.3A8.4 8.4 0 0 0 12 6.4a8.4 8.4 0 0 0-4 .9L6.2 4.2 4.8 5l1.7 3.1A7.9 7.9 0 0 0 4 14v6h16v-6c0-2.3-1-4.4-2.5-5.8ZM8.6 13.6c-.6 0-1.1-.5-1.1-1.1s.5-1.1 1.1-1.1 1.1.5 1.1 1.1-.5 1.1-1.1 1.1Zm6.8 0c-.6 0-1.1-.5-1.1-1.1s.5-1.1 1.1-1.1 1.1.5 1.1 1.1-.5 1.1-1.1 1.1Z"/></svg><span>Android</span></span>
                 </a>
-                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v9.0.1/ConvertTheSpireReborn-linux-x64.zip" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--linux">
-                    <i class="fa-brands fa-linux"></i>&nbsp; Download
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v10.0.6/ConvertTheSpireReborn-linux-x64.zip" data-download-linux target="_blank" rel="noopener noreferrer" class="c-btn c-btn--cta c-btn--linux">
+                    <span class="c-btn__content c-platform-download-text"><svg class="c-platform-download-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.8 2c-.9 0-1.6.7-1.6 1.6 0 .4.2.8.4 1.1-.6.2-1.1.8-1.1 1.5 0 .2 0 .4.1.5-.5.4-.8 1-.8 1.7 0 .4.1.8.3 1.1-.5.4-.8 1-.8 1.6 0 .5.2 1 .5 1.3-.6.7-1 1.6-1 2.5 0 1.9 1.6 3.4 3.5 3.4h.6c.2 1.5.8 2.8 1.8 3.8.2.2.5.2.7 0 .2-.2.2-.5 0-.7-.9-.8-1.4-2-1.5-3.4.8-.2 1.5-.6 2.1-1.2.8.9 1.8 1.4 2.8 1.4.8 0 1.5-.2 2.2-.7.2-.1.2-.4.1-.6-.1-.2-.4-.2-.6-.1-.5.3-1 .4-1.6.4-1.8 0-3.4-1.9-3.4-4.2 0-1.2.4-2.3 1.1-3.1.1.1.2.1.4.1.6 0 1.1-.5 1.1-1.1 0-.4-.2-.7-.5-1 .2-.3.4-.7.4-1.1 0-.8-.5-1.4-1.1-1.7.1-.2.1-.3.1-.5 0-.9-.7-1.6-1.6-1.6-.3 0-.5.1-.8.2-.2-.3-.5-.5-.9-.5-.5 0-1 .3-1.2.8-.3-.1-.5-.1-.8-.1Zm.1 5c.6 0 1 .4 1 1s-.4 1-1 1-1-.4-1-1 .4-1 1-1Z"/></svg><span>Linux</span></span>
                 </a>
-                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v9.0.1/ConvertTheSpireReborn-macOS.zip" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--macos">
-                    <i class="fa-brands fa-apple"></i>&nbsp; Download
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v10.0.6/ConvertTheSpireReborn-macOS.zip" data-download-mac target="_blank" rel="noopener noreferrer" class="c-btn c-btn--cta c-btn--macos">
+                    <span class="c-btn__content c-platform-download-text"><svg class="c-platform-download-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.8 12.6c0-1.8 1-2.8 2.1-3.5-.8-1.2-2.1-2-3.3-2.1-1.4-.2-2.7.8-3.4.8-.8 0-1.9-.8-3.1-.8-1.6 0-3.1.9-4 2.3-1.7 2.9-.5 7.2 1.2 9.6.8 1.1 1.7 2.3 3 2.3 1.2 0 1.6-.7 3-.7 1.4 0 1.8.7 3 .7 1.4 0 2.3-1.1 3-2.2.7-1 1-2 1-2.1-.1 0-2.5-1-2.5-3.8ZM15.1 4.8c.6-.8 1-1.8 1-2.9-1 .1-2.1.7-2.8 1.5-.6.7-1.1 1.8-1 2.8 1 .1 2.1-.5 2.8-1.4Z"/></svg><span>macOS</span></span>
                 </a>
 </div>
 
@@ -209,10 +276,13 @@
                 <a href="/pages/conversion/" class="c-btn c-btn--outline">
                     <i class="fa-solid fa-arrow-right"></i>&nbsp; Learn more
                 </a>
-                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter" target="_blank" rel="noopener" class="c-btn c-btn--outline">
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--outline">
                     <i class="fa-brands fa-github"></i>&nbsp; View source
                 </a>
-                <a href="https://github.com/sponsors/Lukas-Bohez" target="_blank" rel="noopener" class="c-btn c-btn--outline">
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v10.0.6/SHA256SUMS.txt" data-download-sha target="_blank" rel="noopener noreferrer" class="c-btn c-btn--outline">
+                    <i class="fa-solid fa-fingerprint"></i>&nbsp; Verify checksums
+                </a>
+                <a href="https://github.com/sponsors/Lukas-Bohez" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--outline">
                     <i class="fa-solid fa-hand-holding-heart"></i>&nbsp; Supporters
                 </a>
                 <a href="/portfolio/" class="c-btn c-btn--outline">
@@ -228,26 +298,29 @@
             </div>
         </section>
 
-        <section class="c-product-card c-product-card--hero c-vault-release" aria-label="Vault The Spire integration">
+        <section class="c-product-card c-product-card--hero c-vault-release" aria-label="BitPlayer integration">
             <div class="c-product-card__badge-row">
                 <span class="c-badge c-badge--green"><i class="fa-solid fa-circle-check"></i> Integrated</span>
-                <span class="c-badge c-badge--blue"><i class="fa-solid fa-box-open"></i> v9.0.1</span>
+                <span class="c-badge c-badge--blue"><i class="fa-solid fa-box-open"></i> <span data-version>v10.0.6</span></span>
                 <span class="c-badge c-badge--slate"><i class="fa-brands fa-flutter"></i> Flutter / Dart</span>
                 <span class="c-badge c-badge--slate"><i class="fa-brands fa-windows"></i> Windows</span>
                 <span class="c-badge c-badge--slate"><i class="fa-brands fa-android"></i> Android</span>
             </div>
-            <h2 class="c-product-card__title">Vault The Spire</h2>
-            <p class="c-product-card__tagline">Now part of Convert The Spire Reborn v9.0.1.</p>
+            <h2 class="c-product-card__title">BitPlayer: Torrent &amp; Media</h2>
+            <p class="c-product-card__tagline">Now part of Convert The Spire Reborn <span data-version>v10.0.6</span>.</p>
 
             <div class="c-update-banner">
                 <i class="fa-solid fa-circle-check"></i>
-                <span><span class="c-update-badge">Merged</span> Vault is integrated into Convert The Spire Reborn. <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v9.0.1" target="_blank" rel="noopener" class="c-update-banner__link">View release &rarr;</a></span>
+                <span><span class="c-update-badge">Merged</span> BitPlayer is now fully integrated into Convert The Spire Reborn <span data-version>v10.0.6</span> - bringing torrent management, background playback, and media library features into a single unified app. <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/tag/v10.0.6" target="_blank" rel="noopener noreferrer" data-release-link class="c-update-banner__link">View release &rarr;</a></span>
             </div>
 
             <ul class="c-feature-list">
-                <li class="c-feature-list__item"><i class="fa-solid fa-link"></i> Vault is integrated into Convert The Spire Reborn</li>
-                <li class="c-feature-list__item"><i class="fa-solid fa-tower-broadcast"></i> Torrenting workflows unified in one app</li>
-                <li class="c-feature-list__item"><i class="fa-solid fa-people-group"></i> Testing group continues for Vault feedback</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-link"></i> BitPlayer is integrated into Convert The Spire Reborn as the torrent + media hub</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-headphones"></i> Advanced background playback for podcasts, lectures, and large music libraries</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-bluetooth-b"></i> Bluetooth media controls for headset and car playback</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-folder-open"></i> Fast local folder loading for large media collections</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-globe"></i> Built-in browser, bookmarks, history, incognito mode, and torrent manager</li>
+                <li class="c-feature-list__item"><i class="fa-solid fa-people-group"></i> Testing group continues for BitPlayer feedback</li>
             </ul>
 
             <div class="c-product-card__actions">
@@ -258,11 +331,11 @@
                     <i class="fa-solid fa-users"></i>&nbsp; Join test group
                 </a>
                 <a href="/pages/vault/" class="c-btn c-btn--outline">
-                    <i class="fa-solid fa-circle-info"></i>&nbsp; Vault details
+                    <i class="fa-solid fa-circle-info"></i>&nbsp; BitPlayer details
                 </a>
             </div>
 
-            <p class="c-product-card__reassurance"><i class="fa-solid fa-circle-check"></i><strong>Status:</strong> Vault is now part of Convert The Spire Reborn v9.0.1.</p>
+            <p class="c-product-card__reassurance"><i class="fa-solid fa-circle-check"></i><strong>Status:</strong> BitPlayer is now part of Convert The Spire Reborn <span data-version>v10.0.6</span>.</p>
         </section>
 
         <section class="c-product-card c-product-card--hero c-product-card--lofi" aria-label="Lofi Extension">
@@ -303,7 +376,9 @@
 
         
         <!-- Quiz & Games Section -->
-        <div id="games-section" class="section">
+        <div class="section-divider" role="separator" aria-hidden="true"><span></span></div>
+
+        <div id="games-section" class="section section-alt">
             <div class="c-section-panel">
                 <h2 class="c-section-title">Quiz &amp; Games</h2>
                 <p class="c-section-lead">Compete in real-time multiplayer quizzes with thousands of community-created themes. Pick a mode and start playing instantly.</p>
@@ -328,46 +403,46 @@
                     </button>
                 </div>
             </div>
+
+            <div class="ad-unit-wrapper ad-slot-square" aria-label="Sponsored content">
+                <p class="ad-label">Sponsored</p>
+                <ins class="adsbygoogle js-adsbygoogle"
+                    style="display:block"
+                    data-ad-client="ca-pub-8418485814964449"
+                    data-ad-slot="7822007431"
+                    data-ad-format="auto"
+                    data-full-width-responsive="true"></ins>
+            </div>
         </div>
         
         <!-- Tools & Content Section -->
+        <div class="section-divider" role="separator" aria-hidden="true"><span></span></div>
+
         <div id="tools-section" class="section">
             <div class="c-section-panel c-tools-intro-panel">
                 <h2 class="c-section-title">Tools &amp; Content</h2>
-                <p class="c-section-lead">Visualise data, build stories, and publish content from one creator workspace.</p>
+                <p class="c-section-lead">Use one focused workspace for creation, publishing, analytics, and app distribution.</p>
                 <div class="c-featured-tools">
                     <a href="/pages/storyCreator/" class="c-featured-tool">
-                        <i class="fa-solid fa-feather-pointed"></i>
-                        <span class="c-featured-tool__title">Story Creator</span>
+                        <span class="c-featured-tool__header"><i class="fa-solid fa-feather-pointed"></i><span class="c-featured-tool__title">Story Creator</span></span>
                         <span class="c-featured-tool__desc">Create interactive stories and structure branching flows quickly.</span>
                     </a>
                     <a href="/pages/content/" class="c-featured-tool">
-                        <i class="fa-solid fa-book-open"></i>
-                        <span class="c-featured-tool__title">Stories Library</span>
+                        <span class="c-featured-tool__header"><i class="fa-solid fa-book-open"></i><span class="c-featured-tool__title">Stories Library</span></span>
                         <span class="c-featured-tool__desc">Read and manage serialized stories from your content hub.</span>
                     </a>
                     <a href="/articles/articlepagenew.html" class="c-featured-tool">
-                        <i class="fa-solid fa-newspaper"></i>
-                        <span class="c-featured-tool__title">Articles</span>
+                        <span class="c-featured-tool__header"><i class="fa-solid fa-newspaper"></i><span class="c-featured-tool__title">Articles</span></span>
                         <span class="c-featured-tool__desc">Browse guides and long-form article content in one place.</span>
                     </a>
                 </div>
             </div>
 
-            <aside class="c-ad-slot-card" aria-label="Advertisement">
-                <ins class="adsbygoogle js-adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-8418485814964449"
-                     data-ad-slot="7822007431"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-            </aside>
-
             <div class="c-section-panel c-tools-actions-panel">
                 <div class="o-button-group o-button-group--2col">
                     <button id="viewGraphsBtn" class="c-btn c-btn--primary bw-btn gamepad gamepad-navigable" onclick="window.location.href='/pages/graphs/'">
                         <span class="c-btn__content"><i class="fa-solid fa-chart-line"></i>&nbsp; View Graphs</span>
-                        <span class="c-btn__desc">Visualise quiz statistics and performance</span>
+                        <span class="c-btn__desc">Visualise quiz statistics and performance in real time</span>
                     </button>
                     <button id="manageTheSpireBtn" class="c-btn c-btn--primary bw-btn" onclick="window.location.href='/pages/manage/'">
                         <span class="c-btn__content"><i class="fa-solid fa-sliders"></i>&nbsp; Manage the Spire</span>
@@ -375,31 +450,63 @@
                     </button>
                 </div>
                 <div class="o-button-group o-button-group--2col">
-                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/storyCreator/'">
-                        <span class="c-btn__content"><i class="fa-solid fa-pen-to-square"></i>&nbsp; Open Story Creator</span>
-                        <span class="c-btn__desc">Write and manage story structures</span>
+                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/spire-ai/'">
+                        <span class="c-btn__content"><i class="fa-solid fa-bolt"></i>&nbsp; Open SpireAI</span>
+                        <span class="c-btn__desc">Generate and launch live multiplayer quizzes quickly</span>
                     </button>
-                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/articles/articlepagenew.html'">
-                        <span class="c-btn__content"><i class="fa-solid fa-newspaper"></i>&nbsp; Open Articles</span>
-                        <span class="c-btn__desc">Read and publish article content</span>
+                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/conversion/'">
+                        <span class="c-btn__content"><i class="fa-solid fa-download"></i>&nbsp; Convert Downloads</span>
+                        <span class="c-btn__desc">Get the latest Convert + BitPlayer desktop and mobile builds</span>
                     </button>
                 </div>
                 <div class="o-button-group o-button-group--2col">
-                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/content/'">
-                        <span class="c-btn__content"><i class="fa-solid fa-book-open-reader"></i>&nbsp; Open Stories</span>
-                        <span class="c-btn__desc">Explore the full story library</span>
+                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/portfolio/'">
+                        <span class="c-btn__content"><i class="fa-solid fa-briefcase"></i>&nbsp; Open Portfolio</span>
+                        <span class="c-btn__desc">Showcase projects, downloads, and recruiter-ready highlights</span>
                     </button>
                     <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/pages/support/'">
                         <span class="c-btn__content"><i class="fa-solid fa-headset"></i>&nbsp; Creator Support</span>
                         <span class="c-btn__desc">Get fast help for content and tools</span>
                     </button>
                 </div>
+                <div class="o-button-group o-button-group--2col">
+                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='/portfolio/cms-demo/'">
+                        <span class="c-btn__content"><i class="fa-solid fa-database"></i>&nbsp; Go to CMS Demo</span>
+                        <span class="c-btn__desc">Separate Next.js demo with Sanity + Cloudinary content loading</span>
+                    </button>
+                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='https://www.sanity.io/'">
+                        <span class="c-btn__content"><i class="fa-solid fa-right-to-bracket"></i>&nbsp; Open Sanity</span>
+                        <span class="c-btn__desc">Manage your content models and portfolio entries in Studio</span>
+                    </button>
+                </div>
+                <div class="o-button-group o-button-group--2col">
+                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/'">
+                        <span class="c-btn__content"><i class="fa-solid fa-code-commit"></i>&nbsp; Release Notes</span>
+                        <span class="c-btn__desc">See the full changelog and track update cadence publicly</span>
+                    </button>
+                    <button class="c-btn c-btn--tertiary bw-btn" onclick="window.location.href='https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v10.0.6/SHA256SUMS.txt'">
+                        <span class="c-btn__content"><i class="fa-solid fa-fingerprint"></i>&nbsp; SHA256 Checksums</span>
+                        <span class="c-btn__desc">Verify downloads with published release hashes</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="ad-unit-wrapper ad-slot-article" aria-label="Sponsored article placement">
+                <p class="ad-label">Sponsored</p>
+                <ins class="adsbygoogle js-adsbygoogle"
+                    style="display:block; text-align:center;"
+                    data-ad-layout="in-article"
+                    data-ad-format="fluid"
+                    data-ad-client="ca-pub-8418485814964449"
+                    data-ad-slot="6382844046"></ins>
             </div>
 
         </div>
         
         <!-- Support Section -->
-        <div id="support-section" class="section">
+        <div class="section-divider" role="separator" aria-hidden="true"><span></span></div>
+
+        <div id="support-section" class="section section-alt">
             <div class="c-section-panel">
                 <h2 class="c-section-title">Support</h2>
                 <p class="c-section-lead">Get help fast and review site policies.</p>
@@ -434,13 +541,34 @@
                     </button>
                 </div>
             </div>
+
+            <div class="ad-unit-wrapper ad-slot-horizontal" aria-label="Sponsored content">
+                <p class="ad-label">Sponsored</p>
+                <ins class="adsbygoogle js-adsbygoogle"
+                    style="display:block"
+                    data-ad-client="ca-pub-8418485814964449"
+                    data-ad-slot="6531017850"
+                    data-ad-format="auto"
+                    data-full-width-responsive="true"></ins>
+            </div>
+        </div>
+
+        <div class="ad-unit-wrapper ad-slot-multiplex" aria-label="Sponsored recommendations">
+            <p class="ad-label">Sponsored</p>
+            <ins class="adsbygoogle js-adsbygoogle"
+                style="display:block"
+                data-ad-format="autorelaxed"
+                data-ad-client="ca-pub-8418485814964449"
+                data-ad-slot="7221282993"></ins>
         </div>
 
     </main>
 
+    <button id="back-to-top" aria-label="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
     <footer class="c-footer">
         <p class="c-footer__about">
-            Built and maintained by one indie developer, <strong>Oroka Conner</strong>. 1000+ downloads across 95+ countries and counting. <small>Last updated: March 2026</small> <!-- UPDATE_STATS -->
+            Built and maintained by one indie developer, <strong>Oroka Conner</strong>. 1000+ downloads across 95+ countries and counting. <small>Last updated: April 2026</small> <!-- UPDATE_STATS -->
         </p>
         <div class="c-footer__bmc">
             <script defer src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="OrokaConner" data-color="#2c6fb8" data-emoji=""  data-font="Inter" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
@@ -461,13 +589,14 @@
         </p>
     </footer>
 
-    <script src="js/themeManager.js"></script>
+    <script src="js/themeManager.js" defer></script>
     <script src="articles/js/imageProvider.js" defer></script>
     <script src="js/main.js" defer></script>
     <script src="/js/gamepad.js" defer></script>
     <script src="js/ip.js" defer></script>
     <script src="js/radar.js" defer></script>
     <script src="js/infomodal.js" defer></script>
+    <script src="js/spire-adblock-detector.js" defer></script>
     <script>
     // Utility function to detect current theme
     function getCurrentTheme() {
@@ -475,7 +604,7 @@
         if (htmlTheme) return htmlTheme;
         if (document.body.classList.contains('theme-dark')) return 'dark';
         if (document.body.classList.contains('theme-light')) return 'light';
-        return localStorage.getItem('theme') || 'light';
+        return localStorage.getItem('spire-theme') || 'dark';
     }
     
     // Show Android instructions when APK download is clicked
@@ -501,22 +630,22 @@
     // Download handlers: open GitHub releases directly (no backend tracking)
     function handleConversionDownload(event) {
         event && event.preventDefault && event.preventDefault();
-        window.open('https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v9.0.1/ConvertTheSpireReborn-windows-x64.zip', '_blank', 'noopener');
+        window.open('https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v10.0.6/ConvertTheSpireReborn-windows-x64.zip', '_blank', 'noopener,noreferrer');
     }
 
     function handleAndroidDownload(event) {
         event && event.preventDefault && event.preventDefault();
-        window.open('https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v9.0.1/ConvertTheSpireReborn-android.apk', '_blank', 'noopener');
+        window.open('https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v10.0.6/ConvertTheSpireReborn.apk', '_blank', 'noopener,noreferrer');
     }
 
     function handleLinuxDownload(event) {
         event && event.preventDefault && event.preventDefault();
-        window.open('https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v9.0.1/ConvertTheSpireReborn-linux-x64.zip', '_blank', 'noopener');
+        window.open('https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v10.0.6/ConvertTheSpireReborn-linux-x64.zip', '_blank', 'noopener,noreferrer');
     }
 
     function handleMacDownload(event) {
         event && event.preventDefault && event.preventDefault();
-        window.open('https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v9.0.1/ConvertTheSpireReborn-macOS.zip', '_blank', 'noopener');
+        window.open('https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v10.0.6/ConvertTheSpireReborn-macOS.zip', '_blank', 'noopener,noreferrer');
     }
     
     // Modal controls
@@ -561,30 +690,9 @@
         });
     })();
     </script>
-
-    <!-- Platform auto-detect: reorder download buttons for current OS -->
-    <script>
-    (function () {
-        const ua = navigator.userAgent || '';
-        let platform = 'windows'; // default
-        if (/android/i.test(ua)) platform = 'android';
-        else if (/linux/i.test(ua) && !/android/i.test(ua)) platform = 'linux';
-        else if (/macintosh|mac os x/i.test(ua)) platform = 'macos';
-        // If user is on the matching platform, move that button first
-        const container = document.querySelector('.c-product-card__actions--platform');
-        if (!container) return;
-        const map = {
-            windows: 'conversionDownloadBtn',
-            android: 'conversionDownloadApkBtn',
-            linux: 'conversionDownloadLinuxBtn',
-            macos: 'conversionDownloadMacBtn'
-        };
-        const primaryBtn = document.getElementById(map[platform]);
-        if (primaryBtn && primaryBtn !== container.firstElementChild) {
-            container.insertBefore(primaryBtn, container.firstElementChild);
-        }
-        if (primaryBtn) primaryBtn.classList.add('platform-highlight');
-    })();
-    </script>
+    <script src="js/ad-fallback.js" defer></script>
+    <script src="js/homepage-enhancements.js" defer></script>
+    <script src="js/platform-download-order.js" defer></script>
+    <script src="js/version-sync.js" defer></script>
 </body>
 </html>

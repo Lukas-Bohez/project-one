@@ -203,6 +203,7 @@ class IndustrialEmpireApp {
     setupActionListeners() {
         // Mining tab actions
         this.bindButton('mine-stone-btn', () => this.gameEngine.mineStone());
+        this.bindButton('watch-ad-btn', () => this.gameEngine.watchAd());
         this.bindButton('hire-stone-miner-btn', () => this.gameEngine.hireWorker('stoneMiner'));
         this.bindButton('hire-coal-miner-btn', () => this.gameEngine.hireWorker('coalMiner'));
         this.bindButton('hire-iron-miner-btn', () => this.gameEngine.hireWorker('ironMiner'));

@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+        <script>
+        (function() {
+            var saved = localStorage.getItem('spire-theme');
+            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            var theme = saved || (prefersDark ? 'dark' : 'dark');
+            document.documentElement.setAttribute('data-theme', theme);
+            document.documentElement.classList.toggle('dark', theme === 'dark');
+        }());
+        </script>
     <!-- Google Analytics (GA4) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-SSEBSTQM21"></script>
     <script>
@@ -12,23 +21,25 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Convert The Spire Reborn v9.0.1 is a unified app that includes Vault The Spire features with torrenting support and an Android file picker display hotfix.">
-    <title>Convert The Spire Reborn v9.0.1 - Unified Convert + Vault App</title>
+    <meta name="description" content="Convert The Spire Reborn delivers integrated BitPlayer torrent and media workflows with improved corrupted download detection and live repair progress tracking.">
+    <title>Convert The Spire Reborn v10.0.6 - Unified Convert + BitPlayer App</title>
 
     <meta name="author" content="Oroka Conner">
     <meta name="robots" content="index, follow">
     <meta name="keywords" content="offline media converter, free media converter, open source converter, Flutter converter app, Windows media converter, Android media converter, Linux media converter, GPLv3, MP3 converter, MP4 converter">
 
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Convert The Spire Reborn v9.0.1 - Unified Convert + Vault App">
-    <meta property="og:description" content="A powerful offline media app built with Flutter. Vault The Spire is now integrated, with torrenting and conversion in one release.">
+    <meta property="og:title" content="Convert The Spire Reborn v10.0.6 - Unified Convert + BitPlayer App">
+    <meta property="og:description" content="A powerful offline media app built with Flutter. BitPlayer torrent workflows are integrated with improved corrupted download recovery and live repair tracking.">
     <meta property="og:url" content="https://quizthespire.com/pages/conversion/">
     <meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg">
     <meta property="og:site_name" content="Quiz The Spire">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Convert The Spire Reborn v9.0.1 - Unified Convert + Vault App">
-    <meta name="twitter:description" content="A powerful offline media app built with Flutter. Vault The Spire is now integrated, with torrenting and conversion in one release.">
+    <meta name="twitter:title" content="Convert The Spire Reborn v10.0.6 - Unified Convert + BitPlayer App">
+    <meta name="twitter:description" content="A powerful offline media app built with Flutter. BitPlayer torrent workflows are integrated with improved corrupted download recovery and live repair tracking.">
     <meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg">
+    <meta name="theme-color" content="#0a0a14" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f8f9fc" media="(prefers-color-scheme: light)">
     <link rel="canonical" href="https://quizthespire.com/pages/conversion/">
 
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
@@ -36,10 +47,15 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin>
+    <link rel="preconnect" href="https://googleads.g.doubleclick.net" crossorigin>
+    <link rel="dns-prefetch" href="//pagead2.googlesyndication.com">
+    <link rel="dns-prefetch" href="//googleads.g.doubleclick.net">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/footer.css">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449" crossorigin="anonymous"></script>
 
     <style>
         /* Conversion page specific */
@@ -85,8 +101,8 @@
 
         <div class="cvt-hero">
             <h2 class="cvt-hero__title">Convert The Spire Reborn</h2>
-            <h2 class="cvt-hero__title">Vault The Spire Is Now Included in Convert.</h2>
-            <p class="cvt-hero__sub">v9.0.1 unifies conversion, playlist sharing, and torrent-powered transfers in one free, open-source app, with an Android file picker display hotfix.</p>
+            <h2 class="cvt-hero__title">BitPlayer: Torrent &amp; Media Is Now Included in Convert.</h2>
+            <p class="cvt-hero__sub"><span data-version>v10.0.6</span> improves corrupted download detection with live repair progress tracking while keeping conversion, playlist sharing, and media workflows unified in one free, open-source app.</p>
         </div>
 
         <!-- explanatory video -->
@@ -130,13 +146,28 @@
             <div class="cvt-feature">
                 <div class="cvt-feature__icon"><i class="fa-solid fa-arrows-rotate"></i></div>
                 <h3 class="cvt-feature__title">Vault + Convert Unified</h3>
-                <p class="cvt-feature__desc">Vault The Spire features now ship directly inside Convert The Spire Reborn for a single workflow.</p>
+                <p class="cvt-feature__desc">BitPlayer: Torrent &amp; Media features now ship directly inside Convert The Spire Reborn for a single workflow.</p>
             </div>
             <div class="cvt-feature">
                 <div class="cvt-feature__icon"><i class="fa-solid fa-tower-broadcast"></i></div>
-                <h3 class="cvt-feature__title">Torrenting in v9.0.1</h3>
-                <p class="cvt-feature__desc">Built-in torrenting support helps make playlist and file sharing easier across devices.</p>
+                <h3 class="cvt-feature__title">Android Build Naming Refresh</h3>
+                <p class="cvt-feature__desc">The Android release now ships as ConvertTheSpireReborn.apk for clearer platform consistency.</p>
             </div>
+            <div class="cvt-feature">
+                <div class="cvt-feature__icon"><i class="fa-solid fa-window-maximize"></i></div>
+                <h3 class="cvt-feature__title">Windows Player Stability</h3>
+                <p class="cvt-feature__desc"><span data-version>v10.0.6</span> improves detection and recovery for corrupted downloads with real-time repair progress.</p>
+            </div>
+        </div>
+
+        <div class="ad-unit-wrapper ad-slot-horizontal" aria-label="Sponsored content">
+            <p class="ad-label">Sponsored</p>
+            <ins class="adsbygoogle js-adsbygoogle"
+                style="display:block"
+                data-ad-client="ca-pub-8418485814964449"
+                data-ad-slot="6531017850"
+                data-ad-format="auto"
+                data-full-width-responsive="true"></ins>
         </div>
 
         <div class="cvt-dl">
@@ -144,16 +175,16 @@
             <p style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:1rem;">Free forever. No account required. No installer needed.</p>
 
             <div class="cvt-dl__buttons">
-                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v9.0.1/ConvertTheSpireReborn-windows-x64.zip" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--windows">
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v10.0.6/ConvertTheSpireReborn-windows-x64.zip" data-download-win target="_blank" rel="noopener noreferrer" class="c-btn c-btn--cta c-btn--windows">
                     <i class="fa-brands fa-windows"></i>&nbsp; Download
                 </a>
-                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v9.0.1/ConvertTheSpireReborn-android.apk" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--android">
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v10.0.6/ConvertTheSpireReborn.apk" data-download-android target="_blank" rel="noopener noreferrer" class="c-btn c-btn--cta c-btn--android">
                     <i class="fa-brands fa-android"></i>&nbsp; Download
                 </a>
-                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v9.0.1/ConvertTheSpireReborn-linux-x64.zip" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--linux" title="Linux Supported">
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v10.0.6/ConvertTheSpireReborn-linux-x64.zip" data-download-linux target="_blank" rel="noopener noreferrer" class="c-btn c-btn--cta c-btn--linux" title="Linux Supported">
                     <i class="fa-brands fa-linux"></i>&nbsp; Download
                 </a>
-                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v9.0.1/ConvertTheSpireReborn-macOS.zip" target="_blank" rel="noopener" class="c-btn c-btn--cta c-btn--macos">
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v10.0.6/ConvertTheSpireReborn-macOS.zip" data-download-mac target="_blank" rel="noopener noreferrer" class="c-btn c-btn--cta c-btn--macos">
                     <i class="fa-brands fa-apple"></i>&nbsp; Download
                 </a>
             </div>
@@ -161,9 +192,11 @@
             <p style="font-size:0.82rem;color:var(--text-muted);margin-top:0.5rem;">
                 <i class="fa-solid fa-lock-open" style="color:var(--success-color, #16a34a);"></i>
                 Open source &middot; GPLv3 &middot; No installer needed &middot;
-                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter" target="_blank" rel="noopener" style="color:var(--primary-color);font-weight:600;text-decoration:none;">View on GitHub</a>
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter" target="_blank" rel="noopener noreferrer" style="color:var(--primary-color);font-weight:600;text-decoration:none;">View on GitHub</a>
                 &nbsp;&middot;&nbsp;
-                <a href="https://github.com/sponsors/Lukas-Bohez" target="_blank" rel="noopener" style="color:var(--primary-color);font-weight:600;text-decoration:none;">Support via GitHub Sponsors</a>
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v10.0.6/SHA256SUMS.txt" data-download-sha target="_blank" rel="noopener noreferrer" style="color:var(--primary-color);font-weight:600;text-decoration:none;">Verify SHA256SUMS</a>
+                &nbsp;&middot;&nbsp;
+                <a href="https://github.com/sponsors/Lukas-Bohez" target="_blank" rel="noopener noreferrer" style="color:var(--primary-color);font-weight:600;text-decoration:none;">Support via GitHub Sponsors</a>
             </p>
         </div>
 
@@ -173,7 +206,7 @@
             <details>
                 <summary><i class="fa-solid fa-shield-halved" style="color:var(--primary-color);"></i> Why does Windows show a SmartScreen warning?</summary>
                 <div class="cvt-faq__body">
-                    <p>Windows SmartScreen warns about unsigned software. Code-signing certificates cost ~$200/year, which isn't feasible for a free, solo-developed project. The app is <strong>100% open-source</strong> under the GPLv3 license - you can inspect every line of code on <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter" target="_blank" rel="noopener">GitHub</a>.</p>
+                    <p>Windows SmartScreen warns about unsigned software. Code-signing certificates cost ~$200/year, which isn't feasible for a free, solo-developed project. The app is <strong>100% open-source</strong> under the GPLv3 license - you can inspect every line of code on <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter" target="_blank" rel="noopener noreferrer">GitHub</a>.</p>
                     <p>To run: click <strong>"More info"</strong> → <strong>"Run anyway."</strong></p>
                 </div>
             </details>
@@ -208,9 +241,18 @@
             <details>
                 <summary><i class="fa-solid fa-code-branch" style="color:var(--primary-color);"></i> Is this really free and open-source?</summary>
                 <div class="cvt-faq__body">
-                    <p>Yes. The full source code is available on <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter" target="_blank" rel="noopener">GitHub</a> under the GPLv3 license. You can audit, fork, and modify it freely. There are no ads, no premium tiers, and no hidden costs.</p>
+                    <p>Yes. The full source code is available on <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter" target="_blank" rel="noopener noreferrer">GitHub</a> under the GPLv3 license. You can audit, fork, and modify it freely. There are no ads, no premium tiers, and no hidden costs.</p>
                 </div>
             </details>
+        </div>
+
+        <div class="ad-unit-wrapper ad-slot-multiplex" aria-label="Sponsored recommendations">
+            <p class="ad-label">Sponsored</p>
+            <ins class="adsbygoogle js-adsbygoogle"
+                style="display:block"
+                data-ad-format="autorelaxed"
+                data-ad-client="ca-pub-8418485814964449"
+                data-ad-slot="7221282993"></ins>
         </div>
 
     </main>
@@ -239,6 +281,7 @@
     </footer>
 
     <script src="/js/themeManager.js" defer></script>
+    <script src="/js/spire-adblock-detector.js" defer></script>
     <script>
     // Update stats from API (static fallback already in HTML)
     fetch('/api/v1/download/analytics')
@@ -271,7 +314,19 @@
             }
         }
     })();
-        // Buttons now point directly to platform-specific release assets.
+
+    if (window.adsbygoogle) {
+        document.querySelectorAll('.js-adsbygoogle').forEach(function (slot) {
+            try {
+                (adsbygoogle = window.adsbygoogle || []).push({});
+                slot.classList.remove('js-adsbygoogle');
+            } catch (e) {
+                console.warn('AdSense slot skipped:', e);
+            }
+        });
+    }
     </script>
+    <script src="../../js/ad-fallback.js" defer></script>
+    <script src="../../js/version-sync.js" defer></script>
 </body>
 </html>

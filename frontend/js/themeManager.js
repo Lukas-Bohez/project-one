@@ -5,7 +5,7 @@
     'use strict';
     
     // Theme management
-    const THEME_KEY = 'quiz-theme-preference';
+    const THEME_KEY = 'spire-theme';
     const THEMES = {
         LIGHT: 'light',
         DARK: 'dark',
@@ -52,24 +52,17 @@
             }
             
             // Debug info
-            console.log('Theme Manager initialized:', {
-                currentTheme: this.currentTheme,
-                effectiveTheme: this.getEffectiveTheme(),
-                toggleFunctionExists: typeof window.toggleTheme,
-                documentReady: document.readyState
-            });
         }
         
         getStoredTheme() {
             try {
                 const stored = localStorage.getItem(THEME_KEY);
-                // Convert old system preference to light mode, or default to light
                 if (stored === THEMES.SYSTEM || !stored) {
-                    return THEMES.LIGHT;
+                    return THEMES.DARK;
                 }
                 return stored === THEMES.DARK ? THEMES.DARK : THEMES.LIGHT;
             } catch (e) {
-                return THEMES.LIGHT;
+                return THEMES.DARK;
             }
         }
         
@@ -115,7 +108,6 @@
                 html.style.setProperty('--sentle-key-bg', '#818384');
                 html.style.setProperty('--sentle-key-text', '#ffffff');
                 html.style.setProperty('--color-input-bg', '#1e1e1e');
-                console.log('✓ Dark theme applied');
             } else {
                 html.style.setProperty('--sentle-bg', '#ffffff');
                 html.style.setProperty('--sentle-text', '#1a1a1b');
@@ -123,7 +115,6 @@
                 html.style.setProperty('--sentle-key-bg', '#d3d6da');
                 html.style.setProperty('--sentle-key-text', '#1a1a1b');
                 html.style.setProperty('--color-input-bg', '#ffffff');
-                console.log('✓ Light theme applied');
             }
             
             if (body) void body.offsetHeight;
@@ -159,15 +150,9 @@
         }
         
         toggleTheme() {
-            console.log('=== THEME TOGGLE CALLED ===');
             // Simple toggle: light <-> dark (no system mode)
             let newTheme;
             const effectiveTheme = this.getEffectiveTheme();
-            
-            console.log('toggleTheme method called:', {
-                currentTheme: this.currentTheme,
-                effectiveTheme: effectiveTheme
-            });
             
             if (effectiveTheme === THEMES.DARK) {
                 newTheme = THEMES.LIGHT;
@@ -175,7 +160,6 @@
                 newTheme = THEMES.DARK;
             }
             
-            console.log('Setting new theme to:', newTheme);
             this.setTheme(newTheme);
         }
         
@@ -254,8 +238,6 @@
         // Force apply current theme to newly created elements
         applyThemeToNewElements(container = document) {
             const currentEffectiveTheme = this.getEffectiveTheme();
-            console.log('Applying theme to new elements:', currentEffectiveTheme);
-            
             // Ensure the container and all its children have the correct theme applied
             if (container !== document) {
                 // Apply theme classes to the container itself
@@ -277,7 +259,6 @@
     // Expose theme control functions globally for backwards compatibility
     window.setTheme = (theme) => window.themeManager.setTheme(theme);
     window.toggleTheme = () => {
-        console.log('toggleTheme called globally - checking if themeManager exists:', !!window.themeManager);
         if (window.themeManager) {
             return window.themeManager.toggleTheme();
         } else {

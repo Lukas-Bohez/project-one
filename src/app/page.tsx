@@ -4,10 +4,10 @@ export default function Home() {
       <main className="mx-auto w-full max-w-6xl p-6 sm:p-10">
         <header className="mb-12 rounded-3xl border border-slate-200 bg-white/75 p-8 shadow-lg backdrop-blur dark:border-slate-700 dark:bg-slate-900/70">
           <p className="text-sm font-semibold uppercase tracking-widest text-blue-700 dark:text-blue-300">
-            Lukas Bohez
+            Oroka Conner
           </p>
           <h1 className="mt-3 text-4xl font-bold leading-tight sm:text-5xl">
-            Frontend Developer & Designer
+            Full-Stack Developer · Flutter · Python · Next.js
           </h1>
           <p className="mt-4 max-w-2xl text-lg text-slate-600 dark:text-slate-300">
             Crafting accessible, responsive, and aesthetic web experiences with Next.js, TypeScript,
@@ -96,8 +96,10 @@ export default function Home() {
             <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
               <h3 className="text-lg font-semibold">ConvertTheSpireFlutter</h3>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                Native Flutter media download engine with YouTube metadata stream handling and bulk
-                conversion. Builds for Linux, Windows, macOS, and Android.
+                Open-source Flutter desktop and mobile app for downloading and converting
+                media from 1,800+ sites. Features 4K/8K downloads, 27+ format conversions,
+                built-in media player, torrent management, DLNA casting, and a built-in
+                browser. 1,000+ downloads across 95+ countries. GPLv3 licensed.
               </p>
               <a
                 className="mt-4 inline-flex items-center text-sm font-semibold text-blue-700 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-100"
@@ -111,8 +113,9 @@ export default function Home() {
             <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
               <h3 className="text-lg font-semibold">QuizTheSpire</h3>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                Python + Apache web utility for high-speed playlist conversion (MP3/MP4),
-                privacy-first and ad-free operation.
+                Full-stack live multiplayer quiz platform. Supports real-time leaderboards,
+                AI-generated themes via SpireAI, and community-created content. Built with
+                vanilla JS, Apache2, and a Python backend. Serving users across 95+ countries.
               </p>
               <a
                 className="mt-4 inline-flex items-center text-sm font-semibold text-blue-700 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-100"
@@ -139,9 +142,11 @@ export default function Home() {
               Email:{' '}
               <a
                 className="font-medium text-blue-700 hover:underline dark:text-blue-300"
-                href="mailto:lukas@example.com"
+                href="https://quizthespire.com/pages/contact/"
+                target="_blank"
+                rel="noreferrer noopener"
               >
-                lukas@example.com
+                Contact via Quiz The Spire →
               </a>
             </li>
             <li>
@@ -170,7 +175,7 @@ export default function Home() {
         </section>
 
         <footer className="mt-8 border-t border-slate-200 pt-4 text-center text-sm text-slate-600 dark:border-slate-700 dark:text-slate-400">
-          © {new Date().getFullYear()} Lukas Bohez. Built with Next.js.
+          © {new Date().getFullYear()} Oroka Conner. Built with Next.js.
         </footer>
       </main>
     </div>

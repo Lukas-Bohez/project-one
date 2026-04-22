@@ -18,6 +18,8 @@ Allow: /google*.html
 Disallow: /pages/admin/
 Disallow: /pages/sentle-admin/
 Disallow: /pages/login/
+Disallow: /pages/manage/
+Disallow: /pages/support/private/
 
 # Block backend and temporary files
 Disallow: /backend/

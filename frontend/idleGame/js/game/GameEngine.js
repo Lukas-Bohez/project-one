@@ -196,8 +196,14 @@ class GameEngine {
                 },
                 convertResources: {
                     cooldown: 0
+                },
+                watchedAdBoost: {
+                    active: false,
+                    endTime: 0,
+                    cooldown: 0
                 }
             },
+            watchedAdCooldown: 0,
             
             // Efficiency multipliers
             efficiency: {
@@ -568,6 +574,14 @@ class GameEngine {
         // Apply ad bonuses
         if (this.state.ads.efficiencyBoost.active) {
             efficiency *= 1.5; // +50% from ad boost
+        }
+        
+        // Apply watched ad boost (50% for 30 seconds with 5 minute cooldown)
+        const now = Date.now();
+        if (this.state.ads.watchedAdBoost && this.state.ads.watchedAdBoost.active && now < this.state.ads.watchedAdBoost.endTime) {
+            efficiency *= 1.5; // +50% from watched ad boost
+        } else if (this.state.ads.watchedAdBoost) {
+            this.state.ads.watchedAdBoost.active = false;
         }
         
         // Helper function to apply gathering chance bonuses
@@ -1437,6 +1451,10 @@ class GameEngine {
         this.updateButtonState('ad-convert-resources-btn', this.state.ads.convertResources.cooldown <= now);
         this.updateButtonState('ad-gold-bonus-btn', this.state.ads.goldBonus.cooldown <= now);
         this.updateButtonState('ad-efficiency-boost-btn', this.state.ads.efficiencyBoost.cooldown <= now);
+        this.updateButtonState('watch-ad-btn', (this.state.watchedAdCooldown || 0) <= now);
+        
+        // Update watch ad cooldown display
+        this.updateAdButtonCooldown();
         
         // Add visual hint for new players
         const mineButton = document.getElementById('mine-stone-btn');
@@ -1629,6 +1647,73 @@ class GameEngine {
         }
         
         console.log('Mined 1 stone manually');
+    }
+    
+    watchAd() {
+        // Check if ad cooldown has expired
+        const now = Date.now();
+        const adCooldownMs = 5 * 60 * 1000; // 5 minute cooldown
+        
+        if (!this.state.watchedAdCooldown) {
+            this.state.watchedAdCooldown = 0;
+        }
+        
+        if (now < this.state.watchedAdCooldown) {
+            const remainingMs = this.state.watchedAdCooldown - now;
+            const remainingMin = Math.ceil(remainingMs / 60000);
+            this.showNotification(`⏳ Ad available in ${remainingMin} minute${remainingMin > 1 ? 's' : ''}`);
+            return;
+        }
+        
+        // Award gold
+        this.state.resources.gold += 100;
+        this.state.stats.totalGoldEarned = (this.state.stats.totalGoldEarned || 0) + 100;
+        
+        // Apply 50% income boost for 30 seconds using the existing ads system
+        this.state.ads.watchedAdBoost = {
+            active: true,
+            endTime: now + (30 * 1000), // 30 seconds
+            cooldown: now + adCooldownMs
+        };
+        this.state.watchedAdCooldown = now + adCooldownMs;
+        
+        // Update button cooldown display
+        this.updateAdButtonCooldown();
+        
+        // Show notification
+        this.showNotification('📺 +100 gold! Income boosted by 50% for 30 seconds!');
+        this.playSound('reward');
+        this.flashElement('gold-amount');
+        
+        // Animate button
+        const btn = document.getElementById('watch-ad-btn');
+        if (btn) {
+            this.spawnParticles(btn, '#ff6b6b', 15);
+            this.spawnFloatingNumber(btn, '+100 💰', '#ffd700');
+        }
+        
+        console.log('Watched ad: +100 gold, 50% boost for 30s');
+    }
+    
+    updateAdButtonCooldown() {
+        const btn = document.getElementById('watch-ad-btn');
+        const cooldownDisplay = document.getElementById('ad-cooldown');
+        
+        if (!btn || !cooldownDisplay) return;
+        
+        const now = Date.now();
+        const adCooldownMs = 5 * 60 * 1000;
+        const timeLeft = Math.max(0, (this.state.watchedAdCooldown || 0) - now);
+        
+        if (timeLeft === 0) {
+            cooldownDisplay.textContent = 'Ready';
+            btn.disabled = false;
+        } else {
+            const minutes = Math.floor(timeLeft / 60000);
+            const seconds = Math.floor((timeLeft % 60000) / 1000);
+            cooldownDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            btn.disabled = true;
+        }
     }
     
     hireWorker(workerType) {

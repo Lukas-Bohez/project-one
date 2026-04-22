@@ -7,3 +7,5 @@
 # Portfolio path is served by Apache Alias from config [quizthespire.com-le-ssl.conf]
 # so no local rewrite is required here.
 
+ErrorDocument 404 /404.html
+

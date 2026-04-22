@@ -22,8 +22,8 @@
 }
 
 .platform-highlight {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 65%, white 35%), 0 14px 28px rgba(0, 0, 0, 0.12);
+    transform: translateY(-1px);
 }
 
 /* Responsive video embed wrapper */
@@ -61,6 +61,41 @@
 html, body {
     max-width: 100%;
     overflow-x: hidden;
+}
+
+html {
+    background-color: #0a0a14;
+    color: #ffffff;
+}
+
+#back-to-top {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 5rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid rgba(74, 158, 255, 0.35);
+    background: rgba(74, 158, 255, 0.15);
+    color: #4a9eff;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 1000;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.25s ease, transform 0.25s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+#back-to-top:hover {
+    background: rgba(74, 158, 255, 0.24);
+    border-color: rgba(74, 158, 255, 0.55);
+}
+
+#back-to-top.visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 :root {
@@ -222,6 +257,230 @@ body {
     opacity: 0;
     transition: opacity 0.6s ease-in-out;
     pointer-events: none;
+}
+
+.hero-stats {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    justify-content: center;
+    gap: 0;
+    margin: 1.4rem auto 0;
+    padding: 1rem 1.1rem;
+    max-width: 860px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.38), rgba(30, 64, 175, 0.16));
+    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.16);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.hero-stat {
+    flex: 1 1 140px;
+    min-width: 140px;
+    padding: 0.55rem 0.85rem;
+    text-align: center;
+}
+
+.hero-stat-number {
+    display: block;
+    font-size: clamp(1.65rem, 3.2vw, 2.45rem);
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: #fff;
+}
+
+.hero-stat-number::after {
+    content: attr(data-suffix);
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-left: 0.1rem;
+    color: rgba(191, 219, 254, 0.92);
+}
+
+.hero-stat-label {
+    margin: 0.35rem 0 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: rgba(226, 232, 240, 0.72);
+}
+
+.hero-stat-divider {
+    align-self: stretch;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.18), transparent);
+}
+
+.hero-stat--compact {
+    min-width: 120px;
+}
+
+.section-divider {
+    width: min(100%, 1120px);
+    margin: 0.6rem auto;
+    padding: 0 0.5rem;
+}
+
+.section-divider span {
+    display: block;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.16), rgba(96, 165, 250, 0.48), rgba(96, 165, 250, 0.16), transparent);
+}
+
+.section-alt {
+    position: relative;
+}
+
+.section-alt::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
+    pointer-events: none;
+}
+
+.c-product-card__actions--platform .c-btn {
+    gap: 0.7rem;
+}
+
+.c-platform-download-icon {
+    width: 1.2rem;
+    height: 1.2rem;
+    flex-shrink: 0;
+}
+
+.c-platform-download-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+}
+
+.ad-unit-wrapper {
+    transition: opacity 0.28s ease, transform 0.28s ease, max-height 0.28s ease, margin 0.28s ease, padding 0.28s ease, border-color 0.28s ease;
+}
+
+.ad-unit-wrapper--collapsed {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    transform: translateY(-4px);
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border-width: 0 !important;
+}
+
+.ad-unit-wrapper--fading {
+    opacity: 0;
+}
+
+.ad-self-promo {
+    display: block;
+    width: 100%;
+    color: inherit;
+    text-decoration: none;
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid rgba(74, 158, 255, 0.22);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015));
+    box-shadow: 0 12px 34px rgba(15, 23, 42, 0.08);
+}
+
+.ad-self-promo:hover {
+    border-color: rgba(74, 158, 255, 0.4);
+    background: linear-gradient(135deg, rgba(74, 158, 255, 0.08), rgba(74, 158, 255, 0.03));
+}
+
+.ad-self-promo-inner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+}
+
+.ad-self-promo-icon {
+    flex: 0 0 auto;
+    font-size: 1.9rem;
+    line-height: 1;
+}
+
+.ad-self-promo-content {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.ad-self-promo-label {
+    margin: 0 0 0.15rem;
+    font-size: 0.67rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #60a5fa;
+}
+
+.ad-self-promo-headline {
+    margin: 0 0 0.2rem;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.35;
+}
+
+.ad-self-promo-body {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+}
+
+.ad-self-promo-cta {
+    flex: 0 0 auto;
+    padding: 0.45rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid rgba(96, 165, 250, 0.28);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #60a5fa;
+    white-space: nowrap;
+}
+
+.ad-self-promo:hover .ad-self-promo-cta {
+    background: rgba(96, 165, 250, 0.12);
+}
+
+@media (max-width: 720px) {
+    .hero-stats {
+        padding: 0.85rem 0.75rem;
+    }
+
+    .hero-stat-divider {
+        display: none;
+    }
+
+    .hero-stat {
+        min-width: 46%;
+    }
+
+    .ad-self-promo-inner {
+        gap: 0.75rem;
+        padding: 0.9rem 0.95rem;
+    }
+
+    .ad-self-promo-cta {
+        display: none;
+    }
+}
+
+@media (max-width: 560px) {
+    .ad-self-promo-icon {
+        display: none;
+    }
 }
 
 /* Light mode: show light spire - MUCH MORE VISIBLE */
@@ -1326,6 +1585,32 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     line-height: 1.5;
 }
 
+.c-header__trust {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.55rem;
+    margin-top: 1rem;
+}
+
+.c-header__trust-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+.c-header__trust-item i,
+.c-header__trust-item svg {
+    color: #bfdbfe;
+}
+
 /* Compact button row: visually consistent, equal-width buttons that sit side-by-side when space allows */
 .compact-button-row{
     display:grid;
@@ -1419,6 +1704,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
+    align-items: center;
     gap: 0.5rem;
     margin: 1.75rem 0 1.5rem;
     padding: 0.5rem 0.75rem;
@@ -1431,6 +1717,47 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     max-width: 850px;
     margin-left: auto;
     margin-right: auto;
+}
+
+.c-nav-actions {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.15rem;
+}
+
+.c-theme-nav-btn {
+    border: 1px solid rgba(44, 76, 124, 0.22);
+    border-radius: 999px;
+    background: rgba(44, 111, 184, 0.08);
+    color: var(--primary-color);
+    font-size: 0.82rem;
+    font-weight: 700;
+    min-height: 40px;
+    padding: 0.55rem 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.c-theme-nav-btn:hover {
+    transform: translateY(-1px);
+    background: rgba(44, 111, 184, 0.16);
+    border-color: rgba(44, 111, 184, 0.4);
+}
+
+[data-theme="dark"] .c-theme-nav-btn,
+.theme-dark .c-theme-nav-btn {
+    background: rgba(96, 165, 250, 0.16);
+    border-color: rgba(147, 197, 253, 0.35);
+    color: #cde3ff;
+}
+
+[data-theme="dark"] .c-theme-nav-btn:hover,
+.theme-dark .c-theme-nav-btn:hover {
+    background: rgba(96, 165, 250, 0.24);
+    border-color: rgba(147, 197, 253, 0.55);
 }
 
 .c-nav-btn {
@@ -1501,6 +1828,16 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
         font-size: 0.82rem;
         flex: 1 1 auto;
         justify-content: center;
+    }
+    .c-nav-actions {
+        width: 100%;
+        margin-left: 0;
+    }
+    .c-theme-nav-btn {
+        width: 100%;
+        justify-content: center;
+        border-radius: 10px;
+        min-height: 42px;
     }
 }
 
@@ -3032,5 +3369,153 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     .c-platform-panel#platform-android .c-modal__steps li:last-child {
         white-space: normal; /* allow compact wrapping */
         margin-bottom: 0.15rem;
+    }
+}
+
+/* =============================================
+   ADSENSE LAYOUT SYSTEM
+   ============================================= */
+.ad-unit-wrapper {
+    width: 100%;
+    max-width: 100%;
+    margin: 1.25rem auto;
+    padding: 0.65rem 0.75rem;
+    border: 1px dashed color-mix(in srgb, var(--border-color) 80%, transparent);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--bg-tertiary) 90%, transparent);
+    overflow: hidden;
+}
+
+.ad-label {
+    margin: 0 0 0.4rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+.ad-slot-horizontal {
+    min-height: 90px;
+}
+
+.ad-slot-square {
+    max-width: 340px;
+    min-height: 280px;
+}
+
+.ad-slot-article {
+    max-width: 760px;
+    min-height: 250px;
+}
+
+.ad-slot-multiplex {
+    min-height: 280px;
+}
+
+@media (max-width: 900px) {
+    .ad-slot-square {
+        max-width: 100%;
+    }
+}
+
+/* =============================================
+   ADBLOCK RECOVERY SOFT-WALL
+   ============================================= */
+.adblock-softwall {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: grid;
+    place-items: center;
+    background: rgba(2, 6, 23, 0.72);
+    backdrop-filter: blur(3px);
+    animation: adblockFadeIn 0.2s ease;
+}
+
+.adblock-softwall.is-leaving {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.adblock-softwall__panel {
+    width: min(92vw, 560px);
+    padding: 1.35rem 1.1rem 1.1rem;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--bg-tertiary) 96%, transparent), color-mix(in srgb, var(--bg-secondary) 92%, transparent));
+    color: var(--text-primary);
+    box-shadow: 0 20px 54px rgba(0, 0, 0, 0.34);
+    position: relative;
+}
+
+.adblock-softwall__kicker {
+    margin: 0 0 0.45rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+.adblock-softwall__panel h2 {
+    margin: 0 0 0.55rem;
+    font-size: 1.35rem;
+    line-height: 1.2;
+}
+
+.adblock-softwall__panel p {
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+.adblock-softwall__actions {
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.adblock-softwall__primary,
+.adblock-softwall__secondary {
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 0.6rem 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.adblock-softwall__primary {
+    background: var(--primary-color);
+    color: #fff;
+}
+
+.adblock-softwall__secondary {
+    background: color-mix(in srgb, var(--bg-secondary) 90%, transparent);
+    border-color: color-mix(in srgb, var(--border-color) 85%, transparent);
+    color: var(--text-primary);
+}
+
+.adblock-softwall__close {
+    position: absolute;
+    top: 0.45rem;
+    right: 0.45rem;
+    border: 1px solid color-mix(in srgb, var(--border-color) 75%, transparent);
+    background: color-mix(in srgb, var(--bg-secondary) 90%, transparent);
+    color: var(--text-primary);
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+@keyframes adblockFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
     }
 }

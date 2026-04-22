@@ -678,6 +678,32 @@ body {
     background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
 }
 
+.ad-reward-btn {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff8c42 100%);
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+    border: 2px solid rgba(255, 200, 87, 0.5);
+    animation: pulse 2s infinite;
+}
+
+.ad-reward-btn:hover {
+    box-shadow: 0 10px 30px rgba(255, 107, 107, 0.7), 0 0 20px rgba(255, 200, 87, 0.6);
+    transform: translateY(-4px) scale(1.05);
+    border-color: rgba(255, 200, 87, 0.8);
+    animation: none;
+}
+
+.ad-reward-btn:active {
+    transform: translateY(-2px) scale(0.99);
+}
+
+.ad-reward-btn:disabled {
+    background: linear-gradient(135deg, #666666 0%, #555555 100%);
+    box-shadow: 0 4px 15px rgba(102, 102, 102, 0.3);
+    border-color: rgba(150, 150, 150, 0.3);
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .processing-btn {
     background: linear-gradient(135deg, #a044ff 0%, #6a3093 100%);
     box-shadow: 0 4px 15px rgba(160, 68, 255, 0.4);

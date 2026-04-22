@@ -1,6 +1,15 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script>
+  (function() {
+    var saved = localStorage.getItem('spire-theme');
+    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var theme = saved || (prefersDark ? 'dark' : 'dark');
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  }());
+  </script>
   <meta charset="utf-8" />
   <!-- Google Analytics (GA4) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-SSEBSTQM21"></script>
@@ -15,27 +24,33 @@
   <!-- Performance optimizations -->
   <link rel="preconnect" href="https://lexica.art" crossorigin>
   <link rel="preconnect" href="https://picsum.photos" crossorigin>
+  <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin>
+  <link rel="preconnect" href="https://googleads.g.doubleclick.net" crossorigin>
   <link rel="dns-prefetch" href="//lexica.art">
   <link rel="dns-prefetch" href="//picsum.photos">
+  <link rel="dns-prefetch" href="//pagead2.googlesyndication.com">
+  <link rel="dns-prefetch" href="//googleads.g.doubleclick.net">
   
   
   <title>Articles • Quiz The Spire</title>
+  <meta name="theme-color" content="#0a0a14" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f8f9fc" media="(prefers-color-scheme: light)">
   <link rel="stylesheet" href="../css/styles.css" />
   <link rel="stylesheet" href="styles.css" />
-  <script src="../js/themeManager.js"></script>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/marked/marked.min.js"></script>
+  <script src="../js/themeManager.js" defer></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js" defer></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" defer></script>
+  <script src="https://unpkg.com/marked/marked.min.js" defer></script>
   <script>
     // Register Service Worker for image caching
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
         navigator.serviceWorker.register('sw.js')
           .then(function(registration) {
-            console.log('Service Worker registered successfully:', registration.scope);
+            // Service worker registered.
           })
           .catch(function(error) {
-            console.log('Service Worker registration failed:', error);
+            console.warn('Service Worker registration failed:', error);
           });
       });
     }
@@ -78,6 +93,16 @@
       </select>
     </div>
 
+    <div class="ad-unit-wrapper ad-slot-horizontal" aria-label="Sponsored content">
+      <p class="ad-label">Sponsored</p>
+      <ins class="adsbygoogle js-adsbygoogle"
+        style="display:block"
+        data-ad-client="ca-pub-8418485814964449"
+        data-ad-slot="6531017850"
+        data-ad-format="auto"
+        data-full-width-responsive="true"></ins>
+    </div>
+
     <!-- Articles Container -->
     <div id="articles-container">
       <div style="text-align: center; padding: 3rem; color: var(--ink-muted);">
@@ -96,13 +121,29 @@
   <footer class="a-footer a-container">
     <p>&copy; 2026 Quiz The Spire Articles • <a href="articlepagenew.html">More Articles</a></p>
     <div style="text-align: center; margin-top: 10px; opacity: 0.7;">
-      <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="OrokaConner" data-color="#2c6fb8" data-emoji=""  data-font="Inter" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
+      <script type="text/javascript" defer src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="OrokaConner" data-color="#2c6fb8" data-emoji=""  data-font="Inter" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
     </div>
   </footer>
 
-    <script src="js/imageProvider.js"></script>
-  <script src="js/cacheManager.js"></script>
-  <script src="js/articles.js"></script>
-  <script src="js/article-images.js"></script>
+  <button id="back-to-top" aria-label="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+  <script src="js/imageProvider.js" defer></script>
+  <script src="js/cacheManager.js" defer></script>
+  <script src="js/articles.js" defer></script>
+  <script src="js/article-images.js" defer></script>
+  <script src="../js/spire-adblock-detector.js" defer></script>
+  <script>
+    (function () {
+      if (!window.adsbygoogle) return;
+      document.querySelectorAll('.js-adsbygoogle').forEach(function (slot) {
+        try {
+          (adsbygoogle = window.adsbygoogle || []).push({});
+          slot.classList.remove('js-adsbygoogle');
+        } catch (_) {}
+      });
+    })();
+  </script>
+  <script src="../js/ad-fallback.js" defer></script>
+  <script src="../js/homepage-enhancements.js" defer></script>
 </body>
 </html>
