@@ -2,7 +2,7 @@
   'use strict';
 
   var REPO = 'Lukas-Bohez/ConvertTheSpireFlutter';
-  var DEFAULT_TAG = 'v10.1.1';
+  var DEFAULT_TAG = 'v10.2.3';
   var API = 'https://api.github.com/repos/' + REPO + '/releases/latest';
   var DOWNLOAD_BASE = 'https://github.com/' + REPO + '/releases/download';
 
