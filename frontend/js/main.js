@@ -39,14 +39,35 @@ const showSection = (sectionName) => {
     const target = document.getElementById(`${sectionName}-section`);
 
     // Update nav buttons
-    document.querySelectorAll('.c-nav-btn').forEach(btn => btn.classList.remove('active'));
-    const activeBtn = document.querySelector(`.c-nav-btn[data-section="${sectionName}"]`);
+    document
+        .querySelectorAll('.c-nav-btn:not([data-tab])')
+        .forEach(btn => btn.classList.remove('active'));
+    const activeBtn = document.querySelector(
+        `.c-nav-btn[data-section="${sectionName}"]:not([data-tab])`
+    );
     if (activeBtn) activeBtn.classList.add('active');
 
     if (!target || current === target) return;
 
     if (current) current.classList.remove('active');
     target.classList.add('active');
+};
+
+const showPortfolioTab = (tabName) => {
+    const tabButtons = document.querySelectorAll('.c-portfolio-tab-btn');
+    const tabPanels = document.querySelectorAll('.c-portfolio-tab-panel');
+
+    if (!tabButtons.length || !tabPanels.length) return;
+
+    tabButtons.forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.tab === tabName);
+    });
+
+    tabPanels.forEach((panel) => {
+        const isActive = panel.dataset.tabContent === tabName;
+        panel.classList.toggle('active', isActive);
+        panel.style.display = isActive ? 'block' : 'none';
+    });
 };
 
 const listenToButtons = () => {
@@ -80,13 +101,22 @@ const listenToButtons = () => {
     }
 
     // Navigation functionality
-    const navBtns = document.querySelectorAll('.c-nav-btn');
+    const navBtns = document.querySelectorAll('.c-nav-btn:not([data-tab])');
     navBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
             const navBtn = e.target.closest('.c-nav-btn');
             if (!navBtn) return;
             const section = navBtn.dataset.section;
             showSection(section);
+        });
+    });
+
+    const portfolioTabs = document.querySelectorAll('.c-portfolio-tab-btn');
+    portfolioTabs.forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const tab = btn.dataset.tab;
+            if (tab) showPortfolioTab(tab);
         });
     });
 };
@@ -122,6 +152,7 @@ const testServoMovement = async () => {
 const initIndexPage = () => {
     listenToButtons();
     markInitializationSuccess();
+    showPortfolioTab('overview');
 
     initialData = getInitialPlaceholderData();
     showSensorData(
