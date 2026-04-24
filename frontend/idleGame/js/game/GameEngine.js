@@ -934,6 +934,9 @@ class GameEngine {
                 if (goldenReward) goldenReward.style.display = 'none';
             }
         }
+
+        const campaign = this.getCampaignSnapshot(theme);
+        this.updateCampaignUI(campaign);
         
         // Update resource display
         this.updateElement('stone-amount', this.formatNumber(this.state.resources.stone));
@@ -1598,6 +1601,167 @@ class GameEngine {
         const element = document.getElementById(elementId);
         if (element && element.textContent !== text) {
             element.textContent = text;
+        }
+    }
+
+    getCampaignSnapshot(theme = null) {
+        const currentTheme = theme || (this.rebirthThemes ? this.rebirthThemes.getCurrentTheme(this.state) : null);
+        const campaignTone = currentTheme?.atmosphere === 'bright' ? 'light' : 'dark';
+        const rebirths = this.state.city?.rebirths || 0;
+        const maxDecay = this.state.city?.adjustedMaxDecay || this.state.city?.maxDecay || 100;
+        const currentDecay = this.state.city?.decay || 0;
+        const decayProgress = Math.min(1, Math.max(0, currentDecay / maxDecay));
+
+        const coreUnlockKeys = ['unlock_coal', 'unlock_iron', 'unlock_silver', 'unlock_processing'];
+        const unlockedCoreCount = coreUnlockKeys.filter((key) => !!this.state[key]).length;
+        const completedResearch = Object.values(this.state.research || {}).filter(Boolean).length;
+        const citySystemsCount = ['salesDepartment', 'miningAcademy', 'automationLab'].filter(
+            (key) => (this.state.city?.[key] || 0) > 0
+        ).length;
+        const supportSystemsCount = ['police', 'banks', 'markets', 'universities'].filter(
+            (key) => (this.state.city?.[key] || 0) > 0
+        ).length;
+        const totalPlayTimeMinutes = Math.floor((this.state.arcade?.totalPlayTime || 0) / 60);
+
+        let phase = 'legacy';
+        let title = currentTheme ? `${currentTheme.name} campaign` : 'Campaign brief';
+        let description = currentTheme?.description || 'Build a run with purpose instead of treating every reset like a dead end.';
+        let progressLabel = 'Legacy progress';
+        let progressValue = Math.min(1, rebirths / 10);
+        let progressNote = 'Every rebirth should feel like a chapter, not a punishment.';
+        let nextGoal = `Push toward Rebirth ${rebirths + 1}`;
+        let nextReward = 'Permanent upgrades make the next loop stronger than the last.';
+
+        if (unlockedCoreCount < coreUnlockKeys.length) {
+            phase = 'foundation';
+            title = 'Build the backbone';
+            description = 'The first run is about proving the chain works: unlock every core tier, then make the factory hum.';
+            progressLabel = 'Foundation progress';
+            progressValue = unlockedCoreCount / coreUnlockKeys.length;
+            progressNote = 'Each unlock turns the loop from a clicker into a production line.';
+            nextGoal = !this.state.unlock_coal
+                ? 'Unlock Cloud Servers'
+                : !this.state.unlock_iron
+                ? 'Unlock User Accounts'
+                : !this.state.unlock_silver
+                ? 'Unlock Premium Subs'
+                : 'Unlock Deployment';
+            nextReward = 'Core unlocks make the early game feel like a system, not a menu of chores.';
+        } else if (completedResearch < 4 || citySystemsCount < 3) {
+            phase = 'automation';
+            title = 'Turn labor into systems';
+            description = 'This is where the game becomes infrastructure: research, city systems, and automation start carrying the run.';
+            progressLabel = 'Automation progress';
+            progressValue = Math.min(1, ((completedResearch / 4) * 0.65) + ((citySystemsCount / 3) * 0.35));
+            progressNote = 'The loop gets more meaningful when machines and departments do the repetitive work.';
+            nextGoal = !this.state.research?.automation
+                ? 'Research Automation'
+                : !this.state.city?.salesDepartment
+                ? 'Build Sales Bot'
+                : !this.state.city?.miningAcademy
+                ? 'Build Mining Academy'
+                : 'Build Automation Lab';
+            nextReward = 'Automation is the point where the empire starts feeling alive on its own.';
+        } else if (rebirths < 1 || decayProgress < 1) {
+            phase = 'rebirth';
+            title = 'Prepare the next chapter';
+            description = 'Decay is not failure here. It is the mechanism that turns one strong run into lasting progress.';
+            progressLabel = 'Rebirth progress';
+            progressValue = decayProgress;
+            progressNote = 'Fill the city with decay, trigger the reset, and cash in the permanent upgrades.';
+            nextGoal = decayProgress < 1 ? 'Raise city decay to 100%' : 'Trigger your first rebirth';
+            nextReward = 'The first rebirth opens the long arc of the game, where momentum compounds instead of vanishing.';
+        }
+
+        const legacyScore = Math.round(
+            (this.state.stats?.totalGoldEarned || 0) +
+            (completedResearch * 220) +
+            (unlockedCoreCount * 180) +
+            (citySystemsCount * 260) +
+            (supportSystemsCount * 90) +
+            (rebirths * 1200) +
+            totalPlayTimeMinutes +
+            Math.round(decayProgress * 150)
+        );
+
+        return {
+            phase,
+            title,
+            description,
+            progressLabel,
+            progressValue,
+            progressNote,
+            nextGoal,
+            nextReward,
+            legacyScore,
+            campaignTone,
+            themeLabel: currentTheme ? `${currentTheme.name} · Chapter ${rebirths + 1}` : `Chapter ${rebirths + 1}`,
+            objectives: [
+                {
+                    title: 'Foundation',
+                    detail: 'Unlock the core tiers and establish a production spine.',
+                    status: phase === 'foundation' ? 'current' : unlockedCoreCount >= coreUnlockKeys.length ? 'complete' : 'upcoming',
+                    progress: unlockedCoreCount / coreUnlockKeys.length,
+                    hint: `${unlockedCoreCount}/${coreUnlockKeys.length} core unlocks`
+                },
+                {
+                    title: 'Automation',
+                    detail: 'Research automation and wire up the city systems that keep the run moving.',
+                    status: phase === 'automation' ? 'current' : completedResearch >= 4 && citySystemsCount >= 3 ? 'complete' : 'upcoming',
+                    progress: Math.min(1, ((completedResearch / 4) * 0.65) + ((citySystemsCount / 3) * 0.35)),
+                    hint: `${completedResearch}/4 research, ${citySystemsCount}/3 city systems`
+                },
+                {
+                    title: 'Legacy',
+                    detail: 'Let the city decay, rebirth the run, and convert the reset into permanent strength.',
+                    status: phase === 'legacy' ? 'current' : rebirths >= 1 && decayProgress >= 1 ? 'complete' : 'upcoming',
+                    progress: phase === 'legacy' ? Math.min(1, rebirths / 10) : decayProgress,
+                    hint: rebirths > 0 ? `${rebirths} rebirths, decay ${Math.round(decayProgress * 100)}%` : 'First rebirth unlocks the arc'
+                }
+            ]
+        };
+    }
+
+    updateCampaignUI(snapshot) {
+        const campaignPanel = document.getElementById('campaign-panel');
+        if (campaignPanel) {
+            campaignPanel.dataset.campaignTone = snapshot.campaignTone;
+            campaignPanel.dataset.campaignPhase = snapshot.phase;
+        }
+
+        this.updateElement('campaign-title', snapshot.title);
+        this.updateElement('campaign-description', snapshot.description);
+        this.updateElement('campaign-theme-chip', snapshot.themeLabel);
+        this.updateElement('campaign-next-chip', `Next: ${snapshot.nextGoal}`);
+        this.updateElement('campaign-legacy-chip', `Legacy Score: ${this.formatNumber(snapshot.legacyScore)}`);
+        this.updateElement('campaign-progress-label', snapshot.progressLabel);
+        this.updateElement('campaign-progress-value', `${Math.round(snapshot.progressValue * 100)}%`);
+        this.updateElement('campaign-progress-note', snapshot.progressNote);
+
+        const progressBar = document.getElementById('campaign-progress-bar');
+        if (progressBar) {
+            progressBar.style.width = `${Math.max(0, Math.min(100, Math.round(snapshot.progressValue * 100)))}%`;
+        }
+
+        const objectivesContainer = document.getElementById('campaign-objectives');
+        if (objectivesContainer) {
+            objectivesContainer.innerHTML = snapshot.objectives.map((objective) => {
+                const stateLabel = objective.status === 'current' ? 'Current' : objective.status === 'complete' ? 'Complete' : 'Next';
+                const statusClass = objective.status === 'current' ? 'is-current' : objective.status === 'complete' ? 'is-complete' : 'is-upcoming';
+                return `
+                    <article class="campaign-objective ${statusClass}">
+                        <div class="campaign-objective__header">
+                            <span class="campaign-objective__title">${objective.title}</span>
+                            <span class="campaign-objective__state">${stateLabel}</span>
+                        </div>
+                        <p class="campaign-objective__detail">${objective.detail}</p>
+                        <div class="campaign-objective__meta">
+                            <span>${Math.round(objective.progress * 100)}%</span>
+                            <span>${objective.hint}</span>
+                        </div>
+                    </article>
+                `;
+            }).join('');
         }
     }
     
@@ -3356,11 +3520,23 @@ class GameEngine {
 
     checkAchievements() {
         if (!this.state.achievements) this.state.achievements = {};
+
+        const rebirths = this.state.city?.rebirths || 0;
+        const currentTheme = this.rebirthThemes?.getCurrentTheme(this.state) || null;
+        const chapterLabel = currentTheme
+            ? `${currentTheme.name} · Chapter ${rebirths + 1}`
+            : `Chapter ${rebirths + 1}`;
+
         for (const m of GameEngine.MILESTONES) {
             if (this.state.achievements[m.id]) continue;
             if (m.check(this.state)) {
-                this.state.achievements[m.id] = Date.now();
-                this.showNotification(m.msg);
+                this.state.achievements[m.id] = {
+                    unlockedAt: Date.now(),
+                    rebirths,
+                    theme: currentTheme?.name || null,
+                    atmosphere: currentTheme?.atmosphere || null
+                };
+                this.showNotification(`${chapterLabel} · ${m.msg}`, 'achievement');
                 this.playSound('hire'); // reuse celebration sound
             }
         }
@@ -3809,7 +3985,7 @@ class GameEngine {
         }, 3000);
     }
     
-    showNotification(message) {
+    showNotification(message, tone = 'default') {
         // Simple notification system
         console.log(`📢 ${message}`);
         
@@ -3821,23 +3997,10 @@ class GameEngine {
         });
         
         const notification = document.createElement('div');
-        notification.className = 'game-notification';
+        notification.className = tone === 'achievement' ? 'game-notification achievement' : 'game-notification';
         notification.textContent = message;
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 15px rgba(102, 126, 234, 0.3);
-            z-index: 10000;
-            max-width: 320px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            font-weight: 500;
-        `;
+        notification.style.top = '20px';
+        notification.style.right = '20px';
         
         document.body.appendChild(notification);
         

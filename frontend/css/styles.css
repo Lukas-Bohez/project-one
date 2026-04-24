@@ -149,6 +149,7 @@ html {
 
 .c-portfolio-tabs {
     display: flex;
+    justify-content: center;
     align-items: center;
     gap: 0.5rem;
     overflow-x: auto;
@@ -162,6 +163,7 @@ html {
     box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+    width: 100%;
     max-width: 850px;
 }
 

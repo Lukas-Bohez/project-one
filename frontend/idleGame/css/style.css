@@ -258,14 +258,22 @@ body {
     color: #ff9800;
 }
 
+.game-notification.achievement {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.98), rgba(217, 119, 6, 0.95));
+    color: #fff8e1;
+    border-color: rgba(255, 245, 214, 0.35);
+    box-shadow: 0 12px 34px rgba(217, 119, 6, 0.35), 0 0 18px rgba(245, 158, 11, 0.2);
+    animation: slideIn 0.3s ease-out, milestonePop 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
 /* Game Container */
 #game-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 24px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 36px;
     justify-content: flex-start;
 }
 
@@ -283,6 +291,258 @@ body {
 
 .game-header:hover {
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.campaign-panel {
+    --campaign-bg: linear-gradient(135deg, rgba(7, 12, 25, 0.94), rgba(16, 23, 40, 0.9));
+    --campaign-surface: rgba(15, 23, 42, 0.58);
+    --campaign-surface-strong: rgba(15, 23, 42, 0.72);
+    --campaign-text: #f8fafc;
+    --campaign-text-muted: rgba(226, 232, 240, 0.85);
+    --campaign-text-soft: rgba(148, 163, 184, 0.95);
+    --campaign-accent: #93c5fd;
+    --campaign-accent-strong: #60a5fa;
+    --campaign-border: rgba(96, 165, 250, 0.18);
+    --campaign-chip-bg: rgba(15, 23, 42, 0.55);
+    --campaign-chip-border: rgba(148, 163, 184, 0.22);
+    --campaign-chip-accent-bg: rgba(59, 130, 246, 0.16);
+    --campaign-state-bg: rgba(148, 163, 184, 0.14);
+    --campaign-state-text: #cbd5e1;
+    --campaign-objective-bg: rgba(15, 23, 42, 0.5);
+    --campaign-objective-border: rgba(148, 163, 184, 0.14);
+    --campaign-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+    position: relative;
+    overflow: hidden;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 26px 28px;
+    border-radius: 24px;
+    border: 1px solid var(--campaign-border);
+    background:
+        radial-gradient(circle at top left, rgba(100, 255, 218, 0.12), transparent 34%),
+        radial-gradient(circle at top right, rgba(96, 165, 250, 0.15), transparent 28%),
+        var(--campaign-bg);
+    color: var(--campaign-text);
+    box-shadow: var(--campaign-shadow);
+}
+
+.campaign-panel[data-campaign-tone="light"] {
+    --campaign-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(236, 245, 255, 0.96));
+    --campaign-surface: rgba(255, 255, 255, 0.88);
+    --campaign-surface-strong: rgba(255, 255, 255, 0.94);
+    --campaign-text: #0f172a;
+    --campaign-text-muted: rgba(15, 23, 42, 0.82);
+    --campaign-text-soft: rgba(51, 65, 85, 0.82);
+    --campaign-accent: #0369a1;
+    --campaign-accent-strong: #0284c7;
+    --campaign-border: rgba(14, 165, 233, 0.22);
+    --campaign-chip-bg: rgba(255, 255, 255, 0.88);
+    --campaign-chip-border: rgba(14, 165, 233, 0.18);
+    --campaign-chip-accent-bg: rgba(14, 165, 233, 0.14);
+    --campaign-state-bg: rgba(14, 165, 233, 0.12);
+    --campaign-state-text: #075985;
+    --campaign-objective-bg: rgba(255, 255, 255, 0.86);
+    --campaign-objective-border: rgba(14, 165, 233, 0.14);
+    --campaign-shadow: 0 18px 48px rgba(15, 23, 42, 0.12);
+    background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.92), transparent 34%),
+        radial-gradient(circle at top right, rgba(14, 165, 233, 0.16), transparent 30%),
+        var(--campaign-bg);
+}
+
+.campaign-panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), transparent 45%);
+}
+
+.campaign-panel[data-campaign-tone="light"]::after {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.28), transparent 45%);
+}
+
+.campaign-panel__eyebrow {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 10px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--campaign-text-soft);
+}
+
+.campaign-panel__layout {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
+    gap: 22px;
+    align-items: start;
+}
+
+.campaign-panel__summary,
+.campaign-panel__meter,
+.campaign-objective {
+    min-width: 0;
+}
+
+.campaign-panel__summary h2 {
+    margin: 0;
+    font-size: clamp(1.4rem, 2.6vw, 2.1rem);
+    line-height: 1.1;
+    color: var(--campaign-text);
+}
+
+.campaign-panel__summary p {
+    margin: 12px 0 0;
+    max-width: 68ch;
+    color: var(--campaign-text-muted);
+    line-height: 1.65;
+}
+
+.campaign-panel__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.campaign-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 0.55rem 0.95rem;
+    border-radius: 999px;
+    border: 1px solid var(--campaign-chip-border);
+    background: var(--campaign-chip-bg);
+    color: var(--campaign-text);
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.campaign-chip--accent {
+    border-color: var(--campaign-accent-strong);
+    background: var(--campaign-chip-accent-bg);
+    color: var(--campaign-accent);
+}
+
+.campaign-panel__meter {
+    padding: 18px;
+    border-radius: 18px;
+    border: 1px solid var(--campaign-border);
+    background: var(--campaign-surface);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.campaign-panel__meter-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+    color: var(--campaign-text);
+    font-weight: 700;
+}
+
+.campaign-panel__meter-head span:last-child {
+    color: var(--campaign-accent);
+}
+
+.campaign-panel__meter p {
+    margin: 10px 0 0;
+    color: var(--campaign-text-muted);
+    line-height: 1.55;
+    font-size: 0.95rem;
+}
+
+.campaign-panel__objectives {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 20px;
+}
+
+.campaign-objective {
+    padding: 16px 18px;
+    border-radius: 16px;
+    border: 1px solid var(--campaign-objective-border);
+    background: var(--campaign-objective-bg);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.campaign-objective.is-current {
+    border-color: var(--campaign-accent-strong);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.18);
+    transform: translateY(-1px);
+}
+
+.campaign-objective.is-complete {
+    border-color: rgba(34, 197, 94, 0.35);
+    background: var(--campaign-objective-bg);
+    opacity: 0.92;
+}
+
+.campaign-objective__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.campaign-objective__title {
+    font-size: 0.98rem;
+    font-weight: 800;
+    color: var(--campaign-text);
+}
+
+.campaign-objective__state {
+    flex-shrink: 0;
+    padding: 0.24rem 0.5rem;
+    border-radius: 999px;
+    background: var(--campaign-state-bg);
+    color: var(--campaign-state-text);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.campaign-objective.is-current .campaign-objective__state {
+    background: rgba(59, 130, 246, 0.2);
+    color: var(--campaign-accent);
+}
+
+.campaign-objective.is-complete .campaign-objective__state {
+    background: rgba(34, 197, 94, 0.18);
+    color: #bbf7d0;
+}
+
+.campaign-objective__detail {
+    margin: 0;
+    color: var(--campaign-text-muted);
+    line-height: 1.55;
+    font-size: 0.92rem;
+}
+
+.campaign-objective__meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 10px;
+    color: var(--campaign-text-soft);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.campaign-objective__meta span:last-child {
+    text-align: right;
 }
 
 .game-header h1 {
@@ -1482,6 +1742,78 @@ body {
 
 /* Additional mobile fixes for cards and panels */
 @media (max-width: 768px) {
+    #game-container {
+        padding: 12px;
+        gap: 14px;
+    }
+
+    .game-header {
+        padding: 16px;
+        border-radius: 14px;
+    }
+
+    .game-header h1 {
+        font-size: clamp(1.7rem, 7vw, 2.15rem);
+    }
+
+    .resource-display {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        width: 100%;
+    }
+
+    .resource-item {
+        min-width: 0;
+        width: 100%;
+        padding: 8px 10px;
+    }
+
+    .campaign-panel {
+        padding: 16px;
+        border-radius: 18px;
+    }
+
+    .campaign-panel__layout {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .campaign-panel__summary p {
+        font-size: 0.95rem;
+    }
+
+    .campaign-panel__chips {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 8px;
+    }
+
+    .campaign-chip {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+        min-height: 40px;
+    }
+
+    .campaign-panel__meter {
+        padding: 14px;
+    }
+
+    .campaign-panel__meter-head {
+        font-size: 0.92rem;
+    }
+
+    .campaign-panel__objectives {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .campaign-objective__header,
+    .campaign-objective__meta {
+        flex-wrap: wrap;
+    }
+
     /* Ensure all panels fit within viewport */
     .panel {
         max-width: 100%;
@@ -1493,6 +1825,7 @@ body {
     .panel-grid {
         grid-template-columns: 1fr !important;
         max-width: 100%;
+        padding: 0;
     }
     
     /* Fix action buttons grid */
@@ -1533,21 +1866,25 @@ body {
         min-height: 44px;
     }
     
-    /* Fix tab buttons - better touch targets */
+    /* Stack the tab buttons vertically on mobile */
     .tab-navigation {
-        padding: 10px 12px;
-        margin: 0 10px;
-        min-height: 55px;
-        flex-wrap: wrap;
-        gap: 6px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 12px;
+        margin: 0;
+        min-height: 0;
+        overflow: visible;
     }
     
     .tab-btn {
-        flex: 1 1 auto;
-        min-width: 90px;
-        font-size: 0.85rem;
-        padding: 10px 8px;
-        min-height: 44px;
+        width: 100%;
+        min-width: 0;
+        justify-content: flex-start;
+        text-align: left;
+        font-size: 0.9rem;
+        padding: 12px 16px;
+        min-height: 48px;
     }
     
     /* Better spacing for resource rows */
@@ -1566,11 +1903,11 @@ body {
 @media (max-width: 480px) {
     /* Ultra-compact mode for very small screens */
     #game-container {
-        padding: 3px;
+        padding: 8px;
     }
     
     .game-header {
-        padding: 8px;
+        padding: 12px;
     }
     
     .game-header h1 {
@@ -1578,8 +1915,8 @@ body {
     }
     
     .resource-item {
-        min-width: 120px;
-        padding: 6px;
+        min-width: 0;
+        padding: 7px 8px;
         font-size: 0.85rem;
     }
     
@@ -1588,7 +1925,7 @@ body {
     }
     
     .panel {
-        padding: 8px;
+        padding: 12px;
     }
     
     .panel h2 {
@@ -1611,28 +1948,57 @@ body {
     
     /* Stack resource items vertically on tiny screens */
     .resource-display {
-        flex-direction: column;
+        grid-template-columns: 1fr;
     }
     
     .resource-item {
-        flex: 1 1 100%;
+        width: 100%;
         max-width: 100%;
     }
     
-    /* Make tabs stack in two rows */
+    /* Keep the tab strip stacked and touch-friendly */
     .tab-navigation {
-        padding: 6px 8px;
-        min-height: 45px;
-        flex-wrap: wrap;
-        gap: 3px;
+        gap: 8px;
+        padding: 10px;
     }
     
     .tab-btn {
-        flex: 1 1 calc(50% - 4px);
+        width: 100%;
         min-width: 0;
-        font-size: 0.75rem;
-        padding: 8px 4px;
-        min-height: 35px;
+        justify-content: flex-start;
+        text-align: left;
+        font-size: 0.82rem;
+        padding: 10px 14px;
+        min-height: 44px;
+    }
+
+    .campaign-panel {
+        padding: 14px;
+    }
+
+    .campaign-panel__summary h2 {
+        font-size: 1.35rem;
+    }
+
+    .campaign-panel__summary p,
+    .campaign-panel__meter p {
+        font-size: 0.88rem;
+    }
+
+    .campaign-panel__chips {
+        grid-template-columns: 1fr;
+    }
+
+    .campaign-panel__meter-head {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .campaign-objective__meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
     }
     
     /* Reduce resource grid spacing */

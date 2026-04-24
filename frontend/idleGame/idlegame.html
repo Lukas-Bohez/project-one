@@ -2,14 +2,6 @@
 <html lang="en">
 <head>
         <meta charset="UTF-8">
-        <!-- Google Analytics (GA4) -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-SSEBSTQM21"></script>
-        <script>
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-SSEBSTQM21');
-        </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <title>Industrial Empire - Dark Narrative Idle Game by Lukas Bohez</title>
@@ -19,9 +11,7 @@
     <meta name="owner" content="Lukas Bohez">
     <meta name="copyright" content="© 2026 Lukas Bohez. All rights reserved.">
     
-    <link rel="stylesheet" href="css/style.css?v=2">
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449"
-     crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="css/style.min.css?v=4">
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" href="/favicon.ico">
@@ -71,6 +61,37 @@
                 </div>
             </div>
         </header>
+
+        <section id="campaign-panel" class="campaign-panel" aria-labelledby="campaign-title">
+            <div class="campaign-panel__eyebrow">Campaign Brief</div>
+            <div class="campaign-panel__layout">
+                <div class="campaign-panel__summary">
+                    <h2 id="campaign-title">Build a run that can survive its own success</h2>
+                    <p id="campaign-description">
+                        Start with raw commits, unlock the full production chain, automate the city,
+                        and then choose when to let the empire decay into a stronger rebirth.
+                    </p>
+                    <div id="campaign-chips" class="campaign-panel__chips">
+                        <span id="campaign-theme-chip" class="campaign-chip">Tech Empire · Chapter 1</span>
+                        <span id="campaign-next-chip" class="campaign-chip campaign-chip--accent">Next: Unlock Cloud Servers</span>
+                        <span id="campaign-legacy-chip" class="campaign-chip">Legacy Score: 0</span>
+                    </div>
+                </div>
+                <div class="campaign-panel__meter">
+                    <div class="campaign-panel__meter-head">
+                        <span id="campaign-progress-label">Foundation progress</span>
+                        <span id="campaign-progress-value">0%</span>
+                    </div>
+                    <div class="progress progress-blue">
+                        <div id="campaign-progress-bar" class="progress-bar" style="width: 0%"></div>
+                    </div>
+                    <p id="campaign-progress-note">
+                        The first goal is to turn manual clicks into a stable chain.
+                    </p>
+                </div>
+            </div>
+            <div id="campaign-objectives" class="campaign-panel__objectives" aria-live="polite"></div>
+        </section>
 
         <!-- Tab Navigation -->
         <nav class="tab-navigation">
@@ -1068,14 +1089,31 @@
     </div>
 
     <!-- JavaScript Modules -->
-    <!-- js-dos library for DOS games -->
-    <script src="https://js-dos.com/6.22/current/js-dos.js"></script>
-    
     <!-- Arcade Functions -->
     <script>
         let currentDosbox = null;
+          let jsDosLoadPromise = null;
         
-        function openDosGame(gameId) {
+          function loadJsDosLibrary() {
+              if (window.Dos) {
+                  return Promise.resolve();
+              }
+
+              if (!jsDosLoadPromise) {
+                  jsDosLoadPromise = new Promise((resolve, reject) => {
+                      const script = document.createElement('script');
+                      script.src = 'https://js-dos.com/6.22/current/js-dos.js';
+                      script.async = true;
+                      script.onload = () => resolve();
+                      script.onerror = () => reject(new Error('Failed to load js-dos'));
+                      document.head.appendChild(script);
+                  });
+              }
+
+              return jsDosLoadPromise;
+          }
+
+          async function openDosGame(gameId) {
             if (!window.app || !window.app.gameEngine || !window.app.gameEngine.arcadeManager) {
                 alert('Arcade system not initialized');
                 return;
@@ -1088,6 +1126,14 @@
                 alert('Game not found');
                 return;
             }
+
+              try {
+                  await loadJsDosLibrary();
+              } catch (error) {
+                  console.error('Failed to load js-dos library:', error);
+                  alert('The arcade library could not be loaded. Please try again later.');
+                  return;
+              }
             
             // Start tracking play time
             arcadeManager.startGame(gameId);
@@ -1284,16 +1330,16 @@
         }
     </script>
     
-    <script src="js/game/NewResourceManager.js?v=2"></script>
-    <script src="js/game/RebirthThemes.js?v=2"></script>
-    <script src="js/game/RebirthRewards.js?v=2"></script>
-    <script src="js/game/ArcadeManager.js?v=2"></script>
-    <script src="js/save/SaveManager.js?v=2"></script>
-    <script src="js/ui/UIManager.js?v=2"></script>
-    <script src="js/ui/UIThemeManager.js?v=2"></script>
-    <script src="js/game/GameEngine.js?v=2"></script>
-    <script src="js/devMenu.js?v=2"></script>
-    <script src="js/app.js?v=2"></script>
+    <script src="js/game/NewResourceManager.min.js?v=3"></script>
+    <script src="js/game/RebirthThemes.min.js?v=3"></script>
+    <script src="js/game/RebirthRewards.min.js?v=3"></script>
+    <script src="js/game/ArcadeManager.min.js?v=3"></script>
+    <script src="js/save/SaveManager.min.js?v=3"></script>
+    <script src="js/ui/UIManager.min.js?v=3"></script>
+    <script src="js/ui/UIThemeManager.min.js?v=3"></script>
+    <script src="js/game/GameEngine.min.js?v=3"></script>
+    <script src="js/devMenu.min.js?v=3"></script>
+    <script src="js/app.min.js?v=3"></script>
 </body>
 </html>
 ```
