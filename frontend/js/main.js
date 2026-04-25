@@ -575,3 +575,100 @@ document.addEventListener('DOMContentLoaded', () => {
     initPortfolioTabs();
   }
 })();
+
+/* ============================================================
+   SECTION NAV + PORTFOLIO SUB-TABS
+   (consolidated — replaces any previous split implementation)
+   ============================================================ */
+(function () {
+  'use strict';
+
+  // ── 1. Portfolio sub-tab switcher ──────────────────────────────────
+  function initPortfolioTabs() {
+    var tabBtns   = document.querySelectorAll('.c-portfolio-tab-btn[data-tab]');
+    var tabPanels = document.querySelectorAll('.c-portfolio-tab-panel[data-tab-content]');
+
+    if (!tabBtns.length) return;
+
+    tabBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var target = btn.getAttribute('data-tab');
+
+        tabBtns.forEach(function (b) { b.classList.remove('active'); });
+        tabPanels.forEach(function (p) {
+          p.classList.remove('active');
+          p.style.display = 'none';
+        });
+
+        btn.classList.add('active');
+        var panel = document.querySelector(
+          '.c-portfolio-tab-panel[data-tab-content="' + target + '"]'
+        );
+        if (panel) {
+          panel.classList.add('active');
+          panel.style.display = 'block';
+        }
+      });
+    });
+
+    // Ensure initial state is correct (show active panel, hide rest)
+    var anyActive = false;
+    tabBtns.forEach(function (btn) {
+      if (btn.classList.contains('active')) anyActive = true;
+    });
+    if (!anyActive && tabBtns.length) {
+      tabBtns[0].classList.add('active');
+    }
+    tabPanels.forEach(function (p) {
+      var tab      = p.getAttribute('data-tab-content');
+      var isActive = document.querySelector(
+        '.c-portfolio-tab-btn[data-tab="' + tab + '"].active'
+      );
+      if (isActive) {
+        p.classList.add('active');
+        p.style.display = 'block';
+      } else {
+        p.classList.remove('active');
+        p.style.display = 'none';
+      }
+    });
+  }
+
+  // ── 2. Top-level section switcher ─────────────────────────────────
+  function showSection(name) {
+    var sections = document.querySelectorAll('.section');
+    var navBtns  = document.querySelectorAll('.c-nav-btn[data-section]');
+
+    sections.forEach(function (s) { s.classList.remove('active'); });
+    navBtns.forEach(function (b)  { b.classList.remove('active'); });
+
+    var target = document.getElementById(name + '-section');
+    if (target) target.classList.add('active');
+
+    var btn = document.querySelector('.c-nav-btn[data-section="' + name + '"]');
+    if (btn) btn.classList.add('active');
+
+    // Re-sync portfolio tabs whenever portfolio becomes visible
+    if (name === 'portfolio') initPortfolioTabs();
+  }
+
+  // ── 3. Wire up top-nav buttons ────────────────────────────────────
+  var navBtns = document.querySelectorAll('.c-nav-btn[data-section]');
+  navBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      showSection(btn.getAttribute('data-section'));
+    });
+  });
+
+  // ── 4. Boot ───────────────────────────────────────────────────────
+  initPortfolioTabs();
+
+  // Show whichever section the active nav button points to
+  var activeNav = document.querySelector('.c-nav-btn[data-section].active');
+  if (activeNav) {
+    showSection(activeNav.getAttribute('data-section'));
+  } else {
+    showSection('portfolio');
+  }
+
+})();
