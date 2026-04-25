@@ -3223,6 +3223,28 @@ class GameEngine {
         const savedAchievements = { ...this.state.achievements }; // Preserve achievements across rebirth
         const savedEventsTriggered = this.state.events?.eventsTriggered || 0; // Preserve event count
         
+        // FIX #1: Preserve research across rebirth (prevents re-research requirement)
+        const savedResearch = { ...this.state.research };
+        
+        // FIX #2: Preserve all unlocks (prevents re-unlocking requirement)
+        const savedUnlocks = {
+            unlock_stone: this.state.unlock_stone,
+            unlock_coal: this.state.unlock_coal,
+            unlock_iron: this.state.unlock_iron,
+            unlock_silver: this.state.unlock_silver,
+            unlock_gold: this.state.unlock_gold,
+            unlock_oil: this.state.unlock_oil,
+            unlock_rubber: this.state.unlock_rubber,
+            unlock_processing: this.state.unlock_processing,
+            unlock_electronics: this.state.unlock_electronics,
+            unlock_jewelry: this.state.unlock_jewelry,
+            unlock_automotive: this.state.unlock_automotive,
+            unlock_autocraft_basic: this.state.unlock_autocraft_basic,
+            unlock_autocraft_intermediate: this.state.unlock_autocraft_intermediate,
+            unlock_autocraft_advanced: this.state.unlock_autocraft_advanced,
+            unlock_autocraft_premium: this.state.unlock_autocraft_premium
+        };
+        
         console.log(`🔄 REBIRTH: Starting rebirth #${newRebirthCount}, preserving upgrades:`, savedRebirthUpgrades);
         
         // Hide any active event banner before reset
@@ -3237,6 +3259,35 @@ class GameEngine {
         this.state.rebirthUpgrades = savedRebirthUpgrades; // Restore rebirth upgrades!
         this.state.achievements = savedAchievements; // Restore achievements!
         this.state.events.eventsTriggered = savedEventsTriggered; // Restore event count!
+        
+        // FIX #1: Restore research (player progression preserved)
+        this.state.research = savedResearch;
+        console.log('🔬 Research preserved across rebirth');
+        
+        // FIX #2: Restore all unlocks (prevents progression blocker)
+        this.state.unlock_stone = savedUnlocks.unlock_stone;
+        this.state.unlock_coal = savedUnlocks.unlock_coal;
+        this.state.unlock_iron = savedUnlocks.unlock_iron;
+        this.state.unlock_silver = savedUnlocks.unlock_silver;
+        this.state.unlock_gold = savedUnlocks.unlock_gold;
+        this.state.unlock_oil = savedUnlocks.unlock_oil;
+        this.state.unlock_rubber = savedUnlocks.unlock_rubber;
+        this.state.unlock_processing = savedUnlocks.unlock_processing;
+        this.state.unlock_electronics = savedUnlocks.unlock_electronics;
+        this.state.unlock_jewelry = savedUnlocks.unlock_jewelry;
+        this.state.unlock_automotive = savedUnlocks.unlock_automotive;
+        this.state.unlock_autocraft_basic = savedUnlocks.unlock_autocraft_basic;
+        this.state.unlock_autocraft_intermediate = savedUnlocks.unlock_autocraft_intermediate;
+        this.state.unlock_autocraft_advanced = savedUnlocks.unlock_autocraft_advanced;
+        this.state.unlock_autocraft_premium = savedUnlocks.unlock_autocraft_premium;
+        console.log('🔓 Unlocks preserved across rebirth');
+        
+        // FIX #3: Clean arcade active state (prevents bonus stacking bugs)
+        if (this.state.arcade) {
+            this.state.arcade.activeGame = null;
+            this.state.arcade.gameStartTime = null;
+            console.log('🎮 Arcade: Cleared active game state');
+        }
         
         console.log(`🔄 REBIRTH: After reset, rebirth count is ${this.state.city.rebirths}`);
         
@@ -3297,6 +3348,9 @@ class GameEngine {
             }, 150);
         }
         
+        // Update UI to reflect preserved state (research, unlocks, etc.)
+        this.updateUI();
+        
         this.playSound('prestige');
         this.showNotification(`🔄 Rebirth #${newRebirthCount} - A new chapter begins...`);
         this.triggerScreenShake();
@@ -3310,7 +3364,7 @@ class GameEngine {
             this.spawnConfetti(header, 20);
         }
         
-        console.log(`City rebirth completed! Total rebirths: ${newRebirthCount}`);
+        console.log(`✅ City rebirth completed! Total rebirths: ${newRebirthCount} - Research, Unlocks, and Arcade state preserved`);
         
         // 🔓 REBIRTH UNLOCK: Release lock and force save the new state
         if (this.saveManager) {

@@ -424,22 +424,62 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // Clear articles cache
-  function clearArticlesCache() {
+  // Clear entire site cache (localStorage, Service Worker, Image cache, Cache API)
+  async function clearArticlesCache() {
     try {
-      const keysToRemove = [];
+      let totalCleared = 0;
+      const clearSummary = [];
+
+      // 1. Clear ALL localStorage
+      const allKeys = [];
       for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('contentPlus_articles_')) {
-          keysToRemove.push(key);
+        allKeys.push(localStorage.key(i));
+      }
+      localStorage.clear();
+      totalCleared += allKeys.length;
+      clearSummary.push(`localStorage (${allKeys.length} entries)`);
+      console.log(`Cleared ${allKeys.length} localStorage entries`);
+
+      // 2. Clear image cache via cacheManager
+      if (window.cacheManager && typeof window.cacheManager.clearImageCache === 'function') {
+        try {
+          await window.cacheManager.clearImageCache();
+          clearSummary.push('image cache');
+          console.log('Cleared image cache via cacheManager');
+        } catch (imgErr) {
+          console.warn('Error clearing image cache:', imgErr);
         }
       }
-      keysToRemove.forEach(key => localStorage.removeItem(key));
-      console.log(`Cleared ${keysToRemove.length} articles cache entries`);
-      alert(`Cleared ${keysToRemove.length} articles cache entries. Refresh the page to reload fresh data.`);
+
+      // 3. Clear Service Worker cache
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'CLEAR_ALL_CACHES'
+        });
+        clearSummary.push('Service Worker cache');
+        console.log('Sent cache clear request to Service Worker');
+      }
+
+      // 4. Clear Cache API caches
+      if ('caches' in window) {
+        try {
+          const cacheNames = await caches.keys();
+          await Promise.all(cacheNames.map(name => caches.delete(name)));
+          totalCleared += cacheNames.length;
+          clearSummary.push(`Cache API (${cacheNames.length} caches)`);
+          console.log(`Cleared ${cacheNames.length} Cache API caches:`, cacheNames);
+        } catch (cacheErr) {
+          console.warn('Error clearing Cache API caches:', cacheErr);
+        }
+      }
+
+      const summary = clearSummary.join(', ');
+      const message = `Cleared site cache: ${summary}. Refresh the page to reload fresh data.`;
+      console.log(message);
+      alert(message);
     } catch (e) {
-      console.error('Error clearing articles cache:', e);
-      alert('Error clearing articles cache. Check console for details.');
+      console.error('Error clearing site cache:', e);
+      alert('Error clearing site cache. Check console for details.');
     }
   }
 

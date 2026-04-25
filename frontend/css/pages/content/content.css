@@ -622,7 +622,7 @@ body {
         color: white !important;
     }
     
-    .c-btn {
+    #theme-toggle {
         position: absolute;
         top: 0.5rem;
         right: 1rem;
