@@ -530,65 +530,32 @@
       </nav>
 
       <!-- Portfolio Section -->
-      <div id="portfolio-section" class="section active">
-        <div class="c-portfolio-tabs" role="tablist" aria-label="Portfolio subsections">
-          <button type="button" class="c-nav-btn c-portfolio-tab-btn active" data-tab="overview">
-            Overview
-          </button>
-          <button type="button" class="c-nav-btn c-portfolio-tab-btn" data-tab="convert">
-            Convert
+      <!-- FIND this entire .c-portfolio-tabs div and replace with: -->
+      <div class="c-portfolio-tabs" role="tablist" aria-label="Portfolio subsections">
+          <button type="button" class="c-nav-btn c-portfolio-tab-btn active " data-tab="convert">
+            <i class="fa-solid fa-download"></i> Convert
           </button>
           <button type="button" class="c-nav-btn c-portfolio-tab-btn" data-tab="releases">
-            Releases
+            <i class="fa-solid fa-flag"></i> Releases
           </button>
           <button type="button" class="c-nav-btn c-portfolio-tab-btn" data-tab="bitplayer">
-            BitPlayer
+            <i class="fa-solid fa-play"></i> BitPlayer
           </button>
           <button type="button" class="c-nav-btn c-portfolio-tab-btn" data-tab="lofi">
-            Lofi
+            <i class="fa-solid fa-headphones"></i> Lofi
           </button>
           <button type="button" class="c-nav-btn c-portfolio-tab-btn" data-tab="demo">
-            Demo
+            <i class="fa-solid fa-film"></i> Demo
           </button>
         </div>
 
-        <div class="c-portfolio-tab-panel active" data-tab-content="overview">
         <!-- =============================================
              HERO: Convert The Spire Reborn  (#1 promo)
              ============================================= -->
-        <div class="c-portfolio-panel">
-          <h2 class="c-section-title">SpireAI - Live Multiplayer Quizzes</h2>
-          <p class="c-section-lead">
-            Create and play real-time multiplayer quizzes. Teachers build quizzes instantly from
-            text. Students compete on live leaderboards. Community themes enable collaborative quiz
-            creation.
-          </p>
-          <div class="c-portfolio-panel__actions">
-            <a href="/pages/spire-ai/" class="c-btn c-btn--portfolio">
-              <i class="fas fa-bolt"></i>&nbsp; Launch SpireAI
-            </a>
-            <a href="/LukasBohez/" class="c-btn c-btn--outline">
-              <i class="fa-solid fa-briefcase"></i>&nbsp; Portfolio
-            </a>
-          </div>
-        </div>
+</div>
+</div>
 
-        <div class="ad-unit-wrapper ad-slot-horizontal" aria-label="Sponsored content">
-          <p class="ad-label">Sponsored</p>
-          <ins
-            class="adsbygoogle js-adsbygoogle"
-            style="display: block"
-            data-ad-client="ca-pub-8418485814964449"
-            data-ad-slot="6531017850"
-            data-ad-format="auto"
-            data-full-width-responsive="true"
-          ></ins>
-        </div>
-
-        <div class="section-divider" role="separator" aria-hidden="true"><span></span></div>
-  </div>
-
-  <div class="c-portfolio-tab-panel" data-tab-content="convert" style="display: none;">
+  <div class="c-portfolio-tab-panel active" data-tab-content="convert" class="u-inline-2-div-class-active-c-portfolio">
 
         <section class="c-product-card c-product-card--hero" aria-label="Convert The Spire Reborn">
           <div class="c-product-card__badge-row">
@@ -823,7 +790,7 @@
         </section>
         </div>
 
-        <div class="c-portfolio-tab-panel" data-tab-content="releases" style="display: none;">
+        <div class="c-portfolio-tab-panel" data-tab-content="releases">
 
         <section class="c-product-card c-product-card--hero" aria-label="v10.2.3 release notes">
           <div class="c-product-card__badge-row">
@@ -935,7 +902,7 @@
         </section>
         </div>
 
-        <div class="c-portfolio-tab-panel" data-tab-content="bitplayer" style="display: none;">
+        <div class="c-portfolio-tab-panel" data-tab-content="bitplayer">
 
         <section
           class="c-product-card c-product-card--hero c-vault-release"
@@ -1027,7 +994,7 @@
         </section>
         </div>
 
-        <div class="c-portfolio-tab-panel" data-tab-content="lofi" style="display: none;">
+        <div class="c-portfolio-tab-panel" data-tab-content="lofi">
 
         <section
           class="c-product-card c-product-card--hero c-product-card--lofi"
@@ -1081,7 +1048,26 @@
         </section>
         </div>
 
-        <div class="c-portfolio-tab-panel" data-tab-content="demo" style="display: none;">
+        <div class="c-portfolio-tab-panel" data-tab-content="demo">
+        <div class="c-portfolio-panel">
+          <h2 class="c-section-title">SpireAI - Live Multiplayer Quizzes</h2>
+          <p class="c-section-lead">
+            Create and play real-time multiplayer quizzes. Teachers build quizzes instantly from
+            text. Students compete on live leaderboards. Community themes enable collaborative quiz
+            creation.
+          </p>
+          <div class="c-portfolio-panel__actions">
+            <a href="/pages/spire-ai/" class="c-btn c-btn--portfolio">
+              <i class="fas fa-bolt"></i>&nbsp; Launch SpireAI
+            </a>
+            <a href="/LukasBohez/" class="c-btn c-btn--outline">
+              <i class="fa-solid fa-briefcase"></i>&nbsp; Portfolio
+            </a>
+          </div>
+        </div>
+
+</div>
+
 
         <!-- explanatory video -->
         <div class="c-video-wrapper" aria-label="Demo video">
@@ -1163,8 +1149,7 @@
         <div class="ad-unit-wrapper ad-slot-square" aria-label="Sponsored content">
           <p class="ad-label">Sponsored</p>
           <ins
-            class="adsbygoogle js-adsbygoogle"
-            style="display: block"
+            class="u-inline-7-ins-class-adsbygoogle-js-adsb adsbygoogle js-adsbygoogle"
             data-ad-client="ca-pub-8418485814964449"
             data-ad-slot="7822007431"
             data-ad-format="auto"
@@ -1340,8 +1325,7 @@
         <div class="ad-unit-wrapper ad-slot-article" aria-label="Sponsored article placement">
           <p class="ad-label">Sponsored</p>
           <ins
-            class="adsbygoogle js-adsbygoogle"
-            style="display: block; text-align: center"
+            class="u-inline-8-ins-class-adsbygoogle-js-adsb adsbygoogle js-adsbygoogle"
             data-ad-layout="in-article"
             data-ad-format="fluid"
             data-ad-client="ca-pub-8418485814964449"
@@ -1418,8 +1402,7 @@
         <div class="ad-unit-wrapper ad-slot-horizontal" aria-label="Sponsored content">
           <p class="ad-label">Sponsored</p>
           <ins
-            class="adsbygoogle js-adsbygoogle"
-            style="display: block"
+            class="u-inline-9-ins-class-adsbygoogle-js-adsb adsbygoogle js-adsbygoogle"
             data-ad-client="ca-pub-8418485814964449"
             data-ad-slot="6531017850"
             data-ad-format="auto"

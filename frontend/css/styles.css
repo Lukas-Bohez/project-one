@@ -3,6 +3,7 @@
 /*---------------------------------------*/
 
 /* Skip-to-content link for keyboard / screen-reader users */
+
 .c-skip-link {
     position: absolute;
     top: -100%;
@@ -17,6 +18,7 @@
     text-decoration: none;
     transition: top 0.2s ease;
 }
+
 .c-skip-link:focus {
     top: 0;
 }
@@ -27,6 +29,7 @@
 }
 
 /* Responsive video embed wrapper */
+
 .c-video-wrapper {
     position: relative;
     width: 100%;
@@ -34,6 +37,7 @@
     margin: 2rem auto;
     aspect-ratio: 16 / 9;
 }
+
 .c-video-wrapper iframe {
     position: absolute;
     top: 0;
@@ -44,6 +48,7 @@
 }
 
 /* disabled button state (linux unsupported) */
+
 .c-btn.disabled,
 .c-btn[disabled] {
     opacity: 0.6;
@@ -51,11 +56,12 @@
     pointer-events: none;
 }
 
-
-
 /* Prevent horizontal overflow on mobile */
+
 * {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 html, body {
@@ -147,75 +153,15 @@ html {
     color: var(--primary-color);
 }
 
-.c-portfolio-tabs {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    flex-wrap: nowrap;
-    gap: 0.5rem;
-    margin: 1.75rem 0 1.5rem;
-    padding: 0.5rem 0.75rem;
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 999px;
-    border: 1px solid rgba(44, 76, 124, 0.1);
-    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    margin-left: auto;
-    margin-right: auto;
-    overflow-x: auto;
-    overflow-y: visible;
-    white-space: nowrap;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-}
-
-.c-portfolio-tabs::-webkit-scrollbar {
-    display: none;
-}
-
-[data-theme="dark"] .c-portfolio-tabs,
-.theme-dark .c-portfolio-tabs {
-    background: rgba(15, 17, 18, 0.94);
-    border-color: rgba(96, 165, 250, 0.12);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-}
-
-.c-portfolio-tabs .c-nav-btn {
-    flex: 0 0 auto;
-    white-space: nowrap;
-    border: 1px solid rgba(44, 76, 124, 0.22);
-}
-
-[data-theme="dark"] .c-portfolio-tabs .c-nav-btn,
-.theme-dark .c-portfolio-tabs .c-nav-btn {
-    border-color: rgba(147, 197, 253, 0.35);
-}
-
 @media (max-width: 640px) {
-    .c-portfolio-tabs {
-        width: 100%;
-        max-width: 100%;
-        justify-content: flex-start;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        white-space: nowrap;
-    }
+    
 }
 
-.c-portfolio-tab-panel {
-    display: none;
-}
-
-.c-portfolio-tab-panel.active {
-    display: block;
-}
 
 #campaign-panel,
-.campaign-panel { margin-top: 2rem; margin-bottom: 2rem; padding: 1.5rem; }
+.campaign-panel {
+    margin-top: 2rem; margin-bottom: 2rem; padding: 1.5rem;
+}
 
 .campaign-panel__eyebrow {
     margin-bottom: 0.5rem;
@@ -309,6 +255,7 @@ html {
 }
 
 /* Dark theme - activated by data-theme attribute on html element */
+
 html[data-theme="dark"],
 [data-theme="dark"],
 .theme-dark {
@@ -354,19 +301,14 @@ html[data-theme="dark"],
     --info-color: #4fc3f7;
 }
 
-
 /*---------------------------------------/*
  # GENERIC
 /*---------------------------------------*/
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
 
 /*---------------------------------------/*
  # ELEMENTS
 /*---------------------------------------*/
+
 body {
     font-family: var(--font-body);
     background-color: var(--bg-primary);
@@ -380,6 +322,7 @@ body {
 }
 
 /* Spire Background - Sharp spire imagery that adapts to theme, stays fixed in viewport */
+
 .spire-background {
     position: fixed;
     top: 0;
@@ -509,6 +452,14 @@ body {
 
 .ad-unit-wrapper {
     transition: opacity 0.28s ease, transform 0.28s ease, max-height 0.28s ease, margin 0.28s ease, padding 0.28s ease, border-color 0.28s ease;
+    width: 100%;
+    max-width: 100%;
+    margin: 1.25rem auto;
+    padding: 0.65rem 0.75rem;
+    border: 1px dashed color-mix(in srgb, var(--border-color) 80%, transparent);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--bg-tertiary) 90%, transparent);
+    overflow: hidden;
 }
 
 .ad-unit-wrapper--collapsed {
@@ -630,6 +581,7 @@ body {
 }
 
 /* Light mode: show light spire - MUCH MORE VISIBLE */
+
 [data-theme="light"] .spire-bg-light,
 .theme-light .spire-bg-light,
 body:not([data-theme]) .spire-bg-light {
@@ -638,6 +590,7 @@ body:not([data-theme]) .spire-bg-light {
 }
 
 /* Dark mode: show dark spire - MUCH MORE VISIBLE */
+
 [data-theme="dark"] .spire-bg-dark,
 .theme-dark .spire-bg-dark {
     opacity: 0.75;
@@ -645,6 +598,7 @@ body:not([data-theme]) .spire-bg-light {
 }
 
 /* Reduced overlay to let the spire image shine through */
+
 .spire-background::after {
     content: '';
     position: absolute;
@@ -663,6 +617,7 @@ body:not([data-theme]) .spire-bg-light {
 }
 
 /* Enhance content readability with subtle backdrop on containers */
+
 .o-container,
 .c-header {
     position: relative;
@@ -683,6 +638,7 @@ body:not([data-theme]) .spire-bg-light {
 }
 
 /* Smooth transitions for theme changes - scoped to key elements for performance */
+
 .c-header, .c-footer, .c-nav, .c-nav-btn, .c-section-panel, .c-product-card,
 .c-btn, .c-badge, .o-container::before {
     transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
@@ -691,6 +647,7 @@ body:not([data-theme]) .spire-bg-light {
 /*---------------------------------------/*
  # OBJECTS
 /*---------------------------------------*/
+
 .o-container {
     width: 100%;
     max-width: 1200px;
@@ -733,9 +690,10 @@ body:not([data-theme]) .spire-bg-light {
 /*---------------------------------------/*
  # COMPONENTS
 /*---------------------------------------*/
+
 .c-header {
     background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 35%, #2563eb 70%, #3b82f6 100%);
-    color: var(--text-inverse);
+    color: white !important;
     padding: 2.75rem var(--spacing-md) 2.5rem;
     text-align: center;
     position: relative;
@@ -744,9 +702,11 @@ body:not([data-theme]) .spire-bg-light {
     z-index: 1;
     overflow: hidden;
     flex-shrink: 0;
+    margin: 0;
 }
 
 /* Gradient accent line under header */
+
 .c-header::after {
     content: '';
     position: absolute;
@@ -802,11 +762,6 @@ body:not([data-theme]) .spire-bg-light {
     text-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
 }
 
-.c-header {
-    color: white !important;
-    margin: 0;
-}
-
 .c-welcome-message {
     background: rgba(255, 255, 255, 0.92);
     padding: var(--spacing-xl) 2rem;
@@ -848,10 +803,10 @@ body:not([data-theme]) .spire-bg-light {
     background: rgba(255, 255, 255, 0.94);
     border: 1px solid rgba(44, 76, 124, 0.1);
     border-radius: 18px;
-    padding: 1rem;
+    padding: 0.7rem;
     box-shadow: 0 6px 20px rgba(15, 23, 42, 0.07);
     max-width: 820px;
-    margin: 0.9rem auto;
+    margin: 0.7rem auto;
 }
 
 .c-ad-slot-card .adsbygoogle {
@@ -1056,6 +1011,7 @@ body:not([data-theme]) .spire-bg-light {
 }
 
 /* Black & White button utility for unimportant actions */
+
 .bw-btn,
 .c-btn--bw {
     background-color: #fff;
@@ -1073,6 +1029,7 @@ body:not([data-theme]) .spire-bg-light {
 }
 
 /* Dark mode variant: invert colors */
+
 [data-theme="dark"] .bw-btn,
 .theme-dark .bw-btn,
 [data-theme="dark"] .c-btn--bw,
@@ -1091,6 +1048,7 @@ body:not([data-theme]) .spire-bg-light {
 }
 
 /* Accent button (blue) for highlighted actions like Industrial Empire) */
+
 .accent-blue,
 .c-btn--accent {
     background-color: var(--primary-color);
@@ -1120,6 +1078,7 @@ body:not([data-theme]) .spire-bg-light {
 }
 
 /* Make sure bw buttons have a subtle hover effect */
+
 .bw-btn:hover,
 .c-btn--bw:hover {
     background: #f8fafc;
@@ -1140,6 +1099,7 @@ body:not([data-theme]) .spire-bg-light {
 }
 
 /* Dark mode button styles */
+
 [data-theme="dark"] .c-btn--primary,
 [data-theme="dark"] .c-btn--secondary,
 [data-theme="dark"] .c-btn--tertiary,
@@ -1189,9 +1149,8 @@ body:not([data-theme]) .spire-bg-light {
 }
 
 /* Specific buttons that should remain blue */
-#startQuizBtn,
-#studyQuizBtn,
-button[onclick*="idleGame/idlegame.html"] {
+
+idlegame.html"] {
     background-color: var(--primary-color) !important;
     color: white !important;
     border: 1.5px solid rgba(0, 0, 0, 0.08) !important;
@@ -1199,30 +1158,25 @@ button[onclick*="idleGame/idlegame.html"] {
     transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-#startQuizBtn i,
-#studyQuizBtn i,
-button[onclick*="idleGame/idlegame.html"] i {
+idlegame.html"] i {
     color: white !important;
 }
 
-#startQuizBtn:hover,
-#studyQuizBtn:hover,
-button[onclick*="idleGame/idlegame.html"]:hover {
+idlegame.html"]:hover {
     background-color: var(--secondary-color) !important;
     color: white !important;
     border: 1.5px solid rgba(0, 0, 0, 0.12) !important;
     box-shadow: 0 8px 24px rgba(44, 111, 184, 0.32);
     transform: translateY(-2px);
 }
+
 /* Desc text on forced-blue buttons needs white text */
-#startQuizBtn .c-btn__desc,
-#studyQuizBtn .c-btn__desc,
-button[onclick*="idleGame/idlegame.html"] .c-btn__desc {
+
+idlegame.html"] .c-btn__desc {
     color: rgba(255, 255, 255, 0.85);
 }
-#startQuizBtn:has(.c-btn__desc),
-#studyQuizBtn:has(.c-btn__desc),
-button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
+
+idlegame.html"]:has(.c-btn__desc) {
     align-items: center;
     text-align: center;
 }
@@ -1233,6 +1187,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Small button variant */
+
 .c-btn--sm {
     padding: var(--spacing-sm) var(--spacing-md);
     font-size: var(--font-size-sm);
@@ -1241,11 +1196,13 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 /* Theme toggle button (formerly servo button) - on the homepage this is a regular
    grid button styled via bw-btn. The gradient + special padding only causes conflicts.
    Standalone toggle styling lives in legal.css / per-page CSS via .c-theme-toggle. */
+
 #servoTestBtn i {
     color: inherit;
 }
 
 /* Standalone theme-toggle class used on sub-pages (not homepage) */
+
 .c-theme-toggle::before {
     content: '\2600';  /* sun glyph */
     font-size: 1rem;
@@ -1290,7 +1247,8 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 .c-modal {
     display: none;
     position: fixed;
-    z-index: 10000; /* Higher than pulse effects */
+    z-index: 10000;
+    /* higher than pulse effects */
     left: 0;
     top: 0;
     width: 100%;
@@ -1298,6 +1256,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     overflow: auto;
     background-color: var(--bg-overlay);
     backdrop-filter: blur(4px);
+    padding: 0.375rem !important;
 }
 
 .c-modal__content {
@@ -1321,10 +1280,10 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     position: absolute;
     top: var(--spacing-md);
     right: var(--spacing-md);
-    font-size: 22px;
+    font-size: 1rem;
     font-weight: 700;
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border-radius: 999px;
     display: inline-flex;
     align-items: center;
@@ -1447,6 +1406,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Floating dark mode modal (bottom-right) */
+
 .dm-fab {
     position: fixed;
     right: 18px;
@@ -1460,6 +1420,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     box-shadow: 0 6px 16px var(--shadow-medium);
     cursor: pointer;
 }
+
 .dm-popover {
     position: fixed;
     right: 18px; bottom: 72px;
@@ -1472,11 +1433,21 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     display: none;
     z-index: 10000;
 }
-.dm-popover.is-open { display: block; }
-.dm-popover__row { font-weight: 600; margin-bottom: .5rem }
-.dm-popover__actions { display: flex; gap: .5rem }
+
+.dm-popover.is-open {
+    display: block;
+}
+
+.dm-popover__row {
+    font-weight: 600; margin-bottom: .5rem
+}
+
+.dm-popover__actions {
+    display: flex; gap: .5rem
+}
 
 /* Solar sonar animation */
+
 @keyframes solarSonar {
     0% {
         transform: rotate(0deg);
@@ -1508,6 +1479,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Theme toggle functionality - replaces color cycling */
+
 .theme-toggle-btn {
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: var(--text-inverse);
@@ -1527,6 +1499,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Legacy theme classes - maintained for backwards compatibility but now only affect pulse colors */
+
 .theme-blue {
     --pulse-color: #4a86e8;
     --pulse-glow: rgba(74, 134, 232, 0.7);
@@ -1558,6 +1531,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Additional fruit-themed pulse colors */
+
 .theme-banana-yellow {
     --pulse-color: #fbbf24;
     --pulse-glow: rgba(251, 191, 36, 0.7);
@@ -1591,6 +1565,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 /*---------------------------------------/*
  # UTILITIES
 /*---------------------------------------*/
+
 .u-flex {
     display: flex;
 }
@@ -1604,11 +1579,13 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* New utility: top margin */
+
 .u-mt-2 {
     margin-top: 2rem;
 }
 
 /* Connection status styles */
+
 .status-initial {
     color: #666;
     background-color: #f0f0f0;
@@ -1637,6 +1614,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Responsive design */
+
 @media screen and (min-width: 1024px) {
     .o-container {
         margin: var(--spacing-xl) auto;
@@ -1675,6 +1653,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Dark mode preference detection */
+
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]):not(.theme-light) {
         /* Apply dark theme variables when system preference is dark and no explicit light theme is set */
@@ -1712,6 +1691,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Utility Classes */
+
 .u-center-button {
     max-width: 320px;
     margin-left: auto;
@@ -1758,7 +1738,8 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Compact button row: visually consistent, equal-width buttons that sit side-by-side when space allows */
-.compact-button-row{
+
+.compact-button-row {
     display:grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: var(--spacing-md);
@@ -1771,7 +1752,8 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 
 /* Make buttons equal-width across the row when there's room, but allow them
    to shrink to a sensible minimum. On phones they'll stack (see media query). */
-.compact-button-row .c-btn{
+
+.compact-button-row .c-btn {
     min-width: 180px; /* keep comfortable touch targets */
     max-width: 100%;
     display:inline-flex;
@@ -1795,17 +1777,20 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
    Donation progress styling
    Rounded bar with theme-aware black/white border
    --------------------------------------- */
+
 .donation-block {
     max-width: 420px;
     margin: 0 auto 8px;
     text-align: left;
 }
+
 .donation-block label {
     display: block;
     font-size: 0.8em;
     color: var(--text-muted);
     margin-bottom: 6px;
 }
+
 #donation-progress {
     -webkit-appearance: none;
     appearance: none;
@@ -1816,36 +1801,47 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     border: 2px solid #000; /* light-mode black border */
     overflow: hidden;
 }
+
 /* WebKit: style the bar and the value */
+
 #donation-progress::-webkit-progress-bar {
     background-color: transparent;
     border-radius: 999px;
 }
+
 #donation-progress::-webkit-progress-value {
     background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
     border-radius: 999px;
 }
+
 /* Firefox */
+
 #donation-progress::-moz-progress-bar {
     background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
     border-radius: 999px;
 }
 
 /* Dark theme: white border and subtle inner background */
+
 [data-theme="dark"] #donation-progress,
 .theme-dark #donation-progress {
     border: 2px solid #fff;
     background-color: rgba(255,255,255,0.04);
 }
+
 [data-theme="dark"] #donation-progress::-webkit-progress-value,
 .theme-dark #donation-progress::-webkit-progress-value {
     filter: brightness(1.02);
 }
 
 /* Make sure the donation button row keeps spacing on small screens */
-.donation-block .c-btn { min-height: 44px; }
+
+.donation-block .c-btn {
+    min-height: 44px;
+}
 
 /* Navigation and Sections */
+
 .c-nav {
     display: flex;
     flex-wrap: wrap;
@@ -1962,6 +1958,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Nav: switch from pill to rounded rect on narrow screens to avoid awkward wrapping */
+
 @media (max-width: 520px) {
     .c-nav {
         border-radius: 16px;
@@ -2017,25 +2014,27 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     }
 }
 
-
 /* =====================================================
    PRODUCT CARDS - Hero download & Lofi extension promos
    ===================================================== */
+
 .c-product-card {
     position: relative;
     background: rgba(255, 255, 255, 0.97);
     border: 1px solid rgba(44, 76, 124, 0.1);
-    border-radius: 24px;
-    padding: 2.5rem 2.25rem 2.25rem;
-    margin-bottom: var(--spacing-xl);
-    max-width: 820px;
+    border-radius: 12px;
+    padding: 1.125rem 0.875rem 1rem;
+    margin-bottom: 1rem;
+    max-width: calc(100% - 1.5rem);
     margin-left: auto;
     margin-right: auto;
-    box-shadow: 0 10px 36px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(15, 23, 42, 0.08);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     text-align: center;
     transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
+    width: min(100%, 760px);
+    margin: 0.75rem auto 1rem;
 }
 
 .c-product-card:hover {
@@ -2052,22 +2051,26 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Badge row */
+
 .c-product-card__badge-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.45rem;
     justify-content: center;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
+    align-items: center;
+    overflow: visible;
 }
 
 /* Badges */
+
 .c-badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    padding: 0.3rem 0.7rem;
+    gap: 0.25rem;
+    padding: 0.2rem 0.5rem;
     border-radius: 999px;
-    font-size: 0.78rem;
+    font-size: 0.68rem;
     font-weight: 600;
     letter-spacing: 0.01em;
     white-space: nowrap;
@@ -2075,8 +2078,8 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 .c-badge--sm {
-    padding: 0.22rem 0.55rem;
-    font-size: 0.72rem;
+    padding: 0.15rem 0.4rem;
+    font-size: 0.62rem;
 }
 
 .c-badge--green {
@@ -2110,9 +2113,10 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Product card title */
+
 .c-product-card__title {
     font-family: var(--font-display);
-    font-size: 1.85rem;
+    font-size: 1.15rem;
     font-weight: 700;
     margin: 0 0 0.6rem;
     letter-spacing: -0.03em;
@@ -2123,11 +2127,12 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 .c-product-card__tagline {
     margin: 0 0 1.35rem;
     color: var(--text-secondary);
-    font-size: 1.05rem;
+    font-size: 0.85rem;
     line-height: 1.55;
-    max-width: 680px;
+    max-width: 100%;
     margin-left: auto;
     margin-right: auto;
+    margin-bottom: 1rem;
 }
 
 .c-product-card__eyebrow {
@@ -2144,6 +2149,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     background: #ffffff;
     border-color: rgba(44, 111, 184, 0.16);
     margin-top: 1rem;
+    padding: 1.15rem 0.8rem 1rem;
 }
 
 .c-vault-release .c-product-card__badge-row {
@@ -2181,43 +2187,48 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Feature list */
+
 .c-feature-list {
     list-style: none;
     padding: 0;
     margin: 0 0 1.5rem;
     text-align: left;
-    max-width: 620px;
+    max-width: 100%;
     margin-left: auto;
     margin-right: auto;
+    margin-bottom: 1rem;
 }
 
 .c-feature-list__item {
     display: flex;
     align-items: flex-start;
-    gap: 0.7rem;
-    padding: 0.5rem 0;
-    font-size: 0.95rem;
+    gap: 0.5rem;
+    padding: 0.35rem 0;
+    font-size: 0.85rem;
     color: var(--text-primary);
     line-height: 1.5;
 }
 
 .c-feature-list__item i {
     color: var(--primary-color);
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     margin-top: 0.2rem;
     flex-shrink: 0;
-    width: 18px;
+    width: 16px;
     text-align: center;
 }
 
 /* Horizontal variant for lofi card */
+
 .c-feature-list--horizontal {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem 1.5rem;
+    gap: 0.4rem;
     justify-content: center;
     max-width: 100%;
     text-align: center;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 .c-feature-list--horizontal .c-feature-list__item {
@@ -2230,22 +2241,26 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Product card actions */
+
 .c-product-card__actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: 0.5rem;
     justify-content: center;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
+    flex-direction: column;
+    align-items: stretch;
 }
 
 /* CTA button - primary download action */
+
 .c-btn--cta {
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: #fff;
     border: none;
-    padding: 0.9rem 1.85rem;
+    padding: 0.7rem 1rem;
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 0.88rem;
     border-radius: 12px;
     box-shadow: 0 4px 16px rgba(30, 58, 138, 0.22);
     letter-spacing: 0.01em;
@@ -2270,6 +2285,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Lofi variant CTA */
+
 .c-btn--lofi {
     background: linear-gradient(135deg, #7c3aed, #8b5cf6);
     box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
@@ -2280,13 +2296,14 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Outline button - secondary action */
+
 .c-btn--outline {
     background: rgba(255, 255, 255, 0.8);
     color: var(--primary-color);
     border: 1.5px solid var(--primary-color);
-    padding: 0.75rem 1.5rem;
+    padding: 0.6rem 0.875rem;
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     border-radius: 12px;
 }
 
@@ -2296,6 +2313,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* SENTLE button */
+
 .c-btn--sentle {
     background: linear-gradient(135deg, #6aaa64, #538d4e);
     color: white;
@@ -2314,24 +2332,29 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Reassurance line under download buttons */
+
 .c-product-card__reassurance {
     margin: 0 0 0.75rem;
     font-size: 0.82rem;
     color: var(--text-muted);
     letter-spacing: 0.01em;
 }
+
 .c-product-card__reassurance strong {
     font-weight: 800;
     color: var(--text-secondary);
 }
+
 .c-product-card__reassurance i {
     color: #16a34a;
     margin-right: 0.25rem;
 }
+
 [data-theme="dark"] .c-product-card__reassurance i,
 .theme-dark .c-product-card__reassurance i {
     color: #4ade80;
 }
+
 .c-product-card__trust-link {
     color: inherit;
     text-decoration: none;
@@ -2339,20 +2362,24 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     padding-bottom: 1px;
     transition: color 0.2s, border-color 0.2s;
 }
+
 .c-product-card__trust-link:hover {
     color: var(--primary-color);
     border-bottom-color: var(--primary-color);
     border-bottom-style: solid;
 }
+
 .c-product-card__trust-link strong {
     font-weight: 800;
     color: var(--text-secondary);
 }
+
 .c-product-card__trust-link:hover strong {
     color: var(--primary-color);
 }
 
 /* SmartScreen accordion */
+
 .c-smartscreen-info {
     background: #fffbeb;
     border: 1px solid #fde68a;
@@ -2364,6 +2391,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     text-align: left;
     font-size: 0.9rem;
 }
+
 .c-smartscreen-info summary {
     padding: 0.75rem 1rem;
     cursor: pointer;
@@ -2374,54 +2402,69 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     gap: 0.5rem;
     list-style: none;
 }
-.c-smartscreen-info summary::-webkit-details-marker { display: none; }
+
+.c-smartscreen-info summary::-webkit-details-marker {
+    display: none;
+}
+
 .c-smartscreen-info summary::after {
     content: '\25BC';
     font-size: 0.65rem;
     margin-left: auto;
     transition: transform 0.2s;
 }
+
 .c-smartscreen-info[open] summary::after {
     transform: rotate(180deg);
 }
+
 .c-smartscreen-info summary i {
     color: #d97706;
 }
+
 .c-smartscreen-info__body {
     padding: 0 1rem 0.75rem;
     color: #78350f;
     line-height: 1.6;
 }
+
 .c-smartscreen-info__body p {
     margin: 0 0 0.5rem;
 }
+
 .c-smartscreen-info__body a {
     color: #b45309;
     font-weight: 600;
 }
+
 [data-theme="dark"] .c-smartscreen-info,
 .theme-dark .c-smartscreen-info {
     background: rgba(120, 53, 15, 0.2);
     border-color: rgba(251, 191, 36, 0.3);
 }
+
 [data-theme="dark"] .c-smartscreen-info summary,
 .theme-dark .c-smartscreen-info summary {
     color: #fcd34d;
 }
+
 [data-theme="dark"] .c-smartscreen-info summary i,
 .theme-dark .c-smartscreen-info summary i {
     color: #fbbf24;
 }
+
 [data-theme="dark"] .c-smartscreen-info__body,
 .theme-dark .c-smartscreen-info__body {
     color: #fde68a;
 }
+
 [data-theme="dark"] .c-smartscreen-info__body a,
 .theme-dark .c-smartscreen-info__body a {
     color: #fbbf24;
 }
 
 /* Button description subtitle */
+
 .c-btn__content {
     display: flex;
     align-items: center;
@@ -2429,6 +2472,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     font-weight: 600;
     font-size: 0.95rem;
 }
+
 .c-btn__desc {
     display: block;
     font-size: 0.78rem;
@@ -2438,25 +2482,32 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     line-height: 1.35;
     letter-spacing: 0.01em;
 }
+
 /* Buttons with descriptions need vertical layout */
+
 .c-btn:has(.c-btn__desc) {
     flex-direction: column;
     text-align: left;
     padding: 0.9rem 1.15rem;
     align-items: flex-start;
 }
+
 [data-theme="dark"] .c-btn__desc,
 .theme-dark .c-btn__desc {
     color: #cbd5e1;
 }
+
 /* Desc text on colored-bg buttons needs white text */
+
 .c-btn--sentle .c-btn__desc,
 .c-btn--cta .c-btn__desc,
 .accent-blue .c-btn__desc,
 .c-btn--accent .c-btn__desc {
     color: rgba(255, 255, 255, 0.85);
 }
+
 /* Colored-bg buttons keep center alignment */
+
 .c-btn--sentle:has(.c-btn__desc),
 .c-btn--cta:has(.c-btn__desc),
 .accent-blue:has(.c-btn__desc),
@@ -2466,11 +2517,13 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Button loading state */
+
 .c-btn--loading {
     pointer-events: none;
     opacity: 0.7;
     position: relative;
 }
+
 .c-btn--loading::after {
     content: '';
     position: absolute;
@@ -2484,51 +2537,59 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     top: 50%;
     margin-top: -9px;
 }
+
 @keyframes btn-spin {
     to { transform: rotate(360deg); }
 }
 
 /* Footer about line */
+
 .c-footer__about {
     font-size: 0.88rem;
     color: var(--text-muted);
     margin: 0 0 0.75rem;
     line-height: 1.5;
 }
+
 .c-footer__about strong {
     color: var(--text-secondary);
 }
 
 /* Download status bar */
+
 .c-download-status {
     display: none;
     width: 100%;
     max-width: 640px;
     margin: 0.75rem auto;
-    padding: 0.75rem 1rem;
+    padding: 0.6rem 0.75rem;
     border-radius: 8px;
-    font-size: 0.9rem;
+    font-size: 0.82rem;
     border: 1px solid var(--border-color);
     background: var(--bg-tertiary);
     color: var(--text-primary);
     text-align: left;
 }
+
 .c-download-status--info {
     background: #dbeafe;
     border-color: #3b82f6;
     color: #1e3a8a;
 }
+
 .c-download-status--error {
     background: #fee2e2;
     border-color: #ef4444;
     color: #7f1d1d;
 }
+
 [data-theme="dark"] .c-download-status--info,
 .theme-dark .c-download-status--info {
     background: rgba(30, 58, 138, 0.9);
     border-color: #3b82f6;
     color: #93c5fd;
 }
+
 [data-theme="dark"] .c-download-status--error,
 .theme-dark .c-download-status--error {
     background: rgba(127, 29, 29, 0.9);
@@ -2541,6 +2602,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* 2-column button groups */
+
 .o-button-group--2col {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -2551,6 +2613,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     margin-right: auto;
     align-items: stretch;
 }
+
 .o-button-group--2col .c-btn {
     width: 100%;
     height: 100%;
@@ -2563,12 +2626,12 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     }
 }
 
-
 /* =====================================================
    MODAL - Setup instructions overlay (redesigned)
    ===================================================== */
 
 /* Override general modal styles for conversion download modal */
+
 #conversionDownloadModal {
     display: none;
     align-items: center;
@@ -2580,10 +2643,12 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     -webkit-backdrop-filter: blur(6px);
     z-index: 10000;
 }
+
 #conversionDownloadModal.is-open {
     display: flex;
     animation: modalBackdropIn 0.25s ease-out;
 }
+
 #conversionDownloadModal.is-open .c-modal__content {
     animation: modalContentIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -2592,6 +2657,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     from { opacity: 0; }
     to { opacity: 1; }
 }
+
 @keyframes modalContentIn {
     from { opacity: 0; transform: scale(0.95) translateY(10px); }
     to { opacity: 1; transform: scale(1) translateY(0); }
@@ -2607,27 +2673,30 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     max-width: 560px;
     width: 100%;
 }
+
 #conversionDownloadModal .c-modal__header {
     flex-shrink: 0;
 }
 
 .c-modal__title {
     font-family: var(--font-display);
-    font-size: 1.15rem;
+    font-size: 0.95rem;
     font-weight: 700;
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
     color: var(--text-primary);
 }
 
 .c-modal__title i {
     color: var(--primary-color);
+    font-size: 0.9rem;
 }
 
 .c-modal__body {
-    padding: 1rem 1rem; /* tighter, more natural flow */
+    padding: 0.875rem 1rem;
+    /* tighter, more natural flow */
     overflow-y: auto;
     flex: 1;
     min-height: 0;
@@ -2636,34 +2705,46 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 .c-modal__section-heading {
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     font-weight: 600;
     color: var(--text-primary);
     margin: 0 0 0.75rem;
+    margin-bottom: 0.5rem;
 }
 
 /* Numbered step list */
+
 .c-modal__steps {
     list-style: none;
     padding: 0;
     margin: 0 0 1.25rem;
     counter-reset: none;
+    margin-bottom: 0.875rem;
 }
 
 /* make each step a normal flowing block and reserve space for the number */
+
 .c-modal__steps li {
     position: relative;
     display: block;
-    padding-left: 0;              /* no step number */
-    margin: 0.65rem 0;            /* increased from 0.35rem to prevent number overlap */
+    padding-left: 0;
+    /* no step number */
+    margin: 0.65rem 0;
+    /* increased from 0.35rem to prevent number overlap */
     font-size: 0.92rem;
     line-height: 1.35;
     color: var(--text-primary);
     border-bottom: none;
-    word-break: normal;           /* don't split words mid-syllable */
+    word-break: normal;
+    /* don't split words mid-syllable */
     overflow-wrap: break-word;
     hyphens: none;
     min-width: 0;
+    font-size: 0.84rem;
+    margin: 0.5rem 0;
+    /* increased from 0.18rem to prevent 20px numbers overlapping */
+        line-height: 1.28;
+    overflow-wrap: break-word;
 }
 
 .c-modal__steps li:last-child {
@@ -2671,54 +2752,62 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 .c-modal__step-num {
-    position: absolute;        /* removed from text flow so lines wrap naturally */
+    position: absolute;
+    /* removed from text flow so lines wrap naturally */
     left: 0;
-    top: 0.12rem;
-    display: inline-flex;
+    top: 0.06rem;
+    display: none;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 999px;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
     background: rgba(0,0,0,0.03);
     border: 1px solid rgba(0,0,0,0.06);
     color: var(--primary-color);
     font-weight: 700;
-    font-size: 0.78rem;
+    font-size: 0.66rem;
     flex-shrink: 0;
     margin: 0;
-    display: none;
+    left: 0;
 }
 
 /* Alert box inside modal */
+
 .c-modal__alert {
     display: flex;
     align-items: flex-start;
-    gap: 0.6rem;
-    background: transparent;               /* less 'card-like' */
-    border-left: 4px solid #fde68a;        /* subtle accent instead */
+    gap: 0.5rem;
+    background: transparent;
+    /* less 'card-like' */
+    border-left: 4px solid #fde68a;
+    /* subtle accent instead */
     border-radius: 4px;
-    padding: 0.4rem 0.6rem;                /* tighter padding */
+    padding: 0.6rem 0.7rem;
+    /* tighter padding */
     margin-bottom: 0.6rem;
     min-width: 0;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
 }
 
 .c-modal__alert-icon {
     color: #d97706;
-    font-size: 1rem;
-    margin-top: 0.1rem;
+    font-size: 0.95rem;
+    margin-top: 0.05rem;
     flex-shrink: 0;
 }
 
 .c-modal__alert-text {
     margin: 0;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     color: #78350f;
-    line-height: 1.45;
+    line-height: 1.4;
     overflow-wrap: break-word;
 }
 
 /* Prevent the text container inside alerts from overflowing */
+
 .c-modal__alert > div {
     min-width: 0;
     flex: 1;
@@ -2727,37 +2816,38 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 .c-modal__meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.35rem;
     justify-content: center;
-    padding-top: 0.5rem;
+    padding-top: 0.35rem;
 }
 
 .c-modal__footer {
-    padding: 0.75rem 1.25rem;
+    padding: 0.6rem 1rem;
     border-top: 1px solid #e5e7eb;
     background: #f9fafb;
-    border-radius: 0 0 16px 16px;
+    border-radius: 0 0 12px 12px;
     flex-shrink: 0;
 }
 
 .c-modal__note {
     margin: 0;
-    font-size: 0.82rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
     text-align: center;
     line-height: 1.4;
 }
 
 /* Footer separator dots */
+
 .c-footer__sep {
     color: var(--text-muted);
     margin: 0 0.15rem;
 }
 
-
 /* =====================================================
    DARK MODE - Product cards, modal, badges
    ===================================================== */
+
 [data-theme="dark"] .c-product-card,
 .theme-dark .c-product-card {
     background: rgba(17, 24, 39, 0.96);
@@ -2799,6 +2889,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Dark badges */
+
 [data-theme="dark"] .c-badge--green,
 .theme-dark .c-badge--green {
     background: rgba(22, 101, 52, 0.25);
@@ -2835,6 +2926,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Dark feature list icons */
+
 [data-theme="dark"] .c-feature-list__item i,
 .theme-dark .c-feature-list__item i {
     color: #60a5fa;
@@ -2846,6 +2938,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Dark CTA buttons */
+
 [data-theme="dark"] .c-btn--cta,
 .theme-dark .c-btn--cta {
     box-shadow: 0 4px 14px rgba(96, 165, 250, 0.2);
@@ -2857,6 +2950,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Dark outline button */
+
 [data-theme="dark"] .c-btn--outline,
 .theme-dark .c-btn--outline {
     background: rgba(30, 58, 138, 0.15);
@@ -2871,6 +2965,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Dark modal */
+
 [data-theme="dark"] .c-modal__title,
 .theme-dark .c-modal__title {
     color: #e5e7eb;
@@ -2882,77 +2977,32 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Mobile/performance tweak: make product cards feel less narrow on small phones */
-@media (max-width: 640px) {
-    .c-product-card {
-        width: min(100%, 760px);
-        max-width: calc(100% - 1.5rem);
-        padding: 1.25rem 0.9rem 1.1rem;
-        margin: 0.75rem auto 1rem;
-        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(15, 23, 42, 0.08);
-    }
 
-    .c-product-card__badge-row {
-        gap: 0.35rem;
-        justify-content: center;
-    }
+.c-product-card__actions.c-product-card__actions--platform {
+    gap: 0.5rem;
+}
 
-    .c-badge {
-        font-size: 0.68rem;
-        padding: 0.2rem 0.5rem;
-    }
-
-    .c-product-card__title {
-        font-size: 1.45rem;
-    }
-
-    .c-product-card__tagline {
-        font-size: 0.98rem;
-        max-width: 100%;
-        margin-bottom: 0.8rem;
-    }
-
-    .c-feature-list {
-        max-width: 100%;
-        margin-bottom: 1rem;
-    }
-
-    .c-product-card__actions.c-product-card__actions--platform {
-        gap: 0.5rem;
-    }
-
-    .c-product-card__actions.c-product-card__actions--platform .c-btn--cta {
-        flex: 1 1 100%;
+.c-product-card__actions.c-product-card__actions--platform .c-btn--cta {
+    flex: 1 1 100%;
         min-width: 0;
         max-width: 100%;
-    }
+}
 
-    .c-vault-release {
-        padding: 1.15rem 0.8rem 1rem;
-    }
-
-    .c-vault-release .c-product-card__badge-row {
-        justify-content: center;
-    }
-
-    .c-vault-release .c-product-card__title,
+.c-vault-release .c-product-card__title,
     .c-vault-release .c-product-card__tagline,
     .c-vault-release .c-product-card__eyebrow,
     .c-vault-release .c-product-card__reassurance {
-        text-align: center;
-    }
+    text-align: center;
+}
 
-    .c-vault-release .c-feature-list,
+.c-vault-release .c-feature-list,
     .c-vault-release .c-product-card__actions {
-        justify-content: center;
-    }
+    justify-content: center;
+}
 
-    .c-ad-slot-card {
-        padding: 0.7rem;
-        margin: 0.7rem auto;
-    }
+/* Tiny phones: avoid too-tall 1x1 buttons and reduce padding to fit viewport */
 
-    /* Tiny phones: avoid too-tall 1x1 buttons and reduce padding to fit viewport */
-    @media (max-width: 480px) {
+@media (max-width: 480px) {
         .c-product-card {
             padding: 1rem 0.7rem 0.9rem;
             border-radius: 20px;
@@ -2977,7 +3027,6 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
             gap: 0.4rem;
         }
     }
-}
 
 [data-theme="dark"] .c-modal__section-heading,
 .theme-dark .c-modal__section-heading {
@@ -3023,6 +3072,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 }
 
 /* Dark footer separator */
+
 [data-theme="dark"] .c-footer__sep,
 .theme-dark .c-footer__sep {
     color: #6b7280;
@@ -3031,21 +3081,22 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 /* =============================================
    Platform Tabs (modal)
    ============================================= */
+
 .c-platform-tabs {
     display: flex;
     gap: 0;
     border-bottom: 2px solid #e5e7eb;
-    margin-bottom: 1.25rem;
+    margin-bottom: 0.875rem;
 }
 
 .c-platform-tab {
     flex: 1;
-    padding: 0.65rem 1rem;
+    padding: 0.5rem 0.5rem;
     background: none;
     border: none;
     border-bottom: 2px solid transparent;
     margin-bottom: -2px;
-    font-size: 0.92rem;
+    font-size: 0.82rem;
     font-weight: 600;
     color: #64748b;
     cursor: pointer;
@@ -3053,7 +3104,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 0.35rem;
 }
 
 .c-platform-tab:hover {
@@ -3099,7 +3150,6 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 /* =============================================
    Platform-specific CTA Buttons
    ============================================= */
-
 
 .c-btn--windows {
     background: linear-gradient(135deg, #0078d4, #005a9e);
@@ -3179,6 +3229,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 /* =============================================
    Warning alert variant
    ============================================= */
+
 .c-modal__alert--warning {
     background: #fef3c7;
     border-color: #f59e0b;
@@ -3195,14 +3246,15 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 .c-modal__alert-steps {
     margin: 0.4rem 0 0.25rem 1rem;
     padding: 0;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     color: #78350f;
-    line-height: 1.5;
+    line-height: 1.4;
     overflow-wrap: break-word;
+    margin-left: 0.75rem;
 }
 
 .c-modal__alert-steps li {
-    margin-bottom: 0.15rem;
+    margin-bottom: 0.1rem;
 }
 
 .c-modal__alert--warning a {
@@ -3249,87 +3301,20 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 /* =============================================
    Responsive: product cards & modal mobile
    ============================================= */
-@media (max-width: 600px) {
-    /* Product card */
-    .c-product-card {
-        padding: 1.125rem 0.875rem 1rem;
-        border-radius: 12px;
-        margin-bottom: 1rem;
-    }
-    .c-product-card--hero,
+
+/* Product card */
+
+.c-product-card--hero,
     .c-product-card--lofi {
-        border-width: 1px;
-    }
-    .c-product-card__badge-row {
-        gap: 0.35rem;
-        margin-bottom: 0.75rem;
-    }
-    .c-product-card__title {
-        font-size: 1.15rem;
-    }
-    .c-product-card__tagline {
-        font-size: 0.85rem;
-        margin-bottom: 1rem;
-    }
-    .c-product-card__actions {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.5rem;
-        margin-bottom: 0.75rem;
-    }
-    .c-product-card__actions--platform {
-        grid-template-columns: 1fr;
-    }
-    .c-feature-list {
-        margin-bottom: 1rem;
-    }
-    .c-feature-list__item {
-        font-size: 0.85rem;
-        gap: 0.5rem;
-        padding: 0.35rem 0;
-    }
-    .c-feature-list__item i {
-        font-size: 0.78rem;
-        width: 16px;
-    }
-    .c-feature-list--horizontal {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.4rem;
-    }
-    .c-badge {
-        font-size: 0.68rem;
-        padding: 0.2rem 0.5rem;
-        gap: 0.25rem;
-    }
-    .c-badge--sm {
-        font-size: 0.62rem;
-        padding: 0.15rem 0.4rem;
-    }
-    .c-btn--cta {
-        font-size: 0.88rem;
-        padding: 0.7rem 1rem;
-    }
-    .c-btn--outline {
-        font-size: 0.85rem;
-        padding: 0.6rem 0.875rem;
-    }
-    .c-download-status {
-        font-size: 0.82rem;
-        padding: 0.6rem 0.75rem;
-    }
+    border-width: 1px;
+}
 
-    .c-product-card__badge-row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: center;
-        gap: 0.45rem;
-        overflow: visible;
-    }
+.c-product-card__actions--platform {
+    grid-template-columns: 1fr;
+}
 
-    .c-product-card__badge-row .c-badge {
-        min-height: 1.75rem;
+.c-product-card__badge-row .c-badge {
+    min-height: 1.75rem;
         font-size: 0.75rem;
         line-height: 1.1;
         padding: 0.25rem 0.6rem;
@@ -3337,8 +3322,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
         white-space: normal;
         overflow-wrap: anywhere;
         text-align: center;
-    }
-
+}
 
 @media (min-width: 601px) and (max-width: 640px) {
     .c-product-card__badge-row {
@@ -3383,109 +3367,28 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
         text-align: center;
     }
 }
-    /* Modal */
-    .c-modal {
-        padding: 0.375rem !important;
-    }
-    #conversionDownloadModal .c-modal__content,
+
+/* Modal */
+
+#conversionDownloadModal .c-modal__content,
     .c-modal__content {
-        max-height: 96vh !important;
+    max-height: 96vh !important;
         max-height: 96dvh !important;
         border-radius: 12px;
         width: calc(100% - 0.25rem) !important;
-    }
-    .c-modal__header {
-        padding: 0.75rem 1rem;
+}
+
+.c-modal__header {
+    padding: 0.75rem 1rem;
         gap: 0.5rem;
-    }
-    .c-modal__title {
-        font-size: 0.95rem;
-        gap: 0.4rem;
-    }
-    .c-modal__title i {
-        font-size: 0.9rem;
-    }
-    .c-modal__close {
-        width: 32px;
-        height: 32px;
-        font-size: 1rem;
-    }
-    .c-modal__body {
-        padding: 0.875rem 1rem;
-    }
-    .c-modal__section-heading {
-        font-size: 0.85rem;
-        margin-bottom: 0.5rem;
-    }
-    .c-modal__steps {
-        margin-bottom: 0.875rem;
-    }
-    .c-modal__steps li {
-        display: block;
-        padding-left: 0;
-        font-size: 0.84rem;
-        margin: 0.5rem 0;         /* increased from 0.18rem to prevent 20px numbers overlapping */
-        line-height: 1.28;
-        word-break: normal;
-        overflow-wrap: break-word;
-    }
-    .c-modal__steps li strong {
-        overflow-wrap: break-word;
-    }
-    .c-modal__step-num {
-        position: absolute;
-        left: 0;
-        top: 0.06rem;
-        width: 20px;
-        height: 20px;
-        font-size: 0.66rem;
-        border-radius: 4px;
-        display: none;
-    }
-    .c-modal__alert {
-        padding: 0.6rem 0.7rem;
-        gap: 0.5rem;
-        border-radius: 8px;
-        margin-bottom: 0.75rem;
-    }
-    .c-modal__alert-icon {
-        font-size: 0.95rem;
-        margin-top: 0.05rem;
-    }
-    .c-modal__alert-text {
-        font-size: 0.78rem;
-        line-height: 1.4;
-    }
-    .c-modal__alert-steps {
-        font-size: 0.78rem;
-        margin-left: 0.75rem;
-        line-height: 1.4;
-    }
-    .c-modal__alert-steps li {
-        margin-bottom: 0.1rem;
-    }
-    .c-modal__meta {
-        gap: 0.35rem;
-        padding-top: 0.35rem;
-    }
-    .c-modal__footer {
-        padding: 0.6rem 1rem;
-        border-radius: 0 0 12px 12px;
-    }
-    .c-modal__note {
-        font-size: 0.75rem;
-    }
-    .c-platform-tabs {
-        margin-bottom: 0.875rem;
-    }
-    .c-platform-tab {
-        font-size: 0.82rem;
-        padding: 0.5rem 0.5rem;
-        gap: 0.35rem;
-    }
+}
+
+.c-modal__steps li strong {
+    overflow-wrap: break-word;
 }
 
 /* Very small screens - tighten modal steps so short instructions use fewer lines */
+
 @media (max-width: 420px) {
     .c-modal__body {
         padding: 0.65rem 0.75rem;
@@ -3528,16 +3431,6 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 /* =============================================
    ADSENSE LAYOUT SYSTEM
    ============================================= */
-.ad-unit-wrapper {
-    width: 100%;
-    max-width: 100%;
-    margin: 1.25rem auto;
-    padding: 0.65rem 0.75rem;
-    border: 1px dashed color-mix(in srgb, var(--border-color) 80%, transparent);
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--bg-tertiary) 90%, transparent);
-    overflow: hidden;
-}
 
 .ad-label {
     margin: 0 0 0.4rem;
@@ -3575,6 +3468,7 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
 /* =============================================
    ADBLOCK RECOVERY SOFT-WALL
    ============================================= */
+
 .adblock-softwall {
     position: fixed;
     inset: 0;
@@ -3671,4 +3565,175 @@ button[onclick*="idleGame/idlegame.html"]:has(.c-btn__desc) {
     to {
         opacity: 1;
     }
+}
+
+[data-theme='dark']
+
+
+@media (max-width: 520px) {
+  
+
+  
+}
+
+/* Buttons inside the portfolio tab bar */
+
+
+/* ── Mobile: stack the tab buttons vertically ── */
+@media (max-width: 520px) {
+    
+
+    
+}
+
+
+/* ── Extracted inline styles ── */
+.u-inline-1-ins-class-adsbygoogle-js-adsb {
+    <ins
+            class="adsbygoogle js-adsbygoogle"
+            style="display: block"
+            data-ad-client="ca-pub-8418485814964449"
+            data-ad-slot="6531017850"
+            data-ad-format="auto"
+            data-full-width-responsive="true"
+          >;
+}
+.u-inline-2-div-class-active-c-portfolio {
+    <div class= active"c-portfolio-tab-panel" data-tab-content="convert" style="display: block;">;
+}
+.u-inline-3-div-class-c-portfolio-tab-pan {
+    <div class="c-portfolio-tab-panel" data-tab-content="releases" style="display: none;">;
+}
+.u-inline-4-div-class-c-portfolio-tab-pan {
+    <div class="c-portfolio-tab-panel" data-tab-content="bitplayer" style="display: none;">;
+}
+.u-inline-5-div-class-c-portfolio-tab-pan {
+    <div class="c-portfolio-tab-panel" data-tab-content="lofi" style="display: none;">;
+}
+.u-inline-6-div-class-c-portfolio-tab-pan {
+    <div class="c-portfolio-tab-panel" data-tab-content="demo" style="display: none;">;
+}
+.u-inline-7-ins-class-adsbygoogle-js-adsb {
+    <ins
+            class="adsbygoogle js-adsbygoogle"
+            style="display: block"
+            data-ad-client="ca-pub-8418485814964449"
+            data-ad-slot="7822007431"
+            data-ad-format="auto"
+            data-full-width-responsive="true"
+          >;
+}
+.u-inline-8-ins-class-adsbygoogle-js-adsb {
+    <ins
+            class="adsbygoogle js-adsbygoogle"
+            style="display: block; text-align: center"
+            data-ad-layout="in-article"
+            data-ad-format="fluid"
+            data-ad-client="ca-pub-8418485814964449"
+            data-ad-slot="6382844046"
+          >;
+}
+.u-inline-9-ins-class-adsbygoogle-js-adsb {
+    <ins
+            class="adsbygoogle js-adsbygoogle"
+            style="display: block"
+            data-ad-client="ca-pub-8418485814964449"
+            data-ad-slot="6531017850"
+            data-ad-format="auto"
+            data-full-width-responsive="true"
+          <img class="spire-bg-light" src="images/spire-light.jpeg" alt="Quiz The Spire background illustration in light mode"
+      <div class="ad-unit-wrapper ad-slot-multiplex" aria-label="Sponsored recommendations">;
+}
+
+
+/* Buttons inside the tab bar: don't grow, just sit naturally */
+
+
+/* ── Mobile: 2-per-row grid, full-stack only on very small phones ── */
+@media (max-width: 560px) {
+    
+
+    
+}
+
+/* Very small phones: single column */
+@media (max-width: 340px) {
+    
+}
+
+/* Tab panel visibility */
+
+
+/* ── Portfolio tab bar ─────────────────────────────────────────── */
+.c-portfolio-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(44, 76, 124, 0.1);
+    border-radius: 999px;
+    padding: 6px 10px;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04);
+    max-width: fit-content;
+    margin: 0.75rem auto 1rem;
+    box-sizing: border-box;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+[data-theme="dark"] .c-portfolio-tabs,
+.theme-dark .c-portfolio-tabs {
+    background: rgba(15, 17, 18, 0.94);
+    border-color: rgba(96, 165, 250, 0.12);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Buttons inside the tab bar: don't grow, just sit naturally */
+.c-portfolio-tabs .c-nav-btn {
+    flex: 0 0 auto;
+}
+
+/* ── Mobile: 2-per-row grid, full-stack only on very small phones ── */
+@media (max-width: 560px) {
+    .c-portfolio-tabs {
+        /* Switch from pill to rounded rect */
+        border-radius: 18px;
+        padding: 6px 8px;
+        /* Use a 2-column grid so buttons sit 2-per-row */
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        max-width: calc(100% - 2rem);
+        width: calc(100% - 2rem);
+        gap: 6px;
+    }
+
+    .c-portfolio-tabs .c-nav-btn {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+        border-radius: 10px;
+    }
+
+    /* Odd last button spans both columns (e.g. Demo as 5th button) */
+    .c-portfolio-tabs .c-nav-btn:last-child:nth-child(odd) {
+        grid-column: 1 / -1;
+    }
+}
+
+/* Very small phones: single column */
+@media (max-width: 340px) {
+    .c-portfolio-tabs {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Tab panel visibility */
+.c-portfolio-tab-panel {
+    display: none;
+}
+
+.c-portfolio-tab-panel.active {
+    display: block;
 }

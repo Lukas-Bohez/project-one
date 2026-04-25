@@ -152,7 +152,7 @@ const testServoMovement = async () => {
 const initIndexPage = () => {
     listenToButtons();
     markInitializationSuccess();
-    showPortfolioTab('overview');
+    showPortfolioTab('convert');
 
     initialData = getInitialPlaceholderData();
     showSensorData(
@@ -551,3 +551,27 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add modal functionality here if needed
     }
 });
+
+
+/* Force convert as default portfolio sub-tab on load */
+(function () {
+  function initPortfolioTabs() {
+    var buttons = document.querySelectorAll('.c-portfolio-tab-btn');
+    var panels  = document.querySelectorAll('.c-portfolio-tab-panel');
+    if (!buttons.length) return;
+    var activeBtn = document.querySelector('.c-portfolio-tab-btn.active');
+    if (!activeBtn || activeBtn.getAttribute('data-tab') === 'overview') {
+      buttons.forEach(function (b) { b.classList.remove('active'); });
+      panels.forEach(function (p) { p.classList.remove('active'); p.style.display = 'none'; });
+      var cb = document.querySelector('.c-portfolio-tab-btn[data-tab="convert"]');
+      var cp = document.querySelector('.c-portfolio-tab-panel[data-tab-content="convert"]');
+      if (cb) { cb.classList.add('active'); }
+      if (cp) { cp.classList.add('active'); cp.style.display = 'block'; }
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPortfolioTabs);
+  } else {
+    initPortfolioTabs();
+  }
+})();
