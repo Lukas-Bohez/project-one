@@ -53,9 +53,9 @@
     <link rel="dns-prefetch" href="//pagead2.googlesyndication.com" />
     <link rel="dns-prefetch" href="//googleads.g.doubleclick.net" />
     
-    <!-- Preload hero images (WebP with high priority) -->
-    <link rel="preload" href="images/spire-light.webp" as="image" type="image/webp" fetchpriority="high" />
-    <link rel="preload" href="images/spire-dark.webp" as="image" type="image/webp" fetchpriority="high" />
+    <!-- Preload hero images (WebP with high priority, media-query aware) -->
+    <link rel="preload" href="images/spire-light.webp" as="image" type="image/webp" media="(prefers-color-scheme: light)" fetchpriority="high" />
+    <link rel="preload" href="images/spire-dark.webp" as="image" type="image/webp" media="(prefers-color-scheme: dark)" fetchpriority="high" />
     
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
@@ -426,6 +426,9 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://quizthespire.com/" />
     <meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg" />
+    <meta property="og:image:width" content="1920" />
+    <meta property="og:image:height" content="1080" />
+    <meta property="og:image:alt" content="Quiz The Spire hero background" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Quiz The Spire v10.2.3 - Live Multiplayer Quizzes" />
     <meta
@@ -493,12 +496,12 @@
         </div>
         <div class="hero-stat-divider" aria-hidden="true"></div>
         <div class="hero-stat hero-stat--compact">
-          <span class="hero-stat-number" data-target="5" data-suffix=" apps">0</span>
+          <span class="hero-stat-number" data-target="5" data-suffix="">0</span>
           <p class="hero-stat-label">Free tools</p>
         </div>
         <div class="hero-stat-divider" aria-hidden="true"></div>
         <div class="hero-stat hero-stat--compact">
-          <span class="hero-stat-number" data-target="1" data-suffix=" dev">0</span>
+          <span class="hero-stat-number" data-target="1" data-suffix="">0</span>
           <p class="hero-stat-label">Solo built</p>
         </div>
       </div>
@@ -1640,6 +1643,7 @@
     <script src="js/ad-fallback.js" defer></script>
     <script src="js/stat-counter-animation.js" defer></script>
     <script src="js/branded-ad-fallback.js" defer></script>
+    <script src="js/sticky-download-cta.js" defer></script>
     <script src="js/homepage-enhancements.js" defer></script>
     <script src="js/platform-download-order.js" defer></script>
     <script src="js/version-sync.js" defer></script>
