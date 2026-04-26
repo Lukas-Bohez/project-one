@@ -614,17 +614,17 @@
 
           <section class="c-proof-gallery" aria-label="Real app screenshots">
             <div class="c-proof-gallery__header">
-              <h3 class="c-proof-gallery__title">Real App Screenshots</h3>
+              <h3 class="c-proof-gallery__title">See it in action</h3>
               <p class="c-proof-gallery__subtitle">
                 Live UI captures from Convert The Spire Reborn across search, playlists, settings,
                 and media playback. Built for easy use, 4K/8K-quality downloads, and full
                 customization.
               </p>
-              <div class="c-proof-gallery__highlights" aria-label="App highlights">
-                <span class="c-proof-gallery__pill">100+ video playlists supported</span>
-                <span class="c-proof-gallery__pill">4K / 8K downloads</span>
-                <span class="c-proof-gallery__pill">Full customization</span>
-                <span class="c-proof-gallery__pill">Easy to use</span>
+              <div class="c-proof-gallery__highlights c-product-card__badge-row" aria-label="App highlights">
+                <span class="c-badge c-badge--blue">100+ video playlists supported</span>
+                <span class="c-badge c-badge--green">4K / 8K downloads</span>
+                <span class="c-badge c-badge--purple">Full customization</span>
+                <span class="c-badge c-badge--slate">Easy to use</span>
               </div>
             </div>
             <div class="c-proof-gallery__grid">
@@ -674,6 +674,27 @@
                 <button
                   type="button"
                   class="c-proof-gallery__expand"
+                  aria-label="Open Quick new-song downloads screenshot"
+                  data-proof-open
+                >
+                  <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
+                </button>
+                <img
+                  src="images-app/downloadNewSongsEassily.png"
+                  alt="Download queue showing quick new-song additions"
+                  loading="lazy"
+                  decoding="async"
+                  data-proof-image
+                />
+                <figcaption>
+                  <strong>Quick new-song downloads</strong>
+                  <span>Add fresh tracks fast and keep download progress organized.</span>
+                </figcaption>
+              </figure>
+              <figure class="c-proof-gallery__item">
+                <button
+                  type="button"
+                  class="c-proof-gallery__expand"
                   aria-label="Open Extensive settings screenshot"
                   data-proof-open
                 >
@@ -695,6 +716,27 @@
                 <button
                   type="button"
                   class="c-proof-gallery__expand"
+                  aria-label="Open Built-in guide screenshot"
+                  data-proof-open
+                >
+                  <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
+                </button>
+                <img
+                  src="images-app/fullGuideWithInfo.png"
+                  alt="Built-in guide and onboarding information"
+                  loading="lazy"
+                  decoding="async"
+                  data-proof-image
+                />
+                <figcaption>
+                  <strong>Built-in guide</strong>
+                  <span>Learn every feature with clear in-app documentation and tips.</span>
+                </figcaption>
+              </figure>
+              <figure class="c-proof-gallery__item">
+                <button
+                  type="button"
+                  class="c-proof-gallery__expand"
                   aria-label="Open Integrated media player screenshot"
                   data-proof-open
                 >
@@ -710,6 +752,27 @@
                 <figcaption>
                   <strong>Integrated media player</strong>
                   <span>Preview, play, and manage downloads without switching tools.</span>
+                </figcaption>
+              </figure>
+              <figure class="c-proof-gallery__item">
+                <button
+                  type="button"
+                  class="c-proof-gallery__expand"
+                  aria-label="Open Torrent workflow screenshot"
+                  data-proof-open
+                >
+                  <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
+                </button>
+                <img
+                  src="images-app/fullTorrentingFunctionality.png"
+                  alt="Torrent workflow with legal use guidance"
+                  loading="lazy"
+                  decoding="async"
+                  data-proof-image
+                />
+                <figcaption>
+                  <strong>Torrent workflow</strong>
+                  <span>Manage torrent tasks with legal-use guidance and clear status tracking.</span>
                 </figcaption>
               </figure>
             </div>
@@ -974,16 +1037,6 @@
                 >ConvertTheSpireReborn.aab</a
               >
               - 157 MB
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-box"></i>
-              <a
-                href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/download/v10.2.3/zaab.aab"
-                target="_blank"
-                rel="noopener noreferrer"
-                >zaab.aab</a
-              >
-              - 158 MB
             </li>
             <li class="c-feature-list__item">
               <i class="fa-solid fa-box"></i>
@@ -1562,7 +1615,7 @@
 
     <footer class="c-footer">
       <p class="c-footer__about">
-        Built and maintained by one indie developer, <strong>Lukas Bohez</strong>. 1000+ downloads
+        Built and maintained by one indie developer, <strong>Lukas Bohez</strong>. 950+ downloads
         across 95+ countries and counting. <small>Last updated: April 2026</small>
         <!-- UPDATE_STATS -->
       </p>

@@ -15,12 +15,18 @@
     '<h4 class="proof-lightbox__title">Screenshot preview</h4>' +
     '<button type="button" class="proof-lightbox__close" aria-label="Close preview">×</button>' +
     '</div>' +
-    '<div class="proof-lightbox__media"><img alt="" decoding="async" /></div>' +
+    '<div class="proof-lightbox__media">' +
+    '<button type="button" class="proof-lightbox__nav proof-lightbox__nav--prev" aria-label="Previous screenshot">‹</button>' +
+    '<img alt="" decoding="async" />' +
+    '<button type="button" class="proof-lightbox__nav proof-lightbox__nav--next" aria-label="Next screenshot">›</button>' +
+    '</div>' +
     '<div class="proof-lightbox__caption"></div>' +
     '</div>';
   document.body.appendChild(dialog);
 
   var closeButton = dialog.querySelector('.proof-lightbox__close');
+  var prevButton = dialog.querySelector('.proof-lightbox__nav--prev');
+  var nextButton = dialog.querySelector('.proof-lightbox__nav--next');
   var previewImage = dialog.querySelector('img');
   var caption = dialog.querySelector('.proof-lightbox__caption');
   var items = Array.prototype.slice.call(gallery.querySelectorAll('.c-proof-gallery__item'));
@@ -48,13 +54,13 @@
     dialog.classList.add('is-open');
     dialog.setAttribute('aria-hidden', 'false');
     closeButton.focus();
-    document.documentElement.style.overflow = 'hidden';
+    document.documentElement.classList.add('proof-lightbox-open');
   }
 
   function close() {
     dialog.classList.remove('is-open');
     dialog.setAttribute('aria-hidden', 'true');
-    document.documentElement.style.overflow = '';
+    document.documentElement.classList.remove('proof-lightbox-open');
     if (lastActive && typeof lastActive.focus === 'function') {
       lastActive.focus();
     }
@@ -79,6 +85,12 @@
   });
 
   closeButton.addEventListener('click', close);
+  prevButton.addEventListener('click', function () {
+    step(-1);
+  });
+  nextButton.addEventListener('click', function () {
+    step(1);
+  });
 
   document.addEventListener('keydown', function (event) {
     if (!dialog.classList.contains('is-open')) return;
