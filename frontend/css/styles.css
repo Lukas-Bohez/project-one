@@ -366,10 +366,14 @@ body {
 }
 
 .hero-stat {
-    flex: 1 1 140px;
-    min-width: 140px;
+    flex: 1;
+    min-width: 0;
     padding: 0.55rem 0.85rem;
     text-align: center;
+}
+
+.hero-stat:not(:last-child) {
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .hero-stat-number {
@@ -379,14 +383,6 @@ body {
     font-weight: 800;
     letter-spacing: -0.04em;
     color: #fff;
-}
-
-.hero-stat-number::after {
-    content: attr(data-suffix);
-    font-size: 0.82rem;
-    font-weight: 700;
-    margin-left: 0.1rem;
-    color: rgba(191, 219, 254, 0.92);
 }
 
 .hero-stat-label {
@@ -401,7 +397,8 @@ body {
 .hero-stat-divider {
     align-self: stretch;
     width: 1px;
-    background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.18), transparent);
+    background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.28), transparent);
+    display: none;
 }
 
 .hero-stat--compact {
@@ -2184,6 +2181,73 @@ idlegame.html"]:has(.c-btn__desc) {
 
 .c-vault-release .c-product-card__reassurance {
     text-align: center;
+}
+
+.c-proof-gallery {
+    margin: 1rem 0 1.35rem;
+    padding: 0.9rem;
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: linear-gradient(165deg, rgba(15, 23, 42, 0.18), rgba(30, 41, 59, 0.08));
+}
+
+.c-proof-gallery__header {
+    margin-bottom: 0.75rem;
+}
+
+.c-proof-gallery__title {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+}
+
+.c-proof-gallery__subtitle {
+    margin: 0.35rem 0 0;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: var(--text-secondary);
+}
+
+.c-proof-gallery__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+}
+
+.c-proof-gallery__item {
+    margin: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    background: rgba(15, 23, 42, 0.36);
+}
+
+.c-proof-gallery__item img {
+    display: block;
+    width: 100%;
+    height: 132px;
+    object-fit: cover;
+}
+
+.c-proof-gallery__item figcaption {
+    padding: 0.45rem 0.55rem 0.5rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: rgba(226, 232, 240, 0.94);
+}
+
+@media (max-width: 640px) {
+    .c-proof-gallery__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .c-proof-gallery__item img {
+        height: 160px;
+    }
 }
 
 /* Feature list */

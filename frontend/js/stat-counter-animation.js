@@ -1,7 +1,7 @@
 /**
  * Stat Counter Animation
  * Animates the hero stat numbers from 0 to their target values
- * Triggers on page load or when stats come into view
+ * Triggers on page load and respects reduced-motion preferences
  */
 (function () {
   'use strict';
@@ -12,8 +12,14 @@
   function animateCounter(element) {
     const target = parseInt(element.dataset.target, 10);
     const suffix = element.dataset.suffix || '';
-    
+
     if (isNaN(target)) return;
+
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) {
+      element.textContent = target + suffix;
+      return;
+    }
 
     const startValue = 0;
     const startTime = Date.now();
@@ -42,7 +48,7 @@
 
   function initializeCounters() {
     const counters = document.querySelectorAll('.hero-stat-number');
-    
+
     if (counters.length === 0) return;
 
     // Add a small delay before starting animations for better UX
