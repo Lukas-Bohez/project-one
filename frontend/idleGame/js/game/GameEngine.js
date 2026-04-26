@@ -3179,6 +3179,27 @@ class GameEngine {
         }
     }
     
+    /**
+     * Rebirth state contract (keep this in sync with implementation):
+     *
+     * PERSISTS:
+     * - city.rebirths (incremented)
+     * - rebirthUpgrades
+     * - achievements
+     * - events.eventsTriggered (counter only)
+     * - research progression
+     * - unlock_* flags
+     * - autoCraft and autoTransport toggles
+     * - cityInventory.finished only when staged total <= threshold
+     *
+     * RESETS (intentional):
+     * - resources, production, workers, processors, traders, transport stats
+     * - city service/building levels and decay progression
+     * - factory buffers and crafting counts
+     * - active/random event runtime state
+     * - temporary/ad/event multipliers and runtime timers
+     * - arcade active session pointers (activeGame/gameStartTime)
+     */
     rebirth() {
         // Get the effective max decay (scaled by rebirth count)
         const effectiveMaxDecay = this.state.city.adjustedMaxDecay || this.state.city.maxDecay;
@@ -3202,6 +3223,29 @@ class GameEngine {
                 return true;
             }
         }
+
+        // Preserve small staged city inventory, but warn before discarding large stockpiles.
+        const cityFinished = this.state.cityInventory?.finished || {};
+        const stagedGoodsTotal = Object.values(cityFinished)
+            .reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
+        const CITY_INVENTORY_PRESERVE_THRESHOLD = 200;
+        let savedCityInventory = null;
+
+        if (stagedGoodsTotal > CITY_INVENTORY_PRESERVE_THRESHOLD) {
+            const confirmed = window.confirm(
+                `You have ${Math.floor(stagedGoodsTotal)} staged city goods. ` +
+                'Rebirthing now will reset this large stockpile. Continue?'
+            );
+            if (!confirmed) {
+                this.showNotification('Rebirth cancelled to protect staged city inventory.');
+                return false;
+            }
+            this.showNotification('Large staged city inventory will be reset this rebirth.');
+        } else if (stagedGoodsTotal > 0) {
+            savedCityInventory = {
+                finished: { ...cityFinished }
+            };
+        }
         
         // 🔒 REBIRTH LOCK: Prevent saves during rebirth process
         if (this.saveManager) {
@@ -3222,6 +3266,8 @@ class GameEngine {
         const savedRebirthUpgrades = { ...this.state.rebirthUpgrades }; // Preserve rebirth upgrades!
         const savedAchievements = { ...this.state.achievements }; // Preserve achievements across rebirth
         const savedEventsTriggered = this.state.events?.eventsTriggered || 0; // Preserve event count
+        const savedAutoCraft = !!this.state.autoCraft;
+        const savedAutoTransport = { ...(this.state.autoTransport || {}) };
         
         // FIX #1: Preserve research across rebirth (prevents re-research requirement)
         const savedResearch = { ...this.state.research };
@@ -3250,7 +3296,7 @@ class GameEngine {
         // Hide any active event banner before reset
         this.hideEventBanner();
         
-        // Reset game completely (including unlocks and research)
+        // Reset game completely. This intentionally reinitializes transient progression/runtime state.
         this.state = this.getInitialState();
         
         // Restore enhanced efficiency
@@ -3259,6 +3305,8 @@ class GameEngine {
         this.state.rebirthUpgrades = savedRebirthUpgrades; // Restore rebirth upgrades!
         this.state.achievements = savedAchievements; // Restore achievements!
         this.state.events.eventsTriggered = savedEventsTriggered; // Restore event count!
+        this.state.autoCraft = savedAutoCraft;
+        this.state.autoTransport = savedAutoTransport;
         
         // FIX #1: Restore research (player progression preserved)
         this.state.research = savedResearch;
@@ -3281,6 +3329,11 @@ class GameEngine {
         this.state.unlock_autocraft_advanced = savedUnlocks.unlock_autocraft_advanced;
         this.state.unlock_autocraft_premium = savedUnlocks.unlock_autocraft_premium;
         console.log('🔓 Unlocks preserved across rebirth');
+
+        if (savedCityInventory) {
+            this.state.cityInventory = savedCityInventory;
+            console.log(`📦 City inventory preserved across rebirth (${Math.floor(stagedGoodsTotal)} staged goods)`);
+        }
         
         // FIX #3: Clean arcade active state (prevents bonus stacking bugs)
         if (this.state.arcade) {
