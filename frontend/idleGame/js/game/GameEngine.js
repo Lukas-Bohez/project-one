@@ -3342,6 +3342,16 @@ class GameEngine {
             console.log('🎮 Arcade: Cleared active game state');
         }
         
+        // 2.2: Event timing reset audit - ensure event state is fully reset per rebirth
+        // Events should not carry over across rebirths to prevent stacking
+        if (this.state.events) {
+            this.state.events.lastEventTime = 0;      // Reset so new events can trigger immediately
+            this.state.events.activeEvent = null;     // Clear active event to avoid lingering effects
+            this.state.events.eventEndTime = 0;       // Clear event timer
+            // Note: eventsTriggered is intentionally preserved above to track total events across rebirths
+            console.log('📅 Events: Timing reset, counter preserved');
+        }
+        
         console.log(`🔄 REBIRTH: After reset, rebirth count is ${this.state.city.rebirths}`);
         
         // Apply starting gold bonus from rebirth upgrades
@@ -3387,6 +3397,12 @@ class GameEngine {
             this.newResourceManager.updateThemeRecipes();
         }
         
+        // 2.5: MarketSystem reset on rebirth - update state reference to fresh post-rebirth state
+        if (this.marketSystem) {
+            this.marketSystem.setState(this.state);
+            console.log('🛍️ MarketSystem: State reference updated to fresh post-rebirth state');
+        }
+        
         // Apply theme
         if (this.themeManager) {
             setTimeout(() => {
@@ -3405,7 +3421,25 @@ class GameEngine {
         this.updateUI();
         
         this.playSound('prestige');
-        this.showNotification(`🔄 Rebirth #${newRebirthCount} - A new chapter begins...`);
+        
+        // 2.1: Rebirth milestone notifications (1, 5, 10, 25, 50, 100)
+        const milestones = [1, 5, 10, 25, 50, 100];
+        if (milestones.includes(newRebirthCount)) {
+            let milestoneMessage = `🎉 REBIRTH MILESTONE #${newRebirthCount}! `;
+            const milestoneRewards = {
+                1: 'You\'ve mastered your first cycle!',
+                5: 'Five rebirths! The cycle accelerates!',
+                10: 'TEN REBIRTHS! You\'re a legend in the making!',
+                25: 'Twenty-five! Your empire transcends time itself!',
+                50: '50 REBIRTHS! The fabric of reality bends to your will!',
+                100: '100 REBIRTHS! YOU ARE INFINITE! THE VOID BOWS BEFORE YOU!'
+            };
+            milestoneMessage += milestoneRewards[newRebirthCount] || '';
+            this.showNotification(milestoneMessage);
+            console.log(`🎯 MILESTONE: Rebirth #${newRebirthCount} achieved!`);
+        } else {
+            this.showNotification(`🔄 Rebirth #${newRebirthCount} - A new chapter begins...`);
+        }
         this.triggerScreenShake();
         this.triggerScreenFlash();
         
