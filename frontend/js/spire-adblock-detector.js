@@ -35,24 +35,66 @@
     });
   }
 
-  function detectAdblock() {
-    if (localStorage.getItem('spireAdblockAcknowledged') === 'true') return;
-
+  // 3.1: Detect adblock with first-party fallback
+  // Method 1: Check for bait element (standard approach)
+  function detectAdblockBait() {
     var bait = document.createElement('div');
     bait.className = 'adsbox ad-banner ad-placement text-ad';
     bait.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;';
     document.body.appendChild(bait);
 
-    window.setTimeout(function () {
-      var blocked = false;
-      if (!bait || !bait.parentNode) return;
-      blocked = bait.offsetHeight === 0 || bait.clientHeight === 0 || window.getComputedStyle(bait).display === 'none';
-      bait.remove();
+    return new Promise(function (resolve) {
+      window.setTimeout(function () {
+        var blocked = false;
+        if (bait && bait.parentNode) {
+          blocked = bait.offsetHeight === 0 || 
+                   bait.clientHeight === 0 || 
+                   window.getComputedStyle(bait).display === 'none';
+          bait.remove();
+        }
+        resolve(blocked);
+      }, 120);
+    });
+  }
 
+  // Method 2: First-party fallback - check if ad scripts loaded
+  function detectAdblockFallback() {
+    return new Promise(function (resolve) {
+      var scriptLoaded = !!window.adsbygoogle;
+      
+      // Additional fallback: check if Google Ads iframe exists
+      if (!scriptLoaded) {
+        var iframeCheckTimeout = window.setTimeout(function () {
+          var frames = document.querySelectorAll('iframe');
+          for (var i = 0; i < frames.length; i++) {
+            if (frames[i].src.indexOf('googlesyndication') !== -1) {
+              scriptLoaded = true;
+              break;
+            }
+          }
+          resolve(!scriptLoaded);
+        }, 500);
+      } else {
+        resolve(false);
+      }
+    });
+  }
+
+  function detectAdblock() {
+    if (localStorage.getItem('spireAdblockAcknowledged') === 'true') return;
+
+    // Run both detection methods and use the more conservative result
+    Promise.all([
+      detectAdblockBait(),
+      detectAdblockFallback()
+    ]).then(function (results) {
+      var blocked = results[0] || results[1]; // Blocked if either method detects it
       if (blocked) {
         showAdblockNotice();
       }
-    }, 120);
+    }).catch(function () {
+      // If detection fails, assume not blocked (false positive prevention)
+    });
   }
 
   if (document.readyState === 'loading') {

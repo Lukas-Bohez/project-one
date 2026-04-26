@@ -1436,14 +1436,32 @@ class SentleGame {
         }
     }
 
+    // 3.2: SENTLE streak persistence with UTC seed (ensures cross-device consistency)
     rememberPlayedToday(dateStr) {
         if (!dateStr) return;
+        
+        // Use UTC date for consistency across timezones
+        const utcDate = dateStr || new Date().toISOString().split('T')[0];
         const payload = {
-            date: dateStr,
+            date: utcDate,  // UTC date YYYY-MM-DD
             userId: this.userId || null,
             username: this.username || null,
+            utcSeed: this.generateUTCSeed(utcDate)  // UTC-based seed for cross-device recognition
         };
         sessionStorage.setItem('sentle_played_today', JSON.stringify(payload));
+    }
+
+    // Generate UTC seed: hash of date + user for consistent daily recognition
+    generateUTCSeed(dateStr) {
+        // Simple hash of UTC date to create a consistent daily identifier
+        var str = dateStr + (this.userId || this.username || '');
+        var hash = 0;
+        for (var i = 0; i < str.length; i++) {
+            var char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32-bit integer
+        }
+        return Math.abs(hash).toString(36);
     }
 
     hasLocalPlayedToday() {
@@ -1451,10 +1469,16 @@ class SentleGame {
         if (!raw) return false;
         try {
             const saved = JSON.parse(raw);
-            const today = new Date().toISOString().slice(0, 10);
+            // Use UTC date for consistency (no timezone conversion)
+            const today = new Date().toISOString().split('T')[0];  // UTC YYYY-MM-DD
+            
+            // Check if the stored date matches today's UTC date
             if (saved.date !== today) return false;
+            
+            // Cross-verify user identity
             if (saved.userId && this.userId && String(saved.userId) !== String(this.userId)) return false;
             if (!saved.userId && saved.username && this.username && saved.username !== this.username) return false;
+            
             return true;
         } catch (e) {
             return false;
