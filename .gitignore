@@ -71,6 +71,11 @@ backend/.jwt_secret
 *.crt
 frontend/cert/*.pem
 
+# Audit reports and performance metrics
+lh-*.json
+lighthouse-report.json
+flake-report*.txt
+
 # OS / editor noise
 .DS_Store
 Thumbs.db
@@ -78,6 +83,7 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
 *~
 
 # App-specific runtime files

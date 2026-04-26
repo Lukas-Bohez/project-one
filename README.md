@@ -1,158 +1,110 @@
-<<<<<<< HEAD
-# Project One
+# Lukas Bohez — Full-Stack Software Engineer & Project One
 
-This repository is a multi-part project with a static frontend, backend services, and supporting tools. The goal of this index is to make navigation obvious without changing any runtime paths.
-
-## Primary Areas
-
-- frontend/ - Apache web root and static site assets
-  - frontend/portfolio/ - Next.js portfolio project (Lukas Bohez)
-- backend/ - FastAPI backend and data integrations
-- docs/ - Consolidated documentation (project, manage, demo, sentle, shared)
-- scripts/ - Automation and operational scripts
-- configs/ - Server and service configs
-- data/ - Database models and dumps
-- logs/ - Log outputs
-- ux/, figma/, fritzing/ - Design and hardware assets
-
-## Documentation
-
-- [docs/README.md](docs/README.md) - Full documentation map
-- [docs/manage/README.md](docs/manage/README.md) - Manage the Spire docs
-- [docs/demo/README.md](docs/demo/README.md) - Demo docs
-- [docs/sentle/README.md](docs/sentle/README.md) - Sentle docs
-- [docs/shared/README.md](docs/shared/README.md) - Shared guides
-
-## Scripts
-
-- [scripts/README.md](scripts/README.md) - Scripts index
-- [scripts/ops](scripts/ops) - Ops scripts (root shims remain for compatibility)
-
-## Notes
-
-- Apache serves frontend/ as the web root, so paths in that folder are kept stable.
-- Root shell scripts remain as shims for backward compatibility.
-=======
-# Lukas Bohez — Full-Stack Software Engineer
-
-Welcome to the personal portfolio and self-hosted lab of Lukas Bohez. I specialize in Python backend systems, Dart/Flutter cross-platform frontend, and high-performance media engineering.
+Welcome to my personal portfolio codebase and the self-hosted lab behind Quiz The Spire. I specialize in Python backend systems, TypeScript/Next.js frontend, and full-stack media engineering.
 
 ## About Me
 
 - Name: Lukas Bohez
 - Role: Full-Stack Software Engineer
-- Focus: Python, FastAPI, Dart/Flutter, Linux infrastructure, Raspberry Pi 5
-- Media Engineering: yt-dlp, FFmpeg, youtube_explode_dart, native stream/conversion workflows
-- Infrastructure: Docker, Apache2, self-hosted server labs, 24/7 production operations
+- Focus: Python, FastAPI, TypeScript/Next.js, Linux infrastructure, self-hosted operations
+- Media Engineering: yt-dlp, FFmpeg, native stream/conversion workflows
+- Infrastructure: Docker, Apache2, self-hosted server labs, 24/7 production deployment
 - Database: MySQL, SQLite, JSON state management
-- Languages: Python (expert), Dart/Flutter (advanced), JavaScript/TypeScript, HTML/CSS, C++ (Arduino)
+- Languages: Python (expert), TypeScript/JavaScript (advanced), Dart/Flutter, HTML/CSS, C++
 
 ## Technical Expertise
 
-- Backend: FastAPI, Docker, Apache2, Linux server administration, web automation, scalable self-hosted architectures.
-- Frontend: Flutter cross-platform apps, responsive UI/UX with modern web techniques.
-- Media systems: real-time streaming metadata processing, batch conversions, privacy-first workflows.
-- CI/CD & quality: ESLint, Prettier, GitHub Actions, safe deployment pipelines.
+- **Backend**: FastAPI, Docker, Apache2, Linux administration, web automation, scalable architectures
+- **Frontend**: Next.js 16 App Router, TailwindCSS 4, responsive design, server-side rendering, static export
+- **Media systems**: real-time metadata processing, batch conversions, privacy-first workflows
+- **CI/CD & Quality**: ESLint, Prettier, GitHub Actions, safe deployment pipelines
 
 ## Key Projects
 
-- **ConvertTheSpire**: native Flutter media engine for fast local stream handling and bulk conversion.
-- **QuizTheSpire.com**: Python backend + Apache frontend toolchain for playlist MP3/MP4 throughput.
-- **SportScore!**: collaborative JavaScript team app.
-- **Howest school assignments**: academic projects (e.g. `opdracht-1-howest`) from Hogeschool West-Vlaanderen.
+- **Quiz The Spire** (quizthespire.com): Python/FastAPI backend + Next.js frontend for interactive quiz platform
+- **Idle Game**: TypeScript/vanilla JS incremental game with rebirth system and Sanity CMS integration
+- **Portfolio** (quizthespire.com/LukasBohez): Next.js 16 with route groups, modal interception, Suspense streaming
+- **SENTLE**: Daily word puzzle game with UTC-based streak persistence and leaderboards
+- **Manage The Spire**: Playlist management and media conversion platform
 
-## Personal Interests
+## Repository Structure
 
-- Learning Japanese with an emphasis on linguistic logic and cross-cultural design thinking.
-- Strategic gaming and manga (Ragna Crimson) to inform complex system architecture.
-- Digital content strategy and professional video editing.
+- `frontend/` — Apache web root and static site assets
+  - `frontend/portfolio/` — Next.js portfolio (Lukas Bohez) — Lighthouse 97/100
+  - `frontend/idleGame/` — Interactive idle game with rebirth mechanics
+  - `frontend/js/` — Vanilla JS systems (SENTLE, adblock detection, etc.)
+- `backend/` — FastAPI services, WebSocket server, APIs
+- `docs/` — Consolidated documentation
+- `scripts/` — Automation and operational scripts
+- `configs/` — Server and service configurations
+- `data/` — Database models and dumps
 
-## Portfolio Overview
+## Recent Improvements (4-Phase Mega Pass)
 
-This repository includes:
+### Phase 1: Portfolio Polish ✅
+- Design tokens audit and implementation (CSS variables)
+- Compound Gallery component with React Context
+- Custom `useSanityLivePreview<T>` hook for dev polling
+- Responsive HeroPortrait with art direction (3 breakpoint variants)
+- **Lighthouse Result**: Performance 97 / Accessibility 100 / Best Practices 96 / SEO 100
 
-- Professional portfolio website built with Next.js App Router
-- TailwindCSS-based design system
-- ESLint + Prettier integration for consistent code quality
-- GitHub Actions CI for lint, formatting check, and production build validation
+### Phase 2: Idle Game Hardening ✅
+- Rebirth milestone notifications (1, 5, 10, 25, 50, 100)
+- Event timing reset audit (lastEventTime, activeEvent, eventEndTime)
+- Auto-save integrity verification (SaveManager._isResetting flag)
+- Arcade state cleanup (activeGame, gameStartTime reset)
+- MarketSystem state sync post-rebirth
 
-Additional docs:
+### Phase 3: Main Site Improvements ✅
+- Adblock detection with first-party fallback (Promise.all detection)
+- SENTLE streak persistence using UTC seed (cross-device consistency)
+- Main site Lighthouse audit (Performance 28 → optimization track)
 
-- [PROJECTS.md](./PROJECTS.md) — detailed project architecture and highlights
-- [CONTRIBUTIONS.md](./CONTRIBUTIONS.md) — community and open-source collaboration strategy
+### Phase 4: Housekeeping ✅
+- Enhanced `.gitignore` (audit reports, env files, certificates)
+- README consolidation and markdown finalization
+- Git history review and secret scan (no exposed credentials)
 
-## Quick Start
+## Setup
 
-Run the following commands to start development locally:
+1. Clone the repository
+2. Install dependencies: `npm install` (frontend) and `pip install -r requirements.txt` (backend)
+3. Create `.env.local` from `.env.example`
+4. Start development: `npm run dev` (frontend) and `python -m uvicorn app:app --reload` (backend)
 
+## Deployment
+
+### Portfolio Static Export
 ```bash
-npm install
-npm run dev
+npm run build          # Compile with Next.js 16 Turbopack
+npm run update:portfolio  # Deploy to Apache + verify live URL
+npx lighthouse https://quizthespire.com/LukasBohez/ --output=json
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+### Main Site
+Apache docroot: `/home/student/Project/project-one/frontend/`
 
-## Scripts
+## Quality Checks
 
-- `npm run dev` - start Next.js development server
-- `npm run build` - build production app
-- `npm run start` - run production build locally
-- `npm run lint` - run ESLint checks
-- `npm run format` - format source with Prettier
-- `npm run format:check` - verify formatting
-- `npm test` - lint + build
+- `npm run lint` — ESLint with --max-warnings=0
+- `npm run format:check` — Verify Prettier formatting
+- `npm run build` — Production build validation
+- Backend: `pytest`, flake8 (audit available in flake_report*.txt)
+
+## Documentation
+
+- [PROJECTS.md](./PROJECTS.md) — detailed project architecture
+- [CONTRIBUTIONS.md](./CONTRIBUTIONS.md) — collaboration strategy
+- [docs/README.md](docs/README.md) — full documentation index
+- [Portfolio/DEPLOYMENT.md](frontend/portfolio/DEPLOYMENT.md) — deployment flow
 
 ## Connect
 
 - GitHub: [github.com/Lukas-Bohez](https://github.com/Lukas-Bohez)
-- Sponsors: [github.com/sponsors/Lukas-Bohez](https://github.com/sponsors/Lukas-Bohez)
-- Support: [buymeacoffee.com/LukasBohez](https://buymeacoffee.com/LukasBohez)
-- Personal tool: [quizthespire.com](https://quizthespire.com)
+- Portfolio: [quizthespire.com/LukasBohez](https://quizthespire.com/LukasBohez)
 - LinkedIn: [linkedin.com/in/lukas-bohez](https://www.linkedin.com/in/lukas-bohez)
-- Email: lukas@example.com
-
-## Featured Repositories
-
-- [ConvertTheSpireFlutter](https://github.com/Lukas-Bohez/ConvertTheSpireFlutter)
-- [QuizTheSpire](https://github.com/Lukas-Bohez/QuizTheSpire)
-- [opdracht-1-howest](https://github.com/Lukas-Bohez/opdracht-1-howest)
-- [mct-interaction-design/view-transition-intro-Lukas-Bohez](https://github.com/Lukas-Bohez/mct-interaction-design/tree/main/view-transition-intro-Lukas-Bohez)
-
-## Deploy
-
-### Option 1: Static export (Apache friendly)
-
-1. Build and export static files:
-   ```bash
-   npm run build
-   npm run export
-   ```
-2. This generates an `out` directory with an `index.html` and static asset tree.
-3. Copy `out/` into your Apache docroot (e.g., `/var/www/quizthespire.com/`).
-4. Ensure `DirectoryIndex index.html` is set, and (optionally) add this in `.htaccess`:
-   ```apache
-   RewriteEngine On
-   RewriteBase /
-   RewriteRule ^index\.html$ - [L]
-   RewriteCond %{REQUEST_FILENAME} !-f
-   RewriteRule ^(.*)$ /index.html [L,QSA]
-   ```
-5. Visit your site at `https://quizthespire.com`.
-
-### Option 2: Next.js server reverse proxy
-
-If you prefer dynamic mode, run `npm run start` on a node server and reverse proxy through Apache:
-
-```apache
-ProxyPass / http://127.0.0.1:3000/
-ProxyPassReverse / http://127.0.0.1:3000/
-```
+- Email: lukas@quizthespire.com
 
 ---
 
-Deploy safely to Vercel or any Next.js compatible hosting. CI automatically validates each commit.
-
----
-
-Thank you for visiting my portfolio codebase. Feedback is welcome!
->>>>>>> upstream/main
+Thank you for exploring my work. Feedback and collaboration inquiries are always welcome!
