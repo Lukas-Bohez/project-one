@@ -52,6 +52,11 @@
     <link rel="preconnect" href="https://googleads.g.doubleclick.net" crossorigin />
     <link rel="dns-prefetch" href="//pagead2.googlesyndication.com" />
     <link rel="dns-prefetch" href="//googleads.g.doubleclick.net" />
+    
+    <!-- Preload hero images (WebP with high priority) -->
+    <link rel="preload" href="images/spire-light.webp" as="image" type="image/webp" fetchpriority="high" />
+    <link rel="preload" href="images/spire-dark.webp" as="image" type="image/webp" fetchpriority="high" />
+    
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
       rel="stylesheet"
@@ -448,18 +453,26 @@
   <body class="theme-blue">
     <a href="#main-content" class="c-skip-link">Skip to main content</a>
 
-    <!-- Dynamic spire background -->
+    <!-- Dynamic spire background with WebP optimization -->
     <div class="spire-background">
-      <img class="spire-bg-light" src="images/spire-light.jpeg" alt="Quiz The Spire background illustration in light mode"
-        loading="eager"
-        width="1920"
-        height="1080"
-      />
-      <img class="spire-bg-dark" src="images/spire-dark.jpeg" alt="Quiz The Spire background illustration in dark mode"
-        loading="eager"
-        width="1920"
-        height="1080"
-      />
+      <picture>
+        <source srcset="images/spire-light.webp" type="image/webp" />
+        <img class="spire-bg-light" src="images/spire-light.jpeg" alt="Quiz The Spire background illustration in light mode"
+          loading="eager"
+          fetchpriority="high"
+          width="1920"
+          height="1080"
+        />
+      </picture>
+      <picture>
+        <source srcset="images/spire-dark.webp" type="image/webp" />
+        <img class="spire-bg-dark" src="images/spire-dark.jpeg" alt="Quiz The Spire background illustration in dark mode"
+          loading="eager"
+          fetchpriority="high"
+          width="1920"
+          height="1080"
+        />
+      </picture>
     </div>
 
     <header class="c-header">
@@ -1412,12 +1425,18 @@
             data-ad-slot="6531017850"
             data-ad-format="auto"
             data-full-width-responsive="true"
-          <img class="spire-bg-light" src="images/spire-light.jpeg" alt="Quiz The Spire background illustration in light mode"
+          ></ins>
+        </div>
+      </div>
+
       <div class="ad-unit-wrapper ad-slot-multiplex" aria-label="Sponsored recommendations">
         <p class="ad-label">Sponsored</p>
         <ins
           class="adsbygoogle js-adsbygoogle"
-          <img class="spire-bg-dark" src="images/spire-dark.jpeg" alt="Quiz The Spire background illustration in dark mode"
+          data-ad-client="ca-pub-8418485814964449"
+          data-ad-slot="6947629232"
+          data-ad-format="auto"
+          data-full-width-responsive="true"
         ></ins>
       </div>
     </main>
@@ -1619,6 +1638,8 @@
       })();
     </script>
     <script src="js/ad-fallback.js" defer></script>
+    <script src="js/stat-counter-animation.js" defer></script>
+    <script src="js/branded-ad-fallback.js" defer></script>
     <script src="js/homepage-enhancements.js" defer></script>
     <script src="js/platform-download-order.js" defer></script>
     <script src="js/version-sync.js" defer></script>
