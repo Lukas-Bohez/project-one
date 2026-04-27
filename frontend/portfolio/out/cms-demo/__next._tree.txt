@@ -1,5 +1,5 @@
-:HL["/LukasBohez/_next/static/chunks/0b7vuy9o8ttv-.css","style"]
+:HL["/LukasBohez/_next/static/chunks/15eout6ma.m56.css","style"]
 :HL["/LukasBohez/_next/static/media/797e433ab948586e-s.p.0.q-h669a_dqa.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
 :HL["/LukasBohez/_next/static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
 :HL["https://res.cloudinary.com/dmefzpaea/image/upload/f_blur:2000,e_grayscale,q_1,w_20/v1776524472/portfolio/profile/lukas-portrait","image"]
-0:{"tree":{"name":"","param":null,"prefetchHints":28,"slots":{"children":{"name":"(cms)","param":null,"prefetchHints":8,"slots":{"children":{"name":"cms-demo","param":null,"prefetchHints":4,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null},"modal":{"name":"__DEFAULT__","param":null,"prefetchHints":0,"slots":null}}}}}}},"staleTime":300,"buildId":"QumA2TeO47eafudR0P4AJ"}
+0:{"tree":{"name":"","param":null,"prefetchHints":28,"slots":{"children":{"name":"(cms)","param":null,"prefetchHints":8,"slots":{"children":{"name":"cms-demo","param":null,"prefetchHints":4,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null},"modal":{"name":"__DEFAULT__","param":null,"prefetchHints":0,"slots":null}}}}}}},"staleTime":300,"buildId":"gpzpgI7kovcO8C5eR9fge"}
