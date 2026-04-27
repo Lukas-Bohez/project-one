@@ -1,0 +1,278 @@
+{
+  "meta": {
+    "title": "The Lighthouse Keeper's Vigil",
+    "startScene": "arrival",
+    "version": "1.0",
+    "created": "2025-12-10T00:00:00.000Z"
+  },
+  "variables": {
+    "sanity": { "type": "number", "value": 100, "min": 0, "max": 100 },
+    "daysLocked": { "type": "number", "value": 0, "min": 0, "max": 30 },
+    "knowsTheTruth": { "type": "boolean", "value": false },
+    "canLeave": { "type": "boolean", "value": true }
+  },
+  "scenes": {
+    "arrival": {
+      "id": "arrival",
+      "title": "Keeper of the Light",
+      "text": "The lighthouse stands against the grey sea like a reminder that someone, somewhere, once thought light was enough to hold back the darkness. I'm the new keeper. My predecessor left a note that said only: 'Don't go to the light room after dark.' No explanation. No goodbye. Just that warning, pinned to the desk. The supply boat won't be back for a month. I'm alone here now. The light is already humming overhead, doing its job, casting its beam across the water in a rhythm that never falters. Never sleeps.",
+      "choices": [
+        {
+          "id": "explore_tower",
+          "text": "Explore the lighthouse. Get to know your new home.",
+          "target": "exploring_tower",
+          "conditions": [],
+          "effects": []
+        },
+        {
+          "id": "read_logs",
+          "text": "Find the previous keeper's logs. Understand what happened.",
+          "target": "logs_discovery",
+          "conditions": [],
+          "effects": [{ "variable": "knowsTheTruth", "operation": "set", "value": true }]
+        },
+        {
+          "id": "ignore_warning",
+          "text": "[RECKLESS] Ignore the warning. Go to the light room immediately.",
+          "target": "light_room_night",
+          "conditions": [],
+          "effects": [{ "variable": "sanity", "operation": "subtract", "value": 25 }]
+        }
+      ]
+    },
+    "exploring_tower": {
+      "id": "exploring_tower",
+      "title": "The Spiral",
+      "text": "I climb the spiral staircase. My footsteps echo. The metal is cold, and somehow, the higher I go, the colder it gets despite the logic being the opposite. Each level is obsessively maintained. Everything in perfect order. Too perfect. Like someone trying very hard to keep the chaos at bay through sheer organization. There are marks on the wall—tally marks. Many, many tally marks. Stopped at day 847.",
+      "choices": [
+        {
+          "id": "reach_top",
+          "text": "Climb to the very top. To the light.",
+          "target": "light_room_day",
+          "conditions": [],
+          "effects": []
+        },
+        {
+          "id": "count_days",
+          "text": "Wait. 847 days? That's more than two years.",
+          "target": "logs_discovery",
+          "conditions": [],
+          "effects": [{ "variable": "knowsTheTruth", "operation": "set", "value": true }]
+        }
+      ]
+    },
+    "logs_discovery": {
+      "id": "logs_discovery",
+      "title": "The Record",
+      "text": "The logbooks are exhaustive. Day 1: Arrived at lighthouse. It's peaceful. Day 50: The light hums louder at night. Day 100: I can feel it. The hum. It's almost like breathing. Day 200: I'm not sure if it's the light or if something is calling from beneath the light. Day 500: It wants me to stay. I don't think I can leave. Day 847: The last entry, in shaking handwriting: 'It's not the light that keeps the dark away. We're what keeps the light contained. If the light goes out...' The rest is scratched out. Violent, desperate scratching that destroyed the page.",
+      "choices": [
+        {
+          "id": "want_to_leave",
+          "text": "Check if the radio still works. Call for immediate evacuation.",
+          "target": "radio_failure",
+          "conditions": [],
+          "effects": [{ "variable": "canLeave", "operation": "set", "value": false }]
+        },
+        {
+          "id": "understand_duty",
+          "text": "Oh God. I understand now. I'm not here by chance.",
+          "target": "acceptance",
+          "conditions": [],
+          "effects": [{ "variable": "sanity", "operation": "subtract", "value": 15 }]
+        }
+      ]
+    },
+    "light_room_day": {
+      "id": "light_room_day",
+      "title": "The Machinery",
+      "text": "The light room is a perfect circle. The light itself is massive, ancient, beautiful. It rotates with mechanical precision. And it hums. A deep, resonant hum that I feel in my bones. The brass is polished to perfection. But there's something off. Behind the light, in the darkness that the light can't quite reach, I see something. A shape. A suggestion. Something that might be looking back.",
+      "choices": [
+        {
+          "id": "ignore_shape",
+          "text": "It's a trick of the light. Go back downstairs.",
+          "target": "denial",
+          "conditions": [],
+          "effects": []
+        },
+        {
+          "id": "investigate_shadow",
+          "text": "Get closer. Look directly at what's there.",
+          "target": "the_thing",
+          "conditions": [],
+          "effects": [{ "variable": "sanity", "operation": "subtract", "value": 40 }]
+        }
+      ]
+    },
+    "light_room_night": {
+      "id": "light_room_night",
+      "title": "The Light After Dark",
+      "text": "I shouldn't be here. The warning said not here, not at night. But I came anyway. The light is different at night. Hungrier. The hum is louder. And the shape behind it is no longer subtle. It's pressed against the light from the inside. Trying to push through. My previous keeper understood. The light isn't keeping it out. The light is keeping it in.",
+      "choices": [
+        {
+          "id": "run_away",
+          "text": "This is insane. Leave the tower. Escape the lighthouse.",
+          "target": "leaving_attempt",
+          "conditions": [],
+          "effects": [{ "variable": "canLeave", "operation": "set", "value": true }]
+        },
+        {
+          "id": "understand_role",
+          "text": "Wait. The previous keeper—they kept the light burning. That was their job.",
+          "target": "purpose_understood",
+          "conditions": [],
+          "effects": [{ "variable": "knowsTheTruth", "operation": "set", "value": true }]
+        }
+      ]
+    },
+    "radio_failure": {
+      "id": "radio_failure",
+      "title": "No Signal",
+      "text": "The radio is dead. Not broken. Dead. No power. When I check the battery compartment, I find the batteries removed. The previous keeper removed them. On the wall beside the radio, a note: 'If you call for help, it will answer. And when it answers, it will come.' I realize with a cold certainty that I'm not alone here. That this isn't about isolation. It's about containment. About duty.",
+      "choices": [
+        {
+          "id": "accept_duty",
+          "text": "Accept what I have to do. Keep the light burning.",
+          "target": "acceptance",
+          "conditions": [],
+          "effects": [{ "variable": "canLeave", "operation": "set", "value": false }]
+        },
+        {
+          "id": "desperate_escape",
+          "text": "There has to be a way out. There has to be.",
+          "target": "futile_escape",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "the_thing": {
+      "id": "the_thing",
+      "title": "Behind the Light",
+      "text": "I see it clearly now. It's vast. It's ancient. It's aware. It knows I'm looking. It reaches toward me, and the light flares, pushing it back. The light grows brighter, hotter, burning away at the shape. And I understand in a moment of terrible clarity: the light is alive. And it's hungry for the thing it contains. They feed on each other. The previous keeper fed them by turning the light. By keeping the cycle going.",
+      "choices": [
+        {
+          "id": "become_keeper",
+          "text": "I am the keeper now. I will turn the light.",
+          "target": "eternal_duty",
+          "conditions": [],
+          "effects": [{ "variable": "sanity", "operation": "subtract", "value": 20 }, { "variable": "canLeave", "operation": "set", "value": false }]
+        },
+        {
+          "id": "smash_light",
+          "text": "[DESPERATE] Destroy the light. End this.",
+          "target": "light_breaks",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "denial": {
+      "id": "denial",
+      "title": "Evening Falls",
+      "text": "I leave the light room and go about my duties. Feed. Rest. But that night, unable to sleep, I climb back up. The shape is bigger now. Pressing harder. The light strains. And I understand: by seeing it, I've acknowledged it. And acknowledgment gives it power. Every day, the shape will grow. Every night, I'll have to turn the light again. My predecessor turned the light 847 times before they couldn't bear it anymore.",
+      "choices": [
+        {
+          "id": "accept_inevitable",
+          "text": "I will turn the light. Again and again.",
+          "target": "eternal_duty",
+          "conditions": [],
+          "effects": [{ "variable": "daysLocked", "operation": "set", "value": 1 }]
+        }
+      ]
+    },
+    "acceptance": {
+      "id": "acceptance",
+      "title": "The Weight of Understanding",
+      "text": "I understand now. Lighthouses aren't meant to guide ships. They're meant to contain. To hold back. And the keeper's job isn't to maintain a beacon. It's to maintain a seal. The light doesn't shine outward. It shines inward. Keeping something in. And that something is patient. Infinitely patient. Because it knows that someday, a keeper will falter. And when they do, it will be free.",
+      "choices": [
+        {
+          "id": "turn_light",
+          "text": "I am the keeper. I turn the light.",
+          "target": "eternal_duty",
+          "conditions": [],
+          "effects": []
+        },
+        {
+          "id": "break_cycle",
+          "text": "No. I won't perpetuate this. I will break the cycle.",
+          "target": "light_breaks",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "leaving_attempt": {
+      "id": "leaving_attempt",
+      "title": "The Locked Door",
+      "text": "I run. Down the spiral stairs. My footsteps echo like a heartbeat. The door at the bottom is locked. It's never been locked. I try every window. All sealed. And I realize with mounting horror: I was never meant to leave. The supply boat won't come. No one will come. The previous keeper stayed until they couldn't anymore. And now I'm here. The light will still hum. The thing will still press. And I will turn the light, again and again, until I break like my predecessor broke.",
+      "choices": [
+        {
+          "id": "accept_prison",
+          "text": "I am the keeper. I will accept my duty.",
+          "target": "eternal_duty",
+          "conditions": [],
+          "effects": [{ "variable": "canLeave", "operation": "set", "value": false }]
+        },
+        {
+          "id": "desperate_final",
+          "text": "There has to be another way. There has to be.",
+          "target": "futile_escape",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "purpose_understood": {
+      "id": "purpose_understood",
+      "title": "Duty Eternal",
+      "text": "The light hums. The shape presses. And I, the keeper, understand my role. I'm not a custodian. I'm a jailer. The previous keeper kept the thing contained for 847 days until they finally broke. Until they could no longer bear the weight of keeping the darkness at bay with nothing but the light. But someone had to. Someone always has to. And now it's me.",
+      "choices": [
+        {
+          "id": "eternal_light",
+          "text": "I will keep the light burning. For as long as I can.",
+          "target": "eternal_duty",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "light_breaks": {
+      "id": "light_breaks",
+      "title": "Darkness Ascendant",
+      "text": "The light shatters. And the darkness—vast, patient, ancient—pours out. It fills the lighthouse. It spreads across the sea. In those final moments before it takes you, you understand: the previous keepers were trying to prevent this. And you've just undone 847 days of sacrifice. The light goes out. The ships at sea lose their guide. And somewhere in the darkness, something vast finally breathes free. You've released it. Now it's everyone's problem.",
+      "choices": [
+        {
+          "id": "ending_broken",
+          "text": "[THE END] The darkness spreads",
+          "target": "ending_broken",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "futile_escape": {
+      "id": "futile_escape",
+      "title": "The Realization",
+      "text": "You search for a way out. Days pass. Or weeks. Time becomes strange in the lighthouse. The light hums. The shape presses. And slowly, you understand the truth: there is no escape. The lighthouse exists outside normal rules. It's a pocket of reality designed for one purpose: containment. And you are the container. Your previous keeper reached this realization on day 847. You reach it now.",
+      "choices": [
+        {
+          "id": "accept_eternal",
+          "text": "I accept my eternal duty.",
+          "target": "eternal_duty",
+          "conditions": [],
+          "effects": [{ "variable": "daysLocked", "operation": "set", "value": 847 }]
+        }
+      ]
+    },
+    "eternal_duty": {
+      "id": "eternal_duty",
+      "title": "The Keeper",
+      "text": "The light burns. You turn it, day after day. Week after week. The mechanism is smooth, endless. Your predecessor's tallies on the wall are a countdown you're now extending. 848. 849. 850. The shape behind the light never sleeps. Neither will you. Because if you do, if you falter, if you stop turning the light, it will break free. And whatever waits in the darkness beyond the lighthouse will finally have its freedom. So you turn the light. And you will turn it again tomorrow. And the day after that. Forever."
+    },
+    "ending_broken": {
+      "id": "ending_broken",
+      "title": "The Darkness Rises",
+      "text": "Ships lose their guide. Cities lose their light. The darkness spreads, slow and patient, from the lighthouse outward. No one will ever know what you released. No one will ever know that someone, somewhere, was keeping it contained. They'll only know that the darkness came. And it was patient. And it was hungry."
+    }
+  }
+}

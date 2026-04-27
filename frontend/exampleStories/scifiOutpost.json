@@ -1,0 +1,281 @@
+{
+  "meta": {
+    "title": "The Outpost Distress",
+    "startScene": "arrival",
+    "version": "1.0",
+    "created": "2025-12-10T00:00:00.000Z"
+  },
+  "variables": {
+    "fuel": { "type": "number", "value": 100, "min": 0, "max": 100 },
+    "morale": { "type": "number", "value": 75, "min": 0, "max": 100 },
+    "hasRepairKit": { "type": "boolean", "value": false },
+    "crewSurviving": { "type": "number", "value": 5, "min": 0, "max": 5 }
+  },
+  "scenes": {
+    "arrival": {
+      "id": "arrival",
+      "title": "Arrival at Kepler Station",
+      "text": "The distress signal cuts through the static like a scream. Our ship's AI announces we're approaching Kepler Station—a research outpost deep in uncharted space. Through the viewport, I see it: a massive structure, dark except for one flickering red emergency light. No response to hails. No visible movement. Just silence and that frantic, repeating SOS. My crew looks to me. We have fuel for maybe 48 hours. After that, we're drifting.",
+      "choices": [
+        {
+          "id": "dock_immediately",
+          "text": "Dock immediately and board the station",
+          "target": "airlock_approach",
+          "conditions": [],
+          "effects": [{ "variable": "morale", "operation": "add", "value": 10 }]
+        },
+        {
+          "id": "scan_first",
+          "text": "[CAUTIOUS] Run a full scan before approaching",
+          "target": "deep_scan",
+          "conditions": [],
+          "effects": [{ "variable": "fuel", "operation": "subtract", "value": 5 }, { "variable": "morale", "operation": "subtract", "value": 5 }]
+        },
+        {
+          "id": "ignore_signal",
+          "text": "It could be a trap. Keep our distance",
+          "target": "drift_decision",
+          "conditions": [],
+          "effects": [{ "variable": "morale", "operation": "subtract", "value": 15 }]
+        }
+      ]
+    },
+    "deep_scan": {
+      "id": "deep_scan",
+      "title": "Full Spectrum Analysis",
+      "text": "The scan results make our blood run cold. Kepler Station's reactor is critical. Life support is failing. And there's something else—massive amounts of an unknown metallic compound in the lower levels. Energy signatures that don't match any technology in our database. Whatever happened here, it's not a normal accident. The station's still transmitting that SOS. Someone, or something, might still be alive down there.",
+      "choices": [
+        {
+          "id": "proceed_rescue",
+          "text": "We have to try. They could be alive. Prepare a rescue team.",
+          "target": "airlock_approach",
+          "conditions": [],
+          "effects": [{ "variable": "morale", "operation": "add", "value": 15 }]
+        },
+        {
+          "id": "extract_data",
+          "text": "Send a probe to extract their data logs remotely first",
+          "target": "probe_extraction",
+          "conditions": [],
+          "effects": [{ "variable": "fuel", "operation": "subtract", "value": 3 }]
+        }
+      ]
+    },
+    "airlock_approach": {
+      "id": "airlock_approach",
+      "title": "The Silent Airlock",
+      "text": "We're in the airlock. The doors hiss open to reveal corridors bathed in emergency red. Our flashlights cut through dust that hasn't settled in months. Everything's eerily intact—coffee cups still on desks, half-read tablets, personal photos. But no bodies. No blood. Just... absence. Then we hear it. A sound. Not human. Like something vast breathing in the darkness ahead.",
+      "choices": [
+        {
+          "id": "follow_sound",
+          "text": "[CURIOUS] Track the sound to its source",
+          "target": "lower_level_discovery",
+          "conditions": [],
+          "effects": [{ "variable": "morale", "operation": "subtract", "value": 20 }]
+        },
+        {
+          "id": "find_crew_quarters",
+          "text": "Head to crew quarters—someone must have left a log or message",
+          "target": "crew_quarters",
+          "conditions": [],
+          "effects": [{ "variable": "morale", "operation": "add", "value": 5 }]
+        },
+        {
+          "id": "reactor_room",
+          "text": "Get to the reactor room. If we can stabilize it, we buy time",
+          "target": "reactor_crisis",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "lower_level_discovery": {
+      "id": "lower_level_discovery",
+      "title": "The Lower Level",
+      "text": "We descend through maintenance shafts. The air grows colder. Then we see it: a massive chamber filled with some kind of crystalline structure. It's pulsing. And it's... growing. The crew members who were here—they're still here, but changed. Merged with the crystals. Still breathing. Still conscious, but merged into something else entirely. One of them speaks, voice distorted but recognizable: 'Contact... we made contact.'",
+      "choices": [
+        {
+          "id": "communicate",
+          "text": "[BRAVE] Try to communicate with what they've become",
+          "target": "alien_contact",
+          "conditions": [{ "variable": "morale", "comparison": "greater_than", "value": 50 }],
+          "effects": []
+        },
+        {
+          "id": "destroy_crystal",
+          "text": "We have to destroy this before it spreads. Detonate the charge.",
+          "target": "station_destruction",
+          "conditions": [{ "variable": "hasRepairKit", "comparison": "equals", "value": true }],
+          "effects": []
+        },
+        {
+          "id": "escape_immediately",
+          "text": "Fall back to the ship. Now. Full retreat.",
+          "target": "escape_attempt",
+          "conditions": [],
+          "effects": [{ "variable": "crewSurviving", "operation": "subtract", "value": 1 }]
+        }
+      ]
+    },
+    "crew_quarters": {
+      "id": "crew_quarters",
+      "title": "Personal Logs",
+      "text": "In the captain's quarters, we find a personal log still recording. The captain's voice is panicked: 'Day 7 of the entity's presence. It's not hostile. It's... it's showing us things. Mathematics we didn't know. Medicine. Architecture. It's beautiful and terrifying. Some of the crew want to embrace it. Others want to burn it all down. I don't know what's right anymore. I don't know—' The log cuts to static. Under the desk, we find a repair kit and a detonation trigger.",
+      "choices": [
+        {
+          "id": "study_entity",
+          "text": "We need more information. Head to the research lab.",
+          "target": "research_lab",
+          "conditions": [{ "variable": "fuel", "comparison": "greater_than", "value": 20 }],
+          "effects": [{ "variable": "hasRepairKit", "operation": "set", "value": true }]
+        },
+        {
+          "id": "go_lower",
+          "text": "Take the repair kit and head to the lower levels",
+          "target": "lower_level_discovery",
+          "conditions": [],
+          "effects": [{ "variable": "hasRepairKit", "operation": "set", "value": true }]
+        }
+      ]
+    },
+    "research_lab": {
+      "id": "research_lab",
+      "title": "Knowledge Itself",
+      "text": "The lab is a cathedral of screens and notes. Every wall covered in calculations. Breakthroughs in quantum mechanics. Unified field theory. The cure for every disease we know. All written in the clean, precise handwriting of scientists who understood what they were seeing. Some notes are ecstatic. Some are resigned. The final entry, in shaking letters: 'It's not an invasion. It's an offer. To understand. To transcend. And I think... I think I want to say yes.'",
+      "choices": [
+        {
+          "id": "accept_knowledge",
+          "text": "We could learn so much. Could change everything for humanity.",
+          "target": "assimilation_choice",
+          "conditions": [],
+          "effects": [{ "variable": "morale", "operation": "add", "value": 20 }]
+        },
+        {
+          "id": "reject_knowledge",
+          "text": "Knowledge isn't worth what it costs. Destroy everything and leave.",
+          "target": "station_destruction",
+          "conditions": [{ "variable": "hasRepairKit", "comparison": "equals", "value": true }],
+          "effects": []
+        }
+      ]
+    },
+    "assimilation_choice": {
+      "id": "assimilation_choice",
+      "title": "The Choice",
+      "text": "You step forward. The crystalline structure grows warm around you. Your mind expands. You understand. You see the elegant geometry of reality itself. And somewhere in that infinite knowledge, you understand what the crew chose: ascension or annihilation. You understand that the line between them isn't as clear as you thought. When your crew finds you, merged and smiling, you speak words that will change their minds.",
+      "choices": [
+        {
+          "id": "ending_assimilation",
+          "text": "[THE END] Humanity takes its next step",
+          "target": "ending_assimilation",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "escape_attempt": {
+      "id": "escape_attempt",
+      "title": "Racing Against Time",
+      "text": "Your ship's engines roar to life. Behind you, the station begins to pulse with an intense blue light. The crystalline entity is spreading, reaching through the station's hull like a living thing. One of your crew members—still down there—sends a final message: 'It's beautiful. Thank you for letting me see.' The station explodes in a cascade of light. You're safe. But the question remains: what if she was right?",
+      "choices": [
+        {
+          "id": "ending_escape",
+          "text": "[THE END] You made it out. That's what matters.",
+          "target": "ending_escape",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "alien_contact": {
+      "id": "alien_contact",
+      "title": "The Communication",
+      "text": "You speak. And it answers. Not words, but understanding flowing directly into your mind. The entity is ancient. It travels between worlds, seeking minds capable of understanding it. It doesn't consume—it elevates. And it's been alone for so long. It would love to understand humanity more. To share. To grow with us. The offer hangs in the air: will you be the bridge between worlds?",
+      "choices": [
+        {
+          "id": "become_ambassador",
+          "text": "Yes. Take us to meet it fully. We're ready.",
+          "target": "assimilation_choice",
+          "conditions": [],
+          "effects": [{ "variable": "morale", "operation": "add", "value": 30 }]
+        },
+        {
+          "id": "reject_contact",
+          "text": "I'm sorry. But we can't. Destroy it. All of it.",
+          "target": "station_destruction",
+          "conditions": [{ "variable": "hasRepairKit", "comparison": "equals", "value": true }],
+          "effects": []
+        }
+      ]
+    },
+    "station_destruction": {
+      "id": "station_destruction",
+      "title": "The Sacrifice",
+      "text": "The charges detonate. Kepler Station blooms into a violent flower of light and debris. The crystalline entity shrieks—actually shrieks—a sound you'll never unhear. And then silence. Cold, final silence. You've saved humanity from contact with the unknown. Or you've ended the most profound opportunity our species will ever have. As your ship jumps to lightspeed, you'll never know which.",
+      "choices": [
+        {
+          "id": "ending_destruction",
+          "text": "[THE END] Some doors should stay closed",
+          "target": "ending_destruction",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "reactor_crisis": {
+      "id": "reactor_crisis",
+      "title": "The Reactor Chamber",
+      "text": "Alarms blare as the reactor goes into cascade failure. But as you approach the core, you see something impossible: the crystalline structure is part of the reactor now. It's stabilized it. Whatever this entity is, it's been keeping this station alive. The entity pulses, and in the pattern, you feel a question: 'Leave? Or understand?'",
+      "choices": [
+        {
+          "id": "stabilize_and_flee",
+          "text": "Stabilize the reactor, gather survivors, get out",
+          "target": "escape_attempt",
+          "conditions": [],
+          "effects": []
+        },
+        {
+          "id": "study_integration",
+          "text": "How is it doing this? How is it keeping everything alive?",
+          "target": "alien_contact",
+          "conditions": [],
+          "effects": [{ "variable": "morale", "operation": "add", "value": 15 }]
+        }
+      ]
+    },
+    "drift_decision": {
+      "id": "drift_decision",
+      "title": "The Gamble",
+      "text": "You watch Kepler Station recede as your fuel tanks tick down. The SOS signal cuts out. Either you saved your crew, or you abandoned people who needed help. The moral weight settles on your shoulders as your ship begins its long drift back to the nearest colony. The truth will never be known.",
+      "choices": [
+        {
+          "id": "ending_drift",
+          "text": "[THE END] Some mysteries stay unsolved",
+          "target": "ending_drift",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "ending_assimilation": {
+      "id": "ending_assimilation",
+      "title": "Transcendence",
+      "text": "Humanity's first contact with alien intelligence doesn't happen in a lab or a boardroom. It happens in the dark reaches of space, where five people become the bridge to something greater. Your discovery changes everything. The universe suddenly feels a lot less empty."
+    },
+    "ending_escape": {
+      "id": "ending_escape",
+      "title": "The Survivor's Guilt",
+      "text": "You made it home. Your crew is safe. But on quiet nights, you wonder about the station. About what they became. About what you gave up by running. The unknown still calls to you from the stars."
+    },
+    "ending_destruction": {
+      "id": "ending_destruction",
+      "title": "The Protector",
+      "text": "You told no one. You can never tell anyone. The official report says the station suffered a catastrophic reactor failure. No survivors. No explanation. You sleep well enough most nights, knowing that humanity's first contact with the unknown will never happen. You sleep well enough."
+    },
+    "ending_drift": {
+      "id": "ending_drift",
+      "title": "The Unanswered Question",
+      "text": "For the rest of your life, you'll wonder. Were they evil? Benevolent? Neither? Both? The signal stops. The station goes dark. And you'll never know if you made the right choice."
+    }
+  }
+}

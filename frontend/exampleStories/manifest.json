@@ -1,3 +1,6 @@
 [
-  { "file": "enchantedForest.json", "title": "The Enchanted Forest" }
+  { "file": "enchantedForest.json", "title": "The Enchanted Forest" },
+  { "file": "scifiOutpost.json", "title": "The Outpost Distress" },
+  { "file": "detektiveMarlowe.json", "title": "Detective Marlowe's Weird Tuesday" },
+  { "file": "lighthouseKeeper.json", "title": "The Lighthouse Keeper's Vigil" }
 ]

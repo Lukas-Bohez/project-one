@@ -1,0 +1,294 @@
+{
+  "meta": {
+    "title": "Detective Marlowe's Weird Tuesday",
+    "startScene": "office_morning",
+    "version": "1.0",
+    "created": "2025-12-10T00:00:00.000Z"
+  },
+  "variables": {
+    "sanity": { "type": "number", "value": 100, "min": 0, "max": 100 },
+    "casesolved": { "type": "number", "value": 0, "min": 0, "max": 10 },
+    "coffeeCount": { "type": "number", "value": 0, "min": 0, "max": 5 },
+    "partner_annoyed": { "type": "boolean", "value": false }
+  },
+  "scenes": {
+    "office_morning": {
+      "id": "office_morning",
+      "title": "Tuesday Morning at the Precinct",
+      "text": "Detective Marlowe—that's me—stares at a cup of coffee that's been sitting on my desk since yesterday. It's developed its own ecosystem. My partner Detective Chen walks in with a file and an expression I recognize: the look of someone whose day is about to get weird. 'We've got three calls,' she says. 'And they're all weird.' She's not wrong. Welcome to my life.",
+      "choices": [
+        {
+          "id": "coffee_first",
+          "text": "Finish my coffee. I need caffeine for weird.",
+          "target": "coffee_realization",
+          "conditions": [],
+          "effects": [{ "variable": "coffeeCount", "operation": "add", "value": 1 }]
+        },
+        {
+          "id": "hear_cases_now",
+          "text": "No time for coffee. What are the cases?",
+          "target": "three_cases",
+          "conditions": [],
+          "effects": [{ "variable": "sanity", "operation": "subtract", "value": 5 }]
+        }
+      ]
+    },
+    "coffee_realization": {
+      "id": "coffee_realization",
+      "title": "Liquid Regret",
+      "text": "I take a sip. It's somehow both frozen and hot. My taste buds file a complaint with my brain. Chen watches me with barely contained amusement. 'You drank from yesterday's cup again, didn't you?' I can neither confirm nor deny this. The coffee tastes like defeat and old memories.",
+      "choices": [
+        {
+          "id": "cases_post_coffee",
+          "text": "Alright, I'm ready. Tell me about the cases.",
+          "target": "three_cases",
+          "conditions": [],
+          "effects": [{ "variable": "sanity", "operation": "add", "value": 10 }]
+        }
+      ]
+    },
+    "three_cases": {
+      "id": "three_cases",
+      "title": "The Weird Trinity",
+      "text": "Chen spreads three case files on my desk. 'Case one: Someone stole the statue from the park. Not the base. Just the statue. Weirdly precise. Case two: A man called in saying his neighbor's chickens are plotting against him. Case three: A baker reported a break-in, but the only thing missing is a single croissant.' I stare at these cases. This is my job.",
+      "choices": [
+        {
+          "id": "statue_case",
+          "text": "The statue theft is the most normal. Let's start there.",
+          "target": "statue_investigation",
+          "conditions": [],
+          "effects": [{ "variable": "partner_annoyed", "operation": "set", "value": false }]
+        },
+        {
+          "id": "chicken_case",
+          "text": "The chicken conspiracy is too weird. I have to investigate.",
+          "target": "chicken_investigation",
+          "conditions": [],
+          "effects": [{ "variable": "sanity", "operation": "subtract", "value": 10 }]
+        },
+        {
+          "id": "croissant_case",
+          "text": "A stolen croissant. This might actually be legitimate crime.",
+          "target": "croissant_investigation",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "statue_investigation": {
+      "id": "statue_investigation",
+      "title": "The Headless Park",
+      "text": "We arrive at the park to find a perfectly intact statue base. No statue. No damage. It's like the statue just stood up and walked away. The park groundskeeper, Mr. Peterson, stands there looking mystified. 'One minute it was there, the next... gone. But nobody heard anything. It's a two-ton marble statue!'",
+      "choices": [
+        {
+          "id": "question_groundskeeper",
+          "text": "Did anyone with a truck-sized vehicle come through?",
+          "target": "groundskeeper_confession",
+          "conditions": [],
+          "effects": []
+        },
+        {
+          "id": "examine_base",
+          "text": "Examine the base for clues like a real detective",
+          "target": "base_clues",
+          "conditions": [],
+          "effects": [{ "variable": "casesolved", "operation": "add", "value": 1 }]
+        }
+      ]
+    },
+    "base_clues": {
+      "id": "base_clues",
+      "title": "The Evidence",
+      "text": "I examine the base. There are tiny scratches. Very tiny. And there's a note taped underneath in bad handwriting: 'YOUR STATUE IS UGLY. SIGNED, SOMEONE WITH A FORKLIFT AND STRONG OPINIONS.' This is either the worst criminal ever or someone very committed to performance art.",
+      "choices": [
+        {
+          "id": "find_forklift_operator",
+          "text": "Find the honest art critic with the forklift",
+          "target": "statue_solved",
+          "conditions": [],
+          "effects": [{ "variable": "casesolved", "operation": "add", "value": 1 }]
+        }
+      ]
+    },
+    "statue_solved": {
+      "id": "statue_solved",
+      "title": "Case Closed (Technically)",
+      "text": "We find the perpetrator: a local sculptor named Derek who genuinely believed the park statue was 'creatively bankrupt.' He's stored it in his garage. He has no regrets. He wants to know if we're interested in seeing his work. Chen's eye is twitching. I'm starting to understand her pain.",
+      "choices": [
+        {
+          "id": "back_to_desk",
+          "text": "Take Derek to jail and go back to the other cases",
+          "target": "next_case_choice",
+          "conditions": [],
+          "effects": [{ "variable": "partner_annoyed", "operation": "set", "value": true }]
+        }
+      ]
+    },
+    "groundskeeper_confession": {
+      "id": "groundskeeper_confession",
+      "title": "The Unexpected Truth",
+      "text": "'Actually,' Mr. Peterson says quietly, 'I might have hired someone to move it. I hated that statue. It was blocking my view of the fountain. I didn't think they'd just... steal it.' This is technically a crime but somehow feels less criminal than a regular Tuesday.",
+      "choices": [
+        {
+          "id": "cite_groundskeeper",
+          "text": "Give him a citation and move on",
+          "target": "next_case_choice",
+          "conditions": [],
+          "effects": [{ "variable": "casesolved", "operation": "add", "value": 1 }]
+        }
+      ]
+    },
+    "chicken_investigation": {
+      "id": "chicken_investigation",
+      "title": "Fowl Play",
+      "text": "We arrive at a suburban house where a man stands in his backyard, staring at his neighbor's chickens like they're a foreign military force. 'They coordinate,' he says, dead serious. 'I've been watching. Every morning at 6 AM, they all turn and look at my house. It's psychological warfare.' The chickens, for their part, look like normal chickens. Stupid, hungry chickens.",
+      "choices": [
+        {
+          "id": "humor_him",
+          "text": "Play along and pretend to investigate the chickens",
+          "target": "chicken_truth",
+          "conditions": [],
+          "effects": [{ "variable": "sanity", "operation": "subtract", "value": 15 }]
+        },
+        {
+          "id": "suggest_therapy",
+          "text": "Suggest he might need to talk to someone about his chicken concerns",
+          "target": "he_might_be_right",
+          "conditions": [],
+          "effects": [{ "variable": "partner_annoyed", "operation": "set", "value": true }]
+        }
+      ]
+    },
+    "chicken_truth": {
+      "id": "chicken_truth",
+      "title": "The Unbelievable Truth",
+      "text": "I spend two hours watching chickens. And... he's right. At exactly 6 AM, they all turn and stare at his house. It's unsettling. It's probably a coincidence, but I can't prove it. The neighbor appears and casually mentions they're trained to look that way because it's funny. The psychological warfare is intentional. This is somehow worse.",
+      "choices": [
+        {
+          "id": "mediate_chicken_dispute",
+          "text": "Mediate a peace treaty between the neighbors",
+          "target": "chicken_peace",
+          "conditions": [],
+          "effects": [{ "variable": "casesolved", "operation": "add", "value": 1 }]
+        }
+      ]
+    },
+    "he_might_be_right": {
+      "id": "he_might_be_right",
+      "title": "The Suspicious Coincidence",
+      "text": "The man appreciates my professionalism. He pulls out a notebook with weeks of chicken observations documented with timestamps and photos. Some of these photos are, admittedly, incriminating evidence of coordinated bird behavior. Maybe he's not paranoid. Maybe the chickens really are up to something.",
+      "choices": [
+        {
+          "id": "take_it_seriously",
+          "text": "Actually, these observations are detailed. Let's investigate properly.",
+          "target": "chicken_truth",
+          "conditions": [],
+          "effects": [{ "variable": "sanity", "operation": "subtract", "value": 10 }]
+        }
+      ]
+    },
+    "chicken_peace": {
+      "id": "chicken_peace",
+      "title": "An Understanding",
+      "text": "We broker a deal: the neighbor agrees to stop the 6 AM chicken stare routine, and the man agrees not to call in chicken-related complaints every week. Everyone's slightly happier. The chickens, unaware of the treaty, continue being chickens.",
+      "choices": [
+        {
+          "id": "next_case_after_chickens",
+          "text": "Back to the station. One case down, two to go.",
+          "target": "next_case_choice",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "croissant_investigation": {
+      "id": "croissant_investigation",
+      "title": "A Delicate Crime",
+      "text": "We arrive at Sweet Delights Bakery where the owner, Michelle, is genuinely upset about her stolen croissant. 'It wasn't even a good one,' she says. 'I was going to throw it away anyway. But someone STOLE it. The audacity!' Chen and I exchange a look. This might be the sanest case we've gotten all day.",
+      "choices": [
+        {
+          "id": "check_security",
+          "text": "Check the security footage",
+          "target": "footage_reveal",
+          "conditions": [],
+          "effects": []
+        },
+        {
+          "id": "ask_about_enemies",
+          "text": "Does anyone have a grudge against you? Croissant enemies?",
+          "target": "croissant_suspect",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "footage_reveal": {
+      "id": "footage_reveal",
+      "title": "The Culprit Revealed",
+      "text": "The security footage shows a man in a ridiculous fake mustache entering at 2 AM, going straight for the croissant, and leaving with it cradled like it's his newborn child. The mustache is held on with what appears to be duct tape. This is either art or insanity. Possibly both.",
+      "choices": [
+        {
+          "id": "find_mustache_man",
+          "text": "Find the man with the theatrical mustache",
+          "target": "croissant_solved",
+          "conditions": [],
+          "effects": [{ "variable": "casesolved", "operation": "add", "value": 1 }]
+        }
+      ]
+    },
+    "croissant_suspect": {
+      "id": "croissant_suspect",
+      "title": "The Suspicious Customer",
+      "text": "Michelle mentions a guy who came in the day before, asked if her croissants were 'authentically French,' then left in a huff when she said they were 'French-inspired.' He was wearing what she describes as 'a really suspicious mustache.' Sounds like we have a lead.",
+      "choices": [
+        {
+          "id": "track_mustache_guy",
+          "text": "Find the mustache man. He sounds like our guy.",
+          "target": "croissant_solved",
+          "conditions": [],
+          "effects": [{ "variable": "casesolved", "operation": "add", "value": 1 }]
+        }
+      ]
+    },
+    "croissant_solved": {
+      "id": "croissant_solved",
+      "title": "Case Closed",
+      "text": "We find the man. His name is Bernard. He's a French pastry chef who moved to America and is deeply offended by what passes for French baking. He stole the croissant as an act of protest. He's going to make Michelle proper croissants as restitution. Honestly, this might be the best outcome of any case we've handled.",
+      "choices": [
+        {
+          "id": "final_case",
+          "text": "We've solved all three cases. Somehow. Let's go back to the station.",
+          "target": "end_of_day",
+          "conditions": [],
+          "effects": [{ "variable": "casesolved", "operation": "add", "value": 1 }]
+        }
+      ]
+    },
+    "next_case_choice": {
+      "id": "next_case_choice",
+      "title": "Moving Forward",
+      "text": "We have two cases left. The chickens or the croissant. One is definitely insane. One seems normal but might be weirder. This is what we get paid for. Sort of.",
+      "choices": [
+        {
+          "id": "do_chicken_case",
+          "text": "Let's tackle the chicken conspiracy",
+          "target": "chicken_investigation",
+          "conditions": [],
+          "effects": []
+        },
+        {
+          "id": "do_croissant_case",
+          "text": "Maybe the croissant theft is less weird",
+          "target": "croissant_investigation",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    "end_of_day": {
+      "id": "end_of_day",
+      "title": "Another Day at the Precinct",
+      "text": "We walk back into the station. Chen shakes her head. 'That was the weirdest day we've had in months.' I grab a fresh coffee—carefully, after the morning's incident—and smile. 'Tomorrow will be weirder.' It always is. Welcome to detective work in this town."
+    }
+  }
+}
