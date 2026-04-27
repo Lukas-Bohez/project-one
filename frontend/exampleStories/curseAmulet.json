@@ -1,0 +1,233 @@
+{
+  "meta": {
+    "title": "The Cursed Amulet",
+    "startScene": "tavern_encounter",
+    "version": "1.0"
+  },
+  "variables": {
+    "magic": { "type": "number", "value": 50 },
+    "courage": { "type": "number", "value": 60 },
+    "gold": { "type": "number", "value": 100 },
+    "cursed": { "type": "boolean", "value": false },
+    "allies": { "type": "number", "value": 0 }
+  },
+  "scenes": {
+    "tavern_encounter": {
+      "title": "A Desperate Plea",
+      "text": "You're drinking at the Wanderer's Tavern when a cloaked figure sits across from you. She's desperate, haunted. 'I have an amulet,' she whispers, pulling out a glowing pendant. 'It's cursed. And it's killing me. I'll pay you well to break the curse, or... take it off my hands.'",
+      "choices": [
+        {
+          "text": "Accept the job for the gold",
+          "effects": [
+            { "variable": "gold", "operation": "add", "value": 200 },
+            { "variable": "cursed", "operation": "set", "value": true }
+          ],
+          "nextScene": "curse_manifest"
+        },
+        {
+          "text": "Offer to help her break the curse for free",
+          "effects": [
+            { "variable": "allies", "operation": "add", "value": 1 },
+            { "variable": "courage", "operation": "add", "value": 20 }
+          ],
+          "nextScene": "journey_begins"
+        },
+        {
+          "text": "Refuse and leave immediately",
+          "nextScene": "safe_path"
+        }
+      ]
+    },
+    "curse_manifest": {
+      "title": "The Curse Activates",
+      "text": "The moment you touch the amulet, a dark energy spreads through your body. You collapse, and strange visions flood your mind. A sorceress, ancient and terrible, bound her malice into this amulet. To break it, you must journey to her tomb and face the source of the curse.",
+      "choices": [
+        {
+          "text": "Seek out a wizard to teach you protective magic",
+          "effects": [
+            { "variable": "magic", "operation": "add", "value": 40 },
+            { "variable": "gold", "operation": "subtract", "value": 50 }
+          ],
+          "nextScene": "wizard_tower"
+        },
+        {
+          "text": "Follow the visions and go directly to the tomb",
+          "effects": [
+            { "variable": "courage", "operation": "add", "value": 30 }
+          ],
+          "nextScene": "tomb_entrance"
+        }
+      ]
+    },
+    "journey_begins": {
+      "title": "An Unlikely Alliance",
+      "text": "The woman, Elara, becomes your companion on a dangerous quest. She reveals the amulet belonged to a dark sorcerer named Malachar, defeated centuries ago. His tomb lies deep in the Obsidian Mountains. Together, you begin the treacherous journey.",
+      "choices": [
+        {
+          "text": "Head directly to the mountains",
+          "effects": [
+            { "variable": "courage", "operation": "add", "value": 20 }
+          ],
+          "nextScene": "mountain_crossing"
+        },
+        {
+          "text": "Detour to gather more allies and supplies",
+          "effects": [
+            { "variable": "allies", "operation": "add", "value": 2 },
+            { "variable": "gold", "operation": "subtract", "value": 80 }
+          ],
+          "nextScene": "mountain_crossing"
+        }
+      ]
+    },
+    "wizard_tower": {
+      "title": "The Archmage's Lessons",
+      "text": "An old wizard, scarred by magical battles, teaches you the fundamentals of protective magic. 'The amulet feeds on despair and fear,' she warns. 'To break it, you must overcome what binds you to it - whatever weakness the curse has found in your soul.'",
+      "choices": [
+        {
+          "text": "Travel to the tomb fully prepared",
+          "effects": [
+            { "variable": "magic", "operation": "add", "value": 30 }
+          ],
+          "nextScene": "tomb_entrance"
+        }
+      ]
+    },
+    "tomb_entrance": {
+      "title": "The Obsidian Gates",
+      "text": "Before you lies a massive tomb carved from black stone. Ancient runes glow with sickly green light. You feel the curse pulling at you, trying to drag you deeper. At the entrance, you must choose your approach.",
+      "choices": [
+        {
+          "text": "Use magic to counter the entrance's protection",
+          "conditions": [
+            { "variable": "magic", "comparison": "greater_than", "value": 70 }
+          ],
+          "effects": [
+            { "variable": "magic", "operation": "subtract", "value": 20 }
+          ],
+          "nextScene": "inner_chamber"
+        },
+        {
+          "text": "Force your way through with courage and strength",
+          "effects": [
+            { "variable": "courage", "operation": "subtract", "value": 30 }
+          ],
+          "nextScene": "inner_chamber"
+        },
+        {
+          "text": "Search for a hidden entrance",
+          "nextScene": "secret_passage"
+        }
+      ]
+    },
+    "mountain_crossing": {
+      "title": "The Obsidian Mountains",
+      "text": "The journey is brutal. Snow and ice bite at your skin. Your allies prove invaluable, sharing warmth and strength. Finally, you reach the mountain peak where Malachar's tomb is carved into the stone itself.",
+      "choices": [
+        {
+          "text": "Enter the tomb together",
+          "nextScene": "tomb_entrance"
+        }
+      ]
+    },
+    "inner_chamber": {
+      "title": "The Sorcerer's Sanctum",
+      "text": "Inside, you find a chamber filled with magical artifacts and the skeletal remains of Malachar seated on a throne. The amulet in your possession suddenly glows brightly, and you feel the sorcerer's spirit beginning to manifest.",
+      "choices": [
+        {
+          "text": "Confront the spirit directly",
+          "effects": [
+            { "variable": "courage", "operation": "add", "value": 40 }
+          ],
+          "nextScene": "spirit_battle"
+        },
+        {
+          "text": "Destroy the amulet using a magic ritual",
+          "conditions": [
+            { "variable": "magic", "comparison": "greater_than", "value": 60 }
+          ],
+          "effects": [
+            { "variable": "magic", "operation": "subtract", "value": 50 }
+          ],
+          "nextScene": "curse_broken"
+        }
+      ]
+    },
+    "secret_passage": {
+      "title": "Hidden Paths",
+      "text": "You discover a tunnel behind a collapsed wall. It's dangerous but avoids the main defenses. You make your way through carefully, emerging directly in the inner chamber.",
+      "choices": [
+        {
+          "text": "Face the sorcerer's spirit",
+          "nextScene": "spirit_battle"
+        }
+      ]
+    },
+    "spirit_battle": {
+      "title": "The Final Confrontation",
+      "text": "Malachar's spirit manifests fully, a being of pure malice and rage. He demands the amulet. A battle of wills begins - his dark magic against your courage and will to survive. It's not a fight you can win with weapons alone.",
+      "choices": [
+        {
+          "text": "Accept the curse and break it from within",
+          "effects": [
+            { "variable": "cursed", "operation": "set", "value": false },
+            { "variable": "courage", "operation": "add", "value": 50 }
+          ],
+          "nextScene": "curse_broken"
+        },
+        {
+          "text": "Seal Malachar away forever with your own life force",
+          "effects": [
+            { "variable": "cursed", "operation": "set", "value": false }
+          ],
+          "nextScene": "heroic_sacrifice"
+        }
+      ]
+    },
+    "curse_broken": {
+      "title": "Freedom at Last",
+      "text": "The amulet shatters into dust. The curse is broken. You feel the dark presence lifted from your soul. Malachar's spirit dissolves, finally at peace. The amulet's power is gone forever.",
+      "choices": [
+        {
+          "text": "Return home a hero",
+          "nextScene": "victory_ending"
+        }
+      ]
+    },
+    "heroic_sacrifice": {
+      "title": "A Noble End",
+      "text": "Your life force merges with the seal, binding Malachar's spirit forever. You fade, knowing the world is safer because of your choice. Your companions weep, but they know you died a hero, saving not just them, but countless future generations from Malachar's darkness.",
+      "choices": [
+        {
+          "text": "THE END - Sacrificed for the greater good",
+          "nextScene": "end_game"
+        }
+      ]
+    },
+    "safe_path": {
+      "title": "Ignorance is Bliss",
+      "text": "You leave the tavern, ignoring the desperate woman. Days later, you hear rumors of a mysterious curse spreading through the city. You wonder if your refusal to help set something terrible in motion.",
+      "choices": [
+        {
+          "text": "THE END - Some quests are not meant for you",
+          "nextScene": "end_game"
+        }
+      ]
+    },
+    "victory_ending": {
+      "title": "Champion of the Realm",
+      "text": "You return home with the tale of breaking an ancient curse. Bards sing your praises. You're welcomed as a hero wherever you go. The curse that once plagued so many is finally broken, and you broke it.",
+      "choices": [
+        {
+          "text": "THE END - Your legend will endure",
+          "nextScene": "end_game"
+        }
+      ]
+    },
+    "end_game": {
+      "title": "Story Complete",
+      "text": "Your journey through the cursed amulet's story is finished. Different choices lead to heroic victories, noble sacrifices, or regretful inaction. What would you choose if you could do it all again?",
+      "choices": []
+    }
+  }
+}

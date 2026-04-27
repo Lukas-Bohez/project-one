@@ -1,0 +1,203 @@
+{
+  "meta": {
+    "title": "The Lost City of Atlantis",
+    "startScene": "ship_deck",
+    "version": "1.0"
+  },
+  "variables": {
+    "wealth": { "type": "number", "value": 100 },
+    "knowledge": { "type": "number", "value": 50 },
+    "health": { "type": "number", "value": 100 },
+    "hasArtifact": { "type": "boolean", "value": false },
+    "allyCount": { "type": "number", "value": 0 }
+  },
+  "scenes": {
+    "ship_deck": {
+      "title": "The Ancient Map",
+      "text": "Your merchant ship cuts through turbulent waters. An elderly scholar approaches with a weathered map depicting an island that shouldn't exist according to all modern charts. 'Atlantis,' she whispers. 'I've spent my life proving it real. But I need funding, and I need protection on the journey.'",
+      "choices": [
+        {
+          "text": "Invest your entire fortune in the expedition",
+          "effects": [
+            { "variable": "wealth", "operation": "subtract", "value": 100 },
+            { "variable": "knowledge", "operation": "add", "value": 20 },
+            { "variable": "allyCount", "operation": "add", "value": 1 }
+          ],
+          "nextScene": "storm_ahead"
+        },
+        {
+          "text": "Ask for a smaller investment with profit-sharing",
+          "effects": [
+            { "variable": "wealth", "operation": "subtract", "value": 30 },
+            { "variable": "knowledge", "operation": "add", "value": 10 }
+          ],
+          "nextScene": "storm_ahead"
+        },
+        {
+          "text": "Refuse and continue your normal trade route",
+          "effects": [
+            { "variable": "wealth", "operation": "add", "value": 20 }
+          ],
+          "nextScene": "ordinary_life"
+        }
+      ]
+    },
+    "storm_ahead": {
+      "title": "A Tempest Rises",
+      "text": "Three weeks into the voyage, a massive storm emerges from nowhere. The crew panics as waves crash against the hull. Your first mate asks: do you brave the storm head-on, try to navigate around it, or turn back?",
+      "choices": [
+        {
+          "text": "Sail straight through the storm with courage",
+          "effects": [
+            { "variable": "health", "operation": "subtract", "value": 25 },
+            { "variable": "knowledge", "operation": "add", "value": 30 }
+          ],
+          "nextScene": "island_sighting"
+        },
+        {
+          "text": "Attempt to navigate around it carefully",
+          "effects": [
+            { "variable": "wealth", "operation": "subtract", "value": 15 }
+          ],
+          "conditions": [
+            { "variable": "wealth", "comparison": "greater_than", "value": 10 }
+          ],
+          "nextScene": "island_sighting"
+        },
+        {
+          "text": "Turn back to safety",
+          "nextScene": "return_to_port"
+        }
+      ]
+    },
+    "island_sighting": {
+      "title": "Land on the Horizon",
+      "text": "Through the clearing skies, a massive island emerges. Its architecture defies explanation - towering structures of an unknown metal gleam in the sunlight. You've found it. Atlantis is real. Now, where do you explore first?",
+      "choices": [
+        {
+          "text": "Head to the grand central temple",
+          "effects": [
+            { "variable": "knowledge", "operation": "add", "value": 40 },
+            { "variable": "hasArtifact", "operation": "set", "value": true }
+          ],
+          "nextScene": "temple_discovery"
+        },
+        {
+          "text": "Search the scattered ruins for artifacts",
+          "effects": [
+            { "variable": "wealth", "operation": "add", "value": 50 },
+            { "variable": "health", "operation": "subtract", "value": 10 }
+          ],
+          "nextScene": "ruins_ancient"
+        },
+        {
+          "text": "Investigate strange glowing caves beneath the island",
+          "effects": [
+            { "variable": "knowledge", "operation": "add", "value": 50 },
+            { "variable": "health", "operation": "subtract", "value": 35 }
+          ],
+          "nextScene": "cave_mystery"
+        }
+      ]
+    },
+    "temple_discovery": {
+      "title": "The Sacred Chamber",
+      "text": "You stand before an ornate altar, surrounded by walls covered in an unknown script. In the center rests a crystalline sphere that pulses with an inner light. As you approach, the sphere activates, projecting images of Atlantis's final days. A civilization destroyed by their own ambition.",
+      "choices": [
+        {
+          "text": "Take the sphere as proof and leave",
+          "nextScene": "escape_island"
+        },
+        {
+          "text": "Study the sphere's technology further",
+          "effects": [
+            { "variable": "knowledge", "operation": "add", "value": 60 }
+          ],
+          "nextScene": "ascension_ending"
+        }
+      ]
+    },
+    "ruins_ancient": {
+      "title": "Treasures of the Lost",
+      "text": "You find numerous artifacts: golden coins, jeweled ornaments, and devices of unknown purpose. Your crew loads the treasures carefully. You're now a wealthy explorer, and word of your discovery spreads quickly across the world.",
+      "choices": [
+        {
+          "text": "Return to civilization and become famous",
+          "nextScene": "ending_wealth"
+        }
+      ]
+    },
+    "cave_mystery": {
+      "title": "The Underground City",
+      "text": "You discover an entire city beneath Atlantis - streets carved into crystal, buildings that defy physics, and technology millions of years ahead of your time. At the center, a figure of light awaits, ancient and patient. It has been waiting for someone curious enough to find the truth.",
+      "choices": [
+        {
+          "text": "Accept the entity's offer of knowledge",
+          "effects": [
+            { "variable": "knowledge", "operation": "set", "value": 999 }
+          ],
+          "nextScene": "ascension_ending"
+        },
+        {
+          "text": "Flee the island with what you've learned",
+          "nextScene": "escape_island"
+        }
+      ]
+    },
+    "escape_island": {
+      "title": "Against All Odds",
+      "text": "You race back to your ship as the island begins to sink, returning to its ancient resting place beneath the waves. Your crew manages to escape with your discoveries intact. You sail back to civilization as one of history's greatest explorers.",
+      "choices": [
+        {
+          "text": "THE END - You've proven Atlantis was real",
+          "nextScene": "ending_wealth"
+        }
+      ]
+    },
+    "return_to_port": {
+      "title": "The Safe Choice",
+      "text": "You return to port safely, your crew grateful and unharmed. But the secret of Atlantis remains hidden, waiting for another brave adventurer. Perhaps one day you'll gather the courage to try again.",
+      "choices": [
+        {
+          "text": "THE END - Some mysteries remain unsolved",
+          "nextScene": "end_game"
+        }
+      ]
+    },
+    "ordinary_life": {
+      "title": "A Different Path",
+      "text": "You continue your merchant trade, growing moderately wealthy. Years later, you hear rumors that another captain found Atlantis. You wonder what could have been if you'd taken the chance.",
+      "choices": [
+        {
+          "text": "THE END - Curiosity unrewarded",
+          "nextScene": "end_game"
+        }
+      ]
+    },
+    "ascension_ending": {
+      "title": "Transcendence",
+      "text": "With the knowledge of Atlantis unlocked, your understanding of civilization, science, and humanity expands infinitely. You become a bridge between the ancient and modern world, a keeper of lost wisdom. Your influence shapes the future of human knowledge.",
+      "choices": [
+        {
+          "text": "THE END - You've transcended mortal understanding",
+          "nextScene": "end_game"
+        }
+      ]
+    },
+    "ending_wealth": {
+      "title": "Fortune and Fame",
+      "text": "You return a celebrity, your exploration changing everything we thought we knew about human history. Museums compete for your artifacts. Universities want you as a lecturer. Your name becomes synonymous with discovery.",
+      "choices": [
+        {
+          "text": "THE END - A legend is born",
+          "nextScene": "end_game"
+        }
+      ]
+    },
+    "end_game": {
+      "title": "Story Complete",
+      "text": "Thank you for exploring this branching adventure! Your choices shaped the story's outcome. Try different paths to discover alternate endings.",
+      "choices": []
+    }
+  }
+}

@@ -91,7 +91,7 @@ class StoryWeaver {
         });
     }
 
-    loadExamplesManifest(path = '../exampleStories/manifest.json') {
+    loadExamplesManifest(path = '/exampleStories/manifest.json') {
         fetch(path)
             .then(res => {
                 if (!res.ok) throw new Error('Could not fetch examples manifest');
@@ -118,7 +118,7 @@ class StoryWeaver {
                 });
                 if (btn) btn.addEventListener('click', () => {
                     const selected = select.value;
-                    if (selected) this.loadExampleStory('../exampleStories/' + selected);
+                    if (selected) this.loadExampleStory('/exampleStories/' + selected);
                 });
                 if (resetBtn) resetBtn.addEventListener('click', () => {
                     const selected = select.value;
@@ -126,7 +126,7 @@ class StoryWeaver {
                         // Clear stored story and load the example
                         localStorage.removeItem('storyweaver_data');
                         localStorage.removeItem('storyweaver_save');
-                        this.loadExampleStory('../exampleStories/' + selected, true);
+                        this.loadExampleStory('/exampleStories/' + selected, true);
                         // Close header menu and overlay after reset
                         document.body.classList.remove('header-open');
                         const overlay = document.getElementById('mobileOverlay');
@@ -196,7 +196,7 @@ class StoryWeaver {
         return false;
     }
 
-    loadExampleStory(path = '../exampleStories/enchantedForest.json', suppressConfirm = false) {
+    loadExampleStory(path = '/exampleStories/enchantedForest.json', suppressConfirm = false) {
         // Gracefully fetch and apply the example story JSON
         document.body.classList.add('loading');
         fetch(path)

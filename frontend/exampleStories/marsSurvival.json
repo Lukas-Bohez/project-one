@@ -1,0 +1,191 @@
+{
+  "meta": {
+    "title": "Survival on Mars",
+    "startScene": "crash_landing",
+    "version": "1.0"
+  },
+  "variables": {
+    "oxygen": { "type": "number", "value": 100 },
+    "food": { "type": "number", "value": 60 },
+    "morale": { "type": "number", "value": 75 },
+    "repairs": { "type": "number", "value": 0 },
+    "crewAlive": { "type": "number", "value": 4 }
+  },
+  "scenes": {
+    "crash_landing": {
+      "title": "Red Planet Descent",
+      "text": "Alarms blare as your spacecraft loses power during the descent. You manage to land safely, but the impact is hard. Systems are damaged. Through the viewport, you see the rust-colored landscape of Mars stretching endlessly. Your crew of 4 looks to you for leadership.",
+      "choices": [
+        {
+          "text": "Immediately inventory supplies and assess damage",
+          "effects": [
+            { "variable": "morale", "operation": "add", "value": 15 }
+          ],
+          "nextScene": "inventory_check"
+        },
+        {
+          "text": "Send a distress signal and rest",
+          "effects": [
+            { "variable": "morale", "operation": "add", "value": 10 }
+          ],
+          "nextScene": "inventory_check"
+        }
+      ]
+    },
+    "inventory_check": {
+      "title": "Taking Stock",
+      "text": "You have: 60 days of food rations, 100 units of oxygen (with recycler, should last 30 days), water processor that works, and tools. The communication array is damaged - you've sent a distress signal, but rescue is unlikely before 6 months at minimum. You need to become self-sufficient.",
+      "choices": [
+        {
+          "text": "Focus on repairing the communication system",
+          "effects": [
+            { "variable": "repairs", "operation": "add", "value": 30 }
+          ],
+          "nextScene": "day_five"
+        },
+        {
+          "text": "Focus on finding water ice and establishing a habitat",
+          "effects": [
+            { "variable": "food", "operation": "add", "value": 40 },
+            { "variable": "morale", "operation": "add", "value": 20 }
+          ],
+          "nextScene": "day_five"
+        },
+        {
+          "text": "Send exploration teams to find resources",
+          "effects": [
+            { "variable": "morale", "operation": "subtract", "value": 10 },
+            { "variable": "crewAlive", "operation": "subtract", "value": 1 }
+          ],
+          "nextScene": "day_five"
+        }
+      ]
+    },
+    "day_five": {
+      "title": "Five Days In",
+      "text": "You've been surviving on Mars for five days now. The crew is adapting, though tensions are rising. Psychologically, the isolation is hitting harder than expected. Your oxygen reserves are holding stable, but supplies are your biggest concern.",
+      "conditions": [
+        { "variable": "crewAlive", "comparison": "less_than", "value": 3 }
+      ],
+      "text_alternate": "Five days in, and morale is dangerously low after losing a crew member. The surviving three look exhausted. You need to keep hope alive.",
+      "choices": [
+        {
+          "text": "Organize a team activity to boost morale",
+          "effects": [
+            { "variable": "morale", "operation": "add", "value": 25 }
+          ],
+          "nextScene": "breakthrough"
+        },
+        {
+          "text": "Strictly ration supplies and maintain discipline",
+          "effects": [
+            { "variable": "food", "operation": "subtract", "value": 10 },
+            { "variable": "morale", "operation": "subtract", "value": 20 }
+          ],
+          "nextScene": "crisis_point"
+        },
+        {
+          "text": "Attempt a dangerous mission to find subsurface water",
+          "effects": [
+            { "variable": "oxygen", "operation": "subtract", "value": 30 },
+            { "variable": "food", "operation": "add", "value": 60 }
+          ],
+          "nextScene": "breakthrough"
+        }
+      ]
+    },
+    "breakthrough": {
+      "title": "Discovery!",
+      "text": "Your team discovers subsurface water ice and successfully extracts it. With a reliable water source, you can produce oxygen through electrolysis and grow food through hydroponic farming. Suddenly, survival doesn't seem impossible anymore.",
+      "choices": [
+        {
+          "text": "Begin construction of a permanent settlement",
+          "effects": [
+            { "variable": "repairs", "operation": "add", "value": 40 },
+            { "variable": "morale", "operation": "add", "value": 30 }
+          ],
+          "nextScene": "settlement_day_30"
+        }
+      ]
+    },
+    "crisis_point": {
+      "title": "The Breaking Point",
+      "text": "Strict rationing and low morale has created a dangerous situation. Conflicts erupt. Your team is fracturing. Despair hangs heavy over the base. You realize that survival is as much about hope as it is about resources.",
+      "choices": [
+        {
+          "text": "Appeal to your crew's sense of duty and hope",
+          "effects": [
+            { "variable": "morale", "operation": "add", "value": 40 }
+          ],
+          "nextScene": "recovery"
+        },
+        {
+          "text": "Make harsh decisions to maintain control",
+          "effects": [
+            { "variable": "crewAlive", "operation": "subtract", "value": 1 }
+          ],
+          "nextScene": "bitter_victory"
+        }
+      ]
+    },
+    "recovery": {
+      "title": "Rising Again",
+      "text": "Your words inspire the crew. They remember why they came here - to explore, to survive, to prove humanity can reach beyond Earth. With renewed purpose, they work harder than ever.",
+      "choices": [
+        {
+          "text": "Continue to day 30",
+          "nextScene": "settlement_day_30"
+        }
+      ]
+    },
+    "settlement_day_30": {
+      "title": "One Month Later",
+      "text": "You've established a functioning settlement with oxygen production, water extraction, and basic farming. The structures are reinforced. Radio communication is partially restored. The crew has stabilized, and everyone knows their role.",
+      "choices": [
+        {
+          "text": "Focus on expanding the base and preparing for long-term habitation",
+          "nextScene": "mars_success"
+        },
+        {
+          "text": "Attempt to fully repair the communication system to confirm rescue",
+          "nextScene": "mars_success"
+        }
+      ]
+    },
+    "bitter_victory": {
+      "title": "Survival at What Cost",
+      "text": "You've maintained control, but at a terrible price. Your remaining crew survives, but the cost to their morale and trust is devastating. You've proven humans can survive Mars, but the question haunts you: at what cost?",
+      "choices": [
+        {
+          "text": "Continue forward and complete the mission",
+          "nextScene": "ending_bitter"
+        }
+      ]
+    },
+    "mars_success": {
+      "title": "A New World",
+      "text": "Six months pass. Your settlement is thriving. You've proven that humans can not only survive on Mars, but build a functioning civilization. When rescue arrives, you choose to stay, becoming the first permanent colonist of another world.",
+      "choices": [
+        {
+          "text": "THE END - Welcome to Mars Colony One",
+          "nextScene": "end_game"
+        }
+      ]
+    },
+    "ending_bitter": {
+      "title": "Hollow Victory",
+      "text": "You survive, technically. But the trauma and the loss weigh heavily. When rescue finally arrives, you return home as a survivor, but carry deep scars from what Mars demanded of you.",
+      "choices": [
+        {
+          "text": "THE END - Some victories come with a price",
+          "nextScene": "end_game"
+        }
+      ]
+    },
+    "end_game": {
+      "title": "Mars Awaits Your Next Journey",
+      "text": "Your survival story on Mars is complete. Different choices lead to different outcomes - from thriving settlements to hollow victories. What would you choose next time?",
+      "choices": []
+    }
+  }
+}
