@@ -31,12 +31,12 @@
     stickyBar.id = 'sticky-download-bar';
     stickyBar.innerHTML = `
       <div class="sticky-download-cta__content">
-        <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases" 
+        <a href="https://play.google.com/store/apps/details?id=com.torrentspire.ai" 
            class="sticky-download-cta__link"
            target="_blank"
            rel="noopener noreferrer">
           <i class="fa-solid fa-download"></i>
-          Download Convert The Spire Reborn
+          Get Convert The Spire Reborn on Google Play
         </a>
         <button class="sticky-download-cta__dismiss" 
                 type="button" 
