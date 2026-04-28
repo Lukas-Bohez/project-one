@@ -1,7 +1,0 @@
-# Redirect old cms-demo URL to new projects URL
-RedirectMatch 301 ^/LukasBohez/cms-demo/(.*)$ /LukasBohez/projects/$1
-
-RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^LukasBohez/projects/(.+)$ /LukasBohez/projects/$1/index.html [L]
