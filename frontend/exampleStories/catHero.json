@@ -1,0 +1,47 @@
+{
+  "meta": {
+    "title": "The Cat Who Saved the City",
+    "startScene": "start",
+    "version": "1.0",
+    "created": "2026-04-28T00:00:00.000Z"
+  },
+  "variables": {
+    "reputation": { "type": "number", "value": 20, "min": 0, "max": 100 },
+    "fish": { "type": "number", "value": 3, "min": 0, "max": 99 },
+    "trust": { "type": "boolean", "value": false }
+  },
+  "scenes": {
+    "start": {
+      "id": "start",
+      "title": "A Cat on the Rooftops",
+      "text": "The city is in trouble, though nobody seems to notice. From the rooftop, I can see smoke near the tram station and hear a child crying below. I am only a cat, but I am also the only one who can move between all the hidden places.",
+      "choices": [
+        { "id": "investigate", "text": "Investigate the smoke", "target": "tram", "conditions": [], "effects": [{ "variable": "reputation", "operation": "add", "value": 10 }] },
+        { "id": "beg", "text": "Ask the fishmonger for help", "target": "fishmonger", "conditions": [{ "variable": "fish", "comparison": "greater_than", "value": 0 }], "effects": [{ "variable": "fish", "operation": "subtract", "value": 1 }, { "variable": "trust", "operation": "set", "value": true }] }
+      ]
+    },
+    "tram": {
+      "id": "tram",
+      "title": "The Broken Tram",
+      "text": "A loose cable sparks above the tracks. If the tram moves now, it will derail. The driver is panicking. Someone needs to leap onto the control box and pull the emergency stop.",
+      "choices": [
+        { "id": "stop", "text": "Sprint across the rails and stop it", "target": "end", "conditions": [{ "variable": "reputation", "comparison": "greater_than", "value": 15 }], "effects": [{ "variable": "reputation", "operation": "add", "value": 20 }] },
+        { "id": "call", "text": "Call for people to clear the platform", "target": "end", "conditions": [], "effects": [{ "variable": "trust", "operation": "set", "value": true }] }
+      ]
+    },
+    "fishmonger": {
+      "id": "fishmonger",
+      "title": "A Deal for a Hero",
+      "text": "The fishmonger listens, then nods. 'If you save the tram, the whole district will know your name,' they say, sliding over a paper bag like it is a sacred offering.",
+      "choices": [
+        { "id": "run", "text": "Run to the tram station", "target": "tram", "conditions": [], "effects": [{ "variable": "reputation", "operation": "add", "value": 5 }] }
+      ]
+    },
+    "end": {
+      "id": "end",
+      "title": "City Legend",
+      "text": "By sunset, the city has a new hero, and it is a cat with dust on its paws and a perfectly timed leap.",
+      "choices": []
+    }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "title": "Tales from the Mystic Tavern",
+    "startScene": "start",
+    "version": "1.0",
+    "created": "2026-04-28T00:00:00.000Z"
+  },
+  "variables": {
+    "trust": { "type": "number", "value": 50, "min": 0, "max": 100 },
+    "coinPurse": { "type": "number", "value": 12, "min": 0, "max": 999 },
+    "mystery": { "type": "boolean", "value": false }
+  },
+  "scenes": {
+    "start": {
+      "id": "start",
+      "title": "The Tavern Door",
+      "text": "Rain taps against the windows of the old tavern. Warm light spills across the floor, and every table seems to hide a story. The bartender watches me with the kind of patience that means they already know more than they should.",
+      "choices": [
+        { "id": "listen", "text": "Listen for rumors", "target": "rumors", "conditions": [], "effects": [{ "variable": "trust", "operation": "add", "value": 5 }] },
+        { "id": "buy", "text": "Buy a round for the room", "target": "toast", "conditions": [{ "variable": "coinPurse", "comparison": "greater_than", "value": 5 }], "effects": [{ "variable": "coinPurse", "operation": "subtract", "value": 5 }, { "variable": "trust", "operation": "add", "value": 10 }] }
+      ]
+    },
+    "rumors": {
+      "id": "rumors",
+      "title": "Rumor Mill",
+      "text": "A hooded traveler leans close and speaks of a map hidden under the hearthstone. Another swears the cellar door opens only for the honest. The bartender's expression says both stories might be true.",
+      "choices": [
+        { "id": "investigate", "text": "Check the hearthstone", "target": "hearth", "conditions": [{ "variable": "trust", "comparison": "greater_than", "value": 40 }], "effects": [{ "variable": "mystery", "operation": "set", "value": true }] },
+        { "id": "leave", "text": "Leave the tavern", "target": "end", "conditions": [], "effects": [] }
+      ]
+    },
+    "toast": {
+      "id": "toast",
+      "title": "A Room Begins to Sing",
+      "text": "Mugs rise, laughter spreads, and the room's tension melts away. For a moment, the tavern feels less like a stop on the road and more like the center of the world.",
+      "choices": [
+        { "id": "continue", "text": "Stay for the next story", "target": "rumors", "conditions": [], "effects": [{ "variable": "trust", "operation": "add", "value": 5 }] }
+      ]
+    },
+    "hearth": {
+      "id": "hearth",
+      "title": "Under the Hearthstone",
+      "text": "You lift the stone and find a folded note wrapped around a brass key. It reads: 'For the one who asks the right question.' The tavern isn't ordinary at all.",
+      "choices": [
+        { "id": "end", "text": "Keep the key and walk out", "target": "end", "conditions": [], "effects": [{ "variable": "mystery", "operation": "set", "value": true }] }
+      ]
+    },
+    "end": {
+      "id": "end",
+      "title": "Another Night, Another Tale",
+      "text": "The rain has slowed. Whatever happens next, the tavern has already changed the shape of the night.",
+      "choices": []
+    }
+  }
+}

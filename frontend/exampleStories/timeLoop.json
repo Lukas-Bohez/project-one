@@ -1,0 +1,56 @@
+{
+  "meta": {
+    "title": "A Day in the Time Loop",
+    "startScene": "start",
+    "version": "1.0",
+    "created": "2026-04-28T00:00:00.000Z"
+  },
+  "variables": {
+    "clarity": { "type": "number", "value": 40, "min": 0, "max": 100 },
+    "paradox": { "type": "number", "value": 0, "min": 0, "max": 10 },
+    "hasWatch": { "type": "boolean", "value": true }
+  },
+  "scenes": {
+    "start": {
+      "id": "start",
+      "title": "The Alarm That Never Stops",
+      "text": "The alarm blares at 7:12 AM. I know because I've heard it enough times to count the seconds between the snooze and the repeat. The coffee on the counter is always cold. Outside, the same bus brakes at the same corner.",
+      "choices": [
+        { "id": "leave", "text": "Leave the apartment early", "target": "street", "conditions": [], "effects": [{ "variable": "clarity", "operation": "add", "value": 5 }] },
+        { "id": "study", "text": "Study the watch for clues", "target": "watch", "conditions": [{ "variable": "hasWatch", "comparison": "equals", "value": true }], "effects": [{ "variable": "paradox", "operation": "add", "value": 1 }] }
+      ]
+    },
+    "street": {
+      "id": "street",
+      "title": "Same Corner, Same Bus",
+      "text": "The bus passes, the pigeon takes off, and a cyclist nearly clips the lamppost. Everything lines up like a rehearsal. If I want out, I need to break the rhythm.",
+      "choices": [
+        { "id": "detour", "text": "Take a different route", "target": "market", "conditions": [{ "variable": "clarity", "comparison": "greater_than", "value": 30 }], "effects": [{ "variable": "clarity", "operation": "add", "value": 10 }] },
+        { "id": "repeat", "text": "Run back to the apartment", "target": "start", "conditions": [], "effects": [{ "variable": "paradox", "operation": "add", "value": 1 }] }
+      ]
+    },
+    "watch": {
+      "id": "watch",
+      "title": "The Second Hand Stutters",
+      "text": "The watch skips backwards for a beat, then settles. Etched inside the case is a tiny phrase: 'Choose the moment you mean.'",
+      "choices": [
+        { "id": "focus", "text": "Focus on the phrase", "target": "end", "conditions": [], "effects": [{ "variable": "clarity", "operation": "add", "value": 20 }] },
+        { "id": "panic", "text": "Throw the watch away", "target": "end", "conditions": [], "effects": [{ "variable": "paradox", "operation": "add", "value": 2 }] }
+      ]
+    },
+    "market": {
+      "id": "market",
+      "title": "A New Detail",
+      "text": "At the market, one stall is new. The vendor smiles as if they were expecting me. That should be impossible, which means the loop is already cracking.",
+      "choices": [
+        { "id": "speak", "text": "Ask the vendor what they know", "target": "end", "conditions": [], "effects": [{ "variable": "clarity", "operation": "add", "value": 15 }, { "variable": "paradox", "operation": "add", "value": 1 }] }
+      ]
+    },
+    "end": {
+      "id": "end",
+      "title": "One Step Closer",
+      "text": "The loop is still there, but it is no longer seamless. I can feel the shape of an exit now.",
+      "choices": []
+    }
+  }
+}
