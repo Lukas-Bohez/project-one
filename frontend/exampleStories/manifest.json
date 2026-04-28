@@ -6,4 +6,8 @@
   { "file": "atlantisLost.json", "title": "The Lost City of Atlantis" },
   { "file": "marsSurvival.json", "title": "Survival on Mars" },
   { "file": "curseAmulet.json", "title": "The Cursed Amulet" }
+  ,{ "file": "mysticTavern.json", "title": "Tales from the Mystic Tavern" },
+  { "file": "timeLoop.json", "title": "A Day in the Time Loop" },
+  { "file": "catHero.json", "title": "The Cat Who Saved the City" }
 ]
+
