@@ -1,0 +1,138 @@
+/* Image Lightbox Styles */
+
+.image-lightbox-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.92);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overflow: hidden;
+}
+
+.image-lightbox-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  max-width: 95vw;
+  max-height: 95vh;
+}
+
+.image-lightbox-img-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  min-height: 0;
+}
+
+.image-lightbox-img {
+  max-width: 90vw;
+  max-height: calc(100vh - 120px);
+  object-fit: contain;
+  transform-origin: center center;
+  transition: transform 75ms ease-out;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.image-lightbox-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background-color: rgba(0, 0, 0, 0.6);
+  border-radius: 0.5rem;
+  backdrop-filter: blur(4px);
+}
+
+.image-lightbox-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.375rem;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.image-lightbox-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.image-lightbox-btn-close {
+  background-color: rgba(220, 38, 38, 0.4);
+  border-color: rgba(220, 38, 38, 0.5);
+}
+
+.image-lightbox-btn-close:hover {
+  background-color: rgba(220, 38, 38, 0.6);
+  border-color: rgba(220, 38, 38, 0.7);
+}
+
+.image-lightbox-zoom-level {
+  padding: 0.5rem 0.75rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 0.375rem;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  min-width: 3rem;
+  text-align: center;
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .image-lightbox-btn {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+  }
+
+  .image-lightbox-controls {
+    gap: 1rem;
+    padding: 1rem;
+  }
+}
+
+/* Small screen adjustments */
+@media (max-width: 640px) {
+  .image-lightbox-controls {
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .image-lightbox-btn {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.75rem;
+  }
+
+  .image-lightbox-zoom-level {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.75rem;
+  }
+
+  .image-lightbox-img {
+    max-width: 95vw;
+    max-height: calc(100vh - 100px);
+  }
+}
