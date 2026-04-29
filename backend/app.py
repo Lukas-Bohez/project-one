@@ -1173,6 +1173,29 @@ async def connect(sid, environ):
         traceback.print_exc()
 
 
+@sio.on("support_auth")
+async def support_auth(sid, data):
+    user_id = data.get("user_id") if isinstance(data, dict) else None
+    if not user_id:
+        return
+
+    try:
+        user_id = int(user_id)
+    except (TypeError, ValueError):
+        return
+
+    await register_support_socket_user(sid, user_id)
+    try:
+        room_ids = data.get("room_ids", []) if isinstance(data, dict) else []
+        for room_id in room_ids:
+            try:
+                await sio.enter_room(sid, f"support_room_{int(room_id)}")
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+
 @sio.on("join_quiz_session")
 async def handle_join_quiz_session(sid, data):
     """
@@ -1335,6 +1358,8 @@ async def handle_join_quiz_session(sid, data):
 async def disconnect(sid):
     print(f"Client {sid} disconnected")
     connected_clients.discard(sid)
+
+    await unregister_support_socket_user(sid)
 
     # Remove session association
     old_session_id = remove_client_session(sid)
@@ -3221,6 +3246,84 @@ async def login_user(user_credentials: UserCredentials, request: Request):
         )
 
 
+support_user_connections = defaultdict(set)
+support_sid_users = {}
+
+
+def is_support_admin_user(user: dict | None) -> bool:
+    if not user:
+        return False
+    return bool(user.get("is_admin") or user.get("userRoleId", 1) >= 3)
+
+
+def get_active_support_ban(user: dict | None):
+    if not user or not user.get("is_banned"):
+        return None
+
+    if user.get("is_permanent_ban"):
+        return {"is_permanent": True, "banned_until": None, "reason": user.get("ban_reason")}
+
+    banned_until = user.get("banned_until")
+    if not banned_until:
+        return {"is_permanent": True, "banned_until": None, "reason": user.get("ban_reason")}
+
+    try:
+        if banned_until > datetime.now():
+            return {
+                "is_permanent": False,
+                "banned_until": banned_until,
+                "reason": user.get("ban_reason"),
+            }
+    except Exception:
+        return {"is_permanent": True, "banned_until": None, "reason": user.get("ban_reason")}
+
+    return None
+
+
+async def get_support_admin_user(
+    request: Request,
+    x_user_id: str = Header(None, alias="X-User-ID"),
+    x_password: str = Header(None, alias="X-Password"),
+):
+    client_ip = get_client_ip_sync(request)
+    if not x_user_id or not x_password:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing admin credentials")
+
+    try:
+        user_id = int(x_user_id)
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user ID")
+
+    user = UserRepository.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    if not user.get("password_hash") or not UserRepository.verify_password(user["password_hash"], user["salt"], x_password):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid credentials")
+
+    if not is_support_admin_user(user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+
+    log_user_ip_address(user_id, client_ip)
+    return user
+
+
+async def register_support_socket_user(sid: str, user_id: int):
+    support_sid_users[sid] = user_id
+    support_user_connections[user_id].add(sid)
+
+
+async def unregister_support_socket_user(sid: str):
+    user_id = support_sid_users.pop(sid, None)
+    if user_id is None:
+        return
+    user_sids = support_user_connections.get(user_id)
+    if user_sids and sid in user_sids:
+        user_sids.discard(sid)
+        if not user_sids:
+            support_user_connections.pop(user_id, None)
+
+
 # Support chat login endpoint - does NOT create quiz sessions
 @app.post("/api/v1/support/login")
 @limiter.limit("20/minute")
@@ -3244,10 +3347,16 @@ async def support_login_user(user_credentials: UserCredentials, request: Request
         # Just log the IP, don't create sessions or join them
         log_user_ip_address(user_id, get_client_ip_sync(request))
 
+        user = UserRepository.get_user_by_id(user_id)
         logger.info(
             f"User ID {user_id} logged in for support chat (no quiz session created)."
         )
-        return {"message": "Login successful", "user_id": user_id}
+        return {
+            "message": "Login successful",
+            "user_id": user_id,
+            "userRoleId": user.get("userRoleId", 1) if user else 1,
+            "is_admin": is_support_admin_user(user),
+        }
 
     except HTTPException:
         raise
@@ -3295,16 +3404,21 @@ async def support_register_user(user_credentials: UserCredentials, request: Requ
         if not user_id:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="A critical error occurred while creating the user.",
+                detail="Failed to create support user.",
             )
 
-        # Just log the IP, don't create sessions or send chat messages
         log_user_ip_address(user_id, get_client_ip_sync(request))
 
+        user = UserRepository.get_user_by_id(user_id)
         logger.info(
             f"User '{user_credentials.first_name} {user_credentials.last_name}' registered for support chat with ID: {user_id}"
         )
-        return {"message": "User registered successfully", "user_id": user_id}
+        return {
+            "message": "User registered successfully",
+            "user_id": user_id,
+            "userRoleId": user.get("userRoleId", 1) if user else 1,
+            "is_admin": is_support_admin_user(user),
+        }
 
     except HTTPException:
         raise
@@ -3463,6 +3577,7 @@ async def get_support_room_messages(room_id: int, user_id: int = None):
                     "username": m.get("username", "Unknown"),
                     "message": m["message_text"],
                     "user_id": m.get("user_id"),
+                    "deleted_at": str(m["deleted_at"]) if m.get("deleted_at") else None,
                     "created_at": str(m["created_at"]) if m.get("created_at") else None,
                 }
                 for m in (messages or [])
@@ -3496,6 +3611,9 @@ async def send_support_room_message(room_id: int, request: Request):
             raise HTTPException(status_code=400, detail="user_id is required")
 
         user_id = int(user_id)
+        user = UserRepository.get_user_by_id(user_id)
+        if get_active_support_ban(user):
+            raise HTTPException(status_code=403, detail="You are banned from support chat")
 
         # Rate limiting
         now = time.time()
@@ -3549,6 +3667,152 @@ async def send_support_room_message(room_id: int, request: Request):
     except Exception as e:
         logger.error(f"Error sending support message: {e}")
         raise HTTPException(status_code=500, detail="Failed to send message")
+@app.delete("/api/admin/messages/{message_id}")
+async def delete_support_message(message_id: int, request: Request, admin_user: dict = Depends(get_support_admin_user)):
+    try:
+        message = SupportMessageRepository.get_message_by_id(message_id)
+        if not message:
+            raise HTTPException(status_code=404, detail="Message not found")
+
+        SupportMessageRepository.soft_delete_message(message_id)
+        await sio.emit(
+            "support_message_deleted",
+            {
+                "message_id": message_id,
+                "room_id": message.get("room_id"),
+            },
+            room=f"support_room_{message.get('room_id')}",
+        )
+        return {"status": "deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting support message: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete message")
+
+
+@app.get("/api/admin/users/banned")
+async def list_banned_support_users(request: Request, admin_user: dict = Depends(get_support_admin_user)):
+    try:
+        banned_users = UserRepository.get_all_users()
+        active_banned = []
+        for user in banned_users or []:
+            if user.get("is_banned"):
+                active_banned.append(
+                    {
+                        "id": user["id"],
+                        "first_name": user.get("first_name"),
+                        "last_name": user.get("last_name"),
+                        "username": f"{user.get('first_name', '')} {user.get('last_name', '')}".strip(),
+                        "is_permanent_ban": bool(user.get("is_permanent_ban")),
+                        "banned_until": str(user.get("banned_until")) if user.get("banned_until") else None,
+                        "ban_reason": user.get("ban_reason"),
+                    }
+                )
+        return {"users": active_banned}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error listing banned support users: {e}")
+        raise HTTPException(status_code=500, detail="Failed to list banned users")
+
+
+@app.post("/api/admin/users/{user_id}/ban")
+async def ban_support_user(user_id: int, request: Request, admin_user: dict = Depends(get_support_admin_user)):
+    try:
+        body = await request.json()
+        reason = (body.get("reason") or "Support chat policy violation").strip()
+        duration_minutes = body.get("duration_minutes")
+        is_permanent = bool(body.get("is_permanent", False))
+
+        user = UserRepository.get_user_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        banned_until = None
+        if not is_permanent:
+            duration_minutes = int(duration_minutes or 60)
+            if duration_minutes <= 0:
+                raise HTTPException(status_code=400, detail="Duration must be positive")
+            banned_until = datetime.now() + timedelta(minutes=duration_minutes)
+
+        UserRepository.update_user(user_id, {
+            "is_banned": True,
+            "is_permanent_ban": is_permanent,
+            "banned_until": banned_until,
+            "ban_reason": reason,
+        })
+
+        for sid in list(support_user_connections.get(user_id, [])):
+            try:
+                await sio.emit("support_banned", {"reason": reason}, room=sid)
+                await sio.disconnect(sid)
+            except Exception:
+                continue
+
+        return {"status": "banned"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error banning support user: {e}")
+        raise HTTPException(status_code=500, detail="Failed to ban user")
+
+
+@app.post("/api/admin/users/{user_id}/unban")
+async def unban_support_user(user_id: int, request: Request, admin_user: dict = Depends(get_support_admin_user)):
+    try:
+        user = UserRepository.get_user_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        UserRepository.update_user(user_id, {
+            "is_banned": False,
+            "is_permanent_ban": False,
+            "banned_until": None,
+            "ban_reason": None,
+        })
+
+        return {"status": "unbanned"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error unbanning support user: {e}")
+        raise HTTPException(status_code=500, detail="Failed to unban user")
+
+
+@app.get("/api/admin/users/{user_id}/messages")
+async def get_support_user_message_history(user_id: int, request: Request, admin_user: dict = Depends(get_support_admin_user)):
+    try:
+        user = UserRepository.get_user_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        messages = SupportMessageRepository.get_messages_by_user(user_id)
+        return {
+            "user": {
+                "id": user["id"],
+                "first_name": user.get("first_name"),
+                "last_name": user.get("last_name"),
+            },
+            "messages": [
+                {
+                    "id": message["id"],
+                    "room_id": message.get("room_id"),
+                    "room_name": message.get("room_name"),
+                    "message": message.get("message_text"),
+                    "deleted_at": str(message["deleted_at"]) if message.get("deleted_at") else None,
+                    "created_at": str(message["created_at"]) if message.get("created_at") else None,
+                }
+                for message in (messages or [])
+            ],
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting support user message history: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get message history")
+
+
 
 
 def generate_kawaii_string(user_credentials):
@@ -14110,6 +14374,15 @@ def init_support_chat_tables():
     try:
         from database.database import Database
 
+        def ensure_column(table_name: str, column_name: str, column_definition: str):
+            existing = Database.get_rows(
+                f"SHOW COLUMNS FROM {table_name} LIKE %s", [column_name]
+            )
+            if not existing:
+                Database.execute_sql(
+                    f"ALTER TABLE {table_name} ADD COLUMN {column_definition}"
+                )
+
         Database.execute_sql("""
             CREATE TABLE IF NOT EXISTS support_rooms (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -14135,6 +14408,31 @@ def init_support_chat_tables():
                 CHECK (CHAR_LENGTH(message_text) <= 1000)
             )
         """)
+
+        ensure_column("users", "is_admin", "is_admin BOOLEAN NOT NULL DEFAULT FALSE")
+        ensure_column("users", "is_banned", "is_banned BOOLEAN NOT NULL DEFAULT FALSE")
+        ensure_column(
+            "users",
+            "is_permanent_ban",
+            "is_permanent_ban BOOLEAN NOT NULL DEFAULT FALSE",
+        )
+        ensure_column(
+            "users",
+            "banned_until",
+            "banned_until DATETIME NULL DEFAULT NULL",
+        )
+        ensure_column(
+            "users",
+            "ban_reason",
+            "ban_reason TEXT NULL DEFAULT NULL",
+        )
+        ensure_column(
+            "support_messages",
+            "deleted_at",
+            "deleted_at DATETIME NULL DEFAULT NULL",
+        )
+
+        Database.execute_sql("UPDATE users SET is_admin = IF(userRoleId >= 3, TRUE, FALSE)")
 
         # Seed the Global room if it doesn't exist
         existing = Database.get_one_row("SELECT id FROM support_rooms WHERE id = 1")

@@ -32,11 +32,10 @@ class SupportChatSystem {
 
         this.socket.on('connect', () => {
             this.updateConnectionStatus(true);
-            // Re-join rooms we were in
             for (const rName of this.joinedSocketRooms) {
                 this.socket.emit('join', rName);
             }
-            // Reload current room messages after reconnect
+            this.registerSocketAuth();
             if (this.activeRoomId) this.loadMessages(this.activeRoomId);
         });
 
@@ -48,7 +47,15 @@ class SupportChatSystem {
             if (data.room_id === this.activeRoomId) {
                 this.appendMessage(data);
             }
-            // Update unread badge logic could go here
+        });
+
+        this.socket.on('support_message_deleted', (data) => {
+            this.markMessageDeleted(data.message_id, data.room_id);
+        });
+
+        this.socket.on('support_banned', (data) => {
+            this.showNotification(data.reason || 'You have been banned from support chat', 'error');
+            this.handleBannedUser();
         });
 
         // Room list changed (created / deleted)
@@ -57,11 +64,21 @@ class SupportChatSystem {
         });
     }
 
+    registerSocketAuth() {
+        const user = this.getCurrentUser();
+        if (!user || !this.socket) return;
+        this.socket.emit('support_auth', {
+            user_id: user.id,
+            room_ids: this.rooms.map(room => room.id),
+        });
+    }
+
     /* ──────────────────── Auth events ──────────────────── */
     listenForUserEvents() {
         document.addEventListener('userAuthenticated', (e) => {
             this.currentUser = e.detail.user;
             this.loadRooms().then(() => {
+                this.registerSocketAuth();
                 // Auto-select Global Chat (room 1)
                 if (!this.activeRoomId && this.rooms.length) {
                     const global = this.rooms.find(r => r.id === 1) || this.rooms[0];
@@ -89,8 +106,17 @@ class SupportChatSystem {
         const id = localStorage.getItem('support_user_id');
         const fn = localStorage.getItem('support_first_name');
         const ln = localStorage.getItem('support_last_name');
+        const roleId = localStorage.getItem('support_user_role_id');
+        const isAdmin = localStorage.getItem('support_is_admin');
         if (id && fn && ln) {
-            return { id, firstName: fn, lastName: ln, fullName: `${fn} ${ln}` };
+            return {
+                id,
+                firstName: fn,
+                lastName: ln,
+                fullName: `${fn} ${ln}`,
+                userRoleId: roleId ? Number(roleId) : 1,
+                isAdmin: isAdmin === 'true',
+            };
         }
         return null;
     }
@@ -114,6 +140,7 @@ class SupportChatSystem {
                     this.joinedSocketRooms.add(rName);
                 }
             }
+            this.registerSocketAuth();
         } catch (err) {
             console.error('loadRooms error:', err);
         }
@@ -134,7 +161,11 @@ class SupportChatSystem {
             card.className = `room-card${room.id === this.activeRoomId ? ' active' : ''}`;
             card.dataset.roomId = room.id;
 
-            const icon = room.is_private ? '🔒' : (room.id === 1 ? '🌐' : '💬');
+            const icon = room.is_private
+                ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 1110 0v2h1a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8a2 2 0 012-2h1zm2 0h6V8a3 3 0 10-6 0v2zm3 4a1.5 1.5 0 100 3 1.5 1.5 0 000-3z"></path></svg>'
+                : (room.id === 1
+                    ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zm0 2c1.2 0 2.3.8 2.8 2H9.2C9.7 5.8 10.8 5 12 5zm-6 7c0-.7.1-1.4.4-2h3.1c-.1.6-.2 1.3-.2 2s.1 1.4.2 2H6.4a7 7 0 01-.4-2zm6 7c-1.2 0-2.3-.8-2.8-2h5.6c-.5 1.2-1.6 2-2.8 2zm3.6-4h-7.2a10.2 10.2 0 010-4h7.2a10.2 10.2 0 010 4zm1.8-2c0 .7-.1 1.4-.4 2h-3.1c.1-.6.2-1.3.2-2s-.1-1.4-.2-2h3.1c.3.6.4 1.3.4 2zm-1-4h-3.8a8.6 8.6 0 00-1.1-2 7 7 0 014.9 2zm-9.8 0H6.8a7 7 0 014.9-2 8.6 8.6 0 00-1.1 2z"></path></svg>'
+                    : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 5V5zm4 4h8m-8 3h5"></path></svg>');
             const meta = room.is_private ? 'Private' : `${room.message_count || 0} msgs`;
 
             card.innerHTML = `
@@ -249,7 +280,7 @@ class SupportChatSystem {
             const res = await fetch(`${this.baseURL}/api/v1/support/rooms/${roomId}/messages?user_id=${user.id}`);
             if (!res.ok) {
                 if (res.status === 403) {
-                    chatBox.innerHTML = '<div class="no-messages">🔒 You don\'t have access to this room.</div>';
+                    chatBox.innerHTML = '<div class="no-messages"><svg class="inline-status-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 1110 0v2h1a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8a2 2 0 012-2h1zm2 0h6V8a3 3 0 10-6 0v2z"></path></svg> You don\'t have access to this room.</div>';
                     return;
                 }
                 throw new Error('Failed to load messages');
@@ -276,31 +307,68 @@ class SupportChatSystem {
         const chatBox = document.getElementById('chatBox');
         if (!chatBox) return;
 
-        // Remove "no messages" placeholder
         const placeholder = chatBox.querySelector('.no-messages');
         if (placeholder) placeholder.remove();
 
         const user = this.getCurrentUser();
         const currentName = user ? `${user.firstName} ${user.lastName}` : null;
         const isOwn = msg.username === currentName || String(msg.user_id) === String(user?.id);
+        const isDeleted = Boolean(msg.deleted_at);
+        const canModerate = this.isAdmin() && msg.user_id;
 
         const div = document.createElement('div');
-        div.className = `chat-message ${isOwn ? 'own' : 'other'}`;
+        div.className = `chat-message ${isOwn ? 'own' : 'other'}${isDeleted ? ' deleted' : ''}`;
+        div.dataset.messageId = msg.id || '';
+
+        const topRow = document.createElement('div');
+        topRow.className = 'chat-message__top';
 
         const nameEl = document.createElement('div');
         nameEl.className = 'username';
         nameEl.textContent = msg.username || 'Unknown';
 
-        const bodyEl = document.createElement('div');
-        bodyEl.textContent = msg.message || msg.message_text || '';
-
         const timeEl = document.createElement('div');
         timeEl.className = 'timestamp';
         timeEl.textContent = this.formatTimestamp(msg.created_at);
 
-        div.appendChild(nameEl);
+        topRow.appendChild(nameEl);
+        topRow.appendChild(timeEl);
+
+        const bodyEl = document.createElement('div');
+        bodyEl.className = 'message-body';
+        bodyEl.textContent = isDeleted ? 'This message was removed by moderation.' : (msg.message || msg.message_text || '');
+
+        div.appendChild(topRow);
         div.appendChild(bodyEl);
-        div.appendChild(timeEl);
+
+        if (canModerate && !isDeleted) {
+            const actions = document.createElement('div');
+            actions.className = 'message-actions';
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'message-action message-action--danger';
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.addEventListener('click', () => this.deleteMessage(msg.id));
+
+            const banBtn = document.createElement('button');
+            banBtn.type = 'button';
+            banBtn.className = 'message-action';
+            banBtn.textContent = 'Ban';
+            banBtn.addEventListener('click', () => this.banUserFromMessage(msg));
+
+            const historyBtn = document.createElement('button');
+            historyBtn.type = 'button';
+            historyBtn.className = 'message-action';
+            historyBtn.textContent = 'History';
+            historyBtn.addEventListener('click', () => this.openMessageHistory(msg.user_id));
+
+            actions.appendChild(deleteBtn);
+            actions.appendChild(banBtn);
+            actions.appendChild(historyBtn);
+            div.appendChild(actions);
+        }
+
         chatBox.appendChild(div);
 
         if (scroll) this.scrollToBottom();
@@ -315,6 +383,139 @@ class SupportChatSystem {
         if (desc) desc.textContent = '';
         const deleteBtn = document.getElementById('deleteRoomBtn');
         if (deleteBtn) deleteBtn.style.display = 'none';
+    }
+
+    markMessageDeleted(messageId, roomId) {
+        const activeRoom = this.activeRoomId;
+        if (roomId && activeRoom && String(roomId) !== String(activeRoom)) return;
+        const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+        if (!messageEl) {
+            if (activeRoom && String(roomId) === String(activeRoom)) {
+                this.loadMessages(activeRoom);
+            }
+            return;
+        }
+        messageEl.classList.add('deleted');
+        const bodyEl = messageEl.querySelector('.message-body');
+        if (bodyEl) bodyEl.textContent = 'This message was removed by moderation.';
+        const actions = messageEl.querySelector('.message-actions');
+        if (actions) actions.remove();
+    }
+
+    handleBannedUser() {
+        const sendBtn = document.getElementById('sendButton');
+        const input = document.getElementById('messageInput');
+        if (sendBtn) sendBtn.disabled = true;
+        if (input) input.disabled = true;
+    }
+
+    authHeaders() {
+        const userId = localStorage.getItem('support_user_id');
+        const password = localStorage.getItem('support_password');
+        return {
+            'Content-Type': 'application/json',
+            'X-User-ID': userId || '',
+            'X-Password': password || '',
+        };
+    }
+
+    async deleteMessage(messageId) {
+        if (!this.isAdmin()) return false;
+        try {
+            const res = await fetch(`${this.baseURL}/api/admin/messages/${messageId}`, {
+                method: 'DELETE',
+                headers: this.authHeaders(),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.detail || 'Failed to delete message');
+            }
+            return true;
+        } catch (err) {
+            this.showNotification(err.message, 'error');
+            return false;
+        }
+    }
+
+    async banUserFromMessage(msg) {
+        if (!this.isAdmin() || !msg?.user_id) return false;
+        const reason = window.prompt('Ban reason', 'Support chat policy violation');
+        if (reason === null) return false;
+        const duration = window.prompt('Ban duration in minutes, leave blank for permanent', '60');
+        const isPermanent = duration === '';
+        try {
+            const res = await fetch(`${this.baseURL}/api/admin/users/${msg.user_id}/ban`, {
+                method: 'POST',
+                headers: this.authHeaders(),
+                body: JSON.stringify({
+                    reason: reason || 'Support chat policy violation',
+                    duration_minutes: isPermanent ? null : Number(duration),
+                    is_permanent: isPermanent,
+                }),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.detail || 'Failed to ban user');
+            }
+            this.showNotification('User banned', 'success');
+            return true;
+        } catch (err) {
+            this.showNotification(err.message, 'error');
+            return false;
+        }
+    }
+
+    async openMessageHistory(userId) {
+        if (!this.isAdmin() || !userId) return;
+        try {
+            const res = await fetch(`${this.baseURL}/api/admin/users/${userId}/messages`, {
+                headers: this.authHeaders(),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.detail || 'Failed to load history');
+            }
+            const data = await res.json();
+            const lines = (data.messages || []).slice(0, 8).map(message => {
+                const roomName = message.room_name || `Room ${message.room_id}`;
+                return `${roomName}: ${message.message || ''}`;
+            });
+            this.showNotification(lines.length ? lines.join(' | ') : 'No message history found', 'success');
+        } catch (err) {
+            this.showNotification(err.message, 'error');
+        }
+    }
+
+    async loadBannedUsers() {
+        if (!this.isAdmin()) return [];
+        try {
+            const res = await fetch(`${this.baseURL}/api/admin/users/banned`, {
+                headers: this.authHeaders(),
+            });
+            if (!res.ok) return [];
+            const data = await res.json();
+            return data.users || [];
+        } catch {
+            return [];
+        }
+    }
+
+    async unbanUser(userId) {
+        if (!this.isAdmin()) return false;
+        try {
+            const res = await fetch(`${this.baseURL}/api/admin/users/${userId}/unban`, {
+                method: 'POST',
+                headers: this.authHeaders(),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.detail || 'Failed to unban user');
+            }
+            return true;
+        } catch (err) {
+            this.showNotification(err.message, 'error');
+            return false;
+        }
     }
 
     async sendMessage(text) {
@@ -338,9 +539,8 @@ class SupportChatSystem {
             if (!this.socket || !this.socket.connected) {
                 setTimeout(() => this.loadMessages(this.activeRoomId), 200);
             }
-            return true;
-        } catch (err) {
-            this.showNotification(err.message, 'error');
+        const user = this.getCurrentUser();
+        return Boolean(user?.isAdmin || (user?.userRoleId && Number(user.userRoleId) >= 3))wNotification(err.message, 'error');
             return false;
         }
     }

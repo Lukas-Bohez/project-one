@@ -46,7 +46,7 @@ class SupportAuthSystem {
                 const result = await this.sendAuthenticationRequest('login', firstName, lastName, password);
                 
                 if (result && result.user_id) {
-                    this.loginUser(formData, result.user_id);
+                    this.loginUser(formData, result.user_id, result);
                     console.log('Auto-login successful');
                     return true;
                 } else {
@@ -71,6 +71,8 @@ class SupportAuthSystem {
         localStorage.removeItem(STORAGE_KEYS.USER.LAST_NAME);
         localStorage.removeItem(STORAGE_KEYS.USER.PASSWORD);
         localStorage.removeItem(STORAGE_KEYS.USER.USER_ID);
+        localStorage.removeItem('support_user_role_id');
+        localStorage.removeItem('support_is_admin');
     }
 
     createAuthModal() {
@@ -269,7 +271,7 @@ class SupportAuthSystem {
             const result = await this.sendAuthenticationRequest('login', formData.firstName, formData.lastName, formData.password);
             
             if (result && result.user_id) {
-                this.loginUser(formData, result.user_id);
+                this.loginUser(formData, result.user_id, result);
             } else {
                 this.showError('Login failed: Invalid response from server.');
             }
@@ -298,7 +300,7 @@ class SupportAuthSystem {
             const result = await this.sendAuthenticationRequest('register', formData.firstName, formData.lastName, formData.password);
             
             if (result && result.user_id) {
-                this.registerUser(formData, result.user_id);
+                this.registerUser(formData, result.user_id, result);
             } else {
                 this.showError('Registration failed: Unexpected response from server.');
             }
@@ -372,7 +374,7 @@ class SupportAuthSystem {
         }
     }
 
-    loginUser(userData, userId) {
+    loginUser(userData, userId, meta = {}) {
         this.currentUser = {
             id: userId,
             firstName: userData.firstName,
@@ -382,16 +384,20 @@ class SupportAuthSystem {
             score: 0,
             lp: 4,
             sp: 4,
+            userRoleId: meta.userRoleId || 1,
+            isAdmin: Boolean(meta.is_admin),
         };
 
         localStorage.setItem(STORAGE_KEYS.USER.USER_ID, userId);
+        localStorage.setItem('support_user_role_id', String(this.currentUser.userRoleId));
+        localStorage.setItem('support_is_admin', String(this.currentUser.isAdmin));
         
         this.hideAuthModal();
         this.notifyUserAuthenticated(this.currentUser);
         // welcome popup removed per request
     }
 
-    registerUser(userData, userId) {
+    registerUser(userData, userId, meta = {}) {
         const newUser = {
             id: userId,
             firstName: userData.firstName,
@@ -401,9 +407,13 @@ class SupportAuthSystem {
             score: 0,
             lp: 4,
             sp: 4,
+            userRoleId: meta.userRoleId || 1,
+            isAdmin: Boolean(meta.is_admin),
         };
 
         localStorage.setItem(STORAGE_KEYS.USER.USER_ID, userId);
+        localStorage.setItem('support_user_role_id', String(newUser.userRoleId));
+        localStorage.setItem('support_is_admin', String(newUser.isAdmin));
 
         this.currentUser = newUser;
         this.hideAuthModal();

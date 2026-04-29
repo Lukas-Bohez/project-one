@@ -47,8 +47,15 @@
         <!-- ── Sidebar ── -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <a href="/" class="sidebar-logo" title="Go to homepage">🏔️ Quiz The Spire</a>
-                <button class="sidebar-close" id="sidebarClose" title="Close menu" aria-label="Close sidebar">✕</button>
+                <a href="/" class="sidebar-logo" title="Go to homepage">
+                    <svg class="support-logo-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M3 20h18l-9-16-9 16Zm9-10 4.5 8H7.5L12 10Z"></path>
+                    </svg>
+                    <span>Quiz The Spire</span>
+                </a>
+                <button class="sidebar-close" id="sidebarClose" title="Close menu" aria-label="Close sidebar">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+                </button>
             </div>
 
             <div class="sidebar-user" id="sidebarUser" style="display:none;">
@@ -79,7 +86,9 @@
         <main class="chat-main">
             <!-- Mobile top-bar -->
             <div class="mobile-topbar">
-                <button class="hamburger" id="menuToggle" aria-label="Open menu">☰</button>
+                <button class="hamburger" id="menuToggle" aria-label="Open menu">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
                 <span class="mobile-room-name" id="mobileRoomName">Support Chat</span>
                 <button class="c-theme-toggle mobile-theme" id="theme-toggle-mobile" title="Toggle theme" aria-label="Toggle light/dark mode"></button>
             </div>
@@ -91,18 +100,39 @@
                     <span class="room-description" id="roomDescription"></span>
                 </div>
                 <div class="room-header-actions">
-                    <button class="btn-icon btn-delete-room" id="deleteRoomBtn" title="Delete this room" style="display:none;">🗑️</button>
+                    <button class="btn-icon btn-admin-panel" id="adminPanelBtn" title="Open moderation tools" style="display:none;">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l4 8 8 1-6 6 1 9-7-4-7 4 1-9-6-6 8-1 4-8z"></path></svg>
+                    </button>
+                    <button class="btn-icon btn-delete-room" id="deleteRoomBtn" title="Delete this room" style="display:none;">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V5h6v2m-8 0 1 13h8l1-13M10 11v5M14 11v5"></path></svg>
+                    </button>
                 </div>
             </div>
 
             <!-- Welcome / info banner (shown for Global Chat) -->
             <div class="room-info-banner" id="roomInfoBanner">
                 <h3>Welcome to Support Chat!</h3>
-                <p>💬 Pick a room from the sidebar or create your own.</p>
-                <p>🌐 <strong>Global Chat</strong> - visible to everyone. Ask questions and get help here.</p>
-                <p>🔒 <strong>Private Rooms</strong> - only you and admins can see messages.</p>
-                <p>🤝 Be kind, be helpful, have fun!</p>
+                <p><svg class="banner-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v10H7l-3 3V5zm4 3h8m-8 3h5"></path></svg> Pick a room from the sidebar or create your own.</p>
+                <p><svg class="banner-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zm0 4v5l3 3"></path></svg> <strong>Global Chat</strong> - visible to everyone. Ask questions and get help here.</p>
+                <p><svg class="banner-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l8 4v6c0 5-3.5 9.7-8 10-4.5-.3-8-5-8-10V6l8-4z"></path></svg> <strong>Private Rooms</strong> - only you and admins can see messages.</p>
+                <p><svg class="banner-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.5-7-11a7 7 0 1114 0c0 6.5-7 11-7 11zm0-7a2 2 0 100-4 2 2 0 000 4z"></path></svg> Be kind, be helpful, have fun!</p>
             </div>
+
+            <section class="admin-panel" id="adminPanel" hidden>
+                <div class="admin-panel__header">
+                    <h3>Moderation Tools</h3>
+                    <button type="button" class="admin-panel__close" id="adminPanelClose" aria-label="Close moderation tools">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+                    </button>
+                </div>
+                <div class="admin-panel__actions">
+                    <button type="button" class="btn-secondary" id="refreshBannedUsersBtn">Refresh banned users</button>
+                </div>
+                <div class="admin-panel__section">
+                    <h4>Banned users</h4>
+                    <div class="admin-panel__list" id="bannedUsersList"></div>
+                </div>
+            </section>
 
             <!-- Messages -->
             <div class="messages-area" id="chatBox">
@@ -115,7 +145,7 @@
                     <label for="messageInput" class="sr-only" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;">Type a message</label>
                     <textarea id="messageInput" placeholder="Type a message…" maxlength="1000" rows="1"></textarea>
                     <button type="submit" id="sendButton" disabled title="Send message" aria-label="Send message">
-                        <span class="send-icon">➤</span>
+                        <svg class="send-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l16-8-4 8 4 8-16-8z"></path></svg>
                     </button>
                 </form>
             </div>
@@ -127,7 +157,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Create a Chat Room</h3>
-                <button class="modal-close" id="createRoomClose" aria-label="Close">✕</button>
+                <button class="modal-close" id="createRoomClose" aria-label="Close">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+                </button>
             </div>
             <form id="createRoomForm" autocomplete="off">
                 <label for="roomNameInput">Room Name <span class="required">*</span></label>

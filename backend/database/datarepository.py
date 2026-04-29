@@ -610,14 +610,14 @@ class UserRepository:
     @staticmethod
     def get_all_users() -> List[Dict[str, Any]]:
         """Fetches all users from the database."""
-        sql = "SELECT id, last_name, first_name, email, rfid_code, userRoleId, soul_points, limb_points, last_active, session_expires_at, updated_by FROM users"
+        sql = "SELECT id, last_name, first_name, email, rfid_code, userRoleId, is_admin, is_banned, is_permanent_ban, banned_until, ban_reason, soul_points, limb_points, last_active, session_expires_at, updated_by FROM users"
         # Use get_rows which correctly handles fetching multiple dictionary rows
         return Database.get_rows(sql)
 
     @staticmethod
     def get_user_by_id(user_id: int) -> Optional[Dict[str, Any]]:
         """Fetches a single user by ID."""
-        sql = "SELECT id, last_name, first_name, password_hash, salt, rfid_code, userRoleId, soul_points, limb_points, last_active, session_expires_at, updated_by FROM users WHERE id = %s"
+        sql = "SELECT id, last_name, first_name, password_hash, salt, rfid_code, userRoleId, is_admin, is_banned, is_permanent_ban, banned_until, ban_reason, soul_points, limb_points, last_active, session_expires_at, updated_by FROM users WHERE id = %s"
         params = [user_id]
         return Database.get_one_row(sql, params)
 
@@ -652,6 +652,21 @@ class UserRepository:
         if "limb_points" in update_data:
             set_clauses.append("limb_points = %s")
             params.append(update_data["limb_points"])
+        if "is_admin" in update_data:
+            set_clauses.append("is_admin = %s")
+            params.append(update_data["is_admin"])
+        if "is_banned" in update_data:
+            set_clauses.append("is_banned = %s")
+            params.append(update_data["is_banned"])
+        if "is_permanent_ban" in update_data:
+            set_clauses.append("is_permanent_ban = %s")
+            params.append(update_data["is_permanent_ban"])
+        if "banned_until" in update_data:
+            set_clauses.append("banned_until = %s")
+            params.append(update_data["banned_until"])
+        if "ban_reason" in update_data:
+            set_clauses.append("ban_reason = %s")
+            params.append(update_data["ban_reason"])
         if "updated_by" in update_data:
             set_clauses.append("updated_by = %s")
             params.append(update_data["updated_by"])
@@ -675,7 +690,7 @@ class UserRepository:
     @staticmethod
     def get_user_by_rfid(rfid_code: str) -> Optional[Dict[str, Any]]:
         """Fetches a user by RFID code."""
-        sql = "SELECT id, last_name, first_name, password_hash, salt, rfid_code, userRoleId, soul_points, limb_points, last_active, session_expires_at, updated_by FROM users WHERE rfid_code = %s"
+        sql = "SELECT id, last_name, first_name, password_hash, salt, rfid_code, userRoleId, is_admin, is_banned, is_permanent_ban, banned_until, ban_reason, soul_points, limb_points, last_active, session_expires_at, updated_by FROM users WHERE rfid_code = %s"
         params = [rfid_code]
         return Database.get_one_row(sql, params)
 
@@ -729,7 +744,7 @@ class UserRepository:
     @staticmethod
     def get_user_by_name(first_name: str, last_name: str) -> Optional[Dict[str, Any]]:
         """Fetches a user by first and last name."""
-        sql = "SELECT id, last_name, first_name, password_hash, salt, rfid_code, userRoleId, soul_points, limb_points, last_active, session_expires_at, updated_by FROM users WHERE first_name = %s AND last_name = %s"
+        sql = "SELECT id, last_name, first_name, password_hash, salt, rfid_code, userRoleId, is_admin, is_banned, is_permanent_ban, banned_until, ban_reason, soul_points, limb_points, last_active, session_expires_at, updated_by FROM users WHERE first_name = %s AND last_name = %s"
         params = [first_name, last_name]
         return Database.get_one_row(sql, params)
 
@@ -3477,7 +3492,7 @@ class SupportMessageRepository:
 
     @staticmethod
     def get_messages_by_room(room_id: int, limit: int = 200):
-        sql = """SELECT m.id, m.room_id, m.user_id, m.message_text, m.created_at,
+        sql = """SELECT m.id, m.room_id, m.user_id, m.message_text, m.deleted_at, m.created_at,
                         COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Unknown') as username
                  FROM support_messages m
                  LEFT JOIN users u ON m.user_id = u.id
@@ -3487,6 +3502,28 @@ class SupportMessageRepository:
         return Database.get_rows(sql, [room_id, limit])
 
     @staticmethod
-    def delete_message(message_id: int):
-        sql = "DELETE FROM support_messages WHERE id = %s"
+    def get_messages_by_user(user_id: int, limit: int = 50):
+        sql = """SELECT m.id, m.room_id, m.user_id, m.message_text, m.deleted_at, m.created_at,
+                        COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Unknown') as username,
+                        r.name as room_name
+                 FROM support_messages m
+                 LEFT JOIN users u ON m.user_id = u.id
+                 LEFT JOIN support_rooms r ON m.room_id = r.id
+                 WHERE m.user_id = %s
+                 ORDER BY m.created_at DESC
+                 LIMIT %s"""
+        return Database.get_rows(sql, [user_id, limit])
+
+    @staticmethod
+    def get_message_by_id(message_id: int):
+        sql = """SELECT m.id, m.room_id, m.user_id, m.message_text, m.deleted_at, m.created_at,
+                        COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Unknown') as username
+                 FROM support_messages m
+                 LEFT JOIN users u ON m.user_id = u.id
+                 WHERE m.id = %s"""
+        return Database.get_one_row(sql, [message_id])
+
+    @staticmethod
+    def soft_delete_message(message_id: int):
+        sql = "UPDATE support_messages SET deleted_at = CURRENT_TIMESTAMP WHERE id = %s"
         return Database.execute_sql(sql, [message_id])

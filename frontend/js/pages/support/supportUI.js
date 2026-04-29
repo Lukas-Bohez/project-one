@@ -72,6 +72,10 @@ class SupportUI {
         const createRoomClose = document.getElementById('createRoomClose');
         const createRoomCancel = document.getElementById('createRoomCancel');
         const createRoomForm = document.getElementById('createRoomForm');
+        const adminPanelBtn = document.getElementById('adminPanelBtn');
+        const adminPanel = document.getElementById('adminPanel');
+        const adminPanelClose = document.getElementById('adminPanelClose');
+        const refreshBannedUsersBtn = document.getElementById('refreshBannedUsersBtn');
 
         if (createRoomBtn && createRoomModal) {
             createRoomBtn.addEventListener('click', () => { createRoomModal.style.display = 'flex'; });
@@ -108,6 +112,19 @@ class SupportUI {
             });
         }
 
+        if (adminPanelBtn && adminPanel) {
+            adminPanelBtn.addEventListener('click', () => {
+                adminPanel.hidden = !adminPanel.hidden;
+                if (!adminPanel.hidden) this.refreshBannedUsers();
+            });
+        }
+        if (adminPanelClose && adminPanel) {
+            adminPanelClose.addEventListener('click', () => { adminPanel.hidden = true; });
+        }
+        if (refreshBannedUsersBtn) {
+            refreshBannedUsersBtn.addEventListener('click', () => this.refreshBannedUsers());
+        }
+
         // Delete room
         const deleteBtn = document.getElementById('deleteRoomBtn');
         if (deleteBtn) {
@@ -126,9 +143,15 @@ class SupportUI {
     bindUserDisplay() {
         document.addEventListener('userAuthenticated', (e) => {
             this.showUser(e.detail.user.fullName);
+            const adminPanelBtn = document.getElementById('adminPanelBtn');
+            if (adminPanelBtn) adminPanelBtn.style.display = this.chat?.isAdmin() ? 'inline-flex' : 'none';
         });
         document.addEventListener('userLoggedOut', () => {
             this.hideUser();
+            const adminPanelBtn = document.getElementById('adminPanelBtn');
+            const adminPanel = document.getElementById('adminPanel');
+            if (adminPanelBtn) adminPanelBtn.style.display = 'none';
+            if (adminPanel) adminPanel.hidden = true;
         });
 
         // Delayed check after auth system initialises
@@ -147,11 +170,41 @@ class SupportUI {
         else this.hideUser();
     }
 
+    async refreshBannedUsers() {
+        if (!this.chat?.isAdmin()) return;
+        const list = document.getElementById('bannedUsersList');
+        if (!list) return;
+        const users = await this.chat.loadBannedUsers();
+        if (!users.length) {
+            list.innerHTML = '<div class="admin-panel__empty">No banned users.</div>';
+            return;
+        }
+        list.innerHTML = '';
+        users.forEach(user => {
+            const row = document.createElement('div');
+            row.className = 'admin-panel__row';
+            row.innerHTML = `
+                <div class="admin-panel__row-main">
+                    <strong>${user.username || 'Unknown'}</strong>
+                    <span>${user.is_permanent_ban ? 'Permanent ban' : 'Until ' + (user.banned_until || 'unknown')}</span>
+                    <small>${user.ban_reason || 'No reason provided'}</small>
+                </div>
+                <button type="button" class="btn-secondary">Unban</button>
+            `;
+            row.querySelector('button')?.addEventListener('click', async () => {
+                if (await this.chat.unbanUser(user.id)) {
+                    this.refreshBannedUsers();
+                }
+            });
+            list.appendChild(row);
+        });
+    }
+
     showUser(name) {
         const el = document.getElementById('sidebarUser');
         const nameEl = document.getElementById('sidebarUserName');
         if (el) el.style.display = 'block';
-        if (nameEl) nameEl.textContent = `👤 ${name}`;
+        if (nameEl) nameEl.textContent = name;
     }
 
     hideUser() {
