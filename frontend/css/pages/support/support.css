@@ -630,7 +630,8 @@ body {
 }
 .admin-panel__row-main span,
 .admin-panel__row-main small {
-    color: var(--text-secondary);
+    color: var(--text);
+    opacity: .82;
 }
 .admin-panel__empty {
     color: var(--text-secondary);

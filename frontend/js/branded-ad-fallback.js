@@ -6,6 +6,10 @@
 (function () {
   'use strict';
 
+  if (window.__ENABLE_AD_FALLBACK__ !== true) {
+    return;
+  }
+
   // Branded content definitions
   const BRANDED_CONTENT = {
     convert: {
