@@ -539,17 +539,17 @@ class SupportChatSystem {
             if (!this.socket || !this.socket.connected) {
                 setTimeout(() => this.loadMessages(this.activeRoomId), 200);
             }
-        const user = this.getCurrentUser();
-        return Boolean(user?.isAdmin || (user?.userRoleId && Number(user.userRoleId) >= 3))wNotification(err.message, 'error');
+            return true;
+        } catch (err) {
+            this.showNotification(err.message, 'error');
             return false;
         }
     }
 
     /* ──────────────────── Helpers ──────────────────── */
     isAdmin() {
-        // Simple heuristic - the backend does the real check
-        // We could store userRoleId, but for now return false (UI only)
-        return false;
+        const user = this.getCurrentUser();
+        return Boolean(user?.isAdmin || (user?.userRoleId && Number(user.userRoleId) >= 3));
     }
 
     updateConnectionStatus(connected = null) {
