@@ -30,7 +30,7 @@
   }
 
   function scheduleFallback() {
-    window.setTimeout(handleEmptyAds, 1200);
+    window.setTimeout(handleEmptyAds, 2500);
   }
 
   if (document.readyState === 'complete') {
