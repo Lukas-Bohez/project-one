@@ -6,6 +6,59 @@
 
 ---
 
+## PASS 0 — Hard-coded colour audit (do this before everything else)
+
+Search every CSS file AND every HTML template for colour values that are hard-coded instead of using CSS variables:
+
+```bash
+grep -rn "color:\s*#\|background:\s*#\|background-color:\s*#\|border-color:\s*#" --include="*.css" --include="*.html"
+```
+
+Also grep for inline `style="..."` attributes in HTML files that set colours directly.
+
+For the header specifically (`c-header`, `c-header__title`, `c-header__subtitle`, `hero-stat-number`, `hero-stat-label`, `c-header__trust-item`) — every colour must become a CSS variable. Map them as follows:
+
+- Title/heading text -> `var(--color-text-primary)`
+- Subtitle/body text -> `var(--color-text-secondary)`
+- Stat numbers -> `var(--color-text-primary)`
+- Stat labels -> `var(--color-text-secondary)`
+- Trust item icons + text -> `var(--color-accent)` for icons, `var(--color-text-secondary)` for text
+- Any background on the header -> `var(--color-bg)` or `var(--color-surface)`
+
+Delete any existing `:root` colour variable block first, then replace with exactly this:
+
+```css
+:root {
+  --color-bg: #0f1117;
+  --color-surface: #161b27;
+  --color-card: #1e2535;
+  --color-border: #2a2f45;
+  --color-text-primary: #e8eaf0;
+  --color-text-secondary: #7b82a0;
+  --color-accent: #5c6bc0;
+  --color-accent-own: #3b3f8c;
+  --color-success: #22c55e;
+}
+
+[data-theme="light"] { /* or body.light-mode — use whichever exists */
+  --color-bg: #f4f5fb;
+  --color-surface: #ffffff;
+  --color-card: #ffffff;
+  --color-border: #e2e4ef;
+  --color-text-primary: #1a1d2e;
+  --color-text-secondary: #6b7280;
+  --color-accent: #5c6bc0;
+  --color-accent-own: #3b3f8c;
+  --color-success: #22c55e;
+}
+```
+
+Check which theme selector (`body.light-mode` vs `[data-theme="light"]`) the existing JS uses, keep only the correct one, delete the other.
+
+After defining variables, go through every hard-coded colour hit from the grep and replace with the appropriate variable. Any colour that doesn't fit the map above — flag it for review instead of silently deleting it.
+
+Run the grep again at the end to confirm zero raw hex colour values remain in CSS rules. A few in comments or `content:` strings is fine.
+
 ## FIX 1 — Stat Counter Duplication ✅
 
 ### Issue
