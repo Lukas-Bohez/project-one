@@ -5,8 +5,9 @@ echo "🔧 QuizTheSpire Backend - Complete Restart"
 echo "=========================================="
 echo ""
 
-# Navigate to backend directory
-cd /home/student/Project/project-one/backend
+# Resolve the script directory so the wrapper can call the launcher reliably
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR/.."
 
 # Activate virtual environment
 echo "✅ Activating virtual environment..."
@@ -31,7 +32,7 @@ echo "   This will handle thousands of concurrent users without timing out!"
 echo ""
 
 # Start the production backend
-./start-backend-production.sh
+"$SCRIPT_DIR/start-backend-production.sh"
 
 echo ""
 echo "✅ Backend restart complete!"

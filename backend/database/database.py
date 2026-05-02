@@ -62,6 +62,26 @@ class Database:
         finally:
             cls.__close_connection()
 
+    @classmethod
+    def get_one_row_strict(cls, sql_query, params=None):
+        """Fetch a single row and surface any SQL error to the caller."""
+        cls.__open_connection()
+        try:
+            cls._local.cursor.execute(sql_query, params)
+            return cls._local.cursor.fetchone()
+        finally:
+            cls.__close_connection()
+
+    @classmethod
+    def get_rows_strict(cls, sql_query, params=None):
+        """Fetch multiple rows and surface any SQL error to the caller."""
+        cls.__open_connection()
+        try:
+            cls._local.cursor.execute(sql_query, params)
+            return cls._local.cursor.fetchall()
+        finally:
+            cls.__close_connection()
+
     @staticmethod
     def get_all_rows(
         sql: str, params: Optional[List[Any]] = None
@@ -109,5 +129,28 @@ class Database:
                 cls._local.db.rollback()
             print(f"Execute error: {error}")
             return None
+        finally:
+            cls.__close_connection()
+
+    @classmethod
+    def execute_sql_strict(cls, sql_query, params=None):
+        """Execute SQL and surface any database error to the caller."""
+        cls.__open_connection()
+        try:
+            cls._local.cursor.execute(sql_query, params)
+
+            query_type = sql_query.strip().upper().split()[0]
+
+            if query_type == "SELECT":
+                return cls._local.cursor.fetchall()
+
+            cls._local.db.commit()
+            if cls._local.cursor.lastrowid:
+                return cls._local.cursor.lastrowid
+            return cls._local.cursor.rowcount
+        except connector.Error:
+            if hasattr(cls._local, "db"):
+                cls._local.db.rollback()
+            raise
         finally:
             cls.__close_connection()

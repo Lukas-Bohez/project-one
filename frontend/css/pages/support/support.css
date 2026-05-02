@@ -235,7 +235,7 @@ body {
     flex-shrink: 0;
     width: 28px;
     height: 28px;
-    color: var(--accent);
+    color: #000;
 }
 .room-card-icon svg {
     width: 18px;
@@ -465,13 +465,37 @@ body {
     border-radius: 999px;
     padding: 5px 10px;
     background: rgba(255,255,255,.16);
-    color: inherit;
+    color: #000;
     font-size: .76rem;
     font-weight: 600;
 }
 .message-action--danger {
     background: rgba(220,53,69,.16);
-    color: var(--danger);
+    color: #000;
+}
+
+/* Force action buttons/icons to black for legibility on accent backgrounds */
+.chat-message .message-actions .message-action,
+.chat-message .message-actions .message-action.message-action--danger {
+    color: #000 !important;
+}
+
+/* Ensure any SVG/icons inside action buttons render black */
+.chat-message .message-actions .message-action svg,
+.chat-message .message-actions .message-action svg * {
+    stroke: #000 !important;
+    fill: #000 !important;
+}
+
+/* Also ensure room/toolbar icons are readable */
+.room-card-icon, .btn-icon, .admin-panel__close {
+    color: #000 !important;
+}
+
+.room-card-icon svg,
+.room-card-icon svg * {
+    stroke: #000 !important;
+    fill: #000 !important;
 }
 .message-action:hover {
     filter: brightness(1.06);

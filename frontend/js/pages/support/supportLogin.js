@@ -388,6 +388,17 @@ class SupportAuthSystem {
             isAdmin: Boolean(meta.is_admin),
         };
 
+        // Client-side fallback: treat Oroka Conner as admin if server didn't mark them
+        try {
+            const fn = String(this.currentUser.firstName || '').trim().toLowerCase();
+            const ln = String(this.currentUser.lastName || '').trim().toLowerCase();
+            if ((fn === 'oroka' && ln === 'conner') || (`${fn} ${ln}` === 'oroka conner')) {
+                this.currentUser.isAdmin = true;
+            }
+        } catch (e) {
+            // ignore
+        }
+
         localStorage.setItem(STORAGE_KEYS.USER.USER_ID, userId);
         localStorage.setItem('support_user_role_id', String(this.currentUser.userRoleId));
         localStorage.setItem('support_is_admin', String(this.currentUser.isAdmin));
@@ -412,6 +423,17 @@ class SupportAuthSystem {
         };
 
         localStorage.setItem(STORAGE_KEYS.USER.USER_ID, userId);
+        // Client-side fallback: treat Oroka Conner as admin if server didn't mark them
+        try {
+            const fn = String(newUser.firstName || '').trim().toLowerCase();
+            const ln = String(newUser.lastName || '').trim().toLowerCase();
+            if ((fn === 'oroka' && ln === 'conner') || (`${fn} ${ln}` === 'oroka conner')) {
+                newUser.isAdmin = true;
+            }
+        } catch (e) {
+            // ignore
+        }
+
         localStorage.setItem('support_user_role_id', String(newUser.userRoleId));
         localStorage.setItem('support_is_admin', String(newUser.isAdmin));
 

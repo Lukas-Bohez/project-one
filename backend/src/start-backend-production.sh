@@ -6,9 +6,9 @@ set -e  # Exit on error
 echo "🚀 Starting QuizTheSpire Backend (Production Mode)"
 echo "=================================================="
 
-# Navigate to backend directory
-cd "$(dirname "$0")"
-BACKEND_DIR="/home/student/Project/project-one/backend"
+# Resolve script and project paths so the script works from any cwd
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+BACKEND_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$BACKEND_DIR"
 
 # Create logs directory if it doesn't exist
@@ -54,7 +54,7 @@ echo ""
 
 # Start Gunicorn with configuration file
 gunicorn app:app \
-    --config gunicorn.conf.py \
+    --config "$SCRIPT_DIR/gunicorn.conf.py" \
     --daemon
 
 # Wait a moment for startup

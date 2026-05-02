@@ -1,6 +1,40 @@
 (function SpireAdFallback() {
   'use strict';
 
+  var INIT_RETRY_LIMIT = 10;
+  var INIT_RETRY_MS = 600;
+  var COLLAPSE_DELAY_MS = 7000;
+
+  function initializeAdsSlots() {
+    if (!window.adsbygoogle) return false;
+
+    var initializedAny = false;
+    document.querySelectorAll('.js-adsbygoogle').forEach(function (slot) {
+      try {
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        slot.classList.remove('js-adsbygoogle');
+        initializedAny = true;
+      } catch (_) {
+        // Ignore blocked/duplicate push errors and keep page usable.
+      }
+    });
+
+    return initializedAny;
+  }
+
+  function scheduleAdInitialization() {
+    var attempts = 0;
+
+    (function tryInit() {
+      attempts += 1;
+      initializeAdsSlots();
+
+      if (attempts < INIT_RETRY_LIMIT && document.querySelector('.js-adsbygoogle')) {
+        window.setTimeout(tryInit, INIT_RETRY_MS);
+      }
+    })();
+  }
+
   function isRenderedAd(insEl) {
     if (!insEl) return false;
     if (insEl.querySelector('iframe')) return true;
@@ -30,7 +64,8 @@
   }
 
   function scheduleFallback() {
-    window.setTimeout(handleEmptyAds, 2500);
+    scheduleAdInitialization();
+    window.setTimeout(handleEmptyAds, COLLAPSE_DELAY_MS);
   }
 
   if (document.readyState === 'complete') {

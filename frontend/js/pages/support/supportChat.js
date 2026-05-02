@@ -422,13 +422,22 @@ class SupportChatSystem {
     async deleteMessage(messageId) {
         if (!this.isAdmin()) return false;
         try {
-            const res = await fetch(`${this.baseURL}/api/admin/messages/${messageId}`, {
+            const res = await fetch(`${this.baseURL}/api/v1/admin/messages/${messageId}`, {
                 method: 'DELETE',
                 headers: this.authHeaders(),
             });
             if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(err.detail || 'Failed to delete message');
+                let bodyText = null;
+                try {
+                    const json = await res.json().catch(() => null);
+                    bodyText = json;
+                } catch (e) {
+                    try { bodyText = await res.text(); } catch (_) { bodyText = null; }
+                }
+                console.error('deleteMessage failed', { status: res.status, body: bodyText, messageId, headers: this.authHeaders() });
+                // Surface a clearer error to the UI
+                const errDetail = (bodyText && bodyText.detail) || (typeof bodyText === 'string' && bodyText) || 'Failed to delete message';
+                throw new Error(errDetail || `Delete failed (${res.status})`);
             }
             return true;
         } catch (err) {
@@ -444,7 +453,7 @@ class SupportChatSystem {
         const duration = window.prompt('Ban duration in minutes, leave blank for permanent', '60');
         const isPermanent = duration === '';
         try {
-            const res = await fetch(`${this.baseURL}/api/admin/users/${msg.user_id}/ban`, {
+            const res = await fetch(`${this.baseURL}/api/v1/admin/users/${msg.user_id}/ban`, {
                 method: 'POST',
                 headers: this.authHeaders(),
                 body: JSON.stringify({
@@ -468,7 +477,7 @@ class SupportChatSystem {
     async openMessageHistory(userId) {
         if (!this.isAdmin() || !userId) return;
         try {
-            const res = await fetch(`${this.baseURL}/api/admin/users/${userId}/messages`, {
+            const res = await fetch(`${this.baseURL}/api/v1/admin/users/${userId}/messages`, {
                 headers: this.authHeaders(),
             });
             if (!res.ok) {
@@ -489,7 +498,7 @@ class SupportChatSystem {
     async loadBannedUsers() {
         if (!this.isAdmin()) return [];
         try {
-            const res = await fetch(`${this.baseURL}/api/admin/users/banned`, {
+            const res = await fetch(`${this.baseURL}/api/v1/admin/users/banned`, {
                 headers: this.authHeaders(),
             });
             if (!res.ok) return [];
@@ -503,7 +512,7 @@ class SupportChatSystem {
     async unbanUser(userId) {
         if (!this.isAdmin()) return false;
         try {
-            const res = await fetch(`${this.baseURL}/api/admin/users/${userId}/unban`, {
+            const res = await fetch(`${this.baseURL}/api/v1/admin/users/${userId}/unban`, {
                 method: 'POST',
                 headers: this.authHeaders(),
             });
