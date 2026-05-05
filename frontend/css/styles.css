@@ -405,23 +405,23 @@ body {
     min-width: 120px;
 }
 
-.section-divider {
+#main-content .section-divider {
     width: min(100%, 1120px);
     margin: 0.6rem auto;
     padding: 0 0.5rem;
 }
 
-.section-divider span {
+#main-content .section-divider span {
     display: block;
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.16), rgba(96, 165, 250, 0.48), rgba(96, 165, 250, 0.16), transparent);
 }
 
-.section-alt {
+#main-content .section-alt {
     position: relative;
 }
 
-.section-alt::before {
+#main-content .section-alt::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -814,7 +814,7 @@ body:not([data-theme]) .spire-bg-light {
     box-shadow: 0 12px 36px rgba(15, 23, 42, 0.10), 0 2px 8px rgba(15, 23, 42, 0.05);
 }
 
-.section .c-section-panel {
+#main-content .section .c-section-panel {
     margin-bottom: 0;
 }
 
@@ -1981,12 +1981,12 @@ idlegame.html"]:has(.c-btn__desc) {
     }
 }
 
-.section {
+#main-content .section {
     display: none;
     opacity: 0;
 }
 
-.section.active {
+#main-content .section.active {
     display: block;
     min-height: 50vh;
     animation: sectionFadeIn 0.25s ease forwards;
@@ -2005,7 +2005,7 @@ idlegame.html"]:has(.c-btn__desc) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .section.active {
+    #main-content .section.active {
         animation: none;
         opacity: 1;
     }

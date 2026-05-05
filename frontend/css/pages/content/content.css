@@ -574,7 +574,7 @@ body {
 
 
 /* Footer */
-.footer {
+body.article-page .footer {
     background: linear-gradient(135deg, var(--dark-color, #1e293b) 0%, #0f172a 100%);
     color: white;
     text-align: center;
@@ -583,7 +583,7 @@ body {
     position: relative;
 }
 
-.footer::before {
+body.article-page .footer::before {
     content: '';
     position: absolute;
     top: 0;
@@ -594,14 +594,14 @@ body {
     pointer-events: none;
 }
 
-.footer a {
+body.article-page .footer a {
     color: var(--accent-color);
     text-decoration: none;
     font-weight: 500;
     transition: all 0.3s ease;
 }
 
-.footer a:hover {
+body.article-page .footer a:hover {
     text-decoration: underline;
     color: #60a5fa;
 }
