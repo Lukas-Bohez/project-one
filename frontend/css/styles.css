@@ -435,9 +435,14 @@ body {
 }
 
 .c-platform-download-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 1.2rem;
     height: 1.2rem;
     flex-shrink: 0;
+    font-size: 1.05rem;
+    line-height: 1;
 }
 
 .c-platform-download-text {

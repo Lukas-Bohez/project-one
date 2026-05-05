@@ -117,9 +117,22 @@ body {
 }
 .sidebar-logo:hover { opacity: 1; }
 .support-logo-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 20px;
     height: 20px;
-    fill: currentColor;
+    font-size: 1rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.support-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1em;
+    height: 1em;
+    line-height: 1;
     flex-shrink: 0;
 }
 .sidebar-close {
@@ -130,13 +143,18 @@ body {
     padding: 4px 8px;
 }
 .sidebar-close svg,
+.sidebar-close i,
 .modal-close svg,
+.modal-close i,
 .hamburger svg,
+.hamburger i,
 .btn-icon svg,
+.btn-icon i,
 .send-icon,
 .banner-icon,
 .inline-status-icon,
-.admin-panel__close svg {
+.admin-panel__close svg,
+.admin-panel__close i {
     width: 18px;
     height: 18px;
     fill: none;
@@ -235,20 +253,15 @@ body {
     flex-shrink: 0;
     width: 28px;
     height: 28px;
-    color: #000;
+    border-radius: 10px;
+    background: rgba(255,255,255,.14);
+    border: 1px solid rgba(255,255,255,.16);
+    color: rgba(255,255,255,.95);
 }
-.room-card-icon svg {
+.room-card-icon i {
     width: 18px;
     height: 18px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-.room-card-info {
-    flex: 1;
-    min-width: 0;
+    line-height: 1;
 }
 .room-card-name {
     font-size: .9rem;
@@ -420,6 +433,7 @@ body {
     height: 16px;
     margin-top: 2px;
     flex-shrink: 0;
+    color: var(--accent);
 }
 
 /* Messages */
@@ -465,37 +479,23 @@ body {
     border-radius: 999px;
     padding: 5px 10px;
     background: rgba(255,255,255,.16);
-    color: #000;
+    color: var(--text);
     font-size: .76rem;
     font-weight: 600;
 }
 .message-action--danger {
     background: rgba(220,53,69,.16);
-    color: #000;
+    color: var(--danger);
 }
 
-/* Force action buttons/icons to black for legibility on accent backgrounds */
-.chat-message .message-actions .message-action,
-.chat-message .message-actions .message-action.message-action--danger {
-    color: #000 !important;
+.chat-message.own .message-action {
+    background: rgba(255,255,255,.18);
+    color: #fff;
 }
 
-/* Ensure any SVG/icons inside action buttons render black */
-.chat-message .message-actions .message-action svg,
-.chat-message .message-actions .message-action svg * {
-    stroke: #000 !important;
-    fill: #000 !important;
-}
-
-/* Also ensure room/toolbar icons are readable */
-.room-card-icon, .btn-icon, .admin-panel__close {
-    color: #000 !important;
-}
-
-.room-card-icon svg,
-.room-card-icon svg * {
-    stroke: #000 !important;
-    fill: #000 !important;
+.chat-message.other .message-action {
+    background: var(--bg-tertiary);
+    color: var(--text);
 }
 .message-action:hover {
     filter: brightness(1.06);
@@ -592,7 +592,13 @@ body {
     cursor: not-allowed;
     opacity: .5;
 }
-.send-icon { display: inline-block; }
+.send-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .95rem;
+    color: currentColor;
+}
 
 /* Admin panel */
 .admin-panel {

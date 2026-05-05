@@ -162,10 +162,10 @@ class SupportChatSystem {
             card.dataset.roomId = room.id;
 
             const icon = room.is_private
-                ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 1110 0v2h1a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8a2 2 0 012-2h1zm2 0h6V8a3 3 0 10-6 0v2zm3 4a1.5 1.5 0 100 3 1.5 1.5 0 000-3z"></path></svg>'
+                ? '<i class="fa-solid fa-lock room-card-icon__glyph" aria-hidden="true"></i>'
                 : (room.id === 1
-                    ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zm0 2c1.2 0 2.3.8 2.8 2H9.2C9.7 5.8 10.8 5 12 5zm-6 7c0-.7.1-1.4.4-2h3.1c-.1.6-.2 1.3-.2 2s.1 1.4.2 2H6.4a7 7 0 01-.4-2zm6 7c-1.2 0-2.3-.8-2.8-2h5.6c-.5 1.2-1.6 2-2.8 2zm3.6-4h-7.2a10.2 10.2 0 010-4h7.2a10.2 10.2 0 010 4zm1.8-2c0 .7-.1 1.4-.4 2h-3.1c.1-.6.2-1.3.2-2s-.1-1.4-.2-2h3.1c.3.6.4 1.3.4 2zm-1-4h-3.8a8.6 8.6 0 00-1.1-2 7 7 0 014.9 2zm-9.8 0H6.8a7 7 0 014.9-2 8.6 8.6 0 00-1.1 2z"></path></svg>'
-                    : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 5V5zm4 4h8m-8 3h5"></path></svg>');
+                    ? '<i class="fa-solid fa-earth-americas room-card-icon__glyph" aria-hidden="true"></i>'
+                    : '<i class="fa-solid fa-comments room-card-icon__glyph" aria-hidden="true"></i>');
             const meta = room.is_private ? 'Private' : `${room.message_count || 0} msgs`;
 
             card.innerHTML = `
@@ -280,7 +280,7 @@ class SupportChatSystem {
             const res = await fetch(`${this.baseURL}/api/v1/support/rooms/${roomId}/messages?user_id=${user.id}`);
             if (!res.ok) {
                 if (res.status === 403) {
-                    chatBox.innerHTML = '<div class="no-messages"><svg class="inline-status-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 1110 0v2h1a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8a2 2 0 012-2h1zm2 0h6V8a3 3 0 10-6 0v2z"></path></svg> You don\'t have access to this room.</div>';
+                    chatBox.innerHTML = '<div class="no-messages"><i class="fa-solid fa-lock inline-status-icon" aria-hidden="true"></i> You don\'t have access to this room.</div>';
                     return;
                 }
                 throw new Error('Failed to load messages');
