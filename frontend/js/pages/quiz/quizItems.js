@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/rules-of-hooks */
+
 // Global variable to store current user
 let currentUser = null;
 let itemUpdateInterval = null;

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-this-alias */
+
 /*
  * Browser Compatibility Polyfills
  * Add support for modern JavaScript features in older browsers

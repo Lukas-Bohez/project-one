@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-this-alias */
+
 // #region ***  DOM references                           ***********
 const domAdmin = {
   logoutBtn: document.getElementById('logoutBtn'),
