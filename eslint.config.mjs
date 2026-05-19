@@ -20,6 +20,9 @@ const eslintConfig = defineConfig([
     // Default ignores of eslint-config-next:
     '.next/**',
     'out/**',
+    // Generated static export for portfolio
+    'frontend/portfolio/out/**',
+    'frontend/portfolio/out',
     'build/**',
     'next-env.d.ts',
   ]),
