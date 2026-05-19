@@ -389,7 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.dataLayer = window.dataLayer || [];
             function gtag() {
               dataLayer.push(arguments);
-            } // eslint-disable-line no-inner-declarations
+            }
             gtag('consent', 'update', {
               ad_storage: 'granted',
               analytics_storage: 'granted',
@@ -435,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.dataLayer = window.dataLayer || [];
             function gtag() {
               dataLayer.push(arguments);
-            } // eslint-disable-line no-inner-declarations
+            }
             gtag('consent', 'update', {
               ad_storage: 'denied',
               analytics_storage: 'denied',

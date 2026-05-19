@@ -89,6 +89,7 @@ convert spire-dark.jpeg -quality 85 spire-dark.webp   → 152 KB (96% reduction)
    - Browser prioritizes download over lower-priority assets
 
 3. **Preload Links in `<head>`**
+
    ```html
    <link
      rel="preload"
