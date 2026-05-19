@@ -18,16 +18,12 @@
       "choices": [
         {
           "text": "Immediately inventory supplies and assess damage",
-          "effects": [
-            { "variable": "morale", "operation": "add", "value": 15 }
-          ],
+          "effects": [{ "variable": "morale", "operation": "add", "value": 15 }],
           "nextScene": "inventory_check"
         },
         {
           "text": "Send a distress signal and rest",
-          "effects": [
-            { "variable": "morale", "operation": "add", "value": 10 }
-          ],
+          "effects": [{ "variable": "morale", "operation": "add", "value": 10 }],
           "nextScene": "inventory_check"
         }
       ]
@@ -38,9 +34,7 @@
       "choices": [
         {
           "text": "Focus on repairing the communication system",
-          "effects": [
-            { "variable": "repairs", "operation": "add", "value": 30 }
-          ],
+          "effects": [{ "variable": "repairs", "operation": "add", "value": 30 }],
           "nextScene": "day_five"
         },
         {
@@ -64,16 +58,12 @@
     "day_five": {
       "title": "Five Days In",
       "text": "You've been surviving on Mars for five days now. The crew is adapting, though tensions are rising. Psychologically, the isolation is hitting harder than expected. Your oxygen reserves are holding stable, but supplies are your biggest concern.",
-      "conditions": [
-        { "variable": "crewAlive", "comparison": "less_than", "value": 3 }
-      ],
+      "conditions": [{ "variable": "crewAlive", "comparison": "less_than", "value": 3 }],
       "text_alternate": "Five days in, and morale is dangerously low after losing a crew member. The surviving three look exhausted. You need to keep hope alive.",
       "choices": [
         {
           "text": "Organize a team activity to boost morale",
-          "effects": [
-            { "variable": "morale", "operation": "add", "value": 25 }
-          ],
+          "effects": [{ "variable": "morale", "operation": "add", "value": 25 }],
           "nextScene": "breakthrough"
         },
         {
@@ -114,16 +104,12 @@
       "choices": [
         {
           "text": "Appeal to your crew's sense of duty and hope",
-          "effects": [
-            { "variable": "morale", "operation": "add", "value": 40 }
-          ],
+          "effects": [{ "variable": "morale", "operation": "add", "value": 40 }],
           "nextScene": "recovery"
         },
         {
           "text": "Make harsh decisions to maintain control",
-          "effects": [
-            { "variable": "crewAlive", "operation": "subtract", "value": 1 }
-          ],
+          "effects": [{ "variable": "crewAlive", "operation": "subtract", "value": 1 }],
           "nextScene": "bitter_victory"
         }
       ]

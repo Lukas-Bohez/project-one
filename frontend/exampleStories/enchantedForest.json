@@ -108,7 +108,10 @@
           "text": "[HEALTHY] Pick some flowersmight need them later",
           "target": "deep_forest",
           "conditions": [{ "variable": "health", "comparison": "greater_than", "value": 80 }],
-          "effects": [{ "variable": "courage", "operation": "add", "value": 10 }, { "variable": "health", "operation": "add", "value": 20 }]
+          "effects": [
+            { "variable": "courage", "operation": "add", "value": 10 },
+            { "variable": "health", "operation": "add", "value": 20 }
+          ]
         }
       ]
     },
@@ -123,7 +126,11 @@
           "text": "Restart",
           "target": "start",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "set", "value": 100 }, { "variable": "courage", "operation": "set", "value": 50 }, { "variable": "gold", "operation": "set", "value": 25 }]
+          "effects": [
+            { "variable": "health", "operation": "set", "value": 100 },
+            { "variable": "courage", "operation": "set", "value": 50 },
+            { "variable": "gold", "operation": "set", "value": 25 }
+          ]
         }
       ]
     },
@@ -137,15 +144,24 @@
           "id": "choice_suffer",
           "text": "[REQUIRES COURAGE: 60] Bite down and try to pull myself together",
           "target": "cliff_suffer",
-          "conditions": [{ "variable": "courage", "comparison": "greater_than", "value": 60 }, { "variable": "health", "comparison": "greater_than", "value": 50 }],
-          "effects": [{ "variable": "health", "operation": "subtract", "value": 50 }, { "variable": "courage", "operation": "add", "value": 15 }]
+          "conditions": [
+            { "variable": "courage", "comparison": "greater_than", "value": 60 },
+            { "variable": "health", "comparison": "greater_than", "value": 50 }
+          ],
+          "effects": [
+            { "variable": "health", "operation": "subtract", "value": 50 },
+            { "variable": "courage", "operation": "add", "value": 15 }
+          ]
         },
         {
           "id": "choice_call_help",
           "text": "Scream for helpI don't care about pride anymore",
           "target": "cliff_help",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "subtract", "value": 30 }, { "variable": "courage", "operation": "subtract", "value": 10 }]
+          "effects": [
+            { "variable": "health", "operation": "subtract", "value": 30 },
+            { "variable": "courage", "operation": "subtract", "value": 10 }
+          ]
         },
         {
           "id": "choice_too_weak",
@@ -194,7 +210,10 @@
           "text": "Try to climb back",
           "target": "cliff_climb",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "subtract", "value": 30 }, { "variable": "courage", "operation": "add", "value": 5 }]
+          "effects": [
+            { "variable": "health", "operation": "subtract", "value": 30 },
+            { "variable": "courage", "operation": "add", "value": 5 }
+          ]
         }
       ]
     },
@@ -222,7 +241,12 @@
           "text": "Restart",
           "target": "start",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "set", "value": 100 }, { "variable": "courage", "operation": "set", "value": 50 }, { "variable": "gold", "operation": "set", "value": 25 }, { "variable": "hasMap", "operation": "set", "value": false }]
+          "effects": [
+            { "variable": "health", "operation": "set", "value": 100 },
+            { "variable": "courage", "operation": "set", "value": 50 },
+            { "variable": "gold", "operation": "set", "value": 25 },
+            { "variable": "hasMap", "operation": "set", "value": false }
+          ]
         }
       ]
     },
@@ -313,7 +337,12 @@
           "text": "Restart",
           "target": "start",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "set", "value": 100 }, { "variable": "courage", "operation": "set", "value": 50 }, { "variable": "gold", "operation": "set", "value": 25 }, { "variable": "hasMap", "operation": "set", "value": false }]
+          "effects": [
+            { "variable": "health", "operation": "set", "value": 100 },
+            { "variable": "courage", "operation": "set", "value": 50 },
+            { "variable": "gold", "operation": "set", "value": 25 },
+            { "variable": "hasMap", "operation": "set", "value": false }
+          ]
         }
       ]
     },
@@ -362,7 +391,10 @@
           "text": "[REQUIRES COURAGE: 65] Sprint through before they close",
           "target": "teeth_run",
           "conditions": [{ "variable": "courage", "comparison": "greater_than", "value": 65 }],
-          "effects": [{ "variable": "health", "operation": "subtract", "value": 20 }, { "variable": "courage", "operation": "add", "value": 10 }]
+          "effects": [
+            { "variable": "health", "operation": "subtract", "value": 20 },
+            { "variable": "courage", "operation": "add", "value": 10 }
+          ]
         },
         {
           "id": "choice_crawl",
@@ -404,7 +436,10 @@
           "text": "Enter the giant mouth",
           "target": "death_teeth",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "subtract", "value": 30 }, { "variable": "courage", "operation": "subtract", "value": 10 }]
+          "effects": [
+            { "variable": "health", "operation": "subtract", "value": 30 },
+            { "variable": "courage", "operation": "subtract", "value": 10 }
+          ]
         }
       ]
     },
@@ -418,7 +453,10 @@
           "text": "Continue",
           "target": "teeth_continue",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "subtract", "value": 25 }, { "variable": "courage", "operation": "add", "value": 5 }]
+          "effects": [
+            { "variable": "health", "operation": "subtract", "value": 25 },
+            { "variable": "courage", "operation": "add", "value": 5 }
+          ]
         }
       ]
     },
@@ -446,7 +484,12 @@
           "text": "Restart",
           "target": "start",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "set", "value": 100 }, { "variable": "courage", "operation": "set", "value": 50 }, { "variable": "gold", "operation": "set", "value": 25 }, { "variable": "hasMap", "operation": "set", "value": false }]
+          "effects": [
+            { "variable": "health", "operation": "set", "value": 100 },
+            { "variable": "courage", "operation": "set", "value": 50 },
+            { "variable": "gold", "operation": "set", "value": 25 },
+            { "variable": "hasMap", "operation": "set", "value": false }
+          ]
         }
       ]
     },
@@ -551,7 +594,12 @@
           "text": "Restart",
           "target": "start",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "set", "value": 100 }, { "variable": "courage", "operation": "set", "value": 50 }, { "variable": "gold", "operation": "set", "value": 25 }, { "variable": "hasMap", "operation": "set", "value": false }]
+          "effects": [
+            { "variable": "health", "operation": "set", "value": 100 },
+            { "variable": "courage", "operation": "set", "value": 50 },
+            { "variable": "gold", "operation": "set", "value": 25 },
+            { "variable": "hasMap", "operation": "set", "value": false }
+          ]
         }
       ]
     },
@@ -564,8 +612,14 @@
           "id": "choice_fight",
           "text": "[REQUIRES COURAGE: 75] FightI won't die without trying",
           "target": "spider_fight",
-          "conditions": [{ "variable": "courage", "comparison": "greater_than", "value": 75 }, { "variable": "health", "comparison": "greater_than", "value": 40 }],
-          "effects": [{ "variable": "health", "operation": "subtract", "value": 25 }, { "variable": "courage", "operation": "add", "value": 15 }]
+          "conditions": [
+            { "variable": "courage", "comparison": "greater_than", "value": 75 },
+            { "variable": "health", "comparison": "greater_than", "value": 40 }
+          ],
+          "effects": [
+            { "variable": "health", "operation": "subtract", "value": 25 },
+            { "variable": "courage", "operation": "add", "value": 15 }
+          ]
         },
         {
           "id": "choice_run_away",
@@ -592,15 +646,24 @@
           "id": "choice_keep_fighting",
           "text": "[REQUIRES COURAGE: 80] Keep fighting heroically",
           "target": "spider_keep",
-          "conditions": [{ "variable": "courage", "comparison": "greater_than", "value": 80 }, { "variable": "health", "comparison": "greater_than", "value": 35 }],
-          "effects": [{ "variable": "health", "operation": "subtract", "value": 35 }, { "variable": "courage", "operation": "add", "value": 10 }]
+          "conditions": [
+            { "variable": "courage", "comparison": "greater_than", "value": 80 },
+            { "variable": "health", "comparison": "greater_than", "value": 35 }
+          ],
+          "effects": [
+            { "variable": "health", "operation": "subtract", "value": 35 },
+            { "variable": "courage", "operation": "add", "value": 10 }
+          ]
         },
         {
           "id": "choice_retreat",
           "text": "Retreat while you still can",
           "target": "spider_run",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "subtract", "value": 15 }, { "variable": "courage", "operation": "subtract", "value": 10 }]
+          "effects": [
+            { "variable": "health", "operation": "subtract", "value": 15 },
+            { "variable": "courage", "operation": "subtract", "value": 10 }
+          ]
         }
       ]
     },
@@ -656,7 +719,12 @@
           "text": "Restart",
           "target": "start",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "set", "value": 100 }, { "variable": "courage", "operation": "set", "value": 50 }, { "variable": "gold", "operation": "set", "value": 25 }, { "variable": "hasMap", "operation": "set", "value": false }]
+          "effects": [
+            { "variable": "health", "operation": "set", "value": 100 },
+            { "variable": "courage", "operation": "set", "value": 50 },
+            { "variable": "gold", "operation": "set", "value": 25 },
+            { "variable": "hasMap", "operation": "set", "value": false }
+          ]
         }
       ]
     },
@@ -670,21 +738,30 @@
           "text": "Rest here and gather strength",
           "target": "glade_rest",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "add", "value": 15 }, { "variable": "gold", "operation": "add", "value": 10 }]
+          "effects": [
+            { "variable": "health", "operation": "add", "value": 15 },
+            { "variable": "gold", "operation": "add", "value": 10 }
+          ]
         },
         {
           "id": "choice_continue_path",
           "text": "Continue along the path",
           "target": "path_continue",
           "conditions": [],
-          "effects": [{ "variable": "gold", "operation": "add", "value": 15 }, { "variable": "courage", "operation": "add", "value": 5 }]
+          "effects": [
+            { "variable": "gold", "operation": "add", "value": 15 },
+            { "variable": "courage", "operation": "add", "value": 5 }
+          ]
         },
         {
           "id": "choice_hire_guide",
           "text": "[REQUIRES GOLD: 30] Hire the merchant as guide",
           "target": "safe_victory",
           "conditions": [{ "variable": "gold", "comparison": "greater_than", "value": 30 }],
-          "effects": [{ "variable": "gold", "operation": "subtract", "value": 30 }, { "variable": "health", "operation": "set", "value": 100 }]
+          "effects": [
+            { "variable": "gold", "operation": "subtract", "value": 30 },
+            { "variable": "health", "operation": "set", "value": 100 }
+          ]
         }
       ]
     },
@@ -726,7 +803,10 @@
           "text": "Wake up",
           "target": "glade_wake",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "subtract", "value": 50 }, { "variable": "courage", "operation": "subtract", "value": 10 }]
+          "effects": [
+            { "variable": "health", "operation": "subtract", "value": 50 },
+            { "variable": "courage", "operation": "subtract", "value": 10 }
+          ]
         }
       ]
     },
@@ -754,7 +834,12 @@
           "text": "Restart",
           "target": "start",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "set", "value": 100 }, { "variable": "courage", "operation": "set", "value": 50 }, { "variable": "gold", "operation": "set", "value": 25 }, { "variable": "hasMap", "operation": "set", "value": false }]
+          "effects": [
+            { "variable": "health", "operation": "set", "value": 100 },
+            { "variable": "courage", "operation": "set", "value": 50 },
+            { "variable": "gold", "operation": "set", "value": 25 },
+            { "variable": "hasMap", "operation": "set", "value": false }
+          ]
         }
       ]
     },
@@ -768,7 +853,10 @@
           "text": "Search the ruinsfortune favors the bold",
           "target": "ruins_investigate",
           "conditions": [],
-          "effects": [{ "variable": "gold", "operation": "add", "value": 25 }, { "variable": "courage", "operation": "add", "value": 10 }]
+          "effects": [
+            { "variable": "gold", "operation": "add", "value": 25 },
+            { "variable": "courage", "operation": "add", "value": 10 }
+          ]
         },
         {
           "id": "choice_back_to_glade",
@@ -838,7 +926,10 @@
           "text": "Face the demons",
           "target": "ruins_demons",
           "conditions": [],
-          "effects": [{ "variable": "courage", "operation": "add", "value": 20 }, { "variable": "health", "operation": "subtract", "value": 20 }]
+          "effects": [
+            { "variable": "courage", "operation": "add", "value": 20 },
+            { "variable": "health", "operation": "subtract", "value": 20 }
+          ]
         }
       ]
     },
@@ -866,7 +957,12 @@
           "text": "Restart",
           "target": "start",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "set", "value": 100 }, { "variable": "courage", "operation": "set", "value": 50 }, { "variable": "gold", "operation": "set", "value": 25 }, { "variable": "hasMap", "operation": "set", "value": false }]
+          "effects": [
+            { "variable": "health", "operation": "set", "value": 100 },
+            { "variable": "courage", "operation": "set", "value": 50 },
+            { "variable": "gold", "operation": "set", "value": 25 },
+            { "variable": "hasMap", "operation": "set", "value": false }
+          ]
         }
       ]
     },
@@ -880,7 +976,12 @@
           "text": "Play Again",
           "target": "start",
           "conditions": [],
-          "effects": [{ "variable": "health", "operation": "set", "value": 100 }, { "variable": "courage", "operation": "set", "value": 50 }, { "variable": "gold", "operation": "set", "value": 25 }, { "variable": "hasMap", "operation": "set", "value": false }]
+          "effects": [
+            { "variable": "health", "operation": "set", "value": 100 },
+            { "variable": "courage", "operation": "set", "value": 50 },
+            { "variable": "gold", "operation": "set", "value": 25 },
+            { "variable": "hasMap", "operation": "set", "value": false }
+          ]
         }
       ]
     }

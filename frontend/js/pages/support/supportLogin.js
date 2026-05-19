@@ -2,81 +2,83 @@
 // This version does NOT create quiz sessions - only authenticates for support chat
 
 const STORAGE_KEYS = {
-    USER: {
-        USER_ID: 'support_user_id',
-        FIRST_NAME: 'support_first_name',
-        LAST_NAME: 'support_last_name',
-        PASSWORD: 'support_password'
-    }
+  USER: {
+    USER_ID: 'support_user_id',
+    FIRST_NAME: 'support_first_name',
+    LAST_NAME: 'support_last_name',
+    PASSWORD: 'support_password',
+  },
 };
 
 class SupportAuthSystem {
-    constructor() {
-        this.currentUser = null;
-        this.lanIP = `https://${window.location.hostname}`;
-        this.init();
-    }
+  constructor() {
+    this.currentUser = null;
+    this.lanIP = `https://${window.location.hostname}`;
+    this.init();
+  }
 
-    init() {
-        this.createAuthModal();
-        this.bindEvents();
-        
-        // Try auto-login first, only show modal if it fails
-        this.autoLogin().then(success => {
-            if (!success) {
-                this.showAuthModal();
-            }
-        }).catch(error => {
-            console.error('Auto-login attempt failed:', error);
-            this.showAuthModal();
-        });
-    }
+  init() {
+    this.createAuthModal();
+    this.bindEvents();
 
-    async autoLogin() {
-        const firstName = localStorage.getItem(STORAGE_KEYS.USER.FIRST_NAME);
-        const lastName = localStorage.getItem(STORAGE_KEYS.USER.LAST_NAME);
-        const password = localStorage.getItem(STORAGE_KEYS.USER.PASSWORD);
-
-        if (firstName && lastName && password) {
-            console.log('Attempting auto-login for:', firstName, lastName);
-            
-            const formData = { firstName, lastName, password };
-
-            try {
-                const result = await this.sendAuthenticationRequest('login', firstName, lastName, password);
-                
-                if (result && result.user_id) {
-                    this.loginUser(formData, result.user_id, result);
-                    console.log('Auto-login successful');
-                    return true;
-                } else {
-                    console.warn('Auto-login failed: Invalid response from server');
-                    this.clearStoredCredentials();
-                    return false;
-                }
-            } catch (error) {
-                console.error('Auto-login error:', error.message || error);
-                // Don't show error message for auto-login failures, just clear and show modal
-                this.clearStoredCredentials();
-                return false;
-            }
-        } else {
-            console.log('No stored credentials found for auto-login');
-            return false;
+    // Try auto-login first, only show modal if it fails
+    this.autoLogin()
+      .then((success) => {
+        if (!success) {
+          this.showAuthModal();
         }
-    }
+      })
+      .catch((error) => {
+        console.error('Auto-login attempt failed:', error);
+        this.showAuthModal();
+      });
+  }
 
-    clearStoredCredentials() {
-        localStorage.removeItem(STORAGE_KEYS.USER.FIRST_NAME);
-        localStorage.removeItem(STORAGE_KEYS.USER.LAST_NAME);
-        localStorage.removeItem(STORAGE_KEYS.USER.PASSWORD);
-        localStorage.removeItem(STORAGE_KEYS.USER.USER_ID);
-        localStorage.removeItem('support_user_role_id');
-        localStorage.removeItem('support_is_admin');
-    }
+  async autoLogin() {
+    const firstName = localStorage.getItem(STORAGE_KEYS.USER.FIRST_NAME);
+    const lastName = localStorage.getItem(STORAGE_KEYS.USER.LAST_NAME);
+    const password = localStorage.getItem(STORAGE_KEYS.USER.PASSWORD);
 
-    createAuthModal() {
-        const modalHTML = `
+    if (firstName && lastName && password) {
+      console.log('Attempting auto-login for:', firstName, lastName);
+
+      const formData = { firstName, lastName, password };
+
+      try {
+        const result = await this.sendAuthenticationRequest('login', firstName, lastName, password);
+
+        if (result && result.user_id) {
+          this.loginUser(formData, result.user_id, result);
+          console.log('Auto-login successful');
+          return true;
+        } else {
+          console.warn('Auto-login failed: Invalid response from server');
+          this.clearStoredCredentials();
+          return false;
+        }
+      } catch (error) {
+        console.error('Auto-login error:', error.message || error);
+        // Don't show error message for auto-login failures, just clear and show modal
+        this.clearStoredCredentials();
+        return false;
+      }
+    } else {
+      console.log('No stored credentials found for auto-login');
+      return false;
+    }
+  }
+
+  clearStoredCredentials() {
+    localStorage.removeItem(STORAGE_KEYS.USER.FIRST_NAME);
+    localStorage.removeItem(STORAGE_KEYS.USER.LAST_NAME);
+    localStorage.removeItem(STORAGE_KEYS.USER.PASSWORD);
+    localStorage.removeItem(STORAGE_KEYS.USER.USER_ID);
+    localStorage.removeItem('support_user_role_id');
+    localStorage.removeItem('support_is_admin');
+  }
+
+  createAuthModal() {
+    const modalHTML = `
             <div id="authModal" class="c-modal">
                 <div class="c-modal__content">
                     <h2 id="authModalTitle">Join <a href="/" class="c-header__link gamepad">Quiz The Spire</a> Support Chat</h2>
@@ -106,374 +108,401 @@ class SupportAuthSystem {
             </div>
         `;
 
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+  }
+
+  bindEvents() {
+    const loginBtn = document.getElementById('loginBtn');
+    const registerBtn = document.getElementById('registerBtn');
+    const authForm = document.getElementById('authForm');
+
+    if (!loginBtn || !registerBtn || !authForm) {
+      console.error('Auth modal buttons or form not found.');
+      return;
     }
 
-    bindEvents() {
-        const loginBtn = document.getElementById('loginBtn');
-        const registerBtn = document.getElementById('registerBtn');
-        const authForm = document.getElementById('authForm');
+    loginBtn.addEventListener('click', (e) => this.handleLogin(e));
+    registerBtn.addEventListener('click', (e) => this.handleRegister(e));
 
-        if (!loginBtn || !registerBtn || !authForm) {
-            console.error("Auth modal buttons or form not found.");
-            return;
+    // Prevent default form submission
+    authForm.addEventListener('submit', (e) => e.preventDefault());
+
+    // Allow Enter key to trigger login
+    authForm.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        this.handleLogin(e);
+      }
+    });
+  }
+
+  showAuthModal() {
+    const modal = document.getElementById('authModal');
+    if (modal) modal.style.display = 'block';
+  }
+
+  hideAuthModal() {
+    const modal = document.getElementById('authModal');
+    if (modal) {
+      // Remove from DOM completely, not just hide
+      modal.remove();
+    }
+  }
+
+  showError(message) {
+    const errorContainer = document.getElementById('authError');
+    if (errorContainer) {
+      errorContainer.textContent = message;
+      errorContainer.style.display = 'block';
+      errorContainer.classList.add('error-shake');
+
+      // Remove shake animation after it completes
+      setTimeout(() => {
+        errorContainer.classList.remove('error-shake');
+      }, 300);
+
+      // Auto-hide after 6 seconds (longer for better UX)
+      setTimeout(() => {
+        if (errorContainer.textContent === message) {
+          errorContainer.style.display = 'none';
         }
+      }, 6000);
+    } else {
+      // Fallback: create error message if container doesn't exist
+      console.error('Error container not found, message:', message);
+      alert(message);
+    }
+  }
 
-        loginBtn.addEventListener('click', (e) => this.handleLogin(e));
-        registerBtn.addEventListener('click', (e) => this.handleRegister(e));
+  showLoading(button) {
+    const buttonText = button.querySelector('.button-text');
+    if (buttonText) {
+      buttonText.innerHTML = '<span class="c-loading-spinner"></span>Processing...';
+    }
+    button.disabled = true;
+  }
 
-        // Prevent default form submission
-        authForm.addEventListener('submit', (e) => e.preventDefault());
+  hideLoading(button, originalText) {
+    const buttonText = button.querySelector('.button-text');
+    if (buttonText) {
+      buttonText.textContent = originalText;
+    }
+    button.disabled = false;
+  }
 
-        // Allow Enter key to trigger login
-        authForm.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.handleLogin(e);
-            }
-        });
+  validateForm() {
+    const firstNameInput = document.getElementById('firstName');
+    const lastNameInput = document.getElementById('lastName');
+    const passwordInput = document.getElementById('password');
+
+    const firstName = firstNameInput ? firstNameInput.value.trim() : '';
+    const lastName = lastNameInput ? lastNameInput.value.trim() : '';
+    const password = passwordInput ? passwordInput.value : '';
+
+    [firstNameInput, lastNameInput, passwordInput].forEach((input) => {
+      if (input) input.classList.remove('error');
+    });
+
+    if (!firstName) {
+      this.showError('First name is required');
+      if (firstNameInput) firstNameInput.classList.add('error');
+      return null;
+    }
+    if (firstName.length < 1) {
+      this.showError('First name must be at least 1 character long');
+      if (firstNameInput) firstNameInput.classList.add('error');
+      return null;
+    }
+    if (firstName.length > 50) {
+      this.showError('First name must be 50 characters or less');
+      if (firstNameInput) firstNameInput.classList.add('error');
+      return null;
     }
 
-    showAuthModal() {
-        const modal = document.getElementById('authModal');
-        if (modal) modal.style.display = 'block';
+    if (!lastName) {
+      this.showError('Last name is required');
+      if (lastNameInput) lastNameInput.classList.add('error');
+      return null;
+    }
+    if (lastName.length < 1) {
+      this.showError('Last name must be at least 1 character long');
+      if (lastNameInput) lastNameInput.classList.add('error');
+      return null;
+    }
+    if (lastName.length > 50) {
+      this.showError('Last name must be 50 characters or less');
+      if (lastNameInput) lastNameInput.classList.add('error');
+      return null;
     }
 
-    hideAuthModal() {
-        const modal = document.getElementById('authModal');
-        if (modal) {
-            // Remove from DOM completely, not just hide
-            modal.remove();
-        }
+    if (!password) {
+      this.showError('Password is required');
+      if (passwordInput) passwordInput.classList.add('error');
+      return null;
+    }
+    if (password.length < 8) {
+      this.showError('Password must be at least 8 characters long');
+      if (passwordInput) passwordInput.classList.add('error');
+      return null;
     }
 
-    showError(message) {
-        const errorContainer = document.getElementById('authError');
-        if (errorContainer) {
-            errorContainer.textContent = message;
-            errorContainer.style.display = 'block';
-            errorContainer.classList.add('error-shake');
-            
-            // Remove shake animation after it completes
-            setTimeout(() => {
-                errorContainer.classList.remove('error-shake');
-            }, 300);
-            
-            // Auto-hide after 6 seconds (longer for better UX)
-            setTimeout(() => {
-                if (errorContainer.textContent === message) {
-                    errorContainer.style.display = 'none';
-                }
-            }, 6000);
-        } else {
-            // Fallback: create error message if container doesn't exist
-            console.error('Error container not found, message:', message);
-            alert(message);
-        }
+    if (!/[a-zA-Z]/.test(password)) {
+      this.showError('Password must contain at least one letter');
+      if (passwordInput) passwordInput.classList.add('error');
+      return null;
     }
 
-    showLoading(button) {
-        const buttonText = button.querySelector('.button-text');
-        if (buttonText) {
-            buttonText.innerHTML = '<span class="c-loading-spinner"></span>Processing...';
-        }
-        button.disabled = true;
+    localStorage.setItem(STORAGE_KEYS.USER.FIRST_NAME, firstName);
+    localStorage.setItem(STORAGE_KEYS.USER.LAST_NAME, lastName);
+    localStorage.setItem(STORAGE_KEYS.USER.PASSWORD, password);
+
+    return { firstName, lastName, password };
+  }
+
+  async handleLogin(e) {
+    e.preventDefault();
+    const loginBtn = document.getElementById('loginBtn');
+    const registerBtn = document.getElementById('registerBtn');
+
+    const formData = this.validateForm();
+    if (!formData) return;
+
+    this.showLoading(loginBtn);
+    registerBtn.disabled = true;
+
+    try {
+      const result = await this.sendAuthenticationRequest(
+        'login',
+        formData.firstName,
+        formData.lastName,
+        formData.password
+      );
+
+      if (result && result.user_id) {
+        this.loginUser(formData, result.user_id, result);
+      } else {
+        this.showError('Login failed: Invalid response from server.');
+      }
+    } catch (error) {
+      console.error('Support login error:', error);
+      const errorMessage = error.message || 'Login failed. Please check your credentials.';
+      this.showError(errorMessage);
+    } finally {
+      this.hideLoading(loginBtn, 'Login');
+      registerBtn.disabled = false;
     }
+  }
 
-    hideLoading(button, originalText) {
-        const buttonText = button.querySelector('.button-text');
-        if (buttonText) {
-            buttonText.textContent = originalText;
-        }
-        button.disabled = false;
+  async handleRegister(e) {
+    e.preventDefault();
+    const registerBtn = document.getElementById('registerBtn');
+    const loginBtn = document.getElementById('loginBtn');
+
+    const formData = this.validateForm();
+    if (!formData) return;
+
+    this.showLoading(registerBtn);
+    loginBtn.disabled = true;
+
+    try {
+      const result = await this.sendAuthenticationRequest(
+        'register',
+        formData.firstName,
+        formData.lastName,
+        formData.password
+      );
+
+      if (result && result.user_id) {
+        this.registerUser(formData, result.user_id, result);
+      } else {
+        this.showError('Registration failed: Unexpected response from server.');
+      }
+    } catch (error) {
+      console.error('Support registration error:', error);
+      const errorMessage =
+        error.message || 'Registration failed. User may already exist or password is too weak.';
+      this.showError(errorMessage);
+    } finally {
+      this.hideLoading(registerBtn, 'Register');
+      loginBtn.disabled = false;
     }
+  }
 
-    validateForm() {
-        const firstNameInput = document.getElementById('firstName');
-        const lastNameInput = document.getElementById('lastName');
-        const passwordInput = document.getElementById('password');
+  async sendAuthenticationRequest(endpoint, firstName, lastName, password) {
+    try {
+      // Use support-specific endpoints
+      const response = await fetch(`${this.lanIP}/api/v1/support/${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          first_name: firstName,
+          last_name: lastName,
+          password: password,
+        }),
+      });
 
-        const firstName = firstNameInput ? firstNameInput.value.trim() : '';
-        const lastName = lastNameInput ? lastNameInput.value.trim() : '';
-        const password = passwordInput ? passwordInput.value : '';
-
-        [firstNameInput, lastNameInput, passwordInput].forEach(input => {
-            if (input) input.classList.remove('error');
-        });
-
-        if (!firstName) {
-            this.showError('First name is required');
-            if (firstNameInput) firstNameInput.classList.add('error');
-            return null;
-        }
-        if (firstName.length < 1) {
-            this.showError('First name must be at least 1 character long');
-            if (firstNameInput) firstNameInput.classList.add('error');
-            return null;
-        }
-        if (firstName.length > 50) {
-            this.showError('First name must be 50 characters or less');
-            if (firstNameInput) firstNameInput.classList.add('error');
-            return null;
-        }
-
-        if (!lastName) {
-            this.showError('Last name is required');
-            if (lastNameInput) lastNameInput.classList.add('error');
-            return null;
-        }
-        if (lastName.length < 1) {
-            this.showError('Last name must be at least 1 character long');
-            if (lastNameInput) lastNameInput.classList.add('error');
-            return null;
-        }
-        if (lastName.length > 50) {
-            this.showError('Last name must be 50 characters or less');
-            if (lastNameInput) lastNameInput.classList.add('error');
-            return null;
-        }
-
-        if (!password) {
-            this.showError('Password is required');
-            if (passwordInput) passwordInput.classList.add('error');
-            return null;
-        }
-        if (password.length < 8) {
-            this.showError('Password must be at least 8 characters long');
-            if (passwordInput) passwordInput.classList.add('error');
-            return null;
-        }
-        
-        if (!/[a-zA-Z]/.test(password)) {
-            this.showError('Password must contain at least one letter');
-            if (passwordInput) passwordInput.classList.add('error');
-            return null;
-        }
-        
-        localStorage.setItem(STORAGE_KEYS.USER.FIRST_NAME, firstName);
-        localStorage.setItem(STORAGE_KEYS.USER.LAST_NAME, lastName);
-        localStorage.setItem(STORAGE_KEYS.USER.PASSWORD, password);
-
-        return { firstName, lastName, password };
-    }
-
-    async handleLogin(e) {
-        e.preventDefault();
-        const loginBtn = document.getElementById('loginBtn');
-        const registerBtn = document.getElementById('registerBtn');
-
-        const formData = this.validateForm();
-        if (!formData) return;
-
-        this.showLoading(loginBtn);
-        registerBtn.disabled = true;
-
+      if (!response.ok) {
+        let errorData;
         try {
-            const result = await this.sendAuthenticationRequest('login', formData.firstName, formData.lastName, formData.password);
-            
-            if (result && result.user_id) {
-                this.loginUser(formData, result.user_id, result);
-            } else {
-                this.showError('Login failed: Invalid response from server.');
-            }
-        } catch (error) {
-            console.error('Support login error:', error);
-            const errorMessage = error.message || 'Login failed. Please check your credentials.';
-            this.showError(errorMessage);
-        } finally {
-            this.hideLoading(loginBtn, 'Login');
-            registerBtn.disabled = false;
-        }
-    }
-
-    async handleRegister(e) {
-        e.preventDefault();
-        const registerBtn = document.getElementById('registerBtn');
-        const loginBtn = document.getElementById('loginBtn');
-
-        const formData = this.validateForm();
-        if (!formData) return;
-
-        this.showLoading(registerBtn);
-        loginBtn.disabled = true;
-
-        try {
-            const result = await this.sendAuthenticationRequest('register', formData.firstName, formData.lastName, formData.password);
-            
-            if (result && result.user_id) {
-                this.registerUser(formData, result.user_id, result);
-            } else {
-                this.showError('Registration failed: Unexpected response from server.');
-            }
-        } catch (error) {
-            console.error('Support registration error:', error);
-            const errorMessage = error.message || 'Registration failed. User may already exist or password is too weak.';
-            this.showError(errorMessage);
-        } finally {
-            this.hideLoading(registerBtn, 'Register');
-            loginBtn.disabled = false;
-        }
-    }
-
-    async sendAuthenticationRequest(endpoint, firstName, lastName, password) {
-        try {
-            // Use support-specific endpoints
-            const response = await fetch(`${this.lanIP}/api/v1/support/${endpoint}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    first_name: firstName,
-                    last_name: lastName,
-                    password: password,
-                }),
-            });
-
-            if (!response.ok) {
-                let errorData;
-                try {
-                    errorData = await response.json();
-                } catch (parseError) {
-                    throw new Error(`Server error (${response.status}): ${response.statusText}`);
-                }
-                
-                let errorMessage = 'Unknown server error';
-                
-                if (typeof errorData === 'string') {
-                    errorMessage = errorData;
-                } else if (errorData && typeof errorData === 'object') {
-                    errorMessage = errorData.detail || 
-                                 errorData.message || 
-                                 errorData.error || 
-                                 errorData.msg ||
-                                 (errorData.detail && errorData.detail[0] && errorData.detail[0].msg) ||
-                                 JSON.stringify(errorData);
-                    
-                    if (response.status === 422 && errorData.detail && Array.isArray(errorData.detail)) {
-                        const validationErrors = errorData.detail.map(err => {
-                            const field = err.loc && err.loc.length > 1 ? err.loc[err.loc.length - 1] : 'field';
-                            return `${field}: ${err.msg}`;
-                        }).join(', ');
-                        errorMessage = `Validation error: ${validationErrors}`;
-                    }
-                }
-                
-                throw new Error(errorMessage);
-            }
-
-            return await response.json();
-        } catch (error) {
-            if (error instanceof Error) {
-                throw error;
-            } else if (typeof error === 'object' && error !== null) {
-                const errorMessage = error.detail || error.message || error.error || 'Network or server error';
-                throw new Error(errorMessage);
-            } else {
-                throw new Error('Network or server error');
-            }
-        }
-    }
-
-    loginUser(userData, userId, meta = {}) {
-        this.currentUser = {
-            id: userId,
-            firstName: userData.firstName,
-            lastName: userData.lastName,
-            fullName: `${userData.firstName} ${userData.lastName}`,
-            key: `${userData.firstName}_${userData.lastName}`,
-            score: 0,
-            lp: 4,
-            sp: 4,
-            userRoleId: meta.userRoleId || 1,
-            isAdmin: Boolean(meta.is_admin),
-        };
-
-        // Client-side fallback: treat Oroka Conner as admin if server didn't mark them
-        try {
-            const fn = String(this.currentUser.firstName || '').trim().toLowerCase();
-            const ln = String(this.currentUser.lastName || '').trim().toLowerCase();
-            if ((fn === 'oroka' && ln === 'conner') || (`${fn} ${ln}` === 'oroka conner')) {
-                this.currentUser.isAdmin = true;
-            }
-        } catch (e) {
-            // ignore
+          errorData = await response.json();
+        } catch (parseError) {
+          throw new Error(`Server error (${response.status}): ${response.statusText}`);
         }
 
-        localStorage.setItem(STORAGE_KEYS.USER.USER_ID, userId);
-        localStorage.setItem('support_user_role_id', String(this.currentUser.userRoleId));
-        localStorage.setItem('support_is_admin', String(this.currentUser.isAdmin));
-        
-        this.hideAuthModal();
-        this.notifyUserAuthenticated(this.currentUser);
-        // welcome popup removed per request
-    }
+        let errorMessage = 'Unknown server error';
 
-    registerUser(userData, userId, meta = {}) {
-        const newUser = {
-            id: userId,
-            firstName: userData.firstName,
-            lastName: userData.lastName,
-            fullName: `${userData.firstName} ${userData.lastName}`,
-            key: `${userData.firstName}_${userData.lastName}`,
-            score: 0,
-            lp: 4,
-            sp: 4,
-            userRoleId: meta.userRoleId || 1,
-            isAdmin: Boolean(meta.is_admin),
-        };
+        if (typeof errorData === 'string') {
+          errorMessage = errorData;
+        } else if (errorData && typeof errorData === 'object') {
+          errorMessage =
+            errorData.detail ||
+            errorData.message ||
+            errorData.error ||
+            errorData.msg ||
+            (errorData.detail && errorData.detail[0] && errorData.detail[0].msg) ||
+            JSON.stringify(errorData);
 
-        localStorage.setItem(STORAGE_KEYS.USER.USER_ID, userId);
-        // Client-side fallback: treat Oroka Conner as admin if server didn't mark them
-        try {
-            const fn = String(newUser.firstName || '').trim().toLowerCase();
-            const ln = String(newUser.lastName || '').trim().toLowerCase();
-            if ((fn === 'oroka' && ln === 'conner') || (`${fn} ${ln}` === 'oroka conner')) {
-                newUser.isAdmin = true;
-            }
-        } catch (e) {
-            // ignore
+          if (response.status === 422 && errorData.detail && Array.isArray(errorData.detail)) {
+            const validationErrors = errorData.detail
+              .map((err) => {
+                const field = err.loc && err.loc.length > 1 ? err.loc[err.loc.length - 1] : 'field';
+                return `${field}: ${err.msg}`;
+              })
+              .join(', ');
+            errorMessage = `Validation error: ${validationErrors}`;
+          }
         }
 
-        localStorage.setItem('support_user_role_id', String(newUser.userRoleId));
-        localStorage.setItem('support_is_admin', String(newUser.isAdmin));
+        throw new Error(errorMessage);
+      }
 
-        this.currentUser = newUser;
-        this.hideAuthModal();
-        this.notifyUserAuthenticated(newUser);
-        // popup suppressed
-        document.dispatchEvent(new CustomEvent('userRegistered', {
-            detail: { user: newUser }
-        }));
+      return await response.json();
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      } else if (typeof error === 'object' && error !== null) {
+        const errorMessage =
+          error.detail || error.message || error.error || 'Network or server error';
+        throw new Error(errorMessage);
+      } else {
+        throw new Error('Network or server error');
+      }
+    }
+  }
+
+  loginUser(userData, userId, meta = {}) {
+    this.currentUser = {
+      id: userId,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      fullName: `${userData.firstName} ${userData.lastName}`,
+      key: `${userData.firstName}_${userData.lastName}`,
+      score: 0,
+      lp: 4,
+      sp: 4,
+      userRoleId: meta.userRoleId || 1,
+      isAdmin: Boolean(meta.is_admin),
+    };
+
+    // Client-side fallback: treat Lukas Bohez as admin if server didn't mark them
+    try {
+      const fn = String(this.currentUser.firstName || '')
+        .trim()
+        .toLowerCase();
+      const ln = String(this.currentUser.lastName || '')
+        .trim()
+        .toLowerCase();
+      if ((fn === 'lukas' && ln === 'bohez') || `${fn} ${ln}` === 'lukas bohez') {
+        this.currentUser.isAdmin = true;
+      }
+    } catch (e) {
+      // ignore
     }
 
-    notifyUserAuthenticated(user) {
-        document.dispatchEvent(new CustomEvent('userAuthenticated', {
-            detail: { user }
-        }));
+    localStorage.setItem(STORAGE_KEYS.USER.USER_ID, userId);
+    localStorage.setItem('support_user_role_id', String(this.currentUser.userRoleId));
+    localStorage.setItem('support_is_admin', String(this.currentUser.isAdmin));
+
+    this.hideAuthModal();
+    this.notifyUserAuthenticated(this.currentUser);
+    // welcome popup removed per request
+  }
+
+  registerUser(userData, userId, meta = {}) {
+    const newUser = {
+      id: userId,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      fullName: `${userData.firstName} ${userData.lastName}`,
+      key: `${userData.firstName}_${userData.lastName}`,
+      score: 0,
+      lp: 4,
+      sp: 4,
+      userRoleId: meta.userRoleId || 1,
+      isAdmin: Boolean(meta.is_admin),
+    };
+
+    localStorage.setItem(STORAGE_KEYS.USER.USER_ID, userId);
+    // Client-side fallback: treat Lukas Bohez as admin if server didn't mark them
+    try {
+      const fn = String(newUser.firstName || '')
+        .trim()
+        .toLowerCase();
+      const ln = String(newUser.lastName || '')
+        .trim()
+        .toLowerCase();
+      if ((fn === 'lukas' && ln === 'bohez') || `${fn} ${ln}` === 'lukas bohez') {
+        newUser.isAdmin = true;
+      }
+    } catch (e) {
+      // ignore
     }
 
-    // welcome message popup removed per user request; function kept for parity
-    showWelcomeMessage(user) {
-        // intentionally blank
-    }
+    localStorage.setItem('support_user_role_id', String(newUser.userRoleId));
+    localStorage.setItem('support_is_admin', String(newUser.isAdmin));
 
-    logout() {
-        this.clearStoredCredentials();
-        this.currentUser = null;
-        
-        document.dispatchEvent(new CustomEvent('userLoggedOut'));
-        
-        // Re-create the auth modal since it was removed from DOM on login
-        if (!document.getElementById('authModal')) {
-            this.createAuthModal();
-            this.bindEvents();
-        }
-        this.showAuthModal();
-    }
+    this.currentUser = newUser;
+    this.hideAuthModal();
+    this.notifyUserAuthenticated(newUser);
+    // popup suppressed
+    document.dispatchEvent(
+      new CustomEvent('userRegistered', {
+        detail: { user: newUser },
+      })
+    );
+  }
 
-    getCurrentUser() {
-        return this.currentUser;
+  notifyUserAuthenticated(user) {
+    document.dispatchEvent(
+      new CustomEvent('userAuthenticated', {
+        detail: { user },
+      })
+    );
+  }
+
+  // welcome message popup removed per user request; function kept for parity
+  showWelcomeMessage(user) {
+    // intentionally blank
+  }
+
+  logout() {
+    this.clearStoredCredentials();
+    this.currentUser = null;
+
+    document.dispatchEvent(new CustomEvent('userLoggedOut'));
+
+    // Re-create the auth modal since it was removed from DOM on login
+    if (!document.getElementById('authModal')) {
+      this.createAuthModal();
+      this.bindEvents();
     }
+    this.showAuthModal();
+  }
+
+  getCurrentUser() {
+    return this.currentUser;
+  }
 }
 
 // Export for use in other scripts

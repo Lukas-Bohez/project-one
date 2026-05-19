@@ -4,280 +4,281 @@
  */
 
 class DeveloperMenu {
-    constructor(gameEngine) {
-        console.log('DeveloperMenu constructor called');
-        this.gameEngine = gameEngine;
-        this.isUnlocked = false;
-        this.password = "CapitalismIsDead";
-        
-        this.initializeEventListeners();
-        this.checkFinalRebirthReward();
-        console.log('DeveloperMenu initialized successfully');
+  constructor(gameEngine) {
+    console.log('DeveloperMenu constructor called');
+    this.gameEngine = gameEngine;
+    this.isUnlocked = false;
+    this.password = 'CapitalismIsDead';
+
+    this.initializeEventListeners();
+    this.checkFinalRebirthReward();
+    console.log('DeveloperMenu initialized successfully');
+  }
+
+  initializeEventListeners() {
+    console.log('Initializing dev menu event listeners...');
+    // Open developer menu
+    const devMenuBtn = document.getElementById('dev-menu-btn');
+    console.log('Dev menu button found:', devMenuBtn);
+    if (devMenuBtn) {
+      devMenuBtn.addEventListener('click', () => {
+        console.log('Dev menu button clicked!');
+        this.openDevMenu();
+      });
+      console.log('Click listener added to dev menu button');
+    } else {
+      console.error('Dev menu button not found!');
     }
-    
-    initializeEventListeners() {
-        console.log('Initializing dev menu event listeners...');
-        // Open developer menu
-        const devMenuBtn = document.getElementById('dev-menu-btn');
-        console.log('Dev menu button found:', devMenuBtn);
-        if (devMenuBtn) {
-            devMenuBtn.addEventListener('click', () => {
-                console.log('Dev menu button clicked!');
-                this.openDevMenu();
-            });
-            console.log('Click listener added to dev menu button');
-        } else {
-            console.error('Dev menu button not found!');
-        }
-        
-        // Close developer menu
-        const closeDevMenu = document.getElementById('close-dev-menu');
-        const closeDevMenuBtn = document.getElementById('close-dev-menu-btn');
-        if (closeDevMenu) {
-            closeDevMenu.addEventListener('click', () => this.closeDevMenu());
-        }
-        if (closeDevMenuBtn) {
-            closeDevMenuBtn.addEventListener('click', () => this.closeDevMenu());
-        }
-        
-        // Unlock button
-        const unlockBtn = document.getElementById('dev-unlock-btn');
-        if (unlockBtn) {
-            unlockBtn.addEventListener('click', () => this.attemptUnlock());
-        }
-        
-        // Allow Enter key to unlock
-        const passwordInput = document.getElementById('dev-password');
-        if (passwordInput) {
-            passwordInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    this.attemptUnlock();
-                }
-            });
-        }
-        
-        // Apply rebirth button
-        const applyRebirthBtn = document.getElementById('apply-rebirth-btn');
-        if (applyRebirthBtn) {
-            applyRebirthBtn.addEventListener('click', () => this.applyRebirth());
-        }
-        
-        // Currency buttons
-        const giveGoldBtn = document.getElementById('give-gold-btn');
-        const giveStoneBtn = document.getElementById('give-stone-btn');
-        const giveCoalBtn = document.getElementById('give-coal-btn');
-        const giveIronBtn = document.getElementById('give-iron-btn');
-        const giveSilverBtn = document.getElementById('give-silver-btn');
-        
-        if (giveGoldBtn) {
-            giveGoldBtn.addEventListener('click', () => this.giveCurrency('gold'));
-        }
-        if (giveStoneBtn) {
-            giveStoneBtn.addEventListener('click', () => this.giveCurrency('stone'));
-        }
-        if (giveCoalBtn) {
-            giveCoalBtn.addEventListener('click', () => this.giveCurrency('coal'));
-        }
-        if (giveIronBtn) {
-            giveIronBtn.addEventListener('click', () => this.giveCurrency('iron'));
-        }
-        if (giveSilverBtn) {
-            giveSilverBtn.addEventListener('click', () => this.giveCurrency('silver'));
-        }
-        
-        // Close modal on outside click
-        const modal = document.getElementById('dev-menu-modal');
-        if (modal) {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    this.closeDevMenu();
-                }
-            });
-        }
+
+    // Close developer menu
+    const closeDevMenu = document.getElementById('close-dev-menu');
+    const closeDevMenuBtn = document.getElementById('close-dev-menu-btn');
+    if (closeDevMenu) {
+      closeDevMenu.addEventListener('click', () => this.closeDevMenu());
     }
-    
-    checkFinalRebirthReward() {
-        // Check every second if player has reached final rebirth (rebirth 9 = The Void)
-        setInterval(() => {
-            const rebirths = this.gameEngine?.state?.city?.rebirths || 0;
-            const rewardDiv = document.getElementById('final-rebirth-reward');
-            
-            if (rebirths >= 9 && rewardDiv) {
-                rewardDiv.style.display = 'block';
-            }
-        }, 1000);
+    if (closeDevMenuBtn) {
+      closeDevMenuBtn.addEventListener('click', () => this.closeDevMenu());
     }
-    
-    openDevMenu() {
-        console.log('openDevMenu called');
-        const modal = document.getElementById('dev-menu-modal');
-        console.log('Modal element:', modal);
-        if (modal) {
-            console.log('Setting modal to display flex');
-            modal.classList.add('show');
-            modal.style.display = 'flex';
-            console.log('Modal display set to:', modal.style.display);
-        } else {
-            console.error('Modal element not found!');
-        }
+
+    // Unlock button
+    const unlockBtn = document.getElementById('dev-unlock-btn');
+    if (unlockBtn) {
+      unlockBtn.addEventListener('click', () => this.attemptUnlock());
     }
-    
-    closeDevMenu() {
-        const modal = document.getElementById('dev-menu-modal');
-        if (modal) {
-            modal.classList.remove('show');
-            modal.style.display = 'none';
+
+    // Allow Enter key to unlock
+    const passwordInput = document.getElementById('dev-password');
+    if (passwordInput) {
+      passwordInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          this.attemptUnlock();
         }
-        
-        // Clear password input
-        const passwordInput = document.getElementById('dev-password');
-        if (passwordInput) {
-            passwordInput.value = '';
-        }
-        
-        // Hide error
-        const errorMsg = document.getElementById('dev-password-error');
-        if (errorMsg) {
-            errorMsg.style.display = 'none';
-        }
+      });
     }
-    
-    attemptUnlock() {
-        const passwordInput = document.getElementById('dev-password');
-        const errorMsg = document.getElementById('dev-password-error');
-        const passwordSection = document.getElementById('dev-password-section');
-        const contentSection = document.getElementById('dev-menu-content');
-        
-        if (!passwordInput) return;
-        
-        const enteredPassword = passwordInput.value;
-        
-        if (enteredPassword === this.password) {
-            // Correct password!
-            this.isUnlocked = true;
-            
-            if (passwordSection) passwordSection.style.display = 'none';
-            if (contentSection) contentSection.style.display = 'block';
-            if (errorMsg) errorMsg.style.display = 'none';
-            
-            // Update selector to current rebirth
-            this.updateRebirthSelector();
-            
-            console.log('Developer menu unlocked!');
-        } else {
-            // Wrong password
-            if (errorMsg) {
-                errorMsg.style.display = 'block';
-            }
-            
-            // Shake animation
-            if (passwordInput) {
-                passwordInput.style.animation = 'shake 0.5s';
-                setTimeout(() => {
-                    passwordInput.style.animation = '';
-                }, 500);
-            }
-        }
+
+    // Apply rebirth button
+    const applyRebirthBtn = document.getElementById('apply-rebirth-btn');
+    if (applyRebirthBtn) {
+      applyRebirthBtn.addEventListener('click', () => this.applyRebirth());
     }
-    
-    giveCurrency(resourceType) {
-        const inputId = `dev-${resourceType}-input`;
-        const input = document.getElementById(inputId);
-        
-        if (!input || !this.gameEngine?.state?.resources) return;
-        
-        const amount = parseFloat(input.value);
-        
-        if (isNaN(amount) || amount <= 0) {
-            if (this.gameEngine.showNotification) {
-                this.gameEngine.showNotification('⚠️ Please enter a valid positive amount');
-            }
-            return;
-        }
-        
-        // Add the resource
-        this.gameEngine.state.resources[resourceType] = (this.gameEngine.state.resources[resourceType] || 0) + amount;
-        
-        // Update UI
-        if (this.gameEngine.updateUI) {
-            this.gameEngine.updateUI();
-        }
-        
-        // Get theme-aware resource name
-        let resourceName = resourceType;
-        if (this.gameEngine.themeManager && this.gameEngine.themeManager.currentTheme) {
-            const themeResources = this.gameEngine.themeManager.currentTheme.resources;
-            if (themeResources && themeResources[resourceType]) {
-                resourceName = themeResources[resourceType];
-            }
-        }
-        
-        // Show notification with theme-aware name
-        if (this.gameEngine.showNotification) {
-            const icons = {
-                gold: '💰',
-                stone: '🪨',
-                coal: '⚫',
-                iron: '⚙️',
-                silver: '🥈'
-            };
-            const icon = icons[resourceType] || '📦';
-            this.gameEngine.showNotification(`${icon} Added ${amount} ${resourceName}!`);
-        }
-        
-        // Clear input
-        input.value = '';
-        
-        console.log(`Developer: Added ${amount} ${resourceType} (${resourceName})`);
+
+    // Currency buttons
+    const giveGoldBtn = document.getElementById('give-gold-btn');
+    const giveStoneBtn = document.getElementById('give-stone-btn');
+    const giveCoalBtn = document.getElementById('give-coal-btn');
+    const giveIronBtn = document.getElementById('give-iron-btn');
+    const giveSilverBtn = document.getElementById('give-silver-btn');
+
+    if (giveGoldBtn) {
+      giveGoldBtn.addEventListener('click', () => this.giveCurrency('gold'));
     }
-    
-    updateRebirthSelector() {
-        const selector = document.getElementById('rebirth-selector');
-        if (selector && this.gameEngine?.state?.city) {
-            const currentRebirths = this.gameEngine.state.city.rebirths || 0;
-            selector.value = currentRebirths.toString();
-        }
+    if (giveStoneBtn) {
+      giveStoneBtn.addEventListener('click', () => this.giveCurrency('stone'));
     }
-    
-    applyRebirth() {
-        const selector = document.getElementById('rebirth-selector');
-        if (!selector || !this.gameEngine?.state?.city) return;
-        
-        const targetRebirth = parseInt(selector.value);
-        const currentRebirth = this.gameEngine.state.city.rebirths || 0;
-        
-        if (targetRebirth === currentRebirth) {
-            if (this.gameEngine.showNotification) {
-                this.gameEngine.showNotification('ℹ️ Already at this rebirth level');
-            }
-            return;
-        }
-        
-        // Set the rebirth count
-        this.gameEngine.state.city.rebirths = targetRebirth;
-        
-        // Force theme update
-        if (this.gameEngine.themeManager) {
-            this.gameEngine.themeManager.currentTheme = null; // Force refresh
-            this.gameEngine.themeManager.updateTheme();
-        }
-        
-        // Update UI
-        if (this.gameEngine.updateUI) {
-            this.gameEngine.updateUI();
-        }
-        
-        // Show notification
-        if (this.gameEngine.showNotification) {
-            const themeName = this.gameEngine.rebirthThemes?.getTheme(targetRebirth)?.name || 'Unknown';
-            this.gameEngine.showNotification(`🔧 Jumped to Rebirth ${targetRebirth}: ${themeName}`);
-        }
-        
-        console.log(`Developer: Set rebirth to ${targetRebirth}`);
-        
-        // Close menu
-        this.closeDevMenu();
+    if (giveCoalBtn) {
+      giveCoalBtn.addEventListener('click', () => this.giveCurrency('coal'));
     }
+    if (giveIronBtn) {
+      giveIronBtn.addEventListener('click', () => this.giveCurrency('iron'));
+    }
+    if (giveSilverBtn) {
+      giveSilverBtn.addEventListener('click', () => this.giveCurrency('silver'));
+    }
+
+    // Close modal on outside click
+    const modal = document.getElementById('dev-menu-modal');
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          this.closeDevMenu();
+        }
+      });
+    }
+  }
+
+  checkFinalRebirthReward() {
+    // Check every second if player has reached final rebirth (rebirth 9 = The Void)
+    setInterval(() => {
+      const rebirths = this.gameEngine?.state?.city?.rebirths || 0;
+      const rewardDiv = document.getElementById('final-rebirth-reward');
+
+      if (rebirths >= 9 && rewardDiv) {
+        rewardDiv.style.display = 'block';
+      }
+    }, 1000);
+  }
+
+  openDevMenu() {
+    console.log('openDevMenu called');
+    const modal = document.getElementById('dev-menu-modal');
+    console.log('Modal element:', modal);
+    if (modal) {
+      console.log('Setting modal to display flex');
+      modal.classList.add('show');
+      modal.style.display = 'flex';
+      console.log('Modal display set to:', modal.style.display);
+    } else {
+      console.error('Modal element not found!');
+    }
+  }
+
+  closeDevMenu() {
+    const modal = document.getElementById('dev-menu-modal');
+    if (modal) {
+      modal.classList.remove('show');
+      modal.style.display = 'none';
+    }
+
+    // Clear password input
+    const passwordInput = document.getElementById('dev-password');
+    if (passwordInput) {
+      passwordInput.value = '';
+    }
+
+    // Hide error
+    const errorMsg = document.getElementById('dev-password-error');
+    if (errorMsg) {
+      errorMsg.style.display = 'none';
+    }
+  }
+
+  attemptUnlock() {
+    const passwordInput = document.getElementById('dev-password');
+    const errorMsg = document.getElementById('dev-password-error');
+    const passwordSection = document.getElementById('dev-password-section');
+    const contentSection = document.getElementById('dev-menu-content');
+
+    if (!passwordInput) return;
+
+    const enteredPassword = passwordInput.value;
+
+    if (enteredPassword === this.password) {
+      // Correct password!
+      this.isUnlocked = true;
+
+      if (passwordSection) passwordSection.style.display = 'none';
+      if (contentSection) contentSection.style.display = 'block';
+      if (errorMsg) errorMsg.style.display = 'none';
+
+      // Update selector to current rebirth
+      this.updateRebirthSelector();
+
+      console.log('Developer menu unlocked!');
+    } else {
+      // Wrong password
+      if (errorMsg) {
+        errorMsg.style.display = 'block';
+      }
+
+      // Shake animation
+      if (passwordInput) {
+        passwordInput.style.animation = 'shake 0.5s';
+        setTimeout(() => {
+          passwordInput.style.animation = '';
+        }, 500);
+      }
+    }
+  }
+
+  giveCurrency(resourceType) {
+    const inputId = `dev-${resourceType}-input`;
+    const input = document.getElementById(inputId);
+
+    if (!input || !this.gameEngine?.state?.resources) return;
+
+    const amount = parseFloat(input.value);
+
+    if (isNaN(amount) || amount <= 0) {
+      if (this.gameEngine.showNotification) {
+        this.gameEngine.showNotification('⚠️ Please enter a valid positive amount');
+      }
+      return;
+    }
+
+    // Add the resource
+    this.gameEngine.state.resources[resourceType] =
+      (this.gameEngine.state.resources[resourceType] || 0) + amount;
+
+    // Update UI
+    if (this.gameEngine.updateUI) {
+      this.gameEngine.updateUI();
+    }
+
+    // Get theme-aware resource name
+    let resourceName = resourceType;
+    if (this.gameEngine.themeManager && this.gameEngine.themeManager.currentTheme) {
+      const themeResources = this.gameEngine.themeManager.currentTheme.resources;
+      if (themeResources && themeResources[resourceType]) {
+        resourceName = themeResources[resourceType];
+      }
+    }
+
+    // Show notification with theme-aware name
+    if (this.gameEngine.showNotification) {
+      const icons = {
+        gold: '💰',
+        stone: '🪨',
+        coal: '⚫',
+        iron: '⚙️',
+        silver: '🥈',
+      };
+      const icon = icons[resourceType] || '📦';
+      this.gameEngine.showNotification(`${icon} Added ${amount} ${resourceName}!`);
+    }
+
+    // Clear input
+    input.value = '';
+
+    console.log(`Developer: Added ${amount} ${resourceType} (${resourceName})`);
+  }
+
+  updateRebirthSelector() {
+    const selector = document.getElementById('rebirth-selector');
+    if (selector && this.gameEngine?.state?.city) {
+      const currentRebirths = this.gameEngine.state.city.rebirths || 0;
+      selector.value = currentRebirths.toString();
+    }
+  }
+
+  applyRebirth() {
+    const selector = document.getElementById('rebirth-selector');
+    if (!selector || !this.gameEngine?.state?.city) return;
+
+    const targetRebirth = parseInt(selector.value);
+    const currentRebirth = this.gameEngine.state.city.rebirths || 0;
+
+    if (targetRebirth === currentRebirth) {
+      if (this.gameEngine.showNotification) {
+        this.gameEngine.showNotification('ℹ️ Already at this rebirth level');
+      }
+      return;
+    }
+
+    // Set the rebirth count
+    this.gameEngine.state.city.rebirths = targetRebirth;
+
+    // Force theme update
+    if (this.gameEngine.themeManager) {
+      this.gameEngine.themeManager.currentTheme = null; // Force refresh
+      this.gameEngine.themeManager.updateTheme();
+    }
+
+    // Update UI
+    if (this.gameEngine.updateUI) {
+      this.gameEngine.updateUI();
+    }
+
+    // Show notification
+    if (this.gameEngine.showNotification) {
+      const themeName = this.gameEngine.rebirthThemes?.getTheme(targetRebirth)?.name || 'Unknown';
+      this.gameEngine.showNotification(`🔧 Jumped to Rebirth ${targetRebirth}: ${themeName}`);
+    }
+
+    console.log(`Developer: Set rebirth to ${targetRebirth}`);
+
+    // Close menu
+    this.closeDevMenu();
+  }
 }
 
 // Export for use in other modules
@@ -285,9 +286,9 @@ window.DeveloperMenu = DeveloperMenu;
 
 // Add shake animation to CSS if not already present
 if (!document.getElementById('dev-menu-styles')) {
-    const devMenuStyle = document.createElement('style');
-    devMenuStyle.id = 'dev-menu-styles';
-    devMenuStyle.textContent = `
+  const devMenuStyle = document.createElement('style');
+  devMenuStyle.id = 'dev-menu-styles';
+  devMenuStyle.textContent = `
     @keyframes shake {
         0%, 100% { transform: translateX(0); }
         10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
@@ -337,5 +338,5 @@ if (!document.getElementById('dev-menu-styles')) {
         }
     }
 `;
-    document.head.appendChild(devMenuStyle);
+  document.head.appendChild(devMenuStyle);
 }

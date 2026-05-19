@@ -7,12 +7,14 @@ This update significantly improves the Sentle word game by implementing intellig
 ## ✨ New Features
 
 ### 1. **Intelligent Sentence Reuse System**
+
 - **Problem Solved**: Previously, if no sentence was scheduled for a day, the game would fail
 - **Solution**: Automatically reuses old sentences when none scheduled
 - **Smart Selection**: Prioritizes least-reused sentences to ensure fair rotation
 - **Tracking**: `reuse_count` column tracks how many times each sentence has been reused
 
 **How it works:**
+
 1. System checks if a sentence is scheduled for today
 2. If not found, queries all previously used sentences
 3. Selects sentence with lowest `reuse_count` (with randomization for ties)
@@ -22,23 +24,27 @@ This update significantly improves the Sentle word game by implementing intellig
 ### 2. **Enhanced Admin Panel**
 
 #### Edit Sentences
+
 - Click "✏️ Edit" button on any sentence
 - Modify sentence text and/or scheduled date
 - Server validates word count (2-15 words)
 - Prevents duplicate dates
 
-#### Delete Sentences  
+#### Delete Sentences
+
 - Click "🗑️ Delete" button with confirmation prompt
 - Cascading delete removes related scores and game sessions
 - Safe deletion prevents orphaned data
 
 #### Reuse Count Display
+
 - Orange badge shows how many times a sentence has been reused
 - Example: "Reused 3x" means the sentence appeared on 4 different dates (original + 3 reuses)
 
 ### 3. **Complete Archive History**
 
 **New Table: `sentle_daily_sentences`**
+
 ```sql
 CREATE TABLE sentle_daily_sentences (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -51,6 +57,7 @@ CREATE TABLE sentle_daily_sentences (
 ```
 
 **Benefits:**
+
 - Every day gets an entry, even with zero players
 - Archive shows complete history without gaps
 - Reused sentences display "♻️ REUSED" badge
@@ -61,54 +68,62 @@ CREATE TABLE sentle_daily_sentences (
 #### New Endpoints
 
 **DELETE `/api/sentle/admin/delete/{sentence_id}`**
+
 ```javascript
 // Delete a sentence (admin only)
 fetch('/api/sentle/admin/delete/123', {
-    method: 'DELETE',
-    headers: { 'Authorization': `Bearer ${adminToken}` }
+  method: 'DELETE',
+  headers: { Authorization: `Bearer ${adminToken}` },
 });
 ```
 
 **PUT `/api/sentle/admin/edit/{sentence_id}`**
+
 ```javascript
 // Edit a sentence (admin only)
 fetch('/api/sentle/admin/edit/123', {
-    method: 'PUT',
-    headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${adminToken}`
-    },
-    body: JSON.stringify({
-        sentence: "New sentence text here",
-        date: "2026-02-15"
-    })
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${adminToken}`,
+  },
+  body: JSON.stringify({
+    sentence: 'New sentence text here',
+    date: '2026-02-15',
+  }),
 });
 ```
 
 #### Updated Endpoints
 
 **GET `/api/sentle/daily`**
+
 - Now implements intelligent reuse fallback
 - Returns `reused: true` flag when sentence is reused
 - Logs all decisions to `sentle.log` for debugging
 
 **GET `/api/sentle/archive`**
+
 - Queries from `sentle_daily_sentences` instead of `sentle_sentences`
 - Shows all dates, even with zero plays
 - Includes `reused` flag in response
 
 **GET `/api/sentle/admin/list`**
+
 - Returns `reuse_count` for each sentence
 - Helps admins see sentence rotation balance
 
 ## 🔧 Database Migration
 
 ### Automatic Migration (on server restart)
+
 The `init_sentle_tables()` function now creates:
+
 - `reuse_count` column (if missing)
 - `sentle_daily_sentences` table (if missing)
 
 ### Manual Migration (recommended)
+
 Run the migration script to update existing databases:
 
 ```bash
@@ -117,12 +132,14 @@ python3 migrate_sentle.py
 ```
 
 **Migration performs:**
+
 1. Adds `reuse_count INT DEFAULT 0` column to `sentle_sentences`
 2. Creates `sentle_daily_sentences` table with foreign key constraints
 3. Populates historical data from existing `sentle_sentences` records
 4. Displays summary of changes
 
 **Output Example:**
+
 ```
 ============================================================
 Sentle Database Migration
@@ -147,6 +164,7 @@ Sentle Database Migration
 ## 📊 Schema Changes
 
 ### sentle_sentences (updated)
+
 ```sql
 CREATE TABLE sentle_sentences (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -160,6 +178,7 @@ CREATE TABLE sentle_sentences (
 ```
 
 ### sentle_daily_sentences (new)
+
 ```sql
 CREATE TABLE sentle_daily_sentences (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -175,12 +194,14 @@ CREATE TABLE sentle_daily_sentences (
 ## 🎮 User Experience Improvements
 
 ### For Players
+
 - **No More Empty Days**: Game always has a sentence available
 - **Fair Rotation**: Sentences reused evenly across time
 - **Complete Archive**: View full history without gaps
 - **Reuse Transparency**: See which sentences were reused with badge indicators
 
 ### For Admins
+
 - **Full Control**: Edit or delete any sentence
 - **Visual Feedback**: See reuse counts at a glance
 - **Better Management**: Understand sentence rotation patterns
@@ -218,6 +239,7 @@ All sentence selection logged to `backend/sentle.log`:
 ## 🧪 Testing Recommendations
 
 1. **Test Sentence Reuse**:
+
    ```bash
    # Delete today's sentence, then access game
    # Should automatically reuse an old sentence
@@ -241,27 +263,32 @@ All sentence selection logged to `backend/sentle.log`:
 ## 📦 Files Modified
 
 ### Backend
+
 - `/backend/app.py` - Updated endpoints and logic
 - `/backend/migrate_sentle.py` - New migration script
 
-### Frontend  
+### Frontend
+
 - `/frontend/html/sentle-admin.html` - Enhanced admin UI with edit/delete
 - `/frontend/html/sentle-archive.html` - Added reused badge display
 
 ## 🎓 How to Deploy
 
 1. **Stop the server**:
+
    ```bash
    sudo systemctl stop quiz-backend
    ```
 
 2. **Run migration**:
+
    ```bash
    cd /home/student/Project/project-one/backend
    python3 migrate_sentle.py
    ```
 
 3. **Restart server**:
+
    ```bash
    sudo systemctl start quiz-backend
    ```
@@ -282,20 +309,25 @@ All sentence selection logged to `backend/sentle.log`:
 ## 🆘 Troubleshooting
 
 **Issue**: Migration fails with "Column already exists"
+
 - **Solution**: Migration is idempotent; safe to run multiple times
 
 **Issue**: Edit/delete buttons not appearing
+
 - **Solution**: Clear browser cache and ensure admin token is valid
 
 **Issue**: Archive shows duplicates
+
 - **Solution**: Run migration to populate `sentle_daily_sentences` properly
 
 **Issue**: Sentence reuse not working
+
 - **Solution**: Check `sentle.log` for selection logic, ensure used sentences exist
 
 ## 📞 Support
 
 For issues or questions:
+
 - Check logs: `/home/student/Project/project-one/backend/sentle.log`
 - Database errors: `/home/student/Project/project-one/backend/logs/`
 - Frontend errors: Browser console (F12)

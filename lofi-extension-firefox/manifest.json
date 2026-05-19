@@ -3,9 +3,7 @@
   "name": "Lofi Player",
   "version": "1.0.1",
   "description": "Play lofi music and videos in a standalone window with video support, album art, and full keyboard controls",
-  "permissions": [
-    "storage"
-  ],
+  "permissions": ["storage"],
   "browser_action": {
     "default_title": "Lofi Player"
   },
@@ -17,12 +15,7 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "web_accessible_resources": [
-    "player.html",
-    "assets/tracks.json",
-    "lofi/*.mp3",
-    "lofi/*.mp4"
-  ],
+  "web_accessible_resources": ["player.html", "assets/tracks.json", "lofi/*.mp3", "lofi/*.mp4"],
   "browser_specific_settings": {
     "gecko": {
       "id": "lofi-player@quizthespire.com",

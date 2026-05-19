@@ -97,6 +97,7 @@ Tasks can now contain subtasks, creating a hierarchical task structure:
 ```
 
 **Features:**
+
 - Automatic progress calculation based on completed subtasks
 - Visual progress bar showing completion percentage
 - Expand/collapse subtask sections
@@ -110,9 +111,9 @@ All rendering uses `ManageUI` components from manage-ui-components.js:
 ```javascript
 // Render a task card (works identically in demo and production)
 const html = ManageUI.tasks.renderTaskCard(task, {
-    onClick: `handleTaskClick(${task.id})`,
-    onSubtaskComplete: (subtaskId) => completeSubtask(task.id, subtaskId),
-    onSubtaskUndo: (subtaskId) => undoSubtask(task.id, subtaskId)
+  onClick: `handleTaskClick(${task.id})`,
+  onSubtaskComplete: (subtaskId) => completeSubtask(task.id, subtaskId),
+  onSubtaskUndo: (subtaskId) => undoSubtask(task.id, subtaskId),
 });
 
 // Show a modal
@@ -127,6 +128,7 @@ ManageUI.notification.show('Task completed!', 'success');
 The demo is now **fully interactive**:
 
 ✅ **Boss View:**
+
 - View task overview with Kanban board
 - Create new tasks with subtasks
 - Track task completion
@@ -134,6 +136,7 @@ The demo is now **fully interactive**:
 - View team statistics
 
 ✅ **Employee View:**
+
 - See assigned tasks
 - Mark subtasks as complete
 - Track progress on multi-step tasks
@@ -146,7 +149,7 @@ The demo is now **fully interactive**:
 
 ```html
 <!-- Load in this order -->
-<link rel="stylesheet" href="../css/manage-ui-components.css">
+<link rel="stylesheet" href="../css/manage-ui-components.css" />
 <script src="../js/manage-shared.js" defer></script>
 <script src="../js/manage-ui-components.js" defer></script>
 <script src="../js/your-app.js" defer></script>
@@ -156,31 +159,31 @@ The demo is now **fully interactive**:
 
 ```javascript
 const task = new ManageShared.models.Task({
-    title: "Prepare cafe for opening",
-    description: "Complete opening checklist",
-    priority: "high",
-    category: "operations",
-    assigned_to: 1,
-    due_date: "2024-01-15T08:00:00Z"
+  title: 'Prepare cafe for opening',
+  description: 'Complete opening checklist',
+  priority: 'high',
+  category: 'operations',
+  assigned_to: 1,
+  due_date: '2024-01-15T08:00:00Z',
 });
 
 // Add subtasks
 task.addSubtask({
-    id: 1,
-    title: "Turn on espresso machine",
-    status: "todo"
+  id: 1,
+  title: 'Turn on espresso machine',
+  status: 'todo',
 });
 
 task.addSubtask({
-    id: 2,
-    title: "Stock pastry display",
-    status: "todo"
+  id: 2,
+  title: 'Stock pastry display',
+  status: 'todo',
 });
 
 task.addSubtask({
-    id: 3,
-    title: "Clean outdoor seating",
-    status: "todo"
+  id: 3,
+  title: 'Clean outdoor seating',
+  status: 'todo',
 });
 
 // Check completion
@@ -193,9 +196,9 @@ console.log(task.hasSubtasks()); // true
 ```javascript
 // Render a single task
 const taskHtml = ManageUI.tasks.renderTaskCard(task, {
-    onClick: 'handleTaskClick(taskId)',
-    onSubtaskComplete: completeHandler,
-    onSubtaskUndo: undoHandler
+  onClick: 'handleTaskClick(taskId)',
+  onSubtaskComplete: completeHandler,
+  onSubtaskUndo: undoHandler,
 });
 
 document.getElementById('taskContainer').innerHTML = taskHtml;
@@ -205,21 +208,21 @@ document.getElementById('taskContainer').innerHTML = taskHtml;
 
 ```javascript
 function showNewTaskModal() {
-    const employees = getEmployees(); // Your function
-    
-    const formHtml = ManageUI.tasks.renderTaskForm({
-        employees: employees.map(e => ({
-            value: e.id,
-            label: e.name
-        })),
-        onSubmit: (taskData) => {
-            // Handle form submission
-            createTask(taskData);
-            ManageUI.modal.close();
-        }
-    });
-    
-    ManageUI.modal.show('Create New Task', formHtml, 'medium');
+  const employees = getEmployees(); // Your function
+
+  const formHtml = ManageUI.tasks.renderTaskForm({
+    employees: employees.map((e) => ({
+      value: e.id,
+      label: e.name,
+    })),
+    onSubmit: (taskData) => {
+      // Handle form submission
+      createTask(taskData);
+      ManageUI.modal.close();
+    },
+  });
+
+  ManageUI.modal.show('Create New Task', formHtml, 'medium');
 }
 ```
 
@@ -228,6 +231,7 @@ function showNewTaskModal() {
 ### ManageUI.tasks
 
 **renderTaskCard(task, options)**
+
 - Renders a complete task card with subtasks
 - Options:
   - `onClick`: Click handler for main card
@@ -235,10 +239,12 @@ function showNewTaskModal() {
   - `onSubtaskUndo`: Handler for undoing subtask
 
 **renderSubtaskCard(subtask, options)**
+
 - Renders a single subtask with checkbox
 - Auto-styling based on status
 
 **renderTaskForm(options)**
+
 - Renders task creation/edit form
 - Includes subtask builder
 - Options:
@@ -249,15 +255,18 @@ function showNewTaskModal() {
 ### ManageUI.modal
 
 **show(title, content, size)**
+
 - Shows a modal dialog
 - Sizes: 'small', 'medium', 'large'
 
 **close()**
+
 - Closes the current modal
 
 ### ManageUI.notification
 
 **show(message, type, duration)**
+
 - Shows toast notification
 - Types: 'info', 'success', 'error'
 - Default duration: 3000ms
@@ -278,18 +287,21 @@ Each template includes detailed subtasks representing real workflow steps.
 ## Benefits
 
 ### For Development
+
 - ✅ Write once, run everywhere (demo + production)
 - ✅ Consistent UI across all views
 - ✅ Easier testing and debugging
 - ✅ Faster feature development
 
 ### For Users
+
 - ✅ Demo accurately represents real app
 - ✅ No surprises between demo and production
 - ✅ Better evaluation of features
 - ✅ Smoother onboarding
 
 ### For Maintenance
+
 - ✅ Single source of truth
 - ✅ Changes propagate everywhere automatically
 - ✅ Reduced code duplication
@@ -300,46 +312,49 @@ Each template includes detailed subtasks representing real workflow steps.
 ### To Use in Production
 
 1. **Include the files:**
+
    ```html
-   <link rel="stylesheet" href="../css/manage-ui-components.css">
+   <link rel="stylesheet" href="../css/manage-ui-components.css" />
    <script src="../js/manage-shared.js" defer></script>
    <script src="../js/manage-ui-components.js" defer></script>
    ```
 
 2. **Replace old rendering code:**
+
    ```javascript
    // OLD
    function renderTask(task) {
-       return `<div class="task">...</div>`;
+     return `<div class="task">...</div>`;
    }
-   
+
    // NEW
    function renderTask(task) {
-       return ManageUI.tasks.renderTaskCard(task, {
-           onClick: `selectTask(${task.id})`
-       });
+     return ManageUI.tasks.renderTaskCard(task, {
+       onClick: `selectTask(${task.id})`,
+     });
    }
    ```
 
 3. **Update task data structure:**
+
    ```javascript
    // Add subtasks array to existing tasks
    task.subtasks = [
-       { id: 1, title: "Step 1", status: "todo" },
-       { id: 2, title: "Step 2", status: "todo" }
+     { id: 1, title: 'Step 1', status: 'todo' },
+     { id: 2, title: 'Step 2', status: 'todo' },
    ];
    ```
 
 4. **Wire up handlers:**
    ```javascript
    function completeSubtask(taskId, subtaskId) {
-       // Your backend API call
-       fetch(`/api/tasks/${taskId}/subtasks/${subtaskId}/complete`, {
-           method: 'POST'
-       }).then(() => {
-           ManageUI.notification.show('Subtask completed!', 'success');
-           refreshTasks();
-       });
+     // Your backend API call
+     fetch(`/api/tasks/${taskId}/subtasks/${subtaskId}/complete`, {
+       method: 'POST',
+     }).then(() => {
+       ManageUI.notification.show('Subtask completed!', 'success');
+       refreshTasks();
+     });
    }
    ```
 
@@ -349,15 +364,17 @@ Each template includes detailed subtasks representing real workflow steps.
 
 ```javascript
 function renderTaskList(tasks) {
-    const container = document.getElementById('taskList');
-    
-    container.innerHTML = tasks.map(task => 
-        ManageUI.tasks.renderTaskCard(task, {
-            onClick: `viewTaskDetails(${task.id})`,
-            onSubtaskComplete: (stId) => markSubtaskDone(task.id, stId),
-            onSubtaskUndo: (stId) => reopenSubtask(task.id, stId)
-        })
-    ).join('');
+  const container = document.getElementById('taskList');
+
+  container.innerHTML = tasks
+    .map((task) =>
+      ManageUI.tasks.renderTaskCard(task, {
+        onClick: `viewTaskDetails(${task.id})`,
+        onSubtaskComplete: (stId) => markSubtaskDone(task.id, stId),
+        onSubtaskUndo: (stId) => reopenSubtask(task.id, stId),
+      })
+    )
+    .join('');
 }
 ```
 
@@ -365,24 +382,24 @@ function renderTaskList(tasks) {
 
 ```javascript
 function showCreateTaskModal() {
-    const formHtml = ManageUI.tasks.renderTaskForm({
-        employees: getEmployeeList(),
-        onSubmit: async (data) => {
-            const response = await fetch('/api/tasks', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            
-            if (response.ok) {
-                ManageUI.modal.close();
-                ManageUI.notification.show('Task created!', 'success');
-                loadTasks();
-            }
-        }
-    });
-    
-    ManageUI.modal.show('Create New Task', formHtml, 'medium');
+  const formHtml = ManageUI.tasks.renderTaskForm({
+    employees: getEmployeeList(),
+    onSubmit: async (data) => {
+      const response = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        ManageUI.modal.close();
+        ManageUI.notification.show('Task created!', 'success');
+        loadTasks();
+      }
+    },
+  });
+
+  ManageUI.modal.show('Create New Task', formHtml, 'medium');
 }
 ```
 
@@ -390,37 +407,41 @@ function showCreateTaskModal() {
 
 ```javascript
 function displayTaskProgress(task) {
-    const percentage = task.getCompletionPercentage();
-    const completedSubtasks = task.subtasks.filter(st => st.status === 'completed').length;
-    const totalSubtasks = task.subtasks.length;
-    
-    console.log(`Task: ${task.title}`);
-    console.log(`Progress: ${percentage}% (${completedSubtasks}/${totalSubtasks} subtasks)`);
-    
-    if (percentage === 100) {
-        ManageUI.notification.show(`${task.title} is complete!`, 'success');
-    }
+  const percentage = task.getCompletionPercentage();
+  const completedSubtasks = task.subtasks.filter((st) => st.status === 'completed').length;
+  const totalSubtasks = task.subtasks.length;
+
+  console.log(`Task: ${task.title}`);
+  console.log(`Progress: ${percentage}% (${completedSubtasks}/${totalSubtasks} subtasks)`);
+
+  if (percentage === 100) {
+    ManageUI.notification.show(`${task.title} is complete!`, 'success');
+  }
 }
 ```
 
 ## Troubleshooting
 
 ### Task cards not displaying
+
 - Check that manage-ui-components.js is loaded
 - Verify `window.ManageUI` exists in console
 - Check browser console for errors
 
 ### Subtasks not showing
+
 - Verify task has `subtasks` array
 - Check that subtasks have `id`, `title`, and `status` properties
 - Ensure task card is expanded (click expand button)
 
 ### Styling issues
+
 - Confirm manage-ui-components.css is loaded
 - Check for CSS conflicts with existing styles
 - Verify correct class names (`.ui-task-card`, not `.demo-task-card`)
 
 ### Modal not appearing
+
 - Check z-index conflicts (modals use z-index: 10000)
 - Verify ManageUI.modal.show() is called correctly
 - Check for JS errors preventing execution
@@ -428,6 +449,7 @@ function displayTaskProgress(task) {
 ## Support
 
 For issues or questions about the shared component system:
+
 1. Check browser console for errors
 2. Verify file load order in HTML
 3. Test with sample data from `ManageShared.generators`

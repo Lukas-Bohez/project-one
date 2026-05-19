@@ -2,222 +2,218 @@
 const lanIP = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 
 const dom = {
-    startQuizBtn: document.getElementById('startQuizBtn'),
-    joinQuizBtn: document.getElementById('joinQuizBtn'),
-    viewGraphsBtn: document.getElementById('viewGraphsBtn'),
-    manageQuizBtn: document.getElementById('manageQuizBtn'),
-    infoBtn: document.getElementById('infoBtn'),
-    closeModal: document.querySelector('.c-modal__close'),
-    servoTestBtn: document.getElementById('servoTestBtn')
+  startQuizBtn: document.getElementById('startQuizBtn'),
+  joinQuizBtn: document.getElementById('joinQuizBtn'),
+  viewGraphsBtn: document.getElementById('viewGraphsBtn'),
+  manageQuizBtn: document.getElementById('manageQuizBtn'),
+  infoBtn: document.getElementById('infoBtn'),
+  closeModal: document.querySelector('.c-modal__close'),
+  servoTestBtn: document.getElementById('servoTestBtn'),
 };
 
-let initialData
+let initialData;
 
 const showSensorData = (temp, light, degrees, players) => {
-    // Sensor display elements removed - live data feature retired
+  // Sensor display elements removed - live data feature retired
 };
 
 const showServoMovement = (angle) => {
-    // Servo visual element removed - live data feature retired
+  // Servo visual element removed - live data feature retired
 };
 
 const callbackUpdateDifficulty = (temp, light, sound) => {
-    console.log(`Updating difficulty based on temp: ${temp}°C, light: ${light} lux, sound: ${sound} dB`);
+  console.log(
+    `Updating difficulty based on temp: ${temp}°C, light: ${light} lux, sound: ${sound} dB`
+  );
 };
 
 const getInitialPlaceholderData = () => {
-    return {
-        temp: 25,
-        light: 500,
-        degrees: 90,
-        players: 1
-    };
+  return {
+    temp: 25,
+    light: 500,
+    degrees: 90,
+    players: 1,
+  };
 };
 
 const showSection = (sectionName) => {
-    const current = document.querySelector('.section.active');
-    const target = document.getElementById(`${sectionName}-section`);
+  const current = document.querySelector('.section.active');
+  const target = document.getElementById(`${sectionName}-section`);
 
-    // Update nav buttons
-    document
-        .querySelectorAll('.c-nav-btn:not([data-tab])')
-        .forEach(btn => btn.classList.remove('active'));
-    const activeBtn = document.querySelector(
-        `.c-nav-btn[data-section="${sectionName}"]:not([data-tab])`
-    );
-    if (activeBtn) activeBtn.classList.add('active');
+  // Update nav buttons
+  document
+    .querySelectorAll('.c-nav-btn:not([data-tab])')
+    .forEach((btn) => btn.classList.remove('active'));
+  const activeBtn = document.querySelector(
+    `.c-nav-btn[data-section="${sectionName}"]:not([data-tab])`
+  );
+  if (activeBtn) activeBtn.classList.add('active');
 
-    if (!target || current === target) return;
+  if (!target || current === target) return;
 
-    if (current) current.classList.remove('active');
-    target.classList.add('active');
+  if (current) current.classList.remove('active');
+  target.classList.add('active');
 };
 
 const showPortfolioTab = (tabName) => {
-    const tabButtons = document.querySelectorAll('.c-portfolio-tab-btn');
-    const tabPanels = document.querySelectorAll('.c-portfolio-tab-panel');
+  const tabButtons = document.querySelectorAll('.c-portfolio-tab-btn');
+  const tabPanels = document.querySelectorAll('.c-portfolio-tab-panel');
 
-    if (!tabButtons.length || !tabPanels.length) return;
+  if (!tabButtons.length || !tabPanels.length) return;
 
-    tabButtons.forEach((btn) => {
-        btn.classList.toggle('active', btn.dataset.tab === tabName);
-    });
+  tabButtons.forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.tab === tabName);
+  });
 
-    tabPanels.forEach((panel) => {
-        const isActive = panel.dataset.tabContent === tabName;
-        panel.classList.toggle('active', isActive);
-        panel.style.display = isActive ? 'block' : 'none';
-    });
+  tabPanels.forEach((panel) => {
+    const isActive = panel.dataset.tabContent === tabName;
+    panel.classList.toggle('active', isActive);
+    panel.style.display = isActive ? 'block' : 'none';
+  });
 };
 
 const listenToButtons = () => {
-
-    if (dom.startQuizBtn) {
-        dom.startQuizBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            window.location.href = '/pages/spire-ai/';
-        });
-    }
-
-    if (dom.viewGraphsBtn) {
-        dom.viewGraphsBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            window.location.href = '/pages/graphs/';
-        });
-    }
-
-    if (dom.manageQuizBtn) {
-        dom.manageQuizBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            window.location.href = '/pages/login/';
-        });
-    }
-
-    if (dom.joinQuizBtn) {
-        dom.joinQuizBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            alert('Join Quiz functionality not implemented yet');
-        });
-    }
-
-    // Navigation functionality
-    const navBtns = document.querySelectorAll('.c-nav-btn:not([data-tab])');
-    navBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const navBtn = e.target.closest('.c-nav-btn');
-            if (!navBtn) return;
-            const section = navBtn.dataset.section;
-            showSection(section);
-        });
+  if (dom.startQuizBtn) {
+    dom.startQuizBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = '/pages/spire-ai/';
     });
+  }
 
-    const portfolioTabs = document.querySelectorAll('.c-portfolio-tab-btn');
-    portfolioTabs.forEach((btn) => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const tab = btn.dataset.tab;
-            if (tab) showPortfolioTab(tab);
-        });
+  if (dom.viewGraphsBtn) {
+    dom.viewGraphsBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = '/pages/graphs/';
     });
+  }
+
+  if (dom.manageQuizBtn) {
+    dom.manageQuizBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = '/pages/login/';
+    });
+  }
+
+  if (dom.joinQuizBtn) {
+    dom.joinQuizBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      alert('Join Quiz functionality not implemented yet');
+    });
+  }
+
+  // Navigation functionality
+  const navBtns = document.querySelectorAll('.c-nav-btn:not([data-tab])');
+  navBtns.forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      const navBtn = e.target.closest('.c-nav-btn');
+      if (!navBtn) return;
+      const section = navBtn.dataset.section;
+      showSection(section);
+    });
+  });
+
+  const portfolioTabs = document.querySelectorAll('.c-portfolio-tab-btn');
+  portfolioTabs.forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const tab = btn.dataset.tab;
+      if (tab) showPortfolioTab(tab);
+    });
+  });
 };
 
 const testServoMovement = async () => {
-    try {
-        const url = `${lanIP}/api/v1/trigger-servo`;
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({ command: "SWEEP_SERVO" })
-        });
-        const data = await response.json();
+  try {
+    const url = `${lanIP}/api/v1/trigger-servo`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({ command: 'SWEEP_SERVO' }),
+    });
+    const data = await response.json();
 
-        // DEBUG: Log what we actually receive
-        console.log("Response status:", response.status);
-        console.log("Response data:", data);
-        console.log("data.detail:", data.detail);
+    // DEBUG: Log what we actually receive
+    console.log('Response status:', response.status);
+    console.log('Response data:', data);
+    console.log('data.detail:', data.detail);
 
-        if (response.ok) {
-            console.log(data.message);
-        } else {
-            console.log(data.detail || JSON.stringify(data) || "Unknown error");
-        }
-    } catch (error) {
-        console.log(`Network error during servo trigger: ${error.message}`);
+    if (response.ok) {
+      console.log(data.message);
+    } else {
+      console.log(data.detail || JSON.stringify(data) || 'Unknown error');
     }
+  } catch (error) {
+    console.log(`Network error during servo trigger: ${error.message}`);
+  }
 };
 
 const initIndexPage = () => {
-    listenToButtons();
-    markInitializationSuccess();
-    showPortfolioTab('convert');
+  listenToButtons();
+  markInitializationSuccess();
+  showPortfolioTab('convert');
 
-    initialData = getInitialPlaceholderData();
-    showSensorData(
-        initialData.temp,
-        initialData.light,
-        initialData.degrees,
-        initialData.players
-    );
-    if (initialData.degrees == null){
-      initialData.degrees = 90  
-    } 
-    showServoMovement(initialData.degrees);
+  initialData = getInitialPlaceholderData();
+  showSensorData(initialData.temp, initialData.light, initialData.degrees, initialData.players);
+  if (initialData.degrees == null) {
+    initialData.degrees = 90;
+  }
+  showServoMovement(initialData.degrees);
 };
 
 const initQuizPage = () => {
-    listenToButtons();
-    markInitializationSuccess();
+  listenToButtons();
+  markInitializationSuccess();
 };
 
 const initLoginPage = () => {
-    listenToButtons();
-    markInitializationSuccess();
+  listenToButtons();
+  markInitializationSuccess();
 };
 
 const markInitializationSuccess = () => {
-    const successDiv = document.createElement('div');
-    successDiv.id = 'init-success';
-    successDiv.style.display = 'none';
-    document.body.appendChild(successDiv);
+  const successDiv = document.createElement('div');
+  successDiv.id = 'init-success';
+  successDiv.style.display = 'none';
+  document.body.appendChild(successDiv);
 };
 
 const initApp = () => {
-    testAllFunctions();
+  testAllFunctions();
 
-    const path = window.location.pathname;
-    if (path.includes('index.html') || path === '/') {
-        initIndexPage();
-    } else if (path.startsWith('/pages/quiz')) {
-        initQuizPage();
-    } else if (path.startsWith('/pages/login')) {
-        initLoginPage();
+  const path = window.location.pathname;
+  if (path.includes('index.html') || path === '/') {
+    initIndexPage();
+  } else if (path.startsWith('/pages/quiz')) {
+    initQuizPage();
+  } else if (path.startsWith('/pages/login')) {
+    initLoginPage();
+  }
+
+  setTimeout(() => {
+    if (!document.querySelector('#init-success')) {
+      manualInitialize();
     }
-
-    setTimeout(() => {
-        if (!document.querySelector('#init-success')) {
-            manualInitialize();
-        }
-    }, 1000);
+  }, 1000);
 };
 
 const testAllFunctions = () => {
-    const testData = getInitialPlaceholderData();
-    showSensorData(testData.temp, testData.light, testData.degrees, testData.players);
-    showServoMovement(testData.degrees);
-    callbackUpdateDifficulty(testData.temp, testData.light, 75);
+  const testData = getInitialPlaceholderData();
+  showSensorData(testData.temp, testData.light, testData.degrees, testData.players);
+  showServoMovement(testData.degrees);
+  callbackUpdateDifficulty(testData.temp, testData.light, 75);
 };
 
 const manualInitialize = () => {
-    listenToButtons();
+  listenToButtons();
 };
 
 if (document.readyState !== 'loading') {
-    initApp();
+  initApp();
 } else {
-    document.addEventListener('DOMContentLoaded', initApp);
+  document.addEventListener('DOMContentLoaded', initApp);
 }
 
 // Enhanced Socket.IO client connection with cross-browser compatibility
@@ -542,31 +538,40 @@ window.socketFunctions = {
 // --- Modal and Button Event Listeners ---
 // Removed Socket.IO servo test functionality
 document.addEventListener('DOMContentLoaded', () => {
-    const infoBtn = document.getElementById('infoBtn');
-    const closeModal = document.querySelector('.c-modal__close');
-    // Removed servoTestBtn as Socket.IO functionality is no longer needed
+  const infoBtn = document.getElementById('infoBtn');
+  const closeModal = document.querySelector('.c-modal__close');
+  // Removed servoTestBtn as Socket.IO functionality is no longer needed
 
-    // Info modal functionality remains if needed
-    if (infoBtn && closeModal) {
-        // Add modal functionality here if needed
-    }
+  // Info modal functionality remains if needed
+  if (infoBtn && closeModal) {
+    // Add modal functionality here if needed
+  }
 });
-
 
 /* Force convert as default portfolio sub-tab on load */
 (function () {
   function initPortfolioTabs() {
     var buttons = document.querySelectorAll('.c-portfolio-tab-btn');
-    var panels  = document.querySelectorAll('.c-portfolio-tab-panel');
+    var panels = document.querySelectorAll('.c-portfolio-tab-panel');
     if (!buttons.length) return;
     var activeBtn = document.querySelector('.c-portfolio-tab-btn.active');
     if (!activeBtn || activeBtn.getAttribute('data-tab') === 'overview') {
-      buttons.forEach(function (b) { b.classList.remove('active'); });
-      panels.forEach(function (p) { p.classList.remove('active'); p.style.display = 'none'; });
+      buttons.forEach(function (b) {
+        b.classList.remove('active');
+      });
+      panels.forEach(function (p) {
+        p.classList.remove('active');
+        p.style.display = 'none';
+      });
       var cb = document.querySelector('.c-portfolio-tab-btn[data-tab="convert"]');
       var cp = document.querySelector('.c-portfolio-tab-panel[data-tab-content="convert"]');
-      if (cb) { cb.classList.add('active'); }
-      if (cp) { cp.classList.add('active'); cp.style.display = 'block'; }
+      if (cb) {
+        cb.classList.add('active');
+      }
+      if (cp) {
+        cp.classList.add('active');
+        cp.style.display = 'block';
+      }
     }
   }
   if (document.readyState === 'loading') {
@@ -585,7 +590,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── 1. Portfolio sub-tab switcher ──────────────────────────────────
   function initPortfolioTabs() {
-    var tabBtns   = document.querySelectorAll('.c-portfolio-tab-btn[data-tab]');
+    var tabBtns = document.querySelectorAll('.c-portfolio-tab-btn[data-tab]');
     var tabPanels = document.querySelectorAll('.c-portfolio-tab-panel[data-tab-content]');
 
     if (!tabBtns.length) return;
@@ -594,7 +599,9 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.addEventListener('click', function () {
         var target = btn.getAttribute('data-tab');
 
-        tabBtns.forEach(function (b) { b.classList.remove('active'); });
+        tabBtns.forEach(function (b) {
+          b.classList.remove('active');
+        });
         tabPanels.forEach(function (p) {
           p.classList.remove('active');
           p.style.display = 'none';
@@ -620,10 +627,8 @@ document.addEventListener('DOMContentLoaded', () => {
       tabBtns[0].classList.add('active');
     }
     tabPanels.forEach(function (p) {
-      var tab      = p.getAttribute('data-tab-content');
-      var isActive = document.querySelector(
-        '.c-portfolio-tab-btn[data-tab="' + tab + '"].active'
-      );
+      var tab = p.getAttribute('data-tab-content');
+      var isActive = document.querySelector('.c-portfolio-tab-btn[data-tab="' + tab + '"].active');
       if (isActive) {
         p.classList.add('active');
         p.style.display = 'block';
@@ -637,10 +642,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── 2. Top-level section switcher ─────────────────────────────────
   function showSection(name) {
     var sections = document.querySelectorAll('.section');
-    var navBtns  = document.querySelectorAll('.c-nav-btn[data-section]');
+    var navBtns = document.querySelectorAll('.c-nav-btn[data-section]');
 
-    sections.forEach(function (s) { s.classList.remove('active'); });
-    navBtns.forEach(function (b)  { b.classList.remove('active'); });
+    sections.forEach(function (s) {
+      s.classList.remove('active');
+    });
+    navBtns.forEach(function (b) {
+      b.classList.remove('active');
+    });
 
     var target = document.getElementById(name + '-section');
     if (target) target.classList.add('active');
@@ -670,5 +679,4 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     showSection('portfolio');
   }
-
 })();

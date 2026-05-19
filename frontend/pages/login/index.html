@@ -1,79 +1,119 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
+  <head>
     <!-- Google Analytics (GA4) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-SSEBSTQM21"></script>
     <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-SSEBSTQM21');
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-SSEBSTQM21');
     </script>
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Sign in to Quiz The Spire to join quiz sessions and track your progress.">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.socket.io; style-src 'self' 'unsafe-inline';">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Sign in to Quiz The Spire to join quiz sessions and track your progress."
+    />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' https://cdn.socket.io; style-src 'self' 'unsafe-inline';"
+    />
     <title>Login | Quiz The Spire</title>
-    <link rel="stylesheet" href="/css/styles.css">
-    <link rel="stylesheet" href="/css/pages/login/login.css">
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous" defer></script>
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="apple-touch-icon" href="/favicon.ico">
-    <meta property="og:title" content="Login | Quiz The Spire">
-    <meta property="og:description" content="Sign in to Quiz The Spire">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://quizthespire.com/pages/login/">
-    <meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Login | Quiz The Spire">
-    <meta name="twitter:description" content="Sign in to Quiz The Spire">
-    <meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg">
-    <link rel="canonical" href="https://quizthespire.com/pages/login/">
-</head>
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/pages/login/login.css" />
+    <script
+      src="https://cdn.socket.io/4.7.5/socket.io.min.js"
+      crossorigin="anonymous"
+      defer
+    ></script>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="apple-touch-icon" href="/favicon.ico" />
+    <meta property="og:title" content="Login | Quiz The Spire" />
+    <meta property="og:description" content="Sign in to Quiz The Spire" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://quizthespire.com/pages/login/" />
+    <meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Login | Quiz The Spire" />
+    <meta name="twitter:description" content="Sign in to Quiz The Spire" />
+    <meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg" />
+    <link rel="canonical" href="https://quizthespire.com/pages/login/" />
+  </head>
 
-<body>
+  <body>
     <header class="c-header">
-        <a href="/" class="c-header__link">
-            <h1 class="c-header__title">Quiz The Spire</h1>
-        </a>
+      <a href="/" class="c-header__link">
+        <h1 class="c-header__title">Quiz The Spire</h1>
+      </a>
     </header>
 
     <main class="c-login-container">
-        <form id="adminLoginForm" class="c-login-form js-login-form">
-            <div class="c-error-message js-error-message" role="alert" aria-live="assertive"></div>
+      <form id="adminLoginForm" class="c-login-form js-login-form">
+        <div class="c-error-message js-error-message" role="alert" aria-live="assertive"></div>
 
-            <h2 class="c-login-title">Manage Quiz</h2>
+        <h2 class="c-login-title">Manage Quiz</h2>
 
-            <div class="c-form-group">
-                <label for="firstname" class="c-form-label">First Name</label>
-                <input type="text" id="firstname" class="c-login-input js-user-input" placeholder="Firstname" required autocomplete="given-name" minlength="2" maxlength="50">
-            </div>
+        <div class="c-form-group">
+          <label for="firstname" class="c-form-label">First Name</label>
+          <input
+            type="text"
+            id="firstname"
+            class="c-login-input js-user-input"
+            placeholder="Firstname"
+            required
+            autocomplete="given-name"
+            minlength="2"
+            maxlength="50"
+          />
+        </div>
 
-            <div class="c-form-group">
-                <label for="lastname" class="c-form-label">Last Name</label>
-                <input type="text" id="lastname" class="c-login-input js-user-input-2" placeholder="Lastname" required autocomplete="family-name" minlength="2" maxlength="50">
-            </div>
+        <div class="c-form-group">
+          <label for="lastname" class="c-form-label">Last Name</label>
+          <input
+            type="text"
+            id="lastname"
+            class="c-login-input js-user-input-2"
+            placeholder="Lastname"
+            required
+            autocomplete="family-name"
+            minlength="2"
+            maxlength="50"
+          />
+        </div>
 
-            <div class="c-form-group">
-                <label for="rfid" class="c-form-label">RFID Badge Code</label>
-                <input type="password" id="rfid" class="c-login-input js-rfid-input" placeholder="RFID badge code" required autocomplete="one-time-code" minlength="8" maxlength="24">
-            </div>
+        <div class="c-form-group">
+          <label for="rfid" class="c-form-label">RFID Badge Code</label>
+          <input
+            type="password"
+            id="rfid"
+            class="c-login-input js-rfid-input"
+            placeholder="RFID badge code"
+            required
+            autocomplete="one-time-code"
+            minlength="8"
+            maxlength="24"
+          />
+        </div>
 
-            <!-- CSRF Protection -->
-            <input type="hidden" id="csrfToken" name="_csrf" value="">
+        <!-- CSRF Protection -->
+        <input type="hidden" id="csrfToken" name="_csrf" value="" />
 
-            <div class="c-login-buttons">
-                <button type="button" class="c-btn c-btn--primary js-login-admin" aria-label="Login as administrator">
-                    Login
-                </button>
-            </div>
-        </form>
+        <div class="c-login-buttons">
+          <button
+            type="button"
+            class="c-btn c-btn--primary js-login-admin"
+            aria-label="Login as administrator"
+          >
+            Login
+          </button>
+        </div>
+      </form>
     </main>
-
-
 
     <!-- Non-blocking script loading -->
     <script src="/js/themeManager.js" defer></script>
@@ -84,11 +124,19 @@
     <button id="back-to-top" type="button" aria-label="Back to top">
       <svg class="back-to-top__ring" viewBox="0 0 36 36" aria-hidden="true" focusable="false">
         <circle class="back-to-top__ring-base" cx="18" cy="18" r="16"></circle>
-        <circle id="scroll-ring" class="back-to-top__ring-progress" cx="18" cy="18" r="16" stroke-dasharray="100" stroke-dashoffset="100"></circle>
+        <circle
+          id="scroll-ring"
+          class="back-to-top__ring-progress"
+          cx="18"
+          cy="18"
+          r="16"
+          stroke-dasharray="100"
+          stroke-dashoffset="100"
+        ></circle>
       </svg>
       <i class="fa-solid fa-chevron-up back-to-top__arrow" aria-hidden="true"></i>
     </button>
 
     <script src="/js/homepage-enhancements.js" defer></script>
-</body>
+  </body>
 </html>

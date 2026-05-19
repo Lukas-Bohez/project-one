@@ -18,19 +18,23 @@
   // Utilities
   function escapeHTML(str) {
     if (!str && str !== 0) return '';
-    return String(str).replace(/[&<>"']/g, (c) => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;',
-    })[c] || c);
+    return String(str).replace(
+      /[&<>"']/g,
+      (c) =>
+        ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;',
+        })[c] || c
+    );
   }
 
   function byOrder(a, b) {
     // Prefer explicit story_order if present; fallback to title
-    const ao = (a.story_order ?? a.order ?? 0);
-    const bo = (b.story_order ?? b.order ?? 0);
+    const ao = a.story_order ?? a.order ?? 0;
+    const bo = b.story_order ?? b.order ?? 0;
     if (ao !== bo) return ao - bo;
     return String(a.title || '').localeCompare(String(b.title || ''));
   }
@@ -66,10 +70,13 @@
 
   function setCache(key, data) {
     try {
-      localStorage.setItem(key, JSON.stringify({
-        timestamp: Date.now(),
-        data: data
-      }));
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          timestamp: Date.now(),
+          data: data,
+        })
+      );
     } catch (e) {
       console.warn('Cache write error:', e);
     }
@@ -90,12 +97,14 @@
     if (cached) {
       console.log('[ContentPlus Cache Hit] Using cached stories');
       if (!isValid(cached, CACHE_DURATION)) {
-        fetchFreshStories().then(freshData => {
-          setCache(CACHE_KEY, freshData);
-          console.log('[ContentPlus Cache Update] Stories updated in background');
-          // Update global stories
-          stories = freshData;
-        }).catch(err => console.error('Background stories fetch failed:', err));
+        fetchFreshStories()
+          .then((freshData) => {
+            setCache(CACHE_KEY, freshData);
+            console.log('[ContentPlus Cache Update] Stories updated in background');
+            // Update global stories
+            stories = freshData;
+          })
+          .catch((err) => console.error('Background stories fetch failed:', err));
       }
       return cached.data;
     } else {
@@ -117,14 +126,18 @@
     if (cached) {
       console.log(`[ContentPlus Cache Hit] Using cached articles for story ${storyId}`);
       if (!isValid(cached, CACHE_DURATION)) {
-        fetchFreshArticlesByStory(storyId).then(freshData => {
-          setCache(CACHE_KEY, freshData);
-          console.log(`[ContentPlus Cache Update] Articles updated in background for story ${storyId}`);
-          // Update if current story
-          if (currentStory && currentStory.id === storyId) {
-            articles = freshData.map(normalizeArticle);
-          }
-        }).catch(err => console.error('Background articles fetch failed:', err));
+        fetchFreshArticlesByStory(storyId)
+          .then((freshData) => {
+            setCache(CACHE_KEY, freshData);
+            console.log(
+              `[ContentPlus Cache Update] Articles updated in background for story ${storyId}`
+            );
+            // Update if current story
+            if (currentStory && currentStory.id === storyId) {
+              articles = freshData.map(normalizeArticle);
+            }
+          })
+          .catch((err) => console.error('Background articles fetch failed:', err));
       }
       return cached.data;
     } else {
@@ -139,7 +152,9 @@
   async function fetchStoryArticles(storyId) {
     const list = await fetchArticlesByStory(storyId);
     // Attach story reference
-    list.forEach(a => { a.__story = currentStory; });
+    list.forEach((a) => {
+      a.__story = currentStory;
+    });
     list.sort(byOrder);
     return list;
   }
@@ -149,7 +164,10 @@
     // content field may be JSON string or object
     let content = {};
     try {
-      content = typeof apiArticle.content === 'string' ? JSON.parse(apiArticle.content) : (apiArticle.content || {});
+      content =
+        typeof apiArticle.content === 'string'
+          ? JSON.parse(apiArticle.content)
+          : apiArticle.content || {};
     } catch (e) {
       console.warn('Failed to parse article.content JSON for', apiArticle?.title, e);
       content = {};
@@ -172,13 +190,16 @@
   }
 
   // DOM helpers
-  function el(id) { return document.getElementById(id); }
+  function el(id) {
+    return document.getElementById(id);
+  }
 
   function ensureChapterSelect() {
     // Create or return the chapter selector in the same container as the story selector
     let chap = el('chapter-select');
     if (chap) return chap;
-    const container = document.querySelector('.article-selector') || el('article-display')?.parentElement;
+    const container =
+      document.querySelector('.article-selector') || el('article-display')?.parentElement;
     if (!container) return null;
     chap = document.createElement('select');
     chap.id = 'chapter-select';
@@ -261,7 +282,7 @@
       return;
     }
 
-    currentStory = stories.find(s => String(s.id) === String(storyId)) || null;
+    currentStory = stories.find((s) => String(s.id) === String(storyId)) || null;
     try {
       const list = await fetchStoryArticles(storyId);
       articles = list.map(normalizeArticle);
@@ -275,7 +296,12 @@
         chap.innerHTML = '';
         articles.forEach((a, i) => {
           const opt = document.createElement('option');
-          const num = (a._raw && a._raw.id) ? a._raw.id : (Number.isFinite(a.story_order) ? (a.story_order + 1) : (i + 1));
+          const num =
+            a._raw && a._raw.id
+              ? a._raw.id
+              : Number.isFinite(a.story_order)
+                ? a.story_order + 1
+                : i + 1;
           opt.value = String(i); // value is index for simple navigation
           opt.textContent = `#${num} ${a.title}`;
           chap.appendChild(opt);
@@ -295,7 +321,7 @@
     const select = el('article-select');
     if (!articleDisplay) return;
 
-    if (index === "" || index === null || index === undefined) {
+    if (index === '' || index === null || index === undefined) {
       renderDefaultMessage();
       return;
     }
@@ -326,7 +352,9 @@
       article.sections.forEach((section) => {
         const sTitle = escapeHTML(section.title ?? '');
         const sContent = escapeHTML(section.content ?? '');
-        const listItems = Array.isArray(section.list) ? section.list.map((item) => `<li>${escapeHTML(item)}</li>`).join('') : '';
+        const listItems = Array.isArray(section.list)
+          ? section.list.map((item) => `<li>${escapeHTML(item)}</li>`).join('')
+          : '';
         sectionsHTML += `
           <div class="section">
             <h3>${sTitle}</h3>
@@ -343,19 +371,22 @@
     const hasPrevious = prevIndex >= 0;
     const hasNext = nextIndex < articles.length;
 
-    const prevButton = hasPrevious ?
-      `<button class="nav-button prev-button" onclick="loadArticle(${prevIndex})">
+    const prevButton = hasPrevious
+      ? `<button class="nav-button prev-button" onclick="loadArticle(${prevIndex})">
         <span class="button-icon">←</span>
         Previous
-      </button>` : '';
+      </button>`
+      : '';
 
-    const nextButton = hasNext ?
-      `<button class="nav-button next-button" onclick="loadArticle(${nextIndex})">
+    const nextButton = hasNext
+      ? `<button class="nav-button next-button" onclick="loadArticle(${nextIndex})">
         Next
         <span class="button-icon">→</span>
-      </button>` : '';
+      </button>`
+      : '';
 
-    const navigationHTML = hasMultipleArticles ? `
+    const navigationHTML = hasMultipleArticles
+      ? `
       <div class="article-navigation top-navigation">
         <div class="nav-controls" style="display: flex; align-items: center; gap: 1rem;">
           ${prevButton}
@@ -363,9 +394,11 @@
           ${nextButton}
         </div>
       </div>
-    ` : '';
+    `
+      : '';
 
-    const bottomNavigationHTML = hasMultipleArticles ? `
+    const bottomNavigationHTML = hasMultipleArticles
+      ? `
       <div class="article-navigation bottom-navigation">
         <div class="nav-controls" style="display: flex; align-items: center; gap: 1rem;">
           ${prevButton}
@@ -373,7 +406,8 @@
           ${nextButton}
         </div>
       </div>
-    ` : '';
+    `
+      : '';
 
     articleDisplay.innerHTML = `
       <div class="article">
@@ -454,7 +488,7 @@
       // 3. Clear Service Worker cache
       if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({
-          type: 'CLEAR_ALL_CACHES'
+          type: 'CLEAR_ALL_CACHES',
         });
         clearSummary.push('Service Worker cache');
         console.log('Sent cache clear request to Service Worker');
@@ -464,7 +498,7 @@
       if ('caches' in window) {
         try {
           const cacheNames = await caches.keys();
-          await Promise.all(cacheNames.map(name => caches.delete(name)));
+          await Promise.all(cacheNames.map((name) => caches.delete(name)));
           totalCleared += cacheNames.length;
           clearSummary.push(`Cache API (${cacheNames.length} caches)`);
           console.log(`Cleared ${cacheNames.length} Cache API caches:`, cacheNames);
@@ -494,5 +528,4 @@
   window.loadArticle = loadArticle;
   window.showSection = showSection;
   window.clearArticlesCache = clearArticlesCache;
-
 })();

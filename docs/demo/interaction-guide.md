@@ -7,6 +7,7 @@ The interactive demo now works **logically** with clear, intuitive interactions:
 ### ✅ Task Cards
 
 **What Clicking Does:**
+
 - ❌ **Does NOT** complete the task
 - ✅ Clicking the card itself does **nothing** (prevents accidental actions)
 - ✅ Use **action buttons** at the bottom to change task status
@@ -15,23 +16,28 @@ The interactive demo now works **logically** with clear, intuitive interactions:
 ### 🎯 Task Actions
 
 #### For "To Do" Tasks:
+
 - **Start Task** button → Moves task to "In Progress"
 - **Complete** button → Marks task as done (all subtasks auto-complete)
 
 #### For "In Progress" Tasks:
+
 - **Pause** button → Moves task back to "To Do"
 - **Complete** button → Marks task as done
 
 #### For "Completed" Tasks:
+
 - **Reopen Task** button → Moves task back to "To Do"
 
 ### 📋 Subtask Interactions
 
 **Click on a subtask** to toggle between:
+
 - ⚪ **Not Started** → ✅ **Completed**
 - ✅ **Completed** → ⚪ **Not Started**
 
 **Smart Logic:**
+
 - When you complete a subtask:
   - Parent task automatically moves to "In Progress" (if it was "To Do")
   - Progress bar updates
@@ -60,16 +66,19 @@ The boss dashboard now shows **all task states**:
 ### 🔄 Visual Feedback
 
 **Progress Bars:**
+
 - Automatically calculate completion based on subtasks
 - Color-coded by priority (red = high, blue = medium, gray = low)
 - Show percentage and fraction (e.g., "75% Complete (3/4)")
 
 **Status Badges:**
+
 - 🔵 **To Do** - Gray badge
 - 🟡 **In Progress** - Blue badge
 - 🟢 **Completed** - Green badge
 
 **Notifications:**
+
 - ✅ Success (green) when completing tasks/subtasks
 - ℹ️ Info (blue) when changing status
 - All actions show confirmation messages
@@ -91,12 +100,14 @@ The boss dashboard now shows **all task states**:
 ### 👥 Boss vs Employee Views
 
 **Boss View:**
+
 - See all tasks for all employees
 - 3-column Kanban board
 - Create new tasks
 - Full task management
 
 **Employee View:**
+
 - See only YOUR assigned tasks
 - Same subtask functionality
 - Action buttons to manage your work
@@ -157,6 +168,7 @@ The boss dashboard now shows **all task states**:
 ## Key Improvements
 
 ### ❌ Old Demo Problems:
+
 - Clicking task cards completed them (confusing!)
 - No way to see completed tasks
 - No clear way to expand subtasks
@@ -164,6 +176,7 @@ The boss dashboard now shows **all task states**:
 - Tasks just disappeared when completed
 
 ### ✅ New Demo Features:
+
 - **Explicit action buttons** - clear what each button does
 - **Completed tasks column** - nothing gets lost
 - **Expand/collapse button** - chevron icon shows it's interactive

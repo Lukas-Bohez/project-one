@@ -52,9 +52,7 @@
         },
         {
           "text": "Follow the visions and go directly to the tomb",
-          "effects": [
-            { "variable": "courage", "operation": "add", "value": 30 }
-          ],
+          "effects": [{ "variable": "courage", "operation": "add", "value": 30 }],
           "nextScene": "tomb_entrance"
         }
       ]
@@ -65,9 +63,7 @@
       "choices": [
         {
           "text": "Head directly to the mountains",
-          "effects": [
-            { "variable": "courage", "operation": "add", "value": 20 }
-          ],
+          "effects": [{ "variable": "courage", "operation": "add", "value": 20 }],
           "nextScene": "mountain_crossing"
         },
         {
@@ -86,9 +82,7 @@
       "choices": [
         {
           "text": "Travel to the tomb fully prepared",
-          "effects": [
-            { "variable": "magic", "operation": "add", "value": 30 }
-          ],
+          "effects": [{ "variable": "magic", "operation": "add", "value": 30 }],
           "nextScene": "tomb_entrance"
         }
       ]
@@ -99,19 +93,13 @@
       "choices": [
         {
           "text": "Use magic to counter the entrance's protection",
-          "conditions": [
-            { "variable": "magic", "comparison": "greater_than", "value": 70 }
-          ],
-          "effects": [
-            { "variable": "magic", "operation": "subtract", "value": 20 }
-          ],
+          "conditions": [{ "variable": "magic", "comparison": "greater_than", "value": 70 }],
+          "effects": [{ "variable": "magic", "operation": "subtract", "value": 20 }],
           "nextScene": "inner_chamber"
         },
         {
           "text": "Force your way through with courage and strength",
-          "effects": [
-            { "variable": "courage", "operation": "subtract", "value": 30 }
-          ],
+          "effects": [{ "variable": "courage", "operation": "subtract", "value": 30 }],
           "nextScene": "inner_chamber"
         },
         {
@@ -136,19 +124,13 @@
       "choices": [
         {
           "text": "Confront the spirit directly",
-          "effects": [
-            { "variable": "courage", "operation": "add", "value": 40 }
-          ],
+          "effects": [{ "variable": "courage", "operation": "add", "value": 40 }],
           "nextScene": "spirit_battle"
         },
         {
           "text": "Destroy the amulet using a magic ritual",
-          "conditions": [
-            { "variable": "magic", "comparison": "greater_than", "value": 60 }
-          ],
-          "effects": [
-            { "variable": "magic", "operation": "subtract", "value": 50 }
-          ],
+          "conditions": [{ "variable": "magic", "comparison": "greater_than", "value": 60 }],
+          "effects": [{ "variable": "magic", "operation": "subtract", "value": 50 }],
           "nextScene": "curse_broken"
         }
       ]
@@ -177,9 +159,7 @@
         },
         {
           "text": "Seal Malachar away forever with your own life force",
-          "effects": [
-            { "variable": "cursed", "operation": "set", "value": false }
-          ],
+          "effects": [{ "variable": "cursed", "operation": "set", "value": false }],
           "nextScene": "heroic_sacrifice"
         }
       ]

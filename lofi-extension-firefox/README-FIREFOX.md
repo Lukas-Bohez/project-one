@@ -5,6 +5,7 @@ A browser extension that plays lofi music and videos in a standalone popup windo
 ## Firefox-Specific Features
 
 This is the Firefox-compatible version of the Lofi Player extension. It uses:
+
 - Manifest V2 (Firefox standard)
 - `browser` API namespace (with `chrome` fallback for compatibility)
 - Firefox-specific permissions model
@@ -75,9 +76,11 @@ This is the easiest method and works on all Firefox versions:
 ## File Support
 
 **Bundled Mode:**
+
 - Plays pre-included lofi tracks from the extension
 
 **Files Mode:**
+
 - Load individual audio/video files
 - Load entire folders of music
 - Supported formats: MP3, WAV, OGG, M4A, AAC, FLAC, MP4, WebM
@@ -107,7 +110,7 @@ This creates `LofiExtension-Firefox.zip` in the `frontend/downloads/` folder.
 
 ## License
 
-Created by Oroka Conner
+Created by Lukas Bohez
 © 2025 Quiz The Spire - All rights reserved
 
 ## Support

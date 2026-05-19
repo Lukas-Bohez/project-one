@@ -3,6 +3,7 @@
 ## What's Been Built
 
 ### 🎯 Complete Employee Management System
+
 A production-ready platform for small businesses (5-100 employees) with fairness-first scheduling and compliance automation.
 
 ---
@@ -10,11 +11,13 @@ A production-ready platform for small businesses (5-100 employees) with fairness
 ## 🌟 Key Features Now Live
 
 ### 1. **Interactive Schedule Calendar** 📅
+
 ![Schedule Manager](manage-schedule.html)
 
 **Location**: `/html/manage-schedule.html`
 
 **Features**:
+
 - ✅ **Drag-and-Drop Scheduling**: Move shifts between employees and days with mouse
 - ✅ **Weekly Grid View**: See entire team's schedule at a glance
 - ✅ **Quick Fill Tool**: Create multiple shifts across days with one form
@@ -29,6 +32,7 @@ A production-ready platform for small businesses (5-100 employees) with fairness
 - ✅ **Mobile Responsive**: Horizontal scroll on small screens
 
 **How to Use**:
+
 1. Click any empty cell to add a shift
 2. Click a shift card to edit/delete
 3. Drag shift cards to reschedule
@@ -38,40 +42,39 @@ A production-ready platform for small businesses (5-100 employees) with fairness
 ---
 
 ### 2. **Employee Self-Service Portal** 👤
+
 ![Employee Portal](manage-employee.html)
 
 **Location**: `/html/manage-employee.html`
 
 **Features**:
+
 - ✅ **Personal Dashboard** with quick stats:
   - This week's hours
   - Estimated pay
   - PTO balance
   - Next shift countdown
-  
 - ✅ **My Schedule Tab**:
   - View upcoming shifts (next 14 days)
   - See shift details (time, duration, estimated pay)
   - Download schedule (coming soon)
-  
 - ✅ **Time Off Tab**:
   - Request PTO with date picker
   - Automatic hours calculation
   - PTO balance validation
   - View pending/approved/denied requests
   - Request types: Vacation, Sick, Personal, Unpaid
-  
 - ✅ **Shift Swaps Tab**:
   - Marketplace for peer-to-peer shift trading (foundation ready)
   - Offer unwanted shifts
   - Accept shifts from coworkers
-  
 - ✅ **My Profile Tab**:
   - Personal info (name, code, role, rate)
   - Performance metrics (attendance, total hours)
   - Availability management
 
 **How to Use**:
+
 1. Login as employee
 2. View your upcoming schedule
 3. Request time off when needed
@@ -81,29 +84,28 @@ A production-ready platform for small businesses (5-100 employees) with fairness
 ---
 
 ### 3. **Business Dashboard** ⚙️
+
 ![Main Dashboard](manage.html)
 
 **Location**: `/html/manage.html`
 
 **Features**:
+
 - ✅ **Landing Page**:
   - Hero section with value propositions
   - Feature cards (Scheduling, Compliance, Communication, Analytics)
   - Pricing tiers (Free/Pro/Enterprise)
   - Login & signup modals
-  
 - ✅ **Dashboard Stats**:
   - Active employees count
   - Shifts today
   - Pending time-off requests
   - Weekly hours total
-  
 - ✅ **Quick Actions**:
   - Add Employee
   - Schedule Manager → Opens calendar
   - View Schedule → Opens calendar
   - Employee Portal → Opens self-service interface
-  
 - ✅ **Dark Mode Support**: Automatic theme detection
 - ✅ **Mobile Responsive**: Works on all screen sizes
 
@@ -112,17 +114,20 @@ A production-ready platform for small businesses (5-100 employees) with fairness
 ## 🎨 Design Highlights
 
 ### Color System
+
 - **Primary Blue**: #007bff (actions, links, scheduled shifts)
 - **Success Green**: #28a745 (completed, approved)
 - **Warning Yellow**: #ffc107 (pending requests)
 - **Danger Red**: #dc3545 (missed shifts, denied)
 
 ### Dark Mode
+
 - Automatic detection from Quiz The Spire theme
 - CSS custom properties for seamless switching
 - Optimized contrast ratios for accessibility
 
 ### Responsive Breakpoints
+
 - **Desktop**: 1200px+ (full grid layout)
 - **Tablet**: 768px-1199px (adjusted columns)
 - **Mobile**: <768px (stacked layouts, horizontal scroll)
@@ -132,27 +137,34 @@ A production-ready platform for small businesses (5-100 employees) with fairness
 ## 💡 Smart Features
 
 ### 1. **Shift Duration Calculator**
+
 Automatically calculates:
+
 ```
 Duration = (End Time - Start Time) - Break Minutes
 Pay = Duration × Hourly Rate
 ```
 
 ### 2. **Weekly Analytics**
+
 Real-time computation:
+
 - Sums all shift hours for the week
 - Multiplies by each employee's rate
 - Flags overtime (>8 hours/shift)
 - Updates as you schedule
 
 ### 3. **PTO Balance Validation**
+
 When requesting time off:
+
 - Calculates total days requested
 - Converts to hours (days × 8)
 - Shows remaining balance
 - Prevents over-requesting
 
 ### 4. **Drag-and-Drop Rescheduling**
+
 - Preserves shift times
 - Changes date and/or employee
 - Visual feedback during drag
@@ -164,16 +176,16 @@ When requesting time off:
 
 All UI features connect to `/api/v1/manage` endpoints:
 
-| Feature | Endpoint | Method |
-|---------|----------|--------|
-| Get Dashboard Stats | `/businesses/{id}/dashboard` | GET |
-| List Employees | `/businesses/{id}/employees` | GET |
-| Create Shift | `/shifts` | POST |
-| Update Shift | `/shifts/{id}` | PUT |
-| Delete Shift | `/shifts/{id}` | DELETE |
-| Get Shifts | `/shifts?start_date=X&end_date=Y` | GET |
-| Request Time Off | `/time-off` | POST |
-| List Requests | `/businesses/{id}/time-off` | GET |
+| Feature             | Endpoint                          | Method |
+| ------------------- | --------------------------------- | ------ |
+| Get Dashboard Stats | `/businesses/{id}/dashboard`      | GET    |
+| List Employees      | `/businesses/{id}/employees`      | GET    |
+| Create Shift        | `/shifts`                         | POST   |
+| Update Shift        | `/shifts/{id}`                    | PUT    |
+| Delete Shift        | `/shifts/{id}`                    | DELETE |
+| Get Shifts          | `/shifts?start_date=X&end_date=Y` | GET    |
+| Request Time Off    | `/time-off`                       | POST   |
+| List Requests       | `/businesses/{id}/time-off`       | GET    |
 
 **Demo Mode**: When API calls fail, the UI uses mock data so you can test interactions without a running backend.
 
@@ -260,12 +272,14 @@ Optimized for frontline workers on smartphones:
 ## 🎓 Next Steps for Full Production
 
 ### Immediate Priorities:
+
 1. **Authentication Integration**: Connect to main Quiz The Spire user system
 2. **Real API Calls**: Replace demo mode with live backend calls
 3. **WebSocket Integration**: Real-time shift updates via Socket.IO
 4. **Approval UI**: Manager interface for time-off requests
 
 ### Future Enhancements:
+
 1. **Charts & Graphs**: Chart.js for visual analytics
 2. **CSV Export**: Payroll data download
 3. **Notifications**: Email/SMS alerts for shift changes
@@ -276,42 +290,47 @@ Optimized for frontline workers on smartphones:
 
 ## 📊 Current Status
 
-| Component | Status | Completeness |
-|-----------|--------|--------------|
-| Backend API | ✅ Complete | 100% |
-| Database Schema | ✅ Complete | 100% |
-| Schedule Calendar | ✅ Complete | 95% |
-| Employee Portal | ✅ Complete | 90% |
-| Main Dashboard | ✅ Complete | 85% |
-| Authentication | 🚧 Pending | 0% |
-| Real-time Updates | 🚧 Pending | 0% |
-| Mobile App | ⏳ Future | 0% |
+| Component         | Status      | Completeness |
+| ----------------- | ----------- | ------------ |
+| Backend API       | ✅ Complete | 100%         |
+| Database Schema   | ✅ Complete | 100%         |
+| Schedule Calendar | ✅ Complete | 95%          |
+| Employee Portal   | ✅ Complete | 90%          |
+| Main Dashboard    | ✅ Complete | 85%          |
+| Authentication    | 🚧 Pending  | 0%           |
+| Real-time Updates | 🚧 Pending  | 0%           |
+| Mobile App        | ⏳ Future   | 0%           |
 
 ---
 
 ## 🎉 What Makes This Special
 
 ### 1. **Fairness-First Design**
+
 - Automatic equitable shift distribution
 - Transparent scheduling rules
 - Employee input on availability
 
 ### 2. **Compliance Built-In**
+
 - Overtime detection
 - Break time enforcement
 - Labor law monitoring (ready for rules)
 
 ### 3. **Two-Way Communication**
+
 - Employees can request swaps
 - Anonymous feedback channel
 - Transparent performance tracking
 
 ### 4. **Mobile-First**
+
 - Designed for hourly workers
 - Optimized for smartphones
 - Touch-friendly interfaces
 
 ### 5. **Affordable Pricing**
+
 - Free tier for small teams
 - Flat-rate Pro ($49/month unlimited)
 - No per-user gouging
@@ -333,6 +352,6 @@ Optimized for frontline workers on smartphones:
 ---
 
 **Built with**: FastAPI • MySQL • Vanilla JavaScript • CSS3 • HTML5  
-**Created by**: Oroka Conner  
+**Created by**: Lukas Bohez  
 **Part of**: Quiz The Spire Suite  
 **Date**: February 4, 2026

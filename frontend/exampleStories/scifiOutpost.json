@@ -29,7 +29,10 @@
           "text": "[CAUTIOUS] Run a full scan before approaching",
           "target": "deep_scan",
           "conditions": [],
-          "effects": [{ "variable": "fuel", "operation": "subtract", "value": 5 }, { "variable": "morale", "operation": "subtract", "value": 5 }]
+          "effects": [
+            { "variable": "fuel", "operation": "subtract", "value": 5 },
+            { "variable": "morale", "operation": "subtract", "value": 5 }
+          ]
         },
         {
           "id": "ignore_signal",

@@ -5,7 +5,8 @@ Do NOT commit large binary releases into the repository. Move them here on the s
 Example (on server):
 
 mkdir -p /var/data/protected_downloads
-rsync -av --progress /local/path/*.zip /var/data/protected_downloads/
-# set environment variable if using a different directory
-export PROTECTED_DOWNLOADS_DIR=/var/data/protected_downloads
+rsync -av --progress /local/path/\*.zip /var/data/protected_downloads/
 
+# set environment variable if using a different directory
+
+export PROTECTED_DOWNLOADS_DIR=/var/data/protected_downloads
