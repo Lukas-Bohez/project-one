@@ -4,7 +4,7 @@ export default function Home() {
       <main className="mx-auto w-full max-w-6xl p-6 sm:p-10">
         <header className="mb-12 rounded-3xl border border-slate-200 bg-white/75 p-8 shadow-lg backdrop-blur dark:border-slate-700 dark:bg-slate-900/70">
           <p className="text-sm font-semibold uppercase tracking-widest text-blue-700 dark:text-blue-300">
-            Oroka Conner
+            Lukas Bohez
           </p>
           <h1 className="mt-3 text-4xl font-bold leading-tight sm:text-5xl">
             Full-Stack Developer · Flutter · Python · Next.js
@@ -175,7 +175,7 @@ export default function Home() {
         </section>
 
         <footer className="mt-8 border-t border-slate-200 pt-4 text-center text-sm text-slate-600 dark:border-slate-700 dark:text-slate-400">
-          © {new Date().getFullYear()} Oroka Conner. Built with Next.js.
+          © {new Date().getFullYear()} Lukas Bohez. Built with Next.js.
         </footer>
       </main>
     </div>

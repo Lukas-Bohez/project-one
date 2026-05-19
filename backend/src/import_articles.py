@@ -2,7 +2,7 @@
 """
 Article Import Script
 Imports articles from frontend/js/content.js into the database
-Author: Oroka Conner
+Author: Lukas Bohez
 Date Range: 2025-08-01 to 2025-09-15
 """
 
@@ -265,7 +265,7 @@ def format_article_for_db(
 
     return {
         "title": article.get("title", "Untitled"),
-        "author": "Oroka Conner",
+        "author": "Lukas Bohez",
         "date_written": date_written,
         "story": story_name,  # Keep legacy field for backward compatibility
         "story_id": story_id,

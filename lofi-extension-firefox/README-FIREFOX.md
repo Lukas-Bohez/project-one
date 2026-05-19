@@ -107,7 +107,7 @@ This creates `LofiExtension-Firefox.zip` in the `frontend/downloads/` folder.
 
 ## License
 
-Created by Oroka Conner
+Created by Lukas Bohez
 © 2025 Quiz The Spire - All rights reserved
 
 ## Support

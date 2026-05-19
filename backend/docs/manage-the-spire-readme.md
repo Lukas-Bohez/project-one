@@ -333,7 +333,7 @@ February 4, 2026
 ## 📞 Support
 
 For questions or issues:
-- Contact: Oroka Conner
+- Contact: Lukas Bohez
 - Project: Quiz The Spire Suite
 - Status: **Backend Complete, Frontend Basic UI Ready**
 

@@ -388,11 +388,11 @@ class SupportAuthSystem {
             isAdmin: Boolean(meta.is_admin),
         };
 
-        // Client-side fallback: treat Oroka Conner as admin if server didn't mark them
+        // Client-side fallback: treat Lukas Bohez as admin if server didn't mark them
         try {
             const fn = String(this.currentUser.firstName || '').trim().toLowerCase();
             const ln = String(this.currentUser.lastName || '').trim().toLowerCase();
-            if ((fn === 'oroka' && ln === 'conner') || (`${fn} ${ln}` === 'oroka conner')) {
+            if ((fn === 'lukas' && ln === 'bohez') || (`${fn} ${ln}` === 'lukas bohez')) {
                 this.currentUser.isAdmin = true;
             }
         } catch (e) {
@@ -423,11 +423,11 @@ class SupportAuthSystem {
         };
 
         localStorage.setItem(STORAGE_KEYS.USER.USER_ID, userId);
-        // Client-side fallback: treat Oroka Conner as admin if server didn't mark them
+        // Client-side fallback: treat Lukas Bohez as admin if server didn't mark them
         try {
             const fn = String(newUser.firstName || '').trim().toLowerCase();
             const ln = String(newUser.lastName || '').trim().toLowerCase();
-            if ((fn === 'oroka' && ln === 'conner') || (`${fn} ${ln}` === 'oroka conner')) {
+            if ((fn === 'lukas' && ln === 'bohez') || (`${fn} ${ln}` === 'lukas bohez')) {
                 newUser.isAdmin = true;
             }
         } catch (e) {
