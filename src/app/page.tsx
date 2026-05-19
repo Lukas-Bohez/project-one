@@ -96,10 +96,10 @@ export default function Home() {
             <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
               <h3 className="text-lg font-semibold">ConvertTheSpireFlutter</h3>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                Open-source Flutter desktop and mobile app for downloading and converting
-                media from 1,800+ sites. Features 4K/8K downloads, 27+ format conversions,
-                built-in media player, torrent management, DLNA casting, and a built-in
-                browser. 1,000+ downloads across 95+ countries. GPLv3 licensed.
+                Open-source Flutter desktop and mobile app for downloading and converting media from
+                1,800+ sites. Features 4K/8K downloads, 27+ format conversions, built-in media
+                player, torrent management, DLNA casting, and a built-in browser. 1,000+ downloads
+                across 95+ countries. GPLv3 licensed.
               </p>
               <a
                 className="mt-4 inline-flex items-center text-sm font-semibold text-blue-700 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-100"
@@ -114,8 +114,8 @@ export default function Home() {
               <h3 className="text-lg font-semibold">QuizTheSpire</h3>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                 Full-stack live multiplayer quiz platform. Supports real-time leaderboards,
-                AI-generated themes via SpireAI, and community-created content. Built with
-                vanilla JS, Apache2, and a Python backend. Serving users across 95+ countries.
+                AI-generated themes via SpireAI, and community-created content. Built with vanilla
+                JS, Apache2, and a Python backend. Serving users across 95+ countries.
               </p>
               <a
                 className="mt-4 inline-flex items-center text-sm font-semibold text-blue-700 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-100"
