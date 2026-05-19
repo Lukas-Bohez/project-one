@@ -3184,7 +3184,7 @@ def is_support_admin_user(user: dict | None) -> bool:
 
     # Safety fallback: preserve admin controls for the known support admin account.
     full_name = f"{(user.get('first_name') or '').strip()} {(user.get('last_name') or '').strip()}".strip().lower()
-    return full_name == "oroka conner"
+    return full_name == "lukas bohez"
 
 
 def get_active_support_ban(user: dict | None):
@@ -3229,12 +3229,12 @@ async def get_support_admin_user(
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    # Allow a safe fallback for the known support admin account (Oroka Conner).
+    # Allow a safe fallback for the known support admin account (Lukas Bohez).
     # This lets the admin perform support actions when client-side stored credentials
     # are missing or get out of sync. It's intentionally narrow and only matches
     # the full name to reduce risk.
     full_name = f"{(user.get('first_name') or '').strip()} {(user.get('last_name') or '').strip()}".strip().lower()
-    if full_name == 'oroka conner':
+    if full_name == 'lukas bohez':
         # treat as admin without password verification
         log_warning = f"Admin fallback applied for support account {full_name} from {get_client_ip_sync(request)}"
         logger.info(log_warning)
