@@ -3,6 +3,7 @@
 ## Market Niche & Unique Value Proposition
 
 ### The Gap in Current Management Tools
+
 - **Too Complex**: Enterprise tools like BambooHR, Workday require extensive training
 - **Too Simple**: Basic scheduling apps lack compliance tracking
 - **Expensive**: Most charge per-employee monthly fees ($8-15/user)
@@ -11,9 +12,11 @@
 - **Limited Employee Voice**: One-way communication, no anonymous feedback
 
 ### Manage the Spire's Unique Niche
+
 **Target Market**: Small to medium businesses (5-100 employees) in retail, hospitality, healthcare, and service industries
 
 **Key Differentiators**:
+
 1. **Fairness-First Scheduling Algorithm** - Prevents manager bias, ensures equitable distribution
 2. **Compliance Automation** - Built-in labor law compliance (breaks, overtime, minor restrictions)
 3. **Employee Wellness Integration** - Mental health check-ins, burnout detection
@@ -28,6 +31,7 @@
 ## Core Features
 
 ### For Business Owners/Managers
+
 - **Dashboard**: Real-time overview of staffing, costs, compliance alerts
 - **Smart Scheduler**: Drag-drop interface with AI suggestions for optimal coverage
 - **Employee Profiles**: Skills, availability, performance history, certifications
@@ -40,6 +44,7 @@
 - **Budget Tracking**: Forecast labor costs against actual
 
 ### For Employees
+
 - **Personal Dashboard**: Upcoming shifts, hours worked, earnings projection
 - **Schedule View**: Month/week view with shift details
 - **Shift Marketplace**: Pick up open shifts, request shift swaps
@@ -54,7 +59,9 @@
 ## Technical Architecture
 
 ### Database Schema
+
 **Tables**:
+
 - `manage_businesses` - Company info, subscription tier, settings
 - `manage_employees` - Employee profiles, roles, hire date, status
 - `manage_shifts` - Scheduled shifts with position, notes
@@ -72,6 +79,7 @@
 - `manage_audit_logs` - Complete audit trail of all actions
 
 ### Tech Stack
+
 - **Backend**: FastAPI (Python) - existing stack
 - **Frontend**: Vanilla JS, HTML5, CSS3 - matches Quiz the Spire
 - **Database**: MySQL - existing infrastructure
@@ -80,6 +88,7 @@
 - **Mobile**: Progressive Web App (PWA) installable
 
 ### Security & Privacy
+
 - **Role-based permissions**: Owner, Manager, Employee tiers
 - **Data encryption**: All PII encrypted at rest
 - **Audit logging**: Every action tracked with IP and timestamp
@@ -88,12 +97,15 @@
 - **Session management**: Automatic timeout, device tracking
 
 ## Monetization Strategy
+
 - **Free Tier**: Up to 10 employees, basic features
 - **Pro Tier**: $49/month unlimited employees, advanced analytics
 - **Enterprise**: Custom pricing, API access, SSO, dedicated support
 
 ## Implementation Phases
-**Phase 1 (MVP)**: 
+
+**Phase 1 (MVP)**:
+
 - Basic authentication
 - Employee CRUD
 - Simple scheduling
@@ -101,18 +113,21 @@
 - Warnings system
 
 **Phase 2**:
+
 - Shift swapping
 - Skills tracking
 - Compliance alerts
 - Analytics dashboard
 
 **Phase 3**:
+
 - Anonymous feedback
 - Wellness check-ins
 - Mobile PWA
 - Advanced reporting
 
 ## Success Metrics
+
 - User acquisition: 100 businesses in first 3 months
 - Daily active usage: >60% of registered employees
 - Customer satisfaction: >4.5/5 average rating

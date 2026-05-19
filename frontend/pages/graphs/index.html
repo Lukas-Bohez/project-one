@@ -1,96 +1,140 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
+  <head>
     <!-- Google Analytics (GA4) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-SSEBSTQM21"></script>
     <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-SSEBSTQM21');
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-SSEBSTQM21');
     </script>
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <title>Graphs | Quiz The Spire</title>
-    <meta name="description" content="View detailed performance graphs and statistics for Quiz The Spire sessions. Track quiz performance metrics over time.">
-    
+    <meta
+      name="description"
+      content="View detailed performance graphs and statistics for Quiz The Spire sessions. Track quiz performance metrics over time."
+    />
+
     <!-- Preconnect to external domains to improve loading performance -->
-    <link rel="preconnect" href="https://cdn.socket.io" crossorigin>
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    <link rel="dns-prefetch" href="https://cdn.socket.io">
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-    
+    <link rel="preconnect" href="https://cdn.socket.io" crossorigin />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="dns-prefetch" href="https://cdn.socket.io" />
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+
     <!-- Preload critical resources -->
-    <link rel="preload" href="/css/styles.css" as="style">
-    <link rel="preload" href="/css/pages/graphs/graphs.css" as="style">
-    <link rel="preload" href="/js/themeManager.js" as="script">
-    <link rel="preload" href="/js/pages/graphs/graphs.js" as="script">
-    
+    <link rel="preload" href="/css/styles.css" as="style" />
+    <link rel="preload" href="/css/pages/graphs/graphs.css" as="style" />
+    <link rel="preload" href="/js/themeManager.js" as="script" />
+    <link rel="preload" href="/js/pages/graphs/graphs.js" as="script" />
+
     <!-- Critical CSS inlined for faster rendering -->
     <style>
-        /* Critical above-the-fold styles */
-        body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background-color:var(--bg-primary);min-height:100vh}
-        .c-header{background:linear-gradient(135deg,#1e3a8a,#0c4061);color:#fff;padding:1.5rem 1rem;text-align:center;border-bottom:1px solid rgba(255,255,255,.1)}
-        .c-header__title{margin:0;font-size:1.25rem;font-weight:600;color:#fff !important}
-        .loading-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem;min-height:400px;background:rgba(255,255,255,.05);border-radius:8px}
-        .spinner{width:40px;height:40px;border:4px solid rgba(255,255,255,.2);border-top:4px solid #1e3a8a;border-radius:50%;animation:spin 1s linear infinite}
-        @keyframes spin{to{transform:rotate(360deg)}}
+      /* Critical above-the-fold styles */
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background-color: var(--bg-primary);
+        min-height: 100vh;
+      }
+      .c-header {
+        background: linear-gradient(135deg, #1e3a8a, #0c4061);
+        color: #fff;
+        padding: 1.5rem 1rem;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .c-header__title {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #fff !important;
+      }
+      .loading-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+        min-height: 400px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+      }
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(255, 255, 255, 0.2);
+        border-top: 4px solid #1e3a8a;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
     </style>
-    
-    <link rel="stylesheet" href="/css/styles.css">
-    <link rel="stylesheet" href="/css/pages/graphs/graphs.css">
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" defer></script>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449"
-     crossorigin="anonymous"></script>
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="apple-touch-icon" href="/favicon.ico">
-    <meta property="og:title" content="Data Graphs | Quiz The Spire">
-    <meta property="og:description" content="Real-time data visualization and analytics">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://quizthespire.com/pages/graphs/">
-    <meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Data Graphs | Quiz The Spire">
-    <meta name="twitter:description" content="Real-time data visualization and analytics">
-    <meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg">
-    <link rel="canonical" href="https://quizthespire.com/pages/graphs/">
-</head>
 
-<body>
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/pages/graphs/graphs.css" />
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" defer></script>
+    <script
+      async
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449"
+      crossorigin="anonymous"
+    ></script>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="apple-touch-icon" href="/favicon.ico" />
+    <meta property="og:title" content="Data Graphs | Quiz The Spire" />
+    <meta property="og:description" content="Real-time data visualization and analytics" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://quizthespire.com/pages/graphs/" />
+    <meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Data Graphs | Quiz The Spire" />
+    <meta name="twitter:description" content="Real-time data visualization and analytics" />
+    <meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg" />
+    <link rel="canonical" href="https://quizthespire.com/pages/graphs/" />
+  </head>
+
+  <body>
     <header class="c-header">
-        <a href="/" class="c-header__link gamepad">
-            <h1 class="c-header__title">Quiz The Spire</h1>
-        </a>
+      <a href="/" class="c-header__link gamepad">
+        <h1 class="c-header__title">Quiz The Spire</h1>
+      </a>
     </header>
 
     <main class="c-graphs-container">
-        <div class="c-quiz-sessions-container">
-            <div class="loading-state">
-                <div class="spinner"></div>
-                <p>Loading session data...</p>
-            </div>
+      <div class="c-quiz-sessions-container">
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading session data...</p>
         </div>
-        <div id="paginationPlaceholder"></div>
-        <!-- Hidden accessibility placeholder for Lighthouse -->
-        <div style="position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden;">
-            <label for="sessionSelectPlaceholder">Choose Session:</label>
-            <select id="sessionSelectPlaceholder" aria-label="Session selector">
-                <option>Loading sessions...</option>
-            </select>
-            <h2>Session Title</h2>
-            <h3>Chart Title</h3>
-        </div>
+      </div>
+      <div id="paginationPlaceholder"></div>
+      <!-- Hidden accessibility placeholder for Lighthouse -->
+      <div style="position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden">
+        <label for="sessionSelectPlaceholder">Choose Session:</label>
+        <select id="sessionSelectPlaceholder" aria-label="Session selector">
+          <option>Loading sessions...</option>
+        </select>
+        <h2>Session Title</h2>
+        <h3>Chart Title</h3>
+      </div>
     </main>
 
     <!-- Critical scripts loaded with defer for optimal performance -->
     <script src="/js/themeManager.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts" defer></script>
     <script src="/js/pages/graphs/graphs.js" defer></script>
-    
+
     <!-- Non-critical scripts loaded with defer -->
     <script src="/js/pages/graphs/gamepadGraphs.js" defer></script>
     <script src="/js/infomodal.js" defer></script>
@@ -99,12 +143,19 @@
     <button id="back-to-top" type="button" aria-label="Back to top">
       <svg class="back-to-top__ring" viewBox="0 0 36 36" aria-hidden="true" focusable="false">
         <circle class="back-to-top__ring-base" cx="18" cy="18" r="16"></circle>
-        <circle id="scroll-ring" class="back-to-top__ring-progress" cx="18" cy="18" r="16" stroke-dasharray="100" stroke-dashoffset="100"></circle>
+        <circle
+          id="scroll-ring"
+          class="back-to-top__ring-progress"
+          cx="18"
+          cy="18"
+          r="16"
+          stroke-dasharray="100"
+          stroke-dashoffset="100"
+        ></circle>
       </svg>
       <i class="fa-solid fa-chevron-up back-to-top__arrow" aria-hidden="true"></i>
     </button>
 
     <script src="/js/homepage-enhancements.js" defer></script>
-</body>
-
+  </body>
 </html>

@@ -4,781 +4,917 @@
  */
 
 class UIThemeManager {
-    constructor(gameEngine, rebirthThemes) {
-        this.gameEngine = gameEngine;
-        this.rebirthThemes = rebirthThemes;
-        this.currentTheme = null;
+  constructor(gameEngine, rebirthThemes) {
+    this.gameEngine = gameEngine;
+    this.rebirthThemes = rebirthThemes;
+    this.currentTheme = null;
+  }
+
+  updateTheme() {
+    const theme = this.rebirthThemes.getCurrentTheme(this.gameEngine.state);
+
+    // Only update if theme changed
+    if (this.currentTheme && this.currentTheme.id === theme.id) {
+      return;
     }
 
-    updateTheme() {
-        const theme = this.rebirthThemes.getCurrentTheme(this.gameEngine.state);
-        
-        // Only update if theme changed
-        if (this.currentTheme && this.currentTheme.id === theme.id) {
-            return;
-        }
-        
-        this.currentTheme = theme;
-        console.log(`Applying theme: ${theme.name}`);
+    this.currentTheme = theme;
+    console.log(`Applying theme: ${theme.name}`);
 
-        // Expose current rebirth count on the main container so CSS can scope styles
-        try {
-            const rebirths = this.gameEngine?.state?.city?.rebirths || 0;
-            const container = document.getElementById('game-container');
-            if (container) container.setAttribute('data-rebirth', String(rebirths));
-        } catch (e) {
-            // Fail silently if DOM not ready yet
-        }
-        
-        // Update all UI elements
-        this.updatePageTitle(theme);
-        this.updateColorScheme(theme);
-        this.updateTabNames(theme);
-        this.updateResourceNames(theme);
-        this.updateWorkerNames(theme);
-        this.updateProcessorNames(theme);
-        this.updateTraderNames(theme);
-        this.updateTransportNames(theme);
-        this.updateCityNames(theme);
-        this.updateCraftingNames(theme); // NEW: Update crafting button text
-        this.updateResearchNames(theme);
-        this.updateUnlockNames(theme); // NEW: Update unlock button text
-        this.updateCostCurrency(theme); // NEW: Update all "gold" references to themed currency
-        this.updateRebirthButton(theme);
-        this.updateAtmosphere(theme);
-        
-        // Show theme change notification
-        if (this.gameEngine.showNotification) {
-            this.gameEngine.showNotification(`🔄 ${theme.description}`);
-        }
+    // Expose current rebirth count on the main container so CSS can scope styles
+    try {
+      const rebirths = this.gameEngine?.state?.city?.rebirths || 0;
+      const container = document.getElementById('game-container');
+      if (container) container.setAttribute('data-rebirth', String(rebirths));
+    } catch (e) {
+      // Fail silently if DOM not ready yet
     }
 
-    updatePageTitle(theme) {
-        document.title = `${theme.name}`;
-        
-        // Update main header
-        const header = document.getElementById('game-title');
-        if (header) {
-            header.textContent = theme.name;
-            // Keep click handler working
-            header.style.cursor = 'pointer';
+    // Update all UI elements
+    this.updatePageTitle(theme);
+    this.updateColorScheme(theme);
+    this.updateTabNames(theme);
+    this.updateResourceNames(theme);
+    this.updateWorkerNames(theme);
+    this.updateProcessorNames(theme);
+    this.updateTraderNames(theme);
+    this.updateTransportNames(theme);
+    this.updateCityNames(theme);
+    this.updateCraftingNames(theme); // NEW: Update crafting button text
+    this.updateResearchNames(theme);
+    this.updateUnlockNames(theme); // NEW: Update unlock button text
+    this.updateCostCurrency(theme); // NEW: Update all "gold" references to themed currency
+    this.updateRebirthButton(theme);
+    this.updateAtmosphere(theme);
+
+    // Show theme change notification
+    if (this.gameEngine.showNotification) {
+      this.gameEngine.showNotification(`🔄 ${theme.description}`);
+    }
+  }
+
+  updatePageTitle(theme) {
+    document.title = `${theme.name}`;
+
+    // Update main header
+    const header = document.getElementById('game-title');
+    if (header) {
+      header.textContent = theme.name;
+      // Keep click handler working
+      header.style.cursor = 'pointer';
+    }
+  }
+
+  updateColorScheme(theme) {
+    const root = document.documentElement;
+    root.style.setProperty('--theme-primary', theme.colorScheme.primary);
+    root.style.setProperty('--theme-secondary', theme.colorScheme.secondary);
+    root.style.setProperty('--theme-background', theme.colorScheme.background);
+
+    // Set text colors for inline styles (arcade section, etc.)
+    if (theme.colorScheme.textColor) {
+      root.style.setProperty('--text-primary', theme.colorScheme.textColor);
+    }
+    if (theme.colorScheme.textColorSecondary) {
+      root.style.setProperty('--text-secondary', theme.colorScheme.textColorSecondary);
+    }
+    // Set accent color (defaults to primary if not specified)
+    root.style.setProperty(
+      '--accent-color',
+      theme.colorScheme.accentColor || theme.colorScheme.primary
+    );
+
+    // Apply background
+    const body = document.body;
+    if (body) {
+      body.style.background = theme.colorScheme.background;
+    }
+  }
+
+  updateTabNames(theme) {
+    // Update tab navigation buttons with theme-specific names
+    if (theme.tabs) {
+      this.updateButtonText(
+        'tab-btn-mining',
+        `${theme.tabs.mining.emoji} ${theme.tabs.mining.name}`
+      );
+      this.updateButtonText(
+        'tab-btn-processing',
+        `${theme.tabs.processing.emoji} ${theme.tabs.processing.name}`
+      );
+      this.updateButtonText(
+        'tab-btn-market',
+        `${theme.tabs.market.emoji} ${theme.tabs.market.name}`
+      );
+      this.updateButtonText(
+        'tab-btn-transport',
+        `${theme.tabs.transport.emoji} ${theme.tabs.transport.name}`
+      );
+      this.updateButtonText('tab-btn-city', `${theme.tabs.city.emoji} ${theme.tabs.city.name}`);
+      this.updateButtonText(
+        'tab-btn-research',
+        `${theme.tabs.research.emoji} ${theme.tabs.research.name}`
+      );
+    }
+  }
+
+  updateResourceNames(theme) {
+    const resources = theme.resources;
+
+    // Update resource icons (emojis)
+    this.updateTextContent('stone-icon', resources.stone.emoji);
+    this.updateTextContent('coal-icon', resources.coal.emoji);
+    this.updateTextContent('iron-icon', resources.iron.emoji);
+    this.updateTextContent('silver-icon', resources.silver.emoji);
+    this.updateTextContent('gold-icon', resources.gold.emoji);
+
+    // Update resource display labels (just name, no emoji)
+    this.updateTextContent('stone-label', resources.stone.name + ':');
+    this.updateTextContent('coal-label', resources.coal.name + ':');
+    this.updateTextContent('iron-label', resources.iron.name + ':');
+    this.updateTextContent('silver-label', resources.silver.name + ':');
+    this.updateTextContent('gold-label', resources.gold.name + ':');
+
+    // Update tooltips
+    this.updateTooltip('stone-label', resources.stone.description);
+    this.updateTooltip('coal-label', resources.coal.description);
+    this.updateTooltip('iron-label', resources.iron.description);
+    this.updateTooltip('silver-label', resources.silver.description);
+    this.updateTooltip('gold-label', resources.gold.description);
+
+    // Update mining buttons
+    this.updateButtonText('mine-stone-btn', `Gather ${resources.stone.name}`);
+
+    // Update sell buttons
+    this.updateButtonText('sell-stone-btn', `Sell ${resources.stone.name}`);
+    this.updateButtonText('sell-coal-btn', `Sell ${resources.coal.name}`);
+    this.updateButtonText('sell-iron-btn', `Sell ${resources.iron.name}`);
+    this.updateButtonText('sell-silver-btn', `Sell ${resources.silver.name}`);
+  }
+
+  updateWorkerNames(theme) {
+    const workers = theme.workers;
+    const resources = theme.resources;
+
+    console.log('updateWorkerNames called with:', workers);
+
+    // Update section headers
+    this.updateTextContent(
+      'mining-operations-header',
+      `${theme.tabs.mining.emoji} ${theme.tabs.mining.name} Operations`
+    );
+    this.updateTextContent('workforce-header', `👥 Workforce Status`);
+
+    // Update manual mine button
+    this.updateButtonText('mine-stone-btn', `Gather ${resources.stone.name}`);
+    this.updateButtonDescription(
+      'mine-stone-btn',
+      `+1 ${resources.stone.name.toLowerCase()} per click`
+    );
+
+    // Update hire buttons (titles and descriptions)
+    console.log('Updating hire-stone-miner-btn to:', `Hire ${workers.stoneMiners.name}`);
+    this.updateButtonText('hire-stone-miner-btn', `Hire ${workers.stoneMiners.name}`);
+    this.updateButtonText('hire-coal-miner-btn', `Hire ${workers.coalMiners.name}`);
+    this.updateButtonText('hire-iron-miner-btn', `Hire ${workers.ironMiners.name}`);
+    this.updateButtonText('hire-silver-miner-btn', `Hire ${workers.silverMiners.name}`);
+
+    // Update worker button descriptions with themed resource names
+    this.updateButtonDescription(
+      'hire-stone-miner-btn',
+      `+1 ${resources.stone.name.toLowerCase()}/sec`
+    );
+    this.updateButtonDescription(
+      'hire-coal-miner-btn',
+      `+1 ${resources.coal.name.toLowerCase()}/sec`
+    );
+    this.updateButtonDescription(
+      'hire-iron-miner-btn',
+      `+1 ${resources.iron.name.toLowerCase()}/sec`
+    );
+    this.updateButtonDescription(
+      'hire-silver-miner-btn',
+      `+1 ${resources.silver.name.toLowerCase()}/sec`
+    );
+
+    // Update workforce status labels
+    this.updateTextContent('stone-miners-label', `${workers.stoneMiners.name}:`);
+    this.updateTextContent('coal-miners-label', `${workers.coalMiners.name}:`);
+    this.updateTextContent('iron-miners-label', `${workers.ironMiners.name}:`);
+    this.updateTextContent('silver-miners-label', `${workers.silverMiners.name}:`);
+  }
+
+  updateProcessorNames(theme) {
+    const processors = theme.processors;
+
+    // Update section header
+    this.updateTextContent(
+      'processing-header',
+      `${theme.tabs.processing.emoji} ${theme.tabs.processing.name} Systems`
+    );
+
+    // Update build buttons
+    this.updateButtonTextAndDesc(
+      'build-smelter-btn',
+      `Build ${processors.smelters.name}`,
+      processors.smelters.description
+    );
+    this.updateButtonTextAndDesc(
+      'build-forge-btn',
+      `Build ${processors.forges.name}`,
+      processors.forges.description
+    );
+    this.updateButtonTextAndDesc(
+      'build-refinery-btn',
+      `Build ${processors.refineries.name}`,
+      processors.refineries.description
+    );
+    this.updateButtonTextAndDesc(
+      'build-mint-btn',
+      `Build ${processors.mints.name}`,
+      processors.mints.description
+    );
+
+    // Update status labels
+    this.updateTextContent('smelters-label', `${processors.smelters.name}:`);
+    this.updateTextContent('forges-label', `${processors.forges.name}:`);
+    this.updateTextContent('refineries-label', `${processors.refineries.name}:`);
+    this.updateTextContent('mints-label', `${processors.mints.name}:`);
+  }
+
+  updateTraderNames(theme) {
+    const traders = theme.traders;
+    const resources = theme.resources;
+
+    // Update section header
+    this.updateTextContent('market-header', `${theme.tabs.market.emoji} ${theme.tabs.market.name}`);
+
+    // Update sell button descriptions with themed currency
+    const currencyName = resources.gold.name.toLowerCase();
+
+    this.updateTextContent(
+      'stone-sell-currency',
+      `${currencyName}/${resources.stone.name.toLowerCase()}`
+    );
+    this.updateTextContent(
+      'sell-stone-desc',
+      `Convert ${resources.stone.name.toLowerCase()} to ${currencyName}`
+    );
+
+    this.updateTextContent(
+      'coal-sell-currency',
+      `${currencyName}/${resources.coal.name.toLowerCase()}`
+    );
+    this.updateTextContent(
+      'sell-coal-desc',
+      `Convert ${resources.coal.name.toLowerCase()} to ${currencyName}`
+    );
+
+    this.updateTextContent(
+      'iron-sell-currency',
+      `${currencyName}/${resources.iron.name.toLowerCase()}`
+    );
+    this.updateTextContent(
+      'sell-iron-desc',
+      `Convert ${resources.iron.name.toLowerCase()} to ${currencyName}`
+    );
+
+    this.updateTextContent(
+      'silver-sell-currency',
+      `${currencyName}/${resources.silver.name.toLowerCase()}`
+    );
+    this.updateTextContent(
+      'sell-silver-desc',
+      `Convert ${resources.silver.name.toLowerCase()} to ${currencyName}`
+    );
+
+    // Update hire buttons
+    this.updateButtonText('hire-stone-trader-btn', `Hire ${traders.stoneTraders.name}`);
+    this.updateButtonText('hire-coal-trader-btn', `Hire ${traders.coalTraders.name}`);
+    this.updateButtonText('hire-metal-trader-btn', `Hire ${traders.metalTraders.name}`);
+
+    // Update trader button descriptions
+    this.updateTextContent(
+      'hire-stone-trader-desc',
+      `Auto-sell ${resources.stone.name.toLowerCase()}`
+    );
+    this.updateTextContent(
+      'hire-coal-trader-desc',
+      `Auto-sell ${resources.coal.name.toLowerCase()}`
+    );
+    this.updateTextContent(
+      'hire-metal-trader-desc',
+      `Auto-sell ${resources.iron.name.toLowerCase()} & ${resources.silver.name.toLowerCase()}`
+    );
+
+    // Update status labels
+    this.updateTextContent('stone-traders-label', `${traders.stoneTraders.name}:`);
+    this.updateTextContent('coal-traders-label', `${traders.coalTraders.name}:`);
+    this.updateTextContent('metal-traders-label', `${traders.metalTraders.name}:`);
+  }
+
+  updateTransportNames(theme) {
+    const transport = theme.transport;
+
+    // Update section headers
+    this.updateTextContent(
+      'transport-header',
+      `${theme.tabs.transport.emoji} ${theme.tabs.transport.name} Fleet`
+    );
+    this.updateTextContent('fleet-status-header', `🚚 ${theme.tabs.transport.name} Status`);
+
+    // Update buy buttons
+    this.updateButtonText('buy-cart-btn', `Buy ${transport.carts.name}`);
+    this.updateButtonText('buy-wagon-btn', `Buy ${transport.wagons.name}`);
+    this.updateButtonText('buy-train-btn', `Buy ${transport.trains.name}`);
+
+    // Update status labels
+    this.updateTextContent('carts-label', `${transport.carts.name}:`);
+    this.updateTextContent('wagons-label', `${transport.wagons.name}:`);
+    this.updateTextContent('trains-label', `${transport.trains.name}:`);
+  }
+
+  updateCityNames(theme) {
+    const city = theme.city;
+    const resources = theme.resources;
+
+    // Update section headers
+    this.updateTextContent('city-header', `${theme.tabs.city.emoji} ${theme.tabs.city.name} HQ`);
+    this.updateTextContent('city-status-header', `🏛️ ${theme.tabs.city.name} Status`);
+    this.updateTextContent('city-dynamics-header', `📈 ${theme.tabs.city.name} Dynamics`);
+    this.updateTextContent(
+      'city-inventory-header',
+      `📦 ${theme.tabs.city.name} Finished Inventory`
+    );
+
+    // Update hire/build buttons
+    this.updateButtonText('hire-police-btn', `Hire ${city.police.name}`);
+    this.updateButtonText('hire-politician-btn', `Hire ${city.politicians.name}`);
+    this.updateButtonText('build-bank-btn', `Build ${city.banks.name}`);
+    this.updateButtonText('build-market-btn', `Build ${city.markets.name}`);
+    this.updateButtonText('build-university-btn', `Build ${city.universities.name}`);
+
+    // Update new upgrade buttons
+    // Sales Department, Mining Academy and Automation Lab buttons handled in GameEngine.js with dynamic titles
+
+    // Update button descriptions with theme-specific names
+    this.updateButtonDescription(
+      'build-university-btn',
+      `+10% global efficiency per ${city.universities.name.toLowerCase()}`
+    );
+    this.updateButtonDescription(
+      'hire-politician-btn',
+      `+5% trading efficiency per ${city.politicians.name.toLowerCase()}`
+    );
+    this.updateButtonDescription(
+      'build-market-btn',
+      `+15% trading efficiency per ${city.markets.name.toLowerCase()}`
+    );
+    this.updateButtonDescription('build-bank-btn', `+20% to ALL city sales (stacks!)`);
+
+    // Update status labels
+    this.updateLabel('police-label', `${city.police.name}:`);
+    this.updateLabel('politicians-label', `${city.politicians.name}:`);
+    this.updateLabel('banks-label', `${city.banks.name}:`);
+    this.updateLabel('markets-label', `${city.markets.name}:`);
+    this.updateLabel('universities-label', `${city.universities.name}:`);
+    this.updateLabel('sales-department-label', `${city.salesDepartment.name}:`);
+    this.updateLabel('mining-academy-label', `${city.miningAcademy.name}:`);
+    this.updateLabel('automation-lab-label', `${city.automationLab.name}:`);
+
+    // Update sell button costs with themed bank name
+    const sellButtons = [
+      { id: 'sell-city-basic-btn', value: 3, tier: 'basic' },
+      { id: 'sell-city-intermediate-btn', value: 9, tier: 'intermediate' },
+      { id: 'sell-city-advanced-btn', value: 30, tier: 'advanced' },
+      { id: 'sell-city-premium-btn', value: 120, tier: 'premium' },
+    ];
+
+    sellButtons.forEach((btn) => {
+      const button = document.getElementById(btn.id);
+      if (button && theme.crafting && theme.crafting[btn.tier]) {
+        const craftData = theme.crafting[btn.tier];
+
+        // Update title
+        const titleDiv = button.querySelector('.btn-title');
+        if (titleDiv) {
+          titleDiv.textContent = `💰 Sell ${craftData.result} from ${theme.tabs.city.name}`;
         }
+
+        // Update cost
+        const costDiv = button.querySelector('.btn-cost');
+        if (costDiv) {
+          costDiv.innerHTML = `${btn.value} <span class="themed-currency">${resources.gold.name.toLowerCase()}</span> (+20% per ${city.banks.name})`;
+        }
+
+        // Update description
+        const descDiv = button.querySelector('.btn-description');
+        if (descDiv) {
+          descDiv.textContent = `Sell all ${craftData.result} in ${theme.tabs.city.name.toLowerCase()}`;
+        }
+      }
+    });
+  }
+
+  updateCraftingNames(theme) {
+    if (!theme.crafting) return;
+
+    const crafting = theme.crafting;
+    const resources = theme.resources;
+
+    // Update crafting button titles and descriptions
+    if (crafting.basic) {
+      this.updateTextContent('craft-basic-btn', crafting.basic.title);
+      const basicBtn = document.getElementById('craft-basic-btn');
+      if (basicBtn) {
+        const titleDiv = basicBtn.querySelector('.btn-title');
+        const costDiv = basicBtn.querySelector('.btn-cost');
+        const descDiv = basicBtn.querySelector('.btn-description');
+        if (titleDiv) titleDiv.textContent = `${crafting.basic.emoji} ${crafting.basic.title}`;
+        if (costDiv) costDiv.innerHTML = `Needs: <span>10</span> ${resources.stone.name}`;
+        if (descDiv)
+          descDiv.textContent = `→ ${crafting.basic.result} (Sells for 3 ${resources.gold.name.toLowerCase()})`;
+      }
     }
 
-    updateColorScheme(theme) {
-        const root = document.documentElement;
-        root.style.setProperty('--theme-primary', theme.colorScheme.primary);
-        root.style.setProperty('--theme-secondary', theme.colorScheme.secondary);
-        root.style.setProperty('--theme-background', theme.colorScheme.background);
-        
-        // Set text colors for inline styles (arcade section, etc.)
-        if (theme.colorScheme.textColor) {
-            root.style.setProperty('--text-primary', theme.colorScheme.textColor);
-        }
-        if (theme.colorScheme.textColorSecondary) {
-            root.style.setProperty('--text-secondary', theme.colorScheme.textColorSecondary);
-        }
-        // Set accent color (defaults to primary if not specified)
-        root.style.setProperty('--accent-color', theme.colorScheme.accentColor || theme.colorScheme.primary);
-        
-        // Apply background
-        const body = document.body;
-        if (body) {
-            body.style.background = theme.colorScheme.background;
-        }
+    if (crafting.intermediate) {
+      const intBtn = document.getElementById('craft-intermediate-btn');
+      if (intBtn) {
+        const titleDiv = intBtn.querySelector('.btn-title');
+        const costDiv = intBtn.querySelector('.btn-cost');
+        const descDiv = intBtn.querySelector('.btn-description');
+        if (titleDiv)
+          titleDiv.textContent = `${crafting.intermediate.emoji} ${crafting.intermediate.title}`;
+        if (costDiv)
+          costDiv.innerHTML = `Needs: <span>1</span> ${crafting.basic.result} + <span>5</span> ${resources.coal.name}`;
+        if (descDiv)
+          descDiv.textContent = `→ ${crafting.intermediate.result} (Sells for 9 ${resources.gold.name.toLowerCase()})`;
+      }
     }
 
-    updateTabNames(theme) {
-        // Update tab navigation buttons with theme-specific names
-        if (theme.tabs) {
-            this.updateButtonText('tab-btn-mining', `${theme.tabs.mining.emoji} ${theme.tabs.mining.name}`);
-            this.updateButtonText('tab-btn-processing', `${theme.tabs.processing.emoji} ${theme.tabs.processing.name}`);
-            this.updateButtonText('tab-btn-market', `${theme.tabs.market.emoji} ${theme.tabs.market.name}`);
-            this.updateButtonText('tab-btn-transport', `${theme.tabs.transport.emoji} ${theme.tabs.transport.name}`);
-            this.updateButtonText('tab-btn-city', `${theme.tabs.city.emoji} ${theme.tabs.city.name}`);
-            this.updateButtonText('tab-btn-research', `${theme.tabs.research.emoji} ${theme.tabs.research.name}`);
-        }
+    if (crafting.advanced) {
+      const advBtn = document.getElementById('craft-advanced-btn');
+      if (advBtn) {
+        const titleDiv = advBtn.querySelector('.btn-title');
+        const costDiv = advBtn.querySelector('.btn-cost');
+        const descDiv = advBtn.querySelector('.btn-description');
+        if (titleDiv)
+          titleDiv.textContent = `${crafting.advanced.emoji} ${crafting.advanced.title}`;
+        if (costDiv)
+          costDiv.innerHTML = `Needs: <span>1</span> ${crafting.intermediate.result} + <span>3</span> ${resources.iron.name}`;
+        if (descDiv)
+          descDiv.textContent = `→ ${crafting.advanced.result} (Sells for 30 ${resources.gold.name.toLowerCase()})`;
+      }
     }
 
-    updateResourceNames(theme) {
-        const resources = theme.resources;
-        
-        // Update resource icons (emojis)
-        this.updateTextContent('stone-icon', resources.stone.emoji);
-        this.updateTextContent('coal-icon', resources.coal.emoji);
-        this.updateTextContent('iron-icon', resources.iron.emoji);
-        this.updateTextContent('silver-icon', resources.silver.emoji);
-        this.updateTextContent('gold-icon', resources.gold.emoji);
-        
-        // Update resource display labels (just name, no emoji)
-        this.updateTextContent('stone-label', resources.stone.name + ':');
-        this.updateTextContent('coal-label', resources.coal.name + ':');
-        this.updateTextContent('iron-label', resources.iron.name + ':');
-        this.updateTextContent('silver-label', resources.silver.name + ':');
-        this.updateTextContent('gold-label', resources.gold.name + ':');
-        
-        // Update tooltips
-        this.updateTooltip('stone-label', resources.stone.description);
-        this.updateTooltip('coal-label', resources.coal.description);
-        this.updateTooltip('iron-label', resources.iron.description);
-        this.updateTooltip('silver-label', resources.silver.description);
-        this.updateTooltip('gold-label', resources.gold.description);
-        
-        // Update mining buttons
-        this.updateButtonText('mine-stone-btn', `Gather ${resources.stone.name}`);
-        
-        // Update sell buttons
-        this.updateButtonText('sell-stone-btn', `Sell ${resources.stone.name}`);
-        this.updateButtonText('sell-coal-btn', `Sell ${resources.coal.name}`);
-        this.updateButtonText('sell-iron-btn', `Sell ${resources.iron.name}`);
-        this.updateButtonText('sell-silver-btn', `Sell ${resources.silver.name}`);
+    if (crafting.premium) {
+      const premBtn = document.getElementById('craft-premium-btn');
+      if (premBtn) {
+        const titleDiv = premBtn.querySelector('.btn-title');
+        const costDiv = premBtn.querySelector('.btn-cost');
+        const descDiv = premBtn.querySelector('.btn-description');
+        if (titleDiv) titleDiv.textContent = `${crafting.premium.emoji} ${crafting.premium.title}`;
+        if (costDiv)
+          costDiv.innerHTML = `Needs: <span>1</span> ${crafting.advanced.result} + <span>2</span> ${resources.silver.name}`;
+        if (descDiv)
+          descDiv.textContent = `→ ${crafting.premium.result} (Sells for 120 ${resources.gold.name.toLowerCase()})`;
+      }
     }
 
-    updateWorkerNames(theme) {
-        const workers = theme.workers;
-        const resources = theme.resources;
-        
-        console.log('updateWorkerNames called with:', workers);
-        
-        // Update section headers
-        this.updateTextContent('mining-operations-header', `${theme.tabs.mining.emoji} ${theme.tabs.mining.name} Operations`);
-        this.updateTextContent('workforce-header', `👥 Workforce Status`);
-        
-        // Update manual mine button
-        this.updateButtonText('mine-stone-btn', `Gather ${resources.stone.name}`);
-        this.updateButtonDescription('mine-stone-btn', `+1 ${resources.stone.name.toLowerCase()} per click`);
-        
-        // Update hire buttons (titles and descriptions)
-        console.log('Updating hire-stone-miner-btn to:', `Hire ${workers.stoneMiners.name}`);
-        this.updateButtonText('hire-stone-miner-btn', `Hire ${workers.stoneMiners.name}`);
-        this.updateButtonText('hire-coal-miner-btn', `Hire ${workers.coalMiners.name}`);
-        this.updateButtonText('hire-iron-miner-btn', `Hire ${workers.ironMiners.name}`);
-        this.updateButtonText('hire-silver-miner-btn', `Hire ${workers.silverMiners.name}`);
-        
-        // Update worker button descriptions with themed resource names
-        this.updateButtonDescription('hire-stone-miner-btn', `+1 ${resources.stone.name.toLowerCase()}/sec`);
-        this.updateButtonDescription('hire-coal-miner-btn', `+1 ${resources.coal.name.toLowerCase()}/sec`);
-        this.updateButtonDescription('hire-iron-miner-btn', `+1 ${resources.iron.name.toLowerCase()}/sec`);
-        this.updateButtonDescription('hire-silver-miner-btn', `+1 ${resources.silver.name.toLowerCase()}/sec`);
-        
-        // Update workforce status labels
-        this.updateTextContent('stone-miners-label', `${workers.stoneMiners.name}:`);
-        this.updateTextContent('coal-miners-label', `${workers.coalMiners.name}:`);
-        this.updateTextContent('iron-miners-label', `${workers.ironMiners.name}:`);
-        this.updateTextContent('silver-miners-label', `${workers.silverMiners.name}:`);
+    // Update crafted inventory labels
+    this.updateCraftedInventoryLabels(theme);
+  }
+
+  updateCraftedInventoryLabels(theme) {
+    if (!theme.crafting) return;
+
+    const crafting = theme.crafting;
+    const cityName = theme.tabs?.city?.name || 'City';
+
+    // Update the section header
+    const transportHeader = document.getElementById('transport-to-city-header');
+    if (transportHeader) {
+      transportHeader.textContent = `${theme.tabs?.transport?.emoji || '🚛'} Transport to ${cityName}`;
     }
 
-    updateProcessorNames(theme) {
-        const processors = theme.processors;
-        
-        // Update section header
-        this.updateTextContent('processing-header', `${theme.tabs.processing.emoji} ${theme.tabs.processing.name} Systems`);
-        
-        // Update build buttons
-        this.updateButtonTextAndDesc('build-smelter-btn', `Build ${processors.smelters.name}`, processors.smelters.description);
-        this.updateButtonTextAndDesc('build-forge-btn', `Build ${processors.forges.name}`, processors.forges.description);
-        this.updateButtonTextAndDesc('build-refinery-btn', `Build ${processors.refineries.name}`, processors.refineries.description);
-        this.updateButtonTextAndDesc('build-mint-btn', `Build ${processors.mints.name}`, processors.mints.description);
-        
-        // Update status labels
-        this.updateTextContent('smelters-label', `${processors.smelters.name}:`);
-        this.updateTextContent('forges-label', `${processors.forges.name}:`);
-        this.updateTextContent('refineries-label', `${processors.refineries.name}:`);
-        this.updateTextContent('mints-label', `${processors.mints.name}:`);
+    // Update the section description
+    const transportDesc = document.getElementById('transport-to-city-desc');
+    if (transportDesc) {
+      transportDesc.textContent = `Toggle which items to automatically transport via ${theme.tabs?.transport?.name || 'Infrastructure'} tab`;
     }
 
-    updateTraderNames(theme) {
-        const traders = theme.traders;
-        const resources = theme.resources;
-        
-        // Update section header
-        this.updateTextContent('market-header', `${theme.tabs.market.emoji} ${theme.tabs.market.name}`);
-        
-        // Update sell button descriptions with themed currency
-        const currencyName = resources.gold.name.toLowerCase();
-        
-        this.updateTextContent('stone-sell-currency', `${currencyName}/${resources.stone.name.toLowerCase()}`);
-        this.updateTextContent('sell-stone-desc', `Convert ${resources.stone.name.toLowerCase()} to ${currencyName}`);
-        
-        this.updateTextContent('coal-sell-currency', `${currencyName}/${resources.coal.name.toLowerCase()}`);
-        this.updateTextContent('sell-coal-desc', `Convert ${resources.coal.name.toLowerCase()} to ${currencyName}`);
-        
-        this.updateTextContent('iron-sell-currency', `${currencyName}/${resources.iron.name.toLowerCase()}`);
-        this.updateTextContent('sell-iron-desc', `Convert ${resources.iron.name.toLowerCase()} to ${currencyName}`);
-        
-        this.updateTextContent('silver-sell-currency', `${currencyName}/${resources.silver.name.toLowerCase()}`);
-        this.updateTextContent('sell-silver-desc', `Convert ${resources.silver.name.toLowerCase()} to ${currencyName}`);
-        
-        // Update hire buttons
-        this.updateButtonText('hire-stone-trader-btn', `Hire ${traders.stoneTraders.name}`);
-        this.updateButtonText('hire-coal-trader-btn', `Hire ${traders.coalTraders.name}`);
-        this.updateButtonText('hire-metal-trader-btn', `Hire ${traders.metalTraders.name}`);
-        
-        // Update trader button descriptions
-        this.updateTextContent('hire-stone-trader-desc', `Auto-sell ${resources.stone.name.toLowerCase()}`);
-        this.updateTextContent('hire-coal-trader-desc', `Auto-sell ${resources.coal.name.toLowerCase()}`);
-        this.updateTextContent('hire-metal-trader-desc', `Auto-sell ${resources.iron.name.toLowerCase()} & ${resources.silver.name.toLowerCase()}`);
-        
-        // Update status labels
-        this.updateTextContent('stone-traders-label', `${traders.stoneTraders.name}:`);
-        this.updateTextContent('coal-traders-label', `${traders.coalTraders.name}:`);
-        this.updateTextContent('metal-traders-label', `${traders.metalTraders.name}:`);
+    // Update the labels for crafted inventory items
+    if (crafting.basic) {
+      this.updateTextContent('crafted-basic-label', `${crafting.basic.result}:`);
+      this.updateTooltip('crafted-basic-row', `Ready for transport to ${cityName.toLowerCase()}`);
+    }
+    if (crafting.intermediate) {
+      this.updateTextContent('crafted-intermediate-label', `${crafting.intermediate.result}:`);
+      this.updateTooltip(
+        'crafted-intermediate-row',
+        `Ready for transport to ${cityName.toLowerCase()}`
+      );
+    }
+    if (crafting.advanced) {
+      this.updateTextContent('crafted-advanced-label', `${crafting.advanced.result}:`);
+      this.updateTooltip(
+        'crafted-advanced-row',
+        `Ready for transport to ${cityName.toLowerCase()}`
+      );
+    }
+    if (crafting.premium) {
+      this.updateTextContent('crafted-premium-label', `${crafting.premium.result}:`);
+      this.updateTooltip('crafted-premium-row', `Ready for transport to ${cityName.toLowerCase()}`);
     }
 
-    updateTransportNames(theme) {
-        const transport = theme.transport;
-        
-        // Update section headers
-        this.updateTextContent('transport-header', `${theme.tabs.transport.emoji} ${theme.tabs.transport.name} Fleet`);
-        this.updateTextContent('fleet-status-header', `🚚 ${theme.tabs.transport.name} Status`);
-        
-        // Update buy buttons
-        this.updateButtonText('buy-cart-btn', `Buy ${transport.carts.name}`);
-        this.updateButtonText('buy-wagon-btn', `Buy ${transport.wagons.name}`);
-        this.updateButtonText('buy-train-btn', `Buy ${transport.trains.name}`);
-        
-        // Update status labels
-        this.updateTextContent('carts-label', `${transport.carts.name}:`);
-        this.updateTextContent('wagons-label', `${transport.wagons.name}:`);
-        this.updateTextContent('trains-label', `${transport.trains.name}:`);
+    // Update transport button labels to match
+    this.updateTransportButtonLabels(theme);
+  }
+
+  updateTransportButtonLabels(theme) {
+    if (!theme.crafting) return;
+
+    const crafting = theme.crafting;
+
+    // Update transport toggle button labels
+    const transportButtons = [
+      { id: 'transport-basic-btn', tier: 'basic' },
+      { id: 'transport-intermediate-btn', tier: 'intermediate' },
+      { id: 'transport-advanced-btn', tier: 'advanced' },
+      { id: 'transport-premium-btn', tier: 'premium' },
+    ];
+
+    transportButtons.forEach((btn) => {
+      const button = document.getElementById(btn.id);
+      if (button && crafting[btn.tier]) {
+        const titleDiv = button.querySelector('.btn-title');
+        if (titleDiv) {
+          // Get current ON/OFF state from game state
+          const autoTransport = this.gameEngine?.state?.autoTransport || {};
+          const state = autoTransport[btn.tier] ? 'ON' : 'OFF';
+
+          // Extract a short name from the result (first word or full name if short)
+          const resultName = crafting[btn.tier].result;
+          const shortName =
+            resultName.split(' ').length > 2
+              ? resultName.split(' ').slice(0, 2).join(' ')
+              : resultName;
+
+          titleDiv.textContent = `${crafting[btn.tier].emoji} ${shortName}: ${state}`;
+        }
+      }
+    });
+  }
+
+  updateResearchNames(theme) {
+    if (!theme.research) return;
+
+    const research = theme.research;
+
+    // Update research button titles and descriptions
+    if (research.mining) {
+      this.updateTextContent('research-mining-title', research.mining.name);
+      this.updateTextContent('research-mining-desc', research.mining.description);
+    }
+    if (research.processing) {
+      this.updateTextContent('research-processing-title', research.processing.name);
+      this.updateTextContent('research-processing-desc', research.processing.description);
+    }
+    if (research.automation) {
+      this.updateTextContent('research-automation-title', research.automation.name);
+      this.updateTextContent('research-automation-desc', research.automation.description);
+    }
+    if (research.logistics) {
+      this.updateTextContent('research-logistics-title', research.logistics.name);
+      this.updateTextContent('research-logistics-desc', research.logistics.description);
+    }
+  }
+
+  updateUnlockNames(theme) {
+    if (!theme.unlocks) return;
+
+    const unlocks = theme.unlocks;
+
+    // Update each unlock button with themed text
+    const unlockButtons = document.querySelectorAll('.unlock-btn[data-unlock]');
+    unlockButtons.forEach((btn) => {
+      const unlockType = btn.getAttribute('data-unlock');
+      if (unlocks[unlockType]) {
+        const titleDiv = btn.querySelector('.btn-title');
+        const descDiv = btn.querySelector('.btn-description');
+
+        if (titleDiv) titleDiv.textContent = unlocks[unlockType].title;
+        if (descDiv) descDiv.textContent = unlocks[unlockType].description;
+      }
+    });
+  }
+
+  updateRebirthButton(theme) {
+    const btn = document.getElementById('rebirth-btn');
+    if (btn) {
+      const titleDiv = btn.querySelector('.btn-title');
+      if (titleDiv) {
+        titleDiv.textContent = `${theme.rebirthButton.emoji} ${theme.rebirthButton.text}`;
+      }
+
+      // Update button class for final ending
+      if (theme.isEnding) {
+        btn.classList.add('ending-btn');
+        btn.style.background = 'linear-gradient(135deg, #000000 0%, #1a1a1a 100%)';
+        btn.style.border = '2px solid #ffffff';
+      } else {
+        btn.classList.remove('ending-btn');
+        btn.style.background = '';
+        btn.style.border = '';
+      }
+    }
+  }
+
+  updateAtmosphere(theme) {
+    const container = document.getElementById('game-container');
+    if (!container) return;
+
+    // Remove old atmosphere classes
+    container.classList.remove(
+      'atmosphere-bright',
+      'atmosphere-neutral',
+      'atmosphere-dim',
+      'atmosphere-dark',
+      'atmosphere-darker',
+      'atmosphere-grim',
+      'atmosphere-bleak',
+      'atmosphere-desolate',
+      'atmosphere-sterile',
+      'atmosphere-void'
+    );
+
+    // Add new atmosphere class
+    container.classList.add(`atmosphere-${theme.atmosphere}`);
+
+    // Special handling for ending
+    if (theme.isEnding) {
+      container.classList.add('game-ending');
+    } else {
+      container.classList.remove('game-ending');
     }
 
-    updateCityNames(theme) {
-        const city = theme.city;
-        const resources = theme.resources;
-        
-        // Update section headers
-        this.updateTextContent('city-header', `${theme.tabs.city.emoji} ${theme.tabs.city.name} HQ`);
-        this.updateTextContent('city-status-header', `🏛️ ${theme.tabs.city.name} Status`);
-        this.updateTextContent('city-dynamics-header', `📈 ${theme.tabs.city.name} Dynamics`);
-        this.updateTextContent('city-inventory-header', `📦 ${theme.tabs.city.name} Finished Inventory`);
-        
-        // Update hire/build buttons
-        this.updateButtonText('hire-police-btn', `Hire ${city.police.name}`);
-        this.updateButtonText('hire-politician-btn', `Hire ${city.politicians.name}`);
-        this.updateButtonText('build-bank-btn', `Build ${city.banks.name}`);
-        this.updateButtonText('build-market-btn', `Build ${city.markets.name}`);
-        this.updateButtonText('build-university-btn', `Build ${city.universities.name}`);
-        
-        // Update new upgrade buttons
-        // Sales Department, Mining Academy and Automation Lab buttons handled in GameEngine.js with dynamic titles
-        
-        // Update button descriptions with theme-specific names
-        this.updateButtonDescription('build-university-btn', `+10% global efficiency per ${city.universities.name.toLowerCase()}`);
-        this.updateButtonDescription('hire-politician-btn', `+5% trading efficiency per ${city.politicians.name.toLowerCase()}`);
-        this.updateButtonDescription('build-market-btn', `+15% trading efficiency per ${city.markets.name.toLowerCase()}`);
-        this.updateButtonDescription('build-bank-btn', `+20% to ALL city sales (stacks!)`);
-        
-        // Update status labels
-        this.updateLabel('police-label', `${city.police.name}:`);
-        this.updateLabel('politicians-label', `${city.politicians.name}:`);
-        this.updateLabel('banks-label', `${city.banks.name}:`);
-        this.updateLabel('markets-label', `${city.markets.name}:`);
-        this.updateLabel('universities-label', `${city.universities.name}:`);
-        this.updateLabel('sales-department-label', `${city.salesDepartment.name}:`);
-        this.updateLabel('mining-academy-label', `${city.miningAcademy.name}:`);
-        this.updateLabel('automation-lab-label', `${city.automationLab.name}:`);
-        
-        // Update sell button costs with themed bank name
-        const sellButtons = [
-            { id: 'sell-city-basic-btn', value: 3, tier: 'basic' },
-            { id: 'sell-city-intermediate-btn', value: 9, tier: 'intermediate' },
-            { id: 'sell-city-advanced-btn', value: 30, tier: 'advanced' },
-            { id: 'sell-city-premium-btn', value: 120, tier: 'premium' }
-        ];
-        
-        sellButtons.forEach(btn => {
-            const button = document.getElementById(btn.id);
-            if (button && theme.crafting && theme.crafting[btn.tier]) {
-                const craftData = theme.crafting[btn.tier];
-                
-                // Update title
-                const titleDiv = button.querySelector('.btn-title');
-                if (titleDiv) {
-                    titleDiv.textContent = `💰 Sell ${craftData.result} from ${theme.tabs.city.name}`;
-                }
-                
-                // Update cost
-                const costDiv = button.querySelector('.btn-cost');
-                if (costDiv) {
-                    costDiv.innerHTML = `${btn.value} <span class="themed-currency">${resources.gold.name.toLowerCase()}</span> (+20% per ${city.banks.name})`;
-                }
-                
-                // Update description
-                const descDiv = button.querySelector('.btn-description');
-                if (descDiv) {
-                    descDiv.textContent = `Sell all ${craftData.result} in ${theme.tabs.city.name.toLowerCase()}`;
-                }
-            }
-        });
+    // Fix arcade text readability for all themes
+    this.fixArcadeTextContrast(theme);
+  }
+
+  fixArcadeTextContrast(theme) {
+    // Dynamically adjust arcade section text colors based on theme brightness
+    const arcadeTab = document.getElementById('arcade-tab');
+    if (!arcadeTab) return;
+
+    // Determine if we need light or dark text based on atmosphere
+    const darkBackgrounds = ['bright', 'sterile']; // Light backgrounds need dark text
+    const needsDarkText = darkBackgrounds.includes(theme.atmosphere);
+
+    // Define color schemes for different brightness levels
+    let textConfig;
+
+    if (needsDarkText) {
+      // Light background themes (Rebirth 0 and 8)
+      textConfig = {
+        heading: '#1e293b',
+        body: '#1e293b',
+        bodyOpacity: '1',
+        resourceLabel: '#1e293b',
+        resourceCount: '#000000',
+        tipBackground: 'rgba(219, 234, 254, 0.8)',
+        tipBorder: 'rgba(59, 130, 246, 0.6)',
+        tipText: '#1e293b',
+        tipStrong: '#1e3a8a',
+        disclaimerBackground: 'rgba(30, 41, 59, 0.95)',
+        disclaimerBorder: 'rgba(100, 116, 139, 0.3)',
+        disclaimerText: '#f1f5f9',
+        disclaimerStrong: '#fbbf24',
+      };
+    } else {
+      // Dark background themes (All other rebirths)
+      textConfig = {
+        heading: '#f1f5f9',
+        body: '#e2e8f0',
+        bodyOpacity: '1',
+        resourceLabel: '#e2e8f0',
+        resourceCount: '#ffffff',
+        tipBackground: 'rgba(59, 130, 246, 0.25)',
+        tipBorder: 'rgba(59, 130, 246, 0.6)',
+        tipText: '#f1f5f9',
+        tipStrong: '#fbbf24',
+        disclaimerBackground: 'rgba(30, 41, 59, 0.95)',
+        disclaimerBorder: 'rgba(100, 116, 139, 0.3)',
+        disclaimerText: '#f1f5f9',
+        disclaimerStrong: '#fbbf24',
+      };
     }
 
-    updateCraftingNames(theme) {
-        if (!theme.crafting) return;
-        
-        const crafting = theme.crafting;
-        const resources = theme.resources;
-        
-        // Update crafting button titles and descriptions
-        if (crafting.basic) {
-            this.updateTextContent('craft-basic-btn', crafting.basic.title);
-            const basicBtn = document.getElementById('craft-basic-btn');
-            if (basicBtn) {
-                const titleDiv = basicBtn.querySelector('.btn-title');
-                const costDiv = basicBtn.querySelector('.btn-cost');
-                const descDiv = basicBtn.querySelector('.btn-description');
-                if (titleDiv) titleDiv.textContent = `${crafting.basic.emoji} ${crafting.basic.title}`;
-                if (costDiv) costDiv.innerHTML = `Needs: <span>10</span> ${resources.stone.name}`;
-                if (descDiv) descDiv.textContent = `→ ${crafting.basic.result} (Sells for 3 ${resources.gold.name.toLowerCase()})`;
-            }
+    // Apply heading colors
+    const h2Elements = arcadeTab.querySelectorAll('.panel h2');
+    h2Elements.forEach((h2) => {
+      h2.style.color = textConfig.heading;
+    });
+
+    // Apply resource label and count colors
+    const resourceTypes = arcadeTab.querySelectorAll('.resource-type');
+    resourceTypes.forEach((el) => {
+      el.style.color = textConfig.resourceLabel;
+    });
+
+    const resourceCounts = arcadeTab.querySelectorAll('.resource-count');
+    resourceCounts.forEach((el) => {
+      el.style.color = textConfig.resourceCount;
+    });
+
+    // Apply intro paragraph colors
+    const introParagraphs = arcadeTab.querySelectorAll('.panel > p[style*="margin-bottom: 15px"]');
+    introParagraphs.forEach((p) => {
+      p.style.color = textConfig.body;
+      p.style.opacity = textConfig.bodyOpacity;
+    });
+
+    // Apply tip box styling
+    const tipBoxes = arcadeTab.querySelectorAll('div[style*="background: rgba(59, 130, 246"]');
+    tipBoxes.forEach((box) => {
+      box.style.background = textConfig.tipBackground;
+      box.style.borderColor = textConfig.tipBorder;
+
+      const paragraphs = box.querySelectorAll('p');
+      paragraphs.forEach((p) => {
+        p.style.color = textConfig.tipText;
+      });
+
+      const strongs = box.querySelectorAll('strong');
+      strongs.forEach((s) => {
+        s.style.color = textConfig.tipStrong;
+      });
+    });
+
+    // Apply legal disclaimer styling
+    const legalDisclaimer = document.getElementById('arcade-legal-disclaimer');
+    if (legalDisclaimer) {
+      legalDisclaimer.style.background = textConfig.disclaimerBackground;
+      legalDisclaimer.style.borderColor = textConfig.disclaimerBorder;
+
+      const disclaimerParagraphs = legalDisclaimer.querySelectorAll('p');
+      disclaimerParagraphs.forEach((p) => {
+        p.style.color = textConfig.disclaimerText;
+      });
+
+      const disclaimerStrongs = legalDisclaimer.querySelectorAll('strong');
+      disclaimerStrongs.forEach((s) => {
+        s.style.color = textConfig.disclaimerStrong;
+      });
+    }
+  }
+
+  updateCostCurrency(theme) {
+    const currencyName = theme.resources.gold.name.toLowerCase();
+
+    // List of all possible currency names from all themes (lowercase)
+    const allCurrencies = [
+      'gold',
+      'venture capital',
+      'cash',
+      'company funds',
+      'savings',
+      'coins',
+      'canned food',
+      'will to live',
+      'time',
+      'goodbye',
+    ];
+
+    // Update all .btn-cost divs
+    const costDivs = document.querySelectorAll('.btn-cost');
+    costDivs.forEach((div) => {
+      let text = div.innerHTML;
+
+      // Replace any currency name with the current theme's currency
+      allCurrencies.forEach((oldCurrency) => {
+        // Pattern 1: "</span> gold" (for buttons with span tags)
+        const spanPattern = new RegExp(`</span> ${oldCurrency}`, 'gi');
+        text = text.replace(spanPattern, `</span> ${currencyName}`);
+
+        // Pattern 2: "25 gold" or "Cost: 25 gold" (for unlock buttons without span tags)
+        const directPattern = new RegExp(`(\\d+) ${oldCurrency}\\b`, 'gi');
+        text = text.replace(directPattern, `$1 ${currencyName}`);
+
+        // Also handle "currency/resource" patterns
+        const slashPattern = new RegExp(`${oldCurrency}/`, 'gi');
+        text = text.replace(slashPattern, `${currencyName}/`);
+      });
+
+      div.innerHTML = text;
+    });
+
+    // Update all .btn-description divs
+    const descDivs = document.querySelectorAll('.btn-description');
+    descDivs.forEach((div) => {
+      let text = div.textContent;
+
+      // Replace "to [currency]" patterns
+      allCurrencies.forEach((oldCurrency) => {
+        const toPattern = new RegExp(`to ${oldCurrency}`, 'gi');
+        text = text.replace(toPattern, `to ${currencyName}`);
+
+        const convertPattern = new RegExp(`Convert resources to ${oldCurrency}`, 'gi');
+        text = text.replace(convertPattern, `Convert resources to ${currencyName}`);
+      });
+
+      div.textContent = text;
+    });
+  }
+
+  // Helper methods
+  updateTextContent(elementId, text) {
+    const element = document.getElementById(elementId);
+    if (element) {
+      element.textContent = text;
+    }
+  }
+
+  updateTooltip(elementId, tooltip) {
+    const element = document.getElementById(elementId);
+    if (element) {
+      element.setAttribute('data-tooltip', tooltip);
+      element.setAttribute('title', tooltip);
+    }
+  }
+
+  updateButtonText(buttonId, text) {
+    const button = document.getElementById(buttonId);
+    if (button) {
+      const titleDiv = button.querySelector('.btn-title');
+      if (titleDiv) {
+        titleDiv.textContent = text;
+      } else {
+        // Fallback if no btn-title div
+        const firstChild = button.firstChild;
+        if (firstChild && firstChild.nodeType === Node.TEXT_NODE) {
+          firstChild.textContent = text;
         }
-        
-        if (crafting.intermediate) {
-            const intBtn = document.getElementById('craft-intermediate-btn');
-            if (intBtn) {
-                const titleDiv = intBtn.querySelector('.btn-title');
-                const costDiv = intBtn.querySelector('.btn-cost');
-                const descDiv = intBtn.querySelector('.btn-description');
-                if (titleDiv) titleDiv.textContent = `${crafting.intermediate.emoji} ${crafting.intermediate.title}`;
-                if (costDiv) costDiv.innerHTML = `Needs: <span>1</span> ${crafting.basic.result} + <span>5</span> ${resources.coal.name}`;
-                if (descDiv) descDiv.textContent = `→ ${crafting.intermediate.result} (Sells for 9 ${resources.gold.name.toLowerCase()})`;
-            }
-        }
-        
-        if (crafting.advanced) {
-            const advBtn = document.getElementById('craft-advanced-btn');
-            if (advBtn) {
-                const titleDiv = advBtn.querySelector('.btn-title');
-                const costDiv = advBtn.querySelector('.btn-cost');
-                const descDiv = advBtn.querySelector('.btn-description');
-                if (titleDiv) titleDiv.textContent = `${crafting.advanced.emoji} ${crafting.advanced.title}`;
-                if (costDiv) costDiv.innerHTML = `Needs: <span>1</span> ${crafting.intermediate.result} + <span>3</span> ${resources.iron.name}`;
-                if (descDiv) descDiv.textContent = `→ ${crafting.advanced.result} (Sells for 30 ${resources.gold.name.toLowerCase()})`;
-            }
-        }
-        
-        if (crafting.premium) {
-            const premBtn = document.getElementById('craft-premium-btn');
-            if (premBtn) {
-                const titleDiv = premBtn.querySelector('.btn-title');
-                const costDiv = premBtn.querySelector('.btn-cost');
-                const descDiv = premBtn.querySelector('.btn-description');
-                if (titleDiv) titleDiv.textContent = `${crafting.premium.emoji} ${crafting.premium.title}`;
-                if (costDiv) costDiv.innerHTML = `Needs: <span>1</span> ${crafting.advanced.result} + <span>2</span> ${resources.silver.name}`;
-                if (descDiv) descDiv.textContent = `→ ${crafting.premium.result} (Sells for 120 ${resources.gold.name.toLowerCase()})`;
-            }
-        }
-        
-        // Update crafted inventory labels
-        this.updateCraftedInventoryLabels(theme);
+      }
+    }
+  }
+
+  updateButtonTextAndDesc(buttonId, text, description) {
+    const button = document.getElementById(buttonId);
+    if (button) {
+      const titleDiv = button.querySelector('.btn-title');
+      const descDiv = button.querySelector('.btn-description');
+
+      if (titleDiv) titleDiv.textContent = text;
+      if (descDiv) descDiv.textContent = description;
+    }
+  }
+
+  updateButtonDescription(buttonId, description) {
+    const button = document.getElementById(buttonId);
+    if (button) {
+      const descDiv = button.querySelector('.btn-description');
+      if (descDiv) {
+        descDiv.textContent = description;
+      }
+    }
+  }
+
+  updateLabel(labelClass, text) {
+    // Try finding by exact ID first
+    let element = document.getElementById(labelClass);
+
+    // Try finding by class
+    if (!element) {
+      const elements = document.querySelectorAll(`.${labelClass}`);
+      if (elements.length > 0) {
+        element = elements[0];
+      }
     }
 
-    updateCraftedInventoryLabels(theme) {
-        if (!theme.crafting) return;
-        
-        const crafting = theme.crafting;
-        const cityName = theme.tabs?.city?.name || 'City';
-        
-        // Update the section header
-        const transportHeader = document.getElementById('transport-to-city-header');
-        if (transportHeader) {
-            transportHeader.textContent = `${theme.tabs?.transport?.emoji || '🚛'} Transport to ${cityName}`;
+    // Try finding parent row and updating the first span
+    if (!element) {
+      const parentId = labelClass.replace('-label', '');
+      const parent = document.getElementById(parentId);
+      if (parent) {
+        const span = parent.querySelector('.resource-type');
+        if (span) {
+          element = span;
         }
-        
-        // Update the section description
-        const transportDesc = document.getElementById('transport-to-city-desc');
-        if (transportDesc) {
-            transportDesc.textContent = `Toggle which items to automatically transport via ${theme.tabs?.transport?.name || 'Infrastructure'} tab`;
-        }
-        
-        // Update the labels for crafted inventory items
-        if (crafting.basic) {
-            this.updateTextContent('crafted-basic-label', `${crafting.basic.result}:`);
-            this.updateTooltip('crafted-basic-row', `Ready for transport to ${cityName.toLowerCase()}`);
-        }
-        if (crafting.intermediate) {
-            this.updateTextContent('crafted-intermediate-label', `${crafting.intermediate.result}:`);
-            this.updateTooltip('crafted-intermediate-row', `Ready for transport to ${cityName.toLowerCase()}`);
-        }
-        if (crafting.advanced) {
-            this.updateTextContent('crafted-advanced-label', `${crafting.advanced.result}:`);
-            this.updateTooltip('crafted-advanced-row', `Ready for transport to ${cityName.toLowerCase()}`);
-        }
-        if (crafting.premium) {
-            this.updateTextContent('crafted-premium-label', `${crafting.premium.result}:`);
-            this.updateTooltip('crafted-premium-row', `Ready for transport to ${cityName.toLowerCase()}`);
-        }
-        
-        // Update transport button labels to match
-        this.updateTransportButtonLabels(theme);
+      }
     }
 
-    updateTransportButtonLabels(theme) {
-        if (!theme.crafting) return;
-        
-        const crafting = theme.crafting;
-        
-        // Update transport toggle button labels
-        const transportButtons = [
-            { id: 'transport-basic-btn', tier: 'basic' },
-            { id: 'transport-intermediate-btn', tier: 'intermediate' },
-            { id: 'transport-advanced-btn', tier: 'advanced' },
-            { id: 'transport-premium-btn', tier: 'premium' }
-        ];
-        
-        transportButtons.forEach(btn => {
-            const button = document.getElementById(btn.id);
-            if (button && crafting[btn.tier]) {
-                const titleDiv = button.querySelector('.btn-title');
-                if (titleDiv) {
-                    // Get current ON/OFF state from game state
-                    const autoTransport = this.gameEngine?.state?.autoTransport || {};
-                    const state = autoTransport[btn.tier] ? 'ON' : 'OFF';
-                    
-                    // Extract a short name from the result (first word or full name if short)
-                    const resultName = crafting[btn.tier].result;
-                    const shortName = resultName.split(' ').length > 2 ? 
-                        resultName.split(' ').slice(0, 2).join(' ') : resultName;
-                    
-                    titleDiv.textContent = `${crafting[btn.tier].emoji} ${shortName}: ${state}`;
-                }
-            }
-        });
+    if (element) {
+      element.textContent = text;
     }
+  }
 
-    updateResearchNames(theme) {
-        if (!theme.research) return;
-        
-        const research = theme.research;
-        
-        // Update research button titles and descriptions
-        if (research.mining) {
-            this.updateTextContent('research-mining-title', research.mining.name);
-            this.updateTextContent('research-mining-desc', research.mining.description);
-        }
-        if (research.processing) {
-            this.updateTextContent('research-processing-title', research.processing.name);
-            this.updateTextContent('research-processing-desc', research.processing.description);
-        }
-        if (research.automation) {
-            this.updateTextContent('research-automation-title', research.automation.name);
-            this.updateTextContent('research-automation-desc', research.automation.description);
-        }
-        if (research.logistics) {
-            this.updateTextContent('research-logistics-title', research.logistics.name);
-            this.updateTextContent('research-logistics-desc', research.logistics.description);
-        }
-    }
+  // Handle game ending
+  handleGameEnding() {
+    if (!this.currentTheme || !this.currentTheme.isEnding) return;
 
-    updateUnlockNames(theme) {
-        if (!theme.unlocks) return;
-        
-        const unlocks = theme.unlocks;
-        
-        // Update each unlock button with themed text
-        const unlockButtons = document.querySelectorAll('.unlock-btn[data-unlock]');
-        unlockButtons.forEach(btn => {
-            const unlockType = btn.getAttribute('data-unlock');
-            if (unlocks[unlockType]) {
-                const titleDiv = btn.querySelector('.btn-title');
-                const descDiv = btn.querySelector('.btn-description');
-                
-                if (titleDiv) titleDiv.textContent = unlocks[unlockType].title;
-                if (descDiv) descDiv.textContent = unlocks[unlockType].description;
-            }
-        });
-    }
-
-    updateRebirthButton(theme) {
-        const btn = document.getElementById('rebirth-btn');
-        if (btn) {
-            const titleDiv = btn.querySelector('.btn-title');
-            if (titleDiv) {
-                titleDiv.textContent = `${theme.rebirthButton.emoji} ${theme.rebirthButton.text}`;
-            }
-            
-            // Update button class for final ending
-            if (theme.isEnding) {
-                btn.classList.add('ending-btn');
-                btn.style.background = 'linear-gradient(135deg, #000000 0%, #1a1a1a 100%)';
-                btn.style.border = '2px solid #ffffff';
-            } else {
-                btn.classList.remove('ending-btn');
-                btn.style.background = '';
-                btn.style.border = '';
-            }
-        }
-    }
-
-    updateAtmosphere(theme) {
-        const container = document.getElementById('game-container');
-        if (!container) return;
-        
-        // Remove old atmosphere classes
-        container.classList.remove('atmosphere-bright', 'atmosphere-neutral', 'atmosphere-dim', 
-                                   'atmosphere-dark', 'atmosphere-darker', 'atmosphere-grim', 
-                                   'atmosphere-bleak', 'atmosphere-desolate', 'atmosphere-sterile', 
-                                   'atmosphere-void');
-        
-        // Add new atmosphere class
-        container.classList.add(`atmosphere-${theme.atmosphere}`);
-        
-        // Special handling for ending
-        if (theme.isEnding) {
-            container.classList.add('game-ending');
-        } else {
-            container.classList.remove('game-ending');
-        }
-        
-        // Fix arcade text readability for all themes
-        this.fixArcadeTextContrast(theme);
-    }
-    
-    fixArcadeTextContrast(theme) {
-        // Dynamically adjust arcade section text colors based on theme brightness
-        const arcadeTab = document.getElementById('arcade-tab');
-        if (!arcadeTab) return;
-        
-        // Determine if we need light or dark text based on atmosphere
-        const darkBackgrounds = ['bright', 'sterile']; // Light backgrounds need dark text
-        const needsDarkText = darkBackgrounds.includes(theme.atmosphere);
-        
-        // Define color schemes for different brightness levels
-        let textConfig;
-        
-        if (needsDarkText) {
-            // Light background themes (Rebirth 0 and 8)
-            textConfig = {
-                heading: '#1e293b',
-                body: '#1e293b',
-                bodyOpacity: '1',
-                resourceLabel: '#1e293b',
-                resourceCount: '#000000',
-                tipBackground: 'rgba(219, 234, 254, 0.8)',
-                tipBorder: 'rgba(59, 130, 246, 0.6)',
-                tipText: '#1e293b',
-                tipStrong: '#1e3a8a',
-                disclaimerBackground: 'rgba(30, 41, 59, 0.95)',
-                disclaimerBorder: 'rgba(100, 116, 139, 0.3)',
-                disclaimerText: '#f1f5f9',
-                disclaimerStrong: '#fbbf24'
-            };
-        } else {
-            // Dark background themes (All other rebirths)
-            textConfig = {
-                heading: '#f1f5f9',
-                body: '#e2e8f0',
-                bodyOpacity: '1',
-                resourceLabel: '#e2e8f0',
-                resourceCount: '#ffffff',
-                tipBackground: 'rgba(59, 130, 246, 0.25)',
-                tipBorder: 'rgba(59, 130, 246, 0.6)',
-                tipText: '#f1f5f9',
-                tipStrong: '#fbbf24',
-                disclaimerBackground: 'rgba(30, 41, 59, 0.95)',
-                disclaimerBorder: 'rgba(100, 116, 139, 0.3)',
-                disclaimerText: '#f1f5f9',
-                disclaimerStrong: '#fbbf24'
-            };
-        }
-        
-        // Apply heading colors
-        const h2Elements = arcadeTab.querySelectorAll('.panel h2');
-        h2Elements.forEach(h2 => {
-            h2.style.color = textConfig.heading;
-        });
-        
-        // Apply resource label and count colors
-        const resourceTypes = arcadeTab.querySelectorAll('.resource-type');
-        resourceTypes.forEach(el => {
-            el.style.color = textConfig.resourceLabel;
-        });
-        
-        const resourceCounts = arcadeTab.querySelectorAll('.resource-count');
-        resourceCounts.forEach(el => {
-            el.style.color = textConfig.resourceCount;
-        });
-        
-        // Apply intro paragraph colors
-        const introParagraphs = arcadeTab.querySelectorAll('.panel > p[style*="margin-bottom: 15px"]');
-        introParagraphs.forEach(p => {
-            p.style.color = textConfig.body;
-            p.style.opacity = textConfig.bodyOpacity;
-        });
-        
-        // Apply tip box styling
-        const tipBoxes = arcadeTab.querySelectorAll('div[style*="background: rgba(59, 130, 246"]');
-        tipBoxes.forEach(box => {
-            box.style.background = textConfig.tipBackground;
-            box.style.borderColor = textConfig.tipBorder;
-            
-            const paragraphs = box.querySelectorAll('p');
-            paragraphs.forEach(p => {
-                p.style.color = textConfig.tipText;
-            });
-            
-            const strongs = box.querySelectorAll('strong');
-            strongs.forEach(s => {
-                s.style.color = textConfig.tipStrong;
-            });
-        });
-        
-        // Apply legal disclaimer styling
-        const legalDisclaimer = document.getElementById('arcade-legal-disclaimer');
-        if (legalDisclaimer) {
-            legalDisclaimer.style.background = textConfig.disclaimerBackground;
-            legalDisclaimer.style.borderColor = textConfig.disclaimerBorder;
-            
-            const disclaimerParagraphs = legalDisclaimer.querySelectorAll('p');
-            disclaimerParagraphs.forEach(p => {
-                p.style.color = textConfig.disclaimerText;
-            });
-            
-            const disclaimerStrongs = legalDisclaimer.querySelectorAll('strong');
-            disclaimerStrongs.forEach(s => {
-                s.style.color = textConfig.disclaimerStrong;
-            });
-        }
-    }
-
-    updateCostCurrency(theme) {
-        const currencyName = theme.resources.gold.name.toLowerCase();
-        
-        // List of all possible currency names from all themes (lowercase)
-        const allCurrencies = [
-            'gold', 'venture capital', 'cash', 'company funds', 'savings', 
-            'coins', 'canned food', 'will to live', 'time', 'goodbye'
-        ];
-        
-        // Update all .btn-cost divs
-        const costDivs = document.querySelectorAll('.btn-cost');
-        costDivs.forEach(div => {
-            let text = div.innerHTML;
-            
-            // Replace any currency name with the current theme's currency
-            allCurrencies.forEach(oldCurrency => {
-                // Pattern 1: "</span> gold" (for buttons with span tags)
-                const spanPattern = new RegExp(`</span> ${oldCurrency}`, 'gi');
-                text = text.replace(spanPattern, `</span> ${currencyName}`);
-                
-                // Pattern 2: "25 gold" or "Cost: 25 gold" (for unlock buttons without span tags)
-                const directPattern = new RegExp(`(\\d+) ${oldCurrency}\\b`, 'gi');
-                text = text.replace(directPattern, `$1 ${currencyName}`);
-                
-                // Also handle "currency/resource" patterns
-                const slashPattern = new RegExp(`${oldCurrency}/`, 'gi');
-                text = text.replace(slashPattern, `${currencyName}/`);
-            });
-            
-            div.innerHTML = text;
-        });
-        
-        // Update all .btn-description divs
-        const descDivs = document.querySelectorAll('.btn-description');
-        descDivs.forEach(div => {
-            let text = div.textContent;
-            
-            // Replace "to [currency]" patterns
-            allCurrencies.forEach(oldCurrency => {
-                const toPattern = new RegExp(`to ${oldCurrency}`, 'gi');
-                text = text.replace(toPattern, `to ${currencyName}`);
-                
-                const convertPattern = new RegExp(`Convert resources to ${oldCurrency}`, 'gi');
-                text = text.replace(convertPattern, `Convert resources to ${currencyName}`);
-            });
-            
-            div.textContent = text;
-        });
-    }
-
-    // Helper methods
-    updateTextContent(elementId, text) {
-        const element = document.getElementById(elementId);
-        if (element) {
-            element.textContent = text;
-        }
-    }
-
-    updateTooltip(elementId, tooltip) {
-        const element = document.getElementById(elementId);
-        if (element) {
-            element.setAttribute('data-tooltip', tooltip);
-            element.setAttribute('title', tooltip);
-        }
-    }
-
-    updateButtonText(buttonId, text) {
-        const button = document.getElementById(buttonId);
-        if (button) {
-            const titleDiv = button.querySelector('.btn-title');
-            if (titleDiv) {
-                titleDiv.textContent = text;
-            } else {
-                // Fallback if no btn-title div
-                const firstChild = button.firstChild;
-                if (firstChild && firstChild.nodeType === Node.TEXT_NODE) {
-                    firstChild.textContent = text;
-                }
-            }
-        }
-    }
-
-    updateButtonTextAndDesc(buttonId, text, description) {
-        const button = document.getElementById(buttonId);
-        if (button) {
-            const titleDiv = button.querySelector('.btn-title');
-            const descDiv = button.querySelector('.btn-description');
-            
-            if (titleDiv) titleDiv.textContent = text;
-            if (descDiv) descDiv.textContent = description;
-        }
-    }
-
-    updateButtonDescription(buttonId, description) {
-        const button = document.getElementById(buttonId);
-        if (button) {
-            const descDiv = button.querySelector('.btn-description');
-            if (descDiv) {
-                descDiv.textContent = description;
-            }
-        }
-    }
-
-    updateLabel(labelClass, text) {
-        // Try finding by exact ID first
-        let element = document.getElementById(labelClass);
-        
-        // Try finding by class
-        if (!element) {
-            const elements = document.querySelectorAll(`.${labelClass}`);
-            if (elements.length > 0) {
-                element = elements[0];
-            }
-        }
-        
-        // Try finding parent row and updating the first span
-        if (!element) {
-            const parentId = labelClass.replace('-label', '');
-            const parent = document.getElementById(parentId);
-            if (parent) {
-                const span = parent.querySelector('.resource-type');
-                if (span) {
-                    element = span;
-                }
-            }
-        }
-        
-        if (element) {
-            element.textContent = text;
-        }
-    }
-
-    // Handle game ending
-    handleGameEnding() {
-        if (!this.currentTheme || !this.currentTheme.isEnding) return;
-        
-        // Show ending modal or message
-        const message = `
+    // Show ending modal or message
+    const message = `
             The journey ends here.
             
             You've witnessed the rise and fall of empires,
@@ -787,18 +923,18 @@ class UIThemeManager {
             
             Thank you for playing Industrial Empire.
         `;
-        
-        if (this.gameEngine.showNotification) {
-            this.gameEngine.showNotification(message);
-        }
-        
-        // Optionally disable all actions except viewing stats
-        const actionButtons = document.querySelectorAll('.action-btn:not(#rebirth-btn)');
-        actionButtons.forEach(btn => {
-            btn.disabled = true;
-            btn.style.opacity = '0.3';
-        });
+
+    if (this.gameEngine.showNotification) {
+      this.gameEngine.showNotification(message);
     }
+
+    // Optionally disable all actions except viewing stats
+    const actionButtons = document.querySelectorAll('.action-btn:not(#rebirth-btn)');
+    actionButtons.forEach((btn) => {
+      btn.disabled = true;
+      btn.style.opacity = '0.3';
+    });
+  }
 }
 
 // Export for use in other modules

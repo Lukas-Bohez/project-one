@@ -1,380 +1,415 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-        <meta charset="UTF-8">
-        <!-- Google Analytics (GA4) -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-SSEBSTQM21"></script>
-        <script>
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-SSEBSTQM21');
-        </script>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SSEBSTQM21"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-SSEBSTQM21');
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title>Connection Diagnostic - Quiz The Spire</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .status {
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-        .status.success { background-color: #d4edda; color: #155724; }
-        .status.warning { background-color: #fff3cd; color: #856404; }
-        .status.error { background-color: #f8d7da; color: #721c24; }
-        .status.info { background-color: #d1ecf1; color: #0c5460; }
-        .test-item {
-            margin: 15px 0;
-            padding: 10px;
-            border-left: 4px solid #ddd;
-            background-color: #f8f9fa;
-        }
-        .btn {
-            background: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin: 5px;
-        }
-        .btn:hover { background: #0056b3; }
-        .log {
-            background: #000;
-            color: #0f0;
-            padding: 15px;
-            border-radius: 4px;
-            font-family: monospace;
-            height: 200px;
-            overflow-y: scroll;
-            margin: 20px 0;
-        }
-        pre { margin: 0; }
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .status {
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 4px;
+        font-weight: bold;
+      }
+      .status.success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .status.warning {
+        background-color: #fff3cd;
+        color: #856404;
+      }
+      .status.error {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .status.info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+      }
+      .test-item {
+        margin: 15px 0;
+        padding: 10px;
+        border-left: 4px solid #ddd;
+        background-color: #f8f9fa;
+      }
+      .btn {
+        background: #007bff;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      .btn:hover {
+        background: #0056b3;
+      }
+      .log {
+        background: #000;
+        color: #0f0;
+        padding: 15px;
+        border-radius: 4px;
+        font-family: monospace;
+        height: 200px;
+        overflow-y: scroll;
+        margin: 20px 0;
+      }
+      pre {
+        margin: 0;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>🔧 Connection Diagnostic Tool</h1>
-        <p>This page helps diagnose connection issues across different browsers.</p>
-        
-        <div id="browser-info" class="status info">
-            <h3>Browser Information</h3>
-            <div id="browser-details"></div>
+      <h1>🔧 Connection Diagnostic Tool</h1>
+      <p>This page helps diagnose connection issues across different browsers.</p>
+
+      <div id="browser-info" class="status info">
+        <h3>Browser Information</h3>
+        <div id="browser-details"></div>
+      </div>
+
+      <div id="server-info" class="status info">
+        <h3>Server Information</h3>
+        <div>
+          <strong>Current URL:</strong> <span id="current-url"></span><br />
+          <strong>Protocol:</strong> <span id="protocol"></span><br />
+          <strong>Hostname:</strong> <span id="hostname"></span><br />
+          <strong>Port:</strong> <span id="port"></span>
         </div>
-        
-        <div id="server-info" class="status info">
-            <h3>Server Information</h3>
-            <div>
-                <strong>Current URL:</strong> <span id="current-url"></span><br>
-                <strong>Protocol:</strong> <span id="protocol"></span><br>
-                <strong>Hostname:</strong> <span id="hostname"></span><br>
-                <strong>Port:</strong> <span id="port"></span>
-            </div>
-        </div>
-        
-        <h3>Connection Tests</h3>
-        
-        <div class="test-item">
-            <h4>1. Basic HTTP Test</h4>
-            <button class="btn" onclick="testHTTP()">Test HTTP Connection</button>
-            <div id="http-result"></div>
-        </div>
-        
-        <div class="test-item">
-            <h4>2. Socket.IO Library Test</h4>
-            <button class="btn" onclick="testSocketIO()">Test Socket.IO Availability</button>
-            <div id="socketio-result"></div>
-        </div>
-        
-        <div class="test-item">
-            <h4>3. WebSocket Support Test</h4>
-            <button class="btn" onclick="testWebSocket()">Test WebSocket Support</button>
-            <div id="websocket-result"></div>
-        </div>
-        
-        <div class="test-item">
-            <h4>4. Complete Connection Test</h4>
-            <button class="btn" onclick="testFullConnection()">Test Full Socket.IO Connection</button>
-            <div id="connection-result"></div>
-        </div>
-        
-        <h3>Diagnostic Log</h3>
-        <div id="log" class="log">
-            <pre id="log-content">Diagnostic tool loaded. Click tests above to begin...</pre>
-        </div>
-        
-        <div style="margin-top: 30px;">
-            <button class="btn" onclick="clearLog()">Clear Log</button>
-            <button class="btn" onclick="window.location.href='index.html'">Back to Main Site</button>
-        </div>
+      </div>
+
+      <h3>Connection Tests</h3>
+
+      <div class="test-item">
+        <h4>1. Basic HTTP Test</h4>
+        <button class="btn" onclick="testHTTP()">Test HTTP Connection</button>
+        <div id="http-result"></div>
+      </div>
+
+      <div class="test-item">
+        <h4>2. Socket.IO Library Test</h4>
+        <button class="btn" onclick="testSocketIO()">Test Socket.IO Availability</button>
+        <div id="socketio-result"></div>
+      </div>
+
+      <div class="test-item">
+        <h4>3. WebSocket Support Test</h4>
+        <button class="btn" onclick="testWebSocket()">Test WebSocket Support</button>
+        <div id="websocket-result"></div>
+      </div>
+
+      <div class="test-item">
+        <h4>4. Complete Connection Test</h4>
+        <button class="btn" onclick="testFullConnection()">Test Full Socket.IO Connection</button>
+        <div id="connection-result"></div>
+      </div>
+
+      <h3>Diagnostic Log</h3>
+      <div id="log" class="log">
+        <pre id="log-content">Diagnostic tool loaded. Click tests above to begin...</pre>
+      </div>
+
+      <div style="margin-top: 30px">
+        <button class="btn" onclick="clearLog()">Clear Log</button>
+        <button class="btn" onclick="window.location.href = 'index.html'">Back to Main Site</button>
+      </div>
     </div>
-    
+
     <!-- Load polyfills first -->
     <script src="js/browser-polyfills.js"></script>
-    
+
     <!-- Try to load Socket.IO -->
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" onerror="handleSocketIOLoadError()"></script>
-    
+    <script
+      src="https://cdn.socket.io/4.7.5/socket.io.min.js"
+      onerror="handleSocketIOLoadError()"
+    ></script>
+
     <!-- Load compatibility layer -->
     <script src="js/websocket-compatibility.js"></script>
-    
+
     <script>
-        const logPre = document.getElementById('log-content');
-        const logContainer = document.getElementById('log');
+      const logPre = document.getElementById('log-content');
+      const logContainer = document.getElementById('log');
 
-        function log(message, type = 'info') {
-            const timestamp = new Date().toLocaleTimeString();
-            const color = type === 'error' ? '#f00' : type === 'success' ? '#0f0' : type === 'warning' ? '#ff0' : '#0ff';
-            const entry = document.createElement('div');
-            entry.style.color = color;
-            entry.style.whiteSpace = 'pre-wrap';
-            entry.style.fontFamily = 'monospace';
-            entry.textContent = `[${timestamp}] ${message}`;
-            logContainer.appendChild(entry);
-            logContainer.scrollTop = logContainer.scrollHeight;
-        }
+      function log(message, type = 'info') {
+        const timestamp = new Date().toLocaleTimeString();
+        const color =
+          type === 'error'
+            ? '#f00'
+            : type === 'success'
+              ? '#0f0'
+              : type === 'warning'
+                ? '#ff0'
+                : '#0ff';
+        const entry = document.createElement('div');
+        entry.style.color = color;
+        entry.style.whiteSpace = 'pre-wrap';
+        entry.style.fontFamily = 'monospace';
+        entry.textContent = `[${timestamp}] ${message}`;
+        logContainer.appendChild(entry);
+        logContainer.scrollTop = logContainer.scrollHeight;
+      }
 
-        function clearLog() {
-            while (logContainer.firstChild) logContainer.removeChild(logContainer.firstChild);
-            const p = document.createElement('pre');
-            p.id = 'log-content';
-            p.textContent = 'Log cleared...';
-            logContainer.appendChild(p);
-        }
-        
-        function displayBrowserInfo() {
-            const browser = window.browserCompat ? window.browserCompat.getBrowserInfo() : { name: 'unknown', version: 0 };
-            const ua = navigator.userAgent;
-            
-            document.getElementById('browser-details').innerHTML = `
+      function clearLog() {
+        while (logContainer.firstChild) logContainer.removeChild(logContainer.firstChild);
+        const p = document.createElement('pre');
+        p.id = 'log-content';
+        p.textContent = 'Log cleared...';
+        logContainer.appendChild(p);
+      }
+
+      function displayBrowserInfo() {
+        const browser = window.browserCompat
+          ? window.browserCompat.getBrowserInfo()
+          : { name: 'unknown', version: 0 };
+        const ua = navigator.userAgent;
+
+        document.getElementById('browser-details').innerHTML = `
                 <strong>Detected Browser:</strong> ${browser.name} ${browser.version}<br>
                 <strong>User Agent:</strong> ${ua}<br>
                 <strong>Screen:</strong> ${screen.width}x${screen.height}<br>
                 <strong>Viewport:</strong> ${window.innerWidth}x${window.innerHeight}
             `;
-            
-            log(`Browser detected: ${browser.name} ${browser.version}`, 'info');
+
+        log(`Browser detected: ${browser.name} ${browser.version}`, 'info');
+      }
+
+      function displayServerInfo() {
+        document.getElementById('current-url').textContent = window.location.href;
+        document.getElementById('protocol').textContent = window.location.protocol;
+        document.getElementById('hostname').textContent = window.location.hostname;
+        document.getElementById('port').textContent = window.location.port || 'default';
+      }
+
+      function testHTTP() {
+        log('Testing basic HTTP connection...', 'info');
+
+        fetch(window.location.origin + '/test', { method: 'GET', mode: 'no-cors' })
+          .then(() => {
+            const httpRes = document.getElementById('http-result');
+            while (httpRes.firstChild) httpRes.removeChild(httpRes.firstChild);
+            const httpDiv = document.createElement('div');
+            httpDiv.className = 'status success';
+            httpDiv.textContent = '✅ HTTP connection working';
+            httpRes.appendChild(httpDiv);
+            log('HTTP test passed', 'success');
+          })
+          .catch((error) => {
+            const httpRes2 = document.getElementById('http-result');
+            while (httpRes2.firstChild) httpRes2.removeChild(httpRes2.firstChild);
+            const httpDiv2 = document.createElement('div');
+            httpDiv2.className = 'status warning';
+            httpDiv2.textContent = '⚠️ HTTP test inconclusive (CORS or 404 expected)';
+            httpRes2.appendChild(httpDiv2);
+            log('HTTP test completed (CORS/404 expected)', 'warning');
+          });
+      }
+
+      function testSocketIO() {
+        log('Testing Socket.IO library availability...', 'info');
+
+        if (typeof io !== 'undefined') {
+          const sioRes = document.getElementById('socketio-result');
+          while (sioRes.firstChild) sioRes.removeChild(sioRes.firstChild);
+          const sioDiv = document.createElement('div');
+          sioDiv.className = 'status success';
+          sioDiv.textContent = '✅ Socket.IO library loaded successfully';
+          sioRes.appendChild(sioDiv);
+          log('Socket.IO library available', 'success');
+        } else {
+          const sioRes2 = document.getElementById('socketio-result');
+          while (sioRes2.firstChild) sioRes2.removeChild(sioRes2.firstChild);
+          const sioDiv2 = document.createElement('div');
+          sioDiv2.className = 'status error';
+          sioDiv2.textContent = '❌ Socket.IO library not available';
+          sioRes2.appendChild(sioDiv2);
+          log('Socket.IO library missing', 'error');
         }
-        
-        function displayServerInfo() {
-            document.getElementById('current-url').textContent = window.location.href;
-            document.getElementById('protocol').textContent = window.location.protocol;
-            document.getElementById('hostname').textContent = window.location.hostname;
-            document.getElementById('port').textContent = window.location.port || 'default';
+      }
+
+      function testWebSocket() {
+        log('Testing WebSocket support...', 'info');
+
+        if (typeof WebSocket !== 'undefined') {
+          const wsRes = document.getElementById('websocket-result');
+          while (wsRes.firstChild) wsRes.removeChild(wsRes.firstChild);
+          const wsDiv = document.createElement('div');
+          wsDiv.className = 'status success';
+          wsDiv.textContent = '✅ WebSocket supported';
+          wsRes.appendChild(wsDiv);
+          log('WebSocket support confirmed', 'success');
+        } else {
+          const wsRes2 = document.getElementById('websocket-result');
+          while (wsRes2.firstChild) wsRes2.removeChild(wsRes2.firstChild);
+          const wsDiv2 = document.createElement('div');
+          wsDiv2.className = 'status error';
+          wsDiv2.textContent = '❌ WebSocket not supported';
+          wsRes2.appendChild(wsDiv2);
+          log('WebSocket not supported', 'error');
         }
-        
-        function testHTTP() {
-            log('Testing basic HTTP connection...', 'info');
-            
-            fetch(window.location.origin + '/test', { method: 'GET', mode: 'no-cors' })
-                .then(() => {
-                    const httpRes = document.getElementById('http-result');
-                    while (httpRes.firstChild) httpRes.removeChild(httpRes.firstChild);
-                    const httpDiv = document.createElement('div');
-                    httpDiv.className = 'status success';
-                    httpDiv.textContent = '✅ HTTP connection working';
-                    httpRes.appendChild(httpDiv);
-                    log('HTTP test passed', 'success');
-                })
-                .catch(error => {
-                    const httpRes2 = document.getElementById('http-result');
-                    while (httpRes2.firstChild) httpRes2.removeChild(httpRes2.firstChild);
-                    const httpDiv2 = document.createElement('div');
-                    httpDiv2.className = 'status warning';
-                    httpDiv2.textContent = '⚠️ HTTP test inconclusive (CORS or 404 expected)';
-                    httpRes2.appendChild(httpDiv2);
-                    log('HTTP test completed (CORS/404 expected)', 'warning');
-                });
+      }
+
+      function testFullConnection() {
+        log('Testing full Socket.IO connection with enhanced features...', 'info');
+
+        if (typeof io === 'undefined') {
+          const connRes = document.getElementById('connection-result');
+          while (connRes.firstChild) connRes.removeChild(connRes.firstChild);
+          const connDiv = document.createElement('div');
+          connDiv.className = 'status error';
+          connDiv.textContent = '❌ Cannot test - Socket.IO not loaded';
+          connRes.appendChild(connDiv);
+          log('Connection test failed - Socket.IO not available', 'error');
+          return;
         }
-        
-        function testSocketIO() {
-            log('Testing Socket.IO library availability...', 'info');
-            
-            if (typeof io !== 'undefined') {
-                const sioRes = document.getElementById('socketio-result');
-                while (sioRes.firstChild) sioRes.removeChild(sioRes.firstChild);
-                const sioDiv = document.createElement('div');
-                sioDiv.className = 'status success';
-                sioDiv.textContent = '✅ Socket.IO library loaded successfully';
-                sioRes.appendChild(sioDiv);
-                log('Socket.IO library available', 'success');
-            } else {
-                const sioRes2 = document.getElementById('socketio-result');
-                while (sioRes2.firstChild) sioRes2.removeChild(sioRes2.firstChild);
-                const sioDiv2 = document.createElement('div');
-                sioDiv2.className = 'status error';
-                sioDiv2.textContent = '❌ Socket.IO library not available';
-                sioRes2.appendChild(sioDiv2);
-                log('Socket.IO library missing', 'error');
+
+        const serverURL = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
+        log(`Attempting enhanced connection to: ${serverURL}`, 'info');
+
+        const testSocket = window.createCompatibleSocket
+          ? window.createCompatibleSocket(serverURL, { timeout: 15000 })
+          : io(serverURL, { timeout: 15000, transports: ['polling', 'websocket'] });
+
+        let connectionTimeout = setTimeout(() => {
+          const connRes2 = document.getElementById('connection-result');
+          while (connRes2.firstChild) connRes2.removeChild(connRes2.firstChild);
+          const connDiv2 = document.createElement('div');
+          connDiv2.className = 'status error';
+          connDiv2.textContent = '❌ Connection timeout (15s)';
+          connRes2.appendChild(connDiv2);
+          log('Connection test timed out after 15 seconds', 'error');
+          testSocket.disconnect();
+        }, 18000);
+
+        testSocket.on('connect', () => {
+          log(`Connected! Transport: ${testSocket.io.engine.transport.name}`, 'success');
+
+          // Test enhanced features
+          let featuresTestedCount = 0;
+          const totalFeatures = 3;
+
+          // Test 1: Welcome message
+          testSocket.on('welcome', (data) => {
+            log(`Welcome received: ${JSON.stringify(data)}`, 'success');
+            featuresTestedCount++;
+            checkAllFeatures();
+          });
+
+          // Test 2: Ping/Pong
+          testSocket.on('pong', (data) => {
+            log(`Pong received: ${JSON.stringify(data)}`, 'success');
+            featuresTestedCount++;
+            checkAllFeatures();
+          });
+
+          // Test 3: Connection test
+          testSocket.on('connection_test_response', (data) => {
+            log(`Connection test response: ${JSON.stringify(data)}`, 'success');
+            featuresTestedCount++;
+            checkAllFeatures();
+          });
+
+          // Send test messages
+          setTimeout(() => {
+            testSocket.emit('ping');
+            testSocket.emit('connection_test', { diagnostic: true });
+          }, 1000);
+
+          function checkAllFeatures() {
+            if (featuresTestedCount >= totalFeatures) {
+              clearTimeout(connectionTimeout);
+              const connResSuccess = document.getElementById('connection-result');
+              while (connResSuccess.firstChild)
+                connResSuccess.removeChild(connResSuccess.firstChild);
+              const connDivSuccess = document.createElement('div');
+              connDivSuccess.className = 'status success';
+              connDivSuccess.textContent = '✅ All enhanced features working!';
+              connResSuccess.appendChild(connDivSuccess);
+              log(`All ${totalFeatures} enhanced features tested successfully`, 'success');
+              setTimeout(() => testSocket.disconnect(), 2000);
             }
-        }
-        
-        function testWebSocket() {
-            log('Testing WebSocket support...', 'info');
-            
-            if (typeof WebSocket !== 'undefined') {
-                const wsRes = document.getElementById('websocket-result');
-                while (wsRes.firstChild) wsRes.removeChild(wsRes.firstChild);
-                const wsDiv = document.createElement('div');
-                wsDiv.className = 'status success';
-                wsDiv.textContent = '✅ WebSocket supported';
-                wsRes.appendChild(wsDiv);
-                log('WebSocket support confirmed', 'success');
-            } else {
-                const wsRes2 = document.getElementById('websocket-result');
-                while (wsRes2.firstChild) wsRes2.removeChild(wsRes2.firstChild);
-                const wsDiv2 = document.createElement('div');
-                wsDiv2.className = 'status error';
-                wsDiv2.textContent = '❌ WebSocket not supported';
-                wsRes2.appendChild(wsDiv2);
-                log('WebSocket not supported', 'error');
+          }
+
+          // Fallback - if not all features tested in 10 seconds
+          setTimeout(() => {
+            if (featuresTestedCount < totalFeatures) {
+              clearTimeout(connectionTimeout);
+              const connResWarn = document.getElementById('connection-result');
+              while (connResWarn.firstChild) connResWarn.removeChild(connResWarn.firstChild);
+              const connDivWarn = document.createElement('div');
+              connDivWarn.className = 'status warning';
+              connDivWarn.textContent = `⚠️ Basic connection works (${featuresTestedCount}/${totalFeatures} features)`;
+              connResWarn.appendChild(connDivWarn);
+              log(
+                `Basic connection works, but only ${featuresTestedCount}/${totalFeatures} enhanced features responded`,
+                'warning'
+              );
+              testSocket.disconnect();
             }
-        }
-        
-        function testFullConnection() {
-            log('Testing full Socket.IO connection with enhanced features...', 'info');
-            
-            if (typeof io === 'undefined') {
-                const connRes = document.getElementById('connection-result');
-                while (connRes.firstChild) connRes.removeChild(connRes.firstChild);
-                const connDiv = document.createElement('div');
-                connDiv.className = 'status error';
-                connDiv.textContent = '❌ Cannot test - Socket.IO not loaded';
-                connRes.appendChild(connDiv);
-                log('Connection test failed - Socket.IO not available', 'error');
-                return;
-            }
-            
-            const serverURL = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-            log(`Attempting enhanced connection to: ${serverURL}`, 'info');
-            
-            const testSocket = window.createCompatibleSocket ? 
-                window.createCompatibleSocket(serverURL, { timeout: 15000 }) :
-                io(serverURL, { timeout: 15000, transports: ['polling', 'websocket'] });
-            
-            let connectionTimeout = setTimeout(() => {
-                const connRes2 = document.getElementById('connection-result');
-                while (connRes2.firstChild) connRes2.removeChild(connRes2.firstChild);
-                const connDiv2 = document.createElement('div');
-                connDiv2.className = 'status error';
-                connDiv2.textContent = '❌ Connection timeout (15s)';
-                connRes2.appendChild(connDiv2);
-                log('Connection test timed out after 15 seconds', 'error');
-                testSocket.disconnect();
-            }, 18000);
-            
-            testSocket.on('connect', () => {
-                log(`Connected! Transport: ${testSocket.io.engine.transport.name}`, 'success');
-                
-                // Test enhanced features
-                let featuresTestedCount = 0;
-                const totalFeatures = 3;
-                
-                // Test 1: Welcome message
-                testSocket.on('welcome', (data) => {
-                    log(`Welcome received: ${JSON.stringify(data)}`, 'success');
-                    featuresTestedCount++;
-                    checkAllFeatures();
-                });
-                
-                // Test 2: Ping/Pong
-                testSocket.on('pong', (data) => {
-                    log(`Pong received: ${JSON.stringify(data)}`, 'success');
-                    featuresTestedCount++;
-                    checkAllFeatures();
-                });
-                
-                // Test 3: Connection test
-                testSocket.on('connection_test_response', (data) => {
-                    log(`Connection test response: ${JSON.stringify(data)}`, 'success');
-                    featuresTestedCount++;
-                    checkAllFeatures();
-                });
-                
-                // Send test messages
-                setTimeout(() => {
-                    testSocket.emit('ping');
-                    testSocket.emit('connection_test', { diagnostic: true });
-                }, 1000);
-                
-                function checkAllFeatures() {
-                    if (featuresTestedCount >= totalFeatures) {
-                        clearTimeout(connectionTimeout);
-                        const connResSuccess = document.getElementById('connection-result');
-                        while (connResSuccess.firstChild) connResSuccess.removeChild(connResSuccess.firstChild);
-                        const connDivSuccess = document.createElement('div');
-                        connDivSuccess.className = 'status success';
-                        connDivSuccess.textContent = '✅ All enhanced features working!';
-                        connResSuccess.appendChild(connDivSuccess);
-                        log(`All ${totalFeatures} enhanced features tested successfully`, 'success');
-                        setTimeout(() => testSocket.disconnect(), 2000);
-                    }
-                }
-                
-                // Fallback - if not all features tested in 10 seconds
-                setTimeout(() => {
-                    if (featuresTestedCount < totalFeatures) {
-                        clearTimeout(connectionTimeout);
-                        const connResWarn = document.getElementById('connection-result');
-                        while (connResWarn.firstChild) connResWarn.removeChild(connResWarn.firstChild);
-                        const connDivWarn = document.createElement('div');
-                        connDivWarn.className = 'status warning';
-                        connDivWarn.textContent = `⚠️ Basic connection works (${featuresTestedCount}/${totalFeatures} features)`;
-                        connResWarn.appendChild(connDivWarn);
-                        log(`Basic connection works, but only ${featuresTestedCount}/${totalFeatures} enhanced features responded`, 'warning');
-                        testSocket.disconnect();
-                    }
-                }, 12000);
-            });
-            
-            testSocket.on('connect_error', (error) => {
-                clearTimeout(connectionTimeout);
-                const connResErr = document.getElementById('connection-result');
-                while (connResErr.firstChild) connResErr.removeChild(connResErr.firstChild);
-                const connDivErr = document.createElement('div');
-                connDivErr.className = 'status error';
-                connDivErr.textContent = '❌ Connection failed: ' + (error && error.message ? error.message : 'unknown');
-                connResErr.appendChild(connDivErr);
-                log(`Enhanced connection test FAILED: ${error.message}`, 'error');
-                log(`Error type: ${error.type || 'unknown'}`, 'error');
-            });
-            
-            testSocket.on('disconnect', (reason) => {
-                log(`Test connection disconnected: ${reason}`, 'info');
-            });
-            
-            // Monitor transport upgrades
-            testSocket.on('connect', () => {
-                testSocket.io.engine.on('upgrade', () => {
-                    log(`Transport upgraded to: ${testSocket.io.engine.transport.name}`, 'success');
-                });
-            });
-        }
-        
-        function handleSocketIOLoadError() {
-            log('Socket.IO library failed to load from CDN', 'error');
-        }
-        
-        // Initialize on page load
-        window.addEventListener('DOMContentLoaded', () => {
-            displayBrowserInfo();
-            displayServerInfo();
-            log('Diagnostic tool initialized', 'success');
+          }, 12000);
         });
+
+        testSocket.on('connect_error', (error) => {
+          clearTimeout(connectionTimeout);
+          const connResErr = document.getElementById('connection-result');
+          while (connResErr.firstChild) connResErr.removeChild(connResErr.firstChild);
+          const connDivErr = document.createElement('div');
+          connDivErr.className = 'status error';
+          connDivErr.textContent =
+            '❌ Connection failed: ' + (error && error.message ? error.message : 'unknown');
+          connResErr.appendChild(connDivErr);
+          log(`Enhanced connection test FAILED: ${error.message}`, 'error');
+          log(`Error type: ${error.type || 'unknown'}`, 'error');
+        });
+
+        testSocket.on('disconnect', (reason) => {
+          log(`Test connection disconnected: ${reason}`, 'info');
+        });
+
+        // Monitor transport upgrades
+        testSocket.on('connect', () => {
+          testSocket.io.engine.on('upgrade', () => {
+            log(`Transport upgraded to: ${testSocket.io.engine.transport.name}`, 'success');
+          });
+        });
+      }
+
+      function handleSocketIOLoadError() {
+        log('Socket.IO library failed to load from CDN', 'error');
+      }
+
+      // Initialize on page load
+      window.addEventListener('DOMContentLoaded', () => {
+        displayBrowserInfo();
+        displayServerInfo();
+        log('Diagnostic tool initialized', 'success');
+      });
     </script>
-</body>
+  </body>
 </html>

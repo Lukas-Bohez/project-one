@@ -14,6 +14,7 @@ After the fixes, you need to reload:
 ### 2. Test Bundled Mode (Default)
 
 **Expected Behavior:**
+
 - Extension opens with bundled mode selected
 - Shows "Loading bundled tracks..." briefly
 - Displays 29 tracks in the list
@@ -21,6 +22,7 @@ After the fixes, you need to reload:
 - First track is NOT auto-playing
 
 **Test Steps:**
+
 1. Click the extension icon
 2. Verify 29 tracks are listed
 3. Click on any track (not just the first one)
@@ -33,6 +35,7 @@ After the fixes, you need to reload:
 10. Try shuffle and repeat toggles
 
 **✓ Success Criteria:**
+
 - All tracks visible and clickable
 - Clicking any track starts playback
 - No console errors
@@ -41,6 +44,7 @@ After the fixes, you need to reload:
 ### 3. Test File Selection
 
 **Test Steps:**
+
 1. Switch mode to "Upload Music Files"
 2. Click "Browse..." under "Select Files"
 3. Select 2-3 audio files (MP3/WAV/OGG)
@@ -50,6 +54,7 @@ After the fixes, you need to reload:
 7. Verify playback works
 
 **✓ Success Criteria:**
+
 - Files load without errors
 - Track list updates correctly
 - Files are sorted alphabetically
@@ -59,6 +64,7 @@ After the fixes, you need to reload:
 ### 4. Test Folder Selection
 
 **Test Steps:**
+
 1. Stay in "Upload Music Files" mode
 2. Click "Choose Files" under "Select Folder"
 3. Select a folder containing audio files
@@ -68,6 +74,7 @@ After the fixes, you need to reload:
 7. Click a track to play
 
 **✓ Success Criteria:**
+
 - All audio files from folder are loaded
 - Non-audio files are filtered out
 - Files are sorted alphabetically
@@ -75,12 +82,14 @@ After the fixes, you need to reload:
 - Playback works
 
 **Common Issues:**
+
 - If no "Choose Files" button appears under Select Folder, your browser may not fully support `webkitdirectory`
 - Use individual file selection as fallback
 
 ### 5. Test Mode Switching
 
 **Test Steps:**
+
 1. Load some user files in Files mode
 2. Play one of them
 3. Switch back to "Bundled Lofi Tracks"
@@ -90,6 +99,7 @@ After the fixes, you need to reload:
 7. Should show empty list with "Select files or folder"
 
 **✓ Success Criteria:**
+
 - Switching stops current playback
 - Bundled tracks reload properly in bundled mode
 - Files mode clears tracks when switching
@@ -98,6 +108,7 @@ After the fixes, you need to reload:
 ### 6. Test Clear Files
 
 **Test Steps:**
+
 1. Load files or folder in Files mode
 2. Click "Clear Files" button
 3. Track list should empty
@@ -105,6 +116,7 @@ After the fixes, you need to reload:
 5. Status shows "Files cleared - Select files or folder"
 
 **✓ Success Criteria:**
+
 - All tracks cleared
 - Playback stops if playing
 - File inputs reset (can re-select same files)
@@ -113,6 +125,7 @@ After the fixes, you need to reload:
 ### 7. Test Startup Behavior
 
 **Test Steps:**
+
 1. Close the extension popup
 2. Reopen the extension
 3. Bundled tracks should load
@@ -122,6 +135,7 @@ After the fixes, you need to reload:
 7. Should start playing immediately
 
 **✓ Success Criteria:**
+
 - No auto-play on startup
 - Tracks load successfully
 - First click starts playback
@@ -130,16 +144,19 @@ After the fixes, you need to reload:
 ### 8. Test Edge Cases
 
 **Empty Folder:**
+
 1. Select a folder with no audio files
 2. Should show "No audio files found in selection"
 3. Track list should be empty
 
 **Mixed File Types:**
+
 1. Select folder with audio + other files (txt, jpg, etc.)
 2. Only audio files should appear
 3. Count should match audio files only
 
 **Large Folder:**
+
 1. Select folder with 50+ audio files
 2. All should load (may take a moment)
 3. Scroll should work in track list
@@ -148,6 +165,7 @@ After the fixes, you need to reload:
 ### 9. Browser Console Check
 
 **Throughout testing:**
+
 1. Keep browser console open (F12)
 2. Check for errors (red text)
 3. Acceptable logs:
@@ -157,6 +175,7 @@ After the fixes, you need to reload:
    - "Found X audio files"
 
 **Unacceptable errors:**
+
 - ReferenceError (function not defined)
 - TypeError (cannot read property of undefined)
 - "showDirectoryPicker is not a function" (should be fixed)
@@ -164,6 +183,7 @@ After the fixes, you need to reload:
 ### 10. Persistence Test
 
 **Test Steps:**
+
 1. Set volume to 50%
 2. Enable shuffle
 3. Set repeat to "one"
@@ -178,15 +198,19 @@ After the fixes, you need to reload:
 ## Quick Troubleshooting
 
 **Problem:** Folder selection doesn't work
+
 - **Solution:** Use individual file selection instead, or try a different browser
 
 **Problem:** Tracks load but won't play
+
 - **Solution:** Check volume isn't at 0, verify browser audio permissions
 
 **Problem:** First track seems stuck
+
 - **Solution:** This should be fixed - try reloading extension
 
 **Problem:** Console shows errors
+
 - **Solution:** Report specific error message for further debugging
 
 ---
@@ -194,6 +218,7 @@ After the fixes, you need to reload:
 ## Reporting Issues
 
 If you find bugs, please note:
+
 1. Exact steps to reproduce
 2. Browser version (chrome://version)
 3. Console error messages (if any)

@@ -42,6 +42,7 @@ Welcome to my personal portfolio codebase and the self-hosted lab behind Quiz Th
 ## Recent Improvements (4-Phase Mega Pass)
 
 ### Phase 1: Portfolio Polish ✅
+
 - Design tokens audit and implementation (CSS variables)
 - Compound Gallery component with React Context
 - Custom `useSanityLivePreview<T>` hook for dev polling
@@ -49,18 +50,21 @@ Welcome to my personal portfolio codebase and the self-hosted lab behind Quiz Th
 - **Lighthouse Result**: Performance 97 / Accessibility 100 / Best Practices 96 / SEO 100
 
 ### Phase 2: Idle Game Hardening ✅
+
 - Rebirth milestone notifications (1, 5, 10, 25, 50, 100)
 - Event timing reset audit (lastEventTime, activeEvent, eventEndTime)
-- Auto-save integrity verification (SaveManager._isResetting flag)
+- Auto-save integrity verification (SaveManager.\_isResetting flag)
 - Arcade state cleanup (activeGame, gameStartTime reset)
 - MarketSystem state sync post-rebirth
 
 ### Phase 3: Main Site Improvements ✅
+
 - Adblock detection with first-party fallback (Promise.all detection)
 - SENTLE streak persistence using UTC seed (cross-device consistency)
 - Main site Lighthouse audit (Performance 28 → optimization track)
 
 ### Phase 4: Housekeeping ✅
+
 - Enhanced `.gitignore` (audit reports, env files, certificates)
 - README consolidation and markdown finalization
 - Git history review and secret scan (no exposed credentials)
@@ -75,6 +79,7 @@ Welcome to my personal portfolio codebase and the self-hosted lab behind Quiz Th
 ## Deployment
 
 ### Portfolio Static Export
+
 ```bash
 npm run build          # Compile with Next.js 16 Turbopack
 npm run update:portfolio  # Deploy to Apache + verify live URL
@@ -82,6 +87,7 @@ npx lighthouse https://quizthespire.com/LukasBohez/ --output=json
 ```
 
 ### Main Site
+
 Apache docroot: `/home/student/Project/project-one/frontend/`
 
 ## Quality Checks
@@ -89,7 +95,7 @@ Apache docroot: `/home/student/Project/project-one/frontend/`
 - `npm run lint` — ESLint with --max-warnings=0
 - `npm run format:check` — Verify Prettier formatting
 - `npm run build` — Production build validation
-- Backend: `pytest`, flake8 (audit available in flake_report*.txt)
+- Backend: `pytest`, flake8 (audit available in flake_report\*.txt)
 
 ## Documentation
 

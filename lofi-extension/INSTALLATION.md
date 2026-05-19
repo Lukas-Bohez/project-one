@@ -26,6 +26,7 @@
 ## Using the Extension
 
 ### Bundled Mode (Default)
+
 - Click the extension icon to open the player
 - 29 lofi tracks are pre-loaded and ready to play
 - Click any track to start playback
@@ -34,6 +35,7 @@
 - Enable shuffle or repeat modes
 
 ### Files Mode
+
 1. Click the extension icon
 2. Change mode from "Bundled Lofi Tracks" to "Upload Music Files"
 3. Choose one of:
@@ -41,6 +43,7 @@
    - **Folder Selection**: Click "Select Folder" to load all audio files from a directory
 
 ### Supported Audio Formats
+
 - MP3 (.mp3)
 - WAV (.wav)
 - OGG (.ogg)
@@ -67,22 +70,26 @@
 ## Troubleshooting
 
 ### Extension won't load
+
 - Make sure Developer Mode is enabled
 - Verify you selected the correct folder containing `manifest.json`
 - Check browser console for errors
 
 ### Audio won't play
+
 - Ensure audio files are in supported formats
 - Check browser's audio permissions
 - Verify volume is not at 0
 - Try refreshing the extension
 
 ### Folder selection not working
+
 - File System Access API requires Chrome 86+ or Edge 86+
 - May not work in some browser configurations
 - Use file input as alternative
 
 ### Settings not persisting
+
 - Extension requires `storage` permission (already enabled)
 - Check if browser storage is enabled
 
@@ -96,6 +103,7 @@
 ## Privacy
 
 This extension:
+
 - ✅ Does NOT make any network requests
 - ✅ Does NOT collect any data
 - ✅ Does NOT track your activity

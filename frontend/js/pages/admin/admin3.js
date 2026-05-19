@@ -14,18 +14,18 @@ class AuditLogsManager {
     this.maxRetries = options.maxRetries || 3;
     this.baseRetryDelay = options.baseRetryDelay || 1000; // 1 second
     this.requestTimeout = options.requestTimeout || 10000; // 10 seconds
-    
+
     // State management
     this.isUpdateRunning = false;
     this.retryCount = 0;
     this.updateIntervalId = null;
     this.containerElement = null;
     this.abortController = null;
-    
+
     // Bind methods to preserve context
     this.update = this.update.bind(this);
     this.handleVisibilityChange = this.handleVisibilityChange.bind(this);
-    
+
     // Initialize styles and component
     this.injectStyles();
     this.init();
@@ -37,17 +37,17 @@ class AuditLogsManager {
   safeGet(obj, path, fallback = null) {
     try {
       if (!obj || typeof obj !== 'object') return fallback;
-      
+
       const keys = Array.isArray(path) ? path : path.split('.');
       let result = obj;
-      
+
       for (const key of keys) {
         if (result === null || result === undefined || typeof result !== 'object') {
           return fallback;
         }
         result = result[key];
       }
-      
+
       return result !== undefined ? result : fallback;
     } catch (error) {
       console.warn('SafeGet error:', error, 'for path:', path);
@@ -71,7 +71,7 @@ class AuditLogsManager {
           old_values: {},
           new_values: { timestamp: new Date().toISOString() },
           _sanitized: true,
-          _original_invalid: true
+          _original_invalid: true,
         };
       }
 
@@ -85,13 +85,13 @@ class AuditLogsManager {
         ip_address: this.safeGet(log, 'ip_address', null),
         old_values: {},
         new_values: {},
-        _sanitized: true
+        _sanitized: true,
       };
 
       // Safely handle old_values
       try {
         const oldValues = this.safeGet(log, 'old_values', {});
-        sanitized.old_values = (oldValues && typeof oldValues === 'object') ? oldValues : {};
+        sanitized.old_values = oldValues && typeof oldValues === 'object' ? oldValues : {};
       } catch (error) {
         console.warn('Error sanitizing old_values:', error);
         sanitized.old_values = {};
@@ -100,8 +100,8 @@ class AuditLogsManager {
       // Safely handle new_values with timestamp fallback
       try {
         const newValues = this.safeGet(log, 'new_values', {});
-        sanitized.new_values = (newValues && typeof newValues === 'object') ? newValues : {};
-        
+        sanitized.new_values = newValues && typeof newValues === 'object' ? newValues : {};
+
         // Ensure timestamp exists
         if (!sanitized.new_values.timestamp) {
           // Try to find timestamp in various places
@@ -113,9 +113,9 @@ class AuditLogsManager {
             this.safeGet(log, 'new_values.updated_at'),
             this.safeGet(log, 'old_values.timestamp'),
             this.safeGet(log, 'old_values.created_at'),
-            new Date().toISOString() // Ultimate fallback
+            new Date().toISOString(), // Ultimate fallback
           ];
-          
+
           for (const ts of possibleTimestamps) {
             if (ts) {
               sanitized.new_values.timestamp = ts;
@@ -141,7 +141,7 @@ class AuditLogsManager {
         old_values: {},
         new_values: { timestamp: new Date().toISOString() },
         _sanitized: true,
-        _error: error.message
+        _error: error.message,
       };
     }
   }
@@ -152,7 +152,7 @@ class AuditLogsManager {
   injectStyles() {
     try {
       if (document.getElementById('audit-logs-styles')) return;
-      
+
       const styles = `
         <style id="audit-logs-styles">
           :root {
@@ -500,7 +500,7 @@ class AuditLogsManager {
           }
         </style>
       `;
-      
+
       document.head.insertAdjacentHTML('beforeend', styles);
     } catch (error) {
       console.error('Error injecting styles:', error);
@@ -513,29 +513,29 @@ class AuditLogsManager {
   init() {
     try {
       console.log('Initializing Compact Audit Logs Manager...');
-      
+
       // Cache DOM element
       this.containerElement = document.querySelector(this.containerSelector);
-      
+
       if (!this.containerElement) {
         console.warn(`Audit Logs Manager: Container element "${this.containerSelector}" not found`);
         return false;
       }
-      
+
       // Setup container structure
       this.setupContainer();
-      
+
       console.log('Audit Logs Manager: Container element found and configured');
-      
+
       // Start updates if container exists
       this.start();
-      
+
       // Add visibility change listener for better performance
       document.addEventListener('visibilitychange', this.handleVisibilityChange);
-      
+
       // Clean up on page unload
       window.addEventListener('beforeunload', () => this.stop());
-      
+
       return true;
     } catch (error) {
       console.error('Error in init:', error);
@@ -562,7 +562,7 @@ class AuditLogsManager {
           <div class="audit-logs-list"></div>
         </div>
       `;
-      
+
       this.logsListElement = this.containerElement.querySelector('.audit-logs-list');
     } catch (error) {
       console.error('Error setting up container:', error);
@@ -578,15 +578,15 @@ class AuditLogsManager {
         console.warn('Audit Logs Manager: Cannot start - no container element');
         return;
       }
-      
+
       // Start update cycle
-      
+
       // Clear any existing interval
       this.stop();
-      
+
       // Immediate update
       this.update();
-      
+
       // Set up recurring updates
       this.updateIntervalId = setInterval(this.update, this.updateInterval);
     } catch (error) {
@@ -604,7 +604,7 @@ class AuditLogsManager {
         this.updateIntervalId = null;
         console.log('Audit Logs Manager: Stopped update cycle');
       }
-      
+
       // Cancel any ongoing request
       if (this.abortController) {
         this.abortController.abort();
@@ -638,47 +638,47 @@ class AuditLogsManager {
       // Update already running, skip
       return;
     }
-    
+
     this.isUpdateRunning = true;
     this.showLoadingState();
-    
+
     // Create new abort controller for this request
     this.abortController = new AbortController();
-    
+
     try {
       // Fetching audit logs
-      
+
       const url = `${this.baseUrl}${this.apiEndpoint}?limit=15&_=${Date.now()}`;
       // Request audit logs
-      
+
       // Create timeout manually for better browser compatibility
       const timeoutId = setTimeout(() => {
         if (this.abortController) {
           this.abortController.abort();
         }
       }, this.requestTimeout);
-      
+
       // Get authentication headers
       const userId = sessionStorage.getItem('admin_user_id');
       // client-side RFID removed
       const rfidCode = null;
-      
+
       const headers = {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
+        Pragma: 'no-cache',
       };
-      
+
       // Add auth headers if available
       if (userId && rfidCode) {
         headers['X-User-ID'] = userId;
         headers['X-RFID'] = rfidCode;
       }
-      
+
       const response = await fetch(url, {
         method: 'GET',
         headers: headers,
-        signal: this.abortController.signal
+        signal: this.abortController.signal,
       });
 
       // Clear timeout on successful response
@@ -693,7 +693,7 @@ class AuditLogsManager {
           this.renderError('Authentication required for audit logs');
           return; // Don't retry auth errors
         }
-        
+
         let errorDetail = '';
         try {
           const errorText = await response.text();
@@ -706,7 +706,7 @@ class AuditLogsManager {
         } catch (textError) {
           errorDetail = 'Unknown error';
         }
-        
+
         throw new Error(`HTTP ${response.status}: ${response.statusText}. ${errorDetail}`);
       }
 
@@ -719,9 +719,13 @@ class AuditLogsManager {
         auditLogs = rawData;
       } else if (rawData && typeof rawData === 'object') {
         // Maybe it's wrapped in a response object
-        auditLogs = Array.isArray(rawData.data) ? rawData.data : 
-                   Array.isArray(rawData.logs) ? rawData.logs : 
-                   Array.isArray(rawData.results) ? rawData.results : [rawData];
+        auditLogs = Array.isArray(rawData.data)
+          ? rawData.data
+          : Array.isArray(rawData.logs)
+            ? rawData.logs
+            : Array.isArray(rawData.results)
+              ? rawData.results
+              : [rawData];
       } else {
         console.warn('Unexpected data format:', rawData);
         auditLogs = [];
@@ -729,37 +733,35 @@ class AuditLogsManager {
 
       // Update the display
       this.renderAuditLogs(auditLogs);
-      
+
       // Reset retry count on success
       this.retryCount = 0;
-      
+
       // Dispatch success event
       this.dispatchEvent('auditLogsUpdated', {
         count: auditLogs.length,
         timestamp: Date.now(),
-        success: true
+        success: true,
       });
-
     } catch (error) {
       // Don't log errors if request was aborted
       if (error.name === 'AbortError') {
         console.log('Audit Logs Manager: Request was aborted');
         return;
       }
-      
+
       console.error('Audit Logs Manager: Fetch error:', error);
-      
+
       this.renderError(error.message);
-      
+
       // Dispatch error event
       this.dispatchEvent('auditLogsError', {
         error: error.message,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
 
       // Implement retry logic
       this.handleRetry();
-
     } finally {
       this.isUpdateRunning = false;
       this.abortController = null;
@@ -831,7 +833,7 @@ class AuditLogsManager {
         } catch (logError) {
           console.error(`Audit Logs Manager: Error processing log ${index}:`, logError, log);
           errorCount++;
-          
+
           // Create error log element as fallback
           try {
             const errorLogElement = this.createErrorLogElement(index, logError);
@@ -842,7 +844,9 @@ class AuditLogsManager {
         }
       });
 
-      console.log(`Audit Logs Manager: Successfully rendered ${successCount} audit logs (${errorCount} errors)`);
+      console.log(
+        `Audit Logs Manager: Successfully rendered ${successCount} audit logs (${errorCount} errors)`
+      );
     } catch (error) {
       console.error('Critical error in renderAuditLogs:', error);
       // Ultimate fallback
@@ -864,7 +868,7 @@ class AuditLogsManager {
     try {
       const logDiv = document.createElement('div');
       logDiv.classList.add('audit-log-item', 'error');
-      
+
       logDiv.innerHTML = `
         <div class="audit-log-header">
           <span class="audit-log-badge badge-error">ERROR</span>
@@ -909,7 +913,7 @@ class AuditLogsManager {
     try {
       const logDiv = document.createElement('div');
       logDiv.classList.add('audit-log-item');
-      
+
       // Add sanitization indicator
       if (log._sanitized) {
         logDiv.classList.add('sanitized');
@@ -920,7 +924,7 @@ class AuditLogsManager {
       const message = this.generateCompactMessage(log);
       const timestamp = this.safeGet(log, ['new_values', 'timestamp'], new Date().toISOString());
       const formattedTimestamp = this.formatTimestamp(timestamp);
-      
+
       logDiv.innerHTML = `
         <div class="audit-log-header">
           <span class="audit-log-badge badge-${action}">${this.escapeHtml(String(this.safeGet(log, 'action', 'Unknown')))}</span>
@@ -948,12 +952,16 @@ class AuditLogsManager {
                 <span class="detail-label">User:</span>
                 <span class="detail-value">${this.escapeHtml(String(this.safeGet(log, 'changed_by', 'System')))}</span>
               </div>
-              ${this.safeGet(log, 'ip_address') ? `
+              ${
+                this.safeGet(log, 'ip_address')
+                  ? `
               <div class="audit-log-detail">
                 <span class="detail-label">IP:</span>
                 <span class="detail-value">${this.escapeHtml(String(this.safeGet(log, 'ip_address', '')))}</span>
               </div>
-              ` : ''}
+              `
+                  : ''
+              }
             </div>
             
             ${this.renderCompactChanges(log)}
@@ -999,14 +1007,15 @@ class AuditLogsManager {
     try {
       const oldValues = this.safeGet(log, 'old_values', {});
       const newValues = this.safeGet(log, 'new_values', {});
-      
-      const hasChanges = (oldValues && typeof oldValues === 'object' && Object.keys(oldValues).length > 0) ||
-                        (newValues && typeof newValues === 'object' && Object.keys(newValues).length > 0);
-      
+
+      const hasChanges =
+        (oldValues && typeof oldValues === 'object' && Object.keys(oldValues).length > 0) ||
+        (newValues && typeof newValues === 'object' && Object.keys(newValues).length > 0);
+
       if (!hasChanges) return '';
 
       const changeCount = Object.keys(newValues || {}).length + Object.keys(oldValues || {}).length;
-      
+
       return `
         <div class="audit-log-changes">
           <div class="changes-title">
@@ -1030,15 +1039,15 @@ class AuditLogsManager {
       const changes = [];
       const newValues = this.safeGet(log, 'new_values', {});
       const oldValues = this.safeGet(log, 'old_values', {});
-      
+
       if (newValues && typeof newValues === 'object') {
-        Object.keys(newValues).forEach(key => {
+        Object.keys(newValues).forEach((key) => {
           try {
             if (key === 'timestamp') return; // Skip timestamp in changes display
-            
+
             const value = newValues[key];
             let displayValue = '';
-            
+
             if (value === null || value === undefined) {
               displayValue = 'null';
             } else if (typeof value === 'string') {
@@ -1046,7 +1055,7 @@ class AuditLogsManager {
             } else {
               displayValue = String(value);
             }
-            
+
             // Show old value if available
             const oldValue = oldValues && oldValues[key];
             if (oldValue !== undefined && oldValue !== value) {
@@ -1054,7 +1063,8 @@ class AuditLogsManager {
               if (oldValue === null || oldValue === undefined) {
                 oldDisplayValue = 'null';
               } else if (typeof oldValue === 'string') {
-                oldDisplayValue = oldValue.length > 15 ? oldValue.substring(0, 15) + '...' : oldValue;
+                oldDisplayValue =
+                  oldValue.length > 15 ? oldValue.substring(0, 15) + '...' : oldValue;
               } else {
                 oldDisplayValue = String(oldValue);
               }
@@ -1068,7 +1078,7 @@ class AuditLogsManager {
           }
         });
       }
-      
+
       return changes.join('\n') || 'No displayable changes';
     } catch (error) {
       console.error('Error formatting compact changes:', error);
@@ -1084,7 +1094,7 @@ class AuditLogsManager {
       const action = this.safeGet(log, 'action', 'unknown');
       const actionLower = String(action).toLowerCase();
       const tableName = this.singularize(String(this.safeGet(log, 'table_name', 'item')));
-      
+
       switch (actionLower) {
         case 'create':
           return `New ${tableName} created`;
@@ -1114,15 +1124,15 @@ class AuditLogsManager {
     if (!timestamp) {
       return 'Unknown time';
     }
-    
+
     try {
       let date;
-      
+
       // Try multiple parsing approaches
       if (typeof timestamp === 'string') {
         // Method 1: Clean the timestamp and try direct parsing
         let cleanTimestamp = timestamp.trim();
-        
+
         // Handle microseconds by truncating to milliseconds
         if (cleanTimestamp.includes('.') && !cleanTimestamp.endsWith('Z')) {
           const parts = cleanTimestamp.split('.');
@@ -1131,53 +1141,65 @@ class AuditLogsManager {
             cleanTimestamp = parts[0] + '.' + parts[1].substring(0, 3);
           }
         }
-        
+
         // Try adding Z for UTC if no timezone info
-        if (!cleanTimestamp.includes('Z') && !cleanTimestamp.includes('+') && !cleanTimestamp.includes('-', 10)) {
+        if (
+          !cleanTimestamp.includes('Z') &&
+          !cleanTimestamp.includes('+') &&
+          !cleanTimestamp.includes('-', 10)
+        ) {
           date = new Date(cleanTimestamp + 'Z');
         } else {
           date = new Date(cleanTimestamp);
         }
-        
+
         // Method 2: Manual parsing for problematic formats
         if (isNaN(date.getTime())) {
-          const match = cleanTimestamp.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,6}))?(?:Z|[+-]\d{2}:\d{2})?$/);
+          const match = cleanTimestamp.match(
+            /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,6}))?(?:Z|[+-]\d{2}:\d{2})?$/
+          );
           if (match) {
             const [, year, month, day, hour, minute, second, fraction] = match;
             const milliseconds = fraction ? parseInt(fraction.padEnd(3, '0').substring(0, 3)) : 0;
-            
-            date = new Date(Date.UTC(
-              parseInt(year), 
-              parseInt(month) - 1, 
-              parseInt(day), 
-              parseInt(hour), 
-              parseInt(minute), 
-              parseInt(second),
-              milliseconds
-            ));
+
+            date = new Date(
+              Date.UTC(
+                parseInt(year),
+                parseInt(month) - 1,
+                parseInt(day),
+                parseInt(hour),
+                parseInt(minute),
+                parseInt(second),
+                milliseconds
+              )
+            );
           }
         }
-        
+
         // Method 3: Try as local time (remove T and Z)
         if (isNaN(date.getTime())) {
-          const localFormat = cleanTimestamp.replace('T', ' ').replace('Z', '').replace(/\.\d+$/, '');
+          const localFormat = cleanTimestamp
+            .replace('T', ' ')
+            .replace('Z', '')
+            .replace(/\.\d+$/, '');
           date = new Date(localFormat);
         }
-        
+
         // Method 4: Try epoch timestamp (if it's a string of numbers)
         if (isNaN(date.getTime()) && /^\d+$/.test(cleanTimestamp)) {
           const numTimestamp = parseInt(cleanTimestamp);
           // Check if it's in seconds (Unix timestamp) or milliseconds
-          if (numTimestamp < 10000000000) { // Less than year 2286 in seconds
+          if (numTimestamp < 10000000000) {
+            // Less than year 2286 in seconds
             date = new Date(numTimestamp * 1000);
           } else {
             date = new Date(numTimestamp);
           }
         }
-        
       } else if (typeof timestamp === 'number') {
         // Handle numeric timestamps
-        if (timestamp < 10000000000) { // Unix timestamp in seconds
+        if (timestamp < 10000000000) {
+          // Unix timestamp in seconds
           date = new Date(timestamp * 1000);
         } else {
           date = new Date(timestamp);
@@ -1186,13 +1208,13 @@ class AuditLogsManager {
         // If it's already a Date object or other type
         date = new Date(timestamp);
       }
-      
+
       // Final validation
       if (isNaN(date.getTime())) {
         console.error('All parsing methods failed for timestamp:', timestamp);
         return `Invalid: ${String(timestamp).substring(0, 20)}`;
       }
-      
+
       const now = new Date();
       const diffMs = now - date;
       const diffMins = Math.floor(diffMs / 60000);
@@ -1201,19 +1223,19 @@ class AuditLogsManager {
       const diffWeeks = Math.floor(diffDays / 7);
       const diffMonths = Math.floor(diffDays / 30);
       const diffYears = Math.floor(diffDays / 365);
-      
+
       // Handle future dates (negative differences)
       if (diffMs < 0) {
         const absDiffMs = Math.abs(diffMs);
         const futureHours = Math.floor(absDiffMs / 3600000);
         const futureDays = Math.floor(absDiffMs / 86400000);
-        
+
         if (futureHours < 1) return 'in a few minutes';
         if (futureHours < 24) return `in ${futureHours}h`;
         if (futureDays < 7) return `in ${futureDays}d`;
         return `on ${date.toLocaleDateString()}`;
       }
-      
+
       // Format based on time difference
       if (diffMins < 1) return 'Just now';
       if (diffMins < 60) return `${diffMins}m ago`;
@@ -1222,10 +1244,9 @@ class AuditLogsManager {
       if (diffWeeks < 4) return `${diffWeeks}w ago`;
       if (diffMonths < 12) return `${diffMonths}mo ago`;
       if (diffYears < 2) return '1y ago';
-      
+
       // For very old dates, show the actual date
       return date.toLocaleDateString();
-      
     } catch (error) {
       console.error('Error in formatTimestamp:', error, 'for timestamp:', timestamp);
       return `Error: ${String(timestamp).substring(0, 20)}`;
@@ -1238,7 +1259,7 @@ class AuditLogsManager {
   renderError(errorMessage) {
     try {
       if (!this.logsListElement) return;
-      
+
       this.logsListElement.innerHTML = `
         <div class="error-message">
           <i class="fas fa-exclamation-triangle"></i>
@@ -1261,8 +1282,10 @@ class AuditLogsManager {
       if (this.retryCount < this.maxRetries) {
         this.retryCount++;
         const retryDelay = this.baseRetryDelay * Math.pow(2, this.retryCount - 1);
-        
-        console.log(`Audit Logs Manager: Retrying in ${retryDelay}ms (attempt ${this.retryCount}/${this.maxRetries})`);
+
+        console.log(
+          `Audit Logs Manager: Retrying in ${retryDelay}ms (attempt ${this.retryCount}/${this.maxRetries})`
+        );
 
         setTimeout(() => {
           if (!this.isUpdateRunning) {
@@ -1283,18 +1306,18 @@ class AuditLogsManager {
   singularize(word) {
     try {
       if (!word || typeof word !== 'string') return 'item';
-      
+
       const singularRules = {
-        'users': 'user',
-        'questions': 'question', 
-        'answers': 'answer',
-        'categories': 'category',
-        'themes': 'theme',
-        'logs': 'log',
-        'entries': 'entry',
-        'activities': 'activity'
+        users: 'user',
+        questions: 'question',
+        answers: 'answer',
+        categories: 'category',
+        themes: 'theme',
+        logs: 'log',
+        entries: 'entry',
+        activities: 'activity',
       };
-      
+
       const lowerWord = word.toLowerCase();
       if (singularRules[lowerWord]) return singularRules[lowerWord];
       if (lowerWord.endsWith('ies')) return lowerWord.slice(0, -3) + 'y';
@@ -1326,16 +1349,16 @@ class AuditLogsManager {
     try {
       const actionLower = String(action || '').toLowerCase();
       const iconMap = {
-        'create': 'fas fa-plus',
-        'update': 'fas fa-edit',
-        'delete': 'fas fa-trash',
-        'login': 'fas fa-sign-in-alt',
-        'logout': 'fas fa-sign-out-alt',
-        'register': 'fas fa-user-plus',
-        'unknown': 'fas fa-question',
-        'error': 'fas fa-exclamation-triangle'
+        create: 'fas fa-plus',
+        update: 'fas fa-edit',
+        delete: 'fas fa-trash',
+        login: 'fas fa-sign-in-alt',
+        logout: 'fas fa-sign-out-alt',
+        register: 'fas fa-user-plus',
+        unknown: 'fas fa-question',
+        error: 'fas fa-exclamation-triangle',
       };
-      
+
       return iconMap[actionLower] || 'fas fa-circle';
     } catch (error) {
       console.error('Error getting audit log icon:', error);
@@ -1351,7 +1374,7 @@ class AuditLogsManager {
       if (typeof text !== 'string') {
         text = String(text || '');
       }
-      
+
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
@@ -1379,7 +1402,7 @@ class AuditLogsManager {
     try {
       Object.assign(this, newConfig);
       console.log('Audit Logs Manager: Configuration updated:', newConfig);
-      
+
       if (this.updateIntervalId) {
         this.start();
       }
@@ -1402,8 +1425,8 @@ class AuditLogsManager {
           baseUrl: this.baseUrl,
           apiEndpoint: this.apiEndpoint,
           containerSelector: this.containerSelector,
-          updateInterval: this.updateInterval
-        }
+          updateInterval: this.updateInterval,
+        },
       };
     } catch (error) {
       console.error('Error getting status:', error);
@@ -1446,5 +1469,5 @@ window.auditLogsAPI = {
   stop: () => auditLogsManager?.stop(),
   update: () => auditLogsManager?.update(),
   getStatus: () => auditLogsManager?.getStatus(),
-  updateConfig: (config) => auditLogsManager?.updateConfig(config)
+  updateConfig: (config) => auditLogsManager?.updateConfig(config),
 };

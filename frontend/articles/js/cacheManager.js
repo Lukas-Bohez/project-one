@@ -1,11 +1,11 @@
 // Cache management utilities for image caching
 window.cacheManager = {
   // Clear all image caches
-  clearImageCache: function() {
+  clearImageCache: function () {
     return new Promise((resolve, reject) => {
       if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({
-          type: 'CLEAR_IMAGE_CACHE'
+          type: 'CLEAR_IMAGE_CACHE',
         });
         resolve('Image cache clear request sent to service worker');
       } else {
@@ -21,10 +21,10 @@ window.cacheManager = {
   },
 
   // Get cache statistics
-  getCacheStats: function() {
+  getCacheStats: function () {
     return new Promise((resolve) => {
       if ('caches' in window) {
-        caches.keys().then(cacheNames => {
+        caches.keys().then((cacheNames) => {
           const stats = { caches: cacheNames.length, names: cacheNames };
           resolve(stats);
         });
@@ -35,8 +35,8 @@ window.cacheManager = {
   },
 
   // Preload critical images
-  preloadImages: function(imageUrls) {
-    const promises = imageUrls.map(url => {
+  preloadImages: function (imageUrls) {
+    const promises = imageUrls.map((url) => {
       return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => resolve(url);
@@ -45,7 +45,7 @@ window.cacheManager = {
       });
     });
     return Promise.allSettled(promises);
-  }
+  },
 };
 
 // Add to global scope for debugging

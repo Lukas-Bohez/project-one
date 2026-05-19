@@ -40,7 +40,8 @@ Delete any existing `:root` colour variable block first, then replace with exact
   --color-success: #22c55e;
 }
 
-[data-theme="light"] { /* or body.light-mode — use whichever exists */
+[data-theme='light'] {
+  /* or body.light-mode — use whichever exists */
   --color-bg: #f4f5fb;
   --color-surface: #ffffff;
   --color-card: #ffffff;
@@ -62,16 +63,21 @@ Run the grep again at the end to confirm zero raw hex colour values remain in CS
 ## FIX 1 — Stat Counter Duplication ✅
 
 ### Issue
+
 Live site displayed:
+
 - "5 apps apps" (duplicate "apps")
-- "1 dev dev" (duplicate "dev")  
+- "1 dev dev" (duplicate "dev")
 - "1000+ +" (duplicate "+")
 
 ### Root Cause
+
 HTML had `data-suffix=" apps"` for Free tools counter, but the label said "Free tools" not "apps", creating confusion. The suffix was being appended twice due to incomplete removal.
 
 ### Solution
+
 Removed erroneous suffixes:
+
 ```html
 <!-- Before -->
 <span class="hero-stat-number" data-target="5" data-suffix=" apps">0</span>
@@ -83,6 +89,7 @@ Removed erroneous suffixes:
 ```
 
 Now displays correctly:
+
 - Downloads: "1000+" with label "Downloads"
 - Countries: "95+" with label "Countries"
 - Free tools: "5" with label "Free tools"
@@ -95,17 +102,21 @@ Now displays correctly:
 ## FIX 2 — Adblock Enforcement with Real Verification ✅
 
 ### Issue
+
 Current behavior: When user clicked "I whitelisted", banner disappeared and never returned (user was trusted).
 
 This is problematic because:
+
 1. Users may click without actually whitelisting
 2. No revenue protection from genuine blocking
 3. Users can re-enable adblocker after claiming to whitelist
 
 ### Solution
+
 Complete rewrite of `spire-adblock-detector.js`:
 
 #### New Detection Flow
+
 ```javascript
 User claims "I disabled my ad blocker"
     ↓
@@ -124,6 +135,7 @@ ELSE (adblock genuinely disabled):
 ```
 
 #### Key Features
+
 1. **Verification on claim**: Re-runs canary detection immediately
 2. **7-day TTL**: `localStorage.setItem('adblock-dismissed', JSON.stringify({timestamp, ttl}))`
 3. **Continuous verification**: Even if dismissed, re-checks on page load
@@ -137,7 +149,9 @@ ELSE (adblock genuinely disabled):
 ## FIX 3 — Image Deployment & Lighthouse Verification ✅
 
 ### Status
+
 Previous performance optimization pass (hero images → WebP) was successfully deployed:
+
 - ✅ `spire-light.webp` (45 KB, 93% reduction from 679 KB JPEG)
 - ✅ `spire-dark.webp` (152 KB, 96% reduction from 3.9 MB JPEG)
 - ✅ Preload links with media queries (halves payload for users)
@@ -151,18 +165,33 @@ Previous performance optimization pass (hero images → WebP) was successfully d
 ## BONUS 1 — Media-Query Aware Preload ✅
 
 ### Issue
+
 Both `spire-light.webp` and `spire-dark.webp` preloading unconditionally → doubles image download for all users
 
 ### Solution
+
 Added media queries to preload links:
+
 ```html
 <!-- Only preload light image for users with light mode preference -->
-<link rel="preload" href="images/spire-light.webp" as="image" type="image/webp" 
-      media="(prefers-color-scheme: light)" fetchpriority="high" />
+<link
+  rel="preload"
+  href="images/spire-light.webp"
+  as="image"
+  type="image/webp"
+  media="(prefers-color-scheme: light)"
+  fetchpriority="high"
+/>
 
 <!-- Only preload dark image for dark mode preference -->
-<link rel="preload" href="images/spire-dark.webp" as="image" type="image/webp" 
-      media="(prefers-color-scheme: dark)" fetchpriority="high" />
+<link
+  rel="preload"
+  href="images/spire-dark.webp"
+  as="image"
+  type="image/webp"
+  media="(prefers-color-scheme: dark)"
+  fetchpriority="high"
+/>
 ```
 
 **Impact**: ✅ **Halves image payload** — light mode users: 45 KB (not 197 KB), dark mode users: 152 KB (not 197 KB)
@@ -172,9 +201,11 @@ Added media queries to preload links:
 ## BONUS 2 — OG Tags for Social Sharing ✅
 
 ### Issue
+
 Social cards (Twitter, Facebook) missing image dimensions
 
 ### Solution
+
 ```html
 <meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg" />
 <meta property="og:image:width" content="1920" />
@@ -189,23 +220,29 @@ Social cards (Twitter, Facebook) missing image dimensions
 ## BONUS 3 — Sticky Download CTA with IntersectionObserver ✅
 
 ### Feature
+
 New sticky bar appears when user scrolls below hero section:
+
 - Shows: "⬇ Download Convert The Spire Reborn"
 - Links to: GitHub releases
 - Dismissible for 24 hours with localStorage
 - Uses IntersectionObserver for smooth show/hide
 
 ### Implementation
+
 ```javascript
 // Shows when hero is NOT visible (scrolled past)
 // Hides when hero IS visible
-const observer = new IntersectionObserver(([entry]) => {
-  if (entry.isIntersecting) {
-    stickyBar.style.transform = 'translateY(100%)'; // Hide
-  } else {
-    stickyBar.style.transform = 'translateY(0)'; // Show
-  }
-}, { threshold: 0 });
+const observer = new IntersectionObserver(
+  ([entry]) => {
+    if (entry.isIntersecting) {
+      stickyBar.style.transform = 'translateY(100%)'; // Hide
+    } else {
+      stickyBar.style.transform = 'translateY(0)'; // Show
+    }
+  },
+  { threshold: 0 }
+);
 observer.observe(heroSection);
 ```
 
@@ -216,9 +253,11 @@ observer.observe(heroSection);
 ## Files Changed
 
 ### New Files
+
 - `/frontend/js/sticky-download-cta.js` (IntersectionObserver-based sticky bar)
 
 ### Modified Files
+
 - `/frontend/index.html`
   - Fixed stat counter `data-suffix` attributes (removed erroneous " apps" and " dev")
   - Added media queries to WebP preload links
@@ -245,6 +284,7 @@ observer.observe(heroSection);
 ```
 
 ### Deployment Status
+
 ✅ All changes live at https://quizthespire.com/
 ✅ Git commits: `abda5ca` (current main branch)
 
@@ -252,13 +292,13 @@ observer.observe(heroSection);
 
 ## Performance & Quality Impact
 
-| Improvement | Impact | Metric |
-|-------------|--------|--------|
-| **Stat duplication fix** | Visual clarity | Labels render correctly |
-| **Adblock verification** | Revenue protection | Can't fake whitelist |
-| **Media-query preload** | ~50% image reduction | Light: 45 KB, Dark: 152 KB |
-| **OG tag dimensions** | Social sharing | Cards render with proper aspect ratio |
-| **Sticky CTA** | Convert downloads | Persistent but dismissible |
+| Improvement              | Impact               | Metric                                |
+| ------------------------ | -------------------- | ------------------------------------- |
+| **Stat duplication fix** | Visual clarity       | Labels render correctly               |
+| **Adblock verification** | Revenue protection   | Can't fake whitelist                  |
+| **Media-query preload**  | ~50% image reduction | Light: 45 KB, Dark: 152 KB            |
+| **OG tag dimensions**    | Social sharing       | Cards render with proper aspect ratio |
+| **Sticky CTA**           | Convert downloads    | Persistent but dismissible            |
 
 ---
 

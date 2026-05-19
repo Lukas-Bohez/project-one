@@ -1,42 +1,43 @@
 /* Prevent horizontal overflow on mobile */
 * {
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
 
-html, body {
-    max-width: 100%;
-    overflow-x: hidden;
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* Enhanced Solar Sonar Animation */
 @keyframes solarSonar {
-    0% {
-        transform: rotate(0deg);
-        opacity: 0.8;
-        width: 100px;
-    }
-    50% {
-        opacity: 0.6;
-    }
-    100% {
-        transform: rotate(360deg);
-        opacity: 0;
-        width: 5000px; /* Even larger to cover entire site */
-    }
+  0% {
+    transform: rotate(0deg);
+    opacity: 0.8;
+    width: 100px;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: rotate(360deg);
+    opacity: 0;
+    width: 5000px; /* Even larger to cover entire site */
+  }
 }
 
 .sonar-sweep {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform-origin: 0 0;
-    height: 10px; /* Thicker line */
-    background: linear-gradient(90deg, transparent, var(--pulse-color, #00e5ff), transparent);
-    z-index: 9998;
-    pointer-events: none;
-    border-radius: 50%;
-    filter: blur(2px) brightness(1.2); /* Brighter radar */
-    box-shadow: 0 0 40px 12px var(--pulse-glow, rgba(0, 229, 255, 0.6)); /* Brighter glow */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform-origin: 0 0;
+  height: 10px; /* Thicker line */
+  background: linear-gradient(90deg, transparent, var(--pulse-color, #00e5ff), transparent);
+  z-index: 9998;
+  pointer-events: none;
+  border-radius: 50%;
+  filter: blur(2px) brightness(1.2); /* Brighter radar */
+  box-shadow: 0 0 40px 12px var(--pulse-glow, rgba(0, 229, 255, 0.6)); /* Brighter glow */
 }
 
 /* Pulse animation colors - inherits main theme from styles.css */

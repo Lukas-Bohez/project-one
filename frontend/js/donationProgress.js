@@ -14,7 +14,7 @@
     apiEndpoint: '/api/v1/game',
     adminUsername: 'UserServer', // The account that stores donation progress
     fallbackCurrent: 114,
-    fallbackGoal: 150
+    fallbackGoal: 150,
   };
   // ==================================================================
 
@@ -60,13 +60,22 @@
       // 2) Check for token on any global SaveManager instance if present
       try {
         // Common instances may attach to window.app.gameEngine.saveManager
-        if (window.app && window.app.gameEngine && window.app.gameEngine.saveManager && window.app.gameEngine.saveManager.authToken) {
+        if (
+          window.app &&
+          window.app.gameEngine &&
+          window.app.gameEngine.saveManager &&
+          window.app.gameEngine.saveManager.authToken
+        ) {
           console.log('🔐 getAuthToken: Using token from window.app.gameEngine.saveManager');
           return window.app.gameEngine.saveManager.authToken;
         }
 
         // Also check a few other possible globals
-        const candidates = [window.saveManager, window.SaveManagerInstance, window.saveManagerInstance];
+        const candidates = [
+          window.saveManager,
+          window.SaveManagerInstance,
+          window.saveManagerInstance,
+        ];
         for (const c of candidates) {
           if (c && c.authToken) {
             console.log('🔐 getAuthToken: Using token from SaveManager instance');
@@ -78,7 +87,8 @@
       }
 
       // 3) Try to login with a stored password
-      const password = localStorage.getItem('gamePassword') || localStorage.getItem('donationAdminPassword');
+      const password =
+        localStorage.getItem('gamePassword') || localStorage.getItem('donationAdminPassword');
       if (!password) {
         return null;
       }
@@ -92,14 +102,16 @@
           const parsed = JSON.parse(savedAuth);
           if (parsed && parsed.username) username = parsed.username;
         }
-      } catch (e) { /* ignore */ }
+      } catch (e) {
+        /* ignore */
+      }
 
       const loginUrl = `${CONFIG.baseUrl}${CONFIG.apiEndpoint}/auth/login`;
       console.log('🔐 getAuthToken: Attempting login for', username);
       const resp = await fetch(loginUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username, password: password })
+        body: JSON.stringify({ username: username, password: password }),
       });
 
       if (!resp.ok) {
@@ -111,7 +123,10 @@
       if (data && (data.access_token || data.token)) {
         const token = data.access_token || data.token;
         try {
-          localStorage.setItem('industrialEmpire_auth', JSON.stringify({ token: token, username: username, timestamp: Date.now() }));
+          localStorage.setItem(
+            'industrialEmpire_auth',
+            JSON.stringify({ token: token, username: username, timestamp: Date.now() })
+          );
         } catch (e) {
           // ignore storage errors
         }
@@ -141,7 +156,10 @@
         // Warn at 10s if still pending
         const warnTimer = setTimeout(() => {
           warned = true;
-          console.warn('⏱️ FETCH: Public endpoint taking longer than 10s... still waiting:', publicUrl);
+          console.warn(
+            '⏱️ FETCH: Public endpoint taking longer than 10s... still waiting:',
+            publicUrl
+          );
         }, 10000);
 
         // Abort at 30s to avoid hanging forever
@@ -150,13 +168,20 @@
           console.error('⏳ FETCH: Public endpoint aborted after 30s:', publicUrl);
         }, 30000);
 
-        const publicResp = await fetch(publicUrl, { method: 'GET', headers: { 'Content-Type': 'application/json' }, signal: controller.signal });
+        const publicResp = await fetch(publicUrl, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+        });
 
         const elapsed = Date.now() - start;
         clearTimeout(warnTimer);
         clearTimeout(abortTimer);
 
-        console.log(`🔍 FETCH: Public endpoint response received in ${elapsed}ms, status:`, publicResp.status);
+        console.log(
+          `🔍 FETCH: Public endpoint response received in ${elapsed}ms, status:`,
+          publicResp.status
+        );
 
         if (publicResp.ok) {
           const publicBody = await publicResp.json().catch(() => null);
@@ -166,7 +191,11 @@
             // parse custom_data if string
             let custom = save.custom_data || save;
             if (typeof custom === 'string') {
-              try { custom = JSON.parse(custom); } catch (e) { custom = null; }
+              try {
+                custom = JSON.parse(custom);
+              } catch (e) {
+                custom = null;
+              }
             }
             if (custom && custom.donationProgress) {
               cachedProgress = custom.donationProgress;
@@ -203,32 +232,37 @@
       const loadResponse = await fetch(loadUrl, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
       });
 
       console.log('🔍 FETCH: Load response status:', loadResponse.status);
       if (!loadResponse.ok) {
         const errorText = await loadResponse.text();
-        console.warn('⚠️ FETCH: Load failed with status', loadResponse.status, 'Response:', errorText);
+        console.warn(
+          '⚠️ FETCH: Load failed with status',
+          loadResponse.status,
+          'Response:',
+          errorText
+        );
         return { currentAmount: CONFIG.fallbackCurrent, goalAmount: CONFIG.fallbackGoal };
       }
 
       const response = await loadResponse.json();
       console.log('🔍 FETCH: Got response:', response);
-      
+
       // The response has save_data field from backend
       let saveData = response.save_data || response;
       console.log('🔍 FETCH: Save data keys:', Object.keys(saveData));
       console.log('🔍 FETCH: custom_data type:', typeof saveData.custom_data);
-      
+
       // Extract donation progress from custom_data
       let donationData = {
         currentAmount: CONFIG.fallbackCurrent,
-        goalAmount: CONFIG.fallbackGoal
+        goalAmount: CONFIG.fallbackGoal,
       };
-      
+
       if (saveData.custom_data) {
         // Handle if custom_data is string (from database)
         let customData = saveData.custom_data;
@@ -241,7 +275,7 @@
             console.error('❌ FETCH: Failed to parse custom_data:', e);
           }
         }
-        
+
         if (customData && customData.donationProgress) {
           console.log('✅ FETCH: Found donation progress:', customData.donationProgress);
           donationData = customData.donationProgress;
@@ -255,7 +289,6 @@
       cachedProgress = donationData;
       console.log('✅ FETCH: Returning donation data:', donationData);
       return donationData;
-
     } catch (error) {
       console.error('❌ FETCH: Error fetching donation progress:', error);
       console.error('❌ FETCH: Error stack:', error.stack);
@@ -292,9 +325,9 @@
       const loadResponse = await fetch(loadUrl, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
       });
 
       // Start with defaults
@@ -305,15 +338,25 @@
         resources: { stone: 0, crystals: 0, gold: 0, royal_favor: 0 },
         characters: [],
         buildings: {},
-        upgrades: { mining_speed: 1, transport_speed: 1, market_efficiency: 1, storage_capacity: 1 },
+        upgrades: {
+          mining_speed: 1,
+          transport_speed: 1,
+          market_efficiency: 1,
+          storage_capacity: 1,
+        },
         unlocked_vehicles: ['hand_cart'],
         achievements: [],
         prestige_level: 0,
         offline_time: 0,
-        settings: { sound_enabled: true, auto_save: true, notifications: true, graphics_quality: 'high' },
-        custom_data: {}
+        settings: {
+          sound_enabled: true,
+          auto_save: true,
+          notifications: true,
+          graphics_quality: 'high',
+        },
+        custom_data: {},
       };
-      
+
       // Try to load existing save
       if (loadResponse.ok) {
         const loadedData = await loadResponse.json();
@@ -330,7 +373,7 @@
           saveData.custom_data = {};
         }
       }
-      
+
       if (!saveData.custom_data) {
         saveData.custom_data = {};
       }
@@ -339,7 +382,7 @@
       saveData.custom_data.donationProgress = {
         currentAmount: parseFloat(currentAmount),
         goalAmount: parseFloat(goalAmount),
-        lastUpdated: new Date().toISOString()
+        lastUpdated: new Date().toISOString(),
       };
 
       // If we have a SaveManager, prefer to use its prepareSaveData() to match payload exactly
@@ -352,12 +395,19 @@
           prepared.custom_data.donationProgress = {
             currentAmount: parseFloat(currentAmount),
             goalAmount: parseFloat(goalAmount),
-            lastUpdated: new Date().toISOString()
+            lastUpdated: new Date().toISOString(),
           };
           savePayload = { save_data: prepared, backup: false };
-          console.log('💾 SAVE: Using SaveManager.prepareSaveData() payload (size:', JSON.stringify(savePayload).length, 'bytes)');
+          console.log(
+            '💾 SAVE: Using SaveManager.prepareSaveData() payload (size:',
+            JSON.stringify(savePayload).length,
+            'bytes)'
+          );
         } catch (e) {
-          console.warn('💾 SAVE: Failed to use SaveManager.prepareSaveData(), falling back to manual payload', e);
+          console.warn(
+            '💾 SAVE: Failed to use SaveManager.prepareSaveData(), falling back to manual payload',
+            e
+          );
         }
       }
 
@@ -366,15 +416,19 @@
       const saveResponse = await fetch(saveUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(savePayload)
+        body: JSON.stringify(savePayload),
       });
 
       console.log('💾 SAVE: Save response status:', saveResponse.status);
       let saveRespBody = null;
-      try { saveRespBody = await saveResponse.json(); } catch (e) { /* ignore parse errors */ }
+      try {
+        saveRespBody = await saveResponse.json();
+      } catch (e) {
+        /* ignore parse errors */
+      }
       console.log('💾 SAVE: Save response body:', saveRespBody);
 
       if (!saveResponse.ok) {
@@ -391,7 +445,10 @@
       // Verify by reloading the saved data from server
       try {
         console.log('🔁 SAVE: Verifying saved data by reloading from server');
-        const verifyResp = await fetch(loadUrl, { method: 'GET', headers: { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' } });
+        const verifyResp = await fetch(loadUrl, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+        });
         const verifyBody = await verifyResp.json().catch(() => null);
         console.log('🔁 SAVE: Verify response status:', verifyResp.status, 'body:', verifyBody);
 
@@ -400,7 +457,11 @@
         if (verifySave && verifySave.custom_data) {
           let cd = verifySave.custom_data;
           if (typeof cd === 'string') {
-            try { cd = JSON.parse(cd); } catch (e) { cd = null; }
+            try {
+              cd = JSON.parse(cd);
+            } catch (e) {
+              cd = null;
+            }
           }
           if (cd && cd.donationProgress) {
             verifiedProgress = cd.donationProgress;
@@ -413,7 +474,10 @@
           updateProgressBar(verifiedProgress);
           return { success: true, message: 'Donation progress updated and verified!' };
         } else {
-          console.warn('⚠️ SAVE: Could not verify donation progress after save. Server response:', verifyBody);
+          console.warn(
+            '⚠️ SAVE: Could not verify donation progress after save. Server response:',
+            verifyBody
+          );
           // Still update local cached value and UI so admin sees it
           cachedProgress = saveData.custom_data.donationProgress;
           updateProgressBar(saveData.custom_data.donationProgress);
@@ -423,9 +487,11 @@
         console.error('❌ SAVE: Verification request failed:', err);
         cachedProgress = saveData.custom_data.donationProgress;
         updateProgressBar(saveData.custom_data.donationProgress);
-        return { success: true, message: 'Donation progress updated (verification request failed)' };
+        return {
+          success: true,
+          message: 'Donation progress updated (verification request failed)',
+        };
       }
-
     } catch (error) {
       console.error('❌ Error updating donation progress:', error);
       return { success: false, message: error.message };
@@ -438,9 +504,15 @@
     if (progressBar) {
       progressBar.max = progress.goalAmount;
       progressBar.value = Math.min(progress.currentAmount, progress.goalAmount);
-      progressBar.setAttribute('aria-valuenow', String(Math.min(progress.currentAmount, progress.goalAmount)));
+      progressBar.setAttribute(
+        'aria-valuenow',
+        String(Math.min(progress.currentAmount, progress.goalAmount))
+      );
       progressBar.setAttribute('aria-valuemax', String(progress.goalAmount));
-      progressBar.setAttribute('aria-label', `Funding progress ${progress.currentAmount} of ${progress.goalAmount}`);
+      progressBar.setAttribute(
+        'aria-label',
+        `Funding progress ${progress.currentAmount} of ${progress.goalAmount}`
+      );
     }
   }
 
@@ -461,13 +533,14 @@
         // Never store admin passwords in persistent storage. Keep username in sessionStorage
         if (username) sessionStorage.setItem('donationAdminUsername', username);
         // Password is kept in-memory only and not persisted. Caller should handle it.
-        console.warn('🔐 DonationProgress: Admin password will not be persisted for security reasons');
+        console.warn(
+          '🔐 DonationProgress: Admin password will not be persisted for security reasons'
+        );
         return { success: true };
       } catch (e) {
         console.error('🔐 DonationProgress: Failed to set admin username', e);
         return { success: false, message: e.message };
       }
-    }
+    },
   };
-
 })();

@@ -1,19 +1,19 @@
 // Complete rewrite - Quiz The Spire Info Button
-(function() {
-    'use strict';
-    
-    // Remove any existing elements
-    const cleanup = () => {
-        ['infoBtn', 'infoModal', 'infoButtonStyles'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.remove();
-        });
-    };
-    
-    const createInfoSystem = () => {
-        cleanup();
-        
-        // Inject styles
+(function () {
+  'use strict';
+
+  // Remove any existing elements
+  const cleanup = () => {
+    ['infoBtn', 'infoModal', 'infoButtonStyles'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    });
+  };
+
+  const createInfoSystem = () => {
+    cleanup();
+
+    // Inject styles
     const css = `
             #infoBtn {
                 position: absolute;
@@ -250,37 +250,47 @@
             .qts-dark .section-title { color: #93c5fd; border-bottom-color: rgba(255,255,255,0.04); }
             .qts-dark .info-section p, .qts-dark .info-list li { color: #cbd5e1; }
         `;
-        
-        const style = document.createElement('style');
-        style.id = 'infoButtonStyles';
-        style.textContent = css;
-        document.head.appendChild(style);
-        
-        // Create button
-        const btn = document.createElement('button');
-        btn.id = 'infoBtn';
-        btn.innerHTML = 'ℹ';
-        btn.type = 'button';
 
-        // If the site uses a dark theme (data-theme or body class), or localStorage, mark modal/button with dark class
-        try {
-            const current = (document.documentElement.getAttribute('data-theme') === 'dark' || document.body.classList.contains('theme-dark')) ? 'dark' : null;
-            const saved = current || localStorage.getItem('quiz-theme-preference') || localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-            if (saved === 'dark') {
-                btn.classList.add('qts-dark');
-            }
-        } catch (e) {
-            // ignore
-        }
-        
+    const style = document.createElement('style');
+    style.id = 'infoButtonStyles';
+    style.textContent = css;
+    document.head.appendChild(style);
+
+    // Create button
+    const btn = document.createElement('button');
+    btn.id = 'infoBtn';
+    btn.innerHTML = 'ℹ';
+    btn.type = 'button';
+
+    // If the site uses a dark theme (data-theme or body class), or localStorage, mark modal/button with dark class
+    try {
+      const current =
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('theme-dark')
+          ? 'dark'
+          : null;
+      const saved =
+        current ||
+        localStorage.getItem('quiz-theme-preference') ||
+        localStorage.getItem('theme') ||
+        (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light');
+      if (saved === 'dark') {
+        btn.classList.add('qts-dark');
+      }
+    } catch (e) {
+      // ignore
+    }
+
     // Create modal
-        const modal = document.createElement('div');
-        modal.id = 'infoModal';
-        
-        const content = document.createElement('div');
-        content.className = 'modal-content';
-        
-        content.innerHTML = `
+    const modal = document.createElement('div');
+    modal.id = 'infoModal';
+
+    const content = document.createElement('div');
+    content.className = 'modal-content';
+
+    content.innerHTML = `
             <button class="close-btn" type="button">×</button>
             <h2 class="modal-title">Welcome to Quiz The Spire</h2>
             
@@ -319,53 +329,57 @@
                 </ul>
             </div>
         `;
-        
-        modal.appendChild(content);
-        
-        // Add to page
-        document.body.appendChild(btn);
-        document.body.appendChild(modal);
 
-        // Apply dark class to modal if needed (ensures inline-styled DOM shows dark)
-        try {
-            const saved = localStorage.getItem('quiz-theme-preference') || localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-            if (saved === 'dark') {
-                modal.classList.add('qts-dark');
-            }
-        } catch (e) {}
-        
-        // Event handlers
-        const openModal = () => {
-            modal.style.display = 'block';
-            document.body.style.overflow = 'hidden';
-        };
-        
-        const closeModal = () => {
-            modal.style.display = 'none';
-            document.body.style.overflow = '';
-        };
-        
-        btn.addEventListener('click', openModal);
-        content.querySelector('.close-btn').addEventListener('click', closeModal);
-        
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
-        });
-        
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modal.style.display === 'block') {
-                closeModal();
-            }
-        });
-        
-        console.log('Info button created successfully at top: 16px');
+    modal.appendChild(content);
+
+    // Add to page
+    document.body.appendChild(btn);
+    document.body.appendChild(modal);
+
+    // Apply dark class to modal if needed (ensures inline-styled DOM shows dark)
+    try {
+      const saved =
+        localStorage.getItem('quiz-theme-preference') ||
+        localStorage.getItem('theme') ||
+        (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light');
+      if (saved === 'dark') {
+        modal.classList.add('qts-dark');
+      }
+    } catch (e) {}
+
+    // Event handlers
+    const openModal = () => {
+      modal.style.display = 'block';
+      document.body.style.overflow = 'hidden';
     };
-    
-    // Initialize
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', createInfoSystem);
-    } else {
-        createInfoSystem();
-    }
-    
+
+    const closeModal = () => {
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    };
+
+    btn.addEventListener('click', openModal);
+    content.querySelector('.close-btn').addEventListener('click', closeModal);
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.style.display === 'block') {
+        closeModal();
+      }
+    });
+
+    console.log('Info button created successfully at top: 16px');
+  };
+
+  // Initialize
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', createInfoSystem);
+  } else {
+    createInfoSystem();
+  }
 })();

@@ -26,6 +26,7 @@ cd /home/student/Project/project-one
 ```
 
 The script will:
+
 1. Show you which tables will be created
 2. Ask for confirmation
 3. Prompt for your database password
@@ -123,20 +124,24 @@ After successful migration:
 ## 🆘 Troubleshooting
 
 ### "Access denied" error
+
 - Check password for `quiz_user`
 - Verify user has INSERT and CREATE privileges
 
 ### "Foreign key constraint" error
+
 - Ensure `users` table exists in `quizTheSpire` database
 - The migration should work with the existing schema
 
 ### Tables already exist
+
 - Migration will skip existing tables (uses IF NOT EXISTS)
 - This is safe and expected behavior
 
 ## 📞 Support
 
 If you encounter any issues:
+
 1. Check MySQL error logs
 2. Verify database credentials in `backend/config/config.py`
 3. Ensure MySQL server is running
