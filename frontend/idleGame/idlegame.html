@@ -1,1335 +1,2142 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-        <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <title>Industrial Empire - Dark Narrative Idle Game by Lukas Bohez</title>
-    <meta name="description" content="Play Industrial Empire, a dark narrative idle game that takes you through the rise and fall of empires. Experience a deep story from tech giant to the final end. Created by Lukas Bohez.">
-    <meta name="keywords" content="idle game, industrial game, resource management, narrative game, dark story, prestige game">
-    <meta name="author" content="Lukas Bohez">
-    <meta name="owner" content="Lukas Bohez">
-    <meta name="copyright" content="© 2026 Lukas Bohez. All rights reserved.">
-    
-    <link rel="stylesheet" href="css/style.min.css?v=4">
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="apple-touch-icon" href="/favicon.ico">
-    <meta property="og:title" content="Industrial Empire | Quiz The Spire">
-    <meta property="og:description" content="Idle game - build your industrial empire">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://quizthespire.com/idleGame/idlegame.html">
-    <meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Industrial Empire | Quiz The Spire">
-    <meta name="twitter:description" content="Idle game - build your industrial empire">
-    <meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg">
-    <link rel="canonical" href="https://quizthespire.com/idleGame/idlegame.html">
-</head>
-<body>
-    <div id="game-container">
-        <!-- Header Section -->
-        <header class="game-header">
-            <h1 id="game-title" onclick="window.location.href='../index.html';">🏭 Industrial Empire</h1>
-            <p style="font-size: 0.8em; opacity: 0.8; margin: 2px 0;">by Lukas Bohez</p>
-            
-            <div class="resource-display">
-                <div class="resource-item stone">
-                    <span id="stone-icon" class="resource-icon">🪨</span>
-                    <span id="stone-label" class="resource-label">Stone:</span>
-                    <span id="stone-amount" class="resource-value">0</span>
-                </div>
-                <div class="resource-item coal">
-                    <span id="coal-icon" class="resource-icon">⚫</span>
-                    <span id="coal-label" class="resource-label">Coal:</span>
-                    <span id="coal-amount" class="resource-value">0</span>
-                </div>
-                <div class="resource-item iron">
-                    <span id="iron-icon" class="resource-icon">⚙️</span>
-                    <span id="iron-label" class="resource-label">Iron:</span>
-                    <span id="iron-amount" class="resource-value">0</span>
-                </div>
-                <div class="resource-item silver">
-                    <span id="silver-icon" class="resource-icon">🥈</span>
-                    <span id="silver-label" class="resource-label">Silver:</span>
-                    <span id="silver-amount" class="resource-value">0</span>
-                </div>
-                <div class="resource-item gold">
-                    <span id="gold-icon" class="resource-icon">🥇</span>
-                    <span id="gold-label" class="resource-label">Gold:</span>
-                    <span id="gold-amount" class="resource-value">0</span>
-                </div>
-            </div>
-        </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-        <section id="campaign-panel" class="campaign-panel" aria-labelledby="campaign-title">
-            <div class="campaign-panel__eyebrow">Campaign Brief</div>
-            <div class="campaign-panel__layout">
-                <div class="campaign-panel__summary">
-                    <h2 id="campaign-title">Build a run that can survive its own success</h2>
-                    <p id="campaign-description">
-                        Start with raw commits, unlock the full production chain, automate the city,
-                        and then choose when to let the empire decay into a stronger rebirth.
-                    </p>
-                    <div id="campaign-chips" class="campaign-panel__chips">
-                        <span id="campaign-theme-chip" class="campaign-chip">Tech Empire · Chapter 1</span>
-                        <span id="campaign-next-chip" class="campaign-chip campaign-chip--accent">Next: Unlock Cloud Servers</span>
-                        <span id="campaign-legacy-chip" class="campaign-chip">Legacy Score: 0</span>
-                    </div>
-                </div>
-                <div class="campaign-panel__meter">
-                    <div class="campaign-panel__meter-head">
-                        <span id="campaign-progress-label">Foundation progress</span>
-                        <span id="campaign-progress-value">0%</span>
-                    </div>
-                    <div class="progress progress-blue">
-                        <div id="campaign-progress-bar" class="progress-bar" style="width: 0%"></div>
-                    </div>
-                    <p id="campaign-progress-note">
-                        The first goal is to turn manual clicks into a stable chain.
-                    </p>
-                </div>
+    <title>Industrial Empire - Dark Narrative Idle Game by Lukas Bohez</title>
+    <meta
+      name="description"
+      content="Play Industrial Empire, a dark narrative idle game that takes you through the rise and fall of empires. Experience a deep story from tech giant to the final end. Created by Lukas Bohez."
+    />
+    <meta
+      name="keywords"
+      content="idle game, industrial game, resource management, narrative game, dark story, prestige game"
+    />
+    <meta name="author" content="Lukas Bohez" />
+    <meta name="owner" content="Lukas Bohez" />
+    <meta name="copyright" content="© 2026 Lukas Bohez. All rights reserved." />
+
+    <link rel="stylesheet" href="css/style.min.css?v=4" />
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="apple-touch-icon" href="/favicon.ico" />
+    <meta property="og:title" content="Industrial Empire | Quiz The Spire" />
+    <meta property="og:description" content="Idle game - build your industrial empire" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://quizthespire.com/idleGame/idlegame.html" />
+    <meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Industrial Empire | Quiz The Spire" />
+    <meta name="twitter:description" content="Idle game - build your industrial empire" />
+    <meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg" />
+    <link rel="canonical" href="https://quizthespire.com/idleGame/idlegame.html" />
+  </head>
+  <body>
+    <div id="game-container">
+      <!-- Header Section -->
+      <header class="game-header">
+        <!-- Arcade Tab -->
+        <p style="font-size: 0.8em; opacity: 0.8; margin: 2px 0">by Lukas Bohez</p>
+
+        <div class="resource-display">
+          <div class="resource-item stone">
+            <span id="stone-icon" class="resource-icon">🪨</span>
+            <span id="stone-label" class="resource-label">Stone:</span>
+            <span id="stone-amount" class="resource-value">0</span>
+          </div>
+          <div class="resource-item coal">
+            <span id="coal-icon" class="resource-icon">⚫</span>
+            <span id="coal-label" class="resource-label">Coal:</span>
+            <span id="coal-amount" class="resource-value">0</span>
+          </div>
+          <div class="resource-item iron">
+            <span id="iron-icon" class="resource-icon">⚙️</span>
+            <span id="iron-label" class="resource-label">Iron:</span>
+            <span id="iron-amount" class="resource-value">0</span>
+          </div>
+          <div class="resource-item silver">
+            <span id="silver-icon" class="resource-icon">🥈</span>
+            <span id="silver-label" class="resource-label">Silver:</span>
+            <span id="silver-amount" class="resource-value">0</span>
+          </div>
+          <div class="resource-item gold">
+            <span id="gold-icon" class="resource-icon">🥇</span>
+            <span id="gold-label" class="resource-label">Gold:</span>
+            <span id="gold-amount" class="resource-value">0</span>
+          </div>
+        </div>
+      </header>
+
+      <section id="campaign-panel" class="campaign-panel" aria-labelledby="campaign-title">
+        <div class="campaign-panel__eyebrow">Campaign Brief</div>
+        <div class="campaign-panel__layout">
+          <div class="campaign-panel__summary">
+            <h2 id="campaign-title">Build a run that can survive its own success</h2>
+            <p id="campaign-description">
+              Start with raw commits, unlock the full production chain, automate the city, and then
+              choose when to let the empire decay into a stronger rebirth.
+            </p>
+            <div id="campaign-chips" class="campaign-panel__chips">
+              <span id="campaign-theme-chip" class="campaign-chip">Tech Empire · Chapter 1</span>
+              <span id="campaign-next-chip" class="campaign-chip campaign-chip--accent"
+                >Next: Unlock Cloud Servers</span
+              >
+              <span id="campaign-legacy-chip" class="campaign-chip">Legacy Score: 0</span>
             </div>
-            <div id="campaign-objectives" class="campaign-panel__objectives" aria-live="polite"></div>
+          </div>
+          <div class="campaign-panel__meter">
+            <div class="campaign-panel__meter-head">
+              <span id="campaign-progress-label">Foundation progress</span>
+              <span id="campaign-progress-value">0%</span>
+            </div>
+            <div class="progress progress-blue">
+              <div id="campaign-progress-bar" class="progress-bar" style="width: 0%"></div>
+            </div>
+            <p id="campaign-progress-note">
+              The first goal is to turn manual clicks into a stable chain.
+            </p>
+          </div>
+        </div>
+        <div id="campaign-objectives" class="campaign-panel__objectives" aria-live="polite"></div>
+      </section>
+
+      <!-- Tab Navigation -->
+      <nav class="tab-navigation">
+        <button id="tab-btn-mining" class="tab-btn active" data-tab="mining">⛏️ Mining</button>
+        <button id="tab-btn-processing" class="tab-btn" data-tab="processing">🏗️ Processing</button>
+        <button id="tab-btn-market" class="tab-btn" data-tab="market">🏪 Market</button>
+        <button id="tab-btn-transport" class="tab-btn" data-tab="transport">🚛 Transport</button>
+        <button id="tab-btn-city" class="tab-btn" data-tab="city">🏙️ City</button>
+        <button id="tab-btn-research" class="tab-btn" data-tab="research">🔬 Research</button>
+        <button id="tab-btn-arcade" class="tab-btn" data-tab="arcade">🎮 Arcade</button>
+      </nav>
+
+      <!-- Main Game Area -->
+      <main class="game-main">
+        <!-- Mining Tab -->
+        <section id="mining-tab" class="tab-content active">
+          <div class="panel-grid">
+            <div class="panel">
+              <h2 id="mining-operations-header">⛏️ Mining Operations</h2>
+              <div class="action-buttons">
+                <button id="mine-stone-btn" class="action-btn mine-btn" data-action="mineStone">
+                  <div class="btn-title">Gather Code Commits</div>
+                  <div class="btn-cost">Manual Collection</div>
+                  <div class="btn-description">+1 stone per click</div>
+                </button>
+
+                <button id="watch-ad-btn" class="action-btn ad-reward-btn" data-action="watchAd">
+                  <div class="btn-title">📺 Watch Ad</div>
+                  <div class="btn-cost">Cooldown: <span id="ad-cooldown">Ready</span></div>
+                  <div class="btn-description">+100 gold + 50% income boost for 30s</div>
+                </button>
+
+                <button
+                  id="hire-stone-miner-btn"
+                  class="action-btn worker-btn"
+                  data-action="hireWorker"
+                  data-worker="stoneMiner"
+                >
+                  <div class="btn-title">Hire Junior Devs</div>
+                  <div class="btn-cost">Cost: <span id="stone-miner-cost">5</span> gold</div>
+                  <div class="btn-description">+1 stone/sec</div>
+                </button>
+
+                <button
+                  id="hire-coal-miner-btn"
+                  class="action-btn worker-btn"
+                  data-action="hireWorker"
+                  data-worker="coalMiner"
+                >
+                  <div class="btn-title">Hire DevOps Engineers</div>
+                  <div class="btn-cost">Cost: <span id="coal-miner-cost">25</span> gold</div>
+                  <div class="btn-description">+1 coal/sec</div>
+                </button>
+
+                <button
+                  id="hire-iron-miner-btn"
+                  class="action-btn worker-btn"
+                  data-action="hireWorker"
+                  data-worker="ironMiner"
+                >
+                  <div class="btn-title">Hire Growth Hackers</div>
+                  <div class="btn-cost">Cost: <span id="iron-miner-cost">100</span> gold</div>
+                  <div class="btn-description">+1 iron/sec</div>
+                </button>
+
+                <button
+                  id="hire-silver-miner-btn"
+                  class="action-btn worker-btn"
+                  data-action="hireWorker"
+                  data-worker="silverMiner"
+                >
+                  <div class="btn-title">Hire Sales Reps</div>
+                  <div class="btn-cost">Cost: <span id="silver-miner-cost">500</span> gold</div>
+                  <div class="btn-description">+1 silver/sec</div>
+                </button>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h2 id="workforce-header">👥 Workforce Status</h2>
+              <div class="resource-grid">
+                <div class="resource-row">
+                  <span id="stone-miners-label" class="resource-type">Junior Devs:</span>
+                  <span id="stone-miners-count" class="resource-count">0</span>
+                </div>
+                <div class="resource-row">
+                  <span id="coal-miners-label" class="resource-type">DevOps Engineers:</span>
+                  <span id="coal-miners-count" class="resource-count">0</span>
+                </div>
+                <div class="resource-row">
+                  <span id="iron-miners-label" class="resource-type">Growth Hackers:</span>
+                  <span id="iron-miners-count" class="resource-count">0</span>
+                </div>
+                <div class="resource-row">
+                  <span id="silver-miners-label" class="resource-type">Sales Reps:</span>
+                  <span id="silver-miners-count" class="resource-count">0</span>
+                </div>
+                <div class="resource-row" data-tooltip="Overall mining efficiency after bonuses">
+                  <span class="resource-type">Efficiency:</span>
+                  <span id="mining-efficiency" class="resource-count">100%</span>
+                </div>
+                <div class="progress progress-green">
+                  <div id="mining-efficiency-bar" class="progress-bar" style="width: 100%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
-        <!-- Tab Navigation -->
-        <nav class="tab-navigation">
-            <button id="tab-btn-mining" class="tab-btn active" data-tab="mining">⛏️ Mining</button>
-            <button id="tab-btn-processing" class="tab-btn" data-tab="processing">🏗️ Processing</button>
-            <button id="tab-btn-market" class="tab-btn" data-tab="market">🏪 Market</button>
-            <button id="tab-btn-transport" class="tab-btn" data-tab="transport">🚛 Transport</button>
-            <button id="tab-btn-city" class="tab-btn" data-tab="city">🏙️ City</button>
-            <button id="tab-btn-research" class="tab-btn" data-tab="research">🔬 Research</button>
-            <button id="tab-btn-arcade" class="tab-btn" data-tab="arcade">🎮 Arcade</button>
-        </nav>
+        <!-- Processing Tab -->
+        <section id="processing-tab" class="tab-content">
+          <div class="panel-grid">
+            <div class="panel">
+              <h2 id="processing-header">🔨 Manual Crafting</h2>
+              <p style="font-size: 0.9em; opacity: 0.8; margin-bottom: 15px">
+                💡 Tip: Craft items to earn big profits! Each tier requires the previous crafted
+                item.
+              </p>
+              <div class="action-buttons">
+                <!-- Tier 1: Basic Processing (Always available) -->
+                <button id="craft-basic-btn" class="action-btn craft-btn" data-craft="basic">
+                  <div class="btn-title">⚙️ Compile Code</div>
+                  <div class="btn-cost">Needs: <span>10</span> Code Commits</div>
+                  <div class="btn-description">→ Deployable App (Sells for 3 capital)</div>
+                </button>
 
-        <!-- Main Game Area -->
-        <main class="game-main">
-            <!-- Mining Tab -->
-            <section id="mining-tab" class="tab-content active">
-                <div class="panel-grid">
-                    <div class="panel">
-                        <h2 id="mining-operations-header">⛏️ Mining Operations</h2>
-                        <div class="action-buttons">
-                            <button id="mine-stone-btn" class="action-btn mine-btn" data-action="mineStone">
-                                <div class="btn-title">Gather Code Commits</div>
-                                <div class="btn-cost">Manual Collection</div>
-                                <div class="btn-description">+1 stone per click</div>
-                            </button>
-                            
-                            <button id="watch-ad-btn" class="action-btn ad-reward-btn" data-action="watchAd">
-                                <div class="btn-title">📺 Watch Ad</div>
-                                <div class="btn-cost">Cooldown: <span id="ad-cooldown">Ready</span></div>
-                                <div class="btn-description">+100 gold + 50% income boost for 30s</div>
-                            </button>
-                            
-                            <button id="hire-stone-miner-btn" class="action-btn worker-btn" data-action="hireWorker" data-worker="stoneMiner">
-                                <div class="btn-title">Hire Junior Devs</div>
-                                <div class="btn-cost">Cost: <span id="stone-miner-cost">5</span> gold</div>
-                                <div class="btn-description">+1 stone/sec</div>
-                            </button>
-                            
-                            <button id="hire-coal-miner-btn" class="action-btn worker-btn" data-action="hireWorker" data-worker="coalMiner">
-                                <div class="btn-title">Hire DevOps Engineers</div>
-                                <div class="btn-cost">Cost: <span id="coal-miner-cost">25</span> gold</div>
-                                <div class="btn-description">+1 coal/sec</div>
-                            </button>
-                            
-                            <button id="hire-iron-miner-btn" class="action-btn worker-btn" data-action="hireWorker" data-worker="ironMiner">
-                                <div class="btn-title">Hire Growth Hackers</div>
-                                <div class="btn-cost">Cost: <span id="iron-miner-cost">100</span> gold</div>
-                                <div class="btn-description">+1 iron/sec</div>
-                            </button>
-                            
-                            <button id="hire-silver-miner-btn" class="action-btn worker-btn" data-action="hireWorker" data-worker="silverMiner">
-                                <div class="btn-title">Hire Sales Reps</div>
-                                <div class="btn-cost">Cost: <span id="silver-miner-cost">500</span> gold</div>
-                                <div class="btn-description">+1 silver/sec</div>
-                            </button>
-                        </div>
-                    </div>
+                <!-- Tier 2: Intermediate -->
+                <button
+                  id="craft-intermediate-btn"
+                  class="action-btn craft-btn"
+                  data-craft="intermediate"
+                >
+                  <div class="btn-title">🏗️ Build Platform</div>
+                  <div class="btn-cost">
+                    Needs: <span>1</span> Deployable App + <span>5</span> Cloud Servers
+                  </div>
+                  <div class="btn-description">→ SaaS Platform (Sells for 9 capital)</div>
+                </button>
 
-                    <div class="panel">
-                        <h2 id="workforce-header">👥 Workforce Status</h2>
-                        <div class="resource-grid">
-                            <div class="resource-row">
-                                <span id="stone-miners-label" class="resource-type">Junior Devs:</span>
-                                <span id="stone-miners-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span id="coal-miners-label" class="resource-type">DevOps Engineers:</span>
-                                <span id="coal-miners-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span id="iron-miners-label" class="resource-type">Growth Hackers:</span>
-                                <span id="iron-miners-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span id="silver-miners-label" class="resource-type">Sales Reps:</span>
-                                <span id="silver-miners-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row" data-tooltip="Overall mining efficiency after bonuses">
-                                <span class="resource-type">Efficiency:</span>
-                                <span id="mining-efficiency" class="resource-count">100%</span>
-                            </div>
-                            <div class="progress progress-green"><div id="mining-efficiency-bar" class="progress-bar" style="width: 100%"></div></div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+                <!-- Tier 3: Advanced -->
+                <button id="craft-advanced-btn" class="action-btn craft-btn" data-craft="advanced">
+                  <div class="btn-title">📊 Scale Service</div>
+                  <div class="btn-cost">
+                    Needs: <span>1</span> SaaS Platform + <span>3</span> User Accounts
+                  </div>
+                  <div class="btn-description">→ Enterprise Product (Sells for 30 capital)</div>
+                </button>
 
-            <!-- Processing Tab -->
-            <section id="processing-tab" class="tab-content">
-                <div class="panel-grid">
-                    <div class="panel">
-                        <h2 id="processing-header">🔨 Manual Crafting</h2>
-                        <p style="font-size: 0.9em; opacity: 0.8; margin-bottom: 15px;">💡 Tip: Craft items to earn big profits! Each tier requires the previous crafted item.</p>
-                        <div class="action-buttons">
-                            <!-- Tier 1: Basic Processing (Always available) -->
-                            <button id="craft-basic-btn" class="action-btn craft-btn" data-craft="basic">
-                                <div class="btn-title">⚙️ Compile Code</div>
-                                <div class="btn-cost">Needs: <span>10</span> Code Commits</div>
-                                <div class="btn-description">→ Deployable App (Sells for 3 capital)</div>
-                            </button>
-                            
-                            <!-- Tier 2: Intermediate -->
-                            <button id="craft-intermediate-btn" class="action-btn craft-btn" data-craft="intermediate">
-                                <div class="btn-title">🏗️ Build Platform</div>
-                                <div class="btn-cost">Needs: <span>1</span> Deployable App + <span>5</span> Cloud Servers</div>
-                                <div class="btn-description">→ SaaS Platform (Sells for 9 capital)</div>
-                            </button>
-                            
-                            <!-- Tier 3: Advanced -->
-                            <button id="craft-advanced-btn" class="action-btn craft-btn" data-craft="advanced">
-                                <div class="btn-title">📊 Scale Service</div>
-                                <div class="btn-cost">Needs: <span>1</span> SaaS Platform + <span>3</span> User Accounts</div>
-                                <div class="btn-description">→ Enterprise Product (Sells for 30 capital)</div>
-                            </button>
-                            
-                            <!-- Tier 4: Premium -->
-                            <button id="craft-premium-btn" class="action-btn craft-btn" data-craft="premium">
-                                <div class="btn-title">⭐ Premium Service</div>
-                                <div class="btn-cost">Needs: <span>1</span> Enterprise Product + <span>2</span> Premium Subs</div>
-                                <div class="btn-description">→ Unicorn Startup (Sells for 120 capital)</div>
-                            </button>
-                            
-                            <!-- Auto-craft toggle -->
-                            <button id="toggle-autocraft-btn" class="action-btn city-btn">
-                                <div class="btn-title">🤖 Auto-Craft: OFF</div>
-                                <div class="btn-cost">Toggle automatic crafting</div>
-                                <div class="btn-description">When ON, crafts highest tier possible</div>
-                            </button>
-                        </div>
-                    </div>
+                <!-- Tier 4: Premium -->
+                <button id="craft-premium-btn" class="action-btn craft-btn" data-craft="premium">
+                  <div class="btn-title">⭐ Premium Service</div>
+                  <div class="btn-cost">
+                    Needs: <span>1</span> Enterprise Product + <span>2</span> Premium Subs
+                  </div>
+                  <div class="btn-description">→ Unicorn Startup (Sells for 120 capital)</div>
+                </button>
 
-                    <div class="panel">
-                        <h2>📦 Crafted Inventory</h2>
-                        <div class="resource-grid">
-                            <div class="resource-row" data-tooltip="Ready for transport to city" id="crafted-basic-row">
-                                <span class="resource-type" id="crafted-basic-label">Deployable Apps:</span>
-                                <span id="crafted-basic-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row" data-tooltip="Ready for transport to city" id="crafted-intermediate-row">
-                                <span class="resource-type" id="crafted-intermediate-label">SaaS Platforms:</span>
-                                <span id="crafted-intermediate-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row" data-tooltip="Ready for transport to city" id="crafted-advanced-row">
-                                <span class="resource-type" id="crafted-advanced-label">Enterprise Products:</span>
-                                <span id="crafted-advanced-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row" data-tooltip="Ready for transport to city" id="crafted-premium-row">
-                                <span class="resource-type" id="crafted-premium-label">Unicorn Startups:</span>
-                                <span id="crafted-premium-count" class="resource-count">0</span>
-                            </div>
-                        </div>
-                        
-                        <div class="inventory-panel" style="margin-top: 20px;">
-                            <h3 id="transport-to-city-header">🚛 Transport to City</h3>
-                            <p id="transport-to-city-desc" style="font-size: 0.85em; opacity: 0.8; margin: 5px 0;">Toggle which items to automatically transport via Infrastructure tab</p>
-                            <div class="action-buttons" style="grid-template-columns: 1fr 1fr;">
-                                <button id="transport-basic-btn" class="action-btn transport-btn" style="padding: 10px;">
-                                    <div class="btn-title" style="font-size: 0.9em;">📦 Apps: OFF</div>
-                                </button>
-                                <button id="transport-intermediate-btn" class="action-btn transport-btn" style="padding: 10px;">
-                                    <div class="btn-title" style="font-size: 0.9em;">📦 Platforms: OFF</div>
-                                </button>
-                                <button id="transport-advanced-btn" class="action-btn transport-btn" style="padding: 10px;">
-                                    <div class="btn-title" style="font-size: 0.9em;">📦 Products: OFF</div>
-                                </button>
-                                <button id="transport-premium-btn" class="action-btn transport-btn" style="padding: 10px;">
-                                    <div class="btn-title" style="font-size: 0.9em;">📦 Startups: OFF</div>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Market Tab -->
-            <section id="market-tab" class="tab-content">
-                <div class="panel-grid">
-                    <div class="panel">
-                        <h2 id="market-header">🏪 Marketplace</h2>
-                        <div class="action-buttons">
-                            <button id="sell-stone-btn" class="action-btn sell-btn" data-action="sellResource" data-resource="stone">
-                                <div class="btn-title">Sell Code Commits</div>
-                                <div class="btn-cost">Rate: <span id="stone-sell-rate">0.1</span> <span id="stone-sell-currency">gold/resource</span></div>
-                                <div id="sell-stone-desc" class="btn-description">Convert resources to gold</div>
-                            </button>
-                            
-                            <button id="sell-coal-btn" class="action-btn sell-btn" data-action="sellResource" data-resource="coal">
-                                <div class="btn-title">Sell Cloud Servers</div>
-                                <div class="btn-cost">Rate: <span id="coal-sell-rate">0.5</span> <span id="coal-sell-currency">gold/resource</span></div>
-                                <div id="sell-coal-desc" class="btn-description">Convert resources to gold</div>
-                            </button>
-                            
-                            <button id="sell-iron-btn" class="action-btn sell-btn" data-action="sellResource" data-resource="iron">
-                                <div class="btn-title">Sell User Accounts</div>
-                                <div class="btn-cost">Rate: <span id="iron-sell-rate">2.0</span> <span id="iron-sell-currency">gold/resource</span></div>
-                                <div id="sell-iron-desc" class="btn-description">Convert resources to gold</div>
-                            </button>
-                            
-                            <button id="sell-silver-btn" class="action-btn sell-btn" data-action="sellResource" data-resource="silver">
-                                <div class="btn-title">Sell Premium Subs</div>
-                                <div class="btn-cost">Rate: <span id="silver-sell-rate">8.0</span> <span id="silver-sell-currency">gold/resource</span></div>
-                                <div id="sell-silver-desc" class="btn-description">Convert resources to gold</div>
-                            </button>
-                            
-                            <button id="hire-stone-trader-btn" class="action-btn trader-btn" data-action="hireTrader" data-trader="stoneTrader">
-                                <div class="btn-title">Hire Tech Recruiters</div>
-                                <div class="btn-cost">Cost: <span id="stone-trader-cost">15</span> gold</div>
-                                <div id="hire-stone-trader-desc" class="btn-description">Auto-sell resources</div>
-                            </button>
-                            
-                            <button id="hire-coal-trader-btn" class="action-btn trader-btn" data-action="hireTrader" data-trader="coalTrader">
-                                <div class="btn-title">Hire Cloud Salespeople</div>
-                                <div class="btn-cost">Cost: <span id="coal-trader-cost">75</span> gold</div>
-                                <div id="hire-coal-trader-desc" class="btn-description">Auto-sell resources</div>
-                            </button>
-                            
-                            <button id="hire-metal-trader-btn" class="action-btn trader-btn" data-action="hireTrader" data-trader="metalTrader">
-                                <div class="btn-title">Hire VC Networkers</div>
-                                <div class="btn-cost">Cost: <span id="metal-trader-cost">300</span> gold</div>
-                                <div id="hire-metal-trader-desc" class="btn-description">Auto-sell resources</div>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="panel">
-                        <h2>📊 Market Status</h2>
-                        <div class="resource-grid">
-                            <div class="resource-row">
-                                <span id="stone-traders-label" class="resource-type">Tech Recruiters:</span>
-                                <span id="stone-traders-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span id="coal-traders-label" class="resource-type">Cloud Salespeople:</span>
-                                <span id="coal-traders-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span id="metal-traders-label" class="resource-type">VC Networkers:</span>
-                                <span id="metal-traders-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row" data-tooltip="Trading efficiency including transport congestion">
-                                <span class="resource-type">Market Efficiency:</span>
-                                <span id="market-efficiency" class="resource-count">100%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Transport Tab -->
-            <section id="transport-tab" class="tab-content">
-                <div class="panel-grid">
-                    <div class="panel">
-                        <h2 id="transport-header">🚛 Transport Fleet</h2>
-                        <div class="action-buttons">
-                            <button id="buy-cart-btn" class="action-btn transport-btn" data-action="buyTransport" data-transport="cart">
-                                <div class="btn-title">Buy Ox Cart</div>
-                                <div class="btn-cost">Cost: <span id="cart-cost">30</span> gold</div>
-                                <div class="btn-description">+1 transport capacity</div>
-                            </button>
-                            
-                            <button id="buy-wagon-btn" class="action-btn transport-btn" data-action="buyTransport" data-transport="wagon">
-                                <div class="btn-title">Buy Steam Wagon</div>
-                                <div class="btn-cost">Cost: <span id="wagon-cost">150</span> gold</div>
-                                <div class="btn-description">+5 transport capacity</div>
-                            </button>
-                            
-                            <button id="buy-train-btn" class="action-btn transport-btn" data-action="buyTransport" data-transport="train">
-                                <div class="btn-title">Build Railway</div>
-                                <div class="btn-cost">Cost: <span id="train-cost">800</span> gold</div>
-                                <div class="btn-description">+20 transport capacity</div>
-                            </button>
-
-                            <button id="transport-next-btn" class="action-btn" data-action="transportNext">
-                                <div class="btn-title">Transport Next</div>
-                                <div class="btn-cost">Manual</div>
-                                <div class="btn-description">Move 1 best-value item to city</div>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="panel">
-                        <h2 id="fleet-status-header">🚚 Fleet Status</h2>
-                        <div class="resource-grid">
-                            <div class="resource-row">
-                                <span id="carts-label" class="resource-type">Fiber Lines:</span>
-                                <span id="carts-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span id="wagons-label" class="resource-type">CDN Networks:</span>
-                                <span id="wagons-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span id="trains-label" class="resource-type">Satellite Links:</span>
-                                <span id="trains-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Transport Capacity:</span>
-                                <span id="transport-capacity" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row" data-tooltip="Percent of transport capacity currently needed by production">
-                                <span class="resource-type">Usage:</span>
-                                <span id="transport-usage" class="resource-count">0%</span>
-                            </div>
-                            <div class="progress progress-orange"><div id="transport-usage-bar" class="progress-bar" style="width: 0%"></div></div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- City Tab -->
-            <section id="city-tab" class="tab-content">
-                <div class="panel-grid">
-                    <div class="panel">
-                        <h2 id="city-header">🏢 Corporate HQ</h2>
-                        <div class="action-buttons">
-                            
-                            <button id="hire-politician-btn" class="action-btn city-btn" data-action="hireService" data-service="politician">
-                                <div class="btn-title" id="hire-politician-title">Hire Lobbyists</div>
-                                <div class="btn-cost">Cost: <span id="politician-cost">250</span> <span id="politician-currency">gold</span></div>
-                                <div class="btn-description" id="hire-politician-desc">+5% trading efficiency per lobbyist</div>
-                            </button>
-                            
-                            <button id="build-bank-btn" class="action-btn city-btn" data-action="buildCity" data-building="bank">
-                                <div class="btn-title" id="build-bank-title">Build Accounting Dept</div>
-                                <div class="btn-cost">Cost: <span id="bank-cost">500</span> <span id="bank-currency">gold</span></div>
-                                <div class="btn-description" id="build-bank-desc">+20% to ALL city sales (stacks!)</div>
-                            </button>
-                            
-                            <button id="build-market-btn" class="action-btn city-btn" data-action="buildCity" data-building="market">
-                                <div class="btn-title" id="build-market-title">Build App Stores</div>
-                                <div class="btn-cost">Cost: <span id="market-cost">1000</span> <span id="market-currency">gold</span></div>
-                                <div class="btn-description" id="build-market-desc">+15% trading efficiency (better prices)</div>
-                            </button>
-                            
-                            <button id="build-university-btn" class="action-btn city-btn" data-action="buildCity" data-building="university">
-                                <div class="btn-title" id="build-university-title">Build R&D Labs</div>
-                                <div class="btn-cost">Cost: <span id="university-cost">2500</span> <span id="university-currency">venture capital</span></div>
-                                <div class="btn-description" id="build-university-desc">+10% global efficiency per lab</div>
-                            </button>
-
-                            <button id="build-sales-dept-btn" class="action-btn city-btn" data-action="buildCity" data-building="salesDepartment">
-                                <div class="btn-title" id="build-sales-dept-title">Build Sales Bot</div>
-                                <div class="btn-cost">Cost: <span id="sales-dept-cost">300</span> <span id="sales-dept-currency">venture capital</span></div>
-                                <div class="btn-description" id="build-sales-dept-desc">Auto-sells products (upgradable AI)</div>
-                            </button>
-
-                            <button id="build-mining-academy-btn" class="action-btn city-btn" data-action="buildCity" data-building="miningAcademy">
-                                <div class="btn-title" id="build-mining-academy-title">Build Mining Academy</div>
-                                <div class="btn-cost">Cost: <span id="mining-academy-cost">400</span> <span id="mining-academy-currency">venture capital</span></div>
-                                <div class="btn-description" id="build-mining-academy-desc">+15% resource gathering per level</div>
-                            </button>
-
-                            <button id="build-automation-lab-btn" class="action-btn city-btn" data-action="buildCity" data-building="automationLab">
-                                <div class="btn-title" id="build-automation-lab-title">Build Automation Lab</div>
-                                <div class="btn-cost">Cost: <span id="automation-lab-cost">600</span> <span id="automation-lab-currency">venture capital</span></div>
-                                <div class="btn-description" id="build-automation-lab-desc">+1 auto-craft per tick per level</div>
-                            </button>
-
-                            <button id="hire-police-btn" class="action-btn city-btn" data-action="hireService" data-service="police">
-                                <div class="btn-title" id="hire-police-title">Hire Security Team</div>
-                                <div class="btn-cost">Cost: <span id="police-cost">5000</span> <span id="police-currency">gold</span></div>
-                                <div class="btn-description" id="hire-police-desc">Generates city decay progress</div>
-                            </button>
-
-                            <button id="rebirth-btn" class="action-btn prestige-btn" data-action="rebirth">
-                                <div class="btn-title">🔄 Rebirth Empire</div>
-                                <div class="btn-cost">Requires 100% decay</div>
-                                <div class="btn-description">Reset city for permanent bonuses</div>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="panel">
-                        <h2 id="city-sell-header">💰 Sell Products</h2>
-                        <div class="action-buttons">
-                            <!-- Sell Crafted Items from City -->
-                            <button id="sell-city-basic-btn" class="action-btn sell-btn" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);">
-                                <div class="btn-title" id="sell-city-basic-title">💰 Sell Apps from City</div>
-                                <div class="btn-cost">3 <span id="sell-basic-currency">venture capital</span> (+20% per Accounting Dept)</div>
-                                <div class="btn-description" id="sell-city-basic-desc">Sell all Deployable Apps in city</div>
-                            </button>
-                            
-                            <button id="sell-city-intermediate-btn" class="action-btn sell-btn" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
-                                <div class="btn-title" id="sell-city-intermediate-title">💰 Sell Platforms from City</div>
-                                <div class="btn-cost">9 <span id="sell-intermediate-currency">venture capital</span> (+20% per Accounting Dept)</div>
-                                <div class="btn-description" id="sell-city-intermediate-desc">Sell all SaaS Platforms in city</div>
-                            </button>
-                            
-                            <button id="sell-city-advanced-btn" class="action-btn sell-btn" style="background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);">
-                                <div class="btn-title" id="sell-city-advanced-title">💰 Sell Products from City</div>
-                                <div class="btn-cost">30 <span id="sell-advanced-currency">venture capital</span> (+20% per Accounting Dept)</div>
-                                <div class="btn-description" id="sell-city-advanced-desc">Sell all Enterprise Products in city</div>
-                            </button>
-                            
-                            <button id="sell-city-premium-btn" class="action-btn sell-btn" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
-                                <div class="btn-title" id="sell-city-premium-title">💰 Sell Startups from City</div>
-                                <div class="btn-cost">120 <span id="sell-premium-currency">venture capital</span> (+20% per Accounting Dept)</div>
-                                <div class="btn-description" id="sell-city-premium-desc">Sell all Unicorn Startups in city</div>
-                            </button>
-                        </div>
-                        
-                        <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);">
-                            <h3 id="city-inventory-header" style="margin: 0 0 10px 0; font-size: 1.1em; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">📦 City Inventory</h3>
-                            <div id="city-finished-inventory" class="resource-grid" style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; min-height: 60px;">
-                                <!-- Finished goods will be rendered here by JS -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="panel">
-                        <h2 id="city-status-header">🏛️ Corporate Status</h2>
-                        <div class="resource-grid">
-                            <div class="resource-row">
-                                <span id="police-label" class="resource-type">Security Team:</span>
-                                <span id="police-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span id="politicians-label" class="resource-type">Lobbyists:</span>
-                                <span id="politicians-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span id="banks-label" class="resource-type">Accounting Dept:</span>
-                                <span id="banks-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row" id="bank-bonus-row" style="opacity: 0.8;">
-                                <span class="resource-type">💰 Sales Bonus:</span>
-                                <span id="bank-bonus-display" class="resource-count" style="color: #4ade80;">+0%</span>
-                            </div>
-                            <div class="resource-row">
-                                <span id="markets-label" class="resource-type">App Stores:</span>
-                                <span id="markets-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span id="universities-label" class="resource-type">R&D Labs:</span>
-                                <span id="universities-count" class="resource-count">0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span id="sales-dept-label" class="resource-type">Sales Bot:</span>
-                                <span id="sales-dept-count" class="resource-count">Level 0</span>
-                            </div>
-                            <div class="resource-row" id="sales-timer-row" style="display: none;">
-                                <span class="resource-type">Next Sale:</span>
-                                <span id="sales-timer" class="resource-count" style="color: #4ade80;">--</span>
-                            </div>
-                            <div class="resource-row">
-                                <span id="mining-academy-label" class="resource-type">Mining Academy:</span>
-                                <span id="mining-academy-count" class="resource-count">Level 0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span id="automation-lab-label" class="resource-type">Automation Lab:</span>
-                                <span id="automation-lab-count" class="resource-count">Level 0</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Rebirths:</span>
-                                <span id="rebirths-count" class="resource-count">0</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="panel">
-                        <h2 id="city-dynamics-header">📈 City Dynamics</h2>
-                        <div class="resource-grid">
-                            <div class="resource-row" data-tooltip="As decay reaches 100% your city can be reborn for permanent bonuses">
-                                <span class="resource-type">City Decay:</span>
-                                <span id="city-decay" class="resource-count">0%</span>
-                            </div>
-                            <div class="progress progress-red"><div id="city-decay-bar" class="progress-bar" style="width: 0%"></div></div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Research Tab -->
-            <section id="research-tab" class="tab-content">
-                <div class="panel-grid">
-                    <div class="panel">
-                        <h2 id="research-header">🔬 Research & Development</h2>
-                        <div class="resource-grid">
-                            <div class="resource-row">
-                                <span class="resource-type">Completed Research:</span>
-                                <span id="completed-research" class="resource-count">0</span>
-                            </div>
-                        </div>
-                        <div class="action-buttons">
-                            <button id="research-mining-btn" class="action-btn research-btn" data-action="purchaseResearch" data-research="mining">
-                                <div id="research-mining-title" class="btn-title">Advanced Development</div>
-                                <div class="btn-cost">Cost: <span id="research-mining-cost">50</span> gold</div>
-                                <div id="research-mining-desc" class="btn-description">+25% development efficiency</div>
-                            </button>
-                            
-                            <button id="research-automation-btn" class="action-btn research-btn" data-action="purchaseResearch" data-research="automation">
-                                <div id="research-automation-title" class="btn-title">Automation</div>
-                                <div class="btn-cost">Cost: <span id="research-automation-cost">50</span> gold</div>
-                                <div id="research-automation-desc" class="btn-description">Unlocks auto-miners & auto-traders</div>
-                            </button>
-                            
-                            <button id="research-processing-btn" class="action-btn research-btn" data-action="purchaseResearch" data-research="processing">
-                                <div id="research-processing-title" class="btn-title">Advanced Deployment</div>
-                                <div class="btn-cost">Cost: <span id="research-processing-cost">100</span> gold</div>
-                                <div id="research-processing-desc" class="btn-description">+25% deployment efficiency</div>
-                            </button>
-                            
-                            <button id="research-logistics-btn" class="action-btn research-btn" data-action="purchaseResearch" data-research="logistics">
-                                <div id="research-logistics-title" class="btn-title">Logistics</div>
-                                <div class="btn-cost">Cost: <span id="research-logistics-cost">1000</span> gold</div>
-                                <div id="research-logistics-desc" class="btn-description">+50% transport efficiency</div>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="panel">
-                        <h2>🔓 Unlocks</h2>
-                        <div class="action-buttons" id="unlocks-section">
-                            <button class="action-btn unlock-btn" data-unlock="unlock_coal">
-                                <div class="btn-title">Unlock Cloud Servers</div>
-                                <div class="btn-cost">Cost: 25 gold</div>
-                                <div class="btn-description">Unlock 2nd resource tier</div>
-                            </button>
-                            <button class="action-btn unlock-btn" data-unlock="unlock_iron">
-                                <div class="btn-title">Unlock User Accounts</div>
-                                <div class="btn-cost">Cost: 60 gold</div>
-                                <div class="btn-description">Unlock 3rd resource tier</div>
-                            </button>
-                            <button class="action-btn unlock-btn" data-unlock="unlock_silver">
-                                <div class="btn-title">Unlock Premium Subs</div>
-                                <div class="btn-cost">Cost: 200 gold</div>
-                                <div class="btn-description">Unlock 4th resource tier</div>
-                            </button>
-                            <button class="action-btn unlock-btn" data-unlock="unlock_processing">
-                                <div class="btn-title">Unlock Deployment</div>
-                                <div class="btn-cost">Cost: 80 gold</div>
-                                <div class="btn-description">Unlock production buildings</div>
-                            </button>
-                            
-                            <!-- Auto-Crafter Unlocks -->
-                            <button class="action-btn unlock-btn" id="unlock-autocraft-basic-btn" data-unlock="unlock_autocraft_basic">
-                                <div class="btn-title">🤖 Auto-Craft Basic</div>
-                                <div class="btn-cost">Cost: 100 gold</div>
-                                <div class="btn-description">Auto-craft Tier 1 items when resources available</div>
-                            </button>
-                            <button class="action-btn unlock-btn" id="unlock-autocraft-intermediate-btn" data-unlock="unlock_autocraft_intermediate">
-                                <div class="btn-title">🤖 Auto-Craft Intermediate</div>
-                                <div class="btn-cost">Cost: 500 gold</div>
-                                <div class="btn-description">Auto-craft Tier 2 items when resources available</div>
-                            </button>
-                            <button class="action-btn unlock-btn" id="unlock-autocraft-advanced-btn" data-unlock="unlock_autocraft_advanced">
-                                <div class="btn-title">🤖 Auto-Craft Advanced</div>
-                                <div class="btn-cost">Cost: 2500 gold</div>
-                                <div class="btn-description">Auto-craft Tier 3 items when resources available</div>
-                            </button>
-                            <button class="action-btn unlock-btn" id="unlock-autocraft-premium-btn" data-unlock="unlock_autocraft_premium">
-                                <div class="btn-title">🤖 Auto-Craft Premium</div>
-                                <div class="btn-cost">Cost: 10000 gold</div>
-                                <div class="btn-description">Auto-craft Tier 4 items when resources available</div>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- Rebirth Upgrades Panel -->
-                    <div class="panel" id="rebirth-upgrades-panel" style="grid-column: 1 / -1;">
-                        <h2>⭐ Permanent Rebirth Upgrades</h2>
-                        <div id="rebirth-power-display" style="background: rgba(255,215,0,0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(255,215,0,0.3);">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <span style="font-weight: bold; color: #fbbf24;">⚡ Rebirth Power:</span>
-                                    <span id="rebirth-power-value" style="font-size: 1.2em; font-weight: bold; color: #fde047;">+0%</span>
-                                </div>
-                                <div>
-                                    <span style="opacity: 0.9;">Total Rebirths:</span>
-                                    <span id="rebirth-power-count" style="font-weight: bold; color: #fde047;">0</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="rebirth-upgrades-container" class="action-buttons" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
-                            <!-- Rebirth upgrades will be dynamically generated here -->
-                            <p style="grid-column: 1 / -1; text-align: center; opacity: 0.7; padding: 20px;">
-                                Complete your first rebirth to unlock permanent upgrades!
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-        </main>
-    </div>
-
-            <!-- Arcade Tab -->
-            <section id="arcade-tab" class="tab-content">
-                <div class="panel-grid">
-                    <div class="panel">
-                        <h2>🎮 Retro Arcade</h2>
-                        <p style="margin-bottom: 15px; color: var(--text-secondary, #e2e8f0); opacity: 0.9;">Play classic DOS games to boost your idle game progress! Each hour of gameplay adds permanent bonuses.</p>
-                        
-                        <div id="arcade-legal-disclaimer" style="margin-bottom: 20px; padding: 15px; background: var(--panel-bg, rgba(30, 41, 59, 0.95)); border: 2px solid var(--border-color, rgba(100, 116, 139, 0.3)); border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);">
-                            <p style="margin: 0 0 10px 0; font-size: 0.9em; color: var(--text-primary, #f1f5f9); line-height: 1.6;">
-                                <strong style="color: var(--accent-color, #fbbf24);">📜 Legal Disclaimer & Preservation Notice:</strong>
-                            </p>
-                            <p style="margin: 0 0 8px 0; font-size: 0.85em; color: var(--text-primary, #f1f5f9); line-height: 1.5;">
-                                These classic DOS games are provided for educational and historical preservation purposes only. The games featured here are either abandonware, freeware, or publicly distributed shareware versions from the early computing era.
-                            </p>
-                            <p style="margin: 0; font-size: 0.85em; color: var(--text-primary, #f1f5f9); line-height: 1.5;">
-                                <strong>No copyright infringement is intended.</strong> If you are a rights holder and believe any content should be removed, please contact us immediately and we will promptly comply. These games are archived to preserve gaming history and prevent them from being lost to obscurity.
-                            </p>
-                        </div>
-                        
-                        <div id="arcade-games-container" class="action-buttons">
-                            <!-- Games will be dynamically populated here -->
-                        </div>
-                    </div>
-                    
-                    <div class="panel">
-                        <h2>📊 Arcade Stats & Bonuses</h2>
-                        <div class="resource-grid">
-                            <div class="resource-row">
-                                <span class="resource-type">Total Play Time:</span>
-                                <span id="arcade-total-time" class="resource-count">0h 0m</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Resource Bonus:</span>
-                                <span id="arcade-resource-bonus" class="resource-count">+0%</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Efficiency Bonus:</span>
-                                <span id="arcade-efficiency-bonus" class="resource-count">+0%</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Gold Bonus:</span>
-                                <span id="arcade-gold-bonus" class="resource-count">+0%</span>
-                            </div>
-                            <div class="resource-row">
-                                <span class="resource-type">Crafting Bonus:</span>
-                                <span id="arcade-crafting-bonus" class="resource-count">+0%</span>
-                            </div>
-                        </div>
-                        
-                        <div style="margin-top: 20px; padding: 15px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 8px;">
-                            <p style="margin: 0; font-size: 0.9em; color: var(--text-primary, #f1f5f9);"><strong style="color: var(--text-primary, #fbbf24);">💡 Tip:</strong> Playing games gives bonuses that stack up over time! Each game provides different bonuses. The idle game continues running while you play!</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
-
-        <!-- DOS Game Modal -->
-        <div id="dos-game-modal" class="modal" style="display: none;">
-            <div class="modal-content" style="max-width: 800px; width: 90%;">
-                <div class="modal-header">
-                    <h3 id="dos-game-title">🎮 Game</h3>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="control-btn" onclick="toggleDosFullscreen()" style="padding: 8px 15px; font-size: 0.9em;">⛶ Fullscreen</button>
-                        <button class="close-modal" onclick="closeDosGame()">&times;</button>
-                    </div>
-                </div>
-                <div class="modal-body" style="padding: 0;">
-                    <div id="dosbox-container" style="width: 100%; display: flex; justify-content: center; align-items: center; background: #000; min-height: 400px;">
-                        <canvas id="dosbox" style="max-width: 100%; max-height: 400px;"></canvas>
-                    </div>
-                    <div style="padding: 15px; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.1);">
-                        <p id="dos-game-playtime" style="margin: 0; text-align: center; color: #94a3b8;">Play time: 0m 0s</p>
-                        <button onclick="closeDosGame()" class="control-btn" style="width: 100%; margin-top: 10px;">Close Game</button>
-                    </div>
-                </div>
+                <!-- Auto-craft toggle -->
+                <button id="toggle-autocraft-btn" class="action-btn city-btn">
+                  <div class="btn-title">🤖 Auto-Craft: OFF</div>
+                  <div class="btn-cost">Toggle automatic crafting</div>
+                  <div class="btn-description">When ON, crafts highest tier possible</div>
+                </button>
+              </div>
             </div>
+
+            <div class="panel">
+              <h2>📦 Crafted Inventory</h2>
+              <div class="resource-grid">
+                <div
+                  class="resource-row"
+                  data-tooltip="Ready for transport to city"
+                  id="crafted-basic-row"
+                >
+                  <span class="resource-type" id="crafted-basic-label">Deployable Apps:</span>
+                  <span id="crafted-basic-count" class="resource-count">0</span>
+                </div>
+                <div
+                  class="resource-row"
+                  data-tooltip="Ready for transport to city"
+                  id="crafted-intermediate-row"
+                >
+                  <span class="resource-type" id="crafted-intermediate-label">SaaS Platforms:</span>
+                  <span id="crafted-intermediate-count" class="resource-count">0</span>
+                </div>
+                <div
+                  class="resource-row"
+                  data-tooltip="Ready for transport to city"
+                  id="crafted-advanced-row"
+                >
+                  <span class="resource-type" id="crafted-advanced-label"
+                    >Enterprise Products:</span
+                  >
+                  <span id="crafted-advanced-count" class="resource-count">0</span>
+                </div>
+                <div
+                  class="resource-row"
+                  data-tooltip="Ready for transport to city"
+                  id="crafted-premium-row"
+                >
+                  <span class="resource-type" id="crafted-premium-label">Unicorn Startups:</span>
+                  <span id="crafted-premium-count" class="resource-count">0</span>
+                </div>
+              </div>
+
+              <div class="inventory-panel" style="margin-top: 20px">
+                <h3 id="transport-to-city-header">🚛 Transport to City</h3>
+                <p
+                  id="transport-to-city-desc"
+                  style="font-size: 0.85em; opacity: 0.8; margin: 5px 0"
+                >
+                  Toggle which items to automatically transport via Infrastructure tab
+                </p>
+                <div class="action-buttons" style="grid-template-columns: 1fr 1fr">
+                  <button
+                    id="transport-basic-btn"
+                    class="action-btn transport-btn"
+                    style="padding: 10px"
+                  >
+                    <div class="btn-title" style="font-size: 0.9em">📦 Apps: OFF</div>
+                  </button>
+                  <button
+                    id="transport-intermediate-btn"
+                    class="action-btn transport-btn"
+                    style="padding: 10px"
+                  >
+                    <div class="btn-title" style="font-size: 0.9em">📦 Platforms: OFF</div>
+                  </button>
+                  <button
+                    id="transport-advanced-btn"
+                    class="action-btn transport-btn"
+                    style="padding: 10px"
+                  >
+                    <div class="btn-title" style="font-size: 0.9em">📦 Products: OFF</div>
+                  </button>
+                  <button
+                    id="transport-premium-btn"
+                    class="action-btn transport-btn"
+                    style="padding: 10px"
+                  >
+                    <div class="btn-title" style="font-size: 0.9em">📦 Startups: OFF</div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Market Tab -->
+        <section id="market-tab" class="tab-content">
+          <div class="panel-grid">
+            <div class="panel">
+              <h2 id="market-header">🏪 Marketplace</h2>
+              <div class="action-buttons">
+                <button
+                  id="sell-stone-btn"
+                  class="action-btn sell-btn"
+                  data-action="sellResource"
+                  data-resource="stone"
+                >
+                  <div class="btn-title">Sell Code Commits</div>
+                  <div class="btn-cost">
+                    Rate: <span id="stone-sell-rate">0.1</span>
+                    <span id="stone-sell-currency">gold/resource</span>
+                  </div>
+                  <div id="sell-stone-desc" class="btn-description">Convert resources to gold</div>
+                </button>
+
+                <button
+                  id="sell-coal-btn"
+                  class="action-btn sell-btn"
+                  data-action="sellResource"
+                  data-resource="coal"
+                >
+                  <div class="btn-title">Sell Cloud Servers</div>
+                  <div class="btn-cost">
+                    Rate: <span id="coal-sell-rate">0.5</span>
+                    <span id="coal-sell-currency">gold/resource</span>
+                  </div>
+                  <div id="sell-coal-desc" class="btn-description">Convert resources to gold</div>
+                </button>
+
+                <button
+                  id="sell-iron-btn"
+                  class="action-btn sell-btn"
+                  data-action="sellResource"
+                  data-resource="iron"
+                >
+                  <div class="btn-title">Sell User Accounts</div>
+                  <div class="btn-cost">
+                    Rate: <span id="iron-sell-rate">2.0</span>
+                    <span id="iron-sell-currency">gold/resource</span>
+                  </div>
+                  <div id="sell-iron-desc" class="btn-description">Convert resources to gold</div>
+                </button>
+
+                <button
+                  id="sell-silver-btn"
+                  class="action-btn sell-btn"
+                  data-action="sellResource"
+                  data-resource="silver"
+                >
+                  <div class="btn-title">Sell Premium Subs</div>
+                  <div class="btn-cost">
+                    Rate: <span id="silver-sell-rate">8.0</span>
+                    <span id="silver-sell-currency">gold/resource</span>
+                  </div>
+                  <div id="sell-silver-desc" class="btn-description">Convert resources to gold</div>
+                </button>
+
+                <button
+                  id="hire-stone-trader-btn"
+                  class="action-btn trader-btn"
+                  data-action="hireTrader"
+                  data-trader="stoneTrader"
+                >
+                  <div class="btn-title">Hire Tech Recruiters</div>
+                  <div class="btn-cost">Cost: <span id="stone-trader-cost">15</span> gold</div>
+                  <div id="hire-stone-trader-desc" class="btn-description">Auto-sell resources</div>
+                </button>
+
+                <button
+                  id="hire-coal-trader-btn"
+                  class="action-btn trader-btn"
+                  data-action="hireTrader"
+                  data-trader="coalTrader"
+                >
+                  <div class="btn-title">Hire Cloud Salespeople</div>
+                  <div class="btn-cost">Cost: <span id="coal-trader-cost">75</span> gold</div>
+                  <div id="hire-coal-trader-desc" class="btn-description">Auto-sell resources</div>
+                </button>
+
+                <button
+                  id="hire-metal-trader-btn"
+                  class="action-btn trader-btn"
+                  data-action="hireTrader"
+                  data-trader="metalTrader"
+                >
+                  <div class="btn-title">Hire VC Networkers</div>
+                  <div class="btn-cost">Cost: <span id="metal-trader-cost">300</span> gold</div>
+                  <div id="hire-metal-trader-desc" class="btn-description">Auto-sell resources</div>
+                </button>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h2>📊 Market Status</h2>
+              <div class="resource-grid">
+                <div class="resource-row">
+                  <span id="stone-traders-label" class="resource-type">Tech Recruiters:</span>
+                  <span id="stone-traders-count" class="resource-count">0</span>
+                </div>
+                <div class="resource-row">
+                  <span id="coal-traders-label" class="resource-type">Cloud Salespeople:</span>
+                  <span id="coal-traders-count" class="resource-count">0</span>
+                </div>
+                <div class="resource-row">
+                  <span id="metal-traders-label" class="resource-type">VC Networkers:</span>
+                  <span id="metal-traders-count" class="resource-count">0</span>
+                </div>
+                <div
+                  class="resource-row"
+                  data-tooltip="Trading efficiency including transport congestion"
+                >
+                  <span class="resource-type">Market Efficiency:</span>
+                  <span id="market-efficiency" class="resource-count">100%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Transport Tab -->
+        <section id="transport-tab" class="tab-content">
+          <div class="panel-grid">
+            <div class="panel">
+              <h2 id="transport-header">🚛 Transport Fleet</h2>
+              <div class="action-buttons">
+                <button
+                  id="buy-cart-btn"
+                  class="action-btn transport-btn"
+                  data-action="buyTransport"
+                  data-transport="cart"
+                >
+                  <div class="btn-title">Buy Ox Cart</div>
+                  <div class="btn-cost">Cost: <span id="cart-cost">30</span> gold</div>
+                  <div class="btn-description">+1 transport capacity</div>
+                </button>
+
+                <button
+                  id="buy-wagon-btn"
+                  class="action-btn transport-btn"
+                  data-action="buyTransport"
+                  data-transport="wagon"
+                >
+                  <div class="btn-title">Buy Steam Wagon</div>
+                  <div class="btn-cost">Cost: <span id="wagon-cost">150</span> gold</div>
+                  <div class="btn-description">+5 transport capacity</div>
+                </button>
+
+                <button
+                  id="buy-train-btn"
+                  class="action-btn transport-btn"
+                  data-action="buyTransport"
+                  data-transport="train"
+                >
+                  <div class="btn-title">Build Railway</div>
+                  <div class="btn-cost">Cost: <span id="train-cost">800</span> gold</div>
+                  <div class="btn-description">+20 transport capacity</div>
+                </button>
+
+                <button id="transport-next-btn" class="action-btn" data-action="transportNext">
+                  <div class="btn-title">Transport Next</div>
+                  <div class="btn-cost">Manual</div>
+                  <div class="btn-description">Move 1 best-value item to city</div>
+                </button>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h2 id="fleet-status-header">🚚 Fleet Status</h2>
+              <div class="resource-grid">
+                <div class="resource-row">
+                  <span id="carts-label" class="resource-type">Fiber Lines:</span>
+                  <span id="carts-count" class="resource-count">0</span>
+                </div>
+                <div class="resource-row">
+                  <span id="wagons-label" class="resource-type">CDN Networks:</span>
+                  <span id="wagons-count" class="resource-count">0</span>
+                </div>
+                <div class="resource-row">
+                  <span id="trains-label" class="resource-type">Satellite Links:</span>
+                  <span id="trains-count" class="resource-count">0</span>
+                </div>
+                <div class="resource-row">
+                  <span class="resource-type">Transport Capacity:</span>
+                  <span id="transport-capacity" class="resource-count">0</span>
+                </div>
+                <div
+                  class="resource-row"
+                  data-tooltip="Percent of transport capacity currently needed by production"
+                >
+                  <span class="resource-type">Usage:</span>
+                  <span id="transport-usage" class="resource-count">0%</span>
+                </div>
+                <div class="progress progress-orange">
+                  <div id="transport-usage-bar" class="progress-bar" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- City Tab -->
+        <section id="city-tab" class="tab-content">
+          <div class="panel-grid">
+            <div class="panel">
+              <h2 id="city-header">🏢 Corporate HQ</h2>
+              <div class="action-buttons">
+                <button
+                  id="hire-politician-btn"
+                  class="action-btn city-btn"
+                  data-action="hireService"
+                  data-service="politician"
+                >
+                  <div class="btn-title" id="hire-politician-title">Hire Lobbyists</div>
+                  <div class="btn-cost">
+                    Cost: <span id="politician-cost">250</span>
+                    <span id="politician-currency">gold</span>
+                  </div>
+                  <div class="btn-description" id="hire-politician-desc">
+                    +5% trading efficiency per lobbyist
+                  </div>
+                </button>
+
+                <button
+                  id="build-bank-btn"
+                  class="action-btn city-btn"
+                  data-action="buildCity"
+                  data-building="bank"
+                >
+                  <div class="btn-title" id="build-bank-title">Build Accounting Dept</div>
+                  <div class="btn-cost">
+                    Cost: <span id="bank-cost">500</span> <span id="bank-currency">gold</span>
+                  </div>
+                  <div class="btn-description" id="build-bank-desc">
+                    +20% to ALL city sales (stacks!)
+                  </div>
+                </button>
+
+                <button
+                  id="build-market-btn"
+                  class="action-btn city-btn"
+                  data-action="buildCity"
+                  data-building="market"
+                >
+                  <div class="btn-title" id="build-market-title">Build App Stores</div>
+                  <div class="btn-cost">
+                    Cost: <span id="market-cost">1000</span> <span id="market-currency">gold</span>
+                  </div>
+                  <div class="btn-description" id="build-market-desc">
+                    +15% trading efficiency (better prices)
+                  </div>
+                </button>
+
+                <button
+                  id="build-university-btn"
+                  class="action-btn city-btn"
+                  data-action="buildCity"
+                  data-building="university"
+                >
+                  <div class="btn-title" id="build-university-title">Build R&D Labs</div>
+                  <div class="btn-cost">
+                    Cost: <span id="university-cost">2500</span>
+                    <span id="university-currency">venture capital</span>
+                  </div>
+                  <div class="btn-description" id="build-university-desc">
+                    +10% global efficiency per lab
+                  </div>
+                </button>
+
+                <button
+                  id="build-sales-dept-btn"
+                  class="action-btn city-btn"
+                  data-action="buildCity"
+                  data-building="salesDepartment"
+                >
+                  <div class="btn-title" id="build-sales-dept-title">Build Sales Bot</div>
+                  <div class="btn-cost">
+                    Cost: <span id="sales-dept-cost">300</span>
+                    <span id="sales-dept-currency">venture capital</span>
+                  </div>
+                  <div class="btn-description" id="build-sales-dept-desc">
+                    Auto-sells products (upgradable AI)
+                  </div>
+                </button>
+
+                <button
+                  id="build-mining-academy-btn"
+                  class="action-btn city-btn"
+                  data-action="buildCity"
+                  data-building="miningAcademy"
+                >
+                  <div class="btn-title" id="build-mining-academy-title">Build Mining Academy</div>
+                  <div class="btn-cost">
+                    Cost: <span id="mining-academy-cost">400</span>
+                    <span id="mining-academy-currency">venture capital</span>
+                  </div>
+                  <div class="btn-description" id="build-mining-academy-desc">
+                    +15% resource gathering per level
+                  </div>
+                </button>
+
+                <button
+                  id="build-automation-lab-btn"
+                  class="action-btn city-btn"
+                  data-action="buildCity"
+                  data-building="automationLab"
+                >
+                  <div class="btn-title" id="build-automation-lab-title">Build Automation Lab</div>
+                  <div class="btn-cost">
+                    Cost: <span id="automation-lab-cost">600</span>
+                    <span id="automation-lab-currency">venture capital</span>
+                  </div>
+                  <div class="btn-description" id="build-automation-lab-desc">
+                    +1 auto-craft per tick per level
+                  </div>
+                </button>
+
+                <button
+                  id="hire-police-btn"
+                  class="action-btn city-btn"
+                  data-action="hireService"
+                  data-service="police"
+                >
+                  <div class="btn-title" id="hire-police-title">Hire Security Team</div>
+                  <div class="btn-cost">
+                    Cost: <span id="police-cost">5000</span> <span id="police-currency">gold</span>
+                  </div>
+                  <div class="btn-description" id="hire-police-desc">
+                    Generates city decay progress
+                  </div>
+                </button>
+
+                <button id="rebirth-btn" class="action-btn prestige-btn" data-action="rebirth">
+                  <div class="btn-title">🔄 Rebirth Empire</div>
+                  <div class="btn-cost">Requires 100% decay</div>
+                  <div class="btn-description">Reset city for permanent bonuses</div>
+                </button>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h2 id="city-sell-header">💰 Sell Products</h2>
+              <div class="action-buttons">
+                <!-- Sell Crafted Items from City -->
+                <button
+                  id="sell-city-basic-btn"
+                  class="action-btn sell-btn"
+                  style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%)"
+                >
+                  <div class="btn-title" id="sell-city-basic-title">💰 Sell Apps from City</div>
+                  <div class="btn-cost">
+                    3 <span id="sell-basic-currency">venture capital</span> (+20% per Accounting
+                    Dept)
+                  </div>
+                  <div class="btn-description" id="sell-city-basic-desc">
+                    Sell all Deployable Apps in city
+                  </div>
+                </button>
+
+                <button
+                  id="sell-city-intermediate-btn"
+                  class="action-btn sell-btn"
+                  style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)"
+                >
+                  <div class="btn-title" id="sell-city-intermediate-title">
+                    💰 Sell Platforms from City
+                  </div>
+                  <div class="btn-cost">
+                    9 <span id="sell-intermediate-currency">venture capital</span> (+20% per
+                    Accounting Dept)
+                  </div>
+                  <div class="btn-description" id="sell-city-intermediate-desc">
+                    Sell all SaaS Platforms in city
+                  </div>
+                </button>
+
+                <button
+                  id="sell-city-advanced-btn"
+                  class="action-btn sell-btn"
+                  style="background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%)"
+                >
+                  <div class="btn-title" id="sell-city-advanced-title">
+                    💰 Sell Products from City
+                  </div>
+                  <div class="btn-cost">
+                    30 <span id="sell-advanced-currency">venture capital</span> (+20% per Accounting
+                    Dept)
+                  </div>
+                  <div class="btn-description" id="sell-city-advanced-desc">
+                    Sell all Enterprise Products in city
+                  </div>
+                </button>
+
+                <button
+                  id="sell-city-premium-btn"
+                  class="action-btn sell-btn"
+                  style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
+                >
+                  <div class="btn-title" id="sell-city-premium-title">
+                    💰 Sell Startups from City
+                  </div>
+                  <div class="btn-cost">
+                    120 <span id="sell-premium-currency">venture capital</span> (+20% per Accounting
+                    Dept)
+                  </div>
+                  <div class="btn-description" id="sell-city-premium-desc">
+                    Sell all Unicorn Startups in city
+                  </div>
+                </button>
+              </div>
+
+              <div
+                style="
+                  margin-top: 20px;
+                  padding: 15px;
+                  background: rgba(255, 255, 255, 0.15);
+                  border-radius: 8px;
+                  border: 1px solid rgba(255, 255, 255, 0.2);
+                "
+              >
+                <h3
+                  id="city-inventory-header"
+                  style="
+                    margin: 0 0 10px 0;
+                    font-size: 1.1em;
+                    color: #fff;
+                    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+                  "
+                >
+                  📦 City Inventory
+                </h3>
+                <div
+                  id="city-finished-inventory"
+                  class="resource-grid"
+                  style="
+                    background: rgba(0, 0, 0, 0.3);
+                    padding: 10px;
+                    border-radius: 6px;
+                    min-height: 60px;
+                  "
+                >
+                  <!-- Finished goods will be rendered here by JS -->
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h2 id="city-status-header">🏛️ Corporate Status</h2>
+              <div class="resource-grid">
+                <div class="resource-row">
+                  <span id="police-label" class="resource-type">Security Team:</span>
+                  <span id="police-count" class="resource-count">0</span>
+                </div>
+                <div class="resource-row">
+                  <span id="politicians-label" class="resource-type">Lobbyists:</span>
+                  <span id="politicians-count" class="resource-count">0</span>
+                </div>
+                <div class="resource-row">
+                  <span id="banks-label" class="resource-type">Accounting Dept:</span>
+                  <span id="banks-count" class="resource-count">0</span>
+                </div>
+                <div class="resource-row" id="bank-bonus-row" style="opacity: 0.8">
+                  <span class="resource-type">💰 Sales Bonus:</span>
+                  <span id="bank-bonus-display" class="resource-count" style="color: #4ade80"
+                    >+0%</span
+                  >
+                </div>
+                <div class="resource-row">
+                  <span id="markets-label" class="resource-type">App Stores:</span>
+                  <span id="markets-count" class="resource-count">0</span>
+                </div>
+                <div class="resource-row">
+                  <span id="universities-label" class="resource-type">R&D Labs:</span>
+                  <span id="universities-count" class="resource-count">0</span>
+                </div>
+                <div class="resource-row">
+                  <span id="sales-dept-label" class="resource-type">Sales Bot:</span>
+                  <span id="sales-dept-count" class="resource-count">Level 0</span>
+                </div>
+                <div class="resource-row" id="sales-timer-row" style="display: none">
+                  <span class="resource-type">Next Sale:</span>
+                  <span id="sales-timer" class="resource-count" style="color: #4ade80">--</span>
+                </div>
+                <div class="resource-row">
+                  <span id="mining-academy-label" class="resource-type">Mining Academy:</span>
+                  <span id="mining-academy-count" class="resource-count">Level 0</span>
+                </div>
+                <div class="resource-row">
+                  <span id="automation-lab-label" class="resource-type">Automation Lab:</span>
+                  <span id="automation-lab-count" class="resource-count">Level 0</span>
+                </div>
+                <div class="resource-row">
+                  <span class="resource-type">Rebirths:</span>
+                  <span id="rebirths-count" class="resource-count">0</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h2 id="city-dynamics-header">📈 City Dynamics</h2>
+              <div class="resource-grid">
+                <div
+                  class="resource-row"
+                  data-tooltip="As decay reaches 100% your city can be reborn for permanent bonuses"
+                >
+                  <span class="resource-type">City Decay:</span>
+                  <span id="city-decay" class="resource-count">0%</span>
+                </div>
+                <div class="progress progress-red">
+                  <div id="city-decay-bar" class="progress-bar" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Research Tab -->
+        <section id="research-tab" class="tab-content">
+          <div class="panel-grid">
+            <div class="panel">
+              <h2 id="research-header">🔬 Research & Development</h2>
+              <div class="resource-grid">
+                <div class="resource-row">
+                  <span class="resource-type">Completed Research:</span>
+                  <span id="completed-research" class="resource-count">0</span>
+                </div>
+              </div>
+              <div class="action-buttons">
+                <button
+                  id="research-mining-btn"
+                  class="action-btn research-btn"
+                  data-action="purchaseResearch"
+                  data-research="mining"
+                >
+                  <div id="research-mining-title" class="btn-title">Advanced Development</div>
+                  <div class="btn-cost">Cost: <span id="research-mining-cost">50</span> gold</div>
+                  <div id="research-mining-desc" class="btn-description">
+                    +25% development efficiency
+                  </div>
+                </button>
+
+                <button
+                  id="research-automation-btn"
+                  class="action-btn research-btn"
+                  data-action="purchaseResearch"
+                  data-research="automation"
+                >
+                  <div id="research-automation-title" class="btn-title">Automation</div>
+                  <div class="btn-cost">
+                    Cost: <span id="research-automation-cost">50</span> gold
+                  </div>
+                  <div id="research-automation-desc" class="btn-description">
+                    Unlocks auto-miners & auto-traders
+                  </div>
+                </button>
+
+                <button
+                  id="research-processing-btn"
+                  class="action-btn research-btn"
+                  data-action="purchaseResearch"
+                  data-research="processing"
+                >
+                  <div id="research-processing-title" class="btn-title">Advanced Deployment</div>
+                  <div class="btn-cost">
+                    Cost: <span id="research-processing-cost">100</span> gold
+                  </div>
+                  <div id="research-processing-desc" class="btn-description">
+                    +25% deployment efficiency
+                  </div>
+                </button>
+
+                <button
+                  id="research-logistics-btn"
+                  class="action-btn research-btn"
+                  data-action="purchaseResearch"
+                  data-research="logistics"
+                >
+                  <div id="research-logistics-title" class="btn-title">Logistics</div>
+                  <div class="btn-cost">
+                    Cost: <span id="research-logistics-cost">1000</span> gold
+                  </div>
+                  <div id="research-logistics-desc" class="btn-description">
+                    +50% transport efficiency
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h2>🔓 Unlocks</h2>
+              <div class="action-buttons" id="unlocks-section">
+                <button class="action-btn unlock-btn" data-unlock="unlock_coal">
+                  <div class="btn-title">Unlock Cloud Servers</div>
+                  <div class="btn-cost">Cost: 25 gold</div>
+                  <div class="btn-description">Unlock 2nd resource tier</div>
+                </button>
+                <button class="action-btn unlock-btn" data-unlock="unlock_iron">
+                  <div class="btn-title">Unlock User Accounts</div>
+                  <div class="btn-cost">Cost: 60 gold</div>
+                  <div class="btn-description">Unlock 3rd resource tier</div>
+                </button>
+                <button class="action-btn unlock-btn" data-unlock="unlock_silver">
+                  <div class="btn-title">Unlock Premium Subs</div>
+                  <div class="btn-cost">Cost: 200 gold</div>
+                  <div class="btn-description">Unlock 4th resource tier</div>
+                </button>
+                <button class="action-btn unlock-btn" data-unlock="unlock_processing">
+                  <div class="btn-title">Unlock Deployment</div>
+                  <div class="btn-cost">Cost: 80 gold</div>
+                  <div class="btn-description">Unlock production buildings</div>
+                </button>
+
+                <!-- Auto-Crafter Unlocks -->
+                <button
+                  class="action-btn unlock-btn"
+                  id="unlock-autocraft-basic-btn"
+                  data-unlock="unlock_autocraft_basic"
+                >
+                  <div class="btn-title">🤖 Auto-Craft Basic</div>
+                  <div class="btn-cost">Cost: 100 gold</div>
+                  <div class="btn-description">
+                    Auto-craft Tier 1 items when resources available
+                  </div>
+                </button>
+                <button
+                  class="action-btn unlock-btn"
+                  id="unlock-autocraft-intermediate-btn"
+                  data-unlock="unlock_autocraft_intermediate"
+                >
+                  <div class="btn-title">🤖 Auto-Craft Intermediate</div>
+                  <div class="btn-cost">Cost: 500 gold</div>
+                  <div class="btn-description">
+                    Auto-craft Tier 2 items when resources available
+                  </div>
+                </button>
+                <button
+                  class="action-btn unlock-btn"
+                  id="unlock-autocraft-advanced-btn"
+                  data-unlock="unlock_autocraft_advanced"
+                >
+                  <div class="btn-title">🤖 Auto-Craft Advanced</div>
+                  <div class="btn-cost">Cost: 2500 gold</div>
+                  <div class="btn-description">
+                    Auto-craft Tier 3 items when resources available
+                  </div>
+                </button>
+                <button
+                  class="action-btn unlock-btn"
+                  id="unlock-autocraft-premium-btn"
+                  data-unlock="unlock_autocraft_premium"
+                >
+                  <div class="btn-title">🤖 Auto-Craft Premium</div>
+                  <div class="btn-cost">Cost: 10000 gold</div>
+                  <div class="btn-description">
+                    Auto-craft Tier 4 items when resources available
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Rebirth Upgrades Panel -->
+            <div class="panel" id="rebirth-upgrades-panel" style="grid-column: 1 / -1">
+              <h2>⭐ Permanent Rebirth Upgrades</h2>
+              <div
+                id="rebirth-power-display"
+                style="
+                  background: rgba(255, 215, 0, 0.1);
+                  padding: 15px;
+                  border-radius: 8px;
+                  margin-bottom: 15px;
+                  border: 1px solid rgba(255, 215, 0, 0.3);
+                "
+              >
+                <div style="display: flex; justify-content: space-between; align-items: center">
+                  <div>
+                    <span style="font-weight: bold; color: #fbbf24">⚡ Rebirth Power:</span>
+                    <span
+                      id="rebirth-power-value"
+                      style="font-size: 1.2em; font-weight: bold; color: #fde047"
+                      >+0%</span
+                    >
+                  </div>
+                  <div>
+                    <span style="opacity: 0.9">Total Rebirths:</span>
+                    <span id="rebirth-power-count" style="font-weight: bold; color: #fde047"
+                      >0</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <div
+                id="rebirth-upgrades-container"
+                class="action-buttons"
+                style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))"
+              >
+                <!-- Rebirth upgrades will be dynamically generated here -->
+                <p style="grid-column: 1 / -1; text-align: center; opacity: 0.7; padding: 20px">
+                  Complete your first rebirth to unlock permanent upgrades!
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Arcade Tab -->
+        <section id="arcade-tab" class="tab-content">
+          <div class="panel-grid">
+            <div class="panel">
+              <h2>🎮 Retro Arcade</h2>
+              <p style="margin-bottom: 15px; color: var(--text-secondary, #e2e8f0); opacity: 0.9">
+                Play classic DOS games to boost your idle game progress! Each hour of gameplay adds
+                permanent bonuses.
+              </p>
+
+              <div
+                id="arcade-legal-disclaimer"
+                style="
+                  margin-bottom: 20px;
+                  padding: 15px;
+                  background: var(--panel-bg, rgba(30, 41, 59, 0.95));
+                  border: 2px solid var(--border-color, rgba(100, 116, 139, 0.3));
+                  border-radius: 8px;
+                  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                "
+              >
+                <p
+                  style="
+                    margin: 0 0 10px 0;
+                    font-size: 0.9em;
+                    color: var(--text-primary, #f1f5f9);
+                    line-height: 1.6;
+                  "
+                >
+                  <strong style="color: var(--accent-color, #fbbf24)"
+                    >📜 Legal Disclaimer & Preservation Notice:</strong
+                  >
+                </p>
+                <p
+                  style="
+                    margin: 0 0 8px 0;
+                    font-size: 0.85em;
+                    color: var(--text-primary, #f1f5f9);
+                    line-height: 1.5;
+                  "
+                >
+                  These classic DOS games are provided for educational and historical preservation
+                  purposes only. The games featured here are either abandonware, freeware, or
+                  publicly distributed shareware versions from the early computing era.
+                </p>
+                <p
+                  style="
+                    margin: 0;
+                    font-size: 0.85em;
+                    color: var(--text-primary, #f1f5f9);
+                    line-height: 1.5;
+                  "
+                >
+                  <strong>No copyright infringement is intended.</strong> If you are a rights holder
+                  and believe any content should be removed, please contact us immediately and we
+                  will promptly comply. These games are archived to preserve gaming history and
+                  prevent them from being lost to obscurity.
+                </p>
+              </div>
+
+              <div id="arcade-games-container" class="action-buttons">
+                <!-- Games will be dynamically populated here -->
+              </div>
+            </div>
+
+            <div class="panel">
+              <h2>📊 Arcade Stats & Bonuses</h2>
+              <div class="resource-grid">
+                <div class="resource-row">
+                  <span class="resource-type">Total Play Time:</span>
+                  <span id="arcade-total-time" class="resource-count">0h 0m</span>
+                </div>
+                <div class="resource-row">
+                  <span class="resource-type">Resource Bonus:</span>
+                  <span id="arcade-resource-bonus" class="resource-count">+0%</span>
+                </div>
+                <div class="resource-row">
+                  <span class="resource-type">Efficiency Bonus:</span>
+                  <span id="arcade-efficiency-bonus" class="resource-count">+0%</span>
+                </div>
+                <div class="resource-row">
+                  <span class="resource-type">Gold Bonus:</span>
+                  <span id="arcade-gold-bonus" class="resource-count">+0%</span>
+                </div>
+                <div class="resource-row">
+                  <span class="resource-type">Crafting Bonus:</span>
+                  <span id="arcade-crafting-bonus" class="resource-count">+0%</span>
+                </div>
+              </div>
+
+              <div
+                style="
+                  margin-top: 20px;
+                  padding: 15px;
+                  background: rgba(59, 130, 246, 0.15);
+                  border: 1px solid rgba(59, 130, 246, 0.4);
+                  border-radius: 8px;
+                "
+              >
+                <p style="margin: 0; font-size: 0.9em; color: var(--text-primary, #f1f5f9)">
+                  <strong style="color: var(--text-primary, #fbbf24)">💡 Tip:</strong> Playing games
+                  gives bonuses that stack up over time! Each game provides different bonuses. The
+                  idle game continues running while you play!
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- DOS Game Modal -->
+      <div id="dos-game-modal" class="modal" style="display: none">
+        <div class="modal-content" style="max-width: 800px; width: 90%">
+          <div class="modal-header">
+            <h3 id="dos-game-title">🎮 Game</h3>
+            <div style="display: flex; gap: 10px">
+              <button
+                class="control-btn"
+                onclick="toggleDosFullscreen()"
+                style="padding: 8px 15px; font-size: 0.9em"
+              >
+                ⛶ Fullscreen
+              </button>
+              <button class="close-modal" onclick="closeDosGame()">&times;</button>
+            </div>
+          </div>
+          <div class="modal-body" style="padding: 0">
+            <div
+              id="dosbox-container"
+              style="
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                background: #000;
+                min-height: 400px;
+              "
+            >
+              <canvas id="dosbox" style="max-width: 100%; max-height: 400px"></canvas>
+            </div>
+            <div
+              style="
+                padding: 15px;
+                background: rgba(0, 0, 0, 0.3);
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+              "
+            >
+              <p id="dos-game-playtime" style="margin: 0; text-align: center; color: #94a3b8">
+                Play time: 0m 0s
+              </p>
+              <button
+                onclick="closeDosGame()"
+                class="control-btn"
+                style="width: 100%; margin-top: 10px"
+              >
+                Close Game
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Game Controls -->
+      <footer class="game-footer">
+        <div class="control-buttons">
+          <button id="login-toggle-btn" class="control-btn">👤 Login</button>
+          <button id="save-btn" class="control-btn" disabled>💾 Save Game</button>
+          <button id="load-btn" class="control-btn" disabled>📂 Load Game</button>
+          <button id="reset-btn" class="control-btn danger">🗑️ Reset Game</button>
+        </div>
+        <div class="save-indicator">
+          <span id="save-status">⚠️ Not logged in - Cannot save game</span>
+          <span id="user-status" style="display: none"></span>
+        </div>
+      </footer>
+
+      <!-- Bottom Section: Support & Developer Menu -->
+      <div
+        style="
+          text-align: center;
+          padding: 20px 0;
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
+          margin-top: 20px;
+        "
+      >
+        <!-- Buy Me a Coffee Button -->
+        <div style="margin-bottom: 15px">
+          <script
+            type="text/javascript"
+            src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js"
+            data-name="bmc-button"
+            data-slug="LukasBohez"
+            data-color="#2c6fb8"
+            data-emoji="☕"
+            data-font="Inter"
+            data-text="Support this game"
+            data-outline-color="#000000"
+            data-font-color="#ffffff"
+            data-coffee-color="#FFDD00"
+          ></script>
         </div>
 
-        <!-- Game Controls -->
-        <footer class="game-footer">
-            <div class="control-buttons">
-                <button id="login-toggle-btn" class="control-btn">👤 Login</button>
-                <button id="save-btn" class="control-btn" disabled>💾 Save Game</button>
-                <button id="load-btn" class="control-btn" disabled>📂 Load Game</button>
-                <button id="reset-btn" class="control-btn danger">🗑️ Reset Game</button>
-            </div>
-            <div class="save-indicator">
-                <span id="save-status">⚠️ Not logged in - Cannot save game</span>
-                <span id="user-status" style="display: none;"></span>
-            </div>
-        </footer>
-        
-        <!-- Bottom Section: Support & Developer Menu -->
-        <div style="text-align: center; padding: 20px 0; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 20px;">
-            <!-- Buy Me a Coffee Button -->
-            <div style="margin-bottom: 15px;">
-                <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="LukasBohez" data-color="#2c6fb8" data-emoji="☕"  data-font="Inter" data-text="Support this game" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
-            </div>
-            
-            <!-- Developer Menu Button -->
-            <button id="dev-menu-btn" class="control-btn" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border: 1px solid rgba(255,255,255,0.2);" onclick="openDevMenuDirect()">
-                🔧 Developer Menu
-            </button>
-            
-            <script>
-                function openDevMenuDirect() {
-                    console.log('openDevMenuDirect called');
-                    const modal = document.getElementById('dev-menu-modal');
-                    console.log('Modal found:', modal);
-                    if (modal) {
-                        modal.style.display = 'flex';
-                        modal.style.alignItems = 'center';
-                        modal.style.justifyContent = 'center';
-                        console.log('Modal should now be visible');
-                    } else {
-                        alert('Modal element not found! Check console.');
-                    }
-                }
-                
-                function closeDevMenuDirect() {
-                    console.log('closeDevMenuDirect called');
-                    const modal = document.getElementById('dev-menu-modal');
-                    if (modal) {
-                        modal.style.display = 'none';
-                    }
-                    // Clear password input
-                    const passwordInput = document.getElementById('dev-password');
-                    if (passwordInput) passwordInput.value = '';
-                    // Hide error
-                    const errorMsg = document.getElementById('dev-password-error');
-                    if (errorMsg) errorMsg.style.display = 'none';
-                }
-                
-                function unlockDevMenu() {
-                    console.log('unlockDevMenu called');
-                    const passwordInput = document.getElementById('dev-password');
-                    const errorMsg = document.getElementById('dev-password-error');
-                    const passwordSection = document.getElementById('dev-password-section');
-                    const contentSection = document.getElementById('dev-menu-content');
-                    
-                    if (!passwordInput) return;
-                    
-                    const enteredPassword = passwordInput.value;
-                    const correctPassword = "CapitalismIsDead";
-                    
-                    if (enteredPassword === correctPassword) {
-                        // Correct password!
-                        console.log('Password correct!');
-                        if (passwordSection) passwordSection.style.display = 'none';
-                        if (contentSection) contentSection.style.display = 'block';
-                        if (errorMsg) errorMsg.style.display = 'none';
-                        
-                        // Update selector to current rebirth
-                        if (window.app && window.app.gameEngine) {
-                            const selector = document.getElementById('rebirth-selector');
-                            const currentRebirths = window.app.gameEngine.state?.city?.rebirths || 0;
-                            if (selector) selector.value = currentRebirths.toString();
-                        }
-                    } else {
-                        // Wrong password
-                        console.log('Wrong password');
-                        if (errorMsg) errorMsg.style.display = 'block';
-                        
-                        // Shake animation
-                        if (passwordInput) {
-                            passwordInput.style.animation = 'shake 0.5s';
-                            setTimeout(() => {
-                                passwordInput.style.animation = '';
-                            }, 500);
-                        }
-                    }
-                }
-                
-                function applyRebirthDirect() {
-                    console.log('applyRebirthDirect called');
-                    const selector = document.getElementById('rebirth-selector');
-                    if (!selector || !window.app || !window.app.gameEngine) {
-                        alert('Game engine not available');
-                        return;
-                    }
-                    
-                    const gameEngine = window.app.gameEngine;
-                    const targetRebirth = parseInt(selector.value);
-                    const currentRebirth = gameEngine.state?.city?.rebirths || 0;
-                    
-                    if (targetRebirth === currentRebirth) {
-                        if (gameEngine.showNotification) {
-                            gameEngine.showNotification('ℹ️ Already at this rebirth level');
-                        }
-                        return;
-                    }
-                    
-                    // Set the rebirth count
-                    gameEngine.state.city.rebirths = targetRebirth;
-                    
-                    // Force theme update
-                    if (gameEngine.themeManager) {
-                        gameEngine.themeManager.currentTheme = null; // Force refresh
-                        gameEngine.themeManager.updateTheme();
-                    }
-                    
-                    // Update UI
-                    if (gameEngine.updateUI) {
-                        gameEngine.updateUI();
-                    }
-                    
-                    // Show notification
-                    if (gameEngine.showNotification) {
-                        const themeName = gameEngine.rebirthThemes?.getTheme(targetRebirth)?.name || 'Unknown';
-                        gameEngine.showNotification(`🔧 Jumped to Rebirth ${targetRebirth}: ${themeName}`);
-                    }
-                    
-                    console.log(`Developer: Set rebirth to ${targetRebirth}`);
-                    
-                    // Close menu
-                    closeDevMenuDirect();
-                }
-                
-                // Back to start function for ending screen
-                function backToStart() {
-                    if (!window.app || !window.app.gameEngine) {
-                        alert('Game engine not available');
-                        return;
-                    }
-                    
-                    const gameEngine = window.app.gameEngine;
-                    
-                    // Set rebirth back to 0
-                    gameEngine.state.city.rebirths = 0;
-                    
-                    // Force theme update
-                    if (gameEngine.themeManager) {
-                        gameEngine.themeManager.currentTheme = null; // Force refresh
-                        gameEngine.themeManager.updateTheme();
-                    }
-                    
-                    // Update UI
-                    if (gameEngine.updateUI) {
-                        gameEngine.updateUI();
-                    }
-                    
-                    // Show notification
-                    if (gameEngine.showNotification) {
-                        gameEngine.showNotification('🔄 Returned to the beginning');
-                    }
-                    
-                    console.log('Developer: Returned to Rebirth 0');
-                }
-                
-                // Add shake animation CSS
-                const shakeStyle = document.createElement('style');
-                shakeStyle.textContent = `
+        <!-- Developer Menu Button -->
+        <button
+          id="dev-menu-btn"
+          class="control-btn"
+          style="
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+          "
+          onclick="openDevMenuDirect()"
+        >
+          🔧 Developer Menu
+        </button>
+
+        <script>
+          function openDevMenuDirect() {
+            console.log('openDevMenuDirect called');
+            const modal = document.getElementById('dev-menu-modal');
+            console.log('Modal found:', modal);
+            if (modal) {
+              modal.style.display = 'flex';
+              modal.style.alignItems = 'center';
+              modal.style.justifyContent = 'center';
+              console.log('Modal should now be visible');
+            } else {
+              alert('Modal element not found! Check console.');
+            }
+          }
+
+          function closeDevMenuDirect() {
+            console.log('closeDevMenuDirect called');
+            const modal = document.getElementById('dev-menu-modal');
+            if (modal) {
+              modal.style.display = 'none';
+            }
+            // Clear password input
+            const passwordInput = document.getElementById('dev-password');
+            if (passwordInput) passwordInput.value = '';
+            // Hide error
+            const errorMsg = document.getElementById('dev-password-error');
+            if (errorMsg) errorMsg.style.display = 'none';
+          }
+
+          function unlockDevMenu() {
+            console.log('unlockDevMenu called');
+            const passwordInput = document.getElementById('dev-password');
+            const errorMsg = document.getElementById('dev-password-error');
+            const passwordSection = document.getElementById('dev-password-section');
+            const contentSection = document.getElementById('dev-menu-content');
+
+            if (!passwordInput) return;
+
+            const enteredPassword = passwordInput.value;
+            const correctPassword = 'CapitalismIsDead';
+
+            if (enteredPassword === correctPassword) {
+              // Correct password!
+              console.log('Password correct!');
+              if (passwordSection) passwordSection.style.display = 'none';
+              if (contentSection) contentSection.style.display = 'block';
+              if (errorMsg) errorMsg.style.display = 'none';
+
+              // Update selector to current rebirth
+              if (window.app && window.app.gameEngine) {
+                const selector = document.getElementById('rebirth-selector');
+                const currentRebirths = window.app.gameEngine.state?.city?.rebirths || 0;
+                if (selector) selector.value = currentRebirths.toString();
+              }
+            } else {
+              // Wrong password
+              console.log('Wrong password');
+              if (errorMsg) errorMsg.style.display = 'block';
+
+              // Shake animation
+              if (passwordInput) {
+                passwordInput.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                  passwordInput.style.animation = '';
+                }, 500);
+              }
+            }
+          }
+
+          function applyRebirthDirect() {
+            console.log('applyRebirthDirect called');
+            const selector = document.getElementById('rebirth-selector');
+            if (!selector || !window.app || !window.app.gameEngine) {
+              alert('Game engine not available');
+              return;
+            }
+
+            const gameEngine = window.app.gameEngine;
+            const targetRebirth = parseInt(selector.value);
+            const currentRebirth = gameEngine.state?.city?.rebirths || 0;
+
+            if (targetRebirth === currentRebirth) {
+              if (gameEngine.showNotification) {
+                gameEngine.showNotification('ℹ️ Already at this rebirth level');
+              }
+              return;
+            }
+
+            // Set the rebirth count
+            gameEngine.state.city.rebirths = targetRebirth;
+
+            // Force theme update
+            if (gameEngine.themeManager) {
+              gameEngine.themeManager.currentTheme = null; // Force refresh
+              gameEngine.themeManager.updateTheme();
+            }
+
+            // Update UI
+            if (gameEngine.updateUI) {
+              gameEngine.updateUI();
+            }
+
+            // Show notification
+            if (gameEngine.showNotification) {
+              const themeName =
+                gameEngine.rebirthThemes?.getTheme(targetRebirth)?.name || 'Unknown';
+              gameEngine.showNotification(`🔧 Jumped to Rebirth ${targetRebirth}: ${themeName}`);
+            }
+
+            console.log(`Developer: Set rebirth to ${targetRebirth}`);
+
+            // Close menu
+            closeDevMenuDirect();
+          }
+
+          // Back to start function for ending screen
+          function backToStart() {
+            if (!window.app || !window.app.gameEngine) {
+              alert('Game engine not available');
+              return;
+            }
+
+            const gameEngine = window.app.gameEngine;
+
+            // Set rebirth back to 0
+            gameEngine.state.city.rebirths = 0;
+
+            // Force theme update
+            if (gameEngine.themeManager) {
+              gameEngine.themeManager.currentTheme = null; // Force refresh
+              gameEngine.themeManager.updateTheme();
+            }
+
+            // Update UI
+            if (gameEngine.updateUI) {
+              gameEngine.updateUI();
+            }
+
+            // Show notification
+            if (gameEngine.showNotification) {
+              gameEngine.showNotification('🔄 Returned to the beginning');
+            }
+
+            console.log('Developer: Returned to Rebirth 0');
+          }
+
+          // Add shake animation CSS
+          const shakeStyle = document.createElement('style');
+          shakeStyle.textContent = `
                     @keyframes shake {
                         0%, 100% { transform: translateX(0); }
                         10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
                         20%, 40%, 60%, 80% { transform: translateX(10px); }
                     }
                 `;
-                document.head.appendChild(shakeStyle);
-            </script>
-            
-            <!-- Final Rebirth Reward Message (hidden by default) -->
-            <div id="final-rebirth-reward" style="display: none; margin-top: 15px; padding: 15px; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); border-radius: 12px; border: 2px solid #92400e; box-shadow: 0 8px 32px rgba(251, 191, 36, 0.4);">
-                <p style="margin: 0; font-weight: bold; font-size: 1.1em; color: #1e293b;">🎉 Congratulations on reaching the end!</p>
-                <p style="margin: 8px 0 0 0; color: #1e293b;">Developer Menu Password: <span style="font-weight: bold; font-family: monospace; font-size: 1.1em; color: #7c2d12;">CapitalismIsDead</span></p>
-            </div>
+          document.head.appendChild(shakeStyle);
+        </script>
+
+        <!-- Final Rebirth Reward Message (hidden by default) -->
+        <div
+          id="final-rebirth-reward"
+          style="
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            border-radius: 12px;
+            border: 2px solid #92400e;
+            box-shadow: 0 8px 32px rgba(251, 191, 36, 0.4);
+          "
+        >
+          <p style="margin: 0; font-weight: bold; font-size: 1.1em; color: #1e293b">
+            🎉 Congratulations on reaching the end!
+          </p>
+          <p style="margin: 8px 0 0 0; color: #1e293b">
+            Developer Menu Password:
+            <span
+              style="font-weight: bold; font-family: monospace; font-size: 1.1em; color: #7c2d12"
+              >CapitalismIsDead</span
+            >
+          </p>
         </div>
+      </div>
     </div>
 
     <!-- Developer Menu Modal -->
-    <div id="dev-menu-modal" onclick="if(event.target === this) closeDevMenuDirect()">
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header">
-                <h3>🔧 Developer Menu</h3>
-                <span class="close-modal" id="close-dev-menu" onclick="closeDevMenuDirect()" style="cursor: pointer;">&times;</span>
-            </div>
-            <div class="modal-body">
-                <div id="dev-password-section">
-                    <p style="text-align: center; margin-bottom: 15px;">Enter the password to access developer tools:</p>
-                    <div class="form-group">
-                        <input type="password" id="dev-password" placeholder="Enter password" onkeypress="if(event.key === 'Enter') unlockDevMenu()" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #e0e6ed; font-size: 1rem;">
-                    </div>
-                    <button id="dev-unlock-btn" class="control-btn" onclick="unlockDevMenu()" style="width: 100%; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-                        Unlock
-                    </button>
-                    <p id="dev-password-error" style="color: #ef4444; text-align: center; margin-top: 10px; display: none;">Incorrect password!</p>
-                    <p style="text-align: center; margin-top: 15px; font-size: 0.9em; opacity: 0.8;">Hint: Reach the final rebirth to receive the password as a reward</p>
-                </div>
-                
-                <div id="dev-menu-content" style="display: none;">
-                    <p style="text-align: center; margin-bottom: 20px; color: #4ade80; font-weight: bold;">🔓 Developer Access Granted</p>
-                    
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: bold;">💰 Give Currency/Resources:</label>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
-                            <input type="number" id="dev-gold-input" placeholder="Gold amount" style="padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #e0e6ed;">
-                            <button id="give-gold-btn" class="control-btn" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 8px;">Give Gold</button>
-                            <input type="number" id="dev-stone-input" placeholder="Stone amount" style="padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #e0e6ed;">
-                            <button id="give-stone-btn" class="control-btn" style="background: linear-gradient(135deg, #78716c 0%, #57534e 100%); padding: 8px;">Give Stone</button>
-                            <input type="number" id="dev-coal-input" placeholder="Coal amount" style="padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #e0e6ed;">
-                            <button id="give-coal-btn" class="control-btn" style="background: linear-gradient(135deg, #404040 0%, #262626 100%); padding: 8px;">Give Coal</button>
-                            <input type="number" id="dev-iron-input" placeholder="Iron amount" style="padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #e0e6ed;">
-                            <button id="give-iron-btn" class="control-btn" style="background: linear-gradient(135deg, #71717a 0%, #52525b 100%); padding: 8px;">Give Iron</button>
-                            <input type="number" id="dev-silver-input" placeholder="Silver amount" style="padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #e0e6ed;">
-                            <button id="give-silver-btn" class="control-btn" style="background: linear-gradient(135deg, #c0c0c0 0%, #a8a8a8 100%); padding: 8px; color: #1a1a2e;">Give Silver</button>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: bold;">Jump to Rebirth:</label>
-                        <select id="rebirth-selector" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #e0e6ed; font-size: 1rem;">
-                            <option value="0">Rebirth 0 - Tech Empire</option>
-                            <option value="1">Rebirth 1 - Post-Dot-Com</option>
-                            <option value="2">Rebirth 2 - Industrial Age</option>
-                            <option value="3">Rebirth 3 - Deindustrialization</option>
-                            <option value="4">Rebirth 4 - Retail Collapse</option>
-                            <option value="5">Rebirth 5 - Post-Collapse</option>
-                            <option value="6">Rebirth 6 - Subsistence</option>
-                            <option value="7">Rebirth 7 - Desolation</option>
-                            <option value="8">Rebirth 8 - Medical Triage</option>
-                            <option value="9">Rebirth 9 - The Void</option>
-                            <option value="10">Rebirth 10 - The End</option>
-                        </select>
-                    </div>
-                    
-                    <button id="apply-rebirth-btn" class="control-btn" onclick="applyRebirthDirect()" style="width: 100%; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); margin-bottom: 10px;">
-                        Apply Rebirth
-                    </button>
-                    
-                    <button id="close-dev-menu-btn" class="control-btn" onclick="closeDevMenuDirect()" style="width: 100%; background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);">
-                        Close
-                    </button>
-                </div>
-            </div>
+    <div id="dev-menu-modal" onclick="if (event.target === this) closeDevMenuDirect();">
+      <div class="modal-content" style="max-width: 500px">
+        <div class="modal-header">
+          <h3>🔧 Developer Menu</h3>
+          <span
+            class="close-modal"
+            id="close-dev-menu"
+            onclick="closeDevMenuDirect()"
+            style="cursor: pointer"
+            >&times;</span
+          >
         </div>
+        <div class="modal-body">
+          <div id="dev-password-section">
+            <p style="text-align: center; margin-bottom: 15px">
+              Enter the password to access developer tools:
+            </p>
+            <div class="form-group">
+              <input
+                type="password"
+                id="dev-password"
+                placeholder="Enter password"
+                onkeypress="if (event.key === 'Enter') unlockDevMenu();"
+                style="
+                  width: 100%;
+                  padding: 10px;
+                  border-radius: 8px;
+                  border: 1px solid rgba(255, 255, 255, 0.2);
+                  background: rgba(255, 255, 255, 0.1);
+                  color: #e0e6ed;
+                  font-size: 1rem;
+                "
+              />
+            </div>
+            <button
+              id="dev-unlock-btn"
+              class="control-btn"
+              onclick="unlockDevMenu()"
+              style="width: 100%; background: linear-gradient(135deg, #10b981 0%, #059669 100%)"
+            >
+              Unlock
+            </button>
+            <p
+              id="dev-password-error"
+              style="color: #ef4444; text-align: center; margin-top: 10px; display: none"
+            >
+              Incorrect password!
+            </p>
+            <p style="text-align: center; margin-top: 15px; font-size: 0.9em; opacity: 0.8">
+              Hint: Reach the final rebirth to receive the password as a reward
+            </p>
+          </div>
+
+          <div id="dev-menu-content" style="display: none">
+            <p style="text-align: center; margin-bottom: 20px; color: #4ade80; font-weight: bold">
+              🔓 Developer Access Granted
+            </p>
+
+            <div style="margin-bottom: 20px">
+              <label style="display: block; margin-bottom: 8px; font-weight: bold"
+                >💰 Give Currency/Resources:</label
+              >
+              <div
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px"
+              >
+                <input
+                  type="number"
+                  id="dev-gold-input"
+                  placeholder="Gold amount"
+                  style="
+                    padding: 8px;
+                    border-radius: 6px;
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    background: rgba(255, 255, 255, 0.1);
+                    color: #e0e6ed;
+                  "
+                />
+                <button
+                  id="give-gold-btn"
+                  class="control-btn"
+                  style="
+                    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+                    padding: 8px;
+                  "
+                >
+                  Give Gold
+                </button>
+                <input
+                  type="number"
+                  id="dev-stone-input"
+                  placeholder="Stone amount"
+                  style="
+                    padding: 8px;
+                    border-radius: 6px;
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    background: rgba(255, 255, 255, 0.1);
+                    color: #e0e6ed;
+                  "
+                />
+                <button
+                  id="give-stone-btn"
+                  class="control-btn"
+                  style="
+                    background: linear-gradient(135deg, #78716c 0%, #57534e 100%);
+                    padding: 8px;
+                  "
+                >
+                  Give Stone
+                </button>
+                <input
+                  type="number"
+                  id="dev-coal-input"
+                  placeholder="Coal amount"
+                  style="
+                    padding: 8px;
+                    border-radius: 6px;
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    background: rgba(255, 255, 255, 0.1);
+                    color: #e0e6ed;
+                  "
+                />
+                <button
+                  id="give-coal-btn"
+                  class="control-btn"
+                  style="
+                    background: linear-gradient(135deg, #404040 0%, #262626 100%);
+                    padding: 8px;
+                  "
+                >
+                  Give Coal
+                </button>
+                <input
+                  type="number"
+                  id="dev-iron-input"
+                  placeholder="Iron amount"
+                  style="
+                    padding: 8px;
+                    border-radius: 6px;
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    background: rgba(255, 255, 255, 0.1);
+                    color: #e0e6ed;
+                  "
+                />
+                <button
+                  id="give-iron-btn"
+                  class="control-btn"
+                  style="
+                    background: linear-gradient(135deg, #71717a 0%, #52525b 100%);
+                    padding: 8px;
+                  "
+                >
+                  Give Iron
+                </button>
+                <input
+                  type="number"
+                  id="dev-silver-input"
+                  placeholder="Silver amount"
+                  style="
+                    padding: 8px;
+                    border-radius: 6px;
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    background: rgba(255, 255, 255, 0.1);
+                    color: #e0e6ed;
+                  "
+                />
+                <button
+                  id="give-silver-btn"
+                  class="control-btn"
+                  style="
+                    background: linear-gradient(135deg, #c0c0c0 0%, #a8a8a8 100%);
+                    padding: 8px;
+                    color: #1a1a2e;
+                  "
+                >
+                  Give Silver
+                </button>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 20px">
+              <label style="display: block; margin-bottom: 8px; font-weight: bold"
+                >Jump to Rebirth:</label
+              >
+              <select
+                id="rebirth-selector"
+                style="
+                  width: 100%;
+                  padding: 10px;
+                  border-radius: 8px;
+                  border: 1px solid rgba(255, 255, 255, 0.2);
+                  background: rgba(255, 255, 255, 0.1);
+                  color: #e0e6ed;
+                  font-size: 1rem;
+                "
+              >
+                <option value="0">Rebirth 0 - Tech Empire</option>
+                <option value="1">Rebirth 1 - Post-Dot-Com</option>
+                <option value="2">Rebirth 2 - Industrial Age</option>
+                <option value="3">Rebirth 3 - Deindustrialization</option>
+                <option value="4">Rebirth 4 - Retail Collapse</option>
+                <option value="5">Rebirth 5 - Post-Collapse</option>
+                <option value="6">Rebirth 6 - Subsistence</option>
+                <option value="7">Rebirth 7 - Desolation</option>
+                <option value="8">Rebirth 8 - Medical Triage</option>
+                <option value="9">Rebirth 9 - The Void</option>
+                <option value="10">Rebirth 10 - The End</option>
+              </select>
+            </div>
+
+            <button
+              id="apply-rebirth-btn"
+              class="control-btn"
+              onclick="applyRebirthDirect()"
+              style="
+                width: 100%;
+                background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+                margin-bottom: 10px;
+              "
+            >
+              Apply Rebirth
+            </button>
+
+            <button
+              id="close-dev-menu-btn"
+              class="control-btn"
+              onclick="closeDevMenuDirect()"
+              style="width: 100%; background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%)"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Login Modal -->
     <div id="auth-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="auth-title">Login</h3>
-                <span class="close-modal" id="close-auth">&times;</span>
-            </div>
-            <div class="modal-body">
-                <div id="auth-form">
-                    <div class="form-group">
-                        <label for="username">Username:</label>
-                        <input type="text" id="username" placeholder="Enter username" autocomplete="username" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="password">Password:</label>
-                        <input type="password" id="password" placeholder="Enter password" autocomplete="current-password" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="email" id="email-label" style="display: none;">Email:</label>
-                        <input type="email" id="email" placeholder="Enter email" autocomplete="email" style="display: none;">
-                    </div>
-                    <div class="form-buttons">
-                        <button type="button" id="login-btn" class="primary-btn">Login</button>
-                        <button type="button" id="register-btn" class="secondary-btn">Register</button>
-                    </div>
-                    <div class="auth-toggle">
-                        <p>Don't have an account? <span id="toggle-register" class="link">Register here</span></p>
-                        <p id="toggle-login-text" style="display: none;">Already have an account? <span id="toggle-login" class="link">Login here</span></p>
-                    </div>
-                </div>
-                <div id="auth-status" class="status-message" style="display: none;"></div>
-            </div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="auth-title">Login</h3>
+          <span class="close-modal" id="close-auth">&times;</span>
         </div>
+        <div class="modal-body">
+          <div id="auth-form">
+            <div class="form-group">
+              <label for="username">Username:</label>
+              <input
+                type="text"
+                id="username"
+                placeholder="Enter username"
+                autocomplete="username"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="password">Password:</label>
+              <input
+                type="password"
+                id="password"
+                placeholder="Enter password"
+                autocomplete="current-password"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="email" id="email-label" style="display: none">Email:</label>
+              <input
+                type="email"
+                id="email"
+                placeholder="Enter email"
+                autocomplete="email"
+                style="display: none"
+              />
+            </div>
+            <div class="form-buttons">
+              <button type="button" id="login-btn" class="primary-btn">Login</button>
+              <button type="button" id="register-btn" class="secondary-btn">Register</button>
+            </div>
+            <div class="auth-toggle">
+              <p>
+                Don't have an account? <span id="toggle-register" class="link">Register here</span>
+              </p>
+              <p id="toggle-login-text" style="display: none">
+                Already have an account? <span id="toggle-login" class="link">Login here</span>
+              </p>
+            </div>
+          </div>
+          <div id="auth-status" class="status-message" style="display: none"></div>
+        </div>
+      </div>
     </div>
-        <div class="emptyspace"></div>
+    <div class="emptyspace"></div>
 
     <!-- Rebirth 10 Ending Screen (Full Screen Overlay) -->
-    <div id="ending-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%); z-index: 9999; align-items: center; justify-content: center;">
-        <div style="text-align: center; max-width: 600px; padding: 40px;">
-            <div style="font-size: 4em; margin-bottom: 20px; animation: pulse 2s ease-in-out infinite;">
-                ✨🏆✨
-            </div>
-            <h1 style="font-size: 3em; margin: 0 0 20px 0; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #fbbf24 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: bold; text-shadow: 0 0 40px rgba(251, 191, 36, 0.5);">
-                ✨ The End ✨
-            </h1>
-            <p style="font-size: 1.3em; color: #e2e8f0; margin-bottom: 30px; line-height: 1.6;">
-                You have witnessed the complete cycle.<br>
-                From empire to void, from everything to nothing.
-            </p>
-            <div style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); padding: 30px; border-radius: 16px; border: 3px solid #92400e; box-shadow: 0 0 60px rgba(251, 191, 36, 0.6), inset 0 0 30px rgba(255, 255, 255, 0.1); margin-top: 40px;">
-                <p style="margin: 0 0 15px 0; font-weight: bold; font-size: 1.4em; color: #1e293b; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
-                    🎉 Congratulations, Developer! 🎉
-                </p>
-                <p style="margin: 0 0 10px 0; color: #1e293b; font-size: 1.1em;">
-                    Your reward for reaching the end:
-                </p>
-                <div style="background: rgba(0, 0, 0, 0.2); padding: 15px; border-radius: 8px; margin-top: 15px;">
-                    <p style="margin: 0 0 8px 0; color: #fef3c7; font-weight: 600;">Developer Menu Password:</p>
-                    <p style="margin: 0; font-family: monospace; font-size: 1.5em; font-weight: bold; color: #ffffff; letter-spacing: 2px; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);">
-                        CapitalismIsDead
-                    </p>
-                </div>
-                <p style="margin: 20px 0 0 0; color: #451a03; font-size: 0.95em; font-style: italic;">
-                    Use this password to access the developer menu and jump between rebirths.
-                </p>
-            </div>
-            <button onclick="backToStart()" style="margin-top: 30px; padding: 15px 40px; font-size: 1.2em; font-weight: bold; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4); transition: all 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 30px rgba(59, 130, 246, 0.6)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 20px rgba(59, 130, 246, 0.4)'">
-                🔄 Back to Start
-            </button>
+    <div
+      id="ending-screen"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+      "
+    >
+      <div style="text-align: center; max-width: 600px; padding: 40px">
+        <div style="font-size: 4em; margin-bottom: 20px; animation: pulse 2s ease-in-out infinite">
+          ✨🏆✨
         </div>
+        <h1
+          style="
+            font-size: 3em;
+            margin: 0 0 20px 0;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #fbbf24 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+            text-shadow: 0 0 40px rgba(251, 191, 36, 0.5);
+          "
+        >
+          ✨ The End ✨
+        </h1>
+        <p style="font-size: 1.3em; color: #e2e8f0; margin-bottom: 30px; line-height: 1.6">
+          You have witnessed the complete cycle.<br />
+          From empire to void, from everything to nothing.
+        </p>
+        <div
+          style="
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            padding: 30px;
+            border-radius: 16px;
+            border: 3px solid #92400e;
+            box-shadow:
+              0 0 60px rgba(251, 191, 36, 0.6),
+              inset 0 0 30px rgba(255, 255, 255, 0.1);
+            margin-top: 40px;
+          "
+        >
+          <p
+            style="
+              margin: 0 0 15px 0;
+              font-weight: bold;
+              font-size: 1.4em;
+              color: #1e293b;
+              text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            "
+          >
+            🎉 Congratulations, Developer! 🎉
+          </p>
+          <p style="margin: 0 0 10px 0; color: #1e293b; font-size: 1.1em">
+            Your reward for reaching the end:
+          </p>
+          <div
+            style="
+              background: rgba(0, 0, 0, 0.2);
+              padding: 15px;
+              border-radius: 8px;
+              margin-top: 15px;
+            "
+          >
+            <p style="margin: 0 0 8px 0; color: #fef3c7; font-weight: 600">
+              Developer Menu Password:
+            </p>
+            <p
+              style="
+                margin: 0;
+                font-family: monospace;
+                font-size: 1.5em;
+                font-weight: bold;
+                color: #ffffff;
+                letter-spacing: 2px;
+                text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+              "
+            >
+              CapitalismIsDead
+            </p>
+          </div>
+          <p style="margin: 20px 0 0 0; color: #451a03; font-size: 0.95em; font-style: italic">
+            Use this password to access the developer menu and jump between rebirths.
+          </p>
+        </div>
+        <button
+          onclick="backToStart()"
+          style="
+            margin-top: 30px;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+            transition: all 0.3s ease;
+          "
+          onmouseover="
+            this.style.transform = 'scale(1.05)';
+            this.style.boxShadow = '0 6px 30px rgba(59, 130, 246, 0.6)';
+          "
+          onmouseout="
+            this.style.transform = 'scale(1)';
+            this.style.boxShadow = '0 4px 20px rgba(59, 130, 246, 0.4)';
+          "
+        >
+          🔄 Back to Start
+        </button>
+      </div>
     </div>
 
     <!-- JavaScript Modules -->
     <!-- Arcade Functions -->
     <script>
-        let currentDosbox = null;
-          let jsDosLoadPromise = null;
-        
-          function loadJsDosLibrary() {
-              if (window.Dos) {
-                  return Promise.resolve();
-              }
+      let currentDosbox = null;
+      let jsDosLoadPromise = null;
 
-              if (!jsDosLoadPromise) {
-                  jsDosLoadPromise = new Promise((resolve, reject) => {
-                      const script = document.createElement('script');
-                      script.src = 'https://js-dos.com/6.22/current/js-dos.js';
-                      script.async = true;
-                      script.onload = () => resolve();
-                      script.onerror = () => reject(new Error('Failed to load js-dos'));
-                      document.head.appendChild(script);
-                  });
-              }
+      function loadJsDosLibrary() {
+        if (window.Dos) {
+          return Promise.resolve();
+        }
 
-              return jsDosLoadPromise;
+        if (!jsDosLoadPromise) {
+          jsDosLoadPromise = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://js-dos.com/6.22/current/js-dos.js';
+            script.async = true;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error('Failed to load js-dos'));
+            document.head.appendChild(script);
+          });
+        }
+
+        return jsDosLoadPromise;
+      }
+
+      async function openDosGame(gameId) {
+        if (!window.app || !window.app.gameEngine || !window.app.gameEngine.arcadeManager) {
+          alert('Arcade system not initialized');
+          return;
+        }
+
+        const arcadeManager = window.app.gameEngine.arcadeManager;
+        const game = arcadeManager.games[gameId];
+
+        if (!game) {
+          alert('Game not found');
+          return;
+        }
+
+        try {
+          await loadJsDosLibrary();
+        } catch (error) {
+          console.error('Failed to load js-dos library:', error);
+          alert('The arcade library could not be loaded. Please try again later.');
+          return;
+        }
+
+        // Start tracking play time
+        arcadeManager.startGame(gameId);
+
+        // Show modal
+        const modal = document.getElementById('dos-game-modal');
+        const title = document.getElementById('dos-game-title');
+        title.textContent = `🎮 ${game.name}`;
+        modal.style.display = 'flex';
+
+        // Clear previous dosbox instance
+        const dosboxCanvas = document.getElementById('dosbox');
+        const dosboxContainer = document.getElementById('dosbox-container');
+
+        // Completely clear container and reset styles
+        dosboxContainer.innerHTML = '';
+        dosboxContainer.style.cssText =
+          'width: 100%; display: flex; justify-content: center; align-items: center; background: #000; min-height: 400px;';
+
+        // Create fresh canvas with forced centering
+        const newCanvas = document.createElement('canvas');
+        newCanvas.id = 'dosbox';
+        newCanvas.style.cssText =
+          'display: block; max-width: 100%; max-height: 400px; margin: 0 auto;';
+        dosboxContainer.appendChild(newCanvas);
+
+        // Initialize js-dos with v6.22 API
+        const dosboxInstance = Dos(newCanvas, {
+          wdosboxUrl: 'https://js-dos.com/6.22/current/wdosbox.js',
+          cycles: game.cyclesLimit || 'auto', // Apply cycles limit if specified
+        });
+
+        // Store reference for later cleanup
+        currentDosbox = dosboxInstance;
+
+        dosboxInstance.ready((fs, main) => {
+          // Construct full URL with correct path
+          // Get the base URL and ensure we use the correct case for idleGame folder
+          const baseUrl = window.location.origin + '/idleGame/'; // Force correct capitalization
+          const gamePath = baseUrl + game.zipUrl;
+
+          console.log('Loading game from:', gamePath);
+          console.log('Game relative path:', game.zipUrl);
+
+          // Fetch and add the game zip file
+          fs.extract(gamePath)
+            .then(() => {
+              console.log('Game extracted successfully, running:', game.executable);
+              // Run the executable
+              main(['-c', game.executable]);
+            })
+            .catch((error) => {
+              console.error('Error loading game:', error);
+              console.error('Game path attempted:', gamePath);
+              alert(
+                `Failed to load game from: ${gamePath}\n\nError: ${error.message}\n\nMake sure:\n1. File exists: ${game.zipUrl}\n2. Web server can access it\n3. Check console for details`
+              );
+              closeDosGame();
+            });
+        });
+
+        // Update playtime display
+        updateDosPlaytime(gameId);
+      }
+
+      function closeDosGame() {
+        if (window.app && window.app.gameEngine && window.app.gameEngine.arcadeManager) {
+          window.app.gameEngine.arcadeManager.stopGame();
+        }
+
+        // Try to properly exit/stop the DOSBox instance
+        if (currentDosbox && currentDosbox.exit) {
+          try {
+            currentDosbox.exit();
+          } catch (e) {
+            console.log('Error exiting dosbox:', e);
           }
+        }
 
-          async function openDosGame(gameId) {
-            if (!window.app || !window.app.gameEngine || !window.app.gameEngine.arcadeManager) {
-                alert('Arcade system not initialized');
-                return;
-            }
-            
-            const arcadeManager = window.app.gameEngine.arcadeManager;
-            const game = arcadeManager.games[gameId];
-            
-            if (!game) {
-                alert('Game not found');
-                return;
-            }
+        // Exit fullscreen if active
+        if (
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.mozFullScreenElement ||
+          document.msFullscreenElement
+        ) {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+          }
+        }
 
-              try {
-                  await loadJsDosLibrary();
-              } catch (error) {
-                  console.error('Failed to load js-dos library:', error);
-                  alert('The arcade library could not be loaded. Please try again later.');
-                  return;
-              }
-            
-            // Start tracking play time
-            arcadeManager.startGame(gameId);
-            
-            // Show modal
-            const modal = document.getElementById('dos-game-modal');
-            const title = document.getElementById('dos-game-title');
-            title.textContent = `🎮 ${game.name}`;
-            modal.style.display = 'flex';
-            
-            // Clear previous dosbox instance
-            const dosboxCanvas = document.getElementById('dosbox');
-            const dosboxContainer = document.getElementById('dosbox-container');
-            
-            // Completely clear container and reset styles
-            dosboxContainer.innerHTML = '';
-            dosboxContainer.style.cssText = 'width: 100%; display: flex; justify-content: center; align-items: center; background: #000; min-height: 400px;';
-            
-            // Create fresh canvas with forced centering
-            const newCanvas = document.createElement('canvas');
-            newCanvas.id = 'dosbox';
-            newCanvas.style.cssText = 'display: block; max-width: 100%; max-height: 400px; margin: 0 auto;';
-            dosboxContainer.appendChild(newCanvas);
-            
-            // Initialize js-dos with v6.22 API
-            const dosboxInstance = Dos(newCanvas, {
-                wdosboxUrl: "https://js-dos.com/6.22/current/wdosbox.js",
-                cycles: game.cyclesLimit || 'auto',  // Apply cycles limit if specified
-            });
-            
-            // Store reference for later cleanup
-            currentDosbox = dosboxInstance;
-            
-            dosboxInstance.ready((fs, main) => {
-                // Construct full URL with correct path
-                // Get the base URL and ensure we use the correct case for idleGame folder
-                const baseUrl = window.location.origin + '/idleGame/'; // Force correct capitalization
-                const gamePath = baseUrl + game.zipUrl;
-                
-                console.log('Loading game from:', gamePath);
-                console.log('Game relative path:', game.zipUrl);
-                
-                // Fetch and add the game zip file
-                fs.extract(gamePath).then(() => {
-                    console.log('Game extracted successfully, running:', game.executable);
-                    // Run the executable
-                    main(["-c", game.executable]);
-                }).catch((error) => {
-                    console.error('Error loading game:', error);
-                    console.error('Game path attempted:', gamePath);
-                    alert(`Failed to load game from: ${gamePath}\n\nError: ${error.message}\n\nMake sure:\n1. File exists: ${game.zipUrl}\n2. Web server can access it\n3. Check console for details`);
-                    closeDosGame();
-                });
-            });
-            
-            // Update playtime display
-            updateDosPlaytime(gameId);
+        // Hide modal
+        const modal = document.getElementById('dos-game-modal');
+        modal.style.display = 'none';
+
+        // Completely reset the container - this will be recreated on next open
+        const dosboxContainer = document.getElementById('dosbox-container');
+        if (dosboxContainer) {
+          // Force stop any audio/video elements that might be running
+          const mediaElements = dosboxContainer.querySelectorAll('audio, video');
+          mediaElements.forEach((el) => {
+            el.pause();
+            el.src = '';
+          });
+
+          // Clear everything
+          dosboxContainer.innerHTML = '';
+          dosboxContainer.style.cssText =
+            'width: 100%; display: flex; justify-content: center; align-items: center; background: #000; min-height: 400px;';
+
+          // Add placeholder canvas
+          const placeholderCanvas = document.createElement('canvas');
+          placeholderCanvas.id = 'dosbox';
+          placeholderCanvas.style.cssText =
+            'display: block; max-width: 100%; max-height: 400px; margin: 0 auto;';
+          dosboxContainer.appendChild(placeholderCanvas);
         }
-        
-        function closeDosGame() {
-            if (window.app && window.app.gameEngine && window.app.gameEngine.arcadeManager) {
-                window.app.gameEngine.arcadeManager.stopGame();
-            }
-            
-            // Try to properly exit/stop the DOSBox instance
-            if (currentDosbox && currentDosbox.exit) {
-                try {
-                    currentDosbox.exit();
-                } catch (e) {
-                    console.log('Error exiting dosbox:', e);
-                }
-            }
-            
-            // Exit fullscreen if active
-            if (document.fullscreenElement || document.webkitFullscreenElement || 
-                document.mozFullScreenElement || document.msFullscreenElement) {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                }
-            }
-            
-            // Hide modal
-            const modal = document.getElementById('dos-game-modal');
-            modal.style.display = 'none';
-            
-            // Completely reset the container - this will be recreated on next open
-            const dosboxContainer = document.getElementById('dosbox-container');
-            if (dosboxContainer) {
-                // Force stop any audio/video elements that might be running
-                const mediaElements = dosboxContainer.querySelectorAll('audio, video');
-                mediaElements.forEach(el => {
-                    el.pause();
-                    el.src = '';
-                });
-                
-                // Clear everything
-                dosboxContainer.innerHTML = '';
-                dosboxContainer.style.cssText = 'width: 100%; display: flex; justify-content: center; align-items: center; background: #000; min-height: 400px;';
-                
-                // Add placeholder canvas
-                const placeholderCanvas = document.createElement('canvas');
-                placeholderCanvas.id = 'dosbox';
-                placeholderCanvas.style.cssText = 'display: block; max-width: 100%; max-height: 400px; margin: 0 auto;';
-                dosboxContainer.appendChild(placeholderCanvas);
-            }
-            
-            currentDosbox = null;
+
+        currentDosbox = null;
+      }
+
+      function toggleDosFullscreen() {
+        const modal = document.getElementById('dos-game-modal');
+        const canvas = document.getElementById('dosbox');
+
+        if (
+          !document.fullscreenElement &&
+          !document.webkitFullscreenElement &&
+          !document.mozFullScreenElement
+        ) {
+          // Enter fullscreen on the canvas directly
+          const elem = canvas;
+
+          if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+          } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+          } else if (elem.mozRequestFullScreen) {
+            elem.mozRequestFullScreen();
+          } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen();
+          }
+        } else {
+          // Exit fullscreen
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+          }
         }
-        
-        function toggleDosFullscreen() {
-            const modal = document.getElementById('dos-game-modal');
-            const canvas = document.getElementById('dosbox');
-            
-            if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement) {
-                // Enter fullscreen on the canvas directly
-                const elem = canvas;
-                
-                if (elem.requestFullscreen) {
-                    elem.requestFullscreen();
-                } else if (elem.webkitRequestFullscreen) {
-                    elem.webkitRequestFullscreen();
-                } else if (elem.mozRequestFullScreen) {
-                    elem.mozRequestFullScreen();
-                } else if (elem.msRequestFullscreen) {
-                    elem.msRequestFullscreen();
-                }
-            } else {
-                // Exit fullscreen
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                }
-            }
+      }
+
+      // Handle fullscreen change events for all browsers
+      function handleFullscreenChange() {
+        const dosboxContainer = document.getElementById('dosbox-container');
+        const canvas = document.getElementById('dosbox');
+        const modal = document.getElementById('dos-game-modal');
+
+        if (
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.mozFullScreenElement ||
+          document.msFullscreenElement
+        ) {
+          // Canvas is in fullscreen - fill entire screen while maintaining aspect ratio
+          if (canvas) {
+            canvas.style.cssText =
+              'display: block; width: 100vw; height: 100vh; max-width: 100vw; max-height: 100vh; object-fit: contain; background-color: #000; margin: 0;';
+          }
+        } else {
+          // Not fullscreen - restore normal centered size
+          if (canvas) {
+            canvas.style.cssText =
+              'display: block; max-width: 100%; max-height: 400px; margin: 0 auto;';
+          }
+          // Reset container
+          if (dosboxContainer) {
+            dosboxContainer.style.cssText =
+              'width: 100%; display: flex; justify-content: center; align-items: center; background: #000; min-height: 400px;';
+          }
         }
-        
-        // Handle fullscreen change events for all browsers
-        function handleFullscreenChange() {
-            const dosboxContainer = document.getElementById('dosbox-container');
-            const canvas = document.getElementById('dosbox');
-            const modal = document.getElementById('dos-game-modal');
-            
-            if (document.fullscreenElement || document.webkitFullscreenElement || 
-                document.mozFullScreenElement || document.msFullscreenElement) {
-                // Canvas is in fullscreen - fill entire screen while maintaining aspect ratio
-                if (canvas) {
-                    canvas.style.cssText = 'display: block; width: 100vw; height: 100vh; max-width: 100vw; max-height: 100vh; object-fit: contain; background-color: #000; margin: 0;';
-                }
-            } else {
-                // Not fullscreen - restore normal centered size
-                if (canvas) {
-                    canvas.style.cssText = 'display: block; max-width: 100%; max-height: 400px; margin: 0 auto;';
-                }
-                // Reset container
-                if (dosboxContainer) {
-                    dosboxContainer.style.cssText = 'width: 100%; display: flex; justify-content: center; align-items: center; background: #000; min-height: 400px;';
-                }
-            }
+      }
+
+      // Add event listeners for all fullscreen change events
+      document.addEventListener('fullscreenchange', handleFullscreenChange);
+      document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+      function updateDosPlaytime(gameId) {
+        if (!window.app || !window.app.gameEngine || !window.app.gameEngine.arcadeManager) {
+          return;
         }
-        
-        // Add event listeners for all fullscreen change events
-        document.addEventListener('fullscreenchange', handleFullscreenChange);
-        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-        
-        function updateDosPlaytime(gameId) {
-            if (!window.app || !window.app.gameEngine || !window.app.gameEngine.arcadeManager) {
-                return;
-            }
-            
-            const arcadeManager = window.app.gameEngine.arcadeManager;
-            const playtimeDisplay = document.getElementById('dos-game-playtime');
-            
-            if (arcadeManager.state.arcade.activeGame === gameId && playtimeDisplay) {
-                const playTime = arcadeManager.state.arcade.playTime[gameId] || 0;
-                const minutes = Math.floor(playTime / 60);
-                const seconds = Math.floor(playTime % 60);
-                playtimeDisplay.textContent = `Play time: ${minutes}m ${seconds}s`;
-                
-                // Update again in 1 second
-                setTimeout(() => updateDosPlaytime(gameId), 1000);
-            }
+
+        const arcadeManager = window.app.gameEngine.arcadeManager;
+        const playtimeDisplay = document.getElementById('dos-game-playtime');
+
+        if (arcadeManager.state.arcade.activeGame === gameId && playtimeDisplay) {
+          const playTime = arcadeManager.state.arcade.playTime[gameId] || 0;
+          const minutes = Math.floor(playTime / 60);
+          const seconds = Math.floor(playTime % 60);
+          playtimeDisplay.textContent = `Play time: ${minutes}m ${seconds}s`;
+
+          // Update again in 1 second
+          setTimeout(() => updateDosPlaytime(gameId), 1000);
         }
+      }
     </script>
-    
+
     <script src="js/game/NewResourceManager.min.js?v=3"></script>
     <script src="js/game/RebirthThemes.min.js?v=3"></script>
     <script src="js/game/RebirthRewards.min.js?v=3"></script>
@@ -1340,6 +2147,6 @@
     <script src="js/game/GameEngine.min.js?v=3"></script>
     <script src="js/devMenu.min.js?v=3"></script>
     <script src="js/app.min.js?v=3"></script>
-</body>
+  </body>
 </html>
 ```
