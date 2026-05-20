@@ -2,6 +2,7 @@ package repository
 
 import (
     "context"
+    "database/sql"
     "regexp"
     "testing"
     "time"
@@ -89,6 +90,70 @@ func TestGetByID_FoundAndNotFound(t *testing.T) {
     }
     if item2 != nil {
         t.Fatalf("expected nil for not found, got %+v", item2)
+    }
+
+    if err := mock.ExpectationsWereMet(); err != nil {
+        t.Fatalf("unmet expectations: %v", err)
+    }
+}
+
+func TestCreate_Update_Delete_Answers(t *testing.T) {
+    db, mock, err := sqlmock.New()
+    if err != nil {
+        t.Fatalf("sqlmock.New: %v", err)
+    }
+    defer db.Close()
+
+    repo := NewAnswerRepository(db)
+
+    // Create
+    questionID := int64(10)
+    mock.ExpectExec(regexp.QuoteMeta("INSERT INTO answers (questionId, answer_text, is_correct, created_at, updated_at)\n        VALUES (?, ?, ?, NOW(), NOW())")).
+        WithArgs(questionID, "new answer", true).
+        WillReturnResult(sqlmock.NewResult(77, 1))
+
+    id, err := repo.Create(context.Background(), models.Answer{QuestionID: questionID, AnswerText: "new answer", IsCorrect: true})
+    if err != nil {
+        t.Fatalf("Create failed: %v", err)
+    }
+    if id != 77 {
+        t.Fatalf("expected id 77 got %d", id)
+    }
+
+    // Update success
+    mock.ExpectExec(regexp.QuoteMeta("UPDATE answers\n        SET answer_text = ?, is_correct = ?, updated_at = NOW()\n        WHERE id = ?")).
+        WithArgs("updated", false, int64(77)).
+        WillReturnResult(sqlmock.NewResult(0, 1))
+
+    if err := repo.Update(context.Background(), models.Answer{ID: 77, AnswerText: "updated", IsCorrect: false}); err != nil {
+        t.Fatalf("Update failed: %v", err)
+    }
+
+    // Update not found
+    mock.ExpectExec(regexp.QuoteMeta("UPDATE answers\n        SET answer_text = ?, is_correct = ?, updated_at = NOW()\n        WHERE id = ?")).
+        WithArgs("x", true, int64(9999)).
+        WillReturnResult(sqlmock.NewResult(0, 0))
+
+    if err := repo.Update(context.Background(), models.Answer{ID: 9999, AnswerText: "x", IsCorrect: true}); err != sql.ErrNoRows {
+        t.Fatalf("expected sql.ErrNoRows got %v", err)
+    }
+
+    // Delete success
+    mock.ExpectExec(regexp.QuoteMeta("DELETE FROM answers WHERE id = ?")).
+        WithArgs(int64(77)).
+        WillReturnResult(sqlmock.NewResult(0, 1))
+
+    if err := repo.Delete(context.Background(), 77); err != nil {
+        t.Fatalf("Delete failed: %v", err)
+    }
+
+    // Delete not found
+    mock.ExpectExec(regexp.QuoteMeta("DELETE FROM answers WHERE id = ?")).
+        WithArgs(int64(9999)).
+        WillReturnResult(sqlmock.NewResult(0, 0))
+
+    if err := repo.Delete(context.Background(), 9999); err != sql.ErrNoRows {
+        t.Fatalf("expected sql.ErrNoRows got %v", err)
     }
 
     if err := mock.ExpectationsWereMet(); err != nil {
