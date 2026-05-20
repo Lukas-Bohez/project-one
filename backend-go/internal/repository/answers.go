@@ -73,6 +73,53 @@ func (r *AnswerRepository) GetByID(ctx context.Context, answerID int64) (*models
 	return &item, nil
 }
 
+// Create inserts a new answer and returns the new id.
+func (r *AnswerRepository) Create(ctx context.Context, a models.Answer) (int64, error) {
+	const query = `
+		INSERT INTO answers (questionId, answer_text, is_correct, created_at, updated_at)
+		VALUES (?, ?, ?, NOW(), NOW())
+	`
+	res, err := r.db.ExecContext(ctx, query, a.QuestionID, a.AnswerText, a.IsCorrect)
+	if err != nil {
+		return 0, fmt.Errorf("create answer: %w", err)
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("lastinsertid: %w", err)
+	}
+	return id, nil
+}
+
+// Update modifies an existing answer by id.
+func (r *AnswerRepository) Update(ctx context.Context, a models.Answer) error {
+	const query = `
+		UPDATE answers
+		SET answer_text = ?, is_correct = ?, updated_at = NOW()
+		WHERE id = ?
+	`
+	res, err := r.db.ExecContext(ctx, query, a.AnswerText, a.IsCorrect, a.ID)
+	if err != nil {
+		return fmt.Errorf("update answer: %w", err)
+	}
+	if ra, err := res.RowsAffected(); err == nil && ra == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
+// Delete removes an answer by id.
+func (r *AnswerRepository) Delete(ctx context.Context, id int64) error {
+	const query = `DELETE FROM answers WHERE id = ?`
+	res, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("delete answer: %w", err)
+	}
+	if ra, err := res.RowsAffected(); err == nil && ra == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
 func scanAnswer(scanner interface {
 	Scan(dest ...any) error
 }) (models.Answer, error) {

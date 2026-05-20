@@ -33,6 +33,28 @@ Fetch single answer by id:
 curl "http://localhost:8081/api/v1/answers/456"
 ```
 
+Create a new answer:
+
+```bash
+curl -X POST -H "Content-Type: application/json" \
+	-d '{"questionId":123,"answer_text":"New answer","is_correct":false}' \
+	"http://localhost:8081/api/v1/answers"
+```
+
+Update an answer:
+
+```bash
+curl -X PUT -H "Content-Type: application/json" \
+	-d '{"answer_text":"Updated text","is_correct":true}' \
+	"http://localhost:8081/api/v1/answers/456"
+```
+
+Delete an answer:
+
+```bash
+curl -X DELETE "http://localhost:8081/api/v1/answers/456"
+```
+
 Responses for the list endpoint include `count` (returned items) and `total` (matching items without pagination).
 - `GET /api/v1/themes` - list quiz themes, optional `active_only=true`
 - `GET /api/v1/users` - list public user records, optional `limit=<n>`

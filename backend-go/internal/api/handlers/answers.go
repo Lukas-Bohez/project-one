@@ -12,6 +12,9 @@ import (
 type AnswerStore interface {
 	ListByQuestionID(ctx context.Context, questionID int64, limit, offset int) ([]models.Answer, int, error)
 	GetByID(ctx context.Context, id int64) (*models.Answer, error)
+	Create(ctx context.Context, a models.Answer) (int64, error)
+	Update(ctx context.Context, a models.Answer) error
+	Delete(ctx context.Context, id int64) error
 }
 
 type AnswerHandler struct {
@@ -19,8 +22,31 @@ type AnswerHandler struct {
 }
 
 func (h AnswerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		w.Header().Set("Allow", http.MethodGet)
+	switch r.Method {
+	case http.MethodGet:
+		// continue to list
+	case http.MethodPost:
+		// handle create
+		var payload models.Answer
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			http.Error(w, "invalid body", http.StatusBadRequest)
+			return
+		}
+		if payload.QuestionID == 0 || payload.AnswerText == "" {
+			http.Error(w, "question_id and answer_text required", http.StatusBadRequest)
+			return
+		}
+		id, err := h.Repo.Create(r.Context(), payload)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Location", "/api/v1/answers/"+strconv.FormatInt(id, 10))
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(map[string]any{"id": id})
+		return
+	default:
+		w.Header().Set("Allow", "GET, POST")
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
