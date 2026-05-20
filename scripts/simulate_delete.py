@@ -20,8 +20,8 @@ from backend.database import datarepository as repo
 def fake_get_user_by_id(user_id):
     return {
         'id': int(user_id),
-        'first_name': 'Oroka',
-        'last_name': 'Conner',
+        'first_name': 'Lukas',
+        'last_name': 'Bohez',
         'userRoleId': 3,
     }
 
@@ -53,7 +53,7 @@ backend_app.sio.emit = fake_emit
 async def run_tests():
     for mid in (33, 32, 31):
         try:
-            result = await backend_app.delete_support_message(mid, None, admin_user={'id': 1, 'first_name': 'Oroka', 'last_name': 'Conner'})
+            result = await backend_app.delete_support_message(mid, None, admin_user={'id': 1, 'first_name': 'Lukas', 'last_name': 'Bohez'})
             print(mid, 'result', result)
         except Exception as e:
             print(mid, 'exception', repr(e))

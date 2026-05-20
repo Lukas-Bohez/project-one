@@ -333,6 +333,6 @@ Optimized for frontline workers on smartphones:
 ---
 
 **Built with**: FastAPI • MySQL • Vanilla JavaScript • CSS3 • HTML5  
-**Created by**: Oroka Conner  
+**Created by**: Lukas Bohez  
 **Part of**: Quiz The Spire Suite  
 **Date**: February 4, 2026
