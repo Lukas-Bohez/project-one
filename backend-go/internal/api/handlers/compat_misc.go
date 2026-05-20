@@ -118,7 +118,7 @@ func (StoriesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     // support basic CRUD with noop responses
     if r.Method == http.MethodGet {
         w.Header().Set("Content-Type", "application/json")
-        _ = json.NewEncoder(w).Encode(map[string]any{"count": 0, "stories": []any{}})
+        _ = json.NewEncoder(w).Encode([]any{})
         return
     }
     if strings.HasPrefix(r.URL.Path, "/api/v1/stories/create-if-not-exists") && r.Method == http.MethodPost {

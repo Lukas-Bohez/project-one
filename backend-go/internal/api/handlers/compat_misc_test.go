@@ -36,6 +36,20 @@ func TestStoriesHandlerCreateIfNotExistsCompat(t *testing.T) {
 	}
 }
 
+func TestStoriesHandlerListCompat(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/stories/", nil)
+	rec := httptest.NewRecorder()
+
+	StoriesHandler{}.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+	if strings.TrimSpace(rec.Body.String()) != "[]" {
+		t.Fatalf("expected empty array payload, got %s", rec.Body.String())
+	}
+}
+
 func TestQuizLoginHandlerCompat(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/quiz/login", strings.NewReader(`{"email":"a@example.com"}`))
 	rec := httptest.NewRecorder()
