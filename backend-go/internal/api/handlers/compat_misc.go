@@ -18,6 +18,11 @@ func (ArticlesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         _ = json.NewEncoder(w).Encode(map[string]any{"count": 0, "articles": []any{}})
         return
     }
+    if strings.HasPrefix(path, "/stats") {
+        w.Header().Set("Content-Type", "application/json")
+        _ = json.NewEncoder(w).Encode(map[string]any{"count": 0, "articles": []any{}, "views": 0})
+        return
+    }
 
     // paths like /{id}/ or /by-story/{id}/ or /{id}/status/
     // respond with simple success payloads for mutating requests
@@ -61,6 +66,11 @@ func (StoriesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     if r.Method == http.MethodGet {
         w.Header().Set("Content-Type", "application/json")
         _ = json.NewEncoder(w).Encode(map[string]any{"count": 0, "stories": []any{}})
+        return
+    }
+    if strings.HasPrefix(r.URL.Path, "/api/v1/stories/create-if-not-exists") && r.Method == http.MethodPost {
+        w.Header().Set("Content-Type", "application/json")
+        _ = json.NewEncoder(w).Encode(map[string]any{"ok": true})
         return
     }
     if r.Method == http.MethodPost || r.Method == http.MethodPatch || r.Method == http.MethodDelete {
