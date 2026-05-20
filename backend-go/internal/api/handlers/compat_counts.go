@@ -70,3 +70,42 @@ func (h AnswersPercentageHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 // small compile-time type usage to avoid import warnings
 var _ = models.Answer{}
+
+// ThemeQuestionCountHandler serves /api/v1/themes/{id}/question_count and similar legacy paths.
+type ThemeQuestionCountHandler struct {
+    Repo interface{ QuestionCount(ctx context.Context, themeID int64) (int, error) }
+}
+
+func (h ThemeQuestionCountHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodGet {
+        w.Header().Set("Allow", http.MethodGet)
+        http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+    // Expect path like /api/v1/themes/{id}/question_count or /api/themes/{id}/question_count
+    segs := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+    idx := -1
+    for i, s := range segs {
+        if s == "themes" {
+            idx = i
+            break
+        }
+    }
+    if idx == -1 || len(segs) <= idx+2 || segs[idx+2] != "question_count" {
+        http.Error(w, "not found", http.StatusNotFound)
+        return
+    }
+    idStr := segs[idx+1]
+    id, err := strconv.ParseInt(idStr, 10, 64)
+    if err != nil || id <= 0 {
+        http.Error(w, "invalid id", http.StatusBadRequest)
+        return
+    }
+    cnt, err := h.Repo.QuestionCount(r.Context(), id)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+    w.Header().Set("Content-Type", "application/json")
+    _ = json.NewEncoder(w).Encode(map[string]any{"count": cnt})
+}

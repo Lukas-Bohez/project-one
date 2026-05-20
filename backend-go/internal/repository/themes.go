@@ -66,3 +66,13 @@ func (r *ThemeRepository) GetByID(ctx context.Context, id int64) (*models.Theme,
 
 	return &item, nil
 }
+
+// QuestionCount returns the number of questions associated with a theme.
+func (r *ThemeRepository) QuestionCount(ctx context.Context, themeID int64) (int, error) {
+	const query = `SELECT COUNT(1) FROM questions WHERE themeId = ?`
+	var cnt int
+	if err := r.db.QueryRowContext(ctx, query, themeID).Scan(&cnt); err != nil {
+		return 0, fmt.Errorf("theme question count: %w", err)
+	}
+	return cnt, nil
+}
