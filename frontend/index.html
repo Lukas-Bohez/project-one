@@ -64,11 +64,14 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
         rel="stylesheet"
     /></noscript>
+    <!-- Load Font Awesome non-blocking to avoid render-blocking CSS -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
+      media="print"
+      onload="this.media='all'"
     />
 
     <!-- Critical CSS inlined for faster initial render -->
@@ -1808,14 +1811,35 @@
         });
       })();
     </script>
-    <script src="js/stat-counter-animation.js" defer></script>
-    <script src="js/branded-ad-fallback.js" defer></script>
-    <script src="js/ad-fallback.js" defer></script>
-    <!-- sticky-download-cta removed per design decision -->
-    <script src="js/homepage-enhancements.js" defer></script>
-    <script src="js/platform-download-order.js" defer></script>
-    <script src="js/version-sync.js" defer></script>
-    <script src="js/image-lightbox.js" defer></script>
+    <script>
+      (function () {
+        // Idle-load noncritical scripts to reduce main-thread work on initial load
+        var loadScript = function (src) {
+          var s = document.createElement('script');
+          s.src = src;
+          s.defer = true;
+          s.async = false;
+          document.body.appendChild(s);
+        };
+        var nonCritical = [
+          'js/stat-counter-animation.js',
+          'js/branded-ad-fallback.js',
+          'js/ad-fallback.js',
+          'js/homepage-enhancements.js',
+          'js/platform-download-order.js',
+          'js/version-sync.js',
+          'js/image-lightbox.js'
+        ];
+        var run = function () {
+          for (var i = 0; i < nonCritical.length; i++) loadScript(nonCritical[i]);
+        };
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(run, { timeout: 3000 });
+        } else {
+          setTimeout(run, 3000);
+        }
+      })();
+    </script>
 
   </body>
 </html>
