@@ -16,7 +16,8 @@ func TestArticlesHandlerStatsCompat(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected status 200, got %d", rec.Code)
 	}
-	if !strings.Contains(rec.Body.String(), `"count":0`) {
+	body := rec.Body.String()
+	if !strings.Contains(body, `"total_articles":0`) || !strings.Contains(body, `"active_articles":0`) {
 		t.Fatalf("expected count payload, got %s", rec.Body.String())
 	}
 }

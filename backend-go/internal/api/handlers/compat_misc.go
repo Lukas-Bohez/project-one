@@ -64,7 +64,16 @@ func (ArticlesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     }
     if strings.HasPrefix(path, "/stats") {
         w.Header().Set("Content-Type", "application/json")
-        _ = json.NewEncoder(w).Encode(map[string]any{"count": 0, "articles": []any{}, "views": 0})
+        _ = json.NewEncoder(w).Encode(map[string]any{
+            "count":           0,
+            "articles":        []any{},
+            "views":           0,
+            "total_articles":  0,
+            "active_articles": 0,
+            "published":       0,
+            "draft":           0,
+            "archived":        0,
+        })
         return
     }
 
