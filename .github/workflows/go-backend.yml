@@ -1,0 +1,28 @@
+name: Go backend CI
+
+on:
+  push:
+    paths:
+      - 'backend-go/**'
+  pull_request:
+    paths:
+      - 'backend-go/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend-go
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
+      - name: Get dependencies
+        run: go mod download
+      - name: Run go vet
+        run: go vet ./...
+      - name: Run tests
+        run: go test ./... -v
