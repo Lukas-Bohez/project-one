@@ -48,4 +48,12 @@ func TestQuestionsAnswersHandler_OK(t *testing.T) {
     if resp.Total != 2 || resp.Count != 2 || len(resp.Answers) != 2 {
         t.Fatalf("unexpected payload: %+v", resp)
     }
+
+    // Also test non-v1 path
+    req2 := httptest.NewRequest("GET", "/api/questions/123/answers", nil)
+    rr2 := httptest.NewRecorder()
+    h.ServeHTTP(rr2, req2)
+    if rr2.Code != 200 {
+        t.Fatalf("expected 200 for non-v1 path, got %d: %s", rr2.Code, rr2.Body.String())
+    }
 }

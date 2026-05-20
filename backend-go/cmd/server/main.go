@@ -44,6 +44,9 @@ func main() {
 	}
 	if questionRepo != nil {
 		mux.Handle("/api/v1/questions", handlers.QuestionHandler{Repo: questionRepo})
+		// Non-v1 alias for legacy frontend
+		mux.Handle("/api/questions", handlers.QuestionHandler{Repo: questionRepo})
+		mux.Handle("/api/questions/", handlers.QuestionHandler{Repo: questionRepo})
 	}
 	if answerRepo != nil {
 		mux.Handle("/api/v1/answers", handlers.AnswerHandler{Repo: answerRepo})
@@ -58,6 +61,9 @@ func main() {
 	}
 	if userRepo != nil {
 		mux.Handle("/api/v1/users", handlers.UserHandler{Repo: userRepo})
+		// Non-v1 alias
+		mux.Handle("/api/users", handlers.UserHandler{Repo: userRepo})
+		mux.Handle("/api/users/", handlers.UserHandler{Repo: userRepo})
 	}
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

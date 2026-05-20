@@ -24,15 +24,23 @@ func (h QuestionsAnswersHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
         return
     }
 
-    // Expect path like /api/v1/questions/{id}/answers or with trailing slash
-    p := strings.TrimPrefix(r.URL.Path, "/api/v1/questions/")
-    parts := strings.Split(strings.Trim(p, "/"), "/")
-    if len(parts) < 2 || parts[1] != "answers" {
+    // Accept both /api/v1/questions/{id}/answers and /api/questions/{id}/answers
+    // Split path and find the 'questions' segment
+    segs := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+    // find index of "questions"
+    idx := -1
+    for i, s := range segs {
+        if s == "questions" {
+            idx = i
+            break
+        }
+    }
+    if idx == -1 || len(segs) <= idx+2 || segs[idx+2] != "answers" {
         http.Error(w, "not found", http.StatusNotFound)
         return
     }
 
-    idStr := parts[0]
+    idStr := segs[idx+1]
     qid, err := strconv.ParseInt(idStr, 10, 64)
     if err != nil || qid <= 0 {
         http.Error(w, "invalid question id", http.StatusBadRequest)
