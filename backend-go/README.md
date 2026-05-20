@@ -75,3 +75,17 @@ The Go server reads the same database contract as the Python backend:
 - or `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
 
 The HTTP server listens on `PORT` and defaults to `8081` so it can run beside the Python backend.
+
+## CORS
+
+The server supports CORS configuration via environment variables:
+
+- `CORS_ALLOWED_ORIGINS` — comma-separated list of allowed origins. Use `*` to allow all origins. If unset, `*` is used.
+- `CORS_ALLOW_CREDENTIALS` — set to `true` to enable `Access-Control-Allow-Credentials: true`.
+
+Example to allow only the portfolio frontend:
+
+```bash
+export CORS_ALLOWED_ORIGINS="https://your-frontend.example.com"
+export CORS_ALLOW_CREDENTIALS=true
+```

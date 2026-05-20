@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/api/handlers"
@@ -79,18 +80,67 @@ func withLogging(next http.Handler) http.Handler {
 }
 
 func withCORS(next http.Handler) http.Handler {
-	origin := os.Getenv("CORS_ALLOWED_ORIGIN")
-	if origin == "" {
-		origin = "*"
+	// Read allowlist from CORS_ALLOWED_ORIGINS (comma-separated). If empty, default to '*'.
+	raw := os.Getenv("CORS_ALLOWED_ORIGINS")
+	allowAll := false
+	var allowed []string
+	if raw == "" {
+		allowAll = true
+	} else {
+		for _, part := range strings.Split(raw, ",") {
+			p := strings.TrimSpace(part)
+			if p == "" {
+				continue
+			}
+			if p == "*" {
+				allowAll = true
+				break
+			}
+			allowed = append(allowed, p)
+		}
 	}
+
+	allowCreds := false
+	if strings.ToLower(os.Getenv("CORS_ALLOW_CREDENTIALS")) == "true" {
+		allowCreds = true
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", origin)
+		origin := r.Header.Get("Origin")
+		var allowOrigin string
+		if allowAll {
+			allowOrigin = "*"
+		} else if origin != "" {
+			for _, a := range allowed {
+				if strings.EqualFold(a, origin) {
+					allowOrigin = origin
+					break
+				}
+			}
+		}
+
+		if allowOrigin == "" {
+			// No matching origin; for preflight respond 204 without CORS headers, for other requests return 403.
+			if r.Method == http.MethodOptions {
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+			http.Error(w, "origin not allowed", http.StatusForbidden)
+			return
+		}
+
+		w.Header().Set("Access-Control-Allow-Origin", allowOrigin)
+		if allowCreds {
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+		}
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
+
 		next.ServeHTTP(w, r)
 	})
 }
