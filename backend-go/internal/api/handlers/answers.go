@@ -1,15 +1,21 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
 
-	"github.com/Lukas-Bohez/project-one/backend-go/internal/repository"
+	"github.com/Lukas-Bohez/project-one/backend-go/internal/models"
 )
 
+type AnswerStore interface {
+	ListByQuestionID(ctx context.Context, questionID int64, limit, offset int) ([]models.Answer, int, error)
+	GetByID(ctx context.Context, id int64) (*models.Answer, error)
+}
+
 type AnswerHandler struct {
-	Repo *repository.AnswerRepository
+	Repo AnswerStore
 }
 
 func (h AnswerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

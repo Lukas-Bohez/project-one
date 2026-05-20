@@ -1,16 +1,19 @@
 package handlers
 
 import (
+    "context"
     "encoding/json"
     "net/http"
     "path"
     "strconv"
 
-    "github.com/Lukas-Bohez/project-one/backend-go/internal/repository"
+    "github.com/Lukas-Bohez/project-one/backend-go/internal/models"
 )
 
 type AnswerByIDHandler struct {
-    Repo *repository.AnswerRepository
+    Repo interface {
+        GetByID(ctx context.Context, id int64) (*models.Answer, error)
+    }
 }
 
 func (h AnswerByIDHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
