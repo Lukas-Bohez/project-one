@@ -62,10 +62,44 @@
     }, ANIMATION_DELAY);
   }
 
-  // Wait for DOM to be ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeCounters);
-  } else {
-    initializeCounters();
+  // Schedule initialization during idle time, on first interaction, or when hero becomes visible
+  function scheduleInitOnce() {
+    if (window.__statCountersInitialized) return;
+    window.__statCountersInitialized = true;
+
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(initializeCounters, { timeout: 2000 });
+    } else {
+      setTimeout(initializeCounters, 2000);
+    }
   }
+
+  function onFirstInteraction() {
+    scheduleInitOnce();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      // If hero is near viewport, initialize sooner
+      const hero = document.querySelector('.hero') || document.querySelector('.c-header');
+      if (hero && 'IntersectionObserver' in window) {
+        const io = new IntersectionObserver((entries, obs) => {
+          if (entries.some(e => e.isIntersecting)) {
+            scheduleInitOnce();
+            obs.disconnect();
+          }
+        }, { rootMargin: '200px' });
+        io.observe(hero);
+      } else {
+        // Fallback: schedule on idle
+        scheduleInitOnce();
+      }
+    });
+  } else {
+    scheduleInitOnce();
+  }
+
+  ['keydown', 'pointerdown', 'touchstart', 'mousemove'].forEach(evt =>
+    window.addEventListener(evt, onFirstInteraction, { passive: true, once: true })
+  );
 })();
