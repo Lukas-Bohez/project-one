@@ -69,6 +69,9 @@ func main() {
 	mux.Handle("/api/v1/stories", handlers.StoriesHandler{})
 	mux.Handle("/api/v1/stories/", handlers.StoriesHandler{})
 	mux.Handle("/api/v1/ban-ip", handlers.BanIPHandler{})
+	mux.Handle("/api/v1/quiz/login", handlers.QuizLoginHandler{})
+	mux.Handle("/api/v1/quiz/user/check", handlers.QuizUserCheckHandler{})
+	mux.Handle("/api/shutdown", handlers.ShutdownHandler{})
 
 	if userRepo != nil {
 		mux.Handle("/api/v1/users", handlers.UserHandler{Repo: userRepo})

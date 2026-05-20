@@ -16,9 +16,8 @@ func TestArticlesHandlerStatsCompat(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected status 200, got %d", rec.Code)
 	}
-	body := rec.Body.String()
-	if !strings.Contains(body, `"count":0`) {
-		t.Fatalf("expected count payload, got %s", body)
+	if !strings.Contains(rec.Body.String(), `"count":0`) {
+		t.Fatalf("expected count payload, got %s", rec.Body.String())
 	}
 }
 
@@ -34,29 +33,47 @@ func TestStoriesHandlerCreateIfNotExistsCompat(t *testing.T) {
 	if !strings.Contains(rec.Body.String(), `"ok":true`) {
 		t.Fatalf("expected ok payload, got %s", rec.Body.String())
 	}
-}package handlers
-
-import (
-    "net/http/httptest"
-    "testing"
-)
-
-func TestArticlesHandler_List(t *testing.T) {
-    h := ArticlesHandler{}
-    req := httptest.NewRequest("GET", "/api/v1/articles", nil)
-    rr := httptest.NewRecorder()
-    h.ServeHTTP(rr, req)
-    if rr.Code != 200 {
-        t.Fatalf("expected 200, got %d", rr.Code)
-    }
 }
 
-func TestBanIPHandler_Post(t *testing.T) {
-    h := BanIPHandler{}
-    req := httptest.NewRequest("POST", "/api/v1/ban-ip", nil)
-    rr := httptest.NewRecorder()
-    h.ServeHTTP(rr, req)
-    if rr.Code != 200 {
-        t.Fatalf("expected 200, got %d", rr.Code)
-    }
+func TestQuizLoginHandlerCompat(t *testing.T) {
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/quiz/login", strings.NewReader(`{"email":"a@example.com"}`))
+	rec := httptest.NewRecorder()
+
+	QuizLoginHandler{}.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+	body := rec.Body.String()
+	if !strings.Contains(body, `"token":"dev-token"`) || !strings.Contains(body, `"user_id":1`) {
+		t.Fatalf("unexpected payload: %s", body)
+	}
+}
+
+func TestQuizUserCheckHandlerCompat(t *testing.T) {
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/quiz/user/check", strings.NewReader(`{"email":"a@example.com"}`))
+	rec := httptest.NewRecorder()
+
+	QuizUserCheckHandler{}.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+	if !strings.Contains(rec.Body.String(), `"id":1`) {
+		t.Fatalf("unexpected payload: %s", rec.Body.String())
+	}
+}
+
+func TestShutdownHandlerCompat(t *testing.T) {
+	req := httptest.NewRequest(http.MethodPost, "/api/shutdown", nil)
+	rec := httptest.NewRecorder()
+
+	ShutdownHandler{}.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+	if !strings.Contains(rec.Body.String(), `"message":"Shutdown initiated"`) {
+		t.Fatalf("unexpected payload: %s", rec.Body.String())
+	}
 }

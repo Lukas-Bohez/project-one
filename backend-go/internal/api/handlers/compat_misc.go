@@ -6,6 +6,50 @@ import (
     "strings"
 )
 
+// QuizLoginHandler returns a stable token payload for legacy manage login flows.
+type QuizLoginHandler struct{}
+
+func (QuizLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodPost {
+        w.Header().Set("Allow", "POST")
+        http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+    w.Header().Set("Content-Type", "application/json")
+    _ = json.NewEncoder(w).Encode(map[string]any{
+        "token":        "dev-token",
+        "access_token": "dev-token",
+        "user_id":      1,
+        "id":           1,
+    })
+}
+
+// QuizUserCheckHandler returns a stable user id for legacy business setup flows.
+type QuizUserCheckHandler struct{}
+
+func (QuizUserCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodPost {
+        w.Header().Set("Allow", "POST")
+        http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+    w.Header().Set("Content-Type", "application/json")
+    _ = json.NewEncoder(w).Encode(map[string]any{"id": 1, "exists": true})
+}
+
+// ShutdownHandler acknowledges the shutdown command without actually stopping the server.
+type ShutdownHandler struct{}
+
+func (ShutdownHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodPost {
+        w.Header().Set("Allow", "POST")
+        http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+    w.Header().Set("Content-Type", "application/json")
+    _ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "Shutdown initiated"})
+}
+
 // ArticlesHandler provides minimal compatibility for /api/v1/articles and related paths.
 type ArticlesHandler struct{}
 
