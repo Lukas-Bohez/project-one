@@ -61,3 +61,23 @@ func TestAnswersPercentageHandler(t *testing.T) {
     }
     if v != 42.5 { t.Fatalf("unexpected value: %v", v) }
 }
+
+type fakeThemeRepo struct{ Count int }
+func (f fakeThemeRepo) QuestionCount(ctx context.Context, themeID int64) (int, error) { return f.Count, nil }
+
+func TestThemeQuestionCountHandlerMigrateCompat(t *testing.T) {
+    h := ThemeQuestionCountHandler{Repo: fakeThemeRepo{Count: 11}}
+    req := httptest.NewRequest("POST", "/api/v1/themes/7/migrate-to/9", nil)
+    rr := httptest.NewRecorder()
+    h.ServeHTTP(rr, req)
+    if rr.Code != 200 {
+        t.Fatalf("expected 200, got %d", rr.Code)
+    }
+    var resp map[string]any
+    if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+        t.Fatalf("decode: %v", err)
+    }
+    if migrated, ok := resp["migrated"].(bool); !ok || !migrated {
+        t.Fatalf("expected migrated=true, got %#v", resp)
+    }
+}
