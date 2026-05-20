@@ -15,6 +15,7 @@ type AnswerStore interface {
 	Create(ctx context.Context, a models.Answer) (int64, error)
 	Update(ctx context.Context, a models.Answer) error
 	Delete(ctx context.Context, id int64) error
+	Percentage(ctx context.Context) (float64, error)
 }
 
 type AnswerHandler struct {

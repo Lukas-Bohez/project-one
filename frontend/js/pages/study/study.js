@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // #region --- Data Fetching (from your backend) ---
     const fetchFreshQuestions = async (activeOnly = false) => {
         const questionsEndpoint = `${lanIP}/api/v1/questions/`;
-        const answersBaseEndpoint = `${lanIP}/api/v1/questions/`;
+        const answersBaseEndpoint = `${lanIP}/api/v1/answers`;
         const themesBaseEndpoint = `${lanIP}/api/v1/themes/`;
 
         // Fetch fresh data
@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Fetch answers for each question
         const questionsWithDetails = await Promise.all(questions.map(async (question) => {
             try {
-                const answersUrl = `${answersBaseEndpoint}${question.id}/answers`;
+                const answersUrl = `${answersBaseEndpoint}?question_id=${encodeURIComponent(question.id)}`;
                 const answersResponse = await fetch(answersUrl);
                 const answersData = answersResponse.ok ? await answersResponse.json() : { answers: [] };
                 

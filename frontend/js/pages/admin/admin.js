@@ -35,7 +35,7 @@ const lanIP = `https://${window.location.hostname}`; // Or your actual server IP
 
 const fetchFreshQuestions = async (activeOnly = false) => {
     const questionsEndpoint = `${lanIP}/api/v1/questions/`;
-    const answersBaseEndpoint = `${lanIP}/api/v1/questions/`;
+    const answersBaseEndpoint = `${lanIP}/api/v1/answers`;
     const themesEndpoint = `${lanIP}/api/v1/themes/`;
 
     // Step 1: Fetch all questions
@@ -65,7 +65,8 @@ const fetchFreshQuestions = async (activeOnly = false) => {
     // If backend supports batch, use it. Otherwise, parallelize per-question
     const answerPromises = questions.map(async (question) => {
         try {
-            const answersResponse = await fetch(`${answersBaseEndpoint}${question.id}/answers`);
+            const answersUrl = `${answersBaseEndpoint}?question_id=${encodeURIComponent(question.id)}`;
+            const answersResponse = await fetch(answersUrl);
             if (!answersResponse.ok) {
                 console.warn(`HTTP error fetching answers for question ID ${question.id}! Status: ${answersResponse.status}`);
                 return [];
