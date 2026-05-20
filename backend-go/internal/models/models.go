@@ -62,3 +62,16 @@ type User struct {
 	SessionExpiresAt *time.Time `json:"session_expires_at,omitempty"`
 	UpdatedBy        *int64     `json:"updated_by,omitempty"`
 }
+
+type UserPublic struct {
+	ID               int64      `json:"id"`
+	LastName         string     `json:"last_name"`
+	FirstName        string     `json:"first_name"`
+	RFIDCode         *string    `json:"rfid_code,omitempty"`
+	UserRoleID       int64      `json:"userRoleId"`
+	SoulPoints       int        `json:"soul_points"`
+	LimbPoints       int        `json:"limb_points"`
+	LastActive       *time.Time `json:"last_active,omitempty"`
+	SessionExpiresAt *time.Time `json:"session_expires_at,omitempty"`
+	UpdatedBy        *int64     `json:"updated_by,omitempty"`
+}

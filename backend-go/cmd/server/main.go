@@ -25,9 +25,11 @@ func main() {
 
 	var questionRepo *repository.QuestionRepository
 	var themeRepo *repository.ThemeRepository
+	var userRepo *repository.UserRepository
 	if mysqlDB != nil {
 		questionRepo = repository.NewQuestionRepository(mysqlDB.DB)
 		themeRepo = repository.NewThemeRepository(mysqlDB.DB)
+		userRepo = repository.NewUserRepository(mysqlDB.DB)
 	}
 
 	mux := http.NewServeMux()
@@ -41,6 +43,9 @@ func main() {
 	}
 	if themeRepo != nil {
 		mux.Handle("/api/v1/themes", handlers.ThemeHandler{Repo: themeRepo})
+	}
+	if userRepo != nil {
+		mux.Handle("/api/v1/users", handlers.UserHandler{Repo: userRepo})
 	}
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
