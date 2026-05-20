@@ -209,9 +209,21 @@
       });
   }
 
+  // Run detection after the browser is idle to avoid blocking LCP/TBT.
+  var scheduleDetection = function () {
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(function () {
+        detectAdblock();
+      }, { timeout: 2000 });
+    } else {
+      // Fallback: delay detection so it doesn't run during initial render
+      window.setTimeout(detectAdblock, 2000);
+    }
+  };
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', detectAdblock);
+    document.addEventListener('DOMContentLoaded', scheduleDetection);
   } else {
-    detectAdblock();
+    scheduleDetection();
   }
 })();

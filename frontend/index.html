@@ -43,15 +43,11 @@
     <meta name="copyright" content="Copyright &copy; 2026 Lukas Bohez. All rights reserved." />
     <meta property="og:site_name" content="Quiz The Spire by Lukas Bohez" />
 
-    <!-- Preconnect to external domains -->
+    <!-- Preconnect to most important origins only (keep count low) -->
     <link rel="preconnect" href="https://cdn.socket.io" crossorigin />
-    <link rel="dns-prefetch" href="https://cdn.socket.io" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin />
-    <link rel="preconnect" href="https://googleads.g.doubleclick.net" crossorigin />
-    <link rel="dns-prefetch" href="//pagead2.googlesyndication.com" />
-    <link rel="dns-prefetch" href="//googleads.g.doubleclick.net" />
+    <!-- Avoid excess preconnects; defer other third-party preconnects to runtime when needed -->
     
     <!-- Preload hero images (WebP with high priority, media-query aware) -->
     <link rel="preload" href="images/spire-light.webp" as="image" type="image/webp" media="(prefers-color-scheme: light)" fetchpriority="high" />
@@ -1646,19 +1642,8 @@
         <!-- UPDATE_STATS -->
       </p>
       <div class="c-footer__bmc">
-        <script
-          defer
-          src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js"
-          data-name="bmc-button"
-          data-slug="LukasBohez"
-          data-color="#2c6fb8"
-          data-emoji=""
-          data-font="Inter"
-          data-text="Buy me a coffee"
-          data-outline-color="#000000"
-          data-font-color="#ffffff"
-          data-coffee-color="#FFDD00"
-        ></script>
+        <!-- Lightweight support link instead of external widget script to reduce 3rd-party overhead -->
+        <a class="c-btn" href="https://www.buymeacoffee.com/LukasBohez" target="_blank" rel="noopener noreferrer">Support (Buy me a coffee)</a>
       </div>
       <p class="c-footer__text">
         <strong>&copy; 2026 Quiz The Spire</strong><br />
