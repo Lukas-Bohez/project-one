@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Iceball icon">
+  <defs>
+    <radialGradient id="iceGlow" cx="35%" cy="28%" r="72%">
+      <stop offset="0%" stop-color="#f8feff" />
+      <stop offset="34%" stop-color="#d6f3fb" />
+      <stop offset="72%" stop-color="#7cc4e8" />
+      <stop offset="100%" stop-color="#2c6f9f" />
+    </radialGradient>
+    <linearGradient id="iceFacet" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#8fd9f1" stop-opacity="0.2" />
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="210" fill="url(#iceGlow)" />
+  <path d="M150 184 256 116l112 76-38 118-74 82-88-82-18-126Z" fill="url(#iceFacet)" opacity="0.95" />
+  <path d="M190 156h132l58 58-46 98-78 70-72-70-58-102 64-54Z" fill="none" stroke="#f8feff" stroke-width="18" stroke-linejoin="round" opacity="0.75" />
+  <path d="M256 96v320M128 256h256M176 176l160 160M336 176 176 336" fill="none" stroke="#f8feff" stroke-width="16" stroke-linecap="round" opacity="0.65" />
+  <circle cx="200" cy="180" r="18" fill="#f8feff" opacity="0.9" />
+</svg>
