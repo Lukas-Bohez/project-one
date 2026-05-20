@@ -16,15 +16,16 @@ func NewAnswerRepository(db *sql.DB) *AnswerRepository {
 	return &AnswerRepository{db: db}
 }
 
-func (r *AnswerRepository) ListByQuestionID(ctx context.Context, questionID int64) ([]models.Answer, error) {
+func (r *AnswerRepository) ListByQuestionID(ctx context.Context, questionID int64, limit, offset int) ([]models.Answer, error) {
 	const query = `
 		SELECT id, questionId, answer_text, is_correct, created_at, updated_at
 		FROM answers
 		WHERE questionId = ?
 		ORDER BY id ASC
+		LIMIT ? OFFSET ?
 	`
 
-	rows, err := r.db.QueryContext(ctx, query, questionID)
+	rows, err := r.db.QueryContext(ctx, query, questionID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("list answers: %w", err)
 	}

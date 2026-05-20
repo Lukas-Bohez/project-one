@@ -30,7 +30,24 @@ func (h AnswerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	answers, err := h.Repo.ListByQuestionID(r.Context(), questionID)
+	// Parse pagination params
+	limit := 100
+	offset := 0
+	if raw := r.URL.Query().Get("limit"); raw != "" {
+		if v, err := strconv.Atoi(raw); err == nil && v > 0 {
+			if v > 1000 {
+				v = 1000
+			}
+			limit = v
+		}
+	}
+	if raw := r.URL.Query().Get("offset"); raw != "" {
+		if v, err := strconv.Atoi(raw); err == nil && v >= 0 {
+			offset = v
+		}
+	}
+
+	answers, err := h.Repo.ListByQuestionID(r.Context(), questionID, limit, offset)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

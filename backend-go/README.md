@@ -17,6 +17,21 @@ This directory contains the first Go backend slice for the `project-one` migrati
 - `GET /api/v1/questions` - list quiz questions, optional `active_only=true` and `limit=<n>`
 - `GET /api/v1/answers?question_id=<id>` - list answers for a question
  - `GET /api/v1/answers/{id}` - fetch a single answer by id
+	- Optional pagination: `limit` (default 100, max 1000) and `offset` (default 0)
+
+Examples:
+
+List answers for question 123 with pagination:
+
+```bash
+curl "http://localhost:8081/api/v1/answers?question_id=123&limit=50&offset=0"
+```
+
+Fetch single answer by id:
+
+```bash
+curl "http://localhost:8081/api/v1/answers/456"
+```
 - `GET /api/v1/themes` - list quiz themes, optional `active_only=true`
 - `GET /api/v1/users` - list public user records, optional `limit=<n>`
 
