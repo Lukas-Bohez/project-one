@@ -71,6 +71,16 @@ func (r *UserRepository) GetPublicByID(ctx context.Context, id int64) (*models.U
 	return &item, nil
 }
 
+// ActiveCount returns a simple count of users with a non-null last_active timestamp.
+func (r *UserRepository) ActiveCount(ctx context.Context) (int, error) {
+	const query = `SELECT COUNT(1) FROM users WHERE last_active IS NOT NULL`
+	var cnt int
+	if err := r.db.QueryRowContext(ctx, query).Scan(&cnt); err != nil {
+		return 0, fmt.Errorf("active count: %w", err)
+	}
+	return cnt, nil
+}
+
 func scanUserPublic(scanner interface {
 	Scan(dest ...any) error
 }) (models.UserPublic, error) {

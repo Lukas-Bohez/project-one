@@ -47,6 +47,9 @@ func main() {
 		// Non-v1 alias for legacy frontend
 		mux.Handle("/api/questions", handlers.QuestionHandler{Repo: questionRepo})
 		mux.Handle("/api/questions/", handlers.QuestionHandler{Repo: questionRepo})
+		// legacy active question count
+		mux.Handle("/api/questions/active/count", handlers.QuestionsActiveHandler{Repo: questionRepo})
+		mux.Handle("/api/v1/questions/active/count", handlers.QuestionsActiveHandler{Repo: questionRepo})
 	}
 	if answerRepo != nil {
 		mux.Handle("/api/v1/answers", handlers.AnswerHandler{Repo: answerRepo})
@@ -64,6 +67,14 @@ func main() {
 		// Non-v1 alias
 		mux.Handle("/api/users", handlers.UserHandler{Repo: userRepo})
 		mux.Handle("/api/users/", handlers.UserHandler{Repo: userRepo})
+		// legacy active users count
+		mux.Handle("/api/users/active/count", handlers.UsersActiveHandler{Repo: userRepo})
+		mux.Handle("/api/v1/users/active/count", handlers.UsersActiveHandler{Repo: userRepo})
+	}
+	// answers percentage endpoint (legacy)
+	if answerRepo != nil {
+		mux.Handle("/api/v1/answers/percentage", handlers.AnswersPercentageHandler{Repo: answerRepo})
+		mux.Handle("/api/answers/percentage", handlers.AnswersPercentageHandler{Repo: answerRepo})
 	}
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

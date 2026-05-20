@@ -177,3 +177,13 @@ func ptrTime(value time.Time) *time.Time {
 	v := value.UTC()
 	return &v
 }
+
+// ActiveCount returns the number of active questions (is_active = TRUE)
+func (r *QuestionRepository) ActiveCount(ctx context.Context) (int, error) {
+	const query = `SELECT COUNT(1) FROM questions WHERE is_active = TRUE`
+	var cnt int
+	if err := r.db.QueryRowContext(ctx, query).Scan(&cnt); err != nil {
+		return 0, fmt.Errorf("active question count: %w", err)
+	}
+	return cnt, nil
+}
