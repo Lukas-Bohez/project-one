@@ -61,7 +61,15 @@ func main() {
 	}
 	if themeRepo != nil {
 		mux.Handle("/api/v1/themes", handlers.ThemeHandler{Repo: themeRepo})
-	}
+		}
+		// Articles/stories/ban-ip compatibility for legacy admin UI
+		mux.Handle("/api/v1/articles", handlers.ArticlesHandler{})
+		mux.Handle("/api/v1/articles/", handlers.ArticlesHandler{})
+		mux.Handle("/api/v1/stories", handlers.StoriesHandler{})
+		mux.Handle("/api/v1/stories/", handlers.StoriesHandler{})
+		mux.Handle("/api/v1/ban-ip", handlers.BanIPHandler{})
+		mux.Handle("/api/v1/themes/", handlers.ThemeQuestionCountHandler{Repo: themeRepo})
+
 	if userRepo != nil {
 		mux.Handle("/api/v1/users", handlers.UserHandler{Repo: userRepo})
 		// Non-v1 alias
