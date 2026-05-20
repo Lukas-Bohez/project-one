@@ -16,6 +16,7 @@ This directory contains the first Go backend slice for the `project-one` migrati
 - `GET /healthz` - server and database health check
 - `GET /api/v1/questions` - list quiz questions, optional `active_only=true` and `limit=<n>`
 - `GET /api/v1/answers?question_id=<id>` - list answers for a question
+ - `GET /api/v1/answers/{id}` - fetch a single answer by id
 - `GET /api/v1/themes` - list quiz themes, optional `active_only=true`
 - `GET /api/v1/users` - list public user records, optional `limit=<n>`
 
