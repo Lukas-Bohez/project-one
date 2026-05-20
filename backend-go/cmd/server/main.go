@@ -49,6 +49,10 @@ func main() {
 		mux.Handle("/api/v1/answers", handlers.AnswerHandler{Repo: answerRepo})
 		mux.Handle("/api/v1/answers/", handlers.AnswerByIDHandler{Repo: answerRepo})
 	}
+	// Compatibility: support legacy frontend path for answers under questions
+	if answerRepo != nil {
+		mux.Handle("/api/v1/questions/", handlers.QuestionsAnswersHandler{Repo: answerRepo})
+	}
 	if themeRepo != nil {
 		mux.Handle("/api/v1/themes", handlers.ThemeHandler{Repo: themeRepo})
 	}
