@@ -31,7 +31,7 @@ const AdminSession = {
       user_id: parseInt(userId),
       first_name: firstName,
       last_name: lastName,
-      login_timestamp: parseInt(timestamp)
+      login_timestamp: parseInt(timestamp),
     };
   },
 
@@ -45,7 +45,7 @@ const AdminSession = {
   isValid: () => {
     const session = AdminSession.get();
     if (!session) return false;
-    
+
     // Check if session is expired (24 hours)
     const now = Date.now();
     const sessionAge = now - session.login_timestamp;
@@ -56,7 +56,7 @@ const AdminSession = {
       return false;
     }
     return true;
-  }
+  },
 };
 // #endregion
 
@@ -78,7 +78,9 @@ const showLoadingState = (button, isLoading) => {
     if (!button.dataset.originalText) {
       button.dataset.originalText = button.textContent;
     }
-    button.innerHTML = isLoading ? '<span class="c-loading-spinner"></span> Loading...' : button.dataset.originalText;
+    button.innerHTML = isLoading
+      ? '<span class="c-loading-spinner"></span> Loading...'
+      : button.dataset.originalText;
   }
 };
 // #endregion
@@ -96,12 +98,12 @@ const authenticateUser = async (firstName, lastName, rfidCode) => {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {})
+      ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
     },
     body: JSON.stringify({
       first_name: firstName,
-      last_name: lastName
-    })
+      last_name: lastName,
+    }),
   });
 
   if (!response.ok) {
@@ -131,7 +133,7 @@ const validateForm = () => {
     showErrorMessage('RFID code is required');
     return null;
   }
-  
+
   return { firstName, lastName, rfidCode };
 };
 // #endregion
@@ -139,31 +141,25 @@ const validateForm = () => {
 // #region *** Login Handler ***********
 const handleLogin = async (e) => {
   e.preventDefault();
-  
+
   const formData = validateForm();
   if (!formData) return;
 
   showLoadingState(domLogin.loginBtn, true);
 
   try {
-    const result = await authenticateUser(
-      formData.firstName, 
-      formData.lastName, 
-      formData.rfidCode
-    );
-    
+    const result = await authenticateUser(formData.firstName, formData.lastName, formData.rfidCode);
+
     if (result?.user_id) {
       // Store session data
       AdminSession.store({
         user_id: result.user_id,
         first_name: formData.firstName,
         last_name: formData.lastName,
-        
       });
 
       // Also store for articles.js compatibility (session-only)
       sessionStorage.setItem('currentUserId', result.user_id.toString());
-      
 
       // Redirect to admin page
       window.location.href = '/pages/admin/';
@@ -184,10 +180,10 @@ const setupEventListeners = () => {
   if (domLogin.loginBtn) {
     domLogin.loginBtn.addEventListener('click', handleLogin);
   }
-  
+
   if (domLogin.loginForm) {
     domLogin.loginForm.addEventListener('submit', handleLogin);
-    
+
     // Allow Enter key to trigger login
     domLogin.loginForm.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
@@ -239,15 +235,15 @@ const init = () => {
 
   // Only initialize if the login form is present on the page
   if (document.querySelector('.js-login-form')) {
-      // Populate CSRF token field from cookie (middleware sets `csrf_token` cookie)
-      const tokenInput = document.getElementById('csrfToken');
-      if (tokenInput) {
-        const v = `; ${document.cookie}`;
-        const parts = v.split(`; csrf_token=`);
-        if (parts.length === 2) tokenInput.value = parts.pop().split(';').shift() || '';
-      }
+    // Populate CSRF token field from cookie (middleware sets `csrf_token` cookie)
+    const tokenInput = document.getElementById('csrfToken');
+    if (tokenInput) {
+      const v = `; ${document.cookie}`;
+      const parts = v.split(`; csrf_token=`);
+      if (parts.length === 2) tokenInput.value = parts.pop().split(';').shift() || '';
+    }
     setupEventListeners();
-    
+
     // Clear any existing error messages on page load
     if (domLogin.errorMessage) {
       domLogin.errorMessage.textContent = '';

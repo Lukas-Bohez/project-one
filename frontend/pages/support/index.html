@@ -1,197 +1,307 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" data-theme="blue">
-<head>
+  <head>
     <!-- Google Analytics (GA4) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-SSEBSTQM21"></script>
     <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-SSEBSTQM21');
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-SSEBSTQM21');
     </script>
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Community support chat for Quiz The Spire. Get help or discuss with other players.">
-    <link rel="stylesheet" href="/css/pages/support/support.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Community support chat for Quiz The Spire. Get help or discuss with other players."
+    />
+    <link rel="stylesheet" href="/css/pages/support/support.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
     <title>Community Support Chat - Quiz The Spire</title>
-    <meta name="author" content="Lukas Bohez">
-    <link rel="stylesheet" href="/css/styles.css">
-    <link rel="preconnect" href="https://cdn.socket.io" crossorigin>
-    <link rel="dns-prefetch" href="https://cdn.socket.io">
+    <meta name="author" content="Lukas Bohez" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="preconnect" href="https://cdn.socket.io" crossorigin />
+    <link rel="dns-prefetch" href="https://cdn.socket.io" />
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" defer></script>
     <script src="/js/themeManager.js" defer></script>
     <script src="/js/pages/support/supportLogin.js" defer></script>
     <script src="/js/pages/support/supportChat.js" defer></script>
     <script src="/js/pages/support/supportUI.js" defer></script>
 
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="apple-touch-icon" href="/favicon.ico">
-    <meta property="og:title" content="Community Support | Quiz The Spire">
-    <meta property="og:description" content="Community support chat rooms">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://quizthespire.com/pages/support/">
-    <meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Community Support | Quiz The Spire">
-    <meta name="twitter:description" content="Community support chat rooms">
-    <meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg">
-    <link rel="canonical" href="https://quizthespire.com/pages/support/">
-</head>
-<body class="theme-blue">
-
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="apple-touch-icon" href="/favicon.ico" />
+    <meta property="og:title" content="Community Support | Quiz The Spire" />
+    <meta property="og:description" content="Community support chat rooms" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://quizthespire.com/pages/support/" />
+    <meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Community Support | Quiz The Spire" />
+    <meta name="twitter:description" content="Community support chat rooms" />
+    <meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg" />
+    <link rel="canonical" href="https://quizthespire.com/pages/support/" />
+  </head>
+  <body class="theme-blue">
     <!-- ───── Layout: sidebar + main ───── -->
     <div class="chat-layout">
+      <!-- ── Sidebar ── -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <a href="/" class="sidebar-logo" title="Go to homepage">
+            <i class="fa-solid fa-headset support-logo-icon support-icon" aria-hidden="true"></i>
+            <span>Quiz The Spire</span>
+          </a>
+          <button
+            class="sidebar-close"
+            id="sidebarClose"
+            title="Close menu"
+            aria-label="Close sidebar"
+          >
+            <i class="fa-solid fa-xmark support-icon" aria-hidden="true"></i>
+          </button>
+        </div>
 
-        <!-- ── Sidebar ── -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <a href="/" class="sidebar-logo" title="Go to homepage">
-                    <i class="fa-solid fa-headset support-logo-icon support-icon" aria-hidden="true"></i>
-                    <span>Quiz The Spire</span>
-                </a>
-                <button class="sidebar-close" id="sidebarClose" title="Close menu" aria-label="Close sidebar">
-                    <i class="fa-solid fa-xmark support-icon" aria-hidden="true"></i>
-                </button>
-            </div>
+        <div class="sidebar-user" id="sidebarUser" style="display: none">
+          <div class="sidebar-user-name" id="sidebarUserName"></div>
+          <div class="sidebar-user-actions">
+            <button
+              class="c-theme-toggle"
+              id="theme-toggle"
+              title="Toggle theme"
+              aria-label="Toggle light/dark mode"
+            ></button>
+            <button class="btn-logout" id="logoutBtn" title="Log out">Logout</button>
+          </div>
+        </div>
 
-            <div class="sidebar-user" id="sidebarUser" style="display:none;">
-                <div class="sidebar-user-name" id="sidebarUserName"></div>
-                <div class="sidebar-user-actions">
-                    <button class="c-theme-toggle" id="theme-toggle" title="Toggle theme" aria-label="Toggle light/dark mode"></button>
-                    <button class="btn-logout" id="logoutBtn" title="Log out">Logout</button>
-                </div>
-            </div>
+        <div class="sidebar-section-label">Chat Rooms</div>
 
-            <div class="sidebar-section-label">Chat Rooms</div>
+        <div class="room-list" id="roomList">
+          <!-- Rooms injected by JS -->
+        </div>
 
-            <div class="room-list" id="roomList">
-                <!-- Rooms injected by JS -->
-            </div>
+        <button class="btn-create-room" id="createRoomBtn" title="Create a new chat room">
+          + New Room
+        </button>
 
-            <button class="btn-create-room" id="createRoomBtn" title="Create a new chat room">+ New Room</button>
+        <div class="sidebar-footer">
+          <span class="status-indicator disconnected" id="connectionStatus">
+            <span class="status-dot"></span>
+            <span>Connecting…</span>
+          </span>
+        </div>
+      </aside>
 
-            <div class="sidebar-footer">
-                <span class="status-indicator disconnected" id="connectionStatus">
-                    <span class="status-dot"></span>
-                    <span>Connecting…</span>
-                </span>
-            </div>
-        </aside>
+      <!-- ── Main Chat Area ── -->
+      <main class="chat-main">
+        <!-- Mobile top-bar -->
+        <div class="mobile-topbar">
+          <button class="hamburger" id="menuToggle" aria-label="Open menu">
+            <i class="fa-solid fa-bars support-icon" aria-hidden="true"></i>
+          </button>
+          <span class="mobile-room-name" id="mobileRoomName">Support Chat</span>
+          <button
+            class="c-theme-toggle mobile-theme"
+            id="theme-toggle-mobile"
+            title="Toggle theme"
+            aria-label="Toggle light/dark mode"
+          ></button>
+        </div>
 
-        <!-- ── Main Chat Area ── -->
-        <main class="chat-main">
-            <!-- Mobile top-bar -->
-            <div class="mobile-topbar">
-                <button class="hamburger" id="menuToggle" aria-label="Open menu">
-                    <i class="fa-solid fa-bars support-icon" aria-hidden="true"></i>
-                </button>
-                <span class="mobile-room-name" id="mobileRoomName">Support Chat</span>
-                <button class="c-theme-toggle mobile-theme" id="theme-toggle-mobile" title="Toggle theme" aria-label="Toggle light/dark mode"></button>
-            </div>
+        <!-- Room header -->
+        <div class="room-header" id="roomHeader">
+          <div class="room-header-info">
+            <h2 id="roomTitle">Select a room</h2>
+            <span class="room-description" id="roomDescription"></span>
+          </div>
+          <div class="room-header-actions">
+            <button
+              class="btn-icon btn-admin-panel"
+              id="adminPanelBtn"
+              title="Open moderation tools"
+              style="display: none"
+            >
+              <i class="fa-solid fa-shield-halved support-icon" aria-hidden="true"></i>
+            </button>
+            <button
+              class="btn-icon btn-delete-room"
+              id="deleteRoomBtn"
+              title="Delete this room"
+              style="display: none"
+            >
+              <i class="fa-solid fa-trash-can support-icon" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
 
-            <!-- Room header -->
-            <div class="room-header" id="roomHeader">
-                <div class="room-header-info">
-                    <h2 id="roomTitle">Select a room</h2>
-                    <span class="room-description" id="roomDescription"></span>
-                </div>
-                <div class="room-header-actions">
-                    <button class="btn-icon btn-admin-panel" id="adminPanelBtn" title="Open moderation tools" style="display:none;">
-                        <i class="fa-solid fa-shield-halved support-icon" aria-hidden="true"></i>
-                    </button>
-                    <button class="btn-icon btn-delete-room" id="deleteRoomBtn" title="Delete this room" style="display:none;">
-                        <i class="fa-solid fa-trash-can support-icon" aria-hidden="true"></i>
-                    </button>
-                </div>
-            </div>
+        <!-- Welcome / info banner (shown for Global Chat) -->
+        <div class="room-info-banner" id="roomInfoBanner">
+          <h3>Welcome to Support Chat!</h3>
+          <p>
+            <i class="fa-solid fa-comments banner-icon support-icon" aria-hidden="true"></i> Pick a
+            room from the sidebar or create your own.
+          </p>
+          <p>
+            <i class="fa-solid fa-earth-americas banner-icon support-icon" aria-hidden="true"></i>
+            <strong>Global Chat</strong> - visible to everyone. Ask questions and get help here.
+          </p>
+          <p>
+            <i class="fa-solid fa-lock banner-icon support-icon" aria-hidden="true"></i>
+            <strong>Private Rooms</strong> - only you and admins can see messages.
+          </p>
+          <p>
+            <i class="fa-solid fa-heart banner-icon support-icon" aria-hidden="true"></i> Be kind,
+            be helpful, have fun!
+          </p>
+        </div>
 
-            <!-- Welcome / info banner (shown for Global Chat) -->
-            <div class="room-info-banner" id="roomInfoBanner">
-                <h3>Welcome to Support Chat!</h3>
-                <p><i class="fa-solid fa-comments banner-icon support-icon" aria-hidden="true"></i> Pick a room from the sidebar or create your own.</p>
-                <p><i class="fa-solid fa-earth-americas banner-icon support-icon" aria-hidden="true"></i> <strong>Global Chat</strong> - visible to everyone. Ask questions and get help here.</p>
-                <p><i class="fa-solid fa-lock banner-icon support-icon" aria-hidden="true"></i> <strong>Private Rooms</strong> - only you and admins can see messages.</p>
-                <p><i class="fa-solid fa-heart banner-icon support-icon" aria-hidden="true"></i> Be kind, be helpful, have fun!</p>
-            </div>
+        <section class="admin-panel" id="adminPanel" hidden>
+          <div class="admin-panel__header">
+            <h3>Moderation Tools</h3>
+            <button
+              type="button"
+              class="admin-panel__close"
+              id="adminPanelClose"
+              aria-label="Close moderation tools"
+            >
+              <i class="fa-solid fa-xmark support-icon" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="admin-panel__actions">
+            <button type="button" class="btn-secondary" id="refreshBannedUsersBtn">
+              Refresh banned users
+            </button>
+          </div>
+          <div class="admin-panel__section">
+            <h4>Banned users</h4>
+            <div class="admin-panel__list" id="bannedUsersList"></div>
+          </div>
+        </section>
 
-            <section class="admin-panel" id="adminPanel" hidden>
-                <div class="admin-panel__header">
-                    <h3>Moderation Tools</h3>
-                    <button type="button" class="admin-panel__close" id="adminPanelClose" aria-label="Close moderation tools">
-                        <i class="fa-solid fa-xmark support-icon" aria-hidden="true"></i>
-                    </button>
-                </div>
-                <div class="admin-panel__actions">
-                    <button type="button" class="btn-secondary" id="refreshBannedUsersBtn">Refresh banned users</button>
-                </div>
-                <div class="admin-panel__section">
-                    <h4>Banned users</h4>
-                    <div class="admin-panel__list" id="bannedUsersList"></div>
-                </div>
-            </section>
+        <!-- Messages -->
+        <div class="messages-area" id="chatBox">
+          <!-- Messages injected by JS -->
+        </div>
 
-            <!-- Messages -->
-            <div class="messages-area" id="chatBox">
-                <!-- Messages injected by JS -->
-            </div>
-
-            <!-- Input -->
-            <div class="input-area" id="inputArea">
-                <form class="message-form" id="messageForm" autocomplete="off">
-                    <label for="messageInput" class="sr-only" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;">Type a message</label>
-                    <textarea id="messageInput" placeholder="Type a message…" maxlength="1000" rows="1"></textarea>
-                    <button type="submit" id="sendButton" disabled title="Send message" aria-label="Send message">
-                        <i class="fa-solid fa-paper-plane send-icon support-icon" aria-hidden="true"></i>
-                    </button>
-                </form>
-            </div>
-        </main>
+        <!-- Input -->
+        <div class="input-area" id="inputArea">
+          <form class="message-form" id="messageForm" autocomplete="off">
+            <label
+              for="messageInput"
+              class="sr-only"
+              style="
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                padding: 0;
+                margin: -1px;
+                overflow: hidden;
+                clip: rect(0, 0, 0, 0);
+                white-space: nowrap;
+                border: 0;
+              "
+              >Type a message</label
+            >
+            <textarea
+              id="messageInput"
+              placeholder="Type a message…"
+              maxlength="1000"
+              rows="1"
+            ></textarea>
+            <button
+              type="submit"
+              id="sendButton"
+              disabled
+              title="Send message"
+              aria-label="Send message"
+            >
+              <i class="fa-solid fa-paper-plane send-icon support-icon" aria-hidden="true"></i>
+            </button>
+          </form>
+        </div>
+      </main>
     </div>
 
     <!-- ───── Create Room Modal ───── -->
-    <div class="modal-overlay" id="createRoomModal" style="display:none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Create a Chat Room</h3>
-                <button class="modal-close" id="createRoomClose" aria-label="Close">
-                    <i class="fa-solid fa-xmark support-icon" aria-hidden="true"></i>
-                </button>
-            </div>
-            <form id="createRoomForm" autocomplete="off">
-                <label for="roomNameInput">Room Name <span class="required">*</span></label>
-                <input type="text" id="roomNameInput" placeholder="e.g. Bug Reports" maxlength="100" required>
-
-                <label for="roomDescInput">Description</label>
-                <input type="text" id="roomDescInput" placeholder="What's this room for?" maxlength="255">
-
-                <label class="checkbox-label">
-                    <input type="checkbox" id="roomPrivateCheck">
-                    <span>Private room (only you &amp; admins can access)</span>
-                </label>
-
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary" id="createRoomCancel">Cancel</button>
-                    <button type="submit" class="btn-primary">Create Room</button>
-                </div>
-            </form>
+    <div class="modal-overlay" id="createRoomModal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Create a Chat Room</h3>
+          <button class="modal-close" id="createRoomClose" aria-label="Close">
+            <i class="fa-solid fa-xmark support-icon" aria-hidden="true"></i>
+          </button>
         </div>
+        <form id="createRoomForm" autocomplete="off">
+          <label for="roomNameInput">Room Name <span class="required">*</span></label>
+          <input
+            type="text"
+            id="roomNameInput"
+            placeholder="e.g. Bug Reports"
+            maxlength="100"
+            required
+          />
+
+          <label for="roomDescInput">Description</label>
+          <input
+            type="text"
+            id="roomDescInput"
+            placeholder="What's this room for?"
+            maxlength="255"
+          />
+
+          <label class="checkbox-label">
+            <input type="checkbox" id="roomPrivateCheck" />
+            <span>Private room (only you &amp; admins can access)</span>
+          </label>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" id="createRoomCancel">Cancel</button>
+            <button type="submit" class="btn-primary">Create Room</button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <!-- Buy Me a Coffee -->
-    <script defer src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="LukasBohez" data-color="#2c6fb8" data-emoji="" data-font="Inter" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
-
+    <script
+      defer
+      src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js"
+      data-name="bmc-button"
+      data-slug="LukasBohez"
+      data-color="#2c6fb8"
+      data-emoji=""
+      data-font="Inter"
+      data-text="Buy me a coffee"
+      data-outline-color="#000000"
+      data-font-color="#ffffff"
+      data-coffee-color="#FFDD00"
+    ></script>
 
     <button id="back-to-top" type="button" aria-label="Back to top">
       <svg class="back-to-top__ring" viewBox="0 0 36 36" aria-hidden="true" focusable="false">
         <circle class="back-to-top__ring-base" cx="18" cy="18" r="16"></circle>
-        <circle id="scroll-ring" class="back-to-top__ring-progress" cx="18" cy="18" r="16" stroke-dasharray="100" stroke-dashoffset="100"></circle>
+        <circle
+          id="scroll-ring"
+          class="back-to-top__ring-progress"
+          cx="18"
+          cy="18"
+          r="16"
+          stroke-dasharray="100"
+          stroke-dashoffset="100"
+        ></circle>
       </svg>
       <i class="fa-solid fa-chevron-up back-to-top__arrow" aria-hidden="true"></i>
     </button>
 
     <script src="/js/homepage-enhancements.js" defer></script>
-</body>
+  </body>
 </html>

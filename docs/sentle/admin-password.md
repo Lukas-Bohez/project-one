@@ -9,6 +9,7 @@ sentle6967god
 ## Where to Login
 
 Access the admin panel at:
+
 ```
 https://quizthespire.com/html/sentle-admin.html
 ```
@@ -22,6 +23,7 @@ SENTLE_ADMIN_PASSWORD=your_custom_password_here
 ```
 
 Then restart the backend server:
+
 ```bash
 sudo systemctl restart quiz-backend
 ```
@@ -39,11 +41,13 @@ Once logged in, you can:
 ## Troubleshooting
 
 **Forgot your custom password?**
+
 1. Check your `.env` file in `/home/student/Project/project-one/backend/`
 2. Or reset to default by removing the `SENTLE_ADMIN_PASSWORD` line from `.env`
 3. Restart the server
 
 **Can't login?**
+
 - Make sure you're using the latest password
 - Clear browser cache and try again
 - Check browser console (F12) for errors

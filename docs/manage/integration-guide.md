@@ -1,17 +1,20 @@
 # Manage the Spire - Integration Complete ✓
 
 ## Overview
+
 The Manage the Spire employee management system is now **fully integrated** with real authentication, live APIs, and WebSocket real-time updates. This guide describes all the integration points and how to test them.
 
 ## Architecture
 
 ### Frontend Stack
+
 - **HTML/CSS/JavaScript**: Single-page app with localStorage for state
 - **Authentication**: JWT tokens stored in `localStorage['manage_token']`
 - **API Communication**: RESTful calls to `/api/v1/manage` endpoints
 - **Real-Time Updates**: WebSocket connections at `/api/v1/manage/ws/{business_id}/{user_id}`
 
-### Backend Stack  
+### Backend Stack
+
 - **Framework**: FastAPI with async/await support
 - **Database**: MySQL 8.0+ with connection pooling
 - **Authentication**: JWT bearer tokens validated on each request
@@ -26,7 +29,7 @@ The Manage the Spire employee management system is now **fully integrated** with
 **Location**: `frontend/js/manage.js` → `backend/api/routers/manage.py`
 
 ```
-User clicks "Login" 
+User clicks "Login"
   ↓
 handleLogin() sends POST /api/v1/quiz/login
   ↓
@@ -42,6 +45,7 @@ User logged into Manage the Spire
 ```
 
 **Key Code**:
+
 - Frontend: [manage.js handleLogin()](../js/manage.js) - Calls `/api/v1/quiz/login` endpoint
 - Backend: [manage.py](../api/routers/manage.py) - Authenticates using Quiz The Spire user system
 
@@ -66,6 +70,7 @@ Frontend stores in localStorage['manage_business']
 ```
 
 **Key API Endpoint**:
+
 ```python
 POST /api/v1/manage/businesses
 Content-Type: application/json
@@ -88,6 +93,7 @@ Response: BusinessResponse {id, name, created_at, ...}
 **Location**: `frontend/html/manage-schedule.html` ↔ `backend/api/routers/manage.py`
 
 #### Load Employees
+
 ```javascript
 GET /api/v1/manage/businesses/{business_id}/employees
 Authorization: Bearer <token>
@@ -98,6 +104,7 @@ Response: [EmployeeResponse, ...]
 **Code**: [schedule.js loadEmployees()](../js/schedule.js#L50)
 
 #### Create Employee
+
 ```javascript
 POST /api/v1/manage/employees
 Authorization: Bearer <token>
@@ -122,6 +129,7 @@ Response: EmployeeResponse {id, first_name, ...}
 **Location**: `frontend/html/manage-schedule.html` ↔ `backend/api/routers/manage.py` ↔ `backend/api/websocket.py`
 
 #### Create Shift
+
 ```javascript
 POST /api/v1/manage/shifts
 Authorization: Bearer <token>
@@ -139,31 +147,35 @@ Response: ShiftResponse {id, employee_name, ...}
 ```
 
 **Real-Time Broadcast**:
+
 - Backend triggers `broadcast_shift_created(business_id, shift)`
 - WebSocket ConnectionManager sends to all connected clients in business
 - Frontend receives via WebSocket message with type: `shift_created`
 - UI auto-refreshes shifts without page reload
 
 **Code Flow**:
+
 1. [schedule.js handleShiftSubmit()](../js/schedule.js#L150) - Makes POST request
 2. [manage.py create_shift()](../api/routers/manage.py#L150) - Creates in database
 3. Calls `broadcast_shift_created()` from websocket.py
 4. [websocket-client.js](../js/websocket-client.js) - Receives message, calls loadShifts()
 
 #### Update Shift
-```javascript
-PUT /api/v1/manage/shifts/{shift_id}
-Authorization: Bearer <token>
 
-{
-    "start_time": "08:00:00",
-    "end_time": "16:00:00"
-}
+```javascript
+PUT / api / v1 / manage / shifts / { shift_id };
+Authorization: Bearer <
+  token >
+  {
+    start_time: '08:00:00',
+    end_time: '16:00:00',
+  };
 ```
 
 **Real-Time**: Broadcasts `shift_updated` event to all clients
 
 #### Delete Shift
+
 ```javascript
 DELETE /api/v1/manage/shifts/{shift_id}
 Authorization: Bearer <token>
@@ -180,6 +192,7 @@ Response: 204 No Content
 **Location**: `frontend/html/manage-employee.html` ↔ `backend/api/routers/manage.py`
 
 #### Request Time-Off
+
 ```javascript
 POST /api/v1/manage/time-off
 Authorization: Bearer <token>
@@ -200,6 +213,7 @@ Response: TimeOffRequestResponse {id, status: "pending", ...}
 **Real-Time**: Broadcasts `time_off_requested` event
 
 #### Review Time-Off Request (Manager)
+
 ```javascript
 PUT /api/v1/manage/time-off/{request_id}
 Authorization: Bearer <token>
@@ -329,6 +343,7 @@ Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMjMsImV4cCI6MTcwODU.
 ```
 
 The JWT payload contains:
+
 - `user_id`: Unique user identifier
 - `username`: User's login name
 - `exp`: Token expiration time
@@ -427,15 +442,15 @@ All API calls include try/catch with graceful degradation:
 
 ```javascript
 try {
-    const response = await fetch(url, options);
-    if (!response.ok) {
-        throw new Error(await response.text());
-    }
-    return await response.json();
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+  return await response.json();
 } catch (error) {
-    console.error('API Error:', error);
-    showNotification('Failed to load data. Please try again.', 'error');
-    // Return fallback data or empty array
+  console.error('API Error:', error);
+  showNotification('Failed to load data. Please try again.', 'error');
+  // Return fallback data or empty array
 }
 ```
 

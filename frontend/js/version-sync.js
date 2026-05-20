@@ -20,7 +20,7 @@
       '[data-download-android]': tag + '/ConvertTheSpireReborn.apk',
       '[data-download-linux]': tag + '/ConvertTheSpireReborn-linux-x64.zip',
       '[data-download-mac]': tag + '/ConvertTheSpireReborn-macOS.zip',
-      '[data-download-sha]': tag + '/SHA256SUMS.txt'
+      '[data-download-sha]': tag + '/SHA256SUMS.txt',
     };
 
     Object.keys(downloads).forEach(function (selector) {
@@ -53,4 +53,4 @@
   } else {
     sync();
   }
-}());
+})();

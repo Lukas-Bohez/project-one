@@ -35,9 +35,7 @@
         },
         {
           "text": "Refuse and continue your normal trade route",
-          "effects": [
-            { "variable": "wealth", "operation": "add", "value": 20 }
-          ],
+          "effects": [{ "variable": "wealth", "operation": "add", "value": 20 }],
           "nextScene": "ordinary_life"
         }
       ]
@@ -56,12 +54,8 @@
         },
         {
           "text": "Attempt to navigate around it carefully",
-          "effects": [
-            { "variable": "wealth", "operation": "subtract", "value": 15 }
-          ],
-          "conditions": [
-            { "variable": "wealth", "comparison": "greater_than", "value": 10 }
-          ],
+          "effects": [{ "variable": "wealth", "operation": "subtract", "value": 15 }],
+          "conditions": [{ "variable": "wealth", "comparison": "greater_than", "value": 10 }],
           "nextScene": "island_sighting"
         },
         {
@@ -110,9 +104,7 @@
         },
         {
           "text": "Study the sphere's technology further",
-          "effects": [
-            { "variable": "knowledge", "operation": "add", "value": 60 }
-          ],
+          "effects": [{ "variable": "knowledge", "operation": "add", "value": 60 }],
           "nextScene": "ascension_ending"
         }
       ]
@@ -133,9 +125,7 @@
       "choices": [
         {
           "text": "Accept the entity's offer of knowledge",
-          "effects": [
-            { "variable": "knowledge", "operation": "set", "value": 999 }
-          ],
+          "effects": [{ "variable": "knowledge", "operation": "set", "value": 999 }],
           "nextScene": "ascension_ending"
         },
         {

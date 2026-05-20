@@ -1,38 +1,48 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" data-theme="light">
-<head>
+  <head>
     <!-- Google Analytics (GA4) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-SSEBSTQM21"></script>
     <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-SSEBSTQM21');
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-SSEBSTQM21');
     </script>
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Manage the Spire - Employee Management System</title>
-    <meta name="description" content="Fair, transparent employee management for small businesses. Scheduling, time tracking, and HR tools built for frontline workers.">
-    
+    <meta
+      name="description"
+      content="Fair, transparent employee management for small businesses. Scheduling, time tracking, and HR tools built for frontline workers."
+    />
+
     <!-- FOUC prevention: apply stored theme before first paint -->
     <script>
-        (function() {
-            var t = localStorage.getItem('quiz-theme-preference');
-            if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-        })();
+      (function () {
+        var t = localStorage.getItem('quiz-theme-preference');
+        if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      })();
     </script>
-    
+
     <!-- Favicons -->
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="/css/styles.css">
-    <link rel="stylesheet" href="/css/manage.css">
-    <link rel="stylesheet" href="/css/pages/manage/manage-ui-components.css">
-    <link rel="stylesheet" href="/css/footer.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
-    
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/manage.css" />
+    <link rel="stylesheet" href="/css/pages/manage/manage-ui-components.css" />
+    <link rel="stylesheet" href="/css/footer.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+
     <!-- Scripts -->
     <script src="/js/themeManager.js" defer></script>
     <script src="/js/websocket-client.js" defer></script>
@@ -40,448 +50,565 @@
     <script src="/js/pages/manage/manage-ui-components.js" defer></script>
     <script src="/js/pages/manage/demo-app.js" defer></script>
     <script src="/js/pages/manage/manage.js" defer></script>
-</head>
-<body>
+  </head>
+  <body>
     <!-- Header -->
     <header class="c-header">
-        <div class="c-header__content">
-            <a href="/" class="c-header__logo">
-                <h1 class="c-header__title"><i class="fa-solid fa-gear" aria-hidden="true"></i> Manage the Spire</h1>
-            </a>
-            <p class="c-header__subtitle">Fair & Transparent Employee Management</p>
-        </div>
+      <div class="c-header__content">
+        <a href="/" class="c-header__logo">
+          <h1 class="c-header__title">
+            <i class="fa-solid fa-gear" aria-hidden="true"></i> Manage the Spire
+          </h1>
+        </a>
+        <p class="c-header__subtitle">Fair & Transparent Employee Management</p>
+      </div>
     </header>
 
     <!-- Main Content -->
     <main class="o-container manage-container">
-        
-        <!-- Welcome Section (Before Login) -->
-        <section id="welcomeSection" class="manage-welcome">
-            <div class="hero-section">
-                <h2 class="hero-title">Employee Management Built for Fairness</h2>
-                <p class="hero-subtitle">
-                    The first management platform designed to prevent bias, ensure compliance, 
-                    and empower both employers and employees.
-                </p>
-                
-                <div class="hero-features">
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="fa-regular fa-calendar" aria-hidden="true"></i></div>
-                        <h3>Smart Scheduling</h3>
-                        <p>AI-powered schedule optimization ensures fair shift distribution</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i></div>
-                        <h3>Compliance Built-In</h3>
-                        <p>Automatic labor law compliance monitoring and alerts</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="fa-regular fa-comments" aria-hidden="true"></i></div>
-                        <h3>Two-Way Communication</h3>
-                        <p>Anonymous feedback and transparent performance tracking</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon"><i class="fa-solid fa-chart-line" aria-hidden="true"></i></div>
-                        <h3>Real-Time Analytics</h3>
-                        <p>Labor costs, overtime trends, and workforce insights</p>
-                    </div>
-                </div>
+      <!-- Welcome Section (Before Login) -->
+      <section id="welcomeSection" class="manage-welcome">
+        <div class="hero-section">
+          <h2 class="hero-title">Employee Management Built for Fairness</h2>
+          <p class="hero-subtitle">
+            The first management platform designed to prevent bias, ensure compliance, and empower
+            both employers and employees.
+          </p>
 
-                <!-- Interactive Full Application Demo -->
-                <section class="demo-section" aria-labelledby="demoTitle">
-                    <div class="demo-header-new">
-                        <h3 id="demoTitle">Fully Interactive Demo - Try The Complete Application</h3>
-                        <p>Experience the real application with both manager and employee perspectives. Everything works - no signup required.</p>
-                    </div>
-                    
-                    <div class="demo-view-switcher">
-                        <button class="view-switch-btn is-active" data-view="boss">
-                            <i class="fa-solid fa-user-tie"></i>
-                            <span>Manager Dashboard</span>
-                        </button>
-                        <button class="view-switch-btn" data-view="employee">
-                            <i class="fa-solid fa-user"></i>
-                            <span>Employee Portal</span>
-                        </button>
-                        <button class="view-switch-btn theme-toggle-btn" type="button" id="themeToggleBtn" aria-pressed="false">
-                            <i class="fa-solid fa-moon theme-icon-light" aria-hidden="true"></i>
-                            <i class="fa-solid fa-sun theme-icon-dark" aria-hidden="true"></i>
-                            <span class="theme-label-light">Dark Mode</span>
-                            <span class="theme-label-dark">Light Mode</span>
-                        </button>
-                    </div>
-
-                    <div class="demo-app-container" id="demoAppContainer">
-                        <!-- Dynamic content will be rendered here -->
-                    </div>
-
-                    <div class="demo-footer-info">
-                        <i class="fa-solid fa-circle-info"></i>
-                        <span>This is a fully functional simulation. Click, drag, and interact just like the real application.</span>
-                    </div>
-                </section>
-
-                <div class="cta-section">
-                    <div class="cta-card">
-                        <button class="c-btn c-btn--primary c-btn--lg" id="getStartedBtn">
-                            <i class="fa-solid fa-rocket" aria-hidden="true"></i> Get Started Free
-                        </button>
-                        <span class="cta-hint">New here? Create your business account</span>
-                    </div>
-                    <div class="cta-card">
-                        <button class="c-btn c-btn--secondary c-btn--lg" id="loginBtn">
-                            <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Employee/Manager Login
-                        </button>
-                        <span class="cta-hint">Already have an account? Sign in</span>
-                    </div>
-                </div>
-
-                <div class="pricing-info">
-                    <p><strong>Free for up to 10 employees</strong> • No credit card required</p>
-                    <p class="pricing-tiers">
-                        <span>Free: 10 employees</span> • 
-                        <span>Pro: Unlimited @ $49/month</span> • 
-                        <span>Enterprise: Custom</span>
-                    </p>
-                </div>
+          <div class="hero-features">
+            <div class="feature-card">
+              <div class="feature-icon">
+                <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+              </div>
+              <h3>Smart Scheduling</h3>
+              <p>AI-powered schedule optimization ensures fair shift distribution</p>
             </div>
-        </section>
-
-        <!-- Login Modal -->
-        <div id="loginModal" class="c-modal" role="dialog" aria-hidden="true" aria-labelledby="loginModalTitle">
-            <div class="c-modal__content manage-modal">
-                <div class="c-modal__header">
-                    <h2 id="loginModalTitle">Login to Manage the Spire</h2>
-                    <button class="c-modal__close" aria-label="Close">&times;</button>
-                </div>
-                <div class="c-modal__body">
-                    <form id="loginForm" class="manage-form">
-                        <div class="form-group">
-                            <label for="loginEmail">Email</label>
-                            <input 
-                                type="email" 
-                                id="loginEmail" 
-                                class="form-control" 
-                                required 
-                                placeholder="your@email.com"
-                            >
-                        </div>
-                        <div class="form-group">
-                            <label for="loginPassword">Password</label>
-                            <input 
-                                type="password" 
-                                id="loginPassword" 
-                                class="form-control" 
-                                required 
-                                placeholder="••••••••"
-                            >
-                        </div>
-                        <div id="loginError" class="error-message" style="display: none;"></div>
-                        <button type="submit" class="c-btn c-btn--primary c-btn--block">
-                            Login
-                        </button>
-                    </form>
-                    <div class="form-footer">
-                        <p>Don't have an account? <a href="#" id="signupLink">Create a business account</a></p>
-                    </div>
-                </div>
+            <div class="feature-card">
+              <div class="feature-icon">
+                <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
+              </div>
+              <h3>Compliance Built-In</h3>
+              <p>Automatic labor law compliance monitoring and alerts</p>
             </div>
+            <div class="feature-card">
+              <div class="feature-icon">
+                <i class="fa-regular fa-comments" aria-hidden="true"></i>
+              </div>
+              <h3>Two-Way Communication</h3>
+              <p>Anonymous feedback and transparent performance tracking</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">
+                <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
+              </div>
+              <h3>Real-Time Analytics</h3>
+              <p>Labor costs, overtime trends, and workforce insights</p>
+            </div>
+          </div>
+
+          <!-- Interactive Full Application Demo -->
+          <section class="demo-section" aria-labelledby="demoTitle">
+            <div class="demo-header-new">
+              <h3 id="demoTitle">Fully Interactive Demo - Try The Complete Application</h3>
+              <p>
+                Experience the real application with both manager and employee perspectives.
+                Everything works - no signup required.
+              </p>
+            </div>
+
+            <div class="demo-view-switcher">
+              <button class="view-switch-btn is-active" data-view="boss">
+                <i class="fa-solid fa-user-tie"></i>
+                <span>Manager Dashboard</span>
+              </button>
+              <button class="view-switch-btn" data-view="employee">
+                <i class="fa-solid fa-user"></i>
+                <span>Employee Portal</span>
+              </button>
+              <button
+                class="view-switch-btn theme-toggle-btn"
+                type="button"
+                id="themeToggleBtn"
+                aria-pressed="false"
+              >
+                <i class="fa-solid fa-moon theme-icon-light" aria-hidden="true"></i>
+                <i class="fa-solid fa-sun theme-icon-dark" aria-hidden="true"></i>
+                <span class="theme-label-light">Dark Mode</span>
+                <span class="theme-label-dark">Light Mode</span>
+              </button>
+            </div>
+
+            <div class="demo-app-container" id="demoAppContainer">
+              <!-- Dynamic content will be rendered here -->
+            </div>
+
+            <div class="demo-footer-info">
+              <i class="fa-solid fa-circle-info"></i>
+              <span
+                >This is a fully functional simulation. Click, drag, and interact just like the real
+                application.</span
+              >
+            </div>
+          </section>
+
+          <div class="cta-section">
+            <div class="cta-card">
+              <button class="c-btn c-btn--primary c-btn--lg" id="getStartedBtn">
+                <i class="fa-solid fa-rocket" aria-hidden="true"></i> Get Started Free
+              </button>
+              <span class="cta-hint">New here? Create your business account</span>
+            </div>
+            <div class="cta-card">
+              <button class="c-btn c-btn--secondary c-btn--lg" id="loginBtn">
+                <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Employee/Manager
+                Login
+              </button>
+              <span class="cta-hint">Already have an account? Sign in</span>
+            </div>
+          </div>
+
+          <div class="pricing-info">
+            <p><strong>Free for up to 10 employees</strong> • No credit card required</p>
+            <p class="pricing-tiers">
+              <span>Free: 10 employees</span> • <span>Pro: Unlimited @ $49/month</span> •
+              <span>Enterprise: Custom</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Login Modal -->
+      <div
+        id="loginModal"
+        class="c-modal"
+        role="dialog"
+        aria-hidden="true"
+        aria-labelledby="loginModalTitle"
+      >
+        <div class="c-modal__content manage-modal">
+          <div class="c-modal__header">
+            <h2 id="loginModalTitle">Login to Manage the Spire</h2>
+            <button class="c-modal__close" aria-label="Close">&times;</button>
+          </div>
+          <div class="c-modal__body">
+            <form id="loginForm" class="manage-form">
+              <div class="form-group">
+                <label for="loginEmail">Email</label>
+                <input
+                  type="email"
+                  id="loginEmail"
+                  class="form-control"
+                  required
+                  placeholder="your@email.com"
+                />
+              </div>
+              <div class="form-group">
+                <label for="loginPassword">Password</label>
+                <input
+                  type="password"
+                  id="loginPassword"
+                  class="form-control"
+                  required
+                  placeholder="••••••••"
+                />
+              </div>
+              <div id="loginError" class="error-message" style="display: none"></div>
+              <button type="submit" class="c-btn c-btn--primary c-btn--block">Login</button>
+            </form>
+            <div class="form-footer">
+              <p>
+                Don't have an account? <a href="#" id="signupLink">Create a business account</a>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Business Setup Modal -->
+      <div
+        id="setupModal"
+        class="c-modal"
+        role="dialog"
+        aria-hidden="true"
+        aria-labelledby="setupModalTitle"
+      >
+        <div class="c-modal__content manage-modal">
+          <div class="c-modal__header">
+            <h2 id="setupModalTitle">Create Your Business Account</h2>
+            <button class="c-modal__close" aria-label="Close">&times;</button>
+          </div>
+          <div class="c-modal__body">
+            <form id="setupForm" class="manage-form">
+              <div class="form-group">
+                <label for="businessName">Business Name *</label>
+                <input
+                  type="text"
+                  id="businessName"
+                  class="form-control"
+                  required
+                  placeholder="Your Business Name"
+                />
+              </div>
+              <div class="form-group">
+                <label for="contactEmail">Contact Email *</label>
+                <input
+                  type="email"
+                  id="contactEmail"
+                  class="form-control"
+                  required
+                  placeholder="owner@business.com"
+                />
+              </div>
+              <div class="form-group">
+                <label for="contactPhone">Phone Number</label>
+                <input
+                  type="tel"
+                  id="contactPhone"
+                  class="form-control"
+                  placeholder="(555) 123-4567"
+                />
+              </div>
+              <div class="form-group">
+                <label for="timezone">Timezone *</label>
+                <select id="timezone" class="form-control" required>
+                  <option value="America/New_York">Eastern Time (ET)</option>
+                  <option value="America/Chicago">Central Time (CT)</option>
+                  <option value="America/Denver">Mountain Time (MT)</option>
+                  <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                  <option value="America/Anchorage">Alaska Time (AKT)</option>
+                  <option value="Pacific/Honolulu">Hawaii Time (HT)</option>
+                </select>
+              </div>
+              <div id="setupError" class="error-message" style="display: none"></div>
+              <div id="setupSuccess" class="success-message" style="display: none"></div>
+              <button type="submit" class="c-btn c-btn--primary c-btn--block">
+                Create Business Account
+              </button>
+            </form>
+            <div class="form-footer">
+              <p class="small-text">
+                By creating an account, you agree to our
+                <a href="/pages/terms/" target="_blank" rel="noopener noreferrer"
+                  >Terms of Service</a
+                >
+                and
+                <a href="/pages/privacy/" target="_blank" rel="noopener noreferrer"
+                  >Privacy Policy</a
+                >
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard Section (After Login) -->
+      <section id="dashboardSection" class="manage-dashboard" style="display: none">
+        <div class="dashboard-header">
+          <div>
+            <h2 id="dashboardBusinessName">Loading...</h2>
+            <p id="dashboardRole" class="role-badge">Manager</p>
+          </div>
+          <div class="dashboard-actions">
+            <button class="c-btn c-btn--secondary" id="logoutBtn">Logout</button>
+          </div>
         </div>
 
-        <!-- Business Setup Modal -->
-        <div id="setupModal" class="c-modal" role="dialog" aria-hidden="true" aria-labelledby="setupModalTitle">
-            <div class="c-modal__content manage-modal">
-                <div class="c-modal__header">
-                    <h2 id="setupModalTitle">Create Your Business Account</h2>
-                    <button class="c-modal__close" aria-label="Close">&times;</button>
-                </div>
-                <div class="c-modal__body">
-                    <form id="setupForm" class="manage-form">
-                        <div class="form-group">
-                            <label for="businessName">Business Name *</label>
-                            <input 
-                                type="text" 
-                                id="businessName" 
-                                class="form-control" 
-                                required 
-                                placeholder="Your Business Name"
-                            >
-                        </div>
-                        <div class="form-group">
-                            <label for="contactEmail">Contact Email *</label>
-                            <input 
-                                type="email" 
-                                id="contactEmail" 
-                                class="form-control" 
-                                required 
-                                placeholder="owner@business.com"
-                            >
-                        </div>
-                        <div class="form-group">
-                            <label for="contactPhone">Phone Number</label>
-                            <input 
-                                type="tel" 
-                                id="contactPhone" 
-                                class="form-control" 
-                                placeholder="(555) 123-4567"
-                            >
-                        </div>
-                        <div class="form-group">
-                            <label for="timezone">Timezone *</label>
-                            <select id="timezone" class="form-control" required>
-                                <option value="America/New_York">Eastern Time (ET)</option>
-                                <option value="America/Chicago">Central Time (CT)</option>
-                                <option value="America/Denver">Mountain Time (MT)</option>
-                                <option value="America/Los_Angeles">Pacific Time (PT)</option>
-                                <option value="America/Anchorage">Alaska Time (AKT)</option>
-                                <option value="Pacific/Honolulu">Hawaii Time (HT)</option>
-                            </select>
-                        </div>
-                        <div id="setupError" class="error-message" style="display: none;"></div>
-                        <div id="setupSuccess" class="success-message" style="display: none;"></div>
-                        <button type="submit" class="c-btn c-btn--primary c-btn--block">
-                            Create Business Account
-                        </button>
-                    </form>
-                    <div class="form-footer">
-                        <p class="small-text">
-                            By creating an account, you agree to our 
-                            <a href="/pages/terms/" target="_blank" rel="noopener noreferrer">Terms of Service</a> and 
-                            <a href="/pages/privacy/" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
-                        </p>
-                    </div>
-                </div>
-            </div>
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Active Employees</div>
+            <div class="stat-value" id="statActiveEmployees">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Shifts Today</div>
+            <div class="stat-value" id="statShiftsToday">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Pending Requests</div>
+            <div class="stat-value" id="statPendingRequests">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">This Week's Hours</div>
+            <div class="stat-value" id="statWeekHours">0</div>
+          </div>
         </div>
 
-        <!-- Dashboard Section (After Login) -->
-        <section id="dashboardSection" class="manage-dashboard" style="display: none;">
-            <div class="dashboard-header">
-                <div>
-                    <h2 id="dashboardBusinessName">Loading...</h2>
-                    <p id="dashboardRole" class="role-badge">Manager</p>
-                </div>
-                <div class="dashboard-actions">
-                    <button class="c-btn c-btn--secondary" id="logoutBtn">Logout</button>
-                </div>
-            </div>
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+          <h3>Quick Actions</h3>
+          <div class="action-grid">
+            <button class="action-btn" id="addEmployeeBtn">
+              <span class="action-icon"
+                ><i class="fa-solid fa-user-plus" aria-hidden="true"></i
+              ></span>
+              <span class="action-text">Add Employee</span>
+            </button>
+            <button
+              class="action-btn"
+              id="createShiftBtn"
+              onclick="window.location.href = '/pages/manage-schedule/'"
+            >
+              <span class="action-icon"
+                ><i class="fa-regular fa-calendar" aria-hidden="true"></i
+              ></span>
+              <span class="action-text">Schedule Manager</span>
+            </button>
+            <button
+              class="action-btn"
+              id="viewScheduleBtn"
+              onclick="window.location.href = '/pages/manage-schedule/'"
+            >
+              <span class="action-icon"
+                ><i class="fa-solid fa-chart-line" aria-hidden="true"></i
+              ></span>
+              <span class="action-text">View Schedule</span>
+            </button>
+            <button
+              class="action-btn"
+              id="timeOffBtn"
+              onclick="window.location.href = '/pages/manage-employee/'"
+            >
+              <span class="action-icon"
+                ><i class="fa-solid fa-umbrella-beach" aria-hidden="true"></i
+              ></span>
+              <span class="action-text">Employee Portal</span>
+            </button>
+          </div>
+        </div>
 
-            <!-- Stats Cards -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Active Employees</div>
-                    <div class="stat-value" id="statActiveEmployees">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Shifts Today</div>
-                    <div class="stat-value" id="statShiftsToday">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Pending Requests</div>
-                    <div class="stat-value" id="statPendingRequests">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">This Week's Hours</div>
-                    <div class="stat-value" id="statWeekHours">0</div>
-                </div>
+        <!-- Employee Directory -->
+        <section class="employee-directory" aria-labelledby="employeeDirectoryTitle">
+          <div class="section-header">
+            <div>
+              <h3 id="employeeDirectoryTitle">Employee Directory</h3>
+              <p class="section-subtitle">Manage employee profiles, roles, and passwords.</p>
             </div>
-
-            <!-- Quick Actions -->
-            <div class="quick-actions">
-                <h3>Quick Actions</h3>
-                <div class="action-grid">
-                    <button class="action-btn" id="addEmployeeBtn">
-                        <span class="action-icon"><i class="fa-solid fa-user-plus" aria-hidden="true"></i></span>
-                        <span class="action-text">Add Employee</span>
-                    </button>
-                    <button class="action-btn" id="createShiftBtn" onclick="window.location.href='/pages/manage-schedule/'">
-                        <span class="action-icon"><i class="fa-regular fa-calendar" aria-hidden="true"></i></span>
-                        <span class="action-text">Schedule Manager</span>
-                    </button>
-                    <button class="action-btn" id="viewScheduleBtn" onclick="window.location.href='/pages/manage-schedule/'">
-                        <span class="action-icon"><i class="fa-solid fa-chart-line" aria-hidden="true"></i></span>
-                        <span class="action-text">View Schedule</span>
-                    </button>
-                    <button class="action-btn" id="timeOffBtn" onclick="window.location.href='/pages/manage-employee/'">
-                        <span class="action-icon"><i class="fa-solid fa-umbrella-beach" aria-hidden="true"></i></span>
-                        <span class="action-text">Employee Portal</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Employee Directory -->
-            <section class="employee-directory" aria-labelledby="employeeDirectoryTitle">
-                <div class="section-header">
-                    <div>
-                        <h3 id="employeeDirectoryTitle">Employee Directory</h3>
-                        <p class="section-subtitle">Manage employee profiles, roles, and passwords.</p>
-                    </div>
-                    <button class="c-btn c-btn--primary" id="addEmployeeBtnSecondary">
-                        <i class="fa-solid fa-user-plus" aria-hidden="true"></i> Add Employee
-                    </button>
-                </div>
-                <div class="employee-toolbar">
-                    <input type="search" id="employeeSearch" class="form-control" placeholder="Search by name, role, or email">
-                    <select id="employeeStatusFilter" class="form-control">
-                        <option value="">All statuses</option>
-                        <option value="active">Active</option>
-                        <option value="on_leave">On leave</option>
-                        <option value="suspended">Suspended</option>
-                        <option value="terminated">Terminated</option>
-                    </select>
-                </div>
-                <div id="employeeList" class="employee-list">
-                    <div class="loading-state">Loading employees...</div>
-                </div>
-            </section>
-
-            <!-- Status Notice -->
-            <div class="info-banner">
-                <p><strong><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Schedule Manager is now live!</strong> Click "Schedule Manager" to access the interactive calendar with drag-and-drop shift scheduling.</p>
-                <p><strong><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Employee Portal</strong> allows self-service time-off requests and schedule viewing.</p>
-                <p>API Status: <code>/api/v1/manage/health</code> <i class="fa-solid fa-circle-check" aria-hidden="true"></i> Ready</p>
-            </div>
+            <button class="c-btn c-btn--primary" id="addEmployeeBtnSecondary">
+              <i class="fa-solid fa-user-plus" aria-hidden="true"></i> Add Employee
+            </button>
+          </div>
+          <div class="employee-toolbar">
+            <input
+              type="search"
+              id="employeeSearch"
+              class="form-control"
+              placeholder="Search by name, role, or email"
+            />
+            <select id="employeeStatusFilter" class="form-control">
+              <option value="">All statuses</option>
+              <option value="active">Active</option>
+              <option value="on_leave">On leave</option>
+              <option value="suspended">Suspended</option>
+              <option value="terminated">Terminated</option>
+            </select>
+          </div>
+          <div id="employeeList" class="employee-list">
+            <div class="loading-state">Loading employees...</div>
+          </div>
         </section>
+
+        <!-- Status Notice -->
+        <div class="info-banner">
+          <p>
+            <strong
+              ><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Schedule Manager is now
+              live!</strong
+            >
+            Click "Schedule Manager" to access the interactive calendar with drag-and-drop shift
+            scheduling.
+          </p>
+          <p>
+            <strong
+              ><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Employee Portal</strong
+            >
+            allows self-service time-off requests and schedule viewing.
+          </p>
+          <p>
+            API Status: <code>/api/v1/manage/health</code>
+            <i class="fa-solid fa-circle-check" aria-hidden="true"></i> Ready
+          </p>
+        </div>
+      </section>
     </main>
 
     <!-- Employee Modal -->
-    <div id="employeeModal" class="c-modal" role="dialog" aria-hidden="true" aria-labelledby="employeeModalTitle">
-        <div class="c-modal__content manage-modal employee-modal">
-            <div class="c-modal__header">
-                <h2 id="employeeModalTitle">Add Employee</h2>
-                <button class="c-modal__close" aria-label="Close">&times;</button>
-            </div>
-            <div class="c-modal__body">
-                <form id="employeeForm" class="manage-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="employeeFirstName">First Name *</label>
-                            <input type="text" id="employeeFirstName" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="employeeLastName">Last Name *</label>
-                            <input type="text" id="employeeLastName" class="form-control" required>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="employeeEmail">Email *</label>
-                            <input type="email" id="employeeEmail" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="employeePhone">Phone</label>
-                            <input type="tel" id="employeePhone" class="form-control">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="employeeRole">Role *</label>
-                            <select id="employeeRole" class="form-control" required>
-                                <option value="3">Employee</option>
-                                <option value="2">Manager</option>
-                                <option value="1">Owner</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="employeeStatus">Status</label>
-                            <select id="employeeStatus" class="form-control">
-                                <option value="active">Active</option>
-                                <option value="on_leave">On leave</option>
-                                <option value="suspended">Suspended</option>
-                                <option value="terminated">Terminated</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="employeePosition">Position Title</label>
-                            <input type="text" id="employeePosition" class="form-control" placeholder="Barista, Cashier, etc.">
-                        </div>
-                        <div class="form-group">
-                            <label for="employeeDepartment">Department</label>
-                            <input type="text" id="employeeDepartment" class="form-control">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="employeeHireDate">Hire Date *</label>
-                            <input type="date" id="employeeHireDate" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="employeeHourlyRate">Hourly Rate</label>
-                            <input type="number" id="employeeHourlyRate" class="form-control" min="0" step="0.01" placeholder="15.00">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="employeeCode">Employee Code</label>
-                            <input type="text" id="employeeCode" class="form-control" placeholder="EMP-001">
-                        </div>
-                        <div class="form-group">
-                            <label for="employeePassword">Password</label>
-                            <div class="password-field">
-                                <input type="password" id="employeePassword" class="form-control" minlength="6" placeholder="Set a password">
-                                <button type="button" class="c-btn c-btn--tertiary c-btn--sm" id="generatePasswordBtn">Generate & Copy</button>
-                            </div>
-                            <button type="button" class="link-btn" id="togglePasswordBtn">Show password</button>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="employeeEmergencyName">Emergency Contact Name</label>
-                            <input type="text" id="employeeEmergencyName" class="form-control">
-                        </div>
-                        <div class="form-group">
-                            <label for="employeeEmergencyPhone">Emergency Contact Phone</label>
-                            <input type="tel" id="employeeEmergencyPhone" class="form-control">
-                        </div>
-                    </div>
-
-                    <div id="employeeFormError" class="error-message" style="display: none;"></div>
-                    <div class="modal-actions">
-                        <button type="button" class="c-btn c-btn--secondary" id="cancelEmployeeBtn">Cancel</button>
-                        <button type="submit" class="c-btn c-btn--primary">Save Employee</button>
-                    </div>
-                </form>
-            </div>
+    <div
+      id="employeeModal"
+      class="c-modal"
+      role="dialog"
+      aria-hidden="true"
+      aria-labelledby="employeeModalTitle"
+    >
+      <div class="c-modal__content manage-modal employee-modal">
+        <div class="c-modal__header">
+          <h2 id="employeeModalTitle">Add Employee</h2>
+          <button class="c-modal__close" aria-label="Close">&times;</button>
         </div>
+        <div class="c-modal__body">
+          <form id="employeeForm" class="manage-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="employeeFirstName">First Name *</label>
+                <input type="text" id="employeeFirstName" class="form-control" required />
+              </div>
+              <div class="form-group">
+                <label for="employeeLastName">Last Name *</label>
+                <input type="text" id="employeeLastName" class="form-control" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="employeeEmail">Email *</label>
+                <input type="email" id="employeeEmail" class="form-control" required />
+              </div>
+              <div class="form-group">
+                <label for="employeePhone">Phone</label>
+                <input type="tel" id="employeePhone" class="form-control" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="employeeRole">Role *</label>
+                <select id="employeeRole" class="form-control" required>
+                  <option value="3">Employee</option>
+                  <option value="2">Manager</option>
+                  <option value="1">Owner</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="employeeStatus">Status</label>
+                <select id="employeeStatus" class="form-control">
+                  <option value="active">Active</option>
+                  <option value="on_leave">On leave</option>
+                  <option value="suspended">Suspended</option>
+                  <option value="terminated">Terminated</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="employeePosition">Position Title</label>
+                <input
+                  type="text"
+                  id="employeePosition"
+                  class="form-control"
+                  placeholder="Barista, Cashier, etc."
+                />
+              </div>
+              <div class="form-group">
+                <label for="employeeDepartment">Department</label>
+                <input type="text" id="employeeDepartment" class="form-control" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="employeeHireDate">Hire Date *</label>
+                <input type="date" id="employeeHireDate" class="form-control" required />
+              </div>
+              <div class="form-group">
+                <label for="employeeHourlyRate">Hourly Rate</label>
+                <input
+                  type="number"
+                  id="employeeHourlyRate"
+                  class="form-control"
+                  min="0"
+                  step="0.01"
+                  placeholder="15.00"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="employeeCode">Employee Code</label>
+                <input type="text" id="employeeCode" class="form-control" placeholder="EMP-001" />
+              </div>
+              <div class="form-group">
+                <label for="employeePassword">Password</label>
+                <div class="password-field">
+                  <input
+                    type="password"
+                    id="employeePassword"
+                    class="form-control"
+                    minlength="6"
+                    placeholder="Set a password"
+                  />
+                  <button
+                    type="button"
+                    class="c-btn c-btn--tertiary c-btn--sm"
+                    id="generatePasswordBtn"
+                  >
+                    Generate & Copy
+                  </button>
+                </div>
+                <button type="button" class="link-btn" id="togglePasswordBtn">Show password</button>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="employeeEmergencyName">Emergency Contact Name</label>
+                <input type="text" id="employeeEmergencyName" class="form-control" />
+              </div>
+              <div class="form-group">
+                <label for="employeeEmergencyPhone">Emergency Contact Phone</label>
+                <input type="tel" id="employeeEmergencyPhone" class="form-control" />
+              </div>
+            </div>
+
+            <div id="employeeFormError" class="error-message" style="display: none"></div>
+            <div class="modal-actions">
+              <button type="button" class="c-btn c-btn--secondary" id="cancelEmployeeBtn">
+                Cancel
+              </button>
+              <button type="submit" class="c-btn c-btn--primary">Save Employee</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
 
     <!-- Footer -->
     <footer class="c-footer">
-        <p class="c-footer__about">
-            Part of the Quiz The Spire Suite by <strong>Lukas Bohez</strong>.
-        </p>
-        <p class="c-footer__text">
-            <strong>© 2026 Quiz The Spire</strong><br>
-            Created, Owned &amp; Operated by <strong>Lukas Bohez</strong><br>
-            All rights reserved.
-        </p>
-        <p class="c-footer__links">
-            <a href="/pages/privacy/" class="c-footer__link">Privacy Policy</a>
-            <span class="c-footer__sep" aria-hidden="true">&middot;</span>
-            <a href="/pages/contact/" class="c-footer__link">Contact Us</a>
-            <span class="c-footer__sep" aria-hidden="true">&middot;</span>
-            <a href="/pages/terms/" class="c-footer__link">Terms of Service</a>
-            <span class="c-footer__sep" aria-hidden="true">&middot;</span>
-            <a href="/" class="c-footer__link">Homepage</a>
-        </p>
+      <p class="c-footer__about">
+        Part of the Quiz The Spire Suite by <strong>Lukas Bohez</strong>.
+      </p>
+      <p class="c-footer__text">
+        <strong>© 2026 Quiz The Spire</strong><br />
+        Created, Owned &amp; Operated by <strong>Lukas Bohez</strong><br />
+        All rights reserved.
+      </p>
+      <p class="c-footer__links">
+        <a href="/pages/privacy/" class="c-footer__link">Privacy Policy</a>
+        <span class="c-footer__sep" aria-hidden="true">&middot;</span>
+        <a href="/pages/contact/" class="c-footer__link">Contact Us</a>
+        <span class="c-footer__sep" aria-hidden="true">&middot;</span>
+        <a href="/pages/terms/" class="c-footer__link">Terms of Service</a>
+        <span class="c-footer__sep" aria-hidden="true">&middot;</span>
+        <a href="/" class="c-footer__link">Homepage</a>
+      </p>
     </footer>
 
     <button id="back-to-top" type="button" aria-label="Back to top">
       <svg class="back-to-top__ring" viewBox="0 0 36 36" aria-hidden="true" focusable="false">
         <circle class="back-to-top__ring-base" cx="18" cy="18" r="16"></circle>
-        <circle id="scroll-ring" class="back-to-top__ring-progress" cx="18" cy="18" r="16" stroke-dasharray="100" stroke-dashoffset="100"></circle>
+        <circle
+          id="scroll-ring"
+          class="back-to-top__ring-progress"
+          cx="18"
+          cy="18"
+          r="16"
+          stroke-dasharray="100"
+          stroke-dashoffset="100"
+        ></circle>
       </svg>
       <i class="fa-solid fa-chevron-up back-to-top__arrow" aria-hidden="true"></i>
     </button>
 
     <script src="/js/homepage-enhancements.js" defer></script>
-</body>
+  </body>
 </html>

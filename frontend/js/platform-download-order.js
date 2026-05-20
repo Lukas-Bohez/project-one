@@ -18,7 +18,7 @@
       windows: '.c-btn--windows',
       android: '.c-btn--android',
       linux: '.c-btn--linux',
-      macos: '.c-btn--macos'
+      macos: '.c-btn--macos',
     };
 
     var primaryButton = container.querySelector(platformMap[getPlatform()]);
@@ -40,4 +40,4 @@
   } else {
     reorderButtons();
   }
-}());
+})();

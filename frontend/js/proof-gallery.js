@@ -48,8 +48,12 @@
     previewImage.src = image ? image.currentSrc || image.src : '';
     previewImage.alt = image ? image.alt || '' : '';
     caption.innerHTML =
-      '<strong>' + (title ? title.textContent : 'Screenshot preview') + '</strong>' +
-      '<div>' + (captionText ? captionText.textContent : '') + '</div>';
+      '<strong>' +
+      (title ? title.textContent : 'Screenshot preview') +
+      '</strong>' +
+      '<div>' +
+      (captionText ? captionText.textContent : '') +
+      '</div>';
 
     dialog.classList.add('is-open');
     dialog.setAttribute('aria-hidden', 'false');

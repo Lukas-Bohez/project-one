@@ -29,11 +29,13 @@
 ### 🔧 Architecture Changes
 
 **Before:**
+
 - Popup window → Background Service Worker → Offscreen Document → Audio
 - Complex message passing between 3 contexts
 - Audio stopped when popup closed
 
 **After:**
+
 - Extension icon click → Opens standalone window
 - Direct audio/video playback in window
 - No offscreen document needed
@@ -42,18 +44,22 @@
 ### 📁 File Changes
 
 **Removed:**
+
 - `offscreen.html` - No longer needed
 - `offscreen.js` - No longer needed
 
 **Modified:**
+
 - `manifest.json` - Removed offscreen permission, changed action
 - `background.js` - Simplified to window management only
 
 **New:**
+
 - `player.html` - Standalone window HTML (renamed from popup.html)
 - `player.js` - Standalone player script with video support
 
 **Dependencies Used:**
+
 - `js/jsmediatags.js` - For metadata extraction (already included)
 
 ### 🎯 How It Works Now
@@ -70,21 +76,25 @@
 ### 💡 Usage Tips
 
 **Opening the Player:**
+
 - Click extension icon in toolbar
 - If already open, clicking icon focuses the window
 
 **Video Playback:**
+
 - Load MP4/WebM files
 - Video player appears automatically
 - Uses native video controls + custom progress bar
 
 **Album Art:**
+
 - Works with MP3, M4A, AAC files
 - Automatically extracted when loading files
 - Shows in track list and main view
 - If no art, no thumbnail displayed (clean UI)
 
 **File Loading:**
+
 - Individual files: Select multiple audio/video files
 - Folder: Loads all media files from folder
 - Files are sorted alphabetically
@@ -93,18 +103,21 @@
 ### ⚙️ Technical Details
 
 **Direct Media Playback:**
+
 - Uses HTML5 `<audio>` and `<video>` elements
 - No Web Audio API needed for basic playback
 - Simpler, more reliable
 - Better browser compatibility
 
 **Window Management:**
+
 - Background script tracks window ID
 - Reuses existing window if open
 - Creates new window if closed
 - Cleans up on window close
 
 **Metadata Extraction:**
+
 - Uses jsmediatags library
 - Extracts: title, artist, album art
 - Fallback to filename if no metadata
@@ -153,6 +166,7 @@
 ### 🔄 Migration Guide
 
 **For Users:**
+
 1. Remove old extension (if installed)
 2. Reload extension page (chrome://extensions/)
 3. Or: Click reload button on extension
@@ -160,6 +174,7 @@
 5. Enjoy the improved player!
 
 **No Data Loss:**
+
 - Settings persist (volume, shuffle, repeat)
 - Bundled tracks unchanged
 - User must re-select their files (normal)

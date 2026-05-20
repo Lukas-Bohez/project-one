@@ -18,7 +18,7 @@
       description: 'Fast local media conversion without cloud uploads',
       cta: 'Try Convert',
       href: 'https://github.com/Lukas-Bohez/ConvertTheSpireFlutter',
-      color: '#2563eb'
+      color: '#2563eb',
     },
     spireai: {
       title: 'SpireAI',
@@ -26,7 +26,7 @@
       description: 'AI-powered quiz generation with instant themes',
       cta: 'Generate Quizzes',
       href: '/pages/spire-ai/',
-      color: '#8b5cf6'
+      color: '#8b5cf6',
     },
     sponsors: {
       title: 'Support My Work',
@@ -34,8 +34,8 @@
       description: 'Sponsor development via GitHub Sponsors',
       cta: 'Become Sponsor',
       href: 'https://github.com/sponsors/Lukas-Bohez',
-      color: '#ec4899'
-    }
+      color: '#ec4899',
+    },
   };
 
   function createBrandedCard(content) {

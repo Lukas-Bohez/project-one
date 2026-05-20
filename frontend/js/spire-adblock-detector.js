@@ -13,7 +13,8 @@
     overlay.id = 'adblock-softwall';
     overlay.className = 'adblock-softwall';
 
-    overlay.innerHTML = '' +
+    overlay.innerHTML =
+      '' +
       '<div class="adblock-softwall__panel" role="dialog" aria-modal="true" aria-labelledby="adblock-title">' +
       '  <button class="adblock-softwall__close" type="button" aria-label="Close notice">\u00d7</button>' +
       '  <p class="adblock-softwall__kicker">Ads keep Quiz The Spire free</p>' +
@@ -40,7 +41,7 @@
 
     overlay.querySelector('.adblock-softwall__close').addEventListener('click', closeNotice);
     overlay.querySelector('.adblock-softwall__secondary').addEventListener('click', closeNotice);
-    
+
     whitelistButton.addEventListener('click', handleWhitelistClaim);
   }
 
@@ -49,7 +50,8 @@
     return new Promise(function (resolve) {
       var canary = document.createElement('div');
       canary.className = 'ad-banner adsbox doubleclick pub_300x250 text-ad';
-      canary.style.cssText = 'position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;top:-9999px;';
+      canary.style.cssText =
+        'position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;top:-9999px;';
       document.body.appendChild(canary);
 
       window.setTimeout(function () {
@@ -58,7 +60,7 @@
           var display = window.getComputedStyle(canary).display;
           var visibility = window.getComputedStyle(canary).visibility;
           var height = canary.offsetHeight;
-          
+
           blocked = display === 'none' || visibility === 'hidden' || height === 0;
           canary.remove();
         }
@@ -74,40 +76,47 @@
     whitelistButton.textContent = 'Checking...';
     whitelistButton.disabled = true;
 
-    verifyWhitelistingAsync().then(function (whitelisted) {
-      if (whitelisted) {
-        // Success: user genuinely disabled adblocker
-        messageElement.textContent = 'Thanks for supporting a solo dev! ❤️ This site is now whitelisted.';
-        whitelistButton.textContent = '✓ Thanks!';
-        
-        // Set dismissed flag with 7-day TTL
-        localStorage.setItem('adblock-dismissed', JSON.stringify({
-          timestamp: Date.now(),
-          ttl: 7 * 24 * 60 * 60 * 1000 // 7 days
-        }));
+    verifyWhitelistingAsync()
+      .then(function (whitelisted) {
+        if (whitelisted) {
+          // Success: user genuinely disabled adblocker
+          messageElement.textContent =
+            'Thanks for supporting a solo dev! ❤️ This site is now whitelisted.';
+          whitelistButton.textContent = '✓ Thanks!';
 
-        // Hide banner after 3 seconds
-        window.setTimeout(function () {
-          if (bannerElement && bannerElement.parentNode) {
-            bannerElement.classList.add('is-leaving');
-            window.setTimeout(function () {
-              if (bannerElement && bannerElement.parentNode) bannerElement.remove();
-              bannerElement = null;
-            }, 220);
-          }
-        }, 3000);
-      } else {
-        // Still blocked: show error message
-        messageElement.textContent = 'Still detecting an ad blocker. Please disable it for quizthespire.com and refresh the page, then click again.';
-        whitelistButton.textContent = verificationAttempts > 1 ? 'Check again' : 'Try again';
+          // Set dismissed flag with 7-day TTL
+          localStorage.setItem(
+            'adblock-dismissed',
+            JSON.stringify({
+              timestamp: Date.now(),
+              ttl: 7 * 24 * 60 * 60 * 1000, // 7 days
+            })
+          );
+
+          // Hide banner after 3 seconds
+          window.setTimeout(function () {
+            if (bannerElement && bannerElement.parentNode) {
+              bannerElement.classList.add('is-leaving');
+              window.setTimeout(function () {
+                if (bannerElement && bannerElement.parentNode) bannerElement.remove();
+                bannerElement = null;
+              }, 220);
+            }
+          }, 3000);
+        } else {
+          // Still blocked: show error message
+          messageElement.textContent =
+            'Still detecting an ad blocker. Please disable it for quizthespire.com and refresh the page, then click again.';
+          whitelistButton.textContent = verificationAttempts > 1 ? 'Check again' : 'Try again';
+          whitelistButton.disabled = false;
+          // Do NOT set localStorage — user needs to actually disable it
+        }
+      })
+      .catch(function (err) {
+        console.error('Whitelist verification error:', err);
+        whitelistButton.textContent = 'Check again';
         whitelistButton.disabled = false;
-        // Do NOT set localStorage — user needs to actually disable it
-      }
-    }).catch(function (err) {
-      console.error('Whitelist verification error:', err);
-      whitelistButton.textContent = 'Check again';
-      whitelistButton.disabled = false;
-    });
+      });
   }
 
   // Detection methods
@@ -121,9 +130,10 @@
       window.setTimeout(function () {
         var blocked = false;
         if (bait && bait.parentNode) {
-          blocked = bait.offsetHeight === 0 || 
-                   bait.clientHeight === 0 || 
-                   window.getComputedStyle(bait).display === 'none';
+          blocked =
+            bait.offsetHeight === 0 ||
+            bait.clientHeight === 0 ||
+            window.getComputedStyle(bait).display === 'none';
           bait.remove();
         }
         resolve(blocked);
@@ -134,7 +144,7 @@
   function detectAdblockFallback() {
     return new Promise(function (resolve) {
       var scriptLoaded = !!window.adsbygoogle;
-      
+
       if (!scriptLoaded) {
         var iframeCheckTimeout = window.setTimeout(function () {
           var frames = document.querySelectorAll('iframe');
@@ -165,20 +175,19 @@
         var age = Date.now() - data.timestamp;
         if (age < data.ttl) {
           // Still within TTL, but re-verify in case user re-enabled adblocker
-          Promise.all([
-            detectAdblockBait(),
-            detectAdblockFallback()
-          ]).then(function (results) {
-            var blocked = results[0] || results[1];
-            if (blocked) {
-              // User re-enabled adblocker, show banner again
-              localStorage.removeItem('adblock-dismissed');
-              showAdblockNotice();
-            }
-            // else: still genuinely whitelisted, stay quiet
-          }).catch(function () {
-            // Detection error, stay quiet
-          });
+          Promise.all([detectAdblockBait(), detectAdblockFallback()])
+            .then(function (results) {
+              var blocked = results[0] || results[1];
+              if (blocked) {
+                // User re-enabled adblocker, show banner again
+                localStorage.removeItem('adblock-dismissed');
+                showAdblockNotice();
+              }
+              // else: still genuinely whitelisted, stay quiet
+            })
+            .catch(function () {
+              // Detection error, stay quiet
+            });
           return;
         }
       } catch (e) {
@@ -188,17 +197,16 @@
     }
 
     // No valid dismissal, run full detection
-    Promise.all([
-      detectAdblockBait(),
-      detectAdblockFallback()
-    ]).then(function (results) {
-      var blocked = results[0] || results[1];
-      if (blocked) {
-        showAdblockNotice();
-      }
-    }).catch(function () {
-      // If detection fails, assume not blocked (false positive prevention)
-    });
+    Promise.all([detectAdblockBait(), detectAdblockFallback()])
+      .then(function (results) {
+        var blocked = results[0] || results[1];
+        if (blocked) {
+          showAdblockNotice();
+        }
+      })
+      .catch(function () {
+        // If detection fails, assume not blocked (false positive prevention)
+      });
   }
 
   if (document.readyState === 'loading') {

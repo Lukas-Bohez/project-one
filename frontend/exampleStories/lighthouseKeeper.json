@@ -155,7 +155,10 @@
           "text": "I am the keeper now. I will turn the light.",
           "target": "eternal_duty",
           "conditions": [],
-          "effects": [{ "variable": "sanity", "operation": "subtract", "value": 20 }, { "variable": "canLeave", "operation": "set", "value": false }]
+          "effects": [
+            { "variable": "sanity", "operation": "subtract", "value": 20 },
+            { "variable": "canLeave", "operation": "set", "value": false }
+          ]
         },
         {
           "id": "smash_light",

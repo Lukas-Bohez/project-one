@@ -5,28 +5,35 @@
 ### Fixed Issues
 
 #### 1. **File System Access API Error**
+
 **Problem:** `window.showDirectoryPicker is not a function`
+
 - The File System Access API is not available in extension popups
 - Browser compatibility issues
 
 **Solution:**
+
 - Replaced `showDirectoryPicker()` with `<input webkitdirectory>`
 - Added dedicated folder input element in HTML
 - Better browser compatibility with Chrome/Edge/Opera
 
 #### 2. **Startup Auto-Play Issue**
+
 **Problem:** First song wouldn't play on startup, requiring manual track selection
 
 **Solution:**
+
 - Removed auto-play on initialization
 - Set `isPlaying = false` and `currentIndex = 0` after loading tracks
 - Improved UI messaging: "Click a track to play" instead of auto-playing
 - Users now have full control over when playback starts
 
 #### 3. **File/Folder Loading Issues**
+
 **Problem:** File and folder loading was buggy and unreliable
 
 **Solution:**
+
 - Improved `loadFiles()` function with:
   - Better error handling and logging
   - Alphabetical sorting of loaded files
@@ -63,11 +70,13 @@
 ### Technical Changes
 
 **popup.html**
+
 - Replaced folder button with `<input type="file" webkitdirectory>`
 - Added labels for file and folder inputs
 - Improved layout and spacing
 
 **popup.js**
+
 - Removed `loadFolder()` async function (replaced with input handler)
 - Enhanced `loadFiles()` with sorting and better error handling
 - Improved `updateUI()` with better state checking and messages
@@ -77,6 +86,7 @@
 - Removed unused `directoryHandle` references
 
 **README.md**
+
 - Updated installation instructions
 - Added folder selection documentation
 - Listed all recent fixes
@@ -85,12 +95,14 @@
 ### Browser Compatibility
 
 **Works In:**
+
 - ✅ Chrome 86+
 - ✅ Edge 86+
 - ✅ Opera 72+
 - ✅ Brave 1.17+
 
 **Folder Selection Support:**
+
 - Uses `webkitdirectory` attribute (widely supported)
 - Fallback to individual file selection if needed
 
@@ -134,4 +146,3 @@
 - Added promisified runtime messaging
 - Updated extension icons
 - Fixed data key mismatches
-

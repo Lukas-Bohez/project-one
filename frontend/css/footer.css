@@ -1,119 +1,123 @@
 /* Common Footer Styles */
 .c-footer {
-    text-align: center;
-    padding: 2.5rem 1.5rem 2.75rem;
-    margin-top: auto; /* Pushes footer to bottom when content is short */
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
-    background: linear-gradient(180deg, rgba(248, 249, 252, 0.92), rgba(255, 255, 255, 0.98));
-    color: #1f2937;
-    flex-shrink: 0;
+  text-align: center;
+  padding: 2.5rem 1.5rem 2.75rem;
+  margin-top: auto; /* Pushes footer to bottom when content is short */
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  background: linear-gradient(180deg, rgba(248, 249, 252, 0.92), rgba(255, 255, 255, 0.98));
+  color: #1f2937;
+  flex-shrink: 0;
 }
 
 .c-footer__about {
-    font-size: 0.88rem;
-    color: #4b5563;
-    margin: 0 0 0.75rem;
-    line-height: 1.5;
+  font-size: 0.88rem;
+  color: #4b5563;
+  margin: 0 0 0.75rem;
+  line-height: 1.5;
 }
 
 .c-footer__about strong {
-    color: #1f2937;
+  color: #1f2937;
 }
 
 .c-footer__sep {
-    color: #9ca3af;
-    user-select: none;
+  color: #9ca3af;
+  user-select: none;
 }
 
 .c-footer__text {
-    margin: 6px 0;
-    font-size: 0.95rem;
-    line-height: 1.5;
+  margin: 6px 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 .c-footer__links {
-    margin-top: 12px;
-    font-size: 0.9rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: center;
+  margin-top: 12px;
+  font-size: 0.9rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
 }
 
 .c-footer__link {
-    margin: 0;
-    color: #1d4ed8;
-    text-decoration: none;
-    font-weight: 600;
-    padding: 4px 8px;
-    border-radius: 6px;
-    transition: background 0.2s ease, color 0.2s ease;
+  margin: 0;
+  color: #1d4ed8;
+  text-decoration: none;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
 }
 
 .c-footer__link:hover {
-    background: rgba(37, 99, 235, 0.12);
-    color: #1e40af;
+  background: rgba(37, 99, 235, 0.12);
+  color: #1e40af;
 }
 
 /* Dark theme support */
-[data-theme="dark"] .c-footer,
-body[data-theme="dark"] .c-footer,
+[data-theme='dark'] .c-footer,
+body[data-theme='dark'] .c-footer,
 .theme-dark .c-footer {
-    border-top-color: rgba(255, 255, 255, 0.08);
-    background: linear-gradient(180deg, rgba(17, 24, 39, 0.9), rgba(15, 23, 42, 0.98));
-    color: #e5e7eb;
+  border-top-color: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0.9), rgba(15, 23, 42, 0.98));
+  color: #e5e7eb;
 }
 
-[data-theme="dark"] .c-footer__about,
-body[data-theme="dark"] .c-footer__about,
+[data-theme='dark'] .c-footer__about,
+body[data-theme='dark'] .c-footer__about,
 .theme-dark .c-footer__about {
-    color: #9ca3af;
+  color: #9ca3af;
 }
 
-[data-theme="dark"] .c-footer__about strong,
-body[data-theme="dark"] .c-footer__about strong,
+[data-theme='dark'] .c-footer__about strong,
+body[data-theme='dark'] .c-footer__about strong,
 .theme-dark .c-footer__about strong {
-    color: #d1d5db;
+  color: #d1d5db;
 }
 
-[data-theme="dark"] .c-footer__sep,
-body[data-theme="dark"] .c-footer__sep,
+[data-theme='dark'] .c-footer__sep,
+body[data-theme='dark'] .c-footer__sep,
 .theme-dark .c-footer__sep {
-    color: #4b5563;
+  color: #4b5563;
 }
 
-[data-theme="dark"] .c-footer__link,
-body[data-theme="dark"] .c-footer__link,
+[data-theme='dark'] .c-footer__link,
+body[data-theme='dark'] .c-footer__link,
 .theme-dark .c-footer__link {
-    color: #93c5fd;
+  color: #93c5fd;
 }
 
-[data-theme="dark"] .c-footer__link:hover,
-body[data-theme="dark"] .c-footer__link:hover,
+[data-theme='dark'] .c-footer__link:hover,
+body[data-theme='dark'] .c-footer__link:hover,
 .theme-dark .c-footer__link:hover {
-    background: rgba(59, 130, 246, 0.18);
-    color: #bfdbfe;
+  background: rgba(59, 130, 246, 0.18);
+  color: #bfdbfe;
 }
 
 /* Make the Buy Me a Coffee block prominent at the top of the footer */
-.c-footer__bmc{
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    padding-bottom:24px; /* extra bottom padding to give the button visual breathing room */
-    margin-bottom:8px;
+.c-footer__bmc {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 24px; /* extra bottom padding to give the button visual breathing room */
+  margin-bottom: 8px;
 }
 
 /* If the widget renders an iframe or button, give it a subtle card treatment */
 .c-footer__bmc iframe,
 .c-footer__bmc .bmc-button,
 .c-footer__bmc > * {
-    border-radius:10px;
-    box-shadow:0 8px 24px rgba(0,0,0,0.12);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .c-footer__bmc iframe,
-    .c-footer__bmc .bmc-button,
-    .c-footer__bmc > * { transition: none !important; }
+  .c-footer__bmc iframe,
+  .c-footer__bmc .bmc-button,
+  .c-footer__bmc > * {
+    transition: none !important;
+  }
 }

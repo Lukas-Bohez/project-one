@@ -1,62 +1,76 @@
 // script.js - Improved privacy modal implementation
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Check if user agent is a crawler/bot
-    const isCrawler = () => {
-        const userAgent = navigator.userAgent.toLowerCase();
-        const bots = [
-            'googlebot', 'bingbot', 'slurp', 'duckduckbot', 'baiduspider',
-            'yandexbot', 'sogou', 'exabot', 'facebookexternalhit', 'twitterbot',
-            'rogerbot', 'linkedinbot', 'embedly', 'quora link preview',
-            'showyoubot', 'outbrain', 'pinterest', 'developers.google.com/+/web/snippet'
-        ];
-        return bots.some(bot => userAgent.includes(bot));
-    };
+  // Check if user agent is a crawler/bot
+  const isCrawler = () => {
+    const userAgent = navigator.userAgent.toLowerCase();
+    const bots = [
+      'googlebot',
+      'bingbot',
+      'slurp',
+      'duckduckbot',
+      'baiduspider',
+      'yandexbot',
+      'sogou',
+      'exabot',
+      'facebookexternalhit',
+      'twitterbot',
+      'rogerbot',
+      'linkedinbot',
+      'embedly',
+      'quora link preview',
+      'showyoubot',
+      'outbrain',
+      'pinterest',
+      'developers.google.com/+/web/snippet',
+    ];
+    return bots.some((bot) => userAgent.includes(bot));
+  };
 
-    // Skip privacy modal for crawlers
-    if (isCrawler()) {
-        console.log('Crawler detected - skipping privacy modal');
-        return;
+  // Skip privacy modal for crawlers
+  if (isCrawler()) {
+    console.log('Crawler detected - skipping privacy modal');
+    return;
+  }
+
+  // Function to check consent validity
+  const isConsentValid = () => {
+    const consentData = localStorage.getItem('privacyConsent');
+    if (!consentData) {
+      return false;
+    }
+    try {
+      const { timestamp, accepted } = JSON.parse(consentData);
+      const now = new Date().getTime();
+      const oneYear = 365 * 24 * 60 * 60 * 1000; // 1 year in milliseconds
+
+      if (accepted && now - timestamp < oneYear) {
+        return true;
+      }
+    } catch (e) {
+      console.error('Error parsing privacyConsent from localStorage:', e);
+      localStorage.removeItem('privacyConsent'); // Remove invalid data
+    }
+    return false;
+  };
+
+  // Check if user has already given consent
+  if (!isConsentValid() && window.location.pathname.indexOf('/pages/privacy') === -1) {
+    // Use setTimeout to allow page content to load first
+    setTimeout(showPrivacyModal, 1000);
+  }
+
+  // Function to show privacy modal
+  function showPrivacyModal() {
+    // Don't show if already visible
+    if (document.getElementById('privacy-modal-overlay')) {
+      return;
     }
 
-    // Function to check consent validity
-    const isConsentValid = () => {
-        const consentData = localStorage.getItem('privacyConsent');
-        if (!consentData) {
-            return false;
-        }
-        try {
-            const { timestamp, accepted } = JSON.parse(consentData);
-            const now = new Date().getTime();
-            const oneYear = 365 * 24 * 60 * 60 * 1000; // 1 year in milliseconds
-
-            if (accepted && (now - timestamp < oneYear)) {
-                return true;
-            }
-        } catch (e) {
-            console.error("Error parsing privacyConsent from localStorage:", e);
-            localStorage.removeItem('privacyConsent'); // Remove invalid data
-        }
-        return false;
-    };
-
-    // Check if user has already given consent
-    if (!isConsentValid() && window.location.pathname.indexOf('/pages/privacy') === -1) {
-        // Use setTimeout to allow page content to load first
-        setTimeout(showPrivacyModal, 1000);
-    }
-
-    // Function to show privacy modal
-    function showPrivacyModal() {
-        // Don't show if already visible
-        if (document.getElementById('privacy-modal-overlay')) {
-            return;
-        }
-
-        // Create modal overlay with improved styling
-        const modalOverlay = document.createElement('div');
-        modalOverlay.id = 'privacy-modal-overlay';
-        modalOverlay.style.cssText = `
+    // Create modal overlay with improved styling
+    const modalOverlay = document.createElement('div');
+    modalOverlay.id = 'privacy-modal-overlay';
+    modalOverlay.style.cssText = `
             position: fixed;
             top: 0;
             left: 0;
@@ -70,10 +84,10 @@ document.addEventListener('DOMContentLoaded', () => {
             animation: fadeIn 0.3s ease;
         `;
 
-        // Create modal container with larger size for desktop
-        const modalContainer = document.createElement('div');
-        modalContainer.id = 'privacy-modal-container';
-        modalContainer.style.cssText = `
+    // Create modal container with larger size for desktop
+    const modalContainer = document.createElement('div');
+    modalContainer.id = 'privacy-modal-container';
+    modalContainer.style.cssText = `
             background-color: white;
             width: 90%;
             max-width: 900px;
@@ -86,10 +100,10 @@ document.addEventListener('DOMContentLoaded', () => {
             animation: scaleIn 0.3s ease;
         `;
 
-        // Create modal header
-        const modalHeader = document.createElement('div');
-        // Default header styles, will be overridden for dark mode if needed
-        modalHeader.style.cssText = `
+    // Create modal header
+    const modalHeader = document.createElement('div');
+    // Default header styles, will be overridden for dark mode if needed
+    modalHeader.style.cssText = `
             padding: 20px;
             background: #f8f9fa;
             border-bottom: 1px solid #e9ecef;
@@ -98,34 +112,34 @@ document.addEventListener('DOMContentLoaded', () => {
             align-items: center;
             flex-shrink: 0;
         `;
-        
-        const modalTitle = document.createElement('h2');
-        modalTitle.textContent = 'Privacy Settings';
-        modalTitle.style.cssText = `
+
+    const modalTitle = document.createElement('h2');
+    modalTitle.textContent = 'Privacy Settings';
+    modalTitle.style.cssText = `
             margin: 0;
             font-size: 1.8rem;
             color: #333;
             font-weight: 600;
         `;
-        
-        modalHeader.appendChild(modalTitle);
-        modalContainer.appendChild(modalHeader);
 
-        // Create content container with inline privacy content
-        const contentContainer = document.createElement('div');
-        contentContainer.style.cssText = `
+    modalHeader.appendChild(modalTitle);
+    modalContainer.appendChild(modalHeader);
+
+    // Create content container with inline privacy content
+    const contentContainer = document.createElement('div');
+    contentContainer.style.cssText = `
             flex: 1;
             overflow: hidden;
             position: relative;
             min-height: 0;
         `;
-        
-        // Show inline privacy content directly
-        showInlinePrivacyContent(contentContainer);
-        
-        // Create modal footer with no buttons (they're now in content)
-        const modalFooter = document.createElement('div');
-        modalFooter.style.cssText = `
+
+    // Show inline privacy content directly
+    showInlinePrivacyContent(contentContainer);
+
+    // Create modal footer with no buttons (they're now in content)
+    const modalFooter = document.createElement('div');
+    modalFooter.style.cssText = `
             padding: 20px;
             background: #f8f9fa;
             border-top: 1px solid #e9ecef;
@@ -133,43 +147,43 @@ document.addEventListener('DOMContentLoaded', () => {
             justify-content: flex-end;
             flex-shrink: 0;
         `;
-        
-        // Add elements to DOM
-        modalContainer.appendChild(contentContainer);
-        modalContainer.appendChild(modalFooter);
-        modalOverlay.appendChild(modalContainer);
-        document.body.appendChild(modalOverlay);
-        
-        // Prevent background scrolling more effectively
-        document.body.style.overflow = 'hidden';
-        document.documentElement.style.overflow = 'hidden';
 
-        // Add keydown event listener for ESC key (disabled)
-        const handleKeydown = (e) => {
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                // Disable ESC key to close modal
-            }
-        };
-        document.addEventListener('keydown', handleKeydown);
-        
-        // Store reference to remove later
-        modalOverlay._keydownHandler = handleKeydown;
+    // Add elements to DOM
+    modalContainer.appendChild(contentContainer);
+    modalContainer.appendChild(modalFooter);
+    modalOverlay.appendChild(modalContainer);
+    document.body.appendChild(modalOverlay);
 
-        // Disable click outside to close
-        modalOverlay.onclick = (e) => {
-            // Prevent closing when clicking outside the modal
-            if (e.target === modalOverlay) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        };
+    // Prevent background scrolling more effectively
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
 
-        // No iframe message handling needed since we're using inline content
+    // Add keydown event listener for ESC key (disabled)
+    const handleKeydown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        // Disable ESC key to close modal
+      }
+    };
+    document.addEventListener('keydown', handleKeydown);
 
-        // Add CSS animations
-        const style = document.createElement('style');
-        style.textContent = `
+    // Store reference to remove later
+    modalOverlay._keydownHandler = handleKeydown;
+
+    // Disable click outside to close
+    modalOverlay.onclick = (e) => {
+      // Prevent closing when clicking outside the modal
+      if (e.target === modalOverlay) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    // No iframe message handling needed since we're using inline content
+
+    // Add CSS animations
+    const style = document.createElement('style');
+    style.textContent = `
             @keyframes fadeIn {
                 from { opacity: 0; }
                 to { opacity: 1; }
@@ -203,30 +217,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 background: #555;
             }
         `;
-        document.head.appendChild(style);
-        modalOverlay._style = style;
+    document.head.appendChild(style);
+    modalOverlay._style = style;
 
-        // If current page/theme indicates dark mode, apply dark inline styles to modal elements
-        try {
-            const current = (document.documentElement.getAttribute('data-theme') === 'dark' || document.body.classList.contains('theme-dark')) ? 'dark' : null;
-            const saved = current || localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-            if (saved === 'dark') {
-                modalContainer.style.backgroundColor = '#0b1220';
-                modalContainer.style.boxShadow = '0 10px 40px rgba(0,0,0,0.6)';
-                modalHeader.style.background = '#071029';
-                modalHeader.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
-                modalTitle.style.color = '#e6eef9';
-                modalFooter.style.background = '#071029';
-                modalFooter.style.borderTop = '1px solid rgba(255,255,255,0.04)';
-            }
-        } catch (e) {
-            // ignore
-        }
+    // If current page/theme indicates dark mode, apply dark inline styles to modal elements
+    try {
+      const current =
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('theme-dark')
+          ? 'dark'
+          : null;
+      const saved =
+        current ||
+        localStorage.getItem('theme') ||
+        (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light');
+      if (saved === 'dark') {
+        modalContainer.style.backgroundColor = '#0b1220';
+        modalContainer.style.boxShadow = '0 10px 40px rgba(0,0,0,0.6)';
+        modalHeader.style.background = '#071029';
+        modalHeader.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+        modalTitle.style.color = '#e6eef9';
+        modalFooter.style.background = '#071029';
+        modalFooter.style.borderTop = '1px solid rgba(255,255,255,0.04)';
+      }
+    } catch (e) {
+      // ignore
     }
+  }
 
-    // Fallback function to show inline content if iframe fails
-    function showInlinePrivacyContent(container) {
-        container.innerHTML = `
+  // Fallback function to show inline content if iframe fails
+  function showInlinePrivacyContent(container) {
+    container.innerHTML = `
             <div style="padding: 20px; overflow-y: auto; height: 100%; background: var(--bg-primary); color: var(--text-primary);">
                 <h2 style="color: var(--primary-color); margin-bottom: 1rem;">Privacy Policy</h2>
                 <p style="margin-bottom: 2rem; line-height: 1.6;">
@@ -341,93 +364,97 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
         `;
-        
-        // Add event listeners for both buttons
-        setTimeout(() => {
-            const acceptBtn = container.querySelector('.accept-privacy-btn');
-            const rejectBtn = container.querySelector('.reject-privacy-btn');
-            
-            if (acceptBtn) {
-                // Force the green styling for accept button
-                acceptBtn.style.setProperty('background-color', '#2e7d32', 'important');
-                acceptBtn.style.setProperty('color', 'white', 'important');
-                acceptBtn.style.setProperty('border', '1px solid #2e7d32', 'important');
-                acceptBtn.style.setProperty('box-shadow', '0 2px 4px rgba(46, 139, 50, 0.3)', 'important');
-                acceptBtn.style.setProperty('font-weight', '600', 'important');
-                
-                acceptBtn.addEventListener('click', () => {
-                    const consentData = {
-                        accepted: true,
-                        timestamp: new Date().getTime()
-                    };
-                    localStorage.setItem('privacyConsent', JSON.stringify(consentData));
-                    try {
-                        // Google Consent Mode v2 - grant consent
-                        window.dataLayer = window.dataLayer || [];
-                        const gtag = (...args) => window.dataLayer.push(...args);
-                        gtag('consent','update',{
-                            'ad_storage': 'granted',
-                            'analytics_storage': 'granted',
-                            'ad_user_data': 'granted',
-                            'ad_personalization': 'granted'
-                        });
-                        // Server-side GA4 Measurement Protocol event (secret is not exposed here)
-                        fetch('/api/v1/analytics/track', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({
-                                event_name: 'privacy_consent_granted',
-                                params: {source: 'frontend', consent: true}
-                            }),
-                        }).catch(() => {
-                            console.warn('GA4 MP track event failed (grant)');
-                        });
-                    } catch(e) { /* noop */ }
-                    
-                    // Remove modal
-                    removePrivacyModal();
-                });
-            }
-            
-            if (rejectBtn) {
-                // Force the red styling for reject button
-                rejectBtn.style.setProperty('background-color', '#dc3545', 'important');
-                rejectBtn.style.setProperty('color', 'white', 'important');
-                rejectBtn.style.setProperty('border', '1px solid #dc3545', 'important');
-                rejectBtn.style.setProperty('box-shadow', '0 2px 4px rgba(220, 53, 69, 0.3)', 'important');
-                rejectBtn.style.setProperty('font-weight', '600', 'important');
-                
-                rejectBtn.addEventListener('click', () => {
-                    const consentData = {
-                        accepted: false,
-                        timestamp: new Date().getTime()
-                    };
-                    localStorage.setItem('privacyConsent', JSON.stringify(consentData));
-                    try {
-                        // Google Consent Mode v2 - deny consent
-                        window.dataLayer = window.dataLayer || [];
-                        const gtag = (...args) => window.dataLayer.push(...args);
-                        gtag('consent','update',{
-                            'ad_storage': 'denied',
-                            'analytics_storage': 'denied',
-                            'ad_user_data': 'denied',
-                            'ad_personalization': 'denied'
-                        });
-                        // Server-side GA4 Measurement Protocol event (secret is not exposed here)
-                        fetch('/api/v1/analytics/track', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({
-                                event_name: 'privacy_consent_denied',
-                                params: {source: 'frontend', consent: false}
-                            }),
-                        }).catch(() => {
-                            console.warn('GA4 MP track event failed (deny)');
-                        });
-                    } catch(e) { /* noop */ }
-                    
-                    // Show reconsideration message
-                    container.innerHTML = `
+
+    // Add event listeners for both buttons
+    setTimeout(() => {
+      const acceptBtn = container.querySelector('.accept-privacy-btn');
+      const rejectBtn = container.querySelector('.reject-privacy-btn');
+
+      if (acceptBtn) {
+        // Force the green styling for accept button
+        acceptBtn.style.setProperty('background-color', '#2e7d32', 'important');
+        acceptBtn.style.setProperty('color', 'white', 'important');
+        acceptBtn.style.setProperty('border', '1px solid #2e7d32', 'important');
+        acceptBtn.style.setProperty('box-shadow', '0 2px 4px rgba(46, 139, 50, 0.3)', 'important');
+        acceptBtn.style.setProperty('font-weight', '600', 'important');
+
+        acceptBtn.addEventListener('click', () => {
+          const consentData = {
+            accepted: true,
+            timestamp: new Date().getTime(),
+          };
+          localStorage.setItem('privacyConsent', JSON.stringify(consentData));
+          try {
+            // Google Consent Mode v2 - grant consent
+            window.dataLayer = window.dataLayer || [];
+            const gtag = (...args) => window.dataLayer.push(...args);
+            gtag('consent', 'update', {
+              ad_storage: 'granted',
+              analytics_storage: 'granted',
+              ad_user_data: 'granted',
+              ad_personalization: 'granted',
+            });
+            // Server-side GA4 Measurement Protocol event (secret is not exposed here)
+            fetch('/api/v1/analytics/track', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                event_name: 'privacy_consent_granted',
+                params: { source: 'frontend', consent: true },
+              }),
+            }).catch(() => {
+              console.warn('GA4 MP track event failed (grant)');
+            });
+          } catch (e) {
+            /* noop */
+          }
+
+          // Remove modal
+          removePrivacyModal();
+        });
+      }
+
+      if (rejectBtn) {
+        // Force the red styling for reject button
+        rejectBtn.style.setProperty('background-color', '#dc3545', 'important');
+        rejectBtn.style.setProperty('color', 'white', 'important');
+        rejectBtn.style.setProperty('border', '1px solid #dc3545', 'important');
+        rejectBtn.style.setProperty('box-shadow', '0 2px 4px rgba(220, 53, 69, 0.3)', 'important');
+        rejectBtn.style.setProperty('font-weight', '600', 'important');
+
+        rejectBtn.addEventListener('click', () => {
+          const consentData = {
+            accepted: false,
+            timestamp: new Date().getTime(),
+          };
+          localStorage.setItem('privacyConsent', JSON.stringify(consentData));
+          try {
+            // Google Consent Mode v2 - deny consent
+            window.dataLayer = window.dataLayer || [];
+            const gtag = (...args) => window.dataLayer.push(...args);
+            gtag('consent', 'update', {
+              ad_storage: 'denied',
+              analytics_storage: 'denied',
+              ad_user_data: 'denied',
+              ad_personalization: 'denied',
+            });
+            // Server-side GA4 Measurement Protocol event (secret is not exposed here)
+            fetch('/api/v1/analytics/track', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                event_name: 'privacy_consent_denied',
+                params: { source: 'frontend', consent: false },
+              }),
+            }).catch(() => {
+              console.warn('GA4 MP track event failed (deny)');
+            });
+          } catch (e) {
+            /* noop */
+          }
+
+          // Show reconsideration message
+          container.innerHTML = `
                         <div style="padding: 40px 20px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: var(--bg-primary); color: var(--text-primary);">
                             <h3 style="color: var(--primary-color); margin-bottom: 1rem;">Privacy Preferences Saved</h3>
                             <p style="margin-bottom: 2rem; line-height: 1.6; max-width: 400px;">
@@ -436,33 +463,33 @@ document.addEventListener('DOMContentLoaded', () => {
                             <button onclick="window.location.reload()" style="padding: 12px 24px; background-color: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem;">Refresh Page</button>
                         </div>
                     `;
-                });
-            }
-        }, 100);
-    }
+        });
+      }
+    }, 100);
+  }
 
-    // Remove modal and all event listeners
-    function removePrivacyModal() {
-        const modal = document.getElementById('privacy-modal-overlay');
-        if (modal) {
-            // Remove event listeners
-            if (modal._keydownHandler) {
-                document.removeEventListener('keydown', modal._keydownHandler);
-            }
-            if (modal._messageHandler) {
-                window.removeEventListener('message', modal._messageHandler);
-            }
-            if (modal._style) {
-                document.head.removeChild(modal._style);
-            }
-            
-            // Add fade out animation
-            modal.style.animation = 'fadeOut 0.3s ease';
-            modal.firstChild.style.animation = 'scaleOut 0.3s ease';
-            
-            // Add fadeOut animation
-            const style = document.createElement('style');
-            style.textContent = `
+  // Remove modal and all event listeners
+  function removePrivacyModal() {
+    const modal = document.getElementById('privacy-modal-overlay');
+    if (modal) {
+      // Remove event listeners
+      if (modal._keydownHandler) {
+        document.removeEventListener('keydown', modal._keydownHandler);
+      }
+      if (modal._messageHandler) {
+        window.removeEventListener('message', modal._messageHandler);
+      }
+      if (modal._style) {
+        document.head.removeChild(modal._style);
+      }
+
+      // Add fade out animation
+      modal.style.animation = 'fadeOut 0.3s ease';
+      modal.firstChild.style.animation = 'scaleOut 0.3s ease';
+
+      // Add fadeOut animation
+      const style = document.createElement('style');
+      style.textContent = `
                 @keyframes fadeOut {
                     from { opacity: 1; }
                     to { opacity: 0; }
@@ -472,16 +499,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     to { transform: scale(0.95); opacity: 0; }
                 }
             `;
-            document.head.appendChild(style);
-            
-            // Remove after animation completes
-            setTimeout(() => {
-                modal.remove();
-                // Restore scrolling on both body and html
-                document.body.style.overflow = '';
-                document.documentElement.style.overflow = '';
-                document.head.removeChild(style);
-            }, 300);
-        }
+      document.head.appendChild(style);
+
+      // Remove after animation completes
+      setTimeout(() => {
+        modal.remove();
+        // Restore scrolling on both body and html
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+        document.head.removeChild(style);
+      }, 300);
     }
+  }
 });
