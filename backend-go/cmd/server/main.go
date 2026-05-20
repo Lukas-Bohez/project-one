@@ -24,10 +24,12 @@ func main() {
 	}
 
 	var questionRepo *repository.QuestionRepository
+	var answerRepo *repository.AnswerRepository
 	var themeRepo *repository.ThemeRepository
 	var userRepo *repository.UserRepository
 	if mysqlDB != nil {
 		questionRepo = repository.NewQuestionRepository(mysqlDB.DB)
+		answerRepo = repository.NewAnswerRepository(mysqlDB.DB)
 		themeRepo = repository.NewThemeRepository(mysqlDB.DB)
 		userRepo = repository.NewUserRepository(mysqlDB.DB)
 	}
@@ -40,6 +42,9 @@ func main() {
 	}
 	if questionRepo != nil {
 		mux.Handle("/api/v1/questions", handlers.QuestionHandler{Repo: questionRepo})
+	}
+	if answerRepo != nil {
+		mux.Handle("/api/v1/answers", handlers.AnswerHandler{Repo: answerRepo})
 	}
 	if themeRepo != nil {
 		mux.Handle("/api/v1/themes", handlers.ThemeHandler{Repo: themeRepo})
