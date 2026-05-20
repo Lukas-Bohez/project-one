@@ -9,6 +9,7 @@ import (
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/api/handlers"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/config"
 	"github.com/Lukas-Bohez/project-one/backend-go/internal/db"
+	"github.com/Lukas-Bohez/project-one/backend-go/internal/repository"
 )
 
 func main() {
@@ -22,11 +23,24 @@ func main() {
 		defer mysqlDB.Close()
 	}
 
+	var questionRepo *repository.QuestionRepository
+	var themeRepo *repository.ThemeRepository
+	if mysqlDB != nil {
+		questionRepo = repository.NewQuestionRepository(mysqlDB.DB)
+		themeRepo = repository.NewThemeRepository(mysqlDB.DB)
+	}
+
 	mux := http.NewServeMux()
 	if mysqlDB != nil {
 		mux.Handle("/healthz", handlers.HealthHandler{DB: mysqlDB.DB})
 	} else {
 		mux.Handle("/healthz", handlers.HealthHandler{})
+	}
+	if questionRepo != nil {
+		mux.Handle("/api/v1/questions", handlers.QuestionHandler{Repo: questionRepo})
+	}
+	if themeRepo != nil {
+		mux.Handle("/api/v1/themes", handlers.ThemeHandler{Repo: themeRepo})
 	}
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

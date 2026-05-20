@@ -9,6 +9,13 @@ This directory contains the first Go backend slice for the `project-one` migrati
 - `internal/db`: MySQL connection helpers
 - `internal/api/handlers`: basic HTTP handlers
 - `internal/models`: shared data structs that mirror the Python backend models
+- `internal/repository`: MySQL-backed read repositories for quiz data
+
+## Endpoints
+
+- `GET /healthz` - server and database health check
+- `GET /api/v1/questions` - list quiz questions, optional `active_only=true` and `limit=<n>`
+- `GET /api/v1/themes` - list quiz themes, optional `active_only=true`
 
 ## Run
 
