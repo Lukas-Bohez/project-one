@@ -16,7 +16,14 @@ func NewAnswerRepository(db *sql.DB) *AnswerRepository {
 	return &AnswerRepository{db: db}
 }
 
-func (r *AnswerRepository) ListByQuestionID(ctx context.Context, questionID int64, limit, offset int) ([]models.Answer, error) {
+func (r *AnswerRepository) ListByQuestionID(ctx context.Context, questionID int64, limit, offset int) ([]models.Answer, int, error) {
+	// Get total matching rows for pagination metadata
+	const countQuery = `SELECT COUNT(1) FROM answers WHERE questionId = ?`
+	var total int
+	if err := r.db.QueryRowContext(ctx, countQuery, questionID).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count answers: %w", err)
+	}
+
 	const query = `
 		SELECT id, questionId, answer_text, is_correct, created_at, updated_at
 		FROM answers
@@ -27,7 +34,7 @@ func (r *AnswerRepository) ListByQuestionID(ctx context.Context, questionID int6
 
 	rows, err := r.db.QueryContext(ctx, query, questionID, limit, offset)
 	if err != nil {
-		return nil, fmt.Errorf("list answers: %w", err)
+		return nil, 0, fmt.Errorf("list answers: %w", err)
 	}
 	defer rows.Close()
 
@@ -35,15 +42,15 @@ func (r *AnswerRepository) ListByQuestionID(ctx context.Context, questionID int6
 	for rows.Next() {
 		item, err := scanAnswer(rows)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		answers = append(answers, item)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate answers: %w", err)
+		return nil, 0, fmt.Errorf("iterate answers: %w", err)
 	}
 
-	return answers, nil
+	return answers, total, nil
 }
 
 func (r *AnswerRepository) GetByID(ctx context.Context, answerID int64) (*models.Answer, error) {

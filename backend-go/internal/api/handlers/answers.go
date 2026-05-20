@@ -47,7 +47,7 @@ func (h AnswerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	answers, err := h.Repo.ListByQuestionID(r.Context(), questionID, limit, offset)
+	answers, total, err := h.Repo.ListByQuestionID(r.Context(), questionID, limit, offset)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -56,6 +56,7 @@ func (h AnswerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]any{
 		"count":   len(answers),
+		"total":   total,
 		"answers": answers,
 	})
 }

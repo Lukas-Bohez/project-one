@@ -32,6 +32,8 @@ Fetch single answer by id:
 ```bash
 curl "http://localhost:8081/api/v1/answers/456"
 ```
+
+Responses for the list endpoint include `count` (returned items) and `total` (matching items without pagination).
 - `GET /api/v1/themes` - list quiz themes, optional `active_only=true`
 - `GET /api/v1/users` - list public user records, optional `limit=<n>`
 
