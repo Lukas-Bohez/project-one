@@ -1,8 +1,8 @@
 (function HomepageEnhancements() {
   'use strict';
 
-  function initBackToTop() {
-    var button = document.getElementById('back-to-top');
+  const initBackToTop = () => {
+    const button = document.getElementById('back-to-top');
     if (!button) return;
 
     if (!button.querySelector('.back-to-top__ring')) {
@@ -15,28 +15,28 @@
       );
     }
 
-    var ring = button.querySelector('#scroll-ring');
-    Array.prototype.slice.call(button.childNodes).forEach(function (node) {
+    const ring = button.querySelector('#scroll-ring');
+    Array.from(button.childNodes).forEach((node) => {
       if (node.nodeType === Node.TEXT_NODE && node.textContent && node.textContent.trim()) {
         button.removeChild(node);
       }
     });
 
     if (!button.querySelector('.back-to-top__arrow')) {
-      var arrow = document.createElement('span');
+      const arrow = document.createElement('span');
       arrow.className = 'back-to-top__arrow';
       arrow.setAttribute('aria-hidden', 'true');
       arrow.textContent = '↑';
       button.appendChild(arrow);
     }
 
-    button.addEventListener('click', function () {
+    button.addEventListener('click', () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
-    var onScroll = function () {
-      var maxScroll = document.body.scrollHeight - window.innerHeight;
-      var percent = maxScroll > 0 ? Math.min(window.scrollY / maxScroll, 1) : 0;
+    const onScroll = () => {
+      const maxScroll = document.body.scrollHeight - window.innerHeight;
+      const percent = maxScroll > 0 ? Math.min(window.scrollY / maxScroll, 1) : 0;
       if (ring) {
         ring.style.strokeDashoffset = String(100 - percent * 100);
       }
@@ -48,13 +48,13 @@
     onScroll();
   }
 
-  function markCurrentNavLink() {
-    var links = document.querySelectorAll('nav a[href]');
+  const markCurrentNavLink = () => {
+    const links = document.querySelectorAll('nav a[href]');
     if (!links.length) return;
 
-    links.forEach(function (link) {
+    links.forEach((link) => {
       try {
-        var url = new URL(link.href, window.location.origin);
+        const url = new URL(link.href, window.location.origin);
         if (
           url.href === window.location.href ||
           (url.pathname !== '/' && window.location.pathname.startsWith(url.pathname))
@@ -70,7 +70,7 @@
   if (document.readyState === 'loading') {
     document.addEventListener(
       'DOMContentLoaded',
-      function () {
+      () => {
         // Counter animation is handled by stat-counter-animation.js
         initBackToTop();
         markCurrentNavLink();

@@ -73,7 +73,7 @@ body {
 }
 
 html {
-  background-color: #0a0a14;
+  background-color: var(--bg-primary);
   color: var(--text-inverse);
   scroll-behavior: smooth;
 }
@@ -212,6 +212,9 @@ html {
   /* UI helpers */
   --border-color: #d3d7db;
   --accent-color: var(--primary-color);
+  /* Lighter accent used in highlights and links */
+  --brand-accent: #60a5fa;
+  --brand-accent-2: #93c5fd;
   --success-color: #1f8a49;
   --danger-color: #c62828;
   --hover-bg: #f0f3f6;
@@ -576,7 +579,7 @@ body {
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #60a5fa;
+  color: var(--brand-accent);
 }
 
 .ad-self-promo-headline {
@@ -601,7 +604,7 @@ body {
   border: 1px solid rgba(96, 165, 250, 0.28);
   font-size: 0.75rem;
   font-weight: 700;
-  color: #60a5fa;
+  color: var(--brand-accent);
   white-space: nowrap;
 }
 
@@ -778,7 +781,8 @@ body:not([data-theme]) .spire-bg-light {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #3b82f6, #60a5fa, #93c5fd, #60a5fa, #3b82f6);
+  /* Use variables for accent gradient to centralize colors */
+  background: linear-gradient(90deg, var(--primary-color), var(--brand-accent), var(--brand-accent-2), var(--brand-accent), var(--primary-color));
   background-size: 200% 100%;
   animation: headerShimmer 6s ease-in-out infinite;
   z-index: 1;
@@ -1126,7 +1130,7 @@ body:not([data-theme]) .spire-bg-light {
 .theme-dark .bw-btn i,
 [data-theme='dark'] .c-btn--bw i,
 .theme-dark .c-btn--bw i {
-  color: #60a5fa;
+  color: var(--brand-accent);
 }
 
 /* Accent button (blue) for highlighted actions like Industrial Empire) */
@@ -1175,8 +1179,8 @@ body:not([data-theme]) .spire-bg-light {
 [data-theme='dark'] .c-btn--bw:hover,
 .theme-dark .c-btn--bw:hover {
   background: rgba(30, 58, 138, 0.15);
-  border-color: #60a5fa;
-  color: #93c5fd;
+  border-color: var(--brand-accent);
+  color: var(--brand-accent-2);
   box-shadow: 0 4px 14px rgba(96, 165, 250, 0.15);
 }
 
@@ -1200,8 +1204,8 @@ body:not([data-theme]) .spire-bg-light {
 .theme-dark .c-btn--secondary:hover,
 .theme-dark .c-btn--tertiary:hover {
   background-color: rgba(30, 58, 138, 0.15);
-  border-color: #60a5fa;
-  color: #93c5fd;
+  border-color: var(--brand-accent);
+  color: var(--brand-accent-2);
   box-shadow:
     0 0 0 1px rgba(96, 165, 250, 0.4),
     0 4px 12px rgba(96, 165, 250, 0.15);
@@ -3284,7 +3288,7 @@ body:not([data-theme]) .spire-bg-light {
 
 [data-theme='dark'] .c-feature-list__item i,
 .theme-dark .c-feature-list__item i {
-  color: #60a5fa;
+  color: var(--brand-accent);
 }
 
 [data-theme='dark'] .c-feature-list--horizontal .c-feature-list__item i,
@@ -3309,8 +3313,8 @@ body:not([data-theme]) .spire-bg-light {
 [data-theme='dark'] .c-btn--outline,
 .theme-dark .c-btn--outline {
   background: rgba(30, 58, 138, 0.15);
-  color: #93c5fd;
-  border-color: #93c5fd;
+  color: var(--brand-accent-2);
+  border-color: var(--brand-accent-2);
 }
 
 [data-theme='dark'] .c-btn--outline:hover,
@@ -3328,7 +3332,7 @@ body:not([data-theme]) .spire-bg-light {
 
 [data-theme='dark'] .c-modal__title i,
 .theme-dark .c-modal__title i {
-  color: #60a5fa;
+  color: var(--brand-accent);
 }
 
 /* Mobile/performance tweak: make product cards feel less narrow on small phones */
@@ -3498,8 +3502,8 @@ body:not([data-theme]) .spire-bg-light {
 
 [data-theme='dark'] .c-platform-tab.active,
 .theme-dark .c-platform-tab.active {
-  color: #60a5fa;
-  border-bottom-color: #60a5fa;
+  color: var(--brand-accent);
+  border-bottom-color: var(--brand-accent);
 }
 
 /* =============================================

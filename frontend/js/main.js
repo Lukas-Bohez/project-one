@@ -551,20 +551,20 @@ document.addEventListener('DOMContentLoaded', () => {
 /* Force convert as default portfolio sub-tab on load */
 (function () {
   function initPortfolioTabs() {
-    var buttons = document.querySelectorAll('.c-portfolio-tab-btn');
-    var panels = document.querySelectorAll('.c-portfolio-tab-panel');
+    const buttons = document.querySelectorAll('.c-portfolio-tab-btn');
+    const panels = document.querySelectorAll('.c-portfolio-tab-panel');
     if (!buttons.length) return;
-    var activeBtn = document.querySelector('.c-portfolio-tab-btn.active');
+    const activeBtn = document.querySelector('.c-portfolio-tab-btn.active');
     if (!activeBtn || activeBtn.getAttribute('data-tab') === 'overview') {
-      buttons.forEach(function (b) {
+      buttons.forEach((b) => {
         b.classList.remove('active');
       });
-      panels.forEach(function (p) {
+      panels.forEach((p) => {
         p.classList.remove('active');
         p.style.display = 'none';
       });
-      var cb = document.querySelector('.c-portfolio-tab-btn[data-tab="convert"]');
-      var cp = document.querySelector('.c-portfolio-tab-panel[data-tab-content="convert"]');
+      const cb = document.querySelector('.c-portfolio-tab-btn[data-tab="convert"]');
+      const cp = document.querySelector('.c-portfolio-tab-panel[data-tab-content="convert"]');
       if (cb) {
         cb.classList.add('active');
       }
@@ -590,26 +590,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── 1. Portfolio sub-tab switcher ──────────────────────────────────
   function initPortfolioTabs() {
-    var tabBtns = document.querySelectorAll('.c-portfolio-tab-btn[data-tab]');
-    var tabPanels = document.querySelectorAll('.c-portfolio-tab-panel[data-tab-content]');
+    const tabBtns = document.querySelectorAll('.c-portfolio-tab-btn[data-tab]');
+    const tabPanels = document.querySelectorAll('.c-portfolio-tab-panel[data-tab-content]');
 
     if (!tabBtns.length) return;
 
-    tabBtns.forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var target = btn.getAttribute('data-tab');
+    tabBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const target = btn.getAttribute('data-tab');
 
-        tabBtns.forEach(function (b) {
+        tabBtns.forEach((b) => {
           b.classList.remove('active');
         });
-        tabPanels.forEach(function (p) {
+        tabPanels.forEach((p) => {
           p.classList.remove('active');
           p.style.display = 'none';
         });
 
         btn.classList.add('active');
-        var panel = document.querySelector(
-          '.c-portfolio-tab-panel[data-tab-content="' + target + '"]'
+        const panel = document.querySelector(
+          `.c-portfolio-tab-panel[data-tab-content="${target}"]`
         );
         if (panel) {
           panel.classList.add('active');
@@ -619,16 +619,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Ensure initial state is correct (show active panel, hide rest)
-    var anyActive = false;
-    tabBtns.forEach(function (btn) {
-      if (btn.classList.contains('active')) anyActive = true;
-    });
+    const anyActive = Array.from(tabBtns).some((btn) => btn.classList.contains('active'));
     if (!anyActive && tabBtns.length) {
       tabBtns[0].classList.add('active');
     }
-    tabPanels.forEach(function (p) {
-      var tab = p.getAttribute('data-tab-content');
-      var isActive = document.querySelector('.c-portfolio-tab-btn[data-tab="' + tab + '"].active');
+    tabPanels.forEach((p) => {
+      const tab = p.getAttribute('data-tab-content');
+      const isActive = document.querySelector(`.c-portfolio-tab-btn[data-tab="${tab}"].active`);
       if (isActive) {
         p.classList.add('active');
         p.style.display = 'block';
@@ -641,20 +638,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── 2. Top-level section switcher ─────────────────────────────────
   function showSection(name) {
-    var sections = document.querySelectorAll('.section');
-    var navBtns = document.querySelectorAll('.c-nav-btn[data-section]');
+    const sections = document.querySelectorAll('.section');
+    const navBtns = document.querySelectorAll('.c-nav-btn[data-section]');
 
-    sections.forEach(function (s) {
+    sections.forEach((s) => {
       s.classList.remove('active');
     });
-    navBtns.forEach(function (b) {
+    navBtns.forEach((b) => {
       b.classList.remove('active');
     });
 
-    var target = document.getElementById(name + '-section');
+    const target = document.getElementById(`${name}-section`);
     if (target) target.classList.add('active');
 
-    var btn = document.querySelector('.c-nav-btn[data-section="' + name + '"]');
+    const btn = document.querySelector(`.c-nav-btn[data-section="${name}"]`);
     if (btn) btn.classList.add('active');
 
     // Re-sync portfolio tabs whenever portfolio becomes visible
@@ -662,9 +659,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ── 3. Wire up top-nav buttons ────────────────────────────────────
-  var navBtns = document.querySelectorAll('.c-nav-btn[data-section]');
-  navBtns.forEach(function (btn) {
-    btn.addEventListener('click', function () {
+  const navBtns = document.querySelectorAll('.c-nav-btn[data-section]');
+  navBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
       showSection(btn.getAttribute('data-section'));
     });
   });
@@ -673,7 +670,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initPortfolioTabs();
 
   // Show whichever section the active nav button points to
-  var activeNav = document.querySelector('.c-nav-btn[data-section].active');
+  const activeNav = document.querySelector('.c-nav-btn[data-section].active');
   if (activeNav) {
     showSection(activeNav.getAttribute('data-section'));
   } else {

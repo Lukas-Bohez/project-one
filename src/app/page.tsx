@@ -52,12 +52,12 @@ export default function Home() {
               GitHub Sponsors
             </a>
             <a
-              href="https://buymeacoffee.com/LukasBohez"
+              href="https://github.com/sponsors/Lukas-Bohez"
               target="_blank"
               rel="noreferrer noopener"
               className="rounded-md border border-amber-500 px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-100 dark:border-amber-400 dark:text-amber-300 dark:hover:bg-amber-500/20"
             >
-              Buy Me a Coffee
+              GitHub Sponsors
             </a>
           </div>
         </section>
