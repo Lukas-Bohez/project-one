@@ -403,9 +403,9 @@ body {
   margin: 1.4rem auto 0;
   padding: 1rem 1.1rem;
   max-width: 860px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: var(--surface-radius-lg);
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.38), rgba(30, 64, 175, 0.16));
+  background: rgba(15, 23, 42, 0.55);
   box-shadow: var(--surface-shadow-xl);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -428,7 +428,7 @@ body {
   line-height: 1;
   font-weight: 800;
   letter-spacing: -0.04em;
-  color: var(--text-inverse);
+  color: #ffffff;
 }
 
 .hero-stat-label {
@@ -437,7 +437,7 @@ body {
   font-weight: 700;
   letter-spacing: 0.11em;
   text-transform: uppercase;
-  color: rgba(226, 232, 240, 0.72);
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .hero-stat-divider {
@@ -832,7 +832,7 @@ body:not([data-theme]) .spire-bg-light {
   font-size: 2.6rem !important;
   font-weight: 700;
   font-family: var(--font-display);
-  color: var(--text-inverse) !important;
+  color: #ffffff !important;
   letter-spacing: -0.03em;
   position: relative;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
@@ -1766,7 +1766,6 @@ body:not([data-theme]) .spire-bg-light {
 
 .c-header__subtitle {
   font-size: 0.92rem;
-  opacity: 0.82;
   margin-top: 0.5rem;
   font-weight: 400;
   letter-spacing: 0.06em;
@@ -1775,6 +1774,7 @@ body:not([data-theme]) .spire-bg-light {
   margin-left: auto;
   margin-right: auto;
   line-height: 1.5;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .c-header__trust {
@@ -1791,16 +1791,17 @@ body:not([data-theme]) .spire-bg-light {
   gap: 0.45rem;
   padding: 0.45rem 0.75rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .c-header__trust-item i,
 .c-header__trust-item svg {
-  color: #bfdbfe;
+  color: #93c5fd;
 }
 
 /* Compact button row: visually consistent, equal-width buttons that sit side-by-side when space allows */
@@ -2332,9 +2333,7 @@ body:not([data-theme]) .spire-bg-light {
 .c-proof-gallery__item img {
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 9;
   height: auto;
-  object-fit: cover;
 }
 
 .c-proof-gallery__item:hover img {
@@ -2396,7 +2395,7 @@ body:not([data-theme]) .spire-bg-light {
 
 @media (max-width: 559px) {
   .c-proof-gallery__item img {
-    aspect-ratio: 16 / 10;
+    height: auto;
   }
 }
 
