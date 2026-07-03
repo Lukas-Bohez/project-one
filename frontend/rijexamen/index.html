@@ -454,7 +454,7 @@
       <div class="video-card">
         <div class="video-wrapper">
           <iframe
-            src="https://www.youtube-nocookie.com/embed/y7UG7iI2yug"
+            src="https://www.youtube-nocookie.com/embed/ky1f2DZkQC0"
             title="Risicoperceptietest Oefenexamen 04"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowfullscreen loading="lazy">
@@ -462,7 +462,7 @@
         </div>
         <div class="video-card-info">
           <span class="video-badge">New</span>
-          <h4>Practice Exam 04 — 10 Exercises</h4>
+          <h4>Practice Exam 05 — 10 Exercises</h4>
           <p>Risicoperceptie-test · Dutch</p>
         </div>
       </div>
@@ -470,14 +470,14 @@
       <div class="video-card">
         <div class="video-wrapper">
           <iframe
-            src="https://www.youtube-nocookie.com/embed/PwymVRjdfV8"
+            src="https://www.youtube-nocookie.com/embed/-TGxrS2GFTw"
             title="Risicoperceptietest Oefenexamen 11"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowfullscreen loading="lazy">
           </iframe>
         </div>
         <div class="video-card-info">
-          <h4>Practice Exam 11 — Extra Exercises</h4>
+          <h4>Practice Exam 03 — 10 Exercises</h4>
           <p>Risicoperceptie-test · Dutch</p>
         </div>
       </div>
@@ -485,14 +485,14 @@
       <div class="video-card">
         <div class="video-wrapper">
           <iframe
-            src="https://www.youtube-nocookie.com/embed/F-z4Nisq-Xg"
+            src="https://www.youtube-nocookie.com/embed/em4iGU0z5cE"
             title="Risicoperceptietest Oefenexamen 12"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowfullscreen loading="lazy">
           </iframe>
         </div>
         <div class="video-card-info">
-          <h4>Practice Exam 12 — Extra Exercises</h4>
+          <h4>Driving Exam Tips Practice Exam 12 — Extra Tricks Exercises</h4>
           <p>Risicoperceptie-test · Dutch</p>
         </div>
       </div>
@@ -1019,7 +1019,7 @@ function answerQuestion(choice) {
     if (i === choice && !correct) btn.classList.add('incorrect');
   });
   var fb = document.getElementById('quizFeedback');
-  fb.textContent = correct ? '<i class="fa-solid fa-circle-check"></i> Correct! ' + q.explanation : '<i class="fa-solid fa-circle-xmark"></i> Wrong! ' + q.explanation;
+  fb.innerHTML = correct ? '<i class="fa-solid fa-circle-check"></i> Correct! ' + q.explanation : '<i class="fa-solid fa-circle-xmark"></i> Wrong! ' + q.explanation;
   fb.classList.add('show', correct ? 'pass' : 'fail');
   document.getElementById('quizNextBtn').style.display = 'inline-flex';
   document.getElementById('quizNextBtn').textContent = currentQuestion < quizData.length - 1 ? 'Next →' : 'View Results';
