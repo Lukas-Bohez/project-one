@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Extract All — The most comprehensive Figma extraction plugin. Export SVGs, PNGs, text, variables, styles, components, and metadata — selectively or in bulk.">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Extract All — Figma to Anything | By Lukas Bohez</title>
+  <style>
+    :root {
+      --bg: #f4f8fc; --surface: #fff; --border: #e2e8f0; --text: #1e293b;
+      --text-muted: #64748b; --accent: #18a0fb; --accent-hover: #0d8ddb;
+      --green: #0acf83; --amber: #f7b955; --radius: 12px;
+      --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      --nav-bg: rgba(248,249,251,0.88); --code-bg: #f1f5f9; --code-color: #1e293b;
+    }
+    [data-theme="dark"] {
+      --bg: #0f1112; --surface: #1a1d21; --border: #2a2d31;
+      --text: #e2e8f0; --text-muted: #94a3b8; --accent: #60a5fa;
+      --accent-hover: #93c5fd; --green: #34d399; --amber: #fbbf24;
+      --nav-bg: rgba(15,17,18,0.92); --code-bg: #0a0a0a; --code-color: #60a5fa;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font); font-size: 16px; line-height: 1.7;
+      color: var(--text); background: var(--bg); transition: background 0.3s, color 0.3s;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--nav-bg); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border); padding: 12px 0;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .nav .container { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .nav-logo { font-weight: 800; font-size: 16px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+    .nav-logo span { color: var(--accent); }
+    .nav-links { display: flex; gap: 16px; list-style: none; flex-wrap: wrap; }
+    .nav-links a { font-size: 13px; font-weight: 600; color: var(--text-muted); transition: color 0.15s; }
+    .nav-links a:hover { color: var(--accent); text-decoration: none; }
+    .nav-right { display: flex; align-items: center; gap: 10px; }
+    .btn-back, .btn-theme {
+      font-size: 12px; font-weight: 700; padding: 5px 12px;
+      border: 1px solid var(--border); border-radius: 8px;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .btn-back { color: var(--text-muted); text-decoration: none; }
+    .btn-back:hover { color: var(--accent); border-color: var(--accent); }
+    .btn-theme { color: var(--text-muted); cursor: pointer; background: none; }
+    .btn-theme:hover { color: var(--amber); border-color: var(--amber); }
+    .hero { padding: 72px 0 80px; position: relative; overflow: hidden; background: var(--surface); border-bottom: 1px solid var(--border); transition: background 0.3s; }
+    .hero-content { position: relative; z-index: 1; max-width: 650px; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(24,160,251,0.1); border: 1px solid rgba(24,160,251,0.2); border-radius: 100px; padding: 5px 14px; font-size: 12px; font-weight: 600; color: var(--accent); margin-bottom: 20px; }
+    .hero h1 { font-size: clamp(28px, 5vw, 44px); font-weight: 800; line-height: 1.15; color: var(--text); margin-bottom: 14px; }
+    .hero h1 em { font-style: normal; color: var(--accent); }
+    .hero p { font-size: 16px; color: var(--text-muted); max-width: 500px; margin-bottom: 24px; line-height: 1.6; }
+    .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn-primary { display: inline-flex; align-items: center; gap: 6px; padding: 11px 22px; background: #18a0fb; color: #fff !important; border-radius: 100px; font-weight: 700; font-size: 14px; transition: all 0.2s; }
+    .btn-primary:hover { background: #0d8ddb; text-decoration: none; }
+    .btn-outline { display: inline-flex; align-items: center; gap: 6px; padding: 11px 22px; background: transparent; color: var(--text) !important; border: 2px solid var(--border); border-radius: 100px; font-weight: 700; font-size: 14px; transition: all 0.2s; }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent) !important; text-decoration: none; }
+    .section { padding: 64px 0; transition: background 0.3s; }
+    .section-alt { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .section-header { margin-bottom: 36px; }
+    .section-header h2 { font-size: clamp(20px, 3vw, 26px); font-weight: 800; color: var(--text); margin-bottom: 8px; }
+    .section-header p { font-size: 15px; color: var(--text-muted); }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+    .feature-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; transition: all 0.2s; }
+    .feature-card:hover { border-color: var(--accent); }
+    .feature-icon { font-size: 28px; margin-bottom: 12px; }
+    .feature-card h3 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .feature-card p { font-size: 14px; color: var(--text-muted); line-height: 1.5; }
+    .format-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    .format-table th, .format-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+    .format-table th { color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .format-table td { color: var(--text); }
+    .output-tree { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; color: var(--code-color); line-height: 1.8; overflow-x: auto; }
+    .output-tree .hl { color: var(--accent); }
+    .output-tree .comment { color: var(--text-muted); }
+    .usecase-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+    .usecase-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
+    .usecase-item h4 { font-size: 14px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+    .usecase-item p { font-size: 13px; color: var(--text-muted); }
+    .github-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; margin-top: 24px; }
+    .github-card h3 { color: var(--text); font-size: 18px; margin-bottom: 8px; }
+    .github-card p { color: var(--text-muted); font-size: 14px; margin-bottom: 16px; }
+    .code-block { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; color: var(--accent); overflow-x: auto; margin: 12px 0; }
+    .footer { padding: 28px 0; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border); text-align: center; }
+    @media (max-width: 600px) {
+      .hero { padding: 48px 0 56px; } .section { padding: 40px 0; }
+      .feature-grid { grid-template-columns: 1fr; } .container { padding: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container">
+    <a href="#" class="nav-logo">🖼️ Figma<span>Extract All</span></a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#formats">Formats</a></li>
+      <li><a href="#usecases">Use Cases</a></li>
+      <li><a href="#install">Install</a></li>
+    </ul>
+    <div class="nav-right">
+      <a href="/" class="btn-back">🏠 Home</a>
+      <button class="btn-theme" id="themeToggle">🌓 Theme</button>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <div class="hero-content">
+      <div class="hero-badge">🔌 Figma Plugin · v2.0.0 · MIT</div>
+      <div class="hero-preview" style="margin-bottom:16px;">
+        <img src="figma.png" alt="Figma Extract All plugin UI preview" style="max-width:300px;width:100%;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.2);" />
+      </div>
+      <h1>The most <em>comprehensive</em> Figma extraction plugin</h1>
+      <p>Export SVGs, PNGs, text, variables, styles, components, and metadata — selectively or in bulk, per page or across all pages. Built for AI-assisted development, After Effects workflows, and design token pipelines.</p>
+      <div class="hero-cta">
+        <a href="https://github.com/Lukas-Bohez/figma-extract-all" target="_blank" rel="noopener" class="btn-primary">⭐ View on GitHub</a>
+        <a href="#install" class="btn-outline">📥 How to Install</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="section" id="features">
+  <div class="container">
+    <div class="section-header"><h2>What It Does</h2><p>Extract <strong>everything</strong> from any Figma file into structured, reusable formats.</p></div>
+    <div class="feature-grid">
+      <div class="feature-card"><div class="feature-icon">📊</div><h3>Data Extraction</h3><p>Export JSON/text data — full extract, text only, variables, styles, components, and pages.</p></div>
+      <div class="feature-card"><div class="feature-icon">🎯</div><h3>Selected Nodes</h3><p>Export only the nodes you've selected in Figma as SVG, PNG, JPG, or raw SVG code.</p></div>
+      <div class="feature-card"><div class="feature-icon">🗂️</div><h3>Batch Export</h3><p>Export every node on the current page (or all pages) as SVG/PNG with real-time progress.</p></div>
+      <div class="feature-card"><div class="feature-icon">🧠</div><h3>AI-Ready Output</h3><p>Full extract JSON contains everything — drop it into any LLM for complete design context.</p></div>
+      <div class="feature-card"><div class="feature-icon">🎬</div><h3>After Effects / Lottie</h3><p>Lottie JSON Bundle export with embedded SVGs and position metadata for motion design.</p></div>
+      <div class="feature-card"><div class="feature-icon">🎨</div><h3>Design Tokens</h3><p>Extract variables with named modes, hex colors, CSS rgba() values, and code syntax.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt" id="formats">
+  <div class="container">
+    <div class="section-header"><h2>Export Formats</h2><p>Choose exactly what you need — from raw SVGs to complete structured JSON.</p></div>
+    <table class="format-table">
+      <thead><tr><th>Format</th><th>Use Case</th></tr></thead>
+      <tbody>
+        <tr><td><strong>SVG</strong></td><td>Vector graphics → After Effects, websites, AI tools</td></tr>
+        <tr><td><strong>PNG</strong></td><td>Raster images at chosen scale (1x–8x)</td></tr>
+        <tr><td><strong>JPG</strong></td><td>Compressed raster for web/email previews</td></tr>
+        <tr><td><strong>SVG Code</strong></td><td>Raw SVG markup as .svg text files</td></tr>
+        <tr><td><strong>JSON</strong></td><td>Structured data for scripts, AI pipelines, database imports</td></tr>
+        <tr><td><strong>TXT</strong></td><td>Plain text for LLM context, copy-paste workflows</td></tr>
+      </tbody>
+    </table>
+    <h3 style="margin-top:28px;margin-bottom:12px;">Full Extract Output Structure</h3>
+    <div class="output-tree">
+      <span class="hl">{FileName}</span>_full-extract.json    ← Complete structured data<br>
+      <span class="hl">{FileName}</span>_text.json            ← All text nodes with typography<br>
+      <span class="hl">{FileName}</span>_text.txt             ← Plain text dump (AI-friendly)<br>
+      <span class="hl">{FileName}</span>_variables.json       ← All design variables<br>
+      <span class="hl">{FileName}</span>_styles.json          ← All styles (paint, text, effect, grid)<br>
+      <span class="hl">{FileName}</span>_components.json      ← All components<br>
+      <span class="hl">{FileName}</span>_pages.json           ← Page structure<br>
+      <br><span class="comment">// Each node as individual file:</span><br>
+      node-name.svg / node-name.png<br>
+      page-name/node-name.svg (page-prefixed)
+    </div>
+  </div>
+</section>
+
+<section class="section" id="usecases">
+  <div class="container">
+    <div class="section-header"><h2>Use Cases</h2></div>
+    <div class="usecase-grid">
+      <div class="usecase-item"><h4>🎬 After Effects</h4><p>Lottie JSON Bundle with motion-ready SVGs + positions</p></div>
+      <div class="usecase-item"><h4>🤖 AI Development</h4><p>Full Extract JSON + SVGs → feed to LLM for websites</p></div>
+      <div class="usecase-item"><h4>🎨 Design Tokens</h4><p>Variables + Styles JSON for automated pipelines</p></div>
+      <div class="usecase-item"><h4>📝 Content Audit</h4><p>Text JSON + TXT for comprehensive review</p></div>
+      <div class="usecase-item"><h4>📚 Component Docs</h4><p>Components JSON + SVG exports for docs</p></div>
+      <div class="usecase-item"><h4>💾 Design Backup</h4><p>Full Extract + all SVGs + PNGs for archiving</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt" id="install">
+  <div class="container">
+    <div class="section-header"><h2>How to Install</h2><p>Get the plugin running in Figma in under a minute.</p></div>
+    <h3>Option A — Figma Desktop (recommended)</h3>
+    <ol style="padding-left:20px;line-height:2;">
+      <li>Download the latest .zip from <a href="https://github.com/Lukas-Bohez/figma-extract-all/releases" target="_blank" rel="noopener">GitHub Releases</a></li>
+      <li>In Figma: <strong>Plugins → Development → Import plugin from manifest</strong></li>
+      <li>Select <code style="background:var(--code-bg);padding:2px 8px;border-radius:4px;">manifest.json</code></li>
+      <li>Done — open any Figma file and run "Extract All"</li>
+    </ol>
+    <h3 style="margin-top:24px;">Option B — Build from Source</h3>
+    <div class="code-block">git clone https://github.com/Lukas-Bohez/figma-extract-all.git<br>cd figma-extract-all<br>npm install && npm run build</div>
+    <h3 style="margin-top:24px;">Keyboard Shortcuts</h3>
+    <table class="format-table">
+      <thead><tr><th>Shortcut</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td><code>Ctrl+Enter / ⌘+Enter</code></td><td>Full Extract</td></tr>
+        <tr><td><code>Esc</code></td><td>Cancel export</td></tr>
+      </tbody>
+    </table>
+    <div class="github-card">
+      <h3>🔗 GitHub Repository</h3>
+      <p>Star the repo, fork it, contribute — all code is MIT licensed and open source.</p>
+      <a href="https://github.com/Lukas-Bohez/figma-extract-all" target="_blank" rel="noopener" class="btn-primary">⭐ View on GitHub</a>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <p>Built by <a href="https://github.com/Lukas-Bohez" target="_blank" rel="noopener">Lukas Bohez</a> · MIT · <a href="https://quizthespire.com">Quiz The Spire</a></p>
+    <p style="margin-top:4px;">One click, everything you need.™</p>
+  </div>
+</footer>
+
+<script>
+(function() {
+  var KEY = 'spire-theme';
+  function get() { return localStorage.getItem(KEY) || 'dark'; }
+  function apply(t) { document.documentElement.setAttribute('data-theme', t); }
+  document.getElementById('themeToggle').addEventListener('click', function() {
+    var n = get() === 'dark' ? 'light' : 'dark';
+    localStorage.setItem(KEY, n); apply(n);
+    try { localStorage.setItem('spire-theme-sync', Date.now().toString()); } catch(e) {}
+  });
+  window.addEventListener('storage', function(e) {
+    if (e.key === KEY || e.key === 'spire-theme-sync') apply(get());
+  });
+  apply(get());
+})();
+</script>
+</body>
+</html>
