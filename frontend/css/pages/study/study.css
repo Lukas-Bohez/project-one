@@ -566,10 +566,25 @@ body {
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
+  color: #1e293b;
 }
 
 .toggle-selector:hover {
   background-color: #e9ecef;
+  color: #0f172a;
+}
+
+[data-theme='dark'] .toggle-selector,
+.theme-dark .toggle-selector {
+  background-color: #1e293b;
+  border-color: #374151;
+  color: #e2e8f0;
+}
+
+[data-theme='dark'] .toggle-selector:hover,
+.theme-dark .toggle-selector:hover {
+  background-color: #334155;
+  color: #f1f5f9;
 }
 
 .toggle-icon {

@@ -1163,6 +1163,50 @@ body:not([data-theme]) .spire-bg-light {
   color: white !important;
 }
 
+/* Accent button hover — keep text and icon visible */
+.accent-blue:hover,
+.c-btn--accent:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+  transform: translateY(-2px);
+}
+
+.accent-blue:hover i,
+.c-btn--accent:hover i {
+  color: #fff !important;
+}
+
+.accent-blue:hover .c-btn__desc,
+.c-btn--accent:hover .c-btn__desc {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+[data-theme='dark'] .accent-blue:hover,
+.theme-dark .accent-blue:hover,
+[data-theme='dark'] .c-btn--accent:hover,
+.theme-dark .c-btn--accent:hover {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+  box-shadow: 0 6px 22px rgba(59, 130, 246, 0.35);
+}
+
+[data-theme='dark'] .accent-blue:hover i,
+.theme-dark .accent-blue:hover i,
+[data-theme='dark'] .c-btn--accent:hover i,
+.theme-dark .c-btn--accent:hover i {
+  color: #fff !important;
+}
+
+[data-theme='dark'] .accent-blue:hover .c-btn__desc,
+.theme-dark .accent-blue:hover .c-btn__desc,
+[data-theme='dark'] .c-btn--accent:hover .c-btn__desc,
+.theme-dark .c-btn--accent:hover .c-btn__desc {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
 /* Make sure bw buttons have a subtle hover effect */
 
 .bw-btn:hover,

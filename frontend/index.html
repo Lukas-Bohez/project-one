@@ -15,9 +15,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="AI-powered full-stack developer. Python, TypeScript, AI/LLM, Next.js, Flutter, Apache. Real-time multiplayer quizzes (SpireAI), cross-platform apps, browser extensions, Figma plugins, and interactive study guides — all open source."
+      content="Full-Stack Developer & Open-Source Builder — Python, TypeScript, AI/LLM, Next.js, Flutter, Apache. Real-time multiplayer quizzes, cross-platform apps, browser extensions, Figma plugins, and interactive study guides. Shipping to 95+ countries."
     />
-    <title>Lukas Bohez - Full-Stack Developer | Portfolio & Projects</title>
+    <title>Lukas Bohez — Full-Stack Developer | Portfolio & Projects</title>
 
     <!-- Google Analytics (GA4) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-SSEBSTQM21"></script>
@@ -30,24 +30,21 @@
       gtag('config', 'G-SSEBSTQM21');
     </script>
 
-    <!-- Google AdSense will be idle-loaded to avoid blocking initial render -->
-
     <!-- Ownership & Author Information -->
     <meta name="author" content="Lukas Bohez" />
     <meta name="owner" content="Lukas Bohez" />
     <meta name="copyright" content="Copyright &copy; 2026 Lukas Bohez. All rights reserved." />
     <meta property="og:site_name" content="Quiz The Spire by Lukas Bohez" />
 
-    <!-- Preconnect to most important origins only (keep count low) -->
+    <!-- Preconnect to most important origins -->
     <link rel="preconnect" href="https://cdn.socket.io" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Avoid excess preconnects; defer other third-party preconnects to runtime when needed -->
-    
-    <!-- Preload hero images (WebP with high priority, media-query aware) -->
+
+    <!-- Preload hero images -->
     <link rel="preload" href="images/spire-light.webp" as="image" type="image/webp" media="(prefers-color-scheme: light)" fetchpriority="high" />
     <link rel="preload" href="images/spire-dark.webp" as="image" type="image/webp" media="(prefers-color-scheme: dark)" fetchpriority="high" />
-    
+
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
       rel="stylesheet"
@@ -59,7 +56,7 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
         rel="stylesheet"
     /></noscript>
-    <!-- Load Font Awesome non-blocking to avoid render-blocking CSS -->
+    <!-- Load Font Awesome non-blocking -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
@@ -71,6 +68,7 @@
 
     <!-- Critical CSS inlined for faster initial render -->
     <style>
+      /* ── RESET & BASE ──────────────────────────── */
       body {
         margin: 0;
         padding: 0;
@@ -91,48 +89,112 @@
         background: #0f1112;
         color: #e6eef8;
       }
+
+      /* ── HEADER ────────────────────────────────── */
       .c-header {
         background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 35%, #2563eb 70%, #3b82f6 100%);
         color: #fff;
-        padding: 2.75rem 1rem 2.5rem;
+        padding: 3rem 1rem 2.5rem;
         text-align: center;
         box-shadow: 0 4px 24px rgba(15, 23, 42, 0.3);
         overflow: hidden;
         flex-shrink: 0;
+        position: relative;
+      }
+      .c-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
       }
       .c-header h1 {
         margin: 0;
-        font-size: 1.25rem;
-        font-weight: 600;
+        font-family: 'Space Grotesk', 'Inter', sans-serif;
+        font-size: clamp(1.75rem, 5vw, 2.75rem);
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+      }
+      .c-header__subtitle {
+        margin: 0.75rem auto 0;
+        max-width: 720px;
+        font-size: clamp(0.9rem, 2.2vw, 1.05rem);
+        line-height: 1.6;
+        opacity: 0.9;
+        font-weight: 400;
+        color: rgba(255,255,255,0.85);
+      }
+      .c-header__tagline {
+        font-size: 0.82rem;
+        opacity: 0.7;
+        margin-top: 0.4rem;
+      }
+
+      /* ── HERO STATS ────────────────────────────── */
+      .hero-stats {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1.5rem;
+        margin-top: 1.75rem;
+      }
+      .hero-stat {
+        text-align: center;
+        padding: 0.5rem 1.2rem;
+        background: rgba(255,255,255,0.08);
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.12);
+        backdrop-filter: blur(6px);
+        min-width: 90px;
+      }
+      .hero-stat-number {
+        display: block;
+        font-family: 'Space Grotesk', 'Inter', sans-serif;
+        font-size: clamp(1.5rem, 4vw, 2rem);
+        font-weight: 700;
+        line-height: 1.2;
         color: #fff;
       }
+      .hero-stat-label {
+        margin: 0.15rem 0 0;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        opacity: 0.7;
+        color: rgba(255,255,255,0.8);
+        font-weight: 500;
+      }
+
+      /* ── HEADER TRUST LINKS ────────────────────── */
+      .c-header__trust {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1.25rem;
+        margin-top: 1.25rem;
+      }
+      .c-header__trust-item {
+        font-size: 0.85rem;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+      }
+      .c-header__trust-item:hover {
+        opacity: 1;
+      }
+
+      /* ── CONTAINER ─────────────────────────────── */
       .o-container {
         max-width: 1200px;
         padding: 0 1rem;
-        margin: 1rem auto;
+        margin: 1.5rem auto;
         flex: 1 0 auto;
       }
-      .c-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 1rem 1.5rem;
-        border: 1.5px solid #e2e8f0;
-        border-radius: 12px;
-        font-size: 1rem;
-        font-weight: 500;
-        cursor: pointer;
-        background: #fff;
-        color: #1e293b;
-        min-height: 44px;
-        transition: all 0.2s ease;
-      }
-      [data-theme='dark'] .c-btn,
-      .theme-dark .c-btn {
-        background: #1f2326;
-        color: #e2e8f0;
-        border-color: #2a3034;
-      }
+
+      /* ── BACKGROUND ────────────────────────────── */
       .spire-background {
         position: fixed;
         top: 0;
@@ -153,37 +215,759 @@
         transition: opacity 0.6s;
         filter: brightness(0.85);
       }
+
+      /* ── NAVIGATION ────────────────────────────── */
+      .c-nav {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.4rem;
+        margin-bottom: 1.5rem;
+        padding: 0.35rem;
+        background: #fff;
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+      }
+      [data-theme='dark'] .c-nav,
+      .theme-dark .c-nav {
+        background: #111827;
+        border-color: #374151;
+      }
+      .c-nav-btn {
+        flex: 1 1 auto;
+        min-width: 0;
+        padding: 0.6rem 0.9rem;
+        border: none;
+        border-radius: 10px;
+        background: transparent;
+        color: #475569;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        justify-content: center;
+      }
+      .c-nav-btn:hover {
+        background: #f1f5f9;
+        color: #1e293b;
+      }
+      .c-nav-btn.active {
+        background: #2563eb;
+        color: #fff;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+      }
+      [data-theme='dark'] .c-nav-btn {
+        color: #94a3b8;
+      }
+      [data-theme='dark'] .c-nav-btn:hover {
+        background: #1e293b;
+        color: #e2e8f0;
+      }
+      [data-theme='dark'] .c-nav-btn.active {
+        background: #2563eb;
+        color: #fff;
+      }
+      .c-nav-actions {
+        display: flex;
+        gap: 0.35rem;
+        margin-left: auto;
+        flex-shrink: 0;
+      }
+      .c-theme-nav-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.5rem 0.85rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        background: #f8fafc;
+        color: #475569;
+        font-size: 0.82rem;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .c-theme-nav-btn:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+      }
+      [data-theme='dark'] .c-theme-nav-btn,
+      .theme-dark .c-theme-nav-btn {
+        background: #1f2326;
+        border-color: #2a3034;
+        color: #94a3b8;
+      }
+      [data-theme='dark'] .c-theme-nav-btn:hover,
+      .theme-dark .c-theme-nav-btn:hover {
+        background: #2a3034;
+        border-color: #4b5563;
+        color: #e2e8f0;
+      }
+
+      /* ── SECTIONS ──────────────────────────────── */
+      .section {
+        display: none;
+        animation: fadeSlideIn 0.35s ease;
+      }
+      .section.active {
+        display: block;
+      }
+      .section-divider {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+      .section-divider span {
+        flex: 1;
+        height: 1px;
+        background: #e2e8f0;
+      }
+      [data-theme='dark'] .section-divider span,
+      .theme-dark .section-divider span {
+        background: #374151;
+      }
+      .c-section-panel {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 1.75rem;
+        box-shadow: 0 1px 4px rgba(15,23,42,0.04);
+        margin-bottom: 1.5rem;
+      }
+      [data-theme='dark'] .c-section-panel,
+      .theme-dark .c-section-panel {
+        background: #111827;
+        border-color: #374151;
+      }
+      .c-section-title {
+        font-family: 'Space Grotesk', 'Inter', sans-serif;
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem;
+        color: #0f172a;
+        letter-spacing: -0.01em;
+      }
+      [data-theme='dark'] .c-section-title,
+      .theme-dark .c-section-title {
+        color: #f1f5f9;
+      }
+      .c-section-lead {
+        font-size: 0.95rem;
+        line-height: 1.55;
+        color: #475569;
+        margin: 0 0 1rem;
+        max-width: 680px;
+      }
+      [data-theme='dark'] .c-section-lead,
+      .theme-dark .c-section-lead {
+        color: #94a3b8;
+      }
+
+      /* ── PORTFOLIO SUB-TABS ────────────────────── */
+      .c-portfolio-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin-bottom: 1.25rem;
+      }
+      .c-portfolio-tab-btn {
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        color: #475569;
+        border-radius: 10px;
+        padding: 0.5rem 1rem;
+      }
+      [data-theme='dark'] .c-portfolio-tab-btn,
+      .theme-dark .c-portfolio-tab-btn {
+        background: #111827;
+        border-color: #374151;
+        color: #94a3b8;
+      }
+
+      /* ── BUTTON UNIFIED SYSTEM ─────────────────── */
+      .c-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        padding: 0.85rem 1.35rem;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 0.93rem;
+        font-weight: 500;
+        cursor: pointer;
+        background: #fff;
+        color: #1e293b;
+        min-height: 44px;
+        text-decoration: none;
+        transition: all 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+        font-family: inherit;
+      }
+      .c-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(15,23,42,0.08);
+      }
+      .c-btn:active {
+        transform: translateY(0);
+      }
+      [data-theme='dark'] .c-btn,
+      .theme-dark .c-btn {
+        background: #1f2326;
+        color: #e2e8f0;
+        border-color: #2a3034;
+      }
+
+      /* Primary button */
+      .c-btn--primary {
+        background: #2563eb;
+        color: #fff;
+        border-color: #2563eb;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(37,99,235,0.2);
+      }
+      .c-btn--primary:hover {
+        background: #1d4ed8;
+        border-color: #1d4ed8;
+        color: #fff;
+        box-shadow: 0 6px 20px rgba(37,99,235,0.3);
+        transform: translateY(-2px);
+      }
+      .c-btn--primary i { color: #fff; }
+      [data-theme='dark'] .c-btn--primary,
+      .theme-dark .c-btn--primary {
+        background: #2563eb;
+        color: #fff;
+        border-color: #2563eb;
+      }
+      [data-theme='dark'] .c-btn--primary:hover,
+      .theme-dark .c-btn--primary:hover {
+        background: #3b82f6;
+        border-color: #3b82f6;
+        color: #fff;
+        box-shadow: 0 6px 22px rgba(59,130,246,0.35);
+      }
+
+      /* Outline button */
+      .c-btn--outline {
+        background: transparent;
+        border-color: #cbd5e1;
+        color: #475569;
+      }
+      .c-btn--outline:hover {
+        background: #f8fafc;
+        border-color: #2563eb;
+        color: #2563eb;
+        box-shadow: 0 0 0 1px rgba(37,99,235,0.15), 0 4px 12px rgba(37,99,235,0.08);
+      }
+      [data-theme='dark'] .c-btn--outline,
+      .theme-dark .c-btn--outline {
+        background: transparent;
+        border-color: #374151;
+        color: #94a3b8;
+      }
+      [data-theme='dark'] .c-btn--outline:hover,
+      .theme-dark .c-btn--outline:hover {
+        background: rgba(37,99,235,0.08);
+        border-color: #3b82f6;
+        color: #93c5fd;
+        box-shadow: 0 0 0 1px rgba(59,130,246,0.25), 0 4px 14px rgba(59,130,246,0.12);
+      }
+
+      /* Accent button (highlighted actions like Industrial Empire) */
+      .c-btn--accent {
+        background: #2563eb;
+        color: #fff;
+        border-color: #2563eb;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(37,99,235,0.2);
+      }
+      .c-btn--accent:hover {
+        background: #1d4ed8;
+        border-color: #1d4ed8;
+        color: #fff;
+        box-shadow: 0 6px 20px rgba(37,99,235,0.3);
+        transform: translateY(-2px);
+      }
+      .c-btn--accent i { color: #fff !important; }
+      .c-btn--accent .c-btn__desc { color: rgba(255,255,255,0.85) !important; }
+      [data-theme='dark'] .c-btn--accent,
+      .theme-dark .c-btn--accent {
+        background: #2563eb;
+        color: #fff;
+        border-color: #2563eb;
+      }
+      [data-theme='dark'] .c-btn--accent:hover,
+      .theme-dark .c-btn--accent:hover {
+        background: #3b82f6;
+        border-color: #3b82f6;
+        color: #fff;
+        box-shadow: 0 6px 22px rgba(59,130,246,0.35);
+      }
+      [data-theme='dark'] .c-btn--accent i,
+      .theme-dark .c-btn--accent i { color: #fff !important; }
+      [data-theme='dark'] .c-btn--accent .c-btn__desc,
+      .theme-dark .c-btn--accent .c-btn__desc { color: rgba(255,255,255,0.85) !important; }
+
+      /* BW button */
+      .c-btn--bw {
+        background: #fff;
+        color: #1e293b;
+        border: 1.5px solid #e2e8f0;
+        font-weight: 500;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+      }
+      .c-btn--bw:hover {
+        background: #f8fafc;
+        border-color: #2563eb;
+        color: #2563eb;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(37,99,235,0.1);
+      }
+      .c-btn--bw i { color: #2563eb; }
+      [data-theme='dark'] .c-btn--bw,
+      .theme-dark .c-btn--bw {
+        background: rgba(15,17,18,0.9);
+        color: #e2e8f0;
+        border-color: rgba(96,165,250,0.18);
+      }
+      [data-theme='dark'] .c-btn--bw:hover,
+      .theme-dark .c-btn--bw:hover {
+        background: rgba(30,58,138,0.12);
+        border-color: #60a5fa;
+        color: #93c5fd;
+        box-shadow: 0 4px 14px rgba(96,165,250,0.12);
+      }
+      [data-theme='dark'] .c-btn--bw i,
+      .theme-dark .c-btn--bw i { color: #60a5fa; }
+
+      /* ── BUTTON WITH DESCRIPTION ───────────────── */
+      .c-btn__content {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-weight: 600;
+        font-size: 0.93rem;
+        line-height: 1.3;
+      }
+      .c-btn__desc {
+        display: block;
+        font-size: 0.76rem;
+        font-weight: 400;
+        line-height: 1.35;
+        opacity: 0.75;
+        margin-top: 0.15rem;
+      }
+      .c-btn:has(.c-btn__desc) {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+        padding: 1rem 1.25rem;
+      }
+      [data-theme='dark'] .c-btn__desc,
+      .theme-dark .c-btn__desc { color: #94a3b8; }
+
+      /* Sentle special button */
+      .c-btn--sentle {
+        background: linear-gradient(135deg, #7c3aed, #a855f7);
+        color: #fff;
+        border-color: transparent;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(124,58,237,0.22);
+      }
+      .c-btn--sentle:hover {
+        background: linear-gradient(135deg, #6d28d9, #9333ea);
+        color: #fff;
+        box-shadow: 0 6px 20px rgba(124,58,237,0.32);
+        transform: translateY(-2px);
+      }
+      .c-btn--sentle i { color: #fff !important; }
+      .c-btn--sentle .c-btn__desc { color: rgba(255,255,255,0.85) !important; }
+      [data-theme='dark'] .c-btn--sentle,
+      .theme-dark .c-btn--sentle {
+        background: linear-gradient(135deg, #7c3aed, #a855f7);
+        color: #fff;
+      }
+      [data-theme='dark'] .c-btn--sentle:hover,
+      .theme-dark .c-btn--sentle:hover {
+        background: linear-gradient(135deg, #8b5cf6, #c084fc);
+        color: #fff;
+      }
+      [data-theme='dark'] .c-btn--sentle i,
+      .theme-dark .c-btn--sentle i { color: #fff !important; }
+      [data-theme='dark'] .c-btn--sentle .c-btn__desc,
+      .theme-dark .c-btn--sentle .c-btn__desc { color: rgba(255,255,255,0.85) !important; }
+
+      /* Button groups */
+      .o-button-group {
+        display: grid;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+      }
+      .o-button-group--2col {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      @media (max-width: 600px) {
+        .o-button-group--2col { grid-template-columns: 1fr; }
+      }
+
+      /* ── PRODUCT CARD ──────────────────────────── */
+      .c-product-card {
+        display: block;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 1.75rem;
+        box-shadow: 0 1px 4px rgba(15,23,42,0.04);
+        margin-bottom: 1.5rem;
+      }
+      [data-theme='dark'] .c-product-card,
+      .theme-dark .c-product-card {
+        background: #111827;
+        border-color: #374151;
+      }
+      .c-product-card__title {
+        font-family: 'Space Grotesk', 'Inter', sans-serif;
+        font-size: 1.35rem;
+        font-weight: 700;
+        margin: 0 0 0.35rem;
+        color: #0f172a;
+      }
+      [data-theme='dark'] .c-product-card__title,
+      .theme-dark .c-product-card__title { color: #f1f5f9; }
+      .c-product-card__tagline {
+        font-size: 0.93rem;
+        color: #475569;
+        margin: 0 0 0.5rem;
+        line-height: 1.5;
+      }
+      [data-theme='dark'] .c-product-card__tagline,
+      .theme-dark .c-product-card__tagline { color: #94a3b8; }
+      .c-product-card__badge-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-bottom: 0.75rem;
+      }
+      .c-product-card__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        margin-top: 1rem;
+      }
+      .c-product-card__reassurance {
+        font-size: 0.82rem;
+        color: #64748b;
+        margin-top: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      [data-theme='dark'] .c-product-card__reassurance,
+      .theme-dark .c-product-card__reassurance { color: #94a3b8; }
+
+      /* ── BADGES ────────────────────────────────── */
+      .c-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .c-badge--green { background: #ecfdf5; color: #065f46; }
+      .c-badge--blue { background: #eff6ff; color: #1e40af; }
+      .c-badge--slate { background: #f1f5f9; color: #334155; }
+      .c-badge--purple { background: #f5f3ff; color: #5b21b6; }
+      [data-theme='dark'] .c-badge--green,
+      .theme-dark .c-badge--green { background: #064e3b; color: #a7f3d0; }
+      [data-theme='dark'] .c-badge--blue,
+      .theme-dark .c-badge--blue { background: #1e3a5f; color: #93c5fd; }
+      [data-theme='dark'] .c-badge--slate,
+      .theme-dark .c-badge--slate { background: #1e293b; color: #cbd5e1; }
+      [data-theme='dark'] .c-badge--purple,
+      .theme-dark .c-badge--purple { background: #3b0764; color: #c4b5fd; }
+
+      /* ── FEATURE LIST ──────────────────────────── */
+      .c-feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 0.75rem 0;
+        display: grid;
+        gap: 0.5rem;
+      }
+      .c-feature-list__item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.55rem;
+        font-size: 0.88rem;
+        color: #334155;
+        line-height: 1.45;
+      }
+      .c-feature-list__item i {
+        color: #2563eb;
+        margin-top: 0.2rem;
+        flex-shrink: 0;
+      }
+      [data-theme='dark'] .c-feature-list__item,
+      .theme-dark .c-feature-list__item { color: #cbd5e1; }
+      [data-theme='dark'] .c-feature-list__item i,
+      .theme-dark .c-feature-list__item i { color: #60a5fa; }
+
+      /* ── PROOF GALLERY ─────────────────────────── */
+      .c-proof-gallery {
+        margin: 1.25rem 0;
+      }
+      .c-proof-gallery__header {
+        margin-bottom: 0.85rem;
+      }
+      .c-proof-gallery__title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 1.05rem;
+        margin: 0 0 0.25rem;
+      }
+      .c-proof-gallery__subtitle {
+        font-size: 0.84rem;
+        color: #64748b;
+        margin: 0;
+      }
+      [data-theme='dark'] .c-proof-gallery__subtitle,
+      .theme-dark .c-proof-gallery__subtitle { color: #94a3b8; }
+      .c-proof-gallery__highlights {
+        margin-top: 0.6rem;
+      }
+      .c-proof-gallery__grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 0.75rem;
+      }
+      .c-proof-gallery__item {
+        position: relative;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        transition: transform 0.2s, box-shadow 0.2s;
+        margin: 0;
+      }
+      [data-theme='dark'] .c-proof-gallery__item,
+      .theme-dark .c-proof-gallery__item {
+        background: #0f172a;
+        border-color: #374151;
+      }
+      .c-proof-gallery__item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(15,23,42,0.1);
+      }
+      .c-proof-gallery__item img {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 16/9;
+        object-fit: cover;
+      }
+      .c-proof-gallery__item figcaption {
+        padding: 0.55rem 0.7rem;
+        font-size: 0.78rem;
+        line-height: 1.35;
+        color: #475569;
+      }
+      [data-theme='dark'] .c-proof-gallery__item figcaption,
+      .theme-dark .c-proof-gallery__item figcaption { color: #94a3b8; }
+      .c-proof-gallery__item figcaption strong {
+        display: block;
+        color: #0f172a;
+        font-size: 0.84rem;
+        margin-bottom: 0.15rem;
+      }
+      [data-theme='dark'] .c-proof-gallery__item figcaption strong,
+      .theme-dark .c-proof-gallery__item figcaption strong { color: #e2e8f0; }
+      .c-proof-gallery__expand {
+        position: absolute;
+        top: 0.4rem;
+        right: 0.4rem;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.3);
+        background: rgba(0,0,0,0.45);
+        color: #fff;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        z-index: 2;
+        transition: all 0.2s;
+      }
+      .c-proof-gallery__expand:hover {
+        background: rgba(0,0,0,0.65);
+      }
+
+      /* ── UPDATE BANNER ─────────────────────────── */
+      .c-update-banner {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        border: 2px solid #f59e0b;
+        border-radius: 10px;
+        padding: 0.85rem 1.15rem;
+        margin-bottom: 1rem;
+        font-size: 0.88rem;
+        color: #78350f;
+        box-shadow: 0 2px 12px rgba(245,158,11,0.14);
+      }
+      .c-update-banner i { color: #d97706; font-size: 1.1rem; }
+      .c-update-badge {
+        display: inline-block;
+        background: #dc2626;
+        color: #fff;
+        font-size: 0.68rem;
+        font-weight: 800;
+        padding: 2px 7px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-right: 2px;
+      }
+      .c-update-banner__link {
+        color: #92400e;
+        font-weight: 600;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+      .c-update-banner__link:hover { text-decoration: underline; }
+      [data-theme='dark'] .c-update-banner,
+      .theme-dark .c-update-banner {
+        background: linear-gradient(135deg, rgba(120,53,15,0.45), rgba(146,64,14,0.3));
+        border-color: rgba(245,158,11,0.5);
+        color: #fde68a;
+        box-shadow: 0 2px 12px rgba(245,158,11,0.08);
+      }
+      [data-theme='dark'] .c-update-banner i,
+      .theme-dark .c-update-banner i { color: #fbbf24; }
+      [data-theme='dark'] .c-update-banner__link,
+      .theme-dark .c-update-banner__link { color: #fbbf24; }
+
+      /* ── PORTFOLIO PANEL / NEXTJS LINK ──────────── */
+      .c-portfolio-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 1.75rem;
+        box-shadow: 0 1px 4px rgba(15,23,42,0.04);
+        margin-bottom: 1.5rem;
+        max-width: 100%;
+      }
+      .c-portfolio-panel__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+      }
+      .c-portfolio-panel__actions .c-btn {
+        flex: 0 1 auto;
+        min-width: 200px;
+      }
+      [data-theme='dark'] .c-portfolio-panel,
+      .theme-dark .c-portfolio-panel {
+        background: #111827;
+        border-color: #374151;
+      }
+
+      /* ── FEATURED TOOLS GRID ───────────────────── */
+      .c-featured-tools {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.75rem;
+        margin-top: 0.75rem;
+      }
+      .c-featured-tool {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        align-items: flex-start;
+        padding: 1rem;
+        border-radius: 12px;
+        border: 1px solid #dbe3ef;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+        text-decoration: none;
+        color: #1e293b;
+        transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      }
+      .c-featured-tool:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(30,58,138,0.1);
+        border-color: #93c5fd;
+      }
+      .c-featured-tool__header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 0;
+      }
+      .c-featured-tool i {
+        font-size: 1.05rem;
+        color: #2563eb;
+        flex: 0 0 auto;
+      }
+      .c-featured-tool__title {
+        font-weight: 700;
+        font-size: 0.93rem;
+        line-height: 1.2;
+      }
+      .c-featured-tool__desc {
+        font-size: 0.82rem;
+        line-height: 1.4;
+        color: #475569;
+      }
+      [data-theme='dark'] .c-featured-tool,
+      .theme-dark .c-featured-tool {
+        background: linear-gradient(135deg, #0f172a 0%, #111827 100%);
+        border-color: #334155;
+        color: #e5e7eb;
+      }
+      [data-theme='dark'] .c-featured-tool__desc,
+      .theme-dark .c-featured-tool__desc { color: #cbd5e1; }
+      [data-theme='dark'] .c-featured-tool i,
+      .theme-dark .c-featured-tool i { color: #93c5fd; }
+
+      /* ── MODAL ─────────────────────────────────── */
       .c-modal {
         position: fixed;
         inset: 0;
         display: none;
         align-items: center;
         justify-content: center;
-        background: rgba(0, 0, 0, 0.55);
+        background: rgba(0,0,0,0.55);
         z-index: 1000;
         padding: 1rem;
         backdrop-filter: blur(4px);
       }
-      .c-modal.is-open {
-        display: flex;
-      }
+      .c-modal.is-open { display: flex; }
       .c-modal__content {
         background: #fff;
         border-radius: 16px;
         max-width: 560px;
         width: 100%;
         padding: 0;
-        box-shadow: 0 24px 48px rgba(0, 0, 0, 0.18);
+        box-shadow: 0 24px 48px rgba(0,0,0,0.18);
         border: 1px solid #e5e7eb;
-        transition:
-          background 0.3s ease,
-          border-color 0.3s ease,
-          color 0.3s ease;
-        overflow: visible;
         max-height: 90vh;
         max-height: 90dvh;
         display: flex;
         flex-direction: column;
+        overflow: visible;
       }
       [data-theme='dark'] .c-modal__content,
       .theme-dark .c-modal__content {
@@ -201,9 +985,7 @@
         flex-shrink: 0;
       }
       [data-theme='dark'] .c-modal__header,
-      .theme-dark .c-modal__header {
-        border-bottom-color: #374151;
-      }
+      .theme-dark .c-modal__header { border-bottom-color: #374151; }
       .c-modal__close {
         border: 1px solid #e5e7eb;
         background: #f9fafb;
@@ -215,12 +997,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.2s ease;
+        transition: all 0.2s;
       }
-      .c-modal__close:hover {
-        background: #f1f5f9;
-        border-color: #cbd5e1;
-      }
+      .c-modal__close:hover { background: #f1f5f9; border-color: #cbd5e1; }
       [data-theme='dark'] .c-modal__close,
       .theme-dark .c-modal__close {
         border-color: #374151;
@@ -228,182 +1007,143 @@
         color: #d1d5db;
       }
       [data-theme='dark'] .c-modal__close:hover,
-      .theme-dark .c-modal__close:hover {
-        background: #374151;
-        border-color: #4b5563;
+      .theme-dark .c-modal__close:hover { background: #374151; border-color: #4b5563; }
+
+      /* ── AD UNITS ──────────────────────────────── */
+      .ad-unit-wrapper {
+        margin: 1.75rem auto;
+        text-align: center;
+        max-width: 780px;
       }
-      .c-product-card {
-        display: block;
-      }
-      .c-portfolio-panel {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 18px;
-        padding: 1.5rem;
-        box-shadow: 0 22px 40px rgba(15, 23, 42, 0.08);
-        margin-bottom: 1.5rem;
-      }
-      .c-portfolio-panel__actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-      }
-      .c-portfolio-panel__actions a {
-        flex: 1 1 240px;
-        min-width: 220px;
-        white-space: nowrap;
-      }
-      .c-btn--portfolio {
-        min-width: 280px;
-        padding: 1rem 1.35rem;
-        font-size: 1rem;
-        background: #2563eb;
-        color: #fff;
-        border-color: transparent;
-      }
-      .c-btn--portfolio:hover {
-        background: #1d4ed8;
-      }
-      [data-theme='dark'] .c-portfolio-panel,
-      .theme-dark .c-portfolio-panel {
-        background: #111827;
-        border-color: #374151;
-      }
-      .c-featured-tools {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 0.85rem;
-        margin-top: 1rem;
-      }
-      .c-featured-tool {
-        display: flex;
-        flex-direction: column;
-        gap: 0.45rem;
-        align-items: flex-start;
-        padding: 1rem 1rem;
-        border-radius: 12px;
-        border: 1px solid #dbe3ef;
-        background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
-        text-decoration: none;
-        color: #1e293b;
-        transition:
-          transform 0.2s ease,
-          box-shadow 0.2s ease,
-          border-color 0.2s ease;
-      }
-      .c-featured-tool:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 24px rgba(30, 58, 138, 0.12);
-        border-color: #93c5fd;
-      }
-      .c-featured-tool__header {
-        display: flex;
-        align-items: center;
-        gap: 0.55rem;
-        min-width: 0;
-      }
-      .c-featured-tool i {
-        font-size: 1.05rem;
-        color: #1d4ed8;
-        flex: 0 0 auto;
-      }
-      .c-featured-tool__title {
-        font-weight: 700;
-        font-size: 0.98rem;
-        line-height: 1.2;
-      }
-      .c-featured-tool__desc {
-        font-size: 0.86rem;
-        line-height: 1.4;
-        color: #475569;
-      }
-      [data-theme='dark'] .c-featured-tool,
-      .theme-dark .c-featured-tool {
-        background: linear-gradient(135deg, #0f172a 0%, #111827 100%);
-        border-color: #334155;
-        color: #e5e7eb;
-      }
-      [data-theme='dark'] .c-featured-tool__desc,
-      .theme-dark .c-featured-tool__desc {
-        color: #cbd5e1;
-      }
-      [data-theme='dark'] .c-featured-tool i,
-      .theme-dark .c-featured-tool i {
-        color: #93c5fd;
+      .ad-label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #94a3b8;
+        margin-bottom: 0.3rem;
       }
 
-      /* Update banner - major release */
-      .c-update-banner {
+      /* ── SMARTS CREEEN INFO ────────────────────── */
+      .c-smartscreen-info {
+        margin-top: 0.75rem;
+        font-size: 0.82rem;
+        color: #64748b;
+      }
+      .c-smartscreen-info summary {
+        cursor: pointer;
+        font-weight: 500;
+        color: #2563eb;
+      }
+      .c-smartscreen-info__body {
+        margin-top: 0.5rem;
+        padding: 0.7rem;
+        background: #f8fafc;
+        border-radius: 8px;
+      }
+      [data-theme='dark'] .c-smartscreen-info__body,
+      .theme-dark .c-smartscreen-info__body { background: #1e293b; }
+
+      /* ── PORTFOLIO TAB PANELS ──────────────────── */
+      .c-portfolio-tab-panel { display: none; }
+      .c-portfolio-tab-panel.active { display: block; animation: fadeSlideIn 0.3s ease; }
+
+      /* ── VIDEO ─────────────────────────────────── */
+      .c-video-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 840px;
+        margin: 2rem auto;
+        aspect-ratio: 16/9;
+      }
+      .c-video-wrapper iframe {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        border: 0;
+      }
+
+      /* ── ANIMATIONS ────────────────────────────── */
+      @keyframes fadeSlideIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* ── FOOTER ────────────────────────────────── */
+      .c-footer {
+        text-align: center;
+        padding: 2rem 1rem;
+        border-top: 1px solid #e2e8f0;
+        background: #fff;
+        margin-top: 2rem;
+        font-size: 0.84rem;
+        color: #64748b;
+        line-height: 1.6;
+      }
+      [data-theme='dark'] .c-footer,
+      .theme-dark .c-footer {
+        background: #0f1112;
+        border-color: #1e293b;
+        color: #94a3b8;
+      }
+      .c-footer__about {
+        max-width: 560px;
+        margin: 0 auto 0.75rem;
+      }
+      .c-footer__links {
         display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        background: linear-gradient(135deg, #fef3c7, #fde68a);
-        border: 2px solid #f59e0b;
-        border-radius: 10px;
-        padding: 0.85rem 1.15rem;
-        margin-bottom: 1rem;
-        font-size: 0.9rem;
-        color: #78350f;
-        box-shadow: 0 2px 12px rgba(245, 158, 11, 0.18);
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.3rem;
+        margin-top: 0.5rem;
       }
-      .c-update-banner i {
-        color: #d97706;
-        font-size: 1.15rem;
-      }
-      .c-update-banner .c-update-badge {
-        display: inline-block;
-        background: #dc2626;
-        color: #fff;
-        font-size: 0.7rem;
-        font-weight: 800;
-        padding: 2px 7px;
-        border-radius: 4px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-right: 2px;
-      }
-      .c-update-banner__link {
-        color: #92400e;
-        font-weight: 600;
+      .c-footer__link {
+        color: #2563eb;
         text-decoration: none;
-        white-space: nowrap;
+        font-weight: 500;
       }
-      .c-update-banner__link:hover {
-        text-decoration: underline;
+      .c-footer__link:hover { text-decoration: underline; }
+      [data-theme='dark'] .c-footer__link,
+      .theme-dark .c-footer__link { color: #60a5fa; }
+      .c-footer__sep { opacity: 0.4; }
+      .c-footer__bmc { margin: 0.75rem 0; }
+
+      /* ── RESPONSIVE ────────────────────────────── */
+      @media (max-width: 768px) {
+        .c-header { padding: 2rem 0.75rem 1.75rem; }
+        .hero-stats { gap: 0.75rem; }
+        .hero-stat { padding: 0.4rem 0.8rem; min-width: 70px; }
+        .c-product-card { padding: 1.2rem; }
+        .c-section-panel { padding: 1.2rem; }
+        .c-nav { gap: 0.2rem; padding: 0.25rem; }
+        .c-nav-btn { padding: 0.45rem 0.6rem; font-size: 0.78rem; }
+        .c-portfolio-tabs { gap: 0.2rem; }
+        .c-portfolio-tab-btn { padding: 0.4rem 0.7rem; font-size: 0.78rem; }
+        .c-proof-gallery__grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
       }
-      [data-theme='dark'] .c-update-banner,
-      .theme-dark .c-update-banner {
-        background: linear-gradient(135deg, rgba(120, 53, 15, 0.45), rgba(146, 64, 14, 0.3));
-        border-color: rgba(245, 158, 11, 0.5);
-        color: #fde68a;
-        box-shadow: 0 2px 12px rgba(245, 158, 11, 0.12);
+
+      /* Skip link */
+      .c-skip-link {
+        position: absolute;
+        top: -100%;
+        left: 1rem;
+        z-index: 9999;
+        padding: 0.75rem 1.25rem;
+        background: #2563eb;
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border-radius: 0 0 8px 8px;
+        text-decoration: none;
+        transition: top 0.2s;
       }
-      [data-theme='dark'] .c-update-banner i,
-      .theme-dark .c-update-banner i {
-        color: #fbbf24;
-      }
-      [data-theme='dark'] .c-update-banner__link,
-      .theme-dark .c-update-banner__link {
-        color: #fbbf24;
-      }
+      .c-skip-link:focus { top: 0; }
     </style>
 
     <link rel="stylesheet" href="css/styles.css" />
     <link rel="stylesheet" href="css/footer.css" />
     <link rel="stylesheet" href="css/image-lightbox.css" />
 
-    <link
-      rel="preload"
-      href="css/radar.css"
-      as="style"
-      onload="
-        this.onload = null;
-        this.rel = 'stylesheet';
-      "
-    />
+    <link rel="preload" href="css/radar.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
     <noscript><link rel="stylesheet" href="css/radar.css" /></noscript>
     <meta name="google-site-verification" content="i-fm4jHv_Tzy9zhCDiAArKCN0CTisNhAbAm3rmEwpfM" />
 
@@ -413,11 +1153,8 @@
     <link rel="apple-touch-icon" sizes="192x192" href="/icons/favicon-192x192.png" />
     <link rel="manifest" href="/site.webmanifest" />
 
-    <meta property="og:title" content="Quiz The Spire - Live Multiplayer Quizzes" />
-    <meta
-      property="og:description"
-      content="Quiz The Spire v10.7.1 - Create and play real-time multiplayer quizzes with AI-powered themes. Build quizzes instantly from text. Compete on live leaderboards with community-created content."
-    />
+    <meta property="og:title" content="Quiz The Spire — Live Multiplayer Quizzes" />
+    <meta property="og:description" content="Quiz The Spire v10.7.1 — Create and play real-time multiplayer quizzes with AI-powered themes. Build quizzes instantly from text. Compete on live leaderboards with community-created content." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://quizthespire.com/" />
     <meta property="og:image" content="https://quizthespire.com/images/spire-light.jpeg" />
@@ -425,11 +1162,8 @@
     <meta property="og:image:height" content="1080" />
     <meta property="og:image:alt" content="Quiz The Spire hero background" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Quiz The Spire v10.7.1 - Live Multiplayer Quizzes" />
-    <meta
-      name="twitter:description"
-      content="Quiz The Spire v10.7.1 - Create and play real-time multiplayer quizzes with AI-powered themes. Build quizzes instantly for classrooms."
-    />
+    <meta name="twitter:title" content="Quiz The Spire v10.7.1 — Live Multiplayer Quizzes" />
+    <meta name="twitter:description" content="Quiz The Spire v10.7.1 — Create and play real-time multiplayer quizzes with AI-powered themes." />
     <meta name="twitter:image" content="https://quizthespire.com/images/spire-light.jpeg" />
     <script type="application/ld+json">
       {
@@ -441,7 +1175,7 @@
         "softwareVersion": "10.7.0",
         "downloadUrl": "https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest",
         "url": "https://quizthespire.com/",
-        "description": "Quiz The Spire v10.7.1 - Live multiplayer quizzes with AI-powered themes, real-time leaderboards, and community content."
+        "description": "Quiz The Spire v10.7.1 — Live multiplayer quizzes with AI-powered themes, real-time leaderboards, and community content."
       }
     </script>
     <meta name="theme-color" content="#0a0a14" media="(prefers-color-scheme: dark)" />
@@ -451,34 +1185,28 @@
   <body class="theme-blue">
     <a href="#main-content" class="c-skip-link">Skip to main content</a>
 
-    <!-- Dynamic spire background with WebP optimization -->
+    <!-- Dynamic spire background -->
     <div class="spire-background">
       <picture>
         <source srcset="images/spire-light.webp" type="image/webp" />
-        <img class="spire-bg-light" src="images/spire-light.jpeg" alt="Quiz The Spire background illustration in light mode"
-          loading="eager"
-          fetchpriority="high"
-          width="1920"
-          height="1080"
-        />
+        <img class="spire-bg-light" src="images/spire-light.jpeg" alt="Quiz The Spire background" loading="eager" fetchpriority="high" width="1920" height="1080" />
       </picture>
       <picture>
         <source srcset="images/spire-dark.webp" type="image/webp" />
-        <img class="spire-bg-dark" src="images/spire-dark.jpeg" alt="Quiz The Spire background illustration in dark mode"
-          loading="eager"
-          fetchpriority="high"
-          width="1920"
-          height="1080"
-        />
+        <img class="spire-bg-dark" src="images/spire-dark.jpeg" alt="Quiz The Spire background" loading="eager" fetchpriority="high" width="1920" height="1080" />
       </picture>
     </div>
 
+    <!-- ═══════════════════════════════════════════
+         HEADER
+         ═══════════════════════════════════════════ -->
     <header class="c-header">
       <h1 class="c-header__title">Lukas Bohez</h1>
       <p class="c-header__subtitle">
-        Full-stack developer - Python, TypeScript, AI/LLM, Next.js, Flutter, Apache. Building real-time platforms, cross-platform apps, and AI-powered developer tooling. Shipping to 95+ countries.
+        Full-Stack Developer & Open-Source Builder — Python, TypeScript, AI/LLM, Next.js, Flutter, Apache.
+        Building real-time platforms, cross-platform apps, and AI-powered developer tooling.
       </p>
-      <div class="hero-stats" role="region" aria-label="Site statistics">
+      <div class="hero-stats" role="region" aria-label="Key stats">
         <div class="hero-stat">
           <span class="hero-stat-number" data-target="7" data-suffix="+">0</span>
           <p class="hero-stat-label">Projects</p>
@@ -487,1231 +1215,511 @@
           <span class="hero-stat-number" data-target="5" data-suffix="+">0</span>
           <p class="hero-stat-label">Languages</p>
         </div>
-        <div class="hero-stat hero-stat--compact">
-          <span class="hero-stat-number" data-target="4" data-suffix="">0</span>
+        <div class="hero-stat">
+          <span class="hero-stat-number" data-target="4" data-suffix="+">0</span>
           <p class="hero-stat-label">Frameworks</p>
         </div>
-        <div class="hero-stat hero-stat--compact">
+        <div class="hero-stat">
           <span class="hero-stat-number" data-start-year="2024">2+</span>
-          <p class="hero-stat-label">Years exp</p>
+          <p class="hero-stat-label">Years Exp</p>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-number">950+</span>
+          <p class="hero-stat-label">Downloads</p>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-number">95+</span>
+          <p class="hero-stat-label">Countries</p>
         </div>
       </div>
-      <div class="c-header__trust" aria-label="Trust signals">
-        <span class="c-header__trust-item"
-          ><a href="https://github.com/Lukas-Bohez" target="_blank" rel="noopener" style="color:#fff;text-decoration:none;"><i class="fa-brands fa-github"></i>&nbsp;GitHub</a></span
-        >
+      <div class="c-header__trust" aria-label="Connect">
+        <span class="c-header__trust-item"><a href="https://github.com/Lukas-Bohez" target="_blank" rel="noopener" style="color:#fff;text-decoration:none;"><i class="fa-brands fa-github"></i>&nbsp;GitHub</a></span>
         <span class="c-header__trust-item"><a href="https://www.linkedin.com/in/lukas-bohez-3ba566271/" target="_blank" rel="noopener" style="color:#fff;text-decoration:none;"><i class="fa-brands fa-linkedin"></i>&nbsp;LinkedIn</a></span>
         <span class="c-header__trust-item"><a href="mailto:lukasbohez@gmail.com" style="color:#fff;text-decoration:none;"><i class="fa-solid fa-envelope"></i>&nbsp;Email</a></span>
       </div>
     </header>
 
+    <!-- ═══════════════════════════════════════════
+         MAIN CONTENT
+         ═══════════════════════════════════════════ -->
     <main id="main-content" class="o-container">
-      <!-- =============================================
-             TAB NAVIGATION
-             ============================================= -->
+
+      <!-- ── TAB NAVIGATION ────────────────────────── -->
       <nav class="c-nav" aria-label="Site sections">
-        <button class="c-nav-btn active" data-section="portfolio">
-          <i class="fa-solid fa-briefcase"></i> Portfolio
-        </button>
-        <button class="c-nav-btn" data-section="games">
-          <i class="fa-solid fa-gamepad"></i> Quiz &amp; Games
-        </button>
-        <button class="c-nav-btn" data-section="tools">
-          <i class="fa-solid fa-toolbox"></i> Tools &amp; Content
-        </button>
-        <button class="c-nav-btn" data-section="support">
-          <i class="fa-solid fa-life-ring"></i> Support
-        </button>
+        <button class="c-nav-btn active" data-section="portfolio"><i class="fa-solid fa-briefcase"></i> Portfolio</button>
+        <button class="c-nav-btn" data-section="games"><i class="fa-solid fa-gamepad"></i> Quiz & Games</button>
+        <button class="c-nav-btn" data-section="tools"><i class="fa-solid fa-toolbox"></i> Tools & Content</button>
+        <button class="c-nav-btn" data-section="support"><i class="fa-solid fa-life-ring"></i> Support</button>
         <div class="c-nav-actions">
-          <button
-            id="theme-toggle"
-            class="c-theme-nav-btn"
-            type="button"
-            aria-label="Toggle dark mode"
-            title="Toggle dark mode"
-          >
+          <button id="theme-toggle" class="c-theme-nav-btn" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
             <i class="fa-solid fa-circle-half-stroke"></i>
             <span>Theme</span>
           </button>
         </div>
       </nav>
+
+      <!-- ═══════════════════════════════════════════
+           PORTFOLIO SECTION
+           ═══════════════════════════════════════════ -->
       <div id="portfolio-section" class="section active">
 
-      <!-- Portfolio Section -->
-      <!-- FIND this entire .c-portfolio-tabs div and replace with: -->
-      <div class="c-portfolio-tabs" role="tablist" aria-label="Portfolio subsections">
-          <button type="button" class="c-nav-btn c-portfolio-tab-btn" data-tab="convert">
-            <i class="fa-solid fa-download"></i> Convert
-          </button>
-          <button type="button" class="c-nav-btn c-portfolio-tab-btn" data-tab="releases">
-            <i class="fa-solid fa-flag"></i> Releases
-          </button>
-          <button type="button" class="c-nav-btn c-portfolio-tab-btn" data-tab="bitplayer">
-            <i class="fa-solid fa-play"></i> BitPlayer
-          </button>
-          <button type="button" class="c-nav-btn c-portfolio-tab-btn" data-tab="lofi">
-            <i class="fa-solid fa-headphones"></i> Lofi
-          </button>
-          <button type="button" class="c-nav-btn c-portfolio-tab-btn active" data-tab="demo">
-            <i class="fa-solid fa-bolt"></i> SpireAI
-          </button>
-          <button type="button" class="c-nav-btn c-portfolio-tab-btn" data-tab="midi">
-            <i class="fa-solid fa-music"></i> MIDIComposer
-          </button>
+        <!-- Portfolio sub-tabs -->
+        <div class="c-portfolio-tabs" role="tablist" aria-label="Portfolio subsections">
+          <button type="button" class="c-nav-btn c-portfolio-tab-btn" data-tab="convert"><i class="fa-solid fa-download"></i> Convert</button>
+          <button type="button" class="c-nav-btn c-portfolio-tab-btn" data-tab="releases"><i class="fa-solid fa-flag"></i> Releases</button>
+          <button type="button" class="c-nav-btn c-portfolio-tab-btn" data-tab="bitplayer"><i class="fa-solid fa-play"></i> BitPlayer</button>
+          <button type="button" class="c-nav-btn c-portfolio-tab-btn" data-tab="lofi"><i class="fa-solid fa-headphones"></i> Lofi</button>
+          <button type="button" class="c-nav-btn c-portfolio-tab-btn active" data-tab="nextjs"><i class="fa-brands fa-react"></i> Next.js Portfolio</button>
+          <button type="button" class="c-nav-btn c-portfolio-tab-btn" data-tab="midi"><i class="fa-solid fa-music"></i> MIDIComposer</button>
         </div>
 
-        <!-- =============================================
-             HERO: Convert The Spire Reborn  (#1 promo)
-             ============================================= -->
-
-
-  <div class="c-portfolio-tab-panel" data-tab-content="convert">
-
-        <section class="c-product-card c-product-card--hero" aria-label="Convert The Spire Reborn">
-          <div class="c-product-card__badge-row">
-            <span class="c-badge c-badge--green"
-              ><i class="fa-solid fa-shield-halved"></i> Open Source</span
-            >
-            <span class="c-badge c-badge--blue"
-              ><i class="fa-solid fa-scale-balanced"></i> GPLv3 Licensed</span
-            >
-            <span class="c-badge c-badge--blue"
-              ><i class="fa-solid fa-puzzle-piece"></i> Flutter / Dart</span
-            >
-            <span class="c-badge c-badge--slate"><i class="fa-brands fa-windows"></i> Windows</span>
-            <span class="c-badge c-badge--green"><i class="fa-brands fa-android"></i> Android</span>
-            <span class="c-badge c-badge--slate" title="Linux builds"
-              ><i class="fa-brands fa-linux"></i> Linux</span
-            >
-            <span class="c-badge c-badge--slate"
-              ><i class="fa-brands fa-apple"></i> macOS (untested)</span
-            >
-          </div>
-          <h2 class="c-product-card__title">Convert The Spire Reborn</h2>
-          <p class="c-product-card__tagline">The Cleanest Way to Download YouTube Playlists.</p>
-          <p class="c-product-card__tagline">
-            Free, open-source. Download individual videos or massive playlists in true 4K/8K.
-          </p>
-            Built and maintained by one indie developer, <strong>Lukas Bohez</strong>. 950+ downloads
-          <div class="c-update-banner">
-            <i class="fa-solid fa-rocket"></i>
-            <span
-              ><span class="c-update-badge" data-version>v10.8.2</span> Improved crash resilience
-              keeps long-running sessions stable.
-              <a
-                href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-release-link
-                class="c-update-banner__link"
-                >View full changelog &rarr;</a
-              ></span
-            >
-          </div>
-
-          <section class="c-proof-gallery" aria-label="Real app screenshots">
-            <div class="c-proof-gallery__header">
-              <h3 class="c-proof-gallery__title">See it in action</h3>
-              <p class="c-proof-gallery__subtitle">
-                Live UI captures from Convert The Spire Reborn across search, playlists, settings,
-                and media playback. Built for easy use, 4K/8K-quality downloads, and full
-                customization.
-              </p>
-              <div class="c-proof-gallery__highlights c-product-card__badge-row" aria-label="App highlights">
-                <span class="c-badge c-badge--blue">100+ video playlists supported</span>
-                <span class="c-badge c-badge--green">4K / 8K downloads</span>
-                <span class="c-badge c-badge--purple">Full customization</span>
-                <span class="c-badge c-badge--slate">Easy to use</span>
-              </div>
+        <!-- ── Convert The Spire Reborn ─────────── -->
+        <div class="c-portfolio-tab-panel" data-tab-content="convert">
+          <section class="c-product-card" aria-label="Convert The Spire Reborn">
+            <div class="c-product-card__badge-row">
+              <span class="c-badge c-badge--green"><i class="fa-solid fa-shield-halved"></i> Open Source</span>
+              <span class="c-badge c-badge--blue"><i class="fa-solid fa-scale-balanced"></i> GPLv3</span>
+              <span class="c-badge c-badge--blue"><i class="fa-solid fa-puzzle-piece"></i> Flutter / Dart</span>
+              <span class="c-badge c-badge--slate"><i class="fa-brands fa-windows"></i> Windows</span>
+              <span class="c-badge c-badge--green"><i class="fa-brands fa-android"></i> Android</span>
+              <span class="c-badge c-badge--slate"><i class="fa-brands fa-linux"></i> Linux</span>
+              <span class="c-badge c-badge--slate"><i class="fa-brands fa-apple"></i> macOS (untested)</span>
             </div>
-            <div class="c-proof-gallery__grid">
+            <h2 class="c-product-card__title">Convert The Spire Reborn</h2>
+            <p class="c-product-card__tagline">The Cleanest Way to Download YouTube Playlists.</p>
+            <p class="c-product-card__tagline">Free, open-source. Download individual videos or massive playlists in true 4K/8K. Built and maintained by one indie developer, <strong>Lukas Bohez</strong>. 950+ downloads across 95+ countries.</p>
+
+            <div class="c-update-banner">
+              <i class="fa-solid fa-rocket"></i>
+              <span><span class="c-update-badge" data-version>v10.8.2</span> Improved crash resilience keeps long-running sessions stable.
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest" target="_blank" rel="noopener noreferrer" data-release-link class="c-update-banner__link">View changelog &rarr;</a>
+              </span>
+            </div>
+
+            <!-- Proof Gallery -->
+            <section class="c-proof-gallery" aria-label="App screenshots">
+              <div class="c-proof-gallery__header">
+                <h3 class="c-proof-gallery__title">See it in action</h3>
+                <p class="c-proof-gallery__subtitle">Live UI captures of Convert The Spire Reborn across search, playlists, settings, and media playback.</p>
+                <div class="c-proof-gallery__highlights c-product-card__badge-row" aria-label="Highlights">
+                  <span class="c-badge c-badge--blue">100+ video playlists supported</span>
+                  <span class="c-badge c-badge--green">4K / 8K downloads</span>
+                  <span class="c-badge c-badge--purple">Full customization</span>
+                  <span class="c-badge c-badge--slate">Easy to use</span>
+                </div>
+              </div>
+              <div class="c-proof-gallery__grid">
                 <figure class="c-proof-gallery__item">
-                  <button
-                    type="button"
-                    class="c-proof-gallery__expand"
-                    aria-label="Open 100+ video download proof screenshot"
-                    data-proof-open
-                  >
-                    <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
-                  </button>
-                  <img
-                    src="imagesPortfolio/additionalProof100+videos.png"
-                    alt="Proof screenshot showing 100+ video downloads supported"
-                    loading="lazy"
-                    decoding="async"
-                    data-zoomable
-                    title="Click to zoom"
-                  />
-                  <figcaption>
-                    <strong>100+ video proof</strong>
-                    <span>Real screenshot showing the larger playlist download workflow in action.</span>
-                  </figcaption>
+                  <button type="button" class="c-proof-gallery__expand" aria-label="Open 100+ video proof screenshot" data-proof-open><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
+                  <img src="imagesPortfolio/additionalProof100+videos.png" alt="100+ video downloads supported" loading="lazy" decoding="async" data-zoomable title="Click to zoom" />
+                  <figcaption><strong>100+ video proof</strong><span>Real screenshot of the larger playlist download workflow in action.</span></figcaption>
                 </figure>
-              <figure class="c-proof-gallery__item">
-                <button
-                  type="button"
-                  class="c-proof-gallery__expand"
-                  aria-label="Open Search + queue workflow screenshot"
-                  data-proof-open
-                >
-                  <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
-                </button>
-                <picture>
-                  <source type="image/webp" srcset="images-app/fullSearchFunctionality-480.webp 480w, images-app/fullSearchFunctionality-800.webp 800w, images-app/fullSearchFunctionality-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw" />
-                  <img src="images-app/fullSearchFunctionality-1200.webp" alt="Search view showing live results from multiple sources" loading="lazy" decoding="async" data-zoomable title="Click to zoom" width="1200" height="675" />
-                </picture>
-                <figcaption>
-                  <strong>Search + queue workflow</strong>
-                  <span>Find content fast, add items in one click, and keep the queue moving.</span>
-                </figcaption>
-              </figure>
-              <figure class="c-proof-gallery__item">
-                <button
-                  type="button"
-                  class="c-proof-gallery__expand"
-                  aria-label="Open Full playlist downloads screenshot"
-                  data-proof-open
-                >
-                  <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
-                </button>
-                <picture>
-                  <source type="image/webp" srcset="images-app/DownloadFullPlaylists-480.webp 480w, images-app/DownloadFullPlaylists-800.webp 800w, images-app/DownloadFullPlaylists-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw" />
-                  <img src="images-app/DownloadFullPlaylists-1200.webp" alt="Playlist manager with selected tracks ready for download" loading="lazy" decoding="async" data-zoomable title="Click to zoom" width="1200" height="675" />
-                </picture>
-                <figcaption>
-                  <strong>Full playlist downloads</strong>
-                  <span>Queue entire playlists and grab 100+ videos without babysitting the app.</span>
-                </figcaption>
-              </figure>
-              <figure class="c-proof-gallery__item">
-                <button
-                  type="button"
-                  class="c-proof-gallery__expand"
-                  aria-label="Open Quick new-song downloads screenshot"
-                  data-proof-open
-                >
-                  <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
-                </button>
-                <picture>
-                  <source type="image/webp" srcset="images-app/downloadNewSongsEassily-480.webp 480w, images-app/downloadNewSongsEassily-800.webp 800w, images-app/downloadNewSongsEassily-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw" />
-                  <img src="images-app/downloadNewSongsEassily-1200.webp" alt="Download queue showing quick new-song additions" loading="lazy" decoding="async" data-zoomable title="Click to zoom" width="1200" height="675" />
-                </picture>
-                <figcaption>
-                  <strong>Quick new-song downloads</strong>
-                  <span>Add fresh tracks fast and keep download progress organized.</span>
-                </figcaption>
-              </figure>
-              <figure class="c-proof-gallery__item">
-                <button
-                  type="button"
-                  class="c-proof-gallery__expand"
-                  aria-label="Open Extensive settings screenshot"
-                  data-proof-open
-                >
-                  <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
-                </button>
-                <picture>
-                  <source type="image/webp" srcset="images-app/LotsOfSettingsForCustomization-480.webp 480w, images-app/LotsOfSettingsForCustomization-800.webp 800w, images-app/LotsOfSettingsForCustomization-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw" />
-                  <img src="images-app/LotsOfSettingsForCustomization-1200.webp" alt="Settings page with configurable download folders and format options" loading="lazy" decoding="async" data-zoomable title="Click to zoom" width="1200" height="675" />
-                </picture>
-                <figcaption>
-                  <strong>Full customization</strong>
-                  <span>Fine-tune folders, formats, workers, notifications, and output behavior.</span>
-                </figcaption>
-              </figure>
-              <figure class="c-proof-gallery__item">
-                <button
-                  type="button"
-                  class="c-proof-gallery__expand"
-                  aria-label="Open Built-in guide screenshot"
-                  data-proof-open
-                >
-                  <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
-                </button>
-                <picture>
-                  <source type="image/webp" srcset="images-app/fullGuideWithInfo-480.webp 480w, images-app/fullGuideWithInfo-800.webp 800w, images-app/fullGuideWithInfo-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw" />
-                  <img src="images-app/fullGuideWithInfo-1200.webp" alt="Built-in guide and onboarding information" data-zoomable title="Click to zoom" decoding="async" loading="lazy" width="1200" height="675" />
-                </picture>
-                <figcaption>
-                  <strong>Built-in guide</strong>
-                  <span>Learn every feature with clear in-app documentation and tips.</span>
-                </figcaption>
-              </figure>
-              <figure class="c-proof-gallery__item">
-                <button
-                  type="button"
-                  class="c-proof-gallery__expand"
-                  aria-label="Open Integrated media player screenshot"
-                  data-proof-open
-                >
-                  <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
-                </button>
-                <picture>
-                  <source
-                    type="image/webp"
-                    srcset="images-app/mediaPlayer-480.webp 480w, images-app/mediaPlayer-800.webp 800w, images-app/mediaPlayer-1200.webp 1200w"
-                    sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw"
-                  />
-                  <img
-                    src="images-app/mediaPlayer-1200.webp"
-                    alt="Built-in media player with song list and playback controls"
-                    data-zoomable
-                    title="Click to zoom"
-                    decoding="async"
-                    loading="eager"
-                    fetchpriority="high"
-                    width="1200"
-                    height="675"
-                  />
-                </picture>
-                <figcaption>
-                  <strong>Integrated media player</strong>
-                  <span>Preview, play, and manage downloads without switching tools.</span>
-                </figcaption>
-              </figure>
-              <figure class="c-proof-gallery__item">
-                <button
-                  type="button"
-                  class="c-proof-gallery__expand"
-                  aria-label="Open Usage stats screenshot"
-                  data-proof-open
-                >
-                  <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
-                </button>
-                <picture>
-                  <source type="image/webp" srcset="images-app/stats-480.webp 480w, images-app/stats-800.webp 800w, images-app/stats-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw" />
-                  <img src="images-app/stats-1200.webp" alt="Usage stats showing converted playlists and total videos processed" loading="lazy" decoding="async" data-zoomable title="Click to zoom" width="1200" height="675" />
-                </picture>
-                <figcaption>
-                  <strong>Usage stats</strong>
-                  <span>See how many videos and playlists you have converted, including 100+ playlist runs.</span>
-                </figcaption>
-              </figure>
-              <figure class="c-proof-gallery__item">
-                <button
-                  type="button"
-                  class="c-proof-gallery__expand"
-                  aria-label="Open Torrent workflow screenshot"
-                  data-proof-open
-                >
-                  <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
-                </button>
-                <picture>
-                  <source type="image/webp" srcset="images-app/fullTorrentingFunctionality-480.webp 480w, images-app/fullTorrentingFunctionality-800.webp 800w, images-app/fullTorrentingFunctionality-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw" />
-                  <img src="images-app/fullTorrentingFunctionality-1200.webp" alt="Torrent workflow with legal use guidance" loading="lazy" decoding="async" data-zoomable title="Click to zoom" width="1200" height="675" />
-                </picture>
-                <figcaption>
-                  <strong>Torrent workflow</strong>
-                  <span>Manage torrent tasks with legal-use guidance and clear status tracking.</span>
-                </figcaption>
-              </figure>
+                <figure class="c-proof-gallery__item">
+                  <button type="button" class="c-proof-gallery__expand" aria-label="Open Search screenshot" data-proof-open><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
+                  <picture>
+                    <source type="image/webp" srcset="images-app/fullSearchFunctionality-480.webp 480w, images-app/fullSearchFunctionality-800.webp 800w, images-app/fullSearchFunctionality-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw" />
+                    <img src="images-app/fullSearchFunctionality-1200.webp" alt="Search view" loading="lazy" decoding="async" data-zoomable title="Click to zoom" width="1200" height="675" />
+                  </picture>
+                  <figcaption><strong>Search + queue</strong><span>Find content fast and add items in one click.</span></figcaption>
+                </figure>
+                <figure class="c-proof-gallery__item">
+                  <button type="button" class="c-proof-gallery__expand" aria-label="Open playlist downloads screenshot" data-proof-open><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
+                  <picture>
+                    <source type="image/webp" srcset="images-app/DownloadFullPlaylists-480.webp 480w, images-app/DownloadFullPlaylists-800.webp 800w, images-app/DownloadFullPlaylists-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw" />
+                    <img src="images-app/DownloadFullPlaylists-1200.webp" alt="Playlist manager" loading="lazy" decoding="async" data-zoomable title="Click to zoom" width="1200" height="675" />
+                  </picture>
+                  <figcaption><strong>Full playlist downloads</strong><span>Queue entire playlists and grab 100+ videos.</span></figcaption>
+                </figure>
+                <figure class="c-proof-gallery__item">
+                  <button type="button" class="c-proof-gallery__expand" aria-label="Open new downloads screenshot" data-proof-open><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
+                  <picture>
+                    <source type="image/webp" srcset="images-app/downloadNewSongsEassily-480.webp 480w, images-app/downloadNewSongsEassily-800.webp 800w, images-app/downloadNewSongsEassily-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw" />
+                    <img src="images-app/downloadNewSongsEassily-1200.webp" alt="Quick new-song downloads" loading="lazy" decoding="async" data-zoomable title="Click to zoom" width="1200" height="675" />
+                  </picture>
+                  <figcaption><strong>Quick song downloads</strong><span>Add fresh tracks fast, keep progress organized.</span></figcaption>
+                </figure>
+                <figure class="c-proof-gallery__item">
+                  <button type="button" class="c-proof-gallery__expand" aria-label="Open settings screenshot" data-proof-open><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
+                  <picture>
+                    <source type="image/webp" srcset="images-app/LotsOfSettingsForCustomization-480.webp 480w, images-app/LotsOfSettingsForCustomization-800.webp 800w, images-app/LotsOfSettingsForCustomization-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw" />
+                    <img src="images-app/LotsOfSettingsForCustomization-1200.webp" alt="Settings page" loading="lazy" decoding="async" data-zoomable title="Click to zoom" width="1200" height="675" />
+                  </picture>
+                  <figcaption><strong>Full customization</strong><span>Fine-tune folders, formats, workers, and output behavior.</span></figcaption>
+                </figure>
+                <figure class="c-proof-gallery__item">
+                  <button type="button" class="c-proof-gallery__expand" aria-label="Open guide screenshot" data-proof-open><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
+                  <picture>
+                    <source type="image/webp" srcset="images-app/fullGuideWithInfo-480.webp 480w, images-app/fullGuideWithInfo-800.webp 800w, images-app/fullGuideWithInfo-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw" />
+                    <img src="images-app/fullGuideWithInfo-1200.webp" alt="Built-in guide" data-zoomable title="Click to zoom" decoding="async" loading="lazy" width="1200" height="675" />
+                  </picture>
+                  <figcaption><strong>Built-in guide</strong><span>Learn every feature with clear in-app documentation.</span></figcaption>
+                </figure>
+                <figure class="c-proof-gallery__item">
+                  <button type="button" class="c-proof-gallery__expand" aria-label="Open media player screenshot" data-proof-open><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
+                  <picture>
+                    <source type="image/webp" srcset="images-app/mediaPlayer-480.webp 480w, images-app/mediaPlayer-800.webp 800w, images-app/mediaPlayer-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw" />
+                    <img src="images-app/mediaPlayer-1200.webp" alt="Built-in media player" data-zoomable title="Click to zoom" decoding="async" loading="eager" fetchpriority="high" width="1200" height="675" />
+                  </picture>
+                  <figcaption><strong>Integrated media player</strong><span>Preview and manage downloads without switching tools.</span></figcaption>
+                </figure>
+                <figure class="c-proof-gallery__item">
+                  <button type="button" class="c-proof-gallery__expand" aria-label="Open stats screenshot" data-proof-open><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
+                  <picture>
+                    <source type="image/webp" srcset="images-app/stats-480.webp 480w, images-app/stats-800.webp 800w, images-app/stats-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw" />
+                    <img src="images-app/stats-1200.webp" alt="Usage stats" loading="lazy" decoding="async" data-zoomable title="Click to zoom" width="1200" height="675" />
+                  </picture>
+                  <figcaption><strong>Usage stats</strong><span>Track converted playlists and total videos processed.</span></figcaption>
+                </figure>
+                <figure class="c-proof-gallery__item">
+                  <button type="button" class="c-proof-gallery__expand" aria-label="Open Torrent screenshot" data-proof-open><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
+                  <picture>
+                    <source type="image/webp" srcset="images-app/fullTorrentingFunctionality-480.webp 480w, images-app/fullTorrentingFunctionality-800.webp 800w, images-app/fullTorrentingFunctionality-1200.webp 1200w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw" />
+                    <img src="images-app/fullTorrentingFunctionality-1200.webp" alt="Torrent workflow" loading="lazy" decoding="async" data-zoomable title="Click to zoom" width="1200" height="675" />
+                  </picture>
+                  <figcaption><strong>Torrent workflow</strong><span>Manage torrent tasks with legal-use guidance.</span></figcaption>
+                </figure>
+              </div>
+            </section>
+
+            <ul class="c-feature-list" aria-label="Latest release highlights">
+              <li class="c-feature-list__item"><i class="fa-solid fa-circle-check"></i> <span data-version>v10.8.2</span>: Improved crash resilience keeps long-running sessions stable</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-circle-check"></i> <span data-version>v10.8.2</span>: BitPlayer remains fully integrated across desktop and mobile</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-circle-check"></i> Unified Convert + BitPlayer workflow across desktop and mobile</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-circle-check"></i> Published SHA256 checksums for binary verification</li>
+            </ul>
+
+            <ul class="c-feature-list">
+              <li class="c-feature-list__item"><i class="fa-solid fa-globe"></i> Built-in browser with smart URL handling & ad blocking</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-download"></i> Download from 1,800+ sites via yt-dlp — 1080p video, 320 kbps audio</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-shuffle"></i> Convert between 27+ formats — docs, images, archives & media</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-tv"></i> DLNA / UPnP casting to any TV, speaker, or receiver</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-play"></i> Built-in media player with playlists, queue & library</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-lock"></i> 100% open-source under GPLv3 — your files never leave your machine</li>
+            </ul>
+
+            <div class="c-product-card__actions">
+              <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-windows-x64.zip" data-download-win target="_blank" rel="noopener noreferrer" class="c-btn c-btn--primary"><i class="fa-brands fa-windows"></i> Windows</a>
+              <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn.apk" data-download-android target="_blank" rel="noopener noreferrer" class="c-btn c-btn--primary"><i class="fa-brands fa-android"></i> Android</a>
+              <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-linux-x64.zip" data-download-linux target="_blank" rel="noopener noreferrer" class="c-btn c-btn--primary"><i class="fa-brands fa-linux"></i> Linux</a>
+              <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-macOS.zip" data-download-mac target="_blank" rel="noopener noreferrer" class="c-btn c-btn--primary"><i class="fa-brands fa-apple"></i> macOS</a>
+            </div>
+
+            <details class="c-smartscreen-info">
+              <summary><i class="fa-solid fa-shield-halved"></i> Why does Windows show a warning?</summary>
+              <div class="c-smartscreen-info__body">
+                <p>Windows SmartScreen warns about unsigned software — normal for indie apps not code-signed (code-signing costs ~$200/year). The app is <strong>100% open-source</strong> under GPLv3.</p>
+                <p><strong>To run:</strong> click <em>"More info"</em> → <em>"Run anyway."</em></p>
+              </div>
+            </details>
+
+            <div class="c-product-card__actions">
+              <a href="/pages/conversion/" class="c-btn c-btn--outline"><i class="fa-solid fa-arrow-right"></i> Learn more</a>
+              <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--outline"><i class="fa-brands fa-github"></i> View source</a>
+              <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/SHA256SUMS.txt" data-download-sha target="_blank" rel="noopener noreferrer" class="c-btn c-btn--outline"><i class="fa-solid fa-fingerprint"></i> Verify checksums</a>
+              <a href="https://github.com/sponsors/Lukas-Bohez" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--outline"><i class="fa-solid fa-hand-holding-heart"></i> Supporters</a>
+              <a href="/LukasBohez/projects/" class="c-btn c-btn--outline"><i class="fa-solid fa-star"></i> Project pictures</a>
+              <a href="/LukasBohez/" class="c-btn c-btn--outline"><i class="fa-solid fa-briefcase"></i> Portfolio</a>
+              <a href="/pages/support/" class="c-btn c-btn--outline"><i class="fa-solid fa-headset"></i> Support chat</a>
+            </div>
+
+            <div id="conversionStatus" class="c-download-status" aria-live="polite">
+              <p id="statusText"></p>
             </div>
           </section>
-
-          <ul class="c-feature-list" aria-label="Latest release highlights">
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-circle-check"></i> <span data-version>v10.8.2</span>: Improved
-              crash resilience keeps long-running sessions stable
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-circle-check"></i> <span data-version>v10.8.2</span>: BitPlayer
-              remains fully integrated across desktop and mobile
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-circle-check"></i> Unified Convert + BitPlayer workflow remains
-              active across desktop and mobile
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-circle-check"></i> Published SHA256 checksums make binary
-              verification straightforward
-            </li>
-          </ul>
-
-          <ul class="c-feature-list">
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-globe"></i> Built-in browser with smart URL handling &amp; ad
-              blocking
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-download"></i> Download from 1,800+ sites via yt-dlp - 1080p
-              video, 320 kbps audio
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-shuffle"></i> Convert between 27+ formats - docs, images,
-              archives &amp; media
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-tv"></i> DLNA / UPnP casting to any TV, speaker, or receiver on
-              your network
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-play"></i> Built-in media player with playlists, queue &amp;
-              library management
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-lock"></i> 100% open-source under GPLv3 - your files never leave
-              your machine
-            </li>
-            <!-- Removed: Opt-in distributed computing - donated CPU cycles to third-parties not appropriate for site promotion -->
-            <!-- Removed: Native AOT performance claim -->
-          </ul>
-
-          <div class="c-product-card__actions c-product-card__actions--platform">
-            <a
-              href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-windows-x64.zip"
-              data-download-win
-              target="_blank"
-              rel="noopener noreferrer"
-              class="c-btn c-btn--cta c-btn--windows"
-            >
-              <span class="c-btn__content c-platform-download-text"
-                ><i
-                  class="fa-brands fa-windows c-platform-download-icon"
-                  aria-hidden="true"
-                ></i
-                ><span>Windows</span></span
-              >
-            </a>
-            <a
-              href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn.apk"
-              data-download-android
-              target="_blank"
-              rel="noopener noreferrer"
-              class="c-btn c-btn--cta c-btn--android"
-            >
-              <span class="c-btn__content c-platform-download-text"
-                ><i
-                  class="fa-brands fa-android c-platform-download-icon"
-                  aria-hidden="true"
-                ></i
-                ><span>Android</span></span
-              >
-            </a>
-            <a
-              href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-linux-x64.zip"
-              data-download-linux
-              target="_blank"
-              rel="noopener noreferrer"
-              class="c-btn c-btn--cta c-btn--linux"
-            >
-              <span class="c-btn__content c-platform-download-text"
-                ><i
-                  class="fa-brands fa-linux c-platform-download-icon"
-                  aria-hidden="true"
-                ></i
-                ><span>Linux</span></span
-              >
-            </a>
-            <a
-              href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-macOS.zip"
-              data-download-mac
-              target="_blank"
-              rel="noopener noreferrer"
-              class="c-btn c-btn--cta c-btn--macos"
-            >
-              <span class="c-btn__content c-platform-download-text"
-                ><i
-                  class="fa-brands fa-apple c-platform-download-icon"
-                  aria-hidden="true"
-                ></i
-                ><span>macOS</span></span
-              >
-            </a>
-          </div>
-
-          <details class="c-smartscreen-info">
-            <summary>
-              <i class="fa-solid fa-shield-halved"></i> Why does Windows show a warning?
-            </summary>
-            <div class="c-smartscreen-info__body">
-              <p>
-                Windows SmartScreen warns about unsigned software - this is normal for indie apps
-                that aren&rsquo;t code-signed (signing costs ~$200/year). The app is
-                <strong>100% open-source</strong> under the GPLv3 license.
-              </p>
-              <p>
-                <strong>To run the app:</strong> click <em>&ldquo;More info&rdquo;</em> &rarr;
-                <em>&ldquo;Run anyway.&rdquo;</em>
-              </p>
-            </div>
-          </details>
-
-          <div class="c-product-card__actions">
-            <a href="/pages/conversion/" class="c-btn c-btn--outline">
-              <i class="fa-solid fa-arrow-right"></i>&nbsp; Learn more
-            </a>
-            <a
-              href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="c-btn c-btn--outline"
-            >
-              <i class="fa-brands fa-github"></i>&nbsp; View source
-            </a>
-            <a
-              href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/SHA256SUMS.txt"
-              data-download-sha
-              target="_blank"
-              rel="noopener noreferrer"
-              class="c-btn c-btn--outline"
-            >
-              <i class="fa-solid fa-fingerprint"></i>&nbsp; Verify checksums
-            </a>
-            <a
-              href="https://github.com/sponsors/Lukas-Bohez"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="c-btn c-btn--outline"
-            >
-              <i class="fa-solid fa-hand-holding-heart"></i>&nbsp; Supporters
-            </a>
-            <a href="/LukasBohez/projects/" class="c-btn c-btn--outline">
-              <i class="fa-solid fa-star"></i>&nbsp; View example project pictures →
-            </a>
-            <a href="/LukasBohez/" class="c-btn c-btn--outline">
-              <i class="fa-solid fa-briefcase"></i>&nbsp; Portfolio
-            </a>
-            <a href="/pages/support/" class="c-btn c-btn--outline">
-              <i class="fa-solid fa-headset"></i>&nbsp; Support chat
-            </a>
-          </div>
-
-          <div id="conversionStatus" class="c-download-status" aria-live="polite">
-            <p id="statusText"></p>
-          </div>
-        </section>
         </div>
 
+        <!-- ── Releases ──────────────────────────── -->
         <div class="c-portfolio-tab-panel" data-tab-content="releases">
-
-        <section class="c-product-card c-product-card--hero" aria-label="Latest release notes">
-          <div class="c-product-card__badge-row">
-            <span class="c-badge c-badge--blue"
-              ><i class="fa-solid fa-flag"></i> Release Notes</span
-            >
-            <span class="c-badge c-badge--green"><i class="fa-solid fa-box"></i> Latest release</span>
-            <span class="c-badge c-badge--slate"
-              ><i class="fa-solid fa-calendar-days"></i> April 23, 2026</span
-            >
-          </div>
-          <h2 class="c-product-card__title">Improved crash resilience - latest release</h2>
-          <p class="c-product-card__tagline">
-            The app is more resilient in long-running sessions, so leaving it open for too long no
-            longer trips the same crash path.
-          </p>
-
-          <ul class="c-feature-list" aria-label="Release assets">
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-box"></i>
-              <a
-                href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-windows-x64.zip"
-                target="_blank"
-                rel="noopener noreferrer"
-                >ConvertTheSpireReborn-windows-x64.zip</a
-              >
-              - 38.5 MB
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-box"></i>
-              <a
-                href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-linux-x64.zip"
-                target="_blank"
-                rel="noopener noreferrer"
-                >ConvertTheSpireReborn-linux-x64.zip</a
-              >
-              - 25 MB
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-box"></i>
-              <a
-                href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-macOS.zip"
-                target="_blank"
-                rel="noopener noreferrer"
-                >ConvertTheSpireReborn-macOS.zip</a
-              >
-              - 64 MB
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-box"></i>
-              <a
-                href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn.apk"
-                target="_blank"
-                rel="noopener noreferrer"
-                >ConvertTheSpireReborn.apk</a
-              >
-              - 287 MB
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-box"></i>
-              <a
-                href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn.aab"
-                target="_blank"
-                rel="noopener noreferrer"
-                >ConvertTheSpireReborn.aab</a
-              >
-              - 157 MB
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-box"></i>
-              <a
-                href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/SHA256SUMS.txt"
-                target="_blank"
-                rel="noopener noreferrer"
-                >SHA256SUMS.txt</a
-              >
-              - 543 Bytes
-            </li>
-          </ul>
-
-          <div class="c-product-card__actions">
-            <a
-              href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="c-btn c-btn--outline"
-            >
-              <i class="fa-brands fa-github"></i>&nbsp; View on GitHub
-            </a>
-            <a
-              href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="c-btn c-btn--outline"
-            >
-              <i class="fa-solid fa-list"></i>&nbsp; See all releases
-            </a>
-          </div>
-        </section>
+          <section class="c-product-card" aria-label="Latest release notes">
+            <div class="c-product-card__badge-row">
+              <span class="c-badge c-badge--blue"><i class="fa-solid fa-flag"></i> Release Notes</span>
+              <span class="c-badge c-badge--green"><i class="fa-solid fa-box"></i> Latest release</span>
+              <span class="c-badge c-badge--slate"><i class="fa-solid fa-calendar-days"></i> April 23, 2026</span>
+            </div>
+            <h2 class="c-product-card__title">Improved crash resilience — latest release</h2>
+            <p class="c-product-card__tagline">The app is more resilient in long-running sessions.</p>
+            <ul class="c-feature-list" aria-label="Release assets">
+              <li class="c-feature-list__item"><i class="fa-solid fa-box"></i> <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-windows-x64.zip" target="_blank" rel="noopener noreferrer">ConvertTheSpireReborn-windows-x64.zip</a> — 38.5 MB</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-box"></i> <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-linux-x64.zip" target="_blank" rel="noopener noreferrer">ConvertTheSpireReborn-linux-x64.zip</a> — 25 MB</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-box"></i> <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-macOS.zip" target="_blank" rel="noopener noreferrer">ConvertTheSpireReborn-macOS.zip</a> — 64 MB</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-box"></i> <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn.apk" target="_blank" rel="noopener noreferrer">ConvertTheSpireReborn.apk</a> — 287 MB</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-box"></i> <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn.aab" target="_blank" rel="noopener noreferrer">ConvertTheSpireReborn.aab</a> — 157 MB</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-box"></i> <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/SHA256SUMS.txt" target="_blank" rel="noopener noreferrer">SHA256SUMS.txt</a> — 543 Bytes</li>
+            </ul>
+            <div class="c-product-card__actions">
+              <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--outline"><i class="fa-brands fa-github"></i> View on GitHub</a>
+              <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--outline"><i class="fa-solid fa-list"></i> All releases</a>
+            </div>
+          </section>
         </div>
 
+        <!-- ── BitPlayer ─────────────────────────── -->
         <div class="c-portfolio-tab-panel" data-tab-content="bitplayer">
+          <section class="c-product-card" aria-label="BitPlayer integration">
+            <div class="c-product-card__badge-row">
+              <span class="c-badge c-badge--green"><i class="fa-solid fa-circle-check"></i> Integrated</span>
+              <span class="c-badge c-badge--blue"><i class="fa-solid fa-box-open"></i> <span data-version>v10.8.2</span></span>
+              <span class="c-badge c-badge--slate"><i class="fa-brands fa-flutter"></i> Flutter / Dart</span>
+              <span class="c-badge c-badge--slate"><i class="fa-brands fa-windows"></i> Windows</span>
+              <span class="c-badge c-badge--slate"><i class="fa-brands fa-android"></i> Android</span>
+            </div>
+            <h2 class="c-product-card__title">BitPlayer: Torrent & Media</h2>
+            <p class="c-product-card__tagline">Now part of Convert The Spire Reborn <span data-version>v10.8.2</span>.</p>
 
-        <section
-          class="c-product-card c-product-card--hero c-vault-release"
-          aria-label="BitPlayer integration"
-        >
-          <div class="c-product-card__badge-row">
-            <span class="c-badge c-badge--green"
-              ><i class="fa-solid fa-circle-check"></i> Integrated</span
-            >
-            <span class="c-badge c-badge--blue"
-              ><i class="fa-solid fa-box-open"></i> <span data-version>v10.8.2</span></span
-            >
-            <span class="c-badge c-badge--slate"
-              ><i class="fa-brands fa-flutter"></i> Flutter / Dart</span
-            >
-            <span class="c-badge c-badge--slate"><i class="fa-brands fa-windows"></i> Windows</span>
-            <span class="c-badge c-badge--slate"><i class="fa-brands fa-android"></i> Android</span>
-          </div>
-          <h2 class="c-product-card__title">BitPlayer: Torrent &amp; Media</h2>
-          <p class="c-product-card__tagline">
-            Now part of Convert The Spire Reborn <span data-version>v10.8.2</span>.
-          </p>
+            <div class="c-update-banner">
+              <i class="fa-solid fa-circle-check"></i>
+              <span><span class="c-update-badge">Merged</span> BitPlayer is now fully integrated into Convert The Spire Reborn <span data-version>v10.8.2</span>, with improved crash resilience, background playback, and media library features.
+                <a href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest" target="_blank" rel="noopener noreferrer" data-release-link class="c-update-banner__link">View release &rarr;</a>
+              </span>
+            </div>
 
-          <div class="c-update-banner">
-            <i class="fa-solid fa-circle-check"></i>
-            <span
-              ><span class="c-update-badge">Merged</span> BitPlayer is now fully integrated into
-              Convert The Spire Reborn <span data-version>v10.8.2</span>, with improved crash
-              resilience, background playback, and media library features in a single unified app.
-              <a
-                href="https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-release-link
-                class="c-update-banner__link"
-                >View release &rarr;</a
-              ></span
-            >
-          </div>
+            <ul class="c-feature-list">
+              <li class="c-feature-list__item"><i class="fa-solid fa-link"></i> Integrated into Convert The Spire Reborn as the torrent + media hub</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-headphones"></i> Advanced background playback for podcasts, lectures, and music libraries</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-bluetooth-b"></i> Bluetooth media controls for headset and car playback</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-folder-open"></i> Fast local folder loading for large media collections</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-globe"></i> Built-in browser, bookmarks, history, incognito mode, and torrent manager</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-people-group"></i> Testing group continues for BitPlayer feedback</li>
+            </ul>
 
-          <ul class="c-feature-list">
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-link"></i> BitPlayer is integrated into Convert The Spire Reborn
-              as the torrent + media hub
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-headphones"></i> Advanced background playback for podcasts,
-              lectures, and large music libraries
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-bluetooth-b"></i> Bluetooth media controls for headset and car
-              playback
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-folder-open"></i> Fast local folder loading for large media
-              collections
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-globe"></i> Built-in browser, bookmarks, history, incognito
-              mode, and torrent manager
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-people-group"></i> Testing group continues for BitPlayer
-              feedback
-            </li>
-          </ul>
+            <div class="c-product-card__actions">
+              <a href="https://play.google.com/store/apps/details?id=com.torrentspire.ai" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--primary"><i class="fa-brands fa-google-play"></i> Get on Google Play</a>
+              <a href="/pages/conversion/" class="c-btn c-btn--primary"><i class="fa-solid fa-arrows-rotate"></i> Open Convert page</a>
+              <a href="https://groups.google.com/g/testersvaultthespire/" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--outline"><i class="fa-solid fa-users"></i> Join test group</a>
+              <a href="/pages/vault/" class="c-btn c-btn--outline"><i class="fa-solid fa-circle-info"></i> BitPlayer details</a>
+            </div>
 
-          <div class="c-product-card__actions">
-            <a href="https://play.google.com/store/apps/details?id=com.torrentspire.ai" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--cta c-btn--android">
-              <i class="fa-brands fa-google-play"></i>&nbsp; Get on Google Play
-            </a>
-            <a href="/pages/conversion/" class="c-btn c-btn--cta c-btn--windows">
-              <i class="fa-solid fa-arrows-rotate"></i>&nbsp; Open Convert app page
-            </a>
-            <a
-              href="https://groups.google.com/g/testersvaultthespire/"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="c-btn c-btn--outline"
-            >
-              <i class="fa-solid fa-users"></i>&nbsp; Join test group
-            </a>
-            <a href="/pages/vault/" class="c-btn c-btn--outline">
-              <i class="fa-solid fa-circle-info"></i>&nbsp; BitPlayer details
-            </a>
-          </div>
-
-          <p class="c-product-card__reassurance">
-            <i class="fa-solid fa-circle-check"></i><strong>Status:</strong> BitPlayer is now part
-            of Convert The Spire Reborn <span data-version>v10.8.2</span>.
-          </p>
-        </section>
+            <p class="c-product-card__reassurance"><i class="fa-solid fa-circle-check"></i> <strong>Status:</strong> BitPlayer is part of Convert The Spire Reborn <span data-version>v10.8.2</span>.</p>
+          </section>
         </div>
 
+        <!-- ── Lofi ──────────────────────────────── -->
         <div class="c-portfolio-tab-panel" data-tab-content="lofi">
-
-        <section
-          class="c-product-card c-product-card--hero c-product-card--lofi"
-          aria-label="Lofi Extension"
-        >
-          <div class="c-product-card__badge-row">
-            <span class="c-badge c-badge--green"
-              ><i class="fa-solid fa-headphones-simple"></i> Background music</span
-            >
-            <span class="c-badge c-badge--blue"
-              ><i class="fa-solid fa-download"></i> Direct download</span
-            >
-            <span class="c-badge c-badge--slate"
-              ><i class="fa-brands fa-chrome"></i> Chrome-compatible</span
-            >
-            <span class="c-badge c-badge--slate"
-              ><i class="fa-brands fa-firefox-browser"></i> Firefox-ready</span
-            >
-          </div>
-          <h2 class="c-product-card__title">Lofi Extension</h2>
-          <p class="c-product-card__tagline">Ambient music controls for your browser.</p>
-
-          <ul class="c-feature-list">
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-music"></i> Play relaxing lo-fi while you work
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-download"></i> Download for Chromium or install Firefox add-on
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-user-shield"></i> Privacy-first with no tracking
-            </li>
-          </ul>
-
-          <div class="c-product-card__actions">
-            <a href="/pages/lofi-download/" class="c-btn c-btn--cta c-btn--android">
-              <i class="fa-solid fa-download"></i>&nbsp; Download Extension
-            </a>
-            <a
-              href="https://addons.mozilla.org/nl/firefox/addon/lofi-player/"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="c-btn c-btn--outline"
-            >
-              <i class="fa-brands fa-firefox-browser"></i>&nbsp; Firefox Add-on
-            </a>
-            <a href="/downloads/LofiExtension.zip" download class="c-btn c-btn--outline">
-              <i class="fa-brands fa-chrome"></i>&nbsp; Chromium ZIP
-            </a>
-          </div>
-        </section>
+          <section class="c-product-card" aria-label="Lofi Extension">
+            <div class="c-product-card__badge-row">
+              <span class="c-badge c-badge--green"><i class="fa-solid fa-headphones-simple"></i> Background music</span>
+              <span class="c-badge c-badge--blue"><i class="fa-solid fa-download"></i> Direct download</span>
+              <span class="c-badge c-badge--slate"><i class="fa-brands fa-chrome"></i> Chrome</span>
+              <span class="c-badge c-badge--slate"><i class="fa-brands fa-firefox-browser"></i> Firefox</span>
+            </div>
+            <h2 class="c-product-card__title">Lofi Extension</h2>
+            <p class="c-product-card__tagline">Ambient music controls for your browser.</p>
+            <ul class="c-feature-list">
+              <li class="c-feature-list__item"><i class="fa-solid fa-music"></i> Play relaxing lo-fi while you work</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-download"></i> Download for Chromium or install Firefox add-on</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-user-shield"></i> Privacy-first with no tracking</li>
+            </ul>
+            <div class="c-product-card__actions">
+              <a href="/pages/lofi-download/" class="c-btn c-btn--primary"><i class="fa-solid fa-download"></i> Download Extension</a>
+              <a href="https://addons.mozilla.org/nl/firefox/addon/lofi-player/" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--outline"><i class="fa-brands fa-firefox-browser"></i> Firefox Add-on</a>
+              <a href="/downloads/LofiExtension.zip" download class="c-btn c-btn--outline"><i class="fa-brands fa-chrome"></i> Chromium ZIP</a>
+            </div>
+          </section>
         </div>
 
-        <div class="c-portfolio-tab-panel active" data-tab-content="demo">
-        <div class="c-portfolio-panel">
-          <h2 class="c-section-title">SpireAI - Live Multiplayer Quizzes</h2>
-          <p class="c-section-lead">
-            Create and play real-time multiplayer quizzes. Teachers build quizzes instantly from
-            text. Students compete on live leaderboards. Community themes enable collaborative quiz
-            creation.
-          </p>
-          <div class="c-portfolio-panel__actions">
-            <a href="/pages/spire-ai/" class="c-btn c-btn--portfolio">
-              <i class="fas fa-bolt"></i>&nbsp; Launch SpireAI
-            </a>
-            <a href="/LukasBohez/" class="c-btn c-btn--outline">
-              <i class="fa-solid fa-briefcase"></i>&nbsp; Portfolio
-            </a>
+        <!-- ── Next.js Portfolio ─────────────────── -->
+        <div class="c-portfolio-tab-panel active" data-tab-content="nextjs">
+          <div class="c-portfolio-panel">
+            <h2 class="c-section-title">Next.js Portfolio</h2>
+            <p class="c-section-lead">
+              A modern, recruiter-ready developer portfolio built with Next.js, React, and TypeScript. Showcasing open-source projects, cross-platform apps, AI tools, and full-stack engineering work — all deployed and live.
+            </p>
+            <div class="c-portfolio-panel__actions">
+              <a href="/Portfolio/" class="c-btn c-btn--primary"><i class="fa-solid fa-globe"></i> View Portfolio</a>
+              <a href="/LukasBohez/" class="c-btn c-btn--outline"><i class="fa-solid fa-briefcase"></i> Classic Portfolio</a>
+              <a href="https://github.com/Lukas-Bohez" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--outline"><i class="fa-brands fa-github"></i> GitHub</a>
+            </div>
           </div>
         </div>
 
-</div>
-
-
+        <!-- ── MIDIComposer ──────────────────────── -->
         <div class="c-portfolio-tab-panel" data-tab-content="midi">
-
-        <section class="c-product-card c-product-card--hero" aria-label="MIDIComposer music tool">
-          <div class="c-product-card__badge-row">
-            <span class="c-badge c-badge--blue"
-              ><i class="fa-solid fa-music"></i> AI Music Generator</span
-            >
-            <span class="c-badge c-badge--green"
-              ><i class="fa-solid fa-shield-halved"></i> Browser-only</span
-            >
-            <span class="c-badge c-badge--slate"
-              ><i class="fa-solid fa-download"></i> MIDI export</span
-            >
-          </div>
-          <h2 class="c-product-card__title">MIDIComposer</h2>
-          <p class="c-product-card__tagline">AI-powered MIDI music generator.</p>
-          <p class="c-product-card__tagline">
-            Pick a scene and intensity, then generate a prompt for Claude, ChatGPT, or Gemini. Paste the JSON response back to preview and download as a full multi-track MIDI file.
-          </p>
-
-          <ul class="c-feature-list">
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-wand-magic-sparkles"></i> 8 scene presets — Anime, Lo-fi, Cinematic, J-Pop, RPG, Synthwave, Lounge, Action
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-sliders"></i> 3 intensity levels per scene — from calm to epic
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-file-audio"></i> Full multi-track MIDI with melody, chords, bass, arp, and drums
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-microchip"></i> Invisible watermark proves the file was made with this tool
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-regular fa-copyright"></i> Copyright metadata written into every export
-            </li>
-            <li class="c-feature-list__item">
-              <i class="fa-solid fa-cloud"></i> Everything runs in your browser — no server uploads
-            </li>
-          </ul>
-
-          <div class="c-product-card__actions">
-            <a href="/LukasBohez/vocalExtender.html" class="c-btn c-btn--cta c-btn--windows">
-              <i class="fa-solid fa-wand-magic-sparkles"></i>&nbsp; Open MIDIComposer
-            </a>
-          </div>
-
-          <p class="c-product-card__reassurance">
-            <i class="fa-solid fa-fingerprint"></i><strong> Built by Lukas Bohez</strong> &middot; All generated music is yours to use
-          </p>
-        </section>
+          <section class="c-product-card" aria-label="MIDIComposer music tool">
+            <div class="c-product-card__badge-row">
+              <span class="c-badge c-badge--blue"><i class="fa-solid fa-music"></i> AI Music Generator</span>
+              <span class="c-badge c-badge--green"><i class="fa-solid fa-shield-halved"></i> Browser-only</span>
+              <span class="c-badge c-badge--slate"><i class="fa-solid fa-download"></i> MIDI export</span>
+            </div>
+            <h2 class="c-product-card__title">MIDIComposer</h2>
+            <p class="c-product-card__tagline">AI-powered MIDI music generator.</p>
+            <p class="c-product-card__tagline">Pick a scene and intensity, then generate a prompt for Claude, ChatGPT, or Gemini. Paste the JSON response to preview and download as a full multi-track MIDI file.</p>
+            <ul class="c-feature-list">
+              <li class="c-feature-list__item"><i class="fa-solid fa-wand-magic-sparkles"></i> 8 scene presets — Anime, Lo-fi, Cinematic, J-Pop, RPG, Synthwave, Lounge, Action</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-sliders"></i> 3 intensity levels per scene — from calm to epic</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-file-audio"></i> Full multi-track MIDI with melody, chords, bass, arp, and drums</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-microchip"></i> Invisible watermark proves the file was made with this tool</li>
+              <li class="c-feature-list__item"><i class="fa-regular fa-copyright"></i> Copyright metadata written into every export</li>
+              <li class="c-feature-list__item"><i class="fa-solid fa-cloud"></i> Everything runs in your browser — no server uploads</li>
+            </ul>
+            <div class="c-product-card__actions">
+              <a href="/LukasBohez/vocalExtender.html" class="c-btn c-btn--primary"><i class="fa-solid fa-wand-magic-sparkles"></i> Open MIDIComposer</a>
+            </div>
+            <p class="c-product-card__reassurance"><i class="fa-solid fa-fingerprint"></i> <strong>Built by Lukas Bohez</strong> · All generated music is yours to use</p>
+          </section>
         </div>
 
-        <!-- explanatory video -->
+        <!-- Demo video -->
         <div class="c-video-wrapper" aria-label="Demo video">
-          <iframe
-            src="https://www.youtube.com/embed/1Pvzw1hOprQ"
-            title="Convert The Spire updated demo"
-            allow="
-              accelerometer;
-              autoplay;
-              clipboard-write;
-              encrypted-media;
-              gyroscope;
-              picture-in-picture;
-              web-share;
-            "
-            referrerpolicy="strict-origin-when-cross-origin"
-            allowfullscreen
-          ></iframe>
-        </div>
+          <iframe src="https://www.youtube.com/embed/1Pvzw1hOprQ" title="Convert The Spire demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
         </div>
       </div><!-- /#portfolio-section -->
 
-      </div>
-
-      <!-- Quiz & Games Section -->
-      
-      </div>
-
+      <!-- ═══════════════════════════════════════════
+           QUIZ & GAMES SECTION
+           ═══════════════════════════════════════════ -->
       <div class="section-divider" role="separator" aria-hidden="true"><span></span></div>
 
-      <div id="games-section" class="section section-alt">
+      <div id="games-section" class="section">
         <div class="c-section-panel">
-          <h2 class="c-section-title">Quiz &amp; Games</h2>
-          <p class="c-section-lead">
-            Compete in real-time multiplayer quizzes with thousands of community-created themes.
-            Pick a mode and start playing instantly.
-          </p>
+          <h2 class="c-section-title">Quiz & Games</h2>
+          <p class="c-section-lead">Compete in real-time multiplayer quizzes with thousands of community-created themes. Or jump into word puzzles and idle games — all free.</p>
+
           <div class="o-button-group o-button-group--2col">
-            <button id="startQuizBtn" class="c-btn c-btn--tertiary bw-btn gamepad">
-              <span class="c-btn__content"
-                ><i class="fa-solid fa-play"></i>&nbsp; Start or join Quiz</span
-              >
-              <span class="c-btn__desc"
-                >Live multiplayer with real-time leaderboards and community themes</span
-              >
-            </button>
-            <button
-              id="studyQuizBtn"
-              class="c-btn c-btn--tertiary bw-btn"
-              onclick="window.location.href = '/pages/study/'"
-            >
-              <span class="c-btn__content"
-                ><i class="fa-solid fa-graduation-cap"></i>&nbsp; Study quiz questions</span
-              >
-              <span class="c-btn__desc"
-                >Practice at your own pace with community-created content</span
-              >
-            </button>
+            <button id="startQuizBtn" class="c-btn c-btn--bw"><span class="c-btn__content"><i class="fa-solid fa-play"></i> Start or Join Quiz</span><span class="c-btn__desc">Live multiplayer with real-time leaderboards and community themes</span></button>
+            <button id="studyQuizBtn" class="c-btn c-btn--bw" onclick="window.location.href = '/pages/study/'"><span class="c-btn__content"><i class="fa-solid fa-graduation-cap"></i> Study Quiz Questions</span><span class="c-btn__desc">Practice at your own pace with community-created content</span></button>
           </div>
           <div class="o-button-group o-button-group--2col">
-            <button
-              id="sentleBtn"
-              class="c-btn c-btn--sentle"
-              onclick="window.location.href = '/pages/sentle/'"
-            >
-              <span class="c-btn__content"
-                ><i class="fa-solid fa-spell-check"></i>&nbsp; SENTLE</span
-              >
-              <span class="c-btn__desc">Daily word puzzle - guess the sentence Wordle-style</span>
-            </button>
-            <button
-              id="kingdomQuarryBtn"
-              class="c-btn c-btn--primary accent-blue"
-              onclick="window.location.href = 'idleGame/idlegame.html'"
-            >
-              <span class="c-btn__content"
-                ><i class="fa-solid fa-industry"></i>&nbsp; Industrial Empire</span
-              >
-              <span class="c-btn__desc">Browser-based idle factory game</span>
-            </button>
+            <button id="sentleBtn" class="c-btn c-btn--sentle" onclick="window.location.href = '/pages/sentle/'"><span class="c-btn__content"><i class="fa-solid fa-spell-check"></i> SENTLE</span><span class="c-btn__desc">Daily word puzzle — guess the sentence Wordle-style</span></button>
+            <button id="kingdomQuarryBtn" class="c-btn c-btn--accent" onclick="window.location.href = 'idleGame/idlegame.html'"><span class="c-btn__content"><i class="fa-solid fa-industry"></i> Industrial Empire</span><span class="c-btn__desc">Browser-based idle factory game</span></button>
+          </div>
+        </div>
+
+        <!-- SpireAI in Quiz & Games -->
+        <div class="c-section-panel">
+          <h2 class="c-section-title">SpireAI — AI-Powered Quiz Creator</h2>
+          <p class="c-section-lead">Create and play real-time multiplayer quizzes. Teachers build quizzes instantly from text. Students compete on live leaderboards. Community themes enable collaborative quiz creation.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:0.75rem;">
+            <a href="/pages/spire-ai/" class="c-btn c-btn--primary"><i class="fa-solid fa-bolt"></i> Launch SpireAI</a>
+            <a href="/LukasBohez/" class="c-btn c-btn--outline"><i class="fa-solid fa-briefcase"></i> Portfolio</a>
           </div>
         </div>
 
         <div class="ad-unit-wrapper ad-slot-square" aria-label="Sponsored content">
           <p class="ad-label">Sponsored</p>
-          <ins
-            class="u-inline-7-ins-class-adsbygoogle-js-adsb adsbygoogle js-adsbygoogle"
-            data-ad-client="ca-pub-8418485814964449"
-            data-ad-slot="7822007431"
-            data-ad-format="auto"
-            data-full-width-responsive="true"
-          ></ins>
+          <ins class="adsbygoogle js-adsbygoogle" data-ad-client="ca-pub-8418485814964449" data-ad-slot="7822007431" data-ad-format="auto" data-full-width-responsive="true"></ins>
         </div>
       </div>
 
-      <!-- Tools & Content Section -->
+      <!-- ═══════════════════════════════════════════
+           TOOLS & CONTENT SECTION
+           ═══════════════════════════════════════════ -->
       <div class="section-divider" role="separator" aria-hidden="true"><span></span></div>
 
       <div id="tools-section" class="section">
-        <div class="c-section-panel c-tools-intro-panel">
-          <h2 class="c-section-title">Tools &amp; Content</h2>
-          <p class="c-section-lead">
-            Use one focused workspace for creation, publishing, analytics, and app distribution.
-          </p>
+        <div class="c-section-panel">
+          <h2 class="c-section-title">Tools & Content</h2>
+          <p class="c-section-lead">One focused workspace for creation, publishing, analytics, and app distribution.</p>
           <div class="c-featured-tools">
             <a href="/pages/storyCreator/" class="c-featured-tool">
-              <span class="c-featured-tool__header"
-                ><i class="fa-solid fa-feather-pointed"></i
-                ><span class="c-featured-tool__title">Story Creator</span></span
-              >
-              <span class="c-featured-tool__desc"
-                >Create interactive stories and structure branching flows quickly.</span
-              >
+              <span class="c-featured-tool__header"><i class="fa-solid fa-feather-pointed"></i><span class="c-featured-tool__title">Story Creator</span></span>
+              <span class="c-featured-tool__desc">Create interactive stories and structure branching flows.</span>
             </a>
             <a href="/pages/content/" class="c-featured-tool">
-              <span class="c-featured-tool__header"
-                ><i class="fa-solid fa-book-open"></i
-                ><span class="c-featured-tool__title">Stories Library</span></span
-              >
-              <span class="c-featured-tool__desc"
-                >Read and manage serialized stories from your content hub.</span
-              >
+              <span class="c-featured-tool__header"><i class="fa-solid fa-book-open"></i><span class="c-featured-tool__title">Stories Library</span></span>
+              <span class="c-featured-tool__desc">Read and manage serialized stories from your content hub.</span>
             </a>
             <a href="/articles/articlepagenew.html" class="c-featured-tool">
-              <span class="c-featured-tool__header"
-                ><i class="fa-solid fa-newspaper"></i
-                ><span class="c-featured-tool__title">Articles</span></span
-              >
-              <span class="c-featured-tool__desc"
-                >Browse guides and long-form article content in one place.</span
-              >
+              <span class="c-featured-tool__header"><i class="fa-solid fa-newspaper"></i><span class="c-featured-tool__title">Articles</span></span>
+              <span class="c-featured-tool__desc">Browse guides and long-form article content in one place.</span>
             </a>
             <a href="/figma/" class="c-featured-tool">
-              <span class="c-featured-tool__header"
-                ><i class="fa-brands fa-figma"></i
-                ><span class="c-featured-tool__title">Figma Extract All Plugin</span></span
-              >
-              <span class="c-featured-tool__desc"
-                >Export SVGs, PNGs, text, variables and metadata from Figma. AI-ready for LLMs.</span
-              >
+              <span class="c-featured-tool__header"><i class="fa-brands fa-figma"></i><span class="c-featured-tool__title">Figma Extract All Plugin</span></span>
+              <span class="c-featured-tool__desc">Export SVGs, PNGs, text, variables and metadata from Figma. AI-ready for LLMs.</span>
             </a>
             <a href="/rijexamen/" class="c-featured-tool">
-              <span class="c-featured-tool__header"
-                ><i class="fa-solid fa-car-side"></i
-                ><span class="c-featured-tool__title">Rijexamen Studiegids</span></span
-              >
-              <span class="c-featured-tool__desc"
-                >Driving exam prep for Roeselare with 20 routes and 60+ checkpoints.</span
-              >
+              <span class="c-featured-tool__header"><i class="fa-solid fa-car-side"></i><span class="c-featured-tool__title">Rijexamen Studiegids</span></span>
+              <span class="c-featured-tool__desc">Driving exam prep for Roeselare with 20 routes and 60+ checkpoints.</span>
             </a>
             <a href="/LukasBohez/vocalExtender.html" class="c-featured-tool">
-              <span class="c-featured-tool__header"
-                ><i class="fa-solid fa-music"></i
-                ><span class="c-featured-tool__title">MIDI Composer</span></span
-              >
-              <span class="c-featured-tool__desc"
-                >AI-powered MIDI music generator. Pick a scene, generate, and download MIDI files.</span
-              >
+              <span class="c-featured-tool__header"><i class="fa-solid fa-music"></i><span class="c-featured-tool__title">MIDI Composer</span></span>
+              <span class="c-featured-tool__desc">AI-powered MIDI music generator. Pick a scene, generate, and download MIDI files.</span>
             </a>
           </div>
         </div>
 
-        <div class="c-section-panel c-tools-actions-panel">
-          <!-- TECH-DEBT: Migrate remaining inline onclick handlers in this panel to delegated JS listeners for CSP hardening. -->
+        <div class="c-section-panel">
           <div class="o-button-group o-button-group--2col">
-            <button
-              id="viewGraphsBtn"
-              class="c-btn c-btn--primary bw-btn gamepad gamepad-navigable"
-              onclick="window.location.href = '/pages/graphs/'"
-            >
-              <span class="c-btn__content"
-                ><i class="fa-solid fa-chart-line"></i>&nbsp; View Graphs</span
-              >
-              <span class="c-btn__desc"
-                >Visualise quiz statistics and performance in real time</span
-              >
-            </button>
-            <button
-              id="manageTheSpireBtn"
-              class="c-btn c-btn--primary bw-btn"
-              onclick="window.location.href = '/pages/manage/'"
-            >
-              <span class="c-btn__content"
-                ><i class="fa-solid fa-sliders"></i>&nbsp; Manage the Spire</span
-              >
-              <span class="c-btn__desc">Admin panel for quiz themes and content</span>
-            </button>
+            <button id="viewGraphsBtn" class="c-btn c-btn--bw" onclick="window.location.href = '/pages/graphs/'"><span class="c-btn__content"><i class="fa-solid fa-chart-line"></i> View Graphs</span><span class="c-btn__desc">Visualise quiz statistics and performance in real time</span></button>
+            <button id="manageTheSpireBtn" class="c-btn c-btn--bw" onclick="window.location.href = '/pages/manage/'"><span class="c-btn__content"><i class="fa-solid fa-sliders"></i> Manage the Spire</span><span class="c-btn__desc">Admin panel for quiz themes and content</span></button>
           </div>
           <div class="o-button-group o-button-group--2col">
-            <button
-              class="c-btn c-btn--tertiary bw-btn"
-              onclick="window.location.href = '/pages/spire-ai/'"
-            >
-              <span class="c-btn__content"
-                ><i class="fa-solid fa-bolt"></i>&nbsp; Open SpireAI</span
-              >
-              <span class="c-btn__desc">Generate and launch live multiplayer quizzes quickly</span>
-            </button>
-            <button
-              class="c-btn c-btn--tertiary bw-btn"
-              onclick="window.location.href = '/pages/conversion/'"
-            >
-              <span class="c-btn__content"
-                ><i class="fa-solid fa-download"></i>&nbsp; Convert Downloads</span
-              >
-              <span class="c-btn__desc"
-                >Get the latest Convert + BitPlayer desktop and mobile builds</span
-              >
-            </button>
+            <button class="c-btn c-btn--bw" onclick="window.location.href = '/pages/spire-ai/'"><span class="c-btn__content"><i class="fa-solid fa-bolt"></i> Open SpireAI</span><span class="c-btn__desc">Generate and launch live multiplayer quizzes</span></button>
+            <button class="c-btn c-btn--bw" onclick="window.location.href = '/pages/conversion/'"><span class="c-btn__content"><i class="fa-solid fa-download"></i> Convert Downloads</span><span class="c-btn__desc">Get the latest Convert + BitPlayer builds</span></button>
           </div>
           <div class="o-button-group o-button-group--2col">
-            <button
-              class="c-btn c-btn--tertiary bw-btn"
-              onclick="window.location.href = '/LukasBohez/'"
-            >
-              <span class="c-btn__content"
-                ><i class="fa-solid fa-briefcase"></i>&nbsp; Open Portfolio</span
-              >
-              <span class="c-btn__desc"
-                >Showcase projects, downloads, and recruiter-ready highlights</span
-              >
-            </button>
-            <button
-              class="c-btn c-btn--tertiary bw-btn"
-              onclick="window.location.href = '/LukasBohez/projects/'"
-            >
-              <span class="c-btn__content"
-                ><i class="fa-solid fa-star"></i>&nbsp; Projects Showcase</span
-              >
-              <span class="c-btn__desc">View SpireAI, Convert, SENTLE, and Industrial Empire</span>
-            </button>
+            <button class="c-btn c-btn--bw" onclick="window.location.href = '/LukasBohez/'"><span class="c-btn__content"><i class="fa-solid fa-briefcase"></i> Open Portfolio</span><span class="c-btn__desc">Showcase projects, downloads, and recruiter-ready highlights</span></button>
+            <button class="c-btn c-btn--bw" onclick="window.location.href = '/LukasBohez/projects/'"><span class="c-btn__content"><i class="fa-solid fa-star"></i> Projects Showcase</span><span class="c-btn__desc">SpireAI, Convert, SENTLE, and Industrial Empire</span></button>
           </div>
           <div class="o-button-group o-button-group--2col">
-            <button
-              class="c-btn c-btn--tertiary bw-btn"
-              onclick="window.location.href = '/pages/support/'"
-            >
-              <span class="c-btn__content"
-                ><i class="fa-solid fa-headset"></i>&nbsp; Creator Support</span
-              >
-              <span class="c-btn__desc">Get fast help for content and tools</span>
-            </button>
+            <button class="c-btn c-btn--bw" onclick="window.location.href = '/pages/support/'"><span class="c-btn__content"><i class="fa-solid fa-headset"></i> Creator Support</span><span class="c-btn__desc">Get fast help for content and tools</span></button>
+            <button class="c-btn c-btn--bw" onclick="window.location.href = 'https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/'"><span class="c-btn__content"><i class="fa-solid fa-code-commit"></i> Release Notes</span><span class="c-btn__desc">Full changelog and update cadence</span></button>
           </div>
           <div class="o-button-group o-button-group--2col">
-            <button
-              class="c-btn c-btn--tertiary bw-btn"
-              onclick="
-                window.location.href =
-                  'https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/'
-              "
-            >
-              <span class="c-btn__content"
-                ><i class="fa-solid fa-code-commit"></i>&nbsp; Release Notes</span
-              >
-              <span class="c-btn__desc"
-                >See the full changelog and track update cadence publicly</span
-              >
-            </button>
-            <button
-              class="c-btn c-btn--tertiary bw-btn"
-              onclick="
-                window.location.href =
-                  'https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/SHA256SUMS.txt'
-              "
-            >
-              <span class="c-btn__content"
-                ><i class="fa-solid fa-fingerprint"></i>&nbsp; SHA256 Checksums</span
-              >
-              <span class="c-btn__desc">Verify downloads with published release hashes</span>
-            </button>
+            <button class="c-btn c-btn--bw" onclick="window.location.href = 'https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/SHA256SUMS.txt'"><span class="c-btn__content"><i class="fa-solid fa-fingerprint"></i> SHA256 Checksums</span><span class="c-btn__desc">Verify downloads with published release hashes</span></button>
           </div>
         </div>
 
-        <div class="ad-unit-wrapper ad-slot-article" aria-label="Sponsored article placement">
+        <div class="ad-unit-wrapper ad-slot-article" aria-label="Sponsored article">
           <p class="ad-label">Sponsored</p>
-          <ins
-            class="u-inline-8-ins-class-adsbygoogle-js-adsb adsbygoogle js-adsbygoogle"
-            style="display:block"
-            data-ad-layout="in-article"
-            data-ad-format="fluid"
-            data-ad-client="ca-pub-8418485814964449"
-            data-ad-slot="6382844046"
-          ></ins>
+          <ins class="adsbygoogle js-adsbygoogle" style="display:block" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-8418485814964449" data-ad-slot="6382844046"></ins>
         </div>
       </div>
 
-      <!-- Support Section -->
+      <!-- ═══════════════════════════════════════════
+           SUPPORT SECTION
+           ═══════════════════════════════════════════ -->
       <div class="section-divider" role="separator" aria-hidden="true"><span></span></div>
 
-      <div id="support-section" class="section section-alt">
-        <div id="campaign-panel" class="c-section-panel campaign-panel">
-          <h2 class="c-section-title">Contact c-section-title">Support Support</h2>
+      <div id="support-section" class="section">
+        <div class="c-section-panel">
+          <h2 class="c-section-title">Support</h2>
           <p class="c-section-lead">Get help fast and review site policies.</p>
           <div class="o-button-group o-button-group--2col">
-            <button
-              id="supportBtn"
-              class="c-btn c-btn--primary bw-btn"
-              onclick="window.location.href = '/pages/support/'"
-            >
-              <span class="c-btn__content"
-                ><i class="fa-solid fa-headset"></i>&nbsp; Contact Support</span
-              >
-              <span class="c-btn__desc">Get help - we reply within 24 hours</span>
-            </button>
-            <button
-              class="c-btn c-btn--tertiary bw-btn"
-              onclick="window.location.href = '/pages/about/'"
-            >
-              <span class="c-btn__content"><i class="fa-solid fa-user"></i>&nbsp; About Me</span>
-              <span class="c-btn__desc">Meet the developer behind Quiz The Spire</span>
-            </button>
+            <button id="supportBtn" class="c-btn c-btn--bw" onclick="window.location.href = '/pages/support/'"><span class="c-btn__content"><i class="fa-solid fa-headset"></i> Contact Support</span><span class="c-btn__desc">Get help — we reply within 24 hours</span></button>
+            <button class="c-btn c-btn--bw" onclick="window.location.href = '/pages/about/'"><span class="c-btn__content"><i class="fa-solid fa-user"></i> About Me</span><span class="c-btn__desc">Meet the developer behind Quiz The Spire</span></button>
           </div>
           <div class="o-button-group o-button-group--2col">
-            <button
-              class="c-btn c-btn--tertiary bw-btn"
-              onclick="window.location.href = '/pages/privacy/'"
-            >
-              <span class="c-btn__content"
-                ><i class="fa-solid fa-shield-halved"></i>&nbsp; Privacy Policy</span
-              >
-              <span class="c-btn__desc">How we handle your data</span>
-            </button>
-            <button id="manageQuizBtn" class="c-btn c-btn--tertiary bw-btn">
-              <span class="c-btn__content"
-                ><i class="fa-solid fa-gears"></i>&nbsp; Manage Quiz</span
-              >
-              <span class="c-btn__desc">Session settings and quiz controls</span>
-            </button>
+            <button class="c-btn c-btn--bw" onclick="window.location.href = '/pages/privacy/'"><span class="c-btn__content"><i class="fa-solid fa-shield-halved"></i> Privacy Policy</span><span class="c-btn__desc">How we handle your data</span></button>
+            <button id="manageQuizBtn" class="c-btn c-btn--bw"><span class="c-btn__content"><i class="fa-solid fa-gears"></i> Manage Quiz</span><span class="c-btn__desc">Session settings and quiz controls</span></button>
           </div>
           <div class="o-button-group o-button-group--2col">
-            <button
-              class="c-btn c-btn--tertiary bw-btn"
-              onclick="window.location.href = '/pages/terms/'"
-            >
-              <span class="c-btn__content"
-                ><i class="fa-solid fa-file-contract"></i>&nbsp; Terms of Service</span
-              >
-              <span class="c-btn__desc">Usage rules and legal information</span>
-            </button>
-            <button
-              class="c-btn c-btn--tertiary bw-btn"
-              onclick="window.location.href = '/pages/contact/'"
-            >
-              <span class="c-btn__content"
-                ><i class="fa-solid fa-envelope"></i>&nbsp; Contact Us</span
-              >
-              <span class="c-btn__desc">Questions, feedback, or business enquiries</span>
-            </button>
+            <button class="c-btn c-btn--bw" onclick="window.location.href = '/pages/terms/'"><span class="c-btn__content"><i class="fa-solid fa-file-contract"></i> Terms of Service</span><span class="c-btn__desc">Usage rules and legal information</span></button>
+            <button class="c-btn c-btn--bw" onclick="window.location.href = '/pages/contact/'"><span class="c-btn__content"><i class="fa-solid fa-envelope"></i> Contact Us</span><span class="c-btn__desc">Questions, feedback, or business enquiries</span></button>
           </div>
         </div>
 
         <div class="ad-unit-wrapper ad-slot-horizontal" aria-label="Sponsored content">
           <p class="ad-label">Sponsored</p>
-          <ins
-            class="u-inline-9-ins-class-adsbygoogle-js-adsb adsbygoogle js-adsbygoogle"
-            style="display:block"
-            data-ad-client="ca-pub-8418485814964449"
-            data-ad-slot="6531017850"
-            data-ad-format="auto"
-            data-full-width-responsive="true"
-          ></ins>
+          <ins class="adsbygoogle js-adsbygoogle" style="display:block" data-ad-client="ca-pub-8418485814964449" data-ad-slot="6531017850" data-ad-format="auto" data-full-width-responsive="true"></ins>
         </div>
       </div>
 
       <div class="ad-unit-wrapper ad-slot-multiplex" aria-label="Sponsored recommendations">
         <p class="ad-label">Sponsored</p>
-        <ins
-          class="adsbygoogle js-adsbygoogle"
-          style="display:block"
-          data-ad-client="ca-pub-8418485814964449"
-          data-ad-slot="6947629232"
-          data-ad-format="auto"
-          data-full-width-responsive="true"
-        ></ins>
+        <ins class="adsbygoogle js-adsbygoogle" style="display:block" data-ad-client="ca-pub-8418485814964449" data-ad-slot="6947629232" data-ad-format="auto" data-full-width-responsive="true"></ins>
       </div>
     </main>
 
+    <!-- Back to top -->
     <button id="back-to-top" type="button" aria-label="Back to top">
       <svg class="back-to-top__ring" viewBox="0 0 36 36" aria-hidden="true" focusable="false">
         <circle class="back-to-top__ring-base" cx="18" cy="18" r="16"></circle>
-        <circle
-          id="scroll-ring"
-          class="back-to-top__ring-progress"
-          cx="18"
-          cy="18"
-          r="16"
-          stroke-dasharray="100"
-          stroke-dashoffset="100"
-        ></circle>
+        <circle id="scroll-ring" class="back-to-top__ring-progress" cx="18" cy="18" r="16" stroke-dasharray="100" stroke-dashoffset="100"></circle>
       </svg>
       <i class="fa-solid fa-chevron-up back-to-top__arrow" aria-hidden="true"></i>
     </button>
 
+    <!-- Footer -->
     <footer class="c-footer">
       <p class="c-footer__about">
-        Built and maintained by one indie developer, <strong>Lukas Bohez</strong>. 950+ downloads
-        across 95+ countries and counting. <small>Last updated: April 2026</small>
-        <!-- UPDATE_STATS -->
+        Built and maintained by <strong>Lukas Bohez</strong>. 950+ downloads across 95+ countries. <small>Last updated: April 2026</small>
       </p>
       <div class="c-footer__bmc">
-        <!-- Lightweight support link instead of external widget script to reduce 3rd-party overhead -->
-        <a class="c-btn" href="https://github.com/sponsors/Lukas-Bohez" target="_blank" rel="noopener noreferrer">Support on GitHub Sponsors</a>
+        <a class="c-btn c-btn--outline" href="https://github.com/sponsors/Lukas-Bohez" target="_blank" rel="noopener noreferrer">Support on GitHub Sponsors</a>
       </div>
       <p class="c-footer__text">
         <strong>&copy; 2026 Quiz The Spire</strong><br />
-        Created, Owned &amp; Operated by <strong>Lukas Bohez</strong><br />
+        Created, Owned & Operated by <strong>Lukas Bohez</strong><br />
         All rights reserved.
       </p>
       <p class="c-footer__links">
@@ -1738,143 +1746,80 @@
     <script src="js/infomodal.js" defer></script>
     <script src="js/spire-adblock-detector.js" defer></script>
     <script>
-      // Utility function to detect current theme
       function getCurrentTheme() {
-        const htmlTheme = document.documentElement.getAttribute('data-theme');
+        var htmlTheme = document.documentElement.getAttribute('data-theme');
         if (htmlTheme) return htmlTheme;
         if (document.body.classList.contains('theme-dark')) return 'dark';
         if (document.body.classList.contains('theme-light')) return 'light';
         return localStorage.getItem('spire-theme') || 'dark';
       }
 
-      // Show Android instructions when APK download is clicked
       function showAndroidInstructions() {
-        const modal = document.getElementById('conversionDownloadModal');
-        // Switch to Android tab
-        document
-          .querySelectorAll('.c-platform-tab')
-          .forEach((t) => t.classList.toggle('active', t.dataset.platform === 'android'));
-        document
-          .querySelectorAll('.c-platform-panel')
-          .forEach((p) => p.classList.toggle('active', p.id === 'platform-android'));
+        var modal = document.getElementById('conversionDownloadModal');
+        document.querySelectorAll('.c-platform-tab').forEach(function (t) { t.classList.toggle('active', t.dataset.platform === 'android'); });
+        document.querySelectorAll('.c-platform-panel').forEach(function (p) { p.classList.toggle('active', p.id === 'platform-android'); });
         modal.classList.add('is-open');
         modal.setAttribute('aria-hidden', 'false');
       }
 
-      // Show Linux instructions when Linux download is clicked
       function showLinuxInstructions() {
-        const modal = document.getElementById('conversionDownloadModal');
-        // Switch to Linux tab
-        document
-          .querySelectorAll('.c-platform-tab')
-          .forEach((t) => t.classList.toggle('active', t.dataset.platform === 'linux'));
-        document
-          .querySelectorAll('.c-platform-panel')
-          .forEach((p) => p.classList.toggle('active', p.id === 'platform-linux'));
+        var modal = document.getElementById('conversionDownloadModal');
+        document.querySelectorAll('.c-platform-tab').forEach(function (t) { t.classList.toggle('active', t.dataset.platform === 'linux'); });
+        document.querySelectorAll('.c-platform-panel').forEach(function (p) { p.classList.toggle('active', p.id === 'platform-linux'); });
         modal.classList.add('is-open');
         modal.setAttribute('aria-hidden', 'false');
       }
 
-      // Download handlers: open GitHub releases directly (no backend tracking)
       function handleConversionDownload(event) {
         event && event.preventDefault && event.preventDefault();
-        window.open(
-          'https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-windows-x64.zip',
-          '_blank',
-          'noopener,noreferrer'
-        );
+        window.open('https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-windows-x64.zip', '_blank', 'noopener,noreferrer');
       }
-
       function handleAndroidDownload(event) {
         event && event.preventDefault && event.preventDefault();
-        window.open(
-          'https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn.apk',
-          '_blank',
-          'noopener,noreferrer'
-        );
+        window.open('https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn.apk', '_blank', 'noopener,noreferrer');
       }
-
       function handleLinuxDownload(event) {
         event && event.preventDefault && event.preventDefault();
-        window.open(
-          'https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-linux-x64.zip',
-          '_blank',
-          'noopener,noreferrer'
-        );
+        window.open('https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-linux-x64.zip', '_blank', 'noopener,noreferrer');
       }
-
       function handleMacDownload(event) {
         event && event.preventDefault && event.preventDefault();
-        window.open(
-          'https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-macOS.zip',
-          '_blank',
-          'noopener,noreferrer'
-        );
+        window.open('https://github.com/Lukas-Bohez/ConvertTheSpireFlutter/releases/latest/download/ConvertTheSpireReborn-macOS.zip', '_blank', 'noopener,noreferrer');
       }
 
-      // Modal controls
       (function () {
-        const modal = document.getElementById('conversionDownloadModal');
+        var modal = document.getElementById('conversionDownloadModal');
         if (!modal) return;
-        const closeBtn = modal.querySelector('.c-modal__close');
-        const instructionsBtn = document.getElementById('conversionInstructionsBtn');
-        const openModal = () => {
-          modal.classList.add('is-open');
-          modal.setAttribute('aria-hidden', 'false');
-        };
-        const closeModal = () => {
-          modal.classList.remove('is-open');
-          modal.setAttribute('aria-hidden', 'true');
-        };
+        var closeBtn = modal.querySelector('.c-modal__close');
+        var instructionsBtn = document.getElementById('conversionInstructionsBtn');
+        var openModal = function () { modal.classList.add('is-open'); modal.setAttribute('aria-hidden', 'false'); };
+        var closeModal = function () { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); };
         if (closeBtn) closeBtn.addEventListener('click', closeModal);
-        if (instructionsBtn)
-          instructionsBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            openModal();
-          });
-        modal.addEventListener('click', (e) => {
-          if (e.target === modal) closeModal();
-        });
-        document.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape') closeModal();
-        });
-
-        // Platform tab switching
-        modal.querySelectorAll('.c-platform-tab').forEach((tab) => {
-          tab.addEventListener('click', () => {
-            const platform = tab.dataset.platform;
-            modal
-              .querySelectorAll('.c-platform-tab')
-              .forEach((t) => t.classList.toggle('active', t === tab));
-            modal
-              .querySelectorAll('.c-platform-panel')
-              .forEach((p) => p.classList.toggle('active', p.id === 'platform-' + platform));
+        if (instructionsBtn) instructionsBtn.addEventListener('click', function (e) { e.preventDefault(); openModal(); });
+        modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+        modal.querySelectorAll('.c-platform-tab').forEach(function (tab) {
+          tab.addEventListener('click', function () {
+            var platform = tab.dataset.platform;
+            modal.querySelectorAll('.c-platform-tab').forEach(function (t) { t.classList.toggle('active', t === tab); });
+            modal.querySelectorAll('.c-platform-panel').forEach(function (p) { p.classList.toggle('active', p.id === 'platform-' + platform); });
           });
         });
       })();
     </script>
-    <!-- Analytics removed: no backend calls for download statistics -->
     <script>
-      (function () {
-        // No-op: keep static numbers in HTML to avoid contacting backend.
-      })();
+      (function () { /* no-op static stats */ })();
     </script>
-
     <script>
       (function () {
         if (!window.adsbygoogle) return;
         document.querySelectorAll('.js-adsbygoogle').forEach(function () {
-          try {
-            (adsbygoogle = window.adsbygoogle || []).push({});
-          } catch (e) {
-            // Ignore ad-blocker/runtime errors and keep page usable.
-          }
+          try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) {}
         });
       })();
     </script>
     <script>
       (function () {
-        // Idle-load noncritical scripts to reduce main-thread work on initial load
         var loadScript = function (opts) {
           var s = document.createElement('script');
           if (typeof opts === 'string') opts = { src: opts };
@@ -1886,7 +1831,6 @@
           document.body.appendChild(s);
           return s;
         };
-
         var nonCritical = [
           { src: 'js/stat-counter-animation.js', defer: true },
           { src: 'js/branded-ad-fallback.js', defer: true },
@@ -1896,52 +1840,26 @@
           { src: 'js/version-sync.js', defer: true },
           { src: 'js/image-lightbox.js', defer: true }
         ];
-
         var loadAds = function () {
-          // Load Google AdSense script after idle or interaction to avoid blocking LCP
           if (window.__adsenseLoaded) return;
           window.__adsenseLoaded = true;
-          loadScript({
-            src: 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449',
-            async: true,
-            crossorigin: 'anonymous'
-          });
+          loadScript({ src: 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8418485814964449', async: true, crossorigin: 'anonymous' });
         };
-
         var run = function () {
-          for (var i = 0; i < nonCritical.length; i++) loadScript(nonCritical[i]);
-          // Also load AdSense after non-critical scripts are enqueued
-          try {
-            loadAds();
-          } catch (e) {
-            // swallow
-          }
+          nonCritical.forEach(function (s) { loadScript(s); });
+          try { loadAds(); } catch (e) {}
         };
-
         var schedule = function () {
-          if ('requestIdleCallback' in window) {
-            requestIdleCallback(run, { timeout: 3000 });
-          } else {
-            setTimeout(run, 3000);
-          }
+          if ('requestIdleCallback' in window) requestIdleCallback(run, { timeout: 3000 });
+          else setTimeout(run, 3000);
         };
-
-        // If user interacts early, prioritise loading ads so ad slots can fill
         var onFirstInteraction = function () {
           schedule();
-          ['click', 'keydown', 'touchstart', 'pointerdown'].forEach(function (ev) {
-            window.removeEventListener(ev, onFirstInteraction, { passive: true });
-          });
+          ['click', 'keydown', 'touchstart', 'pointerdown'].forEach(function (ev) { window.removeEventListener(ev, onFirstInteraction, { passive: true }); });
         };
-
-        ['click', 'keydown', 'touchstart', 'pointerdown'].forEach(function (ev) {
-          window.addEventListener(ev, onFirstInteraction, { passive: true });
-        });
-
-        // Fallback schedule if no early interaction
+        ['click', 'keydown', 'touchstart', 'pointerdown'].forEach(function (ev) { window.addEventListener(ev, onFirstInteraction, { passive: true }); });
         schedule();
       })();
     </script>
-
   </body>
 </html>
