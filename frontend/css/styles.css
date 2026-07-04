@@ -898,6 +898,10 @@ body:not([data-theme]) .spire-bg-light {
 }
 
 #main-content .section .c-section-panel {
+  margin-bottom: 1.5rem;
+}
+
+#main-content .section .c-section-panel:last-child {
   margin-bottom: 0;
 }
 

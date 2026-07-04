@@ -12,8 +12,10 @@
 .c-footer__about {
   font-size: 0.88rem;
   color: #4b5563;
-  margin: 0 0 0.75rem;
+  margin: 0 auto 0.75rem;
   line-height: 1.5;
+  text-align: center;
+  max-width: 560px;
 }
 
 .c-footer__about strong {
@@ -26,9 +28,10 @@
 }
 
 .c-footer__text {
-  margin: 6px 0;
+  margin: 6px auto;
   font-size: 0.95rem;
   line-height: 1.5;
+  text-align: center;
 }
 
 .c-footer__links {
@@ -102,8 +105,9 @@ body[data-theme='dark'] .c-footer__link:hover,
   display: flex;
   justify-content: center;
   align-items: center;
-  padding-bottom: 24px; /* extra bottom padding to give the button visual breathing room */
+  padding-bottom: 24px;
   margin-bottom: 8px;
+  text-align: center;
 }
 
 /* If the widget renders an iframe or button, give it a subtle card treatment */
