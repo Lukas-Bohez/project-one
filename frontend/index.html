@@ -66,13 +66,16 @@
 
   /* Hero stats */
   .hero-stats{
-    display:flex;flex-wrap:wrap;justify-content:center;gap:1rem;
+    display:flex;flex-wrap:wrap;justify-content:center;gap:1rem !important;
     margin:2rem auto 0;max-width:780px;
+    padding:0 !important;border:none !important;border-radius:0 !important;
+    background:transparent !important;box-shadow:none !important;
+    backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
   }
   .hero-stat{
     background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);
-    border-radius:14px;padding:1rem 1.5rem;text-align:center;
-    flex:0 1 auto;min-width:110px;
+    border-radius:14px;padding:1rem 1.5rem !important;text-align:center;
+    flex:0 1 auto !important;min-width:110px;border-right:1px solid rgba(255,255,255,.12) !important;
     backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
   }
   .hero-stat-number{
@@ -176,16 +179,16 @@
 
   /* Primary */
   .c-btn--primary{
-    background:#2563eb;color:#fff;border-color:#2563eb;font-weight:600;
+    background:#2563eb !important;color:#fff !important;border-color:#2563eb !important;font-weight:600;
     box-shadow:0 2px 8px rgba(37,99,235,.2);
   }
   .c-btn--primary:hover{
-    background:#1d4ed8;border-color:#1d4ed8;color:#fff;
+    background:#1d4ed8 !important;border-color:#1d4ed8 !important;color:#fff !important;
     box-shadow:0 6px 20px rgba(37,99,235,.3);transform:translateY(-2px);
   }
-  .c-btn--primary i{color:#fff;}
-  [data-theme='dark'] .c-btn--primary{background:#2563eb;color:#fff;border-color:#2563eb;}
-  [data-theme='dark'] .c-btn--primary:hover{background:#3b82f6;border-color:#3b82f6;color:#fff;box-shadow:0 6px 22px rgba(59,130,246,.35);}
+  .c-btn--primary i{color:#fff !important;}
+  [data-theme='dark'] .c-btn--primary{background:#2563eb !important;color:#fff !important;border-color:#2563eb !important;}
+  [data-theme='dark'] .c-btn--primary:hover{background:#3b82f6 !important;border-color:#3b82f6 !important;color:#fff !important;box-shadow:0 6px 22px rgba(59,130,246,.35);}
 
   /* Outline */
   .c-btn--outline{background:transparent;border-color:#cbd5e1;color:#475569;}
@@ -816,8 +819,7 @@
         <h2 class="c-section-title">Next.js Portfolio</h2>
         <p class="c-section-lead">A modern, recruiter-ready developer portfolio built with Next.js, React, and TypeScript. Showcasing open-source projects, cross-platform apps, AI tools, and full-stack engineering work — all deployed and live.</p>
         <div class="c-portfolio-panel__actions">
-          <a href="/Portfolio/" class="c-btn c-btn--primary"><i class="fa-solid fa-globe"></i> View Portfolio</a>
-          <a href="/LukasBohez/" class="c-btn c-btn--outline"><i class="fa-solid fa-briefcase"></i> Classic Portfolio</a>
+          <a href="/LukasBohez/" class="c-btn c-btn--primary"><i class="fa-solid fa-briefcase"></i> Portfolio</a>
           <a href="https://github.com/Lukas-Bohez" target="_blank" rel="noopener noreferrer" class="c-btn c-btn--outline"><i class="fa-brands fa-github"></i> GitHub</a>
         </div>
       </div>
