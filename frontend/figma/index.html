@@ -3,14 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Extract All — The most comprehensive Figma extraction plugin. Export SVGs, PNGs, text, variables, styles, components, and metadata — selectively or in bulk.">
+  <meta name="description" content="Import Lottie JSON — Extract All for AI is the only Figma plugin that imports Lottie animations as editable native Figma vectors, then exports everything for AI coding tools and After Effects. Two directions, one plugin. Under review for official Figma publication.">
+  <meta name="keywords" content="Figma plugin, Lottie JSON import, Figma to Lottie, import Lottie to Figma, Figma Lottie vectors, Extract All for AI, Figma to Cursor, Figma to Claude, Figma to ChatGPT, Figma to v0, Figma to After Effects, Figma SVG export, Figma variables export, Figma AI export, design tokens export">
+  <meta name="author" content="Lukas Bohez">
+  <meta name="robots" content="index, follow, max-image-preview:large">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>Extract All — Figma to Anything | By Lukas Bohez</title>
+  <meta property="og:title" content="Import Lottie JSON — Extract All for AI | Figma Plugin by Lukas Bohez">
+  <meta property="og:description" content="Import Lottie animations as editable Figma vectors, then extract SVGs, variables, and CSS values for AI coding tools and After Effects. Under review for official Figma publication.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://quizthespire.com/LukasBohez/figma/">
+  <meta property="og:image" content="https://quizthespire.com/LukasBohez/figma/Screenshot 2026-07-08 105100.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Import Lottie JSON — Extract All for AI | Figma Plugin">
+  <meta name="twitter:description" content="The only Figma plugin that imports Lottie animations as editable vectors, then extracts everything for AI and After Effects. Under review for official Figma publication.">
+  <meta name="twitter:image" content="https://quizthespire.com/LukasBohez/figma/Screenshot 2026-07-08 105100.png">
+  <link rel="canonical" href="https://quizthespire.com/LukasBohez/figma/">
+  <title>Import Lottie JSON — Extract All for AI | Figma Plugin by Lukas Bohez</title>
   <style>
     :root {
       --bg: #f4f8fc; --surface: #fff; --border: #e2e8f0; --text: #1e293b;
       --text-muted: #64748b; --accent: #18a0fb; --accent-hover: #0d8ddb;
-      --green: #0acf83; --amber: #f7b955; --radius: 12px;
+      --green: #0acf83; --amber: #f7b955; --purple: #a855f7; --radius: 12px;
       --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
       --nav-bg: rgba(248,249,251,0.88); --code-bg: #f1f5f9; --code-color: #1e293b;
     }
@@ -18,7 +33,7 @@
       --bg: #0f1112; --surface: #1a1d21; --border: #2a2d31;
       --text: #e2e8f0; --text-muted: #94a3b8; --accent: #60a5fa;
       --accent-hover: #93c5fd; --green: #34d399; --amber: #fbbf24;
-      --nav-bg: rgba(15,17,18,0.92); --code-bg: #0a0a0a; --code-color: #60a5fa;
+      --purple: #c084fc; --nav-bg: rgba(15,17,18,0.92); --code-bg: #0a0a0a; --code-color: #60a5fa;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
@@ -28,7 +43,7 @@
     }
     a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
-    .container { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+    .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
     .nav {
       position: sticky; top: 0; z-index: 100;
       background: var(--nav-bg); backdrop-filter: blur(12px);
@@ -52,46 +67,157 @@
     .btn-theme { color: var(--text-muted); cursor: pointer; background: none; }
     .btn-theme:hover { color: var(--amber); border-color: var(--amber); }
     .hero { padding: 72px 0 80px; position: relative; overflow: hidden; background: var(--surface); border-bottom: 1px solid var(--border); transition: background 0.3s; }
-    .hero-content { position: relative; z-index: 1; max-width: 650px; }
+    .hero-content { position: relative; z-index: 1; max-width: 700px; margin: 0 auto; text-align: center; }
     .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(24,160,251,0.1); border: 1px solid rgba(24,160,251,0.2); border-radius: 100px; padding: 5px 14px; font-size: 12px; font-weight: 600; color: var(--accent); margin-bottom: 20px; }
+    .hero-badge-review { display: inline-flex; align-items: center; gap: 6px; background: rgba(168,85,247,0.12); border: 1px solid rgba(168,85,247,0.25); border-radius: 100px; padding: 5px 14px; font-size: 12px; font-weight: 700; color: var(--purple); margin-bottom: 20px; margin-left: 8px; }
     .hero h1 { font-size: clamp(28px, 5vw, 44px); font-weight: 800; line-height: 1.15; color: var(--text); margin-bottom: 14px; }
     .hero h1 em { font-style: normal; color: var(--accent); }
-    .hero p { font-size: 16px; color: var(--text-muted); max-width: 500px; margin-bottom: 24px; line-height: 1.6; }
-    .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
+    .hero h1 .lottie-highlight { color: var(--green); }
+    .hero p { font-size: 16px; color: var(--text-muted); max-width: 640px; margin: 0 auto 24px; line-height: 1.6; }
+    .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .hero-preview {
+      margin: 0 auto 20px;
+      position: relative;
+      cursor: zoom-in;
+      display: inline-block;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .hero-preview img {
+      width: 100%;
+      max-width: 600px;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+      display: block;
+      transition: transform 0.2s;
+    }
+    .hero-preview:hover img { transform: scale(1.02); }
+    .hero-preview .zoom-btn {
+      position: absolute; top: 12px; right: 12px;
+      background: rgba(0,0,0,0.65); color: #fff; border: none;
+      border-radius: 100px; padding: 6px 14px; font-size: 12px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
+      transition: all 0.2s; opacity: 0; pointer-events: none;
+    }
+    .hero-preview:hover .zoom-btn { opacity: 1; pointer-events: auto; }
     .btn-primary { display: inline-flex; align-items: center; gap: 6px; padding: 11px 22px; background: #18a0fb; color: #fff !important; border-radius: 100px; font-weight: 700; font-size: 14px; transition: all 0.2s; }
     .btn-primary:hover { background: #0d8ddb; text-decoration: none; }
+    .btn-lottie { display: inline-flex; align-items: center; gap: 6px; padding: 11px 22px; background: var(--green); color: #0f1112 !important; border-radius: 100px; font-weight: 700; font-size: 14px; transition: all 0.2s; }
+    .btn-lottie:hover { opacity: 0.9; text-decoration: none; }
     .btn-outline { display: inline-flex; align-items: center; gap: 6px; padding: 11px 22px; background: transparent; color: var(--text) !important; border: 2px solid var(--border); border-radius: 100px; font-weight: 700; font-size: 14px; transition: all 0.2s; }
     .btn-outline:hover { border-color: var(--accent); color: var(--accent) !important; text-decoration: none; }
     .section { padding: 64px 0; transition: background 0.3s; }
     .section-alt { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-    .section-header { margin-bottom: 36px; }
+    .section-header { margin-bottom: 36px; text-align: center; }
     .section-header h2 { font-size: clamp(20px, 3vw, 26px); font-weight: 800; color: var(--text); margin-bottom: 8px; }
     .section-header p { font-size: 15px; color: var(--text-muted); }
     .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
     .feature-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; transition: all 0.2s; }
     .feature-card:hover { border-color: var(--accent); }
+    .feature-card.feature-hero { border-color: var(--green); background: linear-gradient(135deg, rgba(10,207,131,0.06), rgba(10,207,131,0.02)); }
+    .feature-card.feature-hero:hover { border-color: var(--green); box-shadow: 0 0 24px rgba(10,207,131,0.12); }
+    .feature-card.feature-ai { border-color: var(--purple); background: linear-gradient(135deg, rgba(168,85,247,0.06), rgba(168,85,247,0.02)); }
+    .feature-card.feature-ai:hover { border-color: var(--purple); box-shadow: 0 0 24px rgba(168,85,247,0.12); }
     .feature-icon { font-size: 28px; margin-bottom: 12px; }
     .feature-card h3 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
     .feature-card p { font-size: 14px; color: var(--text-muted); line-height: 1.5; }
+
+    /* Zoomable images */
+    .zoomable-wrap {
+      position: relative; overflow: hidden; border-radius: var(--radius);
+      cursor: zoom-in; transition: all 0.2s;
+    }
+    .zoomable-wrap:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,0.18); }
+    .zoomable-wrap img { width: 100%; height: auto; display: block; transition: transform 0.3s ease; }
+    .zoomable-wrap:hover img { transform: scale(1.03); }
+    .zoomable-wrap .zoom-badge {
+      position: absolute; top: 12px; right: 12px;
+      background: rgba(0,0,0,0.7); color: #fff; border: none;
+      border-radius: 100px; padding: 6px 14px; font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; gap: 6px;
+      transition: all 0.2s; opacity: 0; pointer-events: none; z-index: 2;
+    }
+    .zoomable-wrap:hover .zoom-badge { opacity: 1; }
+    .zoomable-wrap.full-width { grid-column: 1 / -1; }
+
+    /* Gallery */
+    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .gallery-item {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden; transition: all 0.2s;
+    }
+    .gallery-item:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,0.15); }
+    .gallery-item .caption { padding: 12px 16px; font-size: 13px; color: var(--text-muted); }
+
+    /* Two-column showcase for wider images */
+    .showcase-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 20px; }
+    .showcase-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .showcase-item .caption { padding: 14px 18px; font-size: 14px; color: var(--text-muted); }
+
+    /* Lightbox */
+    .lightbox {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 9999; background: rgba(0,0,0,0.92);
+      align-items: center; justify-content: center; flex-direction: column;
+      padding: 20px; cursor: zoom-out;
+    }
+    .lightbox.active { display: flex; }
+    .lightbox img {
+      max-width: 95vw; max-height: 85vh; object-fit: contain;
+      border-radius: 8px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .lightbox-close {
+      position: absolute; top: 20px; right: 24px;
+      font-size: 36px; color: #fff; background: none; border: none;
+      cursor: pointer; font-weight: 300; line-height: 1; z-index: 3;
+      transition: opacity 0.2s;
+    }
+    .lightbox-close:hover { opacity: 0.7; }
+    .lightbox-caption {
+      color: #94a3b8; margin-top: 16px; font-size: 14px; text-align: center;
+      max-width: 600px;
+    }
+
     .format-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
     .format-table th, .format-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
     .format-table th { color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
     .format-table td { color: var(--text); }
     .output-tree { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; color: var(--code-color); line-height: 1.8; overflow-x: auto; }
     .output-tree .hl { color: var(--accent); }
+    .output-tree .hl-green { color: var(--green); }
     .output-tree .comment { color: var(--text-muted); }
     .usecase-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
     .usecase-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
     .usecase-item h4 { font-size: 14px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
     .usecase-item p { font-size: 13px; color: var(--text-muted); }
+    .usecase-item.featured { border-color: var(--green); }
+    .usecase-item.featured h4 { color: var(--green); }
+    .usecase-item.featured-ai { border-color: var(--purple); }
+    .usecase-item.featured-ai h4 { color: var(--purple); }
     .github-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; margin-top: 24px; }
     .github-card h3 { color: var(--text); font-size: 18px; margin-bottom: 8px; }
     .github-card p { color: var(--text-muted); font-size: 14px; margin-bottom: 16px; }
     .code-block { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; color: var(--accent); overflow-x: auto; margin: 12px 0; }
     .footer { padding: 28px 0; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border); text-align: center; }
+    .banner { background: linear-gradient(135deg, rgba(10,207,131,0.1), rgba(10,207,131,0.02)); border: 1px solid var(--green); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 24px; }
+    .banner.banner-review { background: linear-gradient(135deg, rgba(168,85,247,0.1), rgba(168,85,247,0.02)); border-color: var(--purple); }
+    .banner h3 { font-size: 16px; margin-bottom: 8px; }
+    .banner h3 .icon-green { color: var(--green); }
+    .banner p { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+    .flow-diagram { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 16px; margin: 32px 0; font-weight: 700; font-size: 14px; }
+    .flow-step { background: var(--surface); border: 2px solid var(--accent); border-radius: var(--radius); padding: 16px 24px; text-align: center; }
+    .flow-arrow { color: var(--accent); font-size: 24px; }
+    .flow-step.import { border-color: var(--green); }
+    .flow-step.figma { border-color: var(--accent); }
+    .flow-step.extract { border-color: var(--purple); }
     @media (max-width: 600px) {
       .hero { padding: 48px 0 56px; } .section { padding: 40px 0; }
       .feature-grid { grid-template-columns: 1fr; } .container { padding: 0 16px; }
+      .gallery { grid-template-columns: 1fr; }
+      .showcase-grid { grid-template-columns: 1fr; }
+      .flow-diagram { flex-direction: column; }
+      .flow-arrow { transform: rotate(90deg); }
+      .hero-preview img { max-width: 100%; }
     }
   </style>
 </head>
@@ -99,10 +225,11 @@
 
 <nav class="nav">
   <div class="container">
-    <a href="#" class="nav-logo"><i class="fa-brands fa-figma"></i> Figma<span>Extract All</span></a>
+    <a href="#" class="nav-logo"><i class="fa-brands fa-figma"></i> Figma<span>Import + Extract</span></a>
     <ul class="nav-links">
-      <li><a href="#features">Features</a></li>
-      <li><a href="#formats">Formats</a></li>
+      <li><a href="#import">Import Lottie</a></li>
+      <li><a href="#extract">Extract for AI</a></li>
+      <li><a href="#screenshots">Screenshots</a></li>
       <li><a href="#usecases">Use Cases</a></li>
       <li><a href="#install">Install</a></li>
     </ul>
@@ -116,54 +243,174 @@
 <header class="hero">
   <div class="container">
     <div class="hero-content">
-      <div class="hero-badge"><i class="fa-solid fa-plug"></i> Figma Plugin · v2.0.0 · MIT</div>
-      <div class="hero-preview" style="margin-bottom:16px;">
-        <img src="figma.png" alt="Figma Extract All plugin UI preview" style="max-width:300px;width:100%;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.2);" />
+      <div class="hero-badge"><i class="fa-solid fa-plug"></i> Figma Plugin · Import & Export · MIT</div>
+      <div class="hero-badge-review"><i class="fa-solid fa-clock"></i> Under Review — Official Figma Publication</div>
+      <div class="hero-preview" onclick="openLightbox('Screenshot 2026-07-08 105100.png','Import Lottie JSON — Extract All for AI main plugin UI')">
+        <span class="zoom-btn"><i class="fa-solid fa-magnifying-glass-plus"></i> Click to zoom</span>
+        <img src="Screenshot 2026-07-08 105100.png" alt="Import Lottie JSON — Extract All for AI plugin UI showing Lottie import and full extraction panel" />
       </div>
-      <h1>The most <em>comprehensive</em> Figma extraction plugin</h1>
-      <p>Export SVGs, PNGs, text, variables, styles, components, and metadata — selectively or in bulk, per page or across all pages. Built for AI-assisted development, After Effects workflows, and design token pipelines.</p>
+      <h1><span class="lottie-highlight">Import Lottie JSON</span> — <em>Extract All for AI</em></h1>
+      <p>Your Lottie animations don't have to stay locked inside a JSON file. <strong>Import Lottie JSON</strong> brings any Lottie animation straight into Figma, turning every frame into native, editable Figma vectors — no re-tracing, no rebuilding from scratch. Hand an exported Lottie file to a designer who's never opened an animation tool, and they can open it, restyle it, and rebuild it like any other Figma file. It's the fastest way to bring motion work back into the design process.</p>
+      <p>Once it's in Figma, <strong>Extract All for AI</strong> takes it the rest of the way. One click pulls every SVG, Variable, and CSS value out of your file into a clean, structured export — ready to paste into Cursor, Claude, ChatGPT, v0, or whatever AI coding tool you're using. Extracted SVGs also drop straight into Adobe After Effects, so the animation you just imported can head right back out as a polished motion scene, or as a working website.</p>
+      <p><strong>Import a Lottie animation. Reshape it in Figma. Extract it for code or motion. One plugin, both directions.</strong></p>
       <div class="hero-cta">
         <a href="https://github.com/Lukas-Bohez/figma-extract-all" target="_blank" rel="noopener" class="btn-primary"><i class="fa-solid fa-star"></i> View on GitHub</a>
-        <a href="#install" class="btn-outline"><i class="fa-solid fa-download"></i> How to Install</a>
+        <a href="#import" class="btn-lottie"><i class="fa-solid fa-file-import"></i> Import Lottie</a>
+        <a href="#extract" class="btn-outline"><i class="fa-solid fa-robot"></i> Extract for AI</a>
       </div>
     </div>
   </div>
 </header>
 
-<section class="section" id="features">
+<!-- TWO-DIRECTION FLOW DIAGRAM -->
+<section class="section">
   <div class="container">
-    <div class="section-header"><h2>What It Does</h2><p>Extract <strong>everything</strong> from any Figma file into structured, reusable formats.</p></div>
-    <div class="feature-grid">
-      <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-chart-bar"></i></div><h3>Data Extraction</h3><p>Export JSON/text data — full extract, text only, variables, styles, components, and pages.</p></div>
-      <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-bullseye"></i></div><h3>Selected Nodes</h3><p>Export only the nodes you've selected in Figma as SVG, PNG, JPG, or raw SVG code.</p></div>
-      <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-folder-tree"></i></div><h3>Batch Export</h3><p>Export every node on the current page (or all pages) as SVG/PNG with real-time progress.</p></div>
-      <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-brain"></i></div><h3>AI-Ready Output</h3><p>Full extract JSON contains everything — drop it into any LLM for complete design context.</p></div>
-      <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-film"></i></div><h3>After Effects / Lottie</h3><p>Lottie JSON Bundle export with embedded SVGs and position metadata for motion design.</p></div>
-      <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-palette"></i></div><h3>Design Tokens</h3><p>Extract variables with named modes, hex colors, CSS rgba() values, and code syntax.</p></div>
+    <div class="banner banner-review">
+      <h3 style="color:var(--purple);"><i class="fa-solid fa-clock"></i> Under Review for Official Figma Plugin Publication</h3>
+      <p>This plugin is currently under review by Figma to be published as an official plugin in the Figma Community. Category: <strong>Import & Export</strong>. Once approved, you'll be able to install it directly from the Figma plugin directory with one click.</p>
+    </div>
+    <div class="section-header"><h2>Two Directions, One Plugin</h2><p>Import Lottie animations into Figma as editable vectors, then extract everything for AI tools and After Effects.</p></div>
+    <div class="flow-diagram">
+      <div class="flow-step import">
+        <i class="fa-solid fa-file-import" style="font-size:24px;color:var(--green);margin-bottom:8px;display:block;"></i>
+        <span style="color:var(--green);">Import Lottie JSON</span><br>
+        <span style="font-size:12px;color:var(--text-muted);">Every frame → Figma vectors</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step figma">
+        <i class="fa-brands fa-figma" style="font-size:24px;color:var(--accent);margin-bottom:8px;display:block;"></i>
+        <span style="color:var(--accent);">Edit in Figma</span><br>
+        <span style="font-size:12px;color:var(--text-muted);">Restyle, reshape, rebuild</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step extract">
+        <i class="fa-solid fa-robot" style="font-size:24px;color:var(--purple);margin-bottom:8px;display:block;"></i>
+        <span style="color:var(--purple);">Extract All for AI</span><br>
+        <span style="font-size:12px;color:var(--text-muted);">SVGs, Variables, CSS → Cursor, Claude, AE</span>
+      </div>
     </div>
   </div>
 </section>
 
-<section class="section section-alt" id="formats">
+<!-- IMPORT LOTTIE SECTION -->
+<section class="section section-alt" id="import">
   <div class="container">
-    <div class="section-header"><h2>Export Formats</h2><p>Choose exactly what you need — from raw SVGs to complete structured JSON.</p></div>
+    <div class="banner">
+      <h3><i class="fa-solid fa-gem icon-green"></i> The Killer Feature: Import Lottie JSON into Figma</h3>
+      <p>This is the <strong>only Figma plugin in the world</strong> that imports Lottie JSON animations as fully editable native Figma vectors. Every frame of your Lottie animation comes in as real Figma layers — not a flattened preview, not a rasterized image. Your whole team can open, restyle, and rebuild the animation without touching After Effects or any motion tool. No re-tracing. No manual redraws. Just editable vectors inside Figma.</p>
+    </div>
+    <div class="section-header"><h2>What Import Lottie JSON Gets You</h2><p>Bring motion work back into the design process — no animation tool required.</p></div>
+    <div class="feature-grid">
+      <div class="feature-card feature-hero"><div class="feature-icon"><i class="fa-solid fa-file-import"></i></div><h3>Lottie → Editable Figma Vectors</h3><p>Every frame of your Lottie animation, brought in as native, editable Figma vectors. No flattening, no rasterizing — real vector layers you can select, move, restyle, and tweak like any other Figma element.</p></div>
+      <div class="feature-card feature-hero"><div class="feature-icon"><i class="fa-solid fa-ban"></i></div><h3>No Re-Tracing or Manual Redraws</h3><p>Stop exporting PNGs and tracing over them. Import Lottie JSON skips the busywork — the vectors land directly in Figma, ready to edit. Hand an exported Lottie file to a designer and they can work with it immediately.</p></div>
+      <div class="feature-card feature-hero"><div class="feature-icon"><i class="fa-solid fa-users"></i></div><h3>A Normal Figma Layer Structure</h3><p>Your whole team can already work with it. Layers are organized, named, and grouped exactly as you'd expect — no proprietary formats, no locked-down structures, just standard Figma frames and vectors.</p></div>
+      <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-paint-brush"></i></div><h3>Restyle & Rebuild Freely</h3><p>Change colors, adjust strokes, swap shapes, reposition elements. Once the Lottie is in Figma, it's yours to redesign — the animation structure stays intact while you iterate on the visuals.</p></div>
+      <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-rocket"></i></div><h3>Instant, No Converters Needed</h3><p>No middleware, no third-party converter apps, no export-then-reimport loops. Select a Lottie JSON file, click Import, and the animation is in Figma as editable vectors — in seconds.</p></div>
+      <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-vector-square"></i></div><h3>Vector-Perfect, Every Frame</h3><p>Unlike GIFs that pixelate at any scale, Lottie JSON is resolution-independent vector data. Your animations stay razor-sharp at 1x, 2x, 4x — or on an 8K display.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- EXTRACT FOR AI SECTION -->
+<section class="section" id="extract">
+  <div class="container">
+    <div class="section-header"><h2>Extract All for AI — One Click to Code</h2><p>Once your design is in Figma, Extract All for AI pulls every SVG, Variable, and CSS value into a clean structured export — ready for AI coding tools and After Effects.</p></div>
+    <div class="feature-grid">
+      <div class="feature-card feature-ai"><div class="feature-icon"><i class="fa-solid fa-robot"></i></div><h3>AI Coding Tools Ready</h3><p>Paste extracted SVGs, variables, and CSS directly into Cursor, Claude, ChatGPT, v0, GitHub Copilot, or any AI coding assistant — complete design context in one structured export.</p></div>
+      <div class="feature-card feature-ai"><div class="feature-icon"><i class="fa-solid fa-film"></i></div><h3>Straight into After Effects</h3><p>Extracted SVGs drop directly into Adobe After Effects — the animation you imported can head right back out as a polished motion scene with full vector fidelity.</p></div>
+      <div class="feature-card feature-ai"><div class="feature-icon"><i class="fa-solid fa-code"></i></div><h3>CSS Variables & Design Tokens</h3><p>Extract named design tokens, hex colors, CSS rgba() values, and variable modes — ready for your design system, Tailwind config, or CSS-in-JS setup.</p></div>
+      <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-chart-bar"></i></div><h3>Full Data Extraction</h3><p>Export JSON/text data — full extract, text only, variables, styles, components, and pages. Everything structured and ready to parse.</p></div>
+      <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-folder-tree"></i></div><h3>Batch Export</h3><p>Export every node on the current page (or all pages) as SVG/PNG with real-time progress feedback.</p></div>
+      <div class="feature-card"><div class="feature-icon"><i class="fa-solid fa-bullseye"></i></div><h3>Selected Nodes</h3><p>Export only the nodes you've selected in Figma as SVG, PNG, JPG, or raw SVG code — selective, fast, precise.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURED WIDE SCREENSHOT — the smaller 110046 image gets its own hero section -->
+<section class="section-alt" id="featured-screenshot">
+  <div class="container">
+    <div class="section-header"><h2>Full Plugin Overview</h2><p>Click the image to zoom in and see every detail.</p></div>
+    <div class="zoomable-wrap" onclick="openLightbox('Screenshot 2026-07-07 110046.png','Complete plugin interface — all extraction panels and export options')">
+      <span class="zoom-badge"><i class="fa-solid fa-magnifying-glass-plus"></i> Click to zoom</span>
+      <img src="Screenshot 2026-07-07 110046.png" alt="Additional data extraction and export panel" loading="lazy" style="border-radius:var(--radius);">
+    </div>
+    <p style="text-align:center;margin-top:12px;font-size:14px;color:var(--text-muted);">Complete plugin interface — all extraction panels and export options</p>
+  </div>
+</section>
+
+<!-- SCREENSHOT GALLERY — remaining 7 images in a 2-col wide layout -->
+<section class="section" id="screenshots">
+  <div class="container">
+    <div class="section-header"><h2>Screenshots & Gallery</h2><p>See every panel and export mode in action. <strong>Click any image to zoom.</strong></p></div>
+    <div class="gallery">
+      <div class="gallery-item">
+        <div class="zoomable-wrap" onclick="openLightbox('Screenshot 2026-07-06 084818.png','Node selection and batch export view')">
+          <span class="zoom-badge"><i class="fa-solid fa-magnifying-glass-plus"></i> Zoom</span>
+          <img src="Screenshot 2026-07-06 084818.png" alt="Node selection and batch export view" loading="lazy">
+        </div>
+        <div class="caption">Node selection and batch export controls</div>
+      </div>
+      <div class="gallery-item">
+        <div class="zoomable-wrap" onclick="openLightbox('Screenshot 2026-07-06 084843.png','SVG export with individual node settings')">
+          <span class="zoom-badge"><i class="fa-solid fa-magnifying-glass-plus"></i> Zoom</span>
+          <img src="Screenshot 2026-07-06 084843.png" alt="SVG export with individual node settings" loading="lazy">
+        </div>
+        <div class="caption">SVG export — individual node and scale settings</div>
+      </div>
+      <div class="gallery-item">
+        <div class="zoomable-wrap" onclick="openLightbox('Screenshot 2026-07-06 084852.png','Full extract JSON output preview')">
+          <span class="zoom-badge"><i class="fa-solid fa-magnifying-glass-plus"></i> Zoom</span>
+          <img src="Screenshot 2026-07-06 084852.png" alt="Full extract JSON output preview" loading="lazy">
+        </div>
+        <div class="caption">Full extract JSON — structured data for AI and pipelines</div>
+      </div>
+      <div class="gallery-item">
+        <div class="zoomable-wrap" onclick="openLightbox('Screenshot 2026-07-06 084859.png','Variables and design tokens export panel')">
+          <span class="zoom-badge"><i class="fa-solid fa-magnifying-glass-plus"></i> Zoom</span>
+          <img src="Screenshot 2026-07-06 084859.png" alt="Variables and design tokens export panel" loading="lazy">
+        </div>
+        <div class="caption">Variables and design tokens export</div>
+      </div>
+      <div class="gallery-item">
+        <div class="zoomable-wrap" onclick="openLightbox('Screenshot 2026-07-06 084912.png','Styles and components extraction view')">
+          <span class="zoom-badge"><i class="fa-solid fa-magnifying-glass-plus"></i> Zoom</span>
+          <img src="Screenshot 2026-07-06 084912.png" alt="Styles and components extraction view" loading="lazy">
+        </div>
+        <div class="caption">Styles and components extraction</div>
+      </div>
+      <div class="gallery-item">
+        <div class="zoomable-wrap" onclick="openLightbox('Screenshot 2026-07-06 084927.png','Batch export progress with real-time status')">
+          <span class="zoom-badge"><i class="fa-solid fa-magnifying-glass-plus"></i> Zoom</span>
+          <img src="Screenshot 2026-07-06 084927.png" alt="Batch export progress with real-time status" loading="lazy">
+        </div>
+        <div class="caption">Batch export in progress with real-time feedback</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt" id="export-formats">
+  <div class="container">
+    <div class="section-header"><h2>Export Formats</h2><p>Choose exactly what you need — from raw SVGs to structured JSON for AI coding tools.</p></div>
     <table class="format-table">
       <thead><tr><th>Format</th><th>Use Case</th></tr></thead>
       <tbody>
-        <tr><td><strong>SVG</strong></td><td>Vector graphics → After Effects, websites, AI tools</td></tr>
+        <tr><td><strong>Lottie JSON Import</strong> <span style="color:var(--green);font-size:11px;font-weight:700;margin-left:6px;">★ UNIQUE</span></td><td>Import Lottie animations as editable Figma vectors — no re-tracing, no flattening</td></tr>
+        <tr><td><strong>SVG</strong></td><td>Vector graphics → After Effects, AI coding tools, websites</td></tr>
         <tr><td><strong>PNG</strong></td><td>Raster images at chosen scale (1x–8x)</td></tr>
         <tr><td><strong>JPG</strong></td><td>Compressed raster for web/email previews</td></tr>
         <tr><td><strong>SVG Code</strong></td><td>Raw SVG markup as .svg text files</td></tr>
-        <tr><td><strong>JSON</strong></td><td>Structured data for scripts, AI pipelines, database imports</td></tr>
-        <tr><td><strong>TXT</strong></td><td>Plain text for LLM context, copy-paste workflows</td></tr>
+        <tr><td><strong>JSON</strong></td><td>Structured data for AI pipelines, scripts, database imports</td></tr>
+        <tr><td><strong>TXT</strong></td><td>Plain text for LLM context, copy-paste into Cursor/Claude/ChatGPT</td></tr>
+        <tr><td><strong>CSS / Variables</strong></td><td>Design tokens, hex colors, rgba() values, named modes</td></tr>
       </tbody>
     </table>
     <h3 style="margin-top:28px;margin-bottom:12px;">Full Extract Output Structure</h3>
     <div class="output-tree">
-      <span class="hl">{FileName}</span>_full-extract.json    ← Complete structured data<br>
+      <span class="hl">{FileName}</span>_full-extract.json    ← Complete structured data for AI<br>
       <span class="hl">{FileName}</span>_text.json            ← All text nodes with typography<br>
-      <span class="hl">{FileName}</span>_text.txt             ← Plain text dump (AI-friendly)<br>
-      <span class="hl">{FileName}</span>_variables.json       ← All design variables<br>
+      <span class="hl">{FileName}</span>_text.txt             ← Plain text dump (paste into LLMs)<br>
+      <span class="hl">{FileName}</span>_variables.json       ← All design variables & tokens<br>
       <span class="hl">{FileName}</span>_styles.json          ← All styles (paint, text, effect, grid)<br>
       <span class="hl">{FileName}</span>_components.json      ← All components<br>
       <span class="hl">{FileName}</span>_pages.json           ← Page structure<br>
@@ -178,25 +425,27 @@
   <div class="container">
     <div class="section-header"><h2>Use Cases</h2></div>
     <div class="usecase-grid">
-      <div class="usecase-item"><h4><i class="fa-solid fa-film"></i> After Effects</h4><p>Lottie JSON Bundle with motion-ready SVGs + positions</p></div>
-      <div class="usecase-item"><h4><i class="fa-solid fa-robot"></i> AI Development</h4><p>Full Extract JSON + SVGs → feed to LLM for websites</p></div>
-      <div class="usecase-item"><h4><i class="fa-solid fa-palette"></i> Design Tokens</h4><p>Variables + Styles JSON for automated pipelines</p></div>
-      <div class="usecase-item"><h4><i class="fa-solid fa-clipboard-list"></i> Content Audit</h4><p>Text JSON + TXT for comprehensive review</p></div>
-      <div class="usecase-item"><h4><i class="fa-solid fa-books"></i> Component Docs</h4><p>Components JSON + SVG exports for docs</p></div>
-      <div class="usecase-item"><h4><i class="fa-solid fa-floppy-disk"></i> Design Backup</h4><p>Full Extract + all SVGs + PNGs for archiving</p></div>
+      <div class="usecase-item featured"><h4><i class="fa-solid fa-file-import"></i> Import Lottie → Figma ★</h4><p>The only Figma plugin that imports Lottie JSON as editable vectors — bring motion work into the design process</p></div>
+      <div class="usecase-item featured-ai"><h4><i class="fa-solid fa-robot"></i> Extract for AI Coding ★</h4><p>SVGs + Variables + CSS → paste into Cursor, Claude, ChatGPT, v0 for instant AI-powered development</p></div>
+      <div class="usecase-item"><h4><i class="fa-solid fa-film"></i> After Effects</h4><p>Extracted SVGs drop straight into After Effects — import an animation, reshape it in Figma, export for motion</p></div>
+      <div class="usecase-item"><h4><i class="fa-solid fa-palette"></i> Design Tokens</h4><p>Variables + Styles JSON for automated design token pipelines</p></div>
+      <div class="usecase-item"><h4><i class="fa-solid fa-clipboard-list"></i> Content Audit</h4><p>Text JSON + TXT for comprehensive content review and localization</p></div>
+      <div class="usecase-item"><h4><i class="fa-solid fa-books"></i> Component Docs</h4><p>Components JSON + SVG exports for automated documentation</p></div>
+      <div class="usecase-item"><h4><i class="fa-solid fa-floppy-disk"></i> Design Backup</h4><p>Full Extract + all SVGs + PNGs for complete design archiving</p></div>
+      <div class="usecase-item"><h4><i class="fa-solid fa-code"></i> Dev Handoff</h4><p>Export everything a developer needs — assets, tokens, text — in one click</p></div>
     </div>
   </div>
 </section>
 
 <section class="section section-alt" id="install">
   <div class="container">
-    <div class="section-header"><h2>How to Install</h2><p>Get the plugin running in Figma in under a minute.</p></div>
+    <div class="section-header"><h2>How to Install</h2><p>Get the plugin running in Figma in under a minute. <strong style="color:var(--purple);">Under review for official Figma Community publication — soon available directly in the plugin directory.</strong></p></div>
     <h3>Option A — Figma Desktop (recommended)</h3>
     <ol style="padding-left:20px;line-height:2;">
       <li>Download the latest .zip from <a href="https://github.com/Lukas-Bohez/figma-extract-all/releases" target="_blank" rel="noopener">GitHub Releases</a></li>
       <li>In Figma: <strong>Plugins → Development → Import plugin from manifest</strong></li>
       <li>Select <code style="background:var(--code-bg);padding:2px 8px;border-radius:4px;">manifest.json</code></li>
-      <li>Done — open any Figma file and run "Extract All"</li>
+      <li>Done — open any Figma file and run "Import Lottie JSON — Extract All for AI"</li>
     </ol>
     <h3 style="margin-top:24px;">Option B — Build from Source</h3>
     <div class="code-block">git clone https://github.com/Lukas-Bohez/figma-extract-all.git<br>cd figma-extract-all<br>npm install && npm run build</div>
@@ -210,7 +459,7 @@
     </table>
     <div class="github-card">
       <h3><i class="fa-solid fa-link"></i> GitHub Repository</h3>
-      <p>Star the repo, fork it, contribute — all code is MIT licensed and open source.</p>
+      <p>Star the repo, fork it, contribute — all code is MIT licensed and open source. The only Figma plugin that imports Lottie JSON as editable vectors and extracts everything for AI.</p>
       <a href="https://github.com/Lukas-Bohez/figma-extract-all" target="_blank" rel="noopener" class="btn-primary"><i class="fa-solid fa-star"></i> View on GitHub</a>
     </div>
   </div>
@@ -218,26 +467,56 @@
 
 <footer class="footer">
   <div class="container">
-    <p>Built by <a href="https://github.com/Lukas-Bohez" target="_blank" rel="noopener">Lukas Bohez</a> · MIT · <a href="https://quizthespire.com">Quiz The Spire</a></p>
-    <p style="margin-top:4px;">One click, everything you need.™</p>
+    <p>Built and maintained by <a href="https://github.com/Lukas-Bohez" target="_blank" rel="noopener">Lukas Bohez</a> · MIT · <a href="https://quizthespire.com">Quiz The Spire</a> · Bug reports and feature requests welcome.</p>
+    <p style="margin-top:4px;">Import a Lottie animation. Reshape it in Figma. Extract it for code or motion. One plugin, both directions.</p>
   </div>
 </footer>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()" aria-label="Close zoom">&times;</button>
+  <img src="" alt="" id="lightbox-img">
+  <p class="lightbox-caption" id="lightbox-caption"></p>
+</div>
 
 <script>
 (function() {
   var KEY = 'spire-theme';
   function get() { return localStorage.getItem(KEY) || 'dark'; }
   function apply(t) { document.documentElement.setAttribute('data-theme', t); }
-  document.getElementById('themeToggle').addEventListener('click', function() {
-    var n = get() === 'dark' ? 'light' : 'dark';
-    localStorage.setItem(KEY, n); apply(n);
-    try { localStorage.setItem('spire-theme-sync', Date.now().toString()); } catch(e) {}
-  });
+  var btn = document.getElementById('themeToggle');
+  if (btn) {
+    btn.addEventListener('click', function() {
+      var n = get() === 'dark' ? 'light' : 'dark';
+      localStorage.setItem(KEY, n); apply(n);
+      try { localStorage.setItem('spire-theme-sync', Date.now().toString()); } catch(e) {}
+    });
+  }
   window.addEventListener('storage', function(e) {
     if (e.key === KEY || e.key === 'spire-theme-sync') apply(get());
   });
   apply(get());
 })();
+
+function openLightbox(src, caption) {
+  var lb = document.getElementById('lightbox');
+  var img = document.getElementById('lightbox-img');
+  var cap = document.getElementById('lightbox-caption');
+  img.src = src;
+  cap.textContent = caption || '';
+  lb.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  var lb = document.getElementById('lightbox');
+  lb.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeLightbox();
+});
 </script>
 </body>
 </html>
